@@ -3,13 +3,14 @@
 > Date: 2026-09-17 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT ARCHITECTURE / PRODUCT ROUTE**  
-> Supersedes as execution authority: the first-night-only EPI-MQ route and earlier productive-uncertainty scoring plans.
+> Current implementation entry: **SDE-0 / PR #143**  
+> Supersedes as execution authority: first-night-only EPI-MQ routes, earlier productive-uncertainty scoring plans, and the older revision-driven dynamic-decision implementation plan.
 
 ## 1. Product target
 
-The long-term product target is an automatic Blood on the Clocktower Storyteller capable of making ordinary Storyteller discretionary decisions without requiring an experienced human Storyteller to repair the game state mentally.
+The long-term product target is an automatic Blood on the Clocktower Storyteller capable of making ordinary Storyteller discretionary decisions without requiring an experienced human Storyteller to mentally repair the game state.
 
-The immediate target profile is:
+Immediate profile:
 
 ```text
 BEGINNER / ordinary players
@@ -17,15 +18,20 @@ BEGINNER / ordinary players
 + PUBLIC_GOOD_INFO stress assumption
 ```
 
-The algorithm must not merely generate rules-legal information. It must generate information that is legal, coherent, useful, and strategically robust enough that an ordinary evil team still has several understandable worlds in which it can continue to play.
+The engine must generate decisions that are:
 
-The engine must eventually cover both first-night and later-game discretionary decisions, including impairment and special registration.
+- rules-legal;
+- internally coherent;
+- useful to good players;
+- strategically robust enough that an ordinary evil team still has several understandable worlds in which it can continue to play.
 
-## 2. Core architectural decision
+Night 1 is the first calibration surface, not the architectural endpoint.
+
+## 2. Core architecture
 
 Do not treat clue recommendation as independent per-role scoring.
 
-The authoritative route is:
+Authoritative route:
 
 ```text
 canonical actual GameState / interaction-time effective state
@@ -38,7 +44,7 @@ exact hypothetical epistemic consequence evaluation
         ↓
 strategic world-structure diagnostics
         ↓
-profile-specific Storyteller policy
+profile / phase Storyteller policy
         ↓
 reject clearly bad candidates / bundles
         ↓
@@ -47,63 +53,59 @@ select among acceptable survivors
 commit through canonical session / flow ownership
 ```
 
-The long-term orchestration owner is conceptually:
+Conceptual orchestration owner:
 
 ```text
 StorytellerDecisionEngine
 ```
 
-This is an orchestration / policy owner, not a second rules engine and not a second possible-world solver.
+This owner must remain thin. It is not a second rules engine, second state engine, or second possible-world solver.
 
 ## 3. Existing foundations to preserve
 
-The current codebase already contains most of the required lower-level architecture. Preserve and extend it rather than rebuilding parallel systems.
-
-### 3.1 Rules / candidate legality
+### Rules / candidate legality
 
 Rules and canonical candidate producers remain the only legality authority.
 
-Examples include existing pair-information legality and registration domains. Recommendation policy must consume legal candidates rather than re-encode role rules.
+Recommendation consumes legal outcomes; it must not recreate role rules.
 
-### 3.2 InformationProposition / observations
+### InformationProposition / observations
 
-`InformationProposition` remains the common semantic language for what a player is shown or can publicly claim from Storyteller information.
+`InformationProposition` remains the common semantic language for what a player is shown or what a public claim means epistemically.
 
-`ShownRoleAt` remains distinct from actual `RoleAt`. Public shown-role claims must not leak hidden Drunk identity or other hidden actual-state facts.
+`ShownRoleAt` remains distinct from actual `RoleAt`. Public shown-role semantics must not leak hidden Drunk identity or other hidden actual-state facts.
 
-### 3.3 Exact epistemic evaluator
+### Exact epistemic evaluator
 
 The existing exact hypothetical evaluator remains the single consequence authority.
 
-Do **not** create a second `StrategicWorldSolver` or a second rules-aware possible-world implementation inside recommendation.
+Do not create a parallel `StrategicWorldSolver` in recommendation.
 
-The current exact diagnostics already expose the strategically important structure required by the new route, including:
+Current useful diagnostics include:
 
+- exact BEFORE / AFTER world counts;
 - possible Demon seats;
 - distinct evil-team seat configurations;
+- Demon / evil cover;
 - forced-good seats;
 - forced-evil seats;
-- evil cover;
-- exact BEFORE / AFTER world counts;
 - leave-one-out interaction evidence.
 
-Recommendation policy consumes these outputs.
+### Historical replay
 
-### 3.4 Historical multi-night replay
+Historical exact replay is required for later-night decisions. Do not architect around pristine Night 1 only.
 
-The historical exact replay path is a required foundation for later-night decisions. First-night experiments are not the architectural boundary of the system.
+### Dynamic / effective-state infrastructure
 
-### 3.5 Dynamic decision / registration infrastructure
+Existing dynamic candidate generation, impaired-information semantics, registration legality, interaction-time effective-state projection, and dynamic game-state infrastructure are foundations to evolve, not replace with parallel state.
 
-Existing dynamic candidate generation, impaired-information semantics, registration legality, interaction-time effective-state projection, and `DynamicGameState` are reusable foundations. They should be evolved rather than replaced by a parallel state model.
+## 4. Strategic worlds, not raw role permutations
 
-## 4. Strategic worlds, not raw role-permutation worlds
+Raw world cardinality is not the primary quality metric.
 
-Raw possible-world cardinality is not the primary product metric.
+Two worlds that differ only because healthy good players swap similar good roles can have nearly identical strategic meaning. Moving one player between good / Minion / Demon is much more important.
 
-Two worlds that differ only because two healthy good players exchange similar good roles can have almost identical strategic meaning. By contrast, moving one player from good to Minion/Demon is highly significant.
-
-The primary structural projections therefore focus on evil topology:
+Primary product-level structure therefore includes:
 
 ```text
 possible Demon seats
@@ -113,35 +115,24 @@ forced-good seats
 forced-evil seats
 ```
 
-A large exact world count does not make a recommendation robust if almost every surviving world has the same Demon/Minion layout.
-
-Likewise, a recommendation is not automatically good merely because it preserves the maximum number of worlds.
+A recommendation can have thousands of surviving role worlds and still be strategically fragile if nearly all survivors share the same evil topology.
 
 ## 5. Target region: neither too strong nor too weak
 
-The policy must reject both extremes:
+The policy must distinguish:
 
 ```text
-too weak
-    -> information has little useful strategic value
-
-acceptable
-    -> good receives meaningful information
-    -> several viable evil topologies / narratives survive
-
- too strong
-    -> Demon / evil topology collapses too early
-    -> large trusted-good core forms
-    -> ordinary evil players have no simple viable counterworld
+BAD_TOO_WEAK
+ACCEPTABLE
+BAD_TOO_STRONG
+UNCERTAIN
 ```
 
-Do not maximize uncertainty.
+The target is not maximum uncertainty.
 
-Do not search for one mathematically optimal clue.
+An acceptable result should provide meaningful information while preserving multiple understandable strategic counterworlds for ordinary evil players.
 
-Do not reintroduce one opaque scalar whose maximum becomes the product decision.
-
-Initial production semantics should remain conceptually:
+Initial production semantics remain conceptually:
 
 ```text
 hard legality
@@ -150,77 +141,77 @@ hard legality
 → random selection among acceptable survivors
 ```
 
+Do not use one opaque global scalar whose maximum becomes the authority.
+
 A later bounded soft-preference layer is allowed only after deterministic Badness behavior is validated.
 
-## 6. BEGINNER / PUBLIC_GOOD_INFO stress model
+## 6. PUBLIC_GOOD_INFO model
 
-The first policy profile assumes healthy good players eventually make their role and received information public on Day 1.
+The first policy profile uses a deliberate stress assumption: healthy good players eventually make their role and received information public.
 
-This is deliberately conservative. It models the user's current table style and protects against information bundles that become destructive when players share aggressively.
+Public speech is **not** Storyteller confirmation.
 
-The model is not a claim that all real tables always share all information.
+PR #143 establishes the healthy-stage public-claim model conceptually as:
 
-Later, if the product records actual claims / speeches, the evaluator may replace assumed-public information with actual-public information. That is a future refinement, not a prerequisite for the deterministic baseline.
+```text
+speaker is evil
+OR
+(shown role matches claim AND claimed clue is mechanically true)
+```
+
+This preserves evil bluff worlds while keeping healthy good speakers truthful under the stress model.
+
+Strict mechanically known `ShownRoleAt` remains exact and must not be weakened merely because public speech is modeled permissively.
+
+Later, if the app records actual claims, assumed-public information may be replaced by actual-public information. That is not required for the first deterministic baseline.
 
 ## 7. Narrative viability for ordinary evil players
 
 Mathematical existence of an alternative world is not sufficient.
 
-For the BEGINNER / ordinary-player profile, the engine should eventually distinguish:
+For the ordinary-player profile, future policy should distinguish simple viable counterworlds from technically legal worlds that require several simultaneous obscure exceptions.
 
-```text
-simple viable counterworld
-```
+Low-complexity explanations can include:
 
-from:
-
-```text
-technically legal but requiring several simultaneous obscure exceptions
-```
-
-Examples of low-complexity alternative explanations include:
-
-- a Fortune Teller YES caused by the Red Herring;
-- an Investigator result involving a Recluse registering as a Minion;
+- Fortune Teller YES explained by Red Herring;
+- Investigator information explained by legal Recluse registration;
 - one legal Spy/Recluse registration choice.
 
-An alternative world that requires a long stack of unrelated special assumptions should contribute less to beginner robustness.
+This dimension is currently called **narrative viability / narrative complexity**.
 
-This concept is currently named **narrative viability / narrative complexity**.
+Do not freeze a numeric formula yet.
 
-Do **not** freeze a numeric formula yet. It remains a calibration target.
+## 8. Whole-bundle / whole-history interaction
 
-## 8. Whole-bundle interaction remains mandatory
+Individually reasonable clues can combine into destructive information.
 
-Individually reasonable clues can combine into a destructive information chain.
+The evaluator must reason over the complete relevant information ecology rather than summing isolated role scores.
 
-The evaluator must reason over the complete relevant information ecology, not sum isolated per-role scores.
+Canonical adversarial lessons:
 
-Important benchmark patterns discovered during design include:
+### Pair information + Fortune Teller
 
-### 8.1 Pair-information + Fortune Teller confirmation
+Washerwoman / Librarian information can support an information source while a Fortune Teller `NO` can reverse-confirm that source as non-Demon, creating a confirmation loop.
 
-A Washerwoman or Librarian clue can support an information source, while a Fortune Teller `NO` can then hard-confirm the pair-information source as non-Demon, creating a self-reinforcing confirmation chain.
+Red Herring placement can materially cut or create this chain.
 
-The Red Herring can materially change this structure. For example, making the pair-information source the Red Herring can prevent a Fortune Teller `NO` involving that player and therefore cut the reverse-confirmation edge.
+The engine should discover the consequence through world evaluation, not hard-coded `if Washerwoman + Fortune Teller` rules.
 
-The policy must discover this through exact consequences rather than hard-coded `if Washerwoman + Fortune Teller` rules.
+### Investigator + Chef + Empath
 
-### 8.2 Investigator + Chef + Empath collapse
+Three individually normal first-night facts can jointly reduce Demon/Minion topology to almost one world.
 
-A setup containing Investigator, Chef, and Empath can produce three individually normal first-night facts whose conjunction identifies the Minion/Demon topology almost uniquely.
+This is a canonical proof that local pressure scoring is insufficient.
 
-This is a canonical adversarial benchmark because it proves local pressure scoring is insufficient.
+### Recluse restoring ambiguity
 
-### 8.3 Recluse restoring ambiguity
+Legal Recluse registration can restore substantial strategic ambiguity to the same Investigator + Chef + Empath structure.
 
-The same Investigator + Chef + Empath structure can regain substantial strategic robustness when legal Recluse registrations are included.
+The lesson is not `Recluse should always register evil`; registration choice itself belongs to the global decision problem.
 
-The lesson is not `Recluse should always register evil`.
+## 9. Spy / Recluse registration
 
-The lesson is that registration choices are part of the same global decision problem and should be selected according to whole-structure consequences.
-
-## 9. Spy / Recluse registration is a per-interaction decision
+Registration is **per interaction**, not a persistent global boolean.
 
 Do not model:
 
@@ -229,168 +220,137 @@ Recluse = evil
 Spy = good
 ```
 
-as persistent global booleans.
+as permanent state.
 
-Registration is interaction-specific. The same player may legally register differently for different abilities / questions when the rules permit it.
+Rules own which registrations are legal for the current observing interaction.
 
-The engine should treat each legal registration as a candidate decision attached to the observing interaction.
+Storyteller policy chooses among those legal registrations using exact whole-state consequences.
 
-Conceptually:
+If poison / drunkenness disables special registration at the interaction point, effective-state legality removes the candidate.
 
-```text
-RegistrationDecision
-  observer / source ability
-  subject seat
-  registration question
-  registered alignment
-  registered type
-  registered role
-```
+## 10. First-night decision lifecycle
 
-Rules own which registrations are legal. The Storyteller policy chooses among those legal candidates using exact strategic consequences.
-
-If poison / drunkenness disables the special registration ability at the interaction point, the special registration candidate must disappear through effective-state legality rather than through recommendation hacks.
-
-## 10. First-night planning is not a permanently frozen static bundle
-
-The old mental model of `compute one final FirstNightBundle before Night 1 begins and never revisit it` is insufficient.
+Do not compute one final immutable Night-1 bundle before player-controlled state changes occur.
 
 Use lifecycle semantics:
 
 ```text
 PERSISTENT
     actual roles / seating
-    Drunk identity and shown-role commitment where rules require persistence
+    setup-level commitments
     Demon bluffs
     Fortune Teller Red Herring
-    other setup-level persistent decisions
+    Drunk identity / shown-role commitments where persistence is required
 
 COMMITTED
-    information already shown / action already committed
-    immutable for later planning
+    already shown / executed
+    immutable
 
 PLANNED / UNCOMMITTED
-    recommendation decisions not yet shown
-    may be invalidated and re-evaluated when effective state changes
+    not yet shown
+    may be invalidated and re-evaluated
 ```
 
-A first-night planning object may precompute useful candidate structure, but the runtime authority is the current effective game state plus already committed decisions.
+A planning object may precompute candidates, but runtime authority is always current effective state plus committed history.
 
-## 11. Poisoner target handling
+## 11. Poisoner handling
 
-A first-night Poisoner acts early enough to change later information legality and quality.
-
-Do not merely replace the poisoned information role's one clue while leaving every other precomputed recommendation frozen.
-
-After the Poisoner target becomes known:
+After a Poisoner target becomes known:
 
 ```text
 apply poison to effective NightState
 → preserve PERSISTENT decisions
-→ preserve already COMMITTED decisions
+→ preserve COMMITTED decisions
 → invalidate affected PLANNED / UNCOMMITTED decisions
 → regenerate / re-evaluate the remaining relevant decision ecology
 ```
 
-For the first implementation, correctness is more important than incremental optimization. Re-evaluating all still-uncommitted relevant first-night decisions is acceptable.
+Do not merely replace the poisoned information role's one clue while freezing all other recommendations.
 
-Poisoning can also affect non-information roles that influence information semantics, especially Spy / Recluse registration legality. Therefore the invalidation condition must not be `if poisoned target is an information role`.
+Poisoning can also affect non-information roles that participate in information semantics, especially Spy / Recluse registration legality.
+
+For the first implementation, broad correct re-evaluation is preferred over premature incremental optimization.
 
 ## 12. Engine responsibility continues after Night 1
 
-The same decision architecture must serve later nights and days.
+The same decision architecture must handle later interactions such as:
 
-Examples include:
-
-- poisoned / drunk Empath numeric result;
-- poisoned / drunk Fortune Teller YES/NO;
-- poisoned / drunk Undertaker shown role;
-- poisoned / drunk Ravenkeeper shown role;
-- Spy / Recluse registration during later interactions;
-- Mayor death redirection;
-- Demon succession or other Storyteller-discretion choices where supported by rules.
+- poisoned/drunk Empath numeric result;
+- poisoned/drunk Fortune Teller YES/NO;
+- poisoned/drunk Undertaker shown role;
+- poisoned/drunk Ravenkeeper shown role;
+- later Spy/Recluse registration;
+- supported Mayor redirect / Demon succession and other Storyteller-discretion choices.
 
 Per-role modules answer:
 
 > What outcomes are legal here?
 
-The shared Storyteller policy answers:
+Shared Storyteller policy answers:
 
-> Which legal outcome is appropriate for this game state, phase, skill profile, and accumulated public information?
+> Which legal outcome is appropriate for this state, phase, skill profile, and accumulated public information?
 
 ## 13. Event-driven decision model
 
-Later-night decision making should be interaction-driven rather than one giant whole-night static bundle.
-
-Conceptually:
+Later-game decisions should be interaction-driven:
 
 ```text
 interaction begins
 → build current effective DecisionContext
-→ generate legal candidate outcomes
+→ generate legal outcomes
 → materialize hypothetical propositions / effects
 → exact hypothetical evaluation against durable history
-→ apply phase/profile robustness policy
+→ apply phase/profile policy
 → select acceptable outcome
 → commit through session authority
-→ next interaction observes the new committed history
+→ next interaction observes new committed history
 ```
 
-This preserves the existing flow/session ownership boundaries. The recommendation engine does not own night ordering, canonical mutation, poison derivation, deaths, protection, or execution history.
+Recommendation does not own night ordering, canonical mutation, poison derivation, deaths, protection, or execution history.
 
-## 14. Information pacing across the game
+## 14. Information pacing
 
-A fixed Day-1 robustness threshold cannot govern the entire game.
-
-Early game should generally preserve more viable strategic worlds. Later game should naturally converge.
-
-The policy therefore needs a future **information pacing** dimension based on game phase / round / alive count and possibly other durable state.
+A fixed Day-1 robustness threshold cannot govern the whole game.
 
 Conceptually:
 
 ```text
-D1 / early game
-    avoid premature Demon / evil-topology collapse
+early game
+    resist premature Demon / evil-topology collapse
 
 mid game
-    allow stronger convergence and clearer competing narratives
+    permit stronger convergence and clearer competing narratives
 
 final stages
     allow legitimate information to solve the game
 ```
 
-Do not freeze the pacing curve before corpus calibration.
+`information pacing` is therefore a required future policy dimension based on phase / round / alive count and possibly other durable state.
 
-## 15. ConsequenceEvaluator retirement decision
+Do not freeze the numeric pacing curve before corpus evidence.
 
-`recommendation/dynamic/ConsequenceEvaluator` is a legacy heuristic layer and is **not** part of the long-term target architecture.
+## 15. ConsequenceEvaluator retirement
 
-Current heuristics such as:
+`recommendation/dynamic/ConsequenceEvaluator` is legacy and **not part of the long-term architecture**.
 
-- repeated-target penalty;
-- one-shot misinformation penalty;
-- high-impact misinformation penalty;
-- final-day misinformation penalty;
-- `evilAdvantage` adjustment;
+Do not add new product policy to it.
 
-attempt to estimate consequences that the new route will measure directly through exact strategic diagnostics and phase/profile policy.
+Its heuristic repeated-target, one-shot, high-impact misinformation, final-day and `evilAdvantage` logic attempts to estimate effects that the new route should measure directly through exact strategic diagnostics plus profile/phase policy.
 
-Keeping both as independent authorities would create dual ownership and contradictory decisions.
+Keeping both would create dual ownership and conflicting decisions.
 
-Therefore:
+Retirement route:
 
-1. do not add new product policy to `ConsequenceEvaluator`;
-2. identify any context signals that remain independently useful (`oneShotAbility`, player-selected target, phase, history, etc.);
-3. migrate useful context into the unified decision context / policy boundary;
-4. cut callers over to exact strategic robustness policy;
+1. audit callers / fanout;
+2. identify context signals that are genuine inputs rather than heuristic conclusions;
+3. migrate those inputs into unified DecisionContext / StorytellerPolicy;
+4. cut callers to exact strategic robustness policy;
 5. delete `ConsequenceEvaluator` once no unique contract depends on it;
-6. audit `evilAdvantage`, `PublicBalanceHint`, information-pressure fields and related heuristic-only state for retirement or narrower non-authoritative use.
+6. audit `evilAdvantage`, `PublicBalanceHint`, information-pressure and related heuristic-only state for deletion or narrower non-authoritative use.
 
-Do not delete the class before caller migration is safe. The target state, however, is removal rather than permanent secondary scoring.
+The target state is removal, not permanent secondary scoring.
 
 ## 16. Ownership boundaries
-
-Preserve the following ownership:
 
 ```text
 rules
@@ -400,66 +360,68 @@ rules
 
 session
   -> canonical actual state
-  -> persistent / committed action history
-  -> authoritative state mutation
+  -> persistent / committed history
+  -> authoritative mutation
 
 flow
   -> interaction ordering / projection
   -> consumes resolved facts
-  -> must not become a rules or recommendation engine
 
 epistemic
   -> recipient-visible knowledge
-  -> exact hypothetical world consequences
+  -> exact hypothetical consequences
   -> strategic structural diagnostics
   -> historical replay
 
 recommendation / StorytellerDecisionEngine
-  -> compose legal candidates / bundles
+  -> compose legal options
   -> consume exact diagnostics
-  -> apply skill-profile / phase policy
-  -> choose among acceptable legal outcomes
+  -> apply skill-profile / game-phase policy
+  -> select acceptable outcomes
 
 UI
-  -> display / confirmation / manual expert override
-  -> must not reconstruct decision semantics
+  -> display / confirmation / manual Experienced-mode override
 ```
 
-## 17. Selection policy and skill profiles
+## 17. Skill profiles
 
-The first policy remains BEGINNER-oriented.
+The first target remains BEGINNER / ordinary-player oriented.
 
 Do not prematurely create many skill levels.
 
-Long term, the product only needs a small number of meaningful table/player profiles. Current product thinking favors approximately:
+Long-term product thinking currently favors a small number of meaningful profiles, roughly:
 
 ```text
 NORMAL / ordinary
 EXPERT
 ```
 
-This player-skill profile is distinct from Storyteller UI mode. Experienced Storyteller mode may allow manual selection even while using the same underlying table-skill policy.
+Player/table skill profile is distinct from Storyteller UI mode. Experienced Storyteller mode may allow manual selection while using the same underlying table-skill policy.
 
-No final NORMAL / EXPERT thresholds are frozen yet.
+No final NORMAL / EXPERT thresholds are frozen.
 
-## 18. Benchmarks / corpus requirements
+## 18. Corpus requirements
 
-The next calibration corpus must include more than random healthy 7-player bundles.
+SDE-0 / PR #143 must include deliberate adversarial examples, not only random healthy bundles.
 
-Retain and add adversarial fixtures representing at least:
+Required families include:
 
-- pair-information + Fortune Teller confirmation chains;
-- Red Herring choices that cut or create confirmation paths;
+- Pair-information + Fortune Teller confirmation chains;
+- Red Herring variants that cut/create those chains;
 - Investigator + Chef + Empath collapse;
-- the same structures with Recluse registration alternatives;
-- Spy registration alternatives;
-- Drunk shown-role / false-information alternatives;
-- Poisoner target effects and re-planning;
-- later poisoned Empath / Fortune Teller / Undertaker / Ravenkeeper decisions;
-- too-weak information bundles;
+- equivalent cases with Recluse registration alternatives;
+- too-weak bundles;
+- clearly acceptable healthy contrasts.
+
+Later staged expansion will add:
+
+- Drunk shown-role / false information;
+- Spy registration;
+- Poisoner target / re-planning;
+- later impaired Empath / Fortune Teller / Undertaker / Ravenkeeper;
 - late-game cases where stronger convergence is correct.
 
-Human labels remain useful:
+Human labels:
 
 ```text
 BAD_TOO_STRONG
@@ -468,113 +430,101 @@ BAD_TOO_WEAK
 UNCERTAIN
 ```
 
-Use calibration and holdout sets. Do not derive gates and validate them on exactly the same corpus.
+Use calibration and sealed holdout scenarios. Do not derive gates and validate them on the same examples.
 
-## 19. What is frozen vs deliberately unfrozen
+## 19. Frozen vs deliberately unfrozen
 
-### Frozen architecture / product decisions
+### Frozen
 
-- exact epistemic consequence remains the sole world-consequence authority;
-- strategic evil topology matters more than raw full-role world count;
-- whole-bundle / whole-history interaction matters;
 - rules own legality;
+- exact epistemic evaluator owns world consequences;
+- strategic evil topology matters more than raw role-world count;
+- whole-bundle / whole-history interaction matters;
 - Spy/Recluse registration is per interaction;
-- Poisoner can invalidate uncommitted recommendations;
+- Poisoner can invalidate uncommitted decisions;
 - the same engine continues after Night 1;
-- BEGINNER / ordinary-player mode is the first policy target;
-- `ConsequenceEvaluator` is targeted for retirement;
-- no second rules engine, no second possible-world solver, no opaque global optimum score.
+- BEGINNER / ordinary-player profile is first;
+- `ConsequenceEvaluator` is targeted for removal;
+- no second rules engine;
+- no second possible-world solver;
+- no opaque global-optimum scalar.
 
-### Not frozen yet
+### Unfrozen
 
-- exact Demon-candidate count thresholds;
+- exact Demon-candidate thresholds;
 - exact evil-team-configuration thresholds;
-- exact forced-good / forced-evil limits;
+- forced-good / forced-evil limits;
 - narrative-complexity formula;
 - information-pacing curve;
-- NORMAL vs EXPERT numeric profiles;
-- exhaustive search vs beam search for larger candidate spaces;
-- any bounded soft-preference score;
+- NORMAL / EXPERT numeric profiles;
+- exhaustive vs beam search;
+- optional bounded soft preference;
 - production cutover timing.
 
-These require measurement and corpus review.
+## 20. Implementation route
 
-## 20. Implementation route from the current baseline
+### SDE-0 — active now / PR #143
 
-FN-BUNDLE-0, FN-BUNDLE-1 and FN-BUNDLE-2 remain completed foundations.
+Use the merged healthy whole-bundle harness plus existing PR #143 corpus foundation.
 
-The route now becomes:
+Continue with deliberate adversarial scenarios, human review, interpretable diagnostics and first BEGINNER policy gates.
 
-### SDE-0 — BEGINNER strategic-robustness corpus and policy contract
+Do not restart PR #143 and do not cut over production selection yet.
 
-- use the merged healthy whole-bundle harness as the baseline;
-- add deliberately adversarial strategic-collapse fixtures;
-- formalize policy input around existing exact structural diagnostics;
-- derive interpretable candidate Badness gates from human-reviewed data;
-- do not perform production selector cutover yet.
+### SDE-1 — unified orchestration seam
 
-This absorbs the useful intent of the former `FN-BUNDLE-3` stage.
+- formalize thin `StorytellerDecisionEngine` / DecisionContext boundary;
+- reuse canonical candidate generators;
+- reuse exact epistemic evaluator;
+- preserve session / flow ownership;
+- establish persistent / committed / planned lifecycle.
 
-### SDE-1 — unified decision orchestration seam
+### SDE-2 — first-night uncertainty
 
-- define the durable `StorytellerDecisionEngine` / decision-context boundary;
-- reuse canonical candidate generators and exact evaluator;
-- preserve current session / flow ownership;
-- establish planned / committed / persistent decision lifecycle;
-- no second rules or world model.
-
-### SDE-2 — staged uncertainty in first-night ecology
-
-Expand in controlled steps:
+Expand separately:
 
 1. Drunk;
-2. Spy / Recluse per-interaction registration;
-3. Poisoner target / effective-state invalidation and re-planning.
+2. Spy/Recluse per-interaction registration;
+3. Poisoner target / effective-state invalidation / re-planning.
 
-Keep each stage corpus-backed and explainable.
+### SDE-3 — cross-night information
 
-### SDE-3 — cross-night dynamic information
+Bring later impaired / registration decisions through the same engine using historical exact replay.
 
-Bring later impaired / registration decisions through the same engine, starting with Trouble Brewing information roles such as Empath, Fortune Teller, Undertaker and Ravenkeeper.
+### SDE-4 — production cutover / cleanup
 
-Use historical exact replay as the consequence baseline.
-
-### SDE-4 — policy cutover and heuristic retirement
-
-- cut production decision paths to the unified policy;
-- migrate any useful context from legacy local heuristics;
-- retire `ConsequenceEvaluator` and stale heuristic-only state after fanout audit;
-- retain manual Experienced-mode override paths where product UX requires them.
+- cut production callers to unified policy;
+- preserve Experienced-mode manual override;
+- migrate only useful legacy context inputs;
+- delete `ConsequenceEvaluator` and stale heuristic-only state after fanout audit;
+- retire superseded recommendation paths/tests when stronger typed coverage exists.
 
 ## 21. Validation principles
 
 Follow `AGENTS.md` and `TESTING_STRATEGY.md`.
 
-For new durable policy contracts:
+- test durable behavior at the true typed owner;
+- exact semantic changes trigger appropriate epistemic/oracle validation;
+- exploratory corpus measurement does not require manufactured RED tests;
+- stable policy/gate contracts require durable regression evidence;
+- central orchestration/shared semantic cutovers require broader T2/T4 validation;
+- keep expensive calibration experiments outside ordinary bounded regression execution.
 
-- test the true ownership seam;
-- use exact fixtures for world-structure consequences;
-- use corpus / holdout evidence for Badness behavior;
-- do not manufacture RED tests for exploratory measurement;
-- do not add source-string tests when typed seams exist;
-- exact/oracle semantic changes require the corresponding broad validation / T4 gate before merge.
+## 22. New-conversation start
 
-Documentation-only route updates do not require Android regression.
-
-## 22. Immediate next-conversation start
-
-Read, in order:
+Read:
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
-5. this document;
-6. query live `main`, open PRs and current CI;
-7. start from SDE-0 only.
+5. this route;
+6. query live `main`, PR #143 and current CI;
+7. synchronize #143 with latest `main` if behind;
+8. continue SDE-0 from the existing PR.
 
-Do not reopen already completed FN-BUNDLE-0/1/2 audits unless a concrete regression requires it.
+Do not reopen completed FN-BUNDLE-0/1/2 audits without a concrete regression.
 
 ## 23. Stable decision
 
-> **The automatic Storyteller is a persistent game-state decision engine, not a collection of independent clue recommenders. Rules produce legal outcomes; the existing epistemic engine measures exact hypothetical consequences; the Storyteller policy evaluates strategically meaningful evil worlds, confirmation structure, information value, narrative viability and game-phase pacing; then the engine selects among acceptable legal outcomes. First-night bundles are the first calibration surface, not the architectural endpoint. Spy/Recluse registration and poisoning are interaction-time state inputs, and later-night impaired information uses the same engine. `ConsequenceEvaluator` is a migration-era heuristic layer targeted for retirement after unified-policy cutover.**
+> **The automatic Storyteller is a persistent game-state decision engine, not a collection of independent clue recommenders. Rules produce legal outcomes; the existing epistemic engine measures exact hypothetical consequences; Storyteller policy evaluates strategically meaningful evil topology, confirmation structure, information value, narrative viability and game-phase pacing; then it selects among acceptable legal outcomes. First-night bundles are the first calibration surface, not the endpoint. Spy/Recluse registration and poisoning are interaction-time state inputs; later impaired information uses the same engine; and `ConsequenceEvaluator` is a migration-era heuristic layer targeted for removal after unified-policy cutover. PR #143 is the active SDE-0 implementation and must be continued rather than restarted.**
