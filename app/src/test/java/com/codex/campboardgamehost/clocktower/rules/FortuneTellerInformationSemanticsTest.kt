@@ -22,30 +22,38 @@ class FortuneTellerInformationSemanticsTest {
     }
 
     @Test
-    fun `legal target pairs include self and every distinct living pair exactly once`() {
-        val pairs = FortuneTellerInformationSemantics.legalTargetPairs(game())
+    fun `legal target pairs include self dead players and every distinct pair exactly once`() {
+        val game = game(deadSeat = 5)
+        val pairs = FortuneTellerInformationSemantics.legalTargetPairs(game)
 
         assertEquals(21, pairs.size)
         assertEquals(pairs.size, pairs.distinct().size)
         assertTrue(1 to 2 in pairs)
+        assertTrue(2 to 5 in pairs)
         assertTrue(2 to 7 in pairs)
+        assertTrue(FortuneTellerInformationSemantics.healthyResult(game, setOf(2, 5), redHerringSeat = 5))
     }
 
-    private fun game() = GameState(
+    private fun game(deadSeat: Int? = null) = GameState(
         script = ScriptId("trouble_brewing"),
         players = listOf(
-            player(1, "Librarian", CharacterType.TOWNSFOLK),
-            player(2, "Fortune Teller", CharacterType.TOWNSFOLK),
-            player(3, "Slayer", CharacterType.TOWNSFOLK),
-            player(4, "Undertaker", CharacterType.TOWNSFOLK),
-            player(5, "Virgin", CharacterType.TOWNSFOLK),
-            player(6, "Scarlet Woman", CharacterType.MINION),
-            player(7, "Imp", CharacterType.DEMON),
+            player(1, "Librarian", CharacterType.TOWNSFOLK, alive = deadSeat != 1),
+            player(2, "Fortune Teller", CharacterType.TOWNSFOLK, alive = deadSeat != 2),
+            player(3, "Slayer", CharacterType.TOWNSFOLK, alive = deadSeat != 3),
+            player(4, "Undertaker", CharacterType.TOWNSFOLK, alive = deadSeat != 4),
+            player(5, "Virgin", CharacterType.TOWNSFOLK, alive = deadSeat != 5),
+            player(6, "Scarlet Woman", CharacterType.MINION, alive = deadSeat != 6),
+            player(7, "Imp", CharacterType.DEMON, alive = deadSeat != 7),
         ),
         seed = 20260917L,
     )
 
-    private fun player(seat: Int, role: String, type: CharacterType) = PlayerState(
+    private fun player(
+        seat: Int,
+        role: String,
+        type: CharacterType,
+        alive: Boolean,
+    ) = PlayerState(
         seat = seat,
         name = "P$seat",
         actualRole = RoleId(role),
@@ -55,5 +63,6 @@ class FortuneTellerInformationSemanticsTest {
         },
         actualType = type,
         shownRole = RoleId(role),
+        alive = alive,
     )
 }
