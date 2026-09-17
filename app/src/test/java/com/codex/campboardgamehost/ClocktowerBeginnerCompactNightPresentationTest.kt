@@ -5,7 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// UI-INFO-1.3 regression coverage for Beginner compact night surfaces.
+// UI-INFO-1.3/1.4 regression coverage for Beginner compact night surfaces.
 class ClocktowerBeginnerCompactNightPresentationTest {
     @Test
     fun `structured beginner wake guidance uses compact surface`() {
@@ -17,6 +17,16 @@ class ClocktowerBeginnerCompactNightPresentationTest {
     fun `beginner pair surface hides clue target accents but keeps actor cue`() {
         val actor = clocktowerBeginnerPairSeatPresentation(seatNumber = 3, actorSeat = 3)
         val other = clocktowerBeginnerPairSeatPresentation(seatNumber = 5, actorSeat = 3)
+        assertEquals(ClocktowerSquareTableSeatState.Neutral, actor.targetState)
+        assertEquals(ClocktowerSquareTableSeatState.Neutral, other.targetState)
+        assertTrue(actor.isCurrentActor)
+        assertFalse(other.isCurrentActor)
+    }
+
+    @Test
+    fun `beginner reveal-only surface stays neutral while keeping actor cue`() {
+        val actor = clocktowerBeginnerNeutralSeatPresentation(seatNumber = 2, actorSeat = 2)
+        val other = clocktowerBeginnerNeutralSeatPresentation(seatNumber = 5, actorSeat = 2)
         assertEquals(ClocktowerSquareTableSeatState.Neutral, actor.targetState)
         assertEquals(ClocktowerSquareTableSeatState.Neutral, other.targetState)
         assertTrue(actor.isCurrentActor)
