@@ -53,17 +53,17 @@ class StorytellerDecisionEngineTest {
             number = 0,
             observationId = "sde-private-empath-2",
         )
-        val request = StorytellerDecisionRequest(
+        val request = ExactConsequenceRequest(
             decisionId = "first-night-empath",
             candidates = listOf(
-                StorytellerDecisionCandidate(
+                ExactConsequenceCandidate(
                     candidateId = "empath-0",
                     recipientSeat = 2,
                     observation = observation,
                 ),
             ),
         )
-        val decisionContext = StorytellerDecisionContext(
+        val decisionContext = ExactConsequenceContext(
             validatedRuleset = validatedRuleset,
             exactContext = context,
         )
@@ -84,12 +84,12 @@ class StorytellerDecisionEngineTest {
         assertTrue(direct is ExactHypotheticalObservationBundleEvaluation.Ready)
         val expected = (direct as ExactHypotheticalObservationBundleEvaluation.Ready).diagnostics.single()
 
-        val first = StorytellerDecisionEngine.evaluate(request, decisionContext)
-        val second = StorytellerDecisionEngine.evaluate(request, decisionContext)
+        val first = StorytellerDecisionEngine.evaluateExactConsequences(request, decisionContext)
+        val second = StorytellerDecisionEngine.evaluateExactConsequences(request, decisionContext)
 
         assertEquals(first, second)
-        assertTrue(first is StorytellerDecisionEvaluation.Ready)
-        val consequence = (first as StorytellerDecisionEvaluation.Ready).consequences.single()
+        assertTrue(first is ExactConsequenceEvaluation.Ready)
+        val consequence = (first as ExactConsequenceEvaluation.Ready).consequences.single()
         assertEquals("empath-0", consequence.candidateId)
         assertEquals(expected.before, consequence.diagnostics.before)
         assertEquals(expected.after, consequence.diagnostics.after)
@@ -116,11 +116,11 @@ class StorytellerDecisionEngineTest {
             number = 1,
             observationId = "sde-multi-chef-1",
         )
-        val request = StorytellerDecisionRequest(
+        val request = ExactConsequenceRequest(
             decisionId = "healthy-numeric-multi",
             candidates = listOf(
-                StorytellerDecisionCandidate("empath-0", 2, empath),
-                StorytellerDecisionCandidate("chef-1", 1, chef),
+                ExactConsequenceCandidate("empath-0", 2, empath),
+                ExactConsequenceCandidate("chef-1", 1, chef),
             ),
         )
         val direct = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
@@ -136,13 +136,13 @@ class StorytellerDecisionEngineTest {
         val timelineBefore = timeline.reducerFacts()
         val logBefore = observationLog.records.toList()
 
-        val evaluation = StorytellerDecisionEngine.evaluate(
+        val evaluation = StorytellerDecisionEngine.evaluateExactConsequences(
             request = request,
-            context = StorytellerDecisionContext(validatedRuleset, exactContext),
+            context = ExactConsequenceContext(validatedRuleset, exactContext),
         )
 
-        assertTrue(evaluation is StorytellerDecisionEvaluation.Ready)
-        val consequences = (evaluation as StorytellerDecisionEvaluation.Ready).consequences
+        assertTrue(evaluation is ExactConsequenceEvaluation.Ready)
+        val consequences = (evaluation as ExactConsequenceEvaluation.Ready).consequences
         assertEquals(listOf("empath-0", "chef-1"), consequences.map(CandidateConsequence::candidateId))
         assertEquals(expected[0].before, consequences[0].diagnostics.before)
         assertEquals(expected[0].after, consequences[0].diagnostics.after)
@@ -169,10 +169,10 @@ class StorytellerDecisionEngineTest {
             number = 0,
             observationId = "sde-unsupported-empath-2",
         )
-        val request = StorytellerDecisionRequest(
+        val request = ExactConsequenceRequest(
             decisionId = "unsupported",
             candidates = listOf(
-                StorytellerDecisionCandidate(
+                ExactConsequenceCandidate(
                     candidateId = "empath-0",
                     recipientSeat = 2,
                     observation = observation,
@@ -193,18 +193,18 @@ class StorytellerDecisionEngineTest {
         )
         assertTrue(direct is ExactHypotheticalObservationBundleEvaluation.Deferred)
 
-        val evaluation = StorytellerDecisionEngine.evaluate(
+        val evaluation = StorytellerDecisionEngine.evaluateExactConsequences(
             request = request,
-            context = StorytellerDecisionContext(
+            context = ExactConsequenceContext(
                 validatedRuleset = unsupportedRuleset,
                 exactContext = exactContext,
             ),
         )
 
-        assertTrue(evaluation is StorytellerDecisionEvaluation.Deferred)
+        assertTrue(evaluation is ExactConsequenceEvaluation.Deferred)
         assertEquals(
             (direct as ExactHypotheticalObservationBundleEvaluation.Deferred).missingCapabilities,
-            (evaluation as StorytellerDecisionEvaluation.Deferred).missingCapabilities,
+            (evaluation as ExactConsequenceEvaluation.Deferred).missingCapabilities,
         )
     }
 
@@ -219,11 +219,11 @@ class StorytellerDecisionEngineTest {
         var failed = false
 
         try {
-            StorytellerDecisionRequest(
+            ExactConsequenceRequest(
                 decisionId = "duplicate-candidate-ids",
                 candidates = listOf(
-                    StorytellerDecisionCandidate("duplicate", 2, observation),
-                    StorytellerDecisionCandidate("duplicate", 2, observation),
+                    ExactConsequenceCandidate("duplicate", 2, observation),
+                    ExactConsequenceCandidate("duplicate", 2, observation),
                 ),
             )
         } catch (_: IllegalArgumentException) {
