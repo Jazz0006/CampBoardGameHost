@@ -20,49 +20,59 @@ FN-BUNDLE-1 proposition / ShownRoleAt semantics        COMPLETE / PR #140
 FN-BUNDLE-2 healthy whole-bundle exact harness         COMPLETE / PR #142
 SDE-0 BEGINNER strategic-robustness corpus             COMPLETE / PR #143
 SDE-1A global fanout / orchestration seam audit        COMPLETE
+SDE-1B thin bounded exact-consequence contracts        COMPLETE / PR #144 branch
+SDE-1C exact-evaluator orchestration differential      COMPLETE / PR #144 branch
 ```
 
 SDE-0 was squash-merged to `main` as:
 
 `5dd32e085a7db0d3eb14ed8bce3ed3c75f694c6e`
 
-The SDE-1A audit is recorded in:
+SDE-1A authority:
 
 `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`
+
+SDE-1B/1C completion evidence:
+
+`docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`
+
+Executable validation head:
+
+`a0c4fe2a2d1c1c94daedd976285cd29e40a48ee6`
+
+with R2 success, Android FAST success and CI gate success on PR #144.
 
 Always query live `main` before executable edits.
 
 ## 2. CURRENT
 
-**SDE-1B / SDE-1C — thin typed contracts + bounded exact-consequence orchestration seam**
+**SDE-1D — lifecycle ownership contract**
 
-SDE-1A established that the engine must compose existing owners rather than recreate them.
+The exact-consequence seam now exists without production cutover. The next task is to represent the already-frozen decision lifecycle without creating another game-state/history owner.
 
-Current target flow:
+Required distinction:
 
 ```text
-existing healthy typed legal candidate/effect
-        ↓
-recommendation-owned SDE request/context
-        ↓
-existing proposition / hypothetical observation adapter
-        ↓
-ExactHistoricalHypotheticalObservationBundleEvaluator
-        ↓
-typed CandidateConsequence
-        ↓
-policy boundary shell
+PERSISTENT
+    durable setup/session-owned commitments
+    referenced by orchestration, never copied into a second authority
+
+COMMITTED
+    already executed/shown durable facts
+    immutable and session/history owned
+
+PLANNED / UNCOMMITTED
+    disposable recommendation-local plan identity
+    bound to source revisions
+    may be invalidated/re-evaluated before commit
 ```
 
-The first executable slice is evaluation-only. It must not move production selection, UI routing, confirmation, durable commit, flow ordering, or uncertainty ownership.
-
-Preferred initial fixture: an already-supported healthy structured-information interaction, with structured numeric as the lowest-coupling path because its current `DynamicGenerationContext` does not supply `state` and therefore does not invoke legacy `ConsequenceEvaluator`.
+SDE-1D is ownership/lifecycle modeling only. It must not implement Poisoner replanning yet; Poisoner invalidation semantics remain SDE-2.
 
 ## 3. NEXT
 
 ```text
-SDE-1D — lifecycle ownership contract
-SDE-1E — integration boundary proof
+SDE-1E — integration boundary / one real structured caller shadow proof
 SDE-2  — Drunk -> Spy/Recluse -> Poisoner first-night uncertainty
 SDE-3  — cross-night impaired / registration decisions
 SDE-4  — production cutover + legacy heuristic retirement
@@ -72,7 +82,7 @@ SDE-4  — production cutover + legacy heuristic retirement
 
 ### SDE-1A — fanout / seam audit — COMPLETE
 
-Completed findings:
+Frozen results:
 
 - `ClocktowerGameSession` remains canonical actual-state/revision/history authority;
 - rules/candidate domains remain legal-outcome owners;
@@ -86,51 +96,44 @@ Completed findings:
   - `RegistrationPolicy.generateCandidates(...)`;
   - `DayRecommendationModule` malfunction path.
 
-### SDE-1B — thin typed contracts — CURRENT
+### SDE-1B — thin typed contracts — COMPLETE
 
-Define only the smallest durable contracts required for exact consequence orchestration.
-
-Expected concepts, subject to implementation evidence:
+Implemented under `clocktower/recommendation/sde`:
 
 ```text
-StorytellerDecisionEngine
-DecisionContext
-DecisionRequest / DecisionKind
-LegalDecisionCandidate
+ExactConsequenceContext
+ExactConsequenceRequest
+ExactConsequenceCandidate
 CandidateConsequence
-StorytellerPolicyResult
+ExactConsequenceEvaluation
+StorytellerDecisionEngine.evaluateExactConsequences(...)
 ```
 
-Reuse existing revision/snapshot/evaluator types where possible. Do not create a shadow `GameState`, second semantic history, second solver, or duplicate lifecycle store.
+These are deliberately bounded exact-evaluation envelopes, not a competing global state model.
 
-The first contract may expose evaluation without selection.
+The existing legacy `domain.StorytellerDecisionRequest` is intentionally not reused because it embeds `DynamicGameState`. The existing generic `DecisionCandidate<T>` remains a legal/recommendation-era model that a later adapter may project from rather than duplicate.
 
-### SDE-1C — exact-evaluator orchestration — CURRENT
+`ExactConsequenceCandidate` carries a non-empty observation bundle so whole-bundle semantics survive the orchestration boundary.
 
-Route one healthy structured-information fixture through the new seam using:
+### SDE-1C — exact-evaluator orchestration — COMPLETE
 
-- an existing typed legal candidate/effect;
-- existing proposition/observation materialization;
-- `ExactHistoricalHypotheticalObservationBundleEvaluator`;
-- exact structural diagnostics;
-- no guessed new numeric thresholds;
-- no new heuristic authority.
+The seam delegates directly to `ExactHistoricalHypotheticalObservationBundleEvaluator` and returns its exact structural diagnostics keyed by stable candidate identity.
 
-Required focused evidence:
+Focused regression evidence proves:
 
-```text
-SDE consequence output
-==
-direct exact-evaluator output
-```
+- single-candidate exact differential equivalence;
+- deterministic repeated evaluation;
+- multi-observation bundle forwarding;
+- multi-candidate evaluation from one immutable context;
+- no timeline/observation-log mutation;
+- capability deferral without heuristic fallback;
+- duplicate candidate-ID fail-fast.
 
-for the same hypothetical observation/context.
+No selection, UI routing, commit or production caller changed.
 
-This is a differential orchestration contract, not a new epistemic oracle.
+### SDE-1D — lifecycle ownership — CURRENT
 
-### SDE-1D — lifecycle ownership
-
-Represent and test:
+Represent and test the lifecycle distinction without shadowing session state:
 
 ```text
 PERSISTENT
@@ -138,9 +141,21 @@ COMMITTED
 PLANNED / UNCOMMITTED
 ```
 
-Planned state remains orchestration-local and disposable. Persistent/committed truth remains session-owned. Poisoner invalidation/replanning semantics remain SDE-2.
+The minimum useful planned record should contain stable decision/interaction identity, source `gameStateRevision` / `playerInputRevision`, candidate/snapshot identity where required, and lifecycle kind.
 
-### SDE-1E — integration boundary
+It must not contain a mutable copy of canonical game state or durable history.
+
+Required SDE-1D proofs:
+
+- planned records are revision-bound and disposable;
+- committed/persistent references cannot be mutated through SDE lifecycle state;
+- stale planned state can be detected from session revisions;
+- lifecycle metadata does not commit observations or advance revisions;
+- no Poisoner-specific invalidation/replanning policy is introduced yet.
+
+### SDE-1E — integration boundary — NEXT
+
+After lifecycle ownership is explicit, wire one existing healthy structured-information path through the SDE as a bounded shadow/integration proof before wider migration.
 
 Prove that:
 
@@ -148,8 +163,10 @@ Prove that:
 - epistemic still owns world consequences;
 - session still owns committed mutation/history;
 - flow still owns ordering;
+- `InformationDecisionContext` still owns confirmation/freshness;
 - Experienced-mode manual override remains possible;
-- the new engine does not create a second recommendation truth source.
+- the SDE does not create a second recommendation truth source;
+- production-visible choice behavior remains unchanged until an explicit later cutover.
 
 ## 5. SDE-1 non-goals
 
@@ -176,13 +193,14 @@ Do **not** during SDE-1:
 - strategic evil topology matters more than raw full-role world count;
 - whole-bundle / whole-history interaction matters;
 - Spy/Recluse registration is per interaction;
-- Poisoner may invalidate uncommitted plans;
+- Poisoner may invalidate uncommitted decisions;
 - one engine continues beyond Night 1;
 - BEGINNER / ordinary-player policy is the first profile;
 - no opaque global-optimum scalar;
 - `ConsequenceEvaluator` is migration-era and targeted for retirement only after safe caller migration;
 - SDE orchestration belongs under recommendation/SDE rather than session, UI or epistemic;
-- the first SDE slice is evaluation-only and does not own production selection.
+- exact-consequence orchestration is evaluation-only until later integration/cutover work;
+- lifecycle metadata must reference, not duplicate, session-owned durable state.
 
 ## 7. Deliberately unfrozen
 
@@ -199,13 +217,13 @@ Do **not** during SDE-1:
 
 `AGENTS.md` and `docs/TESTING_STRATEGY.md` remain authoritative.
 
-For current SDE-1B/1C work:
+For SDE-1D:
 
-- add focused typed regression tests at the new orchestration owner;
-- compare the orchestration result with the existing exact evaluator for the same request/context;
-- exact evaluator semantics themselves should not change for the first seam;
-- no UI/integration breadth is required until an executable production caller is changed;
-- expensive calibration experiments remain outside ordinary FAST regression.
+- use focused owner-level tests for lifecycle state and revision freshness;
+- do not require exact-world recomputation tests unless exact-evaluation behavior changes;
+- do not add UI/integration breadth until SDE-1E;
+- central runtime fanout changes later require broader T2/T4 validation;
+- expensive calibration experiments stay outside ordinary FAST regression.
 
 ## 9. Authority documents for a new development conversation
 
@@ -216,9 +234,10 @@ Read in order:
 3. this roadmap;
 4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
 5. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
-6. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
-7. query live `main` and open PRs/checks.
+6. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
+7. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
+8. query live `main`, PR #144 and current checks.
 
 ## 10. Stable rule
 
-> **SDE-1A is complete. Current work is SDE-1B/1C: add the smallest recommendation-owned typed orchestration seam that evaluates an existing healthy structured-information candidate through the existing exact epistemic authority and returns typed consequence diagnostics. No production cutover, no second state/rules/solver owner, and no SDE-2 uncertainty yet.**
+> **SDE-1A/B/C are complete on PR #144's branch. Current work is SDE-1D: model persistent/committed/planned lifecycle ownership as thin revision-bound metadata over session-owned truth. Do not implement Poisoner replanning, production selection cutover, or another state/history authority.**
