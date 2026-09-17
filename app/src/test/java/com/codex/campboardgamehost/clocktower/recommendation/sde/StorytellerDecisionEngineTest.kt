@@ -59,7 +59,7 @@ class StorytellerDecisionEngineTest {
                 ExactConsequenceCandidate(
                     candidateId = "empath-0",
                     recipientSeat = 2,
-                    observation = observation,
+                    observations = listOf(observation),
                 ),
             ),
         )
@@ -100,6 +100,59 @@ class StorytellerDecisionEngineTest {
     }
 
     @Test
+    fun `observation bundle is forwarded as one candidate consequence`() {
+        val exactContext = exactContext(ActionFactTimeline(emptyList()), EpistemicObservationLog())
+        val firstObservation = healthyNumericObservation(
+            recipientSeat = 2,
+            ability = "Empath",
+            number = 0,
+            observationId = "sde-bundle-empath-0",
+        )
+        val secondObservation = healthyNumericObservation(
+            recipientSeat = 2,
+            ability = "Empath",
+            number = 1,
+            observationId = "sde-bundle-empath-1",
+        )
+        val observations = listOf(firstObservation, secondObservation)
+        val direct = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = exactContext,
+            queries = listOf(
+                ExactHypotheticalObservationBundleQuery(
+                    bundleId = "direct-bundle",
+                    recipientSeat = 2,
+                    observations = observations,
+                ),
+            ),
+        )
+        assertTrue(direct is ExactHypotheticalObservationBundleEvaluation.Ready)
+        val expected = (direct as ExactHypotheticalObservationBundleEvaluation.Ready).diagnostics.single()
+
+        val evaluation = StorytellerDecisionEngine.evaluateExactConsequences(
+            request = ExactConsequenceRequest(
+                decisionId = "observation-bundle",
+                candidates = listOf(
+                    ExactConsequenceCandidate(
+                        candidateId = "empath-bundle",
+                        recipientSeat = 2,
+                        observations = observations,
+                    ),
+                ),
+            ),
+            context = ExactConsequenceContext(validatedRuleset, exactContext),
+        )
+
+        assertTrue(evaluation is ExactConsequenceEvaluation.Ready)
+        val consequence = (evaluation as ExactConsequenceEvaluation.Ready).consequences.single()
+        assertEquals("empath-bundle", consequence.candidateId)
+        assertEquals(expected.before, consequence.diagnostics.before)
+        assertEquals(expected.after, consequence.diagnostics.after)
+        assertEquals(expected.beforeStructure, consequence.diagnostics.beforeStructure)
+        assertEquals(expected.afterStructure, consequence.diagnostics.afterStructure)
+    }
+
+    @Test
     fun `multiple candidates are evaluated from one immutable exact context`() {
         val timeline = ActionFactTimeline(emptyList())
         val observationLog = EpistemicObservationLog()
@@ -119,8 +172,8 @@ class StorytellerDecisionEngineTest {
         val request = ExactConsequenceRequest(
             decisionId = "healthy-numeric-multi",
             candidates = listOf(
-                ExactConsequenceCandidate("empath-0", 2, empath),
-                ExactConsequenceCandidate("chef-1", 1, chef),
+                ExactConsequenceCandidate("empath-0", 2, listOf(empath)),
+                ExactConsequenceCandidate("chef-1", 1, listOf(chef)),
             ),
         )
         val direct = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
@@ -175,7 +228,7 @@ class StorytellerDecisionEngineTest {
                 ExactConsequenceCandidate(
                     candidateId = "empath-0",
                     recipientSeat = 2,
-                    observation = observation,
+                    observations = listOf(observation),
                 ),
             ),
         )
@@ -222,8 +275,8 @@ class StorytellerDecisionEngineTest {
             ExactConsequenceRequest(
                 decisionId = "duplicate-candidate-ids",
                 candidates = listOf(
-                    ExactConsequenceCandidate("duplicate", 2, observation),
-                    ExactConsequenceCandidate("duplicate", 2, observation),
+                    ExactConsequenceCandidate("duplicate", 2, listOf(observation)),
+                    ExactConsequenceCandidate("duplicate", 2, listOf(observation)),
                 ),
             )
         } catch (_: IllegalArgumentException) {
