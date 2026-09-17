@@ -6,91 +6,133 @@
 
 ## 1. Current state
 
+Completed foundation relevant to the current program:
+
 ```text
-Persistence Simplification                         COMPLETE / merged
-D6.1 Clocktower session authority                 COMPLETE / merged
-D6.2 UI Composition                               COMPLETE / merged
-D6 decomposition campaign                         COMPLETE
-UI-R5 square-table convergence                    COMPLETE / PR #117
-UI-NAV-1 global navigation visual unification     COMPLETE / PR #118
-ROLE-ROTATION-1 recent role rotation              COMPLETE / PR #119
-UX-MODE-1 Beginner / Experienced mode             COMPLETE / PR #120
-UI-INFO-1 information filtering & layout          COMPLETE / PR #121
-Dead-player square-table marking                  COMPLETE / PR #122
-EXPERIENCED-NIGHT-FLOW-1 correctness              COMPLETE / PR #123
-GLOBAL-OWNERSHIP-CLEANUP steps 1-6                COMPLETE / PRs #124-#129
-EXPERIENCED-UI-1 compact TB host surfaces         COMPLETE / PR #130
-EXPERIENCED-UI-2 night information surfaces       COMPLETE / PR #131
-EXPERIENCED-UI-3 device-feedback refinements      COMPLETE / PR #132
-EXPERIENCED-UI-4 poison + ranked recommendations  COMPLETE / PR #133
-DAY-UI-1 centered daytime domain actions          COMPLETE / PR #134
-EPI-MQ-0.5 epistemic capability boundary          COMPLETE / PR #135
-Exact historical hypothetical bundle seam         COMPLETE / PR #137
-First-night experiment contract                   COMPLETE / PR #138
-FN-BUNDLE-0 candidate-space audit + pair cleanup  COMPLETE / PR #139
-FN-BUNDLE-1 evaluator/shown-role semantics        COMPLETE / PR #140
-FN-BUNDLE-2 healthy whole-bundle harness          COMPLETE / merged PR #142
-
-CURRENT:
-SDE-0 — BEGINNER strategic-robustness corpus + policy contract
-
-NEXT:
-SDE-1 — unified StorytellerDecisionEngine orchestration seam
-SDE-2 — Drunk -> Spy/Recluse registration -> Poisoner first-night uncertainty
-SDE-3 — cross-night impaired / registration decisions
-SDE-4 — production cutover + legacy heuristic retirement
-
-DEFERRED:
-NORMAL / EXPERT numeric profile thresholds
-Narrative-complexity formula
-Information-pacing curve
-Optional soft preference / LLM critic
-Pair-information display latency / old-device ADB diagnosis
+D6 decomposition / ownership cleanup                  COMPLETE
+Beginner / Experienced host modes                     COMPLETE
+Same-night effective-state / transaction foundation   COMPLETE
+EPI-MQ capability boundary                            COMPLETE / PR #135
+Exact historical hypothetical bundle seam             COMPLETE / PR #137
+First-night experiment contract                       COMPLETE / PR #138
+FN-BUNDLE-0 candidate-space + pair ownership           COMPLETE / PR #139
+FN-BUNDLE-1 proposition / ShownRoleAt semantics        COMPLETE / PR #140
+FN-BUNDLE-2 healthy whole-bundle exact harness         COMPLETE / PR #142
 ```
 
-Live product baseline after FN-BUNDLE-2 merge:
+Current product-code baseline after FN-BUNDLE-2 merge:
 
 `690bc93b33b87fd54a911f4b9dbfc770f2a16a51`
 
-Documentation-only route commits may advance `main`; always query live `main` before editing.
+Documentation-only architecture commits have advanced `main` beyond that product baseline. Always query live `main` before editing.
+
+### CURRENT
+
+**SDE-0 — BEGINNER strategic-robustness corpus + policy contract**
+
+Active implementation is already underway in:
+
+- PR #143 — `FN-BUNDLE-3: build BEGINNER review corpus`;
+- branch `fn-bundle-3-beginner-corpus`;
+- legacy FN-BUNDLE-3 naming maps directly to **SDE-0** and must not be restarted from zero.
+
+Before additional implementation, synchronize PR #143 with current `main` if behind, then continue from its existing corpus / PUBLIC_GOOD_INFO work.
+
+### NEXT
+
+```text
+SDE-1 — unified StorytellerDecisionEngine orchestration seam
+SDE-2 — Drunk -> Spy/Recluse -> Poisoner first-night uncertainty
+SDE-3 — cross-night impaired / registration decisions
+SDE-4 — production cutover + legacy heuristic retirement
+```
+
+### DEFERRED / UNFROZEN
+
+```text
+NORMAL / EXPERT numeric thresholds
+Narrative-complexity formula
+Information-pacing curve
+Exact Demon / evil-topology Badness thresholds
+Exhaustive vs beam search for larger candidate products
+Optional bounded soft preference / LLM critic
+Pair-information display latency / old-device ADB diagnosis
+```
 
 Current architecture / product route:
 
 `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
-Older EPI-MQ first-night / productive-uncertainty routes are no longer execution authority.
+Older first-night-only EPI-MQ and productive-uncertainty scoring plans are superseded and are not execution authority.
 
 ## 2. Product direction
 
-The recommendation system is no longer treated as a set of independent per-role clue scorers.
+The recommendation system is no longer a collection of independent per-role clue scorers.
 
 The long-term target is a persistent automatic Storyteller decision engine:
 
 ```text
-canonical GameState / effective interaction state
+canonical GameState / interaction-time effective state
         ↓
-rules-owned legal candidates
+rules-owned legal candidate outcomes
         ↓
 InformationProposition / EpistemicObservation
         ↓
-exact hypothetical epistemic evaluation
+exact hypothetical epistemic consequence evaluation
         ↓
 strategic world-structure diagnostics
         ↓
-profile / phase policy
+profile / phase Storyteller policy
         ↓
-acceptable survivor pool
+reject clearly bad candidates / bundles
         ↓
-selection + canonical commit
+select among acceptable survivors
+        ↓
+commit through canonical session / flow ownership
 ```
 
-The first supported policy profile remains BEGINNER / ordinary players under a `PUBLIC_GOOD_INFO` stress assumption.
+The first target profile is BEGINNER / ordinary players, with ordinary / inexperienced evil players and a conservative `PUBLIC_GOOD_INFO` stress model.
 
-## 3. Exact consequence ownership
+## 3. Ownership boundaries
+
+```text
+rules
+  -> legal ability outcomes
+  -> registration legality
+  -> role semantics
+
+session
+  -> canonical actual state
+  -> persistent / committed history
+  -> authoritative mutation
+
+flow
+  -> interaction ordering / projection
+  -> consumes resolved facts
+
+epistemic
+  -> recipient-visible knowledge
+  -> exact hypothetical consequences
+  -> strategic structural diagnostics
+  -> historical replay
+
+recommendation / StorytellerDecisionEngine
+  -> compose legal options
+  -> consume exact diagnostics
+  -> apply skill-profile / game-phase policy
+  -> select acceptable outcomes
+
+UI
+  -> presentation / confirmation / manual Experienced-mode override
+```
+
+Do not create a second rules engine or a second possible-world solver in recommendation.
+
+## 4. Exact consequence model
 
 `epistemic` remains the sole world-consequence authority.
 
-Current exact diagnostics already include:
+Existing exact diagnostics already provide the important structure:
 
 - exact BEFORE / AFTER world counts;
 - possible Demon seats / Demon cover;
@@ -100,276 +142,263 @@ Current exact diagnostics already include:
 - evil cover;
 - leave-one-out interaction evidence.
 
-Do not create a second strategic world solver in `recommendation`.
+Raw full-role world count is descriptive only. Strategic evil topology is the primary product-level structure because cosmetic good-role permutations do not provide the same gameplay ambiguity as alternative Demon / Minion placements.
 
-Raw full-role world count is descriptive only. Strategic evil topology is the main product-level structure.
+## 5. BEGINNER robustness goal
 
-## 4. BEGINNER robustness goal
+The target is not maximum information and not maximum uncertainty.
 
-The policy must reject both:
+The policy must distinguish:
 
 ```text
-BAD_TOO_STRONG
 BAD_TOO_WEAK
+ACCEPTABLE
+BAD_TOO_STRONG
+UNCERTAIN
 ```
 
-and preserve an acceptable middle region where:
+An acceptable result should simultaneously provide useful good information and preserve several understandable strategic worlds for an ordinary evil team.
 
-- good information has useful value;
-- Demon / evil-team topology does not collapse prematurely;
-- large trusted-good blocks do not form too early;
-- ordinary evil players retain multiple understandable counterworlds.
-
-Do not maximize possible-world count.
-
-Do not use a single opaque scalar as the product authority.
-
-Initial selection semantics remain:
+Initial product semantics remain conceptually:
 
 ```text
 hard legality
 → exact structural diagnostics
-→ interpretable Badness gates
+→ interpretable profile Badness gates
 → random selection among acceptable survivors
 ```
 
-## 5. Strategic-world definition
+Do not reintroduce one opaque scalar whose maximum becomes the authoritative Storyteller choice.
 
-Worlds that differ only in cosmetic good-role permutations should not dominate recommendation quality.
+## 6. Whole-bundle / whole-history interaction is mandatory
 
-Primary strategic diagnostics are based on:
-
-```text
-possible Demon seats
-evil-team seat configurations
-evil cover
-forced-good seats
-forced-evil seats
-```
-
-A large raw world family with one surviving evil topology is strategically fragile.
-
-## 6. Whole-bundle / whole-history interaction
-
-Local clue scores are insufficient.
+Local clue scoring is insufficient.
 
 Retained adversarial design lessons include:
 
-- pair-information + Fortune Teller can form confirmation chains;
+- Pair information + Fortune Teller can create strong confirmation chains;
 - Red Herring placement can break or create those chains;
-- Investigator + Chef + Empath can jointly collapse the evil topology even when each clue is individually normal;
-- Recluse registration can restore legitimate ambiguity;
-- the same exact-consequence framework must later evaluate impaired Empath / Fortune Teller / Undertaker / Ravenkeeper information.
+- Investigator + Chef + Empath can jointly collapse the evil topology even when every clue is individually normal;
+- legal Recluse registration can restore large amounts of legitimate ambiguity;
+- later poisoned/drunk Empath, Fortune Teller, Undertaker and Ravenkeeper information must be evaluated against the same accumulated history.
 
-The algorithm should discover these consequences from the world model rather than from hard-coded role-combination exceptions.
+These must be discovered through exact consequences rather than hard-coded role-combination exceptions.
 
-## 7. Registration and impairment decisions
+## 7. Registration and impairment
 
-Spy / Recluse registration is interaction-specific, not a global persistent `good/evil` flag.
+Spy / Recluse registration is **per interaction**, not a persistent global `good/evil` flag.
 
-Rules own the legal registration candidate set. Storyteller policy chooses among legal registrations using global exact consequence evidence.
+Rules own legal registration candidates. Storyteller policy chooses among legal registrations using whole-state exact consequences.
 
-Poison / drunkenness must be represented at interaction-time effective state. If impairment disables a special registration, legality removes it rather than recommendation policy compensating afterward.
+Poison / drunkenness is interaction-time effective state. If impairment disables a registration ability or changes information legality, that change must come from rules/effective-state semantics rather than recommendation hacks.
 
 ## 8. First-night decision lifecycle
 
-Do not freeze every first-night recommendation before player-controlled actions occur.
+Do not freeze one complete final Night-1 bundle before all player-controlled actions occur.
 
-Use lifecycle semantics:
+Use:
 
 ```text
 PERSISTENT
-    setup-level commitments such as actual roles, seating, Demon bluffs,
-    Red Herring and other decisions that must persist
+    roles / seating / setup-level commitments
+    Demon bluffs
+    Fortune Teller Red Herring
+    Drunk identity / shown-role commitments where required
 
 COMMITTED
-    already shown / executed decisions; immutable
+    already shown / executed; immutable
 
 PLANNED / UNCOMMITTED
-    recommendations that may be invalidated and re-evaluated
+    not yet shown; may be invalidated and re-evaluated
 ```
 
-When the Poisoner target becomes known, rebuild the effective night state and re-evaluate all relevant uncommitted decisions. Do not only replace the poisoned role's one information result.
+After a Poisoner target becomes known:
 
-Poisoning Spy / Recluse can change information semantics even when the target itself is not a normal information role.
+```text
+apply poison to effective state
+→ keep PERSISTENT decisions
+→ keep COMMITTED decisions
+→ invalidate affected uncommitted planning
+→ regenerate / re-evaluate the remaining relevant decision ecology
+```
+
+Do not only replace the poisoned role's one clue. Poisoning Spy / Recluse can alter other information semantics as well.
+
+Correct broad re-evaluation is preferred over premature incremental optimization.
 
 ## 9. Cross-night engine scope
 
-The same architecture must eventually handle later interactions:
+The same architecture continues beyond Night 1.
 
-- poisoned / drunk Empath;
-- poisoned / drunk Fortune Teller;
-- poisoned / drunk Undertaker;
-- poisoned / drunk Ravenkeeper;
-- later Spy / Recluse registrations;
-- other Storyteller-discretion decisions such as Mayor redirect or Demon succession where supported.
+Initial Trouble Brewing later-interaction targets include:
 
-Per-role code generates legal outcomes. Shared policy evaluates global consequences.
+- poisoned/drunk Empath numeric results;
+- poisoned/drunk Fortune Teller YES/NO;
+- poisoned/drunk Undertaker shown role;
+- poisoned/drunk Ravenkeeper shown role;
+- later Spy/Recluse registrations;
+- other supported Storyteller-discretion decisions such as Mayor redirect / succession.
 
-Historical exact replay is the required consequence basis after Night 1.
+Per-role modules answer **what is legal**. Shared policy answers **which legal outcome is appropriate now**.
+
+Historical exact replay is the consequence basis after Night 1.
 
 ## 10. Information pacing
 
-The acceptable information-convergence region changes over the game.
+A Day-1 robustness target cannot remain fixed throughout the game.
 
-Early-game policy should protect against premature collapse; later-game policy must allow legitimate convergence and eventual solving.
+Early game should resist premature topology collapse; later game must allow legitimate convergence and eventual solving.
 
-`information pacing` is therefore a required future policy dimension.
+`information pacing` is therefore a required future policy dimension based on phase / round / alive count and possibly other durable state.
 
-No numeric phase curve is frozen yet.
+No numeric pacing curve is frozen yet.
 
 ## 11. ConsequenceEvaluator retirement
 
-`recommendation/dynamic/ConsequenceEvaluator` is now explicitly **legacy / targeted for retirement**.
+`recommendation/dynamic/ConsequenceEvaluator` is explicitly **legacy and targeted for removal**.
 
 Do not add new product policy to it.
 
-Its heuristic concepts such as repeated-target pressure, one-shot protection, high-impact misinformation, final-day penalty and `evilAdvantage` adjustment should not remain a second authority beside exact strategic consequence evaluation.
+Its current repeated-target / one-shot / high-impact misinformation / final-day / `evilAdvantage` heuristics estimate consequences that the new architecture should measure directly using exact strategic diagnostics plus profile/phase policy.
+
+Keeping both as independent authorities would recreate dual ownership.
 
 Retirement route:
 
-1. identify useful context signals that are genuinely independent inputs;
-2. move those inputs into the unified decision context / policy seam;
-3. cut callers over to exact strategic robustness policy;
-4. delete `ConsequenceEvaluator` when no unique contract remains;
-5. audit `evilAdvantage`, `PublicBalanceHint`, information-pressure fields and other heuristic-only state for retirement or narrower use.
+1. audit all callers and fanout;
+2. identify useful context signals that are truly inputs rather than heuristic conclusions;
+3. move those inputs into the unified DecisionContext / StorytellerPolicy boundary;
+4. cut callers over to exact strategic robustness policy;
+5. delete `ConsequenceEvaluator` once no unique contract depends on it;
+6. audit `evilAdvantage`, `PublicBalanceHint`, information-pressure and related heuristic-only state for deletion or narrower non-authoritative use.
 
-Do not delete it before safe fanout/caller migration.
+Do not delete it before safe cutover; the target state is removal, not permanent secondary scoring.
 
-## 12. Frozen vs unfrozen decisions
+## 12. SDE-0 — current implementation program
 
-### Frozen
+PR #143 already provides valid SDE-0 groundwork. Do not repeat it.
+
+Current retained contracts include:
+
+- healthy `PUBLIC_GOOD_INFO` public claims do **not** equal Storyteller confirmation;
+- an evil speaker may lie;
+- a healthy good speaker's public claim must match shown role plus mechanically true clue;
+- strict mechanically known `ShownRoleAt` remains exact;
+- calibration and sealed holdout scenarios are separated by whole setup + seating scenario;
+- corpus items start `UNREVIEWED`;
+- deterministic review sampling preserves exact structural diagnostics and leave-one-out evidence;
+- expensive calibration generation is an explicit experiment, not ordinary regression workload;
+- no scalar quality score or automatic labels are introduced.
+
+SDE-0 must now ensure deliberate adversarial coverage, especially:
+
+1. Pair-information + Fortune Teller confirmation chains;
+2. Red Herring choices that cut/create those chains;
+3. Investigator + Chef + Empath evil-topology collapse;
+4. the same structures with Recluse registration alternatives;
+5. too-weak bundles;
+6. representative healthy acceptable bundles.
+
+Then:
+
+1. human-review calibration items;
+2. label `BAD_TOO_STRONG / ACCEPTABLE / BAD_TOO_WEAK / UNCERTAIN`;
+3. determine which exact diagnostics actually separate labels;
+4. define the smallest durable policy input/output seam;
+5. derive first interpretable BEGINNER Badness gates;
+6. keep the holdout sealed until gates are frozen enough to validate;
+7. do not cut over production selection during SDE-0.
+
+## 13. SDE-1 — unified orchestration seam
+
+After SDE-0 evidence is credible:
+
+- formalize a thin `StorytellerDecisionEngine` orchestration owner;
+- reuse canonical candidate generators;
+- reuse the existing exact epistemic evaluator;
+- define DecisionContext and persistent / committed / planned lifecycle;
+- preserve session mutation and flow ordering ownership;
+- avoid a parallel state model.
+
+## 14. SDE-2 — staged first-night uncertainty
+
+Expand deliberately and separately:
+
+1. Drunk;
+2. Spy / Recluse per-interaction registration;
+3. Poisoner target / effective-state invalidation and re-planning.
+
+Each stage must be corpus-backed and preserve hidden-information boundaries.
+
+## 15. SDE-3 — cross-night decisions
+
+Route later impaired / registration decisions through the same engine using historical exact replay.
+
+Add information-pacing behavior only from measured scenarios, not guessed thresholds.
+
+## 16. SDE-4 — production cutover / cleanup
+
+- cut production callers to the unified engine / policy;
+- preserve Experienced-mode manual override UX;
+- migrate only useful legacy context inputs;
+- retire `ConsequenceEvaluator` and stale heuristic state after fanout audit;
+- retire superseded recommendation paths/tests when stronger typed coverage exists.
+
+## 17. Frozen vs unfrozen
+
+### Frozen architecture/product decisions
 
 - rules own legality;
-- exact epistemic evaluator owns possible-world consequences;
-- strategic evil topology matters more than raw role-world count;
-- whole-bundle / whole-history interaction is required;
+- exact epistemic evaluator owns world consequences;
+- strategic evil topology matters more than raw full-role world count;
+- whole-bundle / whole-history interactions matter;
 - Spy/Recluse registration is per interaction;
 - Poisoner can invalidate uncommitted recommendations;
 - one engine continues after Night 1;
-- BEGINNER / ordinary-player policy is first;
+- BEGINNER / ordinary-player profile is first;
 - `ConsequenceEvaluator` is targeted for removal;
 - no second rules engine;
-- no second possible-world solver;
+- no second world solver;
 - no opaque global-optimum scalar.
 
-### Not frozen
+### Deliberately unfrozen
 
 - exact Demon-candidate thresholds;
 - exact evil-team-configuration thresholds;
 - forced-good / forced-evil limits;
 - narrative-complexity formula;
 - information-pacing curve;
-- NORMAL / EXPERT thresholds;
-- exhaustive vs beam search for large candidate products;
-- optional soft-preference formula;
-- final production cutover timing.
+- NORMAL / EXPERT numeric profiles;
+- exhaustive vs beam search;
+- optional bounded soft-preference formula;
+- production cutover timing.
 
-## 13. SDE-0 — current task
-
-SDE-0 replaces the old `FN-BUNDLE-3` label while preserving its valid corpus-first intent.
-
-Goals:
-
-1. use merged FN-BUNDLE-2 healthy whole-bundle harness as baseline;
-2. build a human-reviewed BEGINNER strategic-robustness corpus;
-3. include deliberate adversarial confirmation-chain / topology-collapse examples;
-4. validate which existing exact structural diagnostics separate `BAD_TOO_STRONG`, `ACCEPTABLE`, `BAD_TOO_WEAK`, `UNCERTAIN`;
-5. define the smallest durable profile-policy input/output contract;
-6. derive first interpretable Badness gates only after corpus review;
-7. keep production selection unchanged during SDE-0.
-
-Corpus must include calibration and holdout sets.
-
-## 14. SDE-1 — unified orchestration seam
-
-After SDE-0 policy evidence is credible:
-
-- introduce / formalize `StorytellerDecisionEngine` as a thin orchestration owner;
-- reuse canonical candidate producers;
-- reuse exact epistemic evaluation;
-- define decision context and persistent/committed/planned lifecycle;
-- preserve session mutation and flow ordering ownership;
-- avoid a new state engine or new rules engine.
-
-## 15. SDE-2 — staged first-night uncertainty
-
-Expand deliberately:
-
-1. Drunk;
-2. Spy / Recluse per-interaction registration;
-3. Poisoner target effects, effective-state invalidation and re-planning.
-
-Each stage remains corpus-backed and must preserve hidden-information boundaries.
-
-## 16. SDE-3 — later-night dynamic decisions
-
-Route later impaired / special-registration information through the same engine using historical exact replay.
-
-Initial Trouble Brewing targets should include Empath, Fortune Teller, Undertaker and Ravenkeeper.
-
-Add information-pacing policy only from measured scenarios, not guessed thresholds.
-
-## 17. SDE-4 — production cutover / cleanup
-
-- cut production decision callers to the unified engine/policy;
-- preserve Experienced-mode manual override UX;
-- migrate useful legacy context;
-- retire `ConsequenceEvaluator` and dead heuristic state after fanout audit;
-- retire superseded recommendation paths and tests when stronger typed coverage exists.
-
-## 18. Architecture ownership
-
-```text
-rules
-  -> legal information / registration semantics
-
-session
-  -> canonical actual state / timeline / commit authority
-
-flow
-  -> interaction ordering / projection; consumes resolved facts
-
-epistemic
-  -> recipient-visible knowledge / exact hypothetical consequences
-
-recommendation / StorytellerDecisionEngine
-  -> compose legal options
-  -> consume exact diagnostics
-  -> apply profile / phase policy
-  -> select acceptable outcome
-
-UI
-  -> presentation / confirmation / manual override
-```
-
-Badness/policy code must not become a rules engine.
-
-## 19. Testing / acceptance
+## 18. Testing / acceptance
 
 `AGENTS.md` and `docs/TESTING_STRATEGY.md` remain authoritative.
 
 For SDE work:
 
-- behavior / policy contracts should be typed at their true owner;
-- exact consequence changes trigger relevant epistemic/oracle validation;
-- exploratory corpus measurement does not need manufactured RED tests;
-- stable corpus/gate contracts do require durable tests before acceptance;
+- test stable contracts at their true typed ownership seam;
+- exact consequence changes trigger appropriate epistemic/oracle validation;
+- experimental corpus measurement does not require manufactured RED tests;
+- stable corpus/gate contracts require durable regression evidence;
 - central orchestration / shared semantic cutovers require broader T2/T4 validation;
-- documentation-only main updates use the existing lightweight docs-only CI route.
+- documentation-only main updates use the lightweight docs-only route.
 
-## 20. New-conversation reading order
+## 19. New-conversation reading order
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
 4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
 5. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`;
-6. query live `main`, open PRs and current checks;
-7. continue from SDE-0 only.
+6. query live `main`, PR #143 and current CI;
+7. synchronize #143 with latest `main` if necessary;
+8. continue SDE-0 from existing PR #143 work.
 
-Do not reload superseded EPI-MQ execution plans as authority.
+Do not reopen FN-BUNDLE-0/1/2 audits without a concrete regression. Do not reload superseded EPI-MQ execution plans as authority.
 
-## 21. Stable rule
+## 20. Stable rule
 
-> **FN-BUNDLE-0/1/2 are complete foundations. The current program is SDE: a persistent Storyteller decision engine using canonical legal candidates plus the existing exact epistemic evaluator to measure strategically meaningful evil-world consequences. SDE-0 calibrates BEGINNER robustness before production cutover. `ConsequenceEvaluator` is a legacy heuristic layer targeted for retirement after unified-policy migration.**
+> **The current program is SDE: a persistent Storyteller decision engine using canonical legal candidates plus the existing exact epistemic evaluator to measure strategically meaningful evil-world consequences. PR #143 is the active SDE-0 implementation, not disposable legacy work. SDE-0 calibrates BEGINNER strategic robustness before production cutover. `ConsequenceEvaluator` is a migration-era heuristic layer targeted for removal after unified-policy cutover.**
