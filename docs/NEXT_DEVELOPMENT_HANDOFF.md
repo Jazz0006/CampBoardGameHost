@@ -1,8 +1,8 @@
-# NEXT DEVELOPMENT HANDOFF — SDE-0 Strategic-Robustness Calibration
+# NEXT DEVELOPMENT HANDOFF — SDE-1 Unified StorytellerDecisionEngine Orchestration
 
 > Updated: 2026-09-17 Australia/Sydney  
-> Status: **CURRENT / continue PR #143 as SDE-0**  
-> Current architecture route: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+> Status: **CURRENT / begin SDE-1**  
+> Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
 ## 0. Start here
 
@@ -13,324 +13,253 @@ Read, in order:
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
 5. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`;
-6. query live `main`, PR #143 and current checks before editing.
+6. query live `main`, open PRs and current checks before editing.
 
-Do not use removed/superseded EPI-MQ / first-night-only route documents as execution authority. Their history remains available in Git.
+Do not restart completed FN-BUNDLE/SDE-0 work.
 
 ## 1. Live continuation point
 
-Relevant completed foundation:
+Completed immediately before this handoff:
+
+- PR #143 — SDE-0 / BEGINNER strategic-robustness corpus + policy contract;
+- squash-merged to `main` as `5dd32e085a7db0d3eb14ed8bce3ed3c75f694c6e`;
+- final validated PR head `7f5b0574b25fff52612cd8cbe74a26933987dae1`;
+- final observed validation: R2 SUCCESS, CI / Android FAST / CI gate SUCCESS, FN-BUNDLE-3 calibration SUCCESS;
+- final test-only classifier intentionally skipped full Android + debug APK.
+
+After merge, roadmap status advanced to SDE-1 in docs-only commit `6f96837cdb122f05a8ee2e18ec5f784b2eb1fde9`.
+
+Always query live `main` because this handoff may itself be followed by another docs-only commit.
+
+## 2. Current objective
+
+**SDE-1 — unified `StorytellerDecisionEngine` orchestration seam**
+
+The goal is not to rewrite recommendation logic. The goal is to establish one thin typed orchestration owner that composes the authorities already present:
 
 ```text
-FN-BUNDLE-0   COMPLETE / PR #139
-FN-BUNDLE-1   COMPLETE / PR #140
-FN-BUNDLE-2   COMPLETE / PR #142
+canonical actual/effective state
+→ rules-owned legal candidates
+→ typed hypothetical propositions/effects
+→ existing exact epistemic evaluator
+→ strategic structural diagnostics
+→ profile/phase policy boundary
+→ selected result
+→ existing session/flow commit path
 ```
 
-Current active implementation:
+The engine must not own role legality, canonical mutation, night ordering, or world solving.
 
-- PR #143;
-- branch `fn-bundle-3-beginner-corpus`;
-- legacy title began as `FN-BUNDLE-3: build BEGINNER review corpus`;
-- program mapping: **PR #143 is the active SDE-0 implementation**;
-- latest observed PR head before this documentation closeout: `b41547660645114b0178b6ac365f5e6278872f18`;
-- current documentation `main` has advanced beyond the PR base.
+## 3. First task — SDE-1A fanout audit
 
-**First action in the next development conversation:** query live refs and synchronize PR #143 with latest `main` before additional executable edits if it is still behind.
+Before creating `StorytellerDecisionEngine`, inspect the live code and map the real call graph for:
 
-Do not discard or restart PR #143. Do not merge it without explicit user authorization.
+1. legal candidate generation;
+2. `InformationProposition` / observation construction;
+3. exact hypothetical evaluation entry points;
+4. first-night bundle recommendation/coordinator callers;
+5. dynamic recommendation callers;
+6. session decision identity/revision/commit ownership;
+7. flow ordering and UI invocation;
+8. `ConsequenceEvaluator` callers and the context signals they consume.
 
-## 2. What PR #143 already establishes
-
-Do not repeat these parts without a concrete defect.
-
-### Healthy PUBLIC_GOOD_INFO claim semantics
-
-Public speech is not Storyteller confirmation.
-
-Healthy-stage public claims are modeled conceptually as:
+For each node classify it as:
 
 ```text
-speaker is evil
-OR
-(shown role matches claim AND claimed clue is mechanically true)
+REUSE AS AUTHORITY
+ADAPT INTO SDE SEAM
+LEGACY CALLER TO MIGRATE LATER
+DUPLICATE / RETIRE AFTER CUTOVER
+OUT OF SCOPE
 ```
 
-Consequences:
+Do not delete production paths during this audit unless they are independently proven dead.
 
-- evil speakers retain bluff worlds;
-- healthy good speakers are truthful under this stress model;
-- strict mechanically known `ShownRoleAt` remains exact;
-- public-claim permissiveness must not weaken actual Storyteller-shown facts.
+## 4. Audit questions that must be answered
 
-### Corpus / holdout contract
+The next implementation plan should answer, with concrete symbols/files:
 
-PR #143 already contains:
+- Which current type should provide canonical actual/effective state to the engine?
+- Which existing candidate producers already expose legal outcomes in typed form?
+- Which decisions still require legacy text/display-option adaptation?
+- What is the narrowest exact evaluator API the orchestrator can consume?
+- Which exact diagnostics are already sufficient to carry SDE-0 structural evidence forward?
+- What existing session identity/revision type should be reused for decision freshness?
+- Where should lifecycle metadata live without shadowing session state?
+- Which callers currently depend on `ConsequenceEvaluator` conclusions versus genuine context inputs?
+- What is the smallest vertical slice that proves the new orchestration seam without production cutover?
 
-- CALIBRATION scenarios;
-- a sealed replacement HOLDOUT scenario;
-- partitioning by whole setup + seating scenario, not sibling signatures;
-- `UNREVIEWED` initial labels;
-- deterministic sampling across structural extremes / quartiles;
-- retained raw public claims, provenance multiplicity, exact diagnostics and leave-one-out evidence;
-- no scalar quality score;
-- no automatic labels.
+## 5. Expected SDE-1 typed seam
 
-The holdout must remain sealed while deriving gates.
+Names are provisional; reuse existing types wherever possible.
 
-### Experiment / regression boundary
-
-The expensive calibration generator is an explicit experiment, not an ordinary regression test.
-
-Keep the intended split:
-
-- lightweight typed tests protect durable corpus contracts;
-- exact corpus generation runs through the dedicated calibration task/workflow;
-- ordinary FAST / bounded FULL regression must not regenerate the expensive calibration corpus by default.
-
-Do not reverse this separation.
-
-## 3. Latest observed PR #143 validation
-
-At head `b41547660645114b0178b6ac365f5e6278872f18`, the latest observed runs were green:
-
-- R2 main-thread boundary — success;
-- CI — success;
-- FN-BUNDLE-3 calibration workflow — success.
-
-PR history also contains a prior full validation checkpoint with Android full + assemble, ASP and Real Clingo green.
-
-After syncing with current `main`, use the actual diff and `TESTING_STRATEGY.md` to determine required validation. Old-head evidence does not automatically validate a new executable head.
-
-## 4. Architectural route now governing the work
-
-The long-term target is no longer a first-night-only clue recommender.
-
-Conceptual owner:
+Likely conceptual boundary:
 
 ```text
 StorytellerDecisionEngine
+    decide(request, context)
+
+DecisionContext
+    canonical/effective state reference
+    phase / round / alive-state context
+    table/player policy profile
+    committed decision history reference
+    lifecycle metadata
+
+DecisionRequest
+    decision kind
+    legal candidates or legal-candidate provider
+    recipient / interaction identity
+
+CandidateConsequence
+    exact BEFORE / AFTER consequence
+    possible Demon seats
+    evil-team configurations
+    forced-good / forced-evil seats
+    evil cover
+    leave-one-out / recovery evidence where relevant
+
+StorytellerPolicyResult
+    acceptable/rejected/uncertain classification
+    selected candidate when appropriate
+    reason/provenance for diagnostics and manual Experienced-mode review
 ```
 
-Authority split:
+Do not freeze these exact class names before auditing existing types.
 
-```text
-rules
-  -> legal outcomes / registration legality
+## 6. Lifecycle contract to establish in SDE-1
 
-session
-  -> canonical actual state / timeline / commit
-
-flow
-  -> interaction ordering / projection
-
-epistemic
-  -> recipient-visible exact hypothetical consequences
-  -> strategic structural diagnostics
-  -> historical replay
-
-recommendation / StorytellerDecisionEngine
-  -> compose legal candidates
-  -> consume exact diagnostics
-  -> apply profile / phase policy
-  -> choose among acceptable outcomes
-
-UI
-  -> display / confirmation / manual Experienced-mode override
-```
-
-Do not create a second rules engine, a second state authority, or a second possible-world solver.
-
-## 5. Strategic robustness model
-
-Raw exact world count is not the product objective.
-
-Primary structure includes:
-
-- possible Demon seats;
-- distinct Demon/Minion seat configurations;
-- evil cover;
-- forced-good seats;
-- forced-evil seats;
-- leave-one-out / interaction recovery.
-
-Worlds that differ only by cosmetic healthy-good role permutations should not dominate quality assessment.
-
-Target categories remain:
-
-```text
-BAD_TOO_WEAK
-ACCEPTABLE
-BAD_TOO_STRONG
-UNCERTAIN
-```
-
-The first profile assumes ordinary / inexperienced evil players plus aggressive healthy-good public sharing.
-
-Do not maximize uncertainty and do not search for one opaque scalar optimum.
-
-## 6. Required SDE-0 adversarial evidence
-
-PR #143 must be extended so calibration deliberately includes interaction-collapse cases, not only representative/random bundles.
-
-Required benchmark families:
-
-1. Pair-information + Fortune Teller confirmation chain.
-2. Red Herring placements that create/cut those confirmation paths.
-3. Investigator + Chef + Empath combinations where individually normal clues jointly collapse evil topology.
-4. Equivalent structures where legal Recluse registration restores meaningful ambiguity.
-5. Too-weak bundles that preserve uncertainty but give little strategic value.
-6. Clearly acceptable healthy examples for contrast.
-
-The evaluator should detect these from exact consequences. Do not implement hard-coded rules such as `if Investigator + Chef + Empath then penalty`.
-
-## 7. Registration decision frozen architecture
-
-Spy / Recluse registration is **per interaction**.
-
-Do not model persistent globals such as:
-
-```text
-Recluse = evil
-Spy = good
-```
-
-Rules generate legal registration candidates for each observing interaction. Future Storyteller policy chooses among them using exact global consequences.
-
-If poison/drunkenness disables special registration at that interaction, effective-state legality removes the candidate.
-
-## 8. Poisoner / first-night lifecycle frozen architecture
-
-Do not freeze all first-night information before player-controlled state changes.
-
-Use:
+SDE-1 must make the ownership distinction expressible:
 
 ```text
 PERSISTENT
-    actual roles / seating / setup commitments
-    Demon bluffs
-    Fortune Teller Red Herring
-    other persistent decisions
+    setup-level decisions that survive replanning
 
 COMMITTED
-    already shown / executed; immutable
+    already shown/executed decisions; immutable
 
 PLANNED / UNCOMMITTED
-    may be invalidated and re-evaluated
+    recommendations that may be invalidated/re-evaluated
 ```
 
-After Poisoner chooses a target:
+SDE-1 only establishes the seam and ownership semantics.
+
+Actual Poisoner-triggered invalidation/replanning belongs to SDE-2.
+
+## 7. Recommended first vertical slice
+
+Choose one already-typed, bounded decision surface with:
+
+- canonical legal candidates;
+- an existing exact hypothetical evaluation path;
+- no need to add Drunk/Spy/Recluse/Poisoner uncertainty;
+- easy comparison against existing behavior;
+- limited production fanout.
+
+The slice should prove:
 
 ```text
-apply effective poison
-→ preserve PERSISTENT
-→ preserve COMMITTED
-→ invalidate affected uncommitted planning
-→ re-evaluate remaining relevant decision ecology
+existing legal candidates
+→ SDE orchestration
+→ exact diagnostics
+→ policy result
 ```
 
-Do not only replace the poisoned player's single clue. Poisoning Spy / Recluse can change other information semantics too.
+without making the new engine the global production authority yet.
 
-Broad correct re-evaluation is preferred before incremental optimization.
+The exact slice must be chosen from the fanout audit, not guessed from role names in advance.
 
-## 9. Cross-night scope frozen architecture
-
-The same engine later handles legal discretionary outcomes for:
-
-- poisoned/drunk Empath;
-- poisoned/drunk Fortune Teller;
-- poisoned/drunk Undertaker;
-- poisoned/drunk Ravenkeeper;
-- later Spy/Recluse registration;
-- supported Mayor redirect / succession and similar Storyteller choices.
-
-Per-role code owns legal outcomes. Shared policy owns selection among legal outcomes.
-
-Historical exact replay is the consequence baseline after Night 1.
-
-## 10. Information pacing
-
-Early game must resist premature collapse; late game must permit legitimate convergence.
-
-`information pacing` is a required future policy dimension.
-
-Do not invent a numeric phase curve during SDE-0.
-
-## 11. ConsequenceEvaluator retirement decision
-
-`recommendation/dynamic/ConsequenceEvaluator` is legacy and **targeted for deletion** after unified-policy cutover.
-
-Do not add new policy to it.
-
-Future route:
-
-1. audit its callers/fanout;
-2. preserve only context signals that are genuine inputs;
-3. migrate those inputs to DecisionContext / StorytellerPolicy;
-4. cut callers to exact strategic robustness policy;
-5. delete `ConsequenceEvaluator` when no unique contract remains;
-6. audit `evilAdvantage`, `PublicBalanceHint`, information-pressure and related heuristic-only state for deletion/narrower use.
-
-The target is removal, not a permanent secondary scoring layer.
-
-## 12. What is deliberately not frozen
-
-Do not decide these from intuition alone:
-
-- exact Demon-candidate thresholds;
-- exact evil-team configuration thresholds;
-- forced-good / forced-evil limits;
-- narrative-complexity formula;
-- information-pacing curve;
-- NORMAL / EXPERT numeric profiles;
-- exhaustive vs beam search for larger products;
-- optional soft-preference formula;
-- production cutover timing.
-
-These require corpus evidence.
-
-## 13. Immediate SDE-0 execution order
-
-After syncing PR #143 with current `main`:
-
-1. audit current PR #143 diff and retain all valid existing corpus/public-claim work;
-2. add the missing adversarial benchmark scenarios above at the true corpus/evaluator ownership seams;
-3. run the dedicated calibration experiment and inspect exact structural outputs;
-4. construct a manageable human-review calibration set;
-5. label calibration items `BAD_TOO_STRONG / ACCEPTABLE / BAD_TOO_WEAK / UNCERTAIN`;
-6. identify which existing exact diagnostics separate labels and where diagnostics are insufficient;
-7. define the smallest durable BEGINNER policy input/output contract;
-8. derive interpretable candidate Badness gates only after review;
-9. keep HOLDOUT sealed until the gates are sufficiently fixed;
-10. validate on holdout and review false accepts / false rejects;
-11. do **not** perform production selector cutover during SDE-0.
-
-## 14. Testing rules
+## 8. Testing expectations
 
 Follow `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
 
-Especially:
+For SDE-1:
 
-- exploratory measurement does not need manufactured RED tests;
-- durable new policy contracts do need typed regression evidence at the true owner;
-- exact epistemic semantic changes trigger relevant oracle / broader validation;
-- central orchestration/shared semantic cutovers require broader T2/T4 evidence;
-- do not bring the expensive calibration experiment back into normal regression execution.
+- audit documentation does not require manufactured RED tests;
+- new stable orchestration types require focused typed tests;
+- any semantic change to exact evaluation requires epistemic/oracle validation;
+- first integration slice should have differential/contract evidence against the current authoritative path where useful;
+- central caller cutovers require broader T2/T4 validation;
+- expensive calibration experiments remain explicit experiments, not default FAST workload.
 
-## 15. Cleanup state
+Do not resurrect low-value source-grep / reflection / field-echo tests removed in the SDE-0 cleanup.
 
-Current active docs are now centered on:
+## 9. SDE-1 non-goals
 
-- `CURRENT_DEVELOPMENT_ROADMAP.md`;
-- `NEXT_DEVELOPMENT_HANDOFF.md`;
-- `STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`;
-- `TESTING_STRATEGY.md`;
-- `AGENTS.md`.
+Do not implement yet:
 
-Superseded first-night-only EPI-MQ / productive-uncertainty / old dynamic-engine execution plans were removed from active `docs/`; Git history preserves them for archaeology.
+- final BEGINNER numeric Badness gates unless supported by reviewed corpus evidence;
+- Drunk hidden-role uncertainty;
+- Spy/Recluse per-interaction policy selection;
+- Poisoner re-planning;
+- later-night information pacing;
+- full production recommendation cutover;
+- deletion of `ConsequenceEvaluator` before safe caller migration;
+- NORMAL/EXPERT numeric policy profiles;
+- a second possible-world solver;
+- a shadow `GameState`.
 
-Audits and rule/ownership documents that retain independent factual value remain available as on-demand references.
+## 10. SDE-0 contracts that must survive
 
-## 16. Stable handoff
+Preserve:
 
-> **Start the next development conversation by reading the five current authority documents, query live `main` and PR #143, synchronize #143 with `main` if behind, then continue SDE-0 from the existing PR rather than recreating FN-BUNDLE work. The immediate engineering objective is corpus-backed BEGINNER strategic-robustness policy evidence. Exact epistemic consequences remain authoritative; Spy/Recluse registration is per-interaction; Poisoner may invalidate uncommitted plans; the same engine extends across nights; and `ConsequenceEvaluator` is targeted for retirement rather than preservation.**
+- healthy `PUBLIC_GOOD_INFO` is not Storyteller confirmation;
+- evil public speakers retain bluff worlds;
+- healthy good public claims must match shown role and mechanically true clue in the current stress model;
+- strict mechanically known `ShownRoleAt` remains exact;
+- raw role-world cardinality is descriptive, not the primary product objective;
+- possible Demon seats / evil-team topology / forced alignment / evil cover are primary structural evidence;
+- whole-bundle interactions matter;
+- calibration and holdout remain separated;
+- no opaque global scalar becomes the decision authority.
+
+## 11. Later stages
+
+```text
+SDE-2
+    Drunk
+    → Spy/Recluse per-interaction registration
+    → Poisoner effective-state invalidation / re-planning
+
+SDE-3
+    cross-night impaired / registration decisions
+    historical exact replay
+    measured information pacing
+
+SDE-4
+    production cutover
+    Experienced-mode manual override preservation
+    ConsequenceEvaluator retirement
+    stale heuristic-state cleanup
+```
+
+Do not pull later-stage complexity into SDE-1 merely because the eventual engine will support it.
+
+## 12. ConsequenceEvaluator migration rule
+
+`recommendation/dynamic/ConsequenceEvaluator` is migration-era legacy.
+
+During SDE-1A:
+
+- audit every caller;
+- separate genuine context inputs from heuristic conclusions;
+- preserve useful inputs for future `DecisionContext`;
+- do not add new policy logic to `ConsequenceEvaluator`;
+- do not delete it until the new seam covers its unique production obligations.
+
+## 13. First implementation deliverables
+
+The first SDE-1 PR should ideally contain only what is necessary to establish the seam cleanly:
+
+1. fanout/ownership audit document;
+2. typed orchestration boundary at the true package owner;
+3. focused tests for that boundary;
+4. one bounded vertical integration slice if the audit supports it;
+5. no broad production cutover;
+6. updated roadmap/handoff with measured follow-up work.
+
+If the fanout audit shows the seam should be split into separate PRs, prefer smaller ownership-preserving PRs over one large migration.
+
+## 14. Stable handoff
+
+> **SDE-0 is merged. Begin SDE-1 by auditing live candidate/evaluator/session/flow fanout, then formalize the smallest thin `StorytellerDecisionEngine` orchestration seam that reuses canonical rules and exact epistemic consequences. Establish persistent/committed/planned ownership without implementing SDE-2 uncertainty yet. Do not create parallel state, rules, or world-solving authority, and do not perform global production cutover during the first SDE-1 slice.**
