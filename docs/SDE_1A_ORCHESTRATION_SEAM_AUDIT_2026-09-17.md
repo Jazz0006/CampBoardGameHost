@@ -3,12 +3,14 @@
 > Date: 2026-09-17 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `sde-1-orchestration-seam`  
-> Live `main` baseline: `4d6e90a7a268570d261048931a3557433ea01d83`  
-> Status: **ACTIVE AUDIT — no production cutover**
+> Live `main` baseline audited: `4d6e90a7a268570d261048931a3557433ea01d83`  
+> Status: **COMPLETE — no production cutover performed**
 
-## 1. Authority and scope
+## 1. Scope and result
 
-This audit follows, in order:
+SDE-1A mapped the live ownership and call graph required before introducing a unified `StorytellerDecisionEngine` orchestration seam.
+
+The audit followed, in order:
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
@@ -17,157 +19,132 @@ This audit follows, in order:
 5. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`;
 6. live `main` at the baseline above.
 
-SDE-1A maps the real ownership and fanout before introducing `StorytellerDecisionEngine`.
+The audit did not reopen completed FN-BUNDLE candidate-space/setup-pair ownership work, did not introduce a second rules/state/world-solver authority, and did not cut production callers over.
 
-This audit does **not**:
-
-- reopen completed FN-BUNDLE candidate-space/setup-pair audits;
-- introduce a second rules engine, state model, or possible-world solver;
-- perform a production caller cutover;
-- implement Drunk / Spy-Recluse policy / Poisoner replanning from SDE-2;
-- delete `ConsequenceEvaluator` before its callers are migrated;
-- change runtime semantics.
-
-## 2. Current live topology
-
-The current production/experiment topology is not one recommendation pipeline. It is a set of authorities plus migration-era orchestration spread across `rules`, `recommendation`, `epistemic`, `session`, `flow`, and `UI`.
+The architectural conclusion is stable:
 
 ```text
-ClocktowerGameSession
-    canonical GameState + revisions + durable semantic history
-        |
-        +--> flow planner/projector
-        |       interaction ordering only
-        |
-        +--> UI / host screen                            [legacy fanout hotspot]
-                |
-                +--> ClocktowerRecommendationCoordinator
-                |       |
-                |       +--> SetupRecommendationModule
-                |       +--> NightRecommendationModule
-                |       |       +--> DynamicCandidateGenerator
-                |       |       |       +--> ConsequenceEvaluator   [legacy heuristic]
-                |       |       +--> RegistrationPolicy
-                |       |               +--> TroubleBrewingRegistrationDomain [legal authority]
-                |       |               +--> ConsequenceEvaluator   [legacy heuristic]
-                |       |       +--> DynamicCandidateGenerator.select
-                |       +--> DayRecommendationModule
-                |       +--> InMemoryDecisionEventStore
-                |
-                +--> FirstNightInformationMigration
-                +--> structured information / registration / effective-state UI adapters
-
-rules-owned / canonical legal producers
-    +--> NaturalPairInformationCandidateGenerator
-    +--> FirstNightNumericInformationSemantics / FixedInformationEvaluator
-    +--> SetupCandidateGenerator
-    +--> TroubleBrewingRegistrationDomain
-    +--> registration legality / interaction semantics
-
-legal information/effects
-    +--> TroubleBrewingFirstNightInformationPropositionMaterializer
-    +--> structured numeric/boolean observation adapters
-    +--> EpistemicObservation materialization
-            |
-            +--> ExactHistoricalHypotheticalObservationBundleEvaluator
-                    BEFORE / AFTER exact worlds
-                    structural diagnostics
-
-SDE-0 experiment path
-    TroubleBrewingFirstNightHealthyBundleHarness
-        canonical candidate producers
-        -> PUBLIC_GOOD_INFO projection
-        -> ExactHistoricalHypotheticalObservationBundleEvaluator
-        -> structural / leave-one-out diagnostics
+canonical session state / effective-state authority
+        ↓
+rules-owned legal candidates
+        ↓
+typed proposition / hypothetical observation adapter
+        ↓
+existing exact epistemic evaluator
+        ↓
+exact structural consequence diagnostics
+        ↓
+Storyteller policy boundary
+        ↓
+selection only where that surface owns selection
+        ↓
+existing confirmation / session commit authority
 ```
 
-The target SDE seam belongs **between legal candidate/effect production and session commit**, while consuming the epistemic evaluator as an authority rather than absorbing it.
+`StorytellerDecisionEngine` belongs between legal candidate/effect production and confirmation/commit. It must compose existing authorities rather than absorb them.
 
-## 3. Ownership classification
+## 2. Canonical ownership map
 
-Classification values are the SDE-1 handoff values.
+| Node / symbol | Classification | SDE conclusion |
+| --- | --- | --- |
+| `ClocktowerGameSession` / `ClocktowerSessionState` | **REUSE AS AUTHORITY** | Only canonical actual-state/revision/history writer. SDE reads/projects it and never becomes a second state owner. |
+| `ClocktowerGameSession.toGameSnapshot(...)` | **REUSE AS AUTHORITY** | Preferred revision-bound bridge into exact epistemic evaluation. |
+| `InformationDecisionRevision` / `InformationDecisionSnapshot` | **REUSE AS AUTHORITY** | Reuse session `gameStateRevision` + `playerInputRevision`; no new revision counter. |
+| `InformationDecisionContext` | **REUSE AS AUTHORITY** | Existing revision-bound confirmation/freshness seam. SDE must not bypass it. |
+| `DecisionEventStore` / `DecisionRevision` | **REUSE AS AUTHORITY, CLEANUP LATER** | Useful event semantics, but current coordinator ownership is migration-era; do not clone history. |
+| `NaturalPairInformationCandidateGenerator` | **REUSE AS AUTHORITY** | Pair-information legality/domain remains rules-owned. |
+| `FirstNightNumericInformationSemantics` / fixed rules evaluators | **REUSE AS AUTHORITY** | Healthy numeric truth/mechanics remain rules-owned. |
+| `SetupCandidateGenerator` | **REUSE AS AUTHORITY** | Setup legal candidates remain producer-owned. |
+| `TroubleBrewingRegistrationDomain` | **REUSE AS AUTHORITY** | Single TB Spy/Recluse registration-legality owner. |
+| `TroubleBrewingFirstNightInformationPropositionMaterializer` | **ADAPT INTO SDE SEAM** | Thin legal-effect -> semantic proposition adapter; not legality/policy authority. |
+| structured numeric/boolean information adapters | **ADAPT INTO SDE SEAM** | Preserve candidate IDs, typed observations and confirmation semantics; move strategic evaluation outside UI fanout. |
+| `ExactHistoricalHypotheticalObservationBundleEvaluator` | **REUSE AS AUTHORITY** | Narrow exact consequence authority. Do not add a recommendation-owned solver. |
+| `TroubleBrewingFirstNightHealthyBundleHarness` | **OUT OF SCOPE FOR PRODUCTION; REUSE AS EVIDENCE** | SDE-0 experiment/calibration harness, not runtime orchestration owner. |
+| `DynamicCandidateGenerator.generate*` | **ADAPT INTO SDE SEAM** | Useful typed candidate/effect construction but currently mixes in legacy consequence scoring when state is supplied. |
+| `DynamicCandidateGenerator.select` | **LEGACY CALLER TO MIGRATE LATER** | Preserve impaired-family budget/selection until policy cutover. |
+| `ImpairedInformationPolicy` | **REUSE AS AUTHORITY / SDE-2 INPUT** | Keep SDE-2 uncertainty out of first seam. |
+| `RegistrationPolicy` | **ADAPT INTO SDE SEAM** | Keep registration legality in domain; replace only downstream recommendation scoring later. |
+| `SetupRecommendationModule` / `NightRecommendationModule` / `DayRecommendationModule` | **LEGACY CALLER TO MIGRATE LATER** | Routing layers, not durable ownership. |
+| `ClocktowerRecommendationCoordinator` | **LEGACY CALLER TO MIGRATE LATER** | Current broad fanout facade is too mixed to become final SDE unchanged. |
+| `ConsequenceEvaluator` | **DUPLICATE / RETIRE AFTER CUTOVER** | Migration-era heuristic scorer; no new SDE policy belongs here. |
+| `DynamicGameState` | **ADAPT INTO SDE SEAM** | Mixed mechanical + heuristic read model; never promote wholesale to canonical `DecisionContext`. |
+| `FirstNightInformationMigration` | **LEGACY CALLER TO MIGRATE LATER** | Useful lifecycle lessons only; not a future shadow state owner. |
+| `TroubleBrewingFirstNightPrecomputeCoordinator` | **OUT OF SCOPE** | Cache/prewarm scheduling only. |
+| `ClocktowerProductionFirstNightFlow` / planner / projector | **REUSE AS AUTHORITY** | Flow owns ordering; SDE resolves one interaction. |
+| `ClocktowerJudgeScreen` / host UI | **LEGACY CALLER TO MIGRATE LATER** | Primary production orchestration fanout hotspot; eventually caller-only. |
 
-| Node / symbol | Current responsibility | Classification | SDE-1A conclusion |
-| --- | --- | --- | --- |
-| `ClocktowerGameSession` / `ClocktowerSessionState` | canonical `GameState`, revisions, histories, timeline and durable observation commit | **REUSE AS AUTHORITY** | SDE must read/project this state; it must never become a second writer. |
-| `ClocktowerGameSession.toGameSnapshot(...)` | revision-bound epistemic snapshot projection | **REUSE AS AUTHORITY** | Preferred bridge from canonical session state to exact epistemic evaluation when a validated ruleset is available. |
-| `InformationDecisionRevision` / `InformationDecisionSnapshot` | freshness and immutable candidate-space identity for information confirmation | **REUSE AS AUTHORITY** | Reuse the session revision values; do not create another revision counter. |
-| `InformationDecisionContext` | shared validation/confirmation boundary for recommended vs structured-manual information choices | **REUSE AS AUTHORITY** | Strong existing confirmation seam. SDE should produce/consume its legal candidate IDs rather than bypass it. |
-| `DecisionEventStore` / `DecisionRevision` | atomic event append, idempotency, status/correction archive | **REUSE AS AUTHORITY** with ownership cleanup later | Event semantics are useful, but the store is currently embedded in `ClocktowerRecommendationCoordinator`; SDE must not clone this history. |
-| `NaturalPairInformationCandidateGenerator` | canonical typed pair-information domain | **REUSE AS AUTHORITY** | Keep legality here; SDE consumes candidates only. |
-| `FirstNightNumericInformationSemantics` / fixed rules evaluators | healthy numeric truth and mechanical information semantics | **REUSE AS AUTHORITY** | Rules-owned truth remains outside SDE. |
-| `SetupCandidateGenerator` | typed setup-level legal candidate producers such as Red Herring / Demon bluffs | **REUSE AS AUTHORITY** | Setup legality remains producer-owned. |
-| `TroubleBrewingRegistrationDomain` | Spy/Recluse legal registration candidates and typed registration facts | **REUSE AS AUTHORITY** | This is the single TB legality owner. SDE must not regenerate special-registration legality. |
-| `TroubleBrewingFirstNightInformationPropositionMaterializer` | already-legal TB first-night information -> `InformationProposition` | **ADAPT INTO SDE SEAM** | Useful semantic adapter; it is not legality or policy authority and is currently first-night/TB-specific. |
-| structured numeric/boolean information adapters | typed production observation draft + `InformationDecisionContext` construction | **ADAPT INTO SDE SEAM** | Existing production seam is useful; keep legal candidate IDs and confirmation semantics, move strategic evaluation outside UI/coordinator fanout. |
-| `ExactHistoricalHypotheticalObservationBundleEvaluator` | exact mutation-free hypothetical consequence evaluation and structural diagnostics | **REUSE AS AUTHORITY** | This is the narrow exact consequence authority. Do not add a recommendation-owned world solver. |
-| `TroubleBrewingFirstNightHealthyBundleHarness` | SDE-0 experimental composition, public projection, exact diagnostic queries, leave-one-out evidence | **OUT OF SCOPE** for production ownership; **REUSE AS EVIDENCE** | Preserve as calibration/contract evidence. Do not make the experiment harness the production engine. |
-| `DynamicCandidateGenerator.generate*` | typed dynamic candidate/evaluation construction; currently also invokes legacy consequence heuristic when state is supplied | **ADAPT INTO SDE SEAM** | Split candidate/effect production from legacy consequence scoring during later migration. Do not treat current evaluation score as exact strategic consequence. |
-| `DynamicCandidateGenerator.select` | impaired-information family budget + weighted stable selection | **LEGACY CALLER TO MIGRATE LATER** | Preserve behavior until SDE policy/selection cutover. Family legality/budget semantics may remain reusable independently. |
-| `ImpairedInformationPolicy` | impaired truthful-vs-false semantic family budget | **REUSE AS AUTHORITY / SDE-2 INPUT** | Do not pull SDE-2 uncertainty into the first SDE-1 slice. |
-| `RegistrationPolicy` | adapts legal registration candidates into recommendation candidates, then applies legacy scoring/selection | **ADAPT INTO SDE SEAM** | Keep the rules-owned legal domain; migrate recommendation scoring/policy later. |
-| `SetupRecommendationModule`, `NightRecommendationModule`, `DayRecommendationModule` | thin coordinator adapters | **LEGACY CALLER TO MIGRATE LATER** | They are routing layers, not durable ownership. New SDE should not simply wrap them wholesale. |
-| `ClocktowerRecommendationCoordinator` | broad setup/night/day/history/selection/event-store facade | **LEGACY CALLER TO MIGRATE LATER** | Current fanout aggregation point, but too broad/mixed to become the final SDE authority unchanged. |
-| `ConsequenceEvaluator` | soft heuristic scoring/quality-tier mutation of already-legal dynamic/registration candidates | **DUPLICATE / RETIRE AFTER CUTOVER** | No new policy here. Exact structural diagnostics + Storyteller policy are the replacement route. |
-| `DynamicGameState` | post-setup recommendation read model mixing mechanical state and heuristic state | **ADAPT INTO SDE SEAM** | Do not promote the entire type to canonical SDE context; extract genuine interaction facts from session/effective-state authority. |
-| `FirstNightInformationMigration` | migration parity/publication lifecycle and displayed-observation tracking | **LEGACY CALLER TO MIGRATE LATER** | Contains useful planned/displayed lifecycle lessons, but it is a migration object and must not become a shadow game-state owner. |
-| `TroubleBrewingFirstNightPrecomputeCoordinator` | exact-input prewarm/cache lifecycle only | **OUT OF SCOPE** | Scheduling/cache concern; SDE semantics should be independent of precompute policy. |
-| `ClocktowerProductionFirstNightFlow` / planner / projector | canonical interaction ordering/projection | **REUSE AS AUTHORITY** | SDE resolves an interaction; flow decides when that interaction occurs. |
-| `ClocktowerJudgeScreen` / host UI | currently constructs dynamic state, invokes coordinator, converts recommendations to display options, holds migration/registration transient state | **LEGACY CALLER TO MIGRATE LATER** | Major orchestration fanout hotspot. UI must eventually consume typed results rather than assemble Storyteller policy inputs itself. |
+## 3. Canonical state, revisions and durable commit
 
-## 4. Real fanout findings
+`ClocktowerGameSession` already owns:
 
-### 4.1 Canonical state and freshness
-
-`ClocktowerGameSession` is the only acceptable canonical actual-state owner.
-
-Its state already contains:
-
-- `GameState`;
+- canonical `GameState`;
 - `gameStateRevision`;
 - `playerInputRevision`;
 - decision/cross-game history;
 - action timeline;
 - epistemic observation log;
-- semantic-history mode and global timeline cursor.
+- semantic-history mode / global timeline cursor.
 
-`toGameSnapshot(rulesetRef)` already projects the revision-bound state needed by the epistemic subsystem.
+Therefore future `DecisionContext` is a read-only interaction projection/reference, not another persistent state aggregate.
 
-Therefore the SDE `DecisionContext` should be a **read-only interaction projection/reference**, not a new persistent `GameState` aggregate.
+The structured information production chain already provides the required confirmation/commit boundary:
 
-`InformationDecisionRevision(gameStateRevision, playerInputRevision)` and `DecisionRevision` duplicate the two numbers as narrow validation values, but neither should own revision advancement. The values must come from the live session.
+```text
+ClocktowerStructuredInformationPreparation
+→ StructuredNumericInformationAdapter
+→ ClocktowerRecommendationCoordinator.resolveNumberInformation
+→ DynamicCandidateGenerator.generateNumeric
+→ ClocktowerRecommendationCoordinator.informationDecisionContext
+→ StructuredNumberInformationUiModel
+→ InformationDecisionContext.confirm(currentRevision)
+→ ClocktowerHostScreen.recordReliablePrivateInformation
+→ onRecordEpistemicObservation(confirmation.draft)
+→ CampBoardGameHostApp.recordEpistemicObservation
+→ ClocktowerGameSession.commitGlobalEpistemicObservation
+```
 
-### 4.2 Legal candidate production
+SDE must sit before confirmation/commit and return typed evaluation/recommendation results. It must never write semantic history directly.
 
-Already-typed producers exist and should remain authoritative where they are rules-complete:
+`LEGACY_LOCAL` remains compatibility only and is not justification for another commit owner.
+
+## 4. Legal candidate and registration ownership
+
+Existing typed legal producers are sufficient to preserve rules ownership:
 
 - pair information: `NaturalPairInformationCandidateGenerator`;
-- first-night healthy numeric information: `FirstNightNumericInformationSemantics` / fixed rules evaluators;
-- setup decisions: `SetupCandidateGenerator`;
-- special registration: `TroubleBrewingRegistrationDomain`;
-- dynamic information: `DynamicCandidateGenerator.generateNumeric/generateCategorical/generatePairInformation` provides a useful typed transport, but currently mixes construction with `ConsequenceEvaluator` when `DynamicGenerationContext.state` is present.
+- healthy first-night numeric truth: `FirstNightNumericInformationSemantics` / fixed rules evaluators;
+- setup choices: `SetupCandidateGenerator`;
+- special registration: `TroubleBrewingRegistrationDomain`.
 
-The SDE seam should consume typed legal candidates/effects. It must not reconstruct role rules from UI display choices.
+Registration is explicitly split:
 
-### 4.3 Proposition / observation construction
+```text
+TroubleBrewingRegistrationDomain
+    legal actual/special registration candidates
+    typed RegistrationFact projection
 
-`TroubleBrewingFirstNightInformationPropositionMaterializer` is already deliberately thin: it converts an already-legal `EffectDraft.PlayerInformation` to `InformationProposition` and delegates mechanical structure such as Empath living neighbours to rules code.
+RegistrationPolicy
+    recommendation adaptation
+    style/discussion/pressure/history/balance heuristics
+    ConsequenceEvaluator
+    selection
+```
 
-The structured numeric/boolean production adapters follow the same useful direction: they materialize typed `InformationProposition` + `EpistemicObservationDraft` while `InformationDecisionContext` owns candidate identity/freshness validation.
+A later SDE migration therefore consumes the legal domain and replaces downstream policy; it does not rewrite Spy/Recluse legality.
 
-This is the right direction for an SDE adapter layer:
+## 5. Semantic adapter and exact consequence authority
+
+The desired adapter shape already exists in pieces:
 
 ```text
 legal typed effect
--> semantic proposition / observation
--> exact evaluator query
+→ InformationProposition / EpistemicObservation
+→ ExactHistoricalHypotheticalObservationBundleEvaluator
 ```
 
-The adapter may need a more general interaction-aware shape later, but SDE-1 should not duplicate existing materializers just to change package names.
+`TroubleBrewingFirstNightInformationPropositionMaterializer` is deliberately thin and delegates mechanics back to rules code. Structured numeric/boolean adapters likewise create typed propositions and observation drafts.
 
-### 4.4 Narrow exact evaluator API
-
-The narrowest existing exact API suitable for SDE orchestration is:
+The narrow exact API is:
 
 ```text
 ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
@@ -177,271 +154,189 @@ ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
 )
 ```
 
-It returns either capability deferral or exact per-query diagnostics with:
+It already returns exact BEFORE/AFTER world cardinality and structural diagnostics including:
 
-- exact BEFORE world cardinality;
-- exact AFTER world cardinality;
 - possible Demon seats;
 - distinct evil-team seat configurations;
 - forced-good seats;
 - forced-evil seats;
 - evil-cover seats.
 
-Those diagnostics already carry the primary SDE-0 structural evidence. Leave-one-out / recovery evidence is a **query-composition concern**, demonstrated by the healthy bundle harness; it does not require another solver.
+Leave-one-out / recovery is query composition, already proven by the SDE-0 healthy bundle harness. No second solver is needed.
 
-### 4.5 First-night bundle fanout
+## 6. Completed production fanout inventory
 
-The SDE-0 healthy harness is a valuable reference implementation of the intended authority chain:
+### 6.1 `DynamicGameState`
 
-```text
-canonical candidate producers
--> proposition/public-observation materialization
--> exact hypothetical bundle evaluator
--> structural diagnostics
-```
+The production construction hotspot is `ClocktowerJudgeScreen`. The UI currently assembles the migration-era dynamic read model and then invokes recommendation families through `ClocktowerRecommendationCoordinator`.
 
-However it is explicitly a bounded experiment with staged exclusions and corpus concerns. It should remain calibration/evidence infrastructure, not become the runtime orchestration owner.
+This confirms the architectural smell is orchestration fanout in the host layer, not missing rules ownership.
 
-Production first-night information still has separate UI/migration/precompute paths. SDE-1 must bridge these gradually rather than replacing the healthy harness with a new production bundle engine.
+`MayorRedirectRecommender` and `DemonSuccessorRecommender` consume heuristic `DynamicGameState` fields such as public-balance, information-pressure and evil-advantage summaries. They are later caller-migration targets, not the first exact-information seam.
 
-### 4.6 Dynamic recommendation fanout
+### 6.2 `DynamicCandidateGenerator.generate*`
 
-Current dynamic fanout is predominantly:
+Production dynamic information routes through the coordinator/night-module path. Structured numeric Foundation also uses `DynamicCandidateGenerator.generateNumeric`, but its adapter constructs `DynamicGenerationContext` without `state`.
 
-```text
-ClocktowerJudgeScreen
--> ClocktowerRecommendationCoordinator
--> Night/DayRecommendationModule
--> DynamicCandidateGenerator / RegistrationPolicy / MayorRedirectRecommender / DemonSuccessorRecommender
-```
+That negative finding matters: the structured numeric path does **not** currently invoke legacy `ConsequenceEvaluator`, making it a clean low-coupling seam proof.
 
-The host screen also builds `DynamicGameState` itself and converts recommendation records into display options.
+### 6.3 `ConsequenceEvaluator` production callers
 
-This is the principal production seam smell: **UI is supplying policy-era state and invoking multiple recommendation families directly**.
-
-SDE-1 should eventually replace this with one typed interaction request/context boundary, but the first SDE-1 slice must not globally cut these callers over.
-
-`MayorRedirectRecommender` and `DemonSuccessorRecommender` also consume heuristic fields from `DynamicGameState` directly (`publicBalanceHint`, player information pressure, `evilAdvantage`). They therefore belong to later caller migration rather than the first exact-information seam.
-
-### 4.7 `ConsequenceEvaluator` callers and input split
-
-Two production call paths are now confirmed in the inspected main sources:
+The source-wide audit identified three production caller families:
 
 ```text
-DynamicCandidateGenerator.evaluation(...)
-    when DynamicGenerationContext.state != null
-    -> ConsequenceEvaluator.evaluate(...)
+1. DynamicCandidateGenerator.evaluation(...)
+   when DynamicGenerationContext.state != null
+   → ConsequenceEvaluator.evaluate(...)
 
-RegistrationPolicy.generateCandidates(...)
-    legal resolution from TroubleBrewingRegistrationDomain
-    -> legacy registration scoring
-    -> ConsequenceEvaluator.evaluate(...)
+2. RegistrationPolicy.generateCandidates(...)
+   legal TroubleBrewingRegistrationDomain candidates
+   → legacy registration scoring
+   → ConsequenceEvaluator.evaluate(...)
+
+3. DayRecommendationModule malfunction path
+   → ConsequenceEvaluator.evaluate(...)
 ```
 
-A useful negative finding is the current structured numeric Foundation route: `StructuredNumericInformationAdapter` creates `DynamicGenerationContext` **without a `state`**, so that production candidate-generation path does not invoke `ConsequenceEvaluator` today. This makes it a low-coupling candidate for the first SDE seam proof.
+Retirement therefore cannot be accomplished by migrating only dynamic information or only registration. All three obligations must be covered before deletion.
 
-`ConsequenceEvaluator` consumes these signals:
+Genuine future context inputs include canonical/effective game state, phase/round, ability/recipient/target identity, effective reliability, typed one-shot metadata, player-selected-target provenance and profile/style input.
 
-| Signal | Audit interpretation |
-| --- | --- |
-| canonical/effective `GameState` / alive state | **genuine context input**, but source it from session/effective-state projection |
-| phase / round | **genuine context input** for future pacing; already represented elsewhere even though the evaluator uses only state-derived final-day logic today |
-| ability/recipient/target seats | **genuine interaction identity/input** |
-| reliability / effective ability state | **genuine rules/effective-state input** |
-| `isOneShotAbility` | **genuine ability property**; should come from typed rules metadata/context, not heuristic inference |
-| `playerSelectedTarget` | **genuine interaction provenance** when mechanically relevant to policy explanation |
-| Storyteller/table profile (`style`) | **policy input**, not mechanical state |
-| `alignmentImpact` | **heuristic conclusion/tuning input**; do not copy into the canonical DecisionContext without a separately justified contract |
-| `evilAdvantage` | **legacy heuristic conclusion** targeted for retirement/redefinition |
-| `PublicBalanceHint` | **legacy heuristic summary**; not canonical mechanical truth |
-| `playerInformationPressureBySeat` | **legacy heuristic state** unless a narrower descriptive telemetry use is independently justified |
-| `MisinformationLedger` high/consecutive false counts | **legacy policy-history heuristic**; committed semantic history should be the source of truth for new exact policy inputs |
-| registration ledger | potentially **genuine interaction history**, but must be derived/owned by canonical semantic history/rules rather than copied as a second authoritative ledger |
+Do **not** promote legacy heuristic conclusions wholesale into `DecisionContext`, including:
 
-No new SDE policy should be added to `ConsequenceEvaluator`.
+- `alignmentImpact`;
+- `evilAdvantage`;
+- `PublicBalanceHint`;
+- `playerInformationPressureBySeat`;
+- `MisinformationLedger` counters;
+- duplicated registration history that can instead be derived from canonical semantic history/rules.
 
-### 4.8 Production information confirmation -> durable commit handoff
+## 7. Production first-night versus SDE-0 harness
 
-The current structured numeric information path already gives SDE-1 a clean confirmation boundary:
+The production first-night path and SDE-0 experiment harness are separate owners:
 
 ```text
-ClocktowerStructuredInformationPreparation
--> StructuredNumericInformationAdapter
--> ClocktowerRecommendationCoordinator.resolveNumberInformation
--> DynamicCandidateGenerator.generateNumeric
--> ClocktowerRecommendationCoordinator.informationDecisionContext
--> StructuredNumberInformationUiModel
--> InformationDecisionContext.confirm(currentRevision)
--> ClocktowerHostScreen.recordReliablePrivateInformation
--> onRecordEpistemicObservation(confirmation.draft)
--> CampBoardGameHostApp.recordEpistemicObservation
--> ClocktowerGameSession.commitGlobalEpistemicObservation   [GLOBAL_V1]
+production
+    ClocktowerProductionFirstNightFlow
+    ClocktowerFirstNightInformationRequest / structured adapters
+    FirstNightInformationMigration
+    TroubleBrewingFirstNightPrecomputeCoordinator
+
+experiment / evidence
+    TroubleBrewingFirstNightHealthyBundleHarness
+        canonical candidate producers
+        → PUBLIC_GOOD_INFO projection
+        → ExactHistoricalHypotheticalObservationBundleEvaluator
+        → structural / leave-one-out diagnostics
 ```
 
-The important ownership result is that `InformationDecisionContext` confirms a typed, revision-bound observation draft, while `ClocktowerGameSession` remains the durable commit authority. The future SDE should fit before confirmation/commit and return typed evaluation/recommendation data; it should not write semantic history itself.
+The harness remains calibration/contract evidence only. The first SDE seam must not accidentally cut production over to the experiment harness.
 
-`LEGACY_LOCAL` remains a compatibility path. SDE-1 must not use that compatibility path as a reason to create a new commit owner.
+## 8. Lifecycle ownership
 
-### 4.9 Registration legality versus recommendation scoring
-
-The registration split is already explicit enough to preserve:
-
-```text
-TroubleBrewingRegistrationDomain
-    owns Spy/Recluse special-registration legality
-    owns actual + special typed candidate normalization
-    owns typed RegistrationFact projection
-
-RegistrationPolicy
-    adapts legal domain candidates into DecisionCandidate
-    applies style/discussion/pressure/history/balance heuristics
-    invokes ConsequenceEvaluator
-    selects a recommendation
-```
-
-Therefore registration is not a candidate-generation rewrite target. A later SDE migration should consume `TroubleBrewingRegistrationResolution.candidates` (or an equivalent typed adapter output) and replace only the recommendation-policy layer.
-
-## 5. Lifecycle ownership
-
-SDE-1 needs lifecycle metadata, but it must not shadow session state.
-
-Recommended ownership:
+SDE-1 requires lifecycle metadata without shadowing session state:
 
 ```text
 PERSISTENT
-    reference to setup/session-owned durable commitments
-    examples: Red Herring, Demon bluffs, durable shown-role commitments where applicable
+    references to setup/session-owned durable commitments
 
 COMMITTED
-    session-owned durable event / action / observation history
-    immutable input to subsequent SDE decisions
+    session-owned durable event/action/observation history
 
 PLANNED / UNCOMMITTED
     orchestration-local recommendation identity + source revision
-    disposable; never a second game fact
+    disposable and never a second game fact
 ```
 
-A planned recommendation should therefore minimally carry:
+A planned record should carry only stable decision/interaction identity, source revisions, candidate-space/snapshot identity where needed, and lifecycle kind. It should not carry a mutable copy of canonical state.
 
-- stable interaction/decision identity;
-- source `gameStateRevision` + `playerInputRevision`;
-- candidate-space/snapshot identity where confirmation needs it;
-- lifecycle kind (`PLANNED`, with persistent intent represented separately if required);
-- no mutable copy of canonical game state.
+## 9. Final SDE-1A boundary
 
-On confirmation, existing session validation/commit ownership remains authoritative. SDE should return a typed result/proposal, not mutate the game directly.
-
-## 6. Decisions still requiring legacy adaptation
-
-The host UI currently contains several display-oriented/manual domains that are not yet one canonical SDE request shape:
-
-- number options built from `UnreliableNumberContext`;
-- categorical yes/no or role-name options;
-- registration display options assembled from `SpecialRegistrationContext`;
-- Mayor redirect and Demon successor recommendation display mapping;
-- first-night migration objects converting typed observations into legacy reveal behavior.
-
-These should be migrated by adapting **typed legal options to SDE requests**, not by teaching SDE to parse localized labels or `ClocktowerDisplayOption`.
-
-## 7. Smallest first vertical slice
-
-The smallest seam-proving slice should be **non-production-authoritative typed information consequence orchestration**, not a full first-night bundle selector and not a Mayor/registration cutover.
-
-Proposed bounded proof:
+The first durable orchestration shape is now sufficiently constrained:
 
 ```text
-existing typed legal healthy information candidate/effect
--> existing proposition/observation adapter
--> ExactHistoricalHypotheticalObservationBundleEvaluator
--> typed CandidateConsequence carrying exact structural diagnostics
--> thin policy-result classification shell
-```
-
-The structured numeric Foundation path is especially suitable because it already has stable candidate IDs, revision validation, typed observation materialization, and a durable session commit handoff, while its current `DynamicGenerationContext` does not supply `state` and therefore does not invoke the legacy `ConsequenceEvaluator`.
-
-Constraints for the slice:
-
-- use a healthy, already-supported information surface so no Drunk/Spy/Recluse/Poisoner uncertainty is added;
-- no global selection cutover;
-- no UI changes required to prove the seam;
-- compare the SDE-produced exact diagnostics against the existing SDE-0 exact path for the same hypothetical observations;
-- keep `InformationDecisionContext` as the later confirmation/freshness boundary rather than inventing a replacement.
-
-This proves the architectural seam that matters:
-
-```text
-legal candidate
--> exact consequence
--> policy boundary
-```
-
-without prematurely solving lifecycle invalidation or replacing production recommendation routing.
-
-## 8. Provisional SDE boundary after audit
-
-Do **not** freeze names yet, but the narrow boundary now appears to be:
-
-```text
-StorytellerDecisionEngine
-    evaluate(request, context)
+StorytellerDecisionEngine.evaluate(request, context)
 
 DecisionContext
-    session snapshot/reference
+    revision-bound session snapshot/reference
     gameStateRevision / playerInputRevision
     phase / round / interaction identity
-    validated ruleset / semantic history references
+    validated ruleset / semantic-history references
     profile input
-    lifecycle references (not copied state)
+    lifecycle references, not copied state
 
 DecisionRequest
-    typed legal candidates or a typed provider owned by the relevant rules/candidate domain
+    typed legal candidates or typed legal provider
     proposition/observation materializer
 
 CandidateConsequence
     candidate identity
     exact bundle diagnostics
-    optional composed/leave-one-out diagnostics when requested
+    optional composed / leave-one-out diagnostics
 
 StorytellerPolicyResult
-    ACCEPTABLE / BAD_TOO_STRONG / BAD_TOO_WEAK / UNCERTAIN
-    selected candidate only when the policy surface actually owns selection
+    ACCEPTABLE | BAD_TOO_STRONG | BAD_TOO_WEAK | UNCERTAIN
+    selected candidate only when the policy surface owns selection
     reason/provenance diagnostics
 ```
 
-Important: a first seam can expose evaluation without selection. Selection authority should only move when policy gates have durable evidence.
+Names remain implementation details until SDE-1B tests pin the smallest useful contract.
 
-The provisional package owner for this boundary is `clocktower/recommendation` (prefer a dedicated `sde` subpackage when the first types are added), not `session`, `ui`, or `epistemic`. `session` remains state/commit authority; `epistemic` remains exact-evaluation authority.
+Package ownership should be under `clocktower/recommendation` with a dedicated `sde` subpackage. `session` remains state/commit authority and `epistemic` remains exact-evaluation authority.
 
-## 9. Architectural decisions from SDE-1A so far
+## 10. First implementation slice chosen by the audit
 
-1. **Canonical actual state:** `ClocktowerGameSession.state`; use `toGameSnapshot(...)` for exact epistemic projection.
-2. **Freshness:** session `gameStateRevision` + `playerInputRevision`; reuse `InformationDecisionRevision`/snapshot semantics where information confirmation needs them.
-3. **Legal outcomes:** keep existing typed rules/candidate producers; do not regenerate legality in SDE.
-4. **Registration legality:** `TroubleBrewingRegistrationDomain` remains the legal owner; migrate only downstream recommendation policy.
-5. **Exact consequence:** reuse `ExactHistoricalHypotheticalObservationBundleEvaluator`.
-6. **Structural evidence:** current exact world-structure diagnostics are sufficient for the SDE-0 primary topology dimensions.
-7. **Lifecycle:** planned state is ephemeral; persistent/committed truth remains session-owned.
-8. **Confirmation/commit:** `InformationDecisionContext` remains the revision-bound confirmation seam; `ClocktowerGameSession` remains the durable observation writer.
-9. **Flow:** ordering stays in `flow`; SDE resolves decisions but does not decide when interactions occur.
-10. **UI:** current host screen is a migration caller, not an orchestration authority.
-11. **Legacy heuristic:** `ConsequenceEvaluator` is not part of the target architecture; confirmed callers include dynamic candidate evaluation and registration candidate evaluation.
-12. **First vertical slice:** typed healthy information candidate -> exact diagnostics -> thin policy boundary, with no production cutover.
-13. **Package ownership:** target orchestration belongs under recommendation/SDE, while session and epistemic retain their existing authorities.
+The first seam proof is a **healthy structured-information exact-consequence evaluation**, with structured numeric as the preferred initial fixture.
 
-## 10. Remaining SDE-1A audit before implementation
+Why this slice:
 
-Before adding the first orchestration types, finish these narrow checks on the branch:
+- already-typed legal candidates;
+- stable candidate IDs;
+- revision validation through `InformationDecisionContext`;
+- typed observation materialization;
+- durable session commit handoff already exists;
+- existing exact evaluator can consume the same hypothetical observation;
+- current structured numeric path does not invoke legacy `ConsequenceEvaluator`;
+- no Drunk / Spy / Recluse / Poisoner uncertainty required;
+- no UI or production selection cutover required.
 
-- enumerate every production call site that constructs `DynamicGameState` and every call path into `DynamicCandidateGenerator.generate*`; the host UI is the confirmed primary fanout hotspot, but the full source-level inventory should be recorded before caller migration;
-- complete a source-wide `ConsequenceEvaluator` reference check beyond the two confirmed production paths (`DynamicCandidateGenerator.evaluation` and `RegistrationPolicy.generateCandidates`);
-- enumerate first-night setup/bundle production callers versus experiment-only callers to avoid accidental SDE-0 harness cutover;
-- confirm the first seam test fixture against one existing healthy structured-information interaction and its exact SDE-0-equivalent hypothetical observation.
+Required proof:
 
-Completed during this audit pass:
+```text
+existing healthy legal candidate/effect
+→ SDE request/context
+→ existing semantic observation adapter
+→ ExactHistoricalHypotheticalObservationBundleEvaluator
+→ typed CandidateConsequence
+```
 
-- mapped `InformationDecisionContext` confirmation to `ClocktowerGameSession.commitGlobalEpistemicObservation` through the production host/app callback chain;
-- separated registration legal-option ownership (`TroubleBrewingRegistrationDomain`) from registration recommendation scoring (`RegistrationPolicy`);
-- identified a low-coupling structured numeric production path that currently bypasses `ConsequenceEvaluator` because no dynamic `state` is supplied;
-- narrowed the provisional package owner to recommendation/SDE without moving session or epistemic ownership.
+The focused test should compare the SDE consequence output with the same exact hypothetical observation evaluated directly through the existing exact authority. This is an orchestration differential test, not a new oracle.
 
-No runtime change should begin until the remaining fanout checks are recorded here or in a follow-up SDE-1A commit.
+## 11. SDE-1A completion decisions
+
+1. `ClocktowerGameSession` remains the only canonical actual-state and durable semantic-history owner.
+2. Session revisions remain the only freshness source.
+3. Rules/candidate domains remain legal-outcome owners.
+4. `TroubleBrewingRegistrationDomain` remains registration-legality owner.
+5. `ExactHistoricalHypotheticalObservationBundleEvaluator` remains exact consequence authority.
+6. SDE-0 healthy bundle harness remains experiment/evidence infrastructure, not runtime owner.
+7. Flow remains interaction-ordering owner.
+8. `InformationDecisionContext` remains confirmation/freshness owner for structured information.
+9. Host UI/coordinator modules are migration callers, not target authorities.
+10. `ConsequenceEvaluator` is targeted for retirement only after all three production caller families are migrated.
+11. The first SDE seam is evaluation-only; selection authority does not move prematurely.
+12. The first seam uses a healthy structured-information fixture and performs no production cutover.
+13. SDE orchestration belongs under recommendation/SDE; session and epistemic ownership stay unchanged.
+
+## 12. Validation and closeout
+
+SDE-1A was documentation/audit-only. No runtime semantics changed and no Gradle/runtime suite was required for the audit commits under the testing strategy.
+
+The next executable work is **SDE-1B / SDE-1C**:
+
+1. add the smallest typed orchestration contracts;
+2. add a focused exact-consequence orchestration differential test;
+3. implement the bounded healthy structured-information evaluation seam;
+4. do not change UI, selection, commit ownership or production routing yet.
+
+> **SDE-1A is COMPLETE. The next task is to implement the smallest recommendation-owned exact-consequence orchestration seam over existing legal-candidate and epistemic authorities, beginning with a healthy structured-information fixture and no production cutover.**
