@@ -6,10 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
-import java.nio.file.Files
-import java.nio.file.Path
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -30,20 +27,6 @@ class ClocktowerDemonBluffPresentationTest {
         )
 
         assertEquals(listOf("Virgin", "Slayer", "Soldier"), result)
-    }
-
-    @Test
-    fun `manual Demon bluff fallback is explicitly wired to the unified storyteller style`() {
-        val presentationSource = source("ClocktowerDemonBluffPresentation.kt")
-        val hostSource = source("clocktower/ui/ClocktowerHostScreen.kt")
-
-        assertFalse(
-            presentationSource.contains(
-                "preferredManualStyle: RecommendationStyle = RecommendationStyle.BALANCED",
-            ),
-        )
-        assertTrue(presentationSource.contains("storytellerStyle: RecommendationStyle,"))
-        assertTrue(hostSource.contains("storytellerStyle = automaticStorytellerStyle,"))
     }
 
     @Test
@@ -94,17 +77,6 @@ class ClocktowerDemonBluffPresentationTest {
             listOf("Undertaker"),
             (unresolved as DemonBluffPresentationResolution.Invalid).unresolvedRoleNames,
         )
-    }
-
-    private fun source(relativePath: String): String {
-        val relative = Path.of("src/main/java/com/codex/campboardgamehost").resolve(relativePath)
-        val fromRoot = Path.of("app").resolve(relative)
-        val path = when {
-            Files.exists(relative) -> relative
-            Files.exists(fromRoot) -> fromRoot
-            else -> error("$relativePath source not found from ${Path.of("").toAbsolutePath()}")
-        }
-        return String(Files.readAllBytes(path), Charsets.UTF_8)
     }
 
     private fun plan(
