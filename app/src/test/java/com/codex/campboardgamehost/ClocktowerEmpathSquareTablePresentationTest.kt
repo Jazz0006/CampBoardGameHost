@@ -189,6 +189,32 @@ class ClocktowerEmpathSquareTablePresentationTest {
         assertEquals(emptySet<Int>(), clocktowerEmpathDisplayedContributionSeats(listOf(zero, two), "zero"))
     }
 
+    @Test
+    fun `automatic Empath keeps direct square-table result when automatic preview is unavailable`() {
+        val proposition = InformationProposition.NumericResult(
+            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+            sourceSeat = 1,
+            subjectSeats = listOf(2, 3),
+            value = 1,
+        )
+        val choices = clocktowerEmpathResultChoices(
+            step = numericStep("Empath", proposition, "1"),
+            players = listOf(
+                player(1, "Empath", Alignment.GOOD, CharacterType.TOWNSFOLK),
+                player(2, "Imp", Alignment.EVIL, CharacterType.DEMON),
+                player(3, "Washerwoman", Alignment.GOOD, CharacterType.TOWNSFOLK),
+            ),
+            automaticStorytellerInfo = true,
+            automaticDisplayOption = null,
+            resultFirstRegistrationCandidates = emptyList(),
+            structuredNumberUiModel = null,
+        )
+
+        assertEquals(1, choices.size)
+        assertEquals(ClocktowerEmpathResultSourceKind.Direct, choices.single().sourceKind)
+        assertEquals(1, choices.single().value)
+    }
+
     private fun players() = listOf(
         player(1, "Empath", Alignment.GOOD, CharacterType.TOWNSFOLK),
         player(2, "Imp", Alignment.EVIL, CharacterType.DEMON),
@@ -230,5 +256,23 @@ class ClocktowerEmpathSquareTablePresentationTest {
         ),
         spyRegistersGood = spyRegistersGood,
         recluseRegistersEvil = recluseRegistersEvil,
+    )
+
+    private fun numericStep(
+        role: String,
+        proposition: InformationProposition.NumericResult,
+        shown: String,
+    ) = ClocktowerNightStepUi(
+        title = role,
+        actor = null,
+        isRealAction = true,
+        reason = "",
+        storytellerAction = "",
+        tellPlayer = shown,
+        explanation = "",
+        displayKind = ClocktowerDisplayKind.Number,
+        displayPrimary = shown,
+        displayProposition = proposition,
+        roleEnName = role,
     )
 }
