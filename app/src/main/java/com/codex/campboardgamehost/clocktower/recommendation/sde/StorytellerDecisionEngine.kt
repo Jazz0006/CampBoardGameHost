@@ -24,15 +24,16 @@ internal data class ExactConsequenceContext(
     val playerInputRevision: Long get() = exactContext.initialSnapshot.playerInputRevision
 }
 
-/** One already-legal, already-materialized hypothetical observation candidate. */
+/** One already-legal, already-materialized hypothetical observation-bundle candidate. */
 internal data class ExactConsequenceCandidate(
     val candidateId: String,
     val recipientSeat: Int,
-    val observation: EpistemicObservation,
+    val observations: List<EpistemicObservation>,
 ) {
     init {
         require(candidateId.isNotBlank()) { "Exact-consequence candidate ID cannot be blank." }
         require(recipientSeat > 0) { "Exact-consequence candidate recipient seat must be positive." }
+        require(observations.isNotEmpty()) { "Exact-consequence candidate observations cannot be empty." }
     }
 }
 
@@ -91,7 +92,7 @@ internal object StorytellerDecisionEngine {
             ExactHypotheticalObservationBundleQuery(
                 bundleId = queryId(request.decisionId, index, candidate.candidateId),
                 recipientSeat = candidate.recipientSeat,
-                observations = listOf(candidate.observation),
+                observations = candidate.observations,
             )
         }
 
