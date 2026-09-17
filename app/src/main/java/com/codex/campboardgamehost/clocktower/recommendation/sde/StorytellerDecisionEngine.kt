@@ -10,12 +10,13 @@ import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObserva
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
 
 /**
- * Read-only orchestration context for exact Storyteller consequence evaluation.
+ * Read-only bounded context for the first exact-consequence SDE seam.
  *
- * Canonical state, revisions and semantic history remain owned by the session/epistemic inputs
- * referenced here. This type intentionally does not copy or mutate game state.
+ * This intentionally does not reuse the legacy domain StorytellerDecisionRequest because that model
+ * embeds DynamicGameState. Canonical state, revisions and semantic history remain owned by the
+ * session/epistemic inputs referenced here.
  */
-internal data class StorytellerDecisionContext(
+internal data class ExactConsequenceContext(
     val validatedRuleset: ValidatedClocktowerRuleset,
     val exactContext: ExactHistoricalHypotheticalContext,
 ) {
@@ -23,32 +24,33 @@ internal data class StorytellerDecisionContext(
     val playerInputRevision: Long get() = exactContext.initialSnapshot.playerInputRevision
 }
 
-/**
- * One already-legal, already-materialized hypothetical candidate.
- *
- * Candidate legality and observation semantics are owned by their existing producers/materializers;
- * the SDE only orchestrates consequence evaluation.
- */
-internal data class StorytellerDecisionCandidate(
+/** One already-legal, already-materialized hypothetical observation candidate. */
+internal data class ExactConsequenceCandidate(
     val candidateId: String,
     val recipientSeat: Int,
     val observation: EpistemicObservation,
 ) {
     init {
-        require(candidateId.isNotBlank()) { "Storyteller decision candidate ID cannot be blank." }
-        require(recipientSeat > 0) { "Storyteller decision candidate recipient seat must be positive." }
+        require(candidateId.isNotBlank()) { "Exact-consequence candidate ID cannot be blank." }
+        require(recipientSeat > 0) { "Exact-consequence candidate recipient seat must be positive." }
     }
 }
 
-internal data class StorytellerDecisionRequest(
+/**
+ * Bounded request envelope for exact consequence evaluation only.
+ *
+ * This is not the final global Storyteller request model and deliberately carries no DynamicGameState,
+ * selection weights, mutable lifecycle state or legacy heuristic summaries.
+ */
+internal data class ExactConsequenceRequest(
     val decisionId: String,
-    val candidates: List<StorytellerDecisionCandidate>,
+    val candidates: List<ExactConsequenceCandidate>,
 ) {
     init {
-        require(decisionId.isNotBlank()) { "Storyteller decision ID cannot be blank." }
-        require(candidates.isNotEmpty()) { "Storyteller decision request requires at least one candidate." }
-        require(candidates.map(StorytellerDecisionCandidate::candidateId).distinct().size == candidates.size) {
-            "Storyteller decision candidate IDs must be unique within a request."
+        require(decisionId.isNotBlank()) { "Exact-consequence decision ID cannot be blank." }
+        require(candidates.isNotEmpty()) { "Exact-consequence request requires at least one candidate." }
+        require(candidates.map(ExactConsequenceCandidate::candidateId).distinct().size == candidates.size) {
+            "Exact-consequence candidate IDs must be unique within a request."
         }
     }
 }
@@ -58,17 +60,17 @@ internal data class CandidateConsequence(
     val diagnostics: ExactHypotheticalObservationBundleDiagnostics,
 )
 
-internal sealed interface StorytellerDecisionEvaluation {
+internal sealed interface ExactConsequenceEvaluation {
     data class Ready(
         val consequences: List<CandidateConsequence>,
-    ) : StorytellerDecisionEvaluation
+    ) : ExactConsequenceEvaluation
 
     data class Deferred(
         val missingCapabilities: Set<EpistemicEvaluationCapability>,
-    ) : StorytellerDecisionEvaluation {
+    ) : ExactConsequenceEvaluation {
         init {
             require(missingCapabilities.isNotEmpty()) {
-                "Deferred Storyteller decision evaluation must identify missing capabilities."
+                "Deferred exact-consequence evaluation must identify missing capabilities."
             }
         }
     }
@@ -77,14 +79,14 @@ internal sealed interface StorytellerDecisionEvaluation {
 /**
  * Thin recommendation-owned orchestration seam over the existing exact epistemic authority.
  *
- * This first SDE slice performs consequence evaluation only. It does not select a candidate, commit
- * an observation, mutate session state, alter interaction ordering, or introduce heuristic fallback.
+ * This first SDE slice evaluates consequences only. It does not select a candidate, commit an
+ * observation, mutate session state, alter interaction ordering, or introduce heuristic fallback.
  */
 internal object StorytellerDecisionEngine {
-    fun evaluate(
-        request: StorytellerDecisionRequest,
-        context: StorytellerDecisionContext,
-    ): StorytellerDecisionEvaluation {
+    fun evaluateExactConsequences(
+        request: ExactConsequenceRequest,
+        context: ExactConsequenceContext,
+    ): ExactConsequenceEvaluation {
         val queries = request.candidates.mapIndexed { index, candidate ->
             ExactHypotheticalObservationBundleQuery(
                 bundleId = queryId(request.decisionId, index, candidate.candidateId),
@@ -101,16 +103,16 @@ internal object StorytellerDecisionEngine {
             )
         ) {
             is ExactHypotheticalObservationBundleEvaluation.Deferred ->
-                StorytellerDecisionEvaluation.Deferred(
+                ExactConsequenceEvaluation.Deferred(
                     missingCapabilities = evaluation.missingCapabilities,
                 )
 
             is ExactHypotheticalObservationBundleEvaluation.Ready -> {
                 require(evaluation.diagnostics.size == request.candidates.size) {
                     "Exact evaluator returned ${evaluation.diagnostics.size} diagnostics for " +
-                        "${request.candidates.size} Storyteller decision candidates."
+                        "${request.candidates.size} exact-consequence candidates."
                 }
-                StorytellerDecisionEvaluation.Ready(
+                ExactConsequenceEvaluation.Ready(
                     consequences = request.candidates.zip(evaluation.diagnostics).map { (candidate, diagnostic) ->
                         CandidateConsequence(
                             candidateId = candidate.candidateId,
