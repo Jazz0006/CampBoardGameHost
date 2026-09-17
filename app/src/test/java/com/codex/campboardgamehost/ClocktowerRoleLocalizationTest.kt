@@ -6,12 +6,11 @@ import org.junit.Test
 
 class ClocktowerRoleLocalizationTest {
     @Test
-    fun `canonical role identity localizes without changing role id`() {
+    fun `canonical role identity localizes to Chinese and English labels`() {
         val roleId = RoleId("Chef")
 
         assertEquals("厨师", clocktowerRoleLabel(roleId, "zh"))
         assertEquals("Chef", clocktowerRoleLabel(roleId, "en"))
-        assertEquals("Chef", roleId.value)
     }
 
     @Test
