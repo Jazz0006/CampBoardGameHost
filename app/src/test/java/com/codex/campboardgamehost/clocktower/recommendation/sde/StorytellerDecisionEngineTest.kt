@@ -47,7 +47,12 @@ class StorytellerDecisionEngineTest {
         val timeline = ActionFactTimeline(emptyList())
         val observationLog = EpistemicObservationLog()
         val context = exactContext(timeline, observationLog)
-        val observation = healthyEmpathObservation()
+        val observation = healthyNumericObservation(
+            recipientSeat = 2,
+            ability = "Empath",
+            number = 0,
+            observationId = "sde-private-empath-2",
+        )
         val request = StorytellerDecisionRequest(
             decisionId = "first-night-empath",
             candidates = listOf(
@@ -95,11 +100,74 @@ class StorytellerDecisionEngineTest {
     }
 
     @Test
+    fun `multiple candidates are evaluated from one immutable exact context`() {
+        val timeline = ActionFactTimeline(emptyList())
+        val observationLog = EpistemicObservationLog()
+        val exactContext = exactContext(timeline, observationLog)
+        val empath = healthyNumericObservation(
+            recipientSeat = 2,
+            ability = "Empath",
+            number = 0,
+            observationId = "sde-multi-empath-2",
+        )
+        val chef = healthyNumericObservation(
+            recipientSeat = 1,
+            ability = "Chef",
+            number = 1,
+            observationId = "sde-multi-chef-1",
+        )
+        val request = StorytellerDecisionRequest(
+            decisionId = "healthy-numeric-multi",
+            candidates = listOf(
+                StorytellerDecisionCandidate("empath-0", 2, empath),
+                StorytellerDecisionCandidate("chef-1", 1, chef),
+            ),
+        )
+        val direct = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = exactContext,
+            queries = listOf(
+                ExactHypotheticalObservationBundleQuery("direct-empath", 2, listOf(empath)),
+                ExactHypotheticalObservationBundleQuery("direct-chef", 1, listOf(chef)),
+            ),
+        )
+        assertTrue(direct is ExactHypotheticalObservationBundleEvaluation.Ready)
+        val expected = (direct as ExactHypotheticalObservationBundleEvaluation.Ready).diagnostics
+        val timelineBefore = timeline.reducerFacts()
+        val logBefore = observationLog.records.toList()
+
+        val evaluation = StorytellerDecisionEngine.evaluate(
+            request = request,
+            context = StorytellerDecisionContext(validatedRuleset, exactContext),
+        )
+
+        assertTrue(evaluation is StorytellerDecisionEvaluation.Ready)
+        val consequences = (evaluation as StorytellerDecisionEvaluation.Ready).consequences
+        assertEquals(listOf("empath-0", "chef-1"), consequences.map(CandidateConsequence::candidateId))
+        assertEquals(expected[0].before, consequences[0].diagnostics.before)
+        assertEquals(expected[0].after, consequences[0].diagnostics.after)
+        assertEquals(expected[0].beforeStructure, consequences[0].diagnostics.beforeStructure)
+        assertEquals(expected[0].afterStructure, consequences[0].diagnostics.afterStructure)
+        assertEquals(expected[1].before, consequences[1].diagnostics.before)
+        assertEquals(expected[1].after, consequences[1].diagnostics.after)
+        assertEquals(expected[1].beforeStructure, consequences[1].diagnostics.beforeStructure)
+        assertEquals(expected[1].afterStructure, consequences[1].diagnostics.afterStructure)
+        assertEquals(timelineBefore, timeline.reducerFacts())
+        assertEquals(logBefore, observationLog.records)
+    }
+
+    @Test
     fun `exact capability deferral is surfaced without heuristic fallback`() {
         val unsupportedRuleset = validatedRuleset.copy(
             script = validatedRuleset.script.copy(
                 source = ClocktowerScriptSource.IMPORTED_HOMEBREW,
             ),
+        )
+        val observation = healthyNumericObservation(
+            recipientSeat = 2,
+            ability = "Empath",
+            number = 0,
+            observationId = "sde-unsupported-empath-2",
         )
         val request = StorytellerDecisionRequest(
             decisionId = "unsupported",
@@ -107,7 +175,7 @@ class StorytellerDecisionEngineTest {
                 StorytellerDecisionCandidate(
                     candidateId = "empath-0",
                     recipientSeat = 2,
-                    observation = healthyEmpathObservation(),
+                    observation = observation,
                 ),
             ),
         )
@@ -119,7 +187,7 @@ class StorytellerDecisionEngineTest {
                 ExactHypotheticalObservationBundleQuery(
                     bundleId = "direct-unsupported",
                     recipientSeat = 2,
-                    observations = listOf(healthyEmpathObservation()),
+                    observations = listOf(observation),
                 ),
             ),
         )
@@ -140,6 +208,31 @@ class StorytellerDecisionEngineTest {
         )
     }
 
+    @Test
+    fun `malformed candidate identity fails before exact evaluation`() {
+        val observation = healthyNumericObservation(
+            recipientSeat = 2,
+            ability = "Empath",
+            number = 0,
+            observationId = "sde-malformed-empath-2",
+        )
+        var failed = false
+
+        try {
+            StorytellerDecisionRequest(
+                decisionId = "duplicate-candidate-ids",
+                candidates = listOf(
+                    StorytellerDecisionCandidate("duplicate", 2, observation),
+                    StorytellerDecisionCandidate("duplicate", 2, observation),
+                ),
+            )
+        } catch (_: IllegalArgumentException) {
+            failed = true
+        }
+
+        assertTrue("Duplicate candidate IDs must fail at the SDE request boundary.", failed)
+    }
+
     private fun exactContext(
         timeline: ActionFactTimeline,
         observationLog: EpistemicObservationLog,
@@ -154,22 +247,28 @@ class StorytellerDecisionEngineTest {
         roleDefinitions = roles,
     )
 
-    private fun healthyEmpathObservation(): EpistemicObservation {
+    private fun healthyNumericObservation(
+        recipientSeat: Int,
+        ability: String,
+        number: Int,
+        observationId: String,
+    ): EpistemicObservation {
+        val roleId = RoleId(ability)
         val information = EffectDraft.PlayerInformation(
-            recipientSeat = 2,
-            sourceAbility = RoleId("Empath"),
-            value = InformationValue.Number(0),
+            recipientSeat = recipientSeat,
+            sourceAbility = roleId,
+            value = InformationValue.Number(number),
         )
         return EpistemicObservation(
-            observationId = "sde-private-empath-2",
+            observationId = observationId,
             snapshotId = formal.snapshotId,
             phase = StorytellerPhase.FIRST_NIGHT,
             round = 1,
             sequence = 0,
-            sourceSeat = 2,
-            sourceAbility = RoleId("Empath"),
+            sourceSeat = recipientSeat,
+            sourceAbility = roleId,
             visibility = ObservationVisibility.PRIVATE,
-            recipientSeats = setOf(2),
+            recipientSeats = setOf(recipientSeat),
             reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
             proposition = TroubleBrewingFirstNightInformationPropositionMaterializer.materialize(
                 game = snapshot.gameState,
