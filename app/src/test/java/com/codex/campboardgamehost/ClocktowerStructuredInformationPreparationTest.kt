@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
+import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import org.junit.Assert.*
@@ -134,6 +135,56 @@ class ClocktowerStructuredInformationPreparationTest {
         assertEquals(expected.contextSnapshot, actual.contextSnapshot)
         val candidate = actual.choices.single { it.recommended }.candidateId
         assertEquals(expected.acceptRecommendation(candidate, revision), actual.acceptRecommendation(candidate, revision))
+    }
+
+    @Test
+    fun `manual information domain survives when automatic recommendations are empty`() {
+        val investigator = ClocktowerRole(
+            team = ClocktowerTeam.Townsfolk,
+            zhName = "调查员",
+            enName = "Investigator",
+            zhDescription = "",
+            enDescription = "",
+        )
+        val actor = PlayerCard(
+            name = "Player 1",
+            role = Role.Civilian,
+            word = "",
+            clocktowerTeam = ClocktowerTeam.Townsfolk,
+            clocktowerRole = investigator,
+            clocktowerShownRole = investigator,
+        )
+        val manualCandidate = ClocktowerDisplayOption(
+            label = "manual legal candidate",
+            displayKind = ClocktowerDisplayKind.EitherOne,
+            displayTitle = "Investigator information",
+            displayPrimary = "Poisoner",
+            displaySecondary = "2   3",
+            displayFooter = "One of these two players",
+        )
+        val builder = ClocktowerInformationStepBuilder(
+            cards = listOf(actor),
+            language = "en",
+            automaticStorytellerInfo = false,
+            text = { _, en -> en },
+            roleActor = { actor },
+            roleMissingReason = { "" },
+            abilityStateFor = { _, _ -> AbilityFunctioningState.FUNCTIONING },
+            actorIsUnreliable = { _, _ -> false },
+            recentMisinformationStreak = { 0 },
+        )
+
+        val built = builder.build(
+            roleName = "调查员",
+            enName = "Investigator",
+            tellPlayer = null,
+            explanation = "",
+            reliableDisplayOptions = { emptyList() },
+            legalSelectionOptions = { listOf(manualCandidate) },
+        )
+
+        assertEquals(listOf(manualCandidate), built.manualInformationCandidates)
+        assertEquals(listOf(manualCandidate), built.automaticInformationCandidates)
     }
 
     private fun step() = ClocktowerNightStepUi(
