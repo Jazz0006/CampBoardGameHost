@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.ClocktowerPhase
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.prepareNumericInformationUiModel
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
@@ -11,16 +12,16 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 import com.codex.campboardgamehost.clocktower.epistemic.A4RuntimeFixtures
-import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
+import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -35,16 +36,18 @@ class StructuredInformationProductionShadowTest {
     )
 
     @Test
-    fun `production shadow uses committed setup baseline and current session freshness without mutation`() {
+    fun `production shadow uses committed setup and canonical session without stealing commit authority`() {
         val fixture = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
-        val currentSnapshot = fixture.copy(
-            gameStateRevision = fixture.gameStateRevision + 4,
-            playerInputRevision = fixture.playerInputRevision + 2,
-            actionTimeline = ActionFactTimeline(emptyList()),
-            epistemicObservationLog = EpistemicObservationLog(),
-            semanticHistoryMode = com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode.GLOBAL_V1,
-            nextTimelineGlobalSequence = 0L,
+        val session = ClocktowerGameSession.create(
+            gameId = fixture.gameId,
+            gameSeed = fixture.gameSeed,
+            rulesetRef = rulesetRef,
+            initialState = fixture.gameState,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
+        repeat(4) { session.advanceGameStateRevision() }
+        repeat(2) { session.recordPlayerInput() }
+        val currentSnapshot = session.toGameSnapshot(rulesetRef)
         val setup = CommittedClocktowerSetup(
             script = currentSnapshot.gameState.script,
             setupSeed = currentSnapshot.gameSeed,
@@ -82,7 +85,8 @@ class StructuredInformationProductionShadowTest {
             revision = revision,
             recommendedValue = 0,
         )
-        val before = currentSnapshot
+        val visibleChoicesBefore = model.choices.toList()
+        val sessionBeforeShadow = session.state
 
         val result = StructuredInformationProductionShadow.evaluateFirstNight(
             decisionContext = model.shadowDecisionContext,
@@ -96,8 +100,22 @@ class StructuredInformationProductionShadowTest {
         assertEquals(model.contextSnapshot, result.informationSnapshot)
         assertEquals(model.contextSnapshot.legalCandidateIds, result.plannedDecisions.map { it.candidateId })
         assertTrue(result.plannedDecisions.all { it.sourceRevision == revision })
-        assertEquals(before, currentSnapshot)
-        assertEquals(0, currentSnapshot.actionTimeline.entries.size)
-        assertEquals(0, currentSnapshot.epistemicObservationLog.records.size)
+        assertEquals(visibleChoicesBefore, model.choices)
+        assertEquals(sessionBeforeShadow, session.state)
+
+        val recommended = model.choices.single { it.recommended }
+        val confirmation = model.acceptRecommendation(recommended.candidateId, revision)
+        val confirmed = confirmation.confirmed
+        assertNotNull(confirmed)
+        assertEquals(sessionBeforeShadow, session.state)
+
+        session.commitGlobalEpistemicObservation(requireNotNull(confirmed).draft)
+
+        assertEquals(sessionBeforeShadow.gameStateRevision, session.state.gameStateRevision)
+        assertEquals(sessionBeforeShadow.playerInputRevision + 1, session.state.playerInputRevision)
+        assertEquals(
+            sessionBeforeShadow.epistemicObservationLog.records.size + 1,
+            session.state.epistemicObservationLog.records.size,
+        )
     }
 }
