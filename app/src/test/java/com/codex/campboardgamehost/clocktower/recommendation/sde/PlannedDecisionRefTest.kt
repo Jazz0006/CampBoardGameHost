@@ -23,10 +23,12 @@ class PlannedDecisionRefTest {
     fun `information snapshot creates a disposable planned reference without copying candidate state`() {
         val planned = PlannedDecisionRef.fromInformationSnapshot(
             decisionId = "first-night-empath-2",
+            candidateId = "empath-0",
             snapshot = sourceSnapshot,
         )
 
         assertEquals("first-night-empath-2", planned.decisionId)
+        assertEquals("empath-0", planned.candidateId)
         assertEquals(sourceRevision, planned.sourceRevision)
         assertEquals(sourceSnapshot.semanticIdentity, planned.sourceSemanticIdentity)
         assertTrue(planned.isCurrentFor(sourceSnapshot))
@@ -34,10 +36,7 @@ class PlannedDecisionRefTest {
 
     @Test
     fun `game state revision change invalidates planned decision`() {
-        val planned = PlannedDecisionRef.fromInformationSnapshot(
-            decisionId = "first-night-empath-2",
-            snapshot = sourceSnapshot,
-        )
+        val planned = plannedInformationDecision()
 
         assertFalse(
             planned.isCurrentFor(
@@ -48,10 +47,7 @@ class PlannedDecisionRefTest {
 
     @Test
     fun `player input revision change invalidates planned decision`() {
-        val planned = PlannedDecisionRef.fromInformationSnapshot(
-            decisionId = "first-night-empath-2",
-            snapshot = sourceSnapshot,
-        )
+        val planned = plannedInformationDecision()
 
         assertFalse(
             planned.isCurrentFor(
@@ -62,10 +58,7 @@ class PlannedDecisionRefTest {
 
     @Test
     fun `candidate space identity change invalidates snapshot-bound planned decision at same revision`() {
-        val planned = PlannedDecisionRef.fromInformationSnapshot(
-            decisionId = "first-night-empath-2",
-            snapshot = sourceSnapshot,
-        )
+        val planned = plannedInformationDecision()
         val changedCandidateSpace = sourceSnapshot.copy(
             semanticIdentity = "information-decision|7|11|empath-0,empath-2",
             legalCandidateIds = listOf("empath-0", "empath-2"),
@@ -78,6 +71,7 @@ class PlannedDecisionRefTest {
     fun `revision-only planned decision remains independent of information candidate space`() {
         val planned = PlannedDecisionRef(
             decisionId = "night-mayor-redirect",
+            candidateId = "redirect-seat-4",
             sourceRevision = sourceRevision,
         )
         val unrelatedInformationSnapshot = sourceSnapshot.copy(
@@ -87,4 +81,24 @@ class PlannedDecisionRefTest {
         assertTrue(planned.isCurrentFor(sourceRevision))
         assertTrue(planned.isCurrentFor(unrelatedInformationSnapshot))
     }
+
+    @Test
+    fun `information snapshot rejects a candidate that was not legal in that candidate space`() {
+        val failure = runCatching {
+            PlannedDecisionRef.fromInformationSnapshot(
+                decisionId = "first-night-empath-2",
+                candidateId = "empath-9",
+                snapshot = sourceSnapshot,
+            )
+        }.exceptionOrNull()
+
+        assertTrue(failure is IllegalArgumentException)
+    }
+
+    private fun plannedInformationDecision(): PlannedDecisionRef =
+        PlannedDecisionRef.fromInformationSnapshot(
+            decisionId = "first-night-empath-2",
+            candidateId = "empath-0",
+            snapshot = sourceSnapshot,
+        )
 }
