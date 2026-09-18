@@ -63,23 +63,57 @@ Always query live `main` and PR #144 before executable edits.
 
 ## 2. CURRENT
 
-**SDE-3 — cross-night impaired / registration decisions**
+**PAUSED BEFORE SDE-3 — algorithm-scope review required**
 
-SDE-2 first-night uncertainty is complete.
+SDE-2 first-night uncertainty is complete. PR #144 should be merged as the checkpoint, then executable SDE-3 work must pause until the following previously under-specified algorithm questions are discussed in a fresh conversation.
 
-Current objective:
+### 2.1 Drunk information-role clue generation
+
+The Drunk may be shown an information role. The unreliable clue selected for that shown role is itself an important first-night Storyteller decision and may materially affect game balance.
+
+Before SDE-3, confirm:
+
+- which Drunk shown information roles are already covered by the current candidate/evaluation model;
+- whether unreliable Drunk clue selection is evaluated jointly with the rest of the first-night bundle or only treated as a legality/reliability variant;
+- how its strategic weight should interact with truthful healthy information;
+- whether first-night bundle evaluation currently undervalues this branch.
+
+### 2.2 Demon bluff identities
+
+The Demon's three bluff identities can strongly affect evil-team narrative space and therefore the strategic value of information shown to good players.
+
+Before SDE-3, audit whether current consequence evaluation actually incorporates bluff commitments when weighting clue candidates.
+
+Do not assume that exact possible-world evaluation alone captures this if the bluff identities are absent from the evaluated state/hypothesis.
+
+The discussion must determine whether bluff selection/commitment should be:
+
+- an upstream setup commitment referenced by SDE;
+- part of first-night bundle evaluation;
+- or a separate strategic prior/constraint.
+
+### 2.3 Player-count generality
+
+Current design/evidence has been discussed mainly around roughly 7–9 player Trouble Brewing examples.
+
+Before SDE-3, confirm explicitly whether:
+
+- exact enumeration and strategic metrics are semantically valid for larger legal player counts;
+- any fixtures, thresholds, candidate generation rules, topology metrics, or calibration assumptions are accidentally tuned to the analyzed 7–9 player range;
+- computational cost changes the feasible exact-evaluation strategy at larger counts;
+- recommendation policy needs player-count normalization even when the underlying rules engine remains correct.
+
+### 2.4 Resume gate
+
+Do **not** begin SDE-3 executable implementation until these three topics are reviewed and the roadmap is updated with the resulting decisions.
+
+The intended next engineering stage remains:
 
 ```text
-later-game interaction begins
-→ derive current effective state from canonical session/history
-→ existing rules/candidate owner generates legal impaired/registration outcomes
-→ materialize typed hypothetical observation/effect
-→ SDE exact historical evaluation
-→ freshness-bound planning
-→ existing confirmation/commit authority
+SDE-3 — cross-night impaired / registration decisions
 ```
 
-Start with an audit before executable changes. Prefer one narrow later-night information interaction that exercises the already-proven Drunk/poison/registration boundaries without creating a second history/effective-state owner.
+but it is gated by this algorithm-scope review.
 
 ## 3. NEXT
 
@@ -306,4 +340,4 @@ Read in order:
 
 ## 10. Stable rule
 
-> **SDE-1A/B/C/D/E and SDE-2A/B/C are complete on PR #144. Final SDE-2C executable evidence is `fd90b8dc0433dbd925f0be9f94f3a2693e416f4b` with R2, Android FAST and CI gate SUCCESS. Current work is SDE-3: audit one later-game impaired/registration interaction and route it through the existing exact historical orchestration seam without duplicating session, effective-state, registration, or history ownership. Production selection remains unchanged until an explicit later cutover.**
+> **SDE-1A/B/C/D/E and SDE-2A/B/C are complete on PR #144. Final SDE-2C executable evidence is `fd90b8dc0433dbd925f0be9f94f3a2693e416f4b` with R2, Android FAST and CI gate SUCCESS. Merge PR #144 as the checkpoint, then PAUSE before SDE-3. The next conversation must review three open algorithm questions first: Drunk information-role unreliable clue generation, Demon bluff identity influence on information weighting, and validity/calibration/performance beyond the mainly analyzed 7–9 player range. Do not resume SDE-3 executable work until those decisions are recorded.**
