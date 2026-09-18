@@ -92,7 +92,12 @@ class TroubleBrewingTopologyObservationCompositionTest {
         val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
         val knowledge = knowledge(
             profile,
-            listOf(InformationProposition.RoleInPlay(RoleId("Fortune Teller"), true)),
+            listOf(
+                InformationProposition.RoleInPlay(RoleId("Fortune Teller"), true),
+                // Keep this fixture about one shared Red Herring identity. Without this constraint,
+                // the positive result can instead be witnessed by a functioning Recluse registration.
+                InformationProposition.RoleInPlay(RoleId("Recluse"), false),
+            ),
         )
         val subjects = listOf(2, 3)
         val proposition = InformationProposition.AllOf(
