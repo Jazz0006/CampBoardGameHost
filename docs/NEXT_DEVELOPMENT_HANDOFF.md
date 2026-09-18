@@ -1,8 +1,8 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-18 Australia/Sydney  
-> Status: **SDE-2D3 COMPLETE / PR #147 FULL-CI GREEN — pending user-authorized merge**  
-> Base checkpoint: PR #146 merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`; PR #147 is the validated D3 successor, not yet merged  
+> Status: **SDE-2D4 CURRENT — 5–15 correctness/performance/normalized-metrics audit complete**  
+> Base checkpoint: PR #147 merged to `main` as `2cab06efeee5692024e065c632deefe765ca1618`; D2D4 continues on fresh branch `sde-2d4-5-15-validation-performance`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
@@ -15,8 +15,9 @@ Read, in order:
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
 5. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
-6. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
-7. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
+6. `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
+7. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
+8. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
 8. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
 9. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
 10. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
@@ -322,9 +323,35 @@ Prove differential correctness on bounded fixtures:
 
 Prefer exact quotient or constraint/symbolic feasibility over random sampling.
 
-## 7. NEXT AFTER PR #147 MERGE — SDE-2D4 5–15 player validation
+## 7. CURRENT — SDE-2D4 5–15 player validation
 
-Do not begin executable D2D4 work on the SDE-2D3 branch. After user-authorized merge of PR #147, create a fresh branch from live `main` and perform a focused performance/representation audit before implementation.
+PR #147 is merged to live `main` as `2cab06efeee5692024e065c632deefe765ca1618`.
+
+D2D4 branch:
+
+`sde-2d4-5-15-validation-performance`
+
+Current authority:
+
+`docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`
+
+The focused audit is complete.
+
+Frozen execution order:
+
+```text
+D4A normalized strategic diagnostics
+    ↓
+D4B reproducible T3 scale evidence
+    ↓
+D4C topology-first exact feasibility
+    ↓
+D4D differential correctness
+    ↓
+D4E 5–15 performance matrix
+```
+
+Do not attempt to solve large-player scaling by only compressing the already-generated raw world stream. Current ZDD construction still iterates that stream.
 
 Evidence regimes:
 
@@ -418,4 +445,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **SDE-2D3 is fully implemented and full-ci GREEN on draft PR #147 at acceptance head `2d491663a899d048b4b69522e9cdde700effa85b`, but remains unmerged pending explicit user authorization. PR #146 is merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`. After PR #147 is merged, start SDE-2D4 on a fresh branch: validate the exact strategic quotient across 5–15 player regimes, measure CPU/memory/mobile latency, define normalized strategic metrics, and only then decide whether symbolic topology feasibility or another representation switch is required. Production Demon-bluff selection has not cut over; `demon-bluff-ease` remains compatibility behavior until the later explicit cutover. SDE-3 remains blocked until the complete SDE-2D gate is explicitly satisfied.**
+> **PR #147 is merged to `main` as `2cab06efeee5692024e065c632deefe765ca1618`. SDE-2D4 is current on branch `sde-2d4-5-15-validation-performance`. The D2D4 audit shows that the strategic quotient is the right result identity but the current exact and ZDD paths still discover it by exhaustively generating raw mechanical witnesses. Implement exact normalized BEFORE/AFTER strategic diagnostics first, then build reproducible T3 scale evidence, then introduce an epistemic-owned topology-first exact witness-feasibility seam and cross-check it against bounded exhaustive enumeration / Clingo before measuring 5–15 performance. Do not freeze player-count cutoffs, use sampling as exact evidence, cut production policy, or start SDE-3 yet.**
