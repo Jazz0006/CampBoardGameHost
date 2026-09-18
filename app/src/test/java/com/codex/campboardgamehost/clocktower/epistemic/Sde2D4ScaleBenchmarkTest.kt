@@ -252,6 +252,6 @@ class Sde2D4ScaleBenchmarkTest {
         Runtime.getRuntime().let { runtime -> runtime.totalMemory() - runtime.freeMemory() }
 
     private companion object {
-        const val PREFIX_WORLD_LIMIT = 25_000
+        const val PREFIX_WORLD_LIMIT = 1_000
     }
 }
