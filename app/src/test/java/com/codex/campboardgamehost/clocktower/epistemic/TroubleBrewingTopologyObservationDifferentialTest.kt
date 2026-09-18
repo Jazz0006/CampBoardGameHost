@@ -112,7 +112,6 @@ class TroubleBrewingTopologyObservationDifferentialTest {
                     InformationProposition.RoleAt(1, RoleId("Drunk")),
                     InformationProposition.ShownRoleAt(1, RoleId("Chef")),
                     InformationProposition.RoleAt(2, RoleId("Butler")),
-                    InformationProposition.RoleAt(3, RoleId("Recluse")),
                 ),
                 observation = observation(
                     "drunk-source",
