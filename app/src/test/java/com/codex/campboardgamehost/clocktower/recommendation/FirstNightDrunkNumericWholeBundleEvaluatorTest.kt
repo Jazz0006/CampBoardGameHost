@@ -35,7 +35,7 @@ class FirstNightDrunkNumericWholeBundleEvaluatorTest {
 
     @Test
     fun `Drunk shown Empath evaluates complete numeric domain against one HealthyCore`() {
-        val snapshot = snapshot()
+        val snapshot = snapshot(shownRole = "Empath")
         val context = ExactHistoricalHypotheticalContext(
             initialSnapshot = snapshot,
             initialPhase = StorytellerPhase.FIRST_NIGHT,
@@ -85,10 +85,48 @@ class FirstNightDrunkNumericWholeBundleEvaluatorTest {
         )
     }
 
-    private fun snapshot(): GameSnapshot {
+    @Test
+    fun `Drunk shown Chef uses the rules display domain in whole-bundle exact evaluation`() {
+        val snapshot = snapshot(shownRole = "Chef")
+        val context = ExactHistoricalHypotheticalContext(
+            initialSnapshot = snapshot,
+            initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1,
+            actionTimeline = ActionFactTimeline(emptyList()),
+            perceivedRolesBySeat = snapshot.gameState.players.associate { player ->
+                player.seat to (player.shownRole ?: player.actualRole)
+            },
+            observationLog = EpistemicObservationLog(),
+            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            roleDefinitions = roles,
+        )
+
+        val evaluation = TroubleBrewingFirstNightDrunkNumericWholeBundleEvaluator.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = context,
+            request = FirstNightDrunkNumericWholeBundleRequest(
+                drunkSeat = 2,
+                evaluationRecipientSeats = setOf(1),
+                healthyCore = emptyList(),
+            ),
+        )
+
+        assertTrue(evaluation is FirstNightDrunkNumericWholeBundleEvaluation.Ready)
+        val ready = evaluation as FirstNightDrunkNumericWholeBundleEvaluation.Ready
+        assertEquals(RoleId("Chef"), ready.shownAbility)
+        assertEquals(listOf(0, 1, 2), ready.candidates.map { it.value })
+        assertTrue(ready.candidates.any { it.semanticTruth == SemanticTruth.TRUE })
+        assertTrue(ready.candidates.any { it.semanticTruth == SemanticTruth.FALSE })
+        assertTrue(
+            ready.candidates.first { it.semanticTruth == SemanticTruth.FALSE }
+                .fullBundleByRecipient.single().after.value > BigInteger.ZERO,
+        )
+    }
+
+    private fun snapshot(shownRole: String): GameSnapshot {
         val players = listOf(
             player(1, "Washerwoman", CharacterType.TOWNSFOLK),
-            player(2, "Drunk", CharacterType.OUTSIDER, shownRole = "Empath"),
+            player(2, "Drunk", CharacterType.OUTSIDER, shownRole = shownRole),
             player(3, "Chef", CharacterType.TOWNSFOLK),
             player(4, "Soldier", CharacterType.TOWNSFOLK),
             player(5, "Scarlet Woman", CharacterType.MINION),
