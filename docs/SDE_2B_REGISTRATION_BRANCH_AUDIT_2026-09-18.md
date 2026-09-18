@@ -3,7 +3,7 @@
 > Date: 2026-09-18 Australia/Sydney  
 > Branch: `sde-1-orchestration-seam`  
 > PR: #144  
-> Status: **AUDIT COMPLETE / TEST-FIRST IMPLEMENTATION NEXT**
+> Status: **COMPLETE**
 
 ## 1. Objective
 
@@ -217,3 +217,98 @@ Do not migrate the full legacy `RegistrationPolicy` selection stack in this slic
 ## 13. Frozen conclusion
 
 > **Spy/Recluse legality already has a single owner and exact world mechanics already support interaction-local registration. SDE-2B must preserve successful registration witness alternatives and let an exact hypothetical candidate bind one selected witness. Registration remains per interaction, never canonical identity. No second registration rules engine is required.**
+
+
+## 14. Implemented exact branch contract
+
+SDE-2B implemented the smallest complete branch-binding seam.
+
+### Exact world result
+
+`WorldObservationResult` now preserves:
+
+```text
+registrationWitnesses: Set<Set<RegistrationFact>>
+```
+
+The existing flattened `registrationFacts` view remains available as the union of those successful witness alternatives.
+
+This preserves distinctions such as:
+
+```text
+natural truth             -> {}
+Spy-only explanation      -> {Spy}
+Spy + Recluse explanation -> {Spy, Recluse}
+```
+
+rather than collapsing them into one falsely-conjunctive set.
+
+### Exact hypothetical query
+
+`ExactRegistrationWitnessBinding` binds one selected witness to one hypothetical observation.
+
+Semantics:
+
+```text
+no binding      -> any legal witness may explain the observation
+empty binding   -> require a natural/no-special witness
+special binding -> require that selected interaction-local witness
+```
+
+Generator-local `interactionId` / `registrationQuestion` values are not treated as canonical identity. Matching uses selected registration semantics while the hypothetical observation provides interaction scope.
+
+### SDE forwarding
+
+`ExactConsequenceCandidate` now carries optional registration witness bindings and `StorytellerDecisionEngine` forwards them unchanged to the exact evaluator.
+
+`PairInformationExactConsequenceAdapter` projects an already-legal truthful `PairInformationLegalCandidate` into that exact boundary.
+
+The adapter:
+
+- does not call registration legality again;
+- does not materialize a new proposition;
+- does not mutate player identity/state;
+- explicitly binds an empty witness for natural truthful candidates;
+- explicitly binds the candidate's existing typed witness for Spy/Recluse registered truth.
+
+## 15. Executable evidence
+
+Core exact registration semantics:
+
+`a977c01c0f4ae634dd60e4999759838f4005228c`
+
+Validation:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS (executed)
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+```
+
+Final SDE forwarding / pair projection head:
+
+`ec970aaa302b7ea6ba5f869aec43cf8f3a82b950`
+
+Validation:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS (executed)
+CI gate                        SUCCESS
+Real Clingo cross-validation   SKIPPED by classifier
+ASP contract tests             SKIPPED by classifier
+Full Android/APK step          SKIPPED by classifier
+```
+
+CI run: `35294683751`.
+
+Focused regression contracts:
+
+- `RegistrationWitnessAlternativesTest`
+- `ExactRegistrationWitnessBindingTest`
+- `Sde2RegistrationWitnessForwardingTest`
+
+## 16. Frozen SDE-2B result
+
+> **Spy/Recluse registration remains interaction-scoped and rules-owned. Exact world evaluation preserves complete successful witness alternatives; exact hypothetical candidates may bind one selected witness; SDE forwards that binding without re-deciding legality. Canonical player identity is never mutated and production selection is still unchanged.**
