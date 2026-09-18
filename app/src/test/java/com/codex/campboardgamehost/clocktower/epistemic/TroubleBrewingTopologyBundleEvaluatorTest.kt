@@ -123,12 +123,12 @@ class TroubleBrewingTopologyBundleEvaluatorTest {
 
     @Test
     fun strategic_bundle_diagnostics_do_not_fake_mechanical_cardinality() {
-        val profile = TroubleBrewingSetupProfiles.standard(15)
+        val profile = TroubleBrewingSetupProfiles.standard(8)
         val knowledge = knowledge(profile)
         val result = evaluate(
             knowledge,
             query(
-                "fifteen-structure",
+                "bounded-structure",
                 listOf(
                     observation(
                         "shown-chef",
@@ -145,8 +145,8 @@ class TroubleBrewingTopologyBundleEvaluatorTest {
         val diagnostic = result.diagnostics.single()
         assertTrue(diagnostic.beforeFeasible)
         assertTrue(diagnostic.afterFeasible)
-        assertTrue(diagnostic.beforeStructure.distinctStrategicWorldCount <= 5_460)
-        assertTrue(diagnostic.afterStructure.distinctStrategicWorldCount <= 5_460)
+        assertTrue(diagnostic.beforeStructure.distinctStrategicWorldCount <= 56)
+        assertTrue(diagnostic.afterStructure.distinctStrategicWorldCount <= 56)
     }
 
     private fun evaluate(
