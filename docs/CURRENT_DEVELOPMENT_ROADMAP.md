@@ -153,7 +153,22 @@ PR #146 was user-authorized and merged to `main` as `0aa488098f1284e26d8df03f402
 
 ### 2.3 SDE-2D3 — strategic-world quotient — CURRENT
 
-Work now continues on fresh branch `sde-2d3-strategic-world-quotient` from merged `main`. Begin with the focused representation/fanout audit before executable quotient changes.
+Authority:
+
+- `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
+- branch `sde-2d3-strategic-world-quotient` from merged PR #146 main.
+
+Representation/fanout audit is complete. Executable quotient implementation has not started.
+
+Frozen audit result:
+
+- existing `possibleDemonSeats` + `evilTeamSeatConfigurations` are marginals/coarse sets and lose Demon↔Minion pairing;
+- v1 `StrategicWorldKey` uses immutable setup identity: unique setup Demon seat + canonical setup Minion seats;
+- exact mechanical worlds remain witness authority;
+- the key should be accumulated inside the existing `WorldStructureAccumulator` pass;
+- do not add a recommendation-owned solver;
+- do not widen `PlayerWorldSet` / ZDD in the first slice;
+- historical current-Demon state is a separate cross-night dimension and must not silently redefine setup topology.
 
 Raw role-world cardinality is no longer the primary recommendation unit.
 
