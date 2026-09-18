@@ -89,6 +89,29 @@ class StrategicWorldKeyTest {
     }
 
     @Test
+    fun `projection uses role definition character type rather than role name heuristics`() {
+        val opaqueRoles = listOf(
+            role("Copper", Alignment.GOOD, CharacterType.TOWNSFOLK),
+            role("Quartz", Alignment.GOOD, CharacterType.TOWNSFOLK),
+            role("Lantern", Alignment.EVIL, CharacterType.MINION),
+            role("Harbor", Alignment.EVIL, CharacterType.DEMON),
+        ).associateBy(RoleDefinition::id)
+        val world = world(
+            linkedMapOf(
+                1 to RoleId("Copper"),
+                2 to RoleId("Quartz"),
+                3 to RoleId("Lantern"),
+                4 to RoleId("Harbor"),
+            ),
+        )
+
+        assertEquals(
+            StrategicWorldKey(demonSeat = 4, minionSeats = listOf(3)),
+            StrategicWorldKey.from(world, opaqueRoles),
+        )
+    }
+
+    @Test
     fun `historical current-role succession does not rewrite setup strategic key`() {
         val setup = world(
             linkedMapOf(
