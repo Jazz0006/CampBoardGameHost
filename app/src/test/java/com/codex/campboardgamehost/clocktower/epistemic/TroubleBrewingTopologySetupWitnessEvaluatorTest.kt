@@ -138,20 +138,32 @@ class TroubleBrewingTopologySetupWitnessEvaluatorTest {
         val baron = TroubleBrewingSetupProfiles.withBaron(8)
         val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
 
-        assertInfeasible(
-            standard,
-            topology,
-            setupKnowledge = listOf(InformationProposition.RoleInPlay(RoleId("Baron"), true)),
+        assertEquals(
+            "Standard profile must reject an in-play Baron.",
+            TroubleBrewingTopologySetupFeasibility.Infeasible,
+            evaluate(
+                standard,
+                topology,
+                listOf(InformationProposition.RoleInPlay(RoleId("Baron"), true)),
+            ),
         )
-        assertFeasible(
-            baron,
-            topology,
-            setupKnowledge = listOf(InformationProposition.RoleInPlay(RoleId("Baron"), true)),
+        assertEquals(
+            "Baron profile must admit its required Baron.",
+            TroubleBrewingTopologySetupFeasibility.Feasible,
+            evaluate(
+                baron,
+                topology,
+                listOf(InformationProposition.RoleInPlay(RoleId("Baron"), true)),
+            ),
         )
-        assertInfeasible(
-            baron,
-            topology,
-            setupKnowledge = listOf(InformationProposition.RoleInPlay(RoleId("Baron"), false)),
+        assertEquals(
+            "Baron profile must reject knowledge that Baron is absent.",
+            TroubleBrewingTopologySetupFeasibility.Infeasible,
+            evaluate(
+                baron,
+                topology,
+                listOf(InformationProposition.RoleInPlay(RoleId("Baron"), false)),
+            ),
         )
     }
 
