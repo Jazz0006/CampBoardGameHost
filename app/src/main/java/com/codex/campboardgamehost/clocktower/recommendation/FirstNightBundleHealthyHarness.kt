@@ -363,6 +363,8 @@ internal object TroubleBrewingFirstNightHealthyBundleHarness {
                         )
                     }
             }
+            FirstNightBundleCandidateFactorKind.BOOLEAN_INFORMATION ->
+                error("Healthy FN-BUNDLE-2 does not own Drunk Fortune Teller result factors.")
             FirstNightBundleCandidateFactorKind.RED_HERRING ->
                 SetupCandidateGenerator.generateRedHerringCandidates(game).map { candidate ->
                     concreteLatentOption(factor, candidate.candidateId)
