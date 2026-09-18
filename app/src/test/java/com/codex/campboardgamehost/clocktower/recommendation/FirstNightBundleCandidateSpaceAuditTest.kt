@@ -128,6 +128,27 @@ class FirstNightBundleCandidateSpaceAuditTest {
     }
 
     @Test
+    fun `Drunk shown Fortune Teller result is a two-option factor while target pair stays player controlled`() {
+        val game = game(
+            player(1, "Chef", CharacterType.TOWNSFOLK),
+            player(2, "Drunk", CharacterType.OUTSIDER, shownRole = "Fortune Teller"),
+            player(3, "Empath", CharacterType.TOWNSFOLK),
+            player(4, "Scarlet Woman", CharacterType.MINION),
+            player(5, "Imp", CharacterType.DEMON),
+            player(6, "Soldier", CharacterType.TOWNSFOLK),
+        )
+
+        val audit = TroubleBrewingFirstNightBundleCandidateSpaceAuditor.inspect(game, roles)
+        val result = audit.factors.single { it.factorId == "boolean.fortune-teller.seat-2" }
+
+        assertEquals(FirstNightBundleCandidateFactorKind.BOOLEAN_INFORMATION, result.kind)
+        assertEquals(listOf("answer-no", "answer-yes"), result.optionIds)
+        assertTrue(FirstNightBundleDeferredComplexity.DRUNK !in audit.deferredComplexities)
+        assertEquals(setOf("fortune-teller-target"), audit.excludedPlayerControlledElements)
+        assertEquals(audit.rawCartesianCount, audit.legalCompleteBundleCount)
+    }
+
+    @Test
     fun `registration alternatives are counted only as known producer options until that stage is enabled`() {
         val game = game(
             player(1, "Chef", CharacterType.TOWNSFOLK),
