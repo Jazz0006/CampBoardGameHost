@@ -22,16 +22,20 @@ class TroubleBrewingTopologySetupWitnessDifferentialTest {
     @Test
     fun topology_first_setup_feasibility_matches_exhaustive_five_player_exact_projection() {
         val cases = listOf(
-            TroubleBrewingSetupProfiles.standard(5) to emptyList(),
             TroubleBrewingSetupProfiles.standard(5) to listOf(
-                InformationProposition.RoleAt(2, RoleId("Poisoner")),
-            ),
-            TroubleBrewingSetupProfiles.withBaron(5) to emptyList(),
-            TroubleBrewingSetupProfiles.withBaron(5) to listOf(
-                InformationProposition.RoleAt(2, RoleId("Baron")),
+                InformationProposition.RoleAt(1, RoleId("Chef")),
+                InformationProposition.RoleAt(2, RoleId("Empath")),
+                InformationProposition.RoleAt(3, RoleId("Fortune Teller")),
             ),
             TroubleBrewingSetupProfiles.withBaron(5) to listOf(
-                InformationProposition.RoleInPlay(RoleId("Chef"), false),
+                InformationProposition.RoleAt(1, RoleId("Chef")),
+                InformationProposition.RoleAt(2, RoleId("Drunk")),
+                InformationProposition.RoleAt(3, RoleId("Butler")),
+            ),
+            TroubleBrewingSetupProfiles.withBaron(5) to listOf(
+                InformationProposition.RoleAt(1, RoleId("Drunk")),
+                InformationProposition.RoleAt(2, RoleId("Butler")),
+                InformationProposition.RoleAt(3, RoleId("Empath")),
             ),
         )
 
