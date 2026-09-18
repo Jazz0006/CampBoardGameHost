@@ -140,6 +140,59 @@ class ExactHistoricalHypotheticalObservationBundleEvaluatorTest {
     }
 
     @Test
+    fun `exact structure quotient equals distinct surviving setup evil topologies`() {
+        val timeline = timelineOf(emptyList())
+        val observationLog = EpistemicObservationLog()
+        val observation = publicObservation(
+            id = "strategic-quotient-imp-at-5",
+            sequence = 1,
+            proposition = InformationProposition.RoleAt(5, RoleId("Imp")),
+        )
+        val evaluation = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = context(timeline, observationLog),
+            queries = listOf(
+                ExactHypotheticalObservationBundleQuery(
+                    bundleId = "strategic-quotient",
+                    recipientSeat = 1,
+                    observations = listOf(observation),
+                ),
+            ),
+        )
+
+        assertTrue(evaluation is ExactHypotheticalObservationBundleEvaluation.Ready)
+        val diagnostic =
+            (evaluation as ExactHypotheticalObservationBundleEvaluation.Ready).diagnostics.single()
+        val baseline = baselineWorlds(timeline, observationLog)
+        val rolesById = roles.associateBy(RoleDefinition::id)
+        val surviving = baseline.filter { world ->
+            TroubleBrewingWorldObservationEvaluator.evaluate(
+                world = world,
+                roles = rolesById,
+                observation = observation,
+                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            ).matches
+        }
+
+        assertEquals(
+            manualStrategicKeys(baseline, rolesById),
+            diagnostic.beforeStructure.strategicWorldKeys,
+        )
+        assertEquals(
+            manualStrategicKeys(surviving, rolesById),
+            diagnostic.afterStructure.strategicWorldKeys,
+        )
+        assertEquals(
+            diagnostic.beforeStructure.strategicWorldKeys.size,
+            diagnostic.beforeStructure.distinctStrategicWorldCount,
+        )
+        assertEquals(
+            diagnostic.afterStructure.strategicWorldKeys.size,
+            diagnostic.afterStructure.distinctStrategicWorldCount,
+        )
+    }
+
+    @Test
     fun `supported contradictory bundle is exact zero rather than deferred`() {
         val poisonerAtFour = InformationProposition.RoleAt(4, RoleId("Poisoner"))
         val positive = publicObservation("poisoner-positive", 1, poisonerAtFour)
@@ -221,6 +274,22 @@ class ExactHistoricalHypotheticalObservationBundleEvaluatorTest {
             actionTimeline = timeline,
             observationLog = observationLog,
         ).worldSet.enumeratedWorlds()
+    }
+
+    private fun manualStrategicKeys(
+        worlds: Collection<EnumeratedWorld>,
+        rolesById: Map<RoleId, RoleDefinition>,
+    ): Set<StrategicWorldKey> = worlds.mapTo(linkedSetOf()) { world ->
+        val demonSeats = world.rolesBySeat.filterValues { role ->
+            rolesById.getValue(role).type == com.codex.campboardgamehost.clocktower.domain.CharacterType.DEMON
+        }.keys
+        val minionSeats = world.rolesBySeat.filterValues { role ->
+            rolesById.getValue(role).type == com.codex.campboardgamehost.clocktower.domain.CharacterType.MINION
+        }.keys.sorted()
+        StrategicWorldKey(
+            demonSeat = demonSeats.single(),
+            minionSeats = minionSeats,
+        )
     }
 
     private fun publicObservation(
