@@ -84,6 +84,8 @@ afterEvaluate {
         classpath = sourceTask.classpath
 
         filter {
+            // testFast is a separate Test task and does not inherit debugUnitTest's filter.
+            excludeTestsMatching(fnBundle3CalibrationExperiment)
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest")
