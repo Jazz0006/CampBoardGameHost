@@ -156,6 +156,19 @@ class TroubleBrewingTopologySetupWitnessEvaluatorTest {
     }
 
     @Test
+    fun `duplicate identical shown role setup facts are idempotent`() {
+        val profile = TroubleBrewingSetupProfiles.standard(8)
+        val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
+        val shown = InformationProposition.ShownRoleAt(1, RoleId("Chef"))
+
+        assertFeasible(
+            profile,
+            topology,
+            setupKnowledge = listOf(shown, shown),
+        )
+    }
+
+    @Test
     fun `mechanical setup propositions defer instead of being reported as infeasible`() {
         val profile = TroubleBrewingSetupProfiles.standard(8)
         val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
