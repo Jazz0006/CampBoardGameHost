@@ -7,6 +7,8 @@ import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
+import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
@@ -33,6 +35,7 @@ import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -169,9 +172,9 @@ class DemonBluffJointOutputEvaluatorTest {
         assertSame(ready, shadow.jointOutput)
         assertEquals(
             visibleResult.plans.associate { plan ->
-                val bluff = plan.decisions.filterIsInstance<com.codex.campboardgamehost.clocktower.domain.StorytellerDecision.DemonBluffs>().single()
+                val bluff = plan.decisions.filterIsInstance<StorytellerDecision.DemonBluffs>().single()
                 plan.style to legalCandidates.single { candidate ->
-                    val roles = (candidate.outcome as com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome.DemonBluffs).roles
+                    val roles = (candidate.outcome as SetupClueOutcome.DemonBluffs).roles
                     roles == bluff.roles
                 }.candidateId
             },
@@ -180,6 +183,34 @@ class DemonBluffJointOutputEvaluatorTest {
         assertTrue(RecommendationStyle.BALANCED in shadow.legacyBluffCandidateIdByStyle)
     }
 
+
+    @Test
+    fun `locked Demon bluffs are persistent inputs and cannot enter shadow replanning`() {
+        val legalCandidate = SetupCandidateGenerator.generateDemonBluffCandidates(game, roles).first()
+        val lockedBluffs = (legalCandidate.outcome as SetupClueOutcome.DemonBluffs).roles
+        val request = SetupCoordinationRequest(
+            game = game,
+            roles = roles,
+            lockedDecisions = listOf(StorytellerDecision.DemonBluffs(lockedBluffs)),
+        )
+        val coordinator = ClocktowerRecommendationCoordinator()
+        val visibleResult = coordinator.recommendSetup(request)
+
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            coordinator.evaluateSetupDemonBluffShadow(
+                request = request,
+                visibleResult = visibleResult,
+                exactContext = ExactConsequenceContext(
+                    validatedRuleset = validatedRuleset,
+                    exactContext = exactContext,
+                ),
+                evaluationRecipientSeats = setOf(1),
+                publicWholeBundleObservations = emptyList(),
+            )
+        }
+
+        assertTrue(error.message.orEmpty().contains("persistent setup inputs"))
+    }
 
     private fun publicChefClaim(): EpistemicObservation {
         val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, 1)
