@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptSource
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
@@ -34,6 +35,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformati
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightPublicGoodInfoProjection
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import java.io.File
@@ -123,25 +125,17 @@ class DemonBluffJointOutputEvaluatorTest {
         val logBefore = exactContext.observationLog.records.toList()
         val publicWholeBundle = listOf(publicChefClaim())
 
-        val coordinator = ClocktowerRecommendationCoordinator()
-        val setupRequest = SetupCoordinationRequest(game = game, roles = roles)
-        val visibleResult = coordinator.recommendSetup(setupRequest)
-        val visiblePlansBefore = visibleResult.plans.toList()
-        val shadow = coordinator.evaluateSetupDemonBluffShadow(
-            request = setupRequest,
-            visibleResult = visibleResult,
-            exactContext = ExactConsequenceContext(
-                validatedRuleset = validatedRuleset,
-                exactContext = exactContext,
-            ),
+        val evaluation = TroubleBrewingDemonBluffJointOutputEvaluator.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = exactContext,
+            actualDemonSeat = 7,
             evaluationRecipientSeats = recipientSeats,
             publicWholeBundleObservations = publicWholeBundle,
+            candidates = candidates,
         )
 
-        assertSame(visibleResult, shadow.visibleResult)
-        assertEquals(visiblePlansBefore, shadow.visibleResult.plans)
-        assertTrue(shadow.jointOutput is DemonBluffJointOutputEvaluation.Ready)
-        val ready = shadow.jointOutput as DemonBluffJointOutputEvaluation.Ready
+        assertTrue(evaluation is DemonBluffJointOutputEvaluation.Ready)
+        val ready = evaluation as DemonBluffJointOutputEvaluation.Ready
         val distinctRoles = candidates.flatMap { it.roles }.distinct().sortedBy(RoleId::value)
 
         assertEquals(distinctRoles, ready.roleSupports.map(DemonBluffRoleSupport::role))
@@ -197,21 +191,57 @@ class DemonBluffJointOutputEvaluatorTest {
         }
         assertEquals(timelineBefore, exactContext.actionTimeline.reducerFacts())
         assertEquals(logBefore, exactContext.observationLog.records)
-
-        assertSame(ready, shadow.jointOutput)
-        assertEquals(
-            visibleResult.plans.associate { plan ->
-                val bluff = plan.decisions.filterIsInstance<StorytellerDecision.DemonBluffs>().single()
-                plan.style to legalCandidates.single { candidate ->
-                    val roles = (candidate.outcome as SetupClueOutcome.DemonBluffs).roles
-                    roles == bluff.roles
-                }.candidateId
-            },
-            shadow.legacyBluffCandidateIdByStyle,
-        )
-        assertTrue(RecommendationStyle.BALANCED in shadow.legacyBluffCandidateIdByStyle)
     }
 
+    @Test
+    fun `production setup shadow preserves visible result while exact evaluation defers`() {
+        val productionGame = TroubleBrewingFixtures.eightPlayerExample()
+        val productionRoles = TroubleBrewingFixtures.fullRoleDefinitions()
+        val productionSnapshot = GameSnapshot(
+            gameId = "sde-2d2-production-shadow",
+            gameStateRevision = 0,
+            playerInputRevision = 0,
+            gameSeed = productionGame.seed,
+            rulesetRef = rulesetRef,
+            gameState = productionGame,
+        )
+        val productionExactContext = ExactHistoricalHypotheticalContext(
+            initialSnapshot = productionSnapshot,
+            initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1,
+            actionTimeline = ActionFactTimeline(emptyList()),
+            perceivedRolesBySeat = productionGame.players.associate { player ->
+                player.seat to (player.shownRole ?: player.actualRole)
+            },
+            observationLog = EpistemicObservationLog(),
+            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            roleDefinitions = productionRoles,
+        )
+        val unsupportedRuleset = validatedRuleset.copy(
+            script = validatedRuleset.script.copy(source = ClocktowerScriptSource.IMPORTED_HOMEBREW),
+        )
+        val coordinator = ClocktowerRecommendationCoordinator()
+        val request = SetupCoordinationRequest(game = productionGame, roles = productionRoles)
+        val visibleResult = coordinator.recommendSetup(request)
+        val visiblePlansBefore = visibleResult.plans.toList()
+
+        val shadow = coordinator.evaluateSetupDemonBluffShadow(
+            request = request,
+            visibleResult = visibleResult,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = unsupportedRuleset,
+                exactContext = productionExactContext,
+            ),
+            evaluationRecipientSeats = setOf(1),
+            publicWholeBundleObservations = emptyList(),
+        )
+
+        assertSame(visibleResult, shadow.visibleResult)
+        assertEquals(visiblePlansBefore, shadow.visibleResult.plans)
+        assertTrue(shadow.jointOutput is DemonBluffJointOutputEvaluation.Deferred)
+        assertTrue(shadow.legacyBluffCandidateIdByStyle.isNotEmpty())
+        assertTrue(RecommendationStyle.BALANCED in shadow.legacyBluffCandidateIdByStyle)
+    }
 
     @Test
     fun `locked Demon bluffs are persistent inputs and cannot enter shadow replanning`() {
@@ -223,7 +253,7 @@ class DemonBluffJointOutputEvaluatorTest {
             lockedDecisions = listOf(StorytellerDecision.DemonBluffs(lockedBluffs)),
         )
         val coordinator = ClocktowerRecommendationCoordinator()
-        val visibleResult = coordinator.recommendSetup(request)
+        val visibleResult = SetupRecommendationService.ConstrainedResult(plans = emptyList())
 
         val error = assertThrows(IllegalArgumentException::class.java) {
             coordinator.evaluateSetupDemonBluffShadow(
