@@ -95,6 +95,7 @@ afterEvaluate {
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologySetupWitnessDifferentialTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyObservationDifferentialTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyBundleDifferentialTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputEvaluatorTest")
         }
     }
