@@ -1,8 +1,9 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2 First-Night Uncertainty / Replanning
 
 > Updated: 2026-09-18 Australia/Sydney  
-> Status: **CURRENT / SDE-1A–E COMPLETE ON PR #144 BRANCH**  
+> Status: **CURRENT / SDE-2A COMPLETE / SDE-2B NEXT EXECUTABLE SLICE**  
 > SDE-1E completion: `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`  
+> SDE-2A completion: `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
 ## 0. Start here
@@ -100,49 +101,45 @@ existing legal/materialized candidates
 
 Tests prove visible choices and confirmation semantics remain unchanged and only explicit `ClocktowerGameSession.commitGlobalEpistemicObservation(...)` performs durable observation/revision mutation.
 
-## 3. Current objective — SDE-2
+## 3. Current objective — SDE-2B
 
-Implement first-night uncertainty and replanning in this order:
-
-```text
-SDE-2A Drunk ownership / dependency audit
-→ SDE-2B Spy/Recluse interaction-scoped registration uncertainty
-→ SDE-2C Poisoner-driven invalidation/replanning
-```
-
-Do not jump directly to a global optimization policy.
-
-## 4. SDE-2A — Drunk
-
-Audit before editing:
-
-- where the Drunk shown role is committed;
-- which first-night clues depend on that shown role;
-- which recommendation decisions are still uncommitted when Poisoner acts;
-- which existing semantic identities/revisions already express those dependencies.
-
-Freeze the distinction:
+SDE-2A is complete. Continue with Spy/Recluse interaction-scoped registration uncertainty.
 
 ```text
-Drunk shown role
-    PERSISTENT setup commitment
-
-Drunk clue recommendation
-    PLANNED until confirmed/shown
-
-shown clue observation
-    COMMITTED durable history
+TroubleBrewingRegistrationDomain
+→ legal interaction-local registration alternatives
+→ exact hypothetical evaluation branch
+→ SDE consequence diagnostics
 ```
 
-SDE must never treat the already committed shown role as a disposable plan.
+No canonical player identity mutation is allowed.
 
-Add tests before implementation for:
+## 4. SDE-2A — Drunk — COMPLETE
 
-- a Drunk shown-role commitment surviving replanning;
-- an uncommitted clue plan becoming stale when its source dependency changes;
-- a committed clue observation never being rewritten.
+Completion authority:
 
-## 5. SDE-2B — Spy / Recluse
+`docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`
+
+Executable evidence:
+
+`6c9d7fe8776fea4723004e22790ba11c1f140b8c`
+
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS (executed)
+CI gate                        SUCCESS
+```
+
+Frozen result:
+
+- shown role is PERSISTENT setup/session truth;
+- unshown clue is PLANNED/disposable;
+- shown clue is COMMITTED/immutable;
+- Poisoner draft stales plans through `playerInputRevision`;
+- Poisoner confirm stales plans through `gameStateRevision`;
+- no new SDE dependency store or replanning revision counter exists.
+
+## 5. SDE-2B — Spy / Recluse — CURRENT
 
 Registration remains interaction-scoped.
 
@@ -219,4 +216,4 @@ SDE-2 may touch the registration family only when required by the scoped uncerta
 
 ## 10. Stable handoff
 
-> **SDE-1A/B/C/D/E are complete on PR #144, with final executable evidence at `e7bb31937db32863e5606044b443818011d16236`. Continue with SDE-2A: audit Drunk first-night ownership/dependencies and add tests proving persistent shown identity, disposable clue planning, stale-plan invalidation, and immutable committed history. Then proceed to interaction-scoped Spy/Recluse uncertainty and Poisoner-driven replanning. Preserve all SDE-1 ownership boundaries and do not cut production selection over to SDE yet.**
+> **SDE-1A/B/C/D/E and SDE-2A are complete on PR #144. SDE-2A executable evidence is `6c9d7fe8776fea4723004e22790ba11c1f140b8c`. Continue with SDE-2B: audit `TroubleBrewingRegistrationDomain`, the legacy `RegistrationPolicy` caller, and exact world-evaluation registration semantics; then add the smallest typed interaction-local registration assumption needed by exact consequence evaluation. Do not mutate canonical Spy/Recluse identity, duplicate registration legality, or cut production selection over to SDE.**
