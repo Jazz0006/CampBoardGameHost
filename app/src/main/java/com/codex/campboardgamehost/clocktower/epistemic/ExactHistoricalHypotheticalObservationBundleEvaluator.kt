@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
+import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
@@ -32,15 +33,47 @@ internal data class ExactHistoricalHypotheticalContext(
     }
 }
 
+/**
+ * Optional exact binding for one Storyteller-selected registration witness.
+ *
+ * The binding is scoped by [observationId], not by the generator-local RegistrationFact
+ * interaction ID. An empty [registrations] set explicitly selects a natural/no-special witness.
+ * Omitting a binding from the query preserves the legacy existential "any legal witness" semantics.
+ */
+internal data class ExactRegistrationWitnessBinding(
+    val observationId: String,
+    val registrations: Set<RegistrationFact>,
+) {
+    init {
+        require(observationId.isNotBlank()) { "Exact registration witness observation ID cannot be blank." }
+    }
+}
+
 internal data class ExactHypotheticalObservationBundleQuery(
     val bundleId: String,
     val recipientSeat: Int,
     val observations: List<EpistemicObservation>,
+    val registrationWitnessBindings: List<ExactRegistrationWitnessBinding> = emptyList(),
 ) {
     init {
         require(bundleId.isNotBlank()) { "Hypothetical observation bundle ID cannot be blank." }
         require(recipientSeat > 0) { "Hypothetical observation bundle recipient seat must be positive." }
+        require(
+            registrationWitnessBindings.map(ExactRegistrationWitnessBinding::observationId).distinct().size ==
+                registrationWitnessBindings.size,
+        ) {
+            "A hypothetical observation may have at most one selected registration witness binding."
+        }
+        val observationIds = observations.map(EpistemicObservation::observationId).toSet()
+        require(registrationWitnessBindings.all { it.observationId in observationIds }) {
+            "Every selected registration witness must bind an observation in the same hypothetical bundle."
+        }
     }
+
+    fun registrationWitnessBindingFor(
+        observation: EpistemicObservation,
+    ): ExactRegistrationWitnessBinding? =
+        registrationWitnessBindings.singleOrNull { it.observationId == observation.observationId }
 }
 
 /** Descriptive strategic structure only. Badness policy does not belong in the exact evaluator. */
@@ -202,7 +235,10 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                             .filter(::isStrictShownRoleClaim)
                             .distinctBy { observation -> observation.proposition }
                         val remainingByQuery = groupedQueries.map { query ->
-                            query.observations.filterNot(::isStrictShownRoleClaim)
+                            query.observations.filterNot { observation ->
+                                isStrictShownRoleClaim(observation) &&
+                                    query.registrationWitnessBindingFor(observation) == null
+                            }
                         }
                         val afterCounts = LongArray(groupedQueries.size)
                         val afterStructureAccumulators = List(groupedQueries.size) {
@@ -224,13 +260,15 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                                     }
                             if (passesIdentityEnvelope) {
                                 groupedQueries.indices.forEach { queryIndex ->
+                                    val query = groupedQueries[queryIndex]
                                     val matchesQuery = remainingByQuery[queryIndex].all { observation ->
-                                        TroubleBrewingWorldObservationEvaluator.evaluate(
+                                        matchesObservation(
+                                            query = query,
                                             world = world,
                                             roles = rolesById,
                                             observation = observation,
                                             hypothesis = hypothesis,
-                                        ).matches
+                                        )
                                     }
                                     if (matchesQuery) {
                                         afterCounts[queryIndex] += 1L
@@ -288,12 +326,13 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                 val beforeWorlds = baselineBySeat.getValue(query.recipientSeat)
                 val afterWorlds = beforeWorlds.filter { world ->
                     query.observations.all { observation ->
-                        TroubleBrewingWorldObservationEvaluator.evaluate(
+                        matchesObservation(
+                            query = query,
                             world = world,
                             roles = rolesById,
                             observation = observation,
                             hypothesis = context.hypothesis,
-                        ).matches
+                        )
                     }
                 }
                 val before = beforeBySeat.getValue(query.recipientSeat)
@@ -321,6 +360,82 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                 TroubleBrewingWorldObservationEvaluator.evaluateKnownFact(world, rolesById, proposition)
             }
         }
+    }
+
+    private fun matchesObservation(
+        query: ExactHypotheticalObservationBundleQuery,
+        world: EnumeratedWorld,
+        roles: Map<RoleId, RoleDefinition>,
+        observation: EpistemicObservation,
+        hypothesis: EpistemicHypothesis,
+    ): Boolean {
+        val result = TroubleBrewingWorldObservationEvaluator.evaluate(
+            world = world,
+            roles = roles,
+            observation = observation,
+            hypothesis = hypothesis,
+        )
+        if (!result.matches) return false
+        val selected = query.registrationWitnessBindingFor(observation) ?: return true
+        return result.registrationWitnesses.any { witness ->
+            registrationWitnessMatches(
+                selected = selected.registrations,
+                exactWitness = witness,
+                roles = roles,
+            )
+        }
+    }
+
+    private fun registrationWitnessMatches(
+        selected: Set<RegistrationFact>,
+        exactWitness: Set<RegistrationFact>,
+        roles: Map<RoleId, RoleDefinition>,
+    ): Boolean {
+        if (selected.size != exactWitness.size) return false
+        if (selected.isEmpty()) return true
+
+        val unmatched = exactWitness.toMutableList()
+        selected.forEach { selectedFact ->
+            val matchIndex = unmatched.indexOfFirst { exactFact ->
+                sameRegistrationSelection(
+                    selected = selectedFact,
+                    exact = exactFact,
+                    roles = roles,
+                )
+            }
+            if (matchIndex < 0) return false
+            unmatched.removeAt(matchIndex)
+        }
+        return unmatched.isEmpty()
+    }
+
+    /**
+     * Generator-local interaction IDs and query labels are provenance, not selected registration
+     * identity. The exact observation supplies interaction scope. Compare the selected semantic
+     * registration against the dimensions the exact observation actually queried.
+     */
+    private fun sameRegistrationSelection(
+        selected: RegistrationFact,
+        exact: RegistrationFact,
+        roles: Map<RoleId, RoleDefinition>,
+    ): Boolean {
+        if (selected.subjectSeat != exact.subjectSeat || selected.reason != exact.reason) return false
+
+        val selectedRole = selected.registeredRole
+        val exactRole = exact.registeredRole
+        if (exactRole != null && selectedRole != exactRole) return false
+
+        val selectedType = selected.registeredType ?: selectedRole?.let(roles::get)?.type
+        val exactType = exact.registeredType ?: exactRole?.let(roles::get)?.type
+        if (exactType != null && selectedType != exactType) return false
+
+        val selectedAlignment =
+            selected.registeredAlignment ?: selectedRole?.let(roles::get)?.alignment
+        val exactAlignment =
+            exact.registeredAlignment ?: exactRole?.let(roles::get)?.alignment
+        if (exactAlignment != null && selectedAlignment != exactAlignment) return false
+
+        return true
     }
 
     private fun validateQueries(
