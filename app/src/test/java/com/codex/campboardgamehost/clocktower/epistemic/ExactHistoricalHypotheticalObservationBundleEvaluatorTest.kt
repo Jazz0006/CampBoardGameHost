@@ -115,7 +115,7 @@ class ExactHistoricalHypotheticalObservationBundleEvaluatorTest {
             .diagnostics.associateBy(ExactHypotheticalObservationBundleDiagnostics::bundleId)
         val baselineWorlds = baselineWorlds(timeline, observationLog)
         val rolesById = roles.associateBy(RoleDefinition::id)
-        val expectedIntersection = baselineWorlds.count { world ->
+        val intersectionWorlds = baselineWorlds.filter { world ->
             listOf(poisoner, imp).all { observation ->
                 TroubleBrewingWorldObservationEvaluator.evaluate(
                     world = world,
@@ -125,9 +125,26 @@ class ExactHistoricalHypotheticalObservationBundleEvaluatorTest {
                 ).matches
             }
         }
+        val forward = diagnostics.getValue("forward")
 
-        assertEquals(exact(baselineWorlds.size), diagnostics.getValue("forward").before)
-        assertEquals(exact(expectedIntersection), diagnostics.getValue("forward").after)
+        assertEquals(exact(baselineWorlds.size), forward.before)
+        assertEquals(exact(intersectionWorlds.size), forward.after)
+        assertEquals(
+            manualStrategicKeys(baselineWorlds, rolesById),
+            forward.beforeStructure.strategicWorldKeys,
+        )
+        assertEquals(
+            manualStrategicKeys(intersectionWorlds, rolesById),
+            forward.afterStructure.strategicWorldKeys,
+        )
+        assertEquals(
+            forward.beforeStructure.strategicWorldKeys.size,
+            forward.beforeStructure.distinctStrategicWorldCount,
+        )
+        assertEquals(
+            forward.afterStructure.strategicWorldKeys.size,
+            forward.afterStructure.distinctStrategicWorldCount,
+        )
         assertEquals(diagnostics.getValue("forward").after, diagnostics.getValue("reverse").after)
         assertTrue(
             diagnostics.getValue("forward").after.value <=
@@ -221,6 +238,22 @@ class ExactHistoricalHypotheticalObservationBundleEvaluatorTest {
             actionTimeline = timeline,
             observationLog = observationLog,
         ).worldSet.enumeratedWorlds()
+    }
+
+    private fun manualStrategicKeys(
+        worlds: Collection<EnumeratedWorld>,
+        rolesById: Map<RoleId, RoleDefinition>,
+    ): Set<StrategicWorldKey> = worlds.mapTo(linkedSetOf()) { world ->
+        val demonSeats = world.rolesBySeat.filterValues { role ->
+            rolesById.getValue(role).type == com.codex.campboardgamehost.clocktower.domain.CharacterType.DEMON
+        }.keys
+        val minionSeats = world.rolesBySeat.filterValues { role ->
+            rolesById.getValue(role).type == com.codex.campboardgamehost.clocktower.domain.CharacterType.MINION
+        }.keys.sorted()
+        StrategicWorldKey(
+            demonSeat = demonSeats.single(),
+            minionSeats = minionSeats,
+        )
     }
 
     private fun publicObservation(
