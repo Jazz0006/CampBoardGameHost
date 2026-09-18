@@ -115,7 +115,7 @@ class ExactHistoricalHypotheticalObservationBundleEvaluatorTest {
             .diagnostics.associateBy(ExactHypotheticalObservationBundleDiagnostics::bundleId)
         val baselineWorlds = baselineWorlds(timeline, observationLog)
         val rolesById = roles.associateBy(RoleDefinition::id)
-        val expectedIntersection = baselineWorlds.count { world ->
+        val intersectionWorlds = baselineWorlds.filter { world ->
             listOf(poisoner, imp).all { observation ->
                 TroubleBrewingWorldObservationEvaluator.evaluate(
                     world = world,
@@ -125,9 +125,26 @@ class ExactHistoricalHypotheticalObservationBundleEvaluatorTest {
                 ).matches
             }
         }
+        val forward = diagnostics.getValue("forward")
 
-        assertEquals(exact(baselineWorlds.size), diagnostics.getValue("forward").before)
-        assertEquals(exact(expectedIntersection), diagnostics.getValue("forward").after)
+        assertEquals(exact(baselineWorlds.size), forward.before)
+        assertEquals(exact(intersectionWorlds.size), forward.after)
+        assertEquals(
+            manualStrategicKeys(baselineWorlds, rolesById),
+            forward.beforeStructure.strategicWorldKeys,
+        )
+        assertEquals(
+            manualStrategicKeys(intersectionWorlds, rolesById),
+            forward.afterStructure.strategicWorldKeys,
+        )
+        assertEquals(
+            forward.beforeStructure.strategicWorldKeys.size,
+            forward.beforeStructure.distinctStrategicWorldCount,
+        )
+        assertEquals(
+            forward.afterStructure.strategicWorldKeys.size,
+            forward.afterStructure.distinctStrategicWorldCount,
+        )
         assertEquals(diagnostics.getValue("forward").after, diagnostics.getValue("reverse").after)
         assertTrue(
             diagnostics.getValue("forward").after.value <=
@@ -136,59 +153,6 @@ class ExactHistoricalHypotheticalObservationBundleEvaluatorTest {
         assertTrue(
             diagnostics.getValue("forward").after.value <=
                 diagnostics.getValue("imp-only").after.value,
-        )
-    }
-
-    @Test
-    fun `exact structure quotient equals distinct surviving setup evil topologies`() {
-        val timeline = timelineOf(emptyList())
-        val observationLog = EpistemicObservationLog()
-        val observation = publicObservation(
-            id = "strategic-quotient-imp-at-5",
-            sequence = 1,
-            proposition = InformationProposition.RoleAt(5, RoleId("Imp")),
-        )
-        val evaluation = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
-            validatedRuleset = validatedRuleset,
-            context = context(timeline, observationLog),
-            queries = listOf(
-                ExactHypotheticalObservationBundleQuery(
-                    bundleId = "strategic-quotient",
-                    recipientSeat = 1,
-                    observations = listOf(observation),
-                ),
-            ),
-        )
-
-        assertTrue(evaluation is ExactHypotheticalObservationBundleEvaluation.Ready)
-        val diagnostic =
-            (evaluation as ExactHypotheticalObservationBundleEvaluation.Ready).diagnostics.single()
-        val baseline = baselineWorlds(timeline, observationLog)
-        val rolesById = roles.associateBy(RoleDefinition::id)
-        val surviving = baseline.filter { world ->
-            TroubleBrewingWorldObservationEvaluator.evaluate(
-                world = world,
-                roles = rolesById,
-                observation = observation,
-                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-            ).matches
-        }
-
-        assertEquals(
-            manualStrategicKeys(baseline, rolesById),
-            diagnostic.beforeStructure.strategicWorldKeys,
-        )
-        assertEquals(
-            manualStrategicKeys(surviving, rolesById),
-            diagnostic.afterStructure.strategicWorldKeys,
-        )
-        assertEquals(
-            diagnostic.beforeStructure.strategicWorldKeys.size,
-            diagnostic.beforeStructure.distinctStrategicWorldCount,
-        )
-        assertEquals(
-            diagnostic.afterStructure.strategicWorldKeys.size,
-            diagnostic.afterStructure.distinctStrategicWorldCount,
         )
     }
 
