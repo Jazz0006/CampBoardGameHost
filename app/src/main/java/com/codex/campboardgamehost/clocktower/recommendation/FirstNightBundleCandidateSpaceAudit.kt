@@ -221,27 +221,44 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
 
     private fun numericInformationFactors(game: GameState): List<FirstNightBundleCandidateFactorAudit> = game.players
         .asSequence()
-        .filter { source ->
-            source.alive && !source.poisoned && source.actualRole in numericRoles
+        .mapNotNull { source ->
+            if (!source.alive) return@mapNotNull null
+            val abilityRole = when {
+                source.actualRole == drunk && source.shownRole?.let(numericRoles::contains) == true ->
+                    requireNotNull(source.shownRole)
+                !source.poisoned && source.actualRole in numericRoles -> source.actualRole
+                else -> return@mapNotNull null
+            }
+            source to abilityRole
         }
-        .sortedBy { it.seat }
-        .map { source ->
-            val roleKey = numericRoleKey(source.actualRole)
-            val truthValues = FirstNightNumericInformationSemantics
-                .healthyTruthValues(game, source.seat)
-                .toSortedSet()
+        .sortedBy { (source, _) -> source.seat }
+        .map { (source, abilityRole) ->
+            val roleKey = numericRoleKey(abilityRole)
+            val drunkSource = source.actualRole == drunk
+            val optionIds = if (drunkSource) {
+                FirstNightNumericLegalDomain.generate(
+                    game = game,
+                    sourceSeat = source.seat,
+                    abilityRole = abilityRole,
+                    reliability = ReliabilityState.DRUNK,
+                ).map { it.candidateId }
+            } else {
+                FirstNightNumericInformationSemantics
+                    .healthyTruthValues(game, source.seat)
+                    .toSortedSet()
+                    .map { value -> "value-$value" }
+            }
             FirstNightBundleCandidateFactorAudit(
                 factorId = "numeric.$roleKey.seat-${source.seat}",
                 kind = FirstNightBundleCandidateFactorKind.FIXED_NUMERIC_INFORMATION,
-                control = if (truthValues.size <= 1) {
+                control = if (!drunkSource && optionIds.size <= 1) {
                     FirstNightBundleEntryControl.RULE_DETERMINED
                 } else {
-                    // Multiple healthy truths are produced only by legal registration alternatives.
                     FirstNightBundleEntryControl.STORYTELLER_CONTROLLED
                 },
                 profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
                 sourceSeat = source.seat,
-                optionIds = truthValues.map { value -> "value-$value" },
+                optionIds = optionIds,
             )
         }
         .toList()
@@ -277,8 +294,7 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
 
     private fun deferredComplexities(game: GameState): Set<FirstNightBundleDeferredComplexity> = buildSet {
         val unsupportedDrunkInformation = game.players.any { source ->
-            source.actualRole == drunk &&
-                (source.shownRole?.let(numericRoles::contains) == true || source.shownRole == fortuneTeller)
+            source.actualRole == drunk && source.shownRole == fortuneTeller
         }
         if (unsupportedDrunkInformation) add(FirstNightBundleDeferredComplexity.DRUNK)
         if (game.players.any { it.actualRole == spy || it.actualRole == recluse }) {
