@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
-> Updated: 2026-09-18 Australia/Sydney  
-> Status: **SDE-2D4 CURRENT — 5–15 correctness/performance/normalized-metrics audit complete**  
+> Updated: 2026-09-19 Australia/Sydney  
+> Status: **SDE-2D4 CURRENT — topology-first implementation substantially complete; final differential/performance/T4 acceptance pending**  
 > Base checkpoint: PR #147 merged to `main` as `2cab06efeee5692024e065c632deefe765ca1618`; D2D4 continues on fresh branch `sde-2d4-5-15-validation-performance`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
@@ -17,17 +17,18 @@ Read, in order:
 5. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
 6. `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
 7. `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
-8. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
-9. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-10. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
-11. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
-12. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
-13. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
-14. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
-15. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
-16. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
-17. Storyteller Decision Engine route;
-18. query live `main` and current checks before executable edits.
+8. `docs/SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`;
+9. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
+10. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
+11. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
+12. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
+13. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
+14. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
+15. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
+16. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
+17. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
+18. Storyteller Decision Engine route;
+19. query live `main`, PR #149 head and current checks before executable edits.
 
 Do not restart completed FN-BUNDLE, SDE-0, SDE-1 or SDE-2A/B/C work.
 
@@ -334,37 +335,78 @@ D2D4 branch:
 
 `sde-2d4-5-15-validation-performance`
 
+Draft PR:
+
+**#149 — SDE-2D4: validate 5–15 strategic scaling**
+
 Current authority:
 
 - `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
-- `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`.
+- `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
+- `docs/SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`.
 
-The focused audit is complete.
+The branch has moved well beyond the initial audit.
 
-Frozen execution order:
+Implemented:
 
 ```text
-D4A normalized strategic diagnostics
-    ↓
-D4B reproducible T3 scale evidence
-    ↓
-D4C topology-first exact feasibility
-    ↓
-D4D differential correctness
-    ↓
-D4E 5–15 performance matrix
+D4A   normalized strategic diagnostics
+D4B   source-derived scale matrix + bounded raw-stream prefix harness
+D4C1  exact topology-domain enumeration for 5–15
+D4C2  role/type/shown-role setup witness existence
+D4C3  Drunk + Poisoner finite-resource AbilityState feasibility
+D4C4a registration-aware identity observations
+D4C4b Chef / Empath / Fortune Teller / Red Herring observations
+D4C4c composable AnyOf / AllOf / supported Not constraint branches
+D4C5  exact strategic topology whole-bundle evaluator with shared witness
+D4D   bounded exhaustive differential tests
+D4E   topology-bundle 5–15 performance harness
 ```
 
-Current implementation checkpoint:
+Important architecture:
 
-- D4A normalized strategic diagnostics implemented tests-first;
-- D4B reproducible T3 scale matrix/prefix-throughput harness implemented and excluded from FAST;
-- D4C proposition/fanout audit complete;
-- next gate is full validation of D4A/D4B, then D4C1 topology-domain tests-first.
+- `TroubleBrewingStrategicTopologyDomain` enumerates only Demon seat × Minion seat combinations;
+- `TroubleBrewingTopologySetupWitnessEvaluator` proves role/setup/mechanical existence without enumerating complete role worlds;
+- remaining seat assignment uses an exact type-quota → role → seat max-flow existence proof;
+- `TroubleBrewingTopologyObservationWitnessEvaluator` exposes composable logical explanation branches;
+- `TroubleBrewingTopologyHypotheticalBundleEvaluator` composes every observation into one shared witness, preserving unique Drunk, unique roles, one Poisoner target and one Red Herring identity;
+- registration legality still belongs to `TroubleBrewingRegistrationDomain`;
+- legacy `WorldCardinality.Exact` still means mechanical-world cardinality and was not redefined;
+- no production recommendation consumer has cut over to topology-first diagnostics.
 
-Do not attempt to solve large-player scaling by only compressing the already-generated raw world stream. Current ZDD construction still iterates that stream.
+A FAST checkpoint exposed three failures. Two were stale/underspecified tests. The third found a real standard-profile Baron contradiction bug: an Elvis fallback restored `base` after `withForbiddenInPlay(Baron)` correctly returned `null`. That bug is fixed.
 
-Evidence regimes:
+Current executable checkpoint:
+
+`f2ba4b8e29514ecc398626acf26526b1445d7eb6`
+
+CI run:
+
+`35357362990`
+
+Validation:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+ASP contract tests             SKIPPED by classifier
+Android testFull / APK         SKIPPED at FAST checkpoint
+```
+
+Remaining work before SDE-2D4 may be called complete:
+
+1. verify/expand **whole-bundle** bounded differential against exhaustive mechanical worlds, not merely independent observation SAT;
+2. execute the D4E 5–15 topology-bundle performance harness and record CPU/heap/latency evidence;
+3. decide from measured evidence whether direct topology feasibility is sufficient or needs additional memoization/compiled constraints;
+4. trigger a final `[full-ci]` checkpoint and require Android `testFull`, debug APK, ASP contracts, Real Clingo and CI gate all green;
+5. update PR #149 body and final roadmap/handoff after that acceptance;
+6. do **not** merge PR #149 without explicit user authorization.
+
+Do not start SDE-3 and do not cut production recommendation policy yet.
+
+Evidence regimes remain:
 
 ```text
 5–6
@@ -373,31 +415,13 @@ Evidence regimes:
 13–15
 ```
 
-Validate separately:
-
-- semantic correctness;
-- candidate-space assumptions;
-- normalized strategic metrics;
-- CPU cost;
-- memory cost;
-- mobile-feasible latency.
-
-Useful baseline-relative metrics include:
+For 15 players with one Demon / three Minions:
 
 ```text
-demonCoverRetention
-evilTopologyRetention
-evilCoverRetention
-forcedGoodFraction
+15 × C(14,3) = 5,460 strategic topology keys maximum
 ```
 
-For a 15-player one-Demon/three-Minion topology, the raw seat-topology upper bound is:
-
-```text
-15 × C(14,3) = 5,460
-```
-
-Do not freeze a production switch threshold until measured evidence exists.
+The raw mechanical witness space remains the bounded oracle, not the production discovery representation.
 
 ## 8. THEN — SDE-2D5 calibration
 
@@ -456,4 +480,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **PR #147 is merged to `main` as `2cab06efeee5692024e065c632deefe765ca1618`. SDE-2D4 is current on branch `sde-2d4-5-15-validation-performance`. The D2D4 audit shows that the strategic quotient is the right result identity but the current exact and ZDD paths still discover it by exhaustively generating raw mechanical witnesses. Implement exact normalized BEFORE/AFTER strategic diagnostics first, then build reproducible T3 scale evidence, then introduce an epistemic-owned topology-first exact witness-feasibility seam and cross-check it against bounded exhaustive enumeration / Clingo before measuring 5–15 performance. Do not freeze player-count cutoffs, use sampling as exact evidence, cut production policy, or start SDE-3 yet.**
+> **SDE-2D4 is current on draft PR #149, branch `sde-2d4-5-15-validation-performance`. The topology-first implementation is substantially complete through D4C5, bounded D4D differential tests exist, and a D4E 5–15 performance harness exists. Current executable checkpoint `f2ba4b8e29514ecc398626acf26526b1445d7eb6` has R2 / Android FAST / Real Clingo / CI gate SUCCESS. A real standard-profile Baron contradiction bug found by FAST was fixed; do not revert that fix. Next, prove whole-bundle shared-witness parity against bounded exhaustive worlds, run and record D4E 5–15 CPU/heap/latency evidence, then trigger one final `[full-ci]` T4 checkpoint. Do not redefine mechanical `WorldCardinality.Exact`, do not cut production recommendation consumers to topology-first yet, do not merge PR #149 without explicit user authorization, and do not begin SDE-3.**
