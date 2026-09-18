@@ -26,6 +26,7 @@ SDE-1D lifecycle ownership / planned freshness         COMPLETE / PR #144 branch
 SDE-1E structured production shadow integration        COMPLETE / PR #144 branch
 SDE-2A Drunk ownership / revision replanning contract  COMPLETE / PR #144 branch
 SDE-2B Spy/Recluse exact registration witness binding   COMPLETE / PR #144 branch
+SDE-2C Poisoner invalidation / broad replanning          COMPLETE / PR #144 branch
 ```
 
 SDE-0 was squash-merged to `main` as:
@@ -62,27 +63,27 @@ Always query live `main` and PR #144 before executable edits.
 
 ## 2. CURRENT
 
-**SDE-2C — Poisoner-driven invalidation / replanning**
+**SDE-3 — cross-night impaired / registration decisions**
 
-SDE-2B is complete. Registration remains rules-owned and interaction-scoped; exact evaluation can now bind a selected registration witness without mutating canonical identity.
+SDE-2 first-night uncertainty is complete.
 
-Current task:
+Current objective:
 
 ```text
-Poisoner draft / confirmation changes existing session revisions
-→ prior PlannedDecisionRef becomes stale
-→ unshown first-night plan is discarded
-→ existing legality/materialization owners rebuild candidates
-→ StructuredInformationProductionShadow / SDE re-evaluates exact consequences
-→ fresh plan binds the new current revision
+later-game interaction begins
+→ derive current effective state from canonical session/history
+→ existing rules/candidate owner generates legal impaired/registration outcomes
+→ materialize typed hypothetical observation/effect
+→ SDE exact historical evaluation
+→ freshness-bound planning
+→ existing confirmation/commit authority
 ```
 
-The first implementation should prefer broad correct re-evaluation of still-uncommitted first-night decisions over premature dependency optimization. COMMITTED observations remain immutable history.
+Start with an audit before executable changes. Prefer one narrow later-night information interaction that exercises the already-proven Drunk/poison/registration boundaries without creating a second history/effective-state owner.
 
 ## 3. NEXT
 
 ```text
-SDE-3  — cross-night impaired / registration decisions
 SDE-4  — production cutover + legacy heuristic retirement
 ```
 
@@ -208,15 +209,31 @@ PairInformationExactConsequenceAdapter
 canonical player identity        -> unchanged
 ```
 
-### 5.3 Poisoner — CURRENT
+### 5.3 Poisoner — COMPLETE
 
-Model Poisoner changes as invalidation/replanning of still-uncommitted planned decisions.
+Authority/evidence:
 
-Do not rewrite already committed/shown observations. Replanning must use existing session revisions and planned freshness rather than a new lifecycle counter.
+- `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
+- executable SHA `fd90b8dc0433dbd925f0be9f94f3a2693e416f4b`;
+- R2 / Android FAST / CI gate SUCCESS.
 
-### 5.4 Acceptance target
+Frozen result:
 
-By the end of SDE-2, one first-night decision chain should prove:
+```text
+Poisoner draft          -> playerInputRevision invalidation
+Poisoner confirmation   -> durable hidden Poison action + gameStateRevision invalidation
+uncommitted plans       -> stale across source revision changes
+fresh planning          -> regenerate/re-evaluate through existing owners
+committed observations  -> immutable
+hidden poison target    -> excluded from recipient epistemic baseline
+new lifecycle counter   -> none
+```
+
+Broad replanning was proven with both poisoned Empath and unaffected Chef. The unaffected role may keep the same legal IDs/diagnostics, but its old plan is still stale because its source revision is obsolete.
+
+### 5.4 Acceptance target — COMPLETE
+
+SDE-2 now proves:
 
 ```text
 persistent setup commitments
@@ -283,9 +300,10 @@ Read in order:
 8. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
 9. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
 10. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
-11. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
-12. query live `main`, PR #144 and current checks.
+11. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
+12. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
+13. query live `main`, PR #144 and current checks.
 
 ## 10. Stable rule
 
-> **SDE-1A/B/C/D/E and SDE-2A/B are complete on PR #144. SDE-2B final executable evidence is `ec970aaa...`, with exact registration semantics additionally cross-validated by Clingo at `a977c01...`. Current work is SDE-2C: prove Poisoner source changes invalidate prior uncommitted plans through existing session revisions, then broadly regenerate/re-evaluate still-uncommitted first-night decisions without rewriting committed history or introducing a new replanning counter.**
+> **SDE-1A/B/C/D/E and SDE-2A/B/C are complete on PR #144. Final SDE-2C executable evidence is `fd90b8dc0433dbd925f0be9f94f3a2693e416f4b` with R2, Android FAST and CI gate SUCCESS. Current work is SDE-3: audit one later-game impaired/registration interaction and route it through the existing exact historical orchestration seam without duplicating session, effective-state, registration, or history ownership. Production selection remains unchanged until an explicit later cutover.**
