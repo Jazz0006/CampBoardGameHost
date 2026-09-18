@@ -5,7 +5,7 @@
 > Parent authority:
 > - `SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`
 > - `SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`
-> Status: **AUDIT COMPLETE — bundle cutover blocked on branch composition**
+> Status: **IMPLEMENTATION CHECKPOINT — branch composition and parallel strategic bundle diagnostics implemented; final whole-bundle differential / D4E / T4 acceptance pending**
 
 ## 1. Current implemented topology-first layers
 
@@ -19,10 +19,29 @@ D4C2 setup role/type/shown-role witness existence
 D4C3 Drunk / Poisoner AbilityState witness existence
 D4C4a identity observations + Spy/Recluse registration witness semantics
 D4C4b Chef / Empath / Fortune Teller topology-first observation semantics
-D4D bounded differential tests against exhaustive mechanical worlds
+D4C4c composable observation constraint branches
+D4C5 parallel exact strategic topology whole-bundle evaluator
+D4D bounded setup / observation differential tests against exhaustive mechanical worlds
+D4E 5–15 topology-bundle performance harness
 ```
 
 The new path still has no production policy cutover.
+
+Current executable checkpoint after fixing the standard-profile Baron contradiction:
+
+`f2ba4b8e29514ecc398626acf26526b1445d7eb6`
+
+Validation at that checkpoint:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+Android testFull / APK         not selected at this FAST checkpoint
+```
+
+The Baron defect was an implementation bug in the standard-profile branch: `withForbiddenInPlay(Baron)` correctly returned `null` for a contradiction, but an Elvis fallback restored the previous `base` branch. The fix preserves the contradiction rather than silently discarding it.
 
 ## 2. Existing exact bundle contract cannot be reused dishonestly
 
@@ -228,25 +247,27 @@ No role permutation is needed.
 
 ## 10. Migration order
 
-Frozen order:
+Current state:
 
 ```text
-D4C4c composable observation branches
+D4C4c composable observation branches                 IMPLEMENTED
     ↓
-D4D expand bounded whole-bundle differential
+parallel ExactStrategicTopologyBundleDiagnostics      IMPLEMENTED
     ↓
-parallel ExactStrategicTopologyBundleDiagnostics
+pristine first-night topology bundle evaluator        IMPLEMENTED
     ↓
-pristine first-night topology bundle evaluator
+bounded setup / observation differential              IMPLEMENTED
     ↓
-shadow comparison with exhaustive exact evaluator
+bounded whole-bundle shared-witness differential      NEXT ACCEPTANCE GAP
     ↓
-migrate feasibility-only SDE consumers
+D4E 5–15 CPU / memory / latency evidence              HARNESS READY / EVIDENCE PENDING
     ↓
-D4E 5–15 CPU / memory / latency matrix
+final [full-ci] T4                                    PENDING
+    ↓
+migrate feasibility-only SDE consumers                LATER / NOT D2D4 ACCEPTED YET
 ```
 
-Do not remove or reinterpret the old exact mechanical-cardinality API in D2D4.
+Do not remove or reinterpret the old exact mechanical-cardinality API in D2D4. Do not migrate production consumers before whole-bundle parity and performance/T4 evidence are accepted.
 
 ## 11. Acceptance condition before cutover
 
