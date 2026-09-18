@@ -24,6 +24,7 @@ SDE-1B thin bounded exact-consequence contracts        COMPLETE / PR #144 branch
 SDE-1C exact-evaluator orchestration differential      COMPLETE / PR #144 branch
 SDE-1D lifecycle ownership / planned freshness         COMPLETE / PR #144 branch
 SDE-1E structured production shadow integration        COMPLETE / PR #144 branch
+SDE-2A Drunk ownership / revision replanning contract  COMPLETE / PR #144 branch
 ```
 
 SDE-0 was squash-merged to `main` as:
@@ -60,17 +61,20 @@ Always query live `main` and PR #144 before executable edits.
 
 ## 2. CURRENT
 
-**SDE-2 — first-night uncertainty / replanning**
+**SDE-2B — Spy/Recluse interaction-scoped registration uncertainty**
 
-SDE-1 is complete through SDE-1E. The next stage is to model the first uncertainty-bearing decisions that cannot be treated as one fixed healthy information world:
+SDE-2A is complete. The Drunk/Poisoner ownership contract proved that existing `gameStateRevision` / `playerInputRevision` plus `PlannedDecisionRef` already provide the required stale-plan boundary; no SDE-specific replanning counter or dependency store is needed.
+
+Current task:
 
 ```text
-Drunk
-→ Spy/Recluse registration branches
-→ Poisoner-driven invalidation/replanning
+TroubleBrewingRegistrationDomain legality
+→ interaction-local Spy/Recluse registration branch
+→ exact hypothetical consequence evaluation
+→ no canonical identity mutation
 ```
 
-The objective is not to add another solver or mutable recommendation state. SDE-2 must compose the SDE-1 exact consequence seam with the existing setup/session/rules/registration authorities and make uncertainty/replanning explicit.
+Audit how the exact evaluator should consume one branch-local registration assumption while preserving `TroubleBrewingRegistrationDomain` as the only registration-legality authority.
 
 ## 3. NEXT
 
@@ -161,23 +165,27 @@ Executable evidence: `e7bb31937db32863e5606044b443818011d16236`.
 
 Start SDE-2 with a fresh audit before implementation.
 
-### 5.1 Drunk
+### 5.1 Drunk — COMPLETE
 
-Determine exactly which first-night choices depend on the Drunk's shown role and which parts are already persistent setup commitments versus uncommitted clue decisions.
+Authority/evidence:
 
-Required distinction:
+- `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`
+- executable SHA `6c9d7fe8776fea4723004e22790ba11c1f140b8c`
+- Android FAST and CI gate SUCCESS.
+
+Frozen result:
 
 ```text
-committed shown identity
-vs
-uncommitted information candidate
-vs
-later durable shown information
+Drunk shown role      -> PERSISTENT setup/session truth
+unshown Drunk clue    -> PLANNED / disposable
+shown committed clue  -> COMMITTED / immutable history
+Poisoner draft        -> playerInputRevision invalidation
+Poisoner confirm      -> gameStateRevision invalidation
 ```
 
-Do not let SDE own or rewrite the committed Drunk shown role.
+No SDE-specific dependency store or replanning revision counter was added.
 
-### 5.2 Spy / Recluse
+### 5.2 Spy / Recluse — CURRENT
 
 Model registration as interaction-scoped uncertainty using `TroubleBrewingRegistrationDomain`, not as a permanent alternate identity.
 
@@ -261,4 +269,4 @@ Read in order:
 
 ## 10. Stable rule
 
-> **SDE-1A/B/C/D/E are complete on PR #144's branch with executable validation on `e7bb319...`. Current work is SDE-2: first-night uncertainty and replanning, beginning with Drunk, then interaction-scoped Spy/Recluse registration, then Poisoner-driven invalidation of uncommitted plans. Preserve all SDE-1 ownership boundaries and do not perform production selection cutover yet.**
+> **SDE-1A/B/C/D/E and SDE-2A are complete on PR #144's branch. SDE-2A executable evidence is `6c9d7fe...`. Current work is SDE-2B: model Spy/Recluse as interaction-scoped registration uncertainty without canonical identity mutation and without duplicating `TroubleBrewingRegistrationDomain` legality. Preserve all existing ownership boundaries and do not perform production selection cutover yet.**
