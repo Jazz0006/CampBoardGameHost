@@ -32,7 +32,7 @@ class DemonBluffJointOutputEvaluatorTest {
         rulesetVersion = "sde-2d2-demon-bluff-test",
         sourceRevision = "official",
     )
-    private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
+    private val roles = TroubleBrewingFixtures.roleDefinitions()
     private val game = TroubleBrewingFixtures.eightPlayerExample()
     private val snapshot = GameSnapshot(
         gameId = "sde-2d2-demon-bluff",
