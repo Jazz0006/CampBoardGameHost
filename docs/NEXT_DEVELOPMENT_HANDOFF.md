@@ -1,8 +1,8 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-18 Australia/Sydney  
-> Status: **SDE-2D1 COMPLETE / PR #145 FULL-CI GREEN — pending user-authorized merge**  
-> Base checkpoint: PR #144 merged to `main` as `89453c902741699b072d11320d85a5561172abe5`; PR #145 is the validated D1 successor, not yet merged  
+> Status: **SDE-2D2 COMPLETE / PR #146 FULL-CI GREEN — pending user-authorized merge**  
+> Base checkpoint: PR #145 merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`; PR #146 is the validated D2 successor, not yet merged  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
@@ -15,43 +15,34 @@ Read, in order:
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
 5. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
-6. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
-7. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
-8. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
-9. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
-10. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
-11. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
-12. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
-13. Storyteller Decision Engine route;
-14. query live `main` and current checks before executable edits.
+6. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
+7. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
+8. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
+9. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
+10. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
+11. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
+12. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
+13. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
+14. Storyteller Decision Engine route;
+15. query live `main` and current checks before executable edits.
 
 Do not restart completed FN-BUNDLE, SDE-0, SDE-1 or SDE-2A/B/C work.
 
 ## 1. Live continuation point
 
-PR #144 is merged. The old branch/draft status in the previous handoff is obsolete.
+PR #145 is merged to live `main`.
 
 Merge commit:
 
-`89453c902741699b072d11320d85a5561172abe5`
+`6fc0d99f1a250b91925280ed12ec0b199220b060`
 
-Final SDE-2C executable evidence before merge:
+SDE-2D2 is now fully implemented on draft PR #146, branch:
 
-`fd90b8dc0433dbd925f0be9f94f3a2693e416f4b`
-
-Validated:
-
-```text
-R2 main-thread boundary        SUCCESS
-Android FAST unit tests        SUCCESS
-CI gate                        SUCCESS
-```
-
-SDE-2D1 is now implemented on draft PR #145.
+`sde-2d2-demon-bluff-joint-output`
 
 Final executable acceptance head:
 
-`27b17d5e0eedea3367f5a1b69ed2093fb958f1af`
+`6acb708bd734d36d024240f0dea213a882a7714b`
 
 Validated:
 
@@ -64,9 +55,13 @@ Real Clingo cross-validation   SUCCESS
 CI gate                        SUCCESS
 ```
 
-PR #145 remains draft and unmerged. Do not convert it to Ready or merge it without explicit user authorization.
+Authority:
 
-After merge, the next executable stage is **SDE-2D2**, not SDE-3.
+`docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`
+
+PR #146 remains draft and unmerged. Do not convert it to Ready or merge it without explicit user authorization.
+
+After merge, the next executable stage is **SDE-2D3 strategic-world quotient**, not SDE-3.
 
 ## 2. Frozen architecture entering SDE-2D
 
@@ -194,7 +189,7 @@ Role-information utility
 Authority:
 
 - `docs/SDE_2D1_DRUNK_WHOLE_BUNDLE_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-- draft PR #145;
+- PR #145 merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`;
 - final executable acceptance head `27b17d5e0eedea3367f5a1b69ed2093fb958f1af`.
 
 Implemented:
@@ -217,40 +212,37 @@ Finite-resource regression evidence protects:
 
 Do not generalize the last rule into a cross-script global one-poisoned-player invariant.
 
-## 5. NEXT — SDE-2D2 Demon bluff joint-output migration
+## 5. COMPLETE — SDE-2D2 Demon bluff joint-output migration
 
-**Start only after PR #145 is merged. Use a fresh branch.**
+Authority:
 
-Read-only fanout precheck already reconfirmed:
+- `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
+- draft PR #146;
+- executable acceptance head `6acb708bd734d36d024240f0dea213a882a7714b`.
+
+Implemented:
 
 - `SetupCandidateGenerator.generateDemonBluffCandidates()` remains the legal triplet owner;
-- `SetupRecommendationService` currently supplies strategic preference through `demon-bluff-ease / bluffDifficulty`;
-- Demon bluff presentation already distinguishes applied setup decisions from pending recommendation output, providing a useful committed/persistent boundary.
+- SDE consumes already-legal triplets through a pure projection adapter;
+- each distinct bluff role receives an exact strict-`ShownRoleAt` counterworld support diagnostic against the current public whole-bundle facts;
+- legal triplets share the same role-support records instead of multiplying exact enumeration by triplet count;
+- triplet overlay exposes supported roles, evil-team topology union/intersection and topology-pattern diversity;
+- the exact evaluator shares pristine source-world scans for different shown-role values constrained to the same seat set while preserving exact per-query role checks;
+- applied presentation wins over later pending recommendation changes;
+- recovery preserves committed bluff roles;
+- locked Demon bluffs are persistent inputs and are rejected from SDE replanning;
+- `ClocktowerRecommendationCoordinator.evaluateSetupDemonBluffShadow()` supplies a shadow-only orchestration seam beside the existing setup recommendation result;
+- `DemonBluffSetupShadowAdapter` returns the same visible result object and records legacy selected candidate IDs by style;
+- bluff triplet identity is canonicalized across setup producers so list-order differences cannot create false domain mismatches;
+- `DemonBluffJointOutputEvaluatorTest` is measured-expensive exact evidence and remains mandatory in full/affected validation rather than FAST.
 
-After PR #145 merge:
+Production selection has **not** cut over. `SetupRecommendationService` remains unchanged and `demon-bluff-ease / bluffDifficulty` remains the visible compatibility heuristic pending the later explicit production cutover.
 
-- audit `SetupRecommendationService` bluff fanout and commit boundary;
-- keep `SetupCandidateGenerator.generateDemonBluffCandidates()` as legality owner;
-- define the smallest SDE candidate/output shape for an uncommitted bluff triplet;
-- evaluate bluff support against the same whole-bundle strategic consequences;
-- prove committed bluff persistence;
-- preserve existing visible production behavior initially through shadow/differential evidence;
-- retire `demon-bluff-ease` as strategic authority only at an explicit cutover step.
+Do not reopen D2A–D2D implementation on the next branch unless a concrete regression is found.
 
-Initial useful bluff diagnostics:
+## 6. NEXT AFTER PR #146 MERGE — SDE-2D3 Strategic-world quotient
 
-- role support at the actual Demon seat;
-- supported evil-team topologies;
-- information-role bluff claim affordance;
-- overlap/redundancy across the three bluff narratives;
-- narrative complexity / exception dependence;
-- interaction with healthy information, Drunk clue and Red Herring.
-
-Do not re-run complete raw exact enumeration for every bluff triplet when a shared structural diagnostic can support a cheaper overlay.
-
-## 6. THEN — SDE-2D3 Strategic-world quotient
-
-Perform a fresh fanout/representation audit before implementation.
+Do not begin executable D2D3 work on the SDE-2D2 branch. After user-authorized merge of PR #146, create a fresh branch from live `main` and perform a fresh fanout/representation audit before implementation.
 
 Goal:
 
@@ -373,4 +365,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **SDE-2D1 is fully implemented and full-ci GREEN on draft PR #145 at executable head `27b17d5e0eedea3367f5a1b69ed2093fb958f1af`, but remains unmerged pending explicit user authorization. After merge, start SDE-2D2 on a fresh branch: preserve SetupCandidateGenerator as Demon bluff legality owner, migrate still-uncommitted bluff strategic selection away from SetupRecommendationService bluffDifficulty heuristics into SDE joint-output evaluation, and prove committed bluff persistence. Then proceed to the epistemic-owned strategic evil-topology quotient, 5–15 player validation, and calibration. SDE-3 remains blocked until the complete SDE-2D gate is explicitly satisfied.**
+> **SDE-2D2 is fully implemented and full-ci GREEN on draft PR #146 at executable head `6acb708bd734d36d024240f0dea213a882a7714b`, but remains unmerged pending explicit user authorization. PR #145 is already merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`. After PR #146 is merged, start SDE-2D3 on a fresh branch: preserve the exact evaluator as mechanical-feasibility authority, introduce an epistemic-owned quotient keyed initially by Demon seat + Minion seat set, and prove quotient/mechanical differential correctness before using it as the primary strategic recommendation unit. Then proceed to SDE-2D4 5–15 player validation/performance and SDE-2D5 calibration. Production Demon-bluff selection has not cut over; `demon-bluff-ease` remains compatibility behavior until the later explicit cutover. SDE-3 remains blocked until the complete SDE-2D gate is explicitly satisfied.**
