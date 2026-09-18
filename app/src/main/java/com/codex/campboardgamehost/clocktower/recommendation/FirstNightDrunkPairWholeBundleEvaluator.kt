@@ -258,7 +258,7 @@ internal object TroubleBrewingFirstNightDrunkPairWholeBundleEvaluator {
         )
         return FirstNightPublicGoodInfoProjection.project(
             FirstNightInformationBundle(
-                bundleId = "sde-d1-drunk-pair:${candidate.candidateId}",
+                bundleId = "sde-d1-drunk-pair",
                 entries = listOf(
                     FirstNightInformationBundleEntry(
                         entryId = "drunk-pair-clue",
