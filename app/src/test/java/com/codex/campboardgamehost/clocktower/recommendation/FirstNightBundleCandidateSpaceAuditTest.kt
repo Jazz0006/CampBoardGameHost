@@ -52,7 +52,6 @@ class FirstNightBundleCandidateSpaceAuditTest {
 
         assertEquals(
             setOf(
-                FirstNightBundleDeferredComplexity.DRUNK,
                 FirstNightBundleDeferredComplexity.SPY_RECLUSE_REGISTRATION,
                 FirstNightBundleDeferredComplexity.POISONER_TARGET,
             ),
@@ -60,7 +59,44 @@ class FirstNightBundleCandidateSpaceAuditTest {
         )
         assertNull(audit.legalCompleteBundleCount)
         assertEquals(BigInteger.ZERO, audit.evaluatedCount)
-        assertTrue(audit.factors.none { it.factorId.contains("washerwoman") })
+        val drunkWasherwoman = audit.factors.single { it.factorId == "pair.washerwoman.seat-2" }
+        val expectedDrunkDomain = PairInformationLegalDomain.generate(
+            game = game,
+            roleDefinitions = roles,
+            sourceSeat = 2,
+            abilityRole = RoleId("Washerwoman"),
+            reliability = com.codex.campboardgamehost.clocktower.domain.ReliabilityState.DRUNK,
+        )
+        assertEquals(expectedDrunkDomain.map { it.candidateId }.sorted(), drunkWasherwoman.optionIds)
+        assertTrue(expectedDrunkDomain.any { it.semanticTruth == com.codex.campboardgamehost.clocktower.domain.SemanticTruth.FALSE })
+    }
+
+    @Test
+    fun `Drunk shown pair role is a complete legal factor rather than deferred complexity`() {
+        val game = game(
+            player(1, "Chef", CharacterType.TOWNSFOLK),
+            player(2, "Drunk", CharacterType.OUTSIDER, shownRole = "Investigator"),
+            player(3, "Empath", CharacterType.TOWNSFOLK),
+            player(4, "Scarlet Woman", CharacterType.MINION),
+            player(5, "Imp", CharacterType.DEMON),
+            player(6, "Soldier", CharacterType.TOWNSFOLK),
+        )
+
+        val audit = TroubleBrewingFirstNightBundleCandidateSpaceAuditor.inspect(game, roles)
+        val drunkInvestigator = audit.factors.single { it.factorId == "pair.investigator.seat-2" }
+        val legal = PairInformationLegalDomain.generate(
+            game = game,
+            roleDefinitions = roles,
+            sourceSeat = 2,
+            abilityRole = RoleId("Investigator"),
+            reliability = com.codex.campboardgamehost.clocktower.domain.ReliabilityState.DRUNK,
+        )
+
+        assertTrue(FirstNightBundleDeferredComplexity.DRUNK !in audit.deferredComplexities)
+        assertEquals(legal.map { it.candidateId }.sorted(), drunkInvestigator.optionIds)
+        assertTrue(legal.any { it.semanticTruth == com.codex.campboardgamehost.clocktower.domain.SemanticTruth.FALSE })
+        assertTrue(legal.any { it.semanticTruth == com.codex.campboardgamehost.clocktower.domain.SemanticTruth.TRUE })
+        assertEquals(audit.rawCartesianCount, audit.legalCompleteBundleCount)
     }
 
     @Test
