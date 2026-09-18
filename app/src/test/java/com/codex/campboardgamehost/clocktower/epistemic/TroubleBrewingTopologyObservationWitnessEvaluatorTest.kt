@@ -229,7 +229,7 @@ class TroubleBrewingTopologyObservationWitnessEvaluatorTest {
     }
 
     @Test
-    fun unsupported_numeric_observation_defers_in_D4C4a() {
+    fun adjacent_evil_numeric_observation_is_supported_after_D4C4b() {
         val profile = TroubleBrewingSetupProfiles.standard(8)
         val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
         val knowledge = knowledge(profile, emptyList())
@@ -245,7 +245,7 @@ class TroubleBrewingTopologyObservationWitnessEvaluatorTest {
 
         val result = evaluate(profile, topology, knowledge, observation)
 
-        assertTrue(result is TroubleBrewingTopologyObservationFeasibility.Deferred)
+        assertTrue(result is TroubleBrewingTopologyObservationFeasibility.Feasible)
     }
 
     private fun evaluate(
