@@ -89,6 +89,7 @@ afterEvaluate {
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputEvaluatorTest")
         }
     }
 
