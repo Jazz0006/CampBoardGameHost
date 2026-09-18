@@ -91,6 +91,32 @@ class EnumeratedWorldSetTest {
         )
     }
 
+    @Test fun `non-recipient Drunk worlds carry a legal latent shown Townsfolk role`() {
+        val extendedRoles = roles + role("Washerwoman", CharacterType.TOWNSFOLK)
+        val knowledge = PlayerKnowledgeSnapshot(
+            knowledgeSnapshotId = "knowledge-a3-latent-drunk-shown-role",
+            formalSnapshotId = snapshotId,
+            recipientSeat = 1,
+            perceivedRole = RoleId("Chef"),
+            setupKnowledge = listOf(InformationProposition.SetupProfile(3, 1, 1, 1)),
+        )
+
+        val worlds = TroubleBrewingWorldEnumerator.enumerate(
+            ruleset,
+            knowledge,
+            EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            extendedRoles,
+        ).enumeratedWorlds()
+            .filter { it.rolesBySeat[2] == RoleId("Drunk") }
+
+        assertTrue(worlds.isNotEmpty())
+        assertTrue(worlds.all { world ->
+            val shown = world.shownRolesBySeat[2] ?: return@all false
+            extendedRoles.single { it.id == shown }.type == CharacterType.TOWNSFOLK &&
+                shown !in world.rolesBySeat.values
+        })
+    }
+
     @Test fun `pair information keeps actual and interaction-local registration explanations`() {
         val worldWithSpy = world("Chef", "Spy", "Imp", "Empath", "Recluse")
         val worldWithoutSpy = world("Chef", "Empath", "Imp", "Poisoner", "Recluse")
