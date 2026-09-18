@@ -466,3 +466,8 @@ CI gate
 ```
 
 If T4 is green, advance roadmap/handoff to **SDE-2D3 COMPLETE / PR #147 pending user-authorized merge**, with SDE-2D4 5–15 player generalization/performance as the next stage after merge.
+
+
+### T4 requested
+
+The D3A–D3D implementation and consumer audit are frozen for acceptance. This checkpoint intentionally requests full repository validation before the route is advanced to SDE-2D4.
