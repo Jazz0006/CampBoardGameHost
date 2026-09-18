@@ -475,15 +475,74 @@ D4E 5–15 performance matrix
 Do not attempt to make 15-player exhaustive mechanical enumeration faster enough by micro-optimizing the current raw-world loop. Its search-space order of magnitude is the wrong primary representation.
 
 
-## 15. D4A / D4B checkpoint
+## 15. Implementation checkpoint — 2026-09-19
 
-D4A normalized strategic diagnostics and D4B reproducible scale evidence are implemented.
+D4A and D4B are no longer the current frontier. The D2D4 branch now contains the topology-first implementation through the whole-bundle strategic seam:
 
-A full validation checkpoint is required here because the D4B benchmark is intentionally excluded from FAST and must execute before D4C1 changes the exact search architecture.
+```text
+D4A   normalized strategic diagnostics
+D4B   reproducible scale / bounded-prefix evidence
+D4C1  5–15 StrategicWorldKey topology domain
+D4C2  setup identity/type/shown-role witness existence
+D4C3  Drunk / Poisoner finite-resource AbilityState feasibility
+D4C4a identity + Spy/Recluse registration observation semantics
+D4C4b Chef / Empath / Fortune Teller / Red Herring semantics
+D4C4c composable logical observation branches
+D4C5  exact strategic topology whole-bundle evaluator
+D4D   bounded setup / observation differential tests
+D4E   5–15 topology-bundle performance harness
+```
 
+The setup existence tail was optimized from enumerating Townsfolk/Outsider seat splits to an exact type-quota → role → seat max-flow proof. This changes the search implementation, not the semantic contract.
 
-### D4B benchmark-governance adjustment
+A subsequent FAST run exposed three failures:
 
-The first full-CI checkpoint used a 25,000-world raw-stream prefix at each representative player count. The Android full job remained in the test/build step for more than five minutes, far beyond the expected usefulness of a repeatable evidence harness. Because the D4B prefix workload was the new T3 stressor, the prefix cap was reduced to **1,000 emitted worlds**.
+- one stale test still expected numeric observations to be Deferred after D4C4b;
+- one Red Herring conflict fixture failed to exclude the Recluse registration explanation;
+- one real standard-profile Baron contradiction was incorrectly accepted.
 
-This does not change the source-derived total search-space matrix and does not weaken correctness evidence: prefix throughput is performance instrumentation only. The purpose is to measure per-witness generation behavior without turning T4 into an accidental stress test.
+The Baron bug was caused by an Elvis fallback that swallowed a legitimate null contradiction:
+
+```kotlin
+baron?.let { base.withForbiddenInPlay(it.id) } ?: base
+```
+
+The standard-profile branch now propagates the contradiction instead of restoring the old base branch.
+
+Current executable checkpoint:
+
+`f2ba4b8e29514ecc398626acf26526b1445d7eb6`
+
+Validation:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+ASP contract tests             SKIPPED by classifier
+Android testFull / APK         SKIPPED at this FAST checkpoint
+```
+
+### 15.1 D4B / D4E benchmark governance
+
+Performance instrumentation remains separate from ordinary FAST:
+
+- `Sde2D4ScaleBenchmarkTest` is excluded from FAST;
+- `Sde2D4TopologyBundlePerformanceTest` is excluded from FAST;
+- raw-prefix D4B instrumentation uses a 1,000-world cap per representative player count.
+
+These exclusions are feedback-loop governance only. They do not remove D4B/D4E from acceptance evidence.
+
+### 15.2 Remaining acceptance gap
+
+D2D4 is not COMPLETE yet.
+
+Required next:
+
+1. bounded **whole-bundle shared-witness** parity against exhaustive exact worlds;
+2. explicit D4E 5–15 topology-bundle CPU / heap / latency evidence;
+3. final `[full-ci]` T4 with Android `testFull`, debug APK, ASP contracts, Real Clingo and CI gate all green;
+4. final PR #149 / roadmap / handoff update after the evidence is recorded.
+
+No production policy cutover and no SDE-3 work should begin before that gate.
