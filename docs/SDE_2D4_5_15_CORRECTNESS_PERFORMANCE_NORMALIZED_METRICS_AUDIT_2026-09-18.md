@@ -534,15 +534,102 @@ Performance instrumentation remains separate from ordinary FAST:
 
 These exclusions are feedback-loop governance only. They do not remove D4B/D4E from acceptance evidence.
 
-### 15.2 Remaining acceptance gap
+### 15.2 D4D whole-bundle differential evidence
+
+The final D4D gap is now closed by:
+
+`TroubleBrewingTopologyBundleDifferentialTest`
+
+Unlike the earlier setup-only and single-observation differential tests, this oracle filters every observation in a candidate bundle against the **same** exhaustive `EnumeratedWorld`, including selected registration-witness matching, and compares:
+
+```text
+topology-first BEFORE StrategicWorldKey set
+==
+exhaustive baseline projection
+
+topology-first AFTER StrategicWorldKey set
+==
+exhaustive same-world whole-bundle projection
+```
+
+Bounded coverage includes:
+
+- natural role-identity conflict;
+- one shared Poisoner target;
+- one shared Drunk identity/resource;
+- Spy special-registration witness;
+- Recluse Demon-type registration witness;
+- selected empty registration binding rejecting a special-registration-only explanation;
+- Fortune Teller Red Herring shared identity;
+- contradictory bundle;
+- standard and Baron setup profiles.
+
+First executable test commit:
+
+`b8a798ea36d5dbffbeaf765690851ff50ddfa5d3`
+
+A fixture-only named-argument compile correction followed as:
+
+`ed96ee639fc989183ea73fda7137f581ba79b58f`
+
+PR CI run `35406446111` validated the corrected oracle:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+ASP contract tests             SKIPPED by classifier
+```
+
+The Android FAST build completed in `5m40s`. This is correctness evidence, but it is also direct evidence that the exhaustive whole-bundle differential should join the existing setup/observation differential classes outside ordinary T1 FAST and remain in affected/full validation.
+
+### 15.3 D4E measured 5–15 topology-bundle matrix
+
+The existing `Sde2D4TopologyBundlePerformanceTest` was executed unchanged on a temporary validation branch based on `ed96ee6...`.
+
+It records a standard-profile, single-bundle topology-first pass with no guessed latency threshold:
+
+| Players | Topology upper bound | Before keys | After keys | Elapsed ms | Coarse heap delta bytes |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 5 | 20 | 12 | 12 | 54 | 0 |
+| 6 | 30 | 20 | 20 | 23 | 1,507,344 |
+| 7 | 42 | 30 | 30 | 28 | 2,555,944 |
+| 8 | 56 | 42 | 42 | 21 | 3,735,528 |
+| 9 | 72 | 56 | 56 | 28 | 5,242,904 |
+| 10 | 360 | 252 | 252 | 95 | 25,165,808 |
+| 11 | 495 | 360 | 360 | 119 | 35,061,776 |
+| 12 | 660 | 495 | 495 | 161 | 0 |
+| 13 | 2,860 | 1,980 | 1,980 | 710 | 102,090,128 |
+| 14 | 4,004 | 2,860 | 2,860 | 767 | 0 |
+| 15 | 5,460 | 4,004 | 4,004 | 766 | 54,548,232 |
+
+The heap number is deliberately labelled **coarse**. Zero deltas at 5, 12 and 14 demonstrate that GC timing makes before/after heap deltas unsuitable as peak-memory measurements. The non-zero values still provide useful evidence of allocation/heap pressure, especially in the 13–15 regime.
+
+### 15.4 D4E representation decision
+
+The measured result supports keeping direct topology feasibility as the D2D4 exact strategic discovery path:
+
+- the 15-player strategic domain remains thousands of keys rather than the source-derived raw mechanical space on the order of `10^17`;
+- the measured single-bundle JVM path remains sub-second through 15 players;
+- 13–15 player latency is broadly flat rather than showing renewed combinatorial explosion;
+- no evidence in this matrix justifies adding semantic complexity through compiled constraints before production cutover.
+
+Therefore D2D4 does **not** add memoization or compiled constraints now.
+
+This is not a production/mobile latency threshold. Before a future production cutover, multi-candidate batch scaling and representative Android-device evidence remain valid places to decide whether caching, memoized witness proofs or compiled constraints are needed.
+
+The raw mechanical enumerator remains the bounded correctness oracle only. Do not return to raw-world enumeration as production discovery.
+
+### 15.5 Remaining acceptance gap
 
 D2D4 is not COMPLETE yet.
 
-Required next:
+Only the final acceptance checkpoint remains:
 
-1. bounded **whole-bundle shared-witness** parity against exhaustive exact worlds;
-2. explicit D4E 5–15 topology-bundle CPU / heap / latency evidence;
-3. final `[full-ci]` T4 with Android `testFull`, debug APK, ASP contracts, Real Clingo and CI gate all green;
-4. final PR #149 / roadmap / handoff update after the evidence is recorded.
+1. move the new whole-bundle exhaustive differential out of ordinary FAST while retaining it in `testFull`;
+2. create an explicit `[full-ci]` logical checkpoint;
+3. require Android `testFull`, debug APK, ASP contracts, Real Clingo, R2 and CI gate all green;
+4. update PR #149 / roadmap / handoff after that evidence is recorded.
 
 No production policy cutover and no SDE-3 work should begin before that gate.
