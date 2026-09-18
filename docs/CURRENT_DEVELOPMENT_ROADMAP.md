@@ -19,14 +19,15 @@ FN-BUNDLE-0 candidate-space + pair ownership           COMPLETE / PR #139
 FN-BUNDLE-1 proposition / ShownRoleAt semantics        COMPLETE / PR #140
 FN-BUNDLE-2 healthy whole-bundle exact harness         COMPLETE / PR #142
 SDE-0 BEGINNER strategic-robustness corpus             COMPLETE / PR #143
-SDE-1A global fanout / orchestration seam audit        COMPLETE / PR #144 branch
-SDE-1B thin bounded exact-consequence contracts        COMPLETE / PR #144 branch
-SDE-1C exact-evaluator orchestration differential      COMPLETE / PR #144 branch
-SDE-1D lifecycle ownership / planned freshness         COMPLETE / PR #144 branch
-SDE-1E structured production shadow integration        COMPLETE / PR #144 branch
-SDE-2A Drunk ownership / revision replanning contract  COMPLETE / PR #144 branch
-SDE-2B Spy/Recluse exact registration witness binding   COMPLETE / PR #144 branch
-SDE-2C Poisoner invalidation / broad replanning          COMPLETE / PR #144 branch
+SDE-1A global fanout / orchestration seam audit        COMPLETE / PR #144
+SDE-1B thin bounded exact-consequence contracts        COMPLETE / PR #144
+SDE-1C exact-evaluator orchestration differential      COMPLETE / PR #144
+SDE-1D lifecycle ownership / planned freshness         COMPLETE / PR #144
+SDE-1E structured production shadow integration        COMPLETE / PR #144
+SDE-2A Drunk ownership / revision replanning contract  COMPLETE / PR #144
+SDE-2B Spy/Recluse exact registration witness binding  COMPLETE / PR #144
+SDE-2C Poisoner invalidation / broad replanning        COMPLETE / PR #144
+SDE-2D pre-SDE-3 strategic generalization              CURRENT
 ```
 
 SDE-0 was squash-merged to `main` as:
@@ -55,69 +56,120 @@ Real Clingo cross-validation   SKIPPED by classifier
 Full Android/APK step          SKIPPED by classifier
 ```
 
-Live `main` at validation:
+PR #144 was merged to `main` as:
 
-`4d6e90a7a268570d261048931a3557433ea01d83`
+`89453c902741699b072d11320d85a5561172abe5`
 
-Always query live `main` and PR #144 before executable edits.
+Current corrective-route authority:
+
+`docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+
+Always query live `main` before executable edits.
 
 ## 2. CURRENT
 
-**PAUSED BEFORE SDE-3 — algorithm-scope review required**
+**SDE-2D — PRE-SDE-3 STRATEGIC GENERALIZATION**
 
-SDE-2 first-night uncertainty is complete. PR #144 should be merged as the checkpoint, then executable SDE-3 work must pause until the following previously under-specified algorithm questions are discussed in a fresh conversation.
+The pre-SDE-3 algorithm review is complete. The three previously open questions are now frozen into an executable corrective route:
 
-### 2.1 Drunk information-role clue generation
+`docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
 
-The Drunk may be shown an information role. The unreliable clue selected for that shown role is itself an important first-night Storyteller decision and may materially affect game balance.
+Do **not** begin SDE-3 until SDE-2D reaches its acceptance gate.
 
-Before SDE-3, confirm:
+### 2.1 SDE-2D1 — Drunk whole-bundle completion
 
-- which Drunk shown information roles are already covered by the current candidate/evaluation model;
-- whether unreliable Drunk clue selection is evaluated jointly with the rest of the first-night bundle or only treated as a legality/reliability variant;
-- how its strategic weight should interact with truthful healthy information;
-- whether first-night bundle evaluation currently undervalues this branch.
+Frozen direction:
 
-### 2.2 Demon bluff identities
+- the Drunk shown role remains PERSISTENT setup/session truth and is never reselected by SDE;
+- the unshown clue is a PLANNED Storyteller decision;
+- supported shown information roles generate all surface-valid outputs, including accidentally truthful outputs;
+- unreliable clue choice is evaluated jointly with the rest of Night 1;
+- evaluation separates `HealthyCore`, `FullBundle` and `DrunkMarginal`;
+- impaired public-claim semantics must distinguish functioning truth from malfunctioning permissiveness without leaking hidden Drunk/Poisoner state.
 
-The Demon's three bluff identities can strongly affect evil-team narrative space and therefore the strategic value of information shown to good players.
+### 2.2 SDE-2D2 — Demon bluff joint-output migration
 
-Before SDE-3, audit whether current consequence evaluation actually incorporates bluff commitments when weighting clue candidates.
-
-Do not assume that exact possible-world evaluation alone captures this if the bluff identities are absent from the evaluated state/hypothesis.
-
-The discussion must determine whether bluff selection/commitment should be:
-
-- an upstream setup commitment referenced by SDE;
-- part of first-night bundle evaluation;
-- or a separate strategic prior/constraint.
-
-### 2.3 Player-count generality
-
-Current design/evidence has been discussed mainly around roughly 7–9 player Trouble Brewing examples.
-
-Before SDE-3, confirm explicitly whether:
-
-- exact enumeration and strategic metrics are semantically valid for larger legal player counts;
-- any fixtures, thresholds, candidate generation rules, topology metrics, or calibration assumptions are accidentally tuned to the analyzed 7–9 player range;
-- computational cost changes the feasible exact-evaluation strategy at larger counts;
-- recommendation policy needs player-count normalization even when the underlying rules engine remains correct.
-
-### 2.4 Resume gate
-
-Do **not** begin SDE-3 executable implementation until these three topics are reviewed and the roadmap is updated with the resulting decisions.
-
-The intended next engineering stage remains:
+Frozen ownership:
 
 ```text
-SDE-3 — cross-night impaired / registration decisions
+SetupCandidateGenerator
+    -> legal bluff triplets
+
+StorytellerDecisionEngine / policy
+    -> strategic choice among uncommitted legal bluff triplets
+
+shown + committed bluffs
+    -> PERSISTENT setup fact for later planning
 ```
 
-but it is gated by this algorithm-scope review.
+The current `SetupRecommendationService` `demon-bluff-ease` / `bluffDifficulty` score is migration-era heuristic selection, not the target authority.
+
+Before commitment, Demon bluffs are an SDE output variable and must be evaluated jointly with other Storyteller-controlled first-night decisions. After commitment they are immutable inputs to remaining planning.
+
+### 2.3 SDE-2D3 — strategic-world quotient
+
+Raw role-world cardinality is no longer the primary recommendation unit.
+
+The target strategic identity starts with:
+
+```text
+Demon seat
++ Minion seat set
+```
+
+A strategic topology survives if at least one mechanically legal assignment/witness can explain the current visible facts and hypothetical bundle.
+
+Mechanical role assignments remain exact correctness witnesses; do not create a second recommendation-owned world solver.
+
+Retain two separate evaluation axes:
+
+- strategic pressure / evil-topology concentration;
+- role-information utility, so useful good-role information is not discarded merely because it leaves evil topology unchanged.
+
+### 2.4 SDE-2D4 — 5–15 player generalization and cost
+
+Rules/setup semantics already support 5–15 non-Traveller players, but recommendation correctness/calibration/performance are not yet proven across that range.
+
+Evidence must cover:
+
+```text
+5–6
+7–9
+10–12
+13–15
+```
+
+Prefer baseline-relative diagnostics such as Demon-cover retention and evil-topology retention. Raw BEFORE/AFTER role-world count becomes secondary evidence.
+
+Do not freeze a production player-count cutoff or approximation threshold before measured cost evidence.
+
+### 2.5 SDE-2D5 — calibration / policy evidence
+
+After the durable diagnostics exist, expand the calibration corpus across:
+
+- Drunk versus healthy-core cases;
+- bluff-supported versus bluff-fragile cases;
+- equal/similar raw world count but different evil topology;
+- useful role-information with unchanged evil topology;
+- representative player-count regimes.
+
+Keep the policy interpretable and gate-based; do not introduce an opaque global scalar.
+
+### 2.6 Resume gate
+
+SDE-3 may begin only after:
+
+1. Drunk whole-bundle semantics are implemented for the supported first-night information roles;
+2. Demon bluff strategic selection has a validated SDE path and committed lifecycle proof;
+3. strategic-world exact/symbolic feasibility has a durable epistemic owner;
+4. player-count-normalized diagnostics are defined where required;
+5. representative 5–15 player correctness/performance evidence exists;
+6. roadmap/handoff are explicitly advanced to SDE-3.
 
 ## 3. NEXT
 
 ```text
+SDE-3  — cross-night impaired / registration decisions
 SDE-4  — production cutover + legacy heuristic retirement
 ```
 
@@ -304,21 +356,28 @@ Do not during SDE-2:
 - Poisoner may invalidate uncommitted decisions but not committed facts;
 - BEGINNER / ordinary-player policy is the first profile;
 - no opaque global-optimum scalar;
-- lifecycle metadata references, never duplicates, durable session truth.
+- lifecycle metadata references, never duplicates, durable session truth;
+- Drunk shown role is persistent input; Drunk clue choice is whole-bundle output until committed;
+- Demon bluff legality remains setup-owned, while uncommitted bluff selection migrates to SDE strategic policy;
+- committed Demon bluffs become persistent inputs and are not replanned;
+- strategic evil topology, not raw role permutation multiplicity, is the primary large-player recommendation unit;
+- mechanical worlds remain exact feasibility/correctness witnesses;
+- role-information utility remains distinct from strategic pressure.
 
 ## 8. Testing / acceptance
 
 `AGENTS.md` and `docs/TESTING_STRATEGY.md` remain authoritative.
 
-For SDE-2:
+For SDE-2D:
 
-- tests-first for each uncertainty boundary;
-- exact evaluator remains oracle where possible;
-- prove stale-plan invalidation with existing revisions;
-- prove no committed history rewrite;
-- prove registration legality remains in the registration domain;
-- keep expensive corpus/calibration work outside ordinary FAST regression;
-- use the final executable SHA, not a later docs-only SHA, as validation evidence.
+- begin each executable slice with a focused fanout/ownership audit;
+- add a RED only for a genuine new/changed durable contract;
+- preserve exact rules/epistemic authority while changing strategic representation;
+- prove no committed history rewrite and no second state/world authority;
+- prove Drunk shown-role persistence and committed-bluff persistence;
+- keep expensive corpus/performance work outside ordinary FAST regression;
+- use exact/symbolic cross-check fixtures before reducing dependence on exhaustive enumeration;
+- do not freeze player-count thresholds from 7-player evidence alone.
 
 ## 9. Authority documents for a new development conversation
 
@@ -335,9 +394,10 @@ Read in order:
 9. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
 10. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
 11. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
-12. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
-13. query live `main`, PR #144 and current checks.
+12. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
+13. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
+14. query live `main` and current checks.
 
 ## 10. Stable rule
 
-> **SDE-1A/B/C/D/E and SDE-2A/B/C are complete on PR #144. Final SDE-2C executable evidence is `fd90b8dc0433dbd925f0be9f94f3a2693e416f4b` with R2, Android FAST and CI gate SUCCESS. Merge PR #144 as the checkpoint, then PAUSE before SDE-3. The next conversation must review three open algorithm questions first: Drunk information-role unreliable clue generation, Demon bluff identity influence on information weighting, and validity/calibration/performance beyond the mainly analyzed 7–9 player range. Do not resume SDE-3 executable work until those decisions are recorded.**
+> **PR #144 is merged at `89453c902741699b072d11320d85a5561172abe5`. The pre-SDE-3 review is resolved by SDE-2D. Execute SDE-2D1 Drunk whole-bundle completion, then SDE-2D2 Demon bluff joint-output migration, SDE-2D3 strategic-world quotient, SDE-2D4 5–15 player generalization/performance, and SDE-2D5 calibration. Demon bluffs are SDE outputs until committed and persistent inputs afterwards. Large-player strategy must move toward exact strategic evil-topology feasibility rather than exhaustive raw role-world multiplicity. Do not begin SDE-3 until the SDE-2D acceptance gate is explicitly satisfied.**
