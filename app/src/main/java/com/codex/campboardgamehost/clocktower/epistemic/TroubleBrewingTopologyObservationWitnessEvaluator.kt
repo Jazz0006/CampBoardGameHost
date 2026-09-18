@@ -52,9 +52,17 @@ internal object TroubleBrewingTopologyObservationWitnessEvaluator {
         selectedRegistrationWitness: Set<RegistrationFact>? = null,
         hypothesis: EpistemicHypothesis,
     ): TroubleBrewingTopologyObservationFeasibility {
-        val supported = observation.proposition is InformationProposition.RoleAt ||
-            observation.proposition is InformationProposition.AlignmentAt ||
-            observation.proposition is InformationProposition.CharacterTypeAt
+        val supported = when (val proposition = observation.proposition) {
+            is InformationProposition.RoleAt,
+            is InformationProposition.AlignmentAt,
+            is InformationProposition.CharacterTypeAt -> true
+            is InformationProposition.NumericResult ->
+                proposition.metric == NumericMetric.ADJACENT_EVIL_PAIRS ||
+                    proposition.metric == NumericMetric.LIVING_EVIL_NEIGHBOURS
+            is InformationProposition.BooleanResult ->
+                proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT
+            else -> false
+        }
         if (!supported) {
             return TroubleBrewingTopologyObservationFeasibility.Deferred(
                 listOf(observation.proposition),
@@ -165,26 +173,55 @@ internal object TroubleBrewingTopologyObservationWitnessEvaluator {
             emptyList()
         }
 
-        addIfFeasible(
-            additionalFacts = functioningSourceFacts + observation.proposition,
-            witness = emptySet(),
-        )
+        when (observation.proposition) {
+            is InformationProposition.RoleAt,
+            is InformationProposition.AlignmentAt,
+            is InformationProposition.CharacterTypeAt -> {
+                addIfFeasible(
+                    additionalFacts = functioningSourceFacts + observation.proposition,
+                    witness = emptySet(),
+                )
 
-        specialRegistrationBranches(
-            roles = roles,
-            observation = observation,
-        ).forEach { branch ->
-            addIfFeasible(
-                additionalFacts = functioningSourceFacts + listOf(
-                    InformationProposition.RoleAt(branch.subjectSeat, branch.actualRole),
-                    InformationProposition.AbilityStateAt(
-                        seat = branch.subjectSeat,
-                        abilityRole = branch.actualRole,
-                        abilityState = AbilityState.FUNCTIONING,
-                    ),
-                ),
-                witness = setOf(branch.registrationFact),
-            )
+                specialRegistrationBranches(
+                    roles = roles,
+                    observation = observation,
+                ).forEach { branch ->
+                    addIfFeasible(
+                        additionalFacts = functioningSourceFacts + branch.additionalFacts(),
+                        witness = setOf(branch.registrationFact),
+                    )
+                }
+            }
+
+            is InformationProposition.NumericResult ->
+                numericObservationBranches(
+                    topology = topology,
+                    playerCount = profile.total,
+                    proposition = observation.proposition,
+                    observation = observation,
+                    roles = roles,
+                ).forEach { branch ->
+                    addIfFeasible(
+                        additionalFacts = functioningSourceFacts + branch.additionalFacts,
+                        witness = branch.registrationWitness,
+                    )
+                }
+
+            is InformationProposition.BooleanResult ->
+                fortuneTellerObservationBranches(
+                    topology = topology,
+                    playerCount = profile.total,
+                    proposition = observation.proposition,
+                    observation = observation,
+                    roles = roles,
+                ).forEach { branch ->
+                    addIfFeasible(
+                        additionalFacts = functioningSourceFacts + branch.additionalFacts,
+                        witness = branch.registrationWitness,
+                    )
+                }
+
+            else -> error("Unsupported proposition escaped D4C4 capability guard.")
         }
 
         return witnesses.toResult()
@@ -268,6 +305,168 @@ internal object TroubleBrewingTopologyObservationWitnessEvaluator {
         }
     }
 
+    private fun numericObservationBranches(
+        topology: StrategicWorldKey,
+        playerCount: Int,
+        proposition: InformationProposition.NumericResult,
+        observation: EpistemicObservation,
+        roles: Map<RoleId, RoleDefinition>,
+    ): List<ObservationConstraintBranch> {
+        val seats = if (proposition.subjectSeats.isEmpty()) {
+            (1..playerCount).toList()
+        } else {
+            proposition.subjectSeats
+        }
+        require(seats.isNotEmpty() && seats.all { it in 1..playerCount }) {
+            "Topology numeric observation references seats outside the player range."
+        }
+
+        val spyCandidates = seats
+            .filter { it in topology.minionSeats }
+            .mapNotNull { seat ->
+                specialRegistrationBranches(
+                    roles = roles,
+                    observation = observation.copy(
+                        proposition = InformationProposition.AlignmentAt(seat, Alignment.GOOD),
+                    ),
+                ).singleOrNull { it.actualRole.value == "Spy" }
+            }
+        val recluseCandidates = seats
+            .filter { it != topology.demonSeat && it !in topology.minionSeats }
+            .mapNotNull { seat ->
+                specialRegistrationBranches(
+                    roles = roles,
+                    observation = observation.copy(
+                        proposition = InformationProposition.AlignmentAt(seat, Alignment.EVIL),
+                    ),
+                ).singleOrNull { it.actualRole.value == "Recluse" }
+            }
+
+        val spyChoices = listOf<SpecialRegistrationBranch?>(null) + spyCandidates
+        val recluseChoices = listOf<SpecialRegistrationBranch?>(null) + recluseCandidates
+        val result = linkedSetOf<ObservationConstraintBranch>()
+
+        for (spy in spyChoices) {
+            for (recluse in recluseChoices) {
+                val evilBySeat = seats.associateWith { seat ->
+                    when {
+                        spy?.subjectSeat == seat -> false
+                        recluse?.subjectSeat == seat -> true
+                        seat == topology.demonSeat || seat in topology.minionSeats -> true
+                        else -> false
+                    }
+                }
+                val value = when (proposition.metric) {
+                    NumericMetric.ADJACENT_EVIL_PAIRS ->
+                        seats.indices.count { index ->
+                            evilBySeat.getValue(seats[index]) &&
+                                evilBySeat.getValue(seats[(index + 1) % seats.size])
+                        }
+                    NumericMetric.LIVING_EVIL_NEIGHBOURS ->
+                        seats.count { evilBySeat.getValue(it) }
+                    else -> continue
+                }
+                if (value != proposition.value) continue
+
+                val specials = listOfNotNull(spy, recluse)
+                result += ObservationConstraintBranch(
+                    additionalFacts = specials.flatMap(SpecialRegistrationBranch::additionalFacts),
+                    registrationWitness = specials.mapTo(linkedSetOf()) { it.registrationFact },
+                )
+            }
+        }
+        return result.toList()
+    }
+
+    private fun fortuneTellerObservationBranches(
+        topology: StrategicWorldKey,
+        playerCount: Int,
+        proposition: InformationProposition.BooleanResult,
+        observation: EpistemicObservation,
+        roles: Map<RoleId, RoleDefinition>,
+    ): List<ObservationConstraintBranch> {
+        require(proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT)
+        val seats = if (proposition.subjectSeats.isEmpty()) {
+            (1..playerCount).toList()
+        } else {
+            proposition.subjectSeats
+        }
+        require(seats.isNotEmpty() && seats.all { it in 1..playerCount }) {
+            "Topology Fortune Teller observation references seats outside the player range."
+        }
+
+        val fortuneTeller = roles.values.singleOrNull { it.id.value == "Fortune Teller" }
+            ?: return emptyList()
+        val demonSelected = topology.demonSeat in seats
+        val selectedGoodSeats = seats.filter { seat ->
+            seat != topology.demonSeat && seat !in topology.minionSeats
+        }
+        val goodSeatsOutsideSelection = (1..playerCount).filter { seat ->
+            seat !in seats && seat != topology.demonSeat && seat !in topology.minionSeats
+        }
+        val result = linkedSetOf<ObservationConstraintBranch>()
+
+        if (proposition.value) {
+            if (demonSelected) {
+                result += ObservationConstraintBranch(emptyList(), emptySet())
+                return result.toList()
+            }
+
+            if (selectedGoodSeats.isNotEmpty()) {
+                result += ObservationConstraintBranch(
+                    additionalFacts = listOf(
+                        InformationProposition.RoleInPlay(fortuneTeller.id, true),
+                    ),
+                    registrationWitness = emptySet(),
+                )
+            }
+
+            selectedGoodSeats.forEach { seat ->
+                val recluse = specialRegistrationBranches(
+                    roles = roles,
+                    observation = observation.copy(
+                        proposition = InformationProposition.CharacterTypeAt(
+                            seat,
+                            CharacterType.DEMON,
+                        ),
+                    ),
+                ).singleOrNull { it.actualRole.value == "Recluse" } ?: return@forEach
+
+                result += ObservationConstraintBranch(
+                    additionalFacts = recluse.additionalFacts() + listOf(
+                        InformationProposition.RoleInPlay(fortuneTeller.id, false),
+                    ),
+                    registrationWitness = setOf(recluse.registrationFact),
+                )
+                if (goodSeatsOutsideSelection.isNotEmpty()) {
+                    result += ObservationConstraintBranch(
+                        additionalFacts = recluse.additionalFacts() + listOf(
+                            InformationProposition.RoleInPlay(fortuneTeller.id, true),
+                        ),
+                        registrationWitness = setOf(recluse.registrationFact),
+                    )
+                }
+            }
+        } else if (!demonSelected) {
+            result += ObservationConstraintBranch(
+                additionalFacts = listOf(
+                    InformationProposition.RoleInPlay(fortuneTeller.id, false),
+                ),
+                registrationWitness = emptySet(),
+            )
+            if (goodSeatsOutsideSelection.isNotEmpty()) {
+                result += ObservationConstraintBranch(
+                    additionalFacts = listOf(
+                        InformationProposition.RoleInPlay(fortuneTeller.id, true),
+                    ),
+                    registrationWitness = emptySet(),
+                )
+            }
+        }
+
+        return result.toList()
+    }
+
     private fun Set<Set<RegistrationFact>>.toResult(): TroubleBrewingTopologyObservationFeasibility =
         if (isEmpty()) {
             TroubleBrewingTopologyObservationFeasibility.Infeasible
@@ -279,5 +478,22 @@ internal object TroubleBrewingTopologyObservationWitnessEvaluator {
         val subjectSeat: Int,
         val actualRole: RoleId,
         val registrationFact: RegistrationFact,
+    ) {
+        fun additionalFacts(): List<InformationProposition> = listOf(
+            InformationProposition.RoleAt(subjectSeat, actualRole),
+            InformationProposition.AbilityStateAt(
+                seat = subjectSeat,
+                abilityRole = actualRole,
+                abilityState = AbilityState.FUNCTIONING,
+            ),
+        )
+    }
+
+    private data class ObservationConstraintBranch(
+        val additionalFacts: List<InformationProposition>,
+        val registrationWitness: Set<RegistrationFact>,
     )
+
+    private val InformationProposition.SetupProfile.total: Int
+        get() = townsfolk + outsiders + minions + demons
 }
