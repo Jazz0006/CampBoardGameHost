@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
@@ -59,8 +60,8 @@ internal data class FirstNightBundleCandidateFactorAudit(
  *
  * [rawCartesianCount] is always the product of the currently represented canonical producer
  * factors. [legalCompleteBundleCount] is deliberately nullable: it is exact only when no staged
- * complexity is present. A Drunk, Spy/Recluse registration source, or Poisoner means the current
- * healthy-slice producer set is known to be incomplete, so this audit must not pretend its partial
+ * complexity is present. Unsupported Drunk information roles, Spy/Recluse registration sources, or
+ * Poisoner mean the represented producer set is incomplete, so this audit must not pretend its partial
  * product is the count of complete legal Night 1 bundles.
  *
  * [representedPublicProjectionUpperBound] is the Cartesian product after removing factors that are
@@ -115,7 +116,7 @@ internal data class FirstNightBundleCandidateSpaceAudit(
  * Recommendation-owned live-producer audit for Trouble Brewing Night 1.
  *
  * The object only composes producer identities/counts:
- * - Washerwoman/Librarian/Investigator legality stays in [NaturalPairInformationCandidateGenerator];
+ * - Washerwoman/Librarian/Investigator legality stays in [PairInformationLegalDomain];
  * - Chef/Empath truth values stay in [FirstNightNumericInformationSemantics];
  * - Fortune Teller Red Herring and demon-bluff legality stay in [SetupCandidateGenerator].
  *
@@ -171,17 +172,30 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
         roleDefinitions: List<RoleDefinition>,
     ): List<FirstNightBundleCandidateFactorAudit> = game.players
         .asSequence()
-        .filter { source ->
-            source.alive && !source.poisoned && source.actualRole in pairRoles
+        .mapNotNull { source ->
+            if (!source.alive) return@mapNotNull null
+            val abilityRole = when {
+                source.actualRole == drunk && source.shownRole in pairRoles -> requireNotNull(source.shownRole)
+                !source.poisoned && source.actualRole in pairRoles -> source.actualRole
+                else -> return@mapNotNull null
+            }
+            val reliability = if (source.actualRole == drunk) {
+                ReliabilityState.DRUNK
+            } else {
+                ReliabilityState.RELIABLE
+            }
+            source to (abilityRole to reliability)
         }
-        .sortedBy { it.seat }
-        .map { source ->
-            val roleKey = pairRoleKey(source.actualRole)
-            val candidates = NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace(
+        .sortedBy { (source, _) -> source.seat }
+        .map { (source, ability) ->
+            val (abilityRole, reliability) = ability
+            val roleKey = pairRoleKey(abilityRole)
+            val candidates = PairInformationLegalDomain.generate(
                 game = game,
-                sourceSeat = source.seat,
-                abilityRole = source.actualRole,
                 roleDefinitions = roleDefinitions,
+                sourceSeat = source.seat,
+                abilityRole = abilityRole,
+                reliability = reliability,
             )
             FirstNightBundleCandidateFactorAudit(
                 factorId = "pair.$roleKey.seat-${source.seat}",
@@ -251,7 +265,11 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
     }
 
     private fun deferredComplexities(game: GameState): Set<FirstNightBundleDeferredComplexity> = buildSet {
-        if (game.players.any { it.actualRole == drunk }) add(FirstNightBundleDeferredComplexity.DRUNK)
+        val unsupportedDrunkInformation = game.players.any { source ->
+            source.actualRole == drunk &&
+                (source.shownRole in numericRoles || source.shownRole == fortuneTeller)
+        }
+        if (unsupportedDrunkInformation) add(FirstNightBundleDeferredComplexity.DRUNK)
         if (game.players.any { it.actualRole == spy || it.actualRole == recluse }) {
             add(FirstNightBundleDeferredComplexity.SPY_RECLUSE_REGISTRATION)
         }
