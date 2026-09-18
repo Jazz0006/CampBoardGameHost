@@ -3,7 +3,7 @@
 > Date: 2026-09-17 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT ARCHITECTURE / PRODUCT ROUTE**  
-> Current implementation entry: **SDE-0 / PR #143**  
+> Current implementation entry: **SDE-2D / pre-SDE-3 strategic generalization**  
 > Supersedes as execution authority: first-night-only EPI-MQ routes, earlier productive-uncertainty scoring plans, and the older revision-driven dynamic-decision implementation plan.
 
 ## 1. Product target
@@ -101,9 +101,28 @@ Existing dynamic candidate generation, impaired-information semantics, registrat
 
 ## 4. Strategic worlds, not raw role permutations
 
-Raw world cardinality is not the primary quality metric.
+Raw world cardinality is not the primary quality metric or the long-term production representation.
 
 Two worlds that differ only because healthy good players swap similar good roles can have nearly identical strategic meaning. Moving one player between good / Minion / Demon is much more important.
+
+The primary recommendation representation therefore moves toward an exact strategic quotient:
+
+```text
+StrategicWorldKey(
+    demonSeat,
+    minionSeats
+)
+```
+
+A strategic world survives when at least one mechanically legal role assignment / state / registration witness satisfies the same visible facts and hypothetical observations.
+
+Complete mechanical worlds remain necessary as:
+
+- rule-semantic correctness witnesses;
+- exact/symbolic feasibility support;
+- sources of role-information and narrative explanation detail.
+
+They must not receive additional strategic weight merely because many equivalent Townsfolk permutations realize the same evil topology.
 
 Primary product-level structure therefore includes:
 
@@ -113,9 +132,12 @@ Demon + Minion seat configurations
 evil cover
 forced-good seats
 forced-evil seats
+narrative support / complexity
 ```
 
-A recommendation can have thousands of surviving role worlds and still be strategically fragile if nearly all survivors share the same evil topology.
+Keep **role-information utility** separate from strategic pressure: a useful Washerwoman/Librarian-style clue may preserve every evil topology while still giving legitimate good-team information.
+
+For large-player production, prefer exact quotient / constraint / symbolic feasibility over exhaustive materialization and over unlabelled random sampling. The epistemic layer remains the single consequence authority; do not create a second recommendation-owned StrategicWorldSolver.
 
 ## 5. Target region: neither too strong nor too weak
 
@@ -151,7 +173,7 @@ The first policy profile uses a deliberate stress assumption: healthy good playe
 
 Public speech is **not** Storyteller confirmation.
 
-PR #143 establishes the healthy-stage public-claim model conceptually as:
+PR #143 established the healthy-stage public-claim model conceptually as:
 
 ```text
 speaker is evil
@@ -159,11 +181,21 @@ OR
 (shown role matches claim AND claimed clue is mechanically true)
 ```
 
-This preserves evil bluff worlds while keeping healthy good speakers truthful under the stress model.
+SDE-2D generalizes the model for Drunk/Poisoned information without exposing hidden impairment:
+
+```text
+speaker is evil
+OR
+(shown role matches AND source ability is malfunctioning)
+OR
+(shown role matches AND source ability is functioning AND clue is mechanically true)
+```
+
+This preserves evil bluff worlds, allows unreliable information to be strategically evaluated, and keeps hidden actual Drunk/Poisoner state private.
 
 Strict mechanically known `ShownRoleAt` remains exact and must not be weakened merely because public speech is modeled permissively.
 
-Later, if the app records actual claims, assumed-public information may be replaced by actual-public information. That is not required for the first deterministic baseline.
+Later, if the app records actual claims, assumed-public information may be replaced by actual-public information.
 
 ## 7. Narrative viability for ordinary evil players
 
@@ -237,8 +269,8 @@ Use lifecycle semantics:
 ```text
 PERSISTENT
     actual roles / seating
-    setup-level commitments
-    Demon bluffs
+    committed setup-level choices
+    committed Demon bluffs
     Fortune Teller Red Herring
     Drunk identity / shown-role commitments where persistence is required
 
@@ -252,6 +284,10 @@ PLANNED / UNCOMMITTED
 ```
 
 A planning object may precompute candidates, but runtime authority is always current effective state plus committed history.
+
+Before reveal/commit, Demon bluff triplets are **PLANNED output variables**, not external strategic inputs. Their legality stays in `SetupCandidateGenerator`; strategic selection migrates from `SetupRecommendationService` `demon-bluff-ease` / `bluffDifficulty` heuristics into SDE whole-bundle policy. Once shown, the selected bluff triplet becomes PERSISTENT and later replanning must preserve it.
+
+The Drunk shown role is already PERSISTENT before information recommendation. SDE may select the unreliable clue but must never reselect the shown identity.
 
 ## 11. Poisoner handling
 
@@ -402,9 +438,9 @@ No final NORMAL / EXPERT thresholds are frozen.
 
 ## 18. Corpus requirements
 
-SDE-0 / PR #143 must include deliberate adversarial examples, not only random healthy bundles.
+Calibration evidence must follow the current SDE stage rather than remain permanently seven-player/healthy-only.
 
-Required families include:
+Already established families include:
 
 - Pair-information + Fortune Teller confirmation chains;
 - Red Herring variants that cut/create those chains;
@@ -413,15 +449,18 @@ Required families include:
 - too-weak bundles;
 - clearly acceptable healthy contrasts.
 
-Later staged expansion will add:
+SDE-2D must add:
 
-- Drunk shown-role / false information;
-- Spy registration;
-- Poisoner target / re-planning;
-- later impaired Empath / Fortune Teller / Undertaker / Ravenkeeper;
-- late-game cases where stronger convergence is correct.
+- Drunk `HealthyCore / FullBundle / DrunkMarginal` contrasts;
+- surface-valid Drunk clues that are false, misleading, or accidentally true;
+- Demon-bluff-supported versus bluff-fragile whole bundles;
+- bluff triplets with redundant versus diverse counter-narratives;
+- cases with similar raw world counts but materially different evil topologies;
+- useful role-information cases that leave evil topology unchanged;
+- representative setup regimes `5–6`, `7–9`, `10–12`, `13–15`;
+- explicit performance evidence for exact enumeration, strategic quotient and symbolic/constraint feasibility.
 
-Human labels:
+Human labels remain:
 
 ```text
 BAD_TOO_STRONG
@@ -430,7 +469,7 @@ BAD_TOO_WEAK
 UNCERTAIN
 ```
 
-Use calibration and sealed holdout scenarios. Do not derive gates and validate them on the same examples.
+Use calibration and sealed holdout scenarios. Do not derive gates and validate them on the same examples. Keep expensive corpus/performance work outside ordinary FAST regression.
 
 ## 19. Frozen vs deliberately unfrozen
 
@@ -439,9 +478,15 @@ Use calibration and sealed holdout scenarios. Do not derive gates and validate t
 - rules own legality;
 - exact epistemic evaluator owns world consequences;
 - strategic evil topology matters more than raw role-world count;
+- strategic topology is a quotient/feasibility view over mechanically legal worlds, not a second solver;
+- raw role permutations sharing one evil topology do not gain strategic weight merely by multiplicity;
+- role-information utility remains distinct from strategic pressure;
 - whole-bundle / whole-history interaction matters;
 - Spy/Recluse registration is per interaction;
 - Poisoner can invalidate uncommitted decisions;
+- Drunk shown role is persistent while the unshown clue is a whole-bundle output;
+- uncommitted Demon bluff triplets are SDE outputs; committed bluff triplets are persistent later inputs;
+- Demon bluff legality remains setup-owned;
 - the same engine continues after Night 1;
 - BEGINNER / ordinary-player profile is first;
 - `ConsequenceEvaluator` is targeted for removal;
@@ -457,39 +502,54 @@ Use calibration and sealed holdout scenarios. Do not derive gates and validate t
 - narrative-complexity formula;
 - information-pacing curve;
 - NORMAL / EXPERT numeric profiles;
-- exhaustive vs beam search;
+- exact strategic-quotient implementation shape and symbolic backend details;
+- measured production switch/cost thresholds, if any;
 - optional bounded soft preference;
 - production cutover timing.
 
 ## 20. Implementation route
 
-### SDE-0 — active now / PR #143
+### SDE-0 — COMPLETE / PR #143
 
-Use the merged healthy whole-bundle harness plus existing PR #143 corpus foundation.
+Established the first BEGINNER strategic-robustness corpus and healthy PUBLIC_GOOD_INFO evidence.
 
-Continue with deliberate adversarial scenarios, human review, interpretable diagnostics and first BEGINNER policy gates.
+### SDE-1 — COMPLETE / PR #144
 
-Do not restart PR #143 and do not cut over production selection yet.
+Established thin exact-consequence orchestration, production shadow integration, lifecycle ownership and revision-bound planning.
 
-### SDE-1 — unified orchestration seam
+### SDE-2A/B/C — COMPLETE / PR #144
 
-- formalize thin `StorytellerDecisionEngine` / DecisionContext boundary;
-- reuse canonical candidate generators;
-- reuse exact epistemic evaluator;
-- preserve session / flow ownership;
-- establish persistent / committed / planned lifecycle.
+Established:
 
-### SDE-2 — first-night uncertainty
+1. Drunk shown-role / planned-clue ownership and replanning;
+2. Spy/Recluse interaction-local registration witness binding;
+3. Poisoner invalidation and broad replanning.
 
-Expand separately:
+### SDE-2D — CURRENT / required before SDE-3
 
-1. Drunk;
-2. Spy/Recluse per-interaction registration;
-3. Poisoner target / effective-state invalidation / re-planning.
+Authority:
+
+`docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+
+Execute:
+
+```text
+SDE-2D1  Drunk whole-bundle semantics
+    ↓
+SDE-2D2  Demon bluff joint-output strategic migration
+    ↓
+SDE-2D3  strategic-world quotient / exact feasibility seam
+    ↓
+SDE-2D4  5–15 player semantic + performance validation
+    ↓
+SDE-2D5  cross-regime calibration / policy evidence
+```
+
+Do not begin SDE-3 before this gate is complete.
 
 ### SDE-3 — cross-night information
 
-Bring later impaired / registration decisions through the same engine using historical exact replay.
+Bring later impaired / registration decisions through the same engine using historical exact replay after SDE-2D establishes the corrected strategic representation.
 
 ### SDE-4 — production cutover / cleanup
 
@@ -497,6 +557,7 @@ Bring later impaired / registration decisions through the same engine using hist
 - preserve Experienced-mode manual override;
 - migrate only useful legacy context inputs;
 - delete `ConsequenceEvaluator` and stale heuristic-only state after fanout audit;
+- retire `SetupRecommendationService` bluffDifficulty strategic authority once SDE bluff selection is the validated owner;
 - retire superseded recommendation paths/tests when stronger typed coverage exists.
 
 ## 21. Validation principles
@@ -518,13 +579,13 @@ Read:
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
-5. this route;
-6. query live `main`, PR #143 and current CI;
-7. synchronize #143 with latest `main` if behind;
-8. continue SDE-0 from the existing PR.
+5. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
+6. this route as architecture background;
+7. query live `main` and current checks;
+8. continue the current SDE-2D slice from the handoff.
 
-Do not reopen completed FN-BUNDLE-0/1/2 audits without a concrete regression.
+Do not reopen completed FN-BUNDLE/SDE-0/SDE-1/SDE-2A/B/C work without a concrete regression.
 
 ## 23. Stable decision
 
-> **The automatic Storyteller is a persistent game-state decision engine, not a collection of independent clue recommenders. Rules produce legal outcomes; the existing epistemic engine measures exact hypothetical consequences; Storyteller policy evaluates strategically meaningful evil topology, confirmation structure, information value, narrative viability and game-phase pacing; then it selects among acceptable legal outcomes. First-night bundles are the first calibration surface, not the endpoint. Spy/Recluse registration and poisoning are interaction-time state inputs; later impaired information uses the same engine; and `ConsequenceEvaluator` is a migration-era heuristic layer targeted for removal after unified-policy cutover. PR #143 is the active SDE-0 implementation and must be continued rather than restarted.**
+> **The automatic Storyteller is a persistent strategic decision engine, not a collection of independent clue recommenders. Rules generate legal outcomes; the epistemic layer proves mechanical feasibility and hypothetical consequences; strategic evaluation operates primarily on evil-team topology while preserving role-information utility and narrative support. Drunk unreliable clues are whole-bundle outputs over a persistent shown role. Demon bluff triplets are SDE outputs until shown, then persistent inputs. Large-player production must move toward exact strategic-topology quotient/constraint feasibility rather than giving repeated weight to exhaustive raw role permutations. SDE-2D is the current mandatory corrective route before SDE-3; no second world solver and no opaque global scalar are allowed.**
