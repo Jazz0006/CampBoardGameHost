@@ -40,7 +40,7 @@ internal object DemonBluffSetupShadowAdapter {
         }
 
         val candidateIdByRoles = projected.associateBy(
-            keySelector = { candidate -> candidate.roles },
+            keySelector = { candidate -> canonicalBluffRoles(candidate.roles) },
             valueTransform = DemonBluffJointOutputCandidate::candidateId,
         )
         require(candidateIdByRoles.size == projected.size) {
@@ -56,7 +56,7 @@ internal object DemonBluffSetupShadowAdapter {
             "Visible setup result may expose at most one plan per recommendation style."
         }
         val legacyByStyle = plansWithBluffs.associate { (style, bluff) ->
-            val candidateId = candidateIdByRoles[bluff.roles]
+            val candidateId = candidateIdByRoles[canonicalBluffRoles(bluff.roles)]
                 ?: error(
                     "Visible setup recommendation selected a Demon bluff triplet that is absent " +
                         "from the setup-owned legal candidate domain.",
@@ -78,4 +78,9 @@ internal object DemonBluffSetupShadowAdapter {
             jointOutput = jointOutput,
         )
     }
+
+    private fun canonicalBluffRoles(
+        roles: List<com.codex.campboardgamehost.clocktower.domain.RoleId>,
+    ): List<com.codex.campboardgamehost.clocktower.domain.RoleId> =
+        roles.sortedBy { it.value }
 }
