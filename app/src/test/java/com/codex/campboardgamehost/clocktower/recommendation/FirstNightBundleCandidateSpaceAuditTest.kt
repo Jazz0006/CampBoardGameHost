@@ -100,6 +100,34 @@ class FirstNightBundleCandidateSpaceAuditTest {
     }
 
     @Test
+    fun `Drunk shown numeric role is a complete legal factor rather than deferred complexity`() {
+        val game = game(
+            player(1, "Chef", CharacterType.TOWNSFOLK),
+            player(2, "Drunk", CharacterType.OUTSIDER, shownRole = "Empath"),
+            player(3, "Soldier", CharacterType.TOWNSFOLK),
+            player(4, "Scarlet Woman", CharacterType.MINION),
+            player(5, "Imp", CharacterType.DEMON),
+            player(6, "Monk", CharacterType.TOWNSFOLK),
+        )
+
+        val audit = TroubleBrewingFirstNightBundleCandidateSpaceAuditor.inspect(game, roles)
+        val drunkEmpath = audit.factors.single { it.factorId == "numeric.empath.seat-2" }
+        val legal = FirstNightNumericLegalDomain.generate(
+            game = game,
+            sourceSeat = 2,
+            abilityRole = RoleId("Empath"),
+            reliability = com.codex.campboardgamehost.clocktower.domain.ReliabilityState.DRUNK,
+        )
+
+        assertTrue(FirstNightBundleDeferredComplexity.DRUNK !in audit.deferredComplexities)
+        assertEquals(legal.map { it.candidateId }, drunkEmpath.optionIds)
+        assertEquals(listOf("value-0", "value-1", "value-2"), drunkEmpath.optionIds)
+        assertTrue(legal.any { it.semanticTruth == com.codex.campboardgamehost.clocktower.domain.SemanticTruth.FALSE })
+        assertTrue(legal.any { it.semanticTruth == com.codex.campboardgamehost.clocktower.domain.SemanticTruth.TRUE })
+        assertEquals(audit.rawCartesianCount, audit.legalCompleteBundleCount)
+    }
+
+    @Test
     fun `registration alternatives are counted only as known producer options until that stage is enabled`() {
         val game = game(
             player(1, "Chef", CharacterType.TOWNSFOLK),
