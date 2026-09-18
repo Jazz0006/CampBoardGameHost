@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-18 Australia/Sydney  
-> Status: **SDE-2D2 MERGED / SDE-2D3 REPRESENTATION AUDIT CURRENT**  
+> Status: **SDE-2D3 IMPLEMENTED — T4 ACCEPTANCE PENDING**  
 > Base checkpoint: PR #146 merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`; SDE-2D3 continues on fresh branch `sde-2d3-strategic-world-quotient`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
@@ -247,21 +247,28 @@ Authority:
 
 `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`
 
-The representation/fanout audit is complete; executable implementation has not started.
+The representation/fanout audit and first implementation are complete; final T4 acceptance is pending.
 
-Frozen first-slice direction:
+Implemented flow:
 
 ```text
 EnumeratedWorld.rolesBySeat
     -> StrategicWorldKey(setup Demon seat, setup Minion seats)
     -> existing exact WorldStructureAccumulator pass
     -> ExactWorldStructureDiagnostics.strategicWorldKeys
-    -> SDE diagnostic consumers
+    -> SDE precise strategic diagnostics
 ```
 
-Do not reconstruct the joint topology from `possibleDemonSeats` and `evilTeamSeatConfigurations`: those existing fields lose Demon/Minion pairing.
+Key contracts:
 
-Do not add the key to generic `PlayerWorldSet` / ZDD in the first slice. Do not use `currentRolesBySeat` for the v1 setup topology; Imp succession is a separate historical dynamic dimension.
+- same setup evil topology collapses good-role / shown-role / impairment / explanation multiplicity;
+- Demon/Minion swap within the same evil seat set remains distinct;
+- projection uses role-definition CharacterType;
+- Imp succession changes current active Demon state but does not rewrite the setup key.
+
+Demon-bluff diagnostics now expose precise strategic-key union/intersection/pattern beside the old coarse evil-seat topology fields.
+
+Do not reconstruct the joint topology from `possibleDemonSeats` and `evilTeamSeatConfigurations`. Do not add the key to generic `PlayerWorldSet` / ZDD in D2D3. No production selection cutover occurred.
 
 Goal:
 
