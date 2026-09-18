@@ -244,9 +244,33 @@ class EnumeratedWorldSet private constructor(
 internal data class WorldObservationResult(
     val matches: Boolean,
     val clusters: Set<WorldExplanationClusterId> = emptySet(),
-    /** Registration selections which make this exact world satisfy this interaction. */
+    /** Flattened compatibility/diagnostic view across every successful registration witness path. */
     val registrationFacts: Set<RegistrationFact> = emptySet(),
-)
+    /**
+     * Complete interaction-local registration witnesses which make this exact world satisfy the
+     * observation. An empty witness means the observation is true without special registration.
+     *
+     * Keeping alternatives separate is required for exact branch binding: flattening
+     * {Spy} and {Spy, Recluse} into one set would incorrectly imply both registrations are required.
+     */
+    val registrationWitnesses: Set<Set<RegistrationFact>> = when {
+        !matches -> emptySet()
+        registrationFacts.isEmpty() -> setOf(emptySet())
+        else -> setOf(registrationFacts)
+    },
+) {
+    init {
+        require(matches || registrationWitnesses.isEmpty()) {
+            "A non-matching world cannot expose successful registration witnesses."
+        }
+        require(!matches || registrationWitnesses.isNotEmpty()) {
+            "A matching world must expose at least one registration witness, including the empty natural witness."
+        }
+        require(registrationFacts == registrationWitnesses.flatten().toSet()) {
+            "Flattened registration facts must equal the union of registration witness alternatives."
+        }
+    }
+}
 
 internal object TroubleBrewingWorldObservationEvaluator {
     private val TRUE_INFO = WorldExplanationClusterId("true-info")
@@ -449,26 +473,50 @@ internal object TroubleBrewingWorldObservationEvaluator {
         }
 
         return when (actualRole.value.lowercase()) {
-            "spy" -> WorldObservationResult(
-                (queriedAlignment == null || queriedAlignment == Alignment.GOOD) &&
-                    (queriedType == null || queriedType == CharacterType.TOWNSFOLK || queriedType == CharacterType.OUTSIDER) &&
-                    (queriedRole == null || roles[queriedRole]?.alignment == Alignment.GOOD),
-                setOf(SPY_REGISTRATION),
-                registrationFacts = setOf(registrationFact(
-                    observation, seat, queriedRole, queriedType, queriedAlignment ?: Alignment.GOOD,
-                    RegistrationReason.SPY_ABILITY,
-                )),
-            )
-            "recluse" -> WorldObservationResult(
-                (queriedAlignment == null || queriedAlignment == Alignment.EVIL) &&
-                    (queriedType == null || queriedType == CharacterType.MINION || queriedType == CharacterType.DEMON) &&
-                    (queriedRole == null || roles[queriedRole]?.alignment == Alignment.EVIL),
-                setOf(RECLUSE_REGISTRATION),
-                registrationFacts = setOf(registrationFact(
-                    observation, seat, queriedRole, queriedType, queriedAlignment ?: Alignment.EVIL,
-                    RegistrationReason.RECLUSE_ABILITY,
-                )),
-            )
+            "spy" -> {
+                val matches =
+                    (queriedAlignment == null || queriedAlignment == Alignment.GOOD) &&
+                        (queriedType == null ||
+                            queriedType == CharacterType.TOWNSFOLK ||
+                            queriedType == CharacterType.OUTSIDER) &&
+                        (queriedRole == null || roles[queriedRole]?.alignment == Alignment.GOOD)
+                if (!matches) {
+                    WorldObservationResult(false)
+                } else {
+                    val fact = registrationFact(
+                        observation, seat, queriedRole, queriedType, queriedAlignment ?: Alignment.GOOD,
+                        RegistrationReason.SPY_ABILITY,
+                    )
+                    WorldObservationResult(
+                        matches = true,
+                        clusters = setOf(SPY_REGISTRATION),
+                        registrationFacts = setOf(fact),
+                        registrationWitnesses = setOf(setOf(fact)),
+                    )
+                }
+            }
+            "recluse" -> {
+                val matches =
+                    (queriedAlignment == null || queriedAlignment == Alignment.EVIL) &&
+                        (queriedType == null ||
+                            queriedType == CharacterType.MINION ||
+                            queriedType == CharacterType.DEMON) &&
+                        (queriedRole == null || roles[queriedRole]?.alignment == Alignment.EVIL)
+                if (!matches) {
+                    WorldObservationResult(false)
+                } else {
+                    val fact = registrationFact(
+                        observation, seat, queriedRole, queriedType, queriedAlignment ?: Alignment.EVIL,
+                        RegistrationReason.RECLUSE_ABILITY,
+                    )
+                    WorldObservationResult(
+                        matches = true,
+                        clusters = setOf(RECLUSE_REGISTRATION),
+                        registrationFacts = setOf(fact),
+                        registrationWitnesses = setOf(setOf(fact)),
+                    )
+                }
+            }
             else -> WorldObservationResult(false)
         }
     }
@@ -538,10 +586,21 @@ internal object TroubleBrewingWorldObservationEvaluator {
             }.filterNotNull().filter { it.matches && it.registrationFacts.isNotEmpty() }
             val matches = if (value.value) mandatoryDetection || optionalRegistrations.isNotEmpty() else !mandatoryDetection
             val registrationRequired = value.value && !mandatoryDetection
+            val witnesses = when {
+                !matches -> emptySet()
+                registrationRequired -> optionalRegistrations
+                    .flatMapTo(linkedSetOf()) { it.registrationWitnesses }
+                else -> setOf(emptySet())
+            }
             WorldObservationResult(
-                matches,
-                if (registrationRequired) optionalRegistrations.flatMapTo(linkedSetOf()) { it.clusters } else emptySet(),
-                if (registrationRequired) optionalRegistrations.flatMapTo(linkedSetOf()) { it.registrationFacts } else emptySet(),
+                matches = matches,
+                clusters = if (registrationRequired) {
+                    optionalRegistrations.flatMapTo(linkedSetOf()) { it.clusters }
+                } else {
+                    emptySet()
+                },
+                registrationFacts = witnesses.flatten().toSet(),
+                registrationWitnesses = witnesses,
             )
         }
     }
@@ -594,11 +653,17 @@ internal object TroubleBrewingWorldObservationEvaluator {
         walk(0)
     }
 
-    private fun numericResult(matches: List<List<AlignmentOption>>): WorldObservationResult = WorldObservationResult(
-        matches = matches.isNotEmpty(),
-        clusters = matches.flatten().mapNotNullTo(linkedSetOf(), AlignmentOption::cluster),
-        registrationFacts = matches.flatten().mapNotNullTo(linkedSetOf(), AlignmentOption::registrationFact),
-    )
+    private fun numericResult(matches: List<List<AlignmentOption>>): WorldObservationResult {
+        val witnesses = matches.mapTo(linkedSetOf()) { assignment ->
+            assignment.mapNotNullTo(linkedSetOf(), AlignmentOption::registrationFact)
+        }
+        return WorldObservationResult(
+            matches = matches.isNotEmpty(),
+            clusters = matches.flatten().mapNotNullTo(linkedSetOf(), AlignmentOption::cluster),
+            registrationFacts = witnesses.flatten().toSet(),
+            registrationWitnesses = witnesses,
+        )
+    }
 
     private fun malfunctionClusters(
         world: EnumeratedWorld,
@@ -613,18 +678,36 @@ internal object TroubleBrewingWorldObservationEvaluator {
     }
 
     private fun combineAny(results: List<WorldObservationResult>): WorldObservationResult {
-        val matches = results.filter(WorldObservationResult::matches)
+        val matching = results.filter(WorldObservationResult::matches)
+        val witnesses = matching.flatMapTo(linkedSetOf()) { it.registrationWitnesses }
         return WorldObservationResult(
-            matches.isNotEmpty(),
-            matches.flatMapTo(linkedSetOf()) { it.clusters },
-            matches.flatMapTo(linkedSetOf()) { it.registrationFacts },
+            matches = matching.isNotEmpty(),
+            clusters = matching.flatMapTo(linkedSetOf()) { it.clusters },
+            registrationFacts = witnesses.flatten().toSet(),
+            registrationWitnesses = witnesses,
         )
     }
 
-    private fun combineAll(results: List<WorldObservationResult>): WorldObservationResult =
-        WorldObservationResult(
-            results.all(WorldObservationResult::matches),
-            results.flatMapTo(linkedSetOf()) { it.clusters },
-            results.flatMapTo(linkedSetOf()) { it.registrationFacts },
+    private fun combineAll(results: List<WorldObservationResult>): WorldObservationResult {
+        val matches = results.all(WorldObservationResult::matches)
+        val witnesses = if (matches) combineRegistrationWitnesses(results) else emptySet()
+        return WorldObservationResult(
+            matches = matches,
+            clusters = results.flatMapTo(linkedSetOf()) { it.clusters },
+            registrationFacts = witnesses.flatten().toSet(),
+            registrationWitnesses = witnesses,
         )
+    }
+
+    private fun combineRegistrationWitnesses(
+        results: List<WorldObservationResult>,
+    ): Set<Set<RegistrationFact>> {
+        var combined: Set<Set<RegistrationFact>> = setOf(emptySet())
+        results.forEach { result ->
+            combined = combined.flatMapTo(linkedSetOf()) { prefix ->
+                result.registrationWitnesses.map { witness -> prefix + witness }
+            }
+        }
+        return combined
+    }
 }

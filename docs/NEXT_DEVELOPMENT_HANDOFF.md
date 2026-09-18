@@ -1,7 +1,11 @@
-# NEXT DEVELOPMENT HANDOFF — SDE-1 Unified StorytellerDecisionEngine Orchestration
+# NEXT DEVELOPMENT HANDOFF — SDE-3 Cross-Night Impaired / Registration Decisions
 
-> Updated: 2026-09-17 Australia/Sydney  
-> Status: **CURRENT / begin SDE-1**  
+> Updated: 2026-09-18 Australia/Sydney  
+> Status: **PAUSED / SDE-2 COMPLETE / PRE-SDE-3 ALGORITHM REVIEW REQUIRED**  
+> SDE-1E completion: `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`  
+> SDE-2A completion: `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`  
+> SDE-2B completion: `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`  
+> SDE-2C completion: `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
 ## 0. Start here
@@ -12,254 +16,282 @@ Read, in order:
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
-5. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`;
-6. query live `main`, open PRs and current checks before editing.
+5. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
+6. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
+7. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
+8. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
+9. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
+10. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
+11. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
+12. Storyteller Decision Engine route;
+13. query live `main`, PR #144 head and current checks before executable edits.
 
-Do not restart completed FN-BUNDLE/SDE-0 work.
+Do not restart completed FN-BUNDLE, SDE-0, or SDE-1A–E work.
 
 ## 1. Live continuation point
 
-Completed immediately before this handoff:
+Branch: `sde-1-orchestration-seam`  
+PR: #144, still draft and unmerged.
 
-- PR #143 — SDE-0 / BEGINNER strategic-robustness corpus + policy contract;
-- squash-merged to `main` as `5dd32e085a7db0d3eb14ed8bce3ed3c75f694c6e`;
-- final validated PR head `7f5b0574b25fff52612cd8cbe74a26933987dae1`;
-- final observed validation: R2 SUCCESS, CI / Android FAST / CI gate SUCCESS, FN-BUNDLE-3 calibration SUCCESS;
-- final test-only classifier intentionally skipped full Android + debug APK.
+Live `main` at SDE-1E validation:
 
-After merge, roadmap status advanced to SDE-1 in docs-only commit `6f96837cdb122f05a8ee2e18ec5f784b2eb1fde9`.
+`4d6e90a7a268570d261048931a3557433ea01d83`
 
-Always query live `main` because this handoff may itself be followed by another docs-only commit.
+Final SDE-1E executable validation head:
 
-## 2. Current objective
+`e7bb31937db32863e5606044b443818011d16236`
 
-**SDE-1 — unified `StorytellerDecisionEngine` orchestration seam**
-
-The goal is not to rewrite recommendation logic. The goal is to establish one thin typed orchestration owner that composes the authorities already present:
+Validation:
 
 ```text
-canonical actual/effective state
-→ rules-owned legal candidates
-→ typed hypothetical propositions/effects
-→ existing exact epistemic evaluator
-→ strategic structural diagnostics
-→ profile/phase policy boundary
-→ selected result
-→ existing session/flow commit path
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS (executed)
+CI gate                        SUCCESS
+ASP contract tests             SKIPPED by classifier
+Real Clingo cross-validation   SKIPPED by classifier
+Full Android/APK step          SKIPPED by classifier
 ```
 
-The engine must not own role legality, canonical mutation, night ordering, or world solving.
+CI run: `35285847867`.
 
-## 3. First task — SDE-1A fanout audit
+Later documentation commits are not executable validation evidence.
 
-Before creating `StorytellerDecisionEngine`, inspect the live code and map the real call graph for:
+## 2. SDE-1 completed contracts
 
-1. legal candidate generation;
-2. `InformationProposition` / observation construction;
-3. exact hypothetical evaluation entry points;
-4. first-night bundle recommendation/coordinator callers;
-5. dynamic recommendation callers;
-6. session decision identity/revision/commit ownership;
-7. flow ordering and UI invocation;
-8. `ConsequenceEvaluator` callers and the context signals they consume.
+### Ownership
 
-For each node classify it as:
+- `ClocktowerGameSession` remains canonical actual-state, revisions, durable action/observation history and commit owner.
+- rules/candidate domains own legal outcomes.
+- `TroubleBrewingRegistrationDomain` owns Spy/Recluse registration legality.
+- `ExactHistoricalHypotheticalObservationBundleEvaluator` owns exact possible-world consequences.
+- `InformationDecisionContext` owns structured-information freshness/confirmation.
+- flow planner/projector owns interaction ordering.
+- SDE owns orchestration/evaluation and disposable planned metadata only.
 
-```text
-REUSE AS AUTHORITY
-ADAPT INTO SDE SEAM
-LEGACY CALLER TO MIGRATE LATER
-DUPLICATE / RETIRE AFTER CUTOVER
-OUT OF SCOPE
-```
-
-Do not delete production paths during this audit unless they are independently proven dead.
-
-## 4. Audit questions that must be answered
-
-The next implementation plan should answer, with concrete symbols/files:
-
-- Which current type should provide canonical actual/effective state to the engine?
-- Which existing candidate producers already expose legal outcomes in typed form?
-- Which decisions still require legacy text/display-option adaptation?
-- What is the narrowest exact evaluator API the orchestrator can consume?
-- Which exact diagnostics are already sufficient to carry SDE-0 structural evidence forward?
-- What existing session identity/revision type should be reused for decision freshness?
-- Where should lifecycle metadata live without shadowing session state?
-- Which callers currently depend on `ConsequenceEvaluator` conclusions versus genuine context inputs?
-- What is the smallest vertical slice that proves the new orchestration seam without production cutover?
-
-## 5. Expected SDE-1 typed seam
-
-Names are provisional; reuse existing types wherever possible.
-
-Likely conceptual boundary:
+### Exact consequence seam
 
 ```text
-StorytellerDecisionEngine
-    decide(request, context)
-
-DecisionContext
-    canonical/effective state reference
-    phase / round / alive-state context
-    table/player policy profile
-    committed decision history reference
-    lifecycle metadata
-
-DecisionRequest
-    decision kind
-    legal candidates or legal-candidate provider
-    recipient / interaction identity
-
+ExactConsequenceContext
+ExactConsequenceRequest
+ExactConsequenceCandidate
 CandidateConsequence
-    exact BEFORE / AFTER consequence
-    possible Demon seats
-    evil-team configurations
-    forced-good / forced-evil seats
-    evil cover
-    leave-one-out / recovery evidence where relevant
-
-StorytellerPolicyResult
-    acceptable/rejected/uncertain classification
-    selected candidate when appropriate
-    reason/provenance for diagnostics and manual Experienced-mode review
+ExactConsequenceEvaluation
+StorytellerDecisionEngine.evaluateExactConsequences(...)
 ```
 
-Do not freeze these exact class names before auditing existing types.
+The exact historical baseline revision is distinct from current decision freshness revisions. Production callers must pass current session revisions explicitly when they differ.
 
-## 6. Lifecycle contract to establish in SDE-1
-
-SDE-1 must make the ownership distinction expressible:
+### Lifecycle
 
 ```text
-PERSISTENT
-    setup-level decisions that survive replanning
-
-COMMITTED
-    already shown/executed decisions; immutable
-
-PLANNED / UNCOMMITTED
-    recommendations that may be invalidated/re-evaluated
+PERSISTENT   -> session/setup-owned durable commitments
+COMMITTED    -> session/history-owned executed/shown facts
+PLANNED      -> SDE-owned disposable identity/freshness references only
 ```
 
-SDE-1 only establishes the seam and ownership semantics.
+`PlannedDecisionRef` owns no state store, history, candidate pool, selected payload, mutation handle, or independent revision counter.
 
-Actual Poisoner-triggered invalidation/replanning belongs to SDE-2.
+### Production shadow proof
 
-## 7. Recommended first vertical slice
-
-Choose one already-typed, bounded decision surface with:
-
-- canonical legal candidates;
-- an existing exact hypothetical evaluation path;
-- no need to add Drunk/Spy/Recluse/Poisoner uncertainty;
-- easy comparison against existing behavior;
-- limited production fanout.
-
-The slice should prove:
+The healthy structured numeric path now has a bounded production shadow bridge:
 
 ```text
-existing legal candidates
-→ SDE orchestration
-→ exact diagnostics
-→ policy result
+existing legal/materialized candidates
+→ StructuredInformationProductionShadow
+→ StructuredInformationShadowAdapter
+→ StorytellerDecisionEngine
+→ exact evaluator
+→ PlannedDecisionRef provenance
 ```
 
-without making the new engine the global production authority yet.
+Tests prove visible choices and confirmation semantics remain unchanged and only explicit `ClocktowerGameSession.commitGlobalEpistemicObservation(...)` performs durable observation/revision mutation.
 
-The exact slice must be chosen from the fanout audit, not guessed from role names in advance.
+## 3. Current objective — PAUSE before SDE-3
 
-## 8. Testing expectations
+PR #144 is the intended merge checkpoint. After merge, stop executable development and open a fresh discussion before any SDE-3 implementation.
 
-Follow `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
+The next conversation must analyze three previously under-specified algorithm questions.
 
-For SDE-1:
+### 3.1 Drunk shown as an information role
 
-- audit documentation does not require manufactured RED tests;
-- new stable orchestration types require focused typed tests;
-- any semantic change to exact evaluation requires epistemic/oracle validation;
-- first integration slice should have differential/contract evidence against the current authoritative path where useful;
-- central caller cutovers require broader T2/T4 validation;
-- expensive calibration experiments remain explicit experiments, not default FAST workload.
+A Drunk may believe they are an information role, so the Storyteller must generate unreliable information for that shown ability. This is not merely a reliability flag: the chosen false/misleading clue can materially change first-night balance and downstream narratives.
 
-Do not resurrect low-value source-grep / reflection / field-echo tests removed in the SDE-0 cleanup.
+Questions to resolve:
 
-## 9. SDE-1 non-goals
+- Does the current first-night bundle algorithm actually evaluate Drunk clue choices as strategic candidates?
+- Is the Drunk branch jointly evaluated with healthy first-night information, or only generated through a permissive legality path?
+- How should a Drunk clue's balance weight compare with healthy Investigator / Washerwoman / Librarian / Chef / Empath / Fortune Teller information?
+- Do existing exact consequence metrics treat deliberately unreliable information correctly?
 
-Do not implement yet:
+Do not change production behavior until this is answered.
 
-- final BEGINNER numeric Badness gates unless supported by reviewed corpus evidence;
-- Drunk hidden-role uncertainty;
-- Spy/Recluse per-interaction policy selection;
-- Poisoner re-planning;
-- later-night information pacing;
-- full production recommendation cutover;
-- deletion of `ConsequenceEvaluator` before safe caller migration;
-- NORMAL/EXPERT numeric policy profiles;
-- a second possible-world solver;
-- a shadow `GameState`.
+### 3.2 Demon bluff identities
 
-## 10. SDE-0 contracts that must survive
+The Demon's bluff identities affect which evil narratives are easy to sustain and therefore can change the strategic value of good-player information.
 
-Preserve:
+Questions to resolve:
 
-- healthy `PUBLIC_GOOD_INFO` is not Storyteller confirmation;
-- evil public speakers retain bluff worlds;
-- healthy good public claims must match shown role and mechanically true clue in the current stress model;
-- strict mechanically known `ShownRoleAt` remains exact;
-- raw role-world cardinality is descriptive, not the primary product objective;
-- possible Demon seats / evil-team topology / forced alignment / evil cover are primary structural evidence;
-- whole-bundle interactions matter;
-- calibration and holdout remain separated;
-- no opaque global scalar becomes the decision authority.
+- Are the three committed Demon bluffs currently visible to the SDE / exact consequence context?
+- If not, are current recommendation diagnostics implicitly evaluating worlds that ignore a major evil-team strategic asset?
+- Should bluffs be persistent upstream setup commitments referenced by SDE?
+- Should bluff choice and first-night information be jointly optimized, sequentially optimized, or merely constrained against one another?
+- How should bluff-role overlap with shown information roles influence clue weighting?
 
-## 11. Later stages
+Do not assume raw possible-world count captures bluff strength.
+
+### 3.3 Player-count generality
+
+Much of the current discussion and fixture evidence has focused on roughly 7–9 player games.
+
+Before continuing, verify separately:
+
+- semantic correctness for every legal supported player count;
+- whether setup/candidate generation has hard-coded or hidden small-game assumptions;
+- whether strategic topology metrics require normalization by player count;
+- whether exact world enumeration remains computationally feasible as player count increases;
+- whether thresholds/calibration derived from 7–9 player examples generalize to larger games;
+- whether the production app should switch evaluation strategy above a count threshold.
+
+### 3.4 Resume condition
+
+Only after these three topics are analyzed should the roadmap decide whether:
+
+1. SDE-3 can proceed unchanged;
+2. SDE-0/1/2 need a corrective bundle/bluff/generalization slice first;
+3. the strategic objective function needs revision before any further integration.
+
+Until then:
 
 ```text
-SDE-2
-    Drunk
-    → Spy/Recluse per-interaction registration
-    → Poisoner effective-state invalidation / re-planning
-
-SDE-3
-    cross-night impaired / registration decisions
-    historical exact replay
-    measured information pacing
-
-SDE-4
-    production cutover
-    Experienced-mode manual override preservation
-    ConsequenceEvaluator retirement
-    stale heuristic-state cleanup
+NO SDE-3 executable work
+NO production selection cutover
+NO legacy heuristic retirement
 ```
 
-Do not pull later-stage complexity into SDE-1 merely because the eventual engine will support it.
+## 4. SDE-2A — Drunk — COMPLETE
 
-## 12. ConsequenceEvaluator migration rule
+Completion authority:
 
-`recommendation/dynamic/ConsequenceEvaluator` is migration-era legacy.
+`docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`
 
-During SDE-1A:
+Executable evidence:
 
-- audit every caller;
-- separate genuine context inputs from heuristic conclusions;
-- preserve useful inputs for future `DecisionContext`;
-- do not add new policy logic to `ConsequenceEvaluator`;
-- do not delete it until the new seam covers its unique production obligations.
+`6c9d7fe8776fea4723004e22790ba11c1f140b8c`
 
-## 13. First implementation deliverables
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS (executed)
+CI gate                        SUCCESS
+```
 
-The first SDE-1 PR should ideally contain only what is necessary to establish the seam cleanly:
+Frozen result:
 
-1. fanout/ownership audit document;
-2. typed orchestration boundary at the true package owner;
-3. focused tests for that boundary;
-4. one bounded vertical integration slice if the audit supports it;
-5. no broad production cutover;
-6. updated roadmap/handoff with measured follow-up work.
+- shown role is PERSISTENT setup/session truth;
+- unshown clue is PLANNED/disposable;
+- shown clue is COMMITTED/immutable;
+- Poisoner draft stales plans through `playerInputRevision`;
+- Poisoner confirm stales plans through `gameStateRevision`;
+- no new SDE dependency store or replanning revision counter exists.
 
-If the fanout audit shows the seam should be split into separate PRs, prefer smaller ownership-preserving PRs over one large migration.
+## 5. SDE-2B — Spy / Recluse — COMPLETE
 
-## 14. Stable handoff
+Completion authority:
 
-> **SDE-0 is merged. Begin SDE-1 by auditing live candidate/evaluator/session/flow fanout, then formalize the smallest thin `StorytellerDecisionEngine` orchestration seam that reuses canonical rules and exact epistemic consequences. Establish persistent/committed/planned ownership without implementing SDE-2 uncertainty yet. Do not create parallel state, rules, or world-solving authority, and do not perform global production cutover during the first SDE-1 slice.**
+`docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`
+
+Executable evidence:
+
+```text
+a977c01...  exact witness alternatives + binding
+             R2 SUCCESS
+             Android FAST SUCCESS
+             Real Clingo SUCCESS
+             CI gate SUCCESS
+
+ec970aaa...  SDE forwarding + pair candidate projection
+             R2 SUCCESS
+             Android FAST SUCCESS
+             CI gate SUCCESS
+```
+
+Frozen result:
+
+- registration legality remains exclusively in `TroubleBrewingRegistrationDomain`;
+- exact world results preserve complete registration witness alternatives;
+- an exact hypothetical candidate may bind one selected interaction-local witness;
+- natural truth uses an explicit empty witness when the candidate selected no special registration;
+- generator-local interaction IDs/questions are provenance, not canonical identity;
+- SDE does not mutate Spy/Recluse identity or re-run legality.
+
+## 6. SDE-2C — Poisoner — COMPLETE
+
+Completion authority:
+
+`docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`
+
+Executable evidence:
+
+`fd90b8dc0433dbd925f0be9f94f3a2693e416f4b`
+
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS (executed)
+CI gate                        SUCCESS
+ASP contract tests             SKIPPED by classifier
+Real Clingo cross-validation   SKIPPED by classifier
+Full Android/APK step          SKIPPED by classifier
+```
+
+CI run: `35296161489`.
+
+Frozen result:
+
+- Poisoner draft edits invalidate uncommitted plans through `playerInputRevision`;
+- confirmed poison commits hidden mechanical history and advances `gameStateRevision`;
+- old plans for both affected and unaffected decisions become stale;
+- fresh decision contexts produce fresh revision-bound plans;
+- committed observations are unchanged;
+- hidden Poison/Protect/Attack/RoleChange facts remain outside recipient-visible historical replay;
+- no new replanning counter/store was added;
+- production selection remains unchanged.
+
+## 7. Test-first expectations
+
+For SDE-3:
+
+- begin with a focused audit, then a RED contract only when executable behavior is missing;
+- reuse exact historical evaluator as oracle;
+- preserve recipient visibility boundaries for hidden Storyteller actions;
+- assert canonical session snapshot/history are unchanged by planning alone;
+- assert stale detection uses existing revision/semantic identity boundaries;
+- assert durable mutation occurs only through existing session APIs;
+- assert visible production selection remains unchanged until a later explicit cutover stage.
+
+Keep expensive corpus/calibration work outside ordinary FAST tests.
+
+## 8. Non-goals
+
+Do not add:
+
+- production selection cutover to SDE diagnostics;
+- global Badness thresholds;
+- another GameState/history/revision authority;
+- permanent Spy/Recluse identity mutation;
+- committed-history rewriting;
+- all-caller `ConsequenceEvaluator` migration;
+- `ConsequenceEvaluator` deletion;
+- cross-night policy beyond what first-night correctness requires.
+
+## 9. Remaining legacy retirement obligations
+
+`ConsequenceEvaluator` still has three production caller families:
+
+1. `DynamicCandidateGenerator.evaluation(...)` when state is supplied;
+2. `RegistrationPolicy.generateCandidates(...)`;
+3. `DayRecommendationModule` malfunction path.
+
+SDE-3 may intersect these caller families only when required by the bounded later-game proof. Do not broaden the task into SDE-4 retirement work.
+
+## 10. Stable handoff
+
+> **SDE-1A/B/C/D/E and SDE-2A/B/C are complete on PR #144. Final SDE-2C executable evidence is `fd90b8dc0433dbd925f0be9f94f3a2693e416f4b`, with R2 / Android FAST / CI gate SUCCESS. Merge PR #144 and then stop. The next conversation must first review: (1) Drunk information-role unreliable clue generation and its first-night balance effect; (2) Demon bluff identities as a strategic input to information weighting; (3) correctness, calibration and computational feasibility beyond the mainly analyzed 7–9 player range. Do not begin SDE-3 implementation until those conclusions are recorded in the roadmap.**

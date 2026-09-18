@@ -23,6 +23,15 @@ internal class StructuredNumberInformationUiModel private constructor(
     val contextSnapshot: InformationDecisionSnapshot
         get() = context.snapshot
 
+    /**
+     * Read-only handoff to the production shadow seam.
+     *
+     * Foundation remains the legality/confirmation owner; exposing the immutable context here avoids
+     * rematerializing candidate drafts or candidate identities in SDE integration code.
+     */
+    internal val shadowDecisionContext: InformationDecisionContext<DynamicInformationOutcome.Number>
+        get() = context
+
     /** Stable across recomposition when the semantic decision projection has not changed. */
     val semanticStateKey: String = buildString {
         append(context.semanticIdentity)
