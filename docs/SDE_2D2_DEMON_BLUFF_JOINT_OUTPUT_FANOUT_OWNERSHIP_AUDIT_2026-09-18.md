@@ -336,3 +336,21 @@ CI gate
 ```
 
 Do not advance the roadmap/handoff to SDE-2D3 until this checkpoint is green.
+
+
+### T4 retry note
+
+The first `[full-ci]` attempt reached all selected gates. R2, ASP and Real Clingo passed, while Android `:app:testFull` exposed one fixture-boundary failure in `DemonBluffJointOutputEvaluatorTest`.
+
+The failing test had reused a deliberately reduced exact-world role domain as the input to the legacy `SetupRecommendationService`. That made the test alter the existing setup scorer's production role domain while trying to prove shadow non-interference.
+
+The evidence was corrected by separating the concerns:
+
+- exact Demon-bluff consequence/parity evidence uses the bounded mechanical fixture only;
+- production setup shadow wiring uses the full Trouble Brewing setup role domain;
+- the wiring test forces exact capability deferral, so it proves the visible legacy result remains unchanged without performing a second expensive enumeration;
+- the committed-bluff rejection test uses a typed empty visible result because rejection occurs before exact evaluation or visible-result inspection.
+
+No production behavior was changed by this correction.
+
+This updated audit commit requests a fresh `[full-ci]` acceptance run. Only the successful retry may be cited as final SDE-2D2 acceptance evidence.
