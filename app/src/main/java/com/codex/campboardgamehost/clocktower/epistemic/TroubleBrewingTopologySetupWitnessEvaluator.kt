@@ -220,7 +220,7 @@ internal object TroubleBrewingTopologySetupWitnessEvaluator {
                 typeConstrained.filterTo(linkedSetOf()) { it.alignment() == alignment }
             } ?: typeConstrained
         }
-        if (allowedTypes.values.any(Set<CharacterType>::isEmpty)) return false
+        if (allowedTypes.values.any { it.isEmpty() }) return false
 
         branch.fixedRoles.forEach { (seat, roleId) ->
             val definition = catalog[roleId] ?: return false
