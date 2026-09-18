@@ -1,9 +1,10 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2 First-Night Uncertainty / Replanning
 
 > Updated: 2026-09-18 Australia/Sydney  
-> Status: **CURRENT / SDE-2A COMPLETE / SDE-2B NEXT EXECUTABLE SLICE**  
+> Status: **CURRENT / SDE-2A–B COMPLETE / SDE-2C NEXT EXECUTABLE SLICE**  
 > SDE-1E completion: `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`  
 > SDE-2A completion: `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`  
+> SDE-2B completion: `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
 ## 0. Start here
@@ -101,18 +102,21 @@ existing legal/materialized candidates
 
 Tests prove visible choices and confirmation semantics remain unchanged and only explicit `ClocktowerGameSession.commitGlobalEpistemicObservation(...)` performs durable observation/revision mutation.
 
-## 3. Current objective — SDE-2B
+## 3. Current objective — SDE-2C
 
-SDE-2A is complete. Continue with Spy/Recluse interaction-scoped registration uncertainty.
+SDE-2A/B are complete. Continue with Poisoner-driven invalidation and broad first-night replanning.
 
 ```text
-TroubleBrewingRegistrationDomain
-→ legal interaction-local registration alternatives
-→ exact hypothetical evaluation branch
-→ SDE consequence diagnostics
+source revision changes
+→ prior PLANNED decisions become stale
+→ discard unshown plan
+→ regenerate through existing legality owners
+→ rebuild exact context from committed setup + durable action/observation history
+→ recompute SDE exact consequences
+→ bind fresh plan to current revision
 ```
 
-No canonical player identity mutation is allowed.
+Do not rewrite COMMITTED observations and do not introduce a new replanning revision/generation authority.
 
 ## 4. SDE-2A — Drunk — COMPLETE
 
@@ -139,27 +143,37 @@ Frozen result:
 - Poisoner confirm stales plans through `gameStateRevision`;
 - no new SDE dependency store or replanning revision counter exists.
 
-## 5. SDE-2B — Spy / Recluse — CURRENT
+## 5. SDE-2B — Spy / Recluse — COMPLETE
 
-Registration remains interaction-scoped.
+Completion authority:
 
-Do not mutate canonical player identity to represent a registration branch.
+`docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`
 
-Audit:
+Executable evidence:
 
-- current `TroubleBrewingRegistrationDomain` inputs/outputs;
-- existing `RegistrationPolicy` legacy heuristic caller;
-- where exact world evaluation needs a branch-local registration assumption;
-- whether the assumption belongs in a request/context envelope or an existing semantic fact type.
+```text
+a977c01...  exact witness alternatives + binding
+             R2 SUCCESS
+             Android FAST SUCCESS
+             Real Clingo SUCCESS
+             CI gate SUCCESS
 
-Required proof:
+ec970aaa...  SDE forwarding + pair candidate projection
+             R2 SUCCESS
+             Android FAST SUCCESS
+             CI gate SUCCESS
+```
 
-- legality remains in `TroubleBrewingRegistrationDomain`;
-- alternate registration is scoped to one interaction/evaluation;
-- no permanent identity/state mutation is introduced;
-- exact evaluator consumes the branch without creating another registration rules engine.
+Frozen result:
 
-## 6. SDE-2C — Poisoner
+- registration legality remains exclusively in `TroubleBrewingRegistrationDomain`;
+- exact world results preserve complete registration witness alternatives;
+- an exact hypothetical candidate may bind one selected interaction-local witness;
+- natural truth uses an explicit empty witness when the candidate selected no special registration;
+- generator-local interaction IDs/questions are provenance, not canonical identity;
+- SDE does not mutate Spy/Recluse identity or re-run legality.
+
+## 6. SDE-2C — Poisoner — CURRENT
 
 Poisoner changes may invalidate still-uncommitted decisions.
 
@@ -175,6 +189,25 @@ source facts change
 → SDE exact consequences are recomputed
 → fresh plan is produced
 ```
+
+Production already commits a confirmed first-night poison target in this order:
+
+```text
+ClocktowerGameSession.commitGlobalActionFact(ActionFactDraft.Poison)
+→ ClocktowerGameSession.commitPoisonTargetBoundary
+```
+
+`StructuredInformationProductionShadow` already reconstructs the first-night baseline from committed setup and replays current `actionTimeline` / `epistemicObservationLog`, so SDE-2C should first prove that this existing path naturally recomputes after poison rather than adding another effective-state owner.
+
+Required RED proof:
+
+- pre-poison shadow produces current planned refs;
+- a Poisoner draft edit stales those refs through `playerInputRevision`;
+- confirmed poison records the durable Poison action and advances `gameStateRevision`;
+- a rebuilt decision context at the new revision produces fresh planned refs;
+- exact consequences are recomputed from the poisoned replay state;
+- planning alone does not append observations or move revisions;
+- already COMMITTED observations survive invalidation unchanged.
 
 Already COMMITTED information remains history and is not rewritten.
 
@@ -216,4 +249,4 @@ SDE-2 may touch the registration family only when required by the scoped uncerta
 
 ## 10. Stable handoff
 
-> **SDE-1A/B/C/D/E and SDE-2A are complete on PR #144. SDE-2A executable evidence is `6c9d7fe8776fea4723004e22790ba11c1f140b8c`. Continue with SDE-2B: audit `TroubleBrewingRegistrationDomain`, the legacy `RegistrationPolicy` caller, and exact world-evaluation registration semantics; then add the smallest typed interaction-local registration assumption needed by exact consequence evaluation. Do not mutate canonical Spy/Recluse identity, duplicate registration legality, or cut production selection over to SDE.**
+> **SDE-1A/B/C/D/E and SDE-2A/B are complete on PR #144. Continue with SDE-2C: use the existing Poison action/session revision authorities to prove broad stale-plan invalidation and fresh exact re-evaluation of still-uncommitted first-night decisions. Prefer tests and existing orchestration seams over a new lifecycle store; committed observations remain immutable and production selection still does not cut over to SDE diagnostics.**
