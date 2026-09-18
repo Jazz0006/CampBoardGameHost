@@ -219,7 +219,8 @@ internal object TroubleBrewingTopologyObservationWitnessEvaluator {
         proposition: InformationProposition,
         observation: EpistemicObservation,
         roles: Map<RoleId, RoleDefinition>,
-    ): TroubleBrewingTopologyObservationConstraintPlan = when (proposition) {
+    ): TroubleBrewingTopologyObservationConstraintPlan {
+        return when (proposition) {
         is InformationProposition.RoleAt,
         is InformationProposition.AlignmentAt,
         is InformationProposition.CharacterTypeAt -> {
@@ -351,6 +352,7 @@ internal object TroubleBrewingTopologyObservationWitnessEvaluator {
         }
 
         else -> TroubleBrewingTopologyObservationConstraintPlan.Deferred(listOf(proposition))
+        }
     }
 
     private fun combineBranches(
