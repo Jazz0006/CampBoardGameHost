@@ -298,6 +298,73 @@ For the first Drunk whole-bundle fixture, it is acceptable to avoid Spy/Recluse 
 
 Do not make Drunk support depend on a second registration implementation.
 
+
+## 10A. Global malfunction explanations are mechanically scarce world resources
+
+Drunk/Poison explanations must not be evaluated as observation-local existential escape hatches.
+
+Every claimed clue in a bundle is interpreted inside the **same mechanically legal world**. Therefore identity/effect resources compete globally:
+
+- if a world contains the Drunk, there is exactly one Drunk identity in that world;
+- two independent claims cannot both consume "the speaker is the Drunk" unless they refer to that same Drunk seat;
+- Poisoner poisoning is sourced from an in-play, functioning Poisoner and is constrained by that role's legal target capacity for the relevant night;
+- if setup/world constraints establish that the only Minion is Baron, the same world cannot also contain Poisoner, so Poisoner-origin malfunction explanations disappear;
+- setup-profile, role-count, identity, registration, and impairment explanations must remain jointly satisfiable in one world.
+
+This is an acceptance invariant, not a scoring heuristic:
+
+```text
+all bundle observations
+    -> one shared mechanically legal world
+    -> finite identity/effect resources are consumed consistently
+```
+
+Do not optimize the exact layer by independently asking whether each observation has *some* Drunk/Poison explanation and then combining those answers. That would admit impossible bundles.
+
+## 10B. Future-proof poisoning ownership: source-local effects, not a global one-poisoned-player invariant
+
+Trouble Brewing currently permits a compact representation because Poisoner is the only ordinary poison source in scope. That must **not** harden into a cross-script invariant such as:
+
+```text
+world.poisonedSeat: Int?
+```
+
+or:
+
+```text
+at most one poisoned player globally
+```
+
+Future scripts can contain multiple impairment sources with different lifecycles. For example, a Poisoner-origin poison and a Pukka-origin poison may coexist, while each source still obeys its own target/timeline rules.
+
+The durable ownership direction is:
+
+```text
+mechanical source/effect state
+    -> derives current AbilityState / functioning status
+    -> recommendation/exact consumers ask whether the ability functions
+```
+
+A future generalized model may need source provenance and timeline, conceptually:
+
+```text
+ImpairmentEffect(
+    targetSeat,
+    sourceRole,
+    sourceSeat,
+    effectType,
+    startPhase,
+    endCondition,
+)
+```
+
+SDE-2D1 does **not** implement that generalized effect system. It only freezes two constraints:
+
+1. do not expose Trouble Brewing's current "single Poisoner target" representation as a universal API contract;
+2. keep exact-world ownership capable of later distinguishing *why* a seat is malfunctioning without changing SDE policy semantics.
+
+This preserves the current lightweight Trouble Brewing implementation while avoiding a future rewrite when roles such as Pukka introduce source-specific, cross-night impairment state.
+
 ## 11. HealthyCore / FullBundle / DrunkMarginal owner
 
 The exact evaluator should continue to answer world consequences only.
@@ -458,6 +525,8 @@ No Host UI, Compose, production selection cutover, or session persistence rewrit
 8. **Fortune Teller target pairs are robustness cases, not Storyteller-controlled bundle factors.**
 9. **Keep the current healthy harness as regression evidence; introduce/generalize a whole-bundle owner instead of hiding mixed semantics under a “Healthy” class name.**
 10. **No production cutover in SDE-2D1.**
+11. **Malfunction explanations are shared-world resources: Drunk identity, Minion occupancy, Poisoner presence, and per-source target capacity must remain jointly legal in one exact world.**
+12. **Do not freeze a global single-poisoned-seat invariant; future generalized impairment must preserve source provenance/timeline while `AbilityState` may remain a derived consumer-facing state.**
 
 ## 16. Next executable action
 
