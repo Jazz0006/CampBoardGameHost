@@ -26,6 +26,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformati
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformationBundleEntry
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightPublicGoodInfoProjection
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -65,7 +66,8 @@ class DemonBluffJointOutputEvaluatorTest {
 
     @Test
     fun `setup legality projects losslessly into SDE bluff candidates`() {
-        val setupCandidates = SetupDemonBluffJointOutputAdapter.legalCandidates(game, roles)
+        val legalCandidates = SetupCandidateGenerator.generateDemonBluffCandidates(game, roles)
+        val setupCandidates = SetupDemonBluffJointOutputAdapter.fromLegalCandidates(legalCandidates)
         val distinctTriples = setupCandidates.map { it.roles.toSet() }.toSet()
 
         assertTrue(setupCandidates.isNotEmpty())
@@ -78,7 +80,8 @@ class DemonBluffJointOutputEvaluatorTest {
 
     @Test
     fun `role support delegates to exact shown-role counterworld and is shared across triplets`() {
-        val candidates = SetupDemonBluffJointOutputAdapter.legalCandidates(game, roles)
+        val legalCandidates = SetupCandidateGenerator.generateDemonBluffCandidates(game, roles)
+        val candidates = SetupDemonBluffJointOutputAdapter.fromLegalCandidates(legalCandidates)
         val recipientSeats = setOf(1)
         val timelineBefore = exactContext.actionTimeline.reducerFacts()
         val logBefore = exactContext.observationLog.records.toList()
