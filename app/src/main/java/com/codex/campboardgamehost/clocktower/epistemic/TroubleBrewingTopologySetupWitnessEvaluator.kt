@@ -101,7 +101,7 @@ internal object TroubleBrewingTopologySetupWitnessEvaluator {
         if (shownFacts.any { (_, values) -> values.map { it.role }.distinct().size != 1 }) {
             return TroubleBrewingTopologySetupFeasibility.Infeasible
         }
-        val canonicalShown = shownFacts.mapValues { (_, values) -> values.single().role }
+        val canonicalShown = shownFacts.mapValues { (_, values) -> values.first().role }
 
         canonicalShown[knowledge.recipientSeat]?.let { shownRole ->
             if (shownRole != knowledge.perceivedRole) {
