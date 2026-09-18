@@ -224,3 +224,115 @@ This audit does not authorize:
 ## 10. Stable implementation decision
 
 > **SDE-2D2 starts with an exact per-role bluff-support overlay over the current whole-bundle public facts, keyed at the actual Demon seat. Legal triplets remain setup-owned. SDE composes triplet diagnostics from shared per-role exact results, so the system does not multiply full world enumeration by every triplet. Applied bluffs continue through the existing persistent recovery boundary and are not replanned. Production selection remains unchanged during the initial shadow migration.**
+
+
+## 11. Implemented checkpoint
+
+SDE-2D2 implementation now satisfies the audited ownership split:
+
+### D2A — COMPLETE
+
+- setup-owned legal bluff candidates are projected losslessly into SDE;
+- the SDE adapter no longer calls `SetupCandidateGenerator` itself;
+- exact support is evaluated as hypothetical `ShownRoleAt(actualDemonSeat, bluffRole)` over the supplied public whole-bundle facts;
+- no observation/history mutation occurs.
+
+### D2B — COMPLETE
+
+- distinct bluff roles are evaluated once per recipient at the SDE layer;
+- legal triplets reuse the same `DemonBluffRoleSupport` objects;
+- triplet diagnostics expose supported roles, evil-team topology union, shared topology intersection and distinct topology-pattern count;
+- no opaque scalar or D3 strategic-world schema has been introduced.
+
+### D2C — COMPLETE
+
+- applied bluff roles continue to win over changed pending recommendation output;
+- recovery round-trip preserves the applied triplet;
+- `ClocktowerRecommendationCoordinator.evaluateSetupDemonBluffShadow()` rejects a request containing locked `DemonBluffs`, so committed/persistent bluff choices cannot enter uncommitted replanning;
+- no new persistence DTO, revision counter or lifecycle owner was added.
+
+### D2D — COMPLETE AS SHADOW PATH
+
+The validated orchestration shape is:
+
+```text
+existing SetupRecommendationService visible result
+        +
+SetupCandidateGenerator legal bluff candidates
+        +
+caller-supplied exact historical / whole-bundle context
+        ↓
+ClocktowerRecommendationCoordinator.evaluateSetupDemonBluffShadow()
+        ↓
+TroubleBrewingDemonBluffJointOutputEvaluator
+        ↓
+exact epistemic evaluator
+        ↓
+DemonBluffSetupShadowAdapter
+        ↓
+unchanged visible result
++ legacy selected candidate IDs by style
++ SDE joint-output diagnostics
+```
+
+The existing production recommendation result object is returned unchanged. No Host/UI caller has been switched to the shadow result and `demon-bluff-ease / bluffDifficulty` remains the production compatibility selector pending the later explicit cutover phase.
+
+## 12. Exact fanout performance correction
+
+Initial SDE-2D2 CI exposed an important execution issue: the pristine exact evaluator grouped strict shown-role queries by the full `ShownRoleAt(seat, role)` identity. Four candidate bluff roles at the same Demon seat therefore regenerated and rescanned the same pristine mechanical world stream four times.
+
+That execution strategy was corrected **inside the epistemic exact owner**, not in recommendation:
+
+```text
+same recipient
++ same strict-shown seat set
++ same public-claim identity envelope
+        ↓
+one pristine world-generation pass
+        ↓
+each role value checked exactly per query
+```
+
+Consequences:
+
+- exact semantics remain per-query;
+- role values are not merged semantically;
+- SDE does not cache or own mechanical worlds;
+- different bluff roles for the same Demon seat share the expensive source enumeration;
+- Real Clingo cross-validation passed after the change.
+
+The real whole-bundle Demon-bluff contract remains intentionally expensive enough to be classified as affected T2 / T3 execution rather than ordinary FAST. `DemonBluffJointOutputEvaluatorTest` remains in `:app:testFull`; the FAST exclusion and its measured rationale are recorded in `TESTING_STRATEGY.md`.
+
+## 13. Final ownership audit
+
+Exact diff review confirms:
+
+- `SetupRecommendationService.kt` is unchanged;
+- `SetupCandidateGenerator` remains the only bluff legality owner;
+- SDE package code does not call the setup candidate generator;
+- `ClocktowerRecommendationCoordinator` is the only new cross-boundary orchestration caller;
+- no UI production path consumes the new shadow diagnostics;
+- no persistence schema changed;
+- no session/history commit API changed;
+- no selection/fallback path was added to the exact evaluator;
+- no second strategic-world solver was introduced;
+- committed bluff persistence uses the pre-existing applied/recovery owner.
+
+Therefore SDE-2D2 establishes the **validated SDE strategic path and lifecycle proof** required before D2D3, but deliberately does **not** perform production strategic-selection cutover. Retirement of `demon-bluff-ease` remains an explicit later cutover concern.
+
+## 14. T4 acceptance checkpoint
+
+This document update is the logical SDE-2D2 acceptance checkpoint and is committed with `[full-ci]`.
+
+Required acceptance evidence:
+
+```text
+R2 main-thread boundary
+Android testFull
+Debug APK assemble
+ASP contract validation
+Real Clingo cross-validation
+CI gate
+```
+
+Do not advance the roadmap/handoff to SDE-2D3 until this checkpoint is green.
