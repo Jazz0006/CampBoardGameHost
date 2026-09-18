@@ -351,6 +351,8 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
                         )
                     }
             }
+            FirstNightBundleCandidateFactorKind.BOOLEAN_INFORMATION ->
+                error("Healthy beginner calibration does not own Drunk Fortune Teller result factors.")
             FirstNightBundleCandidateFactorKind.RED_HERRING ->
                 SetupCandidateGenerator.generateRedHerringCandidates(game).map { candidate ->
                     MaterializedOption(
