@@ -109,6 +109,22 @@ class DemonBluffJointOutputEvaluatorTest {
             }
         }
 
+        val firstCandidate = ready.candidates.first()
+        val topology = firstCandidate.byRecipient.single()
+        val topologySets = firstCandidate.roleSupports.map { support ->
+            support.byRecipient.single().afterStructure.evilTeamSeatConfigurations
+        }
+        val expectedUnion = topologySets.flatMap { it }.toSet()
+        val expectedShared = topologySets.reduce { acc, next -> acc.intersect(next) }
+        val expectedSupportedRoles = firstCandidate.roleSupports
+            .filter { support -> support.byRecipient.single().after.value.signum() > 0 }
+            .mapTo(linkedSetOf(), DemonBluffRoleSupport::role)
+
+        assertEquals(expectedSupportedRoles, topology.supportedRoles)
+        assertEquals(expectedUnion, topology.unionEvilTeamSeatConfigurations)
+        assertEquals(expectedShared, topology.sharedEvilTeamSeatConfigurations)
+        assertEquals(topologySets.distinct().size, topology.distinctRoleTopologyPatternCount)
+
         val firstSupport = ready.roleSupports.first()
         val direct = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
             validatedRuleset = validatedRuleset,
