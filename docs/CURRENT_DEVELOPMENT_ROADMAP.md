@@ -28,8 +28,8 @@ SDE-2A Drunk ownership / revision replanning contract  COMPLETE / PR #144
 SDE-2B Spy/Recluse exact registration witness binding  COMPLETE / PR #144
 SDE-2C Poisoner invalidation / broad replanning        COMPLETE / PR #144
 SDE-2D1 Drunk whole-bundle completion                   COMPLETE / PR #145 merged
-SDE-2D2 Demon bluff joint-output migration              COMPLETE / PR #146 draft, full-ci green
-SDE-2D3 strategic-world quotient                        NEXT AFTER PR #146 MERGE
+SDE-2D2 Demon bluff joint-output migration              COMPLETE / PR #146 merged
+SDE-2D3 strategic-world quotient                        CURRENT
 SDE-2D pre-SDE-3 strategic generalization              CURRENT
 ```
 
@@ -115,12 +115,12 @@ Frozen direction:
 - evaluation separates `HealthyCore`, `FullBundle` and `DrunkMarginal`;
 - impaired public-claim semantics must distinguish functioning truth from malfunctioning permissiveness without leaking hidden Drunk/Poisoner state.
 
-### 2.2 SDE-2D2 — Demon bluff joint-output migration — COMPLETE ON PR #146
+### 2.2 SDE-2D2 — Demon bluff joint-output migration — COMPLETE ON MAIN
 
 Authority:
 
 - `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-- draft PR #146 on branch `sde-2d2-demon-bluff-joint-output`;
+- PR #146 merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`;
 - final executable acceptance head `6acb708bd734d36d024240f0dea213a882a7714b`.
 
 Validation:
@@ -149,11 +149,11 @@ Implemented result:
 
 Production cutover has **not** occurred. `SetupRecommendationService` and its `demon-bluff-ease / bluffDifficulty` compatibility heuristic remain unchanged and visible production behavior remains legacy-owned pending the later explicit cutover stage.
 
-PR #146 remains draft and unmerged. Do not mark it Ready or merge it without explicit user authorization.
+PR #146 was user-authorized and merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`.
 
-### 2.3 SDE-2D3 — strategic-world quotient — NEXT AFTER PR #146 MERGE
+### 2.3 SDE-2D3 — strategic-world quotient — CURRENT
 
-Do not begin executable SDE-2D3 work on the D2 branch. After user-authorized merge of PR #146, create a fresh branch from live `main` and begin with a focused representation/fanout audit.
+Work now continues on fresh branch `sde-2d3-strategic-world-quotient` from merged `main`. Begin with the focused representation/fanout audit before executable quotient changes.
 
 Raw role-world cardinality is no longer the primary recommendation unit.
 
@@ -448,4 +448,4 @@ Read in order:
 
 ## 10. Stable rule
 
-> **PR #145 is merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`. SDE-2D2 is fully implemented and full-ci GREEN on draft PR #146 at executable head `6acb708bd734d36d024240f0dea213a882a7714b`, but remains unmerged pending explicit user authorization. After merge, start SDE-2D3 on a fresh branch: build an epistemic-owned strategic evil-topology quotient over exact mechanical feasibility, then continue SDE-2D4 5–15 player validation/performance and SDE-2D5 calibration. Production Demon-bluff selection has not cut over; `demon-bluff-ease` remains compatibility behavior until the later explicit cutover. Do not begin SDE-3 until the full SDE-2D acceptance gate is explicitly satisfied.**
+> **PR #145 is merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`. PR #146 is merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`, with final executable acceptance head `6acb708bd734d36d024240f0dea213a882a7714b`. SDE-2D3 is now current on fresh branch `sde-2d3-strategic-world-quotient`: build an epistemic-owned strategic evil-topology quotient over exact mechanical feasibility, then continue SDE-2D4 5–15 player validation/performance and SDE-2D5 calibration. Production Demon-bluff selection has not cut over; `demon-bluff-ease` remains compatibility behavior until the later explicit cutover. Do not begin SDE-3 until the full SDE-2D acceptance gate is explicitly satisfied.**
