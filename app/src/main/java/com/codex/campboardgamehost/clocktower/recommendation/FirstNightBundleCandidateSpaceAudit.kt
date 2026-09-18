@@ -13,6 +13,7 @@ import java.math.BigInteger
 internal enum class FirstNightBundleCandidateFactorKind {
     PAIR_INFORMATION,
     FIXED_NUMERIC_INFORMATION,
+    BOOLEAN_INFORMATION,
     RED_HERRING,
     DEMON_BLUFFS,
 }
@@ -145,6 +146,7 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
         val factors = buildList {
             addAll(pairInformationFactors(game, roleDefinitions))
             addAll(numericInformationFactors(game))
+            addAll(drunkFortuneTellerResultFactors(game))
             redHerringFactor(game)?.let(::add)
             demonBluffsFactor(game, roleDefinitions)?.let(::add)
         }.sortedBy(FirstNightBundleCandidateFactorAudit::factorId)
@@ -163,7 +165,13 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
             representedPublicProjectionUpperBound = representedPublicProjectionUpperBound,
             legalCompleteBundleCount = rawCartesianCount.takeIf { deferredComplexities.isEmpty() },
             excludedPlayerControlledElements = buildSet {
-                if (game.players.any { it.actualRole == fortuneTeller }) add(FORTUNE_TELLER_TARGET)
+                if (game.players.any { source ->
+                        source.actualRole == fortuneTeller ||
+                            (source.actualRole == drunk && source.shownRole == fortuneTeller)
+                    }
+                ) {
+                    add(FORTUNE_TELLER_TARGET)
+                }
             },
             deferredComplexities = deferredComplexities,
         )
@@ -263,6 +271,26 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
         }
         .toList()
 
+    private fun drunkFortuneTellerResultFactors(
+        game: GameState,
+    ): List<FirstNightBundleCandidateFactorAudit> = game.players
+        .asSequence()
+        .filter { source ->
+            source.alive && source.actualRole == drunk && source.shownRole == fortuneTeller
+        }
+        .sortedBy { it.seat }
+        .map { source ->
+            FirstNightBundleCandidateFactorAudit(
+                factorId = "boolean.fortune-teller.seat-${source.seat}",
+                kind = FirstNightBundleCandidateFactorKind.BOOLEAN_INFORMATION,
+                control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
+                profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
+                sourceSeat = source.seat,
+                optionIds = listOf("answer-no", "answer-yes"),
+            )
+        }
+        .toList()
+
     private fun redHerringFactor(game: GameState): FirstNightBundleCandidateFactorAudit? {
         if (game.players.none { it.actualRole == fortuneTeller }) return null
         val candidates = SetupCandidateGenerator.generateRedHerringCandidates(game)
@@ -293,10 +321,6 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
     }
 
     private fun deferredComplexities(game: GameState): Set<FirstNightBundleDeferredComplexity> = buildSet {
-        val unsupportedDrunkInformation = game.players.any { source ->
-            source.actualRole == drunk && source.shownRole == fortuneTeller
-        }
-        if (unsupportedDrunkInformation) add(FirstNightBundleDeferredComplexity.DRUNK)
         if (game.players.any { it.actualRole == spy || it.actualRole == recluse }) {
             add(FirstNightBundleDeferredComplexity.SPY_RECLUSE_REGISTRATION)
         }
