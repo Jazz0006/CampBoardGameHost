@@ -3,7 +3,7 @@
 > Date: 2026-09-18 Australia/Sydney  
 > Branch: `sde-1-orchestration-seam`  
 > PR: #144  
-> Status: **AUDIT COMPLETE / CONTRACT IMPLEMENTATION IN PROGRESS**
+> Status: **COMPLETE**
 
 ## 1. Objective
 
@@ -158,3 +158,40 @@ source revision changes
 ```
 
 No new replanning revision counter is justified by the Drunk/Poisoner path.
+
+
+## 9. Executable closure evidence
+
+SDE-2A required no new production lifecycle abstraction. The existing session revisions and `PlannedDecisionRef` contract satisfy the replanning boundary.
+
+Focused executable regression:
+
+`app/src/test/java/com/codex/campboardgamehost/clocktower/recommendation/sde/Sde2DrunkOwnershipReplanningTest.kt`
+
+It proves:
+
+- Poisoner draft input advances only `playerInputRevision` and invalidates the old plan;
+- confirmed poison advances `gameStateRevision` and invalidates a plan made after the draft;
+- the Drunk's shown Investigator identity survives both transitions;
+- a durably committed Drunk clue remains unchanged in the canonical epistemic observation log across later poison replanning boundaries.
+
+Final SDE-2A executable SHA:
+
+`6c9d7fe8776fea4723004e22790ba11c1f140b8c`
+
+Validation:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS (executed)
+CI gate                        SUCCESS
+ASP contract tests             SKIPPED by classifier
+Real Clingo cross-validation   SKIPPED by classifier
+Full Android/APK step          SKIPPED by classifier
+```
+
+CI run: `35291677931`.
+
+Therefore the architectural conclusion is frozen:
+
+> **Drunk shown identity is persistent session/setup truth; unshown clue plans are disposable; committed clue history is immutable; Poisoner replanning uses existing game/input revisions. No SDE-specific dependency store or replanning revision counter is introduced.**
