@@ -146,7 +146,10 @@ internal object TroubleBrewingTopologySetupWitnessEvaluator {
             val role = baron ?: return TroubleBrewingTopologySetupFeasibility.Infeasible
             base.withRequiredInPlay(role.id)
         } else {
-            baron?.let { base.withForbiddenInPlay(it.id) } ?: base
+            // Preserve a contradiction returned by withForbiddenInPlay(). The previous
+            // `baron?.let { ... } ?: base` shape accidentally swallowed null and therefore allowed
+            // explicit Baron-in-play knowledge to survive a standard (non-Baron) profile.
+            if (baron == null) base else base.withForbiddenInPlay(baron.id)
         } ?: return TroubleBrewingTopologySetupFeasibility.Infeasible
 
         var branches = recipientBranches(
