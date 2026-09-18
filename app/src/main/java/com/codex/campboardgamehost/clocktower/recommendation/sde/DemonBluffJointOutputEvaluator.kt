@@ -2,8 +2,7 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
+import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicEvaluationCapability
@@ -17,13 +16,12 @@ import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
 
 /**
  * One already-legal Demon bluff triplet projected into the SDE planning vocabulary.
  *
  * This model validates shape only. Script legality, in-play exclusion and player-count rules remain
- * owned by [SetupCandidateGenerator].
+ * upstream setup concerns; this package consumes only already-legal candidates.
  */
 internal data class DemonBluffJointOutputCandidate(
     val candidateId: String,
@@ -127,18 +125,21 @@ internal sealed interface DemonBluffJointOutputEvaluation {
  * No bluff legality is copied here.
  */
 internal object SetupDemonBluffJointOutputAdapter {
-    fun legalCandidates(
-        game: GameState,
-        roleDefinitions: List<RoleDefinition>,
+    fun fromLegalCandidates(
+        candidates: List<DecisionCandidate<SetupClueOutcome>>,
     ): List<DemonBluffJointOutputCandidate> =
-        SetupCandidateGenerator.generateDemonBluffCandidates(game, roleDefinitions).map { candidate ->
-            val outcome = candidate.outcome as? SetupClueOutcome.DemonBluffs
-                ?: error("Setup Demon bluff producer returned a non-bluff outcome.")
-            DemonBluffJointOutputCandidate(
-                candidateId = candidate.candidateId,
-                roles = outcome.roles.toList(),
-            )
-        }
+        candidates.map(::fromLegalCandidate)
+
+    fun fromLegalCandidate(
+        candidate: DecisionCandidate<SetupClueOutcome>,
+    ): DemonBluffJointOutputCandidate {
+        val outcome = candidate.outcome as? SetupClueOutcome.DemonBluffs
+            ?: error("SDE Demon bluff projection requires an already-legal Demon bluff candidate.")
+        return DemonBluffJointOutputCandidate(
+            candidateId = candidate.candidateId,
+            roles = outcome.roles.toList(),
+        )
+    }
 }
 
 /**
