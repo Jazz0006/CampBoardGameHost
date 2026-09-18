@@ -9,7 +9,9 @@ import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.YesNoAnswer
 import com.codex.campboardgamehost.clocktower.epistemic.EnumeratedWorld
+import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -139,6 +141,20 @@ class FirstNightInformationPropositionMaterializerTest {
         assertEquals(listOf(3, 5), empathProposition.subjectSeats)
         assertEquals(1, empathProposition.value)
         assertTrue(evaluate(world, empath, empathProposition).matches)
+    }
+
+    @Test
+    fun `Fortune Teller materialization preserves typed target pair and Yes No result`() {
+        val yes = information(2, "Fortune Teller", InformationValue.YesNo(YesNoAnswer.YES))
+        val proposition = TroubleBrewingFirstNightInformationPropositionMaterializer.materializeFortuneTeller(
+            information = yes,
+            targetSeats = listOf(5, 3),
+        )
+
+        assertEquals(BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, proposition.metric)
+        assertEquals(2, proposition.sourceSeat)
+        assertEquals(listOf(3, 5), proposition.subjectSeats)
+        assertTrue(proposition.value)
     }
 
     @Test
