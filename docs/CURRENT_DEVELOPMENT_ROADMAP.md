@@ -29,7 +29,8 @@ SDE-2B Spy/Recluse exact registration witness binding  COMPLETE / PR #144
 SDE-2C Poisoner invalidation / broad replanning        COMPLETE / PR #144
 SDE-2D1 Drunk whole-bundle completion                   COMPLETE / PR #145 merged
 SDE-2D2 Demon bluff joint-output migration              COMPLETE / PR #146 merged
-SDE-2D3 strategic-world quotient                        IMPLEMENTED / T4 PENDING
+SDE-2D3 strategic-world quotient                        COMPLETE / PR #147 draft, full-ci green
+SDE-2D4 5–15 player generalization / performance        NEXT AFTER PR #147 MERGE
 SDE-2D pre-SDE-3 strategic generalization              CURRENT
 ```
 
@@ -151,14 +152,31 @@ Production cutover has **not** occurred. `SetupRecommendationService` and its `d
 
 PR #146 was user-authorized and merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`.
 
-### 2.3 SDE-2D3 — strategic-world quotient — CURRENT
+### 2.3 SDE-2D3 — strategic-world quotient — COMPLETE ON PR #147
 
 Authority:
 
 - `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
 - branch `sde-2d3-strategic-world-quotient` from merged PR #146 main.
 
-Representation/fanout audit and the first exact quotient migration are implemented. T4 acceptance is pending.
+Representation/fanout audit and the first exact quotient migration are complete.
+
+Final executable acceptance head:
+
+`2d491663a899d048b4b69522e9cdde700effa85b`
+
+Validation:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android testFull               SUCCESS
+Debug APK assemble             SUCCESS
+ASP contract tests             SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+```
+
+PR #147 remains draft and unmerged. Merge remains user-authorized only.
 
 Implemented result:
 
@@ -190,7 +208,9 @@ Retain two separate evaluation axes:
 - strategic pressure / evil-topology concentration;
 - role-information utility, so useful good-role information is not discarded merely because it leaves evil topology unchanged.
 
-### 2.4 SDE-2D4 — 5–15 player generalization and cost
+### 2.4 SDE-2D4 — 5–15 player generalization and cost — NEXT AFTER PR #147 MERGE
+
+Do not begin executable D2D4 work on the D3 branch. After user-authorized merge of PR #147, create a fresh branch from live `main` and begin with a focused 5–15 player cost/representation audit.
 
 Rules/setup semantics already support 5–15 non-Traveller players, but recommendation correctness/calibration/performance are not yet proven across that range.
 
@@ -459,10 +479,11 @@ Read in order:
 10. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
 11. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
 12. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-13. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
-14. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
-15. query live `main` and current checks.
+13. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
+14. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
+15. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
+16. query live `main` and current checks.
 
 ## 10. Stable rule
 
-> **PR #145 is merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`. PR #146 is merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`, with final executable acceptance head `6acb708bd734d36d024240f0dea213a882a7714b`. SDE-2D3 is now current on fresh branch `sde-2d3-strategic-world-quotient`: build an epistemic-owned strategic evil-topology quotient over exact mechanical feasibility, then continue SDE-2D4 5–15 player validation/performance and SDE-2D5 calibration. Production Demon-bluff selection has not cut over; `demon-bluff-ease` remains compatibility behavior until the later explicit cutover. Do not begin SDE-3 until the full SDE-2D acceptance gate is explicitly satisfied.**
+> **PR #145 is merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`. PR #146 is merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`. SDE-2D3 is fully implemented and full-ci GREEN on draft PR #147 at acceptance head `2d491663a899d048b4b69522e9cdde700effa85b`, but remains unmerged pending explicit user authorization. After merge, start SDE-2D4 on a fresh branch: validate 5–15 player semantic correctness, normalized strategic metrics, CPU/memory cost and mobile-feasible latency before freezing any representation switch or approximation threshold. Production Demon-bluff selection has not cut over; `demon-bluff-ease` remains compatibility behavior until the later explicit cutover. Do not begin SDE-3 until the full SDE-2D acceptance gate is explicitly satisfied.**
