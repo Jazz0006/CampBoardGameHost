@@ -5,20 +5,17 @@ import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicEvaluationCapability
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalContext
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalObservationBundleEvaluator
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleEvaluation
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
-import com.codex.campboardgamehost.clocktower.epistemic.ExactWorldStructureDiagnostics
 import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
-import java.math.BigInteger
 
 /**
  * D1B input: one already-composed public HealthyCore and the persistent Drunk source seat.
@@ -46,17 +43,6 @@ internal data class FirstNightDrunkPairWholeBundleRequest(
     }
 }
 
-/** Structural delta only. Selection policy remains a later SDE concern. */
-internal data class FirstNightDrunkMarginalDiagnostics(
-    val recipientSeat: Int,
-    val rawWorldsRemoved: BigInteger,
-    val removedDemonSeats: Set<Int>,
-    val removedEvilTeamConfigurations: Set<Set<Int>>,
-    val newlyForcedGoodSeats: Set<Int>,
-    val newlyForcedEvilSeats: Set<Int>,
-    val removedEvilCoverSeats: Set<Int>,
-)
-
 internal data class FirstNightDrunkPairCandidateEvaluation(
     val candidateId: String,
     val semanticTruth: SemanticTruth,
@@ -83,11 +69,10 @@ internal sealed interface FirstNightDrunkPairWholeBundleEvaluation {
 }
 
 /**
- * D1B pair slice of the generalized first-night whole-bundle owner.
+ * D1B pair adapter over the shared Drunk whole-bundle exact seam.
  *
  * Candidate legality comes from [PairInformationLegalDomain]. Mechanical consequences come only
- * from the exact epistemic evaluator. This object does not score candidates, reselect the Drunk shown
- * role, bind registration policy, or commit an observation.
+ * from [TroubleBrewingFirstNightDrunkWholeBundleExactEvaluator].
  */
 internal object TroubleBrewingFirstNightDrunkPairWholeBundleEvaluator {
     private val drunk = RoleId("Drunk")
@@ -132,93 +117,59 @@ internal object TroubleBrewingFirstNightDrunkPairWholeBundleEvaluator {
             context.initialRound,
         )
         val sequence = (request.healthyCore.maxOfOrNull(EpistemicObservation::sequence) ?: 0) + 1
-        val publicByCandidateId = candidates.associate { candidate ->
-            candidate.candidateId to publicObservation(
-                game = game,
-                roles = roles,
-                formalSnapshotId = formal.snapshotId,
-                phase = context.initialPhase,
-                round = context.initialRound,
-                sequence = sequence,
-                sourceSeat = request.drunkSeat,
-                shownAbility = shownAbility,
-                candidate = candidate,
+        val exactCandidates = candidates.map { candidate ->
+            FirstNightDrunkWholeBundleCandidate(
+                candidateId = candidate.candidateId,
+                semanticTruth = candidate.semanticTruth,
+                publicObservation = publicObservation(
+                    game = game,
+                    roles = roles,
+                    formalSnapshotId = formal.snapshotId,
+                    phase = context.initialPhase,
+                    round = context.initialRound,
+                    sequence = sequence,
+                    sourceSeat = request.drunkSeat,
+                    shownAbility = shownAbility,
+                    candidate = candidate,
+                ),
             )
-        }
-
-        val recipientSeats = request.evaluationRecipientSeats.toSortedSet()
-        val queries = buildList {
-            recipientSeats.forEach { recipientSeat ->
-                add(
-                    ExactHypotheticalObservationBundleQuery(
-                        bundleId = healthyCoreQueryId(recipientSeat),
-                        recipientSeat = recipientSeat,
-                        observations = request.healthyCore,
-                    ),
-                )
-            }
-            candidates.forEach { candidate ->
-                val publicObservation = publicByCandidateId.getValue(candidate.candidateId)
-                recipientSeats.forEach { recipientSeat ->
-                    add(
-                        ExactHypotheticalObservationBundleQuery(
-                            bundleId = fullBundleQueryId(candidate.candidateId, recipientSeat),
-                            recipientSeat = recipientSeat,
-                            observations = request.healthyCore + publicObservation,
-                        ),
-                    )
-                }
-            }
         }
 
         return when (
-            val exact = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
+            val exact = TroubleBrewingFirstNightDrunkWholeBundleExactEvaluator.evaluate(
                 validatedRuleset = validatedRuleset,
                 context = context,
-                queries = queries,
+                evaluationRecipientSeats = request.evaluationRecipientSeats,
+                healthyCore = request.healthyCore,
+                candidates = exactCandidates,
             )
         ) {
-            is ExactHypotheticalObservationBundleEvaluation.Deferred ->
+            is FirstNightDrunkWholeBundleExactEvaluation.Deferred ->
                 FirstNightDrunkPairWholeBundleEvaluation.Deferred(exact.missingCapabilities)
 
-            is ExactHypotheticalObservationBundleEvaluation.Ready -> {
-                val byId = exact.diagnostics.associateBy(ExactHypotheticalObservationBundleDiagnostics::bundleId)
-                val healthyCore = recipientSeats.map { recipientSeat ->
-                    byId.getValue(healthyCoreQueryId(recipientSeat))
-                }
-                val coreByRecipient = healthyCore.associateBy(ExactHypotheticalObservationBundleDiagnostics::recipientSeat)
-                val completedCandidates = candidates.map { candidate ->
-                    val fullBundle = recipientSeats.map { recipientSeat ->
-                        byId.getValue(fullBundleQueryId(candidate.candidateId, recipientSeat))
-                    }
-                    FirstNightDrunkPairCandidateEvaluation(
-                        candidateId = candidate.candidateId,
-                        semanticTruth = candidate.semanticTruth,
-                        publicObservation = publicByCandidateId.getValue(candidate.candidateId),
-                        fullBundleByRecipient = fullBundle,
-                        marginalByRecipient = fullBundle.map { full ->
-                            marginal(
-                                healthyCore = coreByRecipient.getValue(full.recipientSeat),
-                                fullBundle = full,
-                            )
-                        },
-                    )
-                }
+            is FirstNightDrunkWholeBundleExactEvaluation.Ready ->
                 FirstNightDrunkPairWholeBundleEvaluation.Ready(
                     drunkSeat = request.drunkSeat,
                     shownAbility = shownAbility,
-                    healthyCoreByRecipient = healthyCore,
-                    candidates = completedCandidates,
+                    healthyCoreByRecipient = exact.healthyCoreByRecipient,
+                    candidates = exact.candidates.map { candidate ->
+                        FirstNightDrunkPairCandidateEvaluation(
+                            candidateId = candidate.candidateId,
+                            semanticTruth = candidate.semanticTruth,
+                            publicObservation = candidate.publicObservation,
+                            fullBundleByRecipient = candidate.fullBundleByRecipient,
+                            marginalByRecipient = candidate.marginalByRecipient,
+                        )
+                    },
                 )
-            }
         }
     }
 
     private fun publicObservation(
         game: com.codex.campboardgamehost.clocktower.domain.GameState,
-        roles: List<com.codex.campboardgamehost.clocktower.domain.RoleDefinition>,
+        roles: List<RoleDefinition>,
         formalSnapshotId: String,
-        phase: com.codex.campboardgamehost.clocktower.domain.StorytellerPhase,
+        phase: StorytellerPhase,
         round: Int,
         sequence: Int,
         sourceSeat: Int,
@@ -271,52 +222,4 @@ internal object TroubleBrewingFirstNightDrunkPairWholeBundleEvaluator {
             ),
         ).single()
     }
-
-
-    private fun marginal(
-        healthyCore: ExactHypotheticalObservationBundleDiagnostics,
-        fullBundle: ExactHypotheticalObservationBundleDiagnostics,
-    ): FirstNightDrunkMarginalDiagnostics {
-        require(healthyCore.recipientSeat == fullBundle.recipientSeat)
-        require(fullBundle.after.value <= healthyCore.after.value) {
-            "Adding a Drunk clue cannot create exact worlds."
-        }
-        require(
-            fullBundle.afterStructure.possibleDemonSeats.all(
-                healthyCore.afterStructure.possibleDemonSeats::contains,
-            ),
-        )
-        require(
-            fullBundle.afterStructure.evilTeamSeatConfigurations.all(
-                healthyCore.afterStructure.evilTeamSeatConfigurations::contains,
-            ),
-        )
-        require(
-            fullBundle.afterStructure.evilCoverSeats.all(
-                healthyCore.afterStructure.evilCoverSeats::contains,
-            ),
-        )
-
-        return FirstNightDrunkMarginalDiagnostics(
-            recipientSeat = fullBundle.recipientSeat,
-            rawWorldsRemoved = healthyCore.after.value - fullBundle.after.value,
-            removedDemonSeats =
-                healthyCore.afterStructure.possibleDemonSeats - fullBundle.afterStructure.possibleDemonSeats,
-            removedEvilTeamConfigurations =
-                healthyCore.afterStructure.evilTeamSeatConfigurations -
-                    fullBundle.afterStructure.evilTeamSeatConfigurations,
-            newlyForcedGoodSeats =
-                fullBundle.afterStructure.forcedGoodSeats - healthyCore.afterStructure.forcedGoodSeats,
-            newlyForcedEvilSeats =
-                fullBundle.afterStructure.forcedEvilSeats - healthyCore.afterStructure.forcedEvilSeats,
-            removedEvilCoverSeats =
-                healthyCore.afterStructure.evilCoverSeats - fullBundle.afterStructure.evilCoverSeats,
-        )
-    }
-
-    private fun healthyCoreQueryId(recipientSeat: Int): String =
-        "sde-d1:healthy-core:recipient-$recipientSeat"
-
-    private fun fullBundleQueryId(candidateId: String, recipientSeat: Int): String =
-        "sde-d1:full:$candidateId:recipient-$recipientSeat"
 }
