@@ -354,3 +354,19 @@ The evidence was corrected by separating the concerns:
 No production behavior was changed by this correction.
 
 This updated audit commit requests a fresh `[full-ci]` acceptance run. Only the successful retry may be cited as final SDE-2D2 acceptance evidence.
+
+
+### T4 retry 2 root-cause correction
+
+The second full Android attempt exposed a real shadow-adapter identity bug rather than an exact-semantic failure.
+
+The two existing setup producers encode the same legal bluff triplet with different list ordering:
+
+- `generateDemonBluffCandidates()` sorts the three role IDs before constructing the legal candidate;
+- `generatePlans()` preserves script/catalog order in the visible legacy `StorytellerDecision.DemonBluffs`.
+
+The initial shadow adapter incorrectly used the raw `List<RoleId>` as the lookup key, so an order-only difference made a valid visible triplet appear absent from the legal candidate domain.
+
+The correction canonicalizes triplet identity by sorted role ID **only inside the shadow comparison adapter**. No setup legality, production selection, persistence or exact semantics changed.
+
+The existing production-shadow wiring test now protects this cross-owner ordering difference. This document commit requests a fresh `[full-ci]` run; only that successful run is final SDE-2D2 acceptance evidence.
