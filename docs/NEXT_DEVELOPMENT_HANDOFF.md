@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-3 Cross-Night Impaired / Registration Decisions
 
 > Updated: 2026-09-18 Australia/Sydney  
-> Status: **CURRENT / SDE-2 COMPLETE / SDE-3 AUDIT NEXT**  
+> Status: **PAUSED / SDE-2 COMPLETE / PRE-SDE-3 ALGORITHM REVIEW REQUIRED**  
 > SDE-1E completion: `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`  
 > SDE-2A completion: `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`  
 > SDE-2B completion: `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`  
@@ -106,27 +106,67 @@ existing legal/materialized candidates
 
 Tests prove visible choices and confirmation semantics remain unchanged and only explicit `ClocktowerGameSession.commitGlobalEpistemicObservation(...)` performs durable observation/revision mutation.
 
-## 3. Current objective — SDE-3 audit
+## 3. Current objective — PAUSE before SDE-3
 
-SDE-2 is complete. Do not add more first-night lifecycle infrastructure unless a concrete regression requires it.
+PR #144 is the intended merge checkpoint. After merge, stop executable development and open a fresh discussion before any SDE-3 implementation.
 
-Start SDE-3 with a fresh fanout/ownership audit for later-game impaired or registration decisions.
+The next conversation must analyze three previously under-specified algorithm questions.
 
-Preferred target properties:
+### 3.1 Drunk shown as an information role
+
+A Drunk may believe they are an information role, so the Storyteller must generate unreliable information for that shown ability. This is not merely a reliability flag: the chosen false/misleading clue can materially change first-night balance and downstream narratives.
+
+Questions to resolve:
+
+- Does the current first-night bundle algorithm actually evaluate Drunk clue choices as strategic candidates?
+- Is the Drunk branch jointly evaluated with healthy first-night information, or only generated through a permissive legality path?
+- How should a Drunk clue's balance weight compare with healthy Investigator / Washerwoman / Librarian / Chef / Empath / Fortune Teller information?
+- Do existing exact consequence metrics treat deliberately unreliable information correctly?
+
+Do not change production behavior until this is answered.
+
+### 3.2 Demon bluff identities
+
+The Demon's bluff identities affect which evil narratives are easy to sustain and therefore can change the strategic value of good-player information.
+
+Questions to resolve:
+
+- Are the three committed Demon bluffs currently visible to the SDE / exact consequence context?
+- If not, are current recommendation diagnostics implicitly evaluating worlds that ignore a major evil-team strategic asset?
+- Should bluffs be persistent upstream setup commitments referenced by SDE?
+- Should bluff choice and first-night information be jointly optimized, sequentially optimized, or merely constrained against one another?
+- How should bluff-role overlap with shown information roles influence clue weighting?
+
+Do not assume raw possible-world count captures bluff strength.
+
+### 3.3 Player-count generality
+
+Much of the current discussion and fixture evidence has focused on roughly 7–9 player games.
+
+Before continuing, verify separately:
+
+- semantic correctness for every legal supported player count;
+- whether setup/candidate generation has hard-coded or hidden small-game assumptions;
+- whether strategic topology metrics require normalization by player count;
+- whether exact world enumeration remains computationally feasible as player count increases;
+- whether thresholds/calibration derived from 7–9 player examples generalize to larger games;
+- whether the production app should switch evaluation strategy above a count threshold.
+
+### 3.4 Resume condition
+
+Only after these three topics are analyzed should the roadmap decide whether:
+
+1. SDE-3 can proceed unchanged;
+2. SDE-0/1/2 need a corrective bundle/bluff/generalization slice first;
+3. the strategic objective function needs revision before any further integration.
+
+Until then:
 
 ```text
-later Night interaction
-+ already committed public/private history
-+ current poison/drunk/effective-state semantics
-+ optional Spy/Recluse registration branch
-→ existing legal candidate owner
-→ typed hypothetical observation/effect
-→ exact historical replay
-→ SDE consequence diagnostics
-→ existing freshness / confirmation / durable commit boundaries
+NO SDE-3 executable work
+NO production selection cutover
+NO legacy heuristic retirement
 ```
-
-Do not start with broad production cutover. First prove one bounded later-game interaction through the existing seam.
 
 ## 4. SDE-2A — Drunk — COMPLETE
 
@@ -254,4 +294,4 @@ SDE-3 may intersect these caller families only when required by the bounded late
 
 ## 10. Stable handoff
 
-> **SDE-1A/B/C/D/E and SDE-2A/B/C are complete on PR #144. Final SDE-2C executable evidence is `fd90b8dc0433dbd925f0be9f94f3a2693e416f4b`, with R2 / Android FAST / CI gate SUCCESS. Continue with SDE-3 by auditing one later-game impaired/registration interaction that can reuse the existing exact historical replay, registration legality, revision freshness and session commit authorities. Do not create a second effective-state/history owner and do not cut production selection over yet.**
+> **SDE-1A/B/C/D/E and SDE-2A/B/C are complete on PR #144. Final SDE-2C executable evidence is `fd90b8dc0433dbd925f0be9f94f3a2693e416f4b`, with R2 / Android FAST / CI gate SUCCESS. Merge PR #144 and then stop. The next conversation must first review: (1) Drunk information-role unreliable clue generation and its first-night balance effect; (2) Demon bluff identities as a strategic input to information weighting; (3) correctness, calibration and computational feasibility beyond the mainly analyzed 7–9 player range. Do not begin SDE-3 implementation until those conclusions are recorded in the roadmap.**
