@@ -251,9 +251,9 @@ Proof:
 
 Executable evidence: `e7bb31937db32863e5606044b443818011d16236`.
 
-## 5. SDE-2 starting route
+## 5. SDE-2A/B/C completion summary
 
-Start SDE-2 with a fresh audit before implementation.
+SDE-2A/B/C are complete and provide the lifecycle/uncertainty foundation consumed by current SDE-2D.
 
 ### 5.1 Drunk — COMPLETE
 
