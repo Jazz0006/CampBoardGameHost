@@ -175,7 +175,7 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
         .mapNotNull { source ->
             if (!source.alive) return@mapNotNull null
             val abilityRole = when {
-                source.actualRole == drunk && source.shownRole in pairRoles -> requireNotNull(source.shownRole)
+                source.actualRole == drunk && source.shownRole != null && source.shownRole in pairRoles -> source.shownRole
                 !source.poisoned && source.actualRole in pairRoles -> source.actualRole
                 else -> return@mapNotNull null
             }
@@ -267,7 +267,7 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
     private fun deferredComplexities(game: GameState): Set<FirstNightBundleDeferredComplexity> = buildSet {
         val unsupportedDrunkInformation = game.players.any { source ->
             source.actualRole == drunk &&
-                (source.shownRole in numericRoles || source.shownRole == fortuneTeller)
+                (source.shownRole?.let(numericRoles::contains) == true || source.shownRole == fortuneTeller)
         }
         if (unsupportedDrunkInformation) add(FirstNightBundleDeferredComplexity.DRUNK)
         if (game.players.any { it.actualRole == spy || it.actualRole == recluse }) {
