@@ -301,8 +301,13 @@ internal object TroubleBrewingWorldObservationEvaluator {
                 malfunction,
             )
         }
-        val mechanical = evaluateWithRegistration(world, roles, observation)
-        if (mechanical.matches) return mechanical.copy(clusters = mechanical.clusters + TRUE_INFO)
+        val mechanical = evaluateWithRegistration(world, roles, observation, hypothesis)
+        if (mechanical.matches) {
+            val usesMalfunctionExplanation =
+                DRUNK_EXPLANATION in mechanical.clusters || POISONED_EXPLANATION in mechanical.clusters
+            return if (usesMalfunctionExplanation) mechanical
+            else mechanical.copy(clusters = mechanical.clusters + TRUE_INFO)
+        }
         return WorldObservationResult(false)
     }
 
@@ -316,22 +321,48 @@ internal object TroubleBrewingWorldObservationEvaluator {
         world: EnumeratedWorld,
         roles: Map<RoleId, RoleDefinition>,
         observation: EpistemicObservation,
+        hypothesis: EpistemicHypothesis,
     ): WorldObservationResult = when (val proposition = observation.proposition) {
         is InformationProposition.RoleAt -> registrationMatch(world, roles, observation, proposition.seat, proposition.role, null, null)
         is InformationProposition.AlignmentAt -> registrationMatch(world, roles, observation, proposition.seat, null, null, proposition.alignment)
         is InformationProposition.CharacterTypeAt -> registrationMatch(world, roles, observation, proposition.seat, null, proposition.characterType, null)
+        is InformationProposition.AbilityStateAt -> evaluateAbilityState(world, proposition, hypothesis)
         is InformationProposition.AnyOf -> combineAny(proposition.alternatives.map {
-            evaluateWithRegistration(world, roles, observation.copy(proposition = it))
+            evaluateWithRegistration(world, roles, observation.copy(proposition = it), hypothesis)
         })
         is InformationProposition.AllOf -> combineAll(proposition.propositions.map {
-            evaluateWithRegistration(world, roles, observation.copy(proposition = it))
+            evaluateWithRegistration(world, roles, observation.copy(proposition = it), hypothesis)
         })
-        is InformationProposition.Not -> evaluateWithRegistration(world, roles, observation.copy(proposition = proposition.proposition)).let {
+        is InformationProposition.Not -> evaluateWithRegistration(
+            world,
+            roles,
+            observation.copy(proposition = proposition.proposition),
+            hypothesis,
+        ).let {
             WorldObservationResult(!it.matches, if (it.matches) emptySet() else it.clusters)
         }
         is InformationProposition.NumericResult -> evaluateNumeric(world, roles, observation, proposition)
         is InformationProposition.BooleanResult -> evaluateBoolean(world, roles, observation, proposition)
         else -> WorldObservationResult(evaluateActual(world, roles, proposition))
+    }
+
+    private fun evaluateAbilityState(
+        world: EnumeratedWorld,
+        proposition: InformationProposition.AbilityStateAt,
+        hypothesis: EpistemicHypothesis,
+    ): WorldObservationResult {
+        val actualState = world.abilityStatesBySeat[proposition.seat] ?: AbilityState.FUNCTIONING
+        if (actualState != proposition.abilityState) return WorldObservationResult(false)
+        if (actualState == AbilityState.FUNCTIONING) return WorldObservationResult(true)
+        if (hypothesis == EpistemicHypothesis.FUNCTIONING_ONLY) return WorldObservationResult(false)
+        return WorldObservationResult(
+            matches = true,
+            clusters = when (actualState) {
+                AbilityState.FUNCTIONING -> emptySet()
+                AbilityState.MALFUNCTIONING_DRUNK -> setOf(DRUNK_EXPLANATION)
+                AbilityState.MALFUNCTIONING_POISONED -> setOf(POISONED_EXPLANATION)
+            },
+        )
     }
 
     private fun evaluateActual(
