@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Base: PR #146 merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`  
 > Branch: `sde-2d3-strategic-world-quotient`  
-> Status: **AUDIT COMPLETE — executable implementation not yet started**
+> Status: **D3A–D3D IMPLEMENTED — T4 ACCEPTANCE PENDING**
 
 ## 1. Goal
 
@@ -331,3 +331,138 @@ The repository is already close to the desired architecture:
 The missing piece is **joint Demon/Minion topology identity**.
 
 The smallest correct D2D3 implementation is therefore an epistemic `StrategicWorldKey` projected from immutable setup role identity and accumulated during the existing exact pass. This preserves exactness, removes role-permutation multiplicity from the strategic unit, and avoids creating a second solver or prematurely widening the PlayerWorldSet/ZDD API.
+
+
+## 13. Implementation checkpoint
+
+The audited first D2D3 migration is now implemented.
+
+### D3A — strategic key semantics
+
+Added epistemic `StrategicWorldKey` with the frozen setup identity:
+
+```text
+StrategicWorldKey(
+    demonSeat,
+    canonical sorted minionSeats
+)
+```
+
+Projection uses `RoleDefinition.type`, not role-name heuristics.
+
+Regression evidence proves:
+
+- good-role permutations collapse to the same strategic key;
+- Red Herring, shown role, poison ability state and explanation-cluster differences do not split the key;
+- the same evil seat set with Demon/Minion positions swapped remains strategically distinct;
+- opaque role names still project correctly through CharacterType definitions.
+
+### D3B — exact accumulator parity
+
+`ExactWorldStructureDiagnostics` now carries:
+
+```text
+strategicWorldKeys: Set<StrategicWorldKey>
+distinctStrategicWorldCount
+```
+
+`WorldStructureAccumulator` adds the setup key while it is already scanning each surviving exact mechanical world.
+
+No additional world-generation or world-enumeration pass was introduced.
+
+The parity assertions reuse the existing whole-bundle exact baseline fixture rather than creating a second full exact evaluation. BEFORE and AFTER strategic-key sets are compared against the distinct manual projection of the already-materialized surviving mechanical worlds.
+
+### D3C — historical stability
+
+Both a direct key regression and the existing historical dynamic-role fixture prove that changing `currentRolesBySeat` through Imp succession does not rewrite setup topology.
+
+For the existing setup with:
+
+```text
+setup Demon = seat 4
+setup Minions = seats 2,3
+```
+
+a successor Imp at seat 3 still projects to:
+
+```text
+StrategicWorldKey(4, [2,3])
+```
+
+Current active Demon identity remains separate historical state.
+
+### D3D — SDE precise consumer migration
+
+A production-SDE fanout audit found one direct consumer of the coarse exact topology:
+
+`TroubleBrewingDemonBluffJointOutputEvaluator`.
+
+Its triplet recipient diagnostics now preserve the existing compatibility fields:
+
+```text
+unionEvilTeamSeatConfigurations
+sharedEvilTeamSeatConfigurations
+distinctRoleTopologyPatternCount
+```
+
+and add the precise strategic quotient overlay:
+
+```text
+unionStrategicWorldKeys
+sharedStrategicWorldKeys
+distinctRoleStrategicPatternCount
+```
+
+The precise values are composed only from each role probe's already-produced `afterStructure.strategicWorldKeys`. No new exact evaluation occurs.
+
+No other production SDE file consumes `evilTeamSeatConfigurations`, so there is no second recommendation consumer to migrate in D2D3.
+
+### Tests-first chronology
+
+The stable key and accumulator contracts were introduced by test commits before production implementation. The Demon-bluff precise overlay likewise received failing contract references before the production fields/composition were added.
+
+Additional post-GREEN tests strengthen existing semantics rather than define a new production behavior.
+
+## 14. Current ownership / non-cutover result
+
+After D2D3 implementation:
+
+```text
+mechanical exact worlds
+    -> sole feasibility witnesses
+
+StrategicWorldKey
+    -> epistemic exact setup-topology quotient identity
+
+ExactWorldStructureDiagnostics
+    -> exact quotient result owner
+
+SDE
+    -> consumer/composer of exact strategic diagnostics
+
+SetupRecommendationService
+    -> still current production compatibility selection
+```
+
+No session state, setup legality, committed history, UI, ZDD representation or `PlayerWorldSet` contract changed.
+
+No production recommendation cutover occurred.
+
+Raw role-world cardinality remains available as exact evidence but no longer needs to be the only strategic identity exposed to SDE.
+
+## 15. Acceptance checkpoint
+
+A final `[full-ci]` T4 checkpoint is required before SDE-2D3 can be marked complete.
+
+Required final evidence:
+
+```text
+R2 main-thread boundary
+Android testFull
+Debug APK assemble
+ASP contract tests
+Real Clingo cross-validation
+CI gate
+```
+
+If T4 is green, advance roadmap/handoff to **SDE-2D3 COMPLETE / PR #147 pending user-authorized merge**, with SDE-2D4 5–15 player generalization/performance as the next stage after merge.
