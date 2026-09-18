@@ -2,9 +2,13 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
@@ -48,10 +52,33 @@ class DemonBluffJointOutputEvaluatorTest {
         rulesetVersion = "sde-2d2-demon-bluff-test",
         sourceRevision = "official",
     )
-    private val roles = TroubleBrewingFixtures.roleDefinitions().filterNot { definition ->
-        definition.id in setOf(RoleId("Poisoner"), RoleId("Spy"), RoleId("Baron"))
-    }
-    private val game = TroubleBrewingFixtures.eightPlayerExample()
+    private val fixtureRoleIds = setOf(
+        "Chef",
+        "Empath",
+        "Fortune Teller",
+        "Undertaker",
+        "Virgin",
+        "Scarlet Woman",
+        "Imp",
+        "Investigator",
+        "Monk",
+        "Soldier",
+        "Butler",
+    ).mapTo(linkedSetOf(), ::RoleId)
+    private val roles = TroubleBrewingFixtures.fullRoleDefinitions().filter { it.id in fixtureRoleIds }
+    private val game = GameState(
+        script = TroubleBrewingFixtures.scriptId,
+        players = listOf(
+            player(1, "Chef", CharacterType.TOWNSFOLK),
+            player(2, "Empath", CharacterType.TOWNSFOLK),
+            player(3, "Fortune Teller", CharacterType.TOWNSFOLK),
+            player(4, "Undertaker", CharacterType.TOWNSFOLK),
+            player(5, "Virgin", CharacterType.TOWNSFOLK),
+            player(6, "Scarlet Woman", CharacterType.MINION),
+            player(7, "Imp", CharacterType.DEMON),
+        ),
+        seed = 20260918L,
+    )
     private val snapshot = GameSnapshot(
         gameId = "sde-2d2-demon-bluff",
         gameStateRevision = 0,
@@ -214,6 +241,22 @@ class DemonBluffJointOutputEvaluatorTest {
         assertTrue(error.message.orEmpty().contains("persistent setup inputs"))
     }
 
+    private fun player(
+        seat: Int,
+        role: String,
+        type: CharacterType,
+    ): PlayerState = PlayerState(
+        seat = seat,
+        name = "P$seat",
+        actualRole = RoleId(role),
+        actualAlignment = when (type) {
+            CharacterType.TOWNSFOLK, CharacterType.OUTSIDER -> Alignment.GOOD
+            CharacterType.MINION, CharacterType.DEMON -> Alignment.EVIL
+        },
+        actualType = type,
+        shownRole = RoleId(role),
+    )
+
     private fun publicChefClaim(): EpistemicObservation {
         val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, 1)
         val privateObservation = EpistemicObservation(
@@ -267,7 +310,7 @@ class DemonBluffJointOutputEvaluatorTest {
             recipientSeats = emptySet(),
             reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
             proposition = InformationProposition.ShownRoleAt(
-                seat = 8,
+                seat = 7,
                 role = role,
             ),
         )
