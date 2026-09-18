@@ -5,6 +5,7 @@ import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCa
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
+import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
@@ -27,8 +28,10 @@ import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformati
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightPublicGoodInfoProjection
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -153,6 +156,29 @@ class DemonBluffJointOutputEvaluatorTest {
         }
         assertEquals(timelineBefore, exactContext.actionTimeline.reducerFacts())
         assertEquals(logBefore, exactContext.observationLog.records)
+
+        val visibleResult = SetupRecommendationService.recommendConstrained(game, roles)
+        val visiblePlansBefore = visibleResult.plans.toList()
+        val shadow = DemonBluffSetupShadowAdapter.attach(
+            visibleResult = visibleResult,
+            legalCandidates = legalCandidates,
+            jointOutput = ready,
+        )
+
+        assertSame(visibleResult, shadow.visibleResult)
+        assertSame(ready, shadow.jointOutput)
+        assertEquals(visiblePlansBefore, shadow.visibleResult.plans)
+        assertEquals(
+            visibleResult.plans.associate { plan ->
+                val bluff = plan.decisions.filterIsInstance<com.codex.campboardgamehost.clocktower.domain.StorytellerDecision.DemonBluffs>().single()
+                plan.style to legalCandidates.single { candidate ->
+                    val roles = (candidate.outcome as com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome.DemonBluffs).roles
+                    roles == bluff.roles
+                }.candidateId
+            },
+            shadow.legacyBluffCandidateIdByStyle,
+        )
+        assertTrue(RecommendationStyle.BALANCED in shadow.legacyBluffCandidateIdByStyle)
     }
 
 
