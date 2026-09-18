@@ -77,16 +77,16 @@ class EnumeratedWorldSetTest {
             ruleset, knowledge, EpistemicHypothesis.FUNCTIONING_ONLY, roles,
         )
 
-        // Seat 1 is fixed as Chef. Empath/Fortune Teller occupy two of four remaining seats,
-        // one of Poisoner/Spy is the Minion, and Imp is the Demon. FT worlds include one
-        // distinct hidden red-herring choice for each of the four good seats.
-        assertEquals(WorldCardinality.Exact(BigInteger("552")), result.cardinality())
+        // Exact worlds include latent shown-role state for any non-recipient Drunk. Baron-profile
+        // worlds where seat 1 is Chef therefore split across each mechanically legal out-of-play
+        // Townsfolk shown role instead of collapsing those hidden shown-role alternatives.
+        assertEquals(WorldCardinality.Exact(BigInteger("576")), result.cardinality())
         assertEquals(setOf(RoleId("Chef"), RoleId("Drunk")), result.possibleRoles(1))
         assertEquals(setOf(2, 3, 4, 5), result.possibleDemonSeats())
-        assertEquals(WorldCardinality.Exact(BigInteger("138")), result.demonWorldCount(2))
+        assertEquals(WorldCardinality.Exact(BigInteger("144")), result.demonWorldCount(2))
         assertTrue(RoleId("Baron") in (2..5).flatMapTo(linkedSetOf(), result::possibleRoles))
         assertEquals(
-            WorldCardinality.Exact(BigInteger("120")),
+            WorldCardinality.Exact(BigInteger("144")),
             result.explanationClusters().worldCountByCluster[WorldExplanationClusterId("baron-setup")],
         )
     }
