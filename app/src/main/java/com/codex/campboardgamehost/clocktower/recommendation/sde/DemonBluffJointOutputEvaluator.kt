@@ -63,22 +63,44 @@ internal data class DemonBluffRoleSupport(
             .mapTo(linkedSetOf(), ExactHypotheticalObservationBundleDiagnostics::recipientSeat)
 }
 
+internal data class DemonBluffTripletRecipientDiagnostics(
+    val recipientSeat: Int,
+    val supportedRoles: Set<RoleId>,
+    val unionEvilTeamSeatConfigurations: Set<Set<Int>>,
+    val sharedEvilTeamSeatConfigurations: Set<Set<Int>>,
+    val distinctRoleTopologyPatternCount: Int,
+) {
+    init {
+        require(recipientSeat > 0)
+        require(distinctRoleTopologyPatternCount in 1..3)
+        require(sharedEvilTeamSeatConfigurations.all(unionEvilTeamSeatConfigurations::contains)) {
+            "Shared Demon bluff topology support must be a subset of the triplet union."
+        }
+    }
+}
+
 /**
  * One legal triplet composed from shared per-role exact support.
  *
  * The support objects are intentionally shared with [DemonBluffJointOutputEvaluation.Ready.roleSupports]:
- * triplets do not own or recompute exact world scans.
+ * triplets do not own or recompute exact world scans. [byRecipient] adds only a cheap structural
+ * overlay over those exact results; it does not enumerate worlds or define selection policy.
  */
 internal data class DemonBluffJointOutputDiagnostics(
     val candidateId: String,
     val roles: List<RoleId>,
     val roleSupports: List<DemonBluffRoleSupport>,
+    val byRecipient: List<DemonBluffTripletRecipientDiagnostics>,
 ) {
     init {
         require(roles.size == 3 && roles.distinct().size == roles.size)
         require(roleSupports.map(DemonBluffRoleSupport::role) == roles) {
             "Demon bluff triplet support must preserve candidate role order."
         }
+        require(byRecipient.isNotEmpty())
+        require(byRecipient.map(DemonBluffTripletRecipientDiagnostics::recipientSeat).distinct().size ==
+            byRecipient.size
+        )
     }
 }
 
@@ -227,15 +249,55 @@ internal object TroubleBrewingDemonBluffJointOutputEvaluator {
                 DemonBluffJointOutputEvaluation.Ready(
                     roleSupports = sharedSupports,
                     candidates = candidates.map { candidate ->
+                        val candidateSupports = candidate.roles.map(supportByRole::getValue)
                         DemonBluffJointOutputDiagnostics(
                             candidateId = candidate.candidateId,
                             roles = candidate.roles,
-                            roleSupports = candidate.roles.map(supportByRole::getValue),
+                            roleSupports = candidateSupports,
+                            byRecipient = recipientSeats.map { recipientSeat ->
+                                tripletRecipientDiagnostics(
+                                    recipientSeat = recipientSeat,
+                                    roleSupports = candidateSupports,
+                                )
+                            },
                         )
                     },
                 )
             }
         }
+    }
+
+    private fun tripletRecipientDiagnostics(
+        recipientSeat: Int,
+        roleSupports: List<DemonBluffRoleSupport>,
+    ): DemonBluffTripletRecipientDiagnostics {
+        val configurationsByRole = roleSupports.map { support ->
+            val diagnostic = support.byRecipient.single { it.recipientSeat == recipientSeat }
+            support.role to diagnostic.afterStructure.evilTeamSeatConfigurations
+        }
+        val union = configurationsByRole
+            .flatMap { it.second }
+            .toCollection(linkedSetOf())
+        val shared = configurationsByRole
+            .map { it.second }
+            .reduce { accumulated, configurations ->
+                accumulated.intersect(configurations)
+            }
+            .toCollection(linkedSetOf())
+        val supportedRoles = roleSupports
+            .filter { support ->
+                support.byRecipient.single { it.recipientSeat == recipientSeat }.after.value.signum() > 0
+            }
+            .mapTo(linkedSetOf(), DemonBluffRoleSupport::role)
+        val distinctPatterns = configurationsByRole.map { it.second }.distinct().size
+
+        return DemonBluffTripletRecipientDiagnostics(
+            recipientSeat = recipientSeat,
+            supportedRoles = supportedRoles,
+            unionEvilTeamSeatConfigurations = union,
+            sharedEvilTeamSeatConfigurations = shared,
+            distinctRoleTopologyPatternCount = distinctPatterns,
+        )
     }
 
     private fun strictShownRoleProbe(
