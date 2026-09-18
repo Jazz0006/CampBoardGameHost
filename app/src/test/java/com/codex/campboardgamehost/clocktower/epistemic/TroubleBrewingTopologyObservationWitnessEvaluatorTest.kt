@@ -98,6 +98,40 @@ class TroubleBrewingTopologyObservationWitnessEvaluatorTest {
     }
 
     @Test
+    fun selected_type_only_Recluse_witness_matches_without_forcing_a_specific_Demon_role() {
+        val profile = TroubleBrewingSetupProfiles.standard(8)
+        val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
+        val knowledge = knowledge(
+            profile,
+            listOf(InformationProposition.RoleAt(3, RoleId("Recluse"))),
+        )
+        val observation = observation(
+            proposition = InformationProposition.CharacterTypeAt(3, CharacterType.DEMON),
+            sourceSeat = null,
+        )
+        val selected = setOf(
+            RegistrationFact(
+                interactionId = "generator-type-only",
+                subjectSeat = 3,
+                registeredType = CharacterType.DEMON,
+                registeredAlignment = com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL,
+                registrationQuestion = RegistrationQuestion.CHARACTER_TYPE,
+                reason = RegistrationReason.RECLUSE_ABILITY,
+            ),
+        )
+
+        assertTrue(
+            evaluate(
+                profile,
+                topology,
+                knowledge,
+                observation,
+                selectedWitness = selected,
+            ) is TroubleBrewingTopologyObservationFeasibility.Feasible,
+        )
+    }
+
+    @Test
     fun selected_empty_registration_witness_rejects_a_Spy_only_explanation() {
         val profile = TroubleBrewingSetupProfiles.standard(8)
         val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
