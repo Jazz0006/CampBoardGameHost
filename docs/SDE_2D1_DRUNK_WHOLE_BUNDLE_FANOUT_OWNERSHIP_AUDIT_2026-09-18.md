@@ -3,7 +3,7 @@
 > Date: 2026-09-18 Australia/Sydney  
 > Branch: `sde-2d1-drunk-whole-bundle`  
 > Base: `5e209b00df4ba2b83a0ae15d726d982a345f3b1d`  
-> Status: **AUDIT COMPLETE — implementation not yet cut over**
+> Status: **IMPLEMENTED / FULL ACCEPTANCE GREEN — PR #145 draft, pending user-authorized merge**
 
 ## 1. Scope
 
@@ -528,8 +528,82 @@ No Host UI, Compose, production selection cutover, or session persistence rewrit
 11. **Malfunction explanations are shared-world resources: Drunk identity, Minion occupancy, Poisoner presence, and per-source target capacity must remain jointly legal in one exact world.**
 12. **Do not freeze a global single-poisoned-seat invariant; future generalized impairment must preserve source provenance/timeline while `AbilityState` may remain a derived consumer-facing state.**
 
-## 16. Next executable action
+## 16. Implementation / acceptance result
 
-Start **SDE-2D1A** with the existing staged Drunk public-claim test as the real behavior-change RED, plus a focused non-recipient hidden shown-role exactness test.
+SDE-2D1A through SDE-2D1D are implemented on draft PR #145.
 
-Only after D1A exact/public-claim semantics are GREEN should the candidate-space auditor and generalized whole-bundle composer be wired to `PairInformationLegalDomain(..., DRUNK)` for D1B.
+### D1A — exact/public-claim foundation
+
+Implemented:
+
+- impairment-capable public claims;
+- `FUNCTIONING_ONLY` rejection of malfunction-only explanations;
+- non-recipient Drunk latent shown-role enumeration;
+- generalized public-claim shown-role prefilter without weakening exact proposition authority.
+
+### D1B — pair whole-bundle
+
+Implemented:
+
+- Drunk Washerwoman/Librarian/Investigator candidates use `PairInformationLegalDomain(..., DRUNK)`;
+- supported pair Drunk information is a real bundle factor rather than global `DRUNK` deferred complexity;
+- pair candidates use the shared exact `HealthyCore / FullBundle / DrunkMarginal` seam;
+- healthy producer identity remains unchanged in the legacy healthy harness.
+
+### D1C — numeric whole-bundle
+
+Implemented:
+
+- `FirstNightNumericInformationDisplayDomain` is the rules-owned surface range;
+- `FirstNightNumericLegalDomain` is the score-free legality adapter;
+- Drunk shown Chef/Empath use complete legal numeric display domains;
+- `DynamicCandidateGenerator.generateNumeric` remains recommendation/policy ranking and is not duplicated as legality authority;
+- Chef/Empath both have exact whole-bundle fixtures.
+
+### D1D — Fortune Teller robustness
+
+Implemented:
+
+- target legality is perceived-role aware;
+- the player-selected target pair remains robustness input and is not multiplied into the Storyteller Cartesian factor space;
+- Drunk FT contributes only the complete `NO / YES` Storyteller result factor;
+- typed `BooleanResult(Demon-or-Red-Herring)` materialization is used;
+- Red Herring remains setup-owned and exact functioning counterworlds retain their own legal Red Herring state.
+
+### Shared finite-resource proof
+
+Exact-world tests now explicitly protect:
+
+- at most one Drunk identity per mechanical world;
+- Baron single-Minion profile excludes Poisoner and poison malfunction explanations;
+- current Trouble Brewing Poisoner worlds contain exactly one ordinary poisoned target;
+- all bundle observations are evaluated in one shared mechanically legal world.
+
+The Poisoner assertion remains Trouble Brewing-specific and is **not** promoted to a universal one-poisoned-player rule for future scripts.
+
+### Validation
+
+Final executable acceptance head:
+
+`27b17d5e0eedea3367f5a1b69ed2093fb958f1af`
+
+Full acceptance:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android testFull               SUCCESS
+Debug APK assemble             SUCCESS
+ASP contract tests             SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+```
+
+The branch was rechecked against live `main` before acceptance and was behind by 0 commits.
+
+No Host UI, Compose, session-persistence rewrite, production selection cutover, SDE-2D2 bluff implementation, or SDE-3 behavior is included.
+
+## 17. Next executable action
+
+Keep PR #145 draft until the user explicitly authorizes merge.
+
+After PR #145 is merged, start **SDE-2D2 — Demon bluff joint-output migration** on a fresh branch with a focused fanout/ownership audit. Preserve `SetupCandidateGenerator` as bluff legality owner and migrate only the strategic choice of still-uncommitted bluff triplets into the SDE path.
