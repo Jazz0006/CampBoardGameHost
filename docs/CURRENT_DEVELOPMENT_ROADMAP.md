@@ -25,6 +25,7 @@ SDE-1C exact-evaluator orchestration differential      COMPLETE / PR #144 branch
 SDE-1D lifecycle ownership / planned freshness         COMPLETE / PR #144 branch
 SDE-1E structured production shadow integration        COMPLETE / PR #144 branch
 SDE-2A Drunk ownership / revision replanning contract  COMPLETE / PR #144 branch
+SDE-2B Spy/Recluse exact registration witness binding   COMPLETE / PR #144 branch
 ```
 
 SDE-0 was squash-merged to `main` as:
@@ -61,20 +62,22 @@ Always query live `main` and PR #144 before executable edits.
 
 ## 2. CURRENT
 
-**SDE-2B — Spy/Recluse interaction-scoped registration uncertainty**
+**SDE-2C — Poisoner-driven invalidation / replanning**
 
-SDE-2A is complete. The Drunk/Poisoner ownership contract proved that existing `gameStateRevision` / `playerInputRevision` plus `PlannedDecisionRef` already provide the required stale-plan boundary; no SDE-specific replanning counter or dependency store is needed.
+SDE-2B is complete. Registration remains rules-owned and interaction-scoped; exact evaluation can now bind a selected registration witness without mutating canonical identity.
 
 Current task:
 
 ```text
-TroubleBrewingRegistrationDomain legality
-→ interaction-local Spy/Recluse registration branch
-→ exact hypothetical consequence evaluation
-→ no canonical identity mutation
+Poisoner draft / confirmation changes existing session revisions
+→ prior PlannedDecisionRef becomes stale
+→ unshown first-night plan is discarded
+→ existing legality/materialization owners rebuild candidates
+→ StructuredInformationProductionShadow / SDE re-evaluates exact consequences
+→ fresh plan binds the new current revision
 ```
 
-Audit how the exact evaluator should consume one branch-local registration assumption while preserving `TroubleBrewingRegistrationDomain` as the only registration-legality authority.
+The first implementation should prefer broad correct re-evaluation of still-uncommitted first-night decisions over premature dependency optimization. COMMITTED observations remain immutable history.
 
 ## 3. NEXT
 
@@ -185,13 +188,27 @@ Poisoner confirm      -> gameStateRevision invalidation
 
 No SDE-specific dependency store or replanning revision counter was added.
 
-### 5.2 Spy / Recluse — CURRENT
+### 5.2 Spy / Recluse — COMPLETE
 
-Model registration as interaction-scoped uncertainty using `TroubleBrewingRegistrationDomain`, not as a permanent alternate identity.
+Authority/evidence:
 
-Audit how the exact evaluator should consume branch-local registration assumptions without duplicating registration legality.
+- `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
+- core exact-registration semantics: `a977c01c0f4ae634dd60e4999759838f4005228c` with R2 / Android FAST / Real Clingo / CI gate SUCCESS;
+- final SDE forwarding and pair projection: `ec970aaa302b7ea6ba5f869aec43cf8f3a82b950` with R2 / Android FAST / CI gate SUCCESS.
 
-### 5.3 Poisoner
+Frozen result:
+
+```text
+TroubleBrewingRegistrationDomain -> legality authority
+WorldObservationResult           -> complete successful witness alternatives
+ExactRegistrationWitnessBinding  -> one selected interaction-local witness
+ExactConsequenceCandidate        -> forwards optional witness binding
+PairInformationExactConsequenceAdapter
+                                 -> pure projection from already-legal candidate
+canonical player identity        -> unchanged
+```
+
+### 5.3 Poisoner — CURRENT
 
 Model Poisoner changes as invalidation/replanning of still-uncommitted planned decisions.
 
@@ -264,9 +281,11 @@ Read in order:
 6. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
 7. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
 8. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
-9. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
-10. query live `main`, PR #144 and current checks.
+9. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
+10. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
+11. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
+12. query live `main`, PR #144 and current checks.
 
 ## 10. Stable rule
 
-> **SDE-1A/B/C/D/E and SDE-2A are complete on PR #144's branch. SDE-2A executable evidence is `6c9d7fe...`. Current work is SDE-2B: model Spy/Recluse as interaction-scoped registration uncertainty without canonical identity mutation and without duplicating `TroubleBrewingRegistrationDomain` legality. Preserve all existing ownership boundaries and do not perform production selection cutover yet.**
+> **SDE-1A/B/C/D/E and SDE-2A/B are complete on PR #144. SDE-2B final executable evidence is `ec970aaa...`, with exact registration semantics additionally cross-validated by Clingo at `a977c01...`. Current work is SDE-2C: prove Poisoner source changes invalidate prior uncommitted plans through existing session revisions, then broadly regenerate/re-evaluate still-uncommitted first-night decisions without rewriting committed history or introducing a new replanning counter.**
