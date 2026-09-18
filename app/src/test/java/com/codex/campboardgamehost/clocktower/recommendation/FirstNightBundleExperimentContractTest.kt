@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.ClocktowerScript
+import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
@@ -154,7 +155,30 @@ class FirstNightBundleExperimentContractTest {
                 InformationProposition.AllOf(
                     listOf(
                         InformationProposition.ShownRoleAt(1, RoleId("Chef")),
-                        clue,
+                        InformationProposition.AnyOf(
+                            listOf(
+                                InformationProposition.AbilityStateAt(
+                                    seat = 1,
+                                    abilityRole = RoleId("Chef"),
+                                    abilityState = AbilityState.MALFUNCTIONING_DRUNK,
+                                ),
+                                InformationProposition.AbilityStateAt(
+                                    seat = 1,
+                                    abilityRole = RoleId("Chef"),
+                                    abilityState = AbilityState.MALFUNCTIONING_POISONED,
+                                ),
+                                InformationProposition.AllOf(
+                                    listOf(
+                                        InformationProposition.AbilityStateAt(
+                                            seat = 1,
+                                            abilityRole = RoleId("Chef"),
+                                            abilityState = AbilityState.FUNCTIONING,
+                                        ),
+                                        clue,
+                                    ),
+                                ),
+                            ),
+                        ),
                     ),
                 ),
             ),

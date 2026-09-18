@@ -34,6 +34,36 @@ class FortuneTellerInformationSemanticsTest {
         assertTrue(FortuneTellerInformationSemantics.healthyResult(game, setOf(2, 5), redHerringSeat = 5))
     }
 
+    @Test
+    fun `Drunk shown Fortune Teller has the same player-controlled target domain`() {
+        val game = GameState(
+            script = ScriptId("trouble_brewing"),
+            players = listOf(
+                player(1, "Librarian", CharacterType.TOWNSFOLK, alive = true),
+                PlayerState(
+                    seat = 2,
+                    name = "P2",
+                    actualRole = RoleId("Drunk"),
+                    actualAlignment = Alignment.GOOD,
+                    actualType = CharacterType.OUTSIDER,
+                    shownRole = RoleId("Fortune Teller"),
+                ),
+                player(3, "Chef", CharacterType.TOWNSFOLK, alive = true),
+                player(4, "Soldier", CharacterType.TOWNSFOLK, alive = true),
+                player(5, "Scarlet Woman", CharacterType.MINION, alive = true),
+                player(6, "Imp", CharacterType.DEMON, alive = true),
+            ),
+            seed = 20260918L,
+        )
+
+        val pairs = FortuneTellerInformationSemantics.legalTargetPairs(game, sourceSeat = 2)
+
+        assertEquals(15, pairs.size)
+        assertTrue(1 to 2 in pairs)
+        assertTrue(2 to 6 in pairs)
+        assertEquals(emptyList<Pair<Int, Int>>(), FortuneTellerInformationSemantics.legalTargetPairs(game))
+    }
+
     private fun game(deadSeat: Int? = null) = GameState(
         script = ScriptId("trouble_brewing"),
         players = listOf(

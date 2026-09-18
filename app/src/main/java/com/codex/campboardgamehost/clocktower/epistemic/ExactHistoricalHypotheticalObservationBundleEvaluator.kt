@@ -486,33 +486,37 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
             .distinct()
             .sortedWith(compareBy({ it.seat }, { it.role.value })),
         publicClaimShownRoles = query.observations
-            .mapNotNull(::healthyPublicClaimShownRole)
+            .mapNotNull(::publicClaimShownRoleEnvelope)
             .distinct()
             .sortedWith(compareBy({ it.seat }, { it.role.value })),
     )
 
     /**
-     * Recognizes the current healthy public-claim envelope:
-     * evil speaker OR (claimed shown role AND claimed mechanical clue).
+     * Recognizes the public-claim identity envelope without depending on the internal clue branch.
      *
-     * Only the shown-role part is returned for cheap prefiltering; the complete claim stays in the
-     * query and is evaluated exactly afterwards.
+     * The claim must contain one evil-speaker branch and every non-evil branch must require the same
+     * shown role. Only that necessary identity constraint is returned for cheap prefiltering; the
+     * complete proposition, including functioning/malfunctioning alternatives, is evaluated exactly
+     * afterwards.
      */
-    private fun healthyPublicClaimShownRole(
+    private fun publicClaimShownRoleEnvelope(
         observation: EpistemicObservation,
     ): InformationProposition.ShownRoleAt? {
         if (observation.reliability != ObservationReliability.NOT_ABILITY_INFORMATION) return null
         val any = observation.proposition as? InformationProposition.AnyOf ?: return null
-        if (any.alternatives.size != 2) return null
-        val evilBranch = any.alternatives.filterIsInstance<InformationProposition.AlignmentAt>()
-            .singleOrNull { it.alignment == Alignment.EVIL }
-            ?: return null
-        val truthfulBranch = any.alternatives.filterIsInstance<InformationProposition.AllOf>()
-            .singleOrNull()
-            ?: return null
-        val shownRole = truthfulBranch.propositions.filterIsInstance<InformationProposition.ShownRoleAt>()
-            .singleOrNull()
-            ?: return null
+        val evilBranches = any.alternatives
+            .filterIsInstance<InformationProposition.AlignmentAt>()
+            .filter { it.alignment == Alignment.EVIL }
+        val evilBranch = evilBranches.singleOrNull() ?: return null
+        val claimedGoodBranches = any.alternatives.filterNot { it == evilBranch }
+        if (claimedGoodBranches.isEmpty()) return null
+
+        val shownRoles = claimedGoodBranches.map { branch ->
+            val all = branch as? InformationProposition.AllOf ?: return null
+            all.propositions.filterIsInstance<InformationProposition.ShownRoleAt>().singleOrNull()
+                ?: return null
+        }.distinct()
+        val shownRole = shownRoles.singleOrNull() ?: return null
         if (evilBranch.seat != shownRole.seat) return null
         if (observation.sourceSeat != null && observation.sourceSeat != shownRole.seat) return null
         return shownRole
@@ -521,7 +525,7 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
     /**
      * Necessary-only prefilter for a public claim. A world survives when the speaker can satisfy the
      * lie branch (actual evil; Recluse is retained conservatively because it can register evil) or
-     * when its shown role matches the truthful-good branch. Exact claim semantics are applied later.
+     * when its shown role matches the claimed-good envelope. Exact claim semantics are applied later.
      */
     private fun publicClaimIdentityEnvelopeMatches(
         world: EnumeratedWorld,

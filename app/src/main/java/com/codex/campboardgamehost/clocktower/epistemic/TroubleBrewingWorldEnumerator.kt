@@ -93,9 +93,9 @@ object TroubleBrewingWorldEnumerator {
                 val fortuneTellerInPlay = canonical.values.any { it.value.equals("Fortune Teller", true) }
                 if (fortuneTellerInPlay) {
                     for (redHerring in canonical.filterValues { catalog.getValue(it).alignment == Alignment.GOOD }.keys) {
-                        for (world in mechanicalVariants(canonical, redHerring, knowledge, baseClusters)) yield(world)
+                        for (world in mechanicalVariants(canonical, redHerring, knowledge, catalog, baseClusters)) yield(world)
                     }
-                } else for (world in mechanicalVariants(canonical, null, knowledge, baseClusters)) yield(world)
+                } else for (world in mechanicalVariants(canonical, null, knowledge, catalog, baseClusters)) yield(world)
                 return
             }
 
@@ -131,39 +131,63 @@ object TroubleBrewingWorldEnumerator {
         }
     }
 
-    private fun recipientShownRoles(
+    private fun shownRoleVariants(
         rolesBySeat: Map<Int, RoleId>,
         knowledge: PlayerKnowledgeSnapshot,
-    ): Map<Int, RoleId> = buildMap {
-        rolesBySeat.forEach { (seat, role) ->
-            if (!role.value.equals("Drunk", true)) put(seat, role)
+        catalog: Map<RoleId, RoleDefinition>,
+    ): Sequence<Map<Int, RoleId>> = sequence {
+        val drunkSeat = rolesBySeat.entries.singleOrNull { it.value.value.equals("Drunk", true) }?.key
+        val baseShownRoles = rolesBySeat
+            .filterValues { !it.value.equals("Drunk", true) }
+            .toSortedMap()
+
+        if (drunkSeat == null) {
+            yield(baseShownRoles)
+            return@sequence
         }
-        if (rolesBySeat[knowledge.recipientSeat]?.value.equals("Drunk", true)) {
-            put(knowledge.recipientSeat, knowledge.perceivedRole)
+
+        if (drunkSeat == knowledge.recipientSeat) {
+            yield((baseShownRoles + (drunkSeat to knowledge.perceivedRole)).toSortedMap())
+            return@sequence
         }
-    }.toSortedMap()
+
+        val legalHiddenShownRoles = catalog.values
+            .asSequence()
+            .filter { it.type == CharacterType.TOWNSFOLK }
+            .map(RoleDefinition::id)
+            .filter { it !in rolesBySeat.values }
+            .sortedBy(RoleId::value)
+            .toList()
+
+        for (shownRole in legalHiddenShownRoles) {
+            yield((baseShownRoles + (drunkSeat to shownRole)).toSortedMap())
+        }
+    }
 
     private fun mechanicalVariants(
         rolesBySeat: Map<Int, RoleId>,
         redHerringSeat: Int?,
         knowledge: PlayerKnowledgeSnapshot,
+        catalog: Map<RoleId, RoleDefinition>,
         clusters: Set<WorldExplanationClusterId>,
     ): Sequence<EnumeratedWorld> = sequence {
         val drunkSeat = rolesBySeat.entries.singleOrNull { it.value.value.equals("Drunk", true) }?.key
         val poisonerInPlay = rolesBySeat.values.any { it.value.equals("Poisoner", true) }
         val poisonTargets: List<Int?> = if (poisonerInPlay) rolesBySeat.keys.map { it } else listOf(null)
-        for (poisonTarget in poisonTargets) {
-            val abilityStates = buildMap {
-                if (poisonTarget != null) put(poisonTarget, AbilityState.MALFUNCTIONING_POISONED)
-                if (drunkSeat != null) put(drunkSeat, AbilityState.MALFUNCTIONING_DRUNK)
+        for (shownRoles in shownRoleVariants(rolesBySeat, knowledge, catalog)) {
+            for (poisonTarget in poisonTargets) {
+                val abilityStates = buildMap {
+                    if (poisonTarget != null) put(poisonTarget, AbilityState.MALFUNCTIONING_POISONED)
+                    if (drunkSeat != null) put(drunkSeat, AbilityState.MALFUNCTIONING_DRUNK)
+                }
+                yield(EnumeratedWorld(
+                    rolesBySeat = rolesBySeat,
+                    redHerringSeat = redHerringSeat,
+                    shownRolesBySeat = shownRoles,
+                    abilityStatesBySeat = abilityStates,
+                    explanationClusters = clusters,
+                ))
             }
-            yield(EnumeratedWorld(
-                rolesBySeat = rolesBySeat,
-                redHerringSeat = redHerringSeat,
-                shownRolesBySeat = recipientShownRoles(rolesBySeat, knowledge),
-                abilityStatesBySeat = abilityStates,
-                explanationClusters = clusters,
-            ))
         }
     }
 }

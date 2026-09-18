@@ -77,18 +77,82 @@ class EnumeratedWorldSetTest {
             ruleset, knowledge, EpistemicHypothesis.FUNCTIONING_ONLY, roles,
         )
 
-        // Seat 1 is fixed as Chef. Empath/Fortune Teller occupy two of four remaining seats,
-        // one of Poisoner/Spy is the Minion, and Imp is the Demon. FT worlds include one
-        // distinct hidden red-herring choice for each of the four good seats.
-        assertEquals(WorldCardinality.Exact(BigInteger("552")), result.cardinality())
+        // Exact worlds include latent shown-role state for any non-recipient Drunk. Baron-profile
+        // worlds where seat 1 is Chef therefore split across each mechanically legal out-of-play
+        // Townsfolk shown role instead of collapsing those hidden shown-role alternatives.
+        assertEquals(WorldCardinality.Exact(BigInteger("576")), result.cardinality())
+        val mechanicalWorlds = result.enumeratedWorlds()
+        assertTrue(mechanicalWorlds.any { world ->
+            world.rolesBySeat.values.count { it == RoleId("Drunk") } == 1
+        })
+        assertTrue(mechanicalWorlds.all { world ->
+            world.rolesBySeat.values.count { it == RoleId("Drunk") } <= 1
+        })
         assertEquals(setOf(RoleId("Chef"), RoleId("Drunk")), result.possibleRoles(1))
         assertEquals(setOf(2, 3, 4, 5), result.possibleDemonSeats())
-        assertEquals(WorldCardinality.Exact(BigInteger("138")), result.demonWorldCount(2))
+        assertEquals(WorldCardinality.Exact(BigInteger("144")), result.demonWorldCount(2))
         assertTrue(RoleId("Baron") in (2..5).flatMapTo(linkedSetOf(), result::possibleRoles))
         assertEquals(
-            WorldCardinality.Exact(BigInteger("120")),
+            WorldCardinality.Exact(BigInteger("144")),
             result.explanationClusters().worldCountByCluster[WorldExplanationClusterId("baron-setup")],
         )
+    }
+
+    @Test fun `single-minion setup keeps Baron and Poisoner malfunction resources mutually exclusive`() {
+        val baronKnowledge = knowledge("Chef", TroubleBrewingSetupProfiles.withBaron(5))
+        val baronWorlds = TroubleBrewingWorldEnumerator.enumerate(
+            ruleset,
+            baronKnowledge,
+            EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            roles,
+        ).enumeratedWorlds()
+
+        assertTrue(baronWorlds.isNotEmpty())
+        assertTrue(baronWorlds.all { RoleId("Baron") in it.rolesBySeat.values })
+        assertTrue(baronWorlds.none { RoleId("Poisoner") in it.rolesBySeat.values })
+        assertTrue(baronWorlds.none {
+            AbilityState.MALFUNCTIONING_POISONED in it.abilityStatesBySeat.values
+        })
+
+        val standardKnowledge = knowledge("Chef", TroubleBrewingSetupProfiles.standard(5))
+        val poisonerWorlds = TroubleBrewingWorldEnumerator.enumerate(
+            ruleset,
+            standardKnowledge,
+            EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            roles,
+        ).enumeratedWorlds()
+            .filter { RoleId("Poisoner") in it.rolesBySeat.values }
+
+        assertTrue(poisonerWorlds.isNotEmpty())
+        assertTrue(poisonerWorlds.all { world ->
+            world.abilityStatesBySeat.values.count { it == AbilityState.MALFUNCTIONING_POISONED } == 1
+        })
+    }
+
+    @Test fun `non-recipient Drunk worlds carry a legal latent shown Townsfolk role`() {
+        val extendedRoles = roles + role("Washerwoman", CharacterType.TOWNSFOLK)
+        val knowledge = PlayerKnowledgeSnapshot(
+            knowledgeSnapshotId = "knowledge-a3-latent-drunk-shown-role",
+            formalSnapshotId = snapshotId,
+            recipientSeat = 1,
+            perceivedRole = RoleId("Chef"),
+            setupKnowledge = listOf(InformationProposition.SetupProfile(3, 1, 1, 1)),
+        )
+
+        val worlds = TroubleBrewingWorldEnumerator.enumerate(
+            ruleset,
+            knowledge,
+            EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            extendedRoles,
+        ).enumeratedWorlds()
+            .filter { it.rolesBySeat[2] == RoleId("Drunk") }
+
+        assertTrue(worlds.isNotEmpty())
+        assertTrue(worlds.all { world ->
+            val shown = world.shownRolesBySeat[2] ?: return@all false
+            extendedRoles.single { it.id == shown }.type == CharacterType.TOWNSFOLK &&
+                shown !in world.rolesBySeat.values
+        })
     }
 
     @Test fun `pair information keeps actual and interaction-local registration explanations`() {

@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
@@ -12,6 +13,7 @@ import java.math.BigInteger
 internal enum class FirstNightBundleCandidateFactorKind {
     PAIR_INFORMATION,
     FIXED_NUMERIC_INFORMATION,
+    BOOLEAN_INFORMATION,
     RED_HERRING,
     DEMON_BLUFFS,
 }
@@ -59,8 +61,8 @@ internal data class FirstNightBundleCandidateFactorAudit(
  *
  * [rawCartesianCount] is always the product of the currently represented canonical producer
  * factors. [legalCompleteBundleCount] is deliberately nullable: it is exact only when no staged
- * complexity is present. A Drunk, Spy/Recluse registration source, or Poisoner means the current
- * healthy-slice producer set is known to be incomplete, so this audit must not pretend its partial
+ * complexity is present. Unsupported Drunk information roles, Spy/Recluse registration sources, or
+ * Poisoner mean the represented producer set is incomplete, so this audit must not pretend its partial
  * product is the count of complete legal Night 1 bundles.
  *
  * [representedPublicProjectionUpperBound] is the Cartesian product after removing factors that are
@@ -115,7 +117,9 @@ internal data class FirstNightBundleCandidateSpaceAudit(
  * Recommendation-owned live-producer audit for Trouble Brewing Night 1.
  *
  * The object only composes producer identities/counts:
- * - Washerwoman/Librarian/Investigator legality stays in [NaturalPairInformationCandidateGenerator];
+ * - healthy Washerwoman/Librarian/Investigator producer identity stays in
+ *   [NaturalPairInformationCandidateGenerator], while impaired complete display legality stays in
+ *   [PairInformationLegalDomain];
  * - Chef/Empath truth values stay in [FirstNightNumericInformationSemantics];
  * - Fortune Teller Red Herring and demon-bluff legality stay in [SetupCandidateGenerator].
  *
@@ -142,6 +146,7 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
         val factors = buildList {
             addAll(pairInformationFactors(game, roleDefinitions))
             addAll(numericInformationFactors(game))
+            addAll(drunkFortuneTellerResultFactors(game))
             redHerringFactor(game)?.let(::add)
             demonBluffsFactor(game, roleDefinitions)?.let(::add)
         }.sortedBy(FirstNightBundleCandidateFactorAudit::factorId)
@@ -160,7 +165,13 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
             representedPublicProjectionUpperBound = representedPublicProjectionUpperBound,
             legalCompleteBundleCount = rawCartesianCount.takeIf { deferredComplexities.isEmpty() },
             excludedPlayerControlledElements = buildSet {
-                if (game.players.any { it.actualRole == fortuneTeller }) add(FORTUNE_TELLER_TARGET)
+                if (game.players.any { source ->
+                        source.actualRole == fortuneTeller ||
+                            (source.actualRole == drunk && source.shownRole == fortuneTeller)
+                    }
+                ) {
+                    add(FORTUNE_TELLER_TARGET)
+                }
             },
             deferredComplexities = deferredComplexities,
         )
@@ -171,52 +182,111 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
         roleDefinitions: List<RoleDefinition>,
     ): List<FirstNightBundleCandidateFactorAudit> = game.players
         .asSequence()
-        .filter { source ->
-            source.alive && !source.poisoned && source.actualRole in pairRoles
+        .mapNotNull { source ->
+            if (!source.alive) return@mapNotNull null
+            val abilityRole = when {
+                source.actualRole == drunk && source.shownRole != null && source.shownRole in pairRoles -> source.shownRole
+                !source.poisoned && source.actualRole in pairRoles -> source.actualRole
+                else -> return@mapNotNull null
+            }
+            val reliability = if (source.actualRole == drunk) {
+                ReliabilityState.DRUNK
+            } else {
+                ReliabilityState.RELIABLE
+            }
+            source to (abilityRole to reliability)
         }
-        .sortedBy { it.seat }
-        .map { source ->
-            val roleKey = pairRoleKey(source.actualRole)
-            val candidates = NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace(
-                game = game,
-                sourceSeat = source.seat,
-                abilityRole = source.actualRole,
-                roleDefinitions = roleDefinitions,
-            )
+        .sortedBy { (source, _) -> source.seat }
+        .map { (source, ability) ->
+            val (abilityRole, reliability) = ability
+            val roleKey = pairRoleKey(abilityRole)
+            val optionIds = if (reliability == ReliabilityState.DRUNK) {
+                PairInformationLegalDomain.generate(
+                    game = game,
+                    roleDefinitions = roleDefinitions,
+                    sourceSeat = source.seat,
+                    abilityRole = abilityRole,
+                    reliability = reliability,
+                ).map { it.candidateId }.sorted()
+            } else {
+                NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace(
+                    game = game,
+                    sourceSeat = source.seat,
+                    abilityRole = abilityRole,
+                    roleDefinitions = roleDefinitions,
+                ).map { it.candidateId }.sorted()
+            }
             FirstNightBundleCandidateFactorAudit(
                 factorId = "pair.$roleKey.seat-${source.seat}",
                 kind = FirstNightBundleCandidateFactorKind.PAIR_INFORMATION,
                 control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
                 profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
                 sourceSeat = source.seat,
-                optionIds = candidates.map { it.candidateId }.sorted(),
+                optionIds = optionIds,
             )
         }
         .toList()
 
     private fun numericInformationFactors(game: GameState): List<FirstNightBundleCandidateFactorAudit> = game.players
         .asSequence()
-        .filter { source ->
-            source.alive && !source.poisoned && source.actualRole in numericRoles
+        .mapNotNull { source ->
+            if (!source.alive) return@mapNotNull null
+            val abilityRole = when {
+                source.actualRole == drunk && source.shownRole?.let(numericRoles::contains) == true ->
+                    requireNotNull(source.shownRole)
+                !source.poisoned && source.actualRole in numericRoles -> source.actualRole
+                else -> return@mapNotNull null
+            }
+            source to abilityRole
         }
-        .sortedBy { it.seat }
-        .map { source ->
-            val roleKey = numericRoleKey(source.actualRole)
-            val truthValues = FirstNightNumericInformationSemantics
-                .healthyTruthValues(game, source.seat)
-                .toSortedSet()
+        .sortedBy { (source, _) -> source.seat }
+        .map { (source, abilityRole) ->
+            val roleKey = numericRoleKey(abilityRole)
+            val drunkSource = source.actualRole == drunk
+            val optionIds = if (drunkSource) {
+                FirstNightNumericLegalDomain.generate(
+                    game = game,
+                    sourceSeat = source.seat,
+                    abilityRole = abilityRole,
+                    reliability = ReliabilityState.DRUNK,
+                ).map { it.candidateId }
+            } else {
+                FirstNightNumericInformationSemantics
+                    .healthyTruthValues(game, source.seat)
+                    .toSortedSet()
+                    .map { value -> "value-$value" }
+            }
             FirstNightBundleCandidateFactorAudit(
                 factorId = "numeric.$roleKey.seat-${source.seat}",
                 kind = FirstNightBundleCandidateFactorKind.FIXED_NUMERIC_INFORMATION,
-                control = if (truthValues.size <= 1) {
+                control = if (!drunkSource && optionIds.size <= 1) {
                     FirstNightBundleEntryControl.RULE_DETERMINED
                 } else {
-                    // Multiple healthy truths are produced only by legal registration alternatives.
                     FirstNightBundleEntryControl.STORYTELLER_CONTROLLED
                 },
                 profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
                 sourceSeat = source.seat,
-                optionIds = truthValues.map { value -> "value-$value" },
+                optionIds = optionIds,
+            )
+        }
+        .toList()
+
+    private fun drunkFortuneTellerResultFactors(
+        game: GameState,
+    ): List<FirstNightBundleCandidateFactorAudit> = game.players
+        .asSequence()
+        .filter { source ->
+            source.alive && source.actualRole == drunk && source.shownRole == fortuneTeller
+        }
+        .sortedBy { it.seat }
+        .map { source ->
+            FirstNightBundleCandidateFactorAudit(
+                factorId = "boolean.fortune-teller.seat-${source.seat}",
+                kind = FirstNightBundleCandidateFactorKind.BOOLEAN_INFORMATION,
+                control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
+                profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
+                sourceSeat = source.seat,
+                optionIds = listOf("answer-no", "answer-yes"),
             )
         }
         .toList()
@@ -251,7 +321,6 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
     }
 
     private fun deferredComplexities(game: GameState): Set<FirstNightBundleDeferredComplexity> = buildSet {
-        if (game.players.any { it.actualRole == drunk }) add(FirstNightBundleDeferredComplexity.DRUNK)
         if (game.players.any { it.actualRole == spy || it.actualRole == recluse }) {
             add(FirstNightBundleDeferredComplexity.SPY_RECLUSE_REGISTRATION)
         }
