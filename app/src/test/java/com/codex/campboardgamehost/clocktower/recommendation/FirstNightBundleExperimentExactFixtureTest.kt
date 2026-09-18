@@ -236,8 +236,8 @@ class FirstNightBundleExperimentExactFixtureTest {
         )
         assertEquals(AbilityState.MALFUNCTIONING_DRUNK, drunkWorld.abilityStatesBySeat[1])
 
-        assertFalse(
-            "Drunk false-info public claims are a later staged model, not healthy-stage truthful evidence.",
+        assertTrue(
+            "A mechanically credible public claim may be explained by the speaker being the Drunk shown that role.",
             TroubleBrewingWorldObservationEvaluator.evaluate(
                 world = drunkWorld,
                 roles = rolesById,
