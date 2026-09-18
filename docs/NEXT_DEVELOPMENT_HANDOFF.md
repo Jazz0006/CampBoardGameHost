@@ -15,16 +15,17 @@ Read, in order:
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
 5. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
-6. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-7. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
-8. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
-9. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
-10. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
-11. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
-12. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
-13. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
-14. Storyteller Decision Engine route;
-15. query live `main` and current checks before executable edits.
+6. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
+7. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
+8. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
+9. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
+10. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
+11. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
+12. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
+13. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
+14. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
+15. Storyteller Decision Engine route;
+16. query live `main` and current checks before executable edits.
 
 Do not restart completed FN-BUNDLE, SDE-0, SDE-1 or SDE-2A/B/C work.
 
@@ -242,7 +243,25 @@ Do not reopen D2A–D2D implementation on the next branch unless a concrete regr
 
 ## 6. CURRENT — SDE-2D3 Strategic-world quotient
 
-Fresh branch `sde-2d3-strategic-world-quotient` was created from merged `main`. Perform the fanout/representation audit before executable quotient implementation.
+Authority:
+
+`docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`
+
+The representation/fanout audit is complete; executable implementation has not started.
+
+Frozen first-slice direction:
+
+```text
+EnumeratedWorld.rolesBySeat
+    -> StrategicWorldKey(setup Demon seat, setup Minion seats)
+    -> existing exact WorldStructureAccumulator pass
+    -> ExactWorldStructureDiagnostics.strategicWorldKeys
+    -> SDE diagnostic consumers
+```
+
+Do not reconstruct the joint topology from `possibleDemonSeats` and `evilTeamSeatConfigurations`: those existing fields lose Demon/Minion pairing.
+
+Do not add the key to generic `PlayerWorldSet` / ZDD in the first slice. Do not use `currentRolesBySeat` for the v1 setup topology; Imp succession is a separate historical dynamic dimension.
 
 Goal:
 
