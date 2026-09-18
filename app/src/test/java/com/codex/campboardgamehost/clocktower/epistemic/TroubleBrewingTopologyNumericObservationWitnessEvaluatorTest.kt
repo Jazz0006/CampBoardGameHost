@@ -49,6 +49,7 @@ class TroubleBrewingTopologyNumericObservationWitnessEvaluatorTest {
         val fact = witness.single()
         assertEquals(6, fact.subjectSeat)
         assertEquals(Alignment.GOOD, fact.registeredAlignment)
+        assertEquals(RegistrationQuestion.ALIGNMENT, fact.registrationQuestion)
         assertEquals(RegistrationReason.SPY_ABILITY, fact.reason)
     }
 
@@ -76,6 +77,7 @@ class TroubleBrewingTopologyNumericObservationWitnessEvaluatorTest {
         val fact = result.registrationWitnesses.single().single()
         assertEquals(2, fact.subjectSeat)
         assertEquals(Alignment.EVIL, fact.registeredAlignment)
+        assertEquals(RegistrationQuestion.ALIGNMENT, fact.registrationQuestion)
         assertEquals(RegistrationReason.RECLUSE_ABILITY, fact.reason)
     }
 
