@@ -81,6 +81,13 @@ class EnumeratedWorldSetTest {
         // worlds where seat 1 is Chef therefore split across each mechanically legal out-of-play
         // Townsfolk shown role instead of collapsing those hidden shown-role alternatives.
         assertEquals(WorldCardinality.Exact(BigInteger("576")), result.cardinality())
+        val mechanicalWorlds = result.enumeratedWorlds()
+        assertTrue(mechanicalWorlds.any { world ->
+            world.rolesBySeat.values.count { it == RoleId("Drunk") } == 1
+        })
+        assertTrue(mechanicalWorlds.all { world ->
+            world.rolesBySeat.values.count { it == RoleId("Drunk") } <= 1
+        })
         assertEquals(setOf(RoleId("Chef"), RoleId("Drunk")), result.possibleRoles(1))
         assertEquals(setOf(2, 3, 4, 5), result.possibleDemonSeats())
         assertEquals(WorldCardinality.Exact(BigInteger("144")), result.demonWorldCount(2))
