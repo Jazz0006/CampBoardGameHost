@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
-import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 
@@ -55,14 +54,15 @@ internal object TroubleBrewingTopologyHypotheticalBundleEvaluator {
             "Every topology-first bundle query must target the supplied knowledge recipient."
         }
 
-        val playerCount = knowledge.setupKnowledge
-            .filterIsInstance<InformationProposition.PlayerCount>()
-            .map(InformationProposition.PlayerCount::value)
-            .distinct()
-            .singleOrNull()
-            ?: return ExactStrategicTopologyBundleEvaluation.Deferred(
-                listOf(InformationProposition.PlayerCount(0)),
-            )
+        val playerCount = requireNotNull(
+            knowledge.setupKnowledge
+                .filterIsInstance<InformationProposition.PlayerCount>()
+                .map(InformationProposition.PlayerCount::value)
+                .distinct()
+                .singleOrNull(),
+        ) {
+            "Topology-first bundle evaluation requires exactly one player-count setup fact."
+        }
 
         val baseCandidates = mutableListOf<ProfileTopology>()
         val unsupported = linkedSetOf<InformationProposition>()
