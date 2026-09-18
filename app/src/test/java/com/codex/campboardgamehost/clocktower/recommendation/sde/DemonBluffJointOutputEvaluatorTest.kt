@@ -78,8 +78,8 @@ class DemonBluffJointOutputEvaluatorTest {
 
     @Test
     fun `role support delegates to exact shown-role counterworld and is shared across triplets`() {
-        val candidates = SetupDemonBluffJointOutputAdapter.legalCandidates(game, roles).take(8)
-        val recipientSeats = setOf(1, 2)
+        val candidates = SetupDemonBluffJointOutputAdapter.legalCandidates(game, roles)
+        val recipientSeats = setOf(1)
         val timelineBefore = exactContext.actionTimeline.reducerFacts()
         val logBefore = exactContext.observationLog.records.toList()
         val publicWholeBundle = listOf(publicChefClaim())
