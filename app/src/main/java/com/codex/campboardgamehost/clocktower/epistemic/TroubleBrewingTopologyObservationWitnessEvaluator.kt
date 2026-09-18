@@ -241,16 +241,29 @@ internal object TroubleBrewingTopologyObservationWitnessEvaluator {
                 allowedRoles = allowedRoles,
                 question = question,
             ).special.mapNotNull { candidate ->
-                candidate.registrationFact(
+                val reason = candidate.specialReason ?: return@mapNotNull null
+                val fact = RegistrationFact(
                     interactionId = observation.observationId,
-                    question = question,
-                )?.let { fact ->
-                    SpecialRegistrationBranch(
-                        subjectSeat = subjectSeat,
-                        actualRole = actual.id,
-                        registrationFact = fact,
-                    )
-                }
+                    subjectSeat = subjectSeat,
+                    registeredRole = (proposition as? InformationProposition.RoleAt)?.role,
+                    registeredType =
+                        (proposition as? InformationProposition.CharacterTypeAt)?.characterType,
+                    registeredAlignment = when (reason) {
+                        com.codex.campboardgamehost.clocktower.domain.RegistrationReason.SPY_ABILITY ->
+                            Alignment.GOOD
+                        com.codex.campboardgamehost.clocktower.domain.RegistrationReason.RECLUSE_ABILITY ->
+                            Alignment.EVIL
+                        com.codex.campboardgamehost.clocktower.domain.RegistrationReason.OTHER ->
+                            return@mapNotNull null
+                    },
+                    registrationQuestion = question,
+                    reason = reason,
+                )
+                SpecialRegistrationBranch(
+                    subjectSeat = subjectSeat,
+                    actualRole = actual.id,
+                    registrationFact = fact,
+                )
             }
         }
     }
