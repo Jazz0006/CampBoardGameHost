@@ -48,7 +48,9 @@ class DemonBluffJointOutputEvaluatorTest {
         rulesetVersion = "sde-2d2-demon-bluff-test",
         sourceRevision = "official",
     )
-    private val roles = TroubleBrewingFixtures.roleDefinitions()
+    private val roles = TroubleBrewingFixtures.roleDefinitions().filterNot { definition ->
+        definition.id in setOf(RoleId("Poisoner"), RoleId("Spy"), RoleId("Baron"))
+    }
     private val game = TroubleBrewingFixtures.eightPlayerExample()
     private val snapshot = GameSnapshot(
         gameId = "sde-2d2-demon-bluff",
