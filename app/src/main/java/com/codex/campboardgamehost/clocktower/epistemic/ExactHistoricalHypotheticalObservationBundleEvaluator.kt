@@ -80,6 +80,7 @@ internal data class ExactHypotheticalObservationBundleQuery(
 internal data class ExactWorldStructureDiagnostics(
     val possibleDemonSeats: Set<Int>,
     val evilTeamSeatConfigurations: Set<Set<Int>>,
+    val strategicWorldKeys: Set<StrategicWorldKey>,
     val forcedGoodSeats: Set<Int>,
     val forcedEvilSeats: Set<Int>,
     val evilCoverSeats: Set<Int>,
@@ -87,11 +88,13 @@ internal data class ExactWorldStructureDiagnostics(
     val demonCoverSize: Int get() = possibleDemonSeats.size
     val evilCoverSize: Int get() = evilCoverSeats.size
     val distinctEvilTeamConfigurationCount: Int get() = evilTeamSeatConfigurations.size
+    val distinctStrategicWorldCount: Int get() = strategicWorldKeys.size
 
     companion object {
         val EMPTY = ExactWorldStructureDiagnostics(
             possibleDemonSeats = emptySet(),
             evilTeamSeatConfigurations = emptySet(),
+            strategicWorldKeys = emptySet(),
             forcedGoodSeats = emptySet(),
             forcedEvilSeats = emptySet(),
             evilCoverSeats = emptySet(),
@@ -588,6 +591,7 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
     ) {
         private val possibleDemonSeats = sortedSetOf<Int>()
         private val evilConfigurations = linkedSetOf<Set<Int>>()
+        private val strategicWorldKeys = linkedSetOf<StrategicWorldKey>()
         private val evilCoverSeats = sortedSetOf<Int>()
         private var forcedGoodSeats: MutableSet<Int>? = null
         private var forcedEvilSeats: MutableSet<Int>? = null
@@ -609,6 +613,7 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                 roles.getValue(current.getValue(seat)).alignment == Alignment.GOOD
             }
             evilConfigurations += evilSeats.toSet()
+            strategicWorldKeys += StrategicWorldKey.from(world, roles)
             evilCoverSeats += evilSeats
             if (forcedGoodSeats == null) {
                 forcedGoodSeats = goodSeats
@@ -624,9 +629,18 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
             val canonicalConfigurations = evilConfigurations
                 .sortedWith(compareBy<Set<Int>>({ it.size }, { it.joinToString(",") }))
                 .toCollection(linkedSetOf())
+            val canonicalStrategicWorldKeys = strategicWorldKeys
+                .sortedWith(
+                    compareBy<StrategicWorldKey>(
+                        StrategicWorldKey::demonSeat,
+                        { key -> key.minionSeats.joinToString(",") },
+                    ),
+                )
+                .toCollection(linkedSetOf())
             return ExactWorldStructureDiagnostics(
                 possibleDemonSeats = possibleDemonSeats,
                 evilTeamSeatConfigurations = canonicalConfigurations,
+                strategicWorldKeys = canonicalStrategicWorldKeys,
                 forcedGoodSeats = forcedGoodSeats.orEmpty().toSortedSet(),
                 forcedEvilSeats = forcedEvilSeats.orEmpty().toSortedSet(),
                 evilCoverSeats = evilCoverSeats,
