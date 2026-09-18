@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-18 Australia/Sydney  
+> Updated: 2026-09-19 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -152,7 +152,7 @@ Production cutover has **not** occurred. `SetupRecommendationService` and its `d
 
 PR #146 was user-authorized and merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`.
 
-### 2.3 SDE-2D3 — strategic-world quotient — COMPLETE ON PR #147
+### 2.3 SDE-2D3 — strategic-world quotient — COMPLETE ON MAIN
 
 Authority:
 
@@ -176,7 +176,9 @@ Real Clingo cross-validation   SUCCESS
 CI gate                        SUCCESS
 ```
 
-PR #147 remains draft and unmerged. Merge remains user-authorized only.
+PR #147 was user-authorized and merged to live `main` as:
+
+`2cab06efeee5692024e065c632deefe765ca1618`
 
 Implemented result:
 
@@ -217,19 +219,65 @@ D2D4 continues on fresh branch `sde-2d4-5-15-validation-performance`.
 Focused authority:
 
 - `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
-- `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`.
+- `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
+- `docs/SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`.
 
-Audit result:
+Audit result remains:
 
-- D2D3 compressed strategic identity but current exact discovery still enumerates raw mechanical worlds;
-- current ZDD construction still consumes the same raw stream and therefore does not remove witness-discovery complexity;
-- the existing 15-player A3 benchmark is heavily role-pinned and is not representative of a pristine player-visible baseline;
-- the 15-player strategic topology bound is only 5,460 while current source semantics can expose mechanical witness variants on the order of 10^17 in a minimally constrained baseline;
-- D2D4 therefore requires normalized diagnostics plus topology-first exact witness feasibility, with the exhaustive enumerator retained as bounded oracle evidence.
-- D4A normalized ratio projection and D4B T3 scale harness are implemented on the D2D4 branch; full checkpoint validation is the next gate before D4C1 topology-domain implementation.
-- D4C fanout audit freezes the scalable v1 surface to pristine Night-1 propositions actually emitted by current SDE; historical/B4 replay remains outside the new feasibility seam.
+- D2D3 compressed strategic identity but raw mechanical enumeration remained the discovery bottleneck;
+- current ZDD construction still consumes that raw stream and therefore does not solve witness discovery;
+- 15-player strategic topology is bounded at 5,460 keys while minimally constrained mechanical witness multiplicity can reach roughly `10^17`;
+- exhaustive enumeration remains the bounded correctness oracle, not the production large-player discovery algorithm.
 
-Rules/setup semantics already support 5–15 non-Traveller players, but recommendation correctness/calibration/performance are not yet proven across that range.
+Current D2D4 implementation on draft PR #149 now includes:
+
+```text
+D4A   normalized strategic ratios
+D4B   reproducible source-derived / bounded-prefix scale evidence
+D4C1  exact StrategicWorldKey topology domain
+D4C2  setup role/type/shown-role witness existence
+D4C3  Drunk / Poisoner finite-resource AbilityState feasibility
+D4C4a identity observations + Spy/Recluse registration witness semantics
+D4C4b Chef / Empath / Fortune Teller / Red Herring topology semantics
+D4C4c composable AnyOf / AllOf / supported Not observation branches
+D4C5  parallel exact strategic whole-bundle evaluator with shared witness resources
+D4D   bounded setup/observation differential evidence
+D4E   5–15 topology-bundle performance harness
+```
+
+The setup witness tail was optimized from Townsfolk/Outsider seat-split enumeration to an exact type-quota → role → seat max-flow existence proof. This is an implementation optimization only; the bounded exhaustive differential remains the semantic oracle.
+
+A subsequent FAST failure exposed three issues. Two were stale/underspecified tests and one was a real standard-profile Baron contradiction bug caused by:
+
+```kotlin
+baron?.let { base.withForbiddenInPlay(it.id) } ?: base
+```
+
+The Elvis fallback swallowed the intended `null` contradiction. That bug is fixed at current executable head:
+
+`f2ba4b8e29514ecc398626acf26526b1445d7eb6`
+
+Current checkpoint validation:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android FAST unit tests        SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+ASP contract tests             SKIPPED by classifier
+Android testFull / APK         SKIPPED at this FAST checkpoint
+```
+
+PR #149 remains draft and unmerged. No production recommendation consumer has cut over to the topology-first contract, and the legacy exact mechanical cardinality fields retain their original meaning.
+
+Remaining D2D4 acceptance work:
+
+1. retain/expand bounded whole-bundle differential evidence so one shared witness is proven against the exhaustive oracle;
+2. run the explicit D4E 5–15 CPU/heap/latency harness and record its evidence;
+3. run a final `[full-ci]` T4 checkpoint including Android `testFull`, debug APK, ASP and Real Clingo;
+4. update PR #149 body and final roadmap/handoff only after those gates are green.
+
+Rules/setup semantics already support 5–15 non-Traveller players, but D2D4 must not be marked COMPLETE until the remaining differential/performance/T4 acceptance evidence is recorded.
 
 Evidence must cover:
 
