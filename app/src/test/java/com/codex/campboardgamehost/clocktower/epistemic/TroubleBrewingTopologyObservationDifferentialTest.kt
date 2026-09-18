@@ -13,6 +13,13 @@ import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+/**
+ * Bounded exact differential oracle for topology-first observation semantics.
+ *
+ * This deliberately materializes exhaustive mechanical worlds. It remains mandatory affected/full
+ * evidence, but is excluded from the ordinary FAST edit loop because exhaustive enumeration is a
+ * T2/T3 execution characteristic rather than a cheap unit-test workload.
+ */
 class TroubleBrewingTopologyObservationDifferentialTest {
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
     private val rolesById = roles.associateBy(RoleDefinition::id)
