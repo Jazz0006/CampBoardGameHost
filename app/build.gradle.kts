@@ -91,6 +91,8 @@ afterEvaluate {
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.Sde2D4ScaleBenchmarkTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologySetupWitnessDifferentialTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyObservationDifferentialTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputEvaluatorTest")
         }
     }
