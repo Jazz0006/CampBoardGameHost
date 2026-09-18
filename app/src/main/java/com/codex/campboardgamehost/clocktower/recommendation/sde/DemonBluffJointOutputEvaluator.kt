@@ -16,6 +16,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.epistemic.StrategicWorldKey
 
 /**
  * One already-legal Demon bluff triplet projected into the SDE planning vocabulary.
@@ -67,12 +68,19 @@ internal data class DemonBluffTripletRecipientDiagnostics(
     val unionEvilTeamSeatConfigurations: Set<Set<Int>>,
     val sharedEvilTeamSeatConfigurations: Set<Set<Int>>,
     val distinctRoleTopologyPatternCount: Int,
+    val unionStrategicWorldKeys: Set<StrategicWorldKey>,
+    val sharedStrategicWorldKeys: Set<StrategicWorldKey>,
+    val distinctRoleStrategicPatternCount: Int,
 ) {
     init {
         require(recipientSeat > 0)
         require(distinctRoleTopologyPatternCount in 1..3)
+        require(distinctRoleStrategicPatternCount in 1..3)
         require(sharedEvilTeamSeatConfigurations.all(unionEvilTeamSeatConfigurations::contains)) {
             "Shared Demon bluff topology support must be a subset of the triplet union."
+        }
+        require(sharedStrategicWorldKeys.all(unionStrategicWorldKeys::contains)) {
+            "Shared Demon bluff strategic-world support must be a subset of the triplet union."
         }
     }
 }
@@ -276,6 +284,10 @@ internal object TroubleBrewingDemonBluffJointOutputEvaluator {
             val diagnostic = support.byRecipient.single { it.recipientSeat == recipientSeat }
             support.role to diagnostic.afterStructure.evilTeamSeatConfigurations
         }
+        val strategicKeysByRole = roleSupports.map { support ->
+            val diagnostic = support.byRecipient.single { it.recipientSeat == recipientSeat }
+            support.role to diagnostic.afterStructure.strategicWorldKeys
+        }
         val union = configurationsByRole
             .flatMap { it.second }
             .toCollection(linkedSetOf())
@@ -285,12 +297,22 @@ internal object TroubleBrewingDemonBluffJointOutputEvaluator {
                 accumulated.intersect(configurations)
             }
             .toCollection(linkedSetOf())
+        val strategicUnion = strategicKeysByRole
+            .flatMap { it.second }
+            .toCollection(linkedSetOf())
+        val strategicShared = strategicKeysByRole
+            .map { it.second }
+            .reduce { accumulated, keys ->
+                accumulated.intersect(keys)
+            }
+            .toCollection(linkedSetOf())
         val supportedRoles = roleSupports
             .filter { support ->
                 support.byRecipient.single { it.recipientSeat == recipientSeat }.after.value.signum() > 0
             }
             .mapTo(linkedSetOf(), DemonBluffRoleSupport::role)
         val distinctPatterns = configurationsByRole.map { it.second }.distinct().size
+        val distinctStrategicPatterns = strategicKeysByRole.map { it.second }.distinct().size
 
         return DemonBluffTripletRecipientDiagnostics(
             recipientSeat = recipientSeat,
@@ -298,6 +320,9 @@ internal object TroubleBrewingDemonBluffJointOutputEvaluator {
             unionEvilTeamSeatConfigurations = union,
             sharedEvilTeamSeatConfigurations = shared,
             distinctRoleTopologyPatternCount = distinctPatterns,
+            unionStrategicWorldKeys = strategicUnion,
+            sharedStrategicWorldKeys = strategicShared,
+            distinctRoleStrategicPatternCount = distinctStrategicPatterns,
         )
     }
 
