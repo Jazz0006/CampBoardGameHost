@@ -6,17 +6,37 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 
 /**
- * Rules authority for healthy Fortune Teller target legality and the mechanically correct result.
+ * Rules authority for Fortune Teller target legality and the mechanically correct healthy result.
  *
- * This stage intentionally models the ordinary healthy case only. Recluse registration and
- * malfunctioning information remain separate staged concerns and must not be silently folded into
- * this helper.
+ * Target legality follows the source's perceived role so a Drunk shown Fortune Teller can make the
+ * same player-controlled selection. [healthyResult] remains the functioning-ability truth owner;
+ * malfunctioning result policy stays outside this rules helper.
  */
 internal object FortuneTellerInformationSemantics {
     private val fortuneTeller = RoleId("Fortune Teller")
 
     fun legalTargetPairs(game: GameState): List<Pair<Int, Int>> {
-        if (game.players.none { it.alive && it.actualRole == fortuneTeller }) return emptyList()
+        val source = game.players.firstOrNull { it.alive && it.actualRole == fortuneTeller }
+            ?: return emptyList()
+        return legalTargetPairs(game, source.seat)
+    }
+
+    fun legalTargetPairs(
+        game: GameState,
+        sourceSeat: Int,
+    ): List<Pair<Int, Int>> {
+        val source = game.playerAt(sourceSeat) ?: return emptyList()
+        if (!source.alive) return emptyList()
+        val perceivedRole = AbilityFunctioningSemantics.perceivedRole(
+            AbilitySubject(
+                actualRole = source.actualRole.value,
+                shownRole = source.shownRole?.value,
+                isPoisoned = source.poisoned,
+                isAlive = source.alive,
+            ),
+        )?.let(::RoleId)
+        if (perceivedRole != fortuneTeller) return emptyList()
+
         val seats = game.players.map { it.seat }.sorted()
         return buildList {
             for (firstIndex in 0 until seats.lastIndex) {
