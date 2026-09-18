@@ -1,8 +1,8 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-18 Australia/Sydney  
-> Status: **CURRENT / START SDE-2D1**  
-> Base checkpoint: PR #144 merged to `main` as `89453c902741699b072d11320d85a5561172abe5`  
+> Status: **SDE-2D1 COMPLETE / PR #145 FULL-CI GREEN — pending user-authorized merge**  
+> Base checkpoint: PR #144 merged to `main` as `89453c902741699b072d11320d85a5561172abe5`; PR #145 is the validated D1 successor, not yet merged  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
@@ -47,7 +47,26 @@ Android FAST unit tests        SUCCESS
 CI gate                        SUCCESS
 ```
 
-The next executable stage is **SDE-2D1**, not SDE-3.
+SDE-2D1 is now implemented on draft PR #145.
+
+Final executable acceptance head:
+
+`27b17d5e0eedea3367f5a1b69ed2093fb958f1af`
+
+Validated:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android testFull               SUCCESS
+Debug APK assemble             SUCCESS
+ASP contract tests             SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+```
+
+PR #145 remains draft and unmerged. Do not convert it to Ready or merge it without explicit user authorization.
+
+After merge, the next executable stage is **SDE-2D2**, not SDE-3.
 
 ## 2. Frozen architecture entering SDE-2D
 
@@ -170,35 +189,45 @@ Role-information utility
     useful identity/role information even when topology is unchanged
 ```
 
-## 4. CURRENT — SDE-2D1 Drunk whole-bundle completion
+## 4. COMPLETE — SDE-2D1 Drunk whole-bundle completion
 
-Begin with a focused fanout/ownership audit.
+Authority:
 
-Audit at minimum:
+- `docs/SDE_2D1_DRUNK_WHOLE_BUNDLE_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
+- draft PR #145;
+- final executable acceptance head `27b17d5e0eedea3367f5a1b69ed2093fb958f1af`.
 
-- all current Drunk shown-information-role candidate producers;
-- `FirstNightBundleCandidateSpaceAudit` deferred Drunk handling;
-- `FirstNightBundleHealthyHarness` shown-role/healthy-only guards;
-- current pair/numeric/Fortune-Teller information materializers;
-- public-claim projection and exact observation semantics;
-- `FirstNightInformationMigration` planned/displayed boundaries;
-- Poisoner-driven invalidation already proven by SDE-2A/2C.
+Implemented:
 
-Then implement the smallest durable semantics required for:
+- impairment-capable public information claims;
+- exact latent shown-role state for non-recipient Drunk worlds;
+- shared-world finite malfunction-resource semantics;
+- Drunk Washerwoman/Librarian/Investigator pair whole-bundle evaluation;
+- rules-owned numeric display domain plus Drunk Chef/Empath whole-bundle evaluation;
+- Fortune Teller player-controlled target robustness plus Drunk Yes/No whole-bundle evaluation;
+- shared `HealthyCore / FullBundle / DrunkMarginal` exact consequence seam;
+- healthy harness/calibration remain healthy-only compatibility owners;
+- no Host/UI production selection cutover.
 
-1. surface-valid Drunk clue candidate generation for supported shown information roles;
-2. impaired public-claim semantics;
-3. `HealthyCore / FullBundle / DrunkMarginal` diagnostics;
-4. whole-bundle exact consequence evaluation without changing shown-role ownership;
-5. representative typed fixtures.
+Finite-resource regression evidence protects:
 
-Add a RED only when a genuine durable behavior contract is missing.
+- at most one Drunk identity per exact mechanical world;
+- Baron single-Minion profile excludes Poisoner and poison explanations;
+- current Trouble Brewing Poisoner worlds have exactly one ordinary poison target.
 
-Do not cut production selection over merely to prove this semantic slice.
+Do not generalize the last rule into a cross-script global one-poisoned-player invariant.
 
 ## 5. NEXT — SDE-2D2 Demon bluff joint-output migration
 
-After SDE-2D1 is complete:
+**Start only after PR #145 is merged. Use a fresh branch.**
+
+Read-only fanout precheck already reconfirmed:
+
+- `SetupCandidateGenerator.generateDemonBluffCandidates()` remains the legal triplet owner;
+- `SetupRecommendationService` currently supplies strategic preference through `demon-bluff-ease / bluffDifficulty`;
+- Demon bluff presentation already distinguishes applied setup decisions from pending recommendation output, providing a useful committed/persistent boundary.
+
+After PR #145 merge:
 
 - audit `SetupRecommendationService` bluff fanout and commit boundary;
 - keep `SetupCandidateGenerator.generateDemonBluffCandidates()` as legality owner;
@@ -344,4 +373,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **Start SDE-2D1 from live main. First make Drunk unreliable information a whole-bundle decision using HealthyCore / FullBundle / DrunkMarginal while preserving shown-role persistence. Then migrate uncommitted Demon bluff selection from SetupRecommendationService bluffDifficulty heuristics into SDE joint strategic output selection, with committed bluffs becoming persistent inputs. Next build an epistemic-owned strategic evil-topology quotient/feasibility seam, validate normalized semantics and performance across 5–15 players, then expand calibration. SDE-3 remains blocked until this SDE-2D gate is explicitly complete.**
+> **SDE-2D1 is fully implemented and full-ci GREEN on draft PR #145 at executable head `27b17d5e0eedea3367f5a1b69ed2093fb958f1af`, but remains unmerged pending explicit user authorization. After merge, start SDE-2D2 on a fresh branch: preserve SetupCandidateGenerator as Demon bluff legality owner, migrate still-uncommitted bluff strategic selection away from SetupRecommendationService bluffDifficulty heuristics into SDE joint-output evaluation, and prove committed bluff persistence. Then proceed to the epistemic-owned strategic evil-topology quotient, 5–15 player validation, and calibration. SDE-3 remains blocked until the complete SDE-2D gate is explicitly satisfied.**
