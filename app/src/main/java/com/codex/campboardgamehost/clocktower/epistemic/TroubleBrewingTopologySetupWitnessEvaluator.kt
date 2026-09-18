@@ -347,6 +347,14 @@ internal object TroubleBrewingTopologySetupWitnessEvaluator {
         return placeRequired(0)
     }
 
+    /**
+     * Proves the remaining exact role assignment as a single quota-constrained flow problem.
+     *
+     * Source -> CharacterType edges encode the exact remaining setup counts. Type -> role edges
+     * preserve role identity/uniqueness. Role -> seat edges apply topology/type eligibility and
+     * seat-local forbidden-role constraints. Saturating every seat therefore proves one complete
+     * assignment without enumerating Townsfolk/Outsider seat partitions or role permutations.
+     */
     private fun canFillRemaining(
         assignment: Map<Int, RoleId>,
         usedRoles: Set<RoleId>,
@@ -367,7 +375,6 @@ internal object TroubleBrewingTopologySetupWitnessEvaluator {
             .map { catalog.getValue(it).type }
             .groupingBy { it }
             .eachCount()
-
         val remainingNeed = targetCounts.mapValues { (type, target) ->
             target - (assignedCounts[type] ?: 0)
         }
@@ -375,140 +382,128 @@ internal object TroubleBrewingTopologySetupWitnessEvaluator {
 
         val unassignedSeats = (1..playerCount).filterNot(assignment::containsKey)
         if (remainingNeed.values.sum() != unassignedSeats.size) return false
+        if (unassignedSeats.isEmpty()) return true
 
-        for (type in listOf(CharacterType.MINION, CharacterType.DEMON)) {
-            val eligibleSeats = unassignedSeats.count { type in allowedTypes.getValue(it) }
-            if (eligibleSeats != remainingNeed.getValue(type)) return false
-        }
-
-        val goodSeats = unassignedSeats.filter { seat ->
-            CharacterType.TOWNSFOLK in allowedTypes.getValue(seat) ||
-                CharacterType.OUTSIDER in allowedTypes.getValue(seat)
-        }
-        val forcedTownsfolk = goodSeats.count {
-            allowedTypes.getValue(it) == setOf(CharacterType.TOWNSFOLK)
-        }
-        val forcedOutsider = goodSeats.count {
-            allowedTypes.getValue(it) == setOf(CharacterType.OUTSIDER)
-        }
-        val townsfolkNeed = remainingNeed.getValue(CharacterType.TOWNSFOLK)
-        val outsiderNeed = remainingNeed.getValue(CharacterType.OUTSIDER)
-        if (townsfolkNeed < forcedTownsfolk || outsiderNeed < forcedOutsider) return false
-        if (townsfolkNeed + outsiderNeed != goodSeats.size) return false
-
-        val forcedTownsfolkSeats = goodSeats.filter {
-            allowedTypes.getValue(it) == setOf(CharacterType.TOWNSFOLK)
-        }
-        val forcedOutsiderSeats = goodSeats.filter {
-            allowedTypes.getValue(it) == setOf(CharacterType.OUTSIDER)
-        }
-        val flexibleGoodSeats = goodSeats.filter {
-            allowedTypes.getValue(it).containsAll(
-                setOf(CharacterType.TOWNSFOLK, CharacterType.OUTSIDER),
-            )
-        }
-        val extraOutsiders = outsiderNeed - forcedOutsiderSeats.size
-        if (extraOutsiders !in 0..flexibleGoodSeats.size) return false
-
-        val evilTypeBySeat = unassignedSeats
-            .filter { it !in goodSeats }
-            .associateWith { seat ->
-                allowedTypes.getValue(seat).singleOrNull() ?: return false
-            }
-
-        for (extraOutsiderSeats in combinations(flexibleGoodSeats, extraOutsiders)) {
-            val outsiderSeats = forcedOutsiderSeats + extraOutsiderSeats
-            val outsiderSet = outsiderSeats.toSet()
-            val typeBySeat = buildMap {
-                putAll(evilTypeBySeat)
-                forcedTownsfolkSeats.forEach { put(it, CharacterType.TOWNSFOLK) }
-                outsiderSeats.forEach { put(it, CharacterType.OUTSIDER) }
-                flexibleGoodSeats.filterNot(outsiderSet::contains)
-                    .forEach { put(it, CharacterType.TOWNSFOLK) }
-            }
-            if (typeBySeat.size != unassignedSeats.size) continue
-
-            val allTypesMatch = targetCounts.keys.all { type ->
-                val seats = unassignedSeats.filter { typeBySeat[it] == type }
-                exactRoleMatchingExists(
-                    seats = seats,
-                    type = type,
-                    usedRoles = usedRoles,
-                    catalog = catalog,
-                    forbiddenRoles = forbiddenRoles,
-                    forbiddenRolesBySeat = forbiddenRolesBySeat,
-                )
-            }
-            if (allTypesMatch) return true
-        }
-
-        return false
-    }
-
-    private fun exactRoleMatchingExists(
-        seats: List<Int>,
-        type: CharacterType,
-        usedRoles: Set<RoleId>,
-        catalog: Map<RoleId, RoleDefinition>,
-        forbiddenRoles: Set<RoleId>,
-        forbiddenRolesBySeat: Map<Int, Set<RoleId>>,
-    ): Boolean {
-        if (seats.isEmpty()) return true
         val availableRoles = catalog.values
             .filter { definition ->
-                definition.type == type &&
-                    definition.id !in usedRoles &&
-                    definition.id !in forbiddenRoles
+                definition.id !in usedRoles && definition.id !in forbiddenRoles
             }
-            .map(RoleDefinition::id)
-        if (availableRoles.size < seats.size) return false
-
-        val roleToSeat = mutableMapOf<RoleId, Int>()
-        fun augment(seat: Int, visited: MutableSet<RoleId>): Boolean {
-            val candidates = availableRoles.filterNot {
-                it in forbiddenRolesBySeat[seat].orEmpty()
+            .sortedBy { it.id.value }
+        if (targetCounts.keys.any { type ->
+                availableRoles.count { it.type == type } < remainingNeed.getValue(type)
             }
-            for (role in candidates) {
-                if (!visited.add(role)) continue
-                val previousSeat = roleToSeat[role]
-                if (previousSeat == null || augment(previousSeat, visited)) {
-                    roleToSeat[role] = seat
-                    return true
-                }
-            }
+        ) {
             return false
         }
 
-        return seats
-            .sortedBy { seat ->
-                availableRoles.count { role -> role !in forbiddenRolesBySeat[seat].orEmpty() }
+        val types = listOf(
+            CharacterType.TOWNSFOLK,
+            CharacterType.OUTSIDER,
+            CharacterType.MINION,
+            CharacterType.DEMON,
+        )
+        val source = 0
+        val typeStart = 1
+        val roleStart = typeStart + types.size
+        val seatStart = roleStart + availableRoles.size
+        val sink = seatStart + unassignedSeats.size
+        val graph = Array(sink + 1) { mutableListOf<FlowEdge>() }
+
+        types.forEachIndexed { index, type ->
+            addFlowEdge(
+                graph = graph,
+                from = source,
+                to = typeStart + index,
+                capacity = remainingNeed.getValue(type),
+            )
+        }
+
+        availableRoles.forEachIndexed { roleIndex, definition ->
+            val typeIndex = types.indexOf(definition.type)
+            if (typeIndex < 0) return false
+            val roleNode = roleStart + roleIndex
+            addFlowEdge(graph, typeStart + typeIndex, roleNode, 1)
+
+            unassignedSeats.forEachIndexed { seatIndex, seat ->
+                if (
+                    definition.type in allowedTypes.getValue(seat) &&
+                    definition.id !in forbiddenRolesBySeat[seat].orEmpty()
+                ) {
+                    addFlowEdge(graph, roleNode, seatStart + seatIndex, 1)
+                }
             }
-            .all { seat -> augment(seat, linkedSetOf()) }
+        }
+
+        unassignedSeats.indices.forEach { seatIndex ->
+            addFlowEdge(graph, seatStart + seatIndex, sink, 1)
+        }
+
+        return maxFlow(graph, source, sink) == unassignedSeats.size
     }
 
-    private fun <T> combinations(
-        values: List<T>,
-        count: Int,
-    ): Sequence<List<T>> = sequence {
-        if (count < 0 || count > values.size) return@sequence
-        if (count == 0) {
-            yield(emptyList())
-            return@sequence
-        }
-        val selected = ArrayList<T>(count)
-        suspend fun SequenceScope<List<T>>.walk(start: Int) {
-            if (selected.size == count) {
-                yield(selected.toList())
-                return
+    private data class FlowEdge(
+        val to: Int,
+        var capacity: Int,
+        val reverseIndex: Int,
+    )
+
+    private fun addFlowEdge(
+        graph: Array<MutableList<FlowEdge>>,
+        from: Int,
+        to: Int,
+        capacity: Int,
+    ) {
+        if (capacity <= 0) return
+        val forward = FlowEdge(to = to, capacity = capacity, reverseIndex = graph[to].size)
+        val reverse = FlowEdge(to = from, capacity = 0, reverseIndex = graph[from].size)
+        graph[from] += forward
+        graph[to] += reverse
+    }
+
+    private fun maxFlow(
+        graph: Array<MutableList<FlowEdge>>,
+        source: Int,
+        sink: Int,
+    ): Int {
+        var total = 0
+        while (true) {
+            val parentNode = IntArray(graph.size) { -1 }
+            val parentEdge = IntArray(graph.size) { -1 }
+            val queue = ArrayDeque<Int>()
+            parentNode[source] = source
+            queue.addLast(source)
+
+            while (queue.isNotEmpty() && parentNode[sink] < 0) {
+                val node = queue.removeFirst()
+                graph[node].forEachIndexed { edgeIndex, edge ->
+                    if (edge.capacity > 0 && parentNode[edge.to] < 0) {
+                        parentNode[edge.to] = node
+                        parentEdge[edge.to] = edgeIndex
+                        queue.addLast(edge.to)
+                    }
+                }
             }
-            val remaining = count - selected.size
-            for (index in start..values.size - remaining) {
-                selected += values[index]
-                walk(index + 1)
-                selected.removeAt(selected.lastIndex)
+            if (parentNode[sink] < 0) return total
+
+            var augment = Int.MAX_VALUE
+            var node = sink
+            while (node != source) {
+                val from = parentNode[node]
+                val edge = graph[from][parentEdge[node]]
+                augment = minOf(augment, edge.capacity)
+                node = from
             }
+
+            node = sink
+            while (node != source) {
+                val from = parentNode[node]
+                val edge = graph[from][parentEdge[node]]
+                edge.capacity -= augment
+                graph[node][edge.reverseIndex].capacity += augment
+                node = from
+            }
+            total += augment
         }
-        walk(0)
     }
 
     private fun topologyHasLegalShape(
