@@ -27,6 +27,8 @@ SDE-1E structured production shadow integration        COMPLETE / PR #144
 SDE-2A Drunk ownership / revision replanning contract  COMPLETE / PR #144
 SDE-2B Spy/Recluse exact registration witness binding  COMPLETE / PR #144
 SDE-2C Poisoner invalidation / broad replanning        COMPLETE / PR #144
+SDE-2D1 Drunk whole-bundle completion                   COMPLETE / PR #145 draft, pending merge
+SDE-2D2 Demon bluff joint-output migration              NEXT AFTER PR #145 MERGE
 SDE-2D pre-SDE-3 strategic generalization              CURRENT
 ```
 
@@ -76,7 +78,34 @@ The pre-SDE-3 algorithm review is complete. The three previously open questions 
 
 Do **not** begin SDE-3 until SDE-2D reaches its acceptance gate.
 
-### 2.1 SDE-2D1 — Drunk whole-bundle completion
+### 2.1 SDE-2D1 — Drunk whole-bundle completion — COMPLETE ON PR #145
+
+Implementation is complete on draft PR #145 and has passed the full acceptance gate. Merge remains user-authorized only.
+
+Final executable acceptance head:
+
+`27b17d5e0eedea3367f5a1b69ed2093fb958f1af`
+
+Validation:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android testFull               SUCCESS
+Debug APK assemble             SUCCESS
+ASP contract tests             SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+```
+
+Implemented result:
+
+- supported Drunk pair/numeric/Fortune-Teller information is now a first-class whole-bundle candidate;
+- public claims admit hidden Drunk/Poisoner malfunction explanations without leaking hidden state;
+- exact worlds carry latent non-recipient Drunk shown roles;
+- shared exact evaluation exposes `HealthyCore / FullBundle / DrunkMarginal`;
+- Fortune Teller target pairs remain player-controlled robustness inputs;
+- exact-world finite-resource tests protect one Drunk per world and Trouble Brewing Poisoner/Baron constraints;
+- no production recommendation cutover occurred.
 
 Frozen direction:
 
@@ -87,7 +116,11 @@ Frozen direction:
 - evaluation separates `HealthyCore`, `FullBundle` and `DrunkMarginal`;
 - impaired public-claim semantics must distinguish functioning truth from malfunctioning permissiveness without leaking hidden Drunk/Poisoner state.
 
-### 2.2 SDE-2D2 — Demon bluff joint-output migration
+### 2.2 SDE-2D2 — Demon bluff joint-output migration — NEXT AFTER PR #145 MERGE
+
+Do not begin executable D2 changes on the D1 branch. After user-authorized merge of PR #145, create a fresh branch and begin with a focused fanout/ownership audit.
+
+A read-only precheck during D1 acceptance reconfirmed that `SetupRecommendationService` currently adds `demon-bluff-ease` from role `bluffDifficulty`, while presentation already distinguishes applied setup decisions from pending recommendations.
 
 Frozen ownership:
 
