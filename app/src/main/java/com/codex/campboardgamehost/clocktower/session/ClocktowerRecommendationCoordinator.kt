@@ -35,7 +35,13 @@ import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLeg
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
+import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffSetupShadowAdapter
+import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffSetupShadowEvaluation
+import com.codex.campboardgamehost.clocktower.recommendation.sde.ExactConsequenceContext
+import com.codex.campboardgamehost.clocktower.recommendation.sde.SetupDemonBluffJointOutputAdapter
+import com.codex.campboardgamehost.clocktower.recommendation.sde.TroubleBrewingDemonBluffJointOutputEvaluator
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 
 internal class ClocktowerRecommendationCoordinator(
     initialArchive: DecisionHistoryArchive = DecisionHistoryArchive(),
