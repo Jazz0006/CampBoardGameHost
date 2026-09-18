@@ -91,6 +91,37 @@ class EnumeratedWorldSetTest {
         )
     }
 
+    @Test fun `single-minion setup keeps Baron and Poisoner malfunction resources mutually exclusive`() {
+        val baronKnowledge = knowledge("Chef", TroubleBrewingSetupProfiles.withBaron(5))
+        val baronWorlds = TroubleBrewingWorldEnumerator.enumerate(
+            ruleset,
+            baronKnowledge,
+            EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            roles,
+        ).enumeratedWorlds()
+
+        assertTrue(baronWorlds.isNotEmpty())
+        assertTrue(baronWorlds.all { RoleId("Baron") in it.rolesBySeat.values })
+        assertTrue(baronWorlds.none { RoleId("Poisoner") in it.rolesBySeat.values })
+        assertTrue(baronWorlds.none {
+            AbilityState.MALFUNCTIONING_POISONED in it.abilityStatesBySeat.values
+        })
+
+        val standardKnowledge = knowledge("Chef", TroubleBrewingSetupProfiles.standard(5))
+        val poisonerWorlds = TroubleBrewingWorldEnumerator.enumerate(
+            ruleset,
+            standardKnowledge,
+            EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            roles,
+        ).enumeratedWorlds()
+            .filter { RoleId("Poisoner") in it.rolesBySeat.values }
+
+        assertTrue(poisonerWorlds.isNotEmpty())
+        assertTrue(poisonerWorlds.all { world ->
+            world.abilityStatesBySeat.values.count { it == AbilityState.MALFUNCTIONING_POISONED } == 1
+        })
+    }
+
     @Test fun `non-recipient Drunk worlds carry a legal latent shown Townsfolk role`() {
         val extendedRoles = roles + role("Washerwoman", CharacterType.TOWNSFOLK)
         val knowledge = PlayerKnowledgeSnapshot(
