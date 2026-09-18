@@ -6,6 +6,8 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.YesNoAnswer
+import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
@@ -24,6 +26,7 @@ internal object TroubleBrewingFirstNightInformationPropositionMaterializer {
     private val investigator = RoleId("Investigator")
     private val chef = RoleId("Chef")
     private val empath = RoleId("Empath")
+    private val fortuneTeller = RoleId("Fortune Teller")
     private val pairAbilities = setOf(washerwoman, librarian, investigator)
 
     fun materialize(
@@ -40,6 +43,27 @@ internal object TroubleBrewingFirstNightInformationPropositionMaterializer {
         information.sourceAbility == empath -> materializeEmpath(game, information)
         else -> throw IllegalArgumentException(
             "Unsupported FN-BUNDLE-1 first-night ability ${information.sourceAbility.value}.",
+        )
+    }
+
+    fun materializeFortuneTeller(
+        information: EffectDraft.PlayerInformation,
+        targetSeats: Collection<Int>,
+    ): InformationProposition.BooleanResult {
+        require(information.sourceAbility == fortuneTeller) {
+            "Fortune Teller materialization requires Fortune Teller source ability."
+        }
+        val value = information.value as? InformationValue.YesNo
+            ?: throw IllegalArgumentException("Fortune Teller information must be Yes/No.")
+        val canonicalTargets = targetSeats.toSortedSet()
+        require(canonicalTargets.size == 2) {
+            "Fortune Teller information requires exactly two distinct target seats."
+        }
+        return InformationProposition.BooleanResult(
+            metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+            sourceSeat = information.recipientSeat,
+            subjectSeats = canonicalTargets.toList(),
+            value = value.answer == YesNoAnswer.YES,
         )
     }
 
