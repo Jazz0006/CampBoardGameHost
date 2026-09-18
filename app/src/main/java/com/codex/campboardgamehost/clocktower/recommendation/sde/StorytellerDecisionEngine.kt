@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheti
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleEvaluation
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
+import com.codex.campboardgamehost.clocktower.epistemic.ExactRegistrationWitnessBinding
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 
 /**
@@ -39,11 +40,24 @@ internal data class ExactConsequenceCandidate(
     val candidateId: String,
     val recipientSeat: Int,
     val observations: List<EpistemicObservation>,
+    val registrationWitnessBindings: List<ExactRegistrationWitnessBinding> = emptyList(),
 ) {
     init {
         require(candidateId.isNotBlank()) { "Exact-consequence candidate ID cannot be blank." }
         require(recipientSeat > 0) { "Exact-consequence candidate recipient seat must be positive." }
         require(observations.isNotEmpty()) { "Exact-consequence candidate observations cannot be empty." }
+        require(
+            registrationWitnessBindings
+                .map(ExactRegistrationWitnessBinding::observationId)
+                .distinct()
+                .size == registrationWitnessBindings.size,
+        ) {
+            "An exact-consequence observation may have at most one selected registration witness."
+        }
+        val observationIds = observations.map(EpistemicObservation::observationId).toSet()
+        require(registrationWitnessBindings.all { it.observationId in observationIds }) {
+            "Every registration witness binding must reference an observation in the same exact-consequence candidate."
+        }
     }
 }
 
@@ -103,6 +117,7 @@ internal object StorytellerDecisionEngine {
                 bundleId = queryId(request.decisionId, index, candidate.candidateId),
                 recipientSeat = candidate.recipientSeat,
                 observations = candidate.observations,
+                registrationWitnessBindings = candidate.registrationWitnessBindings,
             )
         }
 
