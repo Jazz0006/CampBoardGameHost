@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Base: PR #146 merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`  
 > Branch: `sde-2d3-strategic-world-quotient`  
-> Status: **D3A–D3D IMPLEMENTED — T4 ACCEPTANCE PENDING**
+> Status: **SDE-2D3 COMPLETE / PR #147 FULL-CI GREEN — pending user-authorized merge**
 
 ## 1. Goal
 
@@ -450,24 +450,27 @@ No production recommendation cutover occurred.
 
 Raw role-world cardinality remains available as exact evidence but no longer needs to be the only strategic identity exposed to SDE.
 
-## 15. Acceptance checkpoint
+## 15. Final acceptance evidence
 
-A final `[full-ci]` T4 checkpoint is required before SDE-2D3 can be marked complete.
+Final SDE-2D3 executable acceptance head:
 
-Required final evidence:
+`2d491663a899d048b4b69522e9cdde700effa85b`
+
+Validation:
 
 ```text
-R2 main-thread boundary
-Android testFull
-Debug APK assemble
-ASP contract tests
-Real Clingo cross-validation
-CI gate
+R2 main-thread boundary        SUCCESS  (run 35325975904)
+Android testFull               SUCCESS  (CI run 35325975875)
+Debug APK assemble             SUCCESS  (CI run 35325975875)
+ASP contract tests             SUCCESS  (CI run 35325975875)
+Real Clingo cross-validation   SUCCESS  (CI run 35325975875)
+CI gate                        SUCCESS  (CI run 35325975875)
 ```
 
-If T4 is green, advance roadmap/handoff to **SDE-2D3 COMPLETE / PR #147 pending user-authorized merge**, with SDE-2D4 5–15 player generalization/performance as the next stage after merge.
+The full Android suite executed the measured-expensive Demon-bluff exact test and therefore validated the precise strategic-key overlay, not only its compilation.
 
+SDE-2D3 is complete.
 
-### T4 requested
+PR #147 remains draft and unmerged. Merge remains user-authorized only.
 
-The D3A–D3D implementation and consumer audit are frozen for acceptance. This checkpoint intentionally requests full repository validation before the route is advanced to SDE-2D4.
+After merge, start SDE-2D4 5–15 player generalization/performance on a fresh branch from live `main`.
