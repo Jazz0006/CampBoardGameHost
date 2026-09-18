@@ -473,3 +473,10 @@ D4E 5–15 performance matrix
 ```
 
 Do not attempt to make 15-player exhaustive mechanical enumeration faster enough by micro-optimizing the current raw-world loop. Its search-space order of magnitude is the wrong primary representation.
+
+
+## 15. D4A / D4B checkpoint
+
+D4A normalized strategic diagnostics and D4B reproducible scale evidence are implemented.
+
+A full validation checkpoint is required here because the D4B benchmark is intentionally excluded from FAST and must execute before D4C1 changes the exact search architecture.
