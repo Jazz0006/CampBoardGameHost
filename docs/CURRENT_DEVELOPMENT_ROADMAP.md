@@ -29,7 +29,7 @@ SDE-2B Spy/Recluse exact registration witness binding  COMPLETE / PR #144
 SDE-2C Poisoner invalidation / broad replanning        COMPLETE / PR #144
 SDE-2D1 Drunk whole-bundle completion                   COMPLETE / PR #145 merged
 SDE-2D2 Demon bluff joint-output migration              COMPLETE / PR #146 merged
-SDE-2D3 strategic-world quotient                        CURRENT
+SDE-2D3 strategic-world quotient                        IMPLEMENTED / T4 PENDING
 SDE-2D pre-SDE-3 strategic generalization              CURRENT
 ```
 
@@ -158,17 +158,19 @@ Authority:
 - `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
 - branch `sde-2d3-strategic-world-quotient` from merged PR #146 main.
 
-Representation/fanout audit is complete. Executable quotient implementation has not started.
+Representation/fanout audit and the first exact quotient migration are implemented. T4 acceptance is pending.
 
-Frozen audit result:
+Implemented result:
 
-- existing `possibleDemonSeats` + `evilTeamSeatConfigurations` are marginals/coarse sets and lose Demon↔Minion pairing;
-- v1 `StrategicWorldKey` uses immutable setup identity: unique setup Demon seat + canonical setup Minion seats;
-- exact mechanical worlds remain witness authority;
-- the key should be accumulated inside the existing `WorldStructureAccumulator` pass;
-- do not add a recommendation-owned solver;
-- do not widen `PlayerWorldSet` / ZDD in the first slice;
-- historical current-Demon state is a separate cross-night dimension and must not silently redefine setup topology.
+- existing `possibleDemonSeats` + `evilTeamSeatConfigurations` remain compatibility marginals/coarse sets;
+- `StrategicWorldKey` preserves the joint setup Demon↔Minion topology that those fields lose;
+- the key is projected from immutable `rolesBySeat` using `RoleDefinition.type`;
+- `ExactWorldStructureDiagnostics.strategicWorldKeys` is accumulated in the existing exact world scan with no second enumeration;
+- bounded semantics prove role-permutation collapse, Demon/Minion swap distinction, type-definition ownership and Imp-succession setup stability;
+- Demon-bluff triplet diagnostics now add precise strategic-key union/intersection/pattern beside the existing coarse topology fields;
+- production SDE fanout audit found no second coarse-topology consumer requiring migration;
+- no recommendation-owned solver, `PlayerWorldSet`/ZDD widening, state mutation or production policy cutover was introduced;
+- historical active-Demon state remains a separate cross-night dimension.
 
 Raw role-world cardinality is no longer the primary recommendation unit.
 
