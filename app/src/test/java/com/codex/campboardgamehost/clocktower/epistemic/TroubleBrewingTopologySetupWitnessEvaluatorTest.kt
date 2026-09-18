@@ -169,13 +169,128 @@ class TroubleBrewingTopologySetupWitnessEvaluatorTest {
     }
 
     @Test
-    fun `mechanical setup propositions defer instead of being reported as infeasible`() {
+    fun poisoned_state_requires_one_in_play_Poisoner_and_a_non_Drunk_target() {
         val profile = TroubleBrewingSetupProfiles.standard(8)
         val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
-        val unsupported = InformationProposition.AbilityStateAt(
-            seat = 2,
+        val poisoned = InformationProposition.AbilityStateAt(
+            seat = 3,
             abilityRole = RoleId("Chef"),
             abilityState = com.codex.campboardgamehost.clocktower.domain.AbilityState.MALFUNCTIONING_POISONED,
+        )
+
+        assertFeasible(
+            profile,
+            topology,
+            setupKnowledge = listOf(
+                InformationProposition.RoleAt(7, RoleId("Poisoner")),
+                poisoned,
+            ),
+        )
+        assertInfeasible(
+            profile,
+            topology,
+            setupKnowledge = listOf(
+                InformationProposition.RoleInPlay(RoleId("Poisoner"), false),
+                poisoned,
+            ),
+        )
+        assertInfeasible(
+            profile,
+            topology,
+            setupKnowledge = listOf(
+                InformationProposition.RoleAt(7, RoleId("Poisoner")),
+                InformationProposition.RoleAt(3, RoleId("Drunk")),
+                poisoned,
+            ),
+        )
+    }
+
+    @Test
+    fun Drunk_and_functioning_states_bind_actual_Drunk_identity() {
+        val profile = TroubleBrewingSetupProfiles.standard(8)
+        val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
+        val drunkState = InformationProposition.AbilityStateAt(
+            seat = 3,
+            abilityRole = RoleId("Chef"),
+            abilityState = com.codex.campboardgamehost.clocktower.domain.AbilityState.MALFUNCTIONING_DRUNK,
+        )
+        val functioning = InformationProposition.AbilityStateAt(
+            seat = 3,
+            abilityRole = RoleId("Chef"),
+            abilityState = com.codex.campboardgamehost.clocktower.domain.AbilityState.FUNCTIONING,
+        )
+
+        assertFeasible(profile, topology, setupKnowledge = listOf(drunkState))
+        assertFeasible(
+            profile,
+            topology,
+            setupKnowledge = listOf(
+                InformationProposition.RoleAt(3, RoleId("Drunk")),
+                drunkState,
+            ),
+        )
+        assertInfeasible(
+            profile,
+            topology,
+            setupKnowledge = listOf(
+                InformationProposition.RoleAt(3, RoleId("Drunk")),
+                functioning,
+            ),
+        )
+    }
+
+    @Test
+    fun one_Poisoner_target_cannot_make_two_distinct_seats_poisoned() {
+        val profile = TroubleBrewingSetupProfiles.standard(8)
+        val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
+        fun poisoned(seat: Int) = InformationProposition.AbilityStateAt(
+            seat = seat,
+            abilityRole = RoleId("Chef"),
+            abilityState = com.codex.campboardgamehost.clocktower.domain.AbilityState.MALFUNCTIONING_POISONED,
+        )
+
+        assertInfeasible(
+            profile,
+            topology,
+            setupKnowledge = listOf(
+                InformationProposition.RoleAt(7, RoleId("Poisoner")),
+                poisoned(2),
+                poisoned(3),
+            ),
+        )
+    }
+
+    @Test
+    fun mandatory_Poisoner_target_prevents_all_functioning_thirteen_player_standard_world() {
+        val profile = TroubleBrewingSetupProfiles.standard(13)
+        val topology = StrategicWorldKey(demonSeat = 13, minionSeats = listOf(10, 11, 12))
+        fun functioning(seat: Int) = InformationProposition.AbilityStateAt(
+            seat = seat,
+            abilityRole = RoleId("Chef"),
+            abilityState = com.codex.campboardgamehost.clocktower.domain.AbilityState.FUNCTIONING,
+        )
+
+        assertInfeasible(
+            profile,
+            topology,
+            setupKnowledge = (1..13).map(::functioning),
+        )
+        assertFeasible(
+            profile,
+            topology,
+            setupKnowledge = (1..12).map(::functioning),
+        )
+    }
+
+    @Test
+    fun later_mechanical_propositions_still_defer_instead_of_becoming_false_UNSAT() {
+        val profile = TroubleBrewingSetupProfiles.standard(8)
+        val topology = StrategicWorldKey(demonSeat = 8, minionSeats = listOf(7))
+        val unsupported = InformationProposition.BooleanResult(
+            metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+            sourceSeat = 1,
+            subjectSeats = listOf(2, 3),
+            value = true,
         )
 
         val result = evaluate(profile, topology, listOf(unsupported))
