@@ -136,7 +136,9 @@ internal object TroubleBrewingFirstNightDrunkPairWholeBundleEvaluator {
             candidate.candidateId to publicObservation(
                 game = game,
                 roles = roles,
-                formal = formal,
+                formalSnapshotId = formal.snapshotId,
+                phase = context.initialPhase,
+                round = context.initialRound,
                 sequence = sequence,
                 sourceSeat = request.drunkSeat,
                 shownAbility = shownAbility,
@@ -215,7 +217,9 @@ internal object TroubleBrewingFirstNightDrunkPairWholeBundleEvaluator {
     private fun publicObservation(
         game: com.codex.campboardgamehost.clocktower.domain.GameState,
         roles: List<com.codex.campboardgamehost.clocktower.domain.RoleDefinition>,
-        formal: FormalGameState,
+        formalSnapshotId: String,
+        phase: com.codex.campboardgamehost.clocktower.domain.StorytellerPhase,
+        round: Int,
         sequence: Int,
         sourceSeat: Int,
         shownAbility: RoleId,
@@ -241,9 +245,9 @@ internal object TroubleBrewingFirstNightDrunkPairWholeBundleEvaluator {
         )
         val privateObservation = EpistemicObservation(
             observationId = "sde-d1-drunk-pair:${candidate.candidateId}",
-            snapshotId = formal.snapshotId,
-            phase = contextPhase(formal),
-            round = formal.round,
+            snapshotId = formalSnapshotId,
+            phase = phase,
+            round = round,
             sequence = sequence,
             sourceSeat = sourceSeat,
             sourceAbility = shownAbility,
@@ -268,7 +272,6 @@ internal object TroubleBrewingFirstNightDrunkPairWholeBundleEvaluator {
         ).single()
     }
 
-    private fun contextPhase(formal: FormalGameState) = formal.phase
 
     private fun marginal(
         healthyCore: ExactHypotheticalObservationBundleDiagnostics,
