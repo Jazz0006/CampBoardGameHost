@@ -49,6 +49,10 @@ class EnumeratedHistoricalDynamicRoleStateTest {
         assertEquals(setupRoles.size, successorWorld.rolesBySeat.values.distinct().size)
         assertEquals(RoleId("Imp"), successorWorld.currentRolesForH5().getValue(3))
         assertEquals(RoleId("Imp"), successorWorld.currentRolesForH5().getValue(4))
+        assertEquals(
+            StrategicWorldKey(demonSeat = 4, minionSeats = listOf(2, 3)),
+            StrategicWorldKey.from(successorWorld, roles.associateBy(RoleDefinition::id)),
+        )
 
         val worldSet = EnumeratedWorldSet.fromWorlds(
             rulesetRef = ruleset,
