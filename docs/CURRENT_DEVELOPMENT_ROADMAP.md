@@ -29,8 +29,8 @@ SDE-2B Spy/Recluse exact registration witness binding  COMPLETE / PR #144
 SDE-2C Poisoner invalidation / broad replanning        COMPLETE / PR #144
 SDE-2D1 Drunk whole-bundle completion                   COMPLETE / PR #145 merged
 SDE-2D2 Demon bluff joint-output migration              COMPLETE / PR #146 merged
-SDE-2D3 strategic-world quotient                        COMPLETE / PR #147 draft, full-ci green
-SDE-2D4 5–15 player generalization / performance        NEXT AFTER PR #147 MERGE
+SDE-2D3 strategic-world quotient                        COMPLETE / PR #147 merged
+SDE-2D4 5–15 player generalization / performance        CURRENT
 SDE-2D pre-SDE-3 strategic generalization              CURRENT
 ```
 
@@ -208,9 +208,23 @@ Retain two separate evaluation axes:
 - strategic pressure / evil-topology concentration;
 - role-information utility, so useful good-role information is not discarded merely because it leaves evil topology unchanged.
 
-### 2.4 SDE-2D4 — 5–15 player generalization and cost — NEXT AFTER PR #147 MERGE
+### 2.4 SDE-2D4 — 5–15 player generalization and cost — CURRENT
 
-Do not begin executable D2D4 work on the D3 branch. After user-authorized merge of PR #147, create a fresh branch from live `main` and begin with a focused 5–15 player cost/representation audit.
+PR #147 was user-authorized and merged to live `main` as `2cab06efeee5692024e065c632deefe765ca1618`.
+
+D2D4 continues on fresh branch `sde-2d4-5-15-validation-performance`.
+
+Focused authority:
+
+`docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`
+
+Audit result:
+
+- D2D3 compressed strategic identity but current exact discovery still enumerates raw mechanical worlds;
+- current ZDD construction still consumes the same raw stream and therefore does not remove witness-discovery complexity;
+- the existing 15-player A3 benchmark is heavily role-pinned and is not representative of a pristine player-visible baseline;
+- the 15-player strategic topology bound is only 5,460 while current source semantics can expose mechanical witness variants on the order of 10^17 in a minimally constrained baseline;
+- D2D4 therefore requires normalized diagnostics plus topology-first exact witness feasibility, with the exhaustive enumerator retained as bounded oracle evidence.
 
 Rules/setup semantics already support 5–15 non-Traveller players, but recommendation correctness/calibration/performance are not yet proven across that range.
 
