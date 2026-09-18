@@ -16,17 +16,18 @@ Read, in order:
 4. this handoff;
 5. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
 6. `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
-7. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
-8. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-8. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
-9. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
-10. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
-11. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
-12. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
-13. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
-14. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
-15. Storyteller Decision Engine route;
-16. query live `main` and current checks before executable edits.
+7. `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
+8. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
+9. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
+10. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
+11. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
+12. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
+13. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
+14. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
+15. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
+16. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
+17. Storyteller Decision Engine route;
+18. query live `main` and current checks before executable edits.
 
 Do not restart completed FN-BUNDLE, SDE-0, SDE-1 or SDE-2A/B/C work.
 
@@ -86,9 +87,11 @@ Authority:
 
 `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`
 
-PR #147 remains draft and unmerged. Do not convert it to Ready or merge it without explicit user authorization.
+PR #147 was user-authorized and merged to live `main` as:
 
-After merge, the next executable stage is **SDE-2D4 5–15 player generalization/performance**, not SDE-3.
+`2cab06efeee5692024e065c632deefe765ca1618`
+
+The current executable stage is **SDE-2D4 5–15 player generalization/performance**, not SDE-3.
 
 ## 2. Frozen architecture entering SDE-2D
 
@@ -333,7 +336,8 @@ D2D4 branch:
 
 Current authority:
 
-`docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`
+- `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
+- `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`.
 
 The focused audit is complete.
 
@@ -350,6 +354,13 @@ D4D differential correctness
     ↓
 D4E 5–15 performance matrix
 ```
+
+Current implementation checkpoint:
+
+- D4A normalized strategic diagnostics implemented tests-first;
+- D4B reproducible T3 scale matrix/prefix-throughput harness implemented and excluded from FAST;
+- D4C proposition/fanout audit complete;
+- next gate is full validation of D4A/D4B, then D4C1 topology-domain tests-first.
 
 Do not attempt to solve large-player scaling by only compressing the already-generated raw world stream. Current ZDD construction still iterates that stream.
 
