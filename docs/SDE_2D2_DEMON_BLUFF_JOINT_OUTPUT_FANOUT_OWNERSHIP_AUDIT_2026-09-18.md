@@ -370,3 +370,27 @@ The initial shadow adapter incorrectly used the raw `List<RoleId>` as the lookup
 The correction canonicalizes triplet identity by sorted role ID **only inside the shadow comparison adapter**. No setup legality, production selection, persistence or exact semantics changed.
 
 The existing production-shadow wiring test now protects this cross-owner ordering difference. This document commit requests a fresh `[full-ci]` run; only that successful run is final SDE-2D2 acceptance evidence.
+
+
+## 15. Final acceptance evidence
+
+SDE-2D2 final executable acceptance head:
+
+`6acb708bd734d36d024240f0dea213a882a7714b`
+
+Final T4 validation:
+
+```text
+R2 main-thread boundary        SUCCESS
+Android testFull               SUCCESS
+Debug APK assemble             SUCCESS
+ASP contract tests             SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS
+```
+
+The accepted implementation includes the strict-shown-role shared scan optimization and canonical bluff-triplet comparison fix described above.
+
+PR #146 remains draft and unmerged. Merge remains user-authorized only.
+
+**SDE-2D2 is complete. SDE-2D3 must start only after PR #146 is merged and on a fresh branch from live main.**
