@@ -2,7 +2,9 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
+import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
@@ -18,6 +20,12 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleProfileExposure
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformationBundle
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformationBundleEntry
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightPublicGoodInfoProjection
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -74,13 +82,14 @@ class DemonBluffJointOutputEvaluatorTest {
         val recipientSeats = setOf(1, 2)
         val timelineBefore = exactContext.actionTimeline.reducerFacts()
         val logBefore = exactContext.observationLog.records.toList()
+        val publicWholeBundle = listOf(publicChefClaim())
 
         val evaluation = TroubleBrewingDemonBluffJointOutputEvaluator.evaluate(
             validatedRuleset = validatedRuleset,
             context = exactContext,
             actualDemonSeat = 8,
             evaluationRecipientSeats = recipientSeats,
-            publicWholeBundleObservations = emptyList(),
+            publicWholeBundleObservations = publicWholeBundle,
             candidates = candidates,
         )
 
@@ -108,7 +117,7 @@ class DemonBluffJointOutputEvaluatorTest {
                 ExactHypotheticalObservationBundleQuery(
                     bundleId = "direct-$recipientSeat",
                     recipientSeat = recipientSeat,
-                    observations = listOf(strictShownRoleProbe(firstSupport.role)),
+                    observations = publicWholeBundle + strictShownRoleProbe(firstSupport.role),
                 )
             },
         )
@@ -125,6 +134,46 @@ class DemonBluffJointOutputEvaluatorTest {
         }
         assertEquals(timelineBefore, exactContext.actionTimeline.reducerFacts())
         assertEquals(logBefore, exactContext.observationLog.records)
+    }
+
+
+    private fun publicChefClaim(): EpistemicObservation {
+        val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, 1)
+        val privateObservation = EpistemicObservation(
+            observationId = "healthy-chef-1",
+            snapshotId = formal.snapshotId,
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            sourceSeat = 1,
+            sourceAbility = RoleId("Chef"),
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(1),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = TroubleBrewingFirstNightInformationPropositionMaterializer.materialize(
+                game = game,
+                information = EffectDraft.PlayerInformation(
+                    recipientSeat = 1,
+                    sourceAbility = RoleId("Chef"),
+                    value = InformationValue.Number(1),
+                ),
+                roleDefinitions = roles,
+            ),
+        )
+        return FirstNightPublicGoodInfoProjection.project(
+            FirstNightInformationBundle(
+                bundleId = "healthy-core",
+                entries = listOf(
+                    FirstNightInformationBundleEntry(
+                        entryId = "healthy-chef",
+                        control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
+                        sourceChoiceId = "chef-1",
+                        observation = privateObservation,
+                        profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
+                    ),
+                ),
+            ),
+        ).single()
     }
 
     private fun strictShownRoleProbe(role: RoleId): EpistemicObservation {
