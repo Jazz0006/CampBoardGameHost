@@ -1,0 +1,348 @@
+package com.codex.campboardgamehost.clocktower.recommendation.sde
+
+import com.codex.campboardgamehost.ClocktowerScript
+import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptSource
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.EffectDraft
+import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.InformationValue
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
+import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalContext
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalObservationBundleEvaluator
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleEvaluation
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
+import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleProfileExposure
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformationBundle
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformationBundleEntry
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightPublicGoodInfoProjection
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
+import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
+import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
+import java.io.File
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class DemonBluffJointOutputEvaluatorTest {
+    private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
+        File("src/main/assets/$assetPath").readText(Charsets.UTF_8)
+    }
+    private val validatedRuleset = catalog.ruleset(ClocktowerScript.TroubleBrewing)
+    private val rulesetRef = validatedRuleset.toRulesetRef(
+        rulesetVersion = "sde-2d2-demon-bluff-test",
+        sourceRevision = "official",
+    )
+    private val fixtureRoleIds = setOf(
+        "Chef",
+        "Empath",
+        "Fortune Teller",
+        "Undertaker",
+        "Virgin",
+        "Scarlet Woman",
+        "Imp",
+        "Investigator",
+        "Monk",
+        "Soldier",
+        "Butler",
+    ).mapTo(linkedSetOf(), ::RoleId)
+    private val roles = TroubleBrewingFixtures.fullRoleDefinitions().filter { it.id in fixtureRoleIds }
+    private val game = GameState(
+        script = TroubleBrewingFixtures.scriptId,
+        players = listOf(
+            player(1, "Chef", CharacterType.TOWNSFOLK),
+            player(2, "Empath", CharacterType.TOWNSFOLK),
+            player(3, "Fortune Teller", CharacterType.TOWNSFOLK),
+            player(4, "Undertaker", CharacterType.TOWNSFOLK),
+            player(5, "Virgin", CharacterType.TOWNSFOLK),
+            player(6, "Scarlet Woman", CharacterType.MINION),
+            player(7, "Imp", CharacterType.DEMON),
+        ),
+        seed = 20260918L,
+    )
+    private val snapshot = GameSnapshot(
+        gameId = "sde-2d2-demon-bluff",
+        gameStateRevision = 0,
+        playerInputRevision = 0,
+        gameSeed = game.seed,
+        rulesetRef = rulesetRef,
+        gameState = game,
+    )
+    private val exactContext = ExactHistoricalHypotheticalContext(
+        initialSnapshot = snapshot,
+        initialPhase = StorytellerPhase.FIRST_NIGHT,
+        initialRound = 1,
+        actionTimeline = ActionFactTimeline(emptyList()),
+        perceivedRolesBySeat = game.players.associate { player ->
+            player.seat to (player.shownRole ?: player.actualRole)
+        },
+        observationLog = EpistemicObservationLog(),
+        hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+        roleDefinitions = roles,
+    )
+
+    @Test
+    fun `setup legality projects losslessly into SDE bluff candidates`() {
+        val legalCandidates = SetupCandidateGenerator.generateDemonBluffCandidates(game, roles)
+        val setupCandidates = SetupDemonBluffJointOutputAdapter.fromLegalCandidates(legalCandidates)
+        val distinctTriples = setupCandidates.map { it.roles.toSet() }.toSet()
+
+        assertTrue(setupCandidates.isNotEmpty())
+        assertEquals(setupCandidates.size, distinctTriples.size)
+        assertTrue(setupCandidates.all { it.roles.size == 3 && it.roles.distinct().size == 3 })
+        assertTrue(setupCandidates.all { candidate ->
+            candidate.roles.none { role -> role in game.players.map { it.actualRole }.toSet() }
+        })
+    }
+
+    @Test
+    fun `role support delegates to exact shown-role counterworld and is shared across triplets`() {
+        val legalCandidates = SetupCandidateGenerator.generateDemonBluffCandidates(game, roles)
+        val candidates = SetupDemonBluffJointOutputAdapter.fromLegalCandidates(legalCandidates)
+        val recipientSeats = setOf(1)
+        val timelineBefore = exactContext.actionTimeline.reducerFacts()
+        val logBefore = exactContext.observationLog.records.toList()
+        val publicWholeBundle = listOf(publicChefClaim())
+
+        val evaluation = TroubleBrewingDemonBluffJointOutputEvaluator.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = exactContext,
+            actualDemonSeat = 7,
+            evaluationRecipientSeats = recipientSeats,
+            publicWholeBundleObservations = publicWholeBundle,
+            candidates = candidates,
+        )
+
+        assertTrue(evaluation is DemonBluffJointOutputEvaluation.Ready)
+        val ready = evaluation as DemonBluffJointOutputEvaluation.Ready
+        val distinctRoles = candidates.flatMap { it.roles }.distinct().sortedBy(RoleId::value)
+
+        assertEquals(distinctRoles, ready.roleSupports.map(DemonBluffRoleSupport::role))
+        assertEquals(candidates.map { it.candidateId }, ready.candidates.map(DemonBluffJointOutputDiagnostics::candidateId))
+        ready.candidates.forEach { candidate ->
+            assertEquals(
+                candidate.roles,
+                candidate.roleSupports.map(DemonBluffRoleSupport::role),
+            )
+            candidate.roleSupports.forEach { support ->
+                assertTrue(ready.roleSupports.single { it.role == support.role } === support)
+            }
+        }
+
+        val firstCandidate = ready.candidates.first()
+        val topology = firstCandidate.byRecipient.single()
+        val topologySets = firstCandidate.roleSupports.map { support ->
+            support.byRecipient.single().afterStructure.evilTeamSeatConfigurations
+        }
+        val expectedUnion = topologySets.flatMap { it }.toSet()
+        val expectedShared = topologySets.reduce { acc, next -> acc.intersect(next) }
+        val expectedSupportedRoles = firstCandidate.roleSupports
+            .filter { support -> support.byRecipient.single().after.value.signum() > 0 }
+            .mapTo(linkedSetOf(), DemonBluffRoleSupport::role)
+
+        assertEquals(expectedSupportedRoles, topology.supportedRoles)
+        assertEquals(expectedUnion, topology.unionEvilTeamSeatConfigurations)
+        assertEquals(expectedShared, topology.sharedEvilTeamSeatConfigurations)
+        assertEquals(topologySets.distinct().size, topology.distinctRoleTopologyPatternCount)
+
+        val firstSupport = ready.roleSupports.first()
+        val direct = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = exactContext,
+            queries = recipientSeats.sorted().map { recipientSeat ->
+                ExactHypotheticalObservationBundleQuery(
+                    bundleId = "direct-$recipientSeat",
+                    recipientSeat = recipientSeat,
+                    observations = publicWholeBundle + strictShownRoleProbe(firstSupport.role),
+                )
+            },
+        )
+        assertTrue(direct is ExactHypotheticalObservationBundleEvaluation.Ready)
+        val directDiagnostics =
+            (direct as ExactHypotheticalObservationBundleEvaluation.Ready).diagnostics
+
+        firstSupport.byRecipient.zip(directDiagnostics).forEach { (actual, expected) ->
+            assertEquals(expected.recipientSeat, actual.recipientSeat)
+            assertEquals(expected.before, actual.before)
+            assertEquals(expected.after, actual.after)
+            assertEquals(expected.beforeStructure, actual.beforeStructure)
+            assertEquals(expected.afterStructure, actual.afterStructure)
+        }
+        assertEquals(timelineBefore, exactContext.actionTimeline.reducerFacts())
+        assertEquals(logBefore, exactContext.observationLog.records)
+    }
+
+    @Test
+    fun `production setup shadow preserves visible result while exact evaluation defers`() {
+        val productionGame = TroubleBrewingFixtures.eightPlayerExample()
+        val productionRoles = TroubleBrewingFixtures.fullRoleDefinitions()
+        val productionSnapshot = GameSnapshot(
+            gameId = "sde-2d2-production-shadow",
+            gameStateRevision = 0,
+            playerInputRevision = 0,
+            gameSeed = productionGame.seed,
+            rulesetRef = rulesetRef,
+            gameState = productionGame,
+        )
+        val productionExactContext = ExactHistoricalHypotheticalContext(
+            initialSnapshot = productionSnapshot,
+            initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1,
+            actionTimeline = ActionFactTimeline(emptyList()),
+            perceivedRolesBySeat = productionGame.players.associate { player ->
+                player.seat to (player.shownRole ?: player.actualRole)
+            },
+            observationLog = EpistemicObservationLog(),
+            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            roleDefinitions = productionRoles,
+        )
+        val unsupportedRuleset = validatedRuleset.copy(
+            script = validatedRuleset.script.copy(source = ClocktowerScriptSource.IMPORTED_HOMEBREW),
+        )
+        val coordinator = ClocktowerRecommendationCoordinator()
+        val request = SetupCoordinationRequest(game = productionGame, roles = productionRoles)
+        val visibleResult = coordinator.recommendSetup(request)
+        val visiblePlansBefore = visibleResult.plans.toList()
+
+        val shadow = coordinator.evaluateSetupDemonBluffShadow(
+            request = request,
+            visibleResult = visibleResult,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = unsupportedRuleset,
+                exactContext = productionExactContext,
+            ),
+            evaluationRecipientSeats = setOf(1),
+            publicWholeBundleObservations = emptyList(),
+        )
+
+        assertSame(visibleResult, shadow.visibleResult)
+        assertEquals(visiblePlansBefore, shadow.visibleResult.plans)
+        assertTrue(shadow.jointOutput is DemonBluffJointOutputEvaluation.Deferred)
+        assertTrue(shadow.legacyBluffCandidateIdByStyle.isNotEmpty())
+        assertTrue(RecommendationStyle.BALANCED in shadow.legacyBluffCandidateIdByStyle)
+    }
+
+    @Test
+    fun `locked Demon bluffs are persistent inputs and cannot enter shadow replanning`() {
+        val legalCandidate = SetupCandidateGenerator.generateDemonBluffCandidates(game, roles).first()
+        val lockedBluffs = (legalCandidate.outcome as SetupClueOutcome.DemonBluffs).roles
+        val request = SetupCoordinationRequest(
+            game = game,
+            roles = roles,
+            lockedDecisions = listOf(StorytellerDecision.DemonBluffs(lockedBluffs)),
+        )
+        val coordinator = ClocktowerRecommendationCoordinator()
+        val visibleResult = SetupRecommendationService.ConstrainedResult(plans = emptyList())
+
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            coordinator.evaluateSetupDemonBluffShadow(
+                request = request,
+                visibleResult = visibleResult,
+                exactContext = ExactConsequenceContext(
+                    validatedRuleset = validatedRuleset,
+                    exactContext = exactContext,
+                ),
+                evaluationRecipientSeats = setOf(1),
+                publicWholeBundleObservations = emptyList(),
+            )
+        }
+
+        assertTrue(error.message.orEmpty().contains("persistent setup inputs"))
+    }
+
+    private fun player(
+        seat: Int,
+        role: String,
+        type: CharacterType,
+    ): PlayerState = PlayerState(
+        seat = seat,
+        name = "P$seat",
+        actualRole = RoleId(role),
+        actualAlignment = when (type) {
+            CharacterType.TOWNSFOLK, CharacterType.OUTSIDER -> Alignment.GOOD
+            CharacterType.MINION, CharacterType.DEMON -> Alignment.EVIL
+        },
+        actualType = type,
+        shownRole = RoleId(role),
+    )
+
+    private fun publicChefClaim(): EpistemicObservation {
+        val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, 1)
+        val privateObservation = EpistemicObservation(
+            observationId = "healthy-chef-1",
+            snapshotId = formal.snapshotId,
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            sourceSeat = 1,
+            sourceAbility = RoleId("Chef"),
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(1),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = TroubleBrewingFirstNightInformationPropositionMaterializer.materialize(
+                game = game,
+                information = EffectDraft.PlayerInformation(
+                    recipientSeat = 1,
+                    sourceAbility = RoleId("Chef"),
+                    value = InformationValue.Number(1),
+                ),
+                roleDefinitions = roles,
+            ),
+        )
+        return FirstNightPublicGoodInfoProjection.project(
+            FirstNightInformationBundle(
+                bundleId = "healthy-core",
+                entries = listOf(
+                    FirstNightInformationBundleEntry(
+                        entryId = "healthy-chef",
+                        control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
+                        sourceChoiceId = "chef-1",
+                        observation = privateObservation,
+                        profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
+                    ),
+                ),
+            ),
+        ).single()
+    }
+
+    private fun strictShownRoleProbe(role: RoleId): EpistemicObservation {
+        val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, 1)
+        return EpistemicObservation(
+            observationId = "direct-bluff-probe-${role.value.lowercase().replace(' ', '-')}",
+            snapshotId = formal.snapshotId,
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 0,
+            sourceSeat = null,
+            sourceAbility = null,
+            visibility = ObservationVisibility.PUBLIC,
+            recipientSeats = emptySet(),
+            reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+            proposition = InformationProposition.ShownRoleAt(
+                seat = 7,
+                role = role,
+            ),
+        )
+    }
+}

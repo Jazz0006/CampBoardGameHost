@@ -128,11 +128,13 @@ internal sealed interface ExactHypotheticalObservationBundleEvaluation {
  * Exact, mutation-free historical evaluator for composed hypothetical observations.
  *
  * A pristine first-night experiment uses constant-memory source enumeration. BEFORE is scanned once
- * per recipient. Queries are grouped by cheap necessary identity envelopes and evaluated in
- * streaming passes without retaining world lists. The envelope supports both strict shown-role facts
- * and the current healthy public-claim form: an evil speaker may lie, while a truthful-good branch
- * requires the claimed shown role. The complete observations are still evaluated afterwards, so the
- * prefilter cannot decide semantics.
+ * per recipient. Queries are grouped by scan-compatible identity envelopes and evaluated in
+ * streaming passes without retaining world lists. Strict shown-role queries that constrain the same
+ * seats share one world-generation pass even when they ask for different shown roles; the exact
+ * role constraint is still checked independently per query. The envelope also supports the current
+ * healthy public-claim form: an evil speaker may lie, while a truthful-good branch requires the
+ * claimed shown role. Complete observations are still evaluated afterwards, so the prefilter cannot
+ * decide semantics.
  *
  * Historical replay keeps the existing enumerated historical baseline. No production A4/ZDD rollout
  * decision is changed by this experiment evaluator.
@@ -223,17 +225,21 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                 val beforeScan = scanWorlds(worldSequence(), rolesById)
 
                 recipientQueries
-                    .groupBy(::pristinePrefilterKey)
-                    .toSortedMap(compareBy(PristinePrefilterKey::stableId))
-                    .forEach { (prefilterKey, groupedQueries) ->
-                        val representative = groupedQueries.first()
-                        require(pristinePrefilterKey(representative) == prefilterKey) {
-                            "Pristine first-night prefilter grouping drifted from query semantics."
+                    .groupBy(::pristineScanKey)
+                    .toSortedMap(compareBy(PristineScanKey::stableId))
+                    .forEach { (scanKey, groupedQueries) ->
+                        require(groupedQueries.all { pristineScanKey(it) == scanKey }) {
+                            "Pristine first-night scan grouping drifted from query semantics."
                         }
 
-                        val strictShownObservations = representative.observations
-                            .filter(::isStrictShownRoleClaim)
-                            .distinctBy { observation -> observation.proposition }
+                        val strictShownByQuery = groupedQueries.map { query ->
+                            query.observations
+                                .filter { observation ->
+                                    isStrictShownRoleClaim(observation) &&
+                                        query.registrationWitnessBindingFor(observation) == null
+                                }
+                                .distinctBy { observation -> observation.proposition }
+                        }
                         val remainingByQuery = groupedQueries.map { query ->
                             query.observations.filterNot { observation ->
                                 isStrictShownRoleClaim(observation) &&
@@ -246,30 +252,33 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                         }
 
                         worldSequence().forEach { world ->
-                            val passesIdentityEnvelope =
-                                strictShownObservations.all { observation ->
-                                    TroubleBrewingWorldObservationEvaluator.evaluate(
-                                        world = world,
-                                        roles = rolesById,
-                                        observation = observation,
-                                        hypothesis = hypothesis,
-                                    ).matches
-                                } &&
-                                    prefilterKey.publicClaimShownRoles.all { claim ->
-                                        publicClaimIdentityEnvelopeMatches(world, rolesById, claim)
-                                    }
-                            if (passesIdentityEnvelope) {
+                            val passesSharedIdentityEnvelope =
+                                scanKey.publicClaimShownRoles.all { claim ->
+                                    publicClaimIdentityEnvelopeMatches(world, rolesById, claim)
+                                }
+                            if (passesSharedIdentityEnvelope) {
                                 groupedQueries.indices.forEach { queryIndex ->
                                     val query = groupedQueries[queryIndex]
-                                    val matchesQuery = remainingByQuery[queryIndex].all { observation ->
-                                        matchesObservation(
-                                            query = query,
-                                            world = world,
-                                            roles = rolesById,
-                                            observation = observation,
-                                            hypothesis = hypothesis,
-                                        )
-                                    }
+                                    val passesStrictShownRoles =
+                                        strictShownByQuery[queryIndex].all { observation ->
+                                            TroubleBrewingWorldObservationEvaluator.evaluate(
+                                                world = world,
+                                                roles = rolesById,
+                                                observation = observation,
+                                                hypothesis = hypothesis,
+                                            ).matches
+                                        }
+                                    val matchesQuery =
+                                        passesStrictShownRoles &&
+                                            remainingByQuery[queryIndex].all { observation ->
+                                                matchesObservation(
+                                                    query = query,
+                                                    world = world,
+                                                    roles = rolesById,
+                                                    observation = observation,
+                                                    hypothesis = hypothesis,
+                                                )
+                                            }
                                     if (matchesQuery) {
                                         afterCounts[queryIndex] += 1L
                                         afterStructureAccumulators[queryIndex].accept(world)
@@ -465,26 +474,31 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
         observation.reliability == ObservationReliability.NOT_ABILITY_INFORMATION &&
             observation.proposition is InformationProposition.ShownRoleAt
 
-    private data class PristinePrefilterKey(
-        val strictShownRoles: List<InformationProposition.ShownRoleAt>,
+    private data class PristineScanKey(
+        val strictShownRoleSeats: List<Int>,
         val publicClaimShownRoles: List<InformationProposition.ShownRoleAt>,
     ) {
         val stableId: String = buildString {
-            append("strict=")
-            append(strictShownRoles.joinToString(";") { "${it.seat}:${it.role.value}" })
+            append("strict-seats=")
+            append(strictShownRoleSeats.joinToString(","))
             append("|claims=")
             append(publicClaimShownRoles.joinToString(";") { "${it.seat}:${it.role.value}" })
         }
     }
 
-    private fun pristinePrefilterKey(
+    /**
+     * Groups strict shown-role fanout by constrained seat rather than role value. The role value is
+     * still evaluated exactly per query inside the shared streaming pass. This prevents N candidate
+     * shown roles for one seat from regenerating the same pristine mechanical world stream N times.
+     */
+    private fun pristineScanKey(
         query: ExactHypotheticalObservationBundleQuery,
-    ): PristinePrefilterKey = PristinePrefilterKey(
-        strictShownRoles = query.observations
+    ): PristineScanKey = PristineScanKey(
+        strictShownRoleSeats = query.observations
             .filter(::isStrictShownRoleClaim)
-            .map { it.proposition as InformationProposition.ShownRoleAt }
+            .map { (it.proposition as InformationProposition.ShownRoleAt).seat }
             .distinct()
-            .sortedWith(compareBy({ it.seat }, { it.role.value })),
+            .sorted(),
         publicClaimShownRoles = query.observations
             .mapNotNull(::publicClaimShownRoleEnvelope)
             .distinct()

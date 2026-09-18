@@ -30,6 +30,30 @@ class ClocktowerDemonBluffPresentationTest {
     }
 
     @Test
+    fun `applied bluff commitment wins over later recommendation changes`() {
+        val applied = listOf("Mayor", "Monk", "Undertaker")
+        val changedPlans = listOf(
+            plan(RecommendationStyle.BALANCED, "Virgin", "Slayer", "Soldier"),
+        )
+
+        val automatic = demonBluffRoleNamesForPresentation(
+            automaticStorytellerInfo = true,
+            appliedRoleNames = applied,
+            setupPlans = changedPlans,
+            storytellerStyle = RecommendationStyle.BALANCED,
+        )
+        val manual = demonBluffRoleNamesForPresentation(
+            automaticStorytellerInfo = false,
+            appliedRoleNames = applied,
+            setupPlans = changedPlans,
+            storytellerStyle = RecommendationStyle.BALANCED,
+        )
+
+        assertEquals(applied, automatic)
+        assertEquals(applied, manual)
+    }
+
+    @Test
     fun `exact three recommended roles resolve in recommendation order`() {
         val legal = listOf(
             role("Chef"),

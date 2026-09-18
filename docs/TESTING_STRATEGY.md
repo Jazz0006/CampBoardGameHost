@@ -54,7 +54,7 @@ S2.1 established executable Android JVM suites at commit `99b340635e04abd64341e5
 
 - `:app:testFast`: 751 tests, 0 failures/errors/skipped
 - `:app:testFull`: 770 tests, 0 failures/errors/skipped
-- `FULL - FAST`: exactly 19 testcases from the five approved excluded classes
+- `FULL - FAST`: the S2 baseline was exactly 19 testcases from five approved excluded classes; SDE-2D2 later added one measured exact-enumeration class to the exclusion set
 - warmed no-change `testFast`: approximately 5.75–6.25s, with tasks `UP-TO-DATE`
 
 `testFast` retains `A3EnumerationBenchmarkTest`, representative utility tests, integration/wiring tests, and ownership/characterization tests.
@@ -125,6 +125,9 @@ The current FAST exclusions are exactly:
 - `com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest`
 - `com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest`
 - `com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest`
+- `com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputEvaluatorTest`
+
+`DemonBluffJointOutputEvaluatorTest` is excluded from FAST based on SDE-2D2 CI measurements: even after reducing the fixture to a minimal healthy seven-player domain and sharing strict shown-role world scans inside the exact evaluator, the test still materially extends the ordinary FAST loop because it intentionally performs real exact whole-bundle enumeration and a direct exact-parity probe. It remains in `:app:testFull` and is mandatory for Demon-bluff / exact-epistemic affected validation.
 
 `A3EnumerationBenchmarkTest` remains in FAST because its measured cost is low.
 
@@ -139,6 +142,7 @@ These classifications are not permanent measurements. Re-measure them when the t
 | `ExpertRecommendationReviewTest` | 5–6s | 24-scenario recommendation quality corpus | T3 | recommendation scoring, legality, setup plans, quality/diversity |
 | `StorytellerV4BaselineSimulationTest` | 3–4s | 1000 setup samples plus 1000 dynamic selections | T3 | selection distribution and simulation semantics |
 | `A4ZddBenchmarkTest` | 2–3s | repeated benchmark, heap and GC measurements | T3 | ZDD construction/filter performance |
+| `DemonBluffJointOutputEvaluatorTest` | multi-minute CI impact in SDE-2D2 edit loops | real exact whole-bundle bluff-role fanout plus direct exact-parity evidence | affected T2 / T3 execution | Demon bluff joint output, exact shown-role fanout, setup/SDE shadow integration |
 | `A3EnumerationBenchmarkTest` | approximately 1s | 20 exact enumerations and performance guards | T1/T2 specialized | world enumeration and scalability |
 
 T3 tests are invoked through the existing full test machinery with exact `--tests` filters when triggered; S2 intentionally does not create a static `testAffected` or `testExpensive` suite.

@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.DecisionCorrectionEvent
 import com.codex.campboardgamehost.clocktower.domain.DecisionEventStatus
@@ -16,6 +17,7 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
@@ -33,7 +35,13 @@ import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLeg
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
+import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffSetupShadowAdapter
+import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffSetupShadowEvaluation
+import com.codex.campboardgamehost.clocktower.recommendation.sde.ExactConsequenceContext
+import com.codex.campboardgamehost.clocktower.recommendation.sde.SetupDemonBluffJointOutputAdapter
+import com.codex.campboardgamehost.clocktower.recommendation.sde.TroubleBrewingDemonBluffJointOutputEvaluator
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 
 internal class ClocktowerRecommendationCoordinator(
     initialArchive: DecisionHistoryArchive = DecisionHistoryArchive(),
@@ -58,6 +66,54 @@ internal class ClocktowerRecommendationCoordinator(
         val result = recommendSetup(request)
         if (result.failureCodes.isNotEmpty()) return null
         return WeightedStableSelector.selectStyle(result.plans, style, RecommendationPlan::style)
+    }
+
+    /**
+     * SDE-2D2 shadow-only orchestration beside the current setup recommendation authority.
+     *
+     * The visible setup result is supplied by the existing setup module and is returned unchanged.
+     * SetupCandidateGenerator remains the legality owner; the SDE evaluator only consumes its legal
+     * Demon-bluff candidates plus caller-supplied whole-bundle public observations. Locked Demon
+     * bluffs are persistent inputs and therefore may not enter this uncommitted shadow path.
+     */
+    fun evaluateSetupDemonBluffShadow(
+        request: SetupCoordinationRequest,
+        visibleResult: SetupRecommendationService.ConstrainedResult,
+        exactContext: ExactConsequenceContext,
+        evaluationRecipientSeats: Set<Int>,
+        publicWholeBundleObservations: List<EpistemicObservation>,
+    ): DemonBluffSetupShadowEvaluation {
+        require(request.lockedDecisions.none { it is StorytellerDecision.DemonBluffs }) {
+            "Locked Demon bluffs are persistent setup inputs and must not be replanned by SDE."
+        }
+        require(exactContext.exactContext.initialSnapshot.gameState == request.game) {
+            "Setup Demon bluff shadow evaluation must use the same canonical game state as the setup request."
+        }
+
+        val legalCandidates = SetupCandidateGenerator.generateDemonBluffCandidates(
+            game = request.game,
+            roleDefinitions = request.roles,
+        )
+        require(legalCandidates.isNotEmpty()) {
+            "Setup Demon bluff shadow evaluation requires an uncommitted legal bluff domain."
+        }
+        val projected = SetupDemonBluffJointOutputAdapter.fromLegalCandidates(legalCandidates)
+        val actualDemonSeat = request.game.players
+            .single { player -> player.actualType == CharacterType.DEMON }
+            .seat
+        val jointOutput = TroubleBrewingDemonBluffJointOutputEvaluator.evaluate(
+            validatedRuleset = exactContext.validatedRuleset,
+            context = exactContext.exactContext,
+            actualDemonSeat = actualDemonSeat,
+            evaluationRecipientSeats = evaluationRecipientSeats,
+            publicWholeBundleObservations = publicWholeBundleObservations,
+            candidates = projected,
+        )
+        return DemonBluffSetupShadowAdapter.attach(
+            visibleResult = visibleResult,
+            legalCandidates = legalCandidates,
+            jointOutput = jointOutput,
+        )
     }
 
     /** B7.3 setup projection: one pool supplies both AUTO and ASSISTED. */
