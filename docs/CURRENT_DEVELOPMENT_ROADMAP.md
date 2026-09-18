@@ -216,7 +216,8 @@ D2D4 continues on fresh branch `sde-2d4-5-15-validation-performance`.
 
 Focused authority:
 
-`docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`
+- `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
+- `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`.
 
 Audit result:
 
@@ -225,6 +226,8 @@ Audit result:
 - the existing 15-player A3 benchmark is heavily role-pinned and is not representative of a pristine player-visible baseline;
 - the 15-player strategic topology bound is only 5,460 while current source semantics can expose mechanical witness variants on the order of 10^17 in a minimally constrained baseline;
 - D2D4 therefore requires normalized diagnostics plus topology-first exact witness feasibility, with the exhaustive enumerator retained as bounded oracle evidence.
+- D4A normalized ratio projection and D4B T3 scale harness are implemented on the D2D4 branch; full checkpoint validation is the next gate before D4C1 topology-domain implementation.
+- D4C fanout audit freezes the scalable v1 surface to pristine Night-1 propositions actually emitted by current SDE; historical/B4 replay remains outside the new feasibility seam.
 
 Rules/setup semantics already support 5–15 non-Traveller players, but recommendation correctness/calibration/performance are not yet proven across that range.
 
