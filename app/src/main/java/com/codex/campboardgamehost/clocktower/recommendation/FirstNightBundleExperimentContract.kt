@@ -110,16 +110,22 @@ internal enum class FirstNightExperimentProfile {
  * Ephemeral PUBLIC_GOOD_INFO projection for the current healthy-stage behavioral experiment.
  *
  * A Day-1 statement is not treated as an oracle fact. Under this profile a healthy good speaker is
- * assumed to share truthfully, while an evil speaker may make the same public statement regardless
- * of their actual role or mechanical information. Therefore each public statement means:
+ * assumed to share the information they received, while an evil speaker may make the same public
+ * statement regardless of their actual role or mechanical information. Therefore each public
+ * statement means:
  *
  *   speaker is evil
  *      OR
- *   (speaker really has the claimed shown role AND the claimed clue is mechanically true)
+ *   (
+ *       speaker has the claimed shown role
+ *       AND (
+ *           the source ability is malfunctioning
+ *           OR (the source ability is functioning AND the claimed clue is mechanically true)
+ *       )
+ *   )
  *
- * This preserves deception counterworlds while still stress-testing tables where healthy good
- * players reveal their information. Drunk / Poisoner / Spy / Recluse semantics remain later staged
- * work; the healthy harness explicitly excludes them from its diagnostic counterworld domain.
+ * Drunk/Poisoner state remains hidden world state. The projection exposes no actual identity or
+ * poison target; exact-world legality decides whether a malfunction explanation is available.
  *
  * No durable observation, timeline, or bundle entry is mutated. Latent/non-shared choices remain
  * part of bundle identity but contribute no Day-1 public claim until a later experiment profile gives
@@ -136,10 +142,33 @@ internal object FirstNightPublicGoodInfoProjection {
             val role = requireNotNull(original.sourceAbility) {
                 "PUBLIC_GOOD_INFO first-night observations require a source ability for public-claim projection."
             }
-            val truthfulGoodBranch = InformationProposition.AllOf(
+            val claimedGoodBranch = InformationProposition.AllOf(
                 listOf(
                     InformationProposition.ShownRoleAt(seat, role),
-                    original.proposition,
+                    InformationProposition.AnyOf(
+                        listOf(
+                            InformationProposition.AbilityStateAt(
+                                seat = seat,
+                                abilityRole = role,
+                                abilityState = AbilityState.MALFUNCTIONING_DRUNK,
+                            ),
+                            InformationProposition.AbilityStateAt(
+                                seat = seat,
+                                abilityRole = role,
+                                abilityState = AbilityState.MALFUNCTIONING_POISONED,
+                            ),
+                            InformationProposition.AllOf(
+                                listOf(
+                                    InformationProposition.AbilityStateAt(
+                                        seat = seat,
+                                        abilityRole = role,
+                                        abilityState = AbilityState.FUNCTIONING,
+                                    ),
+                                    original.proposition,
+                                ),
+                            ),
+                        ),
+                    ),
                 ),
             )
             original.copy(
@@ -155,7 +184,7 @@ internal object FirstNightPublicGoodInfoProjection {
                 proposition = InformationProposition.AnyOf(
                     listOf(
                         InformationProposition.AlignmentAt(seat, Alignment.EVIL),
-                        truthfulGoodBranch,
+                        claimedGoodBranch,
                     ),
                 ),
             )
