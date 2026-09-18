@@ -8,6 +8,12 @@ import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+/**
+ * Bounded exact differential oracle for topology-first setup feasibility.
+ *
+ * Exhaustive mechanical enumeration is intentional correctness evidence here, so this class stays
+ * in affected/full validation but outside the ordinary T1 FAST edit loop.
+ */
 class TroubleBrewingTopologySetupWitnessDifferentialTest {
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
     private val rolesById = roles.associateBy(RoleDefinition::id)
