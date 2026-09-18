@@ -84,16 +84,16 @@ class TroubleBrewingTopologyBundleDifferentialTest {
                         "poison-empath",
                         InformationProposition.AbilityStateAt(
                             seat = 2,
-                            role = RoleId("Empath"),
-                            state = AbilityState.MALFUNCTIONING_POISONED,
+                            abilityRole = RoleId("Empath"),
+                            abilityState = AbilityState.MALFUNCTIONING_POISONED,
                         ),
                     ),
                     observation(
                         "poison-fortune-teller",
                         InformationProposition.AbilityStateAt(
                             seat = 3,
-                            role = RoleId("Fortune Teller"),
-                            state = AbilityState.MALFUNCTIONING_POISONED,
+                            abilityRole = RoleId("Fortune Teller"),
+                            abilityState = AbilityState.MALFUNCTIONING_POISONED,
                         ),
                     ),
                 ),
@@ -111,16 +111,16 @@ class TroubleBrewingTopologyBundleDifferentialTest {
                         "drunk-chef-at-2",
                         InformationProposition.AbilityStateAt(
                             seat = 2,
-                            role = RoleId("Chef"),
-                            state = AbilityState.MALFUNCTIONING_DRUNK,
+                            abilityRole = RoleId("Chef"),
+                            abilityState = AbilityState.MALFUNCTIONING_DRUNK,
                         ),
                     ),
                     observation(
                         "drunk-empath-at-3",
                         InformationProposition.AbilityStateAt(
                             seat = 3,
-                            role = RoleId("Empath"),
-                            state = AbilityState.MALFUNCTIONING_DRUNK,
+                            abilityRole = RoleId("Empath"),
+                            abilityState = AbilityState.MALFUNCTIONING_DRUNK,
                         ),
                     ),
                 ),
