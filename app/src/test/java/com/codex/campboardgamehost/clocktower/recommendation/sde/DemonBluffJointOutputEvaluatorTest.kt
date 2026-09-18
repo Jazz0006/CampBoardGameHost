@@ -28,7 +28,8 @@ import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformati
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightPublicGoodInfoProjection
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
+import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
+import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -90,17 +91,25 @@ class DemonBluffJointOutputEvaluatorTest {
         val logBefore = exactContext.observationLog.records.toList()
         val publicWholeBundle = listOf(publicChefClaim())
 
-        val evaluation = TroubleBrewingDemonBluffJointOutputEvaluator.evaluate(
-            validatedRuleset = validatedRuleset,
-            context = exactContext,
-            actualDemonSeat = 8,
+        val coordinator = ClocktowerRecommendationCoordinator()
+        val setupRequest = SetupCoordinationRequest(game = game, roles = roles)
+        val visibleResult = coordinator.recommendSetup(setupRequest)
+        val visiblePlansBefore = visibleResult.plans.toList()
+        val shadow = coordinator.evaluateSetupDemonBluffShadow(
+            request = setupRequest,
+            visibleResult = visibleResult,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = validatedRuleset,
+                exactContext = exactContext,
+            ),
             evaluationRecipientSeats = recipientSeats,
             publicWholeBundleObservations = publicWholeBundle,
-            candidates = candidates,
         )
 
-        assertTrue(evaluation is DemonBluffJointOutputEvaluation.Ready)
-        val ready = evaluation as DemonBluffJointOutputEvaluation.Ready
+        assertSame(visibleResult, shadow.visibleResult)
+        assertEquals(visiblePlansBefore, shadow.visibleResult.plans)
+        assertTrue(shadow.jointOutput is DemonBluffJointOutputEvaluation.Ready)
+        val ready = shadow.jointOutput as DemonBluffJointOutputEvaluation.Ready
         val distinctRoles = candidates.flatMap { it.roles }.distinct().sortedBy(RoleId::value)
 
         assertEquals(distinctRoles, ready.roleSupports.map(DemonBluffRoleSupport::role))
@@ -157,17 +166,7 @@ class DemonBluffJointOutputEvaluatorTest {
         assertEquals(timelineBefore, exactContext.actionTimeline.reducerFacts())
         assertEquals(logBefore, exactContext.observationLog.records)
 
-        val visibleResult = SetupRecommendationService.recommendConstrained(game, roles)
-        val visiblePlansBefore = visibleResult.plans.toList()
-        val shadow = DemonBluffSetupShadowAdapter.attach(
-            visibleResult = visibleResult,
-            legalCandidates = legalCandidates,
-            jointOutput = ready,
-        )
-
-        assertSame(visibleResult, shadow.visibleResult)
         assertSame(ready, shadow.jointOutput)
-        assertEquals(visiblePlansBefore, shadow.visibleResult.plans)
         assertEquals(
             visibleResult.plans.associate { plan ->
                 val bluff = plan.decisions.filterIsInstance<com.codex.campboardgamehost.clocktower.domain.StorytellerDecision.DemonBluffs>().single()
