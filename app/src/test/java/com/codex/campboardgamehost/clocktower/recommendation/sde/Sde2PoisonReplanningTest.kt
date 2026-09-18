@@ -178,23 +178,24 @@ class Sde2PoisonReplanningTest {
         val chefBeforeReady = chefBefore.consequences as ExactConsequenceEvaluation.Ready
         val chefAfterReady = chefAfter.consequences as ExactConsequenceEvaluation.Ready
 
-        // Once seat 2 is durably poisoned, every shown Empath number is mechanically credible:
-        // the hypothetical information no longer narrows the poisoned replay baseline.
-        assertTrue(
-            empathAfterReady.consequences.all { consequence ->
-                consequence.diagnostics.after == consequence.diagnostics.before
-            },
+        // Effective poison changes Storyteller-side candidate legality, but the hidden target must
+        // never be injected into the recipient's epistemic baseline. Replanning therefore produces
+        // fresh exact evaluations without teaching Chef or Empath that seat 2 was poisoned.
+        assertEquals(
+            empathAfterModel.contextSnapshot.legalCandidateIds,
+            empathAfterReady.consequences.map { it.candidateId },
+        )
+        assertEquals(
+            chefAfterModel.contextSnapshot.legalCandidateIds,
+            chefAfterReady.consequences.map { it.candidateId },
+        )
+        assertEquals(
+            chefBeforeReady.consequences.map { it.diagnostics },
+            chefAfterReady.consequences.map { it.diagnostics },
         )
         assertTrue(
-            empathBeforeReady.consequences.any { consequence ->
-                consequence.diagnostics.after != consequence.diagnostics.before
-            },
-        )
-
-        // Poison history changes the exact baseline even for a still-healthy, unrelated Chef plan.
-        assertNotEquals(
-            chefBeforeReady.consequences.first().diagnostics.before,
-            chefAfterReady.consequences.first().diagnostics.before,
+            empathBeforeReady.consequences.isNotEmpty() &&
+                empathAfterReady.consequences.isNotEmpty(),
         )
     }
 
