@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
+import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicEvaluationCapability
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
