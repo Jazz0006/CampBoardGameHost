@@ -1,8 +1,8 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-18 Australia/Sydney  
-> Status: **SDE-2D2 COMPLETE / PR #146 FULL-CI GREEN — pending user-authorized merge**  
-> Base checkpoint: PR #145 merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`; PR #146 is the validated D2 successor, not yet merged  
+> Status: **SDE-2D2 MERGED / SDE-2D3 REPRESENTATION AUDIT CURRENT**  
+> Base checkpoint: PR #146 merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`; SDE-2D3 continues on fresh branch `sde-2d3-strategic-world-quotient`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
@@ -36,9 +36,11 @@ Merge commit:
 
 `6fc0d99f1a250b91925280ed12ec0b199220b060`
 
-SDE-2D2 is now fully implemented on draft PR #146, branch:
+SDE-2D2 is merged to live `main` via PR #146.
 
-`sde-2d2-demon-bluff-joint-output`
+Merge commit:
+
+`0aa488098f1284e26d8df03f4028cc263bcf9f8a`
 
 Final executable acceptance head:
 
@@ -59,9 +61,7 @@ Authority:
 
 `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`
 
-PR #146 remains draft and unmerged. Do not convert it to Ready or merge it without explicit user authorization.
-
-After merge, the next executable stage is **SDE-2D3 strategic-world quotient**, not SDE-3.
+PR #146 is merged. The current stage is **SDE-2D3 strategic-world quotient**, not SDE-3.
 
 ## 2. Frozen architecture entering SDE-2D
 
@@ -217,7 +217,7 @@ Do not generalize the last rule into a cross-script global one-poisoned-player i
 Authority:
 
 - `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-- draft PR #146;
+- PR #146 merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`;
 - executable acceptance head `6acb708bd734d36d024240f0dea213a882a7714b`.
 
 Implemented:
@@ -240,9 +240,9 @@ Production selection has **not** cut over. `SetupRecommendationService` remains 
 
 Do not reopen D2A–D2D implementation on the next branch unless a concrete regression is found.
 
-## 6. NEXT AFTER PR #146 MERGE — SDE-2D3 Strategic-world quotient
+## 6. CURRENT — SDE-2D3 Strategic-world quotient
 
-Do not begin executable D2D3 work on the SDE-2D2 branch. After user-authorized merge of PR #146, create a fresh branch from live `main` and perform a fresh fanout/representation audit before implementation.
+Fresh branch `sde-2d3-strategic-world-quotient` was created from merged `main`. Perform the fanout/representation audit before executable quotient implementation.
 
 Goal:
 
@@ -365,4 +365,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **SDE-2D2 is fully implemented and full-ci GREEN on draft PR #146 at executable head `6acb708bd734d36d024240f0dea213a882a7714b`, but remains unmerged pending explicit user authorization. PR #145 is already merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`. After PR #146 is merged, start SDE-2D3 on a fresh branch: preserve the exact evaluator as mechanical-feasibility authority, introduce an epistemic-owned quotient keyed initially by Demon seat + Minion seat set, and prove quotient/mechanical differential correctness before using it as the primary strategic recommendation unit. Then proceed to SDE-2D4 5–15 player validation/performance and SDE-2D5 calibration. Production Demon-bluff selection has not cut over; `demon-bluff-ease` remains compatibility behavior until the later explicit cutover. SDE-3 remains blocked until the complete SDE-2D gate is explicitly satisfied.**
+> **SDE-2D2 is merged to `main` via PR #146 as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`, with final executable acceptance head `6acb708bd734d36d024240f0dea213a882a7714b`. SDE-2D3 is current on fresh branch `sde-2d3-strategic-world-quotient`: preserve the exact evaluator as mechanical-feasibility authority, introduce an epistemic-owned quotient keyed initially by Demon seat + Minion seat set, and prove quotient/mechanical differential correctness before using it as the primary strategic recommendation unit. Then proceed to SDE-2D4 5–15 player validation/performance and SDE-2D5 calibration. Production Demon-bluff selection has not cut over; `demon-bluff-ease` remains compatibility behavior until the later explicit cutover. SDE-3 remains blocked until the complete SDE-2D gate is explicitly satisfied.**
