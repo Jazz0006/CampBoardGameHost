@@ -116,7 +116,9 @@ internal data class FirstNightBundleCandidateSpaceAudit(
  * Recommendation-owned live-producer audit for Trouble Brewing Night 1.
  *
  * The object only composes producer identities/counts:
- * - Washerwoman/Librarian/Investigator legality stays in [PairInformationLegalDomain];
+ * - healthy Washerwoman/Librarian/Investigator producer identity stays in
+ *   [NaturalPairInformationCandidateGenerator], while impaired complete display legality stays in
+ *   [PairInformationLegalDomain];
  * - Chef/Empath truth values stay in [FirstNightNumericInformationSemantics];
  * - Fortune Teller Red Herring and demon-bluff legality stay in [SetupCandidateGenerator].
  *
@@ -190,20 +192,29 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
         .map { (source, ability) ->
             val (abilityRole, reliability) = ability
             val roleKey = pairRoleKey(abilityRole)
-            val candidates = PairInformationLegalDomain.generate(
-                game = game,
-                roleDefinitions = roleDefinitions,
-                sourceSeat = source.seat,
-                abilityRole = abilityRole,
-                reliability = reliability,
-            )
+            val optionIds = if (reliability == ReliabilityState.DRUNK) {
+                PairInformationLegalDomain.generate(
+                    game = game,
+                    roleDefinitions = roleDefinitions,
+                    sourceSeat = source.seat,
+                    abilityRole = abilityRole,
+                    reliability = reliability,
+                ).map { it.candidateId }.sorted()
+            } else {
+                NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace(
+                    game = game,
+                    sourceSeat = source.seat,
+                    abilityRole = abilityRole,
+                    roleDefinitions = roleDefinitions,
+                ).map { it.candidateId }.sorted()
+            }
             FirstNightBundleCandidateFactorAudit(
                 factorId = "pair.$roleKey.seat-${source.seat}",
                 kind = FirstNightBundleCandidateFactorKind.PAIR_INFORMATION,
                 control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
                 profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
                 sourceSeat = source.seat,
-                optionIds = candidates.map { it.candidateId }.sorted(),
+                optionIds = optionIds,
             )
         }
         .toList()
