@@ -11,6 +11,35 @@ import org.junit.Test
 
 class Sde2D5FHumanLabelManifestTest {
     @Test
+    fun `unreviewed template covers every reviewable ID and excludes references`() {
+        val material = reviewMaterial()
+        val manifest = Sde2D5FHumanLabelManifestBuilder.unreviewedTemplate(
+            material = material,
+            version = "d5f-b-template-v1",
+        )
+        val reviewableIds = material.records
+            .filter { it.reviewability == Sde2D5FReviewability.REVIEWABLE }
+            .mapTo(linkedSetOf(), Sde2D5FReviewRecord::reviewId)
+
+        assertEquals(reviewableIds, manifest.entries.mapTo(linkedSetOf()) { it.reviewId })
+        assertTrue(manifest.entries.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
+        assertTrue(manifest.entries.all { it.reasons.isEmpty() })
+        assertFalse(manifest.entries.any { it.reviewId == "d5f:baseline:baseline" })
+
+        val validation = Sde2D5FHumanLabelManifestValidator.validate(material, manifest)
+        assertTrue(validation.isValid)
+        assertEquals(reviewableIds, validation.unreviewedRequiredReviewIds)
+        assertFalse(validation.isCompleteForGateDerivation)
+
+        assertEquals(
+            manifest,
+            Sde2D5FHumanLabelManifestCodec.parse(
+                Sde2D5FHumanLabelManifestCodec.render(manifest),
+            ),
+        )
+    }
+
+    @Test
     fun `manifest round trips settled human labels and keeps uncertain explicit`() {
         val material = reviewMaterial()
         val manifest = Sde2D5FHumanLabelManifest(
