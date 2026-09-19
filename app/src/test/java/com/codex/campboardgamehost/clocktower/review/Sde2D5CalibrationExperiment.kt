@@ -227,6 +227,20 @@ class Sde2D5CalibrationExperiment {
         val rendered = Sde2D5FHumanLabelManifestCodec.render(manifest)
         assertEquals(manifest, Sde2D5FHumanLabelManifestCodec.parse(rendered))
 
+        val persistedManifestFile =
+            File("src/test/resources/review/sde-2d5f-human-label-manifest.tsv")
+        val persistedManifest = Sde2D5FHumanLabelManifestCodec.parse(
+            persistedManifestFile.readText(Charsets.UTF_8),
+        )
+        assertEquals(manifest, persistedManifest)
+        val persistedValidation = Sde2D5FHumanLabelManifestValidator.validate(
+            material = reviewMaterial,
+            manifest = persistedManifest,
+        )
+        assertTrue(persistedValidation.isValid)
+        assertFalse(persistedValidation.isCompleteForGateDerivation)
+        assertEquals(requiredReviewIds, persistedValidation.unreviewedRequiredReviewIds)
+
         val manifestFile = File("build/reports/sde-2d5f-human-label-manifest.tsv")
         requireNotNull(manifestFile.parentFile).mkdirs()
         manifestFile.writeText(rendered, Charsets.UTF_8)
