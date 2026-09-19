@@ -103,14 +103,25 @@ internal object Sde2D5CrossRegimeCalibrationEvidenceBuilder {
 
     fun buildBaseline(): Sde2D5CrossRegimeCalibrationEvidence =
         Sde2D5CrossRegimeCalibrationEvidence(
-            points = representativePlayerCounts.map(::buildPoint),
+            points = representativePlayerCounts.flatMap { playerCount ->
+                Sde2D5SetupProfileKind.entries.map { profileKind ->
+                    buildPoint(playerCount, profileKind)
+                }
+            },
         )
 
-    private fun buildPoint(playerCount: Int): Sde2D5CalibrationEvidencePoint {
-        val profile = TroubleBrewingSetupProfiles.standard(playerCount)
-        val snapshotId = "d5b-snapshot-$playerCount"
+    private fun buildPoint(
+        playerCount: Int,
+        profileKind: Sde2D5SetupProfileKind,
+    ): Sde2D5CalibrationEvidencePoint {
+        val profile = when (profileKind) {
+            Sde2D5SetupProfileKind.STANDARD -> TroubleBrewingSetupProfiles.standard(playerCount)
+            Sde2D5SetupProfileKind.BARON -> TroubleBrewingSetupProfiles.withBaron(playerCount)
+        }
+        val profileId = profileKind.name.lowercase()
+        val snapshotId = "d5b-snapshot-$profileId-$playerCount"
         val knowledge = PlayerKnowledgeSnapshot(
-            knowledgeSnapshotId = "d5b-knowledge-$playerCount",
+            knowledgeSnapshotId = "d5b-knowledge-$profileId-$playerCount",
             formalSnapshotId = snapshotId,
             recipientSeat = 1,
             perceivedRole = chef,
@@ -120,7 +131,7 @@ internal object Sde2D5CrossRegimeCalibrationEvidenceBuilder {
             ),
         )
         val observation = EpistemicObservation(
-            observationId = "d5b-shown-chef-$playerCount",
+            observationId = "d5b-shown-chef-$profileId-$playerCount",
             snapshotId = snapshotId,
             phase = StorytellerPhase.FIRST_NIGHT,
             round = 1,
@@ -133,7 +144,7 @@ internal object Sde2D5CrossRegimeCalibrationEvidenceBuilder {
             proposition = InformationProposition.ShownRoleAt(1, chef),
         )
         val query = ExactHypotheticalObservationBundleQuery(
-            bundleId = "d5b-baseline-$playerCount",
+            bundleId = "d5b-baseline-$profileId-$playerCount",
             recipientSeat = 1,
             observations = listOf(observation),
             registrationWitnessBindings = listOf(
@@ -162,7 +173,7 @@ internal object Sde2D5CrossRegimeCalibrationEvidenceBuilder {
             pointId = query.bundleId,
             playerCount = playerCount,
             regime = Sde2D5PlayerCountRegime.from(playerCount),
-            profileKind = Sde2D5SetupProfileKind.STANDARD,
+            profileKind = profileKind,
             beforeStrategicWorldCount = diagnostic.beforeStructure.distinctStrategicWorldCount,
             afterStrategicWorldCount = diagnostic.afterStructure.distinctStrategicWorldCount,
             normalized = NormalizedStrategicDiagnosticsProjector.project(
