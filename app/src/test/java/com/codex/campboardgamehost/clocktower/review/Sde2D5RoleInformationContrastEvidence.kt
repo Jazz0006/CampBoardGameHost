@@ -22,7 +22,7 @@ internal data class Sde2D5RoleInformationCalibrationEvidence(
  * topology retention. This exists only to demonstrate that raw role-world count is not a sufficient
  * strategic objective.
  */
-internal data class Sde2D5RoleInformationMatchedRawContrast private constructor(
+internal class Sde2D5RoleInformationMatchedRawContrast private constructor(
     val first: Sde2D5RoleInformationCalibrationEvidence,
     val second: Sde2D5RoleInformationCalibrationEvidence,
     val beforeWorlds: BigInteger,
