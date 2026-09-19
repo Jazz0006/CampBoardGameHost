@@ -35,14 +35,16 @@ import java.io.File
 internal data class Sde2D5DemonBluffRealCalibration(
     val evidence: List<Sde2D5DemonBluffCalibrationEvidence>,
     val selected: List<Sde2D5DemonBluffCalibrationSelection>,
+    val roleDomainCompleteness: Sde2D5CalibrationRoleDomainCompleteness,
 )
 
 /**
- * Bounded real D2D2 -> D5D calibration fixture.
+ * Full-script real D2D2 -> D5D calibration fixture.
  *
- * The role domain intentionally matches the previously validated D2D2 bounded exact fixture: enough
- * out-of-play GOOD roles to produce four legal bluff triplets without turning calibration into a
- * full Trouble Brewing combinatorial sweep.
+ * D5 policy calibration must preserve every legal Trouble Brewing counterworld family. In
+ * particular, STANDARD actual setup does not let review evidence discard BARON-profile worlds,
+ * Drunk shown-role worlds, or other script roles that remain possible from player knowledge.
+ * Bounded role domains remain valid for local exact-evaluator correctness tests only.
  */
 internal object Sde2D5DemonBluffRealCalibrationBuilder {
     private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
@@ -53,20 +55,7 @@ internal object Sde2D5DemonBluffRealCalibrationBuilder {
         rulesetVersion = "sde-2d5-demon-bluff-calibration",
         sourceRevision = "official",
     )
-    private val fixtureRoleIds = setOf(
-        "Chef",
-        "Empath",
-        "Fortune Teller",
-        "Undertaker",
-        "Virgin",
-        "Scarlet Woman",
-        "Imp",
-        "Investigator",
-        "Monk",
-        "Soldier",
-        "Butler",
-    ).mapTo(linkedSetOf(), ::RoleId)
-    private val roles = TroubleBrewingFixtures.fullRoleDefinitions().filter { it.id in fixtureRoleIds }
+    private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
     private val game = GameState(
         script = TroubleBrewingFixtures.scriptId,
         players = listOf(
@@ -102,10 +91,12 @@ internal object Sde2D5DemonBluffRealCalibrationBuilder {
     )
 
     fun build(): Sde2D5DemonBluffRealCalibration {
+        val roleDomainCompleteness =
+            Sde2D5CalibrationRoleDomainContract.requireFullTroubleBrewing(roles)
         val legal = SetupCandidateGenerator.generateDemonBluffCandidates(game, roles)
         val candidates = SetupDemonBluffJointOutputAdapter.fromLegalCandidates(legal)
         require(candidates.size >= 2) {
-            "D5D bounded fixture requires at least two legal bluff triplets."
+            "D5D full-domain fixture requires at least two legal bluff triplets."
         }
 
         val evaluation = TroubleBrewingDemonBluffJointOutputEvaluator.evaluate(
@@ -117,7 +108,7 @@ internal object Sde2D5DemonBluffRealCalibrationBuilder {
             candidates = candidates,
         )
         require(evaluation is DemonBluffJointOutputEvaluation.Ready) {
-            "D5D bounded real bluff calibration requires exact joint-output support."
+            "D5D full-domain real bluff calibration requires exact joint-output support."
         }
 
         val evidence = evaluation.candidates.map { diagnostic ->
@@ -132,6 +123,7 @@ internal object Sde2D5DemonBluffRealCalibrationBuilder {
         return Sde2D5DemonBluffRealCalibration(
             evidence = evidence,
             selected = Sde2D5DemonBluffCalibrationEvidenceSelector.selectReviewContrasts(evidence),
+            roleDomainCompleteness = roleDomainCompleteness,
         )
     }
 

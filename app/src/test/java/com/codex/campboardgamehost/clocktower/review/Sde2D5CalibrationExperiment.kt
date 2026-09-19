@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.review
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import java.io.File
 import org.junit.Assert.assertEquals
@@ -99,6 +100,10 @@ class Sde2D5CalibrationExperiment {
 
         assertTrue(calibration.evidence.size >= 2)
         assertEquals(
+            Sde2D5CalibrationRoleDomainCompleteness.FULL_SCRIPT_DOMAIN,
+            calibration.roleDomainCompleteness,
+        )
+        assertEquals(
             setOf(
                 Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION,
                 Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION,
@@ -106,11 +111,23 @@ class Sde2D5CalibrationExperiment {
             calibration.selected.flatMapTo(linkedSetOf()) { it.selectionReasons },
         )
         assertTrue(
-            "D5D bounded real fixture must expose more than one shared-support level.",
+            "D5D full-domain real fixture must expose more than one shared-support level.",
             calibration.evidence
                 .map { evidence -> evidence.sharedToUnionRetention }
                 .distinct()
                 .size > 1,
+        )
+    }
+
+    @Test
+    fun `full-domain Demon bluff calibration preserves legal Butler counterworld support`() {
+        val calibration = bluffCalibration
+        val butler = RoleId("Butler")
+        val withButler = calibration.evidence.first { evidence -> butler in evidence.roles }
+
+        assertTrue(
+            "Full Trouble Brewing calibration must retain legal BARON-profile worlds for a Butler claim.",
+            withButler.roleStrategicWorldCounts.getValue(butler) > 0,
         )
     }
 

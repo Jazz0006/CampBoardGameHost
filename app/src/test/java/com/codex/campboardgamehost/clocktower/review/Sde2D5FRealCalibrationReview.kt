@@ -9,6 +9,12 @@ internal object Sde2D5FRealCalibrationReviewBuilder {
         sealedHoldoutScenarioCount: Int =
             FirstNightBundleBeginnerCorpusBuilder.SEALED_HOLDOUT_SCENARIO_COUNT,
     ): Sde2D5FCalibrationReviewMaterial {
+        require(
+            bluff.roleDomainCompleteness ==
+                Sde2D5CalibrationRoleDomainCompleteness.FULL_SCRIPT_DOMAIN,
+        ) {
+            "D5F Demon-bluff review material requires FULL_SCRIPT_DOMAIN calibration evidence."
+        }
         val selectedRoleInformation = listOf(
             roleInformation.topologyNeutral,
             roleInformation.closestRawDifferentTopology.first,
