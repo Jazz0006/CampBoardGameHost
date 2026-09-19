@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-19 Australia/Sydney  
-> Status: **SDE-2D5 CURRENT — D5A–D5E + D5F-A complete; D5F-B next**  
+> Status: **SDE-2D5 CURRENT — D5F-B infrastructure complete; HUMAN REVIEW next**  
 > Base checkpoint: PR #149 squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`; D2D5 branch `sde-2d5-calibration-policy-evidence`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
@@ -453,18 +453,54 @@ clean head              c17db4fc4789a5d0b11156a22a88da7971a37ef7
 clean full CI           35424382474  SUCCESS
 ~~~
 
-**Continue with D5F-B human label manifest only.**
+**D5F-B manifest infrastructure is COMPLETE; HUMAN REVIEW is NEXT.**
 
-Required next contracts:
+Implemented D5F-B contracts:
 
-1. keep labels in a separate manifest keyed by stable review ID;
-2. reject unknown IDs;
-3. reject duplicate IDs;
-4. require explicit reasons for non-UNREVIEWED decisions;
-5. keep `UNCERTAIN` distinct;
-6. expose review-set completeness so gate derivation cannot proceed with required items still UNREVIEWED.
+1. labels live in a separate manifest keyed by stable review ID;
+2. unknown IDs are rejected;
+3. baseline/reference IDs are rejected;
+4. duplicate IDs are rejected;
+5. non-`UNREVIEWED` labels require explicit reasons;
+6. `UNREVIEWED` cannot carry inferred reasons;
+7. `UNCERTAIN` stays explicit;
+8. review-set completeness blocks D5F-C while any required item remains UNREVIEWED;
+9. an all-UNREVIEWED template is generated and round-trips through the manifest codec;
+10. the real manifest seed is persisted at:
+   `app/src/test/resources/review/sde-2d5f-human-label-manifest.tsv`.
 
-Do not derive thresholds in D5F-B. Do not inspect sealed holdout diagnostics.
+A D5E review-selection bug was found and fixed before human review: `4/4` and `5/5` were structurally unequal objects but mathematically equal ratios. Strategic retention comparisons now use cross multiplication. The corrected equal-raw-removal contrast is `4/7` versus `3/6`.
+
+Current reviewable IDs:
+
+~~~text
+d5f:bluff:3ffbf7f823c8418f:r1
+d5f:bluff:58e4a95e9ec27f82:r1
+d5f:drunk:value-1
+d5f:role-info:sig-00002562710d4654:marginal-1
+d5f:role-info:sig-44f30b2b21cd7682:marginal-0
+d5f:role-info:sig-796b6039ad4bb4aa:marginal-0
+d5f:role-info:sig-89a6d878c5516337:marginal-1
+d5f:role-info:sig-aab5a4dfa48cfce0:marginal-2
+~~~
+
+All eight are currently `UNREVIEWED`.
+
+Latest corrected validation:
+
+~~~text
+manifest/live-material head  e88cf88801ceb7c8d28824eb793da98d5ae0b4cc
+D5 calibration T3            35430578290  SUCCESS
+ordinary CI                  35430578286  SUCCESS
+R2 / Android FAST / CI gate                SUCCESS
+~~~
+
+The current manifest is valid but intentionally incomplete:
+`isCompleteForGateDerivation == false`.
+
+Next conversation should perform the **human judgment**, record labels + reasons in the source-controlled manifest, then validate it. Do not automatically infer the labels from metrics.
+
+Do not begin D5F-C, derive thresholds, inspect sealed holdout diagnostics, or alter production selection during this review.
 
 ## 9. SDE-3 resume gate
 
@@ -509,4 +545,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E and D5F-A are COMPLETE. Continue with D5F-B human label manifest from `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`. Keep labels separate from generated evidence, reject unknown/duplicate IDs, require reasons for settled decisions, and block later gate derivation until the required review set is settled. Do not open the sealed holdout, derive/freeze thresholds early, introduce an opaque scalar, cut production policy, or begin SDE-3.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E + D5F-A are COMPLETE and D5F-B manifest infrastructure is COMPLETE. HUMAN REVIEW of the 8 source-controlled UNREVIEWED records is NEXT. Record explicit labels + reasons, then validate completeness. Do not begin D5F-C until the manifest is fully settled; do not open the sealed holdout, derive/freeze thresholds early, introduce an opaque scalar, cut production policy, or begin SDE-3.**
