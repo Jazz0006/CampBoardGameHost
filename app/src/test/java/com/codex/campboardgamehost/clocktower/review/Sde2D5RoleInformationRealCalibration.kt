@@ -19,6 +19,24 @@ import com.codex.campboardgamehost.clocktower.recommendation.sde.StrategicRatio
 import java.io.File
 import java.math.BigInteger
 
+internal fun compareStrategicRatioValue(
+    left: StrategicRatio,
+    right: StrategicRatio,
+): Int = when {
+    left is StrategicRatio.Undefined && right is StrategicRatio.Undefined -> 0
+    left is StrategicRatio.Undefined -> 1
+    right is StrategicRatio.Undefined -> -1
+    left is StrategicRatio.Defined && right is StrategicRatio.Defined ->
+        (left.numerator.toLong() * right.denominator.toLong())
+            .compareTo(right.numerator.toLong() * left.denominator.toLong())
+    else -> error("Unknown strategic ratio implementation.")
+}
+
+internal fun sameStrategicRatioValue(
+    left: StrategicRatio,
+    right: StrategicRatio,
+): Boolean = compareStrategicRatioValue(left, right) == 0
+
 internal data class Sde2D5RoleInformationNearRawContrast(
     val first: Sde2D5RoleInformationCalibrationEvidence,
     val second: Sde2D5RoleInformationCalibrationEvidence,
@@ -29,8 +47,10 @@ internal data class Sde2D5RoleInformationNearRawContrast(
         require(first.point.playerCount == second.point.playerCount)
         require(first.point.profileKind == second.point.profileKind)
         require(
-            first.point.normalized.evilTopologyRetention !=
+            !sameStrategicRatioValue(
+                first.point.normalized.evilTopologyRetention,
                 second.point.normalized.evilTopologyRetention,
+            ),
         )
     }
 }
@@ -146,8 +166,10 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
                     val first = evidence[firstIndex]
                     val second = evidence[secondIndex]
                     if (
-                        first.point.normalized.evilTopologyRetention ==
-                        second.point.normalized.evilTopologyRetention
+                        sameStrategicRatioValue(
+                            first.point.normalized.evilTopologyRetention,
+                            second.point.normalized.evilTopologyRetention,
+                        )
                     ) {
                         continue
                     }
@@ -174,7 +196,7 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
 
         val strongestStrategicCollapse = evidence.minWith(
             Comparator { left, right ->
-                val ratioOrder = compareRatio(
+                val ratioOrder = compareStrategicRatioValue(
                     left.point.normalized.evilTopologyRetention,
                     right.point.normalized.evilTopologyRetention,
                 )
@@ -197,19 +219,6 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
             strongestStrategicCollapse = strongestStrategicCollapse,
             weakestMechanicalInformation = weakestMechanicalInformation,
         )
-    }
-
-    private fun compareRatio(
-        left: StrategicRatio,
-        right: StrategicRatio,
-    ): Int = when {
-        left is StrategicRatio.Undefined && right is StrategicRatio.Undefined -> 0
-        left is StrategicRatio.Undefined -> 1
-        right is StrategicRatio.Undefined -> -1
-        left is StrategicRatio.Defined && right is StrategicRatio.Defined ->
-            (left.numerator.toLong() * right.denominator.toLong())
-                .compareTo(right.numerator.toLong() * left.denominator.toLong())
-        else -> error("Unknown strategic ratio implementation.")
     }
 
     private fun marginalDiagnostic(
