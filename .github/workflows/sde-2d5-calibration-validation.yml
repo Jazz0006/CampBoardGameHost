@@ -27,4 +27,13 @@ jobs:
       - name: Ensure Gradle wrapper is executable
         run: chmod +x ./gradlew
       - name: Run SDE-2D5 calibration evidence
-        run: ./gradlew :app:sde2D5Calibration --no-daemon --rerun-tasks
+        shell: bash
+        run: |
+          set +e
+          ./gradlew :app:sde2D5Calibration --no-daemon --rerun-tasks
+          status=$?
+          if [[ $status -ne 0 ]]; then
+            echo "===== SDE-2D5 JUnit XML ====="
+            find app/build/test-results/sde2D5Calibration -type f -name '*.xml' -maxdepth 2 -print -exec cat {} \;
+          fi
+          exit $status
