@@ -91,6 +91,107 @@ class Sde2D5DemonBluffCalibrationEvidenceTest {
         )
     }
 
+    @Test
+    fun `selects deterministic low and high shared support contrasts without thresholds`() {
+        val monk = RoleId("Monk")
+        val soldier = RoleId("Soldier")
+        val butler = RoleId("Butler")
+        val baseline = structure(
+            setOf(
+                key(1, 5),
+                key(2, 5),
+                key(3, 5),
+                key(4, 5),
+            ),
+        )
+        val common = structure(setOf(key(1, 5), key(2, 5), key(3, 5)))
+        val robust = projectTriplet(
+            candidateId = "robust",
+            roles = listOf(monk, soldier, butler),
+            supports = listOf(
+                support(monk, baseline, common, 30),
+                support(soldier, baseline, common, 30),
+                support(butler, baseline, common, 30),
+            ),
+            union = common.strategicWorldKeys,
+            shared = common.strategicWorldKeys,
+            distinctPatterns = 1,
+        )
+        val fragile = projectTriplet(
+            candidateId = "fragile",
+            roles = listOf(monk, soldier, butler),
+            supports = listOf(
+                support(monk, baseline, common, 30),
+                support(soldier, baseline, structure(setOf(key(1, 5), key(2, 5))), 20),
+                support(butler, baseline, structure(setOf(key(1, 5))), 10),
+            ),
+            union = common.strategicWorldKeys,
+            shared = setOf(key(1, 5)),
+            distinctPatterns = 3,
+        )
+
+        val selected = Sde2D5DemonBluffCalibrationEvidenceSelector.selectReviewContrasts(
+            listOf(robust, fragile),
+        )
+
+        assertEquals(
+            setOf(
+                Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION,
+                Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION,
+            ),
+            selected.flatMapTo(linkedSetOf()) { it.selectionReasons },
+        )
+        assertEquals(
+            setOf("fragile", "robust"),
+            selected.mapTo(linkedSetOf()) { it.evidence.candidateId },
+        )
+        assertEquals(
+            setOf(Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION),
+            selected.single { it.evidence.candidateId == "fragile" }.selectionReasons,
+        )
+        assertEquals(
+            setOf(Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION),
+            selected.single { it.evidence.candidateId == "robust" }.selectionReasons,
+        )
+    }
+
+    private fun projectTriplet(
+        candidateId: String,
+        roles: List<RoleId>,
+        supports: List<DemonBluffRoleSupport>,
+        union: Set<StrategicWorldKey>,
+        shared: Set<StrategicWorldKey>,
+        distinctPatterns: Int,
+    ): Sde2D5DemonBluffCalibrationEvidence {
+        val triplet = DemonBluffJointOutputDiagnostics(
+            candidateId = candidateId,
+            roles = roles,
+            roleSupports = supports,
+            byRecipient = listOf(
+                DemonBluffTripletRecipientDiagnostics(
+                    recipientSeat = 1,
+                    supportedRoles = roles.toSet(),
+                    unionEvilTeamSeatConfigurations = union.mapTo(linkedSetOf()) { key ->
+                        setOf(key.demonSeat) + key.minionSeats
+                    },
+                    sharedEvilTeamSeatConfigurations = shared.mapTo(linkedSetOf()) { key ->
+                        setOf(key.demonSeat) + key.minionSeats
+                    },
+                    distinctRoleTopologyPatternCount = distinctPatterns,
+                    unionStrategicWorldKeys = union,
+                    sharedStrategicWorldKeys = shared,
+                    distinctRoleStrategicPatternCount = distinctPatterns,
+                ),
+            ),
+        )
+        return Sde2D5DemonBluffCalibrationEvidenceProjector.project(
+            playerCount = 7,
+            profileKind = Sde2D5SetupProfileKind.STANDARD,
+            recipientSeat = 1,
+            diagnostic = triplet,
+        )
+    }
+
     private fun support(
         role: RoleId,
         before: ExactWorldStructureDiagnostics,
