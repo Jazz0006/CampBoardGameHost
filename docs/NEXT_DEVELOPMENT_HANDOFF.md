@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-19 Australia/Sydney  
-> Status: **SDE-2D5 CURRENT — calibration / policy evidence audit complete; D5A next**  
+> Status: **SDE-2D5 CURRENT — D5A–D5E + D5F-A complete; D5F-B next**  
 > Base checkpoint: PR #149 squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`; D2D5 branch `sde-2d5-calibration-policy-evidence`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
@@ -426,20 +426,45 @@ FAST / R2 / gate                  SUCCESS
 
 The temporary D5 validation workflow has been removed.
 
-### D5F — CURRENT / AUDIT COMPLETE
+### D5F — CURRENT
 
 Authority: `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`.
 
-Immediate executable slice: **D5F-A only**.
+**D5F-A is COMPLETE.**
 
-1. generate deterministic calibration-only human-review material;
-2. preserve exact rational diagnostics and typed evidence-specific details;
-3. keep all reviewable records `UNREVIEWED`;
-4. keep baseline reference rows non-labelable;
-5. expose only sealed holdout scenario count;
-6. do not derive gates, freeze thresholds, or evaluate holdout yet.
+The calibration-only review export now has:
 
-No opaque global scalar. No production cutover. No SDE-3 yet.
+- stable deterministic review IDs;
+- typed baseline / Drunk / Demon-bluff / role-information records;
+- baseline references that are explicitly non-labelable;
+- every reviewable generated item initially `UNREVIEWED`;
+- exact rational diagnostics preserved;
+- deterministic real review selection spanning all player-count regimes and STANDARD/BARON references;
+- sealed holdout exposure limited to the already-public scenario count.
+
+Accepted evidence:
+
+~~~text
+D5F-A model T1          91d8256c9b483d2f70887f8a526aba175a70f073
+D5F-A calibration T3    35423966647  SUCCESS
+full CI                 35423966654  SUCCESS
+Android full + APK                     BUILD SUCCESSFUL in 7m 12s
+clean head              c17db4fc4789a5d0b11156a22a88da7971a37ef7
+clean full CI           35424382474  SUCCESS
+~~~
+
+**Continue with D5F-B human label manifest only.**
+
+Required next contracts:
+
+1. keep labels in a separate manifest keyed by stable review ID;
+2. reject unknown IDs;
+3. reject duplicate IDs;
+4. require explicit reasons for non-UNREVIEWED decisions;
+5. keep `UNCERTAIN` distinct;
+6. expose review-set completeness so gate derivation cannot proceed with required items still UNREVIEWED.
+
+Do not derive thresholds in D5F-B. Do not inspect sealed holdout diagnostics.
 
 ## 9. SDE-3 resume gate
 
@@ -484,4 +509,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E are COMPLETE and the D5F ownership audit is COMPLETE. Continue with D5F-A deterministic calibration-only review export from `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`. Do not open the sealed holdout, infer human labels automatically, derive/freeze thresholds early, introduce an opaque scalar, cut production policy, or begin SDE-3.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E and D5F-A are COMPLETE. Continue with D5F-B human label manifest from `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`. Keep labels separate from generated evidence, reject unknown/duplicate IDs, require reasons for settled decisions, and block later gate derivation until the required review set is settled. Do not open the sealed holdout, derive/freeze thresholds early, introduce an opaque scalar, cut production policy, or begin SDE-3.**
