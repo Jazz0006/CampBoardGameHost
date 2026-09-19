@@ -266,7 +266,7 @@ Android full + APK build       BUILD SUCCESSFUL in 7m 56s
 
 PR #149 was user-authorized and squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`.
 
-### 2.5 SDE-2D5 — calibration / policy evidence — CURRENT (D5A–E COMPLETE, D5F NEXT)
+### 2.5 SDE-2D5 — calibration / policy evidence — CURRENT (D5A–E COMPLETE, D5F AUDIT COMPLETE)
 
 Authority: `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`.
 
@@ -288,14 +288,15 @@ Key accepted D5E evidence:
 - ordinary CI run `35421032988` SUCCESS;
 - cleanup head `9b47095a906cec5b78807d9ea9f5be6c8079714d` FAST / R2 / CI gate SUCCESS.
 
-D5F is NEXT:
+D5F authority: `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`.
 
-- produce deterministic human-review export from the named evidence axes;
-- assign/review calibration labels and reasons;
-- derive interpretable candidate gates;
-- freeze gates **before** evaluating the sealed holdout;
-- evaluate holdout once after freeze;
-- retain no opaque global scalar.
+D5F-A is NEXT:
+
+- produce deterministic calibration-only human-review export from the named evidence axes;
+- keep all reviewable records `UNREVIEWED`;
+- keep baseline reference rows explicitly non-labelable;
+- expose only the already-public sealed holdout count;
+- do not derive thresholds, freeze gates, or evaluate holdout yet.
 
 Production recommendation selection remains unchanged.
 
