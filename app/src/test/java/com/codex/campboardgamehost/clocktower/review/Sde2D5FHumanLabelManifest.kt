@@ -43,6 +43,28 @@ internal data class Sde2D5FHumanLabelManifestValidation(
         get() = isValid && unreviewedRequiredReviewIds.isEmpty()
 }
 
+internal object Sde2D5FHumanLabelManifestBuilder {
+    fun unreviewedTemplate(
+        material: Sde2D5FCalibrationReviewMaterial,
+        version: String,
+    ): Sde2D5FHumanLabelManifest {
+        require(version.isNotBlank())
+        return Sde2D5FHumanLabelManifest(
+            version = version,
+            entries = material.records
+                .filter { it.reviewability == Sde2D5FReviewability.REVIEWABLE }
+                .map { record ->
+                    Sde2D5FHumanLabelEntry(
+                        reviewId = record.reviewId,
+                        label = FirstNightBeginnerCorpusLabel.UNREVIEWED,
+                        reasons = emptySet(),
+                    )
+                }
+                .sortedBy(Sde2D5FHumanLabelEntry::reviewId),
+        )
+    }
+}
+
 internal object Sde2D5FHumanLabelManifestValidator {
     fun validate(
         material: Sde2D5FCalibrationReviewMaterial,
