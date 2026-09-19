@@ -21,11 +21,12 @@ import java.math.BigInteger
 internal data class Sde2D5RoleInformationNearRawContrast(
     val first: Sde2D5RoleInformationCalibrationEvidence,
     val second: Sde2D5RoleInformationCalibrationEvidence,
-    val afterWorldDifference: BigInteger,
+    val rawWorldRemovalDifference: BigInteger,
 ) {
     init {
-        require(afterWorldDifference.signum() >= 0)
-        require(first.point.rawMechanicalBefore == second.point.rawMechanicalBefore)
+        require(rawWorldRemovalDifference.signum() >= 0)
+        require(first.point.playerCount == second.point.playerCount)
+        require(first.point.profileKind == second.point.profileKind)
         require(
             first.point.normalized.evilTopologyRetention !=
                 second.point.normalized.evilTopologyRetention,
@@ -41,10 +42,11 @@ internal data class Sde2D5RoleInformationRealCalibration(
 /**
  * Reuses the existing FN-BUNDLE healthy exact harness to discover real D5E review contrasts.
  *
- * Selection is deterministic and descriptive:
- * - choose the topology-neutral point with the largest exact mechanical reduction;
- * - among points with different strategic topology retention, choose the pair whose exact AFTER
- *   cardinalities are closest.
+ * Selection is deterministic and descriptive over leave-one-out marginals:
+ * - every point means "omitted bundle -> complete bundle" for one public observation;
+ * - choose the topology-neutral marginal with the largest exact mechanical reduction;
+ * - among marginals with different strategic topology retention, choose the pair whose exact
+ *   raw-world removals are closest.
  *
  * No similarity threshold or recommendation gate is introduced.
  */
@@ -91,20 +93,27 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
             "D5E real role-information calibration requires the healthy exact bundle harness."
         }
 
-        val evidence = evaluation.signatureGroups.map { group ->
-            val diagnostic = group.recipientDiagnostics.single()
-            Sde2D5RoleInformationCalibrationEvidenceProjector.project(
-                playerCount = 7,
-                profileKind = Sde2D5SetupProfileKind.STANDARD,
-                contrastId = "d5e-real-role-information",
-                diagnostic = diagnostic.toExact(group.signatureId),
-            )
+        val evidence = evaluation.signatureGroups.flatMap { group ->
+            val full = group.recipientDiagnostics.single()
+            group.leaveOneOutDiagnostics.mapIndexed { omittedIndex, leaveOneOut ->
+                val omitted = leaveOneOut.recipientDiagnostics.single()
+                Sde2D5RoleInformationCalibrationEvidenceProjector.project(
+                    playerCount = 7,
+                    profileKind = Sde2D5SetupProfileKind.STANDARD,
+                    contrastId = "d5e-real-role-information",
+                    diagnostic = marginalDiagnostic(
+                        bundleId = "${group.signatureId}:marginal-$omittedIndex",
+                        omitted = omitted,
+                        full = full,
+                    ),
+                )
+            }
         }.filter { point ->
             point.hasMechanicalInformationGain &&
                 requireNotNull(point.point.rawMechanicalAfter).signum() > 0
         }
         require(evidence.isNotEmpty()) {
-            "D5E real role-information calibration requires mechanically informative signatures."
+            "D5E real role-information calibration requires mechanically informative marginal clues."
         }
 
         val topologyNeutral = evidence
@@ -116,7 +125,7 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
             )
             .firstOrNull()
             ?: error(
-                "D5E real fixture did not expose a mechanically informative topology-neutral signature.",
+                "D5E real fixture did not expose a mechanically informative topology-neutral marginal clue.",
             )
 
         val pairCandidates = buildList {
@@ -130,13 +139,12 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
                     ) {
                         continue
                     }
-                    val firstAfter = requireNotNull(first.point.rawMechanicalAfter)
-                    val secondAfter = requireNotNull(second.point.rawMechanicalAfter)
                     add(
                         Sde2D5RoleInformationNearRawContrast(
                             first = first,
                             second = second,
-                            afterWorldDifference = firstAfter.subtract(secondAfter).abs(),
+                            rawWorldRemovalDifference =
+                                first.rawWorldsRemoved.subtract(second.rawWorldsRemoved).abs(),
                         ),
                     )
                 }
@@ -146,7 +154,7 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
             "D5E real fixture did not expose different strategic topology retention levels."
         }
         val closest = pairCandidates.minWith(
-            compareBy<Sde2D5RoleInformationNearRawContrast> { it.afterWorldDifference }
+            compareBy<Sde2D5RoleInformationNearRawContrast> { it.rawWorldRemovalDifference }
                 .thenBy { it.first.point.pointId }
                 .thenBy { it.second.point.pointId },
         )
@@ -157,16 +165,24 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
         )
     }
 
-    private fun FirstNightHealthyRecipientExactDiagnostics.toExact(
+    private fun marginalDiagnostic(
         bundleId: String,
-    ) = ExactHypotheticalObservationBundleDiagnostics(
-        bundleId = bundleId,
-        recipientSeat = recipientSeat,
-        before = before,
-        after = after,
-        beforeStructure = beforeStructure,
-        afterStructure = afterStructure,
-    )
+        omitted: FirstNightHealthyRecipientExactDiagnostics,
+        full: FirstNightHealthyRecipientExactDiagnostics,
+    ): ExactHypotheticalObservationBundleDiagnostics {
+        require(omitted.recipientSeat == full.recipientSeat)
+        require(full.after.value <= omitted.after.value) {
+            "A complete bundle cannot create worlds relative to its leave-one-out marginal baseline."
+        }
+        return ExactHypotheticalObservationBundleDiagnostics(
+            bundleId = bundleId,
+            recipientSeat = full.recipientSeat,
+            before = omitted.after,
+            after = full.after,
+            beforeStructure = omitted.afterStructure,
+            afterStructure = full.afterStructure,
+        )
+    }
 
     private fun game(): GameState {
         val roleNames = listOf(
