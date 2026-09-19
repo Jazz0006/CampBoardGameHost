@@ -15,6 +15,7 @@ import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightHealthyBundleHarnessEvaluation
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightHealthyRecipientExactDiagnostics
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightHealthyBundleHarness
+import com.codex.campboardgamehost.clocktower.recommendation.sde.StrategicRatio
 import java.io.File
 import java.math.BigInteger
 
@@ -35,8 +36,11 @@ internal data class Sde2D5RoleInformationNearRawContrast(
 }
 
 internal data class Sde2D5RoleInformationRealCalibration(
+    val allEvidence: List<Sde2D5RoleInformationCalibrationEvidence>,
     val topologyNeutral: Sde2D5RoleInformationCalibrationEvidence,
     val closestRawDifferentTopology: Sde2D5RoleInformationNearRawContrast,
+    val strongestStrategicCollapse: Sde2D5RoleInformationCalibrationEvidence,
+    val weakestMechanicalInformation: Sde2D5RoleInformationCalibrationEvidence,
 )
 
 /**
@@ -168,10 +172,44 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
                 .thenBy { it.second.point.pointId },
         )
 
+        val strongestStrategicCollapse = evidence.minWith(
+            Comparator { left, right ->
+                val ratioOrder = compareRatio(
+                    left.point.normalized.evilTopologyRetention,
+                    right.point.normalized.evilTopologyRetention,
+                )
+                if (ratioOrder != 0) {
+                    ratioOrder
+                } else {
+                    left.point.pointId.compareTo(right.point.pointId)
+                }
+            },
+        )
+        val weakestMechanicalInformation = evidence.minWith(
+            compareBy<Sde2D5RoleInformationCalibrationEvidence> { it.rawWorldsRemoved }
+                .thenBy { it.point.pointId },
+        )
+
         return Sde2D5RoleInformationRealCalibration(
+            allEvidence = evidence.sortedBy { it.point.pointId },
             topologyNeutral = topologyNeutral,
             closestRawDifferentTopology = closest,
+            strongestStrategicCollapse = strongestStrategicCollapse,
+            weakestMechanicalInformation = weakestMechanicalInformation,
         )
+    }
+
+    private fun compareRatio(
+        left: StrategicRatio,
+        right: StrategicRatio,
+    ): Int = when {
+        left is StrategicRatio.Undefined && right is StrategicRatio.Undefined -> 0
+        left is StrategicRatio.Undefined -> 1
+        right is StrategicRatio.Undefined -> -1
+        left is StrategicRatio.Defined && right is StrategicRatio.Defined ->
+            (left.numerator.toLong() * right.denominator.toLong())
+                .compareTo(right.numerator.toLong() * left.denominator.toLong())
+        else -> error("Unknown strategic ratio implementation.")
     }
 
     private fun marginalDiagnostic(
