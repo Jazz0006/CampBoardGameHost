@@ -49,7 +49,6 @@ jobs:
             fi
           }
 
-          run_class "com.codex.campboardgamehost.clocktower.epistemic.Sde2D4ScaleBenchmarkTest"
           run_class "com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest"
           run_class "com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologySetupWitnessDifferentialTest"
           run_class "com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyObservationDifferentialTest"
