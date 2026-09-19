@@ -1,8 +1,8 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-19 Australia/Sydney  
-> Status: **SDE-2D4 COMPLETE on draft PR #149 — next frontier SDE-2D5 after explicit merge authorization**  
-> Base checkpoint: PR #147 merged to `main` as `2cab06efeee5692024e065c632deefe765ca1618`; D2D4 executable acceptance head `9d619370a68b97107957a2dde504778f436dae12` on draft PR #149  
+> Status: **SDE-2D5 CURRENT — calibration / policy evidence audit complete; D5A next**  
+> Base checkpoint: PR #149 squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`; D2D5 branch `sde-2d5-calibration-policy-evidence`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
@@ -92,7 +92,7 @@ PR #147 was user-authorized and merged to live `main` as:
 
 `2cab06efeee5692024e065c632deefe765ca1618`
 
-**SDE-2D4 5–15 player generalization/performance is complete on draft PR #149.** The next development frontier is SDE-2D5 calibration after explicit user-authorized merge of #149; do not begin SDE-3.
+PR #149 was user-authorized and squash-merged to live `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. **SDE-2D5 calibration / policy evidence is now current** on fresh branch `sde-2d5-calibration-policy-evidence`; do not begin SDE-3.
 
 ## 2. Frozen architecture entering SDE-2D
 
@@ -397,9 +397,11 @@ PR #149 remains **draft and unmerged**. Do not merge without explicit user autho
 
 Do not cut production recommendation policy yet and do not start SDE-3.
 
-## 8. NEXT — SDE-2D5 calibration
+## 8. CURRENT — SDE-2D5 calibration
 
-After explicit user-authorized merge of PR #149, start a fresh D2D5 branch and expand human-review/calibration evidence across:
+Authority: `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`.
+
+The fresh D2D5 branch already exists. Expand human-review/calibration evidence across:
 
 - Drunk misinformation;
 - bluff-supported and bluff-fragile bundles;
@@ -454,4 +456,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **SDE-2D4 is COMPLETE on draft PR #149, branch `sde-2d4-5-15-validation-performance`. Final executable acceptance head `9d619370a68b97107957a2dde504778f436dae12` has R2 / Android `testFull` / debug APK / ASP contracts / Real Clingo / CI gate all SUCCESS; Android full + APK completed in 7m56s. D4D proves same-world whole-bundle parity against bounded exhaustive mechanical worlds, and D4E records 5–15 topology-first performance with no current evidence requiring memoization or compiled constraints. `Sde2D4ScaleBenchmarkTest` remains a dedicated T3 evidence task rather than bounded regression coverage. Do not redefine mechanical `WorldCardinality.Exact`, do not cut production consumers to topology-first yet, do not merge PR #149 without explicit user authorization, and do not begin SDE-3. Preferred next sequence: user-authorized merge #149 → fresh branch → SDE-2D5 calibration / policy evidence.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on branch `sde-2d5-calibration-policy-evidence`. The fanout/ownership audit is `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`. Existing FN-BUNDLE-3 calibration/holdout infrastructure should be extended, not replaced. D5A is the immediate executable slice: unify normalized diagnostics over raw-exact and topology-first structure so later 5–15 calibration consumes D2D4 scalable topology evidence. No thresholds, production cutover, holdout tuning or SDE-3 work yet.**
