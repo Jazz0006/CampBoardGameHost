@@ -1,0 +1,200 @@
+package com.codex.campboardgamehost.clocktower.review
+
+import com.codex.campboardgamehost.ClocktowerScript
+import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalContext
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
+import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightHealthyBundleHarnessEvaluation
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightHealthyRecipientExactDiagnostics
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightHealthyBundleHarness
+import java.io.File
+import java.math.BigInteger
+
+internal data class Sde2D5RoleInformationNearRawContrast(
+    val first: Sde2D5RoleInformationCalibrationEvidence,
+    val second: Sde2D5RoleInformationCalibrationEvidence,
+    val afterWorldDifference: BigInteger,
+) {
+    init {
+        require(afterWorldDifference.signum() >= 0)
+        require(first.point.rawMechanicalBefore == second.point.rawMechanicalBefore)
+        require(
+            first.point.normalized.evilTopologyRetention !=
+                second.point.normalized.evilTopologyRetention,
+        )
+    }
+}
+
+internal data class Sde2D5RoleInformationRealCalibration(
+    val topologyNeutral: Sde2D5RoleInformationCalibrationEvidence,
+    val closestRawDifferentTopology: Sde2D5RoleInformationNearRawContrast,
+)
+
+/**
+ * Reuses the existing FN-BUNDLE healthy exact harness to discover real D5E review contrasts.
+ *
+ * Selection is deterministic and descriptive:
+ * - choose the topology-neutral point with the largest exact mechanical reduction;
+ * - among points with different strategic topology retention, choose the pair whose exact AFTER
+ *   cardinalities are closest.
+ *
+ * No similarity threshold or recommendation gate is introduced.
+ */
+internal object Sde2D5RoleInformationRealCalibrationBuilder {
+    private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
+        File("src/main/assets/$assetPath").readText(Charsets.UTF_8)
+    }
+    private val validatedRuleset = catalog.ruleset(ClocktowerScript.TroubleBrewing)
+    private val roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions()
+    private val definitionsByName = roleDefinitions.associateBy { it.id.value }
+
+    fun build(): Sde2D5RoleInformationRealCalibration {
+        val game = game()
+        val rulesetRef = validatedRuleset.toRulesetRef(
+            rulesetVersion = "sde-2d5-role-information-calibration",
+            sourceRevision = "official",
+        )
+        val snapshot = GameSnapshot(
+            gameId = "sde-2d5-role-information-calibration",
+            gameStateRevision = 0,
+            playerInputRevision = 0,
+            gameSeed = game.seed,
+            rulesetRef = rulesetRef,
+            gameState = game,
+        )
+        val context = ExactHistoricalHypotheticalContext(
+            initialSnapshot = snapshot,
+            initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1,
+            actionTimeline = ActionFactTimeline(emptyList()),
+            perceivedRolesBySeat = game.players.associate { player ->
+                player.seat to (player.shownRole ?: player.actualRole)
+            },
+            observationLog = EpistemicObservationLog(),
+            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            roleDefinitions = roleDefinitions,
+        )
+        val evaluation = TroubleBrewingFirstNightHealthyBundleHarness.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = context,
+            evaluationRecipientSeats = setOf(1),
+        )
+        require(evaluation is FirstNightHealthyBundleHarnessEvaluation.Ready) {
+            "D5E real role-information calibration requires the healthy exact bundle harness."
+        }
+
+        val evidence = evaluation.signatureGroups.map { group ->
+            val diagnostic = group.recipientDiagnostics.single()
+            Sde2D5RoleInformationCalibrationEvidenceProjector.project(
+                playerCount = 7,
+                profileKind = Sde2D5SetupProfileKind.STANDARD,
+                contrastId = "d5e-real-role-information",
+                diagnostic = diagnostic.toExact(group.signatureId),
+            )
+        }.filter { point ->
+            point.hasMechanicalInformationGain &&
+                requireNotNull(point.point.rawMechanicalAfter).signum() > 0
+        }
+        require(evidence.isNotEmpty()) {
+            "D5E real role-information calibration requires mechanically informative signatures."
+        }
+
+        val topologyNeutral = evidence
+            .filter(Sde2D5RoleInformationCalibrationEvidence::topologyNeutral)
+            .sortedWith(
+                compareByDescending<Sde2D5RoleInformationCalibrationEvidence> {
+                    it.rawWorldsRemoved
+                }.thenBy { it.point.pointId },
+            )
+            .firstOrNull()
+            ?: error(
+                "D5E real fixture did not expose a mechanically informative topology-neutral signature.",
+            )
+
+        val pairCandidates = buildList {
+            for (firstIndex in evidence.indices) {
+                for (secondIndex in firstIndex + 1 until evidence.size) {
+                    val first = evidence[firstIndex]
+                    val second = evidence[secondIndex]
+                    if (
+                        first.point.normalized.evilTopologyRetention ==
+                        second.point.normalized.evilTopologyRetention
+                    ) {
+                        continue
+                    }
+                    val firstAfter = requireNotNull(first.point.rawMechanicalAfter)
+                    val secondAfter = requireNotNull(second.point.rawMechanicalAfter)
+                    add(
+                        Sde2D5RoleInformationNearRawContrast(
+                            first = first,
+                            second = second,
+                            afterWorldDifference = firstAfter.subtract(secondAfter).abs(),
+                        ),
+                    )
+                }
+            }
+        }
+        require(pairCandidates.isNotEmpty()) {
+            "D5E real fixture did not expose different strategic topology retention levels."
+        }
+        val closest = pairCandidates.minWith(
+            compareBy<Sde2D5RoleInformationNearRawContrast> { it.afterWorldDifference }
+                .thenBy { it.first.point.pointId }
+                .thenBy { it.second.point.pointId },
+        )
+
+        return Sde2D5RoleInformationRealCalibration(
+            topologyNeutral = topologyNeutral,
+            closestRawDifferentTopology = closest,
+        )
+    }
+
+    private fun FirstNightHealthyRecipientExactDiagnostics.toExact(
+        bundleId: String,
+    ) = ExactHypotheticalObservationBundleDiagnostics(
+        bundleId = bundleId,
+        recipientSeat = recipientSeat,
+        before = before,
+        after = after,
+        beforeStructure = beforeStructure,
+        afterStructure = afterStructure,
+    )
+
+    private fun game(): GameState {
+        val roleNames = listOf(
+            "Washerwoman",
+            "Chef",
+            "Empath",
+            "Fortune Teller",
+            "Investigator",
+            "Scarlet Woman",
+            "Imp",
+        )
+        val players = roleNames.mapIndexed { index, roleName ->
+            val role = requireNotNull(definitionsByName[roleName]) {
+                "Unknown Trouble Brewing role $roleName"
+            }
+            PlayerState(
+                seat = index + 1,
+                name = "P${index + 1}",
+                actualRole = role.id,
+                actualAlignment = role.alignment,
+                actualType = role.type,
+                shownRole = role.id,
+            )
+        }
+        return GameState(
+            script = TroubleBrewingFixtures.scriptId,
+            players = players,
+            seed = 20260919L,
+        )
+    }
+}
