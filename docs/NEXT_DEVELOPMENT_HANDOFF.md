@@ -393,7 +393,7 @@ CI gate                        SUCCESS   run 35410931127
 Android full + APK build       BUILD SUCCESSFUL in 7m 56s
 ```
 
-PR #149 remains **draft and unmerged**. Do not merge without explicit user authorization.
+PR #149 was user-authorized and squash-merged to live `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`.
 
 Do not cut production recommendation policy yet and do not start SDE-3.
 
@@ -401,17 +401,43 @@ Do not cut production recommendation policy yet and do not start SDE-3.
 
 Authority: `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`.
 
-The fresh D2D5 branch already exists. Expand human-review/calibration evidence across:
+Branch: `sde-2d5-calibration-policy-evidence`.
 
-- Drunk misinformation;
-- bluff-supported and bluff-fragile bundles;
-- role-information-useful but topology-neutral clues;
-- strategic collapse cases;
-- all player-count regimes.
+D5A–D5E are complete.
 
-Keep policy gate-based and interpretable.
+Implemented evidence now includes:
 
-No opaque global scalar.
+- normalized raw-exact and topology-first projection through one SDE owner;
+- representative 6 / 9 / 12 / 15 topology-first baselines for STANDARD and BARON profiles;
+- Drunk HealthyCore / FullBundle / DrunkMarginal evidence for numeric, pair and Fortune Teller families;
+- Demon-bluff per-role support, shared/union strategic support and deterministic low/high review contrasts;
+- bounded exact proof that mechanical information gain may be topology-neutral;
+- bounded exact proof that equal raw cardinality may hide different strategic-topology retention;
+- a real seven-player healthy-bundle leave-one-out corpus exhibiting topology-neutral marginal information and near-raw/different-topology marginal contrasts.
+
+Latest accepted D5E evidence:
+
+```text
+D5 calibration T3  35421032892  SUCCESS
+ordinary CI        35421032988  SUCCESS
+cleanup head       9b47095a906cec5b78807d9ea9f5be6c8079714d
+FAST / R2 / gate                  SUCCESS
+```
+
+The temporary D5 validation workflow has been removed.
+
+### D5F — NEXT
+
+Use the completed calibration evidence to:
+
+1. generate deterministic human-review material;
+2. assign calibration labels/reasons;
+3. derive named, interpretable candidate gates;
+4. freeze those gates;
+5. only then evaluate the sealed holdout once;
+6. finish D2D5 with a full T4 checkpoint.
+
+No opaque global scalar. No production cutover. No SDE-3 yet.
 
 ## 9. SDE-3 resume gate
 
@@ -456,4 +482,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on branch `sde-2d5-calibration-policy-evidence`. The fanout/ownership audit is `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`. Existing FN-BUNDLE-3 calibration/holdout infrastructure should be extended, not replaced. D5A is the immediate executable slice: unify normalized diagnostics over raw-exact and topology-first structure so later 5–15 calibration consumes D2D4 scalable topology evidence. No thresholds, production cutover, holdout tuning or SDE-3 work yet.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E are COMPLETE and D5F is NEXT. Continue from the completed calibration evidence, not by rebuilding solvers or reverting to raw-world multiplicity. Generate human-review evidence, assign calibration labels/reasons, derive interpretable candidate gates, freeze them, then open the sealed holdout exactly once. No opaque scalar, production cutover, holdout tuning or SDE-3 work before D5F acceptance.**
