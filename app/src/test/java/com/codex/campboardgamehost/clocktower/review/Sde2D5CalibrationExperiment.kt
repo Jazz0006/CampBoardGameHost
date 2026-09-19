@@ -32,15 +32,24 @@ import org.junit.Test
  * production policy thresholds.
  */
 class Sde2D5CalibrationExperiment {
-    private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
-        File("src/main/assets/$assetPath").readText(Charsets.UTF_8)
+    companion object {
+        private val baselineEvidence by lazy {
+            Sde2D5CrossRegimeCalibrationEvidenceBuilder.buildBaseline()
+        }
+        private val drunkEvidence by lazy {
+            Sde2D5DrunkRealCalibrationBuilder.buildFalseNumericEvidence()
+        }
+        private val bluffCalibration by lazy {
+            Sde2D5DemonBluffRealCalibrationBuilder.build()
+        }
+        private val roleInformationCalibration by lazy {
+            Sde2D5RoleInformationRealCalibrationBuilder.build()
+        }
     }
-    private val validatedRuleset = catalog.ruleset(ClocktowerScript.TroubleBrewing)
-    private val roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions()
 
     @Test
     fun `baseline evidence spans all four player count regimes and both setup profile families`() {
-        val evidence = Sde2D5CrossRegimeCalibrationEvidenceBuilder.buildBaseline()
+        val evidence = baselineEvidence
 
         assertEquals(
             listOf(6, 6, 9, 9, 12, 12, 15, 15),
@@ -80,40 +89,8 @@ class Sde2D5CalibrationExperiment {
 
     @Test
     fun `real Drunk numeric candidate projects HealthyCore FullBundle and marginal evidence`() {
-        val snapshot = drunkSnapshot()
-        val context = ExactHistoricalHypotheticalContext(
-            initialSnapshot = snapshot,
-            initialPhase = StorytellerPhase.FIRST_NIGHT,
-            initialRound = 1,
-            actionTimeline = ActionFactTimeline(emptyList()),
-            perceivedRolesBySeat = snapshot.gameState.players.associate { player ->
-                player.seat to (player.shownRole ?: player.actualRole)
-            },
-            observationLog = EpistemicObservationLog(),
-            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-            roleDefinitions = roleDefinitions,
-        )
-        val evaluation = TroubleBrewingFirstNightDrunkNumericWholeBundleEvaluator.evaluate(
-            validatedRuleset = validatedRuleset,
-            context = context,
-            request = FirstNightDrunkNumericWholeBundleRequest(
-                drunkSeat = 2,
-                evaluationRecipientSeats = setOf(1),
-                healthyCore = emptyList(),
-            ),
-        )
-        assertTrue(evaluation is FirstNightDrunkNumericWholeBundleEvaluation.Ready)
-        val ready = evaluation as FirstNightDrunkNumericWholeBundleEvaluation.Ready
-        val falseCandidate = ready.candidates.first { it.semanticTruth == SemanticTruth.FALSE }
+        val evidence = drunkEvidence
 
-        val evidence = Sde2D5DrunkCalibrationEvidenceProjector.project(
-            playerCount = 6,
-            profileKind = Sde2D5SetupProfileKind.BARON,
-            healthyCore = ready.healthyCoreByRecipient.single(),
-            candidate = falseCandidate,
-        )
-
-        assertEquals(falseCandidate.candidateId, evidence.candidateId)
         assertEquals(SemanticTruth.FALSE, evidence.semanticTruth)
         assertEquals(Sde2D5EvidenceKind.DRUNK_HEALTHY_CORE, evidence.healthyCore.evidenceKind)
         assertEquals(Sde2D5EvidenceKind.DRUNK_FULL_BUNDLE, evidence.fullBundle.evidenceKind)
@@ -126,7 +103,7 @@ class Sde2D5CalibrationExperiment {
 
     @Test
     fun `real Demon bluff joint output yields low and high shared support review contrasts`() {
-        val calibration = Sde2D5DemonBluffRealCalibrationBuilder.build()
+        val calibration = bluffCalibration
 
         assertTrue(calibration.evidence.size >= 2)
         assertEquals(
@@ -147,7 +124,7 @@ class Sde2D5CalibrationExperiment {
 
     @Test
     fun `real healthy bundle marginals expose topology neutral and near raw strategic contrasts`() {
-        val calibration = Sde2D5RoleInformationRealCalibrationBuilder.build()
+        val calibration = roleInformationCalibration
 
         assertTrue(calibration.topologyNeutral.hasMechanicalInformationGain)
         assertTrue(calibration.topologyNeutral.topologyNeutral)
@@ -161,6 +138,80 @@ class Sde2D5CalibrationExperiment {
                 nearRaw.second.point.normalized.evilTopologyRetention,
         )
         assertTrue(nearRaw.rawWorldRemovalDifference.signum() >= 0)
+    }
+
+    @Test
+    fun `real D5F calibration review export stays calibration only and deterministic`() {
+        val material = Sde2D5FRealCalibrationReviewBuilder.build(
+            baseline = baselineEvidence,
+            drunk = drunkEvidence,
+            bluff = bluffCalibration,
+            roleInformation = roleInformationCalibration,
+        )
+
+        assertEquals(
+            FirstNightBundleBeginnerCorpusBuilder.SEALED_HOLDOUT_SCENARIO_COUNT,
+            material.sealedHoldoutScenarioCount,
+        )
+        assertEquals(
+            Sde2D5PlayerCountRegime.entries.toSet(),
+            material.records
+                .filter { it.evidenceKind == Sde2D5FReviewEvidenceKind.BASELINE_REFERENCE }
+                .mapTo(linkedSetOf()) { it.regime },
+        )
+        Sde2D5PlayerCountRegime.entries.forEach { regime ->
+            assertEquals(
+                Sde2D5SetupProfileKind.entries.toSet(),
+                material.records
+                    .filter {
+                        it.evidenceKind == Sde2D5FReviewEvidenceKind.BASELINE_REFERENCE &&
+                            it.regime == regime
+                    }
+                    .mapTo(linkedSetOf()) { it.profileKind },
+            )
+        }
+        material.records
+            .filter { it.reviewability == Sde2D5FReviewability.REVIEWABLE }
+            .forEach { record ->
+                assertEquals(FirstNightBeginnerCorpusLabel.UNREVIEWED, record.initialLabel)
+            }
+
+        val drunkRecord = material.records.single {
+            it.evidenceKind == Sde2D5FReviewEvidenceKind.DRUNK_CONTRAST
+        }
+        val drunkDetails = drunkRecord.details as Sde2D5FReviewDetails.DrunkContrast
+        assertEquals(SemanticTruth.FALSE, drunkDetails.evidence.semanticTruth)
+
+        val bluffReasons = material.records
+            .filter { it.evidenceKind == Sde2D5FReviewEvidenceKind.DEMON_BLUFF_SUPPORT }
+            .flatMapTo(linkedSetOf()) { record ->
+                (record.details as Sde2D5FReviewDetails.DemonBluffSupport)
+                    .selection.selectionReasons
+            }
+        assertEquals(Sde2D5DemonBluffSelectionReason.entries.toSet(), bluffReasons)
+
+        val expectedRolePointIds = setOf(
+            roleInformationCalibration.topologyNeutral.point.pointId,
+            roleInformationCalibration.closestRawDifferentTopology.first.point.pointId,
+            roleInformationCalibration.closestRawDifferentTopology.second.point.pointId,
+            roleInformationCalibration.strongestStrategicCollapse.point.pointId,
+            roleInformationCalibration.weakestMechanicalInformation.point.pointId,
+        )
+        val actualRolePointIds = material.records
+            .filter { it.evidenceKind == Sde2D5FReviewEvidenceKind.ROLE_INFORMATION_CONTRAST }
+            .mapTo(linkedSetOf()) { record ->
+                (record.details as Sde2D5FReviewDetails.RoleInformationContrast)
+                    .evidence.point.pointId
+            }
+        assertEquals(expectedRolePointIds, actualRolePointIds)
+
+        val report = Sde2D5FCalibrationReviewRenderer.renderMarkdown(material)
+        assertTrue(report.contains("Sealed holdout scenarios: ${material.sealedHoldoutScenarioCount}"))
+        assertTrue(report.contains("Holdout diagnostics are sealed until gate freeze."))
+        assertTrue(report.contains("initialLabel=UNREVIEWED"))
+        val reportFile = File("build/reports/sde-2d5f-calibration-review.md")
+        requireNotNull(reportFile.parentFile).mkdirs()
+        reportFile.writeText(report, Charsets.UTF_8)
     }
 
     private fun drunkSnapshot(): GameSnapshot {
