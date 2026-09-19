@@ -99,7 +99,7 @@ The executable Android JVM full-suite entry point is:
 :app:testFull
 ```
 
-`testFull` delegates to the existing AGP `:app:testDebugUnitTest` task so Android JVM full coverage remains anchored to the current source of truth.
+`testFull` delegates to the existing AGP `:app:testDebugUnitTest` task so Android JVM full regression coverage remains anchored to the current source of truth. Explicit experiment/benchmark harnesses that are not regression contracts may be excluded from that underlying task and exposed through dedicated T3 tasks; such exclusions must be named and justified in this document.
 
 ## 4. Tier is not trigger
 
@@ -125,7 +125,14 @@ The current FAST exclusions are exactly:
 - `com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest`
 - `com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest`
 - `com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest`
+- `com.codex.campboardgamehost.clocktower.epistemic.Sde2D4ScaleBenchmarkTest`
+- `com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest`
+- `com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologySetupWitnessDifferentialTest`
+- `com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyObservationDifferentialTest`
+- `com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyBundleDifferentialTest`
 - `com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputEvaluatorTest`
+
+`FirstNightBundleBeginnerCorpusExperiment` and `Sde2D4ScaleBenchmarkTest` are also excluded from the underlying `:app:testDebugUnitTest` / `:app:testFull` task because they are explicit evidence-generation harnesses rather than bounded regression contracts. They remain directly runnable through `:app:fnBundle3Calibration` and `:app:sde2D4ScaleBenchmark`.
 
 `DemonBluffJointOutputEvaluatorTest` is excluded from FAST based on SDE-2D2 CI measurements: even after reducing the fixture to a minimal healthy seven-player domain and sharing strict shown-role world scans inside the exact evaluator, the test still materially extends the ordinary FAST loop because it intentionally performs real exact whole-bundle enumeration and a direct exact-parity probe. It remains in `:app:testFull` and is mandatory for Demon-bluff / exact-epistemic affected validation.
 
@@ -143,9 +150,14 @@ These classifications are not permanent measurements. Re-measure them when the t
 | `StorytellerV4BaselineSimulationTest` | 3–4s | 1000 setup samples plus 1000 dynamic selections | T3 | selection distribution and simulation semantics |
 | `A4ZddBenchmarkTest` | 2–3s | repeated benchmark, heap and GC measurements | T3 | ZDD construction/filter performance |
 | `DemonBluffJointOutputEvaluatorTest` | multi-minute CI impact in SDE-2D2 edit loops | real exact whole-bundle bluff-role fanout plus direct exact-parity evidence | affected T2 / T3 execution | Demon bluff joint output, exact shown-role fanout, setup/SDE shadow integration |
+| `Sde2D4ScaleBenchmarkTest` | >900s in isolated CI diagnostic | source-derived scale matrix plus raw-enumerator bounded-prefix measurement; no regression latency threshold | explicit T3 evidence harness, dedicated task only | SDE-2D4 raw enumerator scale investigation |
+| `Sde2D4TopologyBundlePerformanceTest` | sub-second measured bundle evaluation through 15 players, plus Gradle overhead | 5–15 topology-first CPU/coarse-heap evidence | T3; excluded from FAST, retained in full regression | topology-first strategic feasibility performance |
+| `TroubleBrewingTopologySetupWitnessDifferentialTest` | measured-expensive exact differential | topology setup witness parity against bounded exhaustive worlds | affected T2 / T3 execution | topology setup witness semantics |
+| `TroubleBrewingTopologyObservationDifferentialTest` | measured-expensive exact differential | observation witness parity against bounded exhaustive worlds | affected T2 / T3 execution | topology observation semantics |
+| `TroubleBrewingTopologyBundleDifferentialTest` | caused a 5m40s FAST checkpoint when temporarily included | same-world whole-bundle shared-witness parity against exhaustive worlds | affected T2 / T3 execution | topology whole-bundle semantics |
 | `A3EnumerationBenchmarkTest` | approximately 1s | 20 exact enumerations and performance guards | T1/T2 specialized | world enumeration and scalability |
 
-T3 tests are invoked through the existing full test machinery with exact `--tests` filters when triggered; S2 intentionally does not create a static `testAffected` or `testExpensive` suite.
+T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `fnBundle3Calibration` and `sde2D4ScaleBenchmark`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
 
 ## 7. Dependency-aware escalation matrix
 
@@ -255,9 +267,14 @@ Current Android JVM commands:
 ./gradlew :app:testFull
 ```
 
-`testFast` is an independent `Test` task that reuses the AGP debug-unit-test classes/runtime classpath and excludes only the five approved classes above.
+`testFast` is an independent `Test` task that reuses the AGP debug-unit-test classes/runtime classpath and carries the explicit FAST exclusion set above.
 
-`testFull` is a verification/lifecycle task that depends on `:app:testDebugUnitTest` without filtering.
+`testFull` is a verification/lifecycle task that depends on `:app:testDebugUnitTest`. The underlying debug-unit-test task excludes only explicit non-regression evidence harnesses:
+
+- `FirstNightBundleBeginnerCorpusExperiment` → dedicated `:app:fnBundle3Calibration`;
+- `Sde2D4ScaleBenchmarkTest` → dedicated `:app:sde2D4ScaleBenchmark`.
+
+The SDE-2D4 scale harness remains available and was not deleted. Its isolated CI diagnostic exceeded 900 seconds despite having no stable regression latency threshold, so keeping it inside every T4 would make the acceptance gate unbounded without strengthening a correctness contract.
 
 The validated S2 baseline was:
 
@@ -266,13 +283,17 @@ testFull Android JVM coverage = :app:testDebugUnitTest coverage = 770 tests
 FULL - FAST = exactly 19 testcases from the five approved excluded classes
 ```
 
-The historical count is a measurement, not an append-only requirement. The current invariant is:
+That is a historical measurement, not an append-only suite shape. The current invariant is:
 
 ```text
-testFull Android JVM coverage = all currently intentional Android JVM tests
+testFull Android JVM coverage
+= all currently intentional bounded Android JVM regression tests
+
+explicit experiment / scale evidence
+= named dedicated T3 tasks
 ```
 
-No test may disappear from full validation **accidentally**. Deliberate retirement is allowed when its protected contract is identified and is obsolete, duplicated, or covered by stronger evidence; the retirement must be visible in the diff and validated like any other coverage change.
+No regression test may disappear from full validation **accidentally**. Moving a class out of full requires an explicit coverage classification, preserved runnable evidence where useful, and acceptance of the changed suite contract.
 
 ## 14. Maintenance and test retirement
 
