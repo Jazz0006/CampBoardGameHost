@@ -44,11 +44,21 @@ internal enum class Sde2D5SetupProfileKind {
     BARON,
 }
 
+internal enum class Sde2D5EvidenceKind {
+    BASELINE,
+    DRUNK_HEALTHY_CORE,
+    DRUNK_FULL_BUNDLE,
+    DEMON_BLUFF_SUPPORT,
+    STRATEGIC_ROLE_INFORMATION_CONTRAST,
+}
+
 internal data class Sde2D5CalibrationEvidencePoint(
     val pointId: String,
     val playerCount: Int,
     val regime: Sde2D5PlayerCountRegime,
     val profileKind: Sde2D5SetupProfileKind,
+    val evidenceKind: Sde2D5EvidenceKind,
+    val contrastId: String? = null,
     val beforeStrategicWorldCount: Int,
     val afterStrategicWorldCount: Int,
     val normalized: NormalizedStrategicDiagnostics,
@@ -59,6 +69,7 @@ internal data class Sde2D5CalibrationEvidencePoint(
         require(pointId.isNotBlank())
         require(playerCount in 5..15)
         require(regime == Sde2D5PlayerCountRegime.from(playerCount))
+        require(contrastId == null || contrastId.isNotBlank())
         require(beforeStrategicWorldCount >= 0)
         require(afterStrategicWorldCount in 0..beforeStrategicWorldCount)
         require((rawMechanicalBefore == null) == (rawMechanicalAfter == null)) {
@@ -174,6 +185,7 @@ internal object Sde2D5CrossRegimeCalibrationEvidenceBuilder {
             playerCount = playerCount,
             regime = Sde2D5PlayerCountRegime.from(playerCount),
             profileKind = profileKind,
+            evidenceKind = Sde2D5EvidenceKind.BASELINE,
             beforeStrategicWorldCount = diagnostic.beforeStructure.distinctStrategicWorldCount,
             afterStrategicWorldCount = diagnostic.afterStructure.distinctStrategicWorldCount,
             normalized = NormalizedStrategicDiagnosticsProjector.project(
