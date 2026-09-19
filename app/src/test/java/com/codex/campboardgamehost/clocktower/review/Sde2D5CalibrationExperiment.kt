@@ -145,6 +145,28 @@ class Sde2D5CalibrationExperiment {
         )
     }
 
+    @Test
+    fun `real healthy bundle corpus exposes topology neutral and near raw strategic contrasts`() {
+        val calibration = Sde2D5RoleInformationRealCalibrationBuilder.build()
+
+        assertTrue(calibration.topologyNeutral.hasMechanicalInformationGain)
+        assertTrue(calibration.topologyNeutral.topologyNeutral)
+        assertTrue(calibration.topologyNeutral.rawWorldsRemoved.signum() > 0)
+
+        val nearRaw = calibration.closestRawDifferentTopology
+        assertEquals(
+            nearRaw.first.point.rawMechanicalBefore,
+            nearRaw.second.point.rawMechanicalBefore,
+        )
+        assertTrue(nearRaw.first.hasMechanicalInformationGain)
+        assertTrue(nearRaw.second.hasMechanicalInformationGain)
+        assertTrue(
+            nearRaw.first.point.normalized.evilTopologyRetention !=
+                nearRaw.second.point.normalized.evilTopologyRetention,
+        )
+        assertTrue(nearRaw.afterWorldDifference.signum() >= 0)
+    }
+
     private fun drunkSnapshot(): GameSnapshot {
         val rulesetRef = validatedRuleset.toRulesetRef(
             rulesetVersion = "sde-2d5-drunk-calibration",
