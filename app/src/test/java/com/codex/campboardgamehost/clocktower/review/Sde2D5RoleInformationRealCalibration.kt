@@ -115,6 +115,13 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
         require(evidence.isNotEmpty()) {
             "D5E real role-information calibration requires mechanically informative marginal clues."
         }
+        val evidenceSummary = evidence
+            .sortedBy { it.point.pointId }
+            .joinToString(separator = " | ") { point ->
+                val topology = point.point.normalized.evilTopologyRetention
+                "${point.point.pointId}:rawRemoved=${point.rawWorldsRemoved}," +
+                    "topology=$topology,neutral=${point.topologyNeutral}"
+            }
 
         val topologyNeutral = evidence
             .filter(Sde2D5RoleInformationCalibrationEvidence::topologyNeutral)
@@ -125,7 +132,8 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
             )
             .firstOrNull()
             ?: error(
-                "D5E real fixture did not expose a mechanically informative topology-neutral marginal clue.",
+                "D5E real fixture did not expose a mechanically informative topology-neutral " +
+                    "marginal clue. Evidence: $evidenceSummary",
             )
 
         val pairCandidates = buildList {
@@ -151,7 +159,8 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
             }
         }
         require(pairCandidates.isNotEmpty()) {
-            "D5E real fixture did not expose different strategic topology retention levels."
+            "D5E real fixture did not expose different strategic topology retention levels. " +
+                "Evidence: $evidenceSummary"
         }
         val closest = pairCandidates.minWith(
             compareBy<Sde2D5RoleInformationNearRawContrast> { it.rawWorldRemovalDifference }
