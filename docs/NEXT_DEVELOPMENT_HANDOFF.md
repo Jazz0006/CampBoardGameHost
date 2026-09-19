@@ -426,16 +426,18 @@ FAST / R2 / gate                  SUCCESS
 
 The temporary D5 validation workflow has been removed.
 
-### D5F — NEXT
+### D5F — CURRENT / AUDIT COMPLETE
 
-Use the completed calibration evidence to:
+Authority: `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`.
 
-1. generate deterministic human-review material;
-2. assign calibration labels/reasons;
-3. derive named, interpretable candidate gates;
-4. freeze those gates;
-5. only then evaluate the sealed holdout once;
-6. finish D2D5 with a full T4 checkpoint.
+Immediate executable slice: **D5F-A only**.
+
+1. generate deterministic calibration-only human-review material;
+2. preserve exact rational diagnostics and typed evidence-specific details;
+3. keep all reviewable records `UNREVIEWED`;
+4. keep baseline reference rows non-labelable;
+5. expose only sealed holdout scenario count;
+6. do not derive gates, freeze thresholds, or evaluate holdout yet.
 
 No opaque global scalar. No production cutover. No SDE-3 yet.
 
@@ -482,4 +484,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E are COMPLETE and D5F is NEXT. Continue from the completed calibration evidence, not by rebuilding solvers or reverting to raw-world multiplicity. Generate human-review evidence, assign calibration labels/reasons, derive interpretable candidate gates, freeze them, then open the sealed holdout exactly once. No opaque scalar, production cutover, holdout tuning or SDE-3 work before D5F acceptance.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E are COMPLETE and the D5F ownership audit is COMPLETE. Continue with D5F-A deterministic calibration-only review export from `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`. Do not open the sealed holdout, infer human labels automatically, derive/freeze thresholds early, introduce an opaque scalar, cut production policy, or begin SDE-3.**
