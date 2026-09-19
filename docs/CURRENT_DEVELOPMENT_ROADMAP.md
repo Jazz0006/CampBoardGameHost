@@ -266,21 +266,38 @@ Android full + APK build       BUILD SUCCESSFUL in 7m 56s
 
 PR #149 was user-authorized and squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`.
 
-### 2.5 SDE-2D5 — calibration / policy evidence — CURRENT
+### 2.5 SDE-2D5 — calibration / policy evidence — CURRENT (D5A–E COMPLETE, D5F NEXT)
 
 Authority: `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`.
 
-Fresh branch: `sde-2d5-calibration-policy-evidence`.
+Branch: `sde-2d5-calibration-policy-evidence`.
 
-Expand the calibration corpus across:
+Completed:
 
-- Drunk versus healthy-core cases;
-- bluff-supported versus bluff-fragile cases;
-- equal/similar raw world count but different evil topology;
-- useful role-information with unchanged evil topology;
-- representative player-count regimes.
+```text
+D5A  normalized raw-exact / topology-first projection seam
+D5B  5–15 cross-regime STANDARD/BARON calibration evidence
+D5C  Drunk HealthyCore / FullBundle / DrunkMarginal calibration projection
+D5D  Demon-bluff role support + shared/union contrast evidence
+D5E  role-information utility vs strategic-topology contrast evidence
+```
 
-Keep the policy interpretable and gate-based; do not introduce an opaque global scalar.
+Key accepted D5E evidence:
+
+- dedicated calibration T3 run `35421032892` SUCCESS;
+- ordinary CI run `35421032988` SUCCESS;
+- cleanup head `9b47095a906cec5b78807d9ea9f5be6c8079714d` FAST / R2 / CI gate SUCCESS.
+
+D5F is NEXT:
+
+- produce deterministic human-review export from the named evidence axes;
+- assign/review calibration labels and reasons;
+- derive interpretable candidate gates;
+- freeze gates **before** evaluating the sealed holdout;
+- evaluate holdout once after freeze;
+- retain no opaque global scalar.
+
+Production recommendation selection remains unchanged.
 
 ### 2.6 Resume gate
 
@@ -301,7 +318,7 @@ THEN     SDE-3   — cross-night impaired / registration decisions
 THEN     SDE-4   — production cutover + legacy heuristic retirement
 ```
 
-Do not begin SDE-3 until D2D5 calibration, frozen interpretable gate evidence and sealed-holdout acceptance are complete.
+Do not begin SDE-3 until D5F human review, frozen interpretable gate evidence, sealed-holdout acceptance and the final D2D5 T4 checkpoint are complete.
 
 ## 4. SDE-1 completion summary
 
@@ -532,4 +549,4 @@ Read in order:
 
 ## 10. Stable rule
 
-> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on fresh branch `sde-2d5-calibration-policy-evidence`; authority is `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`. First executable slice D5A must let the normalized strategic diagnostics owner consume topology-first D2D4 structure directly, so cross-regime calibration never falls back to raw mechanical enumeration or duplicates metric logic in the review package. Do not freeze thresholds before calibration, do not use one opaque global scalar, do not tune on holdout, do not cut production policy, and do not begin SDE-3.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 remains CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E are COMPLETE and D5F is NEXT. The calibration evidence now covers topology-first 5–15 STANDARD/BARON baselines, Drunk HealthyCore/FullBundle/Marginal, Demon-bluff shared-support contrasts, and real leave-one-out role-information marginals that separate mechanical information gain from strategic-topology pressure. Do not inspect the sealed holdout before gates are frozen, do not use one opaque global scalar, do not cut production policy, and do not begin SDE-3 until D5F + final T4 are complete.**
