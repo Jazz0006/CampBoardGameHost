@@ -30,7 +30,7 @@ SDE-2C Poisoner invalidation / broad replanning        COMPLETE / PR #144
 SDE-2D1 Drunk whole-bundle completion                   COMPLETE / PR #145 merged
 SDE-2D2 Demon bluff joint-output migration              COMPLETE / PR #146 merged
 SDE-2D3 strategic-world quotient                        COMPLETE / PR #147 merged
-SDE-2D4 5–15 player generalization / performance        CURRENT
+SDE-2D4 5–15 player generalization / performance        COMPLETE / PR #149 draft
 SDE-2D pre-SDE-3 strategic generalization              CURRENT
 ```
 
@@ -210,29 +210,22 @@ Retain two separate evaluation axes:
 - strategic pressure / evil-topology concentration;
 - role-information utility, so useful good-role information is not discarded merely because it leaves evil topology unchanged.
 
-### 2.4 SDE-2D4 — 5–15 player generalization and cost — CURRENT
+### 2.4 SDE-2D4 — 5–15 player generalization and cost — COMPLETE ON DRAFT PR #149
 
 PR #147 was user-authorized and merged to live `main` as `2cab06efeee5692024e065c632deefe765ca1618`.
 
-D2D4 continues on fresh branch `sde-2d4-5-15-validation-performance`.
+D2D4 is complete on branch `sde-2d4-5-15-validation-performance`, draft PR #149.
 
-Focused authority:
+Authority:
 
 - `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
 - `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
 - `docs/SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`.
 
-Audit result remains:
-
-- D2D3 compressed strategic identity but raw mechanical enumeration remained the discovery bottleneck;
-- current ZDD construction still consumes that raw stream and therefore does not solve witness discovery;
-- 15-player strategic topology is bounded at 5,460 keys while minimally constrained mechanical witness multiplicity can reach roughly `10^17`;
-- exhaustive enumeration remains the bounded correctness oracle, not the production large-player discovery algorithm.
-
-Current D2D4 implementation on draft PR #149 now includes:
+Implemented and accepted:
 
 ```text
-D4A   normalized strategic ratios
+D4A   normalized strategic diagnostics
 D4B   reproducible source-derived / bounded-prefix scale evidence
 D4C1  exact StrategicWorldKey topology domain
 D4C2  setup role/type/shown-role witness existence
@@ -241,58 +234,39 @@ D4C4a identity observations + Spy/Recluse registration witness semantics
 D4C4b Chef / Empath / Fortune Teller / Red Herring topology semantics
 D4C4c composable AnyOf / AllOf / supported Not observation branches
 D4C5  parallel exact strategic whole-bundle evaluator with shared witness resources
-D4D   bounded setup/observation differential evidence
-D4E   5–15 topology-bundle performance harness
+D4D   same-world whole-bundle exhaustive differential parity
+D4E   measured 5–15 topology-bundle performance matrix
 ```
 
-The setup witness tail was optimized from Townsfolk/Outsider seat-split enumeration to an exact type-quota → role → seat max-flow existence proof. This is an implementation optimization only; the bounded exhaustive differential remains the semantic oracle.
+The setup witness tail uses an exact type-quota → role → seat max-flow existence proof rather than Townsfolk/Outsider seat-split enumeration. The bounded exhaustive oracle caught and fixed a real standard-profile Baron contradiction bug; do not restore the old Elvis fallback.
 
-A subsequent FAST failure exposed three issues. Two were stale/underspecified tests and one was a real standard-profile Baron contradiction bug caused by:
+D4D proves one shared mechanical witness across complete bundles, including role identity conflict, one Poisoner target, one Drunk resource, Spy/Recluse registration witnesses, Fortune Teller Red Herring, selected registration binding, contradictory bundles, and standard/Baron profiles.
 
-```kotlin
-baron?.let { base.withForbiddenInPlay(it.id) } ?: base
-```
+D4E measured direct topology feasibility through 15 players. The 15-player standard-profile run had a topology upper bound of 5,460, 4,004 retained strategic keys, and about 766 ms single-bundle CI-JVM latency. The evidence does not justify memoization or compiled constraints at this stage.
 
-The Elvis fallback swallowed the intended `null` contradiction. That bug is fixed at current executable head:
+The raw mechanical enumerator remains a bounded correctness oracle, not the production discovery representation. `WorldCardinality.Exact` retains exact mechanical-world semantics. No production recommendation consumer has cut over.
 
-`f2ba4b8e29514ecc398626acf26526b1445d7eb6`
+A T4 governance issue was also resolved: `Sde2D4ScaleBenchmarkTest` is an explicit T3 raw-enumerator evidence harness, not a bounded regression contract. It remains runnable as `:app:sde2D4ScaleBenchmark` but is outside `testFull`; the bounded topology performance and exact differential evidence remain in full/affected validation.
 
-Current checkpoint validation:
+Final executable acceptance head:
+
+`9d619370a68b97107957a2dde504778f436dae12`
+
+Final validation:
 
 ```text
-R2 main-thread boundary        SUCCESS
-Android FAST unit tests        SUCCESS
+R2 main-thread boundary        SUCCESS   run 35410931214
+Android testFull               SUCCESS
+Debug APK assemble             SUCCESS
+ASP contract tests             SUCCESS
 Real Clingo cross-validation   SUCCESS
-CI gate                        SUCCESS
-ASP contract tests             SKIPPED by classifier
-Android testFull / APK         SKIPPED at this FAST checkpoint
+CI gate                        SUCCESS   run 35410931127
+Android full + APK build       BUILD SUCCESSFUL in 7m 56s
 ```
 
-PR #149 remains draft and unmerged. No production recommendation consumer has cut over to the topology-first contract, and the legacy exact mechanical cardinality fields retain their original meaning.
+PR #149 remains **draft and unmerged**. Do not merge it without explicit user authorization.
 
-Remaining D2D4 acceptance work:
-
-1. retain/expand bounded whole-bundle differential evidence so one shared witness is proven against the exhaustive oracle;
-2. run the explicit D4E 5–15 CPU/heap/latency harness and record its evidence;
-3. run a final `[full-ci]` T4 checkpoint including Android `testFull`, debug APK, ASP and Real Clingo;
-4. update PR #149 body and final roadmap/handoff only after those gates are green.
-
-Rules/setup semantics already support 5–15 non-Traveller players, but D2D4 must not be marked COMPLETE until the remaining differential/performance/T4 acceptance evidence is recorded.
-
-Evidence must cover:
-
-```text
-5–6
-7–9
-10–12
-13–15
-```
-
-Prefer baseline-relative diagnostics such as Demon-cover retention and evil-topology retention. Raw BEFORE/AFTER role-world count becomes secondary evidence.
-
-Do not freeze a production player-count cutoff or approximation threshold before measured cost evidence.
-
-### 2.5 SDE-2D5 — calibration / policy evidence
+### 2.5 SDE-2D5 — calibration / policy evidence — NEXT
 
 After the durable diagnostics exist, expand the calibration corpus across:
 
@@ -318,9 +292,12 @@ SDE-3 may begin only after:
 ## 3. NEXT
 
 ```text
-SDE-3  — cross-night impaired / registration decisions
-SDE-4  — production cutover + legacy heuristic retirement
+SDE-2D5 — calibration / policy evidence
+SDE-3   — cross-night impaired / registration decisions
+SDE-4   — production cutover + legacy heuristic retirement
 ```
+
+Do not start SDE-2D5 on top of an unmerged D2D4 branch unless the user explicitly asks for that workflow. Preferred sequence: user-authorized merge of PR #149, then a fresh D2D5 branch.
 
 ## 4. SDE-1 completion summary
 
@@ -551,4 +528,4 @@ Read in order:
 
 ## 10. Stable rule
 
-> **PR #145 is merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`. PR #146 is merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`. SDE-2D3 is fully implemented and full-ci GREEN on draft PR #147 at acceptance head `2d491663a899d048b4b69522e9cdde700effa85b`, but remains unmerged pending explicit user authorization. After merge, start SDE-2D4 on a fresh branch: validate 5–15 player semantic correctness, normalized strategic metrics, CPU/memory cost and mobile-feasible latency before freezing any representation switch or approximation threshold. Production Demon-bluff selection has not cut over; `demon-bluff-ease` remains compatibility behavior until the later explicit cutover. Do not begin SDE-3 until the full SDE-2D acceptance gate is explicitly satisfied.**
+> **SDE-2D4 is fully implemented and T4 GREEN on draft PR #149 at executable acceptance head `9d619370a68b97107957a2dde504778f436dae12`. Android `testFull`, debug APK, ASP contracts, Real Clingo, R2 and CI gate all succeeded; D4D whole-bundle exhaustive parity and D4E 5–15 performance evidence are recorded. PR #149 remains draft and unmerged pending explicit user authorization. Production recommendation selection has not cut over to topology-first diagnostics, `WorldCardinality.Exact` still means exact mechanical-world cardinality, and no approximation threshold is frozen. After user-authorized merge, the next development frontier is SDE-2D5 calibration / policy evidence. Do not begin SDE-3 yet.**
