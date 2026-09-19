@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Base: SDE-2D4 squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`  
 > Branch: `sde-2d5-calibration-policy-evidence`  
-> Status: **AUDIT COMPLETE — D5A is the first executable slice**
+> Status: **D5A–D5E COMPLETE / D5F NEXT**
 
 ## 1. Goal
 
@@ -251,16 +251,144 @@ Do not during D2D5:
 - tune on holdout;
 - start SDE-3.
 
-## 11. Immediate next step
+## 11. Implemented checkpoints
 
-Implement D5A test-first:
+### D5A — COMPLETE
+
+`NormalizedStrategicDiagnosticsProjector` now accepts both raw-exact and topology-first diagnostics through one shared `ExactWorldStructureDiagnostics before/after` projection seam.
+
+Accepted focused checkpoint:
 
 ```text
-ExactStrategicTopologyBundleDiagnostics
-        ↓
-NormalizedStrategicDiagnosticsProjector
-        ↓
-same ratios as structure-pair / raw-exact projection
+a56e2e232bce8f11d3d70e086a49a096c47a5ab9
+Android FAST / R2 / CI gate  SUCCESS
 ```
 
-Only after this seam is green should D5B cross-regime corpus work begin.
+No threshold, score or solver was added.
+
+### D5B — COMPLETE
+
+Review-only calibration evidence now spans representative player-count regimes:
+
+```text
+6 / 9 / 12 / 15
+× STANDARD / BARON
+```
+
+using the D2D4 topology-first evaluator. Raw mechanical cardinality is intentionally absent for those scalable baseline points.
+
+The eight-point generation workload was measured as too expensive for ordinary FAST and is now isolated as explicit T3 task:
+
+```text
+:app:sde2D5Calibration
+```
+
+### D5C — COMPLETE
+
+Existing D2D1 Drunk outputs are projected without changing Drunk legality or shown-role ownership:
+
+```text
+HealthyCore
+FullBundle
+DrunkMarginal
+semantic truth
+bounded raw-world delta
+normalized strategic ratios
+```
+
+Numeric, pair and Fortune Teller candidate families share one projection implementation.
+
+Acceptance evidence:
+
+```text
+T1 head ee2c93a216d147dfda1cac7165ede1b2432adc23
+dedicated D5 calibration run 35415636420  SUCCESS
+full CI run               35415636393  SUCCESS
+Android testFull + APK                    BUILD SUCCESSFUL in 7m 47s
+```
+
+### D5D — COMPLETE
+
+D2D2 Demon-bluff joint-output diagnostics now project into distinct review axes:
+
+- per-role normalized strategic support;
+- supported-role count;
+- strategic union size;
+- shared strategic support size;
+- exact `shared / union` retention;
+- distinct role strategic-pattern count.
+
+Deterministic calibration selection chooses observed low/high shared-support contrasts by exact rational comparison. It does **not** classify either end as fragile/robust and does not set a threshold.
+
+A bounded real seven-player legal-bluff fixture proved more than one shared-support level exists.
+
+Acceptance evidence:
+
+```text
+real calibration T3 run 35417646855  SUCCESS
+full CI run          35417646824  SUCCESS
+Android testFull + APK               BUILD SUCCESSFUL in 6m 11s
+```
+
+### D5E — COMPLETE
+
+Role-information utility and strategic pressure are now explicitly separate.
+
+Durable synthetic contracts prove:
+
+1. exact mechanical worlds may decrease while `StrategicWorldKey` is unchanged;
+2. identical raw BEFORE/AFTER cardinality can coexist with materially different strategic-topology retention.
+
+The real calibration fixture reuses `TroubleBrewingFirstNightHealthyBundleHarness` and evaluates **leave-one-out marginal clues**:
+
+```text
+leave-one-out bundle
+        ↓ add one clue
+complete bundle
+```
+
+This real corpus contains:
+
+- a mechanically informative topology-neutral marginal clue;
+- a pair of marginal clues with close raw-world removal but different strategic-topology retention.
+
+The first whole-bundle attempt correctly failed because topology-neutrality was being asked of the entire bundle rather than a clue marginal; the model was corrected rather than weakening the assertion.
+
+Accepted evidence:
+
+```text
+dedicated D5 calibration run 35421032892  SUCCESS
+ordinary CI run              35421032988  SUCCESS
+cleanup head                 9b47095a906cec5b78807d9ea9f5be6c8079714d
+cleanup FAST / R2 / CI gate                  SUCCESS
+```
+
+The temporary validation workflow was removed after evidence collection.
+
+## 12. NEXT — D5F human labels / interpretable gate candidates / sealed holdout
+
+D5F is the only remaining D2D5 slice.
+
+Required order:
+
+```text
+CALIBRATION EVIDENCE
+    ↓
+human review labels + reasons
+    ↓
+candidate interpretable gates
+    ↓
+FREEZE gates
+    ↓
+open/evaluate sealed holdout once
+    ↓
+D5 acceptance
+```
+
+Do not inspect holdout diagnostics before gate freeze.
+
+Do not replace the named evidence axes with an opaque weighted scalar.
+
+Do not cut production recommendation selection in D5F.
+
+Do not begin SDE-3 until D5F, sealed-holdout acceptance, final T4 and roadmap/handoff advancement are complete.
