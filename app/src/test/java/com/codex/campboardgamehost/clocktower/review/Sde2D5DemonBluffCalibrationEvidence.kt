@@ -93,3 +93,77 @@ internal object Sde2D5DemonBluffCalibrationEvidenceProjector {
         )
     }
 }
+
+
+internal enum class Sde2D5DemonBluffSelectionReason {
+    LOWEST_SHARED_TO_UNION,
+    HIGHEST_SHARED_TO_UNION,
+}
+
+internal data class Sde2D5DemonBluffCalibrationSelection(
+    val evidence: Sde2D5DemonBluffCalibrationEvidence,
+    val selectionReasons: Set<Sde2D5DemonBluffSelectionReason>,
+) {
+    init {
+        require(selectionReasons.isNotEmpty())
+    }
+}
+
+/**
+ * Deterministic calibration-point selection only.
+ *
+ * This chooses review contrasts at the observed low/high ends of shared strategic support. It does
+ * not classify either end as acceptable/bad and it does not freeze a policy threshold.
+ */
+internal object Sde2D5DemonBluffCalibrationEvidenceSelector {
+    fun selectReviewContrasts(
+        evidence: List<Sde2D5DemonBluffCalibrationEvidence>,
+    ): List<Sde2D5DemonBluffCalibrationSelection> {
+        require(evidence.isNotEmpty())
+        require(evidence.map(Sde2D5DemonBluffCalibrationEvidence::candidateId).distinct().size == evidence.size)
+
+        val comparator = Comparator<Sde2D5DemonBluffCalibrationEvidence> { left, right ->
+            val ratioOrder = compareRatio(
+                left.sharedToUnionRetention,
+                right.sharedToUnionRetention,
+            )
+            if (ratioOrder != 0) ratioOrder else left.candidateId.compareTo(right.candidateId)
+        }
+        val lowest = evidence.minWith(comparator)
+        val highest = evidence.maxWith(comparator)
+
+        val selected = linkedMapOf<String, Pair<Sde2D5DemonBluffCalibrationEvidence, MutableSet<Sde2D5DemonBluffSelectionReason>>>()
+        fun add(
+            point: Sde2D5DemonBluffCalibrationEvidence,
+            reason: Sde2D5DemonBluffSelectionReason,
+        ) {
+            val entry = selected.getOrPut(point.candidateId) { point to linkedSetOf() }
+            entry.second += reason
+        }
+
+        add(lowest, Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION)
+        add(highest, Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION)
+
+        return selected.values
+            .map { (point, reasons) ->
+                Sde2D5DemonBluffCalibrationSelection(
+                    evidence = point,
+                    selectionReasons = reasons.toSet(),
+                )
+            }
+            .sortedBy { it.evidence.candidateId }
+    }
+
+    private fun compareRatio(
+        left: StrategicRatio,
+        right: StrategicRatio,
+    ): Int = when {
+        left is StrategicRatio.Undefined && right is StrategicRatio.Undefined -> 0
+        left is StrategicRatio.Undefined -> -1
+        right is StrategicRatio.Undefined -> 1
+        left is StrategicRatio.Defined && right is StrategicRatio.Defined ->
+            (left.numerator.toLong() * right.denominator.toLong())
+                .compareTo(right.numerator.toLong() * left.denominator.toLong())
+        else -> error("Unknown strategic ratio implementation.")
+    }
+}
