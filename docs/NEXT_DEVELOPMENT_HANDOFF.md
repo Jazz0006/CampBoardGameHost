@@ -1,8 +1,8 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-19 Australia/Sydney  
-> Status: **SDE-2D4 COMPLETE on draft PR #149 — next frontier SDE-2D5 after explicit merge authorization**  
-> Base checkpoint: PR #147 merged to `main` as `2cab06efeee5692024e065c632deefe765ca1618`; D2D4 executable acceptance head `9d619370a68b97107957a2dde504778f436dae12` on draft PR #149  
+> Status: **SDE-2D5 CURRENT — D5F-B infrastructure complete; HUMAN REVIEW next**  
+> Base checkpoint: PR #149 squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`; D2D5 branch `sde-2d5-calibration-policy-evidence`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
@@ -92,7 +92,7 @@ PR #147 was user-authorized and merged to live `main` as:
 
 `2cab06efeee5692024e065c632deefe765ca1618`
 
-**SDE-2D4 5–15 player generalization/performance is complete on draft PR #149.** The next development frontier is SDE-2D5 calibration after explicit user-authorized merge of #149; do not begin SDE-3.
+PR #149 was user-authorized and squash-merged to live `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. **SDE-2D5 calibration / policy evidence is now current** on fresh branch `sde-2d5-calibration-policy-evidence`; do not begin SDE-3.
 
 ## 2. Frozen architecture entering SDE-2D
 
@@ -393,23 +393,127 @@ CI gate                        SUCCESS   run 35410931127
 Android full + APK build       BUILD SUCCESSFUL in 7m 56s
 ```
 
-PR #149 remains **draft and unmerged**. Do not merge without explicit user authorization.
+PR #149 was user-authorized and squash-merged to live `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`.
 
 Do not cut production recommendation policy yet and do not start SDE-3.
 
-## 8. NEXT — SDE-2D5 calibration
+## 8. CURRENT — SDE-2D5 calibration
 
-After explicit user-authorized merge of PR #149, start a fresh D2D5 branch and expand human-review/calibration evidence across:
+Authority: `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`.
 
-- Drunk misinformation;
-- bluff-supported and bluff-fragile bundles;
-- role-information-useful but topology-neutral clues;
-- strategic collapse cases;
-- all player-count regimes.
+Branch: `sde-2d5-calibration-policy-evidence`.
 
-Keep policy gate-based and interpretable.
+D5A–D5E are complete.
 
-No opaque global scalar.
+Implemented evidence now includes:
+
+- normalized raw-exact and topology-first projection through one SDE owner;
+- representative 6 / 9 / 12 / 15 topology-first baselines for STANDARD and BARON profiles;
+- Drunk HealthyCore / FullBundle / DrunkMarginal evidence for numeric, pair and Fortune Teller families;
+- Demon-bluff per-role support, shared/union strategic support and deterministic low/high review contrasts;
+- bounded exact proof that mechanical information gain may be topology-neutral;
+- bounded exact proof that equal raw cardinality may hide different strategic-topology retention;
+- a real seven-player healthy-bundle leave-one-out corpus exhibiting topology-neutral marginal information and near-raw/different-topology marginal contrasts.
+
+Latest accepted D5E evidence:
+
+```text
+D5 calibration T3  35421032892  SUCCESS
+ordinary CI        35421032988  SUCCESS
+cleanup head       9b47095a906cec5b78807d9ea9f5be6c8079714d
+FAST / R2 / gate                  SUCCESS
+```
+
+The temporary D5 validation workflow has been removed.
+
+### D5F — CURRENT
+
+Authority: `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`.
+
+**D5F-A is COMPLETE.**
+
+The calibration-only review export now has:
+
+- stable deterministic review IDs;
+- typed baseline / Drunk / Demon-bluff / role-information records;
+- baseline references that are explicitly non-labelable;
+- every reviewable generated item initially `UNREVIEWED`;
+- exact rational diagnostics preserved;
+- deterministic real review selection spanning all player-count regimes and STANDARD/BARON references;
+- sealed holdout exposure limited to the already-public scenario count.
+
+Accepted evidence:
+
+~~~text
+D5F-A model T1          91d8256c9b483d2f70887f8a526aba175a70f073
+D5F-A calibration T3    35423966647  SUCCESS
+full CI                 35423966654  SUCCESS
+Android full + APK                     BUILD SUCCESSFUL in 7m 12s
+clean head              c17db4fc4789a5d0b11156a22a88da7971a37ef7
+clean full CI           35424382474  SUCCESS
+~~~
+
+**D5F-B manifest infrastructure is COMPLETE; HUMAN REVIEW is NEXT.**
+
+Implemented D5F-B contracts:
+
+1. labels live in a separate manifest keyed by stable review ID;
+2. unknown IDs are rejected;
+3. baseline/reference IDs are rejected;
+4. duplicate IDs are rejected;
+5. non-`UNREVIEWED` labels require explicit reasons;
+6. `UNREVIEWED` cannot carry inferred reasons;
+7. `UNCERTAIN` stays explicit;
+8. review-set completeness blocks D5F-C while any required item remains UNREVIEWED;
+9. an all-UNREVIEWED template is generated and round-trips through the manifest codec;
+10. the real manifest seed is persisted at:
+   `app/src/test/resources/review/sde-2d5f-human-label-manifest.tsv`.
+
+A D5E review-selection bug was found and fixed before human review: `4/4` and `5/5` were structurally unequal objects but mathematically equal ratios. Strategic retention comparisons now use cross multiplication. The corrected equal-raw-removal contrast is `4/7` versus `3/6`.
+
+The first human-review pass exposed a second calibration problem: `Sde2D5DemonBluffRealCalibrationBuilder` still used the bounded D2D2 role subset. That made legal BARON / Drunk counterworld families unreachable and incorrectly produced zero Butler support. The core world enumerator already handled STANDARD + BARON and Drunk shown-role branching; the defect was the calibration caller's incomplete `roleDefinitions`.
+
+Repair now accepted:
+
+- Demon-bluff real calibration uses `TroubleBrewingFixtures.fullRoleDefinitions()`;
+- `Sde2D5CalibrationRoleDomainContract` distinguishes `BOUNDED_FIXTURE` from `FULL_SCRIPT_DOMAIN`;
+- D5F review material rejects Demon-bluff evidence unless it is `FULL_SCRIPT_DOMAIN`;
+- T3 regression requires Butler to retain legal full-domain support;
+- Drunk and role-information calibration fixtures were audited and were already full-domain.
+
+The two old bluff review IDs are obsolete. The user's earlier provisional judgments on those obsolete records were not persisted and must not be transferred to the repaired records.
+
+Current reviewable IDs:
+
+~~~text
+d5f:bluff:13af34bc8befea2f:r1
+d5f:bluff:fe702b4aac3ca49a:r1
+d5f:drunk:value-1
+d5f:role-info:sig-00002562710d4654:marginal-1
+d5f:role-info:sig-44f30b2b21cd7682:marginal-0
+d5f:role-info:sig-796b6039ad4bb4aa:marginal-0
+d5f:role-info:sig-89a6d878c5516337:marginal-1
+d5f:role-info:sig-aab5a4dfa48cfce0:marginal-2
+~~~
+
+All eight are currently `UNREVIEWED`.
+
+Latest corrected validation:
+
+~~~text
+full-domain repair evidence head  b740a0abe93165dc6d35647ba793a5e26ca8e00b
+D5 calibration T3                 35442885568  SUCCESS
+ordinary CI                       35442885562  SUCCESS
+R2                                35442885576  SUCCESS
+Android full + Debug APK / ASP / Clingo / CI gate  SUCCESS
+~~~
+
+The current manifest is valid but intentionally incomplete:
+`isCompleteForGateDerivation == false`.
+
+Next conversation should restart the **human judgment** from the repaired full-domain bluff records, then continue through the remaining unchanged records. Record labels + reasons in the source-controlled manifest only after each explicit human judgment, then validate completeness. Do not automatically infer the labels from metrics.
+
+Do not begin D5F-C, derive thresholds, inspect sealed holdout diagnostics, or alter production selection during this review.
 
 ## 9. SDE-3 resume gate
 
@@ -454,4 +558,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **SDE-2D4 is COMPLETE on draft PR #149, branch `sde-2d4-5-15-validation-performance`. Final executable acceptance head `9d619370a68b97107957a2dde504778f436dae12` has R2 / Android `testFull` / debug APK / ASP contracts / Real Clingo / CI gate all SUCCESS; Android full + APK completed in 7m56s. D4D proves same-world whole-bundle parity against bounded exhaustive mechanical worlds, and D4E records 5–15 topology-first performance with no current evidence requiring memoization or compiled constraints. `Sde2D4ScaleBenchmarkTest` remains a dedicated T3 evidence task rather than bounded regression coverage. Do not redefine mechanical `WorldCardinality.Exact`, do not cut production consumers to topology-first yet, do not merge PR #149 without explicit user authorization, and do not begin SDE-3. Preferred next sequence: user-authorized merge #149 → fresh branch → SDE-2D5 calibration / policy evidence.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E + D5F-A are COMPLETE and D5F-B manifest infrastructure is COMPLETE. The Demon-bluff calibration role-domain defect found during human review is repaired and guarded by a FULL_SCRIPT_DOMAIN contract. HUMAN REVIEW restarts on the repaired 8-record all-UNREVIEWED manifest. Record explicit labels + reasons, then validate completeness. Do not begin D5F-C until the manifest is fully settled; do not open the sealed holdout, derive/freeze thresholds early, introduce an opaque scalar, cut production policy, or begin SDE-3.**
