@@ -4,7 +4,7 @@
 > Repository: Jazz0006/CampBoardGameHost  
 > Branch: sde-2d5-calibration-policy-evidence  
 > Base D5 evidence: D5A–D5E complete  
-> Status: **AUDIT COMPLETE — D5F-A is the first executable slice**
+> Status: **D5F-A COMPLETE — D5F-B is the next executable slice**
 
 ## 1. Purpose
 
@@ -300,7 +300,7 @@ Do not retune the frozen gates from holdout failures.
 
 ## 10. D5F slices
 
-### D5F-A — deterministic calibration review export
+### D5F-A — deterministic calibration review export — COMPLETE
 
 Implement a review-only model / renderer that consumes completed D5 evidence and emits calibration material only.
 
@@ -394,20 +394,74 @@ D5F does not authorize:
 - a weighted global scalar;
 - SDE-3 work.
 
-## 13. Immediate next step
+## 13. D5F-A implemented checkpoint
 
-D5F-A only:
+D5F-A now provides a review-only tagged export over the completed D5 evidence.
+
+Implemented properties:
+
+- stable deterministic review IDs and ordering;
+- typed baseline / Drunk / Demon-bluff / role-information details;
+- baseline rows are explicit non-labelable references;
+- every reviewable generated record begins `UNREVIEWED`;
+- exact strategic ratios remain numerator/denominator values;
+- bounded raw mechanical evidence remains optional and evidence-specific;
+- review reasons are a vocabulary only and are not inferred automatically;
+- the real review corpus deterministically includes:
+  - all four player-count regimes;
+  - STANDARD and BARON baseline references;
+  - a false Drunk numeric candidate;
+  - Demon-bluff low/high shared-support contrasts;
+  - topology-neutral mechanically useful role information;
+  - near-raw/different-topology role-information contrasts;
+  - the observed strongest strategic-collapse marginal;
+  - the observed weakest positive mechanical-information marginal.
+
+The real export is generated inside the explicit T3 task and writes:
+
+`build/reports/sde-2d5f-calibration-review.md`
+
+The pre-freeze holdout surface remains structurally sealed: the review builder accepts only the already-public sealed scenario **count**. It has no input for holdout scenario ID, seating, setup, diagnostics, labels or outcomes.
+
+Acceptance evidence:
 
 ~~~text
-completed D5 calibration evidence
-        ↓
-deterministic tagged review records
-        ↓
-markdown review export
-        ↓
-all reviewable records UNREVIEWED
-+ baseline reference context
-+ sealed holdout count only
+D5F-A review-model T1 head  91d8256c9b483d2f70887f8a526aba175a70f073
+Android FAST / R2 / CI gate  SUCCESS
+
+D5F-A real review export T3  35423966647  SUCCESS
+full CI run                  35423966654  SUCCESS
+Android testFull + APK                      BUILD SUCCESSFUL in 7m 12s
+
+clean validation head         c17db4fc4789a5d0b11156a22a88da7971a37ef7
+clean full CI run             35424382474  SUCCESS
+R2 / Android full / APK / ASP / Real Clingo / CI gate  SUCCESS
 ~~~
 
-Do not implement candidate thresholds, freeze artifacts, or holdout evaluation in D5F-A.
+No human label was inferred, no candidate gate was derived, no threshold was frozen and no holdout diagnostic was inspected.
+
+## 14. Immediate next step
+
+D5F-B only:
+
+~~~text
+generated calibration review IDs
+        ↓
+separate human label manifest
+        ↓
+validate IDs / reasons / completeness
+        ↓
+still no threshold derivation
+~~~
+
+Required D5F-B contracts:
+
+- manifest entries are keyed by stable D5F review ID;
+- unknown review IDs are rejected;
+- duplicate review IDs are rejected;
+- non-UNREVIEWED decisions require at least one explicit review reason;
+- `UNCERTAIN` remains distinct from `ACCEPTABLE` and bad labels;
+- generated evidence remains immutable and label-free;
+- gate derivation must refuse an incomplete required review set.
+
+Do not derive gates, freeze thresholds, inspect the sealed holdout or begin D5F-C before D5F-B is complete.
