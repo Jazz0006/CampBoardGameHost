@@ -140,7 +140,6 @@ internal object Sde2D5FHumanLabelManifestCodec {
         raw: String,
     ): Sde2D5FHumanLabelManifest {
         val lines = raw.lineSequence()
-            .map(String::trimEnd)
             .filter(String::isNotBlank)
             .toList()
         require(lines.isNotEmpty()) { "D5F label manifest is empty." }
