@@ -30,7 +30,8 @@ SDE-2C Poisoner invalidation / broad replanning        COMPLETE / PR #144
 SDE-2D1 Drunk whole-bundle completion                   COMPLETE / PR #145 merged
 SDE-2D2 Demon bluff joint-output migration              COMPLETE / PR #146 merged
 SDE-2D3 strategic-world quotient                        COMPLETE / PR #147 merged
-SDE-2D4 5–15 player generalization / performance        COMPLETE / PR #149 draft
+SDE-2D4 5–15 player generalization / performance        COMPLETE / PR #149 merged
+SDE-2D5 calibration / policy evidence                   CURRENT
 SDE-2D pre-SDE-3 strategic generalization              CURRENT
 ```
 
@@ -266,7 +267,7 @@ Android full + APK build       BUILD SUCCESSFUL in 7m 56s
 
 PR #149 was user-authorized and squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`.
 
-### 2.5 SDE-2D5 — calibration / policy evidence — CURRENT (D5A–E COMPLETE, D5F AUDIT COMPLETE)
+### 2.5 SDE-2D5 — calibration / policy evidence — CURRENT (D5A–E + D5F-A COMPLETE; D5F-B HUMAN REVIEW PENDING)
 
 Authority: `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`.
 
@@ -290,13 +291,34 @@ Key accepted D5E evidence:
 
 D5F authority: `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`.
 
-D5F-A is NEXT:
+D5F-A is COMPLETE.
 
-- produce deterministic calibration-only human-review export from the named evidence axes;
-- keep all reviewable records `UNREVIEWED`;
-- keep baseline reference rows explicitly non-labelable;
-- expose only the already-public sealed holdout count;
-- do not derive thresholds, freeze gates, or evaluate holdout yet.
+D5F-B manifest infrastructure is also complete, but **human review is still pending**.
+
+Current review state:
+
+- source-controlled manifest:
+  `app/src/test/resources/review/sde-2d5f-human-label-manifest.tsv`;
+- exactly 8 reviewable records;
+- all 8 remain `UNREVIEWED`;
+- manifest is valid but `isCompleteForGateDerivation == false`;
+- baseline reference records remain non-labelable;
+- sealed holdout exposure remains scenario-count only.
+
+The D5E review selector was corrected to compare strategic ratios by mathematical value, so equivalent ratios such as `4/4` and `5/5` are no longer treated as different. Corrected real calibration evidence includes an equal-raw-removal contrast with `4/7` versus `3/6` topology retention.
+
+Latest corrected checkpoint:
+
+~~~text
+source-controlled manifest head   e88cf88801ceb7c8d28824eb793da98d5ae0b4cc
+D5 calibration T3                 35430578290  SUCCESS
+ordinary CI                       35430578286  SUCCESS
+R2 / Android FAST / CI gate                     SUCCESS
+~~~
+
+**NEXT: human-review the 8 manifest records.**
+
+Do not automatically infer labels. Do not begin D5F-C until every required item is settled and the manifest validator reports complete.
 
 Production recommendation selection remains unchanged.
 
@@ -550,4 +572,4 @@ Read in order:
 
 ## 10. Stable rule
 
-> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 remains CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E and D5F-A are COMPLETE. D5F-B human label manifest is NEXT. The calibration review export is deterministic, keeps baseline references non-labelable, starts every reviewable item UNREVIEWED, and exposes only the sealed holdout scenario count before freeze. Do not infer labels automatically, derive/freeze gates early, inspect sealed holdout diagnostics, use one opaque global scalar, cut production policy, or begin SDE-3 until D5F + final T4 are complete.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 remains CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E and D5F-A are COMPLETE, and D5F-B manifest infrastructure is COMPLETE. Human review of the 8 source-controlled UNREVIEWED records is NEXT. D5F-C is blocked until the manifest is fully settled. Do not infer labels automatically, derive/freeze gates early, inspect sealed holdout diagnostics, use one opaque global scalar, cut production policy, or begin SDE-3 until D5F + final T4 are complete.**
