@@ -264,11 +264,15 @@ CI gate                        SUCCESS   run 35410931127
 Android full + APK build       BUILD SUCCESSFUL in 7m 56s
 ```
 
-PR #149 remains **draft and unmerged**. Do not merge it without explicit user authorization.
+PR #149 was user-authorized and squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`.
 
-### 2.5 SDE-2D5 — calibration / policy evidence — NEXT
+### 2.5 SDE-2D5 — calibration / policy evidence — CURRENT
 
-After the durable diagnostics exist, expand the calibration corpus across:
+Authority: `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`.
+
+Fresh branch: `sde-2d5-calibration-policy-evidence`.
+
+Expand the calibration corpus across:
 
 - Drunk versus healthy-core cases;
 - bluff-supported versus bluff-fragile cases;
@@ -292,12 +296,12 @@ SDE-3 may begin only after:
 ## 3. NEXT
 
 ```text
-SDE-2D5 — calibration / policy evidence
-SDE-3   — cross-night impaired / registration decisions
-SDE-4   — production cutover + legacy heuristic retirement
+CURRENT  SDE-2D5 — calibration / policy evidence
+THEN     SDE-3   — cross-night impaired / registration decisions
+THEN     SDE-4   — production cutover + legacy heuristic retirement
 ```
 
-Do not start SDE-2D5 on top of an unmerged D2D4 branch unless the user explicitly asks for that workflow. Preferred sequence: user-authorized merge of PR #149, then a fresh D2D5 branch.
+Do not begin SDE-3 until D2D5 calibration, frozen interpretable gate evidence and sealed-holdout acceptance are complete.
 
 ## 4. SDE-1 completion summary
 
@@ -528,4 +532,4 @@ Read in order:
 
 ## 10. Stable rule
 
-> **SDE-2D4 is fully implemented and T4 GREEN on draft PR #149 at executable acceptance head `9d619370a68b97107957a2dde504778f436dae12`. Android `testFull`, debug APK, ASP contracts, Real Clingo, R2 and CI gate all succeeded; D4D whole-bundle exhaustive parity and D4E 5–15 performance evidence are recorded. PR #149 remains draft and unmerged pending explicit user authorization. Production recommendation selection has not cut over to topology-first diagnostics, `WorldCardinality.Exact` still means exact mechanical-world cardinality, and no approximation threshold is frozen. After user-authorized merge, the next development frontier is SDE-2D5 calibration / policy evidence. Do not begin SDE-3 yet.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on fresh branch `sde-2d5-calibration-policy-evidence`; authority is `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`. First executable slice D5A must let the normalized strategic diagnostics owner consume topology-first D2D4 structure directly, so cross-regime calibration never falls back to raw mechanical enumeration or duplicates metric logic in the review package. Do not freeze thresholds before calibration, do not use one opaque global scalar, do not tune on holdout, do not cut production policy, and do not begin SDE-3.**
