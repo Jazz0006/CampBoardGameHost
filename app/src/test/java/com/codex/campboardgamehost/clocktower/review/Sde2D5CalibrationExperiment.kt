@@ -124,6 +124,27 @@ class Sde2D5CalibrationExperiment {
         )
     }
 
+    @Test
+    fun `real Demon bluff joint output yields low and high shared support review contrasts`() {
+        val calibration = Sde2D5DemonBluffRealCalibrationBuilder.build()
+
+        assertTrue(calibration.evidence.size >= 2)
+        assertEquals(
+            setOf(
+                Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION,
+                Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION,
+            ),
+            calibration.selected.flatMapTo(linkedSetOf()) { it.selectionReasons },
+        )
+        assertTrue(
+            "D5D bounded real fixture must expose more than one shared-support level.",
+            calibration.evidence
+                .map { evidence -> evidence.sharedToUnionRetention }
+                .distinct()
+                .size > 1,
+        )
+    }
+
     private fun drunkSnapshot(): GameSnapshot {
         val rulesetRef = validatedRuleset.toRulesetRef(
             rulesetVersion = "sde-2d5-drunk-calibration",
