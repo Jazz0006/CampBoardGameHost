@@ -125,9 +125,11 @@ class Sde2D5CalibrationExperiment {
         val nearRaw = calibration.closestRawDifferentTopology
         assertTrue(nearRaw.first.hasMechanicalInformationGain)
         assertTrue(nearRaw.second.hasMechanicalInformationGain)
-        assertTrue(
-            nearRaw.first.point.normalized.evilTopologyRetention !=
+        assertFalse(
+            sameStrategicRatioValue(
+                nearRaw.first.point.normalized.evilTopologyRetention,
                 nearRaw.second.point.normalized.evilTopologyRetention,
+            ),
         )
         assertTrue(nearRaw.rawWorldRemovalDifference.signum() >= 0)
     }
