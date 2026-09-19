@@ -263,4 +263,19 @@ class Sde2D5CalibrationExperiment {
         manifestFile.writeText(rendered, Charsets.UTF_8)
     }
 
+    @Test
+    fun `ClockTracker fourteen player human choices remain expressible and topology feasible`() {
+        val pilot = Sde2D5ExternalHumanPilotBuilder.build()
+
+        assertTrue(pilot.actualBluffLegal)
+        assertTrue(pilot.actualRedHerringLegal)
+        assertTrue(pilot.actualDrunkCandidateLegal)
+        assertEquals(SemanticTruth.FALSE, pilot.actualDrunkSemanticTruth)
+        assertTrue(pilot.actualFullBundleFeasibleForEveryRecipient)
+
+        val reportFile = File("build/reports/sde-2d5-external-human-pilot.md")
+        requireNotNull(reportFile.parentFile).mkdirs()
+        reportFile.writeText(pilot.report, Charsets.UTF_8)
+    }
+
 }
