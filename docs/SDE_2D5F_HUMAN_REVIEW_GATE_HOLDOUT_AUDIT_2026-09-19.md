@@ -463,11 +463,33 @@ A codec defect found by the template contract was fixed: parser trimming had rem
 
 A second calibration defect was found while reviewing the generated evidence: structural ratio equality had treated `4/4` and `5/5` as different strategic-retention levels. D5E review selection now compares ratios by mathematical value using cross multiplication. The corrected real near-raw contrast includes equal raw removal (`6841`) with genuinely different strategic retention (`4/7` versus `3/6`).
 
+A third defect was found during the first human-review pass: the Demon-bluff real-calibration fixture reused the old bounded D2D2 role subset. The exact evaluator was correct **within the caller-supplied role domain**, but that bounded catalog excluded legal BARON / Drunk counterworld families and therefore made `Butler` appear unsupported. The production world enumerator itself already supports STANDARD + BARON profiles and Drunk shown-role branches; the defect was calibration-domain completeness, not core world legality.
+
+The repair now freezes a calibration-only completeness contract:
+
+~~~text
+BOUNDED_FIXTURE
+    -> valid for local correctness/differential fixtures only
+
+FULL_SCRIPT_DOMAIN
+    -> required before Demon-bluff evidence may enter D5F human review
+~~~
+
+Implemented protection:
+
+- `Sde2D5DemonBluffRealCalibrationBuilder` now uses `TroubleBrewingFixtures.fullRoleDefinitions()`;
+- `Sde2D5CalibrationRoleDomainContract` classifies and rejects bounded domains for policy calibration;
+- `Sde2D5FRealCalibrationReviewBuilder` refuses Demon-bluff evidence unless the source domain is `FULL_SCRIPT_DOMAIN`;
+- a T3 regression requires legal Butler counterworld support to survive full-domain calibration;
+- the Drunk and role-information real calibration builders were audited and already used the full Trouble Brewing role domain.
+
+The repair changes both selected Demon-bluff contrast IDs. Earlier human-review comments on the old bluff IDs are **non-transferable** and were not persisted to the label manifest. The repaired manifest therefore restarts with all eight records `UNREVIEWED`.
+
 Current source-controlled manifest contains exactly eight reviewable IDs, all `UNREVIEWED`:
 
 ~~~text
-d5f:bluff:3ffbf7f823c8418f:r1
-d5f:bluff:58e4a95e9ec27f82:r1
+d5f:bluff:13af34bc8befea2f:r1
+d5f:bluff:fe702b4aac3ca49a:r1
 d5f:drunk:value-1
 d5f:role-info:sig-00002562710d4654:marginal-1
 d5f:role-info:sig-44f30b2b21cd7682:marginal-0
@@ -486,10 +508,12 @@ ratio-value fix                    900d185ff718054f0270c7e03fae433a4381e4ff
 real-T3 assertion update           0b88a986a56e884e4b750ff9e7d4879a3f16c277
 persisted manifest seed            9cfd0069038c095e6ee54eac04aa94bf1b638304
 seed/live-material validator head  e88cf88801ceb7c8d28824eb793da98d5ae0b4cc
+full-domain repair evidence head   b740a0abe93165dc6d35647ba793a5e26ca8e00b
 
-corrected D5 calibration T3        35430578290  SUCCESS
-ordinary CI                       35430578286  SUCCESS
-R2 / Android FAST / CI gate                     SUCCESS
+full-domain D5 calibration T3      35442885568  SUCCESS
+ordinary CI                        35442885562  SUCCESS
+R2                                 35442885576  SUCCESS
+Android full + Debug APK / ASP / Clingo / CI gate  SUCCESS
 ~~~
 
 The validator intentionally reports the current manifest as **valid but incomplete**:
@@ -499,7 +523,7 @@ No human label has yet been assigned, no gate has been derived and no holdout di
 
 ## 15. Immediate next step — HUMAN REVIEW
 
-Review the eight source-controlled manifest records against the D5F-A calibration evidence and assign human judgments only:
+Restart human review from the repaired full-domain Demon-bluff evidence, then review the remaining six unchanged records. Review the eight source-controlled manifest records against the D5F-A calibration evidence and assign human judgments only:
 
 ~~~text
 UNREVIEWED

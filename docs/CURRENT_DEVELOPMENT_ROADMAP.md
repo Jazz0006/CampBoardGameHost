@@ -307,13 +307,23 @@ Current review state:
 
 The D5E review selector was corrected to compare strategic ratios by mathematical value, so equivalent ratios such as `4/4` and `5/5` are no longer treated as different. Corrected real calibration evidence includes an equal-raw-removal contrast with `4/7` versus `3/6` topology retention.
 
+Human review then exposed a separate D5 Demon-bluff calibration-domain defect: the real calibration fixture used a bounded D2D2 role subset, which excluded legal BARON / Drunk counterworld families. Core exact world enumeration was not defective; it was exact inside an incomplete caller-supplied catalog. D5 policy calibration now requires `FULL_SCRIPT_DOMAIN`, the bluff fixture uses all Trouble Brewing roles, D5F rejects bounded bluff evidence, and a regression protects legal Butler support.
+
+The repair invalidated the two old bluff review IDs. No old human judgment was persisted. Repaired bluff IDs are:
+
+~~~text
+d5f:bluff:13af34bc8befea2f:r1
+d5f:bluff:fe702b4aac3ca49a:r1
+~~~
+
 Latest corrected checkpoint:
 
 ~~~text
-source-controlled manifest head   e88cf88801ceb7c8d28824eb793da98d5ae0b4cc
-D5 calibration T3                 35430578290  SUCCESS
-ordinary CI                       35430578286  SUCCESS
-R2 / Android FAST / CI gate                     SUCCESS
+full-domain repair evidence head  b740a0abe93165dc6d35647ba793a5e26ca8e00b
+D5 calibration T3                35442885568  SUCCESS
+ordinary CI                      35442885562  SUCCESS
+R2                                35442885576  SUCCESS
+Android full + Debug APK / ASP / Clingo / CI gate  SUCCESS
 ~~~
 
 **NEXT: human-review the 8 manifest records.**
@@ -572,4 +582,4 @@ Read in order:
 
 ## 10. Stable rule
 
-> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 remains CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E and D5F-A are COMPLETE, and D5F-B manifest infrastructure is COMPLETE. Human review of the 8 source-controlled UNREVIEWED records is NEXT. D5F-C is blocked until the manifest is fully settled. Do not infer labels automatically, derive/freeze gates early, inspect sealed holdout diagnostics, use one opaque global scalar, cut production policy, or begin SDE-3 until D5F + final T4 are complete.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 remains CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E and D5F-A are COMPLETE, and D5F-B manifest infrastructure is COMPLETE. Demon-bluff calibration now has a FULL_SCRIPT_DOMAIN gate after the bounded-domain defect found during human review. The repaired 8-record manifest is valid and fully UNREVIEWED; human review restarts from the repaired bluff evidence. D5F-C is blocked until the manifest is fully settled. Do not infer labels automatically, derive/freeze gates early, inspect sealed holdout diagnostics, use one opaque global scalar, cut production policy, or begin SDE-3 until D5F + final T4 are complete.**

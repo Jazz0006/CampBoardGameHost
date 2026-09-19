@@ -471,11 +471,23 @@ Implemented D5F-B contracts:
 
 A D5E review-selection bug was found and fixed before human review: `4/4` and `5/5` were structurally unequal objects but mathematically equal ratios. Strategic retention comparisons now use cross multiplication. The corrected equal-raw-removal contrast is `4/7` versus `3/6`.
 
+The first human-review pass exposed a second calibration problem: `Sde2D5DemonBluffRealCalibrationBuilder` still used the bounded D2D2 role subset. That made legal BARON / Drunk counterworld families unreachable and incorrectly produced zero Butler support. The core world enumerator already handled STANDARD + BARON and Drunk shown-role branching; the defect was the calibration caller's incomplete `roleDefinitions`.
+
+Repair now accepted:
+
+- Demon-bluff real calibration uses `TroubleBrewingFixtures.fullRoleDefinitions()`;
+- `Sde2D5CalibrationRoleDomainContract` distinguishes `BOUNDED_FIXTURE` from `FULL_SCRIPT_DOMAIN`;
+- D5F review material rejects Demon-bluff evidence unless it is `FULL_SCRIPT_DOMAIN`;
+- T3 regression requires Butler to retain legal full-domain support;
+- Drunk and role-information calibration fixtures were audited and were already full-domain.
+
+The two old bluff review IDs are obsolete. The user's earlier provisional judgments on those obsolete records were not persisted and must not be transferred to the repaired records.
+
 Current reviewable IDs:
 
 ~~~text
-d5f:bluff:3ffbf7f823c8418f:r1
-d5f:bluff:58e4a95e9ec27f82:r1
+d5f:bluff:13af34bc8befea2f:r1
+d5f:bluff:fe702b4aac3ca49a:r1
 d5f:drunk:value-1
 d5f:role-info:sig-00002562710d4654:marginal-1
 d5f:role-info:sig-44f30b2b21cd7682:marginal-0
@@ -489,16 +501,17 @@ All eight are currently `UNREVIEWED`.
 Latest corrected validation:
 
 ~~~text
-manifest/live-material head  e88cf88801ceb7c8d28824eb793da98d5ae0b4cc
-D5 calibration T3            35430578290  SUCCESS
-ordinary CI                  35430578286  SUCCESS
-R2 / Android FAST / CI gate                SUCCESS
+full-domain repair evidence head  b740a0abe93165dc6d35647ba793a5e26ca8e00b
+D5 calibration T3                 35442885568  SUCCESS
+ordinary CI                       35442885562  SUCCESS
+R2                                35442885576  SUCCESS
+Android full + Debug APK / ASP / Clingo / CI gate  SUCCESS
 ~~~
 
 The current manifest is valid but intentionally incomplete:
 `isCompleteForGateDerivation == false`.
 
-Next conversation should perform the **human judgment**, record labels + reasons in the source-controlled manifest, then validate it. Do not automatically infer the labels from metrics.
+Next conversation should restart the **human judgment** from the repaired full-domain bluff records, then continue through the remaining unchanged records. Record labels + reasons in the source-controlled manifest only after each explicit human judgment, then validate completeness. Do not automatically infer the labels from metrics.
 
 Do not begin D5F-C, derive thresholds, inspect sealed holdout diagnostics, or alter production selection during this review.
 
@@ -545,4 +558,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E + D5F-A are COMPLETE and D5F-B manifest infrastructure is COMPLETE. HUMAN REVIEW of the 8 source-controlled UNREVIEWED records is NEXT. Record explicit labels + reasons, then validate completeness. Do not begin D5F-C until the manifest is fully settled; do not open the sealed holdout, derive/freeze thresholds early, introduce an opaque scalar, cut production policy, or begin SDE-3.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E + D5F-A are COMPLETE and D5F-B manifest infrastructure is COMPLETE. The Demon-bluff calibration role-domain defect found during human review is repaired and guarded by a FULL_SCRIPT_DOMAIN contract. HUMAN REVIEW restarts on the repaired 8-record all-UNREVIEWED manifest. Record explicit labels + reasons, then validate completeness. Do not begin D5F-C until the manifest is fully settled; do not open the sealed holdout, derive/freeze thresholds early, introduce an opaque scalar, cut production policy, or begin SDE-3.**
