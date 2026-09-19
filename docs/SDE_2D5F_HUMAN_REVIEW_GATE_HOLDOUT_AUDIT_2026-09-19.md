@@ -4,7 +4,7 @@
 > Repository: Jazz0006/CampBoardGameHost  
 > Branch: sde-2d5-calibration-policy-evidence  
 > Base D5 evidence: D5A–D5E complete  
-> Status: **D5F-A COMPLETE — D5F-B is the next executable slice**
+> Status: **D5F-A COMPLETE — D5F-B infrastructure COMPLETE; HUMAN REVIEW is the next step**
 
 ## 1. Purpose
 
@@ -313,7 +313,7 @@ Requirements:
 - all generated reviewable items begin UNREVIEWED;
 - baseline reference rows are explicitly non-labelable context.
 
-### D5F-B — human label manifest
+### D5F-B — human label manifest — INFRASTRUCTURE COMPLETE / HUMAN REVIEW PENDING
 
 Add a separate label manifest keyed by stable review ID.
 
@@ -440,28 +440,76 @@ R2 / Android full / APK / ASP / Real Clingo / CI gate  SUCCESS
 
 No human label was inferred, no candidate gate was derived, no threshold was frozen and no holdout diagnostic was inspected.
 
-## 14. Immediate next step
+## 14. D5F-B infrastructure checkpoint
 
-D5F-B only:
+D5F-B now provides a separate human-label manifest with:
+
+- the existing five-label vocabulary;
+- stable review-ID keys;
+- typed review reasons;
+- deterministic line-oriented rendering/parsing;
+- rejection of unknown IDs;
+- rejection of baseline/reference IDs;
+- rejection of duplicate IDs;
+- reasons required for every non-`UNREVIEWED` decision;
+- `UNREVIEWED` forbidden from carrying inferred reasons;
+- explicit `UNCERTAIN`;
+- review-set completeness through `isCompleteForGateDerivation`;
+- an all-`UNREVIEWED` template builder;
+- a source-controlled manifest seed at:
+  `app/src/test/resources/review/sde-2d5f-human-label-manifest.tsv`.
+
+A codec defect found by the template contract was fixed: parser trimming had removed the trailing TAB required to preserve an empty note field. Empty-note templates now round-trip exactly.
+
+A second calibration defect was found while reviewing the generated evidence: structural ratio equality had treated `4/4` and `5/5` as different strategic-retention levels. D5E review selection now compares ratios by mathematical value using cross multiplication. The corrected real near-raw contrast includes equal raw removal (`6841`) with genuinely different strategic retention (`4/7` versus `3/6`).
+
+Current source-controlled manifest contains exactly eight reviewable IDs, all `UNREVIEWED`:
 
 ~~~text
-generated calibration review IDs
-        ↓
-separate human label manifest
-        ↓
-validate IDs / reasons / completeness
-        ↓
-still no threshold derivation
+d5f:bluff:3ffbf7f823c8418f:r1
+d5f:bluff:58e4a95e9ec27f82:r1
+d5f:drunk:value-1
+d5f:role-info:sig-00002562710d4654:marginal-1
+d5f:role-info:sig-44f30b2b21cd7682:marginal-0
+d5f:role-info:sig-796b6039ad4bb4aa:marginal-0
+d5f:role-info:sig-89a6d878c5516337:marginal-1
+d5f:role-info:sig-aab5a4dfa48cfce0:marginal-2
 ~~~
 
-Required D5F-B contracts:
+Validation evidence:
 
-- manifest entries are keyed by stable D5F review ID;
-- unknown review IDs are rejected;
-- duplicate review IDs are rejected;
-- non-UNREVIEWED decisions require at least one explicit review reason;
-- `UNCERTAIN` remains distinct from `ACCEPTABLE` and bad labels;
-- generated evidence remains immutable and label-free;
-- gate derivation must refuse an incomplete required review set.
+~~~text
+manifest core GREEN                d1df3204b9514af15fe9281980a3ed5a50cba494
+empty-note codec fix               624ac96813756d55b8bd8de1efd3a78a70984532
+ratio-equivalence RED              d035c8683cb1489348463187ac46ccb8a5cf8f50
+ratio-value fix                    900d185ff718054f0270c7e03fae433a4381e4ff
+real-T3 assertion update           0b88a986a56e884e4b750ff9e7d4879a3f16c277
+persisted manifest seed            9cfd0069038c095e6ee54eac04aa94bf1b638304
+seed/live-material validator head  e88cf88801ceb7c8d28824eb793da98d5ae0b4cc
 
-Do not derive gates, freeze thresholds, inspect the sealed holdout or begin D5F-C before D5F-B is complete.
+corrected D5 calibration T3        35430578290  SUCCESS
+ordinary CI                       35430578286  SUCCESS
+R2 / Android FAST / CI gate                     SUCCESS
+~~~
+
+The validator intentionally reports the current manifest as **valid but incomplete**:
+`isCompleteForGateDerivation == false`.
+
+No human label has yet been assigned, no gate has been derived and no holdout diagnostic has been inspected.
+
+## 15. Immediate next step — HUMAN REVIEW
+
+Review the eight source-controlled manifest records against the D5F-A calibration evidence and assign human judgments only:
+
+~~~text
+UNREVIEWED
+    ↓ human review
+ACCEPTABLE / BAD_TOO_STRONG / BAD_TOO_WEAK / UNCERTAIN
++ one or more explicit review reasons
+~~~
+
+Do not infer these labels automatically from metrics.
+
+Only after all required review IDs are settled and the manifest validator reports `isCompleteForGateDerivation == true` may D5F-C begin.
+
+Do not derive gates, freeze thresholds, inspect the sealed holdout, cut production policy or begin SDE-3 during the human-review step.
