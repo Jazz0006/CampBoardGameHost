@@ -2,6 +2,10 @@ package com.codex.campboardgamehost.clocktower.review
 
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkFortuneTellerCandidateEvaluation
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkMarginalDiagnostics
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkNumericCandidateEvaluation
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkPairCandidateEvaluation
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkWholeBundleCandidateExactEvaluation
 import com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnostics
 import com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnosticsProjector
@@ -28,12 +32,79 @@ internal object Sde2D5DrunkCalibrationEvidenceProjector {
         profileKind: Sde2D5SetupProfileKind,
         healthyCore: ExactHypotheticalObservationBundleDiagnostics,
         candidate: FirstNightDrunkWholeBundleCandidateExactEvaluation,
+    ): Sde2D5DrunkCalibrationEvidence =
+        projectCandidate(
+            playerCount = playerCount,
+            profileKind = profileKind,
+            healthyCore = healthyCore,
+            candidateId = candidate.candidateId,
+            semanticTruth = candidate.semanticTruth,
+            fullBundleByRecipient = candidate.fullBundleByRecipient,
+            marginalByRecipient = candidate.marginalByRecipient,
+        )
+
+    fun project(
+        playerCount: Int,
+        profileKind: Sde2D5SetupProfileKind,
+        healthyCore: ExactHypotheticalObservationBundleDiagnostics,
+        candidate: FirstNightDrunkNumericCandidateEvaluation,
+    ): Sde2D5DrunkCalibrationEvidence =
+        projectCandidate(
+            playerCount = playerCount,
+            profileKind = profileKind,
+            healthyCore = healthyCore,
+            candidateId = candidate.candidateId,
+            semanticTruth = candidate.semanticTruth,
+            fullBundleByRecipient = candidate.fullBundleByRecipient,
+            marginalByRecipient = candidate.marginalByRecipient,
+        )
+
+    fun project(
+        playerCount: Int,
+        profileKind: Sde2D5SetupProfileKind,
+        healthyCore: ExactHypotheticalObservationBundleDiagnostics,
+        candidate: FirstNightDrunkPairCandidateEvaluation,
+    ): Sde2D5DrunkCalibrationEvidence =
+        projectCandidate(
+            playerCount = playerCount,
+            profileKind = profileKind,
+            healthyCore = healthyCore,
+            candidateId = candidate.candidateId,
+            semanticTruth = candidate.semanticTruth,
+            fullBundleByRecipient = candidate.fullBundleByRecipient,
+            marginalByRecipient = candidate.marginalByRecipient,
+        )
+
+    fun project(
+        playerCount: Int,
+        profileKind: Sde2D5SetupProfileKind,
+        healthyCore: ExactHypotheticalObservationBundleDiagnostics,
+        candidate: FirstNightDrunkFortuneTellerCandidateEvaluation,
+    ): Sde2D5DrunkCalibrationEvidence =
+        projectCandidate(
+            playerCount = playerCount,
+            profileKind = profileKind,
+            healthyCore = healthyCore,
+            candidateId = candidate.candidateId,
+            semanticTruth = candidate.semanticTruth,
+            fullBundleByRecipient = candidate.fullBundleByRecipient,
+            marginalByRecipient = candidate.marginalByRecipient,
+        )
+
+    private fun projectCandidate(
+        playerCount: Int,
+        profileKind: Sde2D5SetupProfileKind,
+        healthyCore: ExactHypotheticalObservationBundleDiagnostics,
+        candidateId: String,
+        semanticTruth: SemanticTruth,
+        fullBundleByRecipient: List<ExactHypotheticalObservationBundleDiagnostics>,
+        marginalByRecipient: List<FirstNightDrunkMarginalDiagnostics>,
     ): Sde2D5DrunkCalibrationEvidence {
         require(playerCount in 5..15)
         val recipientSeat = healthyCore.recipientSeat
-        val fullBundle = candidate.fullBundleByRecipient
+        val fullBundle = fullBundleByRecipient
             .single { it.recipientSeat == recipientSeat }
-        val marginal = candidate.marginalByRecipient
+        val marginal = marginalByRecipient
             .single { it.recipientSeat == recipientSeat }
 
         require(fullBundle.beforeStructure == healthyCore.beforeStructure) {
@@ -49,21 +120,20 @@ internal object Sde2D5DrunkCalibrationEvidenceProjector {
             "Drunk marginal raw-world delta must match HealthyCore minus FullBundle."
         }
 
-        val contrastId = candidate.candidateId
         return Sde2D5DrunkCalibrationEvidence(
-            candidateId = candidate.candidateId,
-            semanticTruth = candidate.semanticTruth,
+            candidateId = candidateId,
+            semanticTruth = semanticTruth,
             healthyCore = evidencePoint(
-                pointId = "${candidate.candidateId}:healthy-core",
-                contrastId = contrastId,
+                pointId = "$candidateId:healthy-core",
+                contrastId = candidateId,
                 evidenceKind = Sde2D5EvidenceKind.DRUNK_HEALTHY_CORE,
                 playerCount = playerCount,
                 profileKind = profileKind,
                 diagnostic = healthyCore,
             ),
             fullBundle = evidencePoint(
-                pointId = "${candidate.candidateId}:full-bundle",
-                contrastId = contrastId,
+                pointId = "$candidateId:full-bundle",
+                contrastId = candidateId,
                 evidenceKind = Sde2D5EvidenceKind.DRUNK_FULL_BUNDLE,
                 playerCount = playerCount,
                 profileKind = profileKind,
