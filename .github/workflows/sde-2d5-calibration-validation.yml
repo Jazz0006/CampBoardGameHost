@@ -26,12 +26,13 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
       - name: Ensure Gradle wrapper is executable
         run: chmod +x ./gradlew
-      - name: Generate repaired D5F calibration review
-        run: >
-          ./gradlew :app:sde2D5Calibration
-          --tests '*Sde2D5CalibrationExperiment.real D5F calibration review export stays calibration only and deterministic'
-          --no-daemon --rerun-tasks
+      - name: Run repaired SDE-2D5 calibration evidence
+        run: ./gradlew :app:sde2D5Calibration --no-daemon --rerun-tasks
       - name: Print D5F calibration review
         run: |
           echo "===== D5F CALIBRATION REVIEW ====="
           cat app/build/reports/sde-2d5f-calibration-review.md
+      - name: Print D5F human label template
+        run: |
+          echo "===== D5F HUMAN LABEL TEMPLATE ====="
+          cat app/build/reports/sde-2d5f-human-label-manifest.tsv
