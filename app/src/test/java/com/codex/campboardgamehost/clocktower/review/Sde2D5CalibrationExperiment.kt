@@ -3,6 +3,7 @@ package com.codex.campboardgamehost.clocktower.review
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -27,6 +28,14 @@ class Sde2D5CalibrationExperiment {
         }
         private val roleInformationCalibration by lazy {
             Sde2D5RoleInformationRealCalibrationBuilder.build()
+        }
+        private val reviewMaterial by lazy {
+            Sde2D5FRealCalibrationReviewBuilder.build(
+                baseline = baselineEvidence,
+                drunk = drunkEvidence,
+                bluff = bluffCalibration,
+                roleInformation = roleInformationCalibration,
+            )
         }
     }
 
@@ -125,12 +134,7 @@ class Sde2D5CalibrationExperiment {
 
     @Test
     fun `real D5F calibration review export stays calibration only and deterministic`() {
-        val material = Sde2D5FRealCalibrationReviewBuilder.build(
-            baseline = baselineEvidence,
-            drunk = drunkEvidence,
-            bluff = bluffCalibration,
-            roleInformation = roleInformationCalibration,
-        )
+        val material = reviewMaterial
 
         assertEquals(
             FirstNightBundleBeginnerCorpusBuilder.SEALED_HOLDOUT_SCENARIO_COUNT,
@@ -195,6 +199,35 @@ class Sde2D5CalibrationExperiment {
         val reportFile = File("build/reports/sde-2d5f-calibration-review.md")
         requireNotNull(reportFile.parentFile).mkdirs()
         reportFile.writeText(report, Charsets.UTF_8)
+    }
+
+    @Test
+    fun `real D5F human label template is valid but incomplete until human review`() {
+        val manifest = Sde2D5FHumanLabelManifestBuilder.unreviewedTemplate(
+            material = reviewMaterial,
+            version = "d5f-b-calibration-v1",
+        )
+        val validation = Sde2D5FHumanLabelManifestValidator.validate(
+            material = reviewMaterial,
+            manifest = manifest,
+        )
+        val requiredReviewIds = reviewMaterial.records
+            .filter { it.reviewability == Sde2D5FReviewability.REVIEWABLE }
+            .mapTo(linkedSetOf(), Sde2D5FReviewRecord::reviewId)
+
+        assertTrue(validation.isValid)
+        assertFalse(validation.isCompleteForGateDerivation)
+        assertEquals(requiredReviewIds, validation.unreviewedRequiredReviewIds)
+        assertEquals(requiredReviewIds, manifest.entries.mapTo(linkedSetOf()) { it.reviewId })
+        assertTrue(manifest.entries.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
+        assertTrue(manifest.entries.all { it.reasons.isEmpty() })
+
+        val rendered = Sde2D5FHumanLabelManifestCodec.render(manifest)
+        assertEquals(manifest, Sde2D5FHumanLabelManifestCodec.parse(rendered))
+
+        val manifestFile = File("build/reports/sde-2d5f-human-label-manifest.tsv")
+        requireNotNull(manifestFile.parentFile).mkdirs()
+        manifestFile.writeText(rendered, Charsets.UTF_8)
     }
 
 }
