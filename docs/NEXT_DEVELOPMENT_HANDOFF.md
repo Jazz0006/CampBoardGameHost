@@ -1,8 +1,8 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
-> Updated: 2026-09-18 Australia/Sydney  
-> Status: **SDE-2D3 COMPLETE / PR #147 FULL-CI GREEN — pending user-authorized merge**  
-> Base checkpoint: PR #146 merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`; PR #147 is the validated D3 successor, not yet merged  
+> Updated: 2026-09-19 Australia/Sydney  
+> Status: **SDE-2D4 COMPLETE on draft PR #149 — next frontier SDE-2D5 after explicit merge authorization**  
+> Base checkpoint: PR #147 merged to `main` as `2cab06efeee5692024e065c632deefe765ca1618`; D2D4 executable acceptance head `9d619370a68b97107957a2dde504778f436dae12` on draft PR #149  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
@@ -15,17 +15,20 @@ Read, in order:
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
 5. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
-6. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
-7. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-8. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
-9. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
-10. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
-11. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
-12. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
-13. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
-14. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
-15. Storyteller Decision Engine route;
-16. query live `main` and current checks before executable edits.
+6. `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
+7. `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
+8. `docs/SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`;
+9. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
+10. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
+11. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
+12. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
+13. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
+14. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
+15. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
+16. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
+17. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
+18. Storyteller Decision Engine route;
+19. query live `main`, PR #149 head and current checks before executable edits.
 
 Do not restart completed FN-BUNDLE, SDE-0, SDE-1 or SDE-2A/B/C work.
 
@@ -85,9 +88,11 @@ Authority:
 
 `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`
 
-PR #147 remains draft and unmerged. Do not convert it to Ready or merge it without explicit user authorization.
+PR #147 was user-authorized and merged to live `main` as:
 
-After merge, the next executable stage is **SDE-2D4 5–15 player generalization/performance**, not SDE-3.
+`2cab06efeee5692024e065c632deefe765ca1618`
+
+**SDE-2D4 5–15 player generalization/performance is complete on draft PR #149.** The next development frontier is SDE-2D5 calibration after explicit user-authorized merge of #149; do not begin SDE-3.
 
 ## 2. Frozen architecture entering SDE-2D
 
@@ -322,48 +327,79 @@ Prove differential correctness on bounded fixtures:
 
 Prefer exact quotient or constraint/symbolic feasibility over random sampling.
 
-## 7. NEXT AFTER PR #147 MERGE — SDE-2D4 5–15 player validation
+## 7. COMPLETE — SDE-2D4 5–15 player validation
 
-Do not begin executable D2D4 work on the SDE-2D3 branch. After user-authorized merge of PR #147, create a fresh branch from live `main` and perform a focused performance/representation audit before implementation.
+PR #147 is merged to live `main` as `2cab06efeee5692024e065c632deefe765ca1618`.
 
-Evidence regimes:
+D2D4 branch:
 
-```text
-5–6
-7–9
-10–12
-13–15
-```
+`sde-2d4-5-15-validation-performance`
 
-Validate separately:
+Draft PR:
 
-- semantic correctness;
-- candidate-space assumptions;
-- normalized strategic metrics;
-- CPU cost;
-- memory cost;
-- mobile-feasible latency.
+**#149 — SDE-2D4: validate 5–15 strategic scaling**
 
-Useful baseline-relative metrics include:
+Authority:
+
+- `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
+- `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
+- `docs/SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`.
+
+Accepted implementation:
 
 ```text
-demonCoverRetention
-evilTopologyRetention
-evilCoverRetention
-forcedGoodFraction
+D4A   normalized strategic diagnostics
+D4B   source-derived scale matrix + bounded raw-stream evidence
+D4C1  exact topology-domain enumeration for 5–15
+D4C2  role/type/shown-role setup witness existence
+D4C3  Drunk + Poisoner finite-resource AbilityState feasibility
+D4C4a registration-aware identity observations
+D4C4b Chef / Empath / Fortune Teller / Red Herring observations
+D4C4c composable AnyOf / AllOf / supported Not constraint branches
+D4C5  exact strategic topology whole-bundle evaluator with shared witness
+D4D   same-world whole-bundle exhaustive differential parity
+D4E   measured 5–15 topology-bundle performance matrix
 ```
 
-For a 15-player one-Demon/three-Minion topology, the raw seat-topology upper bound is:
+Key frozen contracts:
+
+- `TroubleBrewingStrategicTopologyDomain` enumerates Demon seat × Minion seat combinations only;
+- `TroubleBrewingTopologySetupWitnessEvaluator` proves setup existence without complete mechanical-world enumeration;
+- remaining seat assignment uses an exact type-quota → role → seat max-flow proof;
+- `TroubleBrewingTopologyHypotheticalBundleEvaluator` composes all observations into one shared witness with unique Drunk, unique roles, one Poisoner target and one Red Herring identity;
+- registration legality remains owned by `TroubleBrewingRegistrationDomain`;
+- `WorldCardinality.Exact` still means exact mechanical-world cardinality;
+- no production recommendation consumer has cut over to topology-first diagnostics.
+
+D4D whole-bundle parity covers role-identity conflict, Poisoner shared target, Drunk shared resource, Spy/Recluse registration witnesses, Fortune Teller Red Herring, selected registration binding, contradictory bundles, and standard/Baron profiles.
+
+D4E evidence through 15 players supports direct topology feasibility without adding memoization or compiled constraints at this stage. At 15 players, topology upper bound is 5,460 and the measured standard-profile single-bundle path retained 4,004 keys at about 766 ms on the CI JVM.
+
+A test-governance issue was found during T4: `Sde2D4ScaleBenchmarkTest` is a raw-enumerator T3 evidence harness and exceeded a dedicated 900-second CI diagnostic cap. It is now explicitly runnable as `:app:sde2D4ScaleBenchmark` and is not part of bounded `testFull`. The topology performance harness and exact differential regression evidence remain in affected/full validation.
+
+Final executable acceptance head:
+
+`9d619370a68b97107957a2dde504778f436dae12`
+
+Final validation:
 
 ```text
-15 × C(14,3) = 5,460
+R2 main-thread boundary        SUCCESS   run 35410931214
+Android testFull               SUCCESS
+Debug APK assemble             SUCCESS
+ASP contract tests             SUCCESS
+Real Clingo cross-validation   SUCCESS
+CI gate                        SUCCESS   run 35410931127
+Android full + APK build       BUILD SUCCESSFUL in 7m 56s
 ```
 
-Do not freeze a production switch threshold until measured evidence exists.
+PR #149 remains **draft and unmerged**. Do not merge without explicit user authorization.
 
-## 8. THEN — SDE-2D5 calibration
+Do not cut production recommendation policy yet and do not start SDE-3.
 
-Only after durable diagnostics exist, expand human-review/calibration evidence across:
+## 8. NEXT — SDE-2D5 calibration
+
+After explicit user-authorized merge of PR #149, start a fresh D2D5 branch and expand human-review/calibration evidence across:
 
 - Drunk misinformation;
 - bluff-supported and bluff-fragile bundles;
@@ -418,4 +454,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **SDE-2D3 is fully implemented and full-ci GREEN on draft PR #147 at acceptance head `2d491663a899d048b4b69522e9cdde700effa85b`, but remains unmerged pending explicit user authorization. PR #146 is merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`. After PR #147 is merged, start SDE-2D4 on a fresh branch: validate the exact strategic quotient across 5–15 player regimes, measure CPU/memory/mobile latency, define normalized strategic metrics, and only then decide whether symbolic topology feasibility or another representation switch is required. Production Demon-bluff selection has not cut over; `demon-bluff-ease` remains compatibility behavior until the later explicit cutover. SDE-3 remains blocked until the complete SDE-2D gate is explicitly satisfied.**
+> **SDE-2D4 is COMPLETE on draft PR #149, branch `sde-2d4-5-15-validation-performance`. Final executable acceptance head `9d619370a68b97107957a2dde504778f436dae12` has R2 / Android `testFull` / debug APK / ASP contracts / Real Clingo / CI gate all SUCCESS; Android full + APK completed in 7m56s. D4D proves same-world whole-bundle parity against bounded exhaustive mechanical worlds, and D4E records 5–15 topology-first performance with no current evidence requiring memoization or compiled constraints. `Sde2D4ScaleBenchmarkTest` remains a dedicated T3 evidence task rather than bounded regression coverage. Do not redefine mechanical `WorldCardinality.Exact`, do not cut production consumers to topology-first yet, do not merge PR #149 without explicit user authorization, and do not begin SDE-3. Preferred next sequence: user-authorized merge #149 → fresh branch → SDE-2D5 calibration / policy evidence.**
