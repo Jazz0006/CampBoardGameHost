@@ -287,7 +287,7 @@ class Sde2D5CalibrationExperiment {
     fun `real D5F human label template is valid but incomplete until human review`() {
         val manifest = Sde2D5FHumanLabelManifestBuilder.unreviewedTemplate(
             material = reviewMaterial,
-            version = "d5f-b-calibration-v1",
+            version = "d5f-b-calibration-v2",
         )
         val validation = Sde2D5FHumanLabelManifestValidator.validate(
             material = reviewMaterial,
@@ -307,6 +307,19 @@ class Sde2D5CalibrationExperiment {
         val rendered = Sde2D5FHumanLabelManifestCodec.render(manifest)
         assertEquals(manifest, Sde2D5FHumanLabelManifestCodec.parse(rendered))
 
+        val manifestFile = File("build/reports/sde-2d5f-human-label-manifest.tsv")
+        requireNotNull(manifestFile.parentFile).mkdirs()
+        manifestFile.writeText(rendered, Charsets.UTF_8)
+
+        val obsoleteV1File =
+            File("src/test/resources/review/sde-2d5f-human-label-manifest-v1-obsolete.tsv")
+        val obsoleteV1 = Sde2D5FHumanLabelManifestCodec.parse(
+            obsoleteV1File.readText(Charsets.UTF_8),
+        )
+        assertEquals("d5f-b-calibration-v1", obsoleteV1.version)
+        assertTrue(obsoleteV1.entries.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
+        assertTrue(obsoleteV1.entries.all { it.reasons.isEmpty() })
+
         val persistedManifestFile =
             File("src/test/resources/review/sde-2d5f-human-label-manifest.tsv")
         val persistedManifest = Sde2D5FHumanLabelManifestCodec.parse(
@@ -320,10 +333,6 @@ class Sde2D5CalibrationExperiment {
         assertTrue(persistedValidation.isValid)
         assertFalse(persistedValidation.isCompleteForGateDerivation)
         assertEquals(requiredReviewIds, persistedValidation.unreviewedRequiredReviewIds)
-
-        val manifestFile = File("build/reports/sde-2d5f-human-label-manifest.tsv")
-        requireNotNull(manifestFile.parentFile).mkdirs()
-        manifestFile.writeText(rendered, Charsets.UTF_8)
     }
 
     @Test
