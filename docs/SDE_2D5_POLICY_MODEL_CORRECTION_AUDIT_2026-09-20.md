@@ -154,7 +154,7 @@ The correction is:
 
 ## 4. Implemented code that is now policy-stale
 
-### 4.1 `ImpairedInformationPolicy` — target for retirement/replacement
+### 4.1 `ImpairedInformationPolicy` — keep as temporary compatibility policy until SDE cutover
 
 Current stale behavior:
 
@@ -164,7 +164,7 @@ truth vs false family chosen before strategic consequence quality
 IMPAIRED_FALSE_PREFERRED encoded as the normal path
 ~~~
 
-Required target:
+Long-term target remains:
 
 ~~~text
 all rule-legal truthful/false candidates
@@ -173,9 +173,9 @@ truthRelation
     -> diagnostic feature, not family budget
 ~~~
 
-Exceptions such as "no legal false candidate" cease to be semantic-family policy and become ordinary candidate-domain facts.
+However the current 90/10 split was deliberately introduced as a temporary product bridge before the consistency/SDE algorithm existed. Do not remove the production compatibility behavior during D5F-B3.
 
-This change belongs to the cross-night/impaired policy migration, not to rules legality.
+What should be removed now are tests that freeze the exact 90/10 percentage as if it were durable policy. Keep only compatibility/safety tests that prove legal candidates, deterministic replay and fallback behavior. The production bridge is retired only when the replacement SDE owner is ready.
 
 ### 4.2 `DynamicCandidateGenerator.select` — remove semantic truth-family preallocation
 
@@ -191,7 +191,7 @@ Target:
 
 The current `misinformationMassFixedPoint(...)` compatibility surface and 90%-false tests should be retired when the new owner cuts over.
 
-### 4.3 `MalfunctionPolicy` — static truth-distance policy is not a durable owner
+### 4.3 `MalfunctionPolicy` — retain as legacy recommendation bridge, not target policy
 
 Stale concepts:
 
@@ -207,9 +207,11 @@ Useful parts to preserve temporarily:
 
 Target:
 
-- move temporal continuity into exact/history-aware SDE context;
-- replace truth-distance preference with strategic/narrative consequence evaluation;
-- retire this policy as final ranking owner after SDE cross-night cutover.
+- do not spend D5F-B3 effort rewriting this legacy bridge;
+- keep current production behavior until the consistency/SDE replacement is ready;
+- stop treating its static truth-distance/misinformation-pressure scores as calibration truth;
+- later move temporal continuity into exact/history-aware SDE context;
+- retire this policy as final ranking owner only at cross-night/production cutover.
 
 ### 4.4 `SetupEvaluator` / `SetupRecommendationService` — keep as compatibility only
 
@@ -230,17 +232,21 @@ Correction:
 
 `SetupCandidateGenerator` legality ownership remains valid.
 
-### 4.5 Obsolete shown-role scoring seam
+### 4.5 Legacy shown-role scoring versus durable shown-identity setup pipeline
 
 `SetupCandidateGenerator.generatePlans` already rejects `StorytellerDecision.DrunkShownRole`, because shown identity is now committed upstream.
 
-`SetupEvaluator.evaluateClue` still contains a legacy `DrunkShownRole` scoring branch and `TroubleBrewingRecommendationMetadata.drunkSuitability`.
+`SetupEvaluator.evaluateClue` still contains a legacy `DrunkShownRole` scoring branch and `TroubleBrewingRecommendationMetadata.drunkSuitability`. That legacy scoring path is not the durable owner.
 
-Before production cutover:
+The durable capability is already generic and must be preserved for future scripts without curated templates:
 
-- audit remaining direct callers;
-- if no production owner still needs this compatibility API, delete the obsolete scoring path and associated metadata/tests;
-- do not restore Drunk shown-role selection to SDE.
+- `SetupShownIdentityPolicyResolver.resolveGenerated(...)` derives legal shown-role options for a generated setup (currently all unused Townsfolk for Drunk);
+- `SetupShownIdentityCommitter` commits one option deterministically from the setup seed before seating/materialization;
+- template-backed scripts can supply a smaller curated option set through `TemplateShownIdentityPolicySource`.
+
+Therefore future generated/custom scripts do still need **shown-identity selection**, but they do not need the old `SetupEvaluator` scoring branch.
+
+If quality-aware shown-role selection is later desired, insert a generic setup-stage selector between policy resolution and commitment rather than reviving `drunk-shown-role-suitability`. That selector may use role/composition-level diagnostics while preserving the setup persistence boundary. Current seeded-random commitment is an acceptable fallback.
 
 ## 5. D5 calibration corrections required before human review
 
@@ -431,9 +437,9 @@ Do not add:
 
 ### RETIRE / REPLACE DURING SDE-3 / SDE-4
 
-- 90% impaired false-family budget;
-- `IMPAIRED_FALSE_PREFERRED` as default product policy;
-- truth-distance / misinformation-pressure ranking as final malfunction owner;
+- 90% impaired false-family budget (retain temporarily until SDE replacement, but remove tests that freeze the exact percentage as durable policy);
+- `IMPAIRED_FALSE_PREFERRED` as long-term policy meaning (temporary compatibility code may remain);
+- truth-distance / misinformation-pressure ranking as final malfunction owner (legacy bridge may remain until cutover);
 - legacy `demon-bluff-ease` as complete bluff-quality owner;
 - GENTLE/BALANCED/AGGRESSIVE as the target BEGINNER policy model;
 - obsolete Drunk shown-role scoring path after caller audit;
