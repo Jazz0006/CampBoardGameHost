@@ -357,8 +357,9 @@ D5F-B2 remains positive-unlabeled external evidence. It must not auto-label unse
 External evidence is now persisted in:
 - docs/SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv;
 - docs/SDE_2D5F_EXTERNAL_HUMAN_REPEAT_SIGNAL_AUDIT_2026-09-20.md.
+- docs/SDE_2D5F_BEGINNER_POLICY_CONTROL_SURFACE_AUDIT_2026-09-20.md.
 
-The expanded sweep currently classifies healthy-truth danger / Evil-topology coupling, cross-channel narrative coherence, temporal consistency / impairment detectability, and minimum healthy-information floor / Night-1 pressure band as STRONG_REPEAT. Red-Herring trajectory, future correction capacity, narrative-route diversity and confirmation-chain suppression remain REPEATED_EMERGING. Shared-support floor threshold and independent strategic-coverage-complementarity reward remain TENTATIVE.
+The expanded sweep currently classifies healthy-truth danger / Evil-topology coupling, cross-channel narrative coherence, temporal consistency / impairment detectability, and minimum healthy-information floor / Night-1 pressure band as STRONG_REPEAT. Healthy-truth danger is now explicitly stage-bound: PRE-GAME uses it as `SetupTruthExposureRisk`; post-setup SDE may only use `CounterfactualHealthyTruthDanger` as context when the role is already legitimately impaired, and may not retroactively change Drunk identity/shown role. Red-Herring trajectory, future correction capacity, narrative-route diversity and confirmation-chain suppression remain REPEATED_EMERGING. Shared-support floor threshold and independent strategic-coverage-complementarity reward remain TENTATIVE.
 
 Next external-evidence action: continue targeted exact-seat / exact-Night-1 recovery, especially cases that can discriminate the emerging/tentative axes; reuse the catalog later for cross-night Drunk/Poisoned selection.
 
