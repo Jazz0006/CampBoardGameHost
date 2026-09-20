@@ -137,6 +137,7 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
                     sourceSeat = sourceSeat,
                     sourceRole = sourceRole,
                     control = roleInformationControl(sourceRole),
+                    observationKey = leaveOneOut.omittedObservationKey,
                     diagnostic = marginalDiagnostic(
                         bundleId = "${group.signatureId}:marginal-$omittedIndex",
                         omitted = omitted,

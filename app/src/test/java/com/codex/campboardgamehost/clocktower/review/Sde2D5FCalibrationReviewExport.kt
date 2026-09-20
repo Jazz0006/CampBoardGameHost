@@ -438,6 +438,7 @@ internal object Sde2D5FCalibrationReviewRenderer {
                 appendLine("sourceSeat=${evidence.sourceSeat}")
                 appendLine("sourceRole=${evidence.sourceRole.value}")
                 appendLine("control=${evidence.control}")
+                appendLine("observationKey=${evidence.observationKey ?: "N/A"}")
                 appendLine("rawWorldsRemoved=${evidence.rawWorldsRemoved}")
                 appendLine("hasMechanicalInformationGain=${evidence.hasMechanicalInformationGain}")
                 appendLine("topologyNeutral=${evidence.topologyNeutral}")

@@ -11,6 +11,7 @@ internal data class Sde2D5RoleInformationCalibrationEvidence(
     val sourceSeat: Int,
     val sourceRole: RoleId,
     val control: FirstNightBundleEntryControl,
+    val observationKey: String? = null,
     val rawWorldsRemoved: BigInteger,
     val hasMechanicalInformationGain: Boolean,
     val topologyNeutral: Boolean,
@@ -18,6 +19,7 @@ internal data class Sde2D5RoleInformationCalibrationEvidence(
     init {
         require(point.evidenceKind == Sde2D5EvidenceKind.STRATEGIC_ROLE_INFORMATION_CONTRAST)
         require(sourceSeat > 0)
+        require(observationKey == null || observationKey.isNotBlank())
         require(rawWorldsRemoved.signum() >= 0)
         require(hasMechanicalInformationGain == (rawWorldsRemoved.signum() > 0))
     }
@@ -84,6 +86,7 @@ internal object Sde2D5RoleInformationCalibrationEvidenceProjector {
         sourceSeat: Int,
         sourceRole: RoleId,
         control: FirstNightBundleEntryControl,
+        observationKey: String? = null,
         diagnostic: ExactHypotheticalObservationBundleDiagnostics,
     ): Sde2D5RoleInformationCalibrationEvidence {
         require(playerCount in 5..15)
@@ -116,6 +119,7 @@ internal object Sde2D5RoleInformationCalibrationEvidenceProjector {
             sourceSeat = sourceSeat,
             sourceRole = sourceRole,
             control = control,
+            observationKey = observationKey,
             rawWorldsRemoved = removed,
             hasMechanicalInformationGain = removed.signum() > 0,
             topologyNeutral =

@@ -106,6 +106,7 @@ class Sde2D5FCalibrationReviewExportTest {
             sourceSeat = 2,
             sourceRole = RoleId("Chef"),
             control = FirstNightBundleEntryControl.RULE_DETERMINED,
+            observationKey = """{"kind":"test-role-information"}""",
             rawWorldsRemoved = BigInteger.valueOf(15),
             hasMechanicalInformationGain = true,
             topologyNeutral = true,
@@ -201,6 +202,7 @@ class Sde2D5FCalibrationReviewExportTest {
             sourceSeat = 2,
             sourceRole = RoleId("Chef"),
             control = FirstNightBundleEntryControl.RULE_DETERMINED,
+            observationKey = """{"kind":"test-role-information"}""",
             rawWorldsRemoved = BigInteger.valueOf(15),
             hasMechanicalInformationGain = true,
             topologyNeutral = true,
@@ -225,6 +227,7 @@ class Sde2D5FCalibrationReviewExportTest {
         assertTrue(first.contains("reviewability=REFERENCE"))
         assertTrue(first.contains("lifecycleStage=CROSS_STAGE_REFERENCE"))
         assertTrue(first.contains("decisionOwner=CALIBRATION_DIAGNOSTIC_ONLY"))
+        assertTrue(first.contains("""observationKey={"kind":"test-role-information"}"""))
         assertTrue(first.contains("persistenceBoundary=DESCRIPTIVE_BUNDLE_EVIDENCE_ONLY"))
         assertFalse(first.contains("holdout scenario id", ignoreCase = true))
         assertFalse(first.contains("holdout seating", ignoreCase = true))

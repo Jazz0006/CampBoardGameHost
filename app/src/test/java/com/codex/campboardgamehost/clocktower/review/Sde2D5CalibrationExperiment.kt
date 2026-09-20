@@ -160,6 +160,7 @@ class Sde2D5CalibrationExperiment {
         assertTrue(calibration.topologyNeutral.hasMechanicalInformationGain)
         assertTrue(calibration.topologyNeutral.topologyNeutral)
         assertTrue(calibration.topologyNeutral.rawWorldsRemoved.signum() > 0)
+        assertTrue(calibration.allEvidence.all { !it.observationKey.isNullOrBlank() })
 
         val nearRaw = calibration.closestRawDifferentTopology
         assertTrue(nearRaw.first.hasMechanicalInformationGain)
@@ -289,6 +290,7 @@ class Sde2D5CalibrationExperiment {
         assertTrue(report.contains("Holdout diagnostics are sealed until gate freeze."))
         assertTrue(report.contains("initialLabel=UNREVIEWED"))
         assertTrue(report.contains("detail=bundle-confirmation-chain"))
+        assertTrue(report.contains("observationKey={"))
         assertTrue(report.contains("multiChannelCollapse="))
         assertTrue(report.contains("restoresStrategicTopology="))
         val reportFile = File("build/reports/sde-2d5f-calibration-review.md")
