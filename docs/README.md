@@ -1,7 +1,7 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-09-20 Australia/Sydney  
-> 目标：新开发会话只读取当前权威；完成阶段的审计、checkpoint 与旧 handoff 从 `archive/` 按需查阅。
+> 最后整理：2026-09-21 Australia/Sydney  
+> 目标：新开发会话只读取当前权威。历史过程、已撤销路线和中间校准实验不再留在 active docs 中制造歧义。
 
 ## 默认阅读顺序
 
@@ -9,12 +9,12 @@
 2. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 3. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 4. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
-5. [`SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`](SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md) — 当前 D5F-B3 / v2 review model 权威
-6. [`SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv`](SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv) — 当前 external-human review evidence
-7. 需要理解后续 SDE-3 前置约束时，再读 [`SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`](SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md)
+5. [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md) — **当前 first-night policy authority**
+6. [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv) — 外部证据 seed catalog；当前不含已验证 GOLD expert case
+7. 需要 SDE-2D / SDE-3 长期约束时，再读 [`SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`](SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md)
 8. 需要全局 SDE 架构背景时，再读 [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 
-然后查询 live branch / PR / checks。不要从 archive、旧 PR 或历史文档里的 `NEXT / READY / COMPLETE` 推断当前状态。
+随后查询 live branch / PR / checks。不要从 Git history、archive、旧 PR 或旧 manifest 的 `NEXT / READY / COMPLETE` 推断当前任务。
 
 ## 当前状态
 
@@ -28,88 +28,90 @@ SDE-2D4 5–15 generalization            COMPLETE / PR #149
 
 SDE-2D5 calibration / policy evidence  CURRENT / PR #150 draft
   D5A–D5E                              COMPLETE
-  D5F-A                                COMPLETE
-  D5F-B infrastructure                 COMPLETE
-  D5F-B3 policy-model correction       COMPLETE
-  D5F-B v2 human review                NEXT
+  D5F-A / B infrastructure             COMPLETE
+  D5F-B3 correction                    HISTORICAL CHECKPOINT
+  D5F-B4 expert-observed calibration   CURRENT
 
 D5F-C gate/band derivation             BLOCKED
 sealed holdout                         CLOSED
 SDE-3                                  BLOCKED
 ~~~
 
-Canonical human-review manifest:
+## 当前政策核心
 
-`app/src/test/resources/review/sde-2d5f-human-label-manifest.tsv`
+- legality、consequence、selection policy 必须分层。
+- Spy / Recluse registration 永远是 interaction-scoped，不修改 canonical identity。
+- BEGINNER 默认采用角色主题注册：Spy 优先登记为 Good/Townsfolk/Outsider；Recluse 优先登记为 Evil/Minion/Demon。
+- 这个默认是强 prior，不是硬规则；只有 whole-bundle health 有实质改善时才 override。
+- 有健康替代时，避免 Librarian 直接暴露 Recluse，强烈避免 Investigator 直接暴露 Spy；forced case 正常接受。
+- Chef / Empath 只有在所有合法 Spy/Recluse registration 分支都得到同一个值时才是 rule-determined。
+- Drunk misinformation 不等于必须说假话；多夜信息应保持可信的 shadow-world / narrative trajectory。
+- Demon bluffs、Red Herring、pair clues、numeric registration branches、Drunk/poisoned information应在生命周期允许范围内按 whole-bundle 评价。
+- strategic evil topology 比 raw role-world multiplicity 更重要，但不能代替 role-information utility、confirmation-chain、role-function exposure、bluff usability 等语义维度。
+- 不引入 opaque global scalar。
 
-Version:
+## 校准证据原则
 
-`d5f-b-calibration-v2`
+当前路线是 **expert-observation-first**，不是 single-reviewer-label-first。
 
-It contains **11 reviewable records, all currently `UNREVIEWED`**.
+~~~text
+GOLD
+    已验证的资深 / 可信 Storyteller 真人对局
+    可重建 setup + Night 1 choices
+    explicit rationale 优先
 
-The obsolete v1 manifest is retained only as historical evidence:
+SILVER
+    高完整度真实记录，例如 ClockTracker
+    Storyteller 水平未独立验证
 
-`app/src/test/resources/review/sde-2d5f-human-label-manifest-v1-obsolete.tsv`
+QUALITATIVE
+    教程、复盘、资深社区讨论
 
-Do not transfer provisional v1 judgments into v2.
+DIAGNOSTIC_ONLY
+    synthetic / extreme / counterfactual fixture
+~~~
 
-## Current policy-model invariants
+现有 external evidence catalog 只是 seed；在完成专家身份/经验验证前，不得把其中任何条目当作 GOLD。
 
-- Optimize only variables still owned and controllable at the current lifecycle stage.
-- Drunk shown identity is persistent setup input after commit; SDE owns the unshown unreliable clue, not the shown role.
-- Drunk review compares truthful / mild-false / stronger-false candidates on one same-setup surface; truth relation is descriptive, not a quality ranking.
-- Chef / Empath healthy information is rule-determined after setup.
-- Washerwoman / Librarian / Investigator may still expose Storyteller-controlled legal outputs.
-- Fortune Teller pair selection belongs to the player.
-- Red Herring is setup-controllable only before persistence.
-- Poisoner target belongs to the Evil player; future Poisoner targeting is not setup mitigation.
-- Demon bluff triplet is a planning output before reveal and persistent input after reveal.
-- Shared/union bluff support is a coherence/fragility diagnostic, not a monotone quality objective.
-- Healthy-bundle risk is joint confirmation-chain collapse, not “a single strong healthy clue is bad”.
-- Do not add an opaque global confirmation score or a numeric coverage-complementarity reward.
+专家实际选择 A 也不代表所有未选择的 B/C/D 都是 BAD。强 preference evidence 需要 explicit rationale、明确拒绝替代项、重复可比选择或跨来源一致模式。
 
-Compatibility code intentionally retained until later production cutover:
+最终胜负不能作为 Storyteller 决策质量标签。
 
-- impaired-information approximate 90/10 false-family bridge;
-- legacy `MalfunctionPolicy`.
+## 已撤销的 D5 路线
 
-Do not restore old recommendation-owned Drunk shown-role scoring.
+2026-09-20 的以下 active 中间文档已删除，避免继续污染当前路线；Git history 仍保留追溯能力：
+
+- `SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`
+- `SDE_2D5F_EXTREME_FIXTURE_CALIBRATION_SCOPE_CORRECTION_2026-09-20.md`
+- `SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md`
+
+其中有效结论已经合并进 2026-09-21 policy synthesis、roadmap 和 handoff；失效的 synthetic calibration 路线不再作为 active authority。
+
+旧 human-label manifests 与 test-only calibration artifacts 目前只是历史/兼容资产；是否删除属于下一步代码/测试清理审计，不从它们推断当前 policy。
 
 ## Active long-lived references
 
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
 - [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md)
-- [`SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`](SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md)
-- [`SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv`](SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv)
+- [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
+- [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv)
 - [`SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`](SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md)
 - [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 - [`GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`](GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md)
-- [`EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`](EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md)
 - [`epistemic_reference_matrix.md`](epistemic_reference_matrix.md)
-- [`asp_oracle_cross_validation.md`](asp_oracle_cross_validation.md)
 
-Completed FN-BUNDLE / SDE slice-level audit evidence has moved to:
-
-- [`archive/checkpoints/fn-bundle/`](archive/checkpoints/fn-bundle/README.md)
-- [`archive/checkpoints/sde/`](archive/checkpoints/sde/README.md)
-
-## Normative engineering workflow
-
-- root `AGENTS.md`
-- [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
-- [`AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`](AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md)
-- [`LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`](LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md) when applicable
+Completed slice-level evidence lives under [`archive/`](archive/README.md).
 
 ## Status authority
 
 If documents conflict, use this order:
 
 1. official BoTC rules/rulings — gameplay correctness;
-2. root `AGENTS.md` — execution / architecture / test rules;
+2. root `AGENTS.md` — execution / architecture / testing;
 3. `CURRENT_DEVELOPMENT_ROADMAP.md` — current state / priority;
 4. `NEXT_DEVELOPMENT_HANDOFF.md` — current continuation point;
-5. current specialized authority named by roadmap/handoff;
-6. long-lived architecture/reference docs;
-7. archive / old branches / old PRs / Git history — evidence only.
+5. `SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md` — current first-night policy;
+6. current external evidence catalog — source inventory only, not normative truth;
+7. long-lived architecture/reference docs;
+8. archive / Git history — historical evidence only.

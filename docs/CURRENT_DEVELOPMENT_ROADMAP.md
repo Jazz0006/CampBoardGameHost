@@ -19,333 +19,147 @@ SDE-2D2 Demon bluff joint-output                      COMPLETE / PR #146
 SDE-2D3 strategic-world quotient                      COMPLETE / PR #147
 SDE-2D4 5–15 correctness/performance                  COMPLETE / PR #149
 SDE-2D5 calibration / policy evidence                 CURRENT / PR #150 draft
+    D5A–D5E                                            COMPLETE
+    D5F infrastructure                                COMPLETE
+    D5F-B3 correction                                 HISTORICAL CHECKPOINT
+    D5F-B4 expert-observed policy calibration         CURRENT
+D5F-C gate/band derivation                            BLOCKED
+sealed holdout                                        CLOSED
+SDE-3                                                 BLOCKED
 ~~~
-
-Completed slice-level evidence is archived rather than loaded by default:
-
-- [`archive/checkpoints/fn-bundle/`](archive/checkpoints/fn-bundle/README.md)
-- [`archive/checkpoints/sde/`](archive/checkpoints/sde/README.md)
-
-Long-term route authority entering SDE-3 remains:
-
-[`SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`](SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md)
 
 ## 2. Current branch / PR
 
-Branch:
+Branch: `sde-2d5-calibration-policy-evidence`
 
-`sde-2d5-calibration-policy-evidence`
-
-PR:
-
-**#150 — SDE-2D5: calibrate strategic policy evidence**
+PR: **#150 — SDE-2D5: calibrate strategic policy evidence**
 
 PR #150 remains **draft**. Do not merge unless the user explicitly says **“授权合并”**.
 
-Latest accepted B3 functional head:
-
-`74d8bb4cc07c5425bcb61fa821bc2287620f379f`
-
-B3 documentation/cleanup followed on the same branch.
-
-Documentation/archive consolidation baseline:
-
-`77fe159d06f3e4c57144f8621cf6d50e46742b21`
-
-This consolidation moved completed checkpoint evidence out of active `docs/` and rewrote the active README/roadmap/handoff; it did not change runtime behavior.
-
 Always query live refs before executable edits.
 
-## 3. SDE-2D5 status
-
-~~~text
-D5A–D5E                         COMPLETE
-D5F-A                           COMPLETE
-D5F-B manifest infrastructure  COMPLETE
-D5F-B3 policy-model correction COMPLETE
-D5F-B4 expert-observed policy calibration           CURRENT
-D5F-C gate/band derivation     BLOCKED
-sealed holdout                 CLOSED
-SDE-3                           BLOCKED
-~~~
-
-Current policy-model authority:
-
-[`SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`](SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md)
-
-Current external-human evidence catalog:
-
-[`SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv`](SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv)
-
-Current first-night policy authority:
-
-[`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
-
-The earlier representative healthy-information corpus design is superseded as an active calibration route. Its seven deliberately clean scenarios must not be promoted into review/gate evidence.
-
-## 4. D5F-B3 accepted model
-
-### 4.1 Lifecycle rule
-
-> Optimize only variables owned and still controllable at the current lifecycle stage.
-
-Every review record now states:
-
-- lifecycle stage;
-- decision owner;
-- controllable variables;
-- diagnostic-only variables;
-- persistence boundary.
-
-### 4.2 Drunk review
-
-One same-setup review surface carries:
-
-- truthful candidate;
-- mild false candidate;
-- stronger false candidate when a strictly stronger legal false exists;
-- HealthyCore;
-- FullBundle;
-- DrunkMarginal;
-- normalized strategic diagnostics;
-- `counterfactualHealthyTruthDanger`.
-
-Semantic truth is descriptive only.
-
-Drunk shown identity remains persistent setup input. SDE must not turn a healthy player into the Drunk after setup commit.
-
-### 4.3 Healthy information ownership
-
-Current ownership correction:
-
-- Chef / Empath are `RULE_DETERMINED` only when the legal healthy value is unique after Spy/Recluse registration is considered;
-- if legal registration creates multiple healthy values, that interaction-scoped registration branch is Storyteller-controlled and belongs in whole-bundle policy;
-- Washerwoman / Librarian / Investigator may have legal Storyteller output choices;
-- Fortune Teller target pair is player-controlled;
-- Red Herring is setup-controlled before persistence;
-- Poisoner target belongs to the Evil player.
-
-Do not add automatic reroll merely because one healthy clue is strong.
-
-### 4.4 Demon bluff review
-
-Review evidence exposes separately:
-
-- per-role support;
-- individual-support floor;
-- shared / union support;
-- pairwise strategic coverage;
-- distinct strategic patterns;
-- categorical beginner execution burden;
-- categorical claim burden / cadence;
-- narrative route class / diversity;
-- external-human observed triplet.
-
-Shared/union is a coherence/fragility diagnostic, not a monotone quality objective.
-
-Do not add numeric coverage-complementarity reward before human evidence supports it.
-
-### 4.5 Bundle confirmation-chain review
-
-Review evidence exposes:
-
-- full-bundle normalized diagnostics;
-- each leave-one-out diagnostic;
-- worst evaluated good-recipient pressure;
-- whether removal restores Demon cover;
-- whether removal restores strategic topology;
-- restoring-clue count;
-- explicit multi-channel-collapse signal.
-
-No opaque global confirmation score is authorized.
-
-The beginner target is an information ecology band:
-
-~~~text
-too much joint healthy confirmation -> Evil collapses too early
-middle                           -> Good can reason; Evil can survive
-too little reliable information -> Good lacks meaningful traction
-~~~
-
-## 5. Human-review manifest
-
-Canonical manifest:
-
-`app/src/test/resources/review/sde-2d5f-human-label-manifest.tsv`
-
-Version:
-
-`d5f-b-calibration-v3`
-
-Scope correction:
-
-- the old v2 role-information and confirmation-chain records all came from one deliberately extreme 7-player D5E diagnostic fixture;
-- that fixture is still useful for proving metric behavior and regression properties;
-- it is **not representative enough to calibrate BEGINNER policy gates**;
-- those records are now `DIAGNOSTIC_ONLY` and do not require human labels;
-- historical v2 labels are preserved in `sde-2d5f-human-label-manifest-v2-obsolete-extreme-fixture.tsv`;
-- canonical v3 retains only the three Demon-bluff judgments and the independent 6-player Drunk judgment.
-
-The gate is intentionally still blocked even though all four v3 manifest entries are settled. Validation reports missing representative coverage for:
-
-`HEALTHY_BUNDLE_INFORMATION`
-
-This prevents accidental gate derivation before normal-template / external-human calibration evidence replaces the extreme fixture.
-
-See:
-
-[`SDE_2D5F_EXTREME_FIXTURE_CALIBRATION_SCOPE_CORRECTION_2026-09-20.md`](SDE_2D5F_EXTREME_FIXTURE_CALIBRATION_SCOPE_CORRECTION_2026-09-20.md)
-
-## 6. B3 validation
-
-Focused deterministic B3 calibration:
-
-~~~text
-run 35494283217  SUCCESS
-~~~
-
-It verified:
-
-- generated v2 manifest equals persisted v2;
-- 11 reviewable records;
-- grouped Drunk contrast;
-- multi-axis bluff records;
-- confirmation-chain records;
-- real role-information ownership split.
-
-R2 on B3 final documentation/cleanup head before this archive pass:
-
-~~~text
-run 35494608592  SUCCESS
-~~~
-
-Ordinary CI runs around the final B3 heads were superseded/cancelled by subsequent same-branch pushes; the focused B3 T3 is the acceptance evidence for the corrected calibration surface. Query the live branch before the next executable change.
-
-## 7. Compatibility code intentionally retained
-
-Do not remove yet:
-
-- impaired-information approximate 90/10 false-family compatibility bridge;
-- legacy `MalfunctionPolicy`.
-
-Tests that treated the approximate 90% false ratio as durable target policy were removed.
-
-Generic shown-identity setup ownership remains:
-
-~~~text
-SetupShownIdentityPolicyResolver.resolveGenerated(...)
-    -> setup-stage choice
-    -> SetupShownIdentityCommitter
-    -> PlayerState.shownRole
-~~~
-
-Do not restore old `SetupEvaluator` / recommendation-owned Drunk shown-role scoring.
-
-## 8. NEXT — D5F-B4 expert-observed first-night policy corpus
-
-Do **not** attach further diagnostics to the seven clean 7–9 player scenarios as the next calibration step.
-
-The previous materialization checkpoint `cb1ffc454f87a7be8b166d8013746dee7f50bfda` remains valid evidence that the production candidate generators can enumerate those cases, but the resulting corpus is **superseded for active policy calibration** because it deliberately:
-
-- excludes Drunk;
-- freezes Chef/Empath registration-dependent branches;
-- isolates one pair-information role at a time;
-- therefore removes several of the Storyteller interactions that the target policy must actually coordinate.
-
-Its test-only builder/design should be audited for deletion once any unique legality/renderer coverage is confirmed to be duplicated by durable tests. Do not preserve it merely as a calibration stratum.
-
-### Evidence strategy
-
-D5F-B4 is **expert-observation-first**.
-
-Build a source catalog with four evidence classes:
+## 3. Current authorities
+
+- First-night policy: [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
+- External evidence seed: [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv)
+- Long-term pre-SDE-3 route: [`SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`](SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md)
+- Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
+
+## 4. Frozen architecture / policy decisions
+
+- Optimize only variables still controllable at the current lifecycle stage.
+- Rules/canonical producers own legality; epistemic/topology layers own consequences; SDE owns policy/selection.
+- Drunk shown identity is setup-persistent; committed information is immutable.
+- Demon bluffs and Red Herring are persistent once revealed/committed.
+- Fortune Teller target pair and Poisoner target are player-controlled.
+- Spy/Recluse registration is per interaction.
+- BEGINNER thematic prior: Spy normally registers as Good/Townsfolk/Outsider; Recluse normally registers as Evil/Minion/Demon.
+- Actual registration is a fallback when the thematic default materially improves whole-bundle health.
+- Avoid Librarian -> Recluse when a healthy alternative exists; strongly avoid Investigator -> Spy when a healthy alternative exists.
+- Chef/Empath are rule-determined only when every legal registration branch yields the same healthy value.
+- Drunk/poisoned information may accidentally be true; multi-night misinformation should remain narratively coherent.
+- Strategic Evil topology is primary structural evidence, but role-information utility, confirmation chains, role-function exposure, bluff usability and information floor remain separate.
+- No opaque global scalar.
+
+## 5. Calibration correction
+
+The previous D5F route over-relied on synthetic/isolated fixtures and one-person human labels.
+
+Those paths are no longer active.
+
+- The pathological 7-player fixture is historical diagnostic evidence only.
+- The later seven “clean” 7–9 scenarios deliberately excluded Drunk and froze registration-dependent context; do not add diagnostics or labels to them.
+- Their test-only implementation should be deleted if canonical generator/legality tests already protect the durable contracts.
+- Old D5 correction/design documents have been removed from active docs; Git history preserves traceability.
+- Existing human-label manifests are historical/compatibility artifacts, not current policy truth.
+
+## 6. D5F-B4 — expert-observed policy calibration
+
+Evidence hierarchy:
 
 ~~~text
 GOLD
-    expert / trusted Storyteller real games
-    reconstructable setup + Night 1 choices
+    verified experienced/trusted Storyteller
+    reconstructable real game
     explicit rationale preferred
 
 SILVER
-    high-fidelity structured real-game logs
-    e.g. ClockTracker with full grimoire / Night 1 details
+    high-fidelity structured real-game record
+    Storyteller expertise not independently verified
 
 QUALITATIVE
-    Storyteller tutorials, community postmortems,
-    repeated expert/community rules of thumb
+    tutorials / postmortems / repeated experienced-community guidance
 
 DIAGNOSTIC_ONLY
-    synthetic/extreme/counterfactual fixtures
+    synthetic / extreme / counterfactual fixtures
 ~~~
 
-The existing external-human case catalog is a useful seed but is not yet an expert-quality corpus.
+Current external catalog contains SILVER / QUALITATIVE seed evidence only. It contains no verified GOLD cases yet.
 
-### Required extraction contract
+Interpretation rules:
 
-For each reconstructable real game, capture:
+- chosen A does not imply every unchosen B/C/D was bad;
+- explicit rationale/rejection is stronger than silent choice;
+- repeated comparable choices and cross-source consistency strengthen evidence;
+- final game winner is not a Storyteller-quality label;
+- human review is secondary: reconstruction checks, conflict adjudication, and BEGINNER-specific adaptation.
 
-- Storyteller/source provenance and confidence tier;
-- player count and player-experience context when known;
-- committed roles, seating and Drunk shown identity;
-- Demon bluffs and red herring;
-- Spy/Recluse registration choices that affect Night 1 information;
-- Poisoner target when relevant and player-controlled;
-- all observed first-night information outputs;
-- the legal alternative set available at each Storyteller-controlled decision;
-- explicit Storyteller rationale when available;
-- cross-night continuation when it explains Night 1 intent.
+## 7. Immediate execution order
 
-Then run the existing legality/topology/whole-bundle diagnostics over the **observed expert choice and its legal counterfactual alternatives**.
+### D5F-B4A — retire obsolete clean calibration artifacts
 
-Do not treat every unchosen alternative as bad. Preference strength is high only when supported by explicit rationale, explicit rejection, repeated comparable choices, or cross-source consistency.
+Audit and delete if redundant:
 
-Do not use game winner as a quality label.
+- `Sde2D5FRepresentativeHealthyInformationCorpus.kt`;
+- `Sde2D5FRepresentativeHealthyInformationCorpusTest.kt`;
+- related report/task wiring and source-controlled artifacts.
 
-### Human review is secondary
+Do not delete canonical production legality/topology infrastructure.
 
-The project owner's labels remain useful as:
+### D5F-B4B — discover and verify GOLD sources
 
-- reconstruction sanity checks;
-- interpretation of ambiguous cases;
-- conflict resolution between external evidence;
-- BEGINNER-product adaptation.
+Search high-quality Trouble Brewing real games, prioritizing official/TPI-affiliated material, clearly experienced Storytellers, complete recordings/Grimoire state, and explicit rationale.
 
-They are not sufficient by themselves to derive D5F-C gates.
+Record why each source qualifies or does not qualify as GOLD.
 
-### Immediate next work
+### D5F-B4C — reconstruct expert Night 1 decisions
 
-1. expand the external catalog with expert-quality Trouble Brewing sources, prioritizing official/TPI-affiliated or clearly experienced Storytellers and high-fidelity recordings;
-2. identify a small GOLD subset whose Night 1 state can be reconstructed exactly;
-3. build an extractor/adapter that maps those observed games into the existing legal candidate and whole-bundle diagnostic seams;
-4. compare observed choices against their legal counterfactuals without assigning automatic good/bad labels;
-5. infer only repeated, interpretable policy constraints such as thematic registration prior, role-function exposure avoidance, confirmation-chain bounds and impaired-information coherence;
-6. use SILVER ClockTracker games to test whether those patterns generalize;
-7. only then define the minimum human adjudication set and resume D5F-C.
+Capture setup/seats, Drunk shown identity, Demon bluffs, Red Herring, relevant Spy/Recluse registrations, Poisoner context, first-night outputs, lifecycle stage, rationale, and player experience when known.
 
-## 9. Blocked until representative calibration coverage exists
+### D5F-B4D — recover legal counterfactuals
 
-Do not:
+Use existing production legality owners to reconstruct the exact alternatives available at each decision point.
 
-- enter D5F-C;
-- derive or freeze numeric thresholds/bands;
-- inspect sealed holdout diagnostics;
-- tune against holdout;
-- cut production recommendation policy;
-- begin SDE-3;
-- reopen obsolete v1 labeling.
+### D5F-B4E — compare observed choices to alternatives
 
-## 10. SDE-3 resume gate
+Run existing whole-bundle/topology diagnostics over observed expert choices and their legal counterfactuals. Extract repeated interpretable preferences, not a black-box score.
 
-SDE-3 remains blocked until:
+### D5F-B4F — generalize with SILVER evidence
 
-1. expert-observed D5F-B calibration covers the material SDE-owned first-night policy variables;
-2. D5F-C derives interpretable candidate gates/bands from expert-observed constraints plus bounded human adjudication;
-3. gates are frozen before holdout inspection;
-4. sealed holdout is evaluated once against frozen gates;
-5. D5F final acceptance and roadmap/handoff explicitly advance the program.
+Use ClockTracker/high-fidelity logs after GOLD patterns exist.
 
-## 11. Testing cadence
+### D5F-B4G — bounded human adjudication
+
+Use human review only for ambiguous/conflicting evidence and BEGINNER-product adaptation.
+
+## 8. D5F-C remains blocked
+
+Do not derive/freeze gates from old human labels, inspect sealed holdout, tune on holdout, cut production policy, begin SDE-3, or merge PR #150.
+
+D5F-C may begin only after expert-observed evidence covers the material first-night policy variables and legal-counterfactual comparisons support repeated interpretable constraints.
+
+## 9. Compatibility code intentionally retained
+
+Do not remove merely as part of D5F-B4 evidence work:
+
+- impaired-information approximate 90/10 false-family bridge;
+- legacy `MalfunctionPolicy`;
+- legacy registration/scoring paths still used by production.
+
+Their retirement belongs to later production cutover/cleanup.
+
+## 10. Testing cadence
 
 Follow root `AGENTS.md` and [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md).
 
-For the next step, topology evaluation belongs in the explicit D5 calibration workload rather than FAST regression if it becomes expensive. Keep the semantic materializer covered by focused/FAST tests. Do not manufacture runtime tests for the later human label discussion itself.
+Documentation-only cleanup needs exact diff/reference audit, not manufactured runtime tests. Deleting obsolete test-only calibration artifacts requires proving no unique durable contract is lost and then running the smallest affected test tier.

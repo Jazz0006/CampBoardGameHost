@@ -1,4 +1,4 @@
-# NEXT DEVELOPMENT HANDOFF — SDE-2D5F expert-observed policy calibration
+# NEXT DEVELOPMENT HANDOFF — SDE-2D5F-B4 expert-observed first-night policy calibration
 
 > Updated: 2026-09-21 Australia/Sydney  
 > This is the **only active handoff**.
@@ -8,144 +8,143 @@
 1. root `AGENTS.md`
 2. `docs/TESTING_STRATEGY.md`
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-4. `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`
-5. `docs/SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv`
-6. `docs/SDE_2D5F_EXTREME_FIXTURE_CALIBRATION_SCOPE_CORRECTION_2026-09-20.md`
-7. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
-8. this handoff
+4. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
+5. `docs/SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`
+6. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+7. this handoff
 
-The older `SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md` is historical/superseded for active calibration.
+Do not reload deleted 2026-09-20 D5 correction/design files from Git history unless a concrete historical question requires them.
 
 ## 2. Live branch
 
 Branch: `sde-2d5-calibration-policy-evidence`
 
-Latest representative implementation checkpoint before this documentation sync:
+PR #150 remains **draft**. Do not merge unless the user explicitly says **“授权合并”**.
 
-`cb1ffc454f87a7be8b166d8013746dee7f50bfda`
+Always query live branch/PR/checks before editing.
 
-PR #150 remains **draft**.
+## 3. Why the route changed
 
-Validation on that implementation checkpoint:
+Two calibration approaches were rejected as policy authorities:
 
-- CI run `35514598766` — **SUCCESS**
-- R2 main-thread boundary run `35514598790` — **SUCCESS**
-- FN-BUNDLE-3 calibration run `35514598760` — still independent/heavy; it is not acceptance-blocking for the representative materialization slice.
+1. the earlier extreme 7-player fixture was already nearly solved by fixed information;
+2. the replacement seven clean scenarios deliberately excluded Drunk and froze registration-dependent context.
 
-Documentation commits follow that implementation checkpoint, so always query the live branch before executable edits rather than treating the checkpoint SHA as current HEAD.
+A second correction is methodological: one-person labels are not strong enough to define expert Storyteller policy.
 
-**Do not merge unless the user explicitly says “授权合并”.**
+The active route is **expert-observation-first**.
 
-Always query the live branch before editing; do not assume the recorded HEAD is still current.
+## 4. Current policy summary
 
-## 3. Current correction
+- legal candidate enumeration remains complete and rules-owned;
+- Spy/Recluse registration remains interaction-scoped;
+- BEGINNER thematic prior: Spy normally hides as Good; Recluse normally registers as Evil;
+- whole-bundle health may materially override that prior;
+- avoid Librarian exposing Recluse and strongly avoid Investigator exposing Spy when healthy alternatives exist;
+- Chef/Empath are fixed only when registration cannot change their legal healthy value;
+- Drunk information should form a believable multi-night narrative, not merely be false;
+- whole-bundle interaction, role-function exposure, bluff usability and confirmation chains matter in addition to strategic topology;
+- no opaque global score.
 
-The previous v2 role-information / confirmation-chain review set was derived from one fixed 7-player D5E diagnostic setup:
-
-`Washerwoman / Chef / Empath / Fortune Teller / Investigator / Scarlet Woman / Imp`
-
-Human review established that this setup is already pathological for the BEGINNER target. Chef=1 plus Empath=0 nearly collapses the game before Storyteller-controlled Washerwoman/Investigator choices are evaluated. Therefore labels from this setup have low value for calibrating the production choice policy.
-
-Decision:
-
-- retain the fixture and its metrics as diagnostic/regression evidence;
-- mark its role-information and confirmation-chain review records `DIAGNOSTIC_ONLY`;
-- exclude them from required human-label membership and gate derivation;
-- preserve v2 labels only as historical/superseded evidence;
-- do not continue labeling the remaining v2 Chef/Empath records.
-
-## 4. Canonical manifest
-
-Canonical:
-
-`app/src/test/resources/review/sde-2d5f-human-label-manifest.tsv`
-
-Version:
-
-`d5f-b-calibration-v3`
-
-It contains four retained judgments:
+## 5. Evidence hierarchy
 
 ~~~text
-d5f:bluff:13af34bc8befea2f:r1          BAD_TOO_WEAK
-d5f:bluff:334926f04bd2c687:r1          ACCEPTABLE
-d5f:bluff:fe702b4aac3ca49a:r1          ACCEPTABLE
-d5f:drunk:baron-6-drunk-empath-seat-2  BAD_TOO_STRONG
+GOLD
+    verified experienced/trusted Storyteller real games
+    reconstructable setup + Night 1 decision state
+    explicit rationale preferred
+
+SILVER
+    high-fidelity structured real-game logs
+    expertise not independently established
+
+QUALITATIVE
+    tutorials / postmortems / repeated experienced-community discussion
+
+DIAGNOSTIC_ONLY
+    synthetic / extreme / counterfactual fixtures
 ~~~
 
-Historical v2:
+The current external catalog contains **no verified GOLD case**.
 
-`app/src/test/resources/review/sde-2d5f-human-label-manifest-v2-obsolete-extreme-fixture.tsv`
+## 6. Interpretation rules
 
-Do not use v2 labels for gate derivation.
+- reconstruct the legal alternatives that existed at the exact lifecycle stage;
+- chosen A does not imply all unchosen alternatives are bad;
+- explicit rationale/rejection is strong evidence;
+- repeated comparable choices strengthen a preference;
+- cross-source consistency strengthens a preference;
+- one silent observed choice is weak evidence;
+- final winner is not a quality label.
 
-## 5. Gate state
+## 7. NEXT — execute in this order
 
-D5F-C remains **BLOCKED**.
+### Step 1 — audit/delete obsolete clean calibration code
 
-Manifest completeness alone is no longer sufficient. Validation also requires representative calibration coverage for SDE-owned policy variables.
+Inspect:
 
-Current deliberate gap:
+- `app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FRepresentativeHealthyInformationCorpus.kt`
+- `app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FRepresentativeHealthyInformationCorpusTest.kt`
+- any task/report wiring that exists only for that corpus.
 
-`HEALTHY_BUNDLE_INFORMATION`
+Delete them if they protect no unique durable legality/generator contract.
 
-Therefore v3 can have zero `UNREVIEWED` entries while `isCompleteForGateDerivation == false`.
+Do not delete canonical `NaturalPairInformationCandidateGenerator`, `FirstNightNumericInformationSemantics`, `TroubleBrewingRegistrationDomain`, or topology/exact evaluators.
 
-## 6. Evidence direction
+### Step 2 — GOLD source discovery
 
-The earlier ClockTracker investigation was directionally correct because it moved calibration toward real Storyteller choices and realistic information ecologies.
+Use current web research to find expert/trusted Trouble Brewing Storyteller games. Prioritize official/TPI-affiliated material and clearly experienced Storytellers. Record evidence for expertise; do not infer it from production quality alone.
 
-The correction is that **real does not automatically mean expert**.
+### Step 3 — choose reconstructable GOLD cases
 
-Evidence priority is now:
+Prefer cases where Night 1 can recover roles/seats, Drunk shown role, Demon bluffs, Red Herring, Poisoner target, Spy/Recluse registrations, first-night information, and Storyteller rationale.
 
-1. GOLD — reconstructable real games from trusted/experienced Storytellers, with explicit rationale when available;
-2. SILVER — high-fidelity ClockTracker/equivalent logs whose Storyteller quality is not independently established;
-3. QUALITATIVE — experienced Storyteller tutorials, community postmortems and repeated rules of thumb;
-4. DIAGNOSTIC_ONLY — synthetic/extreme/counterfactual fixtures.
+A smaller exact corpus is better than a larger ambiguous one.
 
-Use observed expert choices as anchors and compare them to the legal alternatives that existed at that moment. Do not label every unchosen alternative as bad, and do not use the eventual game winner as a Storyteller-quality label.
+### Step 4 — model observed choice + legal counterfactuals
 
-## 7. Frozen lessons that remain valid
+~~~text
+committed state at decision time
+    ↓
+production legality owner
+    ↓
+complete legal alternative set
+    ↓
+observed expert choice marked separately
+    ↓
+whole-bundle / topology diagnostics
+~~~
 
-- Optimize only variables still owned by the SDE at the current lifecycle stage.
-- Chef / Empath are fixed only when exactly one healthy value remains after legal Spy/Recluse registration branches are considered. Multiple legal values mean the interaction-scoped registration ruling is Storyteller-controlled and belongs in the global bundle.
-- Washerwoman / Librarian / Investigator outputs can be Storyteller-controlled where legal.
-- A topology-neutral clue can still be harmful through cross-confirmation.
-- Player count matters for impaired information.
-- Multi-night impaired information should follow a coherent false-world trajectory.
-- Demon bluff quality must consider usability and narrative route diversity, not only coverage counts.
-- No opaque global score is authorized.
+Do not encode `unchosen = bad`.
 
-## 8. Superseded clean materialization slice
+### Step 5 — extract repeated policy constraints
 
-The seven 7–9 player test-only scenarios implemented at `cb1ffc454f87a7be8b166d8013746dee7f50bfda` are no longer an active calibration stratum.
+Candidate dimensions include thematic registration prior, role-function exposure avoidance, confirmation-chain avoidance, healthy-information floor, impaired-information narrative consistency, bluff narrative support, and Red Herring placement.
 
-They deliberately excluded Drunk and froze registration-dependent numeric context. That made them useful for proving a narrow materialization seam, but too artificial for the real first-night policy problem.
+Only promote a rule when evidence is repeated or explicitly reasoned.
 
-Do not spend further work attaching policy diagnostics or human labels to those scenarios.
+### Step 6 — SILVER generalization
 
-Audit:
+After GOLD patterns exist, test them against structured ClockTracker cases.
 
-- `Sde2D5FRepresentativeHealthyInformationCorpus.kt`;
-- `Sde2D5FRepresentativeHealthyInformationCorpusTest.kt`;
-- `SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md`.
+### Step 7 — bounded human adjudication
 
-If their unique durable behavior is already protected by canonical legality/generator tests, delete the test-only corpus implementation and archive/remove the active design document reference. Do not retain it merely because it was already implemented.
+Ask the project owner only about ambiguous reconstruction, conflicting expert evidence, or BEGINNER-specific adaptation.
 
-## 9. NEXT action — expert-observed corpus
+Do not return to large synthetic labeling sessions.
 
-Build a small high-quality real-game corpus before any new policy labels.
+## 8. Explicit non-goals
 
-1. discover expert/trusted Trouble Brewing Storyteller sources, prioritizing official/TPI-affiliated productions, established expert channels, and high-fidelity public logs;
-2. select cases where committed setup, seating and Night 1 Storyteller decisions can be reconstructed;
-3. record provenance/confidence, player experience, Drunk shown identity, Demon bluffs, red herring, relevant Spy/Recluse registrations, Poisoner context and first-night outputs;
-4. reconstruct the exact legal alternatives at each Storyteller-controlled decision with existing production legality owners;
-5. run whole-bundle/topology diagnostics for the observed choice and legal counterfactuals;
-6. treat explicit rationale / explicit rejection / repeated comparable expert choices as strong preference evidence;
-7. treat one observed choice without rationale as weaker evidence, not an automatic label for all alternatives;
-8. use broader ClockTracker records as a generalization layer after GOLD patterns emerge;
-9. use the project owner's review only for reconstruction checks, conflicting evidence and BEGINNER-specific adaptation;
-10. keep D5F-C blocked until policy constraints are grounded in this expert-observed evidence.
+Do not derive D5F-C thresholds, open sealed holdout, cut production selection over, rewrite core legality/topology architecture, remove compatibility policy still used in production, begin SDE-3, or merge PR #150.
 
-Do not open sealed holdout evidence, freeze thresholds, cut production policy, begin SDE-3, or merge PR #150 without explicit authorization.
+## 9. Success condition for the next conversation
+
+A successful next conversation should finish with:
+
+1. obsolete clean-corpus code/tests either deleted or explicitly justified by unique durable coverage;
+2. a verified source-quality rubric applied consistently;
+3. at least a small set of candidate GOLD Trouble Brewing games identified;
+4. exact reconstruction feasibility assessed for those cases;
+5. the next implementation slice defined around observed expert choice + legal counterfactuals.
+
+Do not manufacture GOLD evidence if public material is insufficient; report the gap and use the strongest available evidence tier.
