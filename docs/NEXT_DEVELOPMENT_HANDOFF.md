@@ -45,6 +45,12 @@ Accepted B3 functional head:
 
 `74d8bb4cc07c5425bcb61fa821bc2287620f379f`
 
+Documentation/archive consolidation baseline:
+
+`77fe159d06f3e4c57144f8621cf6d50e46742b21`
+
+Always query live branch because documentation-only commits may follow this baseline.
+
 Focused B3 calibration:
 
 `35494283217 — SUCCESS`

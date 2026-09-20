@@ -51,6 +51,17 @@ Historical indexes:
 
 Current SDE status must be read from `../CURRENT_DEVELOPMENT_ROADMAP.md`, `../NEXT_DEVELOPMENT_HANDOFF.md`, and the current specialized authority named there.
 
+### 2026-09-20 completed host/UI audit consolidation
+
+Additional completed campaign evidence was moved out of active `docs/`:
+
+- Experienced Night Flow S2–S4 -> [`checkpoints/experienced-night-flow/`](checkpoints/experienced-night-flow/README.md)
+- UI-NAV-1 audit/closeout -> `ui/`
+- superseded R6 impaired-information design -> `checkpoints/sde/`
+- source-string test retirement evidence -> `checkpoints/`
+
+These moves are documentation lifecycle cleanup only; they do not reactivate or change the archived decisions.
+
 ## 2. Handoffs
 
 A handoff moves to `handoffs/` when its execution contract is completed, cancelled, or superseded by a new active handoff.

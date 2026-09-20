@@ -48,6 +48,12 @@ Latest accepted B3 functional head:
 
 B3 documentation/cleanup followed on the same branch.
 
+Documentation/archive consolidation baseline:
+
+`77fe159d06f3e4c57144f8621cf6d50e46742b21`
+
+This consolidation moved completed checkpoint evidence out of active `docs/` and rewrote the active README/roadmap/handoff; it did not change runtime behavior.
+
 Always query live refs before executable edits.
 
 ## 3. SDE-2D5 status
