@@ -85,7 +85,7 @@ internal sealed interface Sde2D5FReviewDetails {
     ) : Sde2D5FReviewDetails
 
     data class DrunkContrast(
-        val evidence: Sde2D5DrunkCalibrationEvidence,
+        val contrast: Sde2D5DrunkCalibrationContrast,
     ) : Sde2D5FReviewDetails
 
     data class DemonBluffSupport(
@@ -145,7 +145,7 @@ internal object Sde2D5FCalibrationReviewBuilder {
     fun build(
         sealedHoldoutScenarioCount: Int,
         baselineReferences: List<Sde2D5CalibrationEvidencePoint>,
-        drunkEvidence: List<Sde2D5DrunkCalibrationEvidence>,
+        drunkContrasts: List<Sde2D5DrunkCalibrationContrast>,
         bluffSelections: List<Sde2D5DemonBluffCalibrationSelection>,
         roleInformationEvidence: List<Sde2D5RoleInformationCalibrationEvidence>,
     ): Sde2D5FCalibrationReviewMaterial {
@@ -174,15 +174,16 @@ internal object Sde2D5FCalibrationReviewBuilder {
                     ),
                 )
             }
-            drunkEvidence.forEach { evidence ->
+            drunkContrasts.forEach { contrast ->
+                val representative = contrast.truthful
                 add(
                     Sde2D5FReviewRecord(
-                        reviewId = "d5f:drunk:${evidence.candidateId}",
+                        reviewId = "d5f:drunk:${contrast.contrastId}",
                         evidenceKind = Sde2D5FReviewEvidenceKind.DRUNK_CONTRAST,
                         reviewability = Sde2D5FReviewability.REVIEWABLE,
-                        regime = evidence.fullBundle.regime,
-                        profileKind = evidence.fullBundle.profileKind,
-                        contrastId = evidence.candidateId,
+                        regime = representative.fullBundle.regime,
+                        profileKind = representative.fullBundle.profileKind,
+                        contrastId = contrast.contrastId,
                         controlSurface = Sde2D5FControlSurface(
                             lifecycleStage = Sde2D5FLifecycleStage.FIRST_NIGHT_AFTER_SETUP_PERSISTENCE,
                             decisionOwner = Sde2D5FDecisionOwner.STORYTELLER_SDE,
@@ -197,7 +198,7 @@ internal object Sde2D5FCalibrationReviewBuilder {
                             persistenceBoundary =
                                 Sde2D5FPersistenceBoundary.DRUNK_SHOWN_IDENTITY_PERSISTENT_CLUE_PLANNED_UNTIL_SHOWN,
                         ),
-                        details = Sde2D5FReviewDetails.DrunkContrast(evidence),
+                        details = Sde2D5FReviewDetails.DrunkContrast(contrast),
                     ),
                 )
             }
@@ -309,16 +310,25 @@ internal object Sde2D5FCalibrationReviewRenderer {
             }
 
             is Sde2D5FReviewDetails.DrunkContrast -> {
-                val evidence = details.evidence
+                val contrast = details.contrast
                 appendLine("detail=drunk-contrast")
-                appendLine("candidateId=${evidence.candidateId}")
-                appendLine("semanticTruth=${evidence.semanticTruth}")
-                appendLine("rawWorldsRemoved=${evidence.rawWorldsRemoved}")
-                appendLine("healthyCore:")
-                appendPoint(evidence.healthyCore, prefix = "  ")
-                appendLine("fullBundle:")
-                appendPoint(evidence.fullBundle, prefix = "  ")
-                appendNormalized("drunkMarginal", evidence.marginalNormalized)
+                appendLine("counterfactualHealthyTruthDanger:")
+                appendNormalized(
+                    "counterfactualHealthyTruthDanger",
+                    contrast.counterfactualHealthyTruthDanger,
+                )
+                contrast.candidates.forEach { candidate ->
+                    val evidence = candidate.evidence
+                    val prefix = "candidate[${candidate.kind}]"
+                    appendLine("$prefix.id=${evidence.candidateId}")
+                    appendLine("$prefix.semanticTruth=${evidence.semanticTruth}")
+                    appendLine("$prefix.rawWorldsRemoved=${evidence.rawWorldsRemoved}")
+                    appendLine("$prefix.healthyCore:")
+                    appendPoint(evidence.healthyCore, prefix = "  $prefix.")
+                    appendLine("$prefix.fullBundle:")
+                    appendPoint(evidence.fullBundle, prefix = "  $prefix.")
+                    appendNormalized("$prefix.drunkMarginal", evidence.marginalNormalized)
+                }
             }
 
             is Sde2D5FReviewDetails.DemonBluffSupport -> {

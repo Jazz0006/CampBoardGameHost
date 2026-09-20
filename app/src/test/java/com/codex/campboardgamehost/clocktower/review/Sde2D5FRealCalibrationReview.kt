@@ -3,7 +3,7 @@ package com.codex.campboardgamehost.clocktower.review
 internal object Sde2D5FRealCalibrationReviewBuilder {
     fun build(
         baseline: Sde2D5CrossRegimeCalibrationEvidence,
-        drunk: Sde2D5DrunkCalibrationEvidence,
+        drunk: Sde2D5DrunkCalibrationContrast,
         bluff: Sde2D5DemonBluffRealCalibration,
         roleInformation: Sde2D5RoleInformationRealCalibration,
         sealedHoldoutScenarioCount: Int =
@@ -26,7 +26,7 @@ internal object Sde2D5FRealCalibrationReviewBuilder {
         return Sde2D5FCalibrationReviewBuilder.build(
             sealedHoldoutScenarioCount = sealedHoldoutScenarioCount,
             baselineReferences = baseline.points,
-            drunkEvidence = listOf(drunk),
+            drunkContrasts = listOf(drunk),
             bluffSelections = bluff.selected,
             roleInformationEvidence = selectedRoleInformation,
         )

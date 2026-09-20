@@ -8,7 +8,6 @@ import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
@@ -27,7 +26,7 @@ internal object Sde2D5DrunkRealCalibrationBuilder {
     private val validatedRuleset = catalog.ruleset(ClocktowerScript.TroubleBrewing)
     private val roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions()
 
-    fun buildFalseNumericEvidence(): Sde2D5DrunkCalibrationEvidence {
+    fun buildNumericContrast(): Sde2D5DrunkCalibrationContrast {
         val snapshot = snapshot()
         val context = ExactHistoricalHypotheticalContext(
             initialSnapshot = snapshot,
@@ -53,12 +52,18 @@ internal object Sde2D5DrunkRealCalibrationBuilder {
         require(evaluation is FirstNightDrunkNumericWholeBundleEvaluation.Ready) {
             "D5F Drunk review evidence requires real numeric whole-bundle evaluation."
         }
-        val falseCandidate = evaluation.candidates.first { it.semanticTruth == SemanticTruth.FALSE }
-        return Sde2D5DrunkCalibrationEvidenceProjector.project(
-            playerCount = 6,
-            profileKind = Sde2D5SetupProfileKind.BARON,
-            healthyCore = evaluation.healthyCoreByRecipient.single(),
-            candidate = falseCandidate,
+        val healthyCore = evaluation.healthyCoreByRecipient.single()
+        val evidence = evaluation.candidates.map { candidate ->
+            Sde2D5DrunkCalibrationEvidenceProjector.project(
+                playerCount = 6,
+                profileKind = Sde2D5SetupProfileKind.BARON,
+                healthyCore = healthyCore,
+                candidate = candidate,
+            )
+        }
+        return Sde2D5DrunkCalibrationContrastBuilder.build(
+            contrastId = "baron-6-drunk-empath-seat-2",
+            evidence = evidence,
         )
     }
 

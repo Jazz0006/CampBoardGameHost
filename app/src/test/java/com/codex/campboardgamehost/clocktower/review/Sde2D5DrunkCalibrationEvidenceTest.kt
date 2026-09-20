@@ -108,6 +108,77 @@ class Sde2D5DrunkCalibrationEvidenceTest {
         assertEquals(StrategicRatio.Defined(3, 6), evidence.marginalNormalized.forcedGoodFraction)
     }
 
+    @Test
+    fun `same setup contrast keeps truthful mild and stronger false candidates separate`() {
+        fun evidence(
+            candidateId: String,
+            truth: SemanticTruth,
+            topologyNumerator: Int,
+        ): Sde2D5DrunkCalibrationEvidence {
+            val point = Sde2D5CalibrationEvidencePoint(
+                pointId = "$candidateId:healthy",
+                playerCount = 6,
+                regime = Sde2D5PlayerCountRegime.FIVE_TO_SIX,
+                profileKind = Sde2D5SetupProfileKind.BARON,
+                evidenceKind = Sde2D5EvidenceKind.DRUNK_HEALTHY_CORE,
+                contrastId = candidateId,
+                beforeStrategicWorldCount = 6,
+                afterStrategicWorldCount = 5,
+                normalized = com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnostics(
+                    demonCoverRetention = StrategicRatio.Defined(4, 5),
+                    evilTopologyRetention = StrategicRatio.Defined(5, 6),
+                    evilCoverRetention = StrategicRatio.Defined(5, 6),
+                    forcedGoodFraction = StrategicRatio.Defined(1, 6),
+                ),
+                rawMechanicalBefore = BigInteger.valueOf(100),
+                rawMechanicalAfter = BigInteger.valueOf(80),
+            )
+            return Sde2D5DrunkCalibrationEvidence(
+                candidateId = candidateId,
+                semanticTruth = truth,
+                healthyCore = point,
+                fullBundle = point.copy(
+                    pointId = "$candidateId:full",
+                    evidenceKind = Sde2D5EvidenceKind.DRUNK_FULL_BUNDLE,
+                    afterStrategicWorldCount = topologyNumerator,
+                ),
+                marginalNormalized =
+                    com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnostics(
+                        demonCoverRetention = StrategicRatio.Defined(topologyNumerator, 5),
+                        evilTopologyRetention = StrategicRatio.Defined(topologyNumerator, 5),
+                        evilCoverRetention = StrategicRatio.Defined(topologyNumerator, 5),
+                        forcedGoodFraction = StrategicRatio.Defined(1, 6),
+                    ),
+                rawWorldsRemoved = BigInteger.valueOf((5 - topologyNumerator).toLong()),
+            )
+        }
+
+        val truthful = evidence("value-1", SemanticTruth.TRUE, 4)
+        val mildFalse = evidence("value-0", SemanticTruth.FALSE, 3)
+        val strongerFalse = evidence("value-2", SemanticTruth.FALSE, 2)
+
+        val contrast = Sde2D5DrunkCalibrationContrastBuilder.build(
+            contrastId = "same-setup",
+            evidence = listOf(strongerFalse, truthful, mildFalse),
+        )
+
+        assertEquals("value-1", contrast.truthful.candidateId)
+        assertEquals("value-0", contrast.mildFalse.candidateId)
+        assertEquals("value-2", contrast.strongerFalse?.candidateId)
+        assertEquals(
+            truthful.marginalNormalized,
+            contrast.counterfactualHealthyTruthDanger,
+        )
+        assertEquals(
+            listOf(
+                Sde2D5DrunkContrastCandidateKind.TRUTHFUL,
+                Sde2D5DrunkContrastCandidateKind.MILD_FALSE,
+                Sde2D5DrunkContrastCandidateKind.STRONGER_FALSE,
+            ),
+            contrast.candidates.map { it.kind },
+        )
+    }
+
     private fun diagnostic(
         id: String,
         beforeWorlds: Long,

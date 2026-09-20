@@ -201,7 +201,7 @@ class Sde2D5FHumanLabelManifestTest {
         return Sde2D5FCalibrationReviewBuilder.build(
             sealedHoldoutScenarioCount = 1,
             baselineReferences = listOf(baseline),
-            drunkEvidence = emptyList(),
+            drunkContrasts = emptyList(),
             bluffSelections = emptyList(),
             roleInformationEvidence = listOf(first, second),
         )

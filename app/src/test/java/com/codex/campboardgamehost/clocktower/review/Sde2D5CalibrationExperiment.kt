@@ -21,8 +21,8 @@ class Sde2D5CalibrationExperiment {
         private val baselineEvidence by lazy {
             Sde2D5CrossRegimeCalibrationEvidenceBuilder.buildBaseline()
         }
-        private val drunkEvidence by lazy {
-            Sde2D5DrunkRealCalibrationBuilder.buildFalseNumericEvidence()
+        private val drunkContrast by lazy {
+            Sde2D5DrunkRealCalibrationBuilder.buildNumericContrast()
         }
         private val bluffCalibration by lazy {
             Sde2D5DemonBluffRealCalibrationBuilder.build()
@@ -33,7 +33,7 @@ class Sde2D5CalibrationExperiment {
         private val reviewMaterial by lazy {
             Sde2D5FRealCalibrationReviewBuilder.build(
                 baseline = baselineEvidence,
-                drunk = drunkEvidence,
+                drunk = drunkContrast,
                 bluff = bluffCalibration,
                 roleInformation = roleInformationCalibration,
             )
@@ -81,17 +81,31 @@ class Sde2D5CalibrationExperiment {
     }
 
     @Test
-    fun `real Drunk numeric candidate projects HealthyCore FullBundle and marginal evidence`() {
-        val evidence = drunkEvidence
+    fun `real Drunk numeric contrast keeps truthful and false candidates on one review surface`() {
+        val contrast = drunkContrast
 
-        assertEquals(SemanticTruth.FALSE, evidence.semanticTruth)
-        assertEquals(Sde2D5EvidenceKind.DRUNK_HEALTHY_CORE, evidence.healthyCore.evidenceKind)
-        assertEquals(Sde2D5EvidenceKind.DRUNK_FULL_BUNDLE, evidence.fullBundle.evidenceKind)
-        assertTrue(evidence.fullBundle.rawMechanicalAfter!!.signum() > 0)
-        assertTrue(
-            evidence.fullBundle.afterStrategicWorldCount <=
-                evidence.healthyCore.afterStrategicWorldCount,
+        assertEquals(SemanticTruth.TRUE, contrast.truthful.semanticTruth)
+        assertEquals(SemanticTruth.FALSE, contrast.mildFalse.semanticTruth)
+        assertEquals(
+            contrast.truthful.marginalNormalized,
+            contrast.counterfactualHealthyTruthDanger,
         )
+        contrast.candidates.forEach { candidate ->
+            val evidence = candidate.evidence
+            assertEquals(
+                Sde2D5EvidenceKind.DRUNK_HEALTHY_CORE,
+                evidence.healthyCore.evidenceKind,
+            )
+            assertEquals(
+                Sde2D5EvidenceKind.DRUNK_FULL_BUNDLE,
+                evidence.fullBundle.evidenceKind,
+            )
+            assertTrue(evidence.fullBundle.rawMechanicalAfter!!.signum() > 0)
+            assertTrue(
+                evidence.fullBundle.afterStrategicWorldCount <=
+                    evidence.healthyCore.afterStrategicWorldCount,
+            )
+        }
     }
 
     @Test
@@ -186,7 +200,12 @@ class Sde2D5CalibrationExperiment {
             it.evidenceKind == Sde2D5FReviewEvidenceKind.DRUNK_CONTRAST
         }
         val drunkDetails = drunkRecord.details as Sde2D5FReviewDetails.DrunkContrast
-        assertEquals(SemanticTruth.FALSE, drunkDetails.evidence.semanticTruth)
+        assertEquals(SemanticTruth.TRUE, drunkDetails.contrast.truthful.semanticTruth)
+        assertEquals(SemanticTruth.FALSE, drunkDetails.contrast.mildFalse.semanticTruth)
+        assertEquals(
+            drunkDetails.contrast.truthful.marginalNormalized,
+            drunkDetails.contrast.counterfactualHealthyTruthDanger,
+        )
 
         val bluffReasons = material.records
             .filter { it.evidenceKind == Sde2D5FReviewEvidenceKind.DEMON_BLUFF_SUPPORT }

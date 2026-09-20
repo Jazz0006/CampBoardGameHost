@@ -80,7 +80,18 @@ class Sde2D5FCalibrationReviewExportTest {
         val material = Sde2D5FCalibrationReviewBuilder.build(
             sealedHoldoutScenarioCount = 1,
             baselineReferences = listOf(baseline),
-            drunkEvidence = listOf(drunk),
+            drunkContrasts = listOf(
+                Sde2D5DrunkCalibrationContrastBuilder.build(
+                    contrastId = "drunk-group",
+                    evidence = listOf(
+                        drunk.copy(
+                            candidateId = "drunk-true",
+                            semanticTruth = SemanticTruth.TRUE,
+                        ),
+                        drunk,
+                    ),
+                ),
+            ),
             bluffSelections = listOf(bluff),
             roleInformationEvidence = listOf(roleInformation),
         )
@@ -156,7 +167,7 @@ class Sde2D5FCalibrationReviewExportTest {
         val material = Sde2D5FCalibrationReviewBuilder.build(
             sealedHoldoutScenarioCount = 1,
             baselineReferences = listOf(baseline),
-            drunkEvidence = emptyList(),
+            drunkContrasts = emptyList(),
             bluffSelections = emptyList(),
             roleInformationEvidence = listOf(roleInformation),
         )
