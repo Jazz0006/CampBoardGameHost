@@ -363,7 +363,24 @@ The expanded sweep currently classifies healthy-truth danger / Evil-topology cou
 
 Next external-evidence action: continue targeted exact-seat / exact-Night-1 recovery, especially cases that can discriminate the emerging/tentative axes; reuse the catalog later for cross-night Drunk/Poisoned selection.
 
-**NEXT: human-review the 8 manifest records, while continuing the bounded D5F-B2 external-human pilot.**
+**D5F-B3 policy-model correction is now REQUIRED before human review.**
+
+Authority:
+
+- `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`.
+
+Audit conclusion:
+
+- D2D1-D2D4 exact/topology architecture remains valid;
+- D5A/B remain valid;
+- D5C/D/E evidence remains useful but incomplete for policy calibration;
+- the current eight-record v1 manifest must remain UNREVIEWED and must not feed D5F-C;
+- fixed impaired false-family preference is a legacy policy contradiction;
+- shared/union remains diagnostic/coherence evidence, not a monotone bluff-quality target;
+- isolated strong healthy clues remain legitimate game variance; do not add automatic seat reroll for a lone Empath 2;
+- human review resumes only after a corrected v2 review schema/manifest covers truth+false Drunk contrasts, bluff execution/narrative dimensions and bundle confirmation-chain evidence.
+
+**NEXT: implement D5F-B3 policy-model correction, regenerate v2 review material/manifest, then resume human review.**
 
 Do not automatically infer labels. Do not begin D5F-C until every required item is settled and the manifest validator reports complete.
 
