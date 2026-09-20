@@ -228,7 +228,7 @@ class Sde2D5FCalibrationReviewExportTest {
         assertTrue(first.contains("lifecycleStage=CROSS_STAGE_REFERENCE"))
         assertTrue(first.contains("decisionOwner=CALIBRATION_DIAGNOSTIC_ONLY"))
         assertTrue(first.contains("""observationKey={"kind":"test-role-information"}"""))
-        assertTrue(first.contains("persistenceBoundary=DESCRIPTIVE_BUNDLE_EVIDENCE_ONLY"))
+        assertTrue(first.contains("persistenceBoundary=FIRST_NIGHT_CLUE_PLANNED_UNTIL_SHOWN_THEN_COMMITTED"))
         assertFalse(first.contains("holdout scenario id", ignoreCase = true))
         assertFalse(first.contains("holdout seating", ignoreCase = true))
     }
