@@ -17,11 +17,21 @@
 
 Branch: `sde-2d5-calibration-policy-evidence`
 
+Latest verified HEAD at handoff:
+
+`171a779ab21bf967929cd4c9bcd917f93d2998af`
+
 PR #150 remains **draft**.
+
+Latest validation on that HEAD:
+
+- CI run `35513739303` — **SUCCESS**
+- R2 main-thread boundary run `35513739295` — **SUCCESS**
+- FN-BUNDLE-3 calibration run `35513739283` — pending at handoff time; it is an independent heavy workflow and is not acceptance-blocking for this scope correction.
 
 **Do not merge unless the user explicitly says “授权合并”.**
 
-Always query the live branch before editing.
+Always query the live branch before editing; do not assume the recorded HEAD is still current.
 
 ## 3. Current correction
 
