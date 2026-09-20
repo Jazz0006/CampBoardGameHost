@@ -319,22 +319,23 @@ For the first implementation, broad correct re-evaluation is preferred over prem
 
 ## 12. Engine responsibility continues after Night 1
 
-The same decision architecture must handle later interactions such as:
+The same decision architecture must handle every supported later interaction whose legal output depends on impairment, registration or prior visible history.
 
-- poisoned/drunk Empath numeric result;
-- poisoned/drunk Fortune Teller YES/NO;
-- poisoned/drunk Undertaker shown role;
-- poisoned/drunk Ravenkeeper shown role;
-- later Spy/Recluse registration;
-- supported Mayor redirect / Demon succession and other Storyteller-discretion choices.
+The architecture must generalize by **information semantics / decision shape**, not by named examples.
 
 Per-role modules answer:
 
-> What outcomes are legal here?
+> What outcomes are legal here, and how is each outcome represented semantically?
 
-Shared Storyteller policy answers:
+Shared Storyteller policy/history answers:
 
-> Which legal outcome is appropriate for this state, phase, skill profile, and accumulated public information?
+> Which legal outcome is appropriate for this state, phase, skill profile, accumulated public information and previously established impaired narrative?
+
+For repeated or history-dependent impaired information, maintain one persistent role-agnostic narrative state representing the believable world already communicated to the affected player.
+
+Examples may include recurring numeric checks, repeated boolean/target checks, later-event role identification, pair/categorical information and future-script abilities. These examples are non-exhaustive and must not produce separate policy algorithms.
+
+A named-role branch is justified only by an actual rules distinction. Cross-night coherence, truth-vs-misinformation pacing and believable counterworld continuity belong to shared policy.
 
 ## 13. Event-driven decision model
 
@@ -489,6 +490,7 @@ Keep expensive corpus/reconstruction work outside ordinary FAST regression.
 - Spy/Recluse registration is per interaction;
 - BEGINNER registration policy has a thematic strong prior: Spy normally hides as Good and Recluse normally registers as Evil, with material whole-bundle override;
 - Poisoner can invalidate uncommitted decisions;
+- repeated/history-dependent impaired information uses shared persistent narrative state rather than named-role policy branches;
 - Drunk shown role is persistent while the unshown clue is a whole-bundle output;
 - uncommitted Demon bluff triplets are SDE outputs; committed bluff triplets are persistent later inputs;
 - Demon bluff legality remains setup-owned;
@@ -563,7 +565,8 @@ Bring later impaired / registration decisions through the same engine using hist
 - migrate only useful legacy context inputs;
 - delete `ConsequenceEvaluator` and stale heuristic-only state after fanout audit;
 - retire `SetupRecommendationService` bluffDifficulty strategic authority once SDE bluff selection is the validated owner;
-- retire superseded recommendation paths/tests when stronger typed coverage exists.
+- retire superseded recommendation paths/tests when stronger typed coverage exists;
+- reject role-specific/fixture-specific misinformation coherence code when the same behavior belongs to the shared narrative/history owner.
 
 ## 21. Validation principles
 
@@ -593,4 +596,4 @@ Do not reopen completed FN-BUNDLE/SDE-0/SDE-1/SDE-2A/B/C work without a concrete
 
 ## 23. Stable decision
 
-> **The automatic Storyteller is a persistent strategic decision engine, not a collection of independent clue recommenders. Rules generate legal outcomes; the epistemic layer proves mechanical feasibility and hypothetical consequences; strategic evaluation operates primarily on evil-team topology while preserving role-information utility and narrative support. Drunk unreliable clues are whole-bundle outputs over a persistent shown role. Demon bluff triplets are SDE outputs until shown, then persistent inputs. Large-player production must move toward exact strategic-topology quotient/constraint feasibility rather than giving repeated weight to exhaustive raw role permutations. SDE-2D is the current mandatory corrective route before SDE-3; no second world solver and no opaque global scalar are allowed.**
+> **The automatic Storyteller is a persistent strategic decision engine, not a collection of independent clue recommenders. Rules generate legal outcomes; the epistemic layer proves mechanical feasibility and hypothetical consequences; strategic evaluation operates primarily on evil-team topology while preserving role-information utility and narrative support. Impaired information uses a shared persistent narrative state so repeated/history-dependent outputs remain coherent with the player's perceived world; named roles provide legality/semantics, not separate misinformation policy. Demon bluff triplets are SDE outputs until shown, then persistent inputs. Large-player production must move toward exact strategic-topology quotient/constraint feasibility rather than giving repeated weight to exhaustive raw role permutations. SDE-2D is the current mandatory corrective route before SDE-3; no second world solver, no fixture-specific policy patching, and no opaque global scalar are allowed.**
