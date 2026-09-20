@@ -1,6 +1,6 @@
 version=d5f-b-calibration-v2
 d5f:bluff:13af34bc8befea2f:r1	BAD_TOO_WEAK	BLUFF_COHERENCE_FRAGILE,BLUFF_SUPPORT_FRAGILE	Beginner/non-expert Demon effectively has only two usable routes: Drunk is not a natural self-claim, has zero strategic support in this evidence, and can be especially implausible when Outsider count does not support it.
-d5f:bluff:334926f04bd2c687:r1	UNREVIEWED		
+d5f:bluff:334926f04bd2c687:r1	ACCEPTABLE	BLUFF_ROUTES_USABLE	All three bluffs have full strategic support in this evidence and provide distinct beginner-usable information, recurring-action, and passive-survival claim routes.
 d5f:bluff:fe702b4aac3ca49a:r1	UNREVIEWED		
 d5f:confirmation:sig-3a97786fbe44b310	UNREVIEWED		
 d5f:confirmation:sig-c8f4a0424526b659	UNREVIEWED		
