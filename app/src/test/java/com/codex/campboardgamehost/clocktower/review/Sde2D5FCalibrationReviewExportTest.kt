@@ -96,6 +96,36 @@ class Sde2D5FCalibrationReviewExportTest {
         }
         assertEquals(Sde2D5FReviewability.REFERENCE, baselineRecord.reviewability)
         assertNull(baselineRecord.initialLabel)
+        assertEquals(
+            Sde2D5FDecisionOwner.NONE_REFERENCE,
+            baselineRecord.controlSurface.decisionOwner,
+        )
+        assertTrue(baselineRecord.controlSurface.controllableVariables.isEmpty())
+
+        val drunkRecord = material.records.single {
+            it.evidenceKind == Sde2D5FReviewEvidenceKind.DRUNK_CONTRAST
+        }
+        assertEquals(
+            setOf(Sde2D5FPolicyVariable.IMPAIRED_CLUE_OUTPUT),
+            drunkRecord.controlSurface.controllableVariables,
+        )
+        assertTrue(
+            Sde2D5FPolicyVariable.SEMANTIC_TRUTH_RELATION in
+                drunkRecord.controlSurface.diagnosticOnlyVariables,
+        )
+        assertFalse(
+            Sde2D5FPolicyVariable.SEMANTIC_TRUTH_RELATION in
+                drunkRecord.controlSurface.controllableVariables,
+        )
+
+        val roleInformationRecord = material.records.single {
+            it.evidenceKind == Sde2D5FReviewEvidenceKind.ROLE_INFORMATION_CONTRAST
+        }
+        assertEquals(
+            Sde2D5FDecisionOwner.CALIBRATION_DIAGNOSTIC_ONLY,
+            roleInformationRecord.controlSurface.decisionOwner,
+        )
+        assertTrue(roleInformationRecord.controlSurface.controllableVariables.isEmpty())
 
         material.records
             .filter { it.reviewability == Sde2D5FReviewability.REVIEWABLE }
@@ -141,8 +171,31 @@ class Sde2D5FCalibrationReviewExportTest {
         assertTrue(first.contains("evilTopologyRetention=20/20"))
         assertTrue(first.contains("initialLabel=UNREVIEWED"))
         assertTrue(first.contains("reviewability=REFERENCE"))
+        assertTrue(first.contains("lifecycleStage=CROSS_STAGE_REFERENCE"))
+        assertTrue(first.contains("decisionOwner=CALIBRATION_DIAGNOSTIC_ONLY"))
+        assertTrue(first.contains("persistenceBoundary=DESCRIPTIVE_BUNDLE_EVIDENCE_ONLY"))
         assertFalse(first.contains("holdout scenario id", ignoreCase = true))
         assertFalse(first.contains("holdout seating", ignoreCase = true))
+    }
+
+    @Test
+    fun `review reason vocabulary covers corrected B3 policy dimensions`() {
+        assertTrue(
+            Sde2D5FReviewReason.entries.containsAll(
+                setOf(
+                    Sde2D5FReviewReason.EXCESSIVE_CONFIRMATION_CHAIN,
+                    Sde2D5FReviewReason.INSUFFICIENT_HEALTHY_INFORMATION,
+                    Sde2D5FReviewReason.IMPAIRED_CLUE_TOO_REVEALING,
+                    Sde2D5FReviewReason.IMPAIRED_CLUE_COHERENT,
+                    Sde2D5FReviewReason.BLUFF_EXECUTION_BURDEN,
+                    Sde2D5FReviewReason.BLUFF_NARRATIVE_REDUNDANCY,
+                    Sde2D5FReviewReason.BLUFF_COHERENCE_FRAGILE,
+                    Sde2D5FReviewReason.BLUFF_ROUTES_USABLE,
+                    Sde2D5FReviewReason.CROSS_CHANNEL_NARRATIVE_COHERENCE,
+                    Sde2D5FReviewReason.OTHER_EXPLICIT_REVIEW_REASON,
+                ),
+            ),
+        )
     }
 
     private fun point(

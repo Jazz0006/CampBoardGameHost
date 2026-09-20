@@ -15,14 +15,66 @@ internal enum class Sde2D5FReviewability {
     REVIEWABLE,
 }
 
+internal enum class Sde2D5FLifecycleStage {
+    CROSS_STAGE_REFERENCE,
+    PRE_GAME_BEFORE_BLUFF_REVEAL,
+    FIRST_NIGHT_AFTER_SETUP_PERSISTENCE,
+}
+
+internal enum class Sde2D5FDecisionOwner {
+    NONE_REFERENCE,
+    STORYTELLER_SDE,
+    CALIBRATION_DIAGNOSTIC_ONLY,
+}
+
+internal enum class Sde2D5FPolicyVariable {
+    NORMALIZED_STRATEGIC_DIAGNOSTICS,
+    IMPAIRED_CLUE_OUTPUT,
+    SEMANTIC_TRUTH_RELATION,
+    COUNTERFACTUAL_HEALTHY_TRUTH_DANGER,
+    DEMON_BLUFF_TRIPLET,
+    BLUFF_SUPPORT_DIAGNOSTICS,
+    BLUFF_EXECUTION_TRAITS,
+    HEALTHY_BUNDLE_INFORMATION,
+}
+
+internal enum class Sde2D5FPersistenceBoundary {
+    REFERENCE_ONLY,
+    DRUNK_SHOWN_IDENTITY_PERSISTENT_CLUE_PLANNED_UNTIL_SHOWN,
+    DEMON_BLUFF_TRIPLET_PLANNED_UNTIL_REVEAL_THEN_PERSISTENT,
+    DESCRIPTIVE_BUNDLE_EVIDENCE_ONLY,
+}
+
+internal data class Sde2D5FControlSurface(
+    val lifecycleStage: Sde2D5FLifecycleStage,
+    val decisionOwner: Sde2D5FDecisionOwner,
+    val controllableVariables: Set<Sde2D5FPolicyVariable>,
+    val diagnosticOnlyVariables: Set<Sde2D5FPolicyVariable>,
+    val persistenceBoundary: Sde2D5FPersistenceBoundary,
+) {
+    init {
+        require(controllableVariables.intersect(diagnosticOnlyVariables).isEmpty()) {
+            "A D5F policy variable cannot be both controllable and diagnostic-only in one lifecycle record."
+        }
+    }
+}
+
 internal enum class Sde2D5FReviewReason {
     STRATEGIC_COLLAPSE,
+    EXCESSIVE_CONFIRMATION_CHAIN,
     INSUFFICIENT_HEALTHY_INFORMATION,
     MECHANICALLY_USEFUL_TOPOLOGY_NEUTRAL,
     DRUNK_MARGINAL_PATHOLOGY,
     DRUNK_MARGINAL_ACCEPTABLE,
+    IMPAIRED_CLUE_TOO_REVEALING,
+    IMPAIRED_CLUE_COHERENT,
     BLUFF_SUPPORT_FRAGILE,
     BLUFF_SUPPORT_ROBUST,
+    BLUFF_EXECUTION_BURDEN,
+    BLUFF_NARRATIVE_REDUNDANCY,
+    BLUFF_COHERENCE_FRAGILE,
+    BLUFF_ROUTES_USABLE,
+    CROSS_CHANNEL_NARRATIVE_COHERENCE,
     CROSS_REGIME_REFERENCE,
     OTHER_EXPLICIT_REVIEW_REASON,
 }
@@ -52,6 +104,7 @@ internal data class Sde2D5FReviewRecord(
     val regime: Sde2D5PlayerCountRegime,
     val profileKind: Sde2D5SetupProfileKind,
     val contrastId: String?,
+    val controlSurface: Sde2D5FControlSurface,
     val details: Sde2D5FReviewDetails,
 ) {
     init {
@@ -108,6 +161,15 @@ internal object Sde2D5FCalibrationReviewBuilder {
                         regime = point.regime,
                         profileKind = point.profileKind,
                         contrastId = point.contrastId,
+                        controlSurface = Sde2D5FControlSurface(
+                            lifecycleStage = Sde2D5FLifecycleStage.CROSS_STAGE_REFERENCE,
+                            decisionOwner = Sde2D5FDecisionOwner.NONE_REFERENCE,
+                            controllableVariables = emptySet(),
+                            diagnosticOnlyVariables = setOf(
+                                Sde2D5FPolicyVariable.NORMALIZED_STRATEGIC_DIAGNOSTICS,
+                            ),
+                            persistenceBoundary = Sde2D5FPersistenceBoundary.REFERENCE_ONLY,
+                        ),
                         details = Sde2D5FReviewDetails.BaselineReference(point),
                     ),
                 )
@@ -121,6 +183,20 @@ internal object Sde2D5FCalibrationReviewBuilder {
                         regime = evidence.fullBundle.regime,
                         profileKind = evidence.fullBundle.profileKind,
                         contrastId = evidence.candidateId,
+                        controlSurface = Sde2D5FControlSurface(
+                            lifecycleStage = Sde2D5FLifecycleStage.FIRST_NIGHT_AFTER_SETUP_PERSISTENCE,
+                            decisionOwner = Sde2D5FDecisionOwner.STORYTELLER_SDE,
+                            controllableVariables = setOf(
+                                Sde2D5FPolicyVariable.IMPAIRED_CLUE_OUTPUT,
+                            ),
+                            diagnosticOnlyVariables = setOf(
+                                Sde2D5FPolicyVariable.SEMANTIC_TRUTH_RELATION,
+                                Sde2D5FPolicyVariable.COUNTERFACTUAL_HEALTHY_TRUTH_DANGER,
+                                Sde2D5FPolicyVariable.NORMALIZED_STRATEGIC_DIAGNOSTICS,
+                            ),
+                            persistenceBoundary =
+                                Sde2D5FPersistenceBoundary.DRUNK_SHOWN_IDENTITY_PERSISTENT_CLUE_PLANNED_UNTIL_SHOWN,
+                        ),
                         details = Sde2D5FReviewDetails.DrunkContrast(evidence),
                     ),
                 )
@@ -135,6 +211,19 @@ internal object Sde2D5FCalibrationReviewBuilder {
                         regime = evidence.regime,
                         profileKind = evidence.profileKind,
                         contrastId = evidence.candidateId,
+                        controlSurface = Sde2D5FControlSurface(
+                            lifecycleStage = Sde2D5FLifecycleStage.PRE_GAME_BEFORE_BLUFF_REVEAL,
+                            decisionOwner = Sde2D5FDecisionOwner.STORYTELLER_SDE,
+                            controllableVariables = setOf(
+                                Sde2D5FPolicyVariable.DEMON_BLUFF_TRIPLET,
+                            ),
+                            diagnosticOnlyVariables = setOf(
+                                Sde2D5FPolicyVariable.BLUFF_SUPPORT_DIAGNOSTICS,
+                                Sde2D5FPolicyVariable.BLUFF_EXECUTION_TRAITS,
+                            ),
+                            persistenceBoundary =
+                                Sde2D5FPersistenceBoundary.DEMON_BLUFF_TRIPLET_PLANNED_UNTIL_REVEAL_THEN_PERSISTENT,
+                        ),
                         details = Sde2D5FReviewDetails.DemonBluffSupport(selection),
                     ),
                 )
@@ -149,6 +238,16 @@ internal object Sde2D5FCalibrationReviewBuilder {
                         regime = point.regime,
                         profileKind = point.profileKind,
                         contrastId = point.contrastId,
+                        controlSurface = Sde2D5FControlSurface(
+                            lifecycleStage = Sde2D5FLifecycleStage.FIRST_NIGHT_AFTER_SETUP_PERSISTENCE,
+                            decisionOwner = Sde2D5FDecisionOwner.CALIBRATION_DIAGNOSTIC_ONLY,
+                            controllableVariables = emptySet(),
+                            diagnosticOnlyVariables = setOf(
+                                Sde2D5FPolicyVariable.HEALTHY_BUNDLE_INFORMATION,
+                                Sde2D5FPolicyVariable.NORMALIZED_STRATEGIC_DIAGNOSTICS,
+                            ),
+                            persistenceBoundary = Sde2D5FPersistenceBoundary.DESCRIPTIVE_BUNDLE_EVIDENCE_ONLY,
+                        ),
                         details = Sde2D5FReviewDetails.RoleInformationContrast(evidence),
                     ),
                 )
@@ -182,6 +281,17 @@ internal object Sde2D5FCalibrationReviewRenderer {
             appendLine("regime=${record.regime}")
             appendLine("profile=${record.profileKind}")
             appendLine("contrastId=${record.contrastId ?: "N/A"}")
+            appendLine("lifecycleStage=${record.controlSurface.lifecycleStage}")
+            appendLine("decisionOwner=${record.controlSurface.decisionOwner}")
+            appendLine(
+                "controllableVariables=" +
+                    record.controlSurface.controllableVariables.sortedBy { it.name }.joinToString(","),
+            )
+            appendLine(
+                "diagnosticOnlyVariables=" +
+                    record.controlSurface.diagnosticOnlyVariables.sortedBy { it.name }.joinToString(","),
+            )
+            appendLine("persistenceBoundary=${record.controlSurface.persistenceBoundary}")
             appendDetails(record.details)
             appendLine()
         }
