@@ -299,10 +299,10 @@ class Sde2D5CalibrationExperiment {
     }
 
     @Test
-    fun `real D5F human label template is valid but incomplete until human review`() {
+    fun `real D5F manifest excludes extreme fixture from policy calibration and keeps gate blocked`() {
         val manifest = Sde2D5FHumanLabelManifestBuilder.unreviewedTemplate(
             material = reviewMaterial,
-            version = "d5f-b-calibration-v2",
+            version = "d5f-b-calibration-v3",
         )
         val validation = Sde2D5FHumanLabelManifestValidator.validate(
             material = reviewMaterial,
@@ -311,20 +311,26 @@ class Sde2D5CalibrationExperiment {
         val requiredReviewIds = reviewMaterial.records
             .filter { it.reviewability == Sde2D5FReviewability.REVIEWABLE }
             .mapTo(linkedSetOf(), Sde2D5FReviewRecord::reviewId)
+        val diagnosticFixtureRecords = reviewMaterial.records.filter {
+            it.evidenceKind == Sde2D5FReviewEvidenceKind.ROLE_INFORMATION_CONTRAST ||
+                it.evidenceKind == Sde2D5FReviewEvidenceKind.BUNDLE_CONFIRMATION_CHAIN
+        }
 
+        assertEquals(4, requiredReviewIds.size)
+        assertTrue(
+            diagnosticFixtureRecords.all {
+                it.reviewability == Sde2D5FReviewability.DIAGNOSTIC_ONLY &&
+                    it.initialLabel == null
+            },
+        )
         assertTrue(validation.isValid)
         assertFalse(validation.isCompleteForGateDerivation)
         assertEquals(requiredReviewIds, validation.unreviewedRequiredReviewIds)
+        assertEquals(
+            setOf(Sde2D5FPolicyVariable.HEALTHY_BUNDLE_INFORMATION),
+            validation.missingRequiredPolicyVariables,
+        )
         assertEquals(requiredReviewIds, manifest.entries.mapTo(linkedSetOf()) { it.reviewId })
-        assertTrue(manifest.entries.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
-        assertTrue(manifest.entries.all { it.reasons.isEmpty() })
-
-        val rendered = Sde2D5FHumanLabelManifestCodec.render(manifest)
-        assertEquals(manifest, Sde2D5FHumanLabelManifestCodec.parse(rendered))
-
-        val manifestFile = File("build/reports/sde-2d5f-human-label-manifest.tsv")
-        requireNotNull(manifestFile.parentFile).mkdirs()
-        manifestFile.writeText(rendered, Charsets.UTF_8)
 
         val obsoleteV1File =
             File("src/test/resources/review/sde-2d5f-human-label-manifest-v1-obsolete.tsv")
@@ -332,22 +338,41 @@ class Sde2D5CalibrationExperiment {
             obsoleteV1File.readText(Charsets.UTF_8),
         )
         assertEquals("d5f-b-calibration-v1", obsoleteV1.version)
-        assertTrue(obsoleteV1.entries.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
-        assertTrue(obsoleteV1.entries.all { it.reasons.isEmpty() })
+
+        val obsoleteV2File =
+            File("src/test/resources/review/sde-2d5f-human-label-manifest-v2-obsolete-extreme-fixture.tsv")
+        val obsoleteV2 = Sde2D5FHumanLabelManifestCodec.parse(
+            obsoleteV2File.readText(Charsets.UTF_8),
+        )
+        assertEquals("d5f-b-calibration-v2", obsoleteV2.version)
+        assertTrue(
+            obsoleteV2.entries.any {
+                it.reviewId.startsWith("d5f:role-info:") ||
+                    it.reviewId.startsWith("d5f:confirmation:")
+            },
+        )
 
         val persistedManifestFile =
             File("src/test/resources/review/sde-2d5f-human-label-manifest.tsv")
         val persistedManifest = Sde2D5FHumanLabelManifestCodec.parse(
             persistedManifestFile.readText(Charsets.UTF_8),
         )
-        assertEquals(manifest, persistedManifest)
+        assertEquals("d5f-b-calibration-v3", persistedManifest.version)
+        assertEquals(
+            requiredReviewIds,
+            persistedManifest.entries.mapTo(linkedSetOf()) { it.reviewId },
+        )
         val persistedValidation = Sde2D5FHumanLabelManifestValidator.validate(
             material = reviewMaterial,
             manifest = persistedManifest,
         )
         assertTrue(persistedValidation.isValid)
+        assertTrue(persistedValidation.unreviewedRequiredReviewIds.isEmpty())
+        assertEquals(
+            setOf(Sde2D5FPolicyVariable.HEALTHY_BUNDLE_INFORMATION),
+            persistedValidation.missingRequiredPolicyVariables,
+        )
         assertFalse(persistedValidation.isCompleteForGateDerivation)
-        assertEquals(requiredReviewIds, persistedValidation.unreviewedRequiredReviewIds)
     }
 
     @Test
