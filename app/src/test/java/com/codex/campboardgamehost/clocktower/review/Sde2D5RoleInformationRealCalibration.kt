@@ -61,6 +61,8 @@ internal data class Sde2D5RoleInformationRealCalibration(
     val closestRawDifferentTopology: Sde2D5RoleInformationNearRawContrast,
     val strongestStrategicCollapse: Sde2D5RoleInformationCalibrationEvidence,
     val weakestMechanicalInformation: Sde2D5RoleInformationCalibrationEvidence,
+    val confirmationChainEvidence: List<Sde2D5BundleConfirmationChainEvidence>,
+    val confirmationChainSelections: List<Sde2D5BundleConfirmationSelection>,
 )
 
 /**
@@ -212,12 +214,25 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
                 .thenBy { it.point.pointId },
         )
 
+        val confirmationChainEvidence = evaluation.signatureGroups.map { group ->
+            Sde2D5BundleConfirmationChainEvidenceProjector.project(
+                playerCount = 7,
+                profileKind = Sde2D5SetupProfileKind.STANDARD,
+                group = group,
+            )
+        }.sortedBy { it.signatureId }
+
         return Sde2D5RoleInformationRealCalibration(
             allEvidence = evidence.sortedBy { it.point.pointId },
             topologyNeutral = topologyNeutral,
             closestRawDifferentTopology = closest,
             strongestStrategicCollapse = strongestStrategicCollapse,
             weakestMechanicalInformation = weakestMechanicalInformation,
+            confirmationChainEvidence = confirmationChainEvidence,
+            confirmationChainSelections =
+                Sde2D5BundleConfirmationChainEvidenceSelector.selectReviewContrasts(
+                    confirmationChainEvidence,
+                ),
         )
     }
 

@@ -29,6 +29,7 @@ internal object Sde2D5FRealCalibrationReviewBuilder {
             drunkContrasts = listOf(drunk),
             bluffSelections = bluff.selected,
             roleInformationEvidence = selectedRoleInformation,
+            confirmationSelections = roleInformation.confirmationChainSelections,
         )
     }
 }

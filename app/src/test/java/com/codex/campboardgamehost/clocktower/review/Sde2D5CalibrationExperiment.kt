@@ -173,6 +173,26 @@ class Sde2D5CalibrationExperiment {
     }
 
     @Test
+    fun `real healthy bundle exposes leave one out confirmation chain diagnostics`() {
+        val calibration = roleInformationCalibration
+
+        assertTrue(calibration.confirmationChainEvidence.isNotEmpty())
+        assertTrue(calibration.confirmationChainSelections.isNotEmpty())
+        calibration.confirmationChainSelections.forEach { selection ->
+            val evidence = selection.evidence
+            assertTrue(evidence.byRecipient.isNotEmpty())
+            val worst = evidence.worstGoodRecipient
+            assertTrue(worst.leaveOneOut.isNotEmpty())
+            assertEquals(
+                worst.leaveOneOut.count {
+                    it.restoresDemonCover || it.restoresStrategicTopology
+                },
+                evidence.worstGoodRecipientRestoringClueCount,
+            )
+        }
+    }
+
+    @Test
     fun `real D5F calibration review export stays calibration only and deterministic`() {
         val material = reviewMaterial
 
@@ -237,10 +257,27 @@ class Sde2D5CalibrationExperiment {
             }
         assertEquals(expectedRolePointIds, actualRolePointIds)
 
+        val confirmationRecords = material.records.filter {
+            it.evidenceKind == Sde2D5FReviewEvidenceKind.BUNDLE_CONFIRMATION_CHAIN
+        }
+        assertEquals(
+            roleInformationCalibration.confirmationChainSelections.size,
+            confirmationRecords.size,
+        )
+        assertTrue(
+            confirmationRecords.all {
+                it.controlSurface.decisionOwner == Sde2D5FDecisionOwner.CALIBRATION_DIAGNOSTIC_ONLY &&
+                    it.controlSurface.controllableVariables.isEmpty()
+            },
+        )
+
         val report = Sde2D5FCalibrationReviewRenderer.renderMarkdown(material)
         assertTrue(report.contains("Sealed holdout scenarios: ${material.sealedHoldoutScenarioCount}"))
         assertTrue(report.contains("Holdout diagnostics are sealed until gate freeze."))
         assertTrue(report.contains("initialLabel=UNREVIEWED"))
+        assertTrue(report.contains("detail=bundle-confirmation-chain"))
+        assertTrue(report.contains("multiChannelCollapse="))
+        assertTrue(report.contains("restoresStrategicTopology="))
         val reportFile = File("build/reports/sde-2d5f-calibration-review.md")
         requireNotNull(reportFile.parentFile).mkdirs()
         reportFile.writeText(report, Charsets.UTF_8)

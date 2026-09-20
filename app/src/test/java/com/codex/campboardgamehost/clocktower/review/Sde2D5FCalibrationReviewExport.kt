@@ -8,6 +8,7 @@ internal enum class Sde2D5FReviewEvidenceKind {
     DRUNK_CONTRAST,
     DEMON_BLUFF_SUPPORT,
     ROLE_INFORMATION_CONTRAST,
+    BUNDLE_CONFIRMATION_CHAIN,
 }
 
 internal enum class Sde2D5FReviewability {
@@ -36,6 +37,7 @@ internal enum class Sde2D5FPolicyVariable {
     BLUFF_SUPPORT_DIAGNOSTICS,
     BLUFF_EXECUTION_TRAITS,
     HEALTHY_BUNDLE_INFORMATION,
+    BUNDLE_CONFIRMATION_CHAIN_DIAGNOSTICS,
 }
 
 internal enum class Sde2D5FPersistenceBoundary {
@@ -95,6 +97,10 @@ internal sealed interface Sde2D5FReviewDetails {
     data class RoleInformationContrast(
         val evidence: Sde2D5RoleInformationCalibrationEvidence,
     ) : Sde2D5FReviewDetails
+
+    data class BundleConfirmationChain(
+        val selection: Sde2D5BundleConfirmationSelection,
+    ) : Sde2D5FReviewDetails
 }
 
 internal data class Sde2D5FReviewRecord(
@@ -148,6 +154,7 @@ internal object Sde2D5FCalibrationReviewBuilder {
         drunkContrasts: List<Sde2D5DrunkCalibrationContrast>,
         bluffSelections: List<Sde2D5DemonBluffCalibrationSelection>,
         roleInformationEvidence: List<Sde2D5RoleInformationCalibrationEvidence>,
+        confirmationSelections: List<Sde2D5BundleConfirmationSelection> = emptyList(),
     ): Sde2D5FCalibrationReviewMaterial {
         require(baselineReferences.all { it.evidenceKind == Sde2D5EvidenceKind.BASELINE })
 
@@ -250,6 +257,32 @@ internal object Sde2D5FCalibrationReviewBuilder {
                             persistenceBoundary = Sde2D5FPersistenceBoundary.DESCRIPTIVE_BUNDLE_EVIDENCE_ONLY,
                         ),
                         details = Sde2D5FReviewDetails.RoleInformationContrast(evidence),
+                    ),
+                )
+            }
+            confirmationSelections.forEach { selection ->
+                val evidence = selection.evidence
+                add(
+                    Sde2D5FReviewRecord(
+                        reviewId = "d5f:confirmation:${evidence.signatureId}",
+                        evidenceKind = Sde2D5FReviewEvidenceKind.BUNDLE_CONFIRMATION_CHAIN,
+                        reviewability = Sde2D5FReviewability.REVIEWABLE,
+                        regime = evidence.regime,
+                        profileKind = evidence.profileKind,
+                        contrastId = evidence.signatureId,
+                        controlSurface = Sde2D5FControlSurface(
+                            lifecycleStage = Sde2D5FLifecycleStage.FIRST_NIGHT_AFTER_SETUP_PERSISTENCE,
+                            decisionOwner = Sde2D5FDecisionOwner.CALIBRATION_DIAGNOSTIC_ONLY,
+                            controllableVariables = emptySet(),
+                            diagnosticOnlyVariables = setOf(
+                                Sde2D5FPolicyVariable.HEALTHY_BUNDLE_INFORMATION,
+                                Sde2D5FPolicyVariable.NORMALIZED_STRATEGIC_DIAGNOSTICS,
+                                Sde2D5FPolicyVariable.BUNDLE_CONFIRMATION_CHAIN_DIAGNOSTICS,
+                            ),
+                            persistenceBoundary =
+                                Sde2D5FPersistenceBoundary.DESCRIPTIVE_BUNDLE_EVIDENCE_ONLY,
+                        ),
+                        details = Sde2D5FReviewDetails.BundleConfirmationChain(selection),
                     ),
                 )
             }
@@ -388,6 +421,30 @@ internal object Sde2D5FCalibrationReviewRenderer {
                 appendLine("hasMechanicalInformationGain=${evidence.hasMechanicalInformationGain}")
                 appendLine("topologyNeutral=${evidence.topologyNeutral}")
                 appendPoint(evidence.point)
+            }
+            is Sde2D5FReviewDetails.BundleConfirmationChain -> {
+                val selection = details.selection
+                val evidence = selection.evidence
+                val worst = evidence.worstGoodRecipient
+                appendLine("detail=bundle-confirmation-chain")
+                appendLine("signatureId=${evidence.signatureId}")
+                appendLine("evaluatedGoodRecipientSeats=${evidence.byRecipient.map { it.recipientSeat }.sorted().joinToString(",")}")
+                appendLine("worstGoodRecipientSeat=${evidence.worstGoodRecipientSeat}")
+                appendLine("worstGoodRecipientRestoringClueCount=${evidence.worstGoodRecipientRestoringClueCount}")
+                appendLine("multiChannelCollapse=${evidence.hasMultiChannelCollapse}")
+                appendLine(
+                    "selectionReasons=" +
+                        selection.selectionReasons.sortedBy { it.name }.joinToString(","),
+                )
+                appendNormalized("fullBundle", worst.fullBundleNormalized)
+                worst.leaveOneOut.forEach { omitted ->
+                    val prefix = "leaveOneOut[${omitted.omittedObservationKey}]"
+                    appendLine("$prefix.restoresDemonCover=${omitted.restoresDemonCover}")
+                    appendLine("$prefix.restoresStrategicTopology=${omitted.restoresStrategicTopology}")
+                    appendLine("$prefix.afterStrategicWorldCount=${omitted.afterStrategicWorldCount}")
+                    appendLine("$prefix.afterDemonCoverCount=${omitted.afterDemonCoverCount}")
+                    appendNormalized(prefix, omitted.normalized)
+                }
             }
         }
     }
