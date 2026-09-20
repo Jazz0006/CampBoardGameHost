@@ -63,7 +63,6 @@ import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendatio
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
-import com.codex.campboardgamehost.clocktower.recommendation.SetupRecommendationLockPolicy
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
@@ -704,7 +703,7 @@ internal fun ClocktowerJudgeScreen(
         mutableStateOf<RecommendationStyle?>(null)
     }
     var lockedRecommendationDecisions by remember(recommendationKey) {
-        mutableStateOf(SetupRecommendationLockPolicy.initialLocks())
+        mutableStateOf<List<StorytellerDecision>>(emptyList())
     }
     val recommendationRequest = SetupCoordinationRequest(
         game = recommendationCards.toClocktowerGameState(
@@ -746,13 +745,7 @@ internal fun ClocktowerJudgeScreen(
             val setupPlans = (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty()
             val automaticPlan = recommendationCoordinator.selectSetupPlan(setupPlans, automaticStorytellerStyle)
             if (automaticPlan != null) {
-                fun setupFamily(plan: RecommendationPlan): String = plan.decisions
-                    .filterIsInstance<StorytellerDecision.DrunkShownRole>()
-                    .singleOrNull()
-                    ?.role
-                    ?.value
-                    ?.let { "drunk-shown-role:$it" }
-                    ?: "setup-plan"
+                val setupFamilyId = "setup-plan"
                 val setupAuditId = "$recommendationKey|setup"
                 val setupDimensions = SelectionAuditDimensions(
                     playerCount = cards.size,
@@ -765,7 +758,7 @@ internal fun ClocktowerJudgeScreen(
                         dimensions = setupDimensions,
                         candidates = setupPlans.map { plan ->
                             SelectionAuditCandidate(
-                                familyId = setupFamily(plan),
+                                familyId = setupFamilyId,
                                 qualityTier = plan.qualityTier,
                             )
                         },
@@ -776,7 +769,7 @@ internal fun ClocktowerJudgeScreen(
                     SelectionAuditCommit(
                         selectionId = setupAuditId,
                         dimensions = setupDimensions,
-                    selectedFamilyId = setupFamily(automaticPlan),
+                    selectedFamilyId = setupFamilyId,
                     ),
                 )
                 selectedRecommendationStyle = automaticPlan.style
@@ -3833,12 +3826,12 @@ internal fun ClocktowerJudgeScreen(
                     appliedRecommendationStyle = plan.style
                 },
                 onReevaluate = { nextLockedDecisions ->
-                    lockedRecommendationDecisions = SetupRecommendationLockPolicy.replaceWith(nextLockedDecisions)
+                    lockedRecommendationDecisions = nextLockedDecisions
                     selectedRecommendationStyle = automaticStorytellerStyle
                     appliedRecommendationStyle = null
                 },
                 onClearLocks = {
-                    lockedRecommendationDecisions = SetupRecommendationLockPolicy.clear()
+                    lockedRecommendationDecisions = emptyList()
                     selectedRecommendationStyle = automaticStorytellerStyle
                 },
             )
