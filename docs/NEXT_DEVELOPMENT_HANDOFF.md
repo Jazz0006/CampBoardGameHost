@@ -11,23 +11,26 @@
 4. `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`
 5. `docs/SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv`
 6. `docs/SDE_2D5F_EXTREME_FIXTURE_CALIBRATION_SCOPE_CORRECTION_2026-09-20.md`
-7. this handoff
+7. `docs/SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md`
+8. this handoff
 
 ## 2. Live branch
 
 Branch: `sde-2d5-calibration-policy-evidence`
 
-Latest verified HEAD at handoff:
+Latest representative implementation checkpoint before this documentation sync:
 
-`171a779ab21bf967929cd4c9bcd917f93d2998af`
+`cb1ffc454f87a7be8b166d8013746dee7f50bfda`
 
 PR #150 remains **draft**.
 
-Latest validation on that HEAD:
+Validation on that implementation checkpoint:
 
-- CI run `35513739303` — **SUCCESS**
-- R2 main-thread boundary run `35513739295` — **SUCCESS**
-- FN-BUNDLE-3 calibration run `35513739283` — pending at handoff time; it is an independent heavy workflow and is not acceptance-blocking for this scope correction.
+- CI run `35514598766` — **SUCCESS**
+- R2 main-thread boundary run `35514598790` — **SUCCESS**
+- FN-BUNDLE-3 calibration run `35514598760` — still independent/heavy; it is not acceptance-blocking for the representative materialization slice.
+
+Documentation commits follow that implementation checkpoint, so always query the live branch before executable edits rather than treating the checkpoint SHA as current HEAD.
 
 **Do not merge unless the user explicitly says “授权合并”.**
 
@@ -103,7 +106,7 @@ Avoid choosing cases merely because they maximize collapse, raw reduction, or an
 ## 7. Frozen lessons that remain valid
 
 - Optimize only variables still owned by the SDE at the current lifecycle stage.
-- Chef / Empath healthy values are rule-determined; do not “fix” them after setup.
+- Chef / Empath are fixed context for this calibration, not optimization targets. If Spy/Recluse registration creates more than one legal healthy value, freeze and expose the registration branch rather than optimizing it as the reviewed variable.
 - Washerwoman / Librarian / Investigator outputs can be Storyteller-controlled where legal.
 - A topology-neutral clue can still be harmful through cross-confirmation.
 - Player count matters for impaired information.
@@ -111,19 +114,36 @@ Avoid choosing cases merely because they maximize collapse, raw reduction, or an
 - Demon bluff quality must consider usability and narrative route diversity, not only coverage counts.
 - No opaque global score is authorized.
 
-## 8. NEXT action
+## 8. Completed representative materialization slice
 
-Design and materialize a representative healthy-information calibration corpus.
+Implemented:
 
-Recommended first slice:
+- design authority: `docs/SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md`;
+- test-only corpus builder/renderer: `Sde2D5FRepresentativeHealthyInformationCorpus.kt`;
+- contract tests: `Sde2D5FRepresentativeHealthyInformationCorpusTest.kt`;
+- seven normal 7–9 player production presets spanning Washerwoman, Librarian, Investigator;
+- production deal-planner seating rather than synthetic extreme seating;
+- full legal pair-clue enumeration from the production generator;
+- explicit Poisoner external context;
+- fixed Chef/Empath context;
+- actual / Spy-registration / Recluse-registration truth basis;
+- complete human-readable table meaning.
 
-1. select several existing 7–9 player templates that are already considered playable;
-2. for each, enumerate legal Washerwoman/Librarian/Investigator output alternatives;
-3. retain rule-determined Chef/Empath values as fixed context;
-4. include external-human / ClockTracker cases where the equivalent choice is observable;
-5. sample middle-band cases plus a small number of clear pathologies as guardrails;
-6. expose human-readable clue bundles;
-7. add only representative cases to v3+ review membership;
-8. verify `HEALTHY_BUNDLE_INFORMATION` coverage is satisfied before D5F-C.
+The external-human audit found useful ecology/guardrail evidence but no clean 7–9 same-setup observed healthy pair-choice set. Do not manufacture direct labels from unlike external games.
+
+No new record is `REVIEWABLE` yet. Canonical manifest remains `d5f-b-calibration-v3`, and the gate remains blocked on `HEALTHY_BUNDLE_INFORMATION`.
+
+## 9. NEXT action
+
+Attach representative strategic diagnostics and choose the bounded human-review subset.
+
+1. evaluate these exact candidate identities through the existing topology-first 5–15 path;
+2. expose Demon-cover, Evil-topology, Evil-cover, forced-good and feasibility separately;
+3. keep full legal enumeration as the machine corpus;
+4. choose human review items by semantic strata: good/Evil decoy, Demon/Minion inclusion, actual-Minon versus registration truth, and cross-confirmation with fixed context;
+5. do not use FIRST/MIDDLE/LAST candidate ordering or diagnostic extrema as the sampling rule;
+6. add a small number of evidence-backed guardrails only after the representative middle-band layer is stable;
+7. only then add representative records to v3+ review membership and re-check `HEALTHY_BUNDLE_INFORMATION` coverage;
+8. D5F-C remains blocked until that coverage is human-reviewed.
 
 Do not open sealed holdout evidence, freeze thresholds, cut production policy, begin SDE-3, or merge PR #150 without explicit authorization.
