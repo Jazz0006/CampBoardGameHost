@@ -1,0 +1,41 @@
+name: SDE-2D5F B3 manifest generation
+
+on:
+  push:
+    branches:
+      - sde-2d5-calibration-policy-evidence
+    paths:
+      - app/build.gradle.kts
+      - app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FManifestGenerationExperiment.kt
+      - .github/workflows/sde-2d5f-b3-manifest-generation.yml
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v6
+      - run: chmod +x ./gradlew
+      - name: Generate corrected D5F v2 manifest
+        run: ./gradlew :app:sde2D5FManifestGeneration --no-daemon --rerun-tasks
+      - name: Print generated manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          for report in \
+            app/build/reports/sde-2d5f-human-label-manifest-generated.tsv \
+            app/build/reports/sde-2d5f-calibration-review-generated.md
+          do
+            if [[ -f "$report" ]]; then
+              echo "===== $report ====="
+              cat "$report"
+            fi
+          done
