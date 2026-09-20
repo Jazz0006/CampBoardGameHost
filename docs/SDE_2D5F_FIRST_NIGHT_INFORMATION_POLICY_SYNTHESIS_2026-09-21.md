@@ -278,30 +278,80 @@ Useful considerations include:
 
 Do not waste an independent misinformation route without a table-level reason.
 
-## 11. Drunk information
+## 11. Persistent impaired narrative state
 
 The Drunk's shown identity is committed at setup and is not reselected by the later SDE.
 
-For a Drunk information role, do not model night-one output as an isolated false number/pair.
+Do not model an impaired information role as a sequence of independent per-interaction false outputs.
 
-Instead maintain a persistent **shadow world / narrative intent**:
+The policy needs a **persistent impaired narrative state**: a role-agnostic representation of the world that the affected player is being led to believe, together with the already-committed observations that constrain future misinformation.
+
+Conceptually:
 
 ~~~text
-Drunk shown role
-    + selected believable false-world interpretation
+perceived role
++ committed information history
++ current public / player-visible history
++ selected believable counterworld assumptions
         ↓
-night 1 output
+persistent impaired narrative state
         ↓
-later deaths / seating changes / observations
+current legal output domain
         ↓
-next output consistent with the same misleading world when feasible
+choose the next output that best preserves
+the same believable perceived world when feasible
 ~~~
 
-The goal is not "always false."
+For the Drunk, this persistent state is commonly a shadow world: a coherent alternative interpretation of seats, alignments, roles, registrations or other facts that explains the information already shown to that player.
 
-Truthful information is legal and may be preferable when a false result would immediately reveal the Drunk or create an incoherent trajectory.
+The same abstraction must work across **information shapes**, not named roles:
 
-For multi-night roles, temporal coherence is a first-class policy concern.
+- recurring numeric information;
+- recurring boolean / target-check information;
+- role-identification information triggered by later events;
+- pair / categorical information;
+- future scripts with other repeated or history-dependent information surfaces.
+
+Named roles such as Empath, Fortune Teller, Undertaker or Ravenkeeper are examples only. They must not define separate policy algorithms.
+
+The goal is not "always false." A truthful output is legal and may be the most believable continuation when a forced lie would contradict the established narrative, reveal impairment, or create an implausible discontinuity.
+
+Temporal coherence is therefore a first-class policy concern:
+
+- previously committed information constrains later choices;
+- deaths, seat-neighbour changes, executions, claims, registrations and other newly visible facts may legitimately change the next result;
+- absence of a meaningful world change should not cause arbitrary information oscillation;
+- when several legal continuations exist, prefer one that preserves a simple coherent perceived world;
+- if the previous narrative becomes impossible, transition deliberately to the least disruptive new explanation rather than randomizing independently.
+
+This state is not permission to fabricate illegal outputs. Rules still own the current legal surface domain; the persistent narrative owner ranks only among legal Storyteller-controllable outcomes.
+
+### 11.1 Generalization / anti-special-case invariant
+
+Implementation must solve this at the shared semantic/history layer, not through scenario-specific or role-specific patches.
+
+Forbidden target shapes include:
+
+~~~text
+if role == Empath and drunk ...
+if role == FortuneTeller and previousAnswer == ...
+if fixture == knownCalibrationCase ...
+if exact seating pattern == ...
+~~~
+
+unless the condition expresses an actual rules distinction owned by that role.
+
+A role module may define:
+
+> What outputs are legal for this ability?
+
+It must not separately own:
+
+> How should misinformation remain coherent across time?
+
+That second question belongs to the shared impaired-narrative policy/history owner.
+
+Every implementation slice must fan out across the supported information-shape families and prove the generic contract with typed tests. A test for one named role is insufficient if the production abstraction claims to support a broader family.
 
 ## 12. Poisoner lifecycle
 
@@ -362,6 +412,7 @@ The following existing architecture remains desirable:
 - exact/topology epistemic evaluators own consequence mechanics;
 - `StrategicWorldKey(demonSeat, minionSeats)` remains the strategic quotient;
 - `NormalizedStrategicDiagnosticsProjector` remains descriptive, not a policy scorer;
+- persistent impaired narrative coherence belongs to a shared semantic/history policy owner, not named-role branches;
 - Demon-bluff joint-output evaluation remains separate from legality;
 - Drunk shown identity remains setup-persistent;
 - Poisoner target remains Evil-player-controlled;
@@ -468,7 +519,7 @@ Do not freeze these from intuition alone.
 
 The current policy direction is:
 
-> **Enumerate every legal first-night information outcome, preserve role/lifecycle ownership, prefer Spy-as-Good and Recluse-as-Evil registration by default, avoid directly exposing Recluse to the Librarian or Spy to the Investigator when healthy alternatives exist, and select information as a whole-table bundle whose goal is a playable middle band rather than a maximum/minimum metric. Drunk misinformation must form a believable cross-night story rather than merely be false.**
+> **Enumerate every legal first-night information outcome, preserve role/lifecycle ownership, prefer Spy-as-Good and Recluse-as-Evil registration by default, avoid directly exposing Recluse to the Librarian or Spy to the Investigator when healthy alternatives exist, and select information as a whole-table bundle whose goal is a playable middle band rather than a maximum/minimum metric. Impaired misinformation must preserve a believable cross-interaction perceived world through a shared role-agnostic narrative state rather than independent per-role lies.**
 
 
 ## 19. Active documentation authority
