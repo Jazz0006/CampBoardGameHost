@@ -119,8 +119,9 @@ class Sde2D5CalibrationExperiment {
         )
         assertEquals(
             setOf(
-                Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION,
-                Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION,
+                Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION_REFERENCE,
+                Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION_REFERENCE,
+                Sde2D5DemonBluffSelectionReason.EXTERNAL_HUMAN_OBSERVED,
             ),
             calibration.selected.flatMapTo(linkedSetOf()) { it.selectionReasons },
         )
@@ -131,6 +132,12 @@ class Sde2D5CalibrationExperiment {
                 .distinct()
                 .size > 1,
         )
+        val observed = calibration.selected.single {
+            Sde2D5DemonBluffSelectionReason.EXTERNAL_HUMAN_OBSERVED in it.selectionReasons
+        }.evidence
+        assertTrue(observed.externalHumanObservedCaseIds.isNotEmpty())
+        assertTrue(observed.individualSupportFloorStrategicWorldCount >= 0)
+        assertTrue(observed.narrativeRouteClassCount >= 2)
     }
 
     @Test

@@ -11,6 +11,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffTripl
 import com.codex.campboardgamehost.clocktower.recommendation.sde.StrategicRatio
 import java.math.BigInteger
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class Sde2D5DemonBluffCalibrationEvidenceTest {
@@ -77,6 +78,11 @@ class Sde2D5DemonBluffCalibrationEvidenceTest {
         assertEquals(1, evidence.sharedStrategicWorldCount)
         assertEquals(StrategicRatio.Defined(1, 3), evidence.sharedToUnionRetention)
         assertEquals(3, evidence.distinctRoleStrategicPatternCount)
+        assertEquals(1, evidence.individualSupportFloorStrategicWorldCount)
+        assertEquals(3, evidence.pairwiseStrategicCoverage.size)
+        assertTrue(evidence.claimCadenceClassCount >= 1)
+        assertTrue(evidence.narrativeRouteClassCount >= 1)
+        assertEquals(roles.toSet(), evidence.roleTraits.keys)
         assertEquals(
             StrategicRatio.Defined(3, 4),
             evidence.roleSupportNormalized.getValue(monk).evilTopologyRetention,
@@ -136,8 +142,8 @@ class Sde2D5DemonBluffCalibrationEvidenceTest {
 
         assertEquals(
             setOf(
-                Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION,
-                Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION,
+                Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION_REFERENCE,
+                Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION_REFERENCE,
             ),
             selected.flatMapTo(linkedSetOf()) { it.selectionReasons },
         )
@@ -146,12 +152,59 @@ class Sde2D5DemonBluffCalibrationEvidenceTest {
             selected.mapTo(linkedSetOf()) { it.evidence.candidateId },
         )
         assertEquals(
-            setOf(Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION),
+            setOf(Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION_REFERENCE),
             selected.single { it.evidence.candidateId == "fragile" }.selectionReasons,
         )
         assertEquals(
-            setOf(Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION),
+            setOf(Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION_REFERENCE),
             selected.single { it.evidence.candidateId == "robust" }.selectionReasons,
+        )
+    }
+
+    @Test
+    fun `human observed bluff triplet is selected without turning observation into a score`() {
+        val saint = RoleId("Saint")
+        val monk = RoleId("Monk")
+        val investigator = RoleId("Investigator")
+        val baseline = structure(setOf(key(1, 5), key(2, 5), key(3, 5)))
+        val common = structure(setOf(key(1, 5), key(2, 5)))
+        val observed = projectTriplet(
+            candidateId = "observed-ct03",
+            roles = listOf(saint, monk, investigator),
+            supports = listOf(
+                support(saint, baseline, common, 20),
+                support(monk, baseline, common, 20),
+                support(investigator, baseline, common, 20),
+            ),
+            union = common.strategicWorldKeys,
+            shared = common.strategicWorldKeys,
+            distinctPatterns = 1,
+        )
+
+        assertEquals(setOf("ct-03"), observed.externalHumanObservedCaseIds)
+        assertEquals(3, observed.narrativeRouteClassCount)
+        assertEquals(3, observed.claimCadenceClassCount)
+
+        val selected = Sde2D5DemonBluffCalibrationEvidenceSelector.selectReviewContrasts(
+            listOf(
+                observed,
+                projectTriplet(
+                    candidateId = "other",
+                    roles = listOf(RoleId("Soldier"), RoleId("Mayor"), RoleId("Butler")),
+                    supports = listOf(
+                        support(RoleId("Soldier"), baseline, common, 20),
+                        support(RoleId("Mayor"), baseline, common, 20),
+                        support(RoleId("Butler"), baseline, common, 20),
+                    ),
+                    union = common.strategicWorldKeys,
+                    shared = common.strategicWorldKeys,
+                    distinctPatterns = 1,
+                ),
+            ),
+        )
+        assertTrue(
+            Sde2D5DemonBluffSelectionReason.EXTERNAL_HUMAN_OBSERVED in
+                selected.single { it.evidence.candidateId == "observed-ct03" }.selectionReasons,
         )
     }
 

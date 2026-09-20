@@ -60,9 +60,39 @@ class Sde2D5FCalibrationReviewExportTest {
                 sharedStrategicWorldCount = 1,
                 sharedToUnionRetention = StrategicRatio.Defined(1, 3),
                 distinctRoleStrategicPatternCount = 3,
+                individualSupportFloorStrategicWorldCount = 3,
+                roleTraits = roles.associateWith(Sde2D5DemonBluffRoleTraits::forRole),
+                claimCadenceClassCount =
+                    roles.map { Sde2D5DemonBluffRoleTraits.forRole(it).claimCadence }.distinct().size,
+                narrativeRouteClassCount =
+                    roles.map { Sde2D5DemonBluffRoleTraits.forRole(it).narrativeRouteClass }.distinct().size,
+                pairwiseStrategicCoverage = listOf(
+                    Sde2D5BluffPairwiseCoverage(
+                        firstRole = roles[0],
+                        secondRole = roles[1],
+                        unionStrategicWorldCount = 3,
+                        sharedStrategicWorldCount = 1,
+                        sharedToUnionRetention = StrategicRatio.Defined(1, 3),
+                    ),
+                    Sde2D5BluffPairwiseCoverage(
+                        firstRole = roles[0],
+                        secondRole = roles[2],
+                        unionStrategicWorldCount = 3,
+                        sharedStrategicWorldCount = 1,
+                        sharedToUnionRetention = StrategicRatio.Defined(1, 3),
+                    ),
+                    Sde2D5BluffPairwiseCoverage(
+                        firstRole = roles[1],
+                        secondRole = roles[2],
+                        unionStrategicWorldCount = 3,
+                        sharedStrategicWorldCount = 1,
+                        sharedToUnionRetention = StrategicRatio.Defined(1, 3),
+                    ),
+                ),
+                externalHumanObservedCaseIds = emptySet(),
             ),
             selectionReasons = setOf(
-                Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION,
+                Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION_REFERENCE,
             ),
         )
         val roleInformation = Sde2D5RoleInformationCalibrationEvidence(

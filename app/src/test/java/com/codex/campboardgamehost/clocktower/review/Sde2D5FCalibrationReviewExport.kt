@@ -343,8 +343,36 @@ internal object Sde2D5FCalibrationReviewRenderer {
                 appendLine("sharedToUnionRetention=${renderRatio(evidence.sharedToUnionRetention)}")
                 appendLine("distinctRoleStrategicPatternCount=${evidence.distinctRoleStrategicPatternCount}")
                 appendLine(
+                    "individualSupportFloorStrategicWorldCount=" +
+                        evidence.individualSupportFloorStrategicWorldCount,
+                )
+                appendLine("claimCadenceClassCount=${evidence.claimCadenceClassCount}")
+                appendLine("narrativeRouteClassCount=${evidence.narrativeRouteClassCount}")
+                appendLine(
+                    "externalHumanObservedCaseIds=" +
+                        evidence.externalHumanObservedCaseIds.sorted().joinToString(","),
+                )
+                appendLine(
                     "selectionReasons=${selection.selectionReasons.sortedBy { it.name }.joinToString(",")}",
                 )
+                evidence.roles.sortedBy { it.value }.forEach { role ->
+                    val trait = evidence.roleTraits.getValue(role)
+                    appendLine(
+                        "roleTrait[${role.value}]=" +
+                            "executionBurden=${trait.beginnerExecutionBurden}," +
+                            "claimBurden=${trait.claimBurden}," +
+                            "cadence=${trait.claimCadence}," +
+                            "route=${trait.narrativeRouteClass}",
+                    )
+                }
+                evidence.pairwiseStrategicCoverage.forEach { pair ->
+                    appendLine(
+                        "pairCoverage[${pair.firstRole.value},${pair.secondRole.value}]=" +
+                            "shared=${pair.sharedStrategicWorldCount}," +
+                            "union=${pair.unionStrategicWorldCount}," +
+                            "retention=${renderRatio(pair.sharedToUnionRetention)}",
+                    )
+                }
                 evidence.roles.sortedBy { it.value }.forEach { role ->
                     appendNormalized(
                         "roleSupport[${role.value}]",

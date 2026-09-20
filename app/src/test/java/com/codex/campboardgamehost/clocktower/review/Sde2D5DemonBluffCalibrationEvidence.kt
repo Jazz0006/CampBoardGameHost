@@ -1,10 +1,90 @@
 package com.codex.campboardgamehost.clocktower.review
 
+import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputDiagnostics
 import com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnostics
 import com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnosticsProjector
 import com.codex.campboardgamehost.clocktower.recommendation.sde.StrategicRatio
+
+internal enum class Sde2D5BluffClaimCadence {
+    ONE_SHOT,
+    RECURRING_NIGHTLY,
+    TRIGGERED,
+    PASSIVE_OR_SOCIAL,
+}
+
+internal enum class Sde2D5BluffNarrativeRouteClass {
+    INFORMATION,
+    PROTECTION,
+    PASSIVE_SURVIVAL,
+    PUBLIC_ABILITY,
+    SOCIAL_OUTSIDER,
+}
+
+internal data class Sde2D5BluffRoleTrait(
+    val beginnerExecutionBurden: Int,
+    val claimBurden: Int,
+    val claimCadence: Sde2D5BluffClaimCadence,
+    val narrativeRouteClass: Sde2D5BluffNarrativeRouteClass,
+) {
+    init {
+        require(beginnerExecutionBurden >= 0)
+        require(claimBurden in 1..5)
+    }
+}
+
+internal data class Sde2D5BluffPairwiseCoverage(
+    val firstRole: RoleId,
+    val secondRole: RoleId,
+    val unionStrategicWorldCount: Int,
+    val sharedStrategicWorldCount: Int,
+    val sharedToUnionRetention: StrategicRatio,
+) {
+    init {
+        require(firstRole != secondRole)
+        require(unionStrategicWorldCount >= 0)
+        require(sharedStrategicWorldCount in 0..unionStrategicWorldCount)
+    }
+}
+
+internal object Sde2D5DemonBluffRoleTraits {
+    fun forRole(role: RoleId): Sde2D5BluffRoleTrait {
+        val (claimBurden, cadence, route) = when (role.value) {
+            "Washerwoman", "Librarian", "Investigator", "Chef" ->
+                Triple(2, Sde2D5BluffClaimCadence.ONE_SHOT, Sde2D5BluffNarrativeRouteClass.INFORMATION)
+            "Empath", "Fortune Teller" ->
+                Triple(5, Sde2D5BluffClaimCadence.RECURRING_NIGHTLY, Sde2D5BluffNarrativeRouteClass.INFORMATION)
+            "Undertaker", "Ravenkeeper" ->
+                Triple(4, Sde2D5BluffClaimCadence.TRIGGERED, Sde2D5BluffNarrativeRouteClass.INFORMATION)
+            "Monk" ->
+                Triple(4, Sde2D5BluffClaimCadence.RECURRING_NIGHTLY, Sde2D5BluffNarrativeRouteClass.PROTECTION)
+            "Virgin", "Slayer" ->
+                Triple(2, Sde2D5BluffClaimCadence.TRIGGERED, Sde2D5BluffNarrativeRouteClass.PUBLIC_ABILITY)
+            "Soldier", "Mayor", "Saint" ->
+                Triple(1, Sde2D5BluffClaimCadence.PASSIVE_OR_SOCIAL, Sde2D5BluffNarrativeRouteClass.PASSIVE_SURVIVAL)
+            "Butler", "Recluse", "Drunk" ->
+                Triple(2, Sde2D5BluffClaimCadence.PASSIVE_OR_SOCIAL, Sde2D5BluffNarrativeRouteClass.SOCIAL_OUTSIDER)
+            else -> error("Missing D5F bluff review trait metadata for ${role.value}.")
+        }
+        return Sde2D5BluffRoleTrait(
+            beginnerExecutionBurden = TroubleBrewingRecommendationMetadata.forRole(role).bluffDifficulty,
+            claimBurden = claimBurden,
+            claimCadence = cadence,
+            narrativeRouteClass = route,
+        )
+    }
+}
+
+internal object Sde2D5ExternalHumanBluffTriplets {
+    private val observed: Map<Set<RoleId>, Set<String>> = mapOf(
+        setOf(RoleId("Chef"), RoleId("Investigator"), RoleId("Saint")) to setOf("ct-01"),
+        setOf(RoleId("Saint"), RoleId("Monk"), RoleId("Investigator")) to setOf("ct-03"),
+    )
+
+    fun caseIdsFor(roles: Collection<RoleId>): Set<String> =
+        observed[roles.toSet()].orEmpty()
+}
 
 internal data class Sde2D5DemonBluffCalibrationEvidence(
     val candidateId: String,
@@ -22,6 +102,12 @@ internal data class Sde2D5DemonBluffCalibrationEvidence(
     val sharedStrategicWorldCount: Int,
     val sharedToUnionRetention: StrategicRatio,
     val distinctRoleStrategicPatternCount: Int,
+    val individualSupportFloorStrategicWorldCount: Int,
+    val roleTraits: Map<RoleId, Sde2D5BluffRoleTrait>,
+    val claimCadenceClassCount: Int,
+    val narrativeRouteClassCount: Int,
+    val pairwiseStrategicCoverage: List<Sde2D5BluffPairwiseCoverage>,
+    val externalHumanObservedCaseIds: Set<String>,
 ) {
     init {
         require(candidateId.isNotBlank())
@@ -36,6 +122,11 @@ internal data class Sde2D5DemonBluffCalibrationEvidence(
         require(roleStrategicWorldCounts.keys == roles.toSet())
         require(sharedStrategicWorldCount in 0..unionStrategicWorldCount)
         require(distinctRoleStrategicPatternCount in 1..3)
+        require(individualSupportFloorStrategicWorldCount == roleStrategicWorldCounts.values.min())
+        require(roleTraits.keys == roles.toSet())
+        require(claimCadenceClassCount == roleTraits.values.map { it.claimCadence }.distinct().size)
+        require(narrativeRouteClassCount == roleTraits.values.map { it.narrativeRouteClass }.distinct().size)
+        require(pairwiseStrategicCoverage.size == 3)
     }
 }
 
@@ -64,6 +155,35 @@ internal object Sde2D5DemonBluffCalibrationEvidenceProjector {
             "Every Demon bluff role must expose support for the selected calibration recipient."
         }
 
+        val roleStrategicKeys = diagnostic.roles.associateWith { role ->
+            supportDiagnostics.getValue(role).afterStructure.strategicWorldKeys
+        }
+        val roleTraits = diagnostic.roles.associateWith(Sde2D5DemonBluffRoleTraits::forRole)
+        val pairwiseCoverage = buildList {
+            diagnostic.roles.indices.forEach { firstIndex ->
+                for (secondIndex in firstIndex + 1 until diagnostic.roles.size) {
+                    val firstRole = diagnostic.roles[firstIndex]
+                    val secondRole = diagnostic.roles[secondIndex]
+                    val firstKeys = roleStrategicKeys.getValue(firstRole)
+                    val secondKeys = roleStrategicKeys.getValue(secondRole)
+                    val union = firstKeys union secondKeys
+                    val shared = firstKeys intersect secondKeys
+                    add(
+                        Sde2D5BluffPairwiseCoverage(
+                            firstRole = firstRole,
+                            secondRole = secondRole,
+                            unionStrategicWorldCount = union.size,
+                            sharedStrategicWorldCount = shared.size,
+                            sharedToUnionRetention = StrategicRatio.bounded(
+                                numerator = shared.size,
+                                denominator = union.size,
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+
         return Sde2D5DemonBluffCalibrationEvidence(
             candidateId = diagnostic.candidateId,
             recipientSeat = recipientSeat,
@@ -90,14 +210,24 @@ internal object Sde2D5DemonBluffCalibrationEvidenceProjector {
                 denominator = recipient.unionStrategicWorldKeys.size,
             ),
             distinctRoleStrategicPatternCount = recipient.distinctRoleStrategicPatternCount,
+            individualSupportFloorStrategicWorldCount =
+                roleStrategicKeys.values.minOf { it.size },
+            roleTraits = roleTraits,
+            claimCadenceClassCount = roleTraits.values.map { it.claimCadence }.distinct().size,
+            narrativeRouteClassCount =
+                roleTraits.values.map { it.narrativeRouteClass }.distinct().size,
+            pairwiseStrategicCoverage = pairwiseCoverage,
+            externalHumanObservedCaseIds =
+                Sde2D5ExternalHumanBluffTriplets.caseIdsFor(diagnostic.roles),
         )
     }
 }
 
 
 internal enum class Sde2D5DemonBluffSelectionReason {
-    LOWEST_SHARED_TO_UNION,
-    HIGHEST_SHARED_TO_UNION,
+    LOWEST_SHARED_TO_UNION_REFERENCE,
+    HIGHEST_SHARED_TO_UNION_REFERENCE,
+    EXTERNAL_HUMAN_OBSERVED,
 }
 
 internal data class Sde2D5DemonBluffCalibrationSelection(
@@ -141,8 +271,13 @@ internal object Sde2D5DemonBluffCalibrationEvidenceSelector {
             entry.second += reason
         }
 
-        add(lowest, Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION)
-        add(highest, Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION)
+        add(lowest, Sde2D5DemonBluffSelectionReason.LOWEST_SHARED_TO_UNION_REFERENCE)
+        add(highest, Sde2D5DemonBluffSelectionReason.HIGHEST_SHARED_TO_UNION_REFERENCE)
+        evidence
+            .filter { it.externalHumanObservedCaseIds.isNotEmpty() }
+            .forEach { observed ->
+                add(observed, Sde2D5DemonBluffSelectionReason.EXTERNAL_HUMAN_OBSERVED)
+            }
 
         return selected.values
             .map { (point, reasons) ->
