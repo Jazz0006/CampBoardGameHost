@@ -375,10 +375,11 @@ Audit conclusion:
 - D5A/B remain valid;
 - D5C/D/E evidence remains useful but incomplete for policy calibration;
 - the current eight-record v1 manifest must remain UNREVIEWED and must not feed D5F-C;
-- fixed impaired false-family preference is a legacy policy contradiction;
+- fixed impaired false-family preference is a legacy policy contradiction **as a target model**, but the existing 90/10 production bridge remains temporarily in place until SDE replacement; B3 should remove tests/calibration assumptions that freeze that percentage rather than rewrite production behavior;
 - shared/union remains diagnostic/coherence evidence, not a monotone bluff-quality target;
 - isolated strong healthy clues remain legitimate game variance; do not add automatic seat reroll for a lone Empath 2;
-- human review resumes only after a corrected v2 review schema/manifest covers truth+false Drunk contrasts, bluff execution/narrative dimensions and bundle confirmation-chain evidence.
+- human review resumes only after a corrected v2 review schema/manifest covers truth+false Drunk contrasts, bluff execution/narrative dimensions and bundle confirmation-chain evidence;
+- generic shown-identity setup support must remain for future GENERATED/custom-script setups; the legacy `SetupEvaluator` Drunk shown-role score is not the durable owner.
 
 **NEXT: implement D5F-B3 policy-model correction, regenerate v2 review material/manifest, then resume human review.**
 
