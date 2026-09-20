@@ -13,6 +13,7 @@ internal enum class Sde2D5FReviewEvidenceKind {
 
 internal enum class Sde2D5FReviewability {
     REFERENCE,
+    DIAGNOSTIC_ONLY,
     REVIEWABLE,
 }
 
@@ -127,7 +128,9 @@ internal data class Sde2D5FReviewRecord(
 
     val initialLabel: FirstNightBeginnerCorpusLabel?
         get() = when (reviewability) {
-            Sde2D5FReviewability.REFERENCE -> null
+            Sde2D5FReviewability.REFERENCE,
+            Sde2D5FReviewability.DIAGNOSTIC_ONLY,
+            -> null
             Sde2D5FReviewability.REVIEWABLE -> FirstNightBeginnerCorpusLabel.UNREVIEWED
         }
 }
@@ -156,6 +159,10 @@ internal object Sde2D5FCalibrationReviewBuilder {
         bluffSelections: List<Sde2D5DemonBluffCalibrationSelection>,
         roleInformationEvidence: List<Sde2D5RoleInformationCalibrationEvidence>,
         confirmationSelections: List<Sde2D5BundleConfirmationSelection> = emptyList(),
+        roleInformationReviewability: Sde2D5FReviewability =
+            Sde2D5FReviewability.REVIEWABLE,
+        confirmationReviewability: Sde2D5FReviewability =
+            Sde2D5FReviewability.REVIEWABLE,
     ): Sde2D5FCalibrationReviewMaterial {
         require(baselineReferences.all { it.evidenceKind == Sde2D5EvidenceKind.BASELINE })
 
@@ -243,7 +250,7 @@ internal object Sde2D5FCalibrationReviewBuilder {
                     Sde2D5FReviewRecord(
                         reviewId = "d5f:role-info:${point.pointId}",
                         evidenceKind = Sde2D5FReviewEvidenceKind.ROLE_INFORMATION_CONTRAST,
-                        reviewability = Sde2D5FReviewability.REVIEWABLE,
+                        reviewability = roleInformationReviewability,
                         regime = point.regime,
                         profileKind = point.profileKind,
                         contrastId = point.contrastId,
@@ -284,7 +291,7 @@ internal object Sde2D5FCalibrationReviewBuilder {
                     Sde2D5FReviewRecord(
                         reviewId = "d5f:confirmation:${evidence.signatureId}",
                         evidenceKind = Sde2D5FReviewEvidenceKind.BUNDLE_CONFIRMATION_CHAIN,
-                        reviewability = Sde2D5FReviewability.REVIEWABLE,
+                        reviewability = confirmationReviewability,
                         regime = evidence.regime,
                         profileKind = evidence.profileKind,
                         contrastId = evidence.signatureId,
