@@ -72,7 +72,7 @@ class ClocktowerRecommendationCoordinatorTest {
         )
 
         assertTrue(selected.decisions.none {
-            it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+            it is StorytellerDecision.DrunkInvestigatorInfo
         })
         assertTrue(selected.observations.any { observation ->
             observation.sourceSeat == 6 &&

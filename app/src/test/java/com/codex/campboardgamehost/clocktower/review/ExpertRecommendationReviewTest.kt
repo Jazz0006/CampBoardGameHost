@@ -59,19 +59,10 @@ private object LegacyFirstLegalBaseline {
             }
 
             val drunkPlayer = game.players.firstOrNull { it.actualRole == drunk }
-            if (drunkPlayer != null) {
-                val legalShownRoles = scriptRoles.filter {
-                    it.type == CharacterType.TOWNSFOLK && it.id !in inPlay
-                }
-                val shownRole = drunkPlayer.shownRole
-                    ?.takeIf { shown -> legalShownRoles.any { it.id == shown } }
-                    ?: legalShownRoles.first().id
-                add(StorytellerDecision.DrunkShownRole(shownRole))
-                if (shownRole == investigator) {
-                    val shownMinion = scriptRoles.first { it.type == CharacterType.MINION }.id
-                    val pair = game.players.filterNot { it.seat == drunkPlayer.seat }.take(2).map { it.seat }.sorted()
-                    add(StorytellerDecision.DrunkInvestigatorInfo(shownMinion, pair))
-                }
+            if (drunkPlayer?.shownRole == investigator) {
+                val shownMinion = scriptRoles.first { it.type == CharacterType.MINION }.id
+                val pair = game.players.filterNot { it.seat == drunkPlayer.seat }.take(2).map { it.seat }.sorted()
+                add(StorytellerDecision.DrunkInvestigatorInfo(shownMinion, pair))
             }
 
             if (game.players.size >= 7 && game.players.any { it.actualType == CharacterType.DEMON }) {

@@ -71,7 +71,7 @@ class ClocktowerGameSessionTest {
     fun `completed game signature survives snapshot restore`() {
         val signature = HistoricalClueSignature(
             decisionType = "setup-plan",
-            drunkShownRole = RoleId("Monk"),
+            shownCharacter = RoleId("Monk"),
         )
         val original = newSession().also { it.recordCompletedGameSignature(signature) }
 
