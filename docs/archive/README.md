@@ -10,6 +10,7 @@
 ```text
 handoffs/     closed or superseded NEXT handoffs
 checkpoints/  completed implementation/test/checkpoint evidence
+               including fn-bundle/ and sde/ campaign histories
 ui/           superseded UI plans and UI campaign closeout evidence
 deferred/     unfinished but explicitly deferred future work
 workflows/    superseded workflow instructions
@@ -38,6 +39,17 @@ checkpoints/d6/
 ```
 
 Use `checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md` as the historical entry point. The individual D6 audit/progress files should not be loaded by default in new sessions.
+
+### 2026-09-20 FN-BUNDLE / SDE checkpoint consolidation
+
+Completed FN-BUNDLE and SDE slice-level audits were moved out of active `docs/` so new sessions do not load obsolete execution details by default.
+
+Historical indexes:
+
+- [`checkpoints/fn-bundle/README.md`](checkpoints/fn-bundle/README.md)
+- [`checkpoints/sde/README.md`](checkpoints/sde/README.md)
+
+Current SDE status must be read from `../CURRENT_DEVELOPMENT_ROADMAP.md`, `../NEXT_DEVELOPMENT_HANDOFF.md`, and the current specialized authority named there.
 
 ## 2. Handoffs
 
