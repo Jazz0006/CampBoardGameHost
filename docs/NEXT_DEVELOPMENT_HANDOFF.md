@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-19 Australia/Sydney  
-> Status: **SDE-2D5 CURRENT — D5F-B infrastructure complete; HUMAN REVIEW next**  
+> Status: **SDE-2D5 CURRENT — D5F-B human review pending; D5F-B2 external-human pilot ACTIVE**  
 > Base checkpoint: PR #149 squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`; D2D5 branch `sde-2d5-calibration-policy-evidence`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
@@ -14,7 +14,9 @@ Read, in order:
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
-5. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
+5. `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`;
+6. `docs/SDE_2D5F_EXTERNAL_HUMAN_EVIDENCE_PILOT_2026-09-20.md`;
+7. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
 6. `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
 7. `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
 8. `docs/SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`;
@@ -31,6 +33,16 @@ Read, in order:
 19. query live `main`, PR #149 head and current checks before executable edits.
 
 Do not restart completed FN-BUNDLE, SDE-0, SDE-1 or SDE-2A/B/C work.
+
+D5F-B2 is deliberately parallel calibration evidence, not a replacement for the controlled eight-item D5F-B review. The first 14-player public Trouble Brewing pilot completed successfully and exposed a policy correction: Demon-bluff shared/union support is not monotone BEGINNER quality. Preserve practical bluffability, real-information anchoring, narrative-route diversity, complementary strategic coverage and a bounded Night-1 pressure band as separate hypotheses until further real cases are reviewed.
+
+Immediate continuation:
+
+1. continue explicit human judgment of the eight repaired D5F records;
+2. reconstruct 2–3 more public Trouble Brewing Night-1 cases;
+3. classify external cases as fully reconstructible executable fixtures or qualitative-only evidence;
+4. compare repeated/new axes before D5F-C gate derivation;
+5. do not open holdout, freeze thresholds, cut production policy, or begin SDE-3.
 
 ## 1. Live continuation point
 
