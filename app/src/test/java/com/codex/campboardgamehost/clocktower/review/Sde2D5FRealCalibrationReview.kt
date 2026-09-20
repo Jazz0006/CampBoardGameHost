@@ -30,6 +30,12 @@ internal object Sde2D5FRealCalibrationReviewBuilder {
             bluffSelections = bluff.selected,
             roleInformationEvidence = selectedRoleInformation,
             confirmationSelections = roleInformation.confirmationChainSelections,
+            // D5E deliberately uses one extreme 7-player diagnostic fixture. Human review
+            // showed that Chef=1 + Empath=0 already leaves Evil with little practical room.
+            // Keep these records for regression/diagnostic value, but do not let them
+            // calibrate BEGINNER policy gates.
+            roleInformationReviewability = Sde2D5FReviewability.DIAGNOSTIC_ONLY,
+            confirmationReviewability = Sde2D5FReviewability.DIAGNOSTIC_ONLY,
         )
     }
 }
