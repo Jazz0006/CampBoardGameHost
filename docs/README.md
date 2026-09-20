@@ -45,7 +45,7 @@ SDE-3                                  BLOCKED
 - 这个默认是强 prior，不是硬规则；只有 whole-bundle health 有实质改善时才 override。
 - 有健康替代时，避免 Librarian 直接暴露 Recluse，强烈避免 Investigator 直接暴露 Spy；forced case 正常接受。
 - Chef / Empath 只有在所有合法 Spy/Recluse registration 分支都得到同一个值时才是 rule-determined。
-- Drunk misinformation 不等于必须说假话；多夜信息应保持可信的 shadow-world / narrative trajectory。
+- 受损信息不等于必须说假话；重复/历史依赖的信息必须通过共享、角色无关的 persistent narrative state 维持玩家认知世界的一致性，不能按角色分别写特判。
 - Demon bluffs、Red Herring、pair clues、numeric registration branches、Drunk/poisoned information应在生命周期允许范围内按 whole-bundle 评价。
 - strategic evil topology 比 raw role-world multiplicity 更重要，但不能代替 role-information utility、confirmation-chain、role-function exposure、bluff usability 等语义维度。
 - 不引入 opaque global scalar。
