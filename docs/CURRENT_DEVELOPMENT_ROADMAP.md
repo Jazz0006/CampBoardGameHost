@@ -63,7 +63,7 @@ D5A–D5E                         COMPLETE
 D5F-A                           COMPLETE
 D5F-B manifest infrastructure  COMPLETE
 D5F-B3 policy-model correction COMPLETE
-D5F-B representative calibration CORRECTION / NEXT
+D5F-B representative calibration MATERIALIZED / DIAGNOSTICS NEXT
 D5F-C gate/band derivation     BLOCKED
 sealed holdout                 CLOSED
 SDE-3                           BLOCKED
@@ -76,6 +76,10 @@ Current policy-model authority:
 Current external-human evidence catalog:
 
 [`SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv`](SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv)
+
+Representative healthy-information corpus authority:
+
+[`SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md`](SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md)
 
 ## 4. D5F-B3 accepted model
 
@@ -238,21 +242,42 @@ SetupShownIdentityPolicyResolver.resolveGenerated(...)
 
 Do not restore old `SetupEvaluator` / recommendation-owned Drunk shown-role scoring.
 
-## 8. NEXT — representative healthy-information calibration
+## 8. NEXT — representative healthy-information diagnostics and review selection
 
 Do **not** continue labeling the two remaining v2 Chef/Empath records.
 
+Completed first representative materialization slice:
+
+- audited all production 7–9 preset pools: 50 presets per player count;
+- confirmed 36 / 38 / 36 presets respectively contain at least one Washerwoman/Librarian/Investigator control surface;
+- selected seven `beginner` / `standard` production presets spanning 7–9 players and all three pair-information roles;
+- committed deterministic seating through the production `TroubleBrewingSetupDealPlanner`;
+- enumerated legal healthy clue outputs through `NaturalPairInformationCandidateGenerator`;
+- fixed Poisoner targets only as explicit Evil-player-controlled context;
+- retained Chef/Empath as fixed context; any registration-dependent healthy branch is exposed rather than optimized;
+- added human-readable seating/clue rendering and registration provenance;
+- kept the new materialization outside review membership and gate derivation.
+
+Implementation checkpoint:
+
+`cb1ffc454f87a7be8b166d8013746dee7f50bfda`
+
+Validation:
+
+- CI run `35514598766` — **SUCCESS**;
+- R2 run `35514598790` — **SUCCESS**.
+
 Next:
 
-1. build representative D5F healthy-information cases from actual supported setup templates and the ClockTracker real-game evidence;
-2. prefer 7–9 player normal/playable setups rather than pathological information-dense fixtures;
-3. within the same committed setup, vary only variables that are actually SDE-controllable at that lifecycle stage;
-4. compare Washerwoman / Librarian / Investigator legal output choices in context with fixed Chef/Empath information;
-5. preserve the external-human lesson that table-level cross-confirmation can matter even when topology/cover metrics are unchanged;
-6. add those representative records as `REVIEWABLE`, satisfying the missing `HEALTHY_BUNDLE_INFORMATION` calibration coverage;
+1. attach `TroubleBrewingTopologyHypotheticalBundleEvaluator` + `NormalizedStrategicDiagnosticsProjector` diagnostics to these exact scenario/candidate identities;
+2. keep Demon-cover, Evil-topology, Evil-cover, forced-good and feasibility components separate — no opaque global score;
+3. select a small human-review subset by semantic strata, not FIRST/MIDDLE/LAST ordering and not metric extrema;
+4. include whole-table context so fixed Chef/Empath and cross-confirmation routes remain visible;
+5. use ClockTracker / external-human evidence as ecology and guardrail anchors; do not invent direct healthy-pair labels where no equivalent observed choice exists;
+6. only after the representative review set is stable, add it as `REVIEWABLE` so `HEALTHY_BUNDLE_INFORMATION` coverage can be satisfied;
 7. only then resume D5F-C gate/band derivation.
 
-The ClockTracker investigation is calibration input, not decoration: it anchors the model in realistic Storyteller choices instead of a synthetic worst-case fixture.
+The machine corpus may retain all legal alternatives; the human labeling workload should stay bounded by table-meaning strata.
 
 ## 9. Blocked until representative calibration coverage exists
 
@@ -280,4 +305,4 @@ SDE-3 remains blocked until:
 
 Follow root `AGENTS.md` and [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md).
 
-For the next step — human labeling — do not manufacture runtime tests for label discussion. After manifest edits, run the manifest/review validation required by the testing strategy and the explicit D5 calibration workload when the evidence schema changes.
+For the next step, topology evaluation belongs in the explicit D5 calibration workload rather than FAST regression if it becomes expensive. Keep the semantic materializer covered by focused/FAST tests. Do not manufacture runtime tests for the later human label discussion itself.
