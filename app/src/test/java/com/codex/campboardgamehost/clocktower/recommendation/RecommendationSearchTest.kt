@@ -42,7 +42,7 @@ class SetupRecommendationServiceTest {
     @Test
     fun `same seed and same cross game history produce the same recommendations`() {
         val history = CrossGameHistory(
-            listOf(HistoricalClueSignature("setup-plan", drunkShownRole = RoleId("Investigator"))),
+            listOf(HistoricalClueSignature("setup-plan", shownCharacter = RoleId("Investigator"))),
         )
 
         val first = SetupRecommendationService.recommend(game, roles, history)
@@ -57,7 +57,7 @@ class SetupRecommendationServiceTest {
             val top = SetupRecommendationService.rankedPlans(game, roles, profile).first()
 
             assertTrue(top.decisions.none {
-                it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+                it is StorytellerDecision.DrunkInvestigatorInfo
             })
             assertTrue(top.observations.any { observation ->
                 observation.sourceSeat == 6 &&

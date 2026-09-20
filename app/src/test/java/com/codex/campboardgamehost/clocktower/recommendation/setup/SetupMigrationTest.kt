@@ -33,12 +33,11 @@ class SetupMigrationTest {
 
         assertTrue(plans.isNotEmpty())
         assertTrue(plans.all { plan ->
-            plan.decisions.none { it is StorytellerDecision.DrunkShownRole } &&
-                plan.observations.any { observation ->
-                    observation.sourceSeat == drunkSeat &&
-                        observation.perceivedRole == RoleId("Librarian") &&
-                        observation.reliability == ReliabilityState.DRUNK
-                }
+            plan.observations.any { observation ->
+                observation.sourceSeat == drunkSeat &&
+                    observation.perceivedRole == RoleId("Librarian") &&
+                    observation.reliability == ReliabilityState.DRUNK
+            }
         })
     }
 
@@ -97,8 +96,7 @@ class SetupMigrationTest {
 
         assertTrue(plans.isNotEmpty())
         assertTrue(plans.all { plan ->
-            plan.decisions.none { it is StorytellerDecision.DrunkShownRole } &&
-                plan.decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().single() == committedInformation
+            plan.decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().single() == committedInformation
         })
     }
 }

@@ -3,8 +3,6 @@ package com.codex.campboardgamehost.clocktower.domain
 sealed interface StorytellerDecision {
     data class RedHerring(val seat: Int) : StorytellerDecision
 
-    data class DrunkShownRole(val role: RoleId) : StorytellerDecision
-
     data class DrunkInvestigatorInfo(
         val shownMinion: RoleId,
         val candidateSeats: List<Int>,
@@ -15,14 +13,12 @@ sealed interface StorytellerDecision {
 
 enum class StorytellerDecisionKind {
     RED_HERRING,
-    DRUNK_SHOWN_ROLE,
     DRUNK_INVESTIGATOR_INFO,
     DEMON_BLUFFS,
 }
 
 fun StorytellerDecision.kind(): StorytellerDecisionKind = when (this) {
     is StorytellerDecision.RedHerring -> StorytellerDecisionKind.RED_HERRING
-    is StorytellerDecision.DrunkShownRole -> StorytellerDecisionKind.DRUNK_SHOWN_ROLE
     is StorytellerDecision.DrunkInvestigatorInfo -> StorytellerDecisionKind.DRUNK_INVESTIGATOR_INFO
     is StorytellerDecision.DemonBluffs -> StorytellerDecisionKind.DEMON_BLUFFS
 }
@@ -73,7 +69,6 @@ data class PlanWarning(
 
 data class PlanEffectSignature(
     val redHerringSeat: Int? = null,
-    val drunkShownRole: RoleId? = null,
     val drunkInvestigatorShownMinion: RoleId? = null,
     val suspectedSeats: Set<Int> = emptySet(),
     val demonBluffs: Set<RoleId> = emptySet(),

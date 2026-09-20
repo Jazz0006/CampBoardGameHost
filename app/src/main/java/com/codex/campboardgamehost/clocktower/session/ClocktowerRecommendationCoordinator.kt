@@ -295,7 +295,6 @@ internal class ClocktowerRecommendationCoordinator(
         val canonical = plan.decisions.joinToString("|") { decision ->
             when (decision) {
                 is StorytellerDecision.RedHerring -> "red-herring:${decision.seat}"
-                is StorytellerDecision.DrunkShownRole -> "drunk-role:${decision.role.value}"
                 is StorytellerDecision.DrunkInvestigatorInfo ->
                     "drunk-investigator:${decision.shownMinion.value}:${decision.candidateSeats.sorted().joinToString(",")}"
                 is StorytellerDecision.DemonBluffs ->

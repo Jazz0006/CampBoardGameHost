@@ -35,16 +35,6 @@ internal object SetupEvaluator {
         profile: RecommendationProfile,
     ): DecisionEvaluation<SetupClueOutcome> {
         val recommendation = when (val outcome = candidate.outcome) {
-            is SetupClueOutcome.DrunkShownRole -> evaluateGenerated(
-                createContext(game),
-                CandidatePlan(
-                    listOfNotNull(
-                        StorytellerDecision.DrunkShownRole(outcome.shownRole),
-                        outcome.investigatorInformation,
-                    ),
-                ),
-                profile,
-            )
             is SetupClueOutcome.RedHerring -> evaluateGenerated(
                 createContext(game),
                 CandidatePlan(listOf(StorytellerDecision.RedHerring(outcome.seat))),
@@ -134,7 +124,6 @@ internal object SetupEvaluator {
         val warnings = mutableListOf<PlanWarning>()
         var qualityTier = QualityTier.RECOMMENDED
         val redHerring = candidate.decision<StorytellerDecision.RedHerring>()
-        val drunkShownRole = candidate.decision<StorytellerDecision.DrunkShownRole>()
         val drunkInfo = candidate.decision<StorytellerDecision.DrunkInvestigatorInfo>()
         val demonBluffs = candidate.decision<StorytellerDecision.DemonBluffs>()
         val drunkPlayer = context.drunkPlayer
@@ -155,17 +144,6 @@ internal object SetupEvaluator {
                 category = ScoreCategory.EXPOSURE,
                 delta = -metadata.exposureSensitivity * profile.criticalExposurePenalty,
                 seats = listOf(target.seat),
-            )
-        }
-
-        drunkShownRole?.let { decision ->
-            val metadata = TroubleBrewingRecommendationMetadata.forRole(decision.role)
-            addScore(
-                scoreItems,
-                ruleId = "drunk-shown-role-suitability",
-                category = ScoreCategory.ROLE_SUITABILITY,
-                delta = metadata.drunkSuitability * 3,
-                seats = listOfNotNull(drunkPlayer?.seat),
             )
         }
 
@@ -399,12 +377,10 @@ internal object SetupEvaluator {
 
     private fun CandidatePlan.effectSignature(): PlanEffectSignature {
         val redHerring = decision<StorytellerDecision.RedHerring>()
-        val shownRole = decision<StorytellerDecision.DrunkShownRole>()
         val investigatorInfo = decision<StorytellerDecision.DrunkInvestigatorInfo>()
         val bluffs = decision<StorytellerDecision.DemonBluffs>()
         return PlanEffectSignature(
             redHerringSeat = redHerring?.seat,
-            drunkShownRole = shownRole?.role,
             drunkInvestigatorShownMinion = investigatorInfo?.shownMinion,
             suspectedSeats = investigatorInfo?.candidateSeats?.toSet().orEmpty(),
             demonBluffs = bluffs?.roles?.toSet().orEmpty(),

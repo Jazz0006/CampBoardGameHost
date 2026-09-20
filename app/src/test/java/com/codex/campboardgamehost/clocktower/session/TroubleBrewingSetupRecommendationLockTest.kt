@@ -40,7 +40,7 @@ class TroubleBrewingSetupRecommendationLockTest {
         assertTrue(result.plans.isNotEmpty())
         result.plans.forEach { plan ->
             assertTrue(plan.decisions.none {
-                it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+                it is StorytellerDecision.DrunkInvestigatorInfo
             })
             assertTrue(plan.observations.any { observation ->
                 observation.sourceSeat == 6 &&

@@ -51,11 +51,6 @@ internal sealed interface LegalityFailure {
         override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
-    data class DrunkShownRoleIsInPlay(val role: RoleId) : LegalityFailure {
-        override val code: String = "drunk-shown-role-is-in-play"
-        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
-    }
-
     data class InvalidCandidateCount(val actualCount: Int) : LegalityFailure {
         override val code: String = "invalid-candidate-count"
         override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
@@ -104,7 +99,6 @@ internal object PlanLegalityValidator {
         val inPlayRoles = game.players.map { it.actualRole }.toSet()
 
         val redHerrings = plan.decisions.filterIsInstance<StorytellerDecision.RedHerring>()
-        val drunkShownRoles = plan.decisions.filterIsInstance<StorytellerDecision.DrunkShownRole>()
         val drunkInvestigatorInfos = plan.decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>()
         val demonBluffDecisions = plan.decisions.filterIsInstance<StorytellerDecision.DemonBluffs>()
 
@@ -117,10 +111,6 @@ internal object PlanLegalityValidator {
                 player.actualAlignment != Alignment.GOOD -> add(LegalityFailure.EvilRedHerring(decision.seat))
             }
         }
-
-        // Shown identity is already a committed setup fact. Recommendation may consume
-        // PlayerState.shownRole but must never select, replace, or lock it as a decision.
-        validateDecisionCount("drunk-shown-role", drunkShownRoles.size, required = false)
 
         // DrunkInvestigatorInfo is a legacy compatibility payload, not a required active
         // recommendation decision. A single historical/locked value remains legal only when

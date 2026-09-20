@@ -55,9 +55,6 @@ internal object SetupRecommendationService {
         if (duplicateKinds.isNotEmpty()) {
             return ConstrainedResult(emptyList(), listOf("duplicate-locked-decision"))
         }
-        if (lockedDecisions.any { it is StorytellerDecision.DrunkShownRole }) {
-            return ConstrainedResult(emptyList(), listOf("shown-identity-is-committed-setup-fact"))
-        }
         if (lockedDecisions.isNotEmpty() && SetupCandidateGenerator.generatePlans(game, roleDefinitions, lockedDecisions).firstOrNull() == null) {
             return ConstrainedResult(emptyList(), listOf("locked-decisions-illegal-or-incompatible"))
         }
@@ -161,7 +158,6 @@ internal object SetupRecommendationService {
         val canonical = plan.decisions.joinToString("|") { decision ->
             when (decision) {
                 is StorytellerDecision.RedHerring -> "red-herring:${decision.seat}"
-                is StorytellerDecision.DrunkShownRole -> "drunk-shown-role:${decision.role.value}"
                 is StorytellerDecision.DrunkInvestigatorInfo -> listOf(
                     "drunk-investigator",
                     decision.shownMinion.value,

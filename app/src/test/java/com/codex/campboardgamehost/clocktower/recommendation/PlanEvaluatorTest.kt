@@ -31,7 +31,7 @@ class SetupEvaluatorTest {
     }
 
     @Test
-    fun `committed Investigator identity produces generic Drunk observation without recommendation identity decision`() {
+    fun `committed Investigator identity produces generic Drunk observation without legacy information decision`() {
         val candidate = activePlan()
         val evaluated = SetupEvaluator.evaluate(
             game,
@@ -41,7 +41,7 @@ class SetupEvaluatorTest {
         )
 
         assertTrue(candidate.decisions.none {
-            it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+            it is StorytellerDecision.DrunkInvestigatorInfo
         })
         val observation = evaluated.observations.single()
         assertEquals(6, observation.sourceSeat)

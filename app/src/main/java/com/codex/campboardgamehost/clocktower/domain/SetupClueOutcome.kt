@@ -1,11 +1,6 @@
 package com.codex.campboardgamehost.clocktower.domain
 
 sealed interface SetupClueOutcome {
-    data class DrunkShownRole(
-        val shownRole: RoleId,
-        val investigatorInformation: StorytellerDecision.DrunkInvestigatorInfo? = null,
-    ) : SetupClueOutcome
-
     data class PairInformation(
         val abilityRole: RoleId,
         val information: PairInformationOutcome,

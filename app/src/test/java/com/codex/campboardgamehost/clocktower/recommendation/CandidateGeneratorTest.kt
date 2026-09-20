@@ -11,7 +11,7 @@ import org.junit.Test
 
 class SetupCandidateGeneratorTest {
     @Test
-    fun `active setup generation excludes recommendation owned Drunk identity and information`() {
+    fun `active setup generation excludes legacy Drunk information`() {
         val game = TroubleBrewingFixtures.eightPlayerExample()
         val roles = TroubleBrewingFixtures.roleDefinitions()
 
@@ -21,7 +21,7 @@ class SetupCandidateGeneratorTest {
         assertTrue(plans.all { PlanLegalityValidator.validate(game, roles, it).isEmpty() })
         assertTrue(plans.all { plan ->
             plan.decisions.none {
-                it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+                it is StorytellerDecision.DrunkInvestigatorInfo
             }
         })
     }
@@ -44,7 +44,7 @@ class SetupCandidateGeneratorTest {
     }
 
     @Test
-    fun `larger role catalog expands active setup space without reactivating legacy Drunk decisions`() {
+    fun `larger role catalog expands active setup space without reactivating legacy Drunk information`() {
         val basicCount = SetupCandidateGenerator.generatePlans(
             TroubleBrewingFixtures.eightPlayerExample(),
             TroubleBrewingFixtures.roleDefinitions(),
@@ -57,7 +57,7 @@ class SetupCandidateGeneratorTest {
         assertTrue(fullPlans.size > basicCount)
         assertTrue(fullPlans.all { plan ->
             plan.decisions.none {
-                it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+                it is StorytellerDecision.DrunkInvestigatorInfo
             }
         })
     }

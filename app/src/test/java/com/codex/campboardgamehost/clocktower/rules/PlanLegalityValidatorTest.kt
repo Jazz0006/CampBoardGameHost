@@ -41,19 +41,6 @@ class PlanLegalityValidatorTest {
     }
 
     @Test
-    fun `shown identity is unexpected inside a recommendation plan`() {
-        val plan = validPlan().copy(
-            decisions = validPlan().decisions + StorytellerDecision.DrunkShownRole(RoleId("Investigator")),
-        )
-
-        val failures = PlanLegalityValidator.validate(game, roles, plan)
-
-        assertTrue(failures.any {
-            it is LegalityFailure.UnexpectedDecision && it.decisionType == "drunk-shown-role"
-        })
-    }
-
-    @Test
     fun `demon bluff cannot be an actual in play role`() {
         val invalidBluffs = StorytellerDecision.DemonBluffs(
             listOf(RoleId("Chef"), RoleId("Monk"), RoleId("Soldier")),
