@@ -64,7 +64,13 @@ Representative catalog records:
 
 Conclusion:
 
-TRUTH_DANGER / EVIL_TOPOLOGY_COUPLING is no longer a singleton hypothesis.
+TRUTH_DANGER / EVIL_TOPOLOGY_COUPLING is no longer a singleton hypothesis, but its policy use is stage-dependent. Human Storytellers may sometimes react during token distribution by changing which seat is the Drunk; the APP must not copy that as a post-setup SDE capability.
+
+Use the dedicated control-surface authority:
+
+`docs/SDE_2D5F_BEGINNER_POLICY_CONTROL_SURFACE_AUDIT_2026-09-20.md`
+
+At PRE-GAME setup time, project this evidence into `SetupTruthExposureRisk` and reject/reroll/reassign dangerous functioning healthy-role arrangements when appropriate. After setup persistence, `CounterfactualHealthyTruthDanger` is diagnostic context only unless that role is already legitimately impaired.
 
 Future impaired-information evaluation should separate:
 
@@ -262,8 +268,10 @@ Candidate generation remains rules-owned and complete.
 Selection should compare each legal impaired-information candidate along separate interpretable axes:
 
 ~~~text
-1. healthyTruthDanger
+1. counterfactualHealthyTruthDanger
    How dangerous would the healthy truth be to the actual Evil topology?
+   This is runtime selection context only when the role is already impaired;
+   for a functioning healthy deterministic role it is diagnostic, not controllable.
 
 2. impairedStrategicPressure
    How much does this candidate collapse strategic worlds?
