@@ -87,7 +87,6 @@ import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
 import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuation
 import com.codex.campboardgamehost.clocktower.session.resolveTroubleBrewingImpSelfKillSuccession
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
-import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationLock
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationPrewarmCoordinator
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationRevealCoordinator
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingFirstNightPrecomputeCoordinator
@@ -1660,10 +1659,7 @@ internal fun CampBoardGameHostApp() {
                 poisonedPlayerName = null,
             ),
             roles = setupRecommendationRoleDefinitions,
-            lockedDecisions = TroubleBrewingSetupRecommendationLock.lockedDecisions(
-                dealPlan = preparedSetup.dealPlan,
-                roleDefinitions = setupRecommendationRoleDefinitions,
-            ),
+            lockedDecisions = emptyList(),
             history = gameHistory.toClocktowerSetupHistory(),
         )
         val initialFirstNightPrecomputeRequest = committedCards.toClocktowerGameState(
