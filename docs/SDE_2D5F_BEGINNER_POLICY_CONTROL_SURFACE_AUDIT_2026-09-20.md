@@ -156,8 +156,9 @@ Conceptually evaluate the proposed persistent setup after role/shown-role resolu
 2. estimate how much their truthful information would collapse Demon cover / Evil topology or create hard confirmation;
 3. account for real persistent setup impairment such as an actual Drunk shown as that role;
 4. do not count possible future Poisoner targeting as mitigation;
-5. reject / reroll / reassign only when exposure is beyond the calibrated beginner band;
-6. simultaneously protect the minimum healthy-information floor.
+5. treat isolated strong truth as legitimate game variance rather than an automatic reroll trigger;
+6. escalate only bundle-level / multi-channel catastrophic interaction for future policy study;
+7. simultaneously protect the minimum healthy-information floor.
 
 This naturally creates a two-sided setup objective:
 
@@ -231,8 +232,9 @@ For BEGINNER APP behavior:
 
 ~~~text
 PRE-GAME candidate evaluation
-    -> high SetupTruthExposureRisk
-    -> prefer another legal role/seat assignment if available
+    -> high local SetupTruthExposureRisk
+    -> record as diagnostic context
+    -> do not reroll solely for this isolated strong clue
 
 AFTER roles revealed / setup committed
     -> Empath=2 is rules-determined
@@ -277,7 +279,7 @@ CounterfactualHealthyTruthDanger
     evidence-derived diagnostic
 
 SetupTruthExposureRisk
-    PRE-GAME setup-policy axis
+    PRE-GAME diagnostic / bundle-interaction input; not an automatic reroll gate
 
 ImpairedClueSuppressionContext
     runtime context only when the role is already impaired
