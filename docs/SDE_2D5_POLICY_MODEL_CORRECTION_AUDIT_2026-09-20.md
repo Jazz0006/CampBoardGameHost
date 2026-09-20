@@ -288,7 +288,7 @@ Across the cleanup series from `f18cc0c3dfbfd18ce61f5d4339d8bfdad7c849c5` throug
 The temporary 90/10 impaired-information bridge and legacy `MalfunctionPolicy` were intentionally **not changed** by this cleanup.
 
 
-## 5.## 5. D5 calibration corrections required before human review
+## 5. D5 calibration corrections required before human review
 
 The current eight-item v1 manifest is all `UNREVIEWED`, which is fortunate.
 
