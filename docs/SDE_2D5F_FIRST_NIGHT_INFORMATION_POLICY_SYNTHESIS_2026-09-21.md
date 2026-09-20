@@ -370,25 +370,85 @@ The following existing architecture remains desirable:
 
 ## 16. Calibration implications
 
-Representative calibration must eventually include both:
+Do **not** maintain an active calibration stratum whose defining property is that Spy, Recluse or Drunk have been deliberately excluded.
 
-### clean healthy-information cases
+Such clean scenarios can prove narrow legality or projection contracts, but typed unit/integration tests already own those invariants. They are not representative enough to justify ongoing calibration maintenance or human-review effort.
 
-Useful for learning ordinary pair clue / confirmation-chain behavior without modifier noise.
+The active calibration target is the real Storyteller problem:
 
-### modifier-rich whole-bundle cases
-
-Required before calibrating the actual first-night policy:
-
-- Spy;
-- Recluse;
-- Drunk;
-- Chef/Empath registration branches;
+- committed setup and seating;
+- Spy / Recluse registration choices where legal;
+- Drunk shown identity and misinformation where present;
+- Chef / Empath registration-derived branches;
+- Washerwoman / Librarian / Investigator choices;
 - Demon bluffs;
-- red herring interaction;
-- cross-confirmation between these channels.
+- red herring;
+- Poisoner-selected context when already known;
+- cross-confirmation between all relevant channels.
 
-A corpus that freezes registration branches or excludes Drunk can remain useful as a **local diagnostic corpus**, but must not be treated as sufficient evidence for global first-night policy calibration.
+### Evidence hierarchy
+
+Policy calibration should be **expert-observation-first**, not single-reviewer-label-first.
+
+Use the following hierarchy:
+
+1. **GOLD — expert observed decisions**
+   - real Trouble Brewing games run by demonstrably experienced / trusted Storytellers;
+   - preferably official/TPI-affiliated productions, established expert channels, or Storytellers with substantial public history;
+   - enough grimoire / Night 1 detail to reconstruct the committed setup and the actual Storyteller choices;
+   - explicit Storyteller rationale is especially valuable.
+
+2. **SILVER — high-fidelity real game records**
+   - structured ClockTracker or equivalent game logs with seating, roles, Demon bluffs, red herring, poisoning and Night 1 information;
+   - Storyteller expertise may be unknown;
+   - use to test whether GOLD-derived patterns generalize, not to define them alone.
+
+3. **QUALITATIVE — community postmortems / guidance**
+   - real-game reports, experienced community discussion and Storyteller tutorials;
+   - useful for discovering policy dimensions, failure modes and rationale;
+   - do not convert directly into numeric gates without stronger evidence.
+
+4. **DIAGNOSTIC_ONLY — synthetic fixtures**
+   - extreme/counterfactual/test fixtures;
+   - useful for mechanics, regression and metric sensitivity;
+   - never the primary calibration truth.
+
+### What an observed expert choice means
+
+An expert choosing candidate A does **not** prove that every unchosen legal candidate was bad.
+
+For each reconstructable game, record:
+
+- the exact legal candidate set known at that lifecycle stage;
+- the observed chosen output;
+- whether explicit rationale exists;
+- whether an alternative was explicitly considered/rejected;
+- whole-bundle state before and after the choice;
+- player-experience context when known.
+
+Strong preference evidence comes from:
+
+- explicit expert rationale;
+- repeated choices across comparable games;
+- observed rejection of an alternative;
+- consistent cross-source patterns.
+
+A single chosen action without rationale is weaker evidence.
+
+Do not use the eventual winner as the label for whether the Storyteller choice was good.
+
+### Human review role
+
+Human review remains useful, but it is not the primary source of truth.
+
+The project owner's review should mainly:
+
+- verify that the reconstructed table meaning is correct;
+- detect cases where the evidence extractor misunderstood the Storyteller's intent;
+- adjudicate conflicting expert evidence;
+- decide product-specific BEGINNER adaptations when expert practice targets a different audience.
+
+Do not derive D5F-C gates solely from one person's intuitive labels.
 
 ## 17. Items not yet frozen
 
