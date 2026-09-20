@@ -54,3 +54,24 @@ jobs:
           name: sde-2d5-external-human-pilot
           path: app/build/reports/sde-2d5-external-human-pilot.md
           if-no-files-found: error
+
+      - name: Print D5F calibration review
+        shell: bash
+        run: |
+          set -euo pipefail
+          review="app/build/reports/sde-2d5f-calibration-review.md"
+          manifest="app/build/reports/sde-2d5f-human-label-manifest.tsv"
+          test -f "$review"
+          test -f "$manifest"
+          cat "$review"
+          echo "===== D5F HUMAN LABEL TEMPLATE ====="
+          cat "$manifest"
+
+      - name: Upload D5F calibration review
+        uses: actions/upload-artifact@v4
+        with:
+          name: sde-2d5f-calibration-review
+          path: |
+            app/build/reports/sde-2d5f-calibration-review.md
+            app/build/reports/sde-2d5f-human-label-manifest.tsv
+          if-no-files-found: error
