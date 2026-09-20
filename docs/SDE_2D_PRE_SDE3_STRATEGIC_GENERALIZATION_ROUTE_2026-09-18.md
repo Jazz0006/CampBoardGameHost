@@ -74,11 +74,13 @@ For an uncommitted Night-1 planning surface:
 persistent setup truth
 + committed history
 + legal Storyteller-controlled factors
-    - healthy information choices
+    - healthy pair-information display choices where rules leave alternatives
     - Drunk unreliable clue choices
     - Demon bluff triplets
     - Fortune Teller Red Herring
     - legal registration witness choices where applicable
++ rule-determined information carried as fixed bundle context
+    - healthy Chef/Empath numeric truth where mechanically determined
 + player-controlled robustness cases
     - e.g. Fortune Teller target pairs
         ↓
