@@ -44,14 +44,15 @@ External-human policy metrics must be projected through APP ownership. In partic
 
 Immediate continuation:
 
-1. implement D5F-B3 policy-model correction from `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`;
+1. implement D5F-B3 policy-model correction from `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`; preserve the temporary 90/10 impaired-information production bridge for now, but remove tests/calibration assumptions that treat the exact split as durable policy;
 2. keep the current v1 eight-item manifest fully UNREVIEWED and do not derive gates from it;
 3. expand Drunk review to truthful + false candidate contrasts;
 4. expand bluff review beyond shared/union to execution burden / narrative route / individual support;
 5. add bundle-level confirmation-chain evidence while preserving isolated strong clues as legitimate variance;
 6. regenerate a deterministic v2 review manifest;
 7. only then resume explicit human judgment;
-8. do not open holdout, freeze thresholds, cut production policy, or begin SDE-3.
+8. preserve generic GENERATED-setup shown-identity resolution/commitment for future scripts; do not revive legacy `drunk-shown-role-suitability` as the durable selector;
+9. do not open holdout, freeze thresholds, cut production policy, or begin SDE-3.
 
 1. continue explicit human judgment of the eight repaired D5F records;
 2. reconstruct 2–3 more public Trouble Brewing Night-1 cases;
