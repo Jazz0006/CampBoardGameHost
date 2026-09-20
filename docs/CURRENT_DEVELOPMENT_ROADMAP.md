@@ -487,6 +487,32 @@ Proof:
 
 Executable evidence: `e7bb31937db32863e5606044b443818011d16236`.
 
+## 4.13 SDE-2D5F-B3 policy-model correction — COMPLETE
+
+Authority: `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`.
+
+B3 corrected the calibration target before human labeling:
+
+- Drunk review is now same-setup truthful / mild-false / stronger-false contrast evidence;
+- Demon bluff review is multi-axis and includes external-human observed triplets;
+- bundle review exposes whole-bundle + leave-one-out confirmation-chain interaction without a scalar score;
+- role-information records preserve lifecycle owner/control provenance;
+- every review record states lifecycle stage, owner, controllable/diagnostic variables, and persistence boundary;
+- v1 is preserved as obsolete/unreviewed;
+- canonical v2 contains 11 all-UNREVIEWED reviewable records.
+
+Focused B3 T3:
+
+~~~text
+run 35494283217  SUCCESS
+implementation head 74d8bb4cc07c5425bcb61fa821bc2287620f379f
+~~~
+
+The 90/10 impaired-information compatibility bridge and legacy `MalfunctionPolicy` remain until later SDE replacement/cutover. Generic setup shown-identity persistence remains authoritative and was not moved back into recommendation scoring.
+
+**Next:** human review of the v2 manifest. Do not enter D5F-C, open holdout evidence, freeze thresholds, or begin SDE-3.
+
+
 ## 5. SDE-2A/B/C completion summary
 
 SDE-2A/B/C are complete and provide the lifecycle/uncertainty foundation consumed by current SDE-2D.
@@ -638,4 +664,4 @@ Read in order:
 
 ## 10. Stable rule
 
-> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 remains CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E and D5F-A are COMPLETE, and D5F-B manifest infrastructure is COMPLETE. Demon-bluff calibration now has a FULL_SCRIPT_DOMAIN gate after the bounded-domain defect found during human review. The repaired 8-record manifest is valid and fully UNREVIEWED; human review restarts from the repaired bluff evidence. D5F-C is blocked until the manifest is fully settled. Do not infer labels automatically, derive/freeze gates early, inspect sealed holdout diagnostics, use one opaque global scalar, cut production policy, or begin SDE-3 until D5F + final T4 are complete.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 remains CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E, D5F-A, D5F-B infrastructure, and D5F-B3 policy-model correction are COMPLETE. The obsolete v1 manifest remains fully UNREVIEWED; canonical v2 has 11 all-UNREVIEWED reviewable records covering grouped Drunk contrasts, multi-axis Demon bluffs, confirmation-chain evidence, and owner-aware role-information contrasts. Human review now restarts on v2. D5F-C is blocked until v2 is explicitly settled. Do not infer labels automatically, derive/freeze gates early, inspect sealed holdout diagnostics, use one opaque global scalar, cut production policy, or begin SDE-3 until D5F + final T4 are complete.**

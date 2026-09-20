@@ -423,96 +423,87 @@ Do not cut production recommendation policy yet and do not start SDE-3.
 
 ## 8. CURRENT — SDE-2D5 calibration
 
-Authority: `docs/SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`.
-
 Branch: `sde-2d5-calibration-policy-evidence`.
 
-D5A–D5E are complete.
+PR #150 remains **draft**. Do not merge unless the user explicitly says **“授权合并”**.
 
-Implemented evidence now includes:
+D5A–D5E and D5F-A are COMPLETE. D5F-B manifest infrastructure is COMPLETE.
 
-- normalized raw-exact and topology-first projection through one SDE owner;
-- representative 6 / 9 / 12 / 15 topology-first baselines for STANDARD and BARON profiles;
-- Drunk HealthyCore / FullBundle / DrunkMarginal evidence for numeric, pair and Fortune Teller families;
-- Demon-bluff per-role support, shared/union strategic support and deterministic low/high review contrasts;
-- bounded exact proof that mechanical information gain may be topology-neutral;
-- bounded exact proof that equal raw cardinality may hide different strategic-topology retention;
-- a real seven-player healthy-bundle leave-one-out corpus exhibiting topology-neutral marginal information and near-raw/different-topology marginal contrasts.
+### D5F-B3 policy-model correction — COMPLETE
 
-Latest accepted D5E evidence:
+Authority:
 
-```text
-D5 calibration T3  35421032892  SUCCESS
-ordinary CI        35421032988  SUCCESS
-cleanup head       9b47095a906cec5b78807d9ea9f5be6c8079714d
-FAST / R2 / gate                  SUCCESS
-```
+- `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`;
+- implementation head `74d8bb4cc07c5425bcb61fa821bc2287620f379f`;
+- focused deterministic B3 calibration run `35494283217` — SUCCESS.
 
-The temporary D5 validation workflow has been removed.
+B3 corrected the target model before human labeling:
 
-### D5F — CURRENT
+1. Drunk calibration is one same-setup contrast surface:
+   - truthful;
+   - mild false;
+   - stronger false when a strictly stronger legal false candidate exists;
+   - HealthyCore / FullBundle / DrunkMarginal / normalized diagnostics retained per candidate;
+   - `counterfactualHealthyTruthDanger` is diagnostic-only;
+   - semantic truth is not a monotone quality objective.
 
-Authority: `docs/SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`.
+2. Demon bluff calibration now exposes:
+   - per-role normalized support;
+   - individual-support floor;
+   - shared / union support;
+   - pairwise strategic coverage;
+   - distinct strategic patterns;
+   - categorical beginner execution burden;
+   - categorical claim burden + cadence;
+   - narrative route class/diversity;
+   - external-human observed triplet;
+   - low/high shared-to-union only as reference contrasts.
 
-**D5F-A is COMPLETE.**
+3. Bundle confirmation evidence now exposes:
+   - full-bundle normalized diagnostics;
+   - every leave-one-out diagnostic;
+   - removal-based Demon-cover/topology restoration;
+   - restoring-clue count;
+   - explicit multi-channel-collapse flag;
+   - no global confirmation score.
 
-The calibration-only review export now has:
+4. Review records now state:
+   - lifecycle stage;
+   - decision owner;
+   - controllable variables;
+   - diagnostic-only variables;
+   - persistence boundary.
 
-- stable deterministic review IDs;
-- typed baseline / Drunk / Demon-bluff / role-information records;
-- baseline references that are explicitly non-labelable;
-- every reviewable generated item initially `UNREVIEWED`;
-- exact rational diagnostics preserved;
-- deterministic real review selection spanning all player-count regimes and STANDARD/BARON references;
-- sealed holdout exposure limited to the already-public scenario count.
+5. Real healthy role-information provenance is explicit:
+   - Chef / Empath -> `RULE_DETERMINED`, not SDE decision variables;
+   - Washerwoman / Investigator -> `STORYTELLER_CONTROLLED`, SDE-controllable until shown;
+   - current healthy harness does not assign Fortune Teller target choice to SDE.
 
-Accepted evidence:
+6. Review reason vocabulary has been expanded for the corrected policy model.
 
-~~~text
-D5F-A model T1          91d8256c9b483d2f70887f8a526aba175a70f073
-D5F-A calibration T3    35423966647  SUCCESS
-full CI                 35423966654  SUCCESS
-Android full + APK                     BUILD SUCCESSFUL in 7m 12s
-clean head              c17db4fc4789a5d0b11156a22a88da7971a37ef7
-clean full CI           35424382474  SUCCESS
-~~~
+### Manifest state
 
-**D5F-B manifest infrastructure is COMPLETE; HUMAN REVIEW is NEXT.**
+Do **not** label obsolete v1:
 
-Implemented D5F-B contracts:
+`app/src/test/resources/review/sde-2d5f-human-label-manifest-v1-obsolete.tsv`
 
-1. labels live in a separate manifest keyed by stable review ID;
-2. unknown IDs are rejected;
-3. baseline/reference IDs are rejected;
-4. duplicate IDs are rejected;
-5. non-`UNREVIEWED` labels require explicit reasons;
-6. `UNREVIEWED` cannot carry inferred reasons;
-7. `UNCERTAIN` stays explicit;
-8. review-set completeness blocks D5F-C while any required item remains UNREVIEWED;
-9. an all-UNREVIEWED template is generated and round-trips through the manifest codec;
-10. the real manifest seed is persisted at:
-   `app/src/test/resources/review/sde-2d5f-human-label-manifest.tsv`.
+Canonical v2:
 
-A D5E review-selection bug was found and fixed before human review: `4/4` and `5/5` were structurally unequal objects but mathematically equal ratios. Strategic retention comparisons now use cross multiplication. The corrected equal-raw-removal contrast is `4/7` versus `3/6`.
+`app/src/test/resources/review/sde-2d5f-human-label-manifest.tsv`
 
-The first human-review pass exposed a second calibration problem: `Sde2D5DemonBluffRealCalibrationBuilder` still used the bounded D2D2 role subset. That made legal BARON / Drunk counterworld families unreachable and incorrectly produced zero Butler support. The core world enumerator already handled STANDARD + BARON and Drunk shown-role branching; the defect was the calibration caller's incomplete `roleDefinitions`.
+Version:
 
-Repair now accepted:
+`d5f-b-calibration-v2`
 
-- Demon-bluff real calibration uses `TroubleBrewingFixtures.fullRoleDefinitions()`;
-- `Sde2D5CalibrationRoleDomainContract` distinguishes `BOUNDED_FIXTURE` from `FULL_SCRIPT_DOMAIN`;
-- D5F review material rejects Demon-bluff evidence unless it is `FULL_SCRIPT_DOMAIN`;
-- T3 regression requires Butler to retain legal full-domain support;
-- Drunk and role-information calibration fixtures were audited and were already full-domain.
-
-The two old bluff review IDs are obsolete. The user's earlier provisional judgments on those obsolete records were not persisted and must not be transferred to the repaired records.
-
-Current reviewable IDs:
+All 11 records are currently `UNREVIEWED`:
 
 ~~~text
 d5f:bluff:13af34bc8befea2f:r1
+d5f:bluff:334926f04bd2c687:r1
 d5f:bluff:fe702b4aac3ca49a:r1
-d5f:drunk:value-1
+d5f:confirmation:sig-3a97786fbe44b310
+d5f:confirmation:sig-c8f4a0424526b659
+d5f:drunk:baron-6-drunk-empath-seat-2
 d5f:role-info:sig-00002562710d4654:marginal-1
 d5f:role-info:sig-44f30b2b21cd7682:marginal-0
 d5f:role-info:sig-796b6039ad4bb4aa:marginal-0
@@ -520,24 +511,43 @@ d5f:role-info:sig-89a6d878c5516337:marginal-1
 d5f:role-info:sig-aab5a4dfa48cfce0:marginal-2
 ~~~
 
-All eight are currently `UNREVIEWED`.
-
-Latest corrected validation:
-
-~~~text
-full-domain repair evidence head  b740a0abe93165dc6d35647ba793a5e26ca8e00b
-D5 calibration T3                 35442885568  SUCCESS
-ordinary CI                       35442885562  SUCCESS
-R2                                35442885576  SUCCESS
-Android full + Debug APK / ASP / Clingo / CI gate  SUCCESS
-~~~
-
-The current manifest is valid but intentionally incomplete:
+The manifest is intentionally incomplete:
 `isCompleteForGateDerivation == false`.
 
-Next conversation should restart the **human judgment** from the repaired full-domain bluff records, then continue through the remaining unchanged records. Record labels + reasons in the source-controlled manifest only after each explicit human judgment, then validate completeness. Do not automatically infer the labels from metrics.
+### Compatibility code intentionally retained
 
-Do not begin D5F-C, derive thresholds, inspect sealed holdout diagnostics, or alter production selection during this review.
+Do not remove yet:
+
+- impaired-information approximate 90/10 false-family compatibility bridge;
+- legacy `MalfunctionPolicy`.
+
+Tests that froze the approximate 90% ratio as durable target policy were removed.
+
+The generic shown-identity setup pipeline remains authoritative:
+
+~~~text
+SetupShownIdentityPolicyResolver.resolveGenerated(...)
+-> generic setup-stage quality-aware choice
+-> SetupShownIdentityCommitter
+-> PlayerState.shownRole
+~~~
+
+Do not restore recommendation-owned Drunk shown-role scoring.
+
+### NEXT
+
+Resume **D5F-B human review on the v2 records**.
+
+Do not:
+
+- transfer any provisional v1 judgments;
+- infer labels from diagnostics automatically;
+- enter D5F-C;
+- derive/freeze thresholds;
+- inspect sealed holdout diagnostics;
+- start SDE-3;
+- cut production policy.
+
 
 ## 9. SDE-3 resume gate
 
@@ -582,4 +592,4 @@ For SDE-2D:
 
 ## 12. Stable handoff
 
-> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E + D5F-A are COMPLETE and D5F-B manifest infrastructure is COMPLETE. The Demon-bluff calibration role-domain defect found during human review is repaired and guarded by a FULL_SCRIPT_DOMAIN contract. HUMAN REVIEW restarts on the repaired 8-record all-UNREVIEWED manifest. Record explicit labels + reasons, then validate completeness. Do not begin D5F-C until the manifest is fully settled; do not open the sealed holdout, derive/freeze thresholds early, introduce an opaque scalar, cut production policy, or begin SDE-3.**
+> **PR #149 is merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`. SDE-2D5 is CURRENT on `sde-2d5-calibration-policy-evidence`; D5A–D5E, D5F-A, D5F-B infrastructure, and D5F-B3 policy-model correction are COMPLETE. Human review now starts on the canonical 11-record all-UNREVIEWED v2 manifest. Record only explicit human labels + reasons. Do not enter D5F-C until v2 is fully settled; do not open the sealed holdout, derive/freeze thresholds early, introduce an opaque scalar, cut production policy, or begin SDE-3.**

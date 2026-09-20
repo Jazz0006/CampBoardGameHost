@@ -497,3 +497,112 @@ Do not resume the eight-record human review until:
 5. every review record states its lifecycle owner/control surface;
 6. the v2 manifest is deterministically regenerated and validates as incomplete/all-UNREVIEWED;
 7. sealed holdout remains untouched.
+
+## 10. D5F-B3 implementation result — COMPLETE
+
+D5F-B3 policy-model correction is now implemented.
+
+Accepted implementation evidence:
+
+- corrected policy/review implementation head: `74d8bb4cc07c5425bcb61fa821bc2287620f379f`;
+- focused deterministic B3 calibration run: `35494283217` — SUCCESS;
+- generated v2 manifest exactly matches the persisted canonical manifest;
+- the sealed holdout remained unopened.
+
+Implemented review surfaces:
+
+1. **Drunk**
+   - one same-setup grouped record containing truthful, mild-false, and a strictly stronger false candidate when one exists;
+   - every candidate retains HealthyCore, FullBundle, DrunkMarginal, raw mechanical delta, and normalized strategic diagnostics;
+   - `counterfactualHealthyTruthDanger` is the truthful candidate's marginal diagnostic and is diagnostic-only;
+   - semantic truth is descriptive only and is not a quality ordering;
+   - the Drunk shown identity remains a persistent setup input and is not reselected by SDE.
+
+2. **Demon bluffs**
+   - per-role normalized support and exact strategic-world counts;
+   - individual-support floor;
+   - shared / union support and pairwise coverage;
+   - distinct strategic patterns;
+   - review-only categorical beginner execution burden and claim burden;
+   - claim cadence and narrative route class/diversity;
+   - explicit external-human observed-triplet selection;
+   - low/high shared-to-union remain reference contrasts only;
+   - no numeric coverage-complementarity reward was added.
+
+3. **Healthy bundle / confirmation chains**
+   - full-bundle normalized diagnostics;
+   - every leave-one-out normalized diagnostic;
+   - Demon-cover / strategic-topology restoration flags;
+   - restoring-clue count and explicit multi-channel-collapse flag;
+   - no opaque confirmation-chain scalar.
+
+4. **Lifecycle ownership**
+   - every review record now states lifecycle stage, decision owner, controllable variables, diagnostic-only variables, and persistence boundary;
+   - real role-information records preserve source-role/control provenance:
+     - Chef / Empath -> `RULE_DETERMINED`, diagnostic-only;
+     - Washerwoman / Investigator -> `STORYTELLER_CONTROLLED`, SDE-controllable until shown;
+   - current healthy harness does not assign Fortune Teller target choice to SDE;
+   - confirmation-chain records remain aggregate diagnostic evidence rather than a claim that every component clue is SDE-owned.
+
+5. **Review vocabulary**
+   - includes `EXCESSIVE_CONFIRMATION_CHAIN`;
+   - `INSUFFICIENT_HEALTHY_INFORMATION`;
+   - `IMPAIRED_CLUE_TOO_REVEALING`;
+   - `IMPAIRED_CLUE_COHERENT`;
+   - `BLUFF_EXECUTION_BURDEN`;
+   - `BLUFF_NARRATIVE_REDUNDANCY`;
+   - `BLUFF_COHERENCE_FRAGILE`;
+   - `BLUFF_ROUTES_USABLE`;
+   - `CROSS_CHANNEL_NARRATIVE_COHERENCE`;
+   - `OTHER_EXPLICIT_REVIEW_REASON`.
+
+Manifest transition:
+
+- obsolete v1 is preserved, still fully UNREVIEWED:
+  `app/src/test/resources/review/sde-2d5f-human-label-manifest-v1-obsolete.tsv`;
+- canonical v2 is:
+  `app/src/test/resources/review/sde-2d5f-human-label-manifest.tsv`;
+- v2 contains 11 reviewable records and all remain `UNREVIEWED`;
+- no v1 human labels were migrated because none existed.
+
+The v2 review IDs are:
+
+~~~text
+d5f:bluff:13af34bc8befea2f:r1
+d5f:bluff:334926f04bd2c687:r1
+d5f:bluff:fe702b4aac3ca49a:r1
+d5f:confirmation:sig-3a97786fbe44b310
+d5f:confirmation:sig-c8f4a0424526b659
+d5f:drunk:baron-6-drunk-empath-seat-2
+d5f:role-info:sig-00002562710d4654:marginal-1
+d5f:role-info:sig-44f30b2b21cd7682:marginal-0
+d5f:role-info:sig-796b6039ad4bb4aa:marginal-0
+d5f:role-info:sig-89a6d878c5516337:marginal-1
+d5f:role-info:sig-aab5a4dfa48cfce0:marginal-2
+~~~
+
+The impaired-information 90/10 compatibility bridge and legacy `MalfunctionPolicy` remain production compatibility code pending later SDE replacement/cutover. Tests that treated the approximate 90% false budget as a durable target policy were removed.
+
+The generic shown-identity setup pipeline remains untouched:
+
+~~~text
+SetupShownIdentityPolicyResolver.resolveGenerated(...)
+-> generic setup-stage shown-identity choice
+-> SetupShownIdentityCommitter
+-> PlayerState.shownRole
+~~~
+
+Do not restore recommendation-owned Drunk shown-role scoring.
+
+### D5F resume point
+
+The policy-model correction gate is satisfied. Resume **D5F-B human review on the v2 manifest**.
+
+Still blocked:
+
+- D5F-C gate/band derivation;
+- threshold freeze;
+- sealed holdout inspection;
+- SDE-3;
+- production cutover.
+

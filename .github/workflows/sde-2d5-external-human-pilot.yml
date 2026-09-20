@@ -40,21 +40,6 @@ jobs:
       - name: Run SDE-2D5 calibration including external human pilot
         run: ./gradlew :app:sde2D5Calibration --no-daemon --rerun-tasks
 
-      - name: Print B3 calibration review and generated v2 manifest
-        if: always()
-        shell: bash
-        run: |
-          set -euo pipefail
-          for report in \
-            app/build/reports/sde-2d5f-calibration-review.md \
-            app/build/reports/sde-2d5f-human-label-manifest.tsv
-          do
-            if [[ -f "$report" ]]; then
-              echo "===== $report ====="
-              cat "$report"
-            fi
-          done
-
       - name: Print external human pilot report
         shell: bash
         run: |
