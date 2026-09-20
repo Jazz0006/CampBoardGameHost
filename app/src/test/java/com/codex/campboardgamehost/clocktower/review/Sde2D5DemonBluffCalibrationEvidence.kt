@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.review
 
-import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputDiagnostics
 import com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnostics
@@ -22,17 +21,18 @@ internal enum class Sde2D5BluffNarrativeRouteClass {
     SOCIAL_OUTSIDER,
 }
 
+internal enum class Sde2D5BluffBurden {
+    LOW,
+    MODERATE,
+    HIGH,
+}
+
 internal data class Sde2D5BluffRoleTrait(
-    val beginnerExecutionBurden: Int,
-    val claimBurden: Int,
+    val beginnerExecutionBurden: Sde2D5BluffBurden,
+    val claimBurden: Sde2D5BluffBurden,
     val claimCadence: Sde2D5BluffClaimCadence,
     val narrativeRouteClass: Sde2D5BluffNarrativeRouteClass,
-) {
-    init {
-        require(beginnerExecutionBurden >= 0)
-        require(claimBurden in 1..5)
-    }
-}
+)
 
 internal data class Sde2D5BluffPairwiseCoverage(
     val firstRole: RoleId,
@@ -49,31 +49,37 @@ internal data class Sde2D5BluffPairwiseCoverage(
 }
 
 internal object Sde2D5DemonBluffRoleTraits {
-    fun forRole(role: RoleId): Sde2D5BluffRoleTrait {
-        val (claimBurden, cadence, route) = when (role.value) {
-            "Washerwoman", "Librarian", "Investigator", "Chef" ->
-                Triple(2, Sde2D5BluffClaimCadence.ONE_SHOT, Sde2D5BluffNarrativeRouteClass.INFORMATION)
-            "Empath", "Fortune Teller" ->
-                Triple(5, Sde2D5BluffClaimCadence.RECURRING_NIGHTLY, Sde2D5BluffNarrativeRouteClass.INFORMATION)
-            "Undertaker", "Ravenkeeper" ->
-                Triple(4, Sde2D5BluffClaimCadence.TRIGGERED, Sde2D5BluffNarrativeRouteClass.INFORMATION)
-            "Monk" ->
-                Triple(4, Sde2D5BluffClaimCadence.RECURRING_NIGHTLY, Sde2D5BluffNarrativeRouteClass.PROTECTION)
-            "Virgin", "Slayer" ->
-                Triple(2, Sde2D5BluffClaimCadence.TRIGGERED, Sde2D5BluffNarrativeRouteClass.PUBLIC_ABILITY)
-            "Soldier", "Mayor", "Saint" ->
-                Triple(1, Sde2D5BluffClaimCadence.PASSIVE_OR_SOCIAL, Sde2D5BluffNarrativeRouteClass.PASSIVE_SURVIVAL)
-            "Butler", "Recluse", "Drunk" ->
-                Triple(2, Sde2D5BluffClaimCadence.PASSIVE_OR_SOCIAL, Sde2D5BluffNarrativeRouteClass.SOCIAL_OUTSIDER)
-            else -> error("Missing D5F bluff review trait metadata for ${role.value}.")
-        }
-        return Sde2D5BluffRoleTrait(
-            beginnerExecutionBurden = TroubleBrewingRecommendationMetadata.forRole(role).bluffDifficulty,
-            claimBurden = claimBurden,
-            claimCadence = cadence,
-            narrativeRouteClass = route,
-        )
+    fun forRole(role: RoleId): Sde2D5BluffRoleTrait = when (role.value) {
+        "Washerwoman", "Librarian", "Investigator" ->
+            trait(Sde2D5BluffBurden.MODERATE, Sde2D5BluffBurden.MODERATE, Sde2D5BluffClaimCadence.ONE_SHOT, Sde2D5BluffNarrativeRouteClass.INFORMATION)
+        "Chef" ->
+            trait(Sde2D5BluffBurden.LOW, Sde2D5BluffBurden.LOW, Sde2D5BluffClaimCadence.ONE_SHOT, Sde2D5BluffNarrativeRouteClass.INFORMATION)
+        "Empath", "Fortune Teller" ->
+            trait(Sde2D5BluffBurden.HIGH, Sde2D5BluffBurden.HIGH, Sde2D5BluffClaimCadence.RECURRING_NIGHTLY, Sde2D5BluffNarrativeRouteClass.INFORMATION)
+        "Undertaker", "Ravenkeeper" ->
+            trait(Sde2D5BluffBurden.HIGH, Sde2D5BluffBurden.HIGH, Sde2D5BluffClaimCadence.TRIGGERED, Sde2D5BluffNarrativeRouteClass.INFORMATION)
+        "Monk" ->
+            trait(Sde2D5BluffBurden.MODERATE, Sde2D5BluffBurden.MODERATE, Sde2D5BluffClaimCadence.RECURRING_NIGHTLY, Sde2D5BluffNarrativeRouteClass.PROTECTION)
+        "Virgin", "Slayer" ->
+            trait(Sde2D5BluffBurden.MODERATE, Sde2D5BluffBurden.MODERATE, Sde2D5BluffClaimCadence.TRIGGERED, Sde2D5BluffNarrativeRouteClass.PUBLIC_ABILITY)
+        "Soldier", "Mayor", "Saint" ->
+            trait(Sde2D5BluffBurden.LOW, Sde2D5BluffBurden.LOW, Sde2D5BluffClaimCadence.PASSIVE_OR_SOCIAL, Sde2D5BluffNarrativeRouteClass.PASSIVE_SURVIVAL)
+        "Butler", "Recluse", "Drunk" ->
+            trait(Sde2D5BluffBurden.LOW, Sde2D5BluffBurden.MODERATE, Sde2D5BluffClaimCadence.PASSIVE_OR_SOCIAL, Sde2D5BluffNarrativeRouteClass.SOCIAL_OUTSIDER)
+        else -> error("Missing D5F bluff review trait metadata for ${role.value}.")
     }
+
+    private fun trait(
+        execution: Sde2D5BluffBurden,
+        claim: Sde2D5BluffBurden,
+        cadence: Sde2D5BluffClaimCadence,
+        route: Sde2D5BluffNarrativeRouteClass,
+    ) = Sde2D5BluffRoleTrait(
+        beginnerExecutionBurden = execution,
+        claimBurden = claim,
+        claimCadence = cadence,
+        narrativeRouteClass = route,
+    )
 }
 
 internal object Sde2D5ExternalHumanBluffTriplets {
