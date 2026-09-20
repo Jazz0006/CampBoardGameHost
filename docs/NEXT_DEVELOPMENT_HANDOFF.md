@@ -42,11 +42,32 @@ The active route is **expert-observation-first**.
 - whole-bundle health may materially override that prior;
 - avoid Librarian exposing Recluse and strongly avoid Investigator exposing Spy when healthy alternatives exist;
 - Chef/Empath are fixed only when registration cannot change their legal healthy value;
-- Drunk information should form a believable multi-night narrative, not merely be false;
+- impaired information should preserve a believable cross-interaction perceived world through a persistent role-agnostic narrative state; it must not degrade into independent nightly lies;
 - whole-bundle interaction, role-function exposure, bluff usability and confirmation chains matter in addition to strategic topology;
-- no opaque global score.
+- no opaque global score;
+- do not implement policy as named-role, exact-seat, or known-fixture special cases unless a real rules distinction requires it.
 
-## 5. Evidence hierarchy
+## 5. Shared impaired-narrative invariant
+
+Treat examples involving a Drunk or poisoned information role as examples of one generic requirement, not separate implementation tasks.
+
+Future production design must provide a shared persistent narrative state over:
+
+~~~text
+perceived role
++ committed observation history
++ current visible history
++ believable counterworld intent
++ current legal outcome domain
+~~~
+
+The shared owner chooses a coherent legal continuation. Named role modules only supply role-specific legality/semantics.
+
+Before accepting an implementation, audit for suspicious branches keyed directly to a named role, a known fixture, exact seats, or one previously discussed scenario. Such branches are acceptable only when they encode a genuine rules distinction, not policy convenience.
+
+Tests must prove the generic abstraction and fanout across multiple information shapes. Passing one named-role example is not evidence that the general contract is implemented.
+
+## 6. Evidence hierarchy
 
 ~~~text
 GOLD
@@ -67,7 +88,7 @@ DIAGNOSTIC_ONLY
 
 The current external catalog contains **no verified GOLD case**.
 
-## 6. Interpretation rules
+## 7. Interpretation rules
 
 - reconstruct the legal alternatives that existed at the exact lifecycle stage;
 - chosen A does not imply all unchosen alternatives are bad;
@@ -77,7 +98,7 @@ The current external catalog contains **no verified GOLD case**.
 - one silent observed choice is weak evidence;
 - final winner is not a quality label.
 
-## 7. NEXT — execute in this order
+## 8. NEXT — execute in this order
 
 ### Step 1 — audit/delete obsolete clean calibration code
 
@@ -133,11 +154,11 @@ Ask the project owner only about ambiguous reconstruction, conflicting expert ev
 
 Do not return to large synthetic labeling sessions.
 
-## 8. Explicit non-goals
+## 9. Explicit non-goals
 
 Do not derive D5F-C thresholds, open sealed holdout, cut production selection over, rewrite core legality/topology architecture, remove compatibility policy still used in production, begin SDE-3, or merge PR #150.
 
-## 9. Success condition for the next conversation
+## 10. Success condition for the next conversation
 
 A successful next conversation should finish with:
 
