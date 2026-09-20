@@ -31,6 +31,7 @@ internal data class Sde2D5FHumanLabelManifestValidation(
     val duplicateReviewIds: Set<String>,
     val entriesMissingReasons: Set<String>,
     val unreviewedRequiredReviewIds: Set<String>,
+    val missingRequiredPolicyVariables: Set<Sde2D5FPolicyVariable>,
 ) {
     val isValid: Boolean
         get() =
@@ -40,7 +41,10 @@ internal data class Sde2D5FHumanLabelManifestValidation(
                 entriesMissingReasons.isEmpty()
 
     val isCompleteForGateDerivation: Boolean
-        get() = isValid && unreviewedRequiredReviewIds.isEmpty()
+        get() =
+            isValid &&
+                unreviewedRequiredReviewIds.isEmpty() &&
+                missingRequiredPolicyVariables.isEmpty()
 }
 
 internal object Sde2D5FHumanLabelManifestBuilder {
@@ -72,7 +76,7 @@ internal object Sde2D5FHumanLabelManifestValidator {
     ): Sde2D5FHumanLabelManifestValidation {
         val recordsById = material.records.associateBy(Sde2D5FReviewRecord::reviewId)
         val referenceIds = material.records
-            .filter { it.reviewability == Sde2D5FReviewability.REFERENCE }
+            .filter { it.reviewability != Sde2D5FReviewability.REVIEWABLE }
             .mapTo(linkedSetOf(), Sde2D5FReviewRecord::reviewId)
         val requiredIds = material.records
             .filter { it.reviewability == Sde2D5FReviewability.REVIEWABLE }
@@ -104,12 +108,28 @@ internal object Sde2D5FHumanLabelManifestValidator {
             }
             .toCollection(linkedSetOf())
 
+        val storytellerOwnedPolicyVariables = material.records
+            .filter {
+                it.controlSurface.decisionOwner == Sde2D5FDecisionOwner.STORYTELLER_SDE
+            }
+            .flatMapTo(linkedSetOf()) { it.controlSurface.controllableVariables }
+        val reviewablePolicyVariables = material.records
+            .filter {
+                it.reviewability == Sde2D5FReviewability.REVIEWABLE &&
+                    it.controlSurface.decisionOwner == Sde2D5FDecisionOwner.STORYTELLER_SDE
+            }
+            .flatMapTo(linkedSetOf()) { it.controlSurface.controllableVariables }
+        val missingRequiredPolicyVariables =
+            (storytellerOwnedPolicyVariables - reviewablePolicyVariables)
+                .toCollection(linkedSetOf())
+
         return Sde2D5FHumanLabelManifestValidation(
             unknownReviewIds = unknown,
             referenceReviewIds = references,
             duplicateReviewIds = duplicates,
             entriesMissingReasons = missingReasons,
             unreviewedRequiredReviewIds = unreviewedRequired,
+            missingRequiredPolicyVariables = missingRequiredPolicyVariables,
         )
     }
 }
