@@ -326,7 +326,37 @@ R2                                35442885576  SUCCESS
 Android full + Debug APK / ASP / Clingo / CI gate  SUCCESS
 ~~~
 
-**NEXT: human-review the 8 manifest records.**
+**D5F-B2 external-human evidence pilot is now ACTIVE in parallel with controlled human review.**
+
+Authority:
+
+- `docs/SDE_2D5F_EXTERNAL_HUMAN_EVIDENCE_PILOT_2026-09-20.md`.
+
+First external Trouble Brewing pilot:
+
+- public ClockTracker 14-player game `ffb40a93-3d7b-42c4-bba8-bc9c363dcd30`;
+- external-human workflow `35446943045` SUCCESS;
+- ordinary CI `35446945108` SUCCESS;
+- R2 `35446945073` SUCCESS;
+- all observed Night-1 decisions were expressible by current legal domains and retained feasible topology witnesses;
+- observed Drunk false Empath `0` sat inside a non-maximal misinformation-pressure band;
+- observed Chef / Investigator / Saint bluffs demonstrated that shared/union support is **not** a monotone BEGINNER-quality objective.
+
+BEGINNER-policy hypothesis is now explicitly multi-axis:
+
+- practical bluffability / novice execution burden;
+- real-information anchoring;
+- narrative-route diversity;
+- strategic-world coverage complementarity after a coherence floor;
+- bounded Night-1 strategic pressure rather than maximum good-team world collapse.
+
+Do **not** freeze `shared/union` as "higher is better". Treat it, if calibration supports it, as a coherence / fragility floor only.
+
+D5F-B2 remains positive-unlabeled external evidence. It must not auto-label unselected candidates, modify the eight-item manifest, expose the sealed holdout, derive/freeze thresholds, or alter production selection.
+
+Next external-evidence action: reconstruct 2–3 additional public Trouble Brewing Night-1 cases and test whether these axes repeat or whether additional interpretable BEGINNER parameters are needed.
+
+**NEXT: human-review the 8 manifest records, while continuing the bounded D5F-B2 external-human pilot.**
 
 Do not automatically infer labels. Do not begin D5F-C until every required item is settled and the manifest validator reports complete.
 
