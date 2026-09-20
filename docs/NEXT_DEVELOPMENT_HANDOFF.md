@@ -35,7 +35,7 @@ D5A–D5E                         COMPLETE
 D5F-A                           COMPLETE
 D5F-B manifest infrastructure  COMPLETE
 D5F-B3 policy-model correction COMPLETE
-D5F-B v2 human review          NEXT
+D5F-B v2 human review          IN PROGRESS — 8/11 COMPLETE
 D5F-C                           BLOCKED
 sealed holdout                  CLOSED
 SDE-3                           BLOCKED
@@ -65,7 +65,7 @@ Version:
 
 `d5f-b-calibration-v2`
 
-It contains 11 records and all are currently `UNREVIEWED`.
+It contains 11 records. Human review is now **8/11 complete**; exactly 3 records remain `UNREVIEWED`.
 
 Do **not** continue labeling:
 
@@ -189,20 +189,68 @@ Do not delete yet:
 
 Do not restore old Drunk shown-role recommendation/scoring abstractions.
 
-## 10. NEXT action
+## 10. Human review progress
 
-Begin the v2 human review **one record at a time**.
+Completed labels:
 
-For each record:
+~~~text
+d5f:bluff:13af34bc8befea2f:r1                 BAD_TOO_WEAK
+d5f:bluff:334926f04bd2c687:r1                 ACCEPTABLE
+d5f:bluff:fe702b4aac3ca49a:r1                 ACCEPTABLE
+d5f:confirmation:sig-3a97786fbe44b310         BAD_TOO_STRONG
+d5f:confirmation:sig-c8f4a0424526b659         BAD_TOO_STRONG
+d5f:drunk:baron-6-drunk-empath-seat-2         BAD_TOO_STRONG
+d5f:role-info:sig-00002562710d4654:marginal-1 ACCEPTABLE
+d5f:role-info:sig-44f30b2b21cd7682:marginal-0 BAD_TOO_STRONG
+~~~
 
-1. inspect the rendered evidence;
-2. get the user's explicit judgment;
-3. record the label and reason;
-4. preserve uncertainty when the evidence does not justify a strong label.
+Remaining records, in order:
+
+~~~text
+d5f:role-info:sig-796b6039ad4bb4aa:marginal-0
+d5f:role-info:sig-89a6d878c5516337:marginal-1
+d5f:role-info:sig-aab5a4dfa48cfce0:marginal-2
+~~~
+
+Important human-review findings that must survive into D5F-C:
+
+- **Player count matters for impaired information.** In the reviewed 6-player Drunk-as-Empath case, truthful `0` was judged too revealing even though normalized strategic topology did not shrink. Small games may need a stronger bias toward coherent misinformation than larger games.
+- **Multi-night impaired roles require temporal coherence.** A Drunk Empath should not be optimized as independent nightly numbers. Human Storyteller reasoning plans a misleading trajectory across nights: e.g. preserve a coherent `0` story until neighbor composition changes, then use later values to maintain the false world.
+- **Topology-neutral does not mean harmless.** A Washerwoman clue can leave the strategic topology count unchanged yet still be too strong because cross-channel evidence quickly confirms the real good role, making the Demon decoy practically useless.
+- **Confirmation-chain judgment is contextual.** Healthy Chef=1 was acceptable alone; the same information can become too strong when reinforced by Empath / pair-information channels.
+
+## 11. Review-surface repair during human review
+
+Human review exposed that role-information records exported only source role/seat plus numerical diagnostics, without the actual clue proposition. That was not sufficient for responsible human labeling.
+
+Fixes:
+
+- `b42862d866d7458e1989e963b42f54bd0d203e8f` — role-information calibration evidence now carries its canonical observation key; renderer exposes it; tests cover the payload.
+- `58bdaa2d16b63c1d4378b9156b0b838c8165bce0` — the SDE-2D5 calibration workflow now prints/uploads the D5F review + manifest artifacts instead of discarding them.
+- `4343669679d9232c08e211a2b5a6638506085068` — fixed an obsolete renderer fixture assertion exposed by FULL CI.
+
+These are review/evidence changes only; they do not change production recommendation policy.
+
+## 12. NEXT action
+
+Continue the v2 human review **one record at a time**, starting with:
+
+`d5f:role-info:sig-796b6039ad4bb4aa:marginal-0`
+
+Before asking for the label, show the user the actual human-readable clue proposition from the repaired review evidence, not only strategic/raw counts.
+
+For each remaining record:
+
+1. inspect the rendered evidence including the actual clue;
+2. explain what the clue means at the table and whether it is SDE-controlled or rule-determined;
+3. get the user's explicit judgment;
+4. record the label and explicit reason;
+5. preserve uncertainty when the evidence does not justify a strong label.
 
 After all 11 are settled:
 
 - validate manifest completeness;
+- explicitly reconcile the new human findings above with D5F-C gate/band design;
 - only then plan D5F-C.
 
 Do not open sealed holdout evidence, freeze thresholds, cut production policy, or begin SDE-3.
