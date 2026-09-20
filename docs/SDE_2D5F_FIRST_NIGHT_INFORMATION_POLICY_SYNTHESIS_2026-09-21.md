@@ -469,3 +469,17 @@ Do not freeze these from intuition alone.
 The current policy direction is:
 
 > **Enumerate every legal first-night information outcome, preserve role/lifecycle ownership, prefer Spy-as-Good and Recluse-as-Evil registration by default, avoid directly exposing Recluse to the Librarian or Spy to the Investigator when healthy alternatives exist, and select information as a whole-table bundle whose goal is a playable middle band rather than a maximum/minimum metric. Drunk misinformation must form a believable cross-night story rather than merely be false.**
+
+
+## 19. Active documentation authority
+
+For current execution, read:
+
+1. `CURRENT_DEVELOPMENT_ROADMAP.md`;
+2. `NEXT_DEVELOPMENT_HANDOFF.md`;
+3. this synthesis;
+4. `SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`.
+
+The 2026-09-20 D5 policy-correction, extreme-fixture-correction and representative-clean-corpus design documents were removed from active docs after their valid conclusions were folded into this synthesis. Git history is sufficient for historical traceability.
+
+Do not revive those deleted routes as parallel calibration authorities.

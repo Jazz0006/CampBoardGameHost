@@ -3,6 +3,7 @@
 > Date: 2026-09-17 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT ARCHITECTURE / PRODUCT ROUTE**  
+> Current D5F policy authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
 > Current implementation entry: **SDE-2D / pre-SDE-3 strategic generalization**  
 > Supersedes as execution authority: first-night-only EPI-MQ routes, earlier productive-uncertainty scoring plans, and the older revision-driven dynamic-decision implementation plan.
 
@@ -239,26 +240,35 @@ This is a canonical proof that local pressure scoring is insufficient.
 
 Legal Recluse registration can restore substantial strategic ambiguity to the same Investigator + Chef + Empath structure.
 
-The lesson is not `Recluse should always register evil`; registration choice itself belongs to the global decision problem.
+The BEGINNER default is to use the Recluse's special Evil/Minion/Demon registration because that expresses the role's intended ambiguity. This is an interaction-scoped strong prior, not a permanent state or hard rule; whole-bundle health may materially override it.
 
 ## 9. Spy / Recluse registration
 
-Registration is **per interaction**, not a persistent global boolean.
+Registration is **per interaction**, never a persistent global boolean or canonical identity mutation.
 
-Do not model:
+Rules own the complete legal registration domain for the current interaction.
 
-```text
-Recluse = evil
-Spy = good
-```
+BEGINNER policy applies a thematic default:
 
-as permanent state.
+~~~text
+Spy
+    -> normally use legal Good/Townsfolk/Outsider registration
 
-Rules own which registrations are legal for the current observing interaction.
+Recluse
+    -> normally use legal Evil/Minion/Demon registration
+~~~
 
-Storyteller policy chooses among those legal registrations using exact whole-state consequences.
+This does **not** mean storing `Spy = good` or `Recluse = evil` across the game. Different abilities may receive different legal registration rulings.
 
-If poison / drunkenness disables special registration at the interaction point, effective-state legality removes the candidate.
+The thematic default is a strong prior. Override it only when the default materially harms whole-bundle health, such as creating an excessive confirmation chain or exposing Evil more strongly.
+
+Role-function exposure is separately relevant:
+
+- avoid Librarian -> Recluse when a healthy alternative exists;
+- strongly avoid Investigator -> Spy when a healthy alternative exists;
+- accept either when rules force the outcome.
+
+If poison/drunkenness disables special registration at the interaction point, effective-state legality removes the special candidate.
 
 ## 10. First-night decision lifecycle
 
@@ -436,40 +446,34 @@ Player/table skill profile is distinct from Storyteller UI mode. Experienced Sto
 
 No final NORMAL / EXPERT thresholds are frozen.
 
-## 18. Corpus requirements
+## 18. Corpus / evidence requirements
 
-Calibration evidence must follow the current SDE stage rather than remain permanently seven-player/healthy-only.
+Synthetic fixtures remain useful for correctness, regression and metric sensitivity, but they are not the primary source of policy truth.
 
-Already established families include:
+Current policy calibration is **expert-observation-first**:
 
-- Pair-information + Fortune Teller confirmation chains;
-- Red Herring variants that cut/create those chains;
-- Investigator + Chef + Empath collapse;
-- equivalent cases with Recluse registration alternatives;
-- too-weak bundles;
-- clearly acceptable healthy contrasts.
+1. identify verified experienced/trusted Storytellers;
+2. reconstruct real Trouble Brewing Night-1 state and observed decisions;
+3. recover the exact legal alternative set at each lifecycle stage;
+4. compare observed expert choices with legal counterfactuals through existing whole-bundle/topology diagnostics;
+5. infer only repeated or explicitly reasoned policy constraints;
+6. validate those constraints against broader high-fidelity real-game logs;
+7. use bounded human review for ambiguity, evidence conflicts and BEGINNER-specific product adaptation.
 
-SDE-2D must add:
+Evidence classes:
 
-- Drunk `HealthyCore / FullBundle / DrunkMarginal` contrasts;
-- surface-valid Drunk clues that are false, misleading, or accidentally true;
-- Demon-bluff-supported versus bluff-fragile whole bundles;
-- bluff triplets with redundant versus diverse counter-narratives;
-- cases with similar raw world counts but materially different evil topologies;
-- useful role-information cases that leave evil topology unchanged;
-- representative setup regimes `5–6`, `7–9`, `10–12`, `13–15`;
-- explicit performance evidence for exact enumeration, strategic quotient and symbolic/constraint feasibility.
+~~~text
+GOLD             verified expert/trusted real play
+SILVER           high-fidelity real logs; expertise unverified
+QUALITATIVE      tutorials / postmortems / community rationale
+DIAGNOSTIC_ONLY  synthetic / extreme / counterfactual fixtures
+~~~
 
-Human labels remain:
+A chosen expert action is preference evidence, not a binary label over all alternatives. Final game outcome must not be used as a Storyteller-choice quality label.
 
-```text
-BAD_TOO_STRONG
-ACCEPTABLE
-BAD_TOO_WEAK
-UNCERTAIN
-```
+The existing descriptive categories `BAD_TOO_STRONG / ACCEPTABLE / BAD_TOO_WEAK / UNCERTAIN` may remain useful downstream, but they must not be derived solely from one reviewer's intuition.
 
-Use calibration and sealed holdout scenarios. Do not derive gates and validate them on the same examples. Keep expensive corpus/performance work outside ordinary FAST regression.
+Keep expensive corpus/reconstruction work outside ordinary FAST regression.
 
 ## 19. Frozen vs deliberately unfrozen
 
@@ -483,6 +487,7 @@ Use calibration and sealed holdout scenarios. Do not derive gates and validate t
 - role-information utility remains distinct from strategic pressure;
 - whole-bundle / whole-history interaction matters;
 - Spy/Recluse registration is per interaction;
+- BEGINNER registration policy has a thematic strong prior: Spy normally hides as Good and Recluse normally registers as Evil, with material whole-bundle override;
 - Poisoner can invalidate uncommitted decisions;
 - Drunk shown role is persistent while the unshown clue is a whole-bundle output;
 - uncommitted Demon bluff triplets are SDE outputs; committed bluff triplets are persistent later inputs;
@@ -542,7 +547,7 @@ SDE-2D3  strategic-world quotient / exact feasibility seam
     ↓
 SDE-2D4  5–15 player semantic + performance validation
     ↓
-SDE-2D5  cross-regime calibration / policy evidence
+SDE-2D5  expert-observed calibration / policy evidence
 ```
 
 Do not begin SDE-3 before this gate is complete.

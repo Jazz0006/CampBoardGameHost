@@ -25,7 +25,7 @@ These files preserve completed or superseded SDE implementation/audit evidence. 
 - `SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`
 - `SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`
 
-## SDE-2D5 precursor evidence superseded by B3/v2
+## SDE-2D5 precursor evidence superseded by the 2026-09-21 policy synthesis
 
 - `SDE_2D5_CALIBRATION_POLICY_EVIDENCE_FANOUT_AUDIT_2026-09-19.md`
 - `SDE_2D5F_HUMAN_REVIEW_GATE_HOLDOUT_AUDIT_2026-09-19.md`
@@ -33,13 +33,15 @@ These files preserve completed or superseded SDE implementation/audit evidence. 
 - `SDE_2D5F_EXTERNAL_HUMAN_REPEAT_SIGNAL_AUDIT_2026-09-20.md`
 - `SDE_2D5F_BEGINNER_POLICY_CONTROL_SURFACE_AUDIT_2026-09-20.md`
 
-The current correction authority remains active outside archive:
+Current D5F policy authority:
 
-- `../../../SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`
+- `../../../SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
 
-The current external-human case catalog also remains active:
+Current external evidence seed catalog:
 
-- `../../../SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv`
+- `../../../SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`
+
+The deleted 2026-09-20 D5 correction/design documents remain available only through Git history and are not active authorities.
 
 Current execution state:
 

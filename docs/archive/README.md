@@ -62,6 +62,24 @@ Additional completed campaign evidence was moved out of active `docs/`:
 
 These moves are documentation lifecycle cleanup only; they do not reactivate or change the archived decisions.
 
+### 2026-09-21 D5F policy consolidation
+
+The active D5F route was consolidated around expert-observed calibration.
+
+Three 2026-09-20 active intermediate documents were deleted rather than retained as parallel authorities:
+
+- `SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`;
+- `SDE_2D5F_EXTREME_FIXTURE_CALIBRATION_SCOPE_CORRECTION_2026-09-20.md`;
+- `SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md`.
+
+Their Git history remains available if historical reconstruction is needed. Current conclusions were folded into:
+
+- `../SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`;
+- `../CURRENT_DEVELOPMENT_ROADMAP.md`;
+- `../NEXT_DEVELOPMENT_HANDOFF.md`.
+
+The previous external-human catalog was renamed/reclassified as an external evidence source catalog. Existing entries are SILVER/QUALITATIVE seeds until expert provenance is independently verified.
+
 ## 2. Handoffs
 
 A handoff moves to `handoffs/` when its execution contract is completed, cancelled, or superseded by a new active handoff.
