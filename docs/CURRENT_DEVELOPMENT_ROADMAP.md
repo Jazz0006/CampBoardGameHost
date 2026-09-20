@@ -63,7 +63,7 @@ D5A–D5E                         COMPLETE
 D5F-A                           COMPLETE
 D5F-B manifest infrastructure  COMPLETE
 D5F-B3 policy-model correction COMPLETE
-D5F-B v2 human review          NEXT
+D5F-B representative calibration CORRECTION / NEXT
 D5F-C gate/band derivation     BLOCKED
 sealed holdout                 CLOSED
 SDE-3                           BLOCKED
@@ -172,19 +172,26 @@ Canonical manifest:
 
 Version:
 
-`d5f-b-calibration-v2`
+`d5f-b-calibration-v3`
 
-State:
+Scope correction:
 
-- 11 reviewable records;
-- all `UNREVIEWED`;
-- `isCompleteForGateDerivation == false`.
+- the old v2 role-information and confirmation-chain records all came from one deliberately extreme 7-player D5E diagnostic fixture;
+- that fixture is still useful for proving metric behavior and regression properties;
+- it is **not representative enough to calibrate BEGINNER policy gates**;
+- those records are now `DIAGNOSTIC_ONLY` and do not require human labels;
+- historical v2 labels are preserved in `sde-2d5f-human-label-manifest-v2-obsolete-extreme-fixture.tsv`;
+- canonical v3 retains only the three Demon-bluff judgments and the independent 6-player Drunk judgment.
 
-Obsolete v1 is historical only:
+The gate is intentionally still blocked even though all four v3 manifest entries are settled. Validation reports missing representative coverage for:
 
-`app/src/test/resources/review/sde-2d5f-human-label-manifest-v1-obsolete.tsv`
+`HEALTHY_BUNDLE_INFORMATION`
 
-Do not transfer v1 labels or provisional judgments.
+This prevents accidental gate derivation before normal-template / external-human calibration evidence replaces the extreme fixture.
+
+See:
+
+[`SDE_2D5F_EXTREME_FIXTURE_CALIBRATION_SCOPE_CORRECTION_2026-09-20.md`](SDE_2D5F_EXTREME_FIXTURE_CALIBRATION_SCOPE_CORRECTION_2026-09-20.md)
 
 ## 6. B3 validation
 
@@ -231,26 +238,23 @@ SetupShownIdentityPolicyResolver.resolveGenerated(...)
 
 Do not restore old `SetupEvaluator` / recommendation-owned Drunk shown-role scoring.
 
-## 8. NEXT — D5F-B v2 human review
+## 8. NEXT — representative healthy-information calibration
 
-Review the 11 canonical v2 records one at a time.
+Do **not** continue labeling the two remaining v2 Chef/Empath records.
 
-Allowed labels remain:
+Next:
 
-~~~text
-BAD_TOO_STRONG
-ACCEPTABLE
-BAD_TOO_WEAK
-UNCERTAIN
-~~~
+1. build representative D5F healthy-information cases from actual supported setup templates and the ClockTracker real-game evidence;
+2. prefer 7–9 player normal/playable setups rather than pathological information-dense fixtures;
+3. within the same committed setup, vary only variables that are actually SDE-controllable at that lifecycle stage;
+4. compare Washerwoman / Librarian / Investigator legal output choices in context with fixed Chef/Empath information;
+5. preserve the external-human lesson that table-level cross-confirmation can matter even when topology/cover metrics are unchanged;
+6. add those representative records as `REVIEWABLE`, satisfying the missing `HEALTHY_BUNDLE_INFORMATION` calibration coverage;
+7. only then resume D5F-C gate/band derivation.
 
-Record explicit human reasons using the corrected reason vocabulary.
+The ClockTracker investigation is calibration input, not decoration: it anchors the model in realistic Storyteller choices instead of a synthetic worst-case fixture.
 
-Do not infer labels from diagnostics automatically.
-
-Do not enter D5F-C until every required v2 record has an explicit human judgment and the manifest validation is complete.
-
-## 9. Blocked until human review completes
+## 9. Blocked until representative calibration coverage exists
 
 Do not:
 
@@ -266,8 +270,8 @@ Do not:
 
 SDE-3 remains blocked until:
 
-1. D5F-B v2 human review is complete;
-2. D5F-C derives interpretable candidate gates/bands from those labels;
+1. representative D5F-B calibration covers every SDE-owned policy variable, including HEALTHY_BUNDLE_INFORMATION;
+2. D5F-C derives interpretable candidate gates/bands from representative labels;
 3. gates are frozen before holdout inspection;
 4. sealed holdout is evaluated once against frozen gates;
 5. D5F final acceptance and roadmap/handoff explicitly advance the program.
