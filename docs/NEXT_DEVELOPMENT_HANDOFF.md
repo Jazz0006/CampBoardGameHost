@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
 > Updated: 2026-09-19 Australia/Sydney  
-> Status: **SDE-2D5 CURRENT — D5F-B human review pending; D5F-B2 external-human pilot ACTIVE**  
+> Status: **SDE-2D5 CURRENT — D5F-B3 policy-model correction REQUIRED before human review**  
 > Base checkpoint: PR #149 squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`; D2D5 branch `sde-2d5-calibration-policy-evidence`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
 > Architecture background: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
@@ -19,6 +19,7 @@ Read, in order:
 7. `docs/SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv`;
 8. `docs/SDE_2D5F_EXTERNAL_HUMAN_REPEAT_SIGNAL_AUDIT_2026-09-20.md`;
 9. `docs/SDE_2D5F_BEGINNER_POLICY_CONTROL_SURFACE_AUDIT_2026-09-20.md`;
+10. `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`;
 7. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
 6. `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
 7. `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
@@ -42,6 +43,15 @@ D5F-B2 is deliberately parallel calibration evidence, not a replacement for the 
 External-human policy metrics must be projected through APP ownership. In particular, `HealthyTruthDanger` is not a post-setup authority to change who is Drunk. Use PRE-GAME `SetupTruthExposureRisk` to reject/reroll/reassign pathological functioning healthy-role layouts; after setup persistence use `CounterfactualHealthyTruthDanger` only as context for already-impaired clue selection. Possible future Poisoner targeting is never setup mitigation because the target belongs to the Evil player. The first 14-player public Trouble Brewing pilot completed successfully and exposed a policy correction: Demon-bluff shared/union support is not monotone BEGINNER quality. Preserve practical bluffability, real-information anchoring, narrative-route diversity, complementary strategic coverage and a bounded Night-1 pressure band as separate hypotheses until further real cases are reviewed.
 
 Immediate continuation:
+
+1. implement D5F-B3 policy-model correction from `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`;
+2. keep the current v1 eight-item manifest fully UNREVIEWED and do not derive gates from it;
+3. expand Drunk review to truthful + false candidate contrasts;
+4. expand bluff review beyond shared/union to execution burden / narrative route / individual support;
+5. add bundle-level confirmation-chain evidence while preserving isolated strong clues as legitimate variance;
+6. regenerate a deterministic v2 review manifest;
+7. only then resume explicit human judgment;
+8. do not open holdout, freeze thresholds, cut production policy, or begin SDE-3.
 
 1. continue explicit human judgment of the eight repaired D5F records;
 2. reconstruct 2–3 more public Trouble Brewing Night-1 cases;
