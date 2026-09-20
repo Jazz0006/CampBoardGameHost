@@ -192,6 +192,50 @@ class Sde2D5FHumanLabelManifestTest {
         }
     }
 
+    @Test
+    fun `diagnostic-only Storyteller evidence does not satisfy policy calibration coverage`() {
+        val baseline = point(
+            pointId = "baseline",
+            evidenceKind = Sde2D5EvidenceKind.BASELINE,
+            contrastId = null,
+        )
+        val diagnosticRoleEvidence = roleEvidence("role-diagnostic").copy(
+            sourceSeat = 1,
+            sourceRole = RoleId("Washerwoman"),
+            control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
+        )
+        val material = Sde2D5FCalibrationReviewBuilder.build(
+            sealedHoldoutScenarioCount = 1,
+            baselineReferences = listOf(baseline),
+            drunkContrasts = emptyList(),
+            bluffSelections = emptyList(),
+            roleInformationEvidence = listOf(diagnosticRoleEvidence),
+            roleInformationReviewability = Sde2D5FReviewability.DIAGNOSTIC_ONLY,
+        )
+        val manifest = Sde2D5FHumanLabelManifestBuilder.unreviewedTemplate(
+            material = material,
+            version = "d5f-b-diagnostic-gap",
+        )
+        val validation = Sde2D5FHumanLabelManifestValidator.validate(material, manifest)
+
+        assertTrue(manifest.entries.isEmpty())
+        assertTrue(validation.isValid)
+        assertTrue(validation.unreviewedRequiredReviewIds.isEmpty())
+        assertEquals(
+            setOf(Sde2D5FPolicyVariable.HEALTHY_BUNDLE_INFORMATION),
+            validation.missingRequiredPolicyVariables,
+        )
+        assertFalse(validation.isCompleteForGateDerivation)
+        assertTrue(
+            material.records
+                .filter { it.evidenceKind == Sde2D5FReviewEvidenceKind.ROLE_INFORMATION_CONTRAST }
+                .all {
+                    it.reviewability == Sde2D5FReviewability.DIAGNOSTIC_ONLY &&
+                        it.initialLabel == null
+                },
+        )
+    }
+
     private fun reviewMaterial(): Sde2D5FCalibrationReviewMaterial {
         val baseline = point(
             pointId = "baseline",
