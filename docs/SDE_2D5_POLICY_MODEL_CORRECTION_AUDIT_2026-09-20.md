@@ -232,23 +232,63 @@ Correction:
 
 `SetupCandidateGenerator` legality ownership remains valid.
 
-### 4.5 Legacy shown-role scoring versus durable shown-identity setup pipeline
+### 4.5 Legacy shown-role recommendation path — REMOVED
 
-`SetupCandidateGenerator.generatePlans` already rejects `StorytellerDecision.DrunkShownRole`, because shown identity is now committed upstream.
+The caller audit confirmed that the old recommendation-owned Drunk shown-role path had been fully superseded by the generic setup shown-identity pipeline.
 
-`SetupEvaluator.evaluateClue` still contains a legacy `DrunkShownRole` scoring branch and `TroubleBrewingRecommendationMetadata.drunkSuitability`. That legacy scoring path is not the durable owner.
+Removed from recommendation ownership:
 
-The durable capability is already generic and must be preserved for future scripts without curated templates:
+- `StorytellerDecision.DrunkShownRole`;
+- `StorytellerDecisionKind.DRUNK_SHOWN_ROLE`;
+- `SetupClueOutcome.DrunkShownRole`;
+- `PlanEffectSignature.drunkShownRole`;
+- `HistoricalClueSignature.drunkShownRole`;
+- `SetupEvaluator` Drunk shown-role branch and `drunk-shown-role-suitability` score;
+- `RoleRecommendationMetadata.drunkSuitability`;
+- legacy plan canonicalization / tie-break / legality / explanation branches;
+- unreachable Storyteller recommendation UI for viewing/editing the shown role;
+- obsolete shown-role setup-history adapter;
+- `SetupRecommendationLockPolicy`, whose remaining purpose was filtering the obsolete decision type;
+- `TroubleBrewingSetupRecommendationLock`, which had become a no-op returning `emptyList()`;
+- tests whose only purpose was to prove the obsolete recommendation type was rejected or absent.
 
-- `SetupShownIdentityPolicyResolver.resolveGenerated(...)` derives legal shown-role options for a generated setup (currently all unused Townsfolk for Drunk);
-- `SetupShownIdentityCommitter` commits one option deterministically from the setup seed before seating/materialization;
-- template-backed scripts can supply a smaller curated option set through `TemplateShownIdentityPolicySource`.
+The durable setup capability was deliberately preserved unchanged:
 
-Therefore future generated/custom scripts do still need **shown-identity selection**, but they do not need the old `SetupEvaluator` scoring branch.
+- `SetupShownIdentityPolicyResolver.resolveGenerated(...)` still derives legal shown-role options for generated/custom setups;
+- `TemplateShownIdentityPolicySource` still supplies curated template options;
+- `SetupShownIdentityCommitter` still commits the shown identity deterministically before seating/materialization;
+- Trouble Brewing `drunk_as_options` metadata remains authoritative for template candidates;
+- committed `PlayerState.shownRole` remains persistent input to later recommendation/SDE work.
 
-If quality-aware shown-role selection is later desired, insert a generic setup-stage selector between policy resolution and commitment rather than reviving `drunk-shown-role-suitability`. That selector may use role/composition-level diagnostics while preserving the setup persistence boundary. Current seeded-random commitment is an acceptable fallback.
+For a future generated script without curated templates, shown-identity selection therefore continues to work. If quality-aware selection is later required, add a generic setup-stage selector between policy resolution and commitment; do not restore the removed recommendation-owned scoring path.
 
-## 5. D5 calibration corrections required before human review
+Cleanup evidence:
+
+~~~text
+538ba0bf44d792da92a8937a57ccb5e34831b897
+    remove legacy Drunk shown-role recommendation type/scoring/metadata/guards
+
+512223b60b6a25d51c6bf977f88fe0451c7c0d19
+    remove no-op setup recommendation lock boundary
+
+83434cd8cd478f4d897af3c6bd7f9804ce4b1f96
+    remove surviving Host/UI/history/similarity references
+
+d5921202014a4676cfc4660d411fcb2bb80cf5bb
+    remove remaining obsolete test fixtures
+
+R2 run 35488897936                 SUCCESS
+CI run 35488897941
+    Android FAST                   SUCCESS
+    CI gate                        SUCCESS
+~~~
+
+Across the cleanup series from `f18cc0c3dfbfd18ce61f5d4339d8bfdad7c849c5` through `d5921202014a4676cfc4660d411fcb2bb80cf5bb`, the diff is 58 additions / 394 deletions, net **-336 lines** across 27 files.
+
+The temporary 90/10 impaired-information bridge and legacy `MalfunctionPolicy` were intentionally **not changed** by this cleanup.
+
+
+## 5.## 5. D5 calibration corrections required before human review
 
 The current eight-item v1 manifest is all `UNREVIEWED`, which is fortunate.
 
@@ -374,7 +414,8 @@ D5F-B human review
 
 ~~~text
 D5F-B2 external-human evidence              COMPLETE / ACTIVE CATALOG
-D5F-B3 policy-model correction              NEXT
+D5F-B3 policy-model correction              ACTIVE
+    - legacy Drunk shown-role recommendation/scoring cleanup COMPLETE
     - freeze control-surface semantics
     - remove false-is-preferred assumption from target model
     - expand D5 review schema
@@ -442,7 +483,7 @@ Do not add:
 - truth-distance / misinformation-pressure ranking as final malfunction owner (legacy bridge may remain until cutover);
 - legacy `demon-bluff-ease` as complete bluff-quality owner;
 - GENTLE/BALANCED/AGGRESSIVE as the target BEGINNER policy model;
-- obsolete Drunk shown-role scoring path after caller audit;
+- legacy Drunk shown-role recommendation/scoring path — REMOVED in D5F-B3;
 - legacy static setup recommendation scoring once SDE production cutover is complete.
 
 ## 9. Acceptance condition for resuming human review

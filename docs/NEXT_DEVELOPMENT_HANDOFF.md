@@ -1,6 +1,6 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D Strategic Generalization
 
-> Updated: 2026-09-19 Australia/Sydney  
+> Updated: 2026-09-20 Australia/Sydney  
 > Status: **SDE-2D5 CURRENT — D5F-B3 policy-model correction REQUIRED before human review**  
 > Base checkpoint: PR #149 squash-merged to `main` as `ce591be6f097db5a67a1d8028e8b98de38bdaf6f`; D2D5 branch `sde-2d5-calibration-policy-evidence`  
 > Current route: `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`  
@@ -20,45 +20,41 @@ Read, in order:
 8. `docs/SDE_2D5F_EXTERNAL_HUMAN_REPEAT_SIGNAL_AUDIT_2026-09-20.md`;
 9. `docs/SDE_2D5F_BEGINNER_POLICY_CONTROL_SURFACE_AUDIT_2026-09-20.md`;
 10. `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`;
-7. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
-6. `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
-7. `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
-8. `docs/SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`;
-9. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
-10. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-11. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
-12. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
-13. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
-14. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
-15. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
-16. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
-17. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
-18. Storyteller Decision Engine route;
-19. query live `main`, PR #149 head and current checks before executable edits.
+11. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
+12. `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
+13. `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
+14. `docs/SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`;
+15. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
+16. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
+17. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
+18. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
+19. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
+20. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
+21. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
+22. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
+23. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`.
 
-Do not restart completed FN-BUNDLE, SDE-0, SDE-1 or SDE-2A/B/C work.
+The current D5F v1 eight-record manifest remains fully `UNREVIEWED` and must not feed gate derivation.
 
-D5F-B2 is deliberately parallel calibration evidence, not a replacement for the controlled eight-item D5F-B review.
+D5F-B3 checkpoint:
 
-External-human policy metrics must be projected through APP ownership. In particular, `HealthyTruthDanger` is not a post-setup authority to change who is Drunk. Use PRE-GAME `SetupTruthExposureRisk` to reject/reroll/reassign pathological functioning healthy-role layouts; after setup persistence use `CounterfactualHealthyTruthDanger` only as context for already-impaired clue selection. Possible future Poisoner targeting is never setup mitigation because the target belongs to the Evil player. The first 14-player public Trouble Brewing pilot completed successfully and exposed a policy correction: Demon-bluff shared/union support is not monotone BEGINNER quality. Preserve practical bluffability, real-information anchoring, narrative-route diversity, complementary strategic coverage and a bounded Night-1 pressure band as separate hypotheses until further real cases are reviewed.
+- legacy recommendation-owned Drunk shown-role type/scoring/UI/history/lock surface is **REMOVED** through code head `d5921202014a4676cfc4660d411fcb2bb80cf5bb`;
+- generic setup shown-identity resolution/commitment remains intact for template and GENERATED/custom-script setups;
+- cleanup net: 58 additions / 394 deletions, **-336 lines**;
+- R2 `35488897936` SUCCESS;
+- CI `35488897941` Android FAST + gate SUCCESS;
+- temporary 90/10 impaired-information production bridge remains intentionally unchanged;
+- legacy `MalfunctionPolicy` remains intentionally unchanged pending SDE replacement.
 
 Immediate continuation:
 
-1. implement D5F-B3 policy-model correction from `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`; preserve the temporary 90/10 impaired-information production bridge for now, but remove tests/calibration assumptions that treat the exact split as durable policy;
-2. keep the current v1 eight-item manifest fully UNREVIEWED and do not derive gates from it;
-3. expand Drunk review to truthful + false candidate contrasts;
-4. expand bluff review beyond shared/union to execution burden / narrative route / individual support;
-5. add bundle-level confirmation-chain evidence while preserving isolated strong clues as legitimate variance;
-6. regenerate a deterministic v2 review manifest;
-7. only then resume explicit human judgment;
-8. preserve generic GENERATED-setup shown-identity resolution/commitment for future scripts; do not revive legacy `drunk-shown-role-suitability` as the durable selector;
-9. do not open holdout, freeze thresholds, cut production policy, or begin SDE-3.
-
-1. continue explicit human judgment of the eight repaired D5F records;
-2. reconstruct 2–3 more public Trouble Brewing Night-1 cases;
-3. classify external cases as fully reconstructible executable fixtures or qualitative-only evidence;
-4. compare repeated/new axes before D5F-C gate derivation;
-5. do not open holdout, freeze thresholds, cut production policy, or begin SDE-3.
+1. continue D5F-B3 by expanding Drunk review to truthful + false candidate contrasts;
+2. expand bluff review beyond shared/union to execution burden / narrative route / individual support;
+3. add bundle-level confirmation-chain evidence while preserving isolated strong clues as legitimate variance;
+4. update review reasons and lifecycle/control-surface metadata;
+5. regenerate a deterministic v2 review manifest, all UNREVIEWED;
+6. only then resume explicit human judgment;
+7. do not open holdout, freeze thresholds, cut production policy, or begin SDE-3.
 
 ## 1. Live continuation point
 

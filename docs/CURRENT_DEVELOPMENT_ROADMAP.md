@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-19 Australia/Sydney  
+> Updated: 2026-09-20 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -380,8 +380,9 @@ Audit conclusion:
 - isolated strong healthy clues remain legitimate game variance; do not add automatic seat reroll for a lone Empath 2;
 - human review resumes only after a corrected v2 review schema/manifest covers truth+false Drunk contrasts, bluff execution/narrative dimensions and bundle confirmation-chain evidence;
 - generic shown-identity setup support must remain for future GENERATED/custom-script setups; the legacy `SetupEvaluator` Drunk shown-role score is not the durable owner.
+- **COMPLETE:** caller audit proved the old shown-role recommendation path was dead migration surface; it has now been removed through head `d5921202014a4676cfc4660d411fcb2bb80cf5bb` while the generic setup resolver/committer path remains intact. Cleanup is net -336 lines from the pre-cleanup checkpoint; R2 `35488897936` and CI `35488897941` are green.
 
-**NEXT: implement D5F-B3 policy-model correction, regenerate v2 review material/manifest, then resume human review.**
+**NEXT: continue D5F-B3 with the corrected v2 review surface: Drunk truth/false contrasts, bluff execution/narrative dimensions, confirmation-chain evidence, review reasons/control-surface metadata, then regenerate the v2 manifest and resume human review.**
 
 Do not automatically infer labels. Do not begin D5F-C until every required item is settled and the manifest validator reports complete.
 
