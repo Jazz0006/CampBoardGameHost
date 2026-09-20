@@ -156,7 +156,27 @@ Policy requirements:
 - remove Drunk from the healthy-bundle “cannot evaluate” boundary for supported shown information roles;
 - preserve shown-role persistence and existing revision invalidation;
 - prove committed Drunk clues remain immutable;
-- include representative Drunk pair, numeric and Fortune Teller-style fixtures as supported capability grows.
+- prove the shared impaired-narrative contract across multiple information-shape families as supported capability grows; named roles/fixtures are examples, not separate policy implementations.
+
+### Persistent impaired narrative state
+
+Whole-bundle treatment of one impaired clue is not sufficient for repeated/history-dependent information.
+
+Before cross-night production cutover, introduce one shared persistent narrative-state concept that carries the believable perceived world created by prior impaired observations.
+
+It must be role-agnostic:
+
+~~~text
+committed impaired observations
++ visible history changes
++ selected counterworld / narrative intent
++ current role-owned legal domain
+    -> coherent next legal output
+~~~
+
+Role-specific modules continue to own legality and proposition construction. They must not each invent their own cross-night misinformation policy.
+
+Do not encode known examples, exact seat layouts or calibration fixtures as policy branches. A special case is allowed only when the game rules themselves distinguish that role/interaction.
 
 ## 5. SDE-2D2 — Demon bluff joint-output migration
 
@@ -388,6 +408,7 @@ SDE-2D must not:
 - replace exactness with unlabelled random sampling;
 - use raw world count as the primary strategic objective;
 - collapse strategic pressure and role-information utility into one opaque scalar;
+- implement cross-night impaired coherence as per-role or fixture-specific policy branches;
 - cut all production selection to SDE before the corrective contracts are validated;
 - retire `ConsequenceEvaluator` early;
 - begin cross-night SDE-3 implementation before this route reaches its acceptance gate.
