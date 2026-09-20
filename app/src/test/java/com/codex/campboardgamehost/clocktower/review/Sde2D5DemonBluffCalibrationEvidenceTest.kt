@@ -82,7 +82,7 @@ class Sde2D5DemonBluffCalibrationEvidenceTest {
         assertEquals(3, evidence.pairwiseStrategicCoverage.size)
         assertTrue(evidence.claimCadenceClassCount >= 1)
         assertTrue(evidence.narrativeRouteClassCount >= 1)
-        assertEquals(roles.toSet(), evidence.roleTraits.keys)
+        assertEquals(setOf(monk, soldier, butler), evidence.roleTraits.keys)
         assertEquals(
             StrategicRatio.Defined(3, 4),
             evidence.roleSupportNormalized.getValue(monk).evilTopologyRetention,
