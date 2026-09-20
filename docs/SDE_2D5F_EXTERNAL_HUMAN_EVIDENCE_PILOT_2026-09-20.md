@@ -230,3 +230,150 @@ D5F-B2 must not:
 - change visible production recommendation selection.
 
 D5F-C may begin only after controlled human review is complete and the external-human pilot findings have been reviewed for whether additional interpretable axes are required.
+
+
+## 7. Additional public Trouble Brewing evidence sweep
+
+The next external sweep deliberately distinguishes evidence fidelity.
+
+~~~text
+EXECUTABLE
+    exact seating/setup and relevant Night-1 choices reconstructible
+
+HIGH_FIDELITY_NIGHT1
+    role/action log is rich enough to study Storyteller choices,
+    but exact seat-index reconstruction is incomplete
+
+QUALITATIVE_ST_RATIONALE
+    explicit Storyteller rationale exists,
+    but the full setup is not reconstructible enough for exact topology evaluation
+~~~
+
+Do not manufacture missing seats or targets to promote a qualitative record into an executable fixture.
+
+### 7.1 Case 2 — santa2452, 11-player Trouble Brewing, 2025-06-20
+
+Public ClockTracker game:
+
+`5815056c-a860-406d-8caa-293b6163fd1f`
+
+Evidence fidelity: **QUALITATIVE_ST_RATIONALE** pending exact seating reconstruction.
+
+The public Storyteller note explicitly says that after seeing the Evil team unexpectedly sitting in a row, the Storyteller considered making either the Chef or Investigator the Drunk and chose the Investigator.
+
+This exposes a new candidate axis:
+
+**TRUTH_DANGER / EVIL_TOPOLOGY_COUPLING**
+
+Question:
+
+> If a healthy information role would truthfully reveal an unusually dangerous feature of the actual Evil topology, should BEGINNER setup/planning prefer to place impairment or misinformation pressure on that information channel?
+
+This is distinct from generic `DrunkMarginal`.
+
+Two false clues with similar marginal world retention may differ because one suppresses a **high-value true signal about the actual Evil seating** while the other suppresses largely redundant information.
+
+Candidate diagnostics to investigate:
+
+- healthy-truth strategic collapse relative to the current setup;
+- actual-Evil-topology exposure by each healthy information role;
+- replacement/Drunk clue pressure relative to the danger of the suppressed healthy truth;
+- whether another independent healthy information chain already exposes the same topology.
+
+Do not turn this into "always drunk the strongest information role". The target remains a useful but non-collapsing beginner information ecology.
+
+### 7.2 Case 3 — Scott, high-fidelity Trouble Brewing Night 1
+
+Public ClockTracker game:
+
+`0c964606-a126-407b-8952-fed8b6fa2e08`
+
+Evidence fidelity: **HIGH_FIDELITY_NIGHT1**; exact seat-index reconstruction remains incomplete, so no topology fixture is fabricated yet.
+
+Indexed public Night-1 notes expose:
+
+- Imp Lyn receives Saint / Monk / Investigator as the three Demon bluffs;
+- Poisoner Scott chooses Art;
+- Librarian Nico receives a Butler pair including Serene;
+- Chef Brian receives 1;
+- Fortune Teller Ion chooses a pair and receives NO;
+- public role/grimoire snippets additionally identify Scarlet Woman Wesley, Spy Maddox, Butler Serene, Virgin Nelson, Soldier Art, Chef Brian, Slayer caspian3787, Ravenkeeper Elliott, Fortune Teller Ion, Librarian Nico and Undertaker Griffin.
+
+The bluff triplet is structurally interesting for BEGINNER play:
+
+~~~text
+Saint
+    low ongoing claim burden / social survival route
+
+Investigator
+    one-shot information route
+
+Monk
+    repeated active protection route
+~~~
+
+This supports keeping **NARRATIVE_ROUTE_DIVERSITY** and **CLAIM_BURDEN / CADENCE** separate from shared-world support.
+
+A candidate bluff set may be beginner-friendly because it offers multiple operational styles, even when those roles do not maximize common strategic support.
+
+Exact ranking comparison is deferred until seat order and remaining hidden setup facts can be recovered without invention.
+
+### 7.3 Case 4 — santa2452, 14-player Trouble Brewing, 2025-03-24
+
+Public ClockTracker game:
+
+`55fba9f9-3a83-42da-b0c4-596be13c4d55`
+
+Evidence fidelity: **QUALITATIVE_TRAJECTORY** pending exact Night-1 reconstruction.
+
+The public game note reports that the Fortune Teller repeatedly selected the Red Herring and therefore received many YES results.
+
+This exposes another candidate axis:
+
+**RED_HERRING_EXPOSURE / TRAJECTORY VALUE**
+
+Current setup legality treats each good seat as a legal Red Herring candidate. A beginner-policy evaluator may need to distinguish the expected downstream interaction of those legal seats.
+
+Questions to investigate:
+
+- how often is a candidate Red Herring likely to be paired with plausible Fortune Teller targets;
+- does the placement create repeated ambiguous YES results or one isolated misleading result;
+- does it accidentally create an obvious pattern that lets the Fortune Teller identify the Red Herring too easily;
+- does the Red Herring overlap with existing confirmation chains or social focal seats;
+- does it create meaningful ambiguity without becoming a hard trap for a novice Fortune Teller.
+
+This is not evidence that "more Red-Herring hits is better". The observed game only proves that one setup choice can have repeated downstream epistemic impact, so static legal-seat equivalence is insufficient for policy calibration.
+
+## 8. Revised external-human parameter inventory
+
+After the first four public Trouble Brewing records, the working BEGINNER parameter inventory is:
+
+1. practical bluffability / novice execution difficulty;
+2. real-information anchoring;
+3. narrative-route diversity;
+4. claim burden / information cadence;
+5. shared-support coherence floor;
+6. strategic-world coverage complementarity;
+7. Night-1 strategic-pressure band;
+8. Drunk misinformation marginal band;
+9. **truth-danger / Evil-topology coupling**;
+10. confirmation-chain suppression;
+11. **Red-Herring exposure / trajectory value**;
+12. future bluff supportability / continuation affordance;
+13. new-player recoverability after an imperfect claim.
+
+Items 9 and 11 were added by the additional real-case sweep. Item 12 remains a hypothesis from public Storyteller notes where later game events were explicitly used to reinforce a protection-role bluff.
+
+None of these axes is yet a frozen gate or weighted score.
+
+## 9. Immediate implementation rule
+
+Before adding another executable external fixture:
+
+- require exact seat order;
+- require actual role/shown-role setup needed by the tested semantics;
+- require all Storyteller-controlled Night-1 choices being compared;
+- record any missing data explicitly;
+- never fill a missing public fact by choosing the value that makes the algorithm look better.
+
+The next executable fixture should be selected from records meeting those reconstruction requirements. Qualitative records remain useful for parameter discovery but must not produce fake exact topology numbers.
