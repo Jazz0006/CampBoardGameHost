@@ -33,6 +33,27 @@ class Sde2D5FManifestGenerationExperiment {
         )
         assertTrue(manifest.entries.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
         assertTrue(manifest.entries.all { it.reasons.isEmpty() })
+        assertEquals(11, manifest.entries.size)
+
+        val roleInfoRecords = material.records.filter {
+            it.evidenceKind == Sde2D5FReviewEvidenceKind.ROLE_INFORMATION_CONTRAST
+        }
+        assertTrue(
+            roleInfoRecords.any {
+                it.controlSurface.decisionOwner == Sde2D5FDecisionOwner.STORYTELLER_SDE
+            },
+        )
+        assertTrue(
+            roleInfoRecords.any {
+                it.controlSurface.decisionOwner == Sde2D5FDecisionOwner.CALIBRATION_DIAGNOSTIC_ONLY
+            },
+        )
+
+        val persisted = Sde2D5FHumanLabelManifestCodec.parse(
+            File("src/test/resources/review/sde-2d5f-human-label-manifest.tsv")
+                .readText(Charsets.UTF_8),
+        )
+        assertEquals(manifest, persisted)
 
         val reports = File("build/reports")
         reports.mkdirs()

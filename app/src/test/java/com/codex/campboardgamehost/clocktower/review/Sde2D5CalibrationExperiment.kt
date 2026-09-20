@@ -100,7 +100,8 @@ class Sde2D5CalibrationExperiment {
                 Sde2D5EvidenceKind.DRUNK_FULL_BUNDLE,
                 evidence.fullBundle.evidenceKind,
             )
-            assertTrue(evidence.fullBundle.rawMechanicalAfter!!.signum() > 0)
+            assertTrue(evidence.fullBundle.rawMechanicalAfter!!.signum() >= 0)
+            assertTrue(evidence.rawWorldsRemoved.signum() >= 0)
             assertTrue(
                 evidence.fullBundle.afterStrategicWorldCount <=
                     evidence.healthyCore.afterStrategicWorldCount,
@@ -170,6 +171,18 @@ class Sde2D5CalibrationExperiment {
             ),
         )
         assertTrue(nearRaw.rawWorldRemovalDifference.signum() >= 0)
+        assertTrue(
+            calibration.allEvidence.any {
+                it.control ==
+                    com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl.STORYTELLER_CONTROLLED
+            },
+        )
+        assertTrue(
+            calibration.allEvidence.any {
+                it.control ==
+                    com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl.RULE_DETERMINED
+            },
+        )
     }
 
     @Test

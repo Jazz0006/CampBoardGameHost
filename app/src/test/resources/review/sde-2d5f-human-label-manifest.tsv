@@ -1,7 +1,10 @@
-version=d5f-b-calibration-v1
+version=d5f-b-calibration-v2
 d5f:bluff:13af34bc8befea2f:r1	UNREVIEWED		
+d5f:bluff:334926f04bd2c687:r1	UNREVIEWED		
 d5f:bluff:fe702b4aac3ca49a:r1	UNREVIEWED		
-d5f:drunk:value-1	UNREVIEWED		
+d5f:confirmation:sig-3a97786fbe44b310	UNREVIEWED		
+d5f:confirmation:sig-c8f4a0424526b659	UNREVIEWED		
+d5f:drunk:baron-6-drunk-empath-seat-2	UNREVIEWED		
 d5f:role-info:sig-00002562710d4654:marginal-1	UNREVIEWED		
 d5f:role-info:sig-44f30b2b21cd7682:marginal-0	UNREVIEWED		
 d5f:role-info:sig-796b6039ad4bb4aa:marginal-0	UNREVIEWED		
