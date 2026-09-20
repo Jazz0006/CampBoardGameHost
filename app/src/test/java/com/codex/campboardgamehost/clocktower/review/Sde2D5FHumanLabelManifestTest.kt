@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost.clocktower.review
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl
 import com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnostics
 import com.codex.campboardgamehost.clocktower.recommendation.sde.StrategicRatio
 import java.math.BigInteger
@@ -214,6 +216,9 @@ class Sde2D5FHumanLabelManifestTest {
                 evidenceKind = Sde2D5EvidenceKind.STRATEGIC_ROLE_INFORMATION_CONTRAST,
                 contrastId = "role-contrast",
             ),
+            sourceSeat = 2,
+            sourceRole = RoleId("Chef"),
+            control = FirstNightBundleEntryControl.RULE_DETERMINED,
             rawWorldsRemoved = BigInteger.TEN,
             hasMechanicalInformationGain = true,
             topologyNeutral = true,

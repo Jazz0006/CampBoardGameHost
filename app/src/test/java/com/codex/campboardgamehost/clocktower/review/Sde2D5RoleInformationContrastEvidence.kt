@@ -1,17 +1,23 @@
 package com.codex.campboardgamehost.clocktower.review
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl
 import com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnosticsProjector
 import java.math.BigInteger
 
 internal data class Sde2D5RoleInformationCalibrationEvidence(
     val point: Sde2D5CalibrationEvidencePoint,
+    val sourceSeat: Int,
+    val sourceRole: RoleId,
+    val control: FirstNightBundleEntryControl,
     val rawWorldsRemoved: BigInteger,
     val hasMechanicalInformationGain: Boolean,
     val topologyNeutral: Boolean,
 ) {
     init {
         require(point.evidenceKind == Sde2D5EvidenceKind.STRATEGIC_ROLE_INFORMATION_CONTRAST)
+        require(sourceSeat > 0)
         require(rawWorldsRemoved.signum() >= 0)
         require(hasMechanicalInformationGain == (rawWorldsRemoved.signum() > 0))
     }
@@ -75,10 +81,14 @@ internal object Sde2D5RoleInformationCalibrationEvidenceProjector {
         playerCount: Int,
         profileKind: Sde2D5SetupProfileKind,
         contrastId: String,
+        sourceSeat: Int,
+        sourceRole: RoleId,
+        control: FirstNightBundleEntryControl,
         diagnostic: ExactHypotheticalObservationBundleDiagnostics,
     ): Sde2D5RoleInformationCalibrationEvidence {
         require(playerCount in 5..15)
         require(contrastId.isNotBlank())
+        require(sourceSeat > 0)
         require(diagnostic.after.value <= diagnostic.before.value) {
             "Hypothetical calibration evidence cannot create exact mechanical worlds."
         }
@@ -103,6 +113,9 @@ internal object Sde2D5RoleInformationCalibrationEvidenceProjector {
                 rawMechanicalBefore = diagnostic.before.value,
                 rawMechanicalAfter = diagnostic.after.value,
             ),
+            sourceSeat = sourceSeat,
+            sourceRole = sourceRole,
+            control = control,
             rawWorldsRemoved = removed,
             hasMechanicalInformationGain = removed.signum() > 0,
             topologyNeutral =

@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost.clocktower.review
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl
 import com.codex.campboardgamehost.clocktower.epistemic.ExactWorldStructureDiagnostics
 import com.codex.campboardgamehost.clocktower.epistemic.StrategicWorldKey
 import com.codex.campboardgamehost.clocktower.epistemic.WorldCardinality
@@ -36,6 +38,9 @@ class Sde2D5RoleInformationContrastEvidenceTest {
             playerCount = 7,
             profileKind = Sde2D5SetupProfileKind.STANDARD,
             contrastId = "ratio-equivalence",
+            sourceSeat = 2,
+            sourceRole = RoleId("Chef"),
+            control = FirstNightBundleEntryControl.RULE_DETERMINED,
             diagnostic = diagnostic(
                 id = "four-of-four",
                 beforeWorlds = 100,
@@ -48,6 +53,9 @@ class Sde2D5RoleInformationContrastEvidenceTest {
             playerCount = 7,
             profileKind = Sde2D5SetupProfileKind.STANDARD,
             contrastId = "ratio-equivalence",
+            sourceSeat = 2,
+            sourceRole = RoleId("Chef"),
+            control = FirstNightBundleEntryControl.RULE_DETERMINED,
             diagnostic = diagnostic(
                 id = "five-of-five",
                 beforeWorlds = 100,
@@ -80,6 +88,9 @@ class Sde2D5RoleInformationContrastEvidenceTest {
             playerCount = 7,
             profileKind = Sde2D5SetupProfileKind.STANDARD,
             contrastId = "topology-neutral-role-information",
+            sourceSeat = 2,
+            sourceRole = RoleId("Chef"),
+            control = FirstNightBundleEntryControl.RULE_DETERMINED,
             diagnostic = diagnostic(
                 id = "topology-neutral",
                 beforeWorlds = 100,
@@ -113,6 +124,9 @@ class Sde2D5RoleInformationContrastEvidenceTest {
             playerCount = 7,
             profileKind = Sde2D5SetupProfileKind.STANDARD,
             contrastId = "matched-raw",
+            sourceSeat = 2,
+            sourceRole = RoleId("Chef"),
+            control = FirstNightBundleEntryControl.RULE_DETERMINED,
             diagnostic = diagnostic(
                 id = "matched-raw-neutral",
                 beforeWorlds = 100,
@@ -125,6 +139,9 @@ class Sde2D5RoleInformationContrastEvidenceTest {
             playerCount = 7,
             profileKind = Sde2D5SetupProfileKind.STANDARD,
             contrastId = "matched-raw",
+            sourceSeat = 2,
+            sourceRole = RoleId("Chef"),
+            control = FirstNightBundleEntryControl.RULE_DETERMINED,
             diagnostic = diagnostic(
                 id = "matched-raw-collapse",
                 beforeWorlds = 100,

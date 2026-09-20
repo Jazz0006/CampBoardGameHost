@@ -5,6 +5,7 @@ import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCa
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
@@ -12,6 +13,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalContext
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightHealthyBundleHarnessEvaluation
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightHealthyRecipientExactDiagnostics
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightHealthyBundleHarness
@@ -123,10 +125,18 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
             val full = group.recipientDiagnostics.single()
             group.leaveOneOutDiagnostics.mapIndexed { omittedIndex, leaveOneOut ->
                 val omitted = leaveOneOut.recipientDiagnostics.single()
+                val omittedObservation = group.publicObservations[omittedIndex]
+                val sourceSeat = requireNotNull(omittedObservation.sourceSeat) {
+                    "Healthy public review clue must retain its source seat."
+                }
+                val sourceRole = requireNotNull(game.playerAt(sourceSeat)).actualRole
                 Sde2D5RoleInformationCalibrationEvidenceProjector.project(
                     playerCount = 7,
                     profileKind = Sde2D5SetupProfileKind.STANDARD,
                     contrastId = "d5e-real-role-information",
+                    sourceSeat = sourceSeat,
+                    sourceRole = sourceRole,
+                    control = roleInformationControl(sourceRole),
                     diagnostic = marginalDiagnostic(
                         bundleId = "${group.signatureId}:marginal-$omittedIndex",
                         omitted = omitted,
@@ -234,6 +244,16 @@ internal object Sde2D5RoleInformationRealCalibrationBuilder {
                     confirmationChainEvidence,
                 ),
         )
+    }
+
+    private fun roleInformationControl(
+        role: RoleId,
+    ): FirstNightBundleEntryControl = when (role.value) {
+        "Washerwoman", "Librarian", "Investigator" ->
+            FirstNightBundleEntryControl.STORYTELLER_CONTROLLED
+        "Chef", "Empath" ->
+            FirstNightBundleEntryControl.RULE_DETERMINED
+        else -> error("Unexpected healthy-bundle role-information source ${role.value}.")
     }
 
     private fun marginalDiagnostic(

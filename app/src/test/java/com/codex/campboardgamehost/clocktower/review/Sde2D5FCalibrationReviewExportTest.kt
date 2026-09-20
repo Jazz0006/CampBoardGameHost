@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.review
 
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl
 import com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnostics
 import com.codex.campboardgamehost.clocktower.recommendation.sde.StrategicRatio
 import java.math.BigInteger
@@ -102,6 +103,9 @@ class Sde2D5FCalibrationReviewExportTest {
                 contrastId = "role-info-contrast",
                 topology = StrategicRatio.Defined(20, 20),
             ),
+            sourceSeat = 2,
+            sourceRole = RoleId("Chef"),
+            control = FirstNightBundleEntryControl.RULE_DETERMINED,
             rawWorldsRemoved = BigInteger.valueOf(15),
             hasMechanicalInformationGain = true,
             topologyNeutral = true,
@@ -167,6 +171,10 @@ class Sde2D5FCalibrationReviewExportTest {
             roleInformationRecord.controlSurface.decisionOwner,
         )
         assertTrue(roleInformationRecord.controlSurface.controllableVariables.isEmpty())
+        assertEquals(
+            Sde2D5FPersistenceBoundary.FIRST_NIGHT_CLUE_PLANNED_UNTIL_SHOWN_THEN_COMMITTED,
+            roleInformationRecord.controlSurface.persistenceBoundary,
+        )
 
         material.records
             .filter { it.reviewability == Sde2D5FReviewability.REVIEWABLE }
@@ -190,6 +198,9 @@ class Sde2D5FCalibrationReviewExportTest {
                 contrastId = "role-info-contrast",
                 topology = StrategicRatio.Defined(20, 20),
             ),
+            sourceSeat = 2,
+            sourceRole = RoleId("Chef"),
+            control = FirstNightBundleEntryControl.RULE_DETERMINED,
             rawWorldsRemoved = BigInteger.valueOf(15),
             hasMechanicalInformationGain = true,
             topologyNeutral = true,

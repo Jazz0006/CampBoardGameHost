@@ -44,6 +44,7 @@ internal enum class Sde2D5FPersistenceBoundary {
     REFERENCE_ONLY,
     DRUNK_SHOWN_IDENTITY_PERSISTENT_CLUE_PLANNED_UNTIL_SHOWN,
     DEMON_BLUFF_TRIPLET_PLANNED_UNTIL_REVEAL_THEN_PERSISTENT,
+    FIRST_NIGHT_CLUE_PLANNED_UNTIL_SHOWN_THEN_COMMITTED,
     DESCRIPTIVE_BUNDLE_EVIDENCE_ONLY,
 }
 
@@ -246,16 +247,33 @@ internal object Sde2D5FCalibrationReviewBuilder {
                         regime = point.regime,
                         profileKind = point.profileKind,
                         contrastId = point.contrastId,
-                        controlSurface = Sde2D5FControlSurface(
-                            lifecycleStage = Sde2D5FLifecycleStage.FIRST_NIGHT_AFTER_SETUP_PERSISTENCE,
-                            decisionOwner = Sde2D5FDecisionOwner.CALIBRATION_DIAGNOSTIC_ONLY,
-                            controllableVariables = emptySet(),
-                            diagnosticOnlyVariables = setOf(
-                                Sde2D5FPolicyVariable.HEALTHY_BUNDLE_INFORMATION,
-                                Sde2D5FPolicyVariable.NORMALIZED_STRATEGIC_DIAGNOSTICS,
-                            ),
-                            persistenceBoundary = Sde2D5FPersistenceBoundary.DESCRIPTIVE_BUNDLE_EVIDENCE_ONLY,
-                        ),
+                        controlSurface = when (evidence.control) {
+                            com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl.STORYTELLER_CONTROLLED ->
+                                Sde2D5FControlSurface(
+                                    lifecycleStage = Sde2D5FLifecycleStage.FIRST_NIGHT_AFTER_SETUP_PERSISTENCE,
+                                    decisionOwner = Sde2D5FDecisionOwner.STORYTELLER_SDE,
+                                    controllableVariables = setOf(
+                                        Sde2D5FPolicyVariable.HEALTHY_BUNDLE_INFORMATION,
+                                    ),
+                                    diagnosticOnlyVariables = setOf(
+                                        Sde2D5FPolicyVariable.NORMALIZED_STRATEGIC_DIAGNOSTICS,
+                                    ),
+                                    persistenceBoundary =
+                                        Sde2D5FPersistenceBoundary.FIRST_NIGHT_CLUE_PLANNED_UNTIL_SHOWN_THEN_COMMITTED,
+                                )
+                            com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl.RULE_DETERMINED ->
+                                Sde2D5FControlSurface(
+                                    lifecycleStage = Sde2D5FLifecycleStage.FIRST_NIGHT_AFTER_SETUP_PERSISTENCE,
+                                    decisionOwner = Sde2D5FDecisionOwner.CALIBRATION_DIAGNOSTIC_ONLY,
+                                    controllableVariables = emptySet(),
+                                    diagnosticOnlyVariables = setOf(
+                                        Sde2D5FPolicyVariable.HEALTHY_BUNDLE_INFORMATION,
+                                        Sde2D5FPolicyVariable.NORMALIZED_STRATEGIC_DIAGNOSTICS,
+                                    ),
+                                    persistenceBoundary =
+                                        Sde2D5FPersistenceBoundary.FIRST_NIGHT_CLUE_PLANNED_UNTIL_SHOWN_THEN_COMMITTED,
+                                )
+                        },
                         details = Sde2D5FReviewDetails.RoleInformationContrast(evidence),
                     ),
                 )
@@ -417,6 +435,9 @@ internal object Sde2D5FCalibrationReviewRenderer {
             is Sde2D5FReviewDetails.RoleInformationContrast -> {
                 val evidence = details.evidence
                 appendLine("detail=role-information-contrast")
+                appendLine("sourceSeat=${evidence.sourceSeat}")
+                appendLine("sourceRole=${evidence.sourceRole.value}")
+                appendLine("control=${evidence.control}")
                 appendLine("rawWorldsRemoved=${evidence.rawWorldsRemoved}")
                 appendLine("hasMechanicalInformationGain=${evidence.hasMechanicalInformationGain}")
                 appendLine("topologyNeutral=${evidence.topologyNeutral}")
