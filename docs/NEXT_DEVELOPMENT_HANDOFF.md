@@ -18,6 +18,7 @@ Read, in order:
 6. `docs/SDE_2D5F_EXTERNAL_HUMAN_EVIDENCE_PILOT_2026-09-20.md`;
 7. `docs/SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv`;
 8. `docs/SDE_2D5F_EXTERNAL_HUMAN_REPEAT_SIGNAL_AUDIT_2026-09-20.md`;
+9. `docs/SDE_2D5F_BEGINNER_POLICY_CONTROL_SURFACE_AUDIT_2026-09-20.md`;
 7. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
 6. `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
 7. `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
@@ -36,7 +37,9 @@ Read, in order:
 
 Do not restart completed FN-BUNDLE, SDE-0, SDE-1 or SDE-2A/B/C work.
 
-D5F-B2 is deliberately parallel calibration evidence, not a replacement for the controlled eight-item D5F-B review. The first 14-player public Trouble Brewing pilot completed successfully and exposed a policy correction: Demon-bluff shared/union support is not monotone BEGINNER quality. Preserve practical bluffability, real-information anchoring, narrative-route diversity, complementary strategic coverage and a bounded Night-1 pressure band as separate hypotheses until further real cases are reviewed.
+D5F-B2 is deliberately parallel calibration evidence, not a replacement for the controlled eight-item D5F-B review.
+
+External-human policy metrics must be projected through APP ownership. In particular, `HealthyTruthDanger` is not a post-setup authority to change who is Drunk. Use PRE-GAME `SetupTruthExposureRisk` to reject/reroll/reassign pathological functioning healthy-role layouts; after setup persistence use `CounterfactualHealthyTruthDanger` only as context for already-impaired clue selection. Possible future Poisoner targeting is never setup mitigation because the target belongs to the Evil player. The first 14-player public Trouble Brewing pilot completed successfully and exposed a policy correction: Demon-bluff shared/union support is not monotone BEGINNER quality. Preserve practical bluffability, real-information anchoring, narrative-route diversity, complementary strategic coverage and a bounded Night-1 pressure band as separate hypotheses until further real cases are reviewed.
 
 Immediate continuation:
 
