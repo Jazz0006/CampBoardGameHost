@@ -79,13 +79,7 @@ DIAGNOSTIC_ONLY
 
 ## 已撤销的 D5 路线
 
-2026-09-20 的以下 active 中间文档已删除，避免继续污染当前路线；Git history 仍保留追溯能力：
-
-- `SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`
-- `SDE_2D5F_EXTREME_FIXTURE_CALIBRATION_SCOPE_CORRECTION_2026-09-20.md`
-- `SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md`
-
-其中有效结论已经合并进 2026-09-21 policy synthesis、roadmap 和 handoff；失效的 synthetic calibration 路线不再作为 active authority。
+2026-09-20 的中间 policy-correction / extreme-fixture / clean-representative calibration 文档已从 active docs 删除。有效结论已经合并进 2026-09-21 policy synthesis、roadmap 和 handoff；Git history / archive 仅用于必要的历史追溯。
 
 旧 human-label manifests 与 test-only calibration artifacts 目前只是历史/兼容资产；是否删除属于下一步代码/测试清理审计，不从它们推断当前 policy。
 
