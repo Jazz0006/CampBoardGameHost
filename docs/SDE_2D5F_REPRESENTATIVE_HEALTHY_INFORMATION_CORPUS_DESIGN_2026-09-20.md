@@ -102,6 +102,44 @@ The first batch is intentionally small and interpretable:
 
 This is not yet the final review membership. It is the first representative materialization surface from which reviewable contrasts can be chosen without using a diagnostic extreme as the sampling rule.
 
+### Implemented first slice
+
+The test-only implementation now lives in:
+
+- `Sde2D5FRepresentativeHealthyInformationCorpus.kt`
+- `Sde2D5FRepresentativeHealthyInformationCorpusTest.kt`
+
+It:
+
+- parses and validates the production preset dataset;
+- passes each selected preset through `TroubleBrewingSetupDealPlanner`;
+- fixes Poisoner targets only as explicit Evil-player-controlled context;
+- enumerates every legal healthy pair clue through `NaturalPairInformationCandidateGenerator`;
+- exposes Chef/Empath as fixed context rather than an optimization target;
+- distinguishes actual-role truth from Spy/Recluse registration truth;
+- renders a complete seat table and human-readable clue meaning;
+- does not add labels, policy gates, thresholds, or manifest membership.
+
+Checkpoint validation on implementation head `cb1ffc454f87a7be8b166d8013746dee7f50bfda`:
+
+- CI run `35514598766` — SUCCESS;
+- R2 run `35514598790` — SUCCESS.
+
+### Human-review subset selection
+
+Full legal enumeration is the **machine corpus**, not the human labeling workload. A normal setup can expose tens of legal pair clues.
+
+Human review should select a small semantic-strata subset from each setup, using table meaning rather than metric extrema. Useful strata include:
+
+- decoy actual alignment/type, especially good versus Evil;
+- whether the pair directly contains the Demon or Minion;
+- Investigator actual-Minion truth versus Recluse-registration truth;
+- Spy-registration truth where present;
+- whether the candidate overlaps a fixed Chef/Empath confirmation route;
+- whether two otherwise similar choices create materially different narrative routes.
+
+Do not select review items by FIRST/MIDDLE/LAST candidate index or by lowest/highest global diagnostic.
+
 ## 7. Human-readable table meaning
 
 Every candidate record must expose enough information for a Storyteller to judge the table, without decoding raw proposition/world objects:
@@ -152,6 +190,8 @@ Use it to:
 - validate that the generated human-readable cases resemble real Storyteller decisions.
 
 Do not map a qualitative external report onto a different setup as if it were an exact observed choice.
+
+Current catalog audit: the external-human evidence contains strong ecology/guardrail evidence, but it does not provide a clean 7–9 player same-setup observed alternative set for healthy Washerwoman/Librarian/Investigator choices. The ClockTracker 14-player case is valuable real-choice evidence but includes impaired information and a different player-count regime. Therefore external evidence should constrain dimensions and guardrails here, not be converted into synthetic direct labels.
 
 ## 10. Gate discipline
 
