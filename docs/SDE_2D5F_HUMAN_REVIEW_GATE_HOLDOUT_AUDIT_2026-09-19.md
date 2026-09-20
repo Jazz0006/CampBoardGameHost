@@ -4,7 +4,7 @@
 > Repository: Jazz0006/CampBoardGameHost  
 > Branch: sde-2d5-calibration-policy-evidence  
 > Base D5 evidence: D5A–D5E complete  
-> Status: **D5F-A COMPLETE — D5F-B infrastructure COMPLETE; HUMAN REVIEW is the next step**
+> Status: **D5F-A COMPLETE — D5F-B infrastructure COMPLETE; D5F-B3 POLICY-MODEL CORRECTION REQUIRED BEFORE HUMAN REVIEW**
 
 ## 1. Purpose
 
@@ -313,7 +313,7 @@ Requirements:
 - all generated reviewable items begin UNREVIEWED;
 - baseline reference rows are explicitly non-labelable context.
 
-### D5F-B — human label manifest — INFRASTRUCTURE COMPLETE / HUMAN REVIEW PENDING
+### D5F-B — human label manifest — INFRASTRUCTURE COMPLETE / HUMAN REVIEW PAUSED FOR B3 CORRECTION
 
 Add a separate label manifest keyed by stable review ID.
 
@@ -519,11 +519,13 @@ Android full + Debug APK / ASP / Clingo / CI gate  SUCCESS
 The validator intentionally reports the current manifest as **valid but incomplete**:
 `isCompleteForGateDerivation == false`.
 
+The subsequent policy-model correction audit found that the v1 review surface is too narrow to calibrate the corrected BEGINNER policy. The manifest remains a valid historical evidence checkpoint but must stay fully UNREVIEWED. It must not feed D5F-C. Authority: `docs/SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`.
+
 No human label has yet been assigned, no gate has been derived and no holdout diagnostic has been inspected.
 
-## 15. Immediate next step — HUMAN REVIEW
+## 15. Immediate next step — D5F-B3 POLICY-MODEL CORRECTION
 
-Restart human review from the repaired full-domain Demon-bluff evidence, then review the remaining six unchanged records. Review the eight source-controlled manifest records against the D5F-A calibration evidence and assign human judgments only:
+Do not resume the v1 eight-record human review yet. First implement the B3 correction: expand Drunk truth/false contrasts, expand bluff review beyond shared/union extremes, expose confirmation-chain interaction, update review reasons/control-surface metadata, and regenerate a deterministic v2 manifest.
 
 ~~~text
 UNREVIEWED
