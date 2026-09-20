@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-20 Australia/Sydney  
+> Updated: 2026-09-21 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -63,7 +63,7 @@ D5A–D5E                         COMPLETE
 D5F-A                           COMPLETE
 D5F-B manifest infrastructure  COMPLETE
 D5F-B3 policy-model correction COMPLETE
-D5F-B representative calibration MATERIALIZED / DIAGNOSTICS NEXT
+D5F-B4 expert-observed policy calibration           CURRENT
 D5F-C gate/band derivation     BLOCKED
 sealed holdout                 CLOSED
 SDE-3                           BLOCKED
@@ -77,9 +77,11 @@ Current external-human evidence catalog:
 
 [`SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv`](SDE_2D5F_EXTERNAL_HUMAN_CASE_CATALOG_2026-09-20.tsv)
 
-Representative healthy-information corpus authority:
+Current first-night policy authority:
 
-[`SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md`](SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md)
+[`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
+
+The earlier representative healthy-information corpus design is superseded as an active calibration route. Its seven deliberately clean scenarios must not be promoted into review/gate evidence.
 
 ## 4. D5F-B3 accepted model
 
@@ -114,13 +116,10 @@ Drunk shown identity remains persistent setup input. SDE must not turn a healthy
 
 ### 4.3 Healthy information ownership
 
-Current real review provenance distinguishes:
+Current ownership correction:
 
-- Chef / Empath → `RULE_DETERMINED`, diagnostic-only;
-- Washerwoman / Investigator → `STORYTELLER_CONTROLLED`, SDE-controllable until shown.
-
-General rule remains:
-
+- Chef / Empath are `RULE_DETERMINED` only when the legal healthy value is unique after Spy/Recluse registration is considered;
+- if legal registration creates multiple healthy values, that interaction-scoped registration branch is Storyteller-controlled and belongs in whole-bundle policy;
 - Washerwoman / Librarian / Investigator may have legal Storyteller output choices;
 - Fortune Teller target pair is player-controlled;
 - Red Herring is setup-controlled before persistence;
@@ -242,42 +241,86 @@ SetupShownIdentityPolicyResolver.resolveGenerated(...)
 
 Do not restore old `SetupEvaluator` / recommendation-owned Drunk shown-role scoring.
 
-## 8. NEXT — representative healthy-information diagnostics and review selection
+## 8. NEXT — D5F-B4 expert-observed first-night policy corpus
 
-Do **not** continue labeling the two remaining v2 Chef/Empath records.
+Do **not** attach further diagnostics to the seven clean 7–9 player scenarios as the next calibration step.
 
-Completed first representative materialization slice:
+The previous materialization checkpoint `cb1ffc454f87a7be8b166d8013746dee7f50bfda` remains valid evidence that the production candidate generators can enumerate those cases, but the resulting corpus is **superseded for active policy calibration** because it deliberately:
 
-- audited all production 7–9 preset pools: 50 presets per player count;
-- confirmed 36 / 38 / 36 presets respectively contain at least one Washerwoman/Librarian/Investigator control surface;
-- selected seven `beginner` / `standard` production presets spanning 7–9 players and all three pair-information roles;
-- committed deterministic seating through the production `TroubleBrewingSetupDealPlanner`;
-- enumerated legal healthy clue outputs through `NaturalPairInformationCandidateGenerator`;
-- fixed Poisoner targets only as explicit Evil-player-controlled context;
-- retained Chef/Empath as fixed context; any registration-dependent healthy branch is exposed rather than optimized;
-- added human-readable seating/clue rendering and registration provenance;
-- kept the new materialization outside review membership and gate derivation.
+- excludes Drunk;
+- freezes Chef/Empath registration-dependent branches;
+- isolates one pair-information role at a time;
+- therefore removes several of the Storyteller interactions that the target policy must actually coordinate.
 
-Implementation checkpoint:
+Its test-only builder/design should be audited for deletion once any unique legality/renderer coverage is confirmed to be duplicated by durable tests. Do not preserve it merely as a calibration stratum.
 
-`cb1ffc454f87a7be8b166d8013746dee7f50bfda`
+### Evidence strategy
 
-Validation:
+D5F-B4 is **expert-observation-first**.
 
-- CI run `35514598766` — **SUCCESS**;
-- R2 run `35514598790` — **SUCCESS**.
+Build a source catalog with four evidence classes:
 
-Next:
+~~~text
+GOLD
+    expert / trusted Storyteller real games
+    reconstructable setup + Night 1 choices
+    explicit rationale preferred
 
-1. attach `TroubleBrewingTopologyHypotheticalBundleEvaluator` + `NormalizedStrategicDiagnosticsProjector` diagnostics to these exact scenario/candidate identities;
-2. keep Demon-cover, Evil-topology, Evil-cover, forced-good and feasibility components separate — no opaque global score;
-3. select a small human-review subset by semantic strata, not FIRST/MIDDLE/LAST ordering and not metric extrema;
-4. include whole-table context so fixed Chef/Empath and cross-confirmation routes remain visible;
-5. use ClockTracker / external-human evidence as ecology and guardrail anchors; do not invent direct healthy-pair labels where no equivalent observed choice exists;
-6. only after the representative review set is stable, add it as `REVIEWABLE` so `HEALTHY_BUNDLE_INFORMATION` coverage can be satisfied;
-7. only then resume D5F-C gate/band derivation.
+SILVER
+    high-fidelity structured real-game logs
+    e.g. ClockTracker with full grimoire / Night 1 details
 
-The machine corpus may retain all legal alternatives; the human labeling workload should stay bounded by table-meaning strata.
+QUALITATIVE
+    Storyteller tutorials, community postmortems,
+    repeated expert/community rules of thumb
+
+DIAGNOSTIC_ONLY
+    synthetic/extreme/counterfactual fixtures
+~~~
+
+The existing external-human case catalog is a useful seed but is not yet an expert-quality corpus.
+
+### Required extraction contract
+
+For each reconstructable real game, capture:
+
+- Storyteller/source provenance and confidence tier;
+- player count and player-experience context when known;
+- committed roles, seating and Drunk shown identity;
+- Demon bluffs and red herring;
+- Spy/Recluse registration choices that affect Night 1 information;
+- Poisoner target when relevant and player-controlled;
+- all observed first-night information outputs;
+- the legal alternative set available at each Storyteller-controlled decision;
+- explicit Storyteller rationale when available;
+- cross-night continuation when it explains Night 1 intent.
+
+Then run the existing legality/topology/whole-bundle diagnostics over the **observed expert choice and its legal counterfactual alternatives**.
+
+Do not treat every unchosen alternative as bad. Preference strength is high only when supported by explicit rationale, explicit rejection, repeated comparable choices, or cross-source consistency.
+
+Do not use game winner as a quality label.
+
+### Human review is secondary
+
+The project owner's labels remain useful as:
+
+- reconstruction sanity checks;
+- interpretation of ambiguous cases;
+- conflict resolution between external evidence;
+- BEGINNER-product adaptation.
+
+They are not sufficient by themselves to derive D5F-C gates.
+
+### Immediate next work
+
+1. expand the external catalog with expert-quality Trouble Brewing sources, prioritizing official/TPI-affiliated or clearly experienced Storytellers and high-fidelity recordings;
+2. identify a small GOLD subset whose Night 1 state can be reconstructed exactly;
+3. build an extractor/adapter that maps those observed games into the existing legal candidate and whole-bundle diagnostic seams;
+4. compare observed choices against their legal counterfactuals without assigning automatic good/bad labels;
+5. infer only repeated, interpretable policy constraints such as thematic registration prior, role-function exposure avoidance, confirmation-chain bounds and impaired-information coherence;
+6. use SILVER ClockTracker games to test whether those patterns generalize;
+7. only then define the minimum human adjudication set and resume D5F-C.
 
 ## 9. Blocked until representative calibration coverage exists
 
@@ -295,8 +338,8 @@ Do not:
 
 SDE-3 remains blocked until:
 
-1. representative D5F-B calibration covers every SDE-owned policy variable, including HEALTHY_BUNDLE_INFORMATION;
-2. D5F-C derives interpretable candidate gates/bands from representative labels;
+1. expert-observed D5F-B calibration covers the material SDE-owned first-night policy variables;
+2. D5F-C derives interpretable candidate gates/bands from expert-observed constraints plus bounded human adjudication;
 3. gates are frozen before holdout inspection;
 4. sealed holdout is evaluated once against frozen gates;
 5. D5F final acceptance and roadmap/handoff explicitly advance the program.
