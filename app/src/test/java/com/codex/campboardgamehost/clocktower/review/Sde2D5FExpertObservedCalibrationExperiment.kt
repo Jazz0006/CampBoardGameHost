@@ -24,7 +24,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
     }
 
     @Test
-    fun `A Stud uses committed prefix topology with bounded exact parity and no GOLD promotion`() {
+    fun `A Stud uses topology-first committed prefix consequence without GOLD promotion`() {
         val calibration = aStud
 
         assertEquals(
