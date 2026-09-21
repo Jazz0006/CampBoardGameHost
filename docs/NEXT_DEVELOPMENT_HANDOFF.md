@@ -120,17 +120,19 @@ TPI independently verifies Ben's long-running involvement and trusted/expert sta
 
 Do not manufacture GOLD by treating the detailed secondary episode index as final verification.
 
-### Step 3 — primary verification + exact case reconstruction — NEXT
+### Step 3 — primary verification + executable case reconstruction — IN PROGRESS
 
-Start with the first three Ben cases. Verify the material setup commitments and Night-1 decisions against the primary recordings, then materialize the cases into canonical project state.
+Executable canonical reconstructions now exist for the first three Ben candidates. `A Stud In Scarlet` and `Live and Imp-Person` also have committed-prefix consequence reports through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow. `Human Remains Of The Day` has legality/witness reconstruction and is the next consequence-calibration case.
 
-High-value first cases:
+All three remain `PRIMARY_VERIFICATION_PENDING`. Continue verifying the material setup commitments and Night-1 decisions against the primary recordings; do not promote them to GOLD from the secondary reconstruction alone.
+
+High-value cases:
 
 - `A Stud In Scarlet`: Drunk shown Empath, Drunk Empath 0, FT YES via Recluse-as-Demon;
 - `Human Remains Of The Day`: known Poisoner target plus poisoned Washerwoman misinformation;
 - `Live and Imp-Person`: Librarian/Chef/FT bundle with interaction-scoped Recluse registration.
 
-A smaller exact corpus is better than a larger ambiguous one.
+A smaller verified corpus is better than a larger ambiguous one.
 
 ### Step 4 — model observed choice + legal counterfactuals
 
@@ -147,9 +149,11 @@ observed expert choice matched to one legal candidate/witness
     ↓
 existing proposition materialization
     ↓
-exact evaluator + topology evaluator
+topology-first real-case consequence
     ↓
 whole-bundle diagnostics
+
+Exact registration/mechanical semantics remain authoritative for legality and witness recovery. Exhaustive possible-world consequence is an optional deep audit only; bounded D4 differential tests own broad topology/exhaustive parity.
 ~~~
 
 Keep earlier committed choices and already-made player-controlled choices fixed. Do not freeze later uncommitted Storyteller choices to their eventual observed values; that would leak hindsight into the counterfactual.
@@ -185,17 +189,27 @@ Completed in this checkpoint:
 1. obsolete clean-corpus code/tests deleted after confirming no unique durable coverage;
 2. GOLD qualification rubric added to the synthesis/catalog;
 3. five candidate expert sources recorded;
-4. reconstruction feasibility assessed;
-5. observed-choice + legal-counterfactual integration contract defined.
+4. generic pair/numeric/boolean evidence projectors reuse production legality and witness owners;
+5. shared canonical-world / claim / consequence projection avoids fixture-specific rules;
+6. `A Stud In Scarlet` committed-prefix topology report is green and artifacted;
+7. `Live and Imp-Person` committed-prefix consequence test is green; workflow publication is being wired for both reports;
+8. dedicated `:app:sde2D5FExpertObservedCalibration` separates current B4 feedback from the historical multi-hour D5 calibration workload.
+
+Measured boundary: a 9-player exhaustive real-case possible-world sample remained multi-minute even when reduced to one stage. Real expert-case consequence therefore stays topology-first. D4 bounded differential tests own broad topology/exhaustive correctness; exact real-case evaluation remains an exceptional deep-audit hook.
+
+Substantive result so far:
+
+- A Stud's currently reconstructed Chef, Drunk-Empath, and Fortune Teller alternatives all leave the evil-seat strategic quotient at 56 -> 56. This is a valid neutral result, not a failed harness; the case's current value lies primarily in registration and impaired-information evidence.
+- Live is the stronger interaction-scoped registration case: the same Recluse is naturally unregistered for observed Chef=1 while the observed Fortune Teller YES uses a Recluse-as-Demon witness.
 
 Next success condition:
 
-1. primary-video verification completed for the three detailed Ben candidates;
-2. at least the first verified case materialized into canonical state without duplicating legality;
-3. its observed decision matched to the complete production legal candidate/witness set;
-4. exact + strategic whole-bundle diagnostics generated for observed choice and legal counterfactuals;
-5. no policy conclusion promoted merely because an alternative was unchosen.
+1. publish/inspect both A Stud and Live reports from the dedicated workflow;
+2. add `Human Remains Of The Day` committed-prefix consequence through the same shared harness, without case-specific policy code;
+3. continue primary-video verification for the detailed Ben candidates;
+4. keep 0 admitted GOLD until the material Night-1 primary-source gate is actually satisfied;
+5. do not promote a policy rule merely because an alternative was unchosen.
 
-Code-smell checkpoint: current pair/numeric/Fortune-Teller Drunk adapters converge on a shared exact consequence evaluator and are acceptable semantic adapters. Do not let the role-named Fortune Teller adapter become a role-specific cross-night policy; persistent impaired narrative selection must remain shared and semantic-shape based.
+Code-smell checkpoint: named role adapters are acceptable only at the legality/proposition semantic boundary. Cross-case evidence projection and later persistent impaired narrative policy must remain shared and information-shape/history based.
 
 Do not manufacture GOLD evidence if public material is insufficient; report the gap and use the strongest available evidence tier.
