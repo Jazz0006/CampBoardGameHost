@@ -49,7 +49,6 @@ internal object Sde2D5FAStudInScarletConsequenceCalibrationBuilder {
             stageId = "${reconstructed.caseId}-chef",
             committedPrefix = emptyList(),
             candidates = chefClaims,
-            exactParityRecipientSeats = setOf(context.evaluationRecipientSeats.first()),
         )
 
         val chefObservedClaim = chefClaims.getValue(chefObservedId)
@@ -130,6 +129,12 @@ internal object Sde2D5FAStudInScarletConsequenceCalibrationBuilder {
             evidence = calibration.fortuneTeller,
         )
         appendLine(
+            "Evaluation boundary: real-case consequence uses topology-first strategic diagnostics. Exhaustive " +
+                "possible-world parity is owned by the existing bounded D4 differential tests; the evidence " +
+                "projector retains an optional exact-oracle hook for exceptional deep audits only.",
+        )
+        appendLine()
+        appendLine(
             "Interpretation guard: observed is distinguished from counterfactual; no unchosen legal candidate " +
                 "is assigned BAD/ACCEPTABLE or any gate label by this report.",
         )
@@ -145,17 +150,15 @@ internal object Sde2D5FAStudInScarletConsequenceCalibrationBuilder {
         appendLine("Committed-prefix observations: ${evidence.prefixObservationCount}")
         appendLine("Observed candidate: `$observedCandidateId`")
         appendLine()
-        appendLine("| Candidate | Observed | Recipient | Exact prefix | Exact after | Strategic prefix | Strategic after | Exact/topology parity |")
-        appendLine("|---|---|---:|---:|---:|---:|---:|---|")
+        appendLine("| Candidate | Observed | Recipient | Strategic prefix | Strategic after |")
+        appendLine("|---|---|---:|---:|---:|")
         evidence.alternatives.forEach { alternative ->
             alternative.byRecipient.forEach { recipient ->
                 appendLine(
                     "| ${alternative.candidateId} | ${alternative.candidateId == observedCandidateId} | " +
-                        "${recipient.recipientSeat} | ${recipient.prefixExactWorldCount?.toString() ?: "-"} | " +
-                        "${recipient.candidateExactWorldCount?.toString() ?: "-"} | " +
+                        "${recipient.recipientSeat} | " +
                         "${recipient.prefixTopologyStructure.distinctStrategicWorldCount} | " +
-                        "${recipient.candidateTopologyStructure.distinctStrategicWorldCount} | " +
-                        "${recipient.strategicParity?.toString() ?: "-"} |",
+                        "${recipient.candidateTopologyStructure.distinctStrategicWorldCount} |",
                 )
             }
         }
