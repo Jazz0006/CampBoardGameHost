@@ -21,6 +21,7 @@ internal data class Sde2D5FLiveAndImpPersonCandidateEvidence(
     val primaryUrl: String,
     val verificationStatus: Sde2D5FPrimaryVerificationStatus,
     val game: GameState,
+    val observedDemonBluffs: Set<RoleId>,
     val observedDemonBluffsLegal: Boolean,
     val redHerringSeat: Int,
     val redHerringLegal: Boolean,
@@ -88,6 +89,7 @@ internal object Sde2D5FLiveAndImpPersonCandidateBuilder {
             primaryUrl = "https://www.youtube.com/watch?v=m14N28Lq-jM",
             verificationStatus = Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFICATION_PENDING,
             game = game,
+            observedDemonBluffs = observedBluffs,
             observedDemonBluffsLegal = observedBluffs in legalBluffs,
             redHerringSeat = redHerringSeat,
             redHerringLegal = redHerringSeat in legalRedHerrings,
@@ -153,6 +155,10 @@ class Sde2D5FLiveAndImpPersonEvidenceTest {
         assertTrue(evidence.game.playerAt(evidence.poisonerTargetSeat)?.poisoned == true)
 
         assertTrue(evidence.observedDemonBluffsLegal)
+        assertEquals(
+            setOf(RoleId("Investigator"), RoleId("Empath"), RoleId("Saint")),
+            evidence.observedDemonBluffs,
+        )
         assertTrue(evidence.redHerringLegal)
         assertEquals(2, evidence.redHerringSeat)
         assertTrue(evidence.fortuneTellerTargetsLegal)
