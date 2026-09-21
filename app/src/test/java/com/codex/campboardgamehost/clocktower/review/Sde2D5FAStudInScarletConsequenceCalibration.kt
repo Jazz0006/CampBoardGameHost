@@ -6,7 +6,6 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.YesNoAnswer
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
 
 internal data class Sde2D5FAStudInScarletConsequenceCalibration(
     val verificationStatus: Sde2D5FPrimaryVerificationStatus,
@@ -178,18 +177,11 @@ internal object Sde2D5FAStudInScarletConsequenceCalibrationBuilder {
             sourceAbility = abilityRole,
             value = InformationValue.Number(value),
         )
-        val proposition = TroubleBrewingFirstNightInformationPropositionMaterializer.materialize(
-            game = context.game,
-            information = information,
-            roleDefinitions = roles,
-        )
-        return Sde2D5FExpertObservedConsequenceProjector.projectPublicClaim(
+        return Sde2D5FExpertObservedConsequenceProjector.projectInformationClaim(
             context = context,
             entryId = entryId,
             sequence = sequence,
-            sourceSeat = sourceSeat,
-            sourceAbility = abilityRole,
-            proposition = proposition,
+            information = information,
         )
     }
 
@@ -207,17 +199,12 @@ internal object Sde2D5FAStudInScarletConsequenceCalibrationBuilder {
             sourceAbility = ability,
             value = InformationValue.YesNo(if (value) YesNoAnswer.YES else YesNoAnswer.NO),
         )
-        val proposition = TroubleBrewingFirstNightInformationPropositionMaterializer.materializeFortuneTeller(
-            information = information,
-            targetSeats = targets,
-        )
-        return Sde2D5FExpertObservedConsequenceProjector.projectPublicClaim(
+        return Sde2D5FExpertObservedConsequenceProjector.projectFortuneTellerClaim(
             context = context,
             entryId = entryId,
             sequence = sequence,
-            sourceSeat = sourceSeat,
-            sourceAbility = ability,
-            proposition = proposition,
+            information = information,
+            targetSeats = targets,
         )
     }
 }
