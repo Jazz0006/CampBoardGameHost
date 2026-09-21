@@ -156,6 +156,8 @@ Keep earlier committed choices and already-made player-controlled choices fixed.
 
 Do not encode `unchosen = bad`.
 
+Bounded implementation note: `FirstNightNumericLegalDomain` exposes player-visible Chef/Empath values but not the exact registration witness. Do not solve this by duplicating numeric rules. Reuse `TroubleBrewingTopologyObservationWitnessEvaluator` / registration-witness semantics to project each legal numeric value to its complete witness alternatives, and preserve both a value-level grouped view and a value+witness evidence candidate view.
+
 ### Step 5 — extract repeated policy constraints
 
 Candidate dimensions include thematic registration prior, role-function exposure avoidance, confirmation-chain avoidance, healthy-information floor, impaired-information narrative consistency, bluff narrative support, and Red Herring placement.
