@@ -102,67 +102,32 @@ internal object Sde2D5FAStudInScarletConsequenceCalibrationBuilder {
 
     fun renderMarkdown(
         calibration: Sde2D5FAStudInScarletConsequenceCalibration,
-    ): String = buildString {
-        appendLine("# SDE-2D5F expert-observed candidate consequence calibration")
-        appendLine()
-        appendLine("Case: `goldcand-ben-01` / A Stud In Scarlet")
-        appendLine("Verification: `${calibration.verificationStatus}`")
-        appendLine(
-            "Guard: mechanical reconstruction and counterfactual diagnostics do not promote this case to GOLD " +
-                "until the material Night-1 state is verified against the primary recording.",
-        )
-        appendLine()
-        stage(
-            title = "Chef",
-            observedCandidateId = calibration.chefObservedCandidateId,
-            evidence = calibration.chef,
-        )
-        stage(
-            title = "Drunk shown Empath",
-            observedCandidateId = calibration.drunkEmpathObservedCandidateId,
-            evidence = calibration.drunkEmpath,
-        )
-        stage(
-            title = "Fortune Teller after player-selected targets",
-            observedCandidateId = calibration.fortuneTellerObservedCandidateId,
-            evidence = calibration.fortuneTeller,
-        )
-        appendLine(
-            "Evaluation boundary: real-case consequence uses topology-first strategic diagnostics. Exhaustive " +
-                "possible-world parity is owned by the existing bounded D4 differential tests; the evidence " +
-                "projector retains an optional exact-oracle hook for exceptional deep audits only.",
-        )
-        appendLine()
-        appendLine(
-            "Interpretation guard: observed is distinguished from counterfactual; no unchosen legal candidate " +
-                "is assigned BAD/ACCEPTABLE or any gate label by this report.",
-        )
-    }
-
-    private fun StringBuilder.stage(
-        title: String,
-        observedCandidateId: String,
-        evidence: Sde2D5FExpertObservedStageConsequence,
-    ) {
-        appendLine("## $title")
-        appendLine()
-        appendLine("Committed-prefix observations: ${evidence.prefixObservationCount}")
-        appendLine("Observed candidate: `$observedCandidateId`")
-        appendLine()
-        appendLine("| Candidate | Observed | Recipient | Strategic prefix | Strategic after |")
-        appendLine("|---|---|---:|---:|---:|")
-        evidence.alternatives.forEach { alternative ->
-            alternative.byRecipient.forEach { recipient ->
-                appendLine(
-                    "| ${alternative.candidateId} | ${alternative.candidateId == observedCandidateId} | " +
-                        "${recipient.recipientSeat} | " +
-                        "${recipient.prefixTopologyStructure.distinctStrategicWorldCount} | " +
-                        "${recipient.candidateTopologyStructure.distinctStrategicWorldCount} |",
-                )
-            }
-        }
-        appendLine()
-    }
+    ): String = Sde2D5FExpertObservedConsequenceRenderer.render(
+        caseId = "goldcand-ben-01",
+        caseTitle = "A Stud In Scarlet",
+        verificationStatus = calibration.verificationStatus,
+        stages = listOf(
+            Sde2D5FExpertObservedStageReport(
+                title = "Chef",
+                observedCandidateId = calibration.chefObservedCandidateId,
+                evidence = calibration.chef,
+            ),
+            Sde2D5FExpertObservedStageReport(
+                title = "Drunk shown Empath",
+                observedCandidateId = calibration.drunkEmpathObservedCandidateId,
+                evidence = calibration.drunkEmpath,
+            ),
+            Sde2D5FExpertObservedStageReport(
+                title = "Fortune Teller after player-selected targets",
+                observedCandidateId = calibration.fortuneTellerObservedCandidateId,
+                evidence = calibration.fortuneTeller,
+            ),
+        ),
+        caseNotes = listOf(
+            "All currently reconstructed A Stud alternatives are topology-neutral on the evil-seat quotient; " +
+                "the case remains valuable primarily for registration and impaired-information evidence.",
+        ),
+    )
 
     private fun numericClaim(
         context: Sde2D5FExpertObservedConsequenceContext,
