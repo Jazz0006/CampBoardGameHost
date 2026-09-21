@@ -88,6 +88,8 @@ DIAGNOSTIC_ONLY
 
 The current external catalog contains **five tracked GOLD candidates but no admitted verified GOLD case yet**. Three detailed Ben Burns games still require primary-video Night-1 verification; the official Ben/Evin recordings require fuller state extraction. Multiple games from Ben share one Storyteller independence key and do not count as independent experts.
 
+Primary metadata has now been rechecked without relaxing the gate: `A Fond Farewell` directly exposes YouTube chapters for Night 1 at `00:04:25` and Day 1 at `00:09:13`; the official 2019 Evin recording describes itself as a full **8-player** game, and TPI's Kickstarter FAQ links the same recording as its first released full play-through. Current public retrieval did not expose auditable Night-1 transcript/frame contents, so this is source authentication / navigation evidence only, not material-state verification.
+
 ## 7. Interpretation rules
 
 - reconstruct the legal alternatives that existed at the exact lifecycle stage;
@@ -113,8 +115,8 @@ The catalog now tracks:
 - Ben Burns — `A Stud In Scarlet` — `FULLY_RECONSTRUCTABLE` from the current detailed index, pending primary-video verification;
 - Ben Burns — `Human Remains Of The Day` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
 - Ben Burns — `Live and Imp-Person` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
-- Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PARTIALLY_RECONSTRUCTABLE`, primary Night-1 chapter available;
-- Evin — early TPI Trouble Brewing playthrough — `PARTIALLY_RECONSTRUCTABLE`, valuable independent-Storyteller target.
+- Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PARTIALLY_RECONSTRUCTABLE`, primary Night-1 chapter confirmed at `00:04:25` (`Day 1` at `00:09:13`);
+- Evin — official 2019 TPI **8-player** Trouble Brewing playthrough — `PARTIALLY_RECONSTRUCTABLE`, valuable independent-Storyteller target.
 
 TPI independently verifies Ben's long-running involvement and trusted/expert status. Evin is also independently qualified as experienced/trusted through his TPI co-founder role, integral early involvement, founding of the Newcastle Clocktower group, and the official TPI-hosted early Trouble Brewing game. His remaining GOLD blocker is state extraction, not expertise.
 
@@ -123,6 +125,8 @@ Do not manufacture GOLD by treating the detailed secondary episode index as fina
 ### Step 3 — primary verification + executable case reconstruction — IN PROGRESS
 
 Executable canonical reconstructions now exist for the first three Ben candidates. All three detailed Ben candidates now have executable committed-prefix consequence reports through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow. The workflow publishes A Stud, Live and Imp-Person, and Human Remains reports together as one artifact.
+
+The latest executable branch checkpoint, `cb41ad0391bcfb0802f842252f6c2df77a500615`, passed dedicated expert-observed calibration **run #28**. CI, R2, and FN-BUNDLE-3 were also green at that executable head. The five commits after the previously recorded `809ee3b...` were not docs-only: they added shared descriptive non-topology feature projection/reporting and workflow artifact publication, with no policy score, BAD/ACCEPTABLE labeling, or GOLD promotion.
 
 All three remain `PRIMARY_VERIFICATION_PENDING`. Continue verifying the material setup commitments and Night-1 decisions against the primary recordings; do not promote them to GOLD from the secondary reconstruction alone.
 
@@ -207,7 +211,7 @@ Substantive result so far:
 Next success condition:
 
 1. continue primary-video verification for the three detailed Ben candidates; prioritize obtaining material Night-1 timestamps/source confirmation rather than adding more secondary-only Ben cases;
-2. inspect whether `A Fond Farewell` or the Evin playthrough can provide an independently primary-verifiable case with enough decision state to enter the executable harness;
+2. use `A Fond Farewell` (`Night 1 00:04:25–00:09:13`) as the first primary extraction target, then the independent Evin 8-player playthrough; if transcript/frame access remains unavailable, record the blocker rather than inferring material state from secondary summaries;
 3. begin extracting repeated policy dimensions only where the three current reports plus source rationale actually support them; do not derive D5F-C numeric gates yet;
 4. keep 0 admitted GOLD until the material Night-1 primary-source gate is actually satisfied;
 5. do not promote a policy rule merely because an alternative was unchosen.
