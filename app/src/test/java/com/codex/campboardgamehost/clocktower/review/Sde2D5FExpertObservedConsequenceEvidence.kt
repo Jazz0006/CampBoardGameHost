@@ -4,9 +4,11 @@ import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
@@ -267,6 +269,31 @@ internal object Sde2D5FExpertObservedConsequenceProjector {
             knowledgeBySeat = knowledgeBySeat,
             exactContext = exactContext,
             evaluationRecipientSeats = goodRecipients,
+        )
+    }
+
+    fun projectPairClaim(
+        context: Sde2D5FExpertObservedConsequenceContext,
+        entryId: String,
+        sequence: Int,
+        decision: Sde2D5FExpertObservedPairDecisionEvidence,
+        alternative: Sde2D5FExpertObservedPairAlternative,
+    ): EpistemicObservation {
+        val value = alternative.shownRole?.let { shownRole ->
+            InformationValue.PlayerPair(
+                shownRole = shownRole,
+                seats = alternative.candidateSeats,
+            )
+        } ?: InformationValue.NoCharacters(CharacterType.OUTSIDER)
+        return projectInformationClaim(
+            context = context,
+            entryId = entryId,
+            sequence = sequence,
+            information = EffectDraft.PlayerInformation(
+                recipientSeat = decision.sourceSeat,
+                sourceAbility = decision.abilityRole,
+                value = value,
+            ),
         )
     }
 
