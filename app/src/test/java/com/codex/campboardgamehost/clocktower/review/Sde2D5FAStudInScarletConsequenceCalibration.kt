@@ -150,11 +150,11 @@ internal object Sde2D5FAStudInScarletConsequenceCalibrationBuilder {
             alternative.byRecipient.forEach { recipient ->
                 appendLine(
                     "| ${alternative.candidateId} | ${alternative.candidateId == observedCandidateId} | " +
-                        "${recipient.recipientSeat} | ${recipient.prefixExactWorldCount} | " +
-                        "${recipient.candidateExactWorldCount} | " +
+                        "${recipient.recipientSeat} | ${recipient.prefixExactWorldCount?.toString() ?: "-"} | " +
+                        "${recipient.candidateExactWorldCount?.toString() ?: "-"} | " +
                         "${recipient.prefixTopologyStructure.distinctStrategicWorldCount} | " +
                         "${recipient.candidateTopologyStructure.distinctStrategicWorldCount} | " +
-                        "${recipient.strategicParity} |",
+                        "${recipient.strategicParity?.toString() ?: "-"} |",
                 )
             }
         }
