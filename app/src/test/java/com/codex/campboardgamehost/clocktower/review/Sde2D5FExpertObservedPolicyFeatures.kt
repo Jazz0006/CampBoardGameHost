@@ -12,7 +12,7 @@ import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSu
 
 internal data class Sde2D5FRegistrationWitnessFeatures(
     val witnessCount: Int,
-    val hasNaturalWitness: Boolean,
+    val hasNoSpecialRegistrationWitness: Boolean,
     val specialReasons: Set<RegistrationReason>,
     val specialSubjectSeats: Set<Int>,
 ) {
@@ -24,7 +24,7 @@ internal data class Sde2D5FRegistrationWitnessFeatures(
         get() = specialReasons.isNotEmpty()
 
     val requiresSpecialRegistration: Boolean
-        get() = !hasNaturalWitness && hasSpecialRegistrationAlternative
+        get() = !hasNoSpecialRegistrationWitness && hasSpecialRegistrationAlternative
 }
 
 internal object Sde2D5FRegistrationWitnessFeatureProjector {
@@ -37,7 +37,7 @@ internal object Sde2D5FRegistrationWitnessFeatureProjector {
         val facts = witnesses.flatten()
         return Sde2D5FRegistrationWitnessFeatures(
             witnessCount = witnesses.size,
-            hasNaturalWitness = witnesses.any { it.isEmpty() },
+            hasNoSpecialRegistrationWitness = witnesses.any { it.isEmpty() },
             specialReasons = facts.mapTo(linkedSetOf(), RegistrationFact::reason),
             specialSubjectSeats = facts.mapTo(linkedSetOf(), RegistrationFact::subjectSeat),
         )
@@ -66,7 +66,7 @@ internal data class Sde2D5FPairCandidatePolicyFeatures(
 
     fun descriptiveSignature(): String = listOf(
         "truth=$semanticTruth",
-        "natural=${registration.hasNaturalWitness}",
+        "natural=${registration.hasNoSpecialRegistrationWitness}",
         "specialReasons=${registration.specialReasons.sortedBy { it.name }.joinToString(",")}",
         "shownBluff=$shownRoleIsDemonBluff",
         "shownInPlay=${shownRoleActualInPlaySeats.isNotEmpty()}",

@@ -126,7 +126,7 @@ Do not manufacture GOLD by treating the detailed secondary episode index as fina
 
 Executable canonical reconstructions now exist for the first three Ben candidates. All three detailed Ben candidates now have executable committed-prefix consequence reports through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow. The workflow publishes A Stud, Live and Imp-Person, and Human Remains reports together as one artifact.
 
-The latest executable branch checkpoint, `cb41ad0391bcfb0802f842252f6c2df77a500615`, passed dedicated expert-observed calibration **run #28**. CI, R2, and FN-BUNDLE-3 were also green at that executable head. The five commits after the previously recorded `809ee3b...` were not docs-only: they added shared descriptive non-topology feature projection/reporting and workflow artifact publication, with no policy score, BAD/ACCEPTABLE labeling, or GOLD promotion.
+The latest accepted B4 executable checkpoint, `c916180d3d310dcafb389682cc49dc5201f7741b`, passed dedicated expert-observed calibration **run #29**. It routes A Stud's Drunk-shown-Empath through the same shared numeric evidence projector used by reliable numeric decisions and publishes that decision in the descriptive feature report. This adds no score, BAD/ACCEPTABLE labeling, or GOLD promotion.
 
 All three remain `PRIMARY_VERIFICATION_PENDING`. Continue verifying the material setup commitments and Night-1 decisions against the primary recordings; do not promote them to GOLD from the secondary reconstruction alone.
 
@@ -164,7 +164,7 @@ Keep earlier committed choices and already-made player-controlled choices fixed.
 
 Do not encode `unchosen = bad`.
 
-Bounded implementation note: `FirstNightNumericLegalDomain` exposes player-visible Chef/Empath values but not the exact registration witness. Do not solve this by duplicating numeric rules. Reuse `TroubleBrewingTopologyObservationWitnessEvaluator` / registration-witness semantics to project each legal numeric value to its complete witness alternatives, and preserve both a value-level grouped view and a value+witness evidence candidate view.
+Numeric witness projection is now **implemented** in the B4 evidence bridge. `FirstNightNumericLegalDomain` remains the player-visible value owner, while `Sde2D5FExpertObservedNumericEvidenceProjector` reuses existing exact observation/registration semantics to recover witness alternatives. The same projector now covers reliable and impaired numeric evidence; do not reintroduce a Drunk-specific numeric evidence path or push evidence-only witness identity into the production legal candidate.
 
 ### Step 5 — extract repeated policy constraints
 
@@ -193,7 +193,7 @@ Completed in this checkpoint:
 1. obsolete clean-corpus code/tests deleted after confirming no unique durable coverage;
 2. GOLD qualification rubric added to the synthesis/catalog;
 3. five candidate expert sources recorded;
-4. generic pair/numeric/boolean evidence projectors reuse production legality and witness owners;
+4. generic pair/numeric/boolean evidence projectors reuse production legality and witness owners; reliable and impaired numeric evidence now share the same numeric projector;
 5. shared canonical-world / claim / consequence projection avoids fixture-specific rules;
 6. `A Stud In Scarlet` committed-prefix topology report is green and artifacted;
 7. `Live and Imp-Person` committed-prefix consequence report is green and artifacted;
@@ -205,6 +205,7 @@ Measured boundary: a 9-player exhaustive real-case possible-world sample remaine
 Substantive result so far:
 
 - A Stud's currently reconstructed Chef, Drunk-Empath, and Fortune Teller alternatives all leave the evil-seat strategic quotient at 56 -> 56. This is a valid neutral result, not a failed harness; the case's current value lies primarily in registration and impaired-information evidence.
+  The descriptive feature report now additionally records Drunk-Empath `0=FALSE` (observed), `1=TRUE`, `2=FALSE`, with no special registration required; semantic truth and registration are separate axes.
 - Live is the stronger interaction-scoped registration case: the same Recluse is naturally unregistered for observed Chef=1 while the observed Fortune Teller YES uses a Recluse-as-Demon witness.
 - Human Remains exposes the limit of topology-only policy evidence: all 273 legal poisoned-Washerwoman candidates collapse to one strategic-after signature at 42 -> 42. The later fixed-target Fortune Teller result is forced and also remains 42 -> 42. This case therefore needs non-topology dimensions such as narrative anchoring, truth danger, role-function exposure and confirmation structure.
 

@@ -45,8 +45,10 @@ internal data class Sde2D5FExpertObservedNumericDecisionEvidence(
  *
  * The projector does not implement Chef/Empath arithmetic or Spy/Recluse registration legality.
  * The production legal domain supplies player-visible numeric candidates. The existing exact world
- * evaluator supplies the interaction-local registration witnesses that can make each candidate true
- * in the reconstructed actual world.
+ * evaluator supplies the interaction-local registration witnesses required for each candidate to
+ * remain mechanically credible in the reconstructed actual world. For impaired information, a
+ * semantically false candidate may still be credible through the malfunction branch without any
+ * special registration.
  *
  * Keeping value and witness separate matters for expert-observed evidence: two legal numeric values
  * may correspond to different Storyteller registration rulings even though the player sees only a
@@ -118,7 +120,7 @@ internal object Sde2D5FExpertObservedNumericEvidenceProjector {
         }
 
         require(alternatives.all { it.matchesReconstructedActualWorld }) {
-            "Production-legal healthy numeric alternatives must each have an exact witness in the reconstructed world."
+            "Production-legal numeric alternatives must each remain mechanically credible in the reconstructed world."
         }
 
         return Sde2D5FExpertObservedNumericDecisionEvidence(

@@ -666,29 +666,28 @@ Therefore:
 
 The first `A Stud In Scarlet` report is also intentionally neutral on the current strategic quotient: every reconstructed Chef, Drunk-Empath and fixed-target Fortune Teller alternative preserves 56 evil-seat strategic topologies for every evaluated good recipient. This does not invalidate the case or the evaluator. It demonstrates that registration choice, impaired-information narrative, role-function exposure and other policy dimensions can carry expert-choice information even when the strategic quotient is unchanged.
 
+The descriptive feature report now also carries the Drunk-shown-Empath through the shared numeric evidence projector. The currently reconstructed observed `0` is `SemanticTruth.FALSE`, while `1` is `TRUE` and `2` is `FALSE`; none requires special registration. The registration feature is therefore explicitly separate from semantic truth. All three source cases remain `PRIMARY_VERIFICATION_PENDING`, so this is a reconstructed descriptive fact, not a frozen preference rule.
+
 `Live and Imp-Person` provides a different kind of evidence. In the reconstructed Night 1, the observed Chef=1 uses the natural registration witness while the later observed Fortune Teller YES uses Recluse-as-Demon. The same Recluse is therefore not modeled by a persistent/global registration state; registration remains interaction-scoped. Its current Librarian, Chef and Fortune Teller counterfactuals are also topology-neutral at 252 -> 252 for every evaluated good recipient. That strengthens the interpretation that this case is about registration semantics, role-function exposure and confirmation structure rather than strategic-topology compression.
 
 
 `Human Remains Of The Day` demonstrates a separate limitation of the strategic quotient. The poisoned Washerwoman has 273 production-legal pair-information candidates in the reconstructed Night 1, yet all 273 collapse to one strategic-after signature and preserve 42 evil-seat strategic topologies for every evaluated good recipient. The later Fortune Teller result is forced for the fixed targets/Red Herring and also remains 42 -> 42. This is not grounds to discard the case: it shows that impaired-information policy cannot be learned from topology compression alone. Narrative anchoring, accidental-truth danger, role-function exposure, confirmation chains, and persistent perceived-world coherence must remain explicit independent dimensions.
 
-### Numeric registration-witness projection gap
+### Numeric registration-witness projection — evidence bridge complete
 
-One bounded integration gap is now explicit:
+`FirstNightNumericLegalDomain` intentionally remains a player-visible **value** domain; it does not need to absorb evidence-only witness identity.
 
-- `FirstNightNumericLegalDomain` correctly enumerates player-visible Chef/Empath values;
-- `FirstNightNumericInformationSemantics` correctly accounts for Spy/Recluse registration when determining the healthy truth-value set;
-- but the numeric legal-domain candidate currently carries the **value**, not the exact interaction-local registration witness that produced that value.
+The B4 evidence bridge is now complete through `Sde2D5FExpertObservedNumericEvidenceProjector`:
 
-The witness information already exists downstream. `TroubleBrewingTopologyObservationWitnessEvaluator` enumerates complete numeric registration-witness branches and `RegistrationWitnessSemanticMatcher` can bind a selected witness. Tests already prove natural, Spy and Recluse numeric witness alternatives.
+- production numeric legality supplies the complete player-visible value domain;
+- existing exact observation semantics recover the interaction-local registration witnesses for each value;
+- evidence keeps both the grouped player-visible value and the exact witness alternatives;
+- Chef/Empath arithmetic and Spy/Recluse legality remain owned by production rules/epistemic code;
+- the same projector now handles both reliable numeric evidence and impaired numeric evidence.
 
-Therefore the evidence harness should add a thin **value-to-witness projection** over existing owners. It must not duplicate Chef/Empath arithmetic or registration legality. For evidence analysis, candidate identity may need to be:
+`A Stud In Scarlet` therefore no longer carries a Drunk-Empath-specific `observedValue + legalValues` path. Its Drunk-shown-Empath decision uses the same shared numeric evidence contract as healthy Chef/Empath decisions. In the current reconstruction, the observed `0` is semantically false, `1` is healthy-role truthful, and `2` is false; all three remain mechanically credible because the source is impaired. This is descriptive evidence only and does not make false information a policy requirement.
 
-~~~text
-player-visible numeric value
-+ interaction-local registration witness
-~~~
-
-while retaining a grouped view by player-visible value. This allows expert cases such as `A Stud In Scarlet` and `Live and Imp-Person` to distinguish different Recluse registration choices without changing canonical identity or inventing a second numeric rules engine.
+Do not move exact witness identity into `FirstNightNumericLegalCandidate` merely for B4 reporting. The production domain should stay player-visible while the evidence layer projects existing witness semantics.
 
 ## 22. D5F-B4A cleanup result
 

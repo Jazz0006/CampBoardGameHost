@@ -176,7 +176,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
             aStudChef.getValue("value-1").registration.specialReasons,
         )
         assertEquals(setOf(5), aStudChef.getValue("value-1").registration.specialSubjectSeats)
-        assertTrue(aStudChef.getValue("value-0").registration.hasNaturalWitness)
+        assertTrue(aStudChef.getValue("value-0").registration.hasNoSpecialRegistrationWitness)
 
         val aStudDrunkEmpath = features.aStudDrunkEmpath.associateBy { it.candidateId }
         assertEquals(setOf("value-0", "value-1", "value-2"), aStudDrunkEmpath.keys)
@@ -184,7 +184,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
 
         val aStudFt = features.aStudFortuneTeller.associateBy { it.candidateId }
         assertTrue(aStudFt.getValue("answer-yes").registration.requiresSpecialRegistration)
-        assertTrue(aStudFt.getValue("answer-no").registration.hasNaturalWitness)
+        assertTrue(aStudFt.getValue("answer-no").registration.hasNoSpecialRegistrationWitness)
 
         val liveLibrarian = features.liveLibrarian.single {
             it.candidateId == "pair-information-ability-v1|Librarian|Recluse|5,8"
@@ -198,12 +198,12 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertTrue(liveLibrarian.candidateEvilSeats.isEmpty())
 
         val liveChef = features.liveChef.associateBy { it.candidateId }
-        assertTrue(liveChef.getValue("value-1").registration.hasNaturalWitness)
+        assertTrue(liveChef.getValue("value-1").registration.hasNoSpecialRegistrationWitness)
         assertTrue(liveChef.getValue("value-2").registration.requiresSpecialRegistration)
         assertEquals(setOf(8), liveChef.getValue("value-2").registration.specialSubjectSeats)
 
         val liveFt = features.liveFortuneTeller.associateBy { it.candidateId }
-        assertTrue(liveFt.getValue("answer-no").registration.hasNaturalWitness)
+        assertTrue(liveFt.getValue("answer-no").registration.hasNoSpecialRegistrationWitness)
         assertTrue(liveFt.getValue("answer-yes").registration.requiresSpecialRegistration)
         assertEquals(setOf(8), liveFt.getValue("answer-yes").registration.specialSubjectSeats)
 
@@ -211,7 +211,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
             it.candidateId == "pair-information-ability-v1|Washerwoman|Empath|2,5"
         }
         assertEquals(SemanticTruth.FALSE, humanObserved.semanticTruth)
-        assertTrue(humanObserved.registration.hasNaturalWitness)
+        assertTrue(humanObserved.registration.hasNoSpecialRegistrationWitness)
         assertTrue(humanObserved.shownRoleIsDemonBluff)
         assertTrue(humanObserved.shownRoleActualInPlaySeats.isEmpty())
         assertTrue(humanObserved.shownRoleCandidateMatchSeats.isEmpty())

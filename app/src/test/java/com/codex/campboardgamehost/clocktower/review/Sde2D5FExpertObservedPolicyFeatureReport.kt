@@ -108,13 +108,13 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
     ) {
         appendLine("### $title")
         appendLine()
-        appendLine("| Candidate | Observed | Value | Semantic truth | Natural witness | Special reasons | Special seats |")
+        appendLine("| Candidate | Observed | Value | Semantic truth | No-special-registration witness | Special reasons | Special seats |")
         appendLine("|---|---|---:|---|---|---|---|")
         candidates.forEach { candidate ->
             appendLine(
                 "| ${cell(candidate.candidateId)} | ${candidate.candidateId == observedCandidateId} | " +
                     "${candidate.value} | ${candidate.semanticTruth} | " +
-                    "${candidate.registration.hasNaturalWitness} | " +
+                    "${candidate.registration.hasNoSpecialRegistrationWitness} | " +
                     "${reasons(candidate.registration.specialReasons)} | " +
                     "${seats(candidate.registration.specialSubjectSeats)} |",
             )
@@ -129,12 +129,12 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
     ) {
         appendLine("### $title")
         appendLine()
-        appendLine("| Candidate | Observed | Value | Natural witness | Special reasons | Special seats |")
+        appendLine("| Candidate | Observed | Value | No-special-registration witness | Special reasons | Special seats |")
         appendLine("|---|---|---|---|---|---|")
         candidates.forEach { candidate ->
             appendLine(
                 "| ${cell(candidate.candidateId)} | ${candidate.candidateId == observedCandidateId} | " +
-                    "${candidate.value} | ${candidate.registration.hasNaturalWitness} | " +
+                    "${candidate.value} | ${candidate.registration.hasNoSpecialRegistrationWitness} | " +
                     "${reasons(candidate.registration.specialReasons)} | " +
                     "${seats(candidate.registration.specialSubjectSeats)} |",
             )
@@ -160,7 +160,7 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
         appendLine("| Observed candidate | Feature | Value |")
         appendLine("|---|---|---|")
         appendLine("| ${cell(observed.candidateId)} | semantic truth | ${observed.semanticTruth} |")
-        appendLine("| ${cell(observed.candidateId)} | natural witness | ${observed.registration.hasNaturalWitness} |")
+        appendLine("| ${cell(observed.candidateId)} | no-special-registration witness | ${observed.registration.hasNoSpecialRegistrationWitness} |")
         appendLine("| ${cell(observed.candidateId)} | special registration reasons | ${reasons(observed.registration.specialReasons)} |")
         appendLine("| ${cell(observed.candidateId)} | shown role is Demon bluff | ${observed.shownRoleIsDemonBluff} |")
         appendLine("| ${cell(observed.candidateId)} | shown role actual in-play seats | ${seats(observed.shownRoleActualInPlaySeats)} |")

@@ -155,7 +155,7 @@ Ben's experienced/trusted status is independently supported by TPI. The first th
 
 Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human Remains Of The Day`, and `Live and Imp-Person`. All three now have committed-prefix consequence calibration through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow and are published together as one report artifact. They remain `PRIMARY_VERIFICATION_PENDING`; executable reconstruction does not satisfy the GOLD primary-source gate.
 
-Latest executable checkpoint: branch HEAD `cb41ad0391bcfb0802f842252f6c2df77a500615` completed dedicated **SDE-2D5F expert-observed calibration run #28** successfully. CI, R2, and FN-BUNDLE-3 also completed successfully at that executable head. Later documentation-only evidence-status commits do not supersede that executable validation result.
+Latest accepted B4 executable checkpoint: branch HEAD `c916180d3d310dcafb389682cc49dc5201f7741b` completed dedicated **SDE-2D5F expert-observed calibration run #29** successfully. The slice removes the Drunk-Empath evidence-only value-list special path and routes impaired numeric evidence through the same shared numeric projector used for reliable numeric information. PR #150 remains draft and no evidence tier was promoted.
 
 Continue primary-video verification of the material setup/Night-1 state. Capture setup/seats, Drunk shown identity, Demon bluffs, Red Herring, relevant Spy/Recluse registrations, Poisoner context, first-night outputs, lifecycle stage, rationale, and player experience when known.
 
@@ -178,6 +178,8 @@ Current executable evidence:
 Run existing whole-bundle/topology diagnostics over observed expert choices and their legal counterfactuals. Extract repeated interpretable preferences, not a black-box score.
 
 The current reports are deliberately allowed to be non-confirmatory on the strategic quotient: A Stud stays 56 -> 56 across modeled alternatives; Live stays 252 -> 252 while still demonstrating interaction-scoped Recluse registration; Human Remains has 273 legal poisoned-Washerwoman candidates but only one 42 -> 42 strategic-after signature. Treat this as evidence that registration choice, impaired narrative, role-function exposure, confirmation structure and truth danger can matter even when the quotient is neutral; do not invent a scalar difference merely to rank the expert choice.
+
+The shared descriptive feature report now covers A Stud's Drunk-shown-Empath through the same numeric evidence contract as Chef. Its current reconstructed candidates are `0=FALSE` (observed), `1=TRUE`, `2=FALSE`; all are mechanically credible under impairment and none needs special registration. Keep semantic truth, registration witness, and strategic topology as separate dimensions.
 
 ### D5F-B4F — generalize with SILVER evidence
 
