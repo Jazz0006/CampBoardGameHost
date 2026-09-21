@@ -93,7 +93,12 @@ internal data class Sde2D5FExpertObservedStageReport(
     val title: String,
     val observedCandidateId: String,
     val evidence: Sde2D5FExpertObservedStageConsequence,
-)
+    val detailLimit: Int = 40,
+) {
+    init {
+        require(detailLimit >= 1)
+    }
+}
 
 internal object Sde2D5FExpertObservedConsequenceRenderer {
     fun render(
@@ -120,14 +125,50 @@ internal object Sde2D5FExpertObservedConsequenceRenderer {
             appendLine("Committed-prefix observations: ${stage.evidence.prefixObservationCount}")
             appendLine("Observed candidate: `${stage.observedCandidateId}`")
             appendLine()
-            appendLine("| Candidate | Observed | Recipient | Strategic prefix | Strategic after |")
-            appendLine("|---|---|---:|---:|---:|")
-            stage.evidence.alternatives.forEach { alternative ->
-                alternative.byRecipient.forEach { recipient ->
+            if (stage.evidence.alternatives.size <= stage.detailLimit) {
+                appendLine("| Candidate | Observed | Recipient | Strategic prefix | Strategic after |")
+                appendLine("|---|---|---:|---:|---:|")
+                stage.evidence.alternatives.forEach { alternative ->
+                    alternative.byRecipient.forEach { recipient ->
+                        appendLine(
+                            "| ${alternative.candidateId} | " +
+                                "${alternative.candidateId == stage.observedCandidateId} | " +
+                                "${recipient.recipientSeat} | " +
+                                "${recipient.prefixTopologyStructure.distinctStrategicWorldCount} | " +
+                                "${recipient.candidateTopologyStructure.distinctStrategicWorldCount} |",
+                        )
+                    }
+                }
+            } else {
+                val signatures = stage.evidence.alternatives.groupBy { alternative ->
+                    alternative.byRecipient
+                        .sortedBy { it.recipientSeat }
+                        .joinToString(";") { recipient ->
+                            "${recipient.recipientSeat}:" +
+                                "${recipient.candidateTopologyStructure.distinctStrategicWorldCount}"
+                        }
+                }
+                val observed = stage.evidence.alternatives.single {
+                    it.candidateId == stage.observedCandidateId
+                }
+                val observedSignature = observed.byRecipient
+                    .sortedBy { it.recipientSeat }
+                    .joinToString(";") { recipient ->
+                        "${recipient.recipientSeat}:" +
+                            "${recipient.candidateTopologyStructure.distinctStrategicWorldCount}"
+                    }
+                appendLine("Legal candidates: ${stage.evidence.alternatives.size}")
+                appendLine("Distinct strategic-after signatures: ${signatures.size}")
+                appendLine(
+                    "Candidates sharing the observed strategic-after signature: " +
+                        "${signatures.getValue(observedSignature).size}",
+                )
+                appendLine()
+                appendLine("| Observed candidate | Recipient | Strategic prefix | Strategic after |")
+                appendLine("|---|---:|---:|---:|")
+                observed.byRecipient.forEach { recipient ->
                     appendLine(
-                        "| ${alternative.candidateId} | " +
-                            "${alternative.candidateId == stage.observedCandidateId} | " +
-                            "${recipient.recipientSeat} | " +
+                        "| ${observed.candidateId} | ${recipient.recipientSeat} | " +
                             "${recipient.prefixTopologyStructure.distinctStrategicWorldCount} | " +
                             "${recipient.candidateTopologyStructure.distinctStrategicWorldCount} |",
                     )
