@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost.clocktower.review
 
+import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -21,6 +23,9 @@ class Sde2D5FExpertObservedCalibrationExperiment {
     }
     private val humanRemains by lazy {
         Sde2D5FHumanRemainsConsequenceCalibrationBuilder.build()
+    }
+    private val policyFeatures by lazy {
+        Sde2D5FExpertObservedPolicyFeatureReportBuilder.build()
     }
 
     @Test
@@ -156,6 +161,73 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertFalse(report.contains("BAD_TOO_WEAK"))
 
         val reportFile = File("build/reports/sde-2d5f-expert-observed-human-remains.md")
+        requireNotNull(reportFile.parentFile).mkdirs()
+        reportFile.writeText(report, Charsets.UTF_8)
+    }
+
+    @Test
+    fun `expert cases expose descriptive non-topology policy features without scoring`() {
+        val features = policyFeatures
+
+        val aStudChef = features.aStudChef.associateBy { it.candidateId }
+        assertTrue(aStudChef.getValue("value-1").registration.requiresSpecialRegistration)
+        assertEquals(
+            setOf(RegistrationReason.RECLUSE_ABILITY),
+            aStudChef.getValue("value-1").registration.specialReasons,
+        )
+        assertEquals(setOf(5), aStudChef.getValue("value-1").registration.specialSubjectSeats)
+        assertTrue(aStudChef.getValue("value-0").registration.hasNaturalWitness)
+
+        val aStudFt = features.aStudFortuneTeller.associateBy { it.candidateId }
+        assertTrue(aStudFt.getValue("answer-yes").registration.requiresSpecialRegistration)
+        assertTrue(aStudFt.getValue("answer-no").registration.hasNaturalWitness)
+
+        val liveLibrarian = features.liveLibrarian.single {
+            it.candidateId == "pair-information-ability-v1|Librarian|Recluse|5,8"
+        }
+        assertEquals(SemanticTruth.TRUE, liveLibrarian.semanticTruth)
+        assertFalse(liveLibrarian.shownRoleIsDemonBluff)
+        assertEquals(setOf(8), liveLibrarian.shownRoleActualInPlaySeats)
+        assertEquals(setOf(8), liveLibrarian.shownRoleCandidateMatchSeats)
+        assertEquals(setOf(8), liveLibrarian.specialRegistrationRoleMatchSeats)
+        assertEquals(setOf(8), liveLibrarian.candidateSpecialRegistrationSubjectSeats)
+        assertTrue(liveLibrarian.candidateEvilSeats.isEmpty())
+
+        val liveChef = features.liveChef.associateBy { it.candidateId }
+        assertTrue(liveChef.getValue("value-1").registration.hasNaturalWitness)
+        assertTrue(liveChef.getValue("value-2").registration.requiresSpecialRegistration)
+        assertEquals(setOf(8), liveChef.getValue("value-2").registration.specialSubjectSeats)
+
+        val liveFt = features.liveFortuneTeller.associateBy { it.candidateId }
+        assertTrue(liveFt.getValue("answer-no").registration.hasNaturalWitness)
+        assertTrue(liveFt.getValue("answer-yes").registration.requiresSpecialRegistration)
+        assertEquals(setOf(8), liveFt.getValue("answer-yes").registration.specialSubjectSeats)
+
+        val humanObserved = features.humanWasherwoman.single {
+            it.candidateId == "pair-information-ability-v1|Washerwoman|Empath|2,5"
+        }
+        assertEquals(SemanticTruth.FALSE, humanObserved.semanticTruth)
+        assertTrue(humanObserved.registration.hasNaturalWitness)
+        assertTrue(humanObserved.shownRoleIsDemonBluff)
+        assertTrue(humanObserved.shownRoleActualInPlaySeats.isEmpty())
+        assertTrue(humanObserved.shownRoleCandidateMatchSeats.isEmpty())
+        assertTrue(humanObserved.specialRegistrationRoleMatchSeats.isEmpty())
+        assertEquals(setOf(2, 5), humanObserved.candidateEvilSeats)
+        assertEquals(setOf(5), humanObserved.candidateDemonSeats)
+        assertEquals(setOf(2), humanObserved.candidateMinionSeats)
+
+        val humanSignatures =
+            features.humanWasherwoman.map { it.descriptiveSignature() }.toSet()
+        assertTrue(humanSignatures.size > 1)
+
+        val report = Sde2D5FExpertObservedPolicyFeatureReportBuilder.render(features)
+        assertTrue(report.contains("descriptive candidate facts only"))
+        assertTrue(report.contains("Distinct descriptive feature signatures:"))
+        assertTrue(report.contains("shown role is Demon bluff"))
+        assertFalse(report.contains("BAD_TOO_STRONG"))
+        assertFalse(report.contains("BAD_TOO_WEAK"))
+
+        val reportFile = File("build/reports/sde-2d5f-expert-observed-policy-features.md")
         requireNotNull(reportFile.parentFile).mkdirs()
         reportFile.writeText(report, Charsets.UTF_8)
     }
