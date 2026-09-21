@@ -654,7 +654,7 @@ The next implementation slice should therefore be an **evidence reconstruction/p
 
 The first executable expert-observed consequence slice now confirms an important scale boundary.
 
-A real 9-player case remained multi-minute when exhaustive possible-world consequence was enabled even for only one sampled decision stage. The same expert-observed workload, evaluated topology-first and isolated in a dedicated T3 workflow, completes in about two minutes end-to-end including build/setup/report publication.
+A real 9-player case remained multi-minute when exhaustive possible-world consequence was enabled even for only one sampled decision stage. The dedicated topology-first T3 workflow now covers A Stud In Scarlet, Live and Imp-Person, and Human Remains Of The Day—including Human Remains' complete 273-candidate poisoned Washerwoman domain—in about 3.5 minutes end-to-end including build/setup/report publication.
 
 Therefore:
 
@@ -668,8 +668,6 @@ The first `A Stud In Scarlet` report is also intentionally neutral on the curren
 
 `Live and Imp-Person` provides a different kind of evidence. In the reconstructed Night 1, the observed Chef=1 uses the natural registration witness while the later observed Fortune Teller YES uses Recluse-as-Demon. The same Recluse is therefore not modeled by a persistent/global registration state; registration remains interaction-scoped. Its current Librarian, Chef and Fortune Teller counterfactuals are also topology-neutral at 252 -> 252 for every evaluated good recipient. That strengthens the interpretation that this case is about registration semantics, role-function exposure and confirmation structure rather than strategic-topology compression.
 
-
-`Human Remains Of The Day` adds a much larger impaired pair-information domain. The poisoned Washerwoman has 273 production-legal candidates in the reconstructed 8-player state. All 273 collapse to one strategic-after signature, and the observed Empath 2/5 clue leaves every evaluated good recipient at 42 -> 42 strategic topologies. The later fixed-target Fortune Teller NO is forced and also leaves 42 -> 42. This is direct evidence that strategic topology alone is too coarse to distinguish many real Storyteller misinformation choices under the mechanically-credible hypothesis; the choice still differs materially in narrative anchoring, Demon-bluff interaction, role-function exposure, semantic truth, and future consistency.
 
 `Human Remains Of The Day` demonstrates a separate limitation of the strategic quotient. The poisoned Washerwoman has 273 production-legal pair-information candidates in the reconstructed Night 1, yet all 273 collapse to one strategic-after signature and preserve 42 evil-seat strategic topologies for every evaluated good recipient. The later Fortune Teller result is forced for the fixed targets/Red Herring and also remains 42 -> 42. This is not grounds to discard the case: it shows that impaired-information policy cannot be learned from topology compression alone. Narrative anchoring, accidental-truth danger, role-function exposure, confirmation chains, and persistent perceived-world coherence must remain explicit independent dimensions.
 
