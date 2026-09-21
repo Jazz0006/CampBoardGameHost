@@ -689,6 +689,49 @@ The B4 evidence bridge is now complete through `Sde2D5FExpertObservedNumericEvid
 
 Do not move exact witness identity into `FirstNightNumericLegalCandidate` merely for B4 reporting. The production domain should stay player-visible while the evidence layer projects existing witness semantics.
 
+### B4E descriptive legal-domain prevalence checkpoint
+
+The shared pair-feature projector now summarizes the **complete legal candidate domain** without truncating it or turning prevalence into a score.
+
+For `Live and Imp-Person` Librarian:
+
+- 16 legal candidates;
+- all 16 are semantically true;
+- all 16 have a no-special-registration witness;
+- the observed descriptive signature is shared by 4 candidates.
+
+For `Human Remains Of The Day` poisoned Washerwoman:
+
+- 273 legal candidates and 25 distinct descriptive feature signatures;
+- 24 are semantically true and 249 semantically false;
+- 42 use a shown role that is one of the Demon bluffs;
+- 143 contain at least one actual Evil seat;
+- 78 contain the actual Demon seat;
+- 78 contain the actual Minion seat;
+- 13 have all candidate seats actually Evil;
+- the observed `Empath | 2,5` candidate is false, uses a Demon-bluff role, and points at the actual Minion + Demon; its complete descriptive signature is shared by 2 legal candidates.
+
+These counts are **legal-domain prevalence only**. They are not rarity scores or preference weights. In particular, 249/273 legal poisoned candidates are already false, so the fact that the observed output is false carries little discriminating evidence by itself. The narrower combination around bluff support / actual-Evil anchoring is descriptively notable, but without primary verification or choice-specific rationale it must not be promoted into a policy preference.
+
+### B4E evidence-maturity ledger — not D5F-C gates
+
+Use the following maturity labels only to decide what deserves further evidence collection:
+
+| Dimension | Current evidence | Maturity | Permitted conclusion now |
+|---|---|---|---|
+| interaction-scoped Spy/Recluse registration | official rules semantics + executable Live reconstruction | RULES_CONFIRMED_FOUNDATION | registration must not become persistent/global state |
+| impaired information may be true or false | official Drunk/poison semantics + shared A Stud numeric domain | RULES_CONFIRMED_FOUNDATION | preserve both truth and falsehood as legal descriptive possibilities; no false-at-all-costs rule |
+| narrative anchoring | 7 tagged external-catalog records, including explicit-rationale material | REPEATED_QUALITATIVE_CANDIDATE | retain as an independent policy dimension; no weight/threshold |
+| truth danger | 6 tagged records, including 3 explicit-rationale records | REPEATED_QUALITATIVE_CANDIDATE | retain as an independent policy dimension; no deterministic lie rule |
+| temporal consistency / impairment detectability | 4 tagged records for each dimension, plus existing shared narrative-state architecture | REPEATED_QUALITATIVE_CANDIDATE | continue collecting cross-night evidence through the shared persistent narrative abstraction |
+| role-function exposure | current synthesis + primary-pending Live candidate | EXPERT_CANDIDATE_ONLY | keep contextual; do not freeze avoidance severity |
+| Red Herring ecology | 2 tagged records | UNDER_EVIDENCED | keep open; no ordering rule |
+| healthy-information floor | 2 tagged records | UNDER_EVIDENCED | keep open; no numeric floor yet |
+
+Catalog tag recurrence is a **curation signal**, not an independent statistical sample. The same source, Storyteller, or human classification can contribute correlated tags.
+
+The source catalog now carries an explicit `storyteller_independence_key`. All Ben Burns candidates use `st-ben-burns`; the Evin candidate uses `st-evin`. A blank key means independence is **not established** and must not be interpreted as a unique independent Storyteller.
+
 ## 22. D5F-B4A cleanup result
 
 The obsolete seven-scenario clean calibration corpus protected no unique durable contract and has been retired:

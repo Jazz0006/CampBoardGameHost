@@ -122,11 +122,13 @@ TPI independently verifies Ben's long-running involvement and trusted/expert sta
 
 Do not manufacture GOLD by treating the detailed secondary episode index as final verification.
 
+The source catalog now stores `storyteller_independence_key` explicitly. Ben's four candidates all use `st-ben-burns`; Evin uses `st-evin`. Blank means independence has not been established and must not be counted as a distinct expert.
+
 ### Step 3 — primary verification + executable case reconstruction — IN PROGRESS
 
 Executable canonical reconstructions now exist for the first three Ben candidates. All three detailed Ben candidates now have executable committed-prefix consequence reports through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow. The workflow publishes A Stud, Live and Imp-Person, and Human Remains reports together as one artifact.
 
-The latest accepted B4 executable checkpoint, `c916180d3d310dcafb389682cc49dc5201f7741b`, passed dedicated expert-observed calibration **run #29**. It routes A Stud's Drunk-shown-Empath through the same shared numeric evidence projector used by reliable numeric decisions and publishes that decision in the descriptive feature report. This adds no score, BAD/ACCEPTABLE labeling, or GOLD promotion.
+The latest accepted B4 executable checkpoint, `26b9afe72e72705f53dc225a79fd5be6e3b6195c`, passed dedicated expert-observed calibration **run #31**. The evidence harness now routes impaired numeric decisions through the shared numeric projector and summarizes complete pair legal domains through a shared typed prevalence projection. This adds no score, ranking, BAD/ACCEPTABLE labeling, or GOLD promotion.
 
 All three remain `PRIMARY_VERIFICATION_PENDING`. Continue verifying the material setup commitments and Night-1 decisions against the primary recordings; do not promote them to GOLD from the secondary reconstruction alone.
 
@@ -170,7 +172,13 @@ Numeric witness projection is now **implemented** in the B4 evidence bridge. `Fi
 
 Candidate dimensions include thematic registration prior, role-function exposure avoidance, confirmation-chain avoidance, healthy-information floor, impaired-information narrative consistency, bluff narrative support, and Red Herring placement.
 
-Only promote a rule when evidence is repeated or explicitly reasoned.
+Use the current evidence-maturity ledger rather than inventing weights:
+
+- rules-confirmed foundations: interaction-scoped registration; impaired information may legally be true or false;
+- repeated qualitative candidates: narrative anchoring, truth danger, temporal consistency / impairment detectability;
+- expert-candidate-only or under-evidenced: role-function exposure severity, Red Herring ordering, healthy-information floor.
+
+Catalog tag counts are curation signals, not independent statistical observations. Only promote a policy rule when evidence is repeated or explicitly reasoned, and never from candidate rarity alone.
 
 ### Step 6 — SILVER generalization
 
@@ -208,6 +216,7 @@ Substantive result so far:
   The descriptive feature report now additionally records Drunk-Empath `0=FALSE` (observed), `1=TRUE`, `2=FALSE`, with no special registration required; semantic truth and registration are separate axes.
 - Live is the stronger interaction-scoped registration case: the same Recluse is naturally unregistered for observed Chef=1 while the observed Fortune Teller YES uses a Recluse-as-Demon witness.
 - Human Remains exposes the limit of topology-only policy evidence: all 273 legal poisoned-Washerwoman candidates collapse to one strategic-after signature at 42 -> 42. The later fixed-target Fortune Teller result is forced and also remains 42 -> 42. This case therefore needs non-topology dimensions such as narrative anchoring, truth danger, role-function exposure and confirmation structure.
+  The new descriptive prevalence view shows 24/273 truthful versus 249/273 false candidates, 42 Demon-bluff-role candidates, 143 touching actual Evil, 78 touching the Demon, 78 touching the Minion, and only 13 all-Evil pairs. The observed false Empath clue to the actual Minion+Demon shares its complete descriptive signature with 1 other candidate. Do not turn this narrowness into a preference score.
 
 Next success condition:
 

@@ -114,7 +114,7 @@ DIAGNOSTIC_ONLY
     synthetic / extreme / counterfactual fixtures
 ~~~
 
-Current external catalog now contains SILVER / QUALITATIVE seed evidence plus five explicitly tracked GOLD candidates. No case has yet been admitted as verified GOLD: the three fully reconstructable Ben Burns candidates still require primary-video Night-1 verification, while the official Ben/Evin recordings still require state extraction. Multiple Ben Burns games share one Storyteller independence key and must not be counted as independent experts.
+Current external catalog now contains SILVER / QUALITATIVE seed evidence plus five explicitly tracked GOLD candidates. No case has yet been admitted as verified GOLD: the three fully reconstructable Ben Burns candidates still require primary-video Night-1 verification, while the official Ben/Evin recordings still require state extraction. Multiple Ben Burns games share one Storyteller independence key and must not be counted as independent experts. The catalog now stores this explicitly as `storyteller_independence_key`: all Ben candidates use `st-ben-burns`, Evin uses `st-evin`, and blank means independence is not established rather than unique.
 
 Primary-source metadata audit on 2026-09-21 tightened two discovery facts without changing evidence tier: official `A Fond Farewell` YouTube chapters mark Night 1 at `00:04:25` and Day 1 at `00:09:13`; the official 2019 Evin video identifies itself as a full **8-player** play-through, and TPI's Kickstarter FAQ links that same recording as its first released full play-through. Public retrieval still did not expose auditable Night-1 transcript/frame state, so both remain state-extraction candidates rather than admitted GOLD.
 
@@ -155,7 +155,7 @@ Ben's experienced/trusted status is independently supported by TPI. The first th
 
 Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human Remains Of The Day`, and `Live and Imp-Person`. All three now have committed-prefix consequence calibration through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow and are published together as one report artifact. They remain `PRIMARY_VERIFICATION_PENDING`; executable reconstruction does not satisfy the GOLD primary-source gate.
 
-Latest accepted B4 executable checkpoint: branch HEAD `c916180d3d310dcafb389682cc49dc5201f7741b` completed dedicated **SDE-2D5F expert-observed calibration run #29** successfully. The slice removes the Drunk-Empath evidence-only value-list special path and routes impaired numeric evidence through the same shared numeric projector used for reliable numeric information. PR #150 remains draft and no evidence tier was promoted.
+Latest accepted B4 executable checkpoint: branch HEAD `26b9afe72e72705f53dc225a79fd5be6e3b6195c` completed dedicated **SDE-2D5F expert-observed calibration run #31** successfully. The shared evidence layer now covers reliable/impaired numeric decisions and complete pair-domain descriptive prevalence without introducing scores, rankings, BAD labels, or evidence-tier promotion. PR #150 remains draft.
 
 Continue primary-video verification of the material setup/Night-1 state. Capture setup/seats, Drunk shown identity, Demon bluffs, Red Herring, relevant Spy/Recluse registrations, Poisoner context, first-night outputs, lifecycle stage, rationale, and player experience when known.
 
@@ -180,6 +180,10 @@ Run existing whole-bundle/topology diagnostics over observed expert choices and 
 The current reports are deliberately allowed to be non-confirmatory on the strategic quotient: A Stud stays 56 -> 56 across modeled alternatives; Live stays 252 -> 252 while still demonstrating interaction-scoped Recluse registration; Human Remains has 273 legal poisoned-Washerwoman candidates but only one 42 -> 42 strategic-after signature. Treat this as evidence that registration choice, impaired narrative, role-function exposure, confirmation structure and truth danger can matter even when the quotient is neutral; do not invent a scalar difference merely to rank the expert choice.
 
 The shared descriptive feature report now covers A Stud's Drunk-shown-Empath through the same numeric evidence contract as Chef. Its current reconstructed candidates are `0=FALSE` (observed), `1=TRUE`, `2=FALSE`; all are mechanically credible under impairment and none needs special registration. Keep semantic truth, registration witness, and strategic topology as separate dimensions.
+
+Pair-domain prevalence is now also explicit. Human Remains' 273 poisoned-Washerwoman candidates contain 249 false candidates, 42 Demon-bluff-role candidates, 143 candidates touching an actual Evil seat, 78 touching the Demon, 78 touching the Minion, and 13 whose complete pair is actually Evil. The observed false Empath clue to the actual Minion+Demon has a descriptive signature shared by only 2 candidates. This is descriptive structure, not evidence that rare combinations are preferred.
+
+The current external catalog recurrence signal is strongest for narrative anchoring (7 tagged records), truth danger (6), and temporal consistency / impairment detectability (4 each). Treat these as evidence-collection priorities only. Role-function exposure, Red Herring ecology and a healthy-information floor remain less mature.
 
 ### D5F-B4F — generalize with SILVER evidence
 
