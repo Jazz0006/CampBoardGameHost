@@ -86,7 +86,7 @@ DIAGNOSTIC_ONLY
     synthetic / extreme / counterfactual fixtures
 ~~~
 
-The current external catalog contains **no verified GOLD case**.
+The current external catalog contains **five tracked GOLD candidates but no admitted verified GOLD case yet**. Three detailed Ben Burns games still require primary-video Night-1 verification; the official Ben/Evin recordings require fuller state extraction. Multiple games from Ben share one Storyteller independence key and do not count as independent experts.
 
 ## 7. Interpretation rules
 
@@ -100,41 +100,59 @@ The current external catalog contains **no verified GOLD case**.
 
 ## 8. NEXT — execute in this order
 
-### Step 1 — audit/delete obsolete clean calibration code
+### Step 1 — audit/delete obsolete clean calibration code — COMPLETE
 
-Inspect:
+Deleted the two representative-clean-corpus Kotlin files. They had no external task/report/resource wiring and protected no unique durable contract. Pair legality, numeric semantics, registration witnesses, and setup/deal behavior remain covered at their owning typed tests.
 
-- `app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FRepresentativeHealthyInformationCorpus.kt`
-- `app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FRepresentativeHealthyInformationCorpusTest.kt`
-- any task/report wiring that exists only for that corpus.
+Do not restore the seven clean scenarios for calibration.
 
-Delete them if they protect no unique durable legality/generator contract.
+### Step 2 — GOLD source discovery — SEEDED / CONTINUE SELECTIVELY
 
-Do not delete canonical `NaturalPairInformationCandidateGenerator`, `FirstNightNumericInformationSemantics`, `TroubleBrewingRegistrationDomain`, or topology/exact evaluators.
+The catalog now tracks:
 
-### Step 2 — GOLD source discovery
+- Ben Burns — `A Stud In Scarlet` — `FULLY_RECONSTRUCTABLE` from the current detailed index, pending primary-video verification;
+- Ben Burns — `Human Remains Of The Day` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
+- Ben Burns — `Live and Imp-Person` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
+- Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PARTIALLY_RECONSTRUCTABLE`, primary Night-1 chapter available;
+- Evin — early TPI Trouble Brewing playthrough — `PARTIALLY_RECONSTRUCTABLE`, valuable independent-Storyteller target.
 
-Use current web research to find expert/trusted Trouble Brewing Storyteller games. Prioritize official/TPI-affiliated material and clearly experienced Storytellers. Record evidence for expertise; do not infer it from production quality alone.
+TPI independently verifies Ben's long-running involvement and trusted/expert status. Evin's game is officially TPI-endorsed, but stronger expertise-depth evidence is still required before GOLD admission.
 
-### Step 3 — choose reconstructable GOLD cases
+Do not manufacture GOLD by treating the detailed secondary episode index as final verification.
 
-Prefer cases where Night 1 can recover roles/seats, Drunk shown role, Demon bluffs, Red Herring, Poisoner target, Spy/Recluse registrations, first-night information, and Storyteller rationale.
+### Step 3 — primary verification + exact case reconstruction — NEXT
+
+Start with the first three Ben cases. Verify the material setup commitments and Night-1 decisions against the primary recordings, then materialize the cases into canonical project state.
+
+High-value first cases:
+
+- `A Stud In Scarlet`: Drunk shown Empath, Drunk Empath 0, FT YES via Recluse-as-Demon;
+- `Human Remains Of The Day`: known Poisoner target plus poisoned Washerwoman misinformation;
+- `Live and Imp-Person`: Librarian/Chef/FT bundle with interaction-scoped Recluse registration.
 
 A smaller exact corpus is better than a larger ambiguous one.
 
 ### Step 4 — model observed choice + legal counterfactuals
 
+Implement an **evidence reconstruction/projection harness**, not a second rules engine:
+
 ~~~text
-committed state at decision time
+committed prefix at decision time
     ↓
 production legality owner
     ↓
 complete legal alternative set
     ↓
-observed expert choice marked separately
+observed expert choice matched to one legal candidate/witness
     ↓
-whole-bundle / topology diagnostics
+existing proposition materialization
+    ↓
+exact evaluator + topology evaluator
+    ↓
+whole-bundle diagnostics
 ~~~
+
+Keep earlier committed choices and already-made player-controlled choices fixed. Do not freeze later uncommitted Storyteller choices to their eventual observed values; that would leak hindsight into the counterfactual.
 
 Do not encode `unchosen = bad`.
 
@@ -158,14 +176,24 @@ Do not return to large synthetic labeling sessions.
 
 Do not derive D5F-C thresholds, open sealed holdout, cut production selection over, rewrite core legality/topology architecture, remove compatibility policy still used in production, begin SDE-3, or merge PR #150.
 
-## 10. Success condition for the next conversation
+## 10. Current checkpoint and next success condition
 
-A successful next conversation should finish with:
+Completed in this checkpoint:
 
-1. obsolete clean-corpus code/tests either deleted or explicitly justified by unique durable coverage;
-2. a verified source-quality rubric applied consistently;
-3. at least a small set of candidate GOLD Trouble Brewing games identified;
-4. exact reconstruction feasibility assessed for those cases;
-5. the next implementation slice defined around observed expert choice + legal counterfactuals.
+1. obsolete clean-corpus code/tests deleted after confirming no unique durable coverage;
+2. GOLD qualification rubric added to the synthesis/catalog;
+3. five candidate expert sources recorded;
+4. reconstruction feasibility assessed;
+5. observed-choice + legal-counterfactual integration contract defined.
+
+Next success condition:
+
+1. primary-video verification completed for the three detailed Ben candidates;
+2. at least the first verified case materialized into canonical state without duplicating legality;
+3. its observed decision matched to the complete production legal candidate/witness set;
+4. exact + strategic whole-bundle diagnostics generated for observed choice and legal counterfactuals;
+5. no policy conclusion promoted merely because an alternative was unchosen.
+
+Code-smell checkpoint: current pair/numeric/Fortune-Teller Drunk adapters converge on a shared exact consequence evaluator and are acceptable semantic adapters. Do not let the role-named Fortune Teller adapter become a role-specific cross-night policy; persistent impaired narrative selection must remain shared and semantic-shape based.
 
 Do not manufacture GOLD evidence if public material is insufficient; report the gap and use the strongest available evidence tier.
