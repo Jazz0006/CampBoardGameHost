@@ -30,22 +30,11 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertEquals("value-0", calibration.drunkEmpathObservedCandidateId)
         assertEquals("answer-yes", calibration.fortuneTellerObservedCandidateId)
 
-        calibration.stages.forEachIndexed { stageIndex, stage ->
+        calibration.stages.forEach { stage ->
             val exactSamples = stage.alternatives.flatMap { alternative ->
                 alternative.byRecipient.filter { recipient -> recipient.strategicParity != null }
             }
-            if (stageIndex == 0) {
-                assertTrue(exactSamples.isNotEmpty())
-                exactSamples.forEach { recipient ->
-                    assertEquals(true, recipient.strategicParity)
-                    assertTrue(
-                        requireNotNull(recipient.candidateExactWorldCount) <=
-                            requireNotNull(recipient.prefixExactWorldCount),
-                    )
-                }
-            } else {
-                assertTrue(exactSamples.isEmpty())
-            }
+            assertTrue(exactSamples.isEmpty())
             stage.alternatives.forEach { alternative ->
                 alternative.byRecipient.forEach { recipient ->
                     assertTrue(
@@ -61,6 +50,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertTrue(report.contains("Observed candidate: `value-1`"))
         assertTrue(report.contains("Observed candidate: `value-0`"))
         assertTrue(report.contains("Observed candidate: `answer-yes`"))
+        assertTrue(report.contains("topology-first strategic diagnostics"))
         assertTrue(report.contains("no unchosen legal candidate"))
         assertFalse(report.contains("BAD_TOO_STRONG"))
         assertFalse(report.contains("BAD_TOO_WEAK"))
