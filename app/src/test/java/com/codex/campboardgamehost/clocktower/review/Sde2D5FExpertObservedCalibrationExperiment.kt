@@ -150,7 +150,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertTrue(report.contains("PRIMARY_VERIFICATION_PENDING"))
         assertTrue(report.contains("Legal candidates:"))
         assertTrue(report.contains("Distinct strategic-after signatures:"))
-        assertTrue(report.contains("full legal alternatives"))
+        assertTrue(report.contains("instead of truncating the legal alternatives"))
         assertTrue(report.contains("Observed candidate: `answer-no`"))
         assertFalse(report.contains("BAD_TOO_STRONG"))
         assertFalse(report.contains("BAD_TOO_WEAK"))
