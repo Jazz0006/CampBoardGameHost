@@ -89,6 +89,66 @@ internal data class Sde2D5FExpertObservedStageConsequence(
     }
 }
 
+internal data class Sde2D5FExpertObservedStageReport(
+    val title: String,
+    val observedCandidateId: String,
+    val evidence: Sde2D5FExpertObservedStageConsequence,
+)
+
+internal object Sde2D5FExpertObservedConsequenceRenderer {
+    fun render(
+        caseId: String,
+        caseTitle: String,
+        verificationStatus: Sde2D5FPrimaryVerificationStatus,
+        stages: List<Sde2D5FExpertObservedStageReport>,
+        caseNotes: List<String> = emptyList(),
+    ): String = buildString {
+        appendLine("# SDE-2D5F expert-observed candidate consequence calibration")
+        appendLine()
+        appendLine("Case: `$caseId` / $caseTitle")
+        appendLine("Verification: `$verificationStatus`")
+        appendLine(
+            "Guard: mechanical reconstruction and counterfactual diagnostics do not promote this case to GOLD " +
+                "until the material Night-1 state is verified against the primary recording.",
+        )
+        caseNotes.forEach { note -> appendLine("Case note: $note") }
+        appendLine()
+
+        stages.forEach { stage ->
+            appendLine("## ${stage.title}")
+            appendLine()
+            appendLine("Committed-prefix observations: ${stage.evidence.prefixObservationCount}")
+            appendLine("Observed candidate: `${stage.observedCandidateId}`")
+            appendLine()
+            appendLine("| Candidate | Observed | Recipient | Strategic prefix | Strategic after |")
+            appendLine("|---|---|---:|---:|---:|")
+            stage.evidence.alternatives.forEach { alternative ->
+                alternative.byRecipient.forEach { recipient ->
+                    appendLine(
+                        "| ${alternative.candidateId} | " +
+                            "${alternative.candidateId == stage.observedCandidateId} | " +
+                            "${recipient.recipientSeat} | " +
+                            "${recipient.prefixTopologyStructure.distinctStrategicWorldCount} | " +
+                            "${recipient.candidateTopologyStructure.distinctStrategicWorldCount} |",
+                    )
+                }
+            }
+            appendLine()
+        }
+
+        appendLine(
+            "Evaluation boundary: real-case consequence uses topology-first strategic diagnostics. Exhaustive " +
+                "possible-world parity is owned by the existing bounded D4 differential tests; the evidence " +
+                "projector retains an optional exact-oracle hook for exceptional deep audits only.",
+        )
+        appendLine()
+        appendLine(
+            "Interpretation guard: observed is distinguished from counterfactual; no unchosen legal candidate " +
+                "is assigned BAD/ACCEPTABLE or any gate label by this report.",
+        )
+    }
+}
+
 /**
  * Evidence-only consequence bridge for expert-observed cases.
  *
