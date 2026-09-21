@@ -50,6 +50,7 @@ jobs:
           reports=(
             "app/build/reports/sde-2d5f-expert-observed-a-stud.md"
             "app/build/reports/sde-2d5f-expert-observed-live-and-imp-person.md"
+            "app/build/reports/sde-2d5f-expert-observed-human-remains.md"
           )
           for report in "${reports[@]}"; do
             test -f "$report"
@@ -63,4 +64,5 @@ jobs:
           path: |
             app/build/reports/sde-2d5f-expert-observed-a-stud.md
             app/build/reports/sde-2d5f-expert-observed-live-and-imp-person.md
+            app/build/reports/sde-2d5f-expert-observed-human-remains.md
           if-no-files-found: error
