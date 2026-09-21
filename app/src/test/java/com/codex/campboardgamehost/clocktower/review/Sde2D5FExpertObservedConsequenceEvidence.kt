@@ -48,17 +48,20 @@ internal data class Sde2D5FExpertObservedConsequenceContext(
 
 internal data class Sde2D5FExpertObservedRecipientConsequence(
     val recipientSeat: Int,
-    val prefixExactWorldCount: BigInteger,
-    val candidateExactWorldCount: BigInteger,
-    val prefixExactStructure: ExactWorldStructureDiagnostics,
-    val candidateExactStructure: ExactWorldStructureDiagnostics,
+    val prefixExactWorldCount: BigInteger?,
+    val candidateExactWorldCount: BigInteger?,
+    val prefixExactStructure: ExactWorldStructureDiagnostics?,
+    val candidateExactStructure: ExactWorldStructureDiagnostics?,
     val prefixTopologyStructure: ExactWorldStructureDiagnostics,
     val candidateTopologyStructure: ExactWorldStructureDiagnostics,
 ) {
-    val strategicParity: Boolean
-        get() =
-            prefixExactStructure.strategicWorldKeys == prefixTopologyStructure.strategicWorldKeys &&
-                candidateExactStructure.strategicWorldKeys == candidateTopologyStructure.strategicWorldKeys
+    val strategicParity: Boolean?
+        get() {
+            val prefixExact = prefixExactStructure ?: return null
+            val candidateExact = candidateExactStructure ?: return null
+            return prefixExact.strategicWorldKeys == prefixTopologyStructure.strategicWorldKeys &&
+                candidateExact.strategicWorldKeys == candidateTopologyStructure.strategicWorldKeys
+        }
 }
 
 internal data class Sde2D5FExpertObservedCandidateConsequence(
@@ -96,6 +99,10 @@ internal data class Sde2D5FExpertObservedStageConsequence(
  * Registration witness identity remains evidence metadata for policy analysis, but the public
  * consequence is evaluated existentially because players observe the clue, not the Storyteller's
  * hidden interaction-local registration ruling.
+ *
+ * Topology-first evaluation covers every selected good recipient. Exhaustive exact enumeration is a
+ * bounded reference oracle only: callers select a small recipient sample for strategic-key parity,
+ * preserving the D4 scale boundary instead of reintroducing all-recipient mechanical enumeration.
  */
 internal object Sde2D5FExpertObservedConsequenceProjector {
     private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
@@ -201,14 +208,17 @@ internal object Sde2D5FExpertObservedConsequenceProjector {
         stageId: String,
         committedPrefix: List<EpistemicObservation>,
         candidates: Map<String, EpistemicObservation>,
+        exactParityRecipientSeats: Set<Int> = setOf(context.evaluationRecipientSeats.first()),
     ): Sde2D5FExpertObservedStageConsequence {
         require(candidates.isNotEmpty())
         require(candidates.keys.all { it.isNotBlank() })
+        require(exactParityRecipientSeats.isNotEmpty())
+        require(exactParityRecipientSeats.all { it in context.evaluationRecipientSeats })
         require(candidates.values.all { it.snapshotId == context.formalSnapshotId })
         require(committedPrefix.all { it.snapshotId == context.formalSnapshotId })
 
         val exactQueries = buildList {
-            context.evaluationRecipientSeats.forEach { recipientSeat ->
+            exactParityRecipientSeats.sorted().forEach { recipientSeat ->
                 add(
                     ExactHypotheticalObservationBundleQuery(
                         bundleId = bundleId(stageId, "prefix", recipientSeat),
@@ -278,16 +288,16 @@ internal object Sde2D5FExpertObservedConsequenceProjector {
                 byRecipient = context.evaluationRecipientSeats.map { recipientSeat ->
                     val prefixId = bundleId(stageId, "prefix", recipientSeat)
                     val candidateBundleId = bundleId(stageId, candidateId, recipientSeat)
-                    val prefixExact = exactById.getValue(prefixId)
-                    val candidateExact = exactById.getValue(candidateBundleId)
+                    val prefixExact = exactById[prefixId]
+                    val candidateExact = exactById[candidateBundleId]
                     val prefixTopology = topologyById.getValue(prefixId)
                     val candidateTopology = topologyById.getValue(candidateBundleId)
                     Sde2D5FExpertObservedRecipientConsequence(
                         recipientSeat = recipientSeat,
-                        prefixExactWorldCount = prefixExact.after.value,
-                        candidateExactWorldCount = candidateExact.after.value,
-                        prefixExactStructure = prefixExact.afterStructure,
-                        candidateExactStructure = candidateExact.afterStructure,
+                        prefixExactWorldCount = prefixExact?.after?.value,
+                        candidateExactWorldCount = candidateExact?.after?.value,
+                        prefixExactStructure = prefixExact?.afterStructure,
+                        candidateExactStructure = candidateExact?.afterStructure,
                         prefixTopologyStructure = prefixTopology.afterStructure,
                         candidateTopologyStructure = candidateTopology.afterStructure,
                     )
