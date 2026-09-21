@@ -25,9 +25,9 @@ SDE-2D5 calibration / policy evidence                 CURRENT / PR #150 draft
     D5F-B4 expert-observed policy calibration         CURRENT
         B4A clean-corpus retirement                    COMPLETE
         B4B GOLD source discovery                     IN PROGRESS
-        B4C expert Night-1 reconstruction              IN PROGRESS
-        B4D legal counterfactual recovery              IN PROGRESS
-        B4E observed-vs-alternative analysis           IN PROGRESS
+        B4C expert Night-1 reconstruction              IN PROGRESS / 3 executable Ben cases
+        B4D legal counterfactual recovery              IN PROGRESS / 3 executable Ben cases
+        B4E observed-vs-alternative analysis           IN PROGRESS / 3 reports artifacted
 D5F-C gate/band derivation                            BLOCKED
 sealed holdout                                        CLOSED
 SDE-3                                                 BLOCKED
