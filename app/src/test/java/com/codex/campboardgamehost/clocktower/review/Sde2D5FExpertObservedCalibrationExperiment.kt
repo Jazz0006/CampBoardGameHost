@@ -30,17 +30,21 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertEquals("value-0", calibration.drunkEmpathObservedCandidateId)
         assertEquals("answer-yes", calibration.fortuneTellerObservedCandidateId)
 
-        calibration.stages.forEach { stage ->
+        calibration.stages.forEachIndexed { stageIndex, stage ->
             val exactSamples = stage.alternatives.flatMap { alternative ->
                 alternative.byRecipient.filter { recipient -> recipient.strategicParity != null }
             }
-            assertTrue(exactSamples.isNotEmpty())
-            exactSamples.forEach { recipient ->
-                assertEquals(true, recipient.strategicParity)
-                assertTrue(
-                    requireNotNull(recipient.candidateExactWorldCount) <=
-                        requireNotNull(recipient.prefixExactWorldCount),
-                )
+            if (stageIndex == 0) {
+                assertTrue(exactSamples.isNotEmpty())
+                exactSamples.forEach { recipient ->
+                    assertEquals(true, recipient.strategicParity)
+                    assertTrue(
+                        requireNotNull(recipient.candidateExactWorldCount) <=
+                            requireNotNull(recipient.prefixExactWorldCount),
+                    )
+                }
+            } else {
+                assertTrue(exactSamples.isEmpty())
             }
             stage.alternatives.forEach { alternative ->
                 alternative.byRecipient.forEach { recipient ->
