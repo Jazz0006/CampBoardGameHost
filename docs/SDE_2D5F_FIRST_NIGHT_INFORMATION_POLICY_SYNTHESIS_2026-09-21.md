@@ -646,6 +646,25 @@ The current code already has most of the required seams:
 
 The next implementation slice should therefore be an **evidence reconstruction/projection harness**, not new production selection code.
 
+### Numeric registration-witness projection gap
+
+One bounded integration gap is now explicit:
+
+- `FirstNightNumericLegalDomain` correctly enumerates player-visible Chef/Empath values;
+- `FirstNightNumericInformationSemantics` correctly accounts for Spy/Recluse registration when determining the healthy truth-value set;
+- but the numeric legal-domain candidate currently carries the **value**, not the exact interaction-local registration witness that produced that value.
+
+The witness information already exists downstream. `TroubleBrewingTopologyObservationWitnessEvaluator` enumerates complete numeric registration-witness branches and `RegistrationWitnessSemanticMatcher` can bind a selected witness. Tests already prove natural, Spy and Recluse numeric witness alternatives.
+
+Therefore the evidence harness should add a thin **value-to-witness projection** over existing owners. It must not duplicate Chef/Empath arithmetic or registration legality. For evidence analysis, candidate identity may need to be:
+
+~~~text
+player-visible numeric value
++ interaction-local registration witness
+~~~
+
+while retaining a grouped view by player-visible value. This allows expert cases such as `A Stud In Scarlet` and `Live and Imp-Person` to distinguish different Recluse registration choices without changing canonical identity or inventing a second numeric rules engine.
+
 ## 22. D5F-B4A cleanup result
 
 The obsolete seven-scenario clean calibration corpus protected no unique durable contract and has been retired:
