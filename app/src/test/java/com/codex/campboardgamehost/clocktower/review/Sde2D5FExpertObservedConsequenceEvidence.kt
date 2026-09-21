@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
@@ -31,6 +32,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundlePro
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformationBundle
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformationBundleEntry
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightPublicGoodInfoProjection
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
 import java.io.File
 import java.math.BigInteger
 
@@ -166,6 +168,42 @@ internal object Sde2D5FExpertObservedConsequenceProjector {
             evaluationRecipientSeats = goodRecipients,
         )
     }
+
+    fun projectInformationClaim(
+        context: Sde2D5FExpertObservedConsequenceContext,
+        entryId: String,
+        sequence: Int,
+        information: EffectDraft.PlayerInformation,
+    ): EpistemicObservation = projectPublicClaim(
+        context = context,
+        entryId = entryId,
+        sequence = sequence,
+        sourceSeat = information.recipientSeat,
+        sourceAbility = information.sourceAbility,
+        proposition = TroubleBrewingFirstNightInformationPropositionMaterializer.materialize(
+            game = context.game,
+            information = information,
+            roleDefinitions = context.roleDefinitions,
+        ),
+    )
+
+    fun projectFortuneTellerClaim(
+        context: Sde2D5FExpertObservedConsequenceContext,
+        entryId: String,
+        sequence: Int,
+        information: EffectDraft.PlayerInformation,
+        targetSeats: List<Int>,
+    ): EpistemicObservation = projectPublicClaim(
+        context = context,
+        entryId = entryId,
+        sequence = sequence,
+        sourceSeat = information.recipientSeat,
+        sourceAbility = information.sourceAbility,
+        proposition = TroubleBrewingFirstNightInformationPropositionMaterializer.materializeFortuneTeller(
+            information = information,
+            targetSeats = targetSeats,
+        ),
+    )
 
     fun projectPublicClaim(
         context: Sde2D5FExpertObservedConsequenceContext,
