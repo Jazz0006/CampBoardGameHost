@@ -145,7 +145,7 @@ The source catalog now tracks five GOLD candidates:
 - Ben Burns — official `Trouble Brewing - A Fond Farewell`;
 - Evin — early TPI Trouble Brewing playthrough.
 
-Ben's experienced/trusted status is independently supported by TPI. The first three have detailed Night-1 reconstructions but require primary-video timestamp verification before GOLD admission. The latter two are strong primary-source targets but still need fuller state extraction; Evin also needs stronger independent evidence of experience depth.
+Ben's experienced/trusted status is independently supported by TPI. The first three have detailed Night-1 reconstructions but require primary-video timestamp verification before GOLD admission. The latter two are strong primary-source targets but still need fuller state extraction. Evin's expert/trusted status is now independently supported by his TPI co-founder role, integral early involvement, and founding of the Newcastle Clocktower group.
 
 ### D5F-B4C — reconstruct expert Night 1 decisions — NEXT
 
