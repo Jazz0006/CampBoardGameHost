@@ -116,7 +116,7 @@ The catalog now tracks:
 - Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PARTIALLY_RECONSTRUCTABLE`, primary Night-1 chapter available;
 - Evin — early TPI Trouble Brewing playthrough — `PARTIALLY_RECONSTRUCTABLE`, valuable independent-Storyteller target.
 
-TPI independently verifies Ben's long-running involvement and trusted/expert status. Evin's game is officially TPI-endorsed, but stronger expertise-depth evidence is still required before GOLD admission.
+TPI independently verifies Ben's long-running involvement and trusted/expert status. Evin is also independently qualified as experienced/trusted through his TPI co-founder role, integral early involvement, founding of the Newcastle Clocktower group, and the official TPI-hosted early Trouble Brewing game. His remaining GOLD blocker is state extraction, not expertise.
 
 Do not manufacture GOLD by treating the detailed secondary episode index as final verification.
 
