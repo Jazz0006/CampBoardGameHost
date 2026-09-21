@@ -77,7 +77,6 @@ afterEvaluate {
             excludeTestsMatching(sde2D4ScaleBenchmark)
             excludeTestsMatching(sde2D5CalibrationExperiment)
             excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
-            excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
         }
     }
 
@@ -98,6 +97,7 @@ afterEvaluate {
             // testFast is a separate Test task and does not inherit debugUnitTest's filter.
             excludeTestsMatching(fnBundle3CalibrationExperiment)
             excludeTestsMatching(sde2D5CalibrationExperiment)
+            excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest")
