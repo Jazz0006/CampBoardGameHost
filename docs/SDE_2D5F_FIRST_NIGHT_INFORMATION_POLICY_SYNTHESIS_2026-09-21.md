@@ -577,7 +577,7 @@ The first high-value candidates are:
 2. **Human Remains Of The Day** — Ben Burns — fully reconstructable from the current episode index, pending primary verification. High-value decision: poisoned Washerwoman misinformation with known Poisoner target; general early-game balancing rationale is also recorded, but is not choice-specific.
 3. **Live and Imp-Person** — Ben Burns — fully reconstructable from the current episode index, pending primary verification. High-value because Chef and Fortune Teller can use different interaction-scoped Recluse registration branches in the same Night 1.
 4. **Trouble Brewing - A Fond Farewell** — Ben Burns on the official Blood on the Clocktower channel — primary video and explicit Night-1 chapter are available, but the complete decision state still needs extraction.
-5. **early TPI Trouble Brewing playthrough (4sfa8_kNxsQ)** — Evin — official TPI-endorsed primary recording and an important independent-Storyteller target, but both expertise-depth evidence and the complete Night-1 state still need extraction before GOLD admission.
+5. **early TPI Trouble Brewing playthrough (4sfa8_kNxsQ)** — Evin — official TPI-endorsed primary recording and an important independent-Storyteller target. Evin's expert/trusted status is independently supported by his TPI co-founder role, integral early involvement, and founding of the Newcastle Clocktower group; the remaining blocker is complete Night-1 state extraction before GOLD admission.
 
 The first three cases are not three independent expert confirmations because they share the same principal Storyteller.
 
