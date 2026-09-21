@@ -1,0 +1,59 @@
+name: SDE-2D5F expert-observed calibration
+
+on:
+  push:
+    branches:
+      - sde-2d5-calibration-policy-evidence
+    paths:
+      - app/build.gradle.kts
+      - app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FExpertObserved*.kt
+      - app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FAStudInScarlet*.kt
+      - app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FHumanRemains*.kt
+      - app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FLiveAndImpPerson*.kt
+      - .github/workflows/sde-2d5f-expert-observed-calibration.yml
+
+concurrency:
+  group: sde-2d5f-expert-observed-calibration-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  calibration:
+    name: Evaluate expert-observed evidence
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Run SDE-2D5F expert-observed calibration
+        run: ./gradlew :app:sde2D5FExpertObservedCalibration --no-daemon --rerun-tasks
+
+      - name: Print expert-observed report
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="app/build/reports/sde-2d5f-expert-observed-a-stud.md"
+          test -f "$report"
+          cat "$report"
+
+      - name: Upload expert-observed report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sde-2d5f-expert-observed-a-stud
+          path: app/build/reports/sde-2d5f-expert-observed-a-stud.md
+          if-no-files-found: error
