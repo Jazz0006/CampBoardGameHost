@@ -617,9 +617,11 @@ match observed expert output to exactly one legal candidate/witness
     ↓
 materialize every legal counterfactual through existing proposition adapters
     ↓
-exact evaluator + strategic-topology evaluator
+topology-first real-case consequence
     ↓
 whole-bundle diagnostics
+
+Exact registration/mechanical semantics remain authoritative for legality and witness recovery. Exhaustive possible-world consequence is not the normal real-case path: bounded D4 differential tests already own broad topology/exhaustive parity, while the evidence bridge retains an optional exact-oracle hook for exceptional deep audits.
 ~~~
 
 Counterfactual reconstruction must not leak hindsight. Earlier committed choices are fixed. Player-controlled choices already made are fixed. Later uncommitted Storyteller decisions must remain variables rather than being silently frozen to what the expert eventually chose.
@@ -645,6 +647,24 @@ The current code already has most of the required seams:
 - committed/unshown lifecycle boundary: session first-night information lifecycle and revisions.
 
 The next implementation slice should therefore be an **evidence reconstruction/projection harness**, not new production selection code.
+
+### Current executable B4 consequence boundary
+
+The first executable expert-observed consequence slice now confirms an important scale boundary.
+
+A real 9-player case remained multi-minute when exhaustive possible-world consequence was enabled even for only one sampled decision stage. The same expert-observed workload, evaluated topology-first and isolated in a dedicated T3 workflow, completes in about two minutes end-to-end including build/setup/report publication.
+
+Therefore:
+
+- real expert cases use production legality owners and exact registration-witness semantics to recover the legal decision surface;
+- committed-prefix consequence for routine B4 analysis is topology-first;
+- exhaustive real-case possible-world scans are optional deep audits, not a per-case requirement;
+- bounded D4 differential tests remain the owner of broad topology-versus-exhaustive evaluator correctness;
+- do not reintroduce all-recipient/all-stage exact enumeration merely to obtain a mechanical-world count.
+
+The first `A Stud In Scarlet` report is also intentionally neutral on the current strategic quotient: every reconstructed Chef, Drunk-Empath and fixed-target Fortune Teller alternative preserves 56 evil-seat strategic topologies for every evaluated good recipient. This does not invalidate the case or the evaluator. It demonstrates that registration choice, impaired-information narrative, role-function exposure and other policy dimensions can carry expert-choice information even when the strategic quotient is unchanged.
+
+`Live and Imp-Person` provides a different kind of evidence. In the reconstructed Night 1, the observed Chef=1 uses the natural registration witness while the later observed Fortune Teller YES uses Recluse-as-Demon. The same Recluse is therefore not modeled by a persistent/global registration state; registration remains interaction-scoped.
 
 ### Numeric registration-witness projection gap
 
