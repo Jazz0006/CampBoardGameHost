@@ -6,7 +6,6 @@ import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
-import com.codex.campboardgamehost.clocktower.epistemic.EnumeratedWorld
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -54,12 +53,9 @@ internal object Sde2D5FExpertObservedBooleanEvidenceProjector {
         require(subjectSeats.isNotEmpty()) {
             "Expert-observed boolean evidence requires a non-empty subject set."
         }
-        val world = EnumeratedWorld(
-            rolesBySeat = game.players.associate { player -> player.seat to player.actualRole },
+        val world = Sde2D5FExpertObservedWorldProjection.from(
+            game = game,
             redHerringSeat = redHerringSeat,
-            shownRolesBySeat = game.players.associate { player ->
-                player.seat to (player.shownRole ?: player.actualRole)
-            },
         )
         val rolesById = roleDefinitions.associateBy(RoleDefinition::id)
 
