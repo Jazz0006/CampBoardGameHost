@@ -534,3 +534,145 @@ For current execution, read:
 The 2026-09-20 D5 policy-correction, extreme-fixture-correction and representative-clean-corpus design documents were removed from active docs after their valid conclusions were folded into this synthesis. Git history is sufficient for historical traceability.
 
 Do not revive those deleted routes as parallel calibration authorities.
+
+## 20. D5F-B4 expert-source qualification and observed-choice integration
+
+### 20.1 GOLD qualification rubric
+
+A real game is admitted to the GOLD corpus only when all required gates below are satisfied:
+
+- **expertise is independently verified**: the Storyteller has documented substantial Storyteller/TPI/design/community practice; source fame or production quality alone is insufficient;
+- **the game is authentic**: a real Trouble Brewing game, not a synthetic teaching fixture or counterfactual;
+- **the material committed state is reconstructable** at the exact decision point: seats/roles plus every setup/night commitment that can change the legal outcome or consequence of the decision;
+- **the observed choice is recoverable** from the source;
+- **the complete legal alternative set is recoverable from production legality owners** rather than hand-authored from the evidence record.
+
+Record rationale separately:
+
+~~~text
+EXPLICIT_SPECIFIC
+    exact decision rationale / explicit rejected alternative
+
+EXPLICIT_GENERAL
+    Storyteller states a general balancing principle relevant to the case
+
+REPEATED_PATTERN
+    same Storyteller makes comparable choices across multiple reconstructable games
+
+OBSERVED_ONLY
+    choice is visible but no rationale is recovered
+~~~
+
+Rationale increases evidence strength but is not required for GOLD if the other gates are satisfied.
+
+Every case also carries an **independence key** based on Storyteller identity. Multiple games run by Ben Burns, for example, are repeated evidence from one expert, not multiple independent experts.
+
+Do not promote a case using a detailed secondary reconstruction until the material Night-1 state has been checked against the primary recording. A case may therefore remain a **GOLD candidate** even when Storyteller expertise is already verified.
+
+### 20.2 First candidate set
+
+The first high-value candidates are:
+
+1. **A Stud In Scarlet** — Ben Burns — fully reconstructable from the current episode index, pending primary Night-1 timestamp verification. High-value decisions include Drunk-Empath misinformation and Fortune Teller YES through Recluse-as-Demon registration.
+2. **Human Remains Of The Day** — Ben Burns — fully reconstructable from the current episode index, pending primary verification. High-value decision: poisoned Washerwoman misinformation with known Poisoner target; general early-game balancing rationale is also recorded, but is not choice-specific.
+3. **Live and Imp-Person** — Ben Burns — fully reconstructable from the current episode index, pending primary verification. High-value because Chef and Fortune Teller can use different interaction-scoped Recluse registration branches in the same Night 1.
+4. **Trouble Brewing - A Fond Farewell** — Ben Burns on the official Blood on the Clocktower channel — primary video and explicit Night-1 chapter are available, but the complete decision state still needs extraction.
+5. **early TPI Trouble Brewing playthrough (4sfa8_kNxsQ)** — Evin — official TPI-endorsed primary recording and an important independent-Storyteller target, but both expertise-depth evidence and the complete Night-1 state still need extraction before GOLD admission.
+
+The first three cases are not three independent expert confirmations because they share the same principal Storyteller.
+
+## 21. Observed expert choice + legal counterfactual contract
+
+Do not build a second evidence-specific rules engine.
+
+The intended evidence harness should reconstruct one real game into the same canonical state types used by production and then ask existing legality owners for the decision domain.
+
+A candidate evidence model should be structurally similar to:
+
+~~~text
+ExpertObservedFirstNightCase
+    case/source metadata
+    storyteller independence key
+    reconstructed setup + persistent commitments
+    ordered observed decision records
+
+ObservedExpertDecision
+    lifecycle point / source revision
+    decision semantics
+    observed candidate identity
+    selected registration witness when observable
+    rationale grade/source
+~~~
+
+For each decision:
+
+~~~text
+committed prefix at decision time
+    ↓
+existing production legality owner
+    ↓
+complete legal candidate set
+    ↓
+match observed expert output to exactly one legal candidate/witness
+    ↓
+materialize every legal counterfactual through existing proposition adapters
+    ↓
+exact evaluator + strategic-topology evaluator
+    ↓
+whole-bundle diagnostics
+~~~
+
+Counterfactual reconstruction must not leak hindsight. Earlier committed choices are fixed. Player-controlled choices already made are fixed. Later uncommitted Storyteller decisions must remain variables rather than being silently frozen to what the expert eventually chose.
+
+Use two diagnostic views when useful:
+
+- **committed-prefix consequence**: immediate consequence of replacing only the current decision;
+- **continuation-feasible whole-bundle consequence**: whether healthy later legal continuations remain after that replacement.
+
+The observed expert candidate is a distinguished member of the legal set, **not a positive label**. Unchosen candidates receive diagnostics, not BAD labels.
+
+### Existing owner reuse
+
+The current code already has most of the required seams:
+
+- pair legality: `NaturalPairInformationCandidateGenerator` / `PairInformationLegalDomain`;
+- numeric legality: `FirstNightNumericInformationSemantics` / `FirstNightNumericLegalDomain`;
+- Fortune Teller legality/semantics: `FortuneTellerInformationSemantics`;
+- registration legality/witnesses: `TroubleBrewingRegistrationDomain` plus exact registration-witness binding;
+- proposition materialization: `TroubleBrewingFirstNightInformationPropositionMaterializer`;
+- exact consequence: `StorytellerDecisionEngine.evaluateExactConsequences` / `ExactHistoricalHypotheticalObservationBundleEvaluator`;
+- strategic consequence: `TroubleBrewingTopologyHypotheticalBundleEvaluator`;
+- committed/unshown lifecycle boundary: session first-night information lifecycle and revisions.
+
+The next implementation slice should therefore be an **evidence reconstruction/projection harness**, not new production selection code.
+
+## 22. D5F-B4A cleanup result
+
+The obsolete seven-scenario clean calibration corpus protected no unique durable contract and has been retired:
+
+- `Sde2D5FRepresentativeHealthyInformationCorpus.kt` — deleted;
+- `Sde2D5FRepresentativeHealthyInformationCorpusTest.kt` — deleted;
+- its Markdown report had no independent task/workflow/resource owner and required no separate deletion.
+
+Durable behavior remains covered at the owning layers, including pair-information legality, numeric registration-aware truth domains, exact registration witnesses, and setup/deal semantics.
+
+This cleanup is especially important because the retired corpus deliberately excluded Drunk and froze multi-valued Chef/Empath registration context to one branch; those assumptions are no longer valid calibration policy.
+
+## 23. Anti-special-case code audit
+
+No production fixture ID such as `TB2_7_...` is part of the active policy path.
+
+Current first-night Drunk consequence adapters are split by **information shape**:
+
+- pair information;
+- numeric information;
+- Fortune Teller target-check/boolean semantics.
+
+They all converge on the shared `TroubleBrewingFirstNightDrunkWholeBundleExactEvaluator`. This is acceptable because the adapters own legal-domain/proposition differences rather than separate policy scoring.
+
+`TroubleBrewingFirstNightInformationPropositionMaterializer` also contains named roles, but those branches encode different proposition semantics and therefore belong at the rules/semantic adapter boundary.
+
+One future-risk area remains: the role-named Fortune Teller adapter must not become a template for role-specific cross-night coherence policy. When persistent impaired narrative state is implemented, continuation policy must move through shared semantic/history abstractions so equivalent boolean/target-check information in future scripts inherits the same behavior automatically.
+
+Legacy `ImpairedInformationPolicy`, `RegistrationPolicy`, and the approximate impaired truthful/false-family bridge remain compatibility code by explicit roadmap decision. They are not evidence that the new D5F policy should be implemented through those legacy scalar heuristics.
+
