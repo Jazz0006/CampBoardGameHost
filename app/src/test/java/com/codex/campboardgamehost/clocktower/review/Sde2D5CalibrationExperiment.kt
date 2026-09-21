@@ -392,10 +392,19 @@ class Sde2D5CalibrationExperiment {
         assertEquals("answer-yes", calibration.fortuneTellerObservedCandidateId)
 
         calibration.stages.forEach { stage ->
+            val exactSamples = stage.alternatives.flatMap { alternative ->
+                alternative.byRecipient.filter { recipient -> recipient.strategicParity != null }
+            }
+            assertTrue(exactSamples.isNotEmpty())
+            exactSamples.forEach { recipient ->
+                assertEquals(true, recipient.strategicParity)
+                assertTrue(
+                    requireNotNull(recipient.candidateExactWorldCount) <=
+                        requireNotNull(recipient.prefixExactWorldCount),
+                )
+            }
             stage.alternatives.forEach { alternative ->
                 alternative.byRecipient.forEach { recipient ->
-                    assertTrue(recipient.strategicParity)
-                    assertTrue(recipient.candidateExactWorldCount <= recipient.prefixExactWorldCount)
                     assertTrue(
                         recipient.candidateTopologyStructure.distinctStrategicWorldCount <=
                             recipient.prefixTopologyStructure.distinctStrategicWorldCount,
