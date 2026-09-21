@@ -54,6 +54,7 @@ internal data class Sde2D5FPairCandidatePolicyFeatures(
     val shownRoleCandidateMatchSeats: Set<Int>,
     val specialRegistrationRoleMatchSeats: Set<Int>,
     val candidateSpecialRegistrationSubjectSeats: Set<Int>,
+    val candidateSeatCount: Int,
     val candidateEvilSeats: Set<Int>,
     val candidateDemonSeats: Set<Int>,
     val candidateMinionSeats: Set<Int>,
@@ -73,12 +74,52 @@ internal data class Sde2D5FPairCandidatePolicyFeatures(
         "shownMatches=${shownRoleCandidateMatchSeats.size}",
         "specialRoleMatches=${specialRegistrationRoleMatchSeats.size}",
         "specialSubjects=${candidateSpecialRegistrationSubjectSeats.size}",
+        "candidateSeats=$candidateSeatCount",
         "evil=${candidateEvilSeats.size}",
         "demon=${candidateDemonSeats.size}",
         "minion=${candidateMinionSeats.size}",
         "outsider=${candidateOutsiderSeats.size}",
         "townsfolk=${candidateTownsfolkSeats.size}",
     ).joinToString("|")
+}
+
+internal data class Sde2D5FPairDomainPolicyFeatureSummary(
+    val candidateCount: Int,
+    val semanticTrueCount: Int,
+    val semanticFalseCount: Int,
+    val noSpecialRegistrationWitnessCount: Int,
+    val hasSpecialRegistrationAlternativeCount: Int,
+    val requiresSpecialRegistrationCount: Int,
+    val shownRoleDemonBluffCount: Int,
+    val shownRoleActualInPlayCount: Int,
+    val shownRoleMatchesCandidateCount: Int,
+    val specialRegistrationRoleMatchesCandidateCount: Int,
+    val containsActualEvilSeatCount: Int,
+    val containsActualDemonSeatCount: Int,
+    val containsActualMinionSeatCount: Int,
+    val allCandidateSeatsActualEvilCount: Int,
+) {
+    init {
+        require(candidateCount > 0)
+        listOf(
+            semanticTrueCount,
+            semanticFalseCount,
+            noSpecialRegistrationWitnessCount,
+            hasSpecialRegistrationAlternativeCount,
+            requiresSpecialRegistrationCount,
+            shownRoleDemonBluffCount,
+            shownRoleActualInPlayCount,
+            shownRoleMatchesCandidateCount,
+            specialRegistrationRoleMatchesCandidateCount,
+            containsActualEvilSeatCount,
+            containsActualDemonSeatCount,
+            containsActualMinionSeatCount,
+            allCandidateSeatsActualEvilCount,
+        ).forEach { count ->
+            require(count in 0..candidateCount)
+        }
+        require(semanticTrueCount + semanticFalseCount == candidateCount)
+    }
 }
 
 internal data class Sde2D5FNumericCandidatePolicyFeatures(
@@ -139,6 +180,7 @@ internal object Sde2D5FExpertObservedPolicyFeatureProjector {
                 shownRoleCandidateMatchSeats = candidateMatchSeats,
                 specialRegistrationRoleMatchSeats = specialRoleMatches,
                 candidateSpecialRegistrationSubjectSeats = specialRegistrationSubjects,
+                candidateSeatCount = players.size,
                 candidateEvilSeats = players
                     .filter { it.actualAlignment == Alignment.EVIL }
                     .mapTo(linkedSetOf()) { it.seat },
@@ -156,6 +198,39 @@ internal object Sde2D5FExpertObservedPolicyFeatureProjector {
                     .mapTo(linkedSetOf()) { it.seat },
             )
         }
+
+    fun summarizePair(
+        candidates: List<Sde2D5FPairCandidatePolicyFeatures>,
+    ): Sde2D5FPairDomainPolicyFeatureSummary {
+        require(candidates.isNotEmpty()) {
+            "Pair-domain feature summary requires at least one legal candidate."
+        }
+        return Sde2D5FPairDomainPolicyFeatureSummary(
+            candidateCount = candidates.size,
+            semanticTrueCount = candidates.count { it.semanticTruth == SemanticTruth.TRUE },
+            semanticFalseCount = candidates.count { it.semanticTruth == SemanticTruth.FALSE },
+            noSpecialRegistrationWitnessCount =
+                candidates.count { it.registration.hasNoSpecialRegistrationWitness },
+            hasSpecialRegistrationAlternativeCount =
+                candidates.count { it.registration.hasSpecialRegistrationAlternative },
+            requiresSpecialRegistrationCount =
+                candidates.count { it.registration.requiresSpecialRegistration },
+            shownRoleDemonBluffCount = candidates.count { it.shownRoleIsDemonBluff },
+            shownRoleActualInPlayCount =
+                candidates.count { it.shownRoleActualInPlaySeats.isNotEmpty() },
+            shownRoleMatchesCandidateCount =
+                candidates.count { it.shownRoleCandidateMatchSeats.isNotEmpty() },
+            specialRegistrationRoleMatchesCandidateCount =
+                candidates.count { it.specialRegistrationRoleMatchSeats.isNotEmpty() },
+            containsActualEvilSeatCount = candidates.count { it.candidateEvilSeats.isNotEmpty() },
+            containsActualDemonSeatCount = candidates.count { it.candidateDemonSeats.isNotEmpty() },
+            containsActualMinionSeatCount = candidates.count { it.candidateMinionSeats.isNotEmpty() },
+            allCandidateSeatsActualEvilCount = candidates.count {
+                it.candidateSeatCount > 0 &&
+                    it.candidateEvilSeats.size == it.candidateSeatCount
+            },
+        )
+    }
 
     fun projectNumeric(
         decision: Sde2D5FExpertObservedNumericDecisionEvidence,

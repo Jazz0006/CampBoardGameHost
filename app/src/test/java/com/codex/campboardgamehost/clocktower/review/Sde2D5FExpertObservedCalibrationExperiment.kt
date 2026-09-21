@@ -224,9 +224,27 @@ class Sde2D5FExpertObservedCalibrationExperiment {
             features.humanWasherwoman.map { it.descriptiveSignature() }.toSet()
         assertTrue(humanSignatures.size > 1)
 
+        val livePairSummary =
+            Sde2D5FExpertObservedPolicyFeatureProjector.summarizePair(features.liveLibrarian)
+        val humanPairSummary =
+            Sde2D5FExpertObservedPolicyFeatureProjector.summarizePair(features.humanWasherwoman)
+        assertEquals(features.liveLibrarian.size, livePairSummary.candidateCount)
+        assertEquals(features.humanWasherwoman.size, humanPairSummary.candidateCount)
+        assertEquals(
+            humanPairSummary.candidateCount,
+            humanPairSummary.semanticTrueCount + humanPairSummary.semanticFalseCount,
+        )
+        assertTrue(humanPairSummary.semanticFalseCount > 0)
+        assertTrue(humanPairSummary.shownRoleDemonBluffCount > 0)
+        assertTrue(humanPairSummary.containsActualDemonSeatCount > 0)
+        assertTrue(humanPairSummary.containsActualMinionSeatCount > 0)
+        assertTrue(humanPairSummary.allCandidateSeatsActualEvilCount > 0)
+
         val report = Sde2D5FExpertObservedPolicyFeatureReportBuilder.render(features)
         assertTrue(report.contains("descriptive candidate facts only"))
         assertTrue(report.contains("Distinct descriptive feature signatures:"))
+        assertTrue(report.contains("Legal-domain feature prevalence"))
+        assertTrue(report.contains("all candidate seats are actual Evil"))
         assertTrue(report.contains("Drunk shown Empath"))
         assertTrue(report.contains("shown role is Demon bluff"))
         assertFalse(report.contains("BAD_TOO_STRONG"))

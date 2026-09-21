@@ -54,6 +54,10 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
             "Strategic topology is intentionally absent from this feature table because the committed-prefix " +
                 "reports already showed topology-neutral alternatives in all three current cases.",
         )
+        appendLine(
+            "Legal-domain prevalence counts below are descriptive only; they are not rarity scores, " +
+                "preference weights, or evidence that an observed candidate was better than an unchosen one.",
+        )
         appendLine()
 
         appendLine("## A Stud In Scarlet")
@@ -150,12 +154,31 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
         val signatures = candidates.groupBy(Sde2D5FPairCandidatePolicyFeatures::descriptiveSignature)
         val observed = candidates.single { it.candidateId == observedCandidateId }
         val observedSignatureCount = signatures.getValue(observed.descriptiveSignature()).size
+        val summary = Sde2D5FExpertObservedPolicyFeatureProjector.summarizePair(candidates)
 
         appendLine("### $title")
         appendLine()
         appendLine("Legal candidates: ${candidates.size}")
         appendLine("Distinct descriptive feature signatures: ${signatures.size}")
         appendLine("Candidates sharing observed descriptive signature: $observedSignatureCount")
+        appendLine()
+        appendLine("#### Legal-domain feature prevalence")
+        appendLine()
+        appendLine("| Domain feature | Candidate count |")
+        appendLine("|---|---:|")
+        appendLine("| semantic truth = TRUE | ${summary.semanticTrueCount} |")
+        appendLine("| semantic truth = FALSE | ${summary.semanticFalseCount} |")
+        appendLine("| has no-special-registration witness | ${summary.noSpecialRegistrationWitnessCount} |")
+        appendLine("| has special-registration alternative | ${summary.hasSpecialRegistrationAlternativeCount} |")
+        appendLine("| requires special registration | ${summary.requiresSpecialRegistrationCount} |")
+        appendLine("| shown role is Demon bluff | ${summary.shownRoleDemonBluffCount} |")
+        appendLine("| shown role actually in play | ${summary.shownRoleActualInPlayCount} |")
+        appendLine("| shown role matches a candidate seat | ${summary.shownRoleMatchesCandidateCount} |")
+        appendLine("| special-registration role matches a candidate seat | ${summary.specialRegistrationRoleMatchesCandidateCount} |")
+        appendLine("| candidate contains actual Evil seat | ${summary.containsActualEvilSeatCount} |")
+        appendLine("| candidate contains actual Demon seat | ${summary.containsActualDemonSeatCount} |")
+        appendLine("| candidate contains actual Minion seat | ${summary.containsActualMinionSeatCount} |")
+        appendLine("| all candidate seats are actual Evil | ${summary.allCandidateSeatsActualEvilCount} |")
         appendLine()
         appendLine("| Observed candidate | Feature | Value |")
         appendLine("|---|---|---|")
