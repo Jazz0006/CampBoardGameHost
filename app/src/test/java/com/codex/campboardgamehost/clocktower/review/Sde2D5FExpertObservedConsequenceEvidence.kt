@@ -133,7 +133,7 @@ internal object Sde2D5FExpertObservedConsequenceRenderer {
                 stage.evidence.alternatives.forEach { alternative ->
                     alternative.byRecipient.forEach { recipient ->
                         appendLine(
-                            "| ${alternative.candidateId} | " +
+                            "| ${markdownCell(alternative.candidateId)} | " +
                                 "${alternative.candidateId == stage.observedCandidateId} | " +
                                 "${recipient.recipientSeat} | " +
                                 "${recipient.prefixTopologyStructure.distinctStrategicWorldCount} | " +
@@ -170,7 +170,7 @@ internal object Sde2D5FExpertObservedConsequenceRenderer {
                 appendLine("|---|---:|---:|---:|")
                 observed.byRecipient.forEach { recipient ->
                     appendLine(
-                        "| ${observed.candidateId} | ${recipient.recipientSeat} | " +
+                        "| ${markdownCell(observed.candidateId)} | ${recipient.recipientSeat} | " +
                             "${recipient.prefixTopologyStructure.distinctStrategicWorldCount} | " +
                             "${recipient.candidateTopologyStructure.distinctStrategicWorldCount} |",
                     )
@@ -190,14 +190,17 @@ internal object Sde2D5FExpertObservedConsequenceRenderer {
                 "is assigned BAD/ACCEPTABLE or any gate label by this report.",
         )
     }
+
+    private fun markdownCell(value: String): String = value.replace("|", "\\|")
 }
 
 /**
  * Evidence-only consequence bridge for expert-observed cases.
  *
  * Legality is deliberately upstream. This owner only projects player-visible claims and compares an
- * already-committed prefix with legal candidate continuations through BOTH existing exact mechanical
- * enumeration and topology-first feasibility. Hidden reconstructed truth is not injected into player
+ * already-committed prefix with legal candidate continuations through topology-first feasibility.
+ * Exhaustive exact evaluation is an optional deep-audit hook, not the routine real-case path.
+ * Hidden reconstructed truth is not injected into player
  * knowledge: no actual role map, Baron profile, Red Herring seat, poison target, or registration
  * witness is added as setup knowledge.
  *
