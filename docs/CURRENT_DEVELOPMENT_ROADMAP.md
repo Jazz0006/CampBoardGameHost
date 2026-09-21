@@ -23,6 +23,9 @@ SDE-2D5 calibration / policy evidence                 CURRENT / PR #150 draft
     D5F infrastructure                                COMPLETE
     D5F-B3 correction                                 HISTORICAL CHECKPOINT
     D5F-B4 expert-observed policy calibration         CURRENT
+        B4A clean-corpus retirement                    COMPLETE
+        B4B GOLD source discovery                     IN PROGRESS
+        B4C expert Night-1 reconstruction              NEXT
 D5F-C gate/band derivation                            BLOCKED
 sealed holdout                                        CLOSED
 SDE-3                                                 BLOCKED
@@ -109,7 +112,7 @@ DIAGNOSTIC_ONLY
     synthetic / extreme / counterfactual fixtures
 ~~~
 
-Current external catalog contains SILVER / QUALITATIVE seed evidence only. It contains no verified GOLD cases yet.
+Current external catalog now contains SILVER / QUALITATIVE seed evidence plus five explicitly tracked GOLD candidates. No case has yet been admitted as verified GOLD: the three fully reconstructable Ben Burns candidates still require primary-video Night-1 verification, while the official Ben/Evin recordings still require state extraction. Multiple Ben Burns games share one Storyteller independence key and must not be counted as independent experts.
 
 Interpretation rules:
 
@@ -121,29 +124,38 @@ Interpretation rules:
 
 ## 7. Immediate execution order
 
-### D5F-B4A — retire obsolete clean calibration artifacts
+### D5F-B4A — retire obsolete clean calibration artifacts — COMPLETE
 
-Audit and delete if redundant:
+Deleted:
 
 - `Sde2D5FRepresentativeHealthyInformationCorpus.kt`;
-- `Sde2D5FRepresentativeHealthyInformationCorpusTest.kt`;
-- related report/task wiring and source-controlled artifacts.
+- `Sde2D5FRepresentativeHealthyInformationCorpusTest.kt`.
 
-Do not delete canonical production legality/topology infrastructure.
+No unique durable coverage was found. Their pair/numeric/registration/deal contracts are already covered by owning typed tests. The report was emitted only by the deleted test; no independent task/resource wiring existed.
 
-### D5F-B4B — discover and verify GOLD sources
+Canonical production legality/topology infrastructure remains intact.
 
-Search high-quality Trouble Brewing real games, prioritizing official/TPI-affiliated material, clearly experienced Storytellers, complete recordings/Grimoire state, and explicit rationale.
+### D5F-B4B — discover and verify GOLD sources — IN PROGRESS
 
-Record why each source qualifies or does not qualify as GOLD.
+The source catalog now tracks five GOLD candidates:
 
-### D5F-B4C — reconstruct expert Night 1 decisions
+- Ben Burns — `A Stud In Scarlet`;
+- Ben Burns — `Human Remains Of The Day`;
+- Ben Burns — `Live and Imp-Person`;
+- Ben Burns — official `Trouble Brewing - A Fond Farewell`;
+- Evin — early TPI Trouble Brewing playthrough.
 
-Capture setup/seats, Drunk shown identity, Demon bluffs, Red Herring, relevant Spy/Recluse registrations, Poisoner context, first-night outputs, lifecycle stage, rationale, and player experience when known.
+Ben's experienced/trusted status is independently supported by TPI. The first three have detailed Night-1 reconstructions but require primary-video timestamp verification before GOLD admission. The latter two are strong primary-source targets but still need fuller state extraction; Evin also needs stronger independent evidence of experience depth.
+
+### D5F-B4C — reconstruct expert Night 1 decisions — NEXT
+
+First verify the material setup/Night-1 state of the three detailed Ben cases against the primary recordings. Then capture setup/seats, Drunk shown identity, Demon bluffs, Red Herring, relevant Spy/Recluse registrations, Poisoner context, first-night outputs, lifecycle stage, rationale, and player experience when known.
+
+Build the reconstruction as an evidence projection onto existing canonical state/legality owners. Do not hand-author a second legality model.
 
 ### D5F-B4D — recover legal counterfactuals
 
-Use existing production legality owners to reconstruct the exact alternatives available at each decision point.
+Use existing production legality owners to reconstruct the exact alternatives available at each decision point. Hold only the committed prefix and already-made player-controlled choices fixed; do not leak later expert choices backward into the counterfactual domain.
 
 ### D5F-B4E — compare observed choices to alternatives
 
