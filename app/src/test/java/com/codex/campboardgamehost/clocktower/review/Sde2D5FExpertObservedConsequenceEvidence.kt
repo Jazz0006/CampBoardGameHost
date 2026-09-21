@@ -100,9 +100,10 @@ internal data class Sde2D5FExpertObservedStageConsequence(
  * consequence is evaluated existentially because players observe the clue, not the Storyteller's
  * hidden interaction-local registration ruling.
  *
- * Topology-first evaluation covers every selected good recipient. Exhaustive exact enumeration is a
- * bounded reference oracle only: callers select a small recipient sample for strategic-key parity,
- * preserving the D4 scale boundary instead of reintroducing all-recipient mechanical enumeration.
+ * Topology-first evaluation covers every selected good recipient. Exhaustive exact enumeration is an
+ * optional bounded reference oracle only: callers select a small recipient sample at representative
+ * stages for strategic-key parity. D4 differential tests own broad evaluator parity, so real evidence
+ * cases do not repeatedly re-prove it at every lifecycle stage.
  */
 internal object Sde2D5FExpertObservedConsequenceProjector {
     private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
@@ -208,11 +209,10 @@ internal object Sde2D5FExpertObservedConsequenceProjector {
         stageId: String,
         committedPrefix: List<EpistemicObservation>,
         candidates: Map<String, EpistemicObservation>,
-        exactParityRecipientSeats: Set<Int> = setOf(context.evaluationRecipientSeats.first()),
+        exactParityRecipientSeats: Set<Int> = emptySet(),
     ): Sde2D5FExpertObservedStageConsequence {
         require(candidates.isNotEmpty())
         require(candidates.keys.all { it.isNotBlank() })
-        require(exactParityRecipientSeats.isNotEmpty())
         require(exactParityRecipientSeats.all { it in context.evaluationRecipientSeats })
         require(candidates.values.all { it.snapshotId == context.formalSnapshotId })
         require(committedPrefix.all { it.snapshotId == context.formalSnapshotId })
@@ -237,15 +237,19 @@ internal object Sde2D5FExpertObservedConsequenceProjector {
                 }
             }
         }
-        val exact = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
-            validatedRuleset = context.validatedRuleset,
-            context = context.exactContext,
-            queries = exactQueries,
-        )
-        require(exact is ExactHypotheticalObservationBundleEvaluation.Ready) {
-            "Expert-observed exact consequence evaluation deferred at stage $stageId."
+        val exactById = if (exactQueries.isEmpty()) {
+            emptyMap()
+        } else {
+            val exact = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
+                validatedRuleset = context.validatedRuleset,
+                context = context.exactContext,
+                queries = exactQueries,
+            )
+            require(exact is ExactHypotheticalObservationBundleEvaluation.Ready) {
+                "Expert-observed exact consequence evaluation deferred at stage $stageId."
+            }
+            exact.diagnostics.associateBy { it.bundleId }
         }
-        val exactById = exact.diagnostics.associateBy { it.bundleId }
 
         val topologyById = linkedMapOf<String, com.codex.campboardgamehost.clocktower.epistemic.ExactStrategicTopologyBundleDiagnostics>()
         context.evaluationRecipientSeats.forEach { recipientSeat ->
