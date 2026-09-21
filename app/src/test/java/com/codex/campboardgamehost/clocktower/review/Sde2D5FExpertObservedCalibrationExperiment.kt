@@ -19,6 +19,9 @@ class Sde2D5FExpertObservedCalibrationExperiment {
     private val liveAndImpPerson by lazy {
         Sde2D5FLiveAndImpPersonConsequenceCalibrationBuilder.build()
     }
+    private val humanRemains by lazy {
+        Sde2D5FHumanRemainsConsequenceCalibrationBuilder.build()
+    }
 
     @Test
     fun `A Stud uses committed prefix topology with bounded exact parity and no GOLD promotion`() {
@@ -109,5 +112,53 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         requireNotNull(reportFile.parentFile).mkdirs()
         reportFile.writeText(report, Charsets.UTF_8)
     }
+    @Test
+    fun `Human Remains keeps complete poisoned pair domain and summarizes rather than truncates it`() {
+        val calibration = humanRemains
+
+        assertEquals(
+            Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFICATION_PENDING,
+            calibration.verificationStatus,
+        )
+        assertEquals(listOf(0, 1), calibration.stages.map { it.prefixObservationCount })
+        assertTrue(calibration.washerwoman.alternatives.size > 100)
+        assertTrue(
+            calibration.washerwoman.alternatives.any {
+                it.candidateId == calibration.washerwomanObservedCandidateId
+            },
+        )
+        assertEquals("answer-no", calibration.fortuneTellerObservedCandidateId)
+        assertEquals(1, calibration.fortuneTeller.alternatives.size)
+
+        calibration.stages.forEach { stage ->
+            assertTrue(
+                stage.alternatives.flatMap { it.byRecipient }
+                    .all { recipient -> recipient.strategicParity == null },
+            )
+            stage.alternatives.forEach { alternative ->
+                alternative.byRecipient.forEach { recipient ->
+                    assertTrue(
+                        recipient.candidateTopologyStructure.distinctStrategicWorldCount <=
+                            recipient.prefixTopologyStructure.distinctStrategicWorldCount,
+                    )
+                }
+            }
+        }
+
+        val report = Sde2D5FHumanRemainsConsequenceCalibrationBuilder.renderMarkdown(calibration)
+        assertTrue(report.contains("Human Remains Of The Day"))
+        assertTrue(report.contains("PRIMARY_VERIFICATION_PENDING"))
+        assertTrue(report.contains("Legal candidates:"))
+        assertTrue(report.contains("Distinct strategic-after signatures:"))
+        assertTrue(report.contains("full legal alternatives"))
+        assertTrue(report.contains("Observed candidate: `answer-no`"))
+        assertFalse(report.contains("BAD_TOO_STRONG"))
+        assertFalse(report.contains("BAD_TOO_WEAK"))
+
+        val reportFile = File("build/reports/sde-2d5f-expert-observed-human-remains.md")
+        requireNotNull(reportFile.parentFile).mkdirs()
+        reportFile.writeText(report, Charsets.UTF_8)
+    }
+
 
 }
