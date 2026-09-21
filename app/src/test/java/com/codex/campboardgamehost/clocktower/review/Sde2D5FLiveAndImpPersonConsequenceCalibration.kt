@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.review
 
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -33,22 +32,13 @@ internal object Sde2D5FLiveAndImpPersonConsequenceCalibrationBuilder {
 
         val librarianClaims = reconstructed.librarian.alternatives
             .mapIndexed { index, alternative ->
-                val value = alternative.shownRole?.let { shownRole ->
-                    InformationValue.PlayerPair(
-                        shownRole = shownRole,
-                        seats = alternative.candidateSeats,
-                    )
-                } ?: InformationValue.NoCharacters(CharacterType.OUTSIDER)
                 alternative.candidateId to
-                    Sde2D5FExpertObservedConsequenceProjector.projectInformationClaim(
+                    Sde2D5FExpertObservedConsequenceProjector.projectPairClaim(
                         context = context,
                         entryId = "librarian-${index + 1}",
                         sequence = 1,
-                        information = EffectDraft.PlayerInformation(
-                            recipientSeat = reconstructed.librarian.sourceSeat,
-                            sourceAbility = reconstructed.librarian.abilityRole,
-                            value = value,
-                        ),
+                        decision = reconstructed.librarian,
+                        alternative = alternative,
                     )
             }
             .toMap()
