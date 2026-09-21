@@ -122,7 +122,7 @@ Do not manufacture GOLD by treating the detailed secondary episode index as fina
 
 ### Step 3 — primary verification + executable case reconstruction — IN PROGRESS
 
-Executable canonical reconstructions now exist for the first three Ben candidates. `A Stud In Scarlet` and `Live and Imp-Person` also have committed-prefix consequence reports through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow. `Human Remains Of The Day` has legality/witness reconstruction and is the next consequence-calibration case.
+Executable canonical reconstructions now exist for the first three Ben candidates. All three detailed Ben candidates now have executable committed-prefix consequence reports through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow. The workflow publishes A Stud, Live and Imp-Person, and Human Remains reports together as one artifact.
 
 All three remain `PRIMARY_VERIFICATION_PENDING`. Continue verifying the material setup commitments and Night-1 decisions against the primary recordings; do not promote them to GOLD from the secondary reconstruction alone.
 
@@ -192,8 +192,9 @@ Completed in this checkpoint:
 4. generic pair/numeric/boolean evidence projectors reuse production legality and witness owners;
 5. shared canonical-world / claim / consequence projection avoids fixture-specific rules;
 6. `A Stud In Scarlet` committed-prefix topology report is green and artifacted;
-7. `Live and Imp-Person` committed-prefix consequence test is green; workflow publication is being wired for both reports;
-8. dedicated `:app:sde2D5FExpertObservedCalibration` separates current B4 feedback from the historical multi-hour D5 calibration workload.
+7. `Live and Imp-Person` committed-prefix consequence report is green and artifacted;
+8. `Human Remains Of The Day` committed-prefix consequence report is green and artifacted, preserving all 273 legal poisoned-Washerwoman candidates while summarizing them by strategic signature;
+9. dedicated `:app:sde2D5FExpertObservedCalibration` separates current B4 feedback from the historical multi-hour D5 calibration workload.
 
 Measured boundary: a 9-player exhaustive real-case possible-world sample remained multi-minute even when reduced to one stage. Real expert-case consequence therefore stays topology-first. D4 bounded differential tests own broad topology/exhaustive correctness; exact real-case evaluation remains an exceptional deep-audit hook.
 
@@ -201,12 +202,13 @@ Substantive result so far:
 
 - A Stud's currently reconstructed Chef, Drunk-Empath, and Fortune Teller alternatives all leave the evil-seat strategic quotient at 56 -> 56. This is a valid neutral result, not a failed harness; the case's current value lies primarily in registration and impaired-information evidence.
 - Live is the stronger interaction-scoped registration case: the same Recluse is naturally unregistered for observed Chef=1 while the observed Fortune Teller YES uses a Recluse-as-Demon witness.
+- Human Remains exposes the limit of topology-only policy evidence: all 273 legal poisoned-Washerwoman candidates collapse to one strategic-after signature at 42 -> 42. The later fixed-target Fortune Teller result is forced and also remains 42 -> 42. This case therefore needs non-topology dimensions such as narrative anchoring, truth danger, role-function exposure and confirmation structure.
 
 Next success condition:
 
-1. publish/inspect both A Stud and Live reports from the dedicated workflow;
-2. add `Human Remains Of The Day` committed-prefix consequence through the same shared harness, without case-specific policy code;
-3. continue primary-video verification for the detailed Ben candidates;
+1. continue primary-video verification for the three detailed Ben candidates; prioritize obtaining material Night-1 timestamps/source confirmation rather than adding more secondary-only Ben cases;
+2. inspect whether `A Fond Farewell` or the Evin playthrough can provide an independently primary-verifiable case with enough decision state to enter the executable harness;
+3. begin extracting repeated policy dimensions only where the three current reports plus source rationale actually support them; do not derive D5F-C numeric gates yet;
 4. keep 0 admitted GOLD until the material Night-1 primary-source gate is actually satisfied;
 5. do not promote a policy rule merely because an alternative was unchosen.
 
