@@ -43,17 +43,24 @@ jobs:
       - name: Run SDE-2D5F expert-observed calibration
         run: ./gradlew :app:sde2D5FExpertObservedCalibration --no-daemon --rerun-tasks
 
-      - name: Print expert-observed report
+      - name: Print expert-observed reports
         shell: bash
         run: |
           set -euo pipefail
-          report="app/build/reports/sde-2d5f-expert-observed-a-stud.md"
-          test -f "$report"
-          cat "$report"
+          reports=(
+            "app/build/reports/sde-2d5f-expert-observed-a-stud.md"
+            "app/build/reports/sde-2d5f-expert-observed-live-and-imp-person.md"
+          )
+          for report in "${reports[@]}"; do
+            test -f "$report"
+            cat "$report"
+          done
 
-      - name: Upload expert-observed report
+      - name: Upload expert-observed reports
         uses: actions/upload-artifact@v4
         with:
-          name: sde-2d5f-expert-observed-a-stud
-          path: app/build/reports/sde-2d5f-expert-observed-a-stud.md
+          name: sde-2d5f-expert-observed-reports
+          path: |
+            app/build/reports/sde-2d5f-expert-observed-a-stud.md
+            app/build/reports/sde-2d5f-expert-observed-live-and-imp-person.md
           if-no-files-found: error
