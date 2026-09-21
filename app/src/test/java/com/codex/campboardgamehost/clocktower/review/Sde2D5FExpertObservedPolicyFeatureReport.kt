@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 
 internal data class Sde2D5FExpertObservedPolicyFeatureReport(
     val aStudChef: List<Sde2D5FNumericCandidatePolicyFeatures>,
+    val aStudDrunkEmpath: List<Sde2D5FNumericCandidatePolicyFeatures>,
     val aStudFortuneTeller: List<Sde2D5FBooleanCandidatePolicyFeatures>,
     val liveLibrarian: List<Sde2D5FPairCandidatePolicyFeatures>,
     val liveChef: List<Sde2D5FNumericCandidatePolicyFeatures>,
@@ -19,6 +20,8 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
 
         return Sde2D5FExpertObservedPolicyFeatureReport(
             aStudChef = Sde2D5FExpertObservedPolicyFeatureProjector.projectNumeric(aStud.chef),
+            aStudDrunkEmpath =
+                Sde2D5FExpertObservedPolicyFeatureProjector.projectNumeric(aStud.drunkEmpath),
             aStudFortuneTeller =
                 Sde2D5FExpertObservedPolicyFeatureProjector.projectBoolean(aStud.fortuneTeller),
             liveLibrarian = Sde2D5FExpertObservedPolicyFeatureProjector.projectPair(
@@ -59,6 +62,11 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
             title = "Chef",
             observedCandidateId = "value-1",
             candidates = report.aStudChef,
+        )
+        numericSection(
+            title = "Drunk shown Empath",
+            observedCandidateId = "value-0",
+            candidates = report.aStudDrunkEmpath,
         )
         booleanSection(
             title = "Fortune Teller",

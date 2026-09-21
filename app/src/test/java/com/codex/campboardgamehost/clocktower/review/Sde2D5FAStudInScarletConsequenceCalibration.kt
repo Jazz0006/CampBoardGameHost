@@ -51,17 +51,17 @@ internal object Sde2D5FAStudInScarletConsequenceCalibrationBuilder {
         )
 
         val chefObservedClaim = chefClaims.getValue(chefObservedId)
-        val drunkClaims = reconstructed.drunkEmpathLegalValues.associate { value ->
-            "value-$value" to numericClaim(
+        val drunkClaims = reconstructed.drunkEmpath.alternatives.associate { alternative ->
+            "value-${alternative.value}" to numericClaim(
                 context = context,
-                entryId = "drunk-empath-$value",
+                entryId = "drunk-empath-${alternative.value}",
                 sequence = 2,
-                sourceSeat = 9,
-                abilityRole = RoleId("Empath"),
-                value = value,
+                sourceSeat = reconstructed.drunkEmpath.sourceSeat,
+                abilityRole = reconstructed.drunkEmpath.abilityRole,
+                value = alternative.value,
             )
         }
-        val drunkObservedId = "value-${reconstructed.drunkEmpathObservedValue}"
+        val drunkObservedId = "value-${reconstructed.drunkEmpath.observedValue}"
         val drunkStage = Sde2D5FExpertObservedConsequenceProjector.evaluateCommittedPrefix(
             context = context,
             stageId = "${reconstructed.caseId}-drunk-empath",

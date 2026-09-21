@@ -9,7 +9,6 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
-import com.codex.campboardgamehost.clocktower.recommendation.FirstNightNumericLegalDomain
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
 import com.codex.campboardgamehost.clocktower.rules.FortuneTellerInformationSemantics
 import org.junit.Assert.assertEquals
@@ -27,8 +26,7 @@ internal data class Sde2D5FAStudInScarletCandidateEvidence(
     val redHerringSeat: Int,
     val redHerringLegal: Boolean,
     val chef: Sde2D5FExpertObservedNumericDecisionEvidence,
-    val drunkEmpathObservedValue: Int,
-    val drunkEmpathLegalValues: List<Int>,
+    val drunkEmpath: Sde2D5FExpertObservedNumericDecisionEvidence,
     val fortuneTellerTargets: Pair<Int, Int>,
     val fortuneTellerTargetsLegal: Boolean,
     val fortuneTeller: Sde2D5FExpertObservedBooleanDecisionEvidence,
@@ -71,12 +69,15 @@ internal object Sde2D5FAStudInScarletCandidateBuilder {
             roleDefinitions = roles,
             observationIdPrefix = "d5f-goldcand-ben-01-chef",
         )
-        val drunkEmpathDomain = FirstNightNumericLegalDomain.generate(
+        val drunkEmpathEvidence = Sde2D5FExpertObservedNumericEvidenceProjector.project(
             game = game,
             sourceSeat = 9,
             abilityRole = RoleId("Empath"),
             reliability = ReliabilityState.DRUNK,
-        ).sortedBy { it.value }
+            observedValue = 0,
+            roleDefinitions = roles,
+            observationIdPrefix = "d5f-goldcand-ben-01-drunk-empath",
+        )
         val fortuneTellerTargets = 4 to 5
         val fortuneTellerEvidence = Sde2D5FExpertObservedBooleanEvidenceProjector.project(
             game = game,
@@ -100,8 +101,7 @@ internal object Sde2D5FAStudInScarletCandidateBuilder {
             redHerringSeat = redHerringSeat,
             redHerringLegal = redHerringSeat in legalRedHerrings,
             chef = chefEvidence,
-            drunkEmpathObservedValue = 0,
-            drunkEmpathLegalValues = drunkEmpathDomain.map { it.value },
+            drunkEmpath = drunkEmpathEvidence,
             fortuneTellerTargets = fortuneTellerTargets,
             fortuneTellerTargetsLegal =
                 fortuneTellerTargets in FortuneTellerInformationSemantics.legalTargetPairs(game, 3),
@@ -162,8 +162,8 @@ class Sde2D5FExpertObservedFirstNightEvidenceTest {
         assertEquals(setOf(RoleId("Saint"), RoleId("Slayer"), RoleId("Soldier")), evidence.observedDemonBluffs)
         assertEquals(9, evidence.redHerringSeat)
 
-        assertTrue(evidence.drunkEmpathObservedValue in evidence.drunkEmpathLegalValues)
-        assertEquals(listOf(0, 1, 2), evidence.drunkEmpathLegalValues)
+        assertEquals(0, evidence.drunkEmpath.observedValue)
+        assertEquals(listOf(0, 1, 2), evidence.drunkEmpath.alternatives.map { it.value })
         assertTrue(evidence.fortuneTellerTargetsLegal)
         assertEquals(4 to 5, evidence.fortuneTellerTargets)
     }

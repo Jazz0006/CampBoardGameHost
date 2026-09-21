@@ -178,6 +178,10 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertEquals(setOf(5), aStudChef.getValue("value-1").registration.specialSubjectSeats)
         assertTrue(aStudChef.getValue("value-0").registration.hasNaturalWitness)
 
+        val aStudDrunkEmpath = features.aStudDrunkEmpath.associateBy { it.candidateId }
+        assertEquals(setOf("value-0", "value-1", "value-2"), aStudDrunkEmpath.keys)
+        assertTrue(aStudDrunkEmpath.values.all { it.registration.witnessCount > 0 })
+
         val aStudFt = features.aStudFortuneTeller.associateBy { it.candidateId }
         assertTrue(aStudFt.getValue("answer-yes").registration.requiresSpecialRegistration)
         assertTrue(aStudFt.getValue("answer-no").registration.hasNaturalWitness)
@@ -223,6 +227,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         val report = Sde2D5FExpertObservedPolicyFeatureReportBuilder.render(features)
         assertTrue(report.contains("descriptive candidate facts only"))
         assertTrue(report.contains("Distinct descriptive feature signatures:"))
+        assertTrue(report.contains("Drunk shown Empath"))
         assertTrue(report.contains("shown role is Demon bluff"))
         assertFalse(report.contains("BAD_TOO_STRONG"))
         assertFalse(report.contains("BAD_TOO_WEAK"))
