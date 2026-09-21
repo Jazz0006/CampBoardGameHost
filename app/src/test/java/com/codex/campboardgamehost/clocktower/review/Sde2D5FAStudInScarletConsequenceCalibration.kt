@@ -49,6 +49,7 @@ internal object Sde2D5FAStudInScarletConsequenceCalibrationBuilder {
             stageId = "${reconstructed.caseId}-chef",
             committedPrefix = emptyList(),
             candidates = chefClaims,
+            exactParityRecipientSeats = setOf(context.evaluationRecipientSeats.first()),
         )
 
         val chefObservedClaim = chefClaims.getValue(chefObservedId)
