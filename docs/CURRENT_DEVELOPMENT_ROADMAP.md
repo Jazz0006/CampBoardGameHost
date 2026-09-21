@@ -151,13 +151,13 @@ Ben's experienced/trusted status is independently supported by TPI. The first th
 
 ### D5F-B4C — reconstruct expert Night 1 decisions — IN PROGRESS
 
-Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human Remains Of The Day`, and `Live and Imp-Person`. The first and third also have committed-prefix consequence calibration through a dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow. They remain `PRIMARY_VERIFICATION_PENDING`; executable reconstruction does not satisfy the GOLD primary-source gate.
+Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human Remains Of The Day`, and `Live and Imp-Person`. All three now have committed-prefix consequence calibration through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow and are published together as one report artifact. They remain `PRIMARY_VERIFICATION_PENDING`; executable reconstruction does not satisfy the GOLD primary-source gate.
 
 Continue primary-video verification of the material setup/Night-1 state. Capture setup/seats, Drunk shown identity, Demon bluffs, Red Herring, relevant Spy/Recluse registrations, Poisoner context, first-night outputs, lifecycle stage, rationale, and player experience when known.
 
 The reconstruction remains an evidence projection onto existing canonical state/legality owners. Do not hand-author a second legality model.
 
-Real-case consequence evaluation is topology-first. A 9-player exhaustive exact possible-world probe remained multi-minute even after reducing it to one sampled stage, while the dedicated topology-first A Stud workflow completed in about two minutes end-to-end. Broad topology/exhaustive correctness remains owned by the bounded D4 differential tests; the evidence bridge keeps exact evaluation only as an optional deep-audit hook.
+Real-case consequence evaluation is topology-first. A 9-player exhaustive exact possible-world probe remained multi-minute even after reducing it to one sampled stage, while the dedicated topology-first workflow covering A Stud, Live and Human Remains completes in about 3.5 minutes end-to-end. Broad topology/exhaustive correctness remains owned by the bounded D4 differential tests; the evidence bridge keeps exact evaluation only as an optional deep-audit hook.
 
 ### D5F-B4D — recover legal counterfactuals — IN PROGRESS
 
@@ -166,13 +166,14 @@ Use existing production legality owners to reconstruct the exact alternatives av
 Current executable evidence:
 - `A Stud In Scarlet`: Chef, Drunk-shown-Empath, and fixed-target Fortune Teller legal alternatives recovered;
 - `Live and Imp-Person`: full Librarian pair domain, Chef values, and fixed-target Fortune Teller alternatives recovered;
+- `Human Remains Of The Day`: complete 273-candidate poisoned-Washerwoman pair domain plus the forced fixed-target Fortune Teller result recovered;
 - registration witnesses remain interaction-scoped evidence metadata rather than player-visible facts.
 
 ### D5F-B4E — compare observed choices to alternatives — IN PROGRESS
 
 Run existing whole-bundle/topology diagnostics over observed expert choices and their legal counterfactuals. Extract repeated interpretable preferences, not a black-box score.
 
-The first A Stud report is deliberately non-confirmatory: all currently reconstructed candidate values preserve the same evil-seat strategic topology count (56 -> 56). Treat this as evidence that registration choice / impaired narrative / role-function dimensions can matter even when the strategic quotient is neutral; do not invent a scalar difference merely to rank the expert choice.
+The current reports are deliberately allowed to be non-confirmatory on the strategic quotient: A Stud stays 56 -> 56 across modeled alternatives; Live stays 252 -> 252 while still demonstrating interaction-scoped Recluse registration; Human Remains has 273 legal poisoned-Washerwoman candidates but only one 42 -> 42 strategic-after signature. Treat this as evidence that registration choice, impaired narrative, role-function exposure, confirmation structure and truth danger can matter even when the quotient is neutral; do not invent a scalar difference merely to rank the expert choice.
 
 ### D5F-B4F — generalize with SILVER evidence
 
