@@ -116,6 +116,8 @@ DIAGNOSTIC_ONLY
 
 Current external catalog now contains SILVER / QUALITATIVE seed evidence plus five explicitly tracked GOLD candidates. No case has yet been admitted as verified GOLD: the three fully reconstructable Ben Burns candidates still require primary-video Night-1 verification, while the official Ben/Evin recordings still require state extraction. Multiple Ben Burns games share one Storyteller independence key and must not be counted as independent experts.
 
+Primary-source metadata audit on 2026-09-21 tightened two discovery facts without changing evidence tier: official `A Fond Farewell` YouTube chapters mark Night 1 at `00:04:25` and Day 1 at `00:09:13`; the official 2019 Evin video identifies itself as a full **8-player** play-through, and TPI's Kickstarter FAQ links that same recording as its first released full play-through. Public retrieval still did not expose auditable Night-1 transcript/frame state, so both remain state-extraction candidates rather than admitted GOLD.
+
 Interpretation rules:
 
 - chosen A does not imply every unchosen B/C/D was bad;
@@ -152,6 +154,8 @@ Ben's experienced/trusted status is independently supported by TPI. The first th
 ### D5F-B4C — reconstruct expert Night 1 decisions — IN PROGRESS
 
 Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human Remains Of The Day`, and `Live and Imp-Person`. All three now have committed-prefix consequence calibration through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow and are published together as one report artifact. They remain `PRIMARY_VERIFICATION_PENDING`; executable reconstruction does not satisfy the GOLD primary-source gate.
+
+Latest executable checkpoint: branch HEAD `cb41ad0391bcfb0802f842252f6c2df77a500615` completed dedicated **SDE-2D5F expert-observed calibration run #28** successfully. CI, R2, and FN-BUNDLE-3 also completed successfully at that executable head. Later documentation-only evidence-status commits do not supersede that executable validation result.
 
 Continue primary-video verification of the material setup/Night-1 state. Capture setup/seats, Drunk shown identity, Demon bluffs, Red Herring, relevant Spy/Recluse registrations, Poisoner context, first-night outputs, lifecycle stage, rationale, and player experience when known.
 
