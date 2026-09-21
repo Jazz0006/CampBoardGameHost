@@ -9,7 +9,6 @@ import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.epistemic.EnumeratedWorld
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
@@ -76,9 +75,7 @@ internal object Sde2D5FExpertObservedNumericEvidenceProjector {
             "Observed value $observedValue is absent from the production numeric legal domain."
         }
 
-        val world = EnumeratedWorld(
-            rolesBySeat = game.players.associate { player -> player.seat to player.actualRole },
-        )
+        val world = Sde2D5FExpertObservedWorldProjection.from(game)
         val rolesById = roleDefinitions.associateBy(RoleDefinition::id)
 
         val alternatives = legalCandidates.mapIndexed { index, candidate ->
