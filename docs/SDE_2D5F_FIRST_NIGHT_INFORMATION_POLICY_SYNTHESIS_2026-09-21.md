@@ -242,6 +242,8 @@ Do not collapse these into one opaque weighted score.
 
 The strategic topology quotient remains more meaningful than raw exact-role-world cardinality. Mechanical-world count remains descriptive evidence, not the primary policy objective.
 
+B4 expert-observed evidence now adds an important qualification: under `MECHANICALLY_CREDIBLE` uncertainty, Drunk/Poisoner explanations can preserve every evil-seat topology across many legal first-night outputs. A topology-neutral result therefore means only that the evil-seat quotient does not distinguish those candidates. It must not be interpreted as policy equivalence. Registration semantics, role-function exposure, confirmation chains, bluff interaction, semantic truth, narrative consistency and future flexibility remain separate first-class dimensions.
+
 ## 9. Demon bluffs
 
 Demon bluffs are a joint output, not three independent role scores.
@@ -665,6 +667,9 @@ Therefore:
 The first `A Stud In Scarlet` report is also intentionally neutral on the current strategic quotient: every reconstructed Chef, Drunk-Empath and fixed-target Fortune Teller alternative preserves 56 evil-seat strategic topologies for every evaluated good recipient. This does not invalidate the case or the evaluator. It demonstrates that registration choice, impaired-information narrative, role-function exposure and other policy dimensions can carry expert-choice information even when the strategic quotient is unchanged.
 
 `Live and Imp-Person` provides a different kind of evidence. In the reconstructed Night 1, the observed Chef=1 uses the natural registration witness while the later observed Fortune Teller YES uses Recluse-as-Demon. The same Recluse is therefore not modeled by a persistent/global registration state; registration remains interaction-scoped. Its current Librarian, Chef and Fortune Teller counterfactuals are also topology-neutral at 252 -> 252 for every evaluated good recipient. That strengthens the interpretation that this case is about registration semantics, role-function exposure and confirmation structure rather than strategic-topology compression.
+
+
+`Human Remains Of The Day` adds a much larger impaired pair-information domain. The poisoned Washerwoman has 273 production-legal candidates in the reconstructed 8-player state. All 273 collapse to one strategic-after signature, and the observed Empath 2/5 clue leaves every evaluated good recipient at 42 -> 42 strategic topologies. The later fixed-target Fortune Teller NO is forced and also leaves 42 -> 42. This is direct evidence that strategic topology alone is too coarse to distinguish many real Storyteller misinformation choices under the mechanically-credible hypothesis; the choice still differs materially in narrative anchoring, Demon-bluff interaction, role-function exposure, semantic truth, and future consistency.
 
 `Human Remains Of The Day` demonstrates a separate limitation of the strategic quotient. The poisoned Washerwoman has 273 production-legal pair-information candidates in the reconstructed Night 1, yet all 273 collapse to one strategic-after signature and preserve 42 evil-seat strategic topologies for every evaluated good recipient. The later Fortune Teller result is forced for the fixed targets/Red Herring and also remains 42 -> 42. This is not grounds to discard the case: it shows that impaired-information policy cannot be learned from topology compression alone. Narrative anchoring, accidental-truth danger, role-function exposure, confirmation chains, and persistent perceived-world coherence must remain explicit independent dimensions.
 
