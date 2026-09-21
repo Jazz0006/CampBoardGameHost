@@ -7,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
+import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightNumericLegalDomain
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
@@ -30,6 +31,7 @@ internal data class Sde2D5FAStudInScarletCandidateEvidence(
     val drunkEmpathLegalValues: List<Int>,
     val fortuneTellerTargets: Pair<Int, Int>,
     val fortuneTellerTargetsLegal: Boolean,
+    val fortuneTeller: Sde2D5FExpertObservedBooleanDecisionEvidence,
 )
 
 /**
@@ -76,6 +78,17 @@ internal object Sde2D5FAStudInScarletCandidateBuilder {
             reliability = ReliabilityState.DRUNK,
         ).sortedBy { it.value }
         val fortuneTellerTargets = 4 to 5
+        val fortuneTellerEvidence = Sde2D5FExpertObservedBooleanEvidenceProjector.project(
+            game = game,
+            sourceSeat = 3,
+            abilityRole = RoleId("Fortune Teller"),
+            metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+            subjectSeats = listOf(fortuneTellerTargets.first, fortuneTellerTargets.second),
+            observedValue = true,
+            redHerringSeat = redHerringSeat,
+            roleDefinitions = roles,
+            observationIdPrefix = "d5f-goldcand-ben-01-fortune-teller",
+        )
 
         return Sde2D5FAStudInScarletCandidateEvidence(
             caseId = "goldcand-ben-01",
@@ -92,6 +105,7 @@ internal object Sde2D5FAStudInScarletCandidateBuilder {
             fortuneTellerTargets = fortuneTellerTargets,
             fortuneTellerTargetsLegal =
                 fortuneTellerTargets in FortuneTellerInformationSemantics.legalTargetPairs(game, 3),
+            fortuneTeller = fortuneTellerEvidence,
         )
     }
 
@@ -152,6 +166,28 @@ class Sde2D5FExpertObservedFirstNightEvidenceTest {
         assertEquals(listOf(0, 1, 2), evidence.drunkEmpathLegalValues)
         assertTrue(evidence.fortuneTellerTargetsLegal)
         assertEquals(4 to 5, evidence.fortuneTellerTargets)
+    }
+
+    @Test
+    fun `A Stud Fortune Teller observed yes and unchosen no remain legal registration alternatives`() {
+        val alternatives = evidence.fortuneTeller.alternatives.associateBy { it.value }
+
+        assertEquals(setOf(false, true), alternatives.keys)
+        assertTrue(evidence.fortuneTeller.observedValue)
+        assertTrue(evidence.fortuneTeller.observedAlternative.value)
+
+        val no = alternatives.getValue(false)
+        assertTrue(emptySet() in no.registrationWitnesses)
+
+        val yes = alternatives.getValue(true)
+        assertFalse(emptySet() in yes.registrationWitnesses)
+        assertTrue(
+            yes.registrationWitnesses.any { witness ->
+                witness.size == 1 &&
+                    witness.single().subjectSeat == 5 &&
+                    witness.single().reason == RegistrationReason.RECLUSE_ABILITY
+            },
+        )
     }
 
     @Test
