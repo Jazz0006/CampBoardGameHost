@@ -65,6 +65,8 @@ afterEvaluate {
         "com.codex.campboardgamehost.clocktower.epistemic.Sde2D4ScaleBenchmarkTest"
     val sde2D5CalibrationExperiment =
         "com.codex.campboardgamehost.clocktower.review.Sde2D5CalibrationExperiment"
+    val sde2D5FExpertObservedCalibrationExperiment =
+        "com.codex.campboardgamehost.clocktower.review.Sde2D5FExpertObservedCalibrationExperiment"
 
     // Corpus generation and raw-enumerator scale measurement are explicit T3 evidence harnesses,
     // not regression tests. Keep them out of the default Android unit-test task so FULL remains
@@ -74,6 +76,8 @@ afterEvaluate {
             excludeTestsMatching(fnBundle3CalibrationExperiment)
             excludeTestsMatching(sde2D4ScaleBenchmark)
             excludeTestsMatching(sde2D5CalibrationExperiment)
+            excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
+            excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
         }
     }
 
@@ -131,6 +135,20 @@ afterEvaluate {
 
         filter {
             includeTestsMatching(sde2D5CalibrationExperiment)
+        }
+
+        outputs.upToDateWhen { false }
+    }
+
+    tasks.register<Test>("sde2D5FExpertObservedCalibration") {
+        group = "verification"
+        description = "Runs the explicit SDE-2D5F-B4 expert-observed evidence workload."
+        val sourceTask = debugUnitTest.get()
+        testClassesDirs = sourceTask.testClassesDirs
+        classpath = sourceTask.classpath
+
+        filter {
+            includeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
         }
 
         outputs.upToDateWhen { false }
