@@ -155,6 +155,57 @@ class Sde2D5FExpertObservedFirstNightEvidenceTest {
     }
 
     @Test
+    fun `numeric evidence projector preserves registration witnesses for the same Empath decision shape`() {
+        val roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions()
+        val definitions = roleDefinitions.associateBy(RoleDefinition::id)
+        fun player(seat: Int, roleName: String): PlayerState {
+            val role = definitions.getValue(RoleId(roleName))
+            return PlayerState(
+                seat = seat,
+                name = "P$seat",
+                actualRole = role.id,
+                actualAlignment = role.alignment,
+                actualType = role.type,
+                shownRole = role.id,
+            )
+        }
+        val game = GameState(
+            script = TroubleBrewingFixtures.scriptId,
+            seed = 20260921L,
+            players = listOf(
+                player(1, "Recluse"),
+                player(2, "Empath"),
+                player(3, "Chef"),
+                player(4, "Monk"),
+                player(5, "Butler"),
+                player(6, "Baron"),
+                player(7, "Imp"),
+            ),
+        )
+
+        val projected = Sde2D5FExpertObservedNumericEvidenceProjector.project(
+            game = game,
+            sourceSeat = 2,
+            abilityRole = RoleId("Empath"),
+            reliability = ReliabilityState.RELIABLE,
+            observedValue = 1,
+            roleDefinitions = roleDefinitions,
+            observationIdPrefix = "d5f-numeric-shape-empath",
+        )
+        val alternatives = projected.alternatives.associateBy { it.value }
+
+        assertEquals(setOf(0, 1), alternatives.keys)
+        assertTrue(emptySet() in alternatives.getValue(0).registrationWitnesses)
+        assertTrue(
+            alternatives.getValue(1).registrationWitnesses.any { witness ->
+                witness.size == 1 &&
+                    witness.single().subjectSeat == 1 &&
+                    witness.single().reason == RegistrationReason.RECLUSE_ABILITY
+            },
+        )
+    }
+
+    @Test
     fun `A Stud Chef observed one and unchosen zero remain separate legal value plus witness alternatives`() {
         val alternatives = evidence.chef.alternatives.associateBy { it.value }
 
