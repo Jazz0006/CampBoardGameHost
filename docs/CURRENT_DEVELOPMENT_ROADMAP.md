@@ -25,7 +25,9 @@ SDE-2D5 calibration / policy evidence                 CURRENT / PR #150 draft
     D5F-B4 expert-observed policy calibration         CURRENT
         B4A clean-corpus retirement                    COMPLETE
         B4B GOLD source discovery                     IN PROGRESS
-        B4C expert Night-1 reconstruction              NEXT
+        B4C expert Night-1 reconstruction              IN PROGRESS
+        B4D legal counterfactual recovery              IN PROGRESS
+        B4E observed-vs-alternative analysis           IN PROGRESS
 D5F-C gate/band derivation                            BLOCKED
 sealed holdout                                        CLOSED
 SDE-3                                                 BLOCKED
@@ -147,19 +149,30 @@ The source catalog now tracks five GOLD candidates:
 
 Ben's experienced/trusted status is independently supported by TPI. The first three have detailed Night-1 reconstructions but require primary-video timestamp verification before GOLD admission. The latter two are strong primary-source targets but still need fuller state extraction. Evin's expert/trusted status is now independently supported by his TPI co-founder role, integral early involvement, and founding of the Newcastle Clocktower group.
 
-### D5F-B4C — reconstruct expert Night 1 decisions — NEXT
+### D5F-B4C — reconstruct expert Night 1 decisions — IN PROGRESS
 
-First verify the material setup/Night-1 state of the three detailed Ben cases against the primary recordings. Then capture setup/seats, Drunk shown identity, Demon bluffs, Red Herring, relevant Spy/Recluse registrations, Poisoner context, first-night outputs, lifecycle stage, rationale, and player experience when known.
+Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human Remains Of The Day`, and `Live and Imp-Person`. The first and third also have committed-prefix consequence calibration through a dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow. They remain `PRIMARY_VERIFICATION_PENDING`; executable reconstruction does not satisfy the GOLD primary-source gate.
 
-Build the reconstruction as an evidence projection onto existing canonical state/legality owners. Do not hand-author a second legality model.
+Continue primary-video verification of the material setup/Night-1 state. Capture setup/seats, Drunk shown identity, Demon bluffs, Red Herring, relevant Spy/Recluse registrations, Poisoner context, first-night outputs, lifecycle stage, rationale, and player experience when known.
 
-### D5F-B4D — recover legal counterfactuals
+The reconstruction remains an evidence projection onto existing canonical state/legality owners. Do not hand-author a second legality model.
+
+Real-case consequence evaluation is topology-first. A 9-player exhaustive exact possible-world probe remained multi-minute even after reducing it to one sampled stage, while the dedicated topology-first A Stud workflow completed in about two minutes end-to-end. Broad topology/exhaustive correctness remains owned by the bounded D4 differential tests; the evidence bridge keeps exact evaluation only as an optional deep-audit hook.
+
+### D5F-B4D — recover legal counterfactuals — IN PROGRESS
 
 Use existing production legality owners to reconstruct the exact alternatives available at each decision point. Hold only the committed prefix and already-made player-controlled choices fixed; do not leak later expert choices backward into the counterfactual domain.
 
-### D5F-B4E — compare observed choices to alternatives
+Current executable evidence:
+- `A Stud In Scarlet`: Chef, Drunk-shown-Empath, and fixed-target Fortune Teller legal alternatives recovered;
+- `Live and Imp-Person`: full Librarian pair domain, Chef values, and fixed-target Fortune Teller alternatives recovered;
+- registration witnesses remain interaction-scoped evidence metadata rather than player-visible facts.
+
+### D5F-B4E — compare observed choices to alternatives — IN PROGRESS
 
 Run existing whole-bundle/topology diagnostics over observed expert choices and their legal counterfactuals. Extract repeated interpretable preferences, not a black-box score.
+
+The first A Stud report is deliberately non-confirmatory: all currently reconstructed candidate values preserve the same evil-seat strategic topology count (56 -> 56). Treat this as evidence that registration choice / impaired narrative / role-function dimensions can matter even when the strategic quotient is neutral; do not invent a scalar difference merely to rank the expert choice.
 
 ### D5F-B4F — generalize with SILVER evidence
 
