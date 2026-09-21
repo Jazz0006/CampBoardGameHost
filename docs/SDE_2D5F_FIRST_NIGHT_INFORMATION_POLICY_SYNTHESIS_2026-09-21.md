@@ -664,7 +664,7 @@ Therefore:
 
 The first `A Stud In Scarlet` report is also intentionally neutral on the current strategic quotient: every reconstructed Chef, Drunk-Empath and fixed-target Fortune Teller alternative preserves 56 evil-seat strategic topologies for every evaluated good recipient. This does not invalidate the case or the evaluator. It demonstrates that registration choice, impaired-information narrative, role-function exposure and other policy dimensions can carry expert-choice information even when the strategic quotient is unchanged.
 
-`Live and Imp-Person` provides a different kind of evidence. In the reconstructed Night 1, the observed Chef=1 uses the natural registration witness while the later observed Fortune Teller YES uses Recluse-as-Demon. The same Recluse is therefore not modeled by a persistent/global registration state; registration remains interaction-scoped.
+`Live and Imp-Person` provides a different kind of evidence. In the reconstructed Night 1, the observed Chef=1 uses the natural registration witness while the later observed Fortune Teller YES uses Recluse-as-Demon. The same Recluse is therefore not modeled by a persistent/global registration state; registration remains interaction-scoped. Its current Librarian, Chef and Fortune Teller counterfactuals are also topology-neutral at 252 -> 252 for every evaluated good recipient. That strengthens the interpretation that this case is about registration semantics, role-function exposure and confirmation structure rather than strategic-topology compression.
 
 ### Numeric registration-witness projection gap
 
