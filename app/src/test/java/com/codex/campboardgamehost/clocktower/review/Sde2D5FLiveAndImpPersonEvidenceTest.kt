@@ -25,6 +25,7 @@ internal data class Sde2D5FLiveAndImpPersonCandidateEvidence(
     val redHerringSeat: Int,
     val redHerringLegal: Boolean,
     val poisonerTargetSeat: Int,
+    val librarian: Sde2D5FExpertObservedPairDecisionEvidence,
     val chef: Sde2D5FExpertObservedNumericDecisionEvidence,
     val fortuneTeller: Sde2D5FExpertObservedBooleanDecisionEvidence,
     val fortuneTellerTargetsLegal: Boolean,
@@ -50,6 +51,16 @@ internal object Sde2D5FLiveAndImpPersonCandidateBuilder {
         val legalRedHerrings = SetupCandidateGenerator.generateRedHerringCandidates(game)
             .map { candidate -> (candidate.outcome as SetupClueOutcome.RedHerring).seat }
             .toSet()
+        val librarian = Sde2D5FExpertObservedPairEvidenceProjector.project(
+            game = game,
+            sourceSeat = 3,
+            abilityRole = RoleId("Librarian"),
+            reliability = ReliabilityState.RELIABLE,
+            observedShownRole = RoleId("Recluse"),
+            observedCandidateSeats = listOf(5, 8),
+            roleDefinitions = roles,
+            observationIdPrefix = "d5f-goldcand-ben-03-librarian",
+        )
         val chef = Sde2D5FExpertObservedNumericEvidenceProjector.project(
             game = game,
             sourceSeat = 5,
@@ -81,6 +92,7 @@ internal object Sde2D5FLiveAndImpPersonCandidateBuilder {
             redHerringSeat = redHerringSeat,
             redHerringLegal = redHerringSeat in legalRedHerrings,
             poisonerTargetSeat = 6,
+            librarian = librarian,
             chef = chef,
             fortuneTeller = fortuneTeller,
             fortuneTellerTargetsLegal =
@@ -144,6 +156,17 @@ class Sde2D5FLiveAndImpPersonEvidenceTest {
         assertTrue(evidence.redHerringLegal)
         assertEquals(2, evidence.redHerringSeat)
         assertTrue(evidence.fortuneTellerTargetsLegal)
+    }
+
+    @Test
+    fun `Live Librarian observed Recluse pair is one legal choice rather than a forced calibration label`() {
+        val observed = evidence.librarian.observedAlternative
+
+        assertEquals(RoleId("Recluse"), observed.shownRole)
+        assertEquals(listOf(5, 8), observed.candidateSeats)
+        assertTrue(observed.matchesReconstructedActualWorld)
+        assertTrue(emptySet() in observed.exactRegistrationWitnesses)
+        assertTrue(evidence.librarian.alternatives.size > 1)
     }
 
     @Test
