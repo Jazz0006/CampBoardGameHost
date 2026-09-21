@@ -153,7 +153,7 @@ These classifications are not permanent measurements. Re-measure them when the t
 | `Sde2D4ScaleBenchmarkTest` | >900s in isolated CI diagnostic | source-derived scale matrix plus raw-enumerator bounded-prefix measurement; no regression latency threshold | explicit T3 evidence harness, dedicated task only | SDE-2D4 raw enumerator scale investigation |
 | `Sde2D4TopologyBundlePerformanceTest` | sub-second measured bundle evaluation through 15 players, plus Gradle overhead | 5–15 topology-first CPU/coarse-heap evidence | T3; excluded from FAST, retained in full regression | topology-first strategic feasibility performance |
 | `Sde2D5CalibrationExperiment` | 5m53s observed when 8 cross-regime topology points were temporarily placed in FAST; historical workflow runs have reached multi-hour duration | deterministic 5–15 STANDARD/BARON calibration evidence generation | explicit T3 evidence harness, dedicated task only | D5 calibration / policy evidence |
-| `Sde2D5FExpertObservedCalibrationExperiment` | about 2 minutes end-to-end in GitHub Actions for A Stud + Live topology-first reports | real expert-case committed-prefix counterfactual evidence using topology-first consequence; exhaustive parity remains owned by D4 differential tests | explicit T3 evidence harness, dedicated task/workflow only | D5F-B4 expert-observed reconstruction / consequence evidence |
+| `Sde2D5FExpertObservedCalibrationExperiment` | about 3.5 minutes end-to-end in GitHub Actions for A Stud + Live + Human Remains topology-first reports | real expert-case committed-prefix counterfactual evidence using topology-first consequence; exhaustive parity remains owned by D4 differential tests | explicit T3 evidence harness, dedicated task/workflow only | D5F-B4 expert-observed reconstruction / consequence evidence |
 | `TroubleBrewingTopologySetupWitnessDifferentialTest` | measured-expensive exact differential | topology setup witness parity against bounded exhaustive worlds | affected T2 / T3 execution | topology setup witness semantics |
 | `TroubleBrewingTopologyObservationDifferentialTest` | measured-expensive exact differential | observation witness parity against bounded exhaustive worlds | affected T2 / T3 execution | topology observation semantics |
 | `TroubleBrewingTopologyBundleDifferentialTest` | caused a 5m40s FAST checkpoint when temporarily included | same-world whole-bundle shared-witness parity against exhaustive worlds | affected T2 / T3 execution | topology whole-bundle semantics |
@@ -275,7 +275,8 @@ Current Android JVM commands:
 
 - `FirstNightBundleBeginnerCorpusExperiment` → dedicated `:app:fnBundle3Calibration`;
 - `Sde2D4ScaleBenchmarkTest` → dedicated `:app:sde2D4ScaleBenchmark`;
-- `Sde2D5CalibrationExperiment` → dedicated `:app:sde2D5Calibration`.
+- `Sde2D5CalibrationExperiment` → dedicated `:app:sde2D5Calibration`;
+- `Sde2D5FExpertObservedCalibrationExperiment` → dedicated `:app:sde2D5FExpertObservedCalibration`.
 
 The SDE-2D4 scale harness remains available and was not deleted. Its isolated CI diagnostic exceeded 900 seconds despite having no stable regression latency threshold, so keeping it inside every T4 would make the acceptance gate unbounded without strengthening a correctness contract.
 
