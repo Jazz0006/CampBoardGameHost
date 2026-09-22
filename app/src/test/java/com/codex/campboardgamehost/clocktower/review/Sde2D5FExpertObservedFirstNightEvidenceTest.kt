@@ -35,9 +35,10 @@ internal data class Sde2D5FAStudInScarletCandidateEvidence(
 /**
  * First expert-observed D5F-B4 reconstruction candidate.
  *
- * The detailed state is reconstructed from the public episode index, while the YouTube recording is
- * the primary source. Until the material Night-1 state is checked against the primary recording,
- * this remains a GOLD candidate and must not be promoted to admitted GOLD evidence.
+ * The detailed state was initially reconstructed from the public episode index and has now been
+ * checked against the primary YouTube recording. Primary provenance and the boundary between
+ * observed outputs and production-derived registration witnesses are recorded in the dedicated
+ * A Stud primary reconstruction document.
  */
 internal object Sde2D5FAStudInScarletCandidateBuilder {
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
@@ -94,7 +95,7 @@ internal object Sde2D5FAStudInScarletCandidateBuilder {
         return Sde2D5FAStudInScarletCandidateEvidence(
             caseId = "goldcand-ben-01",
             primaryUrl = "https://www.youtube.com/watch?v=qZBvRfM3Xow",
-            verificationStatus = Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFICATION_PENDING,
+            verificationStatus = Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFIED,
             game = game,
             observedDemonBluffs = observedBluffs,
             observedDemonBluffsLegal = observedBluffs in legalBluffs,
@@ -147,10 +148,10 @@ class Sde2D5FExpertObservedFirstNightEvidenceTest {
     private val evidence by lazy { Sde2D5FAStudInScarletCandidateBuilder.build() }
 
     @Test
-    fun `A Stud candidate reconstructs observed setup choices without claiming GOLD verification`() {
+    fun `A Stud candidate preserves primary-verified setup choices`() {
         assertEquals("goldcand-ben-01", evidence.caseId)
         assertEquals(
-            Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFICATION_PENDING,
+            Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFIED,
             evidence.verificationStatus,
         )
         assertEquals(9, evidence.game.players.size)
