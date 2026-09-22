@@ -86,7 +86,7 @@ DIAGNOSTIC_ONLY
     synthetic / extreme / counterfactual fixtures
 ~~~
 
-The current external catalog contains **five tracked GOLD candidates but no admitted verified GOLD case yet**. Three detailed Ben Burns games still require primary-video Night-1 verification; the official Ben/Evin recordings require fuller state extraction. Multiple games from Ben share one Storyteller independence key and do not count as independent experts.
+The current external catalog contains **five tracked GOLD candidates but no admitted verified GOLD case yet**. Three detailed Ben Burns games still require primary-video Night-1 verification; `A Fond Farewell` now has primary-verified material state but is blocked on production Traveller legality; the Evin recording still requires state extraction. Multiple games from Ben share one Storyteller independence key and do not count as independent experts.
 
 `A Fond Farewell` has now moved beyond metadata-only discovery. The official primary video was manually checked for material Night-1 state on 2026-09-22, including full radial player↔role mapping, Traveller alignments, Drunk shown Chef, Red Herring, Demon bluffs, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`. The case is still not admitted GOLD because its five Travellers are not represented by the current production rules/domain model, so production-owned legal counterfactual recovery is unavailable. The official 2019 Evin recording remains the next independent-Storyteller primary extraction target.
 
