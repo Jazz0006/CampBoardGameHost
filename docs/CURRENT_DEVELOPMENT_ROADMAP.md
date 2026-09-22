@@ -30,7 +30,8 @@ SDE-2D5 calibration / policy evidence                 CURRENT / PR #150 draft
         B4E observed-vs-alternative analysis           CROSS-EXPERT CHECKPOINT COMPLETE
         B4F-A executable SILVER replay                 COMPLETE
         B4F-B documentary SILVER comparison            COMPLETE
-        B4F-C evidence-gap triage / targeted collection CURRENT
+        B4F-C target specification                     COMPLETE
+        B4F-C targeted evidence acquisition            EXTERNAL / WAITING
 D5F-C gate/band derivation                            BLOCKED
 sealed holdout                                        CLOSED
 SDE-3                                                 BLOCKED
@@ -57,6 +58,7 @@ Always query live refs before executable edits.
 - Evin primary reconstruction: [`SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md)
 - Cross-expert convergence / B4F entry: [`SDE_2D5F_CROSS_EXPERT_CONVERGENCE_AND_B4F_ENTRY_AUDIT_2026-09-23.md`](SDE_2D5F_CROSS_EXPERT_CONVERGENCE_AND_B4F_ENTRY_AUDIT_2026-09-23.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
+- B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
 
 ## 4. Frozen architecture / policy decisions
 
@@ -211,7 +213,7 @@ B4F-B documentary comparison is complete:
 
 Canonical audit: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md).
 
-B4F-C is now the active slice: triage named evidence gaps and request new primary evidence only when it fills one of them. Highest-value unresolved areas remain healthy-information floor/middle band, role-function exposure severity, independent-expert impaired-believability rationale, Demon-bluff preference ordering, and the quantitative multi-axis tradeoff surface. D5F-C remains blocked.
+B4F-C target specification is complete. Targeted evidence acquisition now belongs to the external evidence-collection pipeline rather than further CampBoardGameHost policy implementation. The canonical request contract is [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md). The highest-value next source is an independent experienced Storyteller case with explicit healthy-information floor / middle-band rationale; next are independent impaired-believability rationale, role-function exposure rationale, and Demon-bluff triplet rationale. D5F-C remains blocked until the evidence surface materially improves.
 
 ### D5F-B4G — bounded human adjudication
 
