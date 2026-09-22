@@ -575,13 +575,15 @@ Do not promote a case using a detailed secondary reconstruction until the materi
 
 The first high-value candidates are:
 
-1. **A Stud In Scarlet** — Ben Burns — fully reconstructable from the current episode index, pending primary Night-1 timestamp verification. High-value decisions include Drunk-Empath misinformation and Fortune Teller YES through Recluse-as-Demon registration.
+1. **A Stud In Scarlet** — Ben Burns — **ADMITTED GOLD**. The setup/grimoire and material Night-1 choices were checked against the primary video on 2026-09-22, while complete legal alternatives remain production-owned and executable. High-value evidence includes the Drunk-Empath 0 with explicit “2 would be a little unbelievable” rationale, plus observed Chef=1 and Fortune Teller Tom+Elliott=YES. Historical hidden registration acts were not separately visible; Recluse-as-Evil/Demon witnesses remain production-derived legality evidence.
 2. **Human Remains Of The Day** — Ben Burns — fully reconstructable from the current episode index, pending primary verification. High-value decision: poisoned Washerwoman misinformation with known Poisoner target; general early-game balancing rationale is also recorded, but is not choice-specific.
 3. **Live and Imp-Person** — Ben Burns — fully reconstructable from the current episode index, pending primary verification. High-value because Chef and Fortune Teller can use different interaction-scoped Recluse registration branches in the same Night 1.
 4. **Trouble Brewing - A Fond Farewell** — Ben Burns on the official Blood on the Clocktower channel — material Night-1 state is now primary-verified, including full table mapping, Traveller alignments, setup commitments, observed outputs, and two choice-specific rationales; executable legal-counterfactual recovery remains blocked by missing production Traveller semantics.
 5. **early TPI Trouble Brewing playthrough (4sfa8_kNxsQ)** — Evin — official TPI-endorsed primary recording and an important independent-Storyteller target. Evin's expert/trusted status is independently supported by his TPI co-founder role, integral early involvement, and founding of the Newcastle Clocktower group; the remaining blocker is complete Night-1 state extraction before GOLD admission.
 
-The first three cases are not three independent expert confirmations because they share the same principal Storyteller.
+The first three Ben cases are not three independent expert confirmations because they share the same principal Storyteller. A Stud is the first admitted GOLD case; the other two remain primary-verification candidates.
+
+The primary provenance record is `SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`. It deliberately separates primary-observed outputs from production-derived registration witnesses.
 
 ## 21. Observed expert choice + legal counterfactual contract
 
@@ -666,7 +668,7 @@ Therefore:
 
 The first `A Stud In Scarlet` report is also intentionally neutral on the current strategic quotient: every reconstructed Chef, Drunk-Empath and fixed-target Fortune Teller alternative preserves 56 evil-seat strategic topologies for every evaluated good recipient. This does not invalidate the case or the evaluator. It demonstrates that registration choice, impaired-information narrative, role-function exposure and other policy dimensions can carry expert-choice information even when the strategic quotient is unchanged.
 
-The descriptive feature report now also carries the Drunk-shown-Empath through the shared numeric evidence projector. The currently reconstructed observed `0` is `SemanticTruth.FALSE`, while `1` is `TRUE` and `2` is `FALSE`; none requires special registration. The registration feature is therefore explicitly separate from semantic truth. All three source cases remain `PRIMARY_VERIFICATION_PENDING`, so this is a reconstructed descriptive fact, not a frozen preference rule.
+The descriptive feature report now also carries the Drunk-shown-Empath through the shared numeric evidence projector. The currently reconstructed observed `0` is `SemanticTruth.FALSE`, while `1` is `TRUE` and `2` is `FALSE`; none requires special registration. The registration feature is therefore explicitly separate from semantic truth. A Stud is now `PRIMARY_VERIFIED`; Live and Imp-Person and Human Remains remain `PRIMARY_VERIFICATION_PENDING`. Primary verification strengthens provenance but does not turn an observed alternative into a frozen preference rule.
 
 `Live and Imp-Person` provides a different kind of evidence. In the reconstructed Night 1, the observed Chef=1 uses the natural registration witness while the later observed Fortune Teller YES uses Recluse-as-Demon. The same Recluse is therefore not modeled by a persistent/global registration state; registration remains interaction-scoped. Its current Librarian, Chef and Fortune Teller counterfactuals are also topology-neutral at 252 -> 252 for every evaluated good recipient. That strengthens the interpretation that this case is about registration semantics, role-function exposure and confirmation structure rather than strategic-topology compression.
 
