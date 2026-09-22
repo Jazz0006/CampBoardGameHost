@@ -29,11 +29,11 @@ class Sde2D5FExpertObservedCalibrationExperiment {
     }
 
     @Test
-    fun `A Stud uses topology-first committed prefix consequence without GOLD promotion`() {
+    fun `A Stud uses topology-first committed prefix consequence after primary verification`() {
         val calibration = aStud
 
         assertEquals(
-            Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFICATION_PENDING,
+            Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFIED,
             calibration.verificationStatus,
         )
         assertEquals(listOf(0, 1, 2), calibration.stages.map { it.prefixObservationCount })
@@ -57,7 +57,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         }
 
         val report = Sde2D5FAStudInScarletConsequenceCalibrationBuilder.renderMarkdown(calibration)
-        assertTrue(report.contains("PRIMARY_VERIFICATION_PENDING"))
+        assertTrue(report.contains("PRIMARY_VERIFIED"))
         assertTrue(report.contains("Observed candidate: `value-1`"))
         assertTrue(report.contains("Observed candidate: `value-0`"))
         assertTrue(report.contains("Observed candidate: `answer-yes`"))
