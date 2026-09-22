@@ -713,6 +713,41 @@ For `Human Remains Of The Day` poisoned Washerwoman:
 
 These counts are **legal-domain prevalence only**. They are not rarity scores or preference weights. In particular, 249/273 legal poisoned candidates are already false, so the fact that the observed output is false carries little discriminating evidence by itself. The narrower combination around bluff support / actual-Evil anchoring is descriptively notable, but without primary verification or choice-specific rationale it must not be promoted into a policy preference.
 
+### Primary-verified A Fond Farewell checkpoint
+
+`goldcand-ben-04 / A Fond Farewell` is now materially verified against the official primary recording rather than merely authenticated by chapter metadata. The detailed provenance and derived-seat reconstruction live in `SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`.
+
+Recovered Night-1 facts include:
+
+- 15 base players plus five Trouble Brewing Travellers;
+- Evil Travellers: Bureaucrat / Chiz and Scapegoat / Reznora; the other three Travellers are Good;
+- Gecko is the Drunk shown Chef;
+- Lyra / Undertaker is the Red Herring;
+- Demon bluffs are Empath / Monk / Virgin;
+- Poisoner targets Barrow / Ravenkeeper;
+- Washerwoman Malakai receives Fortune Teller between Viva La Sam (actual FT) and Maggot (Mayor);
+- Drunk-shown-Chef Gecko receives `4`;
+- Fortune Teller Viva La Sam selects Malashaan / Butler + Malakai / Washerwoman, yielding a rule-derived `NO`.
+
+Two choice-specific Ben rationales are especially relevant:
+
+- Red Herring Undertaker: Fortune Tellers “often choose their neighbors as well”;
+- Drunk Chef 4: “a somewhat believable number”.
+
+The recovered actual alignments contain **zero adjacent Evil pairs**, so the functioning Chef truth is 0. The observed Drunk-Chef 4 is therefore false in the actual world, but Ben's stated objective is framed around **believability**, not merely falsehood. This strengthens the existing shared impaired-counterworld / narrative-anchoring direction without establishing a numeric preference or false-at-all-costs rule.
+
+The Red Herring rationale adds a separate generic dimension: **player-choice likelihood / target ecology**. A Red Herring can be strategically relevant partly because the Fortune Teller is likely to select that player. Do not turn this into a fixed neighbor bonus from one expert case.
+
+#### Traveller ownership blocker
+
+This case must **not** be made executable by stripping or compressing Travellers. Traveller seating and public alignment affect adjacency and therefore Chef semantics. The current production rules/domain surface contains no Traveller model identified by the B4 audit.
+
+The architecture rule remains unchanged:
+
+- production rules/canonical owners must own Traveller legality and adjacency semantics if Traveller support is brought into scope;
+- the evidence harness must not implement a second Traveller/Chef rules engine;
+- `A Fond Farewell` remains primary-verified but not admitted GOLD until complete legal counterfactuals can be recovered through production owners.
+
 ### B4E evidence-maturity ledger — not D5F-C gates
 
 Use the following maturity labels only to decide what deserves further evidence collection:
@@ -721,11 +756,11 @@ Use the following maturity labels only to decide what deserves further evidence 
 |---|---|---|---|
 | interaction-scoped Spy/Recluse registration | official rules semantics + executable Live reconstruction | RULES_CONFIRMED_FOUNDATION | registration must not become persistent/global state |
 | impaired information may be true or false | official Drunk/poison semantics + shared A Stud numeric domain | RULES_CONFIRMED_FOUNDATION | preserve both truth and falsehood as legal descriptive possibilities; no false-at-all-costs rule |
-| narrative anchoring | 7 tagged external-catalog records, including explicit-rationale material | REPEATED_QUALITATIVE_CANDIDATE | retain as an independent policy dimension; no weight/threshold |
+| narrative anchoring | 8 tagged external-catalog records, now including primary-verified A Fond explicit rationale | REPEATED_QUALITATIVE_CANDIDATE | retain as an independent policy dimension; no weight/threshold |
 | truth danger | 6 tagged records, including 3 explicit-rationale records | REPEATED_QUALITATIVE_CANDIDATE | retain as an independent policy dimension; no deterministic lie rule |
 | temporal consistency / impairment detectability | 4 tagged records for each dimension, plus existing shared narrative-state architecture | REPEATED_QUALITATIVE_CANDIDATE | continue collecting cross-night evidence through the shared persistent narrative abstraction |
 | role-function exposure | current synthesis + primary-pending Live candidate | EXPERT_CANDIDATE_ONLY | keep contextual; do not freeze avoidance severity |
-| Red Herring ecology | 2 tagged records | UNDER_EVIDENCED | keep open; no ordering rule |
+| Red Herring ecology / player-choice likelihood | 3 tagged Red-Herring records plus primary-verified A Fond choice-specific rationale | EXPERT_CANDIDATE_ONLY | retain likely-target ecology as an independent dimension; no neighbor bonus, ordering rule, or weight |
 | healthy-information floor | 2 tagged records | UNDER_EVIDENCED | keep open; no numeric floor yet |
 
 Catalog tag recurrence is a **curation signal**, not an independent statistical sample. The same source, Storyteller, or human classification can contribute correlated tags.
