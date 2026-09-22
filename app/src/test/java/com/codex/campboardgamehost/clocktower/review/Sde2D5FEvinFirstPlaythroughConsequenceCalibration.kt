@@ -31,15 +31,18 @@ internal object Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder {
             )
         }
 
-        val washerwomanClaims = reconstructed.washerwoman.alternatives.associate { alternative ->
-            alternative.candidateId to Sde2D5FExpertObservedConsequenceProjector.projectPairClaim(
-                context = context,
-                entryId = alternative.candidateId,
-                sequence = 1,
-                decision = reconstructed.washerwoman,
-                alternative = alternative,
-            )
-        }
+        val washerwomanClaims = reconstructed.washerwoman.alternatives
+            .mapIndexed { index, alternative ->
+                alternative.candidateId to
+                    Sde2D5FExpertObservedConsequenceProjector.projectPairClaim(
+                        context = context,
+                        entryId = "washerwoman-${index + 1}",
+                        sequence = 1,
+                        decision = reconstructed.washerwoman,
+                        alternative = alternative,
+                    )
+            }
+            .toMap()
         val washerwomanObservedId = reconstructed.washerwoman.observedAlternative.candidateId
         val washerwomanStage = diagnosticStage("washerwoman consequence") {
             Sde2D5FExpertObservedConsequenceProjector.evaluateCommittedPrefix(
