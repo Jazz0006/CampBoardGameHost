@@ -24,10 +24,11 @@ SDE-2D5 calibration / policy evidence                 CURRENT / PR #150 draft
     D5F-B3 correction                                 HISTORICAL CHECKPOINT
     D5F-B4 expert-observed policy calibration         CURRENT
         B4A clean-corpus retirement                    COMPLETE
-        B4B GOLD source discovery                     IN PROGRESS
-        B4C expert Night-1 reconstruction              IN PROGRESS / 3 executable + A Fond primary-verified
-        B4D legal counterfactual recovery              IN PROGRESS / 3 executable Ben cases
-        B4E observed-vs-alternative analysis           IN PROGRESS / 3 reports artifacted
+        B4B GOLD source discovery                     PAUSED / DEMAND-DRIVEN
+        B4C expert Night-1 reconstruction              IN PROGRESS / 4 executable + A Fond primary-verified
+        B4D legal counterfactual recovery              IN PROGRESS / 4 executable cases
+        B4E observed-vs-alternative analysis           CROSS-EXPERT CHECKPOINT COMPLETE
+        B4F SILVER generalization                      CURRENT / BOUNDED
 D5F-C gate/band derivation                            BLOCKED
 sealed holdout                                        CLOSED
 SDE-3                                                 BLOCKED
@@ -52,6 +53,7 @@ Always query live refs before executable edits.
 - Traveller boundary audit for primary-verified A Fond: [`SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`](SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md)
 - Evin source audit: [`SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`](SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md)
 - Evin primary reconstruction: [`SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md)
+- Cross-expert convergence / B4F entry: [`SDE_2D5F_CROSS_EXPERT_CONVERGENCE_AND_B4F_ENTRY_AUDIT_2026-09-23.md`](SDE_2D5F_CROSS_EXPERT_CONVERGENCE_AND_B4F_ENTRY_AUDIT_2026-09-23.md)
 
 ## 4. Frozen architecture / policy decisions
 
@@ -117,7 +119,7 @@ DIAGNOSTIC_ONLY
     synthetic / extreme / counterfactual fixtures
 ~~~
 
-Current external catalog now contains SILVER / QUALITATIVE seed evidence plus five tracked expert-source cases. **Two primary-verified GOLD decision slices now exist from two independent Storytellers**: A Stud In Scarlet under `st-ben-burns`, and Evin's 2019 first full playthrough under `st-evin`. Evin's Demon bluff triplet remains unknown/not shown, but production semantics prove it is non-material to the admitted WW/Chef/RH/fixed-target-FT slice, so it is not inferred and does not block that slice. The other two executable Ben reconstructions still require primary-video verification. `A Fond Farewell` has primary-verified material Night-1 state and explicit choice-specific rationale, but its executable legal-counterfactual gate is blocked because the live table contains five Travellers and the current production rules/domain model has no Traveller surface.
+Current external catalog now contains SILVER / QUALITATIVE seed evidence plus five tracked expert-source cases. **Two primary-verified GOLD decision slices now exist from two independent Storytellers**: A Stud In Scarlet under `st-ben-burns`, and Evin's 2019 first full playthrough under `st-evin`. Evin's postgame primary image verifies Demon bluffs Recluse / Slayer / Soldier, and the postgame review gives explicit Red-Herring rationale: Doug/Chef was selected because Chef information was especially damaging to Evil and Red-Herring contamination could undermine its credibility. The other two executable Ben reconstructions still require primary-video verification. `A Fond Farewell` has primary-verified material Night-1 state and explicit choice-specific rationale, but its executable legal-counterfactual gate is blocked because the live table contains five Travellers and the current production rules/domain model has no Traveller surface.
 
 Primary-source extraction on 2026-09-22 also completed `A Stud In Scarlet` verification from its primary video. The canonical provenance record is [`SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md). The video directly verifies the player-visible outputs; hidden Recluse registration acts remain production-derived legal witnesses rather than primary-observed declarations.
 
@@ -162,9 +164,9 @@ Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human R
 
 `A Fond Farewell` is the complementary fourth Ben case: the primary material state is now verified, but it is intentionally **not** forced into the executable harness because five Travellers affect seating, adjacency, public alignment, and Chef semantics. The Traveller boundary audit confirms this is a production capability gap, not an evidence-fixture gap: `GameState` has only the four base character types, the TB script/catalog has no Traveller roles, and topology/setup-profile code treats every formal seat as a base setup seat. **Traveller implementation is deferred from B4**; do not compress the 20-seat table or add fixture-local Traveller arithmetic.
 
-Latest accepted B4 executable checkpoint: branch HEAD `26b9afe72e72705f53dc225a79fd5be6e3b6195c` completed dedicated **SDE-2D5F expert-observed calibration run #31** successfully. The shared evidence layer now covers reliable/impaired numeric decisions and complete pair-domain descriptive prevalence without introducing scores, rankings, BAD labels, or evidence-tier promotion. PR #150 remains draft.
+Latest accepted B4 executable checkpoint: branch HEAD `58dfa46901d00a5b9f417a08e29e40cb9b9f2112` completed dedicated **SDE-2D5F expert-observed calibration run #46** successfully. Full CI #3266, R2 #3025, and FN-BUNDLE-3 #200 also succeeded. The shared evidence layer now covers reliable/impaired numeric decisions and complete pair-domain descriptive prevalence without introducing scores, rankings, BAD labels, or evidence-tier promotion. PR #150 remains draft.
 
-The independent Evin primary extraction is complete. Continue primary-video verification only for the two remaining secondary-reconstructed Ben cases when more same-Storyteller depth is useful; the immediate B4 value now comes from comparing the two independent GOLD slices and deciding whether evidence is sufficient to advance beyond source collection. Do not infer its game bag from generic recommended 8-player setup guidance or from a different early TPI recording. `A Fond Farewell` no longer needs additional material Night-1 extraction unless a source contradiction appears. Traveller support is now explicitly deferred from the current B4 slice; if later adopted as a product goal, it must begin as a separate canonical-domain capability with full fan-out audit rather than as evidence-harness code.
+The independent Evin primary extraction and cross-expert comparison are complete. The strongest cross-expert result is **Red Herring contextual utility**: Ben supplies likely-target ecology while Evin supplies truth-danger / credibility-disruption rationale. Broad GOLD discovery is now demand-driven rather than the default. Begin bounded B4F SILVER generalization for dimensions already supported by GOLD/explicit-primary evidence; verify another primary video only when it fills a named gap. Do not infer its game bag from generic recommended 8-player setup guidance or from a different early TPI recording. `A Fond Farewell` no longer needs additional material Night-1 extraction unless a source contradiction appears. Traveller support is now explicitly deferred from the current B4 slice; if later adopted as a product goal, it must begin as a separate canonical-domain capability with full fan-out audit rather than as evidence-harness code.
 
 The reconstruction remains an evidence projection onto existing canonical state/legality owners. Do not hand-author a second legality model.
 
@@ -193,9 +195,14 @@ Pair-domain prevalence is now also explicit. Human Remains' 273 poisoned-Washerw
 
 The current external catalog recurrence signal is strongest for narrative anchoring (8 tagged records), truth danger (6), and temporal consistency / impairment detectability (4 each). `A Fond Farewell` also adds the first explicit `PLAYER_CHOICE_LIKELIHOOD` and `BELIEVABLE_COUNTERWORLD` tags plus a third Red-Herring-trajectory record. Treat these as evidence-collection priorities only. The two Ben rationales are choice-specific evidence, but they still share `st-ben-burns` and do not establish cross-expert generality.
 
-### D5F-B4F — generalize with SILVER evidence
+### D5F-B4F — generalize with SILVER evidence — CURRENT / BOUNDED
 
-Use ClockTracker/high-fidelity logs after GOLD patterns exist.
+The cross-expert entry audit is complete. Existing structured evidence currently supports:
+
+- Red Herring downstream importance: `ct-04` shows repeated RH-driven Fortune Teller YES trajectory; `ct-01` preserves RH as part of a larger first-night bundle. This generalizes persistence/downstream relevance, **not candidate ordering**.
+- Truth danger: `ct-02` is consistent with Storyteller adaptation around dangerous Chef information / Evil topology. Use as SILVER generalization only.
+
+Continue only with hypotheses already grounded in GOLD or explicit primary rationale. Do not derive new numeric gates from SILVER records alone.
 
 ### D5F-B4G — bounded human adjudication
 
