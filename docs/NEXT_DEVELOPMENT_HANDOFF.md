@@ -10,12 +10,13 @@
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 4. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
 5. `docs/SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`
-6. `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`
-7. `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`
-8. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`
-9. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
-10. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
-11. this handoff
+6. `docs/SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+7. `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+8. `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`
+9. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`
+10. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+11. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+12. this handoff
 
 Do not reload deleted 2026-09-20 D5 correction/design files from Git history unless a concrete historical question requires them.
 
@@ -90,7 +91,7 @@ DIAGNOSTIC_ONLY
     synthetic / extreme / counterfactual fixtures
 ~~~
 
-The current external catalog contains **five tracked GOLD candidates but no admitted verified GOLD case yet**. Three detailed Ben Burns games still require primary-video Night-1 verification; `A Fond Farewell` now has primary-verified material state but is blocked on production Traveller legality; the Evin recording still requires state extraction. Multiple games from Ben share one Storyteller independence key and do not count as independent experts.
+The current external catalog now contains **one admitted GOLD case plus four remaining expert-source candidates**. `A Stud In Scarlet` is primary-verified and executable, so it is the first admitted GOLD case. Two other detailed Ben Burns games still require primary-video Night-1 verification; `A Fond Farewell` has primary-verified material state but is blocked on production Traveller legality; the Evin recording still requires state extraction. Multiple games from Ben share one Storyteller independence key and do not count as independent experts.
 
 `A Fond Farewell` has now moved beyond metadata-only discovery. The official primary video was manually checked for material Night-1 state on 2026-09-22, including full radial player↔role mapping, Traveller alignments, Drunk shown Chef, Red Herring, Demon bluffs, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`. The case is still not admitted GOLD because its five Travellers are not represented by the current production rules/domain model, so production-owned legal counterfactual recovery is unavailable. The official 2019 Evin recording remains the next independent-Storyteller primary extraction target. Its source identity is now triangulated through TPI's current Trouble Brewing page plus the original Kickstarter FAQ/update: it is Evin running an 8-player Trouble Brewing game for early/regular Sydney players. Indexed-web search did not expose a reliable transcript or material Night-1 state, so the remaining step is direct primary-video inspection, not more metadata inference. See `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`.
 
@@ -116,7 +117,7 @@ Do not restore the seven clean scenarios for calibration.
 
 The catalog now tracks:
 
-- Ben Burns — `A Stud In Scarlet` — `FULLY_RECONSTRUCTABLE` from the current detailed index, pending primary-video verification;
+- Ben Burns — `A Stud In Scarlet` — `PRIMARY_STATE_VERIFIED_EXECUTABLE`, **ADMITTED GOLD**; primary video verifies the material Night-1 state and the production harness supplies complete legal alternatives;
 - Ben Burns — `Human Remains Of The Day` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
 - Ben Burns — `Live and Imp-Person` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
 - Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PRIMARY_STATE_VERIFIED_TRAVELLER_EXECUTION_BLOCKED`; primary Night-1 state and two choice-specific rationales recovered;
@@ -134,7 +135,7 @@ Executable canonical reconstructions now exist for the first three Ben candidate
 
 The latest accepted B4 executable checkpoint, `26b9afe72e72705f53dc225a79fd5be6e3b6195c`, passed dedicated expert-observed calibration **run #31**. The evidence harness now routes impaired numeric decisions through the shared numeric projector and summarizes complete pair legal domains through a shared typed prevalence projection. This adds no score, ranking, BAD/ACCEPTABLE labeling, or GOLD promotion.
 
-All three executable secondary-reconstructed Ben cases remain `PRIMARY_VERIFICATION_PENDING`. Continue verifying their material setup commitments and Night-1 decisions against the primary recordings; do not promote them to GOLD from the secondary reconstruction alone.
+`A Stud In Scarlet` is now `PRIMARY_VERIFIED` and admitted GOLD after primary-video checking. `Live and Imp-Person` and `Human Remains Of The Day` remain `PRIMARY_VERIFICATION_PENDING`; continue verifying those two against their primary recordings and do not promote them from secondary reconstruction alone.
 
 `A Fond Farewell` is now the inverse state: primary verification is complete, but executable projection is deliberately blocked by missing Traveller semantics. The detailed production-boundary audit is `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`. It confirms that this is not a one-file enum gap: base setup quotas, player-count knowledge, strategic topology and setup witness feasibility all assume every formal seat is a base Townsfolk/Outsider/Minion/Demon participant. Traveller implementation is therefore **deferred from B4**. Do not fake execution by dropping Travellers, compressing the circle, or implementing evidence-local Chef arithmetic.
 
@@ -209,7 +210,7 @@ Completed in this checkpoint:
 3. five candidate expert sources recorded;
 4. generic pair/numeric/boolean evidence projectors reuse production legality and witness owners; reliable and impaired numeric evidence now share the same numeric projector;
 5. shared canonical-world / claim / consequence projection avoids fixture-specific rules;
-6. `A Stud In Scarlet` committed-prefix topology report is green and artifacted;
+6. `A Stud In Scarlet` committed-prefix topology report is green and artifacted, and its material Night-1 state is now primary-verified;
 7. `Live and Imp-Person` committed-prefix consequence report is green and artifacted;
 8. `Human Remains Of The Day` committed-prefix consequence report is green and artifacted, preserving all 273 legal poisoned-Washerwoman candidates while summarizing them by strategic signature;
 9. dedicated `:app:sde2D5FExpertObservedCalibration` separates current B4 feedback from the historical multi-hour D5 calibration workload;
@@ -228,11 +229,11 @@ Substantive result so far:
 
 Next success condition:
 
-1. continue primary-video verification for the three detailed secondary-reconstructed Ben candidates; prioritize material Night-1 timestamps/source confirmation rather than adding more Ben volume;
+1. continue primary-video verification for the two remaining detailed secondary-reconstructed Ben candidates; A Stud is complete and should not be re-watched merely for B4 admission;
 2. directly inspect the independent Evin 8-player primary recording and extract seats/roles/setup commitments/Night-1 outputs with timestamps; do not spend another pass on metadata-only indexed search unless a new source appears;
 3. keep `A Fond Farewell` as primary-verified but execution-blocked; Traveller support has been audited and explicitly deferred from B4, and any later implementation must be a separate canonical-domain capability;
 4. extract repeated policy dimensions only where source rationale and legal counterfactuals support them; do not derive D5F-C numeric gates yet;
-5. keep 0 admitted GOLD until a case satisfies both primary-state verification and production-owned complete legal-counterfactual recovery;
+5. preserve A Stud as the first admitted GOLD case because it satisfies both primary-state verification and production-owned complete legal-counterfactual recovery;
 6. do not promote a policy rule merely because an alternative was unchosen.
 
 Code-smell checkpoint: named role adapters are acceptable only at the legality/proposition semantic boundary. Cross-case evidence projection and later persistent impaired narrative policy must remain shared and information-shape/history based.
