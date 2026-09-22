@@ -28,7 +28,9 @@ SDE-2D5 calibration / policy evidence                 CURRENT / PR #150 draft
         B4C expert Night-1 reconstruction              IN PROGRESS / 4 executable + A Fond primary-verified
         B4D legal counterfactual recovery              IN PROGRESS / 4 executable cases
         B4E observed-vs-alternative analysis           CROSS-EXPERT CHECKPOINT COMPLETE
-        B4F SILVER generalization                      CURRENT / BOUNDED
+        B4F-A executable SILVER replay                 COMPLETE
+        B4F-B documentary SILVER comparison            COMPLETE
+        B4F-C evidence-gap triage / targeted collection CURRENT
 D5F-C gate/band derivation                            BLOCKED
 sealed holdout                                        CLOSED
 SDE-3                                                 BLOCKED
@@ -54,6 +56,7 @@ Always query live refs before executable edits.
 - Evin source audit: [`SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`](SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md)
 - Evin primary reconstruction: [`SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md)
 - Cross-expert convergence / B4F entry: [`SDE_2D5F_CROSS_EXPERT_CONVERGENCE_AND_B4F_ENTRY_AUDIT_2026-09-23.md`](SDE_2D5F_CROSS_EXPERT_CONVERGENCE_AND_B4F_ENTRY_AUDIT_2026-09-23.md)
+- B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 
 ## 4. Frozen architecture / policy decisions
 
@@ -195,14 +198,20 @@ Pair-domain prevalence is now also explicit. Human Remains' 273 poisoned-Washerw
 
 The current external catalog recurrence signal is strongest for narrative anchoring (8 tagged records), truth danger (6), and temporal consistency / impairment detectability (4 each). `A Fond Farewell` also adds the first explicit `PLAYER_CHOICE_LIKELIHOOD` and `BELIEVABLE_COUNTERWORLD` tags plus a third Red-Herring-trajectory record. Treat these as evidence-collection priorities only. The two Ben rationales are choice-specific evidence, but they still share `st-ben-burns` and do not establish cross-expert generality.
 
-### D5F-B4F — generalize with SILVER evidence — CURRENT / BOUNDED
+### D5F-B4F — generalize with SILVER evidence — A/B COMPLETE; C CURRENT
 
-The cross-expert entry audit is complete. Existing structured evidence currently supports:
+B4F-A executable replay is complete. The dedicated `:app:sde2D5FB4FSilverGeneralization` T3 workload replays the durable ct-01 contracts without the historical legacy ranking / broad bluff sweep. Workflow run #3 at `17254848e47abf05c1b7648948ae8b47a89f9e6f` succeeded in about 7 minutes and confirmed observed bluff/RH/Drunk legality plus whole-bundle feasibility for every recipient. The previous external-human auto-workflow, which historically took about 2h48m and still ran the old D5 calibration path, has been retired.
 
-- Red Herring downstream importance: `ct-04` shows repeated RH-driven Fortune Teller YES trajectory; `ct-01` preserves RH as part of a larger first-night bundle. This generalizes persistence/downstream relevance, **not candidate ordering**.
-- Truth danger: `ct-02` is consistent with Storyteller adaptation around dangerous Chef information / Evil topology. Use as SILVER generalization only.
+B4F-B documentary comparison is complete:
 
-Continue only with hypotheses already grounded in GOLD or explicit primary rationale. Do not derive new numeric gates from SILVER records alone.
+- `ct-04` generalizes Red-Herring downstream relevance, **not candidate ordering**;
+- `ct-02` supplies SILVER explicit rationale consistent with truth danger / Evil-topology coupling;
+- `ct-01` is compatible with impaired-information believability but lacks choice-specific rationale, so that preference is not generalized;
+- `ct-01` / `ct-03` show authentic bluff-triplet variation without establishing a triplet ordering.
+
+Canonical audit: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md).
+
+B4F-C is now the active slice: triage named evidence gaps and request new primary evidence only when it fills one of them. Highest-value unresolved areas remain healthy-information floor/middle band, role-function exposure severity, independent-expert impaired-believability rationale, Demon-bluff preference ordering, and the quantitative multi-axis tradeoff surface. D5F-C remains blocked.
 
 ### D5F-B4G — bounded human adjudication
 
