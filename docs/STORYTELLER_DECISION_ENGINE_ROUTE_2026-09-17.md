@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT ARCHITECTURE / PRODUCT ROUTE**  
 > Current D5F policy authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
-> Current implementation entry: **SDE-2D / pre-SDE-3 strategic generalization**  
+> Current implementation entry: **SDE-3A provisional engine / feature / policy contract**  
 > Supersedes as execution authority: first-night-only EPI-MQ routes, earlier productive-uncertainty scoring plans, and the older revision-driven dynamic-decision implementation plan.
 
 ## 1. Product target
@@ -532,33 +532,64 @@ Established:
 2. Spy/Recluse interaction-local registration witness binding;
 3. Poisoner invalidation and broad replanning.
 
-### SDE-2D — CURRENT / required before SDE-3
+### SDE-2D — engineering checkpoint complete; evidence continues in parallel
+
+SDE-2D1 through D4 are complete.
+
+SDE-2D5 established the current evidence / calibration foundation:
+
+- two independent primary-verified GOLD anchors;
+- executable expert counterfactual harnesses;
+- bounded SILVER external-validity replay;
+- explicit targeted evidence gaps;
+- cross-expert Red-Herring contextual utility;
+- truth danger / credibility disruption as a preserved policy dimension.
+
+Final numeric gate/band derivation remains blocked on stronger evidence, but this no longer blocks engine architecture.
+
+Historical pre-SDE-3 execution detail has been archived. Current evidence authorities are the roadmap, policy synthesis and B4F targeted evidence contract.
+
+### SDE-3 — provisional engine + continuously calibrated policy — CURRENT
 
 Authority:
 
-`docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+`docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
 
-Execute:
+Split:
 
-```text
-SDE-2D1  Drunk whole-bundle semantics
+~~~text
+SDE-3A engine / feature / policy contract                  CURRENT
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT
+SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
+SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
+SDE-3E automatic production cutover                         BLOCKED ON 3D
+~~~
+
+SDE-3A/B/C may proceed while ClocktowerEvidenceLab continues targeted source collection.
+
+The first usable policy should be conservative, versioned and explainable. It may use hard boundaries plus interpretable soft priorities, but it must not invent unsupported scalar weights merely to manufacture precision.
+
+The long-term engine separates:
+
+~~~text
+rules-owned legality
     ↓
-SDE-2D2  Demon bluff joint-output strategic migration
+hypothetical consequence / feature projection
     ↓
-SDE-2D3  strategic-world quotient / exact feasibility seam
+versioned policy
     ↓
-SDE-2D4  5–15 player semantic + performance validation
+seeded selection among healthy survivors
     ↓
-SDE-2D5  expert-observed calibration / policy evidence
-```
+DecisionTrace / replay
+~~~
 
-Do not begin SDE-3 before this gate is complete.
+Policy updates remain offline and evidence-reviewed. Game outcome is not a Storyteller-quality label, and the production app must not silently self-train from wins/losses.
 
-### SDE-3 — cross-night information
+### SDE-4 — calibrated cutover / cleanup
 
-Bring later impaired / registration decisions through the same engine using historical exact replay after SDE-2D establishes the corrected strategic representation.
+SDE-4 begins only after the relevant SDE-3D/3E cutover gate is satisfied.
 
-### SDE-4 — production cutover / cleanup
+Then:
 
 - cut production callers to unified policy;
 - preserve Experienced-mode manual override;
@@ -587,13 +618,16 @@ Read:
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
-5. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
+5. `docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`;
 6. this route as architecture background;
-7. query live `main` and current checks;
-8. continue the current SDE-2D slice from the handoff.
+7. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`;
+8. query live branch / PR / checks;
+9. continue SDE-3A from the handoff.
 
-Do not reopen completed FN-BUNDLE/SDE-0/SDE-1/SDE-2A/B/C work without a concrete regression.
+Do not resume broad evidence collection in the app repo. Targeted source acquisition belongs to the external evidence pipeline.
+
+Do not reopen completed FN-BUNDLE / SDE-0 / SDE-1 / SDE-2 engineering work without a concrete regression.
 
 ## 23. Stable decision
 
-> **The automatic Storyteller is a persistent strategic decision engine, not a collection of independent clue recommenders. Rules generate legal outcomes; the epistemic layer proves mechanical feasibility and hypothetical consequences; strategic evaluation operates primarily on evil-team topology while preserving role-information utility and narrative support. Impaired information uses a shared persistent narrative state so repeated/history-dependent outputs remain coherent with the player's perceived world; named roles provide legality/semantics, not separate misinformation policy. Demon bluff triplets are SDE outputs until shown, then persistent inputs. Large-player production must move toward exact strategic-topology quotient/constraint feasibility rather than giving repeated weight to exhaustive raw role permutations. SDE-2D is the current mandatory corrective route before SDE-3; no second world solver, no fixture-specific policy patching, and no opaque global scalar are allowed.**
+> **The automatic Storyteller is a persistent, versioned strategic decision engine, not a collection of independent clue recommenders. Rules generate legal outcomes; shared consequence/feature projection describes strategic topology, information utility, confirmation structure, credibility disruption, role-function exposure, impaired narrative coherence, bluff usability and future flexibility; a versioned policy applies interpretable hard boundaries and soft priorities. SDE-3A/B/C may proceed with a conservative provisional policy while external evidence collection continues in parallel. Final calibrated gates/weights and automatic production cutover remain blocked until evidence supports them. DecisionTrace and historical replay must make policy evolution auditable. No second world solver, no fixture-specific policy patching, no uncontrolled online learning, and no opaque global scalar are allowed.**
