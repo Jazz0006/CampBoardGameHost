@@ -8,9 +8,7 @@
 
 ## 1. Decision
 
-Keep the 2019 Evin Trouble Brewing recording as the next independent-Storyteller primary extraction target.
-
-The source identity and Storyteller provenance are strong enough for a GOLD candidate, but the material Night-1 decision state has **not** yet been extracted from the primary recording. Do not infer that state from generic first-game setup guidance, unrelated early TPI videos, or search snippets.
+The 2019 Evin Trouble Brewing recording has now moved from source-discovery status to a **primary-verified, executable material Night-1 decision slice**.
 
 Current status:
 
@@ -20,13 +18,21 @@ Evin as Storyteller                     VERIFIED
 Trouble Brewing                         VERIFIED
 8-player game                           VERIFIED
 experienced/regular early players       VERIFIED AT SOURCE-DESCRIPTION LEVEL
-full seating / actual roles             NOT EXTRACTED
-setup commitments                       NOT EXTRACTED
-Night-1 outputs                         NOT EXTRACTED
-choice-specific rationale               NOT EXTRACTED
-production legal-counterfactual replay  BLOCKED ON STATE EXTRACTION
-GOLD admission                          NOT YET
+full seating / actual roles             PRIMARY VERIFIED
+Drunk shown identity                    PRIMARY VERIFIED
+Red Herring                             PRIMARY VERIFIED
+Washerwoman output                      PRIMARY VERIFIED
+Chef output                             PRIMARY VERIFIED
+Fortune Teller targets/result           PRIMARY VERIFIED
+Demon bluff triplet                     UNKNOWN / NOT SHOWN
+choice-specific rationale               NOT RECOVERED
+production legal-counterfactual replay  EXECUTABLE FOR MATERIAL SLICE
+GOLD decision-slice admission           YES
 ```
+
+Canonical primary reconstruction:
+
+`docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`
 
 ## 2. Source triangulation
 
@@ -40,75 +46,79 @@ Three public source surfaces identify the same recording:
 3. The Kickstarter campaign update is titled **"The First Full Play-Through of Blood on the Clocktower - Trouble Brewing"** and describes the game as eight regular Sydney players playing Trouble Brewing:
    - https://www.kickstarter.com/projects/pandemoniuminstitute/blood-on-the-clocktower/posts/2486129
 
-These facts strengthen source authenticity and player-experience context. They do **not** recover the hidden Grimoire/Night-1 state.
+These facts establish source authenticity and player-context provenance independently of the manual primary-video reconstruction.
 
-## 3. Indexed-web extraction result
+## 3. Primary extraction result
 
-A targeted indexed-web search on 2026-09-22 did not expose a reliable transcript, timestamped Night-1 log, complete role table, or setup-state reconstruction for this exact YouTube ID.
+The direct primary review recovered:
 
-Therefore the next state-extraction step must be direct inspection of the primary recording rather than another round of generic web inference.
+- Doug — Chef;
+- Claire — Fortune Teller;
+- Sarah-Regina — Washerwoman;
+- Lewis — Scarlet Woman;
+- Julian — Imp;
+- Marianna — Drunk shown Monk;
+- Filip — Undertaker;
+- Michael — Virgin;
+- 06:15 Washerwoman Sarah-Regina learns Julian or Filip is the Undertaker;
+- 06:27 Chef Doug receives 1;
+- 06:49 Fortune Teller Claire selects Doug + Sarah-Regina;
+- 06:55 Claire receives YES because Doug is the Red Herring.
 
-This negative result is worth recording so future B4 work does not repeatedly re-run the same metadata-only search and mistake source provenance for decision-state verification.
+The production evidence harness now reconstructs the same state and asks existing legality owners for the legal alternatives rather than encoding hand-authored outcome rules.
 
-## 4. Two explicit anti-inference guards
+## 4. Demon-bluff boundary
 
-### 4.1 Do not substitute the rulebook's recommended 8-player setup
+The Demon bluff triplet is not shown in the recovered primary material.
 
-Current Trouble Brewing setup guidance contains a recommended first-game eight-player bag:
-
-```text
-Chef
-Empath
-Fortune Teller
-Undertaker
-Virgin
-Drunk shown Investigator
-Scarlet Woman
-Imp
-```
-
-That is generic setup guidance. It is **not evidence** that the Evin video used that exact bag.
-
-Do not copy these roles into `goldcand-evin-01` unless the primary recording verifies them.
-
-### 4.2 Do not reuse the lineup from the older "An Introduction to Blood on the Clocktower" video
-
-An older TPI blog post describes a different filmed game with an 11-seat lineup including an Evil Bone Collector Traveller. That material belongs to a different recording and cannot be used to reconstruct `4sfa8_kNxsQ`.
-
-The presence of early-TPI player names or similar filming context is not enough to merge the records.
-
-## 5. Required direct-primary extraction
-
-When the recording is inspected, recover only source-visible or safely rule-derived facts, with timestamps:
-
-1. clockwise player order;
-2. actual role at each seat;
-3. Drunk actual identity and shown Townsfolk identity, if present;
-4. Demon bluff triplet;
-5. Fortune Teller Red Herring;
-6. Poisoner target, if present;
-7. all first-night Storyteller-controlled information outputs;
-8. all player-selected first-night targets needed to interpret those outputs;
-9. any Spy/Recluse registration ruling needed to make an observed output legal;
-10. any explicit Storyteller rationale tied to a specific decision.
-
-Keep the same provenance distinction used for `A Fond Farewell`:
+A comment-level observation mentions Recluse as a shown/claimed identity, but that is insufficient to establish that Recluse was one of the official Demon bluffs. The canonical record therefore keeps:
 
 ```text
-primary-observed fact
-vs
-rule-derived consequence
-vs
-analysis-derived seat identifier
+Demon bluffs = UNKNOWN_NOT_SHOWN_IN_PRIMARY
 ```
 
-## 6. GOLD boundary
+Do not infer a bluff from a later claim.
 
-Do not promote this case to admitted GOLD until both are true:
+This unknown field does **not** block the current GOLD decision slice because the production legality domains for the reconstructed Washerwoman clue, Chef number, Red Herring candidate set, and fixed-target Fortune Teller result do not depend on Demon bluffs.
 
-1. the material committed Night-1 state is verified from the primary recording; and
-2. the complete legal counterfactual domain can be recovered through existing production legality owners.
+The case must not be used as direct evidence for Demon-bluff selection policy.
 
-Once the primary state is recovered, this case is especially valuable because it provides a second Storyteller independence key (`st-evin`) rather than adding more volume to `st-ben-burns`.
+## 5. Rule-derived consequences
 
-No policy weight, preference ordering, or BAD/ACCEPTABLE label follows from source authenticity alone.
+Production semantics confirm:
+
+- the observed Washerwoman clue is truthful because Filip is the Undertaker;
+- the observed clue needs no Spy/Recluse registration witness;
+- Chef=1 is forced by the single adjacent Evil pair Lewis/Scarlet Woman + Julian/Imp;
+- after Doug is committed as Red Herring and Claire chooses Doug + Sarah-Regina, Fortune Teller YES is forced.
+
+Therefore Chef=1 and the FT YES are mechanical observations, not free Storyteller output choices at those lifecycle stages.
+
+The Washerwoman pair is a genuine Storyteller-controlled choice. Red Herring placement is also Storyteller-controlled, while the later FT hit is trajectory evidence and must not be leaked backward as hindsight during Red Herring counterfactual comparison.
+
+## 6. GOLD decision-slice boundary
+
+GOLD admission is scoped to the reconstructed **material decision slice**.
+
+A hidden field that is unavailable in the source does not block a decision slice when:
+
+1. production semantics establish that the field cannot change that decision's legal alternative set or consequence semantics; and
+2. the unavailable field is explicitly retained as unknown rather than inferred.
+
+That rule is stricter than silently completing the game state from comments or generic setup advice.
+
+For the Evin slice:
+
+- expertise is independently verified;
+- the game is authentic;
+- all state material to the admitted decisions is primary-verified;
+- the observed choices/results are recoverable;
+- complete legal alternatives for those decisions are production-owned and executable.
+
+Therefore `goldcand-evin-01` is admitted as GOLD for this material Night-1 slice and supplies the second Storyteller independence key, `st-evin`.
+
+## 7. Historical anti-inference guards retained
+
+Do not substitute the rulebook's recommended eight-player bag or reuse an unrelated early TPI lineup. Those earlier warnings remain valid even though the actual primary setup is now known.
+
+Do not convert the absence of choice-specific rationale into an inferred preference ordering. Observed choice is evidence; unchosen legal alternatives are not automatically bad.
