@@ -120,7 +120,7 @@ Do not restore the seven clean scenarios for calibration.
 The catalog now tracks:
 
 - Ben Burns — `A Stud In Scarlet` — `PRIMARY_STATE_VERIFIED_EXECUTABLE`, **ADMITTED GOLD**;
-- Evin — official 2019 TPI **8-player** Trouble Brewing playthrough — `PRIMARY_STATE_VERIFIED_EXECUTABLE_MATERIAL_SLICE`, **ADMITTED GOLD** for WW/Chef/RH/FT; Demon bluffs unknown/non-material to this slice;
+- Evin — official 2019 TPI **8-player** Trouble Brewing playthrough — `PRIMARY_STATE_VERIFIED_EXECUTABLE_MATERIAL_SLICE`, **ADMITTED GOLD** for WW/Chef/RH/FT; postgame primary imagery also verifies Demon bluffs Recluse / Slayer / Soldier and the review supplies explicit Red-Herring rationale;
 - Ben Burns — `Human Remains Of The Day` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
 - Ben Burns — `Live and Imp-Person` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
 - Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PRIMARY_STATE_VERIFIED_TRAVELLER_EXECUTION_BLOCKED`; primary Night-1 state and two choice-specific rationales recovered.
