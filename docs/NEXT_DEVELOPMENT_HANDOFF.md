@@ -16,9 +16,10 @@
 9. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`
 10. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`
 11. `docs/SDE_2D5F_CROSS_EXPERT_CONVERGENCE_AND_B4F_ENTRY_AUDIT_2026-09-23.md`
-12. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
-13. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
-14. this handoff
+12. `docs/SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`
+13. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+14. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+15. this handoff
 
 Do not reload deleted 2026-09-20 D5 correction/design files from Git history unless a concrete historical question requires them.
 
@@ -231,14 +232,15 @@ Substantive result so far:
 
 Next success condition:
 
-1. continue **bounded B4F SILVER generalization** only for hypotheses already grounded in GOLD / explicit primary rationale;
-2. treat Red Herring contextual utility as the first cross-expert foundation: Ben = likely-target ecology; Evin = truth danger / credibility disruption; do not turn either into a fixed bonus;
-3. verify another primary video only when it fills a named evidence gap; do not collect same-Storyteller volume by default;
-3. keep `A Fond Farewell` as primary-verified but execution-blocked; Traveller support has been audited and explicitly deferred from B4, and any later implementation must be a separate canonical-domain capability;
-4. extract repeated policy dimensions only where source rationale and legal counterfactuals support them; do not derive D5F-C numeric gates yet;
-6. preserve A Stud and Evin as the first two admitted GOLD decision slices, with separate independence keys and primary/derived provenance boundaries;
-7. keep D5F-C blocked: healthy-information floor, role-function exposure severity, bluff-triplet preference ordering, and independent-expert impaired-believability calibration remain under-evidenced;
-8. do not promote a policy rule merely because an alternative was unchosen.
+1. continue **B4F-C evidence-gap triage / targeted collection**, not broad source discovery;
+2. treat ct-01 executable SILVER replay as accepted external-validity evidence: dedicated B4F run #3 succeeded in about 7 minutes; the obsolete ~2h48m external-human auto-workflow has been retired;
+3. preserve Red Herring contextual utility as the strongest cross-expert foundation: Ben = likely-target ecology; Evin = truth danger / credibility disruption; ct-04 generalizes downstream relevance but not seat ordering;
+4. preserve truth danger / credibility disruption as `GOLD_PLUS_SILVER_EXPLICIT_RATIONALE`; do not turn it into a deterministic suppression rule;
+5. target new primary evidence only for a named unresolved gap, preferring a new Storyteller independence key when the current evidence is single-expert;
+6. highest-priority gaps are healthy-information floor/middle band, role-function exposure severity, independent-expert impaired-believability rationale, Demon-bluff preference ordering, and quantitative multi-axis tradeoffs;
+7. keep `A Fond Farewell` primary-verified but execution-blocked; Traveller support stays outside B4;
+8. keep D5F-C and SDE-3 blocked; do not derive numeric gates or weights yet;
+9. do not promote a policy rule merely because an alternative was unchosen.
 
 Code-smell checkpoint: named role adapters are acceptable only at the legality/proposition semantic boundary. Cross-case evidence projection and later persistent impaired narrative policy must remain shared and information-shape/history based.
 
