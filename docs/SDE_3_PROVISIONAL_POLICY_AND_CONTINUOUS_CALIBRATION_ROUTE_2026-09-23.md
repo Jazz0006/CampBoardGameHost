@@ -403,6 +403,8 @@ Do not turn expert source examples into fixture-specific production tests.
 
 Start with an architecture/fanout audit before production edits.
 
+The audit may begin while PR #150 remains draft, but **SDE-3 production implementation must not be added to the SDE-2D5 calibration branch**. PR #150 is an evidence/calibration checkpoint. After the audit is accepted, wait for explicit user authorization to merge #150; then create a dedicated SDE-3 branch/PR from live `main`. If #150 is not yet merged, keep the SDE-3A work read-only/design-only rather than creating an accidental stacked production migration.
+
 Recommended sequence:
 
 1. audit current `StorytellerDecisionEngine`, decision context, candidate/result contracts and production shadow integration;
