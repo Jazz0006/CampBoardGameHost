@@ -44,7 +44,7 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
             evinWasherwoman = Sde2D5FExpertObservedPolicyFeatureProjector.projectPair(
                 game = evin.game,
                 decision = evin.washerwoman,
-                demonBluffs = null,
+                demonBluffs = evin.observedDemonBluffs,
             ),
             evinChef = Sde2D5FExpertObservedPolicyFeatureProjector.projectNumeric(evin.chef),
             evinFortuneTeller =
@@ -202,8 +202,7 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
         appendLine("| has no-special-registration witness | ${summary.noSpecialRegistrationWitnessCount} |")
         appendLine("| has special-registration alternative | ${summary.hasSpecialRegistrationAlternativeCount} |")
         appendLine("| requires special registration | ${summary.requiresSpecialRegistrationCount} |")
-        appendLine("| shown role is known Demon bluff | ${summary.shownRoleDemonBluffCount} |")
-        appendLine("| shown role Demon-bluff membership unknown | ${summary.shownRoleDemonBluffUnknownCount} |")
+        appendLine("| shown role is Demon bluff | ${summary.shownRoleDemonBluffCount} |")
         appendLine("| shown role actually in play | ${summary.shownRoleActualInPlayCount} |")
         appendLine("| shown role matches a candidate seat | ${summary.shownRoleMatchesCandidateCount} |")
         appendLine("| special-registration role matches a candidate seat | ${summary.specialRegistrationRoleMatchesCandidateCount} |")
@@ -217,7 +216,7 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
         appendLine("| ${cell(observed.candidateId)} | semantic truth | ${observed.semanticTruth} |")
         appendLine("| ${cell(observed.candidateId)} | no-special-registration witness | ${observed.registration.hasNoSpecialRegistrationWitness} |")
         appendLine("| ${cell(observed.candidateId)} | special registration reasons | ${reasons(observed.registration.specialReasons)} |")
-        appendLine("| ${cell(observed.candidateId)} | shown role is Demon bluff | ${knownBoolean(observed.shownRoleIsDemonBluff)} |")
+        appendLine("| ${cell(observed.candidateId)} | shown role is Demon bluff | ${observed.shownRoleIsDemonBluff} |")
         appendLine("| ${cell(observed.candidateId)} | shown role actual in-play seats | ${seats(observed.shownRoleActualInPlaySeats)} |")
         appendLine("| ${cell(observed.candidateId)} | shown role matches candidate seats | ${seats(observed.shownRoleCandidateMatchSeats)} |")
         appendLine("| ${cell(observed.candidateId)} | special-registration role matches | ${seats(observed.specialRegistrationRoleMatchSeats)} |")
@@ -231,8 +230,6 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
     }
 
     private fun cell(value: String): String = value.replace("|", "\\|")
-
-    private fun knownBoolean(value: Boolean?): String = value?.toString() ?: "UNKNOWN"
 
     private fun reasons(reasons: Set<RegistrationReason>): String =
         reasons.sortedBy { it.name }.joinToString(",").ifEmpty { "-" }
