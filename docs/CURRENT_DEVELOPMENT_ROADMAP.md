@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-21 Australia/Sydney  
+> Updated: 2026-09-22 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -25,7 +25,7 @@ SDE-2D5 calibration / policy evidence                 CURRENT / PR #150 draft
     D5F-B4 expert-observed policy calibration         CURRENT
         B4A clean-corpus retirement                    COMPLETE
         B4B GOLD source discovery                     IN PROGRESS
-        B4C expert Night-1 reconstruction              IN PROGRESS / 3 executable Ben cases
+        B4C expert Night-1 reconstruction              IN PROGRESS / 3 executable + A Fond primary-verified
         B4D legal counterfactual recovery              IN PROGRESS / 3 executable Ben cases
         B4E observed-vs-alternative analysis           IN PROGRESS / 3 reports artifacted
 D5F-C gate/band derivation                            BLOCKED
@@ -114,9 +114,9 @@ DIAGNOSTIC_ONLY
     synthetic / extreme / counterfactual fixtures
 ~~~
 
-Current external catalog now contains SILVER / QUALITATIVE seed evidence plus five explicitly tracked GOLD candidates. No case has yet been admitted as verified GOLD: the three fully reconstructable Ben Burns candidates still require primary-video Night-1 verification, while the official Ben/Evin recordings still require state extraction. Multiple Ben Burns games share one Storyteller independence key and must not be counted as independent experts. The catalog now stores this explicitly as `storyteller_independence_key`: all Ben candidates use `st-ben-burns`, Evin uses `st-evin`, and blank means independence is not established rather than unique.
+Current external catalog now contains SILVER / QUALITATIVE seed evidence plus five explicitly tracked GOLD candidates. No case has yet been admitted as verified GOLD. The three earlier fully reconstructable Ben Burns candidates still require primary-video Night-1 verification. `A Fond Farewell` now has primary-verified material Night-1 state and explicit choice-specific rationale, but its executable legal-counterfactual gate is blocked because the live table contains five Travellers and the current production rules/domain model has no Traveller surface. The Evin recording still requires state extraction. Multiple Ben Burns games share one Storyteller independence key and must not be counted as independent experts. The catalog stores this explicitly as `storyteller_independence_key`: all Ben candidates use `st-ben-burns`, Evin uses `st-evin`, and blank means independence is not established rather than unique.
 
-Primary-source metadata audit on 2026-09-21 tightened two discovery facts without changing evidence tier: official `A Fond Farewell` YouTube chapters mark Night 1 at `00:04:25` and Day 1 at `00:09:13`; the official 2019 Evin video identifies itself as a full **8-player** play-through, and TPI's Kickstarter FAQ links that same recording as its first released full play-through. Public retrieval still did not expose auditable Night-1 transcript/frame state, so both remain state-extraction candidates rather than admitted GOLD.
+Primary-source extraction on 2026-09-22 completed the material `A Fond Farewell` Night-1 reconstruction from the official video, including full radial seating/roles, Traveller alignments, Drunk shown Chef, Demon bluffs, Red Herring, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is [`SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md). This is primary verification, not GOLD admission: Traveller-aware production legality is still missing. The official 2019 Evin video remains the next independent-Storyteller primary extraction target.
 
 Interpretation rules:
 
@@ -149,15 +149,17 @@ The source catalog now tracks five GOLD candidates:
 - Ben Burns — official `Trouble Brewing - A Fond Farewell`;
 - Evin — early TPI Trouble Brewing playthrough.
 
-Ben's experienced/trusted status is independently supported by TPI. The first three have detailed Night-1 reconstructions but require primary-video timestamp verification before GOLD admission. The latter two are strong primary-source targets but still need fuller state extraction. Evin's expert/trusted status is now independently supported by his TPI co-founder role, integral early involvement, and founding of the Newcastle Clocktower group.
+Ben's experienced/trusted status is independently supported by TPI. The first three have detailed Night-1 reconstructions but require primary-video timestamp verification before GOLD admission. `A Fond Farewell` now has primary-verified material state and explicit rationale, but executable reconstruction is blocked by missing production Traveller semantics. Evin remains the next strong primary-source target and independently qualifies through his TPI co-founder role, integral early involvement, and founding of the Newcastle Clocktower group.
 
 ### D5F-B4C — reconstruct expert Night 1 decisions — IN PROGRESS
 
-Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human Remains Of The Day`, and `Live and Imp-Person`. All three now have committed-prefix consequence calibration through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow and are published together as one report artifact. They remain `PRIMARY_VERIFICATION_PENDING`; executable reconstruction does not satisfy the GOLD primary-source gate.
+Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human Remains Of The Day`, and `Live and Imp-Person`. All three have committed-prefix consequence calibration through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow and are published together as one report artifact. They remain `PRIMARY_VERIFICATION_PENDING`; executable reconstruction does not satisfy the GOLD primary-source gate.
+
+`A Fond Farewell` is the complementary fourth Ben case: the primary material state is now verified, but it is intentionally **not** forced into the executable harness because five Travellers affect seating, adjacency, public alignment, and Chef semantics. B4 must not compress the 20-seat table to 15 base players or add fixture-local Traveller arithmetic.
 
 Latest accepted B4 executable checkpoint: branch HEAD `26b9afe72e72705f53dc225a79fd5be6e3b6195c` completed dedicated **SDE-2D5F expert-observed calibration run #31** successfully. The shared evidence layer now covers reliable/impaired numeric decisions and complete pair-domain descriptive prevalence without introducing scores, rankings, BAD labels, or evidence-tier promotion. PR #150 remains draft.
 
-Continue primary-video verification of the material setup/Night-1 state. Capture setup/seats, Drunk shown identity, Demon bluffs, Red Herring, relevant Spy/Recluse registrations, Poisoner context, first-night outputs, lifecycle stage, rationale, and player experience when known.
+Continue primary-video verification for the three secondary-reconstructed Ben cases and move the next fresh extraction effort to the independent Evin playthrough. `A Fond Farewell` no longer needs additional material Night-1 extraction unless a source contradiction appears. Separately decide whether Traveller support belongs in current product scope before attempting its production-owned legal counterfactuals.
 
 The reconstruction remains an evidence projection onto existing canonical state/legality owners. Do not hand-author a second legality model.
 
@@ -171,6 +173,7 @@ Current executable evidence:
 - `A Stud In Scarlet`: Chef, Drunk-shown-Empath, and fixed-target Fortune Teller legal alternatives recovered;
 - `Live and Imp-Person`: full Librarian pair domain, Chef values, and fixed-target Fortune Teller alternatives recovered;
 - `Human Remains Of The Day`: complete 273-candidate poisoned-Washerwoman pair domain plus the forced fixed-target Fortune Teller result recovered;
+- `A Fond Farewell`: primary state recovered, but legal-counterfactual execution is blocked until Traveller character/alignment/seating semantics have a production owner;
 - registration witnesses remain interaction-scoped evidence metadata rather than player-visible facts.
 
 ### D5F-B4E — compare observed choices to alternatives — IN PROGRESS
@@ -183,7 +186,7 @@ The shared descriptive feature report now covers A Stud's Drunk-shown-Empath thr
 
 Pair-domain prevalence is now also explicit. Human Remains' 273 poisoned-Washerwoman candidates contain 249 false candidates, 42 Demon-bluff-role candidates, 143 candidates touching an actual Evil seat, 78 touching the Demon, 78 touching the Minion, and 13 whose complete pair is actually Evil. The observed false Empath clue to the actual Minion+Demon has a descriptive signature shared by only 2 candidates. This is descriptive structure, not evidence that rare combinations are preferred.
 
-The current external catalog recurrence signal is strongest for narrative anchoring (7 tagged records), truth danger (6), and temporal consistency / impairment detectability (4 each). Treat these as evidence-collection priorities only. Role-function exposure, Red Herring ecology and a healthy-information floor remain less mature.
+The current external catalog recurrence signal is strongest for narrative anchoring (8 tagged records), truth danger (6), and temporal consistency / impairment detectability (4 each). `A Fond Farewell` also adds the first explicit `PLAYER_CHOICE_LIKELIHOOD` and `BELIEVABLE_COUNTERWORLD` tags plus a third Red-Herring-trajectory record. Treat these as evidence-collection priorities only. The two Ben rationales are choice-specific evidence, but they still share `st-ben-burns` and do not establish cross-expert generality.
 
 ### D5F-B4F — generalize with SILVER evidence
 
