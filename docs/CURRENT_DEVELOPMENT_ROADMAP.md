@@ -49,6 +49,7 @@ Always query live refs before executable edits.
 - External evidence seed: [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv)
 - Long-term pre-SDE-3 route: [`SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`](SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
+- Traveller boundary audit for primary-verified A Fond: [`SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`](SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md)
 
 ## 4. Frozen architecture / policy decisions
 
@@ -155,11 +156,11 @@ Ben's experienced/trusted status is independently supported by TPI. The first th
 
 Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human Remains Of The Day`, and `Live and Imp-Person`. All three have committed-prefix consequence calibration through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow and are published together as one report artifact. They remain `PRIMARY_VERIFICATION_PENDING`; executable reconstruction does not satisfy the GOLD primary-source gate.
 
-`A Fond Farewell` is the complementary fourth Ben case: the primary material state is now verified, but it is intentionally **not** forced into the executable harness because five Travellers affect seating, adjacency, public alignment, and Chef semantics. B4 must not compress the 20-seat table to 15 base players or add fixture-local Traveller arithmetic.
+`A Fond Farewell` is the complementary fourth Ben case: the primary material state is now verified, but it is intentionally **not** forced into the executable harness because five Travellers affect seating, adjacency, public alignment, and Chef semantics. The Traveller boundary audit confirms this is a production capability gap, not an evidence-fixture gap: `GameState` has only the four base character types, the TB script/catalog has no Traveller roles, and topology/setup-profile code treats every formal seat as a base setup seat. **Traveller implementation is deferred from B4**; do not compress the 20-seat table or add fixture-local Traveller arithmetic.
 
 Latest accepted B4 executable checkpoint: branch HEAD `26b9afe72e72705f53dc225a79fd5be6e3b6195c` completed dedicated **SDE-2D5F expert-observed calibration run #31** successfully. The shared evidence layer now covers reliable/impaired numeric decisions and complete pair-domain descriptive prevalence without introducing scores, rankings, BAD labels, or evidence-tier promotion. PR #150 remains draft.
 
-Continue primary-video verification for the three secondary-reconstructed Ben cases and move the next fresh extraction effort to the independent Evin playthrough. `A Fond Farewell` no longer needs additional material Night-1 extraction unless a source contradiction appears. Separately decide whether Traveller support belongs in current product scope before attempting its production-owned legal counterfactuals.
+Continue primary-video verification for the three secondary-reconstructed Ben cases and move the next fresh extraction effort to the independent Evin playthrough. `A Fond Farewell` no longer needs additional material Night-1 extraction unless a source contradiction appears. Traveller support is now explicitly deferred from the current B4 slice; if later adopted as a product goal, it must begin as a separate canonical-domain capability with full fan-out audit rather than as evidence-harness code.
 
 The reconstruction remains an evidence projection onto existing canonical state/legality owners. Do not hand-author a second legality model.
 
