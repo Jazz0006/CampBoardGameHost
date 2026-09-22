@@ -580,7 +580,7 @@ The first high-value candidates are:
 2. **Human Remains Of The Day** — Ben Burns — fully reconstructable from the current episode index, pending primary verification. High-value decision: poisoned Washerwoman misinformation with known Poisoner target; general early-game balancing rationale is also recorded, but is not choice-specific.
 3. **Live and Imp-Person** — Ben Burns — fully reconstructable from the current episode index, pending primary verification. High-value because Chef and Fortune Teller can use different interaction-scoped Recluse registration branches in the same Night 1.
 4. **Trouble Brewing - A Fond Farewell** — Ben Burns on the official Blood on the Clocktower channel — material Night-1 state is now primary-verified, including full table mapping, Traveller alignments, setup commitments, observed outputs, and two choice-specific rationales; executable legal-counterfactual recovery remains blocked by missing production Traveller semantics.
-5. **early TPI Trouble Brewing playthrough (4sfa8_kNxsQ)** — Evin — **ADMITTED GOLD for the primary-verified material Night-1 slice**. The recovered setup has Doug Chef, Claire Fortune Teller, Sarah-Regina Washerwoman, Lewis Scarlet Woman, Julian Imp, Marianna Drunk shown Monk, Filip Undertaker, and Michael Virgin. Primary timestamps verify WW Julian/Filip=Undertaker, Chef=1, Doug as Red Herring, and FT Doug+Sarah-Regina=YES. Demon bluffs remain unknown because the video does not show them; they are non-material to the admitted legality domains and cannot be used for bluff-policy conclusions.
+5. **early TPI Trouble Brewing playthrough (4sfa8_kNxsQ)** — Evin — **ADMITTED GOLD for the primary-verified material Night-1 slice**. The recovered setup has Doug Chef, Claire Fortune Teller, Sarah-Regina Washerwoman, Lewis Scarlet Woman, Julian Imp, Marianna Drunk shown Monk, Filip Undertaker, and Michael Virgin. Primary timestamps verify WW Julian/Filip=Undertaker, Chef=1, Doug as Red Herring, and FT Doug+Sarah-Regina=YES. Postgame primary material also verifies Demon bluffs Recluse/Slayer/Soldier and gives an explicit Red Herring rationale: Chef's information was especially damaging to Evil, so making Doug the Red Herring could make the table doubt Doug and his Chef information.
 
 The first three Ben cases are not three independent expert confirmations because they share the same principal Storyteller. A Stud is the first admitted GOLD case from `st-ben-burns`; the other two remain primary-verification candidates. Evin now contributes a second admitted GOLD decision slice under the independent key `st-evin`.
 
@@ -588,7 +588,7 @@ Primary provenance records:
 - `SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`
 - `SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`
 
-Both records separate primary-observed facts from rule-derived consequences and unknown hidden state.
+Both records separate primary-observed facts from rule-derived consequences. Evin's previously unknown Demon bluff triplet is now resolved by postgame primary imagery.
 
 ## 21. Observed expert choice + legal counterfactual contract
 
@@ -745,6 +745,8 @@ The recovered actual alignments contain **zero adjacent Evil pairs**, so the fun
 
 The Red Herring rationale adds a separate generic dimension: **player-choice likelihood / target ecology**. A Red Herring can be strategically relevant partly because the Fortune Teller is likely to select that player. Do not turn this into a fixed neighbor bonus from one expert case.
 
+Evin provides an independent Red Herring rationale through a **different mechanism**: Doug/Chef was selected because the Chef=1 information was especially harmful to Evil, and contaminating Doug with Red-Herring status could damage confidence in both the player and the information. This is direct primary evidence for **truth danger / credibility disruption**. The two expert rationales therefore do not justify one shared numeric bonus, but together they do support a more general constraint: Red Herring placement is a contextual downstream-information decision, not a random seat pick or a fixed neighbor heuristic.
+
 #### Traveller ownership blocker
 
 This case must **not** be made executable by stripping or compressing Travellers. Traveller seating and public alignment affect adjacency and therefore Chef semantics. The current production rules/domain surface contains no Traveller model identified by the B4 audit.
@@ -764,10 +766,10 @@ Use the following maturity labels only to decide what deserves further evidence 
 | interaction-scoped Spy/Recluse registration | official rules semantics + executable Live reconstruction | RULES_CONFIRMED_FOUNDATION | registration must not become persistent/global state |
 | impaired information may be true or false | official Drunk/poison semantics + shared A Stud numeric domain | RULES_CONFIRMED_FOUNDATION | preserve both truth and falsehood as legal descriptive possibilities; no false-at-all-costs rule |
 | narrative anchoring | 8 tagged external-catalog records, now including primary-verified A Fond explicit rationale | REPEATED_QUALITATIVE_CANDIDATE | retain as an independent policy dimension; no weight/threshold |
-| truth danger | 6 tagged records, including 3 explicit-rationale records | REPEATED_QUALITATIVE_CANDIDATE | retain as an independent policy dimension; no deterministic lie rule |
+| truth danger / credibility disruption | 7 tagged records, now including Evin's primary GOLD choice-specific Red Herring rationale | GOLD_SINGLE_EXPERT_PLUS_REPEATED_QUALITATIVE | retain as an independent policy dimension; strong enough to preserve in policy surface, not enough for a numeric weight or deterministic suppression rule |
 | temporal consistency / impairment detectability | 4 tagged records for each dimension, plus existing shared narrative-state architecture | REPEATED_QUALITATIVE_CANDIDATE | continue collecting cross-night evidence through the shared persistent narrative abstraction |
 | role-function exposure | current synthesis + primary-pending Live candidate | EXPERT_CANDIDATE_ONLY | keep contextual; do not freeze avoidance severity |
-| Red Herring ecology / player-choice likelihood | 3 tagged Red-Herring records plus primary-verified A Fond choice-specific rationale | EXPERT_CANDIDATE_ONLY | retain likely-target ecology as an independent dimension; no neighbor bonus, ordering rule, or weight |
+| Red Herring contextual utility | 4 tagged Red-Herring records plus independent explicit rationales from Ben (likely target ecology) and Evin (credibility disruption) | CROSS_EXPERT_CONTEXTUAL_FOUNDATION | Red Herring selection must remain context-sensitive and downstream-aware; do not collapse the two mechanisms into a fixed neighbor bonus, role-strength ordering, or scalar weight |
 | healthy-information floor | 2 tagged records | UNDER_EVIDENCED | keep open; no numeric floor yet |
 
 Catalog tag recurrence is a **curation signal**, not an independent statistical sample. The same source, Storyteller, or human classification can contribute correlated tags.
