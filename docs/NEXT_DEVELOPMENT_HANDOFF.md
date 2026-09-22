@@ -1,248 +1,376 @@
-# NEXT DEVELOPMENT HANDOFF — SDE-2D5F-B4 expert-observed first-night policy calibration
+# CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-09-22 Australia/Sydney  
-> This is the **only active handoff**.
+> Updated: 2026-09-23 Australia/Sydney  
+> Branch: `sde-2d5-calibration-policy-evidence`  
+> PR: **#150 — SDE-2D5: calibrate strategic policy evidence**  
+> PR #150 **MUST remain draft**. Do not merge unless the user explicitly says **“授权合并”**.
 
 ## 1. Read first
+
+Use these as the active authorities, in order:
 
 1. root `AGENTS.md`
 2. `docs/TESTING_STRATEGY.md`
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-4. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
-5. `docs/SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`
-6. `docs/SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`
-7. `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`
-8. `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`
-9. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`
-10. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`
-11. `docs/SDE_2D5F_CROSS_EXPERT_CONVERGENCE_AND_B4F_ENTRY_AUDIT_2026-09-23.md`
-12. `docs/SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`
-13. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
-14. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
-15. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
-16. this handoff
+4. `docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
+5. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+6. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
+7. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
+8. this handoff
 
-Do not reload deleted 2026-09-20 D5 correction/design files from Git history unless a concrete historical question requires them.
+Evidence/provenance references when needed:
 
-## 2. Live branch
+- `docs/SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`
+- `docs/SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+- `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+- `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+- `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`
+- `docs/SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`
 
-Branch: `sde-2d5-calibration-policy-evidence`
+Do not revive archived pre-SDE-3 execution routes as parallel authority.
 
-PR #150 remains **draft**. Do not merge unless the user explicitly says **“授权合并”**.
+## 2. Live-state rule
 
-Always query live branch/PR/checks before editing.
+Before any executable edit:
 
-## 3. Why the route changed
+1. query live branch HEAD;
+2. query PR #150 state/draft flag;
+3. query live `main`;
+4. query current checks;
+5. never assume the SHA recorded in a prior chat is still current.
 
-Two calibration approaches were rejected as policy authorities:
+The PR must stay **draft**.
 
-1. the earlier extreme 7-player fixture was already nearly solved by fixed information;
-2. the replacement seven clean scenarios deliberately excluded Drunk and froze registration-dependent context.
+## 3. Current program state
 
-A second correction is methodological: one-person labels are not strong enough to define expert Storyteller policy.
+Engineering through SDE-2D4 is complete.
 
-The active route is **expert-observation-first**.
+SDE-2D5 evidence/calibration has reached a stable checkpoint:
 
-## 4. Current policy summary
+- two independent admitted GOLD decision slices:
+  - Ben Burns / `A Stud In Scarlet` / `st-ben-burns`;
+  - Evin 2019 first full playthrough / `st-evin`;
+- A Fond Farewell is primary-verified but remains Traveller-execution-blocked;
+- executable expert counterfactual evidence is green;
+- executable ct-01 SILVER external-validity replay is green;
+- B4F targeted evidence gaps are explicit;
+- broad video/source discovery is no longer the default.
 
-- legal candidate enumeration remains complete and rules-owned;
-- Spy/Recluse registration remains interaction-scoped;
-- BEGINNER thematic prior: Spy normally hides as Good; Recluse normally registers as Evil;
-- whole-bundle health may materially override that prior;
-- avoid Librarian exposing Recluse and strongly avoid Investigator exposing Spy when healthy alternatives exist;
-- Chef/Empath are fixed only when registration cannot change their legal healthy value;
-- impaired information should preserve a believable cross-interaction perceived world through a persistent role-agnostic narrative state; it must not degrade into independent nightly lies;
-- whole-bundle interaction, role-function exposure, bluff usability and confirmation chains matter in addition to strategic topology;
-- no opaque global score;
-- do not implement policy as named-role, exact-seat, or known-fixture special cases unless a real rules distinction requires it.
+Evidence acquisition is now **parallel / external / continuous**. It no longer blocks SDE-3A/B/C.
 
-## 5. Shared impaired-narrative invariant
-
-Treat examples involving a Drunk or poisoned information role as examples of one generic requirement, not separate implementation tasks.
-
-Future production design must provide a shared persistent narrative state over:
+Current route:
 
 ~~~text
-perceived role
-+ committed observation history
-+ current visible history
-+ believable counterworld intent
-+ current legal outcome domain
+SDE-3A engine / feature / policy contract                  CURRENT
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT
+SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
+SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
+SDE-3E automatic production cutover                         BLOCKED ON 3D
 ~~~
 
-The shared owner chooses a coherent legal continuation. Named role modules only supply role-specific legality/semantics.
+## 4. Why SDE-3 may proceed now
 
-Before accepting an implementation, audit for suspicious branches keyed directly to a named role, a known fixture, exact seats, or one previously discussed scenario. Such branches are acceptable only when they encode a genuine rules distinction, not policy convenience.
+Current evidence is sufficient to establish architecture and qualitative policy dimensions, even though it is not sufficient to freeze final numeric weights / gates.
 
-Tests must prove the generic abstraction and fanout across multiple information shapes. Passing one named-role example is not evidence that the general contract is implemented.
+Stable foundations include:
 
-## 6. Evidence hierarchy
+- rules/canonical producers own legality;
+- SDE owns policy among legal alternatives;
+- player-controlled targets remain player-owned;
+- Spy/Recluse registration is interaction-scoped;
+- Drunk/poisoned information may be true or false;
+- repeated impaired information needs one shared persistent perceived-world/narrative owner;
+- Demon bluffs are a joint SDE output until committed;
+- Red Herring is a contextual setup precommit;
+- topology is important but not sufficient;
+- confirmation chains, healthy-information utility, truth danger / credibility disruption, role-function exposure, bluff usability, narrative coherence and future flexibility remain separate dimensions;
+- no opaque global scalar;
+- no fixture-specific policy branches.
+
+What remains under-evidenced is **how strongly to trade these dimensions off**, not whether the engine should represent them.
+
+## 5. Current evidence maturity
+
+### Cross-expert foundation
+
+**Red Herring contextual utility**
+
+- Ben: likely Fortune Teller target ecology;
+- Evin: Chef truth danger / credibility disruption.
+
+Do not collapse these into a fixed neighbour bonus, role bonus or scalar weight.
+
+### Strong but not final
+
+**Truth danger / credibility disruption**
+
+- Evin primary GOLD explicit rationale;
+- ct-02 SILVER explicit Storyteller rationale;
+- repeated supporting qualitative evidence.
+
+Keep the dimension. Do not create a deterministic “suppress the strongest truth” rule.
+
+### Single-expert explicit + qualitative
+
+**Impaired-information believability / perceived-world coherence**
+
+Ben supplies explicit primary rationale, but independent GOLD confirmation is still missing.
+
+The architecture may implement the shared persistent narrative mechanism now. Final preference severity remains calibratable.
+
+### Observation-only / weak preference evidence
+
+- role-function exposure severity;
+- Demon-bluff triplet ordering;
+- exact healthy-information floor;
+- quantitative multi-axis tradeoffs.
+
+These do not justify final weights or hard production cutover.
+
+## 6. External evidence track
+
+ClocktowerEvidenceLab should continue collecting full real games.
+
+CampBoardGameHost should request new evidence only for named gaps in:
+
+`docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
+
+Priority:
+
+1. independent experienced Storyteller with explicit healthy-information floor / middle-band rationale;
+2. independent-expert impaired-information believability rationale, ideally cross-night;
+3. explicit role-function exposure rationale;
+4. explicit Demon-bluff triplet rationale;
+5. broader executable corpus for multi-axis tradeoffs.
+
+Do not resume broad source collection in this repository.
+
+## 7. Current engineering target — SDE-3A
+
+**Do not start by inventing scoring weights.**
+
+First perform a live architecture/fanout audit.
+
+Audit at minimum:
+
+- current `StorytellerDecisionEngine`;
+- current decision context / request / result types;
+- production shadow integration;
+- setup recommendation ownership still touching SDE-controlled outputs;
+- exact/topology consequence projectors;
+- first-night bundle / proposition materialization;
+- historical/revision state needed for later replay;
+- legacy `ConsequenceEvaluator` and related heuristic consumers;
+- persistence surfaces that could own a future DecisionTrace.
+
+Produce an owner map before shared-contract edits.
+
+## 8. Target SDE-3A contracts
+
+The target typed architecture is:
 
 ~~~text
-GOLD
-    verified experienced/trusted Storyteller real games
-    reconstructable setup + Night 1 decision state
-    explicit rationale preferred
+DecisionCandidate
+    legal outcome at one exact lifecycle stage
 
-SILVER
-    high-fidelity structured real-game logs
-    expertise not independently established
+DecisionFeatures
+    interpretable independent consequence dimensions
 
-QUALITATIVE
-    tutorials / postmortems / repeated experienced-community discussion
+PolicyEvaluation
+    survivor / rejection / preference reasons
+    policy version
 
-DIAGNOSTIC_ONLY
-    synthetic / extreme / counterfactual fixtures
+DecisionTrace
+    replayable diagnostic record
 ~~~
 
-The current external catalog contains **two admitted GOLD decision slices from two independent Storytellers**: `A Stud In Scarlet` / `st-ben-burns`, and Evin's 2019 first full playthrough / `st-evin`. Evin's postgame primary image verifies Demon bluffs Recluse / Slayer / Soldier, and his postgame review explicitly explains the Red Herring choice around Chef truth danger / credibility disruption. Two other detailed Ben games remain optional primary-verification targets; `A Fond Farewell` remains primary-verified but blocked on production Traveller legality.
+Feature families should remain explicit:
 
-`A Fond Farewell` has now moved beyond metadata-only discovery. The official primary video was manually checked for material Night-1 state on 2026-09-22, including full radial player↔role mapping, Traveller alignments, Drunk shown Chef, Red Herring, Demon bluffs, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`. The case is still not admitted GOLD because its five Travellers are not represented by the current production rules/domain model, so production-owned legal counterfactual recovery is unavailable. The official 2019 Evin recording has been directly inspected and admitted as GOLD for the executable material slice. The postgame material additionally resolves Demon bluffs and gives explicit Red-Herring rationale. See `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`, the primary reconstruction, and the cross-expert B4F entry audit.
+- strategic topology / cover;
+- confirmation-chain structure;
+- healthy-information utility;
+- truth danger / credibility disruption;
+- role-function exposure;
+- impaired narrative coherence / detectability;
+- bluff usability / route diversity;
+- future flexibility.
 
-## 7. Interpretation rules
+V1 must not force them into one opaque score.
 
-- reconstruct the legal alternatives that existed at the exact lifecycle stage;
-- chosen A does not imply all unchosen alternatives are bad;
-- explicit rationale/rejection is strong evidence;
-- repeated comparable choices strengthen a preference;
-- cross-source consistency strengthens a preference;
-- one silent observed choice is weak evidence;
-- final winner is not a quality label.
+## 9. Target SDE-3B policy
 
-## 8. NEXT — execute in this order
+First provisional profile:
 
-### Step 1 — audit/delete obsolete clean calibration code — COMPLETE
+`BEGINNER_CONSERVATIVE_V1`
 
-Deleted the two representative-clean-corpus Kotlin files. They had no external task/report/resource wiring and protected no unique durable contract. Pair legality, numeric semantics, registration witnesses, and setup/deal behavior remain covered at their owning typed tests.
-
-Do not restore the seven clean scenarios for calibration.
-
-### Step 2 — GOLD source discovery — SEEDED / CONTINUE SELECTIVELY
-
-The catalog now tracks:
-
-- Ben Burns — `A Stud In Scarlet` — `PRIMARY_STATE_VERIFIED_EXECUTABLE`, **ADMITTED GOLD**;
-- Evin — official 2019 TPI **8-player** Trouble Brewing playthrough — `PRIMARY_STATE_VERIFIED_EXECUTABLE_MATERIAL_SLICE`, **ADMITTED GOLD** for WW/Chef/RH/FT; postgame primary imagery also verifies Demon bluffs Recluse / Slayer / Soldier and the review supplies explicit Red-Herring rationale;
-- Ben Burns — `Human Remains Of The Day` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
-- Ben Burns — `Live and Imp-Person` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
-- Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PRIMARY_STATE_VERIFIED_TRAVELLER_EXECUTION_BLOCKED`; primary Night-1 state and two choice-specific rationales recovered.
-
-TPI independently verifies Ben's long-running involvement and trusted/expert status. Evin is independently qualified as experienced/trusted through his TPI co-founder role, integral early involvement, founding of the Newcastle Clocktower group, and the official TPI-hosted early Trouble Brewing game. His material Night-1 slice is now primary-verified and executable, so there is no remaining GOLD blocker for that slice.
-
-Do not manufacture GOLD by treating the detailed secondary episode index as final verification.
-
-The source catalog now stores `storyteller_independence_key` explicitly. Ben's four candidates all use `st-ben-burns`; Evin uses `st-evin`. Blank means independence has not been established and must not be counted as a distinct expert.
-
-### Step 3 — primary verification + executable case reconstruction — IN PROGRESS
-
-Executable canonical reconstructions now exist for the first three Ben candidates. All three detailed Ben candidates now have executable committed-prefix consequence reports through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 task/workflow. The workflow publishes A Stud, Live and Imp-Person, and Human Remains reports together as one artifact.
-
-The latest accepted B4 executable checkpoint, `26b9afe72e72705f53dc225a79fd5be6e3b6195c`, passed dedicated expert-observed calibration **run #31**. The evidence harness now routes impaired numeric decisions through the shared numeric projector and summarizes complete pair legal domains through a shared typed prevalence projection. This adds no score, ranking, BAD/ACCEPTABLE labeling, or GOLD promotion.
-
-`A Stud In Scarlet` is now `PRIMARY_VERIFIED` and admitted GOLD after primary-video checking. `Live and Imp-Person` and `Human Remains Of The Day` remain `PRIMARY_VERIFICATION_PENDING`; continue verifying those two against their primary recordings and do not promote them from secondary reconstruction alone.
-
-`A Fond Farewell` is now the inverse state: primary verification is complete, but executable projection is deliberately blocked by missing Traveller semantics. The detailed production-boundary audit is `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`. It confirms that this is not a one-file enum gap: base setup quotas, player-count knowledge, strategic topology and setup witness feasibility all assume every formal seat is a base Townsfolk/Outsider/Minion/Demon participant. Traveller implementation is therefore **deferred from B4**. Do not fake execution by dropping Travellers, compressing the circle, or implementing evidence-local Chef arithmetic.
-
-High-value cases:
-
-- `A Stud In Scarlet`: Drunk shown Empath, Drunk Empath 0, FT YES via Recluse-as-Demon;
-- `Human Remains Of The Day`: known Poisoner target plus poisoned Washerwoman misinformation;
-- `Live and Imp-Person`: Librarian/Chef/FT bundle with interaction-scoped Recluse registration.
-
-A smaller verified corpus is better than a larger ambiguous one.
-
-### Step 4 — model observed choice + legal counterfactuals
-
-Implement an **evidence reconstruction/projection harness**, not a second rules engine:
+Preferred policy shape:
 
 ~~~text
-committed prefix at decision time
+legal candidates
     ↓
-production legality owner
+hard lifecycle / legality boundaries
     ↓
-complete legal alternative set
+catastrophic / near-catastrophic rejection
     ↓
-observed expert choice matched to one legal candidate/witness
+ordered interpretable soft priorities
     ↓
-existing proposition materialization
+equivalence band
     ↓
-topology-first real-case consequence
-    ↓
-whole-bundle diagnostics
-
-Exact registration/mechanical semantics remain authoritative for legality and witness recovery. Exhaustive possible-world consequence is an optional deep audit only; bounded D4 differential tests own broad topology/exhaustive parity.
+seeded random selection
 ~~~
 
-Keep earlier committed choices and already-made player-controlled choices fixed. Do not freeze later uncommitted Storyteller choices to their eventual observed values; that would leak hindsight into the counterfactual.
+Allow conservative qualitative policy before final numeric calibration.
 
-Do not encode `unchosen = bad`.
+Examples of acceptable V1 intent:
 
-Numeric witness projection is now **implemented** in the B4 evidence bridge. `FirstNightNumericLegalDomain` remains the player-visible value owner, while `Sde2D5FExpertObservedNumericEvidenceProjector` reuses existing exact observation/registration semantics to recover witness alternatives. The same projector now covers reliable and impaired numeric evidence; do not reintroduce a Drunk-specific numeric evidence path or push evidence-only witness identity into the production legal candidate.
+- avoid catastrophic confirmation / Evil-topology collapse when alternatives exist;
+- do not leave Good with effectively no usable information;
+- preserve a coherent impaired perceived world;
+- treat obvious role-function exposure as a contextual cost;
+- evaluate Red Herring in downstream information context;
+- prefer usable beginner bluff routes;
+- preserve future flexibility;
+- use randomness instead of fake precision when evidence does not distinguish survivors.
 
-### Step 5 — extract repeated policy constraints
+## 10. SDE-3C trace/replay requirement
 
-Candidate dimensions include thematic registration prior, role-function exposure avoidance, confirmation-chain avoidance, healthy-information floor, impaired-information narrative consistency, bluff narrative support, Red Herring placement, and player-choice likelihood / target ecology. `A Fond Farewell` supplies choice-specific Ben rationale for both believable impaired information and Red Herring placement around likely Fortune Teller target behavior; keep these as dimensions, not weights.
+Before automatic cutover, persist a replayable diagnostic trace with:
 
-Use the current evidence-maturity ledger rather than inventing weights:
+- policy version;
+- evidence/corpus checkpoint;
+- lifecycle / state revision;
+- complete legal candidate IDs;
+- typed feature values;
+- rejection/survival reasons;
+- recommended candidate;
+- actual committed candidate;
+- manual override flag;
+- optional structured/textual override reason.
 
-- rules-confirmed foundations: interaction-scoped registration; impaired information may legally be true or false;
-- repeated qualitative candidates: narrative anchoring, truth danger, temporal consistency / impairment detectability;
-- expert-candidate-only or under-evidenced: role-function exposure severity, Red Herring ordering, healthy-information floor.
+A human override is useful calibration evidence but is **not automatically a quality label**.
 
-Catalog tag counts are curation signals, not independent statistical observations. Only promote a policy rule when evidence is repeated or explicitly reasoned, and never from candidate rarity alone.
+Historical game state must be replayable under multiple policy versions without mutating historical truth.
 
-### Step 6 — SILVER generalization
+## 11. Continuous calibration model
 
-After GOLD patterns exist, test them against structured ClockTracker cases.
+No uncontrolled production online learning.
 
-### Step 7 — bounded human adjudication
+Do not train on win/loss as a direct Storyteller-quality label.
 
-Ask the project owner only about ambiguous reconstruction, conflicting expert evidence, or BEGINNER-specific adaptation.
+Long-term loop:
 
-Do not return to large synthetic labeling sessions.
+~~~text
+ClocktowerEvidenceLab / exported DecisionTrace
+        ↓
+versioned evidence corpus
+        ↓
+material DecisionSlices
+        ↓
+CampBoardGameHost production legality
+        ↓
+feature projection
+        ↓
+offline policy comparison / replay
+        ↓
+review / regression gate
+        ↓
+explicit new policy version
+~~~
 
-## 9. Explicit non-goals
+Policy evolution is expected and intentional.
 
-Do not derive D5F-C thresholds, open sealed holdout, cut production selection over, rewrite core legality/topology architecture, remove compatibility policy still used in production, begin SDE-3, or merge PR #150.
+## 12. Blocked boundaries
 
-## 10. Current checkpoint and next success condition
+Still blocked:
 
-Completed in this checkpoint:
+### SDE-3D calibrated policy freeze
 
-1. obsolete clean-corpus code/tests deleted after confirming no unique durable coverage;
-2. GOLD qualification rubric added to the synthesis/catalog;
-3. five candidate expert sources recorded;
-4. generic pair/numeric/boolean evidence projectors reuse production legality and witness owners; reliable and impaired numeric evidence now share the same numeric projector;
-5. shared canonical-world / claim / consequence projection avoids fixture-specific rules;
-6. `A Stud In Scarlet` committed-prefix topology report is green and artifacted, and its material Night-1 state is now primary-verified;
-7. `Live and Imp-Person` committed-prefix consequence report is green and artifacted;
-8. `Human Remains Of The Day` committed-prefix consequence report is green and artifacted, preserving all 273 legal poisoned-Washerwoman candidates while summarizing them by strategic signature;
-9. dedicated `:app:sde2D5FExpertObservedCalibration` separates current B4 feedback from the historical multi-hour D5 calibration workload;
-10. `A Fond Farewell` material Night-1 state is primary-verified and preserved in a dedicated reconstruction document; its five-Traveller dependency is explicitly blocked from fixture-local execution;
-11. the Evin 2019 source is provenance-triangulated in a dedicated audit; indexed-web extraction was exhausted without inventing Night-1 state, and explicit anti-inference guards now prevent substitution of the generic recommended 8-player bag or an unrelated early TPI video lineup.
+Do not freeze:
 
-Measured boundary: a 9-player exhaustive real-case possible-world sample remained multi-minute even when reduced to one stage. Real expert-case consequence therefore stays topology-first. D4 bounded differential tests own broad topology/exhaustive correctness; exact real-case evaluation remains an exceptional deep-audit hook.
+- numeric healthy-information bands;
+- exact role-function exposure severity;
+- bluff-triplet preference weights;
+- independent-expert impaired-believability strength;
+- global multi-axis weights.
 
-Substantive result so far:
+### SDE-3E automatic production cutover
 
-- A Stud's currently reconstructed Chef, Drunk-Empath, and Fortune Teller alternatives all leave the evil-seat strategic quotient at 56 -> 56. This is a valid neutral result, not a failed harness; the case's current value lies primarily in registration and impaired-information evidence.
-  The descriptive feature report now additionally records Drunk-Empath `0=FALSE` (observed), `1=TRUE`, `2=FALSE`, with no special registration required; semantic truth and registration are separate axes.
-- Live is the stronger interaction-scoped registration case: the same Recluse is naturally unregistered for observed Chef=1 while the observed Fortune Teller YES uses a Recluse-as-Demon witness.
-- Human Remains exposes the limit of topology-only policy evidence: all 273 legal poisoned-Washerwoman candidates collapse to one strategic-after signature at 42 -> 42. The later fixed-target Fortune Teller result is forced and also remains 42 -> 42. This case therefore needs non-topology dimensions such as narrative anchoring, truth danger, role-function exposure and confirmation structure.
-  The new descriptive prevalence view shows 24/273 truthful versus 249/273 false candidates, 42 Demon-bluff-role candidates, 143 touching actual Evil, 78 touching the Demon, 78 touching the Minion, and only 13 all-Evil pairs. The observed false Empath clue to the actual Minion+Demon shares its complete descriptive signature with 1 other candidate. Do not turn this narrowness into a preference score.
+Do not make the provisional policy the sole automatic authority before:
 
-Next success condition:
+- SDE-3A typed contracts are stable;
+- SDE-3B is regression-safe;
+- SDE-3C shadow / trace / replay is demonstrated;
+- relevant SDE-3D evidence gate is satisfied;
+- manual Experienced-mode override remains available.
 
-1. CampBoardGameHost B4F-A/B and B4F-C target specification are complete; do **not** invent another app-side calibration slice merely to keep moving;
-2. targeted evidence acquisition is external / waiting and should be driven by `SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`;
-3. first acquisition priority is an independent experienced Storyteller case with explicit healthy-information floor / middle-band rationale;
-4. second priority is independent-expert impaired-information believability rationale, ideally recurring/cross-night;
-5. third/fourth priorities are explicit role-function exposure rationale and Demon-bluff triplet rationale;
-6. when a new case arrives, reconstruct only its material decision slice, record an independence key, and recover alternatives through production owners;
-7. keep A Stud + Evin as the two admitted independent GOLD anchors and ct-01 as executable SILVER external-validity evidence;
-8. keep `A Fond Farewell` primary-verified but Traveller-execution-blocked;
-9. keep D5F-C and SDE-3 blocked; no numeric gates, weights, or production policy cutover yet.
+## 13. Legacy cleanup boundary
 
-Code-smell checkpoint: named role adapters are acceptable only at the legality/proposition semantic boundary. Cross-case evidence projection and later persistent impaired narrative policy must remain shared and information-shape/history based.
+Do not delete legacy recommendation authority at the beginning of SDE-3A.
 
-Do not manufacture GOLD evidence if public material is insufficient; report the gap and use the strongest available evidence tier.
+Retirement order:
+
+~~~text
+typed SDE-3 contracts
+→ shadow evaluation
+→ provisional advisory policy
+→ evidence-calibrated policy
+→ production cutover
+→ fanout retirement audit
+→ delete obsolete legacy authority
+~~~
+
+Known retirement targets include:
+
+- `recommendation/dynamic/ConsequenceEvaluator`;
+- heuristic `evilAdvantage` / related stale pressure state where no longer authoritative;
+- setup `bluffDifficulty` strategic authority after SDE bluff ownership is validated;
+- superseded recommendation tests/scaffolding after stronger typed coverage exists.
+
+## 14. Validation
+
+Follow `AGENTS.md` and `TESTING_STRATEGY.md`.
+
+For the next architecture/audit step, documentation-only findings do not require Android regression.
+
+Once shared contracts change:
+
+- perform mandatory producer/consumer fanout audit;
+- use the narrowest durable typed test at the true owner;
+- run T1/T2 according to affected semantics;
+- use T3 evidence harnesses only when their evidence surface is affected;
+- use `[full-ci]` at the logical acceptance checkpoint.
+
+Do not manufacture RED for behavior-preserving refactoring.
+
+## 15. Historical evidence checkpoint
+
+The bounded B4F SILVER workload is:
+
+`:app:sde2D5FB4FSilverGeneralization`
+
+Accepted evidence run:
+
+- run #3;
+- head `17254848e47abf05c1b7648948ae8b47a89f9e6f`;
+- success;
+- about 7 minutes.
+
+The old external-human auto-workflow that could take ~2h48m has been retired.
+
+## 16. Next conversation task
+
+Start **SDE-3A architecture / fanout audit**.
+
+Do not modify production code until the audit answers:
+
+1. Which current type should own the legal candidate identity?
+2. Which existing projectors already expose the required feature primitives?
+3. Which feature primitives are missing versus merely hidden in old reports?
+4. Where should policy evaluation live?
+5. What is the minimal DecisionTrace persistence boundary?
+6. Which current production path can be migrated first in shadow mode without cutover?
+7. Which legacy owners remain authoritative during the migration?
+
+Then propose the smallest testable SDE-3A implementation slice.
+
+Do not begin with weights, numeric thresholds, or broad legacy deletion.
