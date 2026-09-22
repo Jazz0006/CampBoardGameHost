@@ -9,9 +9,9 @@
 
 This document records the material first-night state directly recovered from the primary recording and the supplied primary-video setup screenshot.
 
-The recording does not expose the Demon bluff triplet. A later comment-level observation mentions Recluse as a shown/claimed identity, but that does not prove Recluse was an official Demon bluff. The canonical reconstruction therefore keeps Demon bluffs unknown.
+A postgame primary screenshot exposes the three Demon bluff icons as Recluse, Slayer, and Soldier. This also resolves the earlier comment-level Recluse hint without relying on that secondary inference.
 
-That missing field is not used by the current production legality domains for the reconstructed Washerwoman, Chef, Red Herring, or fixed-target Fortune Teller decision slices.
+The postgame review adds an explicit Evin rationale for the Red Herring placement: Doug/Chef was selected because Chef's information was particularly damaging to Evil, and making Doug the Red Herring could cause the table to doubt Doug and his Chef information.
 
 ## 2. Primary-verified seating
 
@@ -39,7 +39,7 @@ The eight-player setup therefore contains five actual Townsfolk, one Outsider (D
 | 06:49 | Fortune Teller Claire selects Doug + Sarah-Regina | OBSERVED_PLAYER_CHOICE |
 | 06:55 | Claire receives YES; the recording explains that Doug is the Red Herring | OBSERVED |
 
-No choice-specific Evin rationale was recovered for the Washerwoman pair, Chef number, or Red Herring placement.
+No choice-specific Evin rationale was recovered for the Washerwoman pair or Chef number. A postgame review explicitly explains the Red Herring placement: Doug/Chef was chosen because Chef's information was bad for Evil, so a Fortune Teller hit on Doug could undermine confidence in Doug and the Chef information.
 
 ## 4. Rule-derived consequences
 
@@ -50,15 +50,19 @@ These statements are derived from the verified state and production rules rather
 - Doug is the Red Herring, so Claire's Doug + Sarah-Regina check must return YES despite neither target being the actual Demon.
 - No Spy or Recluse is in the reconstructed actual setup, so none of these observations needs a special registration witness.
 
-## 5. Demon-bluff boundary
+## 5. Demon bluffs and postgame rationale
 
-Demon bluffs remain:
+Primary postgame imagery identifies the Demon bluff triplet as:
 
-`UNKNOWN_NOT_SHOWN_IN_PRIMARY`
+- Recluse;
+- Slayer;
+- Soldier.
 
-A comment-level mention of Recluse is retained only as secondary/unverified context. Do not promote it into the canonical Demon bluff set and do not infer that Julian necessarily used a provided bluff merely because Recluse appeared later as a claim/shown identity.
+This replaces the earlier `UNKNOWN_NOT_SHOWN_IN_PRIMARY` state. The prior comment-level Recluse observation is no longer needed to establish bluff membership.
 
-This unknown field means the case must not be used as direct evidence for Demon-bluff selection policy. It does not block the current decision slices because those legal domains do not depend on the bluff triplet.
+The same postgame review provides a choice-specific Red Herring rationale: Doug's Chef=1 information was dangerous to Evil, so assigning Doug as Red Herring could make later Fortune Teller evidence cast doubt on Doug and on the Chef result.
+
+This is evidence for **truth danger / credibility disruption**, not for a universal rule such as “always put the Red Herring on the strongest information role.” The exact decision still depends on the whole setup and likely player interactions.
 
 ## 6. GOLD decision-slice qualification
 
@@ -71,9 +75,10 @@ For the current Evin slice:
 - material seats/roles/shown-role state: primary-verified;
 - observed Washerwoman / Chef / Red Herring / Fortune Teller trajectory: primary-verified;
 - production-owned legal alternatives: executable;
-- missing Demon bluffs: non-material to these admitted legality domains.
+- Demon bluffs: primary-verified as Recluse / Slayer / Soldier;
+- Red Herring rationale: primary postgame explanation recovered.
 
-The case may therefore contribute GOLD evidence for the reconstructed decision slice while remaining unusable for Demon-bluff-policy conclusions.
+The case therefore contributes GOLD evidence for the reconstructed decision slice. The bluff triplet is now also usable as an observed expert bluff-output sample, although one observed triplet does not establish a general bluff-selection preference.
 
 ## 7. Interpretation guard
 
