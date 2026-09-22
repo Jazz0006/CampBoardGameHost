@@ -517,6 +517,18 @@ The following still require calibration rather than arbitrary constants:
 
 Do not freeze these from intuition alone.
 
+This does **not** block provisional implementation of the typed feature surfaces or a conservative versioned policy. SDE-3 may represent these dimensions now and use qualitative hard/soft boundaries where evidence is already strong enough, provided:
+
+- unfrozen dimensions remain explicit and inspectable;
+- arbitrary numeric weights are not invented to create false precision;
+- effectively equivalent healthy candidates may remain tied and be selected with seeded randomness;
+- the policy is versioned and replayable;
+- final calibrated gates / production cutover remain separately blocked.
+
+Current provisional-policy authority:
+
+`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`.
+
 ## 18. Frozen summary
 
 The current policy direction is:
@@ -530,8 +542,10 @@ For current execution, read:
 
 1. `CURRENT_DEVELOPMENT_ROADMAP.md`;
 2. `NEXT_DEVELOPMENT_HANDOFF.md`;
-3. this synthesis;
-4. `SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`.
+3. `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`;
+4. this synthesis;
+5. `SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`;
+6. `SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv` when source-level detail is needed.
 
 The 2026-09-20 D5 policy-correction, extreme-fixture-correction and representative-clean-corpus design documents were removed from active docs after their valid conclusions were folded into this synthesis. Git history is sufficient for historical traceability.
 
