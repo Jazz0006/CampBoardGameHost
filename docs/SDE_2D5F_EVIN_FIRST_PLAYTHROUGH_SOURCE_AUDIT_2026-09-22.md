@@ -24,8 +24,8 @@ Red Herring                             PRIMARY VERIFIED
 Washerwoman output                      PRIMARY VERIFIED
 Chef output                             PRIMARY VERIFIED
 Fortune Teller targets/result           PRIMARY VERIFIED
-Demon bluff triplet                     UNKNOWN / NOT SHOWN
-choice-specific rationale               NOT RECOVERED
+Demon bluff triplet                     PRIMARY VERIFIED
+choice-specific rationale               PRIMARY VERIFIED FOR RED HERRING
 production legal-counterfactual replay  EXECUTABLE FOR MATERIAL SLICE
 GOLD decision-slice admission           YES
 ```
@@ -63,25 +63,25 @@ The direct primary review recovered:
 - 06:15 Washerwoman Sarah-Regina learns Julian or Filip is the Undertaker;
 - 06:27 Chef Doug receives 1;
 - 06:49 Fortune Teller Claire selects Doug + Sarah-Regina;
-- 06:55 Claire receives YES because Doug is the Red Herring.
+- 06:55 Claire receives YES because Doug is the Red Herring;
+- postgame screenshot: Demon bluffs = Recluse / Slayer / Soldier;
+- postgame review: Evin explains that Doug/Chef was selected as Red Herring because Chef's information was especially damaging to Evil, so Red-Herring contamination could make the table doubt Doug and the Chef information.
 
 The production evidence harness now reconstructs the same state and asks existing legality owners for the legal alternatives rather than encoding hand-authored outcome rules.
 
-## 4. Demon-bluff boundary
+## 4. Demon-bluff and rationale update
 
-The Demon bluff triplet is not shown in the recovered primary material.
-
-A comment-level observation mentions Recluse as a shown/claimed identity, but that is insufficient to establish that Recluse was one of the official Demon bluffs. The canonical record therefore keeps:
+A later primary postgame screenshot resolves the bluff triplet directly:
 
 ```text
-Demon bluffs = UNKNOWN_NOT_SHOWN_IN_PRIMARY
+Demon bluffs = Recluse / Slayer / Soldier
 ```
 
-Do not infer a bluff from a later claim.
+This supersedes the earlier unknown-bluff boundary. The prior comment-level Recluse hint is retained only as corroborating secondary context.
 
-This unknown field does **not** block the current GOLD decision slice because the production legality domains for the reconstructed Washerwoman clue, Chef number, Red Herring candidate set, and fixed-target Fortune Teller result do not depend on Demon bluffs.
+The postgame explanation also recovers a choice-specific rationale for Red Herring: Doug's Chef information materially hurt Evil, and making Doug the Red Herring could make other players distrust Doug and his information after a Fortune Teller hit.
 
-The case must not be used as direct evidence for Demon-bluff selection policy.
+This is a high-value primary rationale for truth danger / credibility disruption. It is not permission to hard-code Chef, seat 1, or a role-strength ordering into policy.
 
 ## 5. Rule-derived consequences
 
