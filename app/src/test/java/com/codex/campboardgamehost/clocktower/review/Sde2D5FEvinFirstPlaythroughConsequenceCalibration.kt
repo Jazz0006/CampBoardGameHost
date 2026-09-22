@@ -23,11 +23,13 @@ internal object Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder {
 
     fun build(): Sde2D5FEvinFirstPlaythroughConsequenceCalibration {
         val reconstructed = Sde2D5FEvinFirstPlaythroughCandidateBuilder.build()
-        val context = Sde2D5FExpertObservedConsequenceProjector.context(
-            caseId = reconstructed.caseId,
-            game = reconstructed.game,
-            roleDefinitions = roles,
-        )
+        val context = diagnosticStage("context") {
+            Sde2D5FExpertObservedConsequenceProjector.context(
+                caseId = reconstructed.caseId,
+                game = reconstructed.game,
+                roleDefinitions = roles,
+            )
+        }
 
         val washerwomanClaims = reconstructed.washerwoman.alternatives.associate { alternative ->
             alternative.candidateId to Sde2D5FExpertObservedConsequenceProjector.projectPairClaim(
@@ -39,12 +41,14 @@ internal object Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder {
             )
         }
         val washerwomanObservedId = reconstructed.washerwoman.observedAlternative.candidateId
-        val washerwomanStage = Sde2D5FExpertObservedConsequenceProjector.evaluateCommittedPrefix(
-            context = context,
-            stageId = "${reconstructed.caseId}-washerwoman",
-            committedPrefix = emptyList(),
-            candidates = washerwomanClaims,
-        )
+        val washerwomanStage = diagnosticStage("washerwoman consequence") {
+            Sde2D5FExpertObservedConsequenceProjector.evaluateCommittedPrefix(
+                context = context,
+                stageId = "${reconstructed.caseId}-washerwoman",
+                committedPrefix = emptyList(),
+                candidates = washerwomanClaims,
+            )
+        }
 
         val washerwomanObservedClaim = washerwomanClaims.getValue(washerwomanObservedId)
         val chefClaims = reconstructed.chef.alternatives.associate { alternative ->
@@ -61,12 +65,14 @@ internal object Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder {
             )
         }
         val chefObservedId = "value-${reconstructed.chef.observedValue}"
-        val chefStage = Sde2D5FExpertObservedConsequenceProjector.evaluateCommittedPrefix(
-            context = context,
-            stageId = "${reconstructed.caseId}-chef",
-            committedPrefix = listOf(washerwomanObservedClaim),
-            candidates = chefClaims,
-        )
+        val chefStage = diagnosticStage("chef consequence") {
+            Sde2D5FExpertObservedConsequenceProjector.evaluateCommittedPrefix(
+                context = context,
+                stageId = "${reconstructed.caseId}-chef",
+                committedPrefix = listOf(washerwomanObservedClaim),
+                candidates = chefClaims,
+            )
+        }
 
         val chefObservedClaim = chefClaims.getValue(chefObservedId)
         val fortuneTellerClaims = reconstructed.fortuneTeller.alternatives.associate { alternative ->
@@ -88,12 +94,14 @@ internal object Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder {
         }
         val fortuneTellerObservedId =
             if (reconstructed.fortuneTeller.observedValue) "answer-yes" else "answer-no"
-        val fortuneTellerStage = Sde2D5FExpertObservedConsequenceProjector.evaluateCommittedPrefix(
-            context = context,
-            stageId = "${reconstructed.caseId}-fortune-teller",
-            committedPrefix = listOf(washerwomanObservedClaim, chefObservedClaim),
-            candidates = fortuneTellerClaims,
-        )
+        val fortuneTellerStage = diagnosticStage("fortune-teller consequence") {
+            Sde2D5FExpertObservedConsequenceProjector.evaluateCommittedPrefix(
+                context = context,
+                stageId = "${reconstructed.caseId}-fortune-teller",
+                committedPrefix = listOf(washerwomanObservedClaim, chefObservedClaim),
+                candidates = fortuneTellerClaims,
+            )
+        }
 
         return Sde2D5FEvinFirstPlaythroughConsequenceCalibration(
             verificationStatus = reconstructed.verificationStatus,
@@ -103,6 +111,18 @@ internal object Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder {
             chef = chefStage,
             fortuneTellerObservedCandidateId = fortuneTellerObservedId,
             fortuneTeller = fortuneTellerStage,
+        )
+    }
+
+    private inline fun <T> diagnosticStage(
+        name: String,
+        block: () -> T,
+    ): T = try {
+        block()
+    } catch (error: IllegalArgumentException) {
+        throw IllegalArgumentException(
+            "Evin expert consequence failed at $name: ${error.message}",
+            error,
         )
     }
 
