@@ -277,7 +277,8 @@ Current Android JVM commands:
 - `FirstNightBundleBeginnerCorpusExperiment` → dedicated `:app:fnBundle3Calibration`;
 - `Sde2D4ScaleBenchmarkTest` → dedicated `:app:sde2D4ScaleBenchmark`;
 - `Sde2D5CalibrationExperiment` → dedicated `:app:sde2D5Calibration`;
-- `Sde2D5FExpertObservedCalibrationExperiment` → dedicated `:app:sde2D5FExpertObservedCalibration`.
+- `Sde2D5FExpertObservedCalibrationExperiment` → dedicated `:app:sde2D5FExpertObservedCalibration`;
+- `Sde2D5FB4FSilverGeneralizationExperiment` → dedicated `:app:sde2D5FB4FSilverGeneralization`.
 
 The SDE-2D4 scale harness remains available and was not deleted. Its isolated CI diagnostic exceeded 900 seconds despite having no stable regression latency threshold, so keeping it inside every T4 would make the acceptance gate unbounded without strengthening a correctness contract.
 
@@ -299,6 +300,24 @@ explicit experiment / scale evidence
 ```
 
 No regression test may disappear from full validation **accidentally**. Moving a class out of full requires an explicit coverage classification, preserved runnable evidence where useful, and acceptance of the changed suite contract.
+
+### 13.1 SDE-3 provisional-policy validation
+
+SDE-3 separates stable engine contracts from continuously recalibrated policy.
+
+Validation should follow the ownership layer:
+
+- legal candidate identity / lifecycle → focused typed domain/orchestration tests;
+- feature projection → deterministic feature-contract tests at the shared projector owner;
+- persistent impaired narrative → cross-role / cross-information-shape history tests;
+- `BEGINNER_CONSERVATIVE_V1` policy → explicit reject/survive/reason-code tests rather than fragile scalar snapshots;
+- `DecisionTrace` → persistence / replay / policy-version contract tests;
+- shadow production integration → typed integration tests proving recommendation does not mutate canonical state;
+- historical expert/SILVER replay → named dedicated T3 evidence harnesses, not ordinary FAST regression.
+
+When evidence later changes policy ordering without changing legality/feature semantics, prefer versioned policy fixtures and replay evidence over rewriting rules tests.
+
+Do not use win/loss as a direct expected value for a Storyteller recommendation test.
 
 ## 14. Maintenance and test retirement
 
