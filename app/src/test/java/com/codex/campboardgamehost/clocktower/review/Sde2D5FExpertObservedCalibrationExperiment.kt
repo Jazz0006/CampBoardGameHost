@@ -24,6 +24,9 @@ class Sde2D5FExpertObservedCalibrationExperiment {
     private val humanRemains by lazy {
         Sde2D5FHumanRemainsConsequenceCalibrationBuilder.build()
     }
+    private val evin by lazy {
+        Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder.build()
+    }
     private val policyFeatures by lazy {
         Sde2D5FExpertObservedPolicyFeatureReportBuilder.build()
     }
@@ -161,6 +164,50 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertFalse(report.contains("BAD_TOO_WEAK"))
 
         val reportFile = File("build/reports/sde-2d5f-expert-observed-human-remains.md")
+        requireNotNull(reportFile.parentFile).mkdirs()
+        reportFile.writeText(report, Charsets.UTF_8)
+    }
+
+    @Test
+    fun `Evin primary-verified slice preserves complete legal alternatives without inventing bluffs`() {
+        val calibration = evin
+
+        assertEquals(
+            Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFIED,
+            calibration.verificationStatus,
+        )
+        assertEquals(listOf(0, 1, 2), calibration.stages.map { it.prefixObservationCount })
+        assertTrue(calibration.washerwoman.alternatives.size > 1)
+        assertEquals("value-1", calibration.chefObservedCandidateId)
+        assertEquals(1, calibration.chef.alternatives.size)
+        assertEquals("answer-yes", calibration.fortuneTellerObservedCandidateId)
+        assertEquals(1, calibration.fortuneTeller.alternatives.size)
+
+        calibration.stages.forEach { stage ->
+            assertTrue(
+                stage.alternatives.flatMap { it.byRecipient }
+                    .all { recipient -> recipient.strategicParity == null },
+            )
+            stage.alternatives.forEach { alternative ->
+                alternative.byRecipient.forEach { recipient ->
+                    assertTrue(
+                        recipient.candidateTopologyStructure.distinctStrategicWorldCount <=
+                            recipient.prefixTopologyStructure.distinctStrategicWorldCount,
+                    )
+                }
+            }
+        }
+
+        val report =
+            Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder.renderMarkdown(calibration)
+        assertTrue(report.contains("Evin 2019 First Full Playthrough"))
+        assertTrue(report.contains("PRIMARY_VERIFIED"))
+        assertTrue(report.contains("Demon bluff triplet"))
+        assertTrue(report.contains("trajectory evidence"))
+        assertFalse(report.contains("BAD_TOO_STRONG"))
+        assertFalse(report.contains("BAD_TOO_WEAK"))
+
+        val reportFile = File("build/reports/sde-2d5f-expert-observed-evin.md")
         requireNotNull(reportFile.parentFile).mkdirs()
         reportFile.writeText(report, Charsets.UTF_8)
     }
