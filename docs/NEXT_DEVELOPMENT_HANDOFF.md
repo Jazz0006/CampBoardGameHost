@@ -15,9 +15,10 @@
 8. `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`
 9. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`
 10. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`
-11. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
-12. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
-13. this handoff
+11. `docs/SDE_2D5F_CROSS_EXPERT_CONVERGENCE_AND_B4F_ENTRY_AUDIT_2026-09-23.md`
+12. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+13. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+14. this handoff
 
 Do not reload deleted 2026-09-20 D5 correction/design files from Git history unless a concrete historical question requires them.
 
@@ -92,9 +93,9 @@ DIAGNOSTIC_ONLY
     synthetic / extreme / counterfactual fixtures
 ~~~
 
-The current external catalog now contains **two admitted GOLD decision slices from two independent Storytellers**: `A Stud In Scarlet` / `st-ben-burns`, and Evin's 2019 first full playthrough / `st-evin`. Two other detailed Ben Burns games still require primary-video Night-1 verification; `A Fond Farewell` has primary-verified material state but is blocked on production Traveller legality. Evin's Demon bluffs remain unknown/not shown and are explicitly excluded from bluff-policy evidence, but they are non-material to the admitted executable WW/Chef/RH/FT slice.
+The current external catalog contains **two admitted GOLD decision slices from two independent Storytellers**: `A Stud In Scarlet` / `st-ben-burns`, and Evin's 2019 first full playthrough / `st-evin`. Evin's postgame primary image verifies Demon bluffs Recluse / Slayer / Soldier, and his postgame review explicitly explains the Red Herring choice around Chef truth danger / credibility disruption. Two other detailed Ben games remain optional primary-verification targets; `A Fond Farewell` remains primary-verified but blocked on production Traveller legality.
 
-`A Fond Farewell` has now moved beyond metadata-only discovery. The official primary video was manually checked for material Night-1 state on 2026-09-22, including full radial player↔role mapping, Traveller alignments, Drunk shown Chef, Red Herring, Demon bluffs, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`. The case is still not admitted GOLD because its five Travellers are not represented by the current production rules/domain model, so production-owned legal counterfactual recovery is unavailable. The official 2019 Evin recording remains the next independent-Storyteller primary extraction target. Its source identity is now triangulated through TPI's current Trouble Brewing page plus the original Kickstarter FAQ/update: it is Evin running an 8-player Trouble Brewing game for early/regular Sydney players. Indexed-web search did not expose a reliable transcript or material Night-1 state, so the remaining step is direct primary-video inspection, not more metadata inference. See `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`.
+`A Fond Farewell` has now moved beyond metadata-only discovery. The official primary video was manually checked for material Night-1 state on 2026-09-22, including full radial player↔role mapping, Traveller alignments, Drunk shown Chef, Red Herring, Demon bluffs, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`. The case is still not admitted GOLD because its five Travellers are not represented by the current production rules/domain model, so production-owned legal counterfactual recovery is unavailable. The official 2019 Evin recording has been directly inspected and admitted as GOLD for the executable material slice. The postgame material additionally resolves Demon bluffs and gives explicit Red-Herring rationale. See `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`, the primary reconstruction, and the cross-expert B4F entry audit.
 
 ## 7. Interpretation rules
 
@@ -230,12 +231,14 @@ Substantive result so far:
 
 Next success condition:
 
-1. compare the two independent admitted GOLD slices and identify which policy dimensions are genuinely repeated versus source-specific;
-2. only then decide whether verifying the two remaining Ben recordings would materially reduce uncertainty; do not collect same-Storyteller volume by default;
+1. continue **bounded B4F SILVER generalization** only for hypotheses already grounded in GOLD / explicit primary rationale;
+2. treat Red Herring contextual utility as the first cross-expert foundation: Ben = likely-target ecology; Evin = truth danger / credibility disruption; do not turn either into a fixed bonus;
+3. verify another primary video only when it fills a named evidence gap; do not collect same-Storyteller volume by default;
 3. keep `A Fond Farewell` as primary-verified but execution-blocked; Traveller support has been audited and explicitly deferred from B4, and any later implementation must be a separate canonical-domain capability;
 4. extract repeated policy dimensions only where source rationale and legal counterfactuals support them; do not derive D5F-C numeric gates yet;
-5. preserve A Stud and Evin as the first two admitted GOLD decision slices, with separate independence keys and explicit unknown-field boundaries;
-6. do not promote a policy rule merely because an alternative was unchosen.
+6. preserve A Stud and Evin as the first two admitted GOLD decision slices, with separate independence keys and primary/derived provenance boundaries;
+7. keep D5F-C blocked: healthy-information floor, role-function exposure severity, bluff-triplet preference ordering, and independent-expert impaired-believability calibration remain under-evidenced;
+8. do not promote a policy rule merely because an alternative was unchosen.
 
 Code-smell checkpoint: named role adapters are acceptable only at the legality/proposition semantic boundary. Cross-case evidence projection and later persistent impaired narrative policy must remain shared and information-shape/history based.
 
