@@ -1,6 +1,6 @@
 # NEXT DEVELOPMENT HANDOFF — SDE-2D5F-B4 expert-observed first-night policy calibration
 
-> Updated: 2026-09-21 Australia/Sydney  
+> Updated: 2026-09-22 Australia/Sydney  
 > This is the **only active handoff**.
 
 ## 1. Read first
@@ -10,8 +10,12 @@
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 4. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
 5. `docs/SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`
-6. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
-7. this handoff
+6. `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+7. `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`
+8. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`
+9. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+10. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+11. this handoff
 
 Do not reload deleted 2026-09-20 D5 correction/design files from Git history unless a concrete historical question requires them.
 
@@ -88,7 +92,7 @@ DIAGNOSTIC_ONLY
 
 The current external catalog contains **five tracked GOLD candidates but no admitted verified GOLD case yet**. Three detailed Ben Burns games still require primary-video Night-1 verification; `A Fond Farewell` now has primary-verified material state but is blocked on production Traveller legality; the Evin recording still requires state extraction. Multiple games from Ben share one Storyteller independence key and do not count as independent experts.
 
-`A Fond Farewell` has now moved beyond metadata-only discovery. The official primary video was manually checked for material Night-1 state on 2026-09-22, including full radial player↔role mapping, Traveller alignments, Drunk shown Chef, Red Herring, Demon bluffs, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`. The case is still not admitted GOLD because its five Travellers are not represented by the current production rules/domain model, so production-owned legal counterfactual recovery is unavailable. The official 2019 Evin recording remains the next independent-Storyteller primary extraction target.
+`A Fond Farewell` has now moved beyond metadata-only discovery. The official primary video was manually checked for material Night-1 state on 2026-09-22, including full radial player↔role mapping, Traveller alignments, Drunk shown Chef, Red Herring, Demon bluffs, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`. The case is still not admitted GOLD because its five Travellers are not represented by the current production rules/domain model, so production-owned legal counterfactual recovery is unavailable. The official 2019 Evin recording remains the next independent-Storyteller primary extraction target. Its source identity is now triangulated through TPI's current Trouble Brewing page plus the original Kickstarter FAQ/update: it is Evin running an 8-player Trouble Brewing game for early/regular Sydney players. Indexed-web search did not expose a reliable transcript or material Night-1 state, so the remaining step is direct primary-video inspection, not more metadata inference. See `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`.
 
 ## 7. Interpretation rules
 
@@ -116,7 +120,7 @@ The catalog now tracks:
 - Ben Burns — `Human Remains Of The Day` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
 - Ben Burns — `Live and Imp-Person` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
 - Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PRIMARY_STATE_VERIFIED_TRAVELLER_EXECUTION_BLOCKED`; primary Night-1 state and two choice-specific rationales recovered;
-- Evin — official 2019 TPI **8-player** Trouble Brewing playthrough — `PARTIALLY_RECONSTRUCTABLE`, valuable independent-Storyteller target.
+- Evin — official 2019 TPI **8-player** Trouble Brewing playthrough — `PARTIALLY_RECONSTRUCTABLE`, valuable independent-Storyteller target; source provenance is triangulated, but direct primary-video inspection is still required for seats/roles/setup commitments/Night-1 outputs.
 
 TPI independently verifies Ben's long-running involvement and trusted/expert status. Evin is also independently qualified as experienced/trusted through his TPI co-founder role, integral early involvement, founding of the Newcastle Clocktower group, and the official TPI-hosted early Trouble Brewing game. His remaining GOLD blocker is state extraction, not expertise.
 
@@ -209,7 +213,8 @@ Completed in this checkpoint:
 7. `Live and Imp-Person` committed-prefix consequence report is green and artifacted;
 8. `Human Remains Of The Day` committed-prefix consequence report is green and artifacted, preserving all 273 legal poisoned-Washerwoman candidates while summarizing them by strategic signature;
 9. dedicated `:app:sde2D5FExpertObservedCalibration` separates current B4 feedback from the historical multi-hour D5 calibration workload;
-10. `A Fond Farewell` material Night-1 state is primary-verified and preserved in a dedicated reconstruction document; its five-Traveller dependency is explicitly blocked from fixture-local execution.
+10. `A Fond Farewell` material Night-1 state is primary-verified and preserved in a dedicated reconstruction document; its five-Traveller dependency is explicitly blocked from fixture-local execution;
+11. the Evin 2019 source is provenance-triangulated in a dedicated audit; indexed-web extraction was exhausted without inventing Night-1 state, and explicit anti-inference guards now prevent substitution of the generic recommended 8-player bag or an unrelated early TPI video lineup.
 
 Measured boundary: a 9-player exhaustive real-case possible-world sample remained multi-minute even when reduced to one stage. Real expert-case consequence therefore stays topology-first. D4 bounded differential tests own broad topology/exhaustive correctness; exact real-case evaluation remains an exceptional deep-audit hook.
 
@@ -224,7 +229,7 @@ Substantive result so far:
 Next success condition:
 
 1. continue primary-video verification for the three detailed secondary-reconstructed Ben candidates; prioritize material Night-1 timestamps/source confirmation rather than adding more Ben volume;
-2. make the independent Evin 8-player playthrough the next fresh primary extraction target;
+2. directly inspect the independent Evin 8-player primary recording and extract seats/roles/setup commitments/Night-1 outputs with timestamps; do not spend another pass on metadata-only indexed search unless a new source appears;
 3. keep `A Fond Farewell` as primary-verified but execution-blocked; Traveller support has been audited and explicitly deferred from B4, and any later implementation must be a separate canonical-domain capability;
 4. extract repeated policy dimensions only where source rationale and legal counterfactuals support them; do not derive D5F-C numeric gates yet;
 5. keep 0 admitted GOLD until a case satisfies both primary-state verification and production-owned complete legal-counterfactual recovery;
