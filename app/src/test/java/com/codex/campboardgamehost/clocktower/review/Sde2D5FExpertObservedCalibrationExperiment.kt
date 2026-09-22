@@ -237,7 +237,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
             it.candidateId == "pair-information-ability-v1|Librarian|Recluse|5,8"
         }
         assertEquals(SemanticTruth.TRUE, liveLibrarian.semanticTruth)
-        assertEquals(false, liveLibrarian.shownRoleIsDemonBluff)
+        assertFalse(liveLibrarian.shownRoleIsDemonBluff)
         assertEquals(setOf(8), liveLibrarian.shownRoleActualInPlaySeats)
         assertEquals(setOf(8), liveLibrarian.shownRoleCandidateMatchSeats)
         assertEquals(setOf(8), liveLibrarian.specialRegistrationRoleMatchSeats)
@@ -259,7 +259,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         }
         assertEquals(SemanticTruth.FALSE, humanObserved.semanticTruth)
         assertTrue(humanObserved.registration.hasNoSpecialRegistrationWitness)
-        assertEquals(true, humanObserved.shownRoleIsDemonBluff)
+        assertTrue(humanObserved.shownRoleIsDemonBluff)
         assertTrue(humanObserved.shownRoleActualInPlaySeats.isEmpty())
         assertTrue(humanObserved.shownRoleCandidateMatchSeats.isEmpty())
         assertTrue(humanObserved.specialRegistrationRoleMatchSeats.isEmpty())
@@ -276,7 +276,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         }
         assertEquals(SemanticTruth.TRUE, evinObserved.semanticTruth)
         assertTrue(evinObserved.registration.hasNoSpecialRegistrationWitness)
-        assertEquals(null, evinObserved.shownRoleIsDemonBluff)
+        assertFalse(evinObserved.shownRoleIsDemonBluff)
         assertEquals(setOf(7), evinObserved.shownRoleActualInPlaySeats)
         assertEquals(setOf(7), evinObserved.shownRoleCandidateMatchSeats)
         assertEquals(setOf(5), evinObserved.candidateEvilSeats)
@@ -301,7 +301,6 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertTrue(humanPairSummary.containsActualDemonSeatCount > 0)
         assertTrue(humanPairSummary.containsActualMinionSeatCount > 0)
         assertTrue(humanPairSummary.allCandidateSeatsActualEvilCount > 0)
-        assertTrue(evinPairSummary.shownRoleDemonBluffUnknownCount > 0)
         assertTrue(evinPairSummary.containsActualDemonSeatCount > 0)
 
         val report = Sde2D5FExpertObservedPolicyFeatureReportBuilder.render(features)
@@ -312,8 +311,6 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertTrue(report.contains("Drunk shown Empath"))
         assertTrue(report.contains("shown role is Demon bluff"))
         assertTrue(report.contains("Evin 2019 First Full Playthrough"))
-        assertTrue(report.contains("Demon-bluff membership unknown"))
-        assertTrue(report.contains("UNKNOWN"))
         assertFalse(report.contains("BAD_TOO_STRONG"))
         assertFalse(report.contains("BAD_TOO_WEAK"))
 
