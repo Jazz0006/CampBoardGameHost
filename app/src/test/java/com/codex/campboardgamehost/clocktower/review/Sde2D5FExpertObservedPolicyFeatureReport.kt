@@ -10,6 +10,9 @@ internal data class Sde2D5FExpertObservedPolicyFeatureReport(
     val liveChef: List<Sde2D5FNumericCandidatePolicyFeatures>,
     val liveFortuneTeller: List<Sde2D5FBooleanCandidatePolicyFeatures>,
     val humanWasherwoman: List<Sde2D5FPairCandidatePolicyFeatures>,
+    val evinWasherwoman: List<Sde2D5FPairCandidatePolicyFeatures>,
+    val evinChef: List<Sde2D5FNumericCandidatePolicyFeatures>,
+    val evinFortuneTeller: List<Sde2D5FBooleanCandidatePolicyFeatures>,
 )
 
 internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
@@ -17,6 +20,7 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
         val aStud = Sde2D5FAStudInScarletCandidateBuilder.build()
         val live = Sde2D5FLiveAndImpPersonCandidateBuilder.build()
         val human = Sde2D5FHumanRemainsCandidateBuilder.build()
+        val evin = Sde2D5FEvinFirstPlaythroughCandidateBuilder.build()
 
         return Sde2D5FExpertObservedPolicyFeatureReport(
             aStudChef = Sde2D5FExpertObservedPolicyFeatureProjector.projectNumeric(aStud.chef),
@@ -37,6 +41,14 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
                 decision = human.washerwoman,
                 demonBluffs = human.observedDemonBluffs,
             ),
+            evinWasherwoman = Sde2D5FExpertObservedPolicyFeatureProjector.projectPair(
+                game = evin.game,
+                decision = evin.washerwoman,
+                demonBluffs = null,
+            ),
+            evinChef = Sde2D5FExpertObservedPolicyFeatureProjector.projectNumeric(evin.chef),
+            evinFortuneTeller =
+                Sde2D5FExpertObservedPolicyFeatureProjector.projectBoolean(evin.fortuneTeller),
         )
     }
 
@@ -47,12 +59,13 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
         appendLine()
         appendLine(
             "These are descriptive candidate facts only. They do not score, rank, label, or promote " +
-                "any observed expert choice. All three source cases remain PRIMARY_VERIFICATION_PENDING.",
+                "any observed expert choice. A Stud and Evin are PRIMARY_VERIFIED GOLD decision slices; " +
+                "Live and Human Remains remain PRIMARY_VERIFICATION_PENDING.",
         )
         appendLine()
         appendLine(
-            "Strategic topology is intentionally absent from this feature table because the committed-prefix " +
-                "reports already showed topology-neutral alternatives in all three current cases.",
+            "Strategic topology is reported separately by each committed-prefix consequence report. " +
+                "This table keeps non-topology candidate facts and provenance dimensions explicit.",
         )
         appendLine(
             "Legal-domain prevalence counts below are descriptive only; they are not rarity scores, " +
@@ -102,6 +115,24 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
             title = "Poisoned Washerwoman",
             observedCandidateId = "pair-information-ability-v1|Washerwoman|Empath|2,5",
             candidates = report.humanWasherwoman,
+        )
+
+        appendLine("## Evin 2019 First Full Playthrough")
+        appendLine()
+        pairSection(
+            title = "Washerwoman",
+            observedCandidateId = "pair-information-ability-v1|Washerwoman|Undertaker|5,7",
+            candidates = report.evinWasherwoman,
+        )
+        numericSection(
+            title = "Chef",
+            observedCandidateId = "value-1",
+            candidates = report.evinChef,
+        )
+        booleanSection(
+            title = "Fortune Teller",
+            observedCandidateId = "answer-yes",
+            candidates = report.evinFortuneTeller,
         )
     }
 
@@ -171,7 +202,8 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
         appendLine("| has no-special-registration witness | ${summary.noSpecialRegistrationWitnessCount} |")
         appendLine("| has special-registration alternative | ${summary.hasSpecialRegistrationAlternativeCount} |")
         appendLine("| requires special registration | ${summary.requiresSpecialRegistrationCount} |")
-        appendLine("| shown role is Demon bluff | ${summary.shownRoleDemonBluffCount} |")
+        appendLine("| shown role is known Demon bluff | ${summary.shownRoleDemonBluffCount} |")
+        appendLine("| shown role Demon-bluff membership unknown | ${summary.shownRoleDemonBluffUnknownCount} |")
         appendLine("| shown role actually in play | ${summary.shownRoleActualInPlayCount} |")
         appendLine("| shown role matches a candidate seat | ${summary.shownRoleMatchesCandidateCount} |")
         appendLine("| special-registration role matches a candidate seat | ${summary.specialRegistrationRoleMatchesCandidateCount} |")
@@ -185,7 +217,7 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
         appendLine("| ${cell(observed.candidateId)} | semantic truth | ${observed.semanticTruth} |")
         appendLine("| ${cell(observed.candidateId)} | no-special-registration witness | ${observed.registration.hasNoSpecialRegistrationWitness} |")
         appendLine("| ${cell(observed.candidateId)} | special registration reasons | ${reasons(observed.registration.specialReasons)} |")
-        appendLine("| ${cell(observed.candidateId)} | shown role is Demon bluff | ${observed.shownRoleIsDemonBluff} |")
+        appendLine("| ${cell(observed.candidateId)} | shown role is Demon bluff | ${knownBoolean(observed.shownRoleIsDemonBluff)} |")
         appendLine("| ${cell(observed.candidateId)} | shown role actual in-play seats | ${seats(observed.shownRoleActualInPlaySeats)} |")
         appendLine("| ${cell(observed.candidateId)} | shown role matches candidate seats | ${seats(observed.shownRoleCandidateMatchSeats)} |")
         appendLine("| ${cell(observed.candidateId)} | special-registration role matches | ${seats(observed.specialRegistrationRoleMatchSeats)} |")
@@ -199,6 +231,8 @@ internal object Sde2D5FExpertObservedPolicyFeatureReportBuilder {
     }
 
     private fun cell(value: String): String = value.replace("|", "\\|")
+
+    private fun knownBoolean(value: Boolean?): String = value?.toString() ?: "UNKNOWN"
 
     private fun reasons(reasons: Set<RegistrationReason>): String =
         reasons.sortedBy { it.name }.joinToString(",").ifEmpty { "-" }
