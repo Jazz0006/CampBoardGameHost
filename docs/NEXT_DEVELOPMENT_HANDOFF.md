@@ -132,7 +132,7 @@ The latest accepted B4 executable checkpoint, `26b9afe72e72705f53dc225a79fd5be6e
 
 All three executable secondary-reconstructed Ben cases remain `PRIMARY_VERIFICATION_PENDING`. Continue verifying their material setup commitments and Night-1 decisions against the primary recordings; do not promote them to GOLD from the secondary reconstruction alone.
 
-`A Fond Farewell` is now the inverse state: primary verification is complete, but executable projection is deliberately blocked by missing Traveller semantics. Do not fake execution by dropping Travellers, compressing the circle, or implementing evidence-local Chef arithmetic.
+`A Fond Farewell` is now the inverse state: primary verification is complete, but executable projection is deliberately blocked by missing Traveller semantics. The detailed production-boundary audit is `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`. It confirms that this is not a one-file enum gap: base setup quotas, player-count knowledge, strategic topology and setup witness feasibility all assume every formal seat is a base Townsfolk/Outsider/Minion/Demon participant. Traveller implementation is therefore **deferred from B4**. Do not fake execution by dropping Travellers, compressing the circle, or implementing evidence-local Chef arithmetic.
 
 High-value cases:
 
@@ -225,7 +225,7 @@ Next success condition:
 
 1. continue primary-video verification for the three detailed secondary-reconstructed Ben candidates; prioritize material Night-1 timestamps/source confirmation rather than adding more Ben volume;
 2. make the independent Evin 8-player playthrough the next fresh primary extraction target;
-3. keep `A Fond Farewell` as primary-verified but execution-blocked until the project explicitly decides whether canonical Traveller support belongs in current product scope;
+3. keep `A Fond Farewell` as primary-verified but execution-blocked; Traveller support has been audited and explicitly deferred from B4, and any later implementation must be a separate canonical-domain capability;
 4. extract repeated policy dimensions only where source rationale and legal counterfactuals support them; do not derive D5F-C numeric gates yet;
 5. keep 0 admitted GOLD until a case satisfies both primary-state verification and production-owned complete legal-counterfactual recovery;
 6. do not promote a policy rule merely because an alternative was unchosen.
