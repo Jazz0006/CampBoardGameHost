@@ -88,7 +88,7 @@ DIAGNOSTIC_ONLY
 
 The current external catalog contains **five tracked GOLD candidates but no admitted verified GOLD case yet**. Three detailed Ben Burns games still require primary-video Night-1 verification; the official Ben/Evin recordings require fuller state extraction. Multiple games from Ben share one Storyteller independence key and do not count as independent experts.
 
-Primary metadata has now been rechecked without relaxing the gate: `A Fond Farewell` directly exposes YouTube chapters for Night 1 at `00:04:25` and Day 1 at `00:09:13`; the official 2019 Evin recording describes itself as a full **8-player** game, and TPI's Kickstarter FAQ links the same recording as its first released full play-through. Current public retrieval did not expose auditable Night-1 transcript/frame contents, so this is source authentication / navigation evidence only, not material-state verification.
+`A Fond Farewell` has now moved beyond metadata-only discovery. The official primary video was manually checked for material Night-1 state on 2026-09-22, including full radial player↔role mapping, Traveller alignments, Drunk shown Chef, Red Herring, Demon bluffs, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`. The case is still not admitted GOLD because its five Travellers are not represented by the current production rules/domain model, so production-owned legal counterfactual recovery is unavailable. The official 2019 Evin recording remains the next independent-Storyteller primary extraction target.
 
 ## 7. Interpretation rules
 
@@ -115,7 +115,7 @@ The catalog now tracks:
 - Ben Burns — `A Stud In Scarlet` — `FULLY_RECONSTRUCTABLE` from the current detailed index, pending primary-video verification;
 - Ben Burns — `Human Remains Of The Day` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
 - Ben Burns — `Live and Imp-Person` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
-- Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PARTIALLY_RECONSTRUCTABLE`, primary Night-1 chapter confirmed at `00:04:25` (`Day 1` at `00:09:13`);
+- Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PRIMARY_STATE_VERIFIED_TRAVELLER_EXECUTION_BLOCKED`; primary Night-1 state and two choice-specific rationales recovered;
 - Evin — official 2019 TPI **8-player** Trouble Brewing playthrough — `PARTIALLY_RECONSTRUCTABLE`, valuable independent-Storyteller target.
 
 TPI independently verifies Ben's long-running involvement and trusted/expert status. Evin is also independently qualified as experienced/trusted through his TPI co-founder role, integral early involvement, founding of the Newcastle Clocktower group, and the official TPI-hosted early Trouble Brewing game. His remaining GOLD blocker is state extraction, not expertise.
@@ -130,7 +130,9 @@ Executable canonical reconstructions now exist for the first three Ben candidate
 
 The latest accepted B4 executable checkpoint, `26b9afe72e72705f53dc225a79fd5be6e3b6195c`, passed dedicated expert-observed calibration **run #31**. The evidence harness now routes impaired numeric decisions through the shared numeric projector and summarizes complete pair legal domains through a shared typed prevalence projection. This adds no score, ranking, BAD/ACCEPTABLE labeling, or GOLD promotion.
 
-All three remain `PRIMARY_VERIFICATION_PENDING`. Continue verifying the material setup commitments and Night-1 decisions against the primary recordings; do not promote them to GOLD from the secondary reconstruction alone.
+All three executable secondary-reconstructed Ben cases remain `PRIMARY_VERIFICATION_PENDING`. Continue verifying their material setup commitments and Night-1 decisions against the primary recordings; do not promote them to GOLD from the secondary reconstruction alone.
+
+`A Fond Farewell` is now the inverse state: primary verification is complete, but executable projection is deliberately blocked by missing Traveller semantics. Do not fake execution by dropping Travellers, compressing the circle, or implementing evidence-local Chef arithmetic.
 
 High-value cases:
 
@@ -170,7 +172,7 @@ Numeric witness projection is now **implemented** in the B4 evidence bridge. `Fi
 
 ### Step 5 — extract repeated policy constraints
 
-Candidate dimensions include thematic registration prior, role-function exposure avoidance, confirmation-chain avoidance, healthy-information floor, impaired-information narrative consistency, bluff narrative support, and Red Herring placement.
+Candidate dimensions include thematic registration prior, role-function exposure avoidance, confirmation-chain avoidance, healthy-information floor, impaired-information narrative consistency, bluff narrative support, Red Herring placement, and player-choice likelihood / target ecology. `A Fond Farewell` supplies choice-specific Ben rationale for both believable impaired information and Red Herring placement around likely Fortune Teller target behavior; keep these as dimensions, not weights.
 
 Use the current evidence-maturity ledger rather than inventing weights:
 
@@ -206,7 +208,8 @@ Completed in this checkpoint:
 6. `A Stud In Scarlet` committed-prefix topology report is green and artifacted;
 7. `Live and Imp-Person` committed-prefix consequence report is green and artifacted;
 8. `Human Remains Of The Day` committed-prefix consequence report is green and artifacted, preserving all 273 legal poisoned-Washerwoman candidates while summarizing them by strategic signature;
-9. dedicated `:app:sde2D5FExpertObservedCalibration` separates current B4 feedback from the historical multi-hour D5 calibration workload.
+9. dedicated `:app:sde2D5FExpertObservedCalibration` separates current B4 feedback from the historical multi-hour D5 calibration workload;
+10. `A Fond Farewell` material Night-1 state is primary-verified and preserved in a dedicated reconstruction document; its five-Traveller dependency is explicitly blocked from fixture-local execution.
 
 Measured boundary: a 9-player exhaustive real-case possible-world sample remained multi-minute even when reduced to one stage. Real expert-case consequence therefore stays topology-first. D4 bounded differential tests own broad topology/exhaustive correctness; exact real-case evaluation remains an exceptional deep-audit hook.
 
@@ -220,11 +223,12 @@ Substantive result so far:
 
 Next success condition:
 
-1. continue primary-video verification for the three detailed Ben candidates; prioritize obtaining material Night-1 timestamps/source confirmation rather than adding more secondary-only Ben cases;
-2. use `A Fond Farewell` (`Night 1 00:04:25–00:09:13`) as the first primary extraction target, then the independent Evin 8-player playthrough; if transcript/frame access remains unavailable, record the blocker rather than inferring material state from secondary summaries;
-3. begin extracting repeated policy dimensions only where the three current reports plus source rationale actually support them; do not derive D5F-C numeric gates yet;
-4. keep 0 admitted GOLD until the material Night-1 primary-source gate is actually satisfied;
-5. do not promote a policy rule merely because an alternative was unchosen.
+1. continue primary-video verification for the three detailed secondary-reconstructed Ben candidates; prioritize material Night-1 timestamps/source confirmation rather than adding more Ben volume;
+2. make the independent Evin 8-player playthrough the next fresh primary extraction target;
+3. keep `A Fond Farewell` as primary-verified but execution-blocked until the project explicitly decides whether canonical Traveller support belongs in current product scope;
+4. extract repeated policy dimensions only where source rationale and legal counterfactuals support them; do not derive D5F-C numeric gates yet;
+5. keep 0 admitted GOLD until a case satisfies both primary-state verification and production-owned complete legal-counterfactual recovery;
+6. do not promote a policy rule merely because an alternative was unchosen.
 
 Code-smell checkpoint: named role adapters are acceptable only at the legality/proposition semantic boundary. Cross-case evidence projection and later persistent impaired narrative policy must remain shared and information-shape/history based.
 
