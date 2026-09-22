@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-22 Australia/Sydney  
+> Updated: 2026-09-23 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -18,23 +18,27 @@ SDE-2D1 Drunk whole-bundle                            COMPLETE / PR #145
 SDE-2D2 Demon bluff joint-output                      COMPLETE / PR #146
 SDE-2D3 strategic-world quotient                      COMPLETE / PR #147
 SDE-2D4 5–15 correctness/performance                  COMPLETE / PR #149
-SDE-2D5 calibration / policy evidence                 CURRENT / PR #150 draft
+SDE-2D5 calibration / policy evidence                 PARALLEL / PR #150 draft
     D5A–D5E                                            COMPLETE
     D5F infrastructure                                COMPLETE
     D5F-B3 correction                                 HISTORICAL CHECKPOINT
-    D5F-B4 expert-observed policy calibration         CURRENT
+    D5F-B4 engineering / evidence checkpoint          COMPLETE UP TO EXTERNAL WAIT
         B4A clean-corpus retirement                    COMPLETE
-        B4B GOLD source discovery                     PAUSED / DEMAND-DRIVEN
-        B4C expert Night-1 reconstruction              IN PROGRESS / 4 executable + A Fond primary-verified
-        B4D legal counterfactual recovery              IN PROGRESS / 4 executable cases
+        B4B GOLD source discovery                     DEMAND-DRIVEN
+        B4C expert reconstruction                     COMPLETE FOR CURRENT ANCHORS
+        B4D legal counterfactual recovery              COMPLETE FOR CURRENT EXECUTABLE ANCHORS
         B4E observed-vs-alternative analysis           CROSS-EXPERT CHECKPOINT COMPLETE
         B4F-A executable SILVER replay                 COMPLETE
         B4F-B documentary SILVER comparison            COMPLETE
         B4F-C target specification                     COMPLETE
-        B4F-C targeted evidence acquisition            EXTERNAL / WAITING
-D5F-C gate/band derivation                            BLOCKED
+        B4F-C targeted evidence acquisition            EXTERNAL / CONTINUOUS
+D5F-C final gate/band derivation                      BLOCKED ON EVIDENCE
 sealed holdout                                        CLOSED
-SDE-3                                                 BLOCKED
+SDE-3A engine / feature / policy contract             CURRENT
+SDE-3B BEGINNER_CONSERVATIVE_V1                       NEXT
+SDE-3C shadow / DecisionTrace / replay                 NEXT
+SDE-3D calibrated policy freeze                       BLOCKED ON EVIDENCE
+SDE-3E automatic production cutover                   BLOCKED ON 3D
 ~~~
 
 ## 2. Current branch / PR
@@ -51,7 +55,7 @@ Always query live refs before executable edits.
 
 - First-night policy: [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
 - External evidence seed: [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv)
-- Long-term pre-SDE-3 route: [`SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`](SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md)
+- Current SDE-3 execution route: [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - Traveller boundary audit for primary-verified A Fond: [`SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`](SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md)
 - Evin source audit: [`SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`](SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md)
@@ -140,84 +144,82 @@ Interpretation rules:
 
 ## 7. Immediate execution order
 
-### D5F-B4A — retire obsolete clean calibration artifacts — COMPLETE
+### Evidence track — PARALLEL / EXTERNAL
 
-Deleted:
+Current evidence work has reached a stable checkpoint:
 
-- `Sde2D5FRepresentativeHealthyInformationCorpus.kt`;
-- `Sde2D5FRepresentativeHealthyInformationCorpusTest.kt`.
+- two independent primary-verified GOLD anchors exist: Ben / A Stud and Evin 2019;
+- executable expert and SILVER replay harnesses are green;
+- Red Herring contextual utility is the strongest cross-expert foundation;
+- truth danger / credibility disruption has GOLD + SILVER explicit rationale;
+- targeted evidence gaps are explicitly defined;
+- broad source collection is no longer the default.
 
-No unique durable coverage was found. Their pair/numeric/registration/deal contracts are already covered by owning typed tests. The report was emitted only by the deleted test; no independent task/resource wiring existed.
+Targeted evidence acquisition continues through ClocktowerEvidenceLab according to:
 
-Canonical production legality/topology infrastructure remains intact.
+`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
 
-### D5F-B4B — discover and verify GOLD sources — IN PROGRESS
+This track does **not** block SDE-3A/B/C.
 
-The source catalog now tracks two admitted GOLD decision slices plus three remaining expert-source candidates:
+### SDE-3A — engine / feature / policy contract — CURRENT
 
-- Ben Burns — `A Stud In Scarlet`;
-- Ben Burns — `Human Remains Of The Day`;
-- Ben Burns — `Live and Imp-Person`;
-- Ben Burns — official `Trouble Brewing - A Fond Farewell`;
-- Evin — early TPI Trouble Brewing playthrough.
+Authority:
 
-Ben's experienced/trusted status is independently supported by TPI. `A Stud In Scarlet` is primary-verified and admitted GOLD; `Human Remains Of The Day` and `Live and Imp-Person` still require primary-video verification. `A Fond Farewell` has primary-verified material state and explicit rationale, but executable reconstruction is blocked by missing production Traveller semantics. Evin is now also primary-verified and admitted GOLD for the executable material decision slice, giving B4 its first cross-Storyteller GOLD evidence.
+`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
 
-### D5F-B4C — reconstruct expert Night 1 decisions — IN PROGRESS
+Start with a live fanout/ownership audit of the current StorytellerDecisionEngine and shadow wiring.
 
-Executable canonical reconstructions now exist for `A Stud In Scarlet`, `Human Remains Of The Day`, `Live and Imp-Person`, and the Evin 2019 first playthrough. All four route through the dedicated `:app:sde2D5FExpertObservedCalibration` T3 workload. `A Stud In Scarlet` and Evin are `PRIMARY_VERIFIED` GOLD decision slices from independent Storytellers; the other two remain `PRIMARY_VERIFICATION_PENDING`.
+The next implementation slice must:
 
-`A Fond Farewell` is the complementary fourth Ben case: the primary material state is now verified, but it is intentionally **not** forced into the executable harness because five Travellers affect seating, adjacency, public alignment, and Chef semantics. The Traveller boundary audit confirms this is a production capability gap, not an evidence-fixture gap: `GameState` has only the four base character types, the TB script/catalog has no Traveller roles, and topology/setup-profile code treats every formal seat as a base setup seat. **Traveller implementation is deferred from B4**; do not compress the 20-seat table or add fixture-local Traveller arithmetic.
+1. map current decision/candidate/context/result ownership;
+2. map reusable legality, proposition, topology and bundle surfaces;
+3. define minimal generic typed contracts for candidate, feature projection and policy evaluation;
+4. keep legality separate from policy;
+5. keep features interpretable and independent rather than forcing an opaque scalar;
+6. prepare versioned DecisionTrace / replay without automatic production cutover.
 
-Latest accepted B4 executable checkpoint: branch HEAD `58dfa46901d00a5b9f417a08e29e40cb9b9f2112` completed dedicated **SDE-2D5F expert-observed calibration run #46** successfully. Full CI #3266, R2 #3025, and FN-BUNDLE-3 #200 also succeeded. The shared evidence layer now covers reliable/impaired numeric decisions and complete pair-domain descriptive prevalence without introducing scores, rankings, BAD labels, or evidence-tier promotion. PR #150 remains draft.
+### SDE-3B — BEGINNER_CONSERVATIVE_V1 — NEXT
 
-The independent Evin primary extraction and cross-expert comparison are complete. The strongest cross-expert result is **Red Herring contextual utility**: Ben supplies likely-target ecology while Evin supplies truth-danger / credibility-disruption rationale. Broad GOLD discovery is now demand-driven rather than the default. Begin bounded B4F SILVER generalization for dimensions already supported by GOLD/explicit-primary evidence; verify another primary video only when it fills a named gap. Do not infer its game bag from generic recommended 8-player setup guidance or from a different early TPI recording. `A Fond Farewell` no longer needs additional material Night-1 extraction unless a source contradiction appears. Traveller support is now explicitly deferred from the current B4 slice; if later adopted as a product goal, it must begin as a separate canonical-domain capability with full fan-out audit rather than as evidence-harness code.
+Implement a conservative, explainable first policy using:
 
-The reconstruction remains an evidence projection onto existing canonical state/legality owners. Do not hand-author a second legality model.
+- hard legality/lifecycle boundaries;
+- generic catastrophic / near-catastrophic rejection;
+- healthy-information preservation;
+- contextual Red-Herring utility;
+- coherent impaired narrative;
+- role-function exposure as a soft contextual cost;
+- bluff usability / route diversity;
+- seeded randomness among effectively equivalent healthy survivors.
 
-Real-case consequence evaluation is topology-first. A 9-player exhaustive exact possible-world probe remained multi-minute even after reducing it to one sampled stage, while the dedicated topology-first workflow covering A Stud, Live and Human Remains completes in about 3.5 minutes end-to-end. Broad topology/exhaustive correctness remains owned by the bounded D4 differential tests; the evidence bridge keeps exact evaluation only as an optional deep-audit hook.
+Do not invent unsupported numeric weights.
 
-### D5F-B4D — recover legal counterfactuals — IN PROGRESS
+### SDE-3C — shadow / DecisionTrace / replay — NEXT
 
-Use existing production legality owners to reconstruct the exact alternatives available at each decision point. Hold only the committed prefix and already-made player-controlled choices fixed; do not leak later expert choices backward into the counterfactual domain.
+Before cutover, capture:
 
-Current executable evidence:
-- `A Stud In Scarlet`: Chef, Drunk-shown-Empath, and fixed-target Fortune Teller legal alternatives recovered;
-- `Live and Imp-Person`: full Librarian pair domain, Chef values, and fixed-target Fortune Teller alternatives recovered;
-- `Human Remains Of The Day`: complete 273-candidate poisoned-Washerwoman pair domain plus the forced fixed-target Fortune Teller result recovered;
-- `A Fond Farewell`: primary state recovered, but legal-counterfactual execution is blocked until Traveller character/alignment/seating semantics have a production owner;
-- registration witnesses remain interaction-scoped evidence metadata rather than player-visible facts.
+- policy version;
+- candidate set;
+- typed features;
+- rejection/survival reasons;
+- recommendation;
+- actual committed choice;
+- optional human override/reason.
 
-### D5F-B4E — compare observed choices to alternatives — IN PROGRESS
+Historical replay must support comparing multiple policy versions against the same committed game history.
 
-Run existing whole-bundle/topology diagnostics over observed expert choices and their legal counterfactuals. Extract repeated interpretable preferences, not a black-box score.
+### SDE-3D / 3E — remain blocked
 
-The current reports are deliberately allowed to be non-confirmatory on the strategic quotient: A Stud stays 56 -> 56 across modeled alternatives; Live stays 252 -> 252 while still demonstrating interaction-scoped Recluse registration; Human Remains has 273 legal poisoned-Washerwoman candidates but only one 42 -> 42 strategic-after signature. Treat this as evidence that registration choice, impaired narrative, role-function exposure, confirmation structure and truth danger can matter even when the quotient is neutral; do not invent a scalar difference merely to rank the expert choice.
+Final calibrated policy freeze and automatic production cutover still require stronger external evidence.
 
-The shared descriptive feature report now covers A Stud's Drunk-shown-Empath through the same numeric evidence contract as Chef. Its current reconstructed candidates are `0=FALSE` (observed), `1=TRUE`, `2=FALSE`; all are mechanically credible under impairment and none needs special registration. Keep semantic truth, registration witness, and strategic topology as separate dimensions.
+Current unresolved calibration gaps:
 
-Pair-domain prevalence is now also explicit. Human Remains' 273 poisoned-Washerwoman candidates contain 249 false candidates, 42 Demon-bluff-role candidates, 143 candidates touching an actual Evil seat, 78 touching the Demon, 78 touching the Minion, and 13 whose complete pair is actually Evil. The observed false Empath clue to the actual Minion+Demon has a descriptive signature shared by only 2 candidates. This is descriptive structure, not evidence that rare combinations are preferred.
+- healthy-information floor / middle-band thresholds;
+- role-function exposure severity;
+- independent-expert impaired-information believability;
+- Demon-bluff triplet preference ordering;
+- quantitative multi-axis tradeoff.
 
-The current external catalog recurrence signal is strongest for narrative anchoring (8 tagged records), truth danger (6), and temporal consistency / impairment detectability (4 each). `A Fond Farewell` also adds the first explicit `PLAYER_CHOICE_LIKELIHOOD` and `BELIEVABLE_COUNTERWORLD` tags plus a third Red-Herring-trajectory record. Treat these as evidence-collection priorities only. The two Ben rationales are choice-specific evidence, but they still share `st-ben-burns` and do not establish cross-expert generality.
-
-### D5F-B4F — generalize with SILVER evidence — A/B COMPLETE; C CURRENT
-
-B4F-A executable replay is complete. The dedicated `:app:sde2D5FB4FSilverGeneralization` T3 workload replays the durable ct-01 contracts without the historical legacy ranking / broad bluff sweep. Workflow run #3 at `17254848e47abf05c1b7648948ae8b47a89f9e6f` succeeded in about 7 minutes and confirmed observed bluff/RH/Drunk legality plus whole-bundle feasibility for every recipient. The previous external-human auto-workflow, which historically took about 2h48m and still ran the old D5 calibration path, has been retired.
-
-B4F-B documentary comparison is complete:
-
-- `ct-04` generalizes Red-Herring downstream relevance, **not candidate ordering**;
-- `ct-02` supplies SILVER explicit rationale consistent with truth danger / Evil-topology coupling;
-- `ct-01` is compatible with impaired-information believability but lacks choice-specific rationale, so that preference is not generalized;
-- `ct-01` / `ct-03` show authentic bluff-triplet variation without establishing a triplet ordering.
-
-Canonical audit: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md).
-
-B4F-C target specification is complete. Targeted evidence acquisition now belongs to the external evidence-collection pipeline rather than further CampBoardGameHost policy implementation. The canonical request contract is [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md). The highest-value next source is an independent experienced Storyteller case with explicit healthy-information floor / middle-band rationale; next are independent impaired-believability rationale, role-function exposure rationale, and Demon-bluff triplet rationale. D5F-C remains blocked until the evidence surface materially improves.
-
-### D5F-B4G — bounded human adjudication
-
-Use human review only for ambiguous/conflicting evidence and BEGINNER-product adaptation.
+No automatic online learning is authorized. Policy improvement remains offline, versioned and evidence-reviewed.
 
 ## 8. D5F-C remains blocked
 
