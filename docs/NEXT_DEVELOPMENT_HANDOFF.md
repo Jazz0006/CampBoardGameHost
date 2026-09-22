@@ -151,6 +151,18 @@ Do not resume broad source collection in this repository.
 
 First perform a live architecture/fanout audit.
 
+PR/branch boundary:
+
+- PR #150 remains the SDE-2D5 evidence/calibration checkpoint;
+- the SDE-3A audit may be performed read-only while #150 is draft;
+- do not put SDE-3 production implementation into the current calibration branch;
+- after the audit is accepted, #150 may be merged **only after explicit user authorization**;
+- then create a dedicated SDE-3 branch/PR from live `main`.
+
+This avoids carrying two milestone scopes in one PR.
+
+First perform the audit below.
+
 Audit at minimum:
 
 - current `StorytellerDecisionEngine`;
