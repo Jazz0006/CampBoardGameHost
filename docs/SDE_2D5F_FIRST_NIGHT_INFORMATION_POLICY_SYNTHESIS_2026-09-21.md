@@ -546,6 +546,7 @@ A real game is admitted to the GOLD corpus only when all required gates below ar
 - **expertise is independently verified**: the Storyteller has documented substantial Storyteller/TPI/design/community practice; source fame or production quality alone is insufficient;
 - **the game is authentic**: a real Trouble Brewing game, not a synthetic teaching fixture or counterfactual;
 - **the material committed state is reconstructable** at the exact decision point: seats/roles plus every setup/night commitment that can change the legal outcome or consequence of the decision;
+- unavailable hidden fields may remain explicitly unknown when production semantics prove they cannot affect the admitted decision slice; GOLD is decision-slice scoped, not permission to infer the rest of the game state;
 - **the observed choice is recoverable** from the source;
 - **the complete legal alternative set is recoverable from production legality owners** rather than hand-authored from the evidence record.
 
@@ -579,11 +580,15 @@ The first high-value candidates are:
 2. **Human Remains Of The Day** — Ben Burns — fully reconstructable from the current episode index, pending primary verification. High-value decision: poisoned Washerwoman misinformation with known Poisoner target; general early-game balancing rationale is also recorded, but is not choice-specific.
 3. **Live and Imp-Person** — Ben Burns — fully reconstructable from the current episode index, pending primary verification. High-value because Chef and Fortune Teller can use different interaction-scoped Recluse registration branches in the same Night 1.
 4. **Trouble Brewing - A Fond Farewell** — Ben Burns on the official Blood on the Clocktower channel — material Night-1 state is now primary-verified, including full table mapping, Traveller alignments, setup commitments, observed outputs, and two choice-specific rationales; executable legal-counterfactual recovery remains blocked by missing production Traveller semantics.
-5. **early TPI Trouble Brewing playthrough (4sfa8_kNxsQ)** — Evin — official TPI-endorsed primary recording and an important independent-Storyteller target. Evin's expert/trusted status is independently supported by his TPI co-founder role, integral early involvement, and founding of the Newcastle Clocktower group; the remaining blocker is complete Night-1 state extraction before GOLD admission.
+5. **early TPI Trouble Brewing playthrough (4sfa8_kNxsQ)** — Evin — **ADMITTED GOLD for the primary-verified material Night-1 slice**. The recovered setup has Doug Chef, Claire Fortune Teller, Sarah-Regina Washerwoman, Lewis Scarlet Woman, Julian Imp, Marianna Drunk shown Monk, Filip Undertaker, and Michael Virgin. Primary timestamps verify WW Julian/Filip=Undertaker, Chef=1, Doug as Red Herring, and FT Doug+Sarah-Regina=YES. Demon bluffs remain unknown because the video does not show them; they are non-material to the admitted legality domains and cannot be used for bluff-policy conclusions.
 
-The first three Ben cases are not three independent expert confirmations because they share the same principal Storyteller. A Stud is the first admitted GOLD case; the other two remain primary-verification candidates.
+The first three Ben cases are not three independent expert confirmations because they share the same principal Storyteller. A Stud is the first admitted GOLD case from `st-ben-burns`; the other two remain primary-verification candidates. Evin now contributes a second admitted GOLD decision slice under the independent key `st-evin`.
 
-The primary provenance record is `SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`. It deliberately separates primary-observed outputs from production-derived registration witnesses.
+Primary provenance records:
+- `SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+- `SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+
+Both records separate primary-observed facts from rule-derived consequences and unknown hidden state.
 
 ## 21. Observed expert choice + legal counterfactual contract
 
