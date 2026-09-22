@@ -17,7 +17,7 @@ import org.junit.Test
 class Sde2D5FB4FSilverGeneralizationExperiment {
     @Test
     fun `ct01 executable SILVER case generalizes bounded hypotheses without inventing preference labels`() {
-        val pilot = Sde2D5ExternalHumanPilotBuilder.build()
+        val pilot = Sde2D5ExternalHumanPilotBuilder.buildB4FSilverSnapshot()
 
         assertTrue(pilot.actualBluffLegal)
         assertTrue(pilot.actualRedHerringLegal)
