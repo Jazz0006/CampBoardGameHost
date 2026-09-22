@@ -114,10 +114,16 @@ internal object Sde2D5FExpertObservedConsequenceRenderer {
         appendLine()
         appendLine("Case: `$caseId` / $caseTitle")
         appendLine("Verification: `$verificationStatus`")
-        appendLine(
-            "Guard: mechanical reconstruction and counterfactual diagnostics do not promote this case to GOLD " +
-                "until the material Night-1 state is verified against the primary recording.",
-        )
+        when (verificationStatus) {
+            Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFICATION_PENDING -> appendLine(
+                "Guard: mechanical reconstruction and counterfactual diagnostics do not promote this case to GOLD " +
+                    "until the material Night-1 state is verified against the primary recording.",
+            )
+            Sde2D5FPrimaryVerificationStatus.PRIMARY_VERIFIED -> appendLine(
+                "Primary-state gate: verified against the primary recording. GOLD admission remains governed by " +
+                    "the corpus qualification rubric and production-owned legal-alternative recovery.",
+            )
+        }
         caseNotes.forEach { note -> appendLine("Case note: $note") }
         appendLine()
 
