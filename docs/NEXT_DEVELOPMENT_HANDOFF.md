@@ -14,9 +14,10 @@
 7. `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`
 8. `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`
 9. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`
-10. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
-11. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
-12. this handoff
+10. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+11. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+12. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+13. this handoff
 
 Do not reload deleted 2026-09-20 D5 correction/design files from Git history unless a concrete historical question requires them.
 
@@ -91,7 +92,7 @@ DIAGNOSTIC_ONLY
     synthetic / extreme / counterfactual fixtures
 ~~~
 
-The current external catalog now contains **one admitted GOLD case plus four remaining expert-source candidates**. `A Stud In Scarlet` is primary-verified and executable, so it is the first admitted GOLD case. Two other detailed Ben Burns games still require primary-video Night-1 verification; `A Fond Farewell` has primary-verified material state but is blocked on production Traveller legality; the Evin recording still requires state extraction. Multiple games from Ben share one Storyteller independence key and do not count as independent experts.
+The current external catalog now contains **two admitted GOLD decision slices from two independent Storytellers**: `A Stud In Scarlet` / `st-ben-burns`, and Evin's 2019 first full playthrough / `st-evin`. Two other detailed Ben Burns games still require primary-video Night-1 verification; `A Fond Farewell` has primary-verified material state but is blocked on production Traveller legality. Evin's Demon bluffs remain unknown/not shown and are explicitly excluded from bluff-policy evidence, but they are non-material to the admitted executable WW/Chef/RH/FT slice.
 
 `A Fond Farewell` has now moved beyond metadata-only discovery. The official primary video was manually checked for material Night-1 state on 2026-09-22, including full radial player↔role mapping, Traveller alignments, Drunk shown Chef, Red Herring, Demon bluffs, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`. The case is still not admitted GOLD because its five Travellers are not represented by the current production rules/domain model, so production-owned legal counterfactual recovery is unavailable. The official 2019 Evin recording remains the next independent-Storyteller primary extraction target. Its source identity is now triangulated through TPI's current Trouble Brewing page plus the original Kickstarter FAQ/update: it is Evin running an 8-player Trouble Brewing game for early/regular Sydney players. Indexed-web search did not expose a reliable transcript or material Night-1 state, so the remaining step is direct primary-video inspection, not more metadata inference. See `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`.
 
@@ -117,13 +118,13 @@ Do not restore the seven clean scenarios for calibration.
 
 The catalog now tracks:
 
-- Ben Burns — `A Stud In Scarlet` — `PRIMARY_STATE_VERIFIED_EXECUTABLE`, **ADMITTED GOLD**; primary video verifies the material Night-1 state and the production harness supplies complete legal alternatives;
+- Ben Burns — `A Stud In Scarlet` — `PRIMARY_STATE_VERIFIED_EXECUTABLE`, **ADMITTED GOLD**;
+- Evin — official 2019 TPI **8-player** Trouble Brewing playthrough — `PRIMARY_STATE_VERIFIED_EXECUTABLE_MATERIAL_SLICE`, **ADMITTED GOLD** for WW/Chef/RH/FT; Demon bluffs unknown/non-material to this slice;
 - Ben Burns — `Human Remains Of The Day` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
 - Ben Burns — `Live and Imp-Person` — `FULLY_RECONSTRUCTABLE`, pending primary verification;
-- Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PRIMARY_STATE_VERIFIED_TRAVELLER_EXECUTION_BLOCKED`; primary Night-1 state and two choice-specific rationales recovered;
-- Evin — official 2019 TPI **8-player** Trouble Brewing playthrough — `PARTIALLY_RECONSTRUCTABLE`, valuable independent-Storyteller target; source provenance is triangulated, but direct primary-video inspection is still required for seats/roles/setup commitments/Night-1 outputs.
+- Ben Burns — official `Trouble Brewing - A Fond Farewell` — `PRIMARY_STATE_VERIFIED_TRAVELLER_EXECUTION_BLOCKED`; primary Night-1 state and two choice-specific rationales recovered.
 
-TPI independently verifies Ben's long-running involvement and trusted/expert status. Evin is also independently qualified as experienced/trusted through his TPI co-founder role, integral early involvement, founding of the Newcastle Clocktower group, and the official TPI-hosted early Trouble Brewing game. His remaining GOLD blocker is state extraction, not expertise.
+TPI independently verifies Ben's long-running involvement and trusted/expert status. Evin is independently qualified as experienced/trusted through his TPI co-founder role, integral early involvement, founding of the Newcastle Clocktower group, and the official TPI-hosted early Trouble Brewing game. His material Night-1 slice is now primary-verified and executable, so there is no remaining GOLD blocker for that slice.
 
 Do not manufacture GOLD by treating the detailed secondary episode index as final verification.
 
@@ -229,11 +230,11 @@ Substantive result so far:
 
 Next success condition:
 
-1. continue primary-video verification for the two remaining detailed secondary-reconstructed Ben candidates; A Stud is complete and should not be re-watched merely for B4 admission;
-2. directly inspect the independent Evin 8-player primary recording and extract seats/roles/setup commitments/Night-1 outputs with timestamps; do not spend another pass on metadata-only indexed search unless a new source appears;
+1. compare the two independent admitted GOLD slices and identify which policy dimensions are genuinely repeated versus source-specific;
+2. only then decide whether verifying the two remaining Ben recordings would materially reduce uncertainty; do not collect same-Storyteller volume by default;
 3. keep `A Fond Farewell` as primary-verified but execution-blocked; Traveller support has been audited and explicitly deferred from B4, and any later implementation must be a separate canonical-domain capability;
 4. extract repeated policy dimensions only where source rationale and legal counterfactuals support them; do not derive D5F-C numeric gates yet;
-5. preserve A Stud as the first admitted GOLD case because it satisfies both primary-state verification and production-owned complete legal-counterfactual recovery;
+5. preserve A Stud and Evin as the first two admitted GOLD decision slices, with separate independence keys and explicit unknown-field boundaries;
 6. do not promote a policy rule merely because an alternative was unchosen.
 
 Code-smell checkpoint: named role adapters are acceptable only at the legality/proposition semantic boundary. Cross-case evidence projection and later persistent impaired narrative policy must remain shared and information-shape/history based.
