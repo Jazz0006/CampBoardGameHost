@@ -766,11 +766,21 @@ Use the following maturity labels only to decide what deserves further evidence 
 | interaction-scoped Spy/Recluse registration | official rules semantics + executable Live reconstruction | RULES_CONFIRMED_FOUNDATION | registration must not become persistent/global state |
 | impaired information may be true or false | official Drunk/poison semantics + shared A Stud numeric domain | RULES_CONFIRMED_FOUNDATION | preserve both truth and falsehood as legal descriptive possibilities; no false-at-all-costs rule |
 | narrative anchoring | 8 tagged external-catalog records, now including primary-verified A Fond explicit rationale | REPEATED_QUALITATIVE_CANDIDATE | retain as an independent policy dimension; no weight/threshold |
-| truth danger / credibility disruption | 7 tagged records, now including Evin's primary GOLD choice-specific Red Herring rationale | GOLD_SINGLE_EXPERT_PLUS_REPEATED_QUALITATIVE | retain as an independent policy dimension; strong enough to preserve in policy surface, not enough for a numeric weight or deterministic suppression rule |
+| truth danger / credibility disruption | Evin primary GOLD choice-specific Red Herring rationale + ct-02 SILVER explicit Storyteller rationale + repeated qualitative records | GOLD_PLUS_SILVER_EXPLICIT_RATIONALE | retain as an independent policy dimension; strong enough to preserve in policy surface, not enough for a numeric weight or deterministic suppression rule |
 | temporal consistency / impairment detectability | 4 tagged records for each dimension, plus existing shared narrative-state architecture | REPEATED_QUALITATIVE_CANDIDATE | continue collecting cross-night evidence through the shared persistent narrative abstraction |
 | role-function exposure | current synthesis + primary-pending Live candidate | EXPERT_CANDIDATE_ONLY | keep contextual; do not freeze avoidance severity |
 | Red Herring contextual utility | 4 tagged Red-Herring records plus independent explicit rationales from Ben (likely target ecology) and Evin (credibility disruption) | CROSS_EXPERT_CONTEXTUAL_FOUNDATION | Red Herring selection must remain context-sensitive and downstream-aware; do not collapse the two mechanisms into a fixed neighbor bonus, role-strength ordering, or scalar weight |
 | healthy-information floor | 2 tagged records | UNDER_EVIDENCED | keep open; no numeric floor yet |
+
+B4F bounded SILVER generalization now confirms a limited external-validity boundary:
+
+- executable ct-01 remains production-legal and whole-bundle feasible under the current model;
+- ct-04 generalizes Red-Herring downstream importance, not candidate ordering;
+- ct-02 supplies SILVER explicit rationale consistent with truth danger / Evil-topology coupling;
+- ct-01 is compatible with impaired-information believability but does not generalize that preference because no choice-specific rationale is recovered;
+- ct-01 / ct-03 provide authentic bluff-triplet variation without establishing a triplet ordering.
+
+See `SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`.
 
 Catalog tag recurrence is a **curation signal**, not an independent statistical sample. The same source, Storyteller, or human classification can contribute correlated tags.
 
