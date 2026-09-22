@@ -60,6 +60,14 @@ jobs:
             cat "$report"
           done
 
+      - name: Upload calibration test diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sde-2d5f-expert-observed-test-diagnostics
+          path: app/build/test-results/sde2D5FExpertObservedCalibration
+          if-no-files-found: warn
+
       - name: Upload expert-observed reports
         uses: actions/upload-artifact@v4
         with:
