@@ -10,6 +10,7 @@ on:
       - app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FAStudInScarlet*.kt
       - app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FHumanRemains*.kt
       - app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FLiveAndImpPerson*.kt
+      - app/src/test/java/com/codex/campboardgamehost/clocktower/review/Sde2D5FEvin*.kt
       - .github/workflows/sde-2d5f-expert-observed-calibration.yml
 
 concurrency:
@@ -51,6 +52,7 @@ jobs:
             "app/build/reports/sde-2d5f-expert-observed-a-stud.md"
             "app/build/reports/sde-2d5f-expert-observed-live-and-imp-person.md"
             "app/build/reports/sde-2d5f-expert-observed-human-remains.md"
+            "app/build/reports/sde-2d5f-expert-observed-evin.md"
             "app/build/reports/sde-2d5f-expert-observed-policy-features.md"
           )
           for report in "${reports[@]}"; do
@@ -66,5 +68,6 @@ jobs:
             app/build/reports/sde-2d5f-expert-observed-a-stud.md
             app/build/reports/sde-2d5f-expert-observed-live-and-imp-person.md
             app/build/reports/sde-2d5f-expert-observed-human-remains.md
+            app/build/reports/sde-2d5f-expert-observed-evin.md
             app/build/reports/sde-2d5f-expert-observed-policy-features.md
           if-no-files-found: error
