@@ -17,9 +17,10 @@
 10. `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`
 11. `docs/SDE_2D5F_CROSS_EXPERT_CONVERGENCE_AND_B4F_ENTRY_AUDIT_2026-09-23.md`
 12. `docs/SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`
-13. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
-14. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
-15. this handoff
+13. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
+14. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+15. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+16. this handoff
 
 Do not reload deleted 2026-09-20 D5 correction/design files from Git history unless a concrete historical question requires them.
 
@@ -232,15 +233,15 @@ Substantive result so far:
 
 Next success condition:
 
-1. continue **B4F-C evidence-gap triage / targeted collection**, not broad source discovery;
-2. treat ct-01 executable SILVER replay as accepted external-validity evidence: dedicated B4F run #3 succeeded in about 7 minutes; the obsolete ~2h48m external-human auto-workflow has been retired;
-3. preserve Red Herring contextual utility as the strongest cross-expert foundation: Ben = likely-target ecology; Evin = truth danger / credibility disruption; ct-04 generalizes downstream relevance but not seat ordering;
-4. preserve truth danger / credibility disruption as `GOLD_PLUS_SILVER_EXPLICIT_RATIONALE`; do not turn it into a deterministic suppression rule;
-5. target new primary evidence only for a named unresolved gap, preferring a new Storyteller independence key when the current evidence is single-expert;
-6. highest-priority gaps are healthy-information floor/middle band, role-function exposure severity, independent-expert impaired-believability rationale, Demon-bluff preference ordering, and quantitative multi-axis tradeoffs;
-7. keep `A Fond Farewell` primary-verified but execution-blocked; Traveller support stays outside B4;
-8. keep D5F-C and SDE-3 blocked; do not derive numeric gates or weights yet;
-9. do not promote a policy rule merely because an alternative was unchosen.
+1. CampBoardGameHost B4F-A/B and B4F-C target specification are complete; do **not** invent another app-side calibration slice merely to keep moving;
+2. targeted evidence acquisition is external / waiting and should be driven by `SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`;
+3. first acquisition priority is an independent experienced Storyteller case with explicit healthy-information floor / middle-band rationale;
+4. second priority is independent-expert impaired-information believability rationale, ideally recurring/cross-night;
+5. third/fourth priorities are explicit role-function exposure rationale and Demon-bluff triplet rationale;
+6. when a new case arrives, reconstruct only its material decision slice, record an independence key, and recover alternatives through production owners;
+7. keep A Stud + Evin as the two admitted independent GOLD anchors and ct-01 as executable SILVER external-validity evidence;
+8. keep `A Fond Farewell` primary-verified but Traveller-execution-blocked;
+9. keep D5F-C and SDE-3 blocked; no numeric gates, weights, or production policy cutover yet.
 
 Code-smell checkpoint: named role adapters are acceptable only at the legality/proposition semantic boundary. Cross-case evidence projection and later persistent impaired narrative policy must remain shared and information-shape/history based.
 
