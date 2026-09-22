@@ -237,7 +237,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
             it.candidateId == "pair-information-ability-v1|Librarian|Recluse|5,8"
         }
         assertEquals(SemanticTruth.TRUE, liveLibrarian.semanticTruth)
-        assertFalse(liveLibrarian.shownRoleIsDemonBluff)
+        assertEquals(false, liveLibrarian.shownRoleIsDemonBluff)
         assertEquals(setOf(8), liveLibrarian.shownRoleActualInPlaySeats)
         assertEquals(setOf(8), liveLibrarian.shownRoleCandidateMatchSeats)
         assertEquals(setOf(8), liveLibrarian.specialRegistrationRoleMatchSeats)
@@ -259,7 +259,7 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         }
         assertEquals(SemanticTruth.FALSE, humanObserved.semanticTruth)
         assertTrue(humanObserved.registration.hasNoSpecialRegistrationWitness)
-        assertTrue(humanObserved.shownRoleIsDemonBluff)
+        assertEquals(true, humanObserved.shownRoleIsDemonBluff)
         assertTrue(humanObserved.shownRoleActualInPlaySeats.isEmpty())
         assertTrue(humanObserved.shownRoleCandidateMatchSeats.isEmpty())
         assertTrue(humanObserved.specialRegistrationRoleMatchSeats.isEmpty())
@@ -271,12 +271,27 @@ class Sde2D5FExpertObservedCalibrationExperiment {
             features.humanWasherwoman.map { it.descriptiveSignature() }.toSet()
         assertTrue(humanSignatures.size > 1)
 
+        val evinObserved = features.evinWasherwoman.single {
+            it.candidateId == "pair-information-ability-v1|Washerwoman|Undertaker|5,7"
+        }
+        assertEquals(SemanticTruth.TRUE, evinObserved.semanticTruth)
+        assertTrue(evinObserved.registration.hasNoSpecialRegistrationWitness)
+        assertEquals(null, evinObserved.shownRoleIsDemonBluff)
+        assertEquals(setOf(7), evinObserved.shownRoleActualInPlaySeats)
+        assertEquals(setOf(7), evinObserved.shownRoleCandidateMatchSeats)
+        assertEquals(setOf(5), evinObserved.candidateEvilSeats)
+        assertEquals(setOf(5), evinObserved.candidateDemonSeats)
+        assertTrue(evinObserved.candidateMinionSeats.isEmpty())
+
         val livePairSummary =
             Sde2D5FExpertObservedPolicyFeatureProjector.summarizePair(features.liveLibrarian)
         val humanPairSummary =
             Sde2D5FExpertObservedPolicyFeatureProjector.summarizePair(features.humanWasherwoman)
+        val evinPairSummary =
+            Sde2D5FExpertObservedPolicyFeatureProjector.summarizePair(features.evinWasherwoman)
         assertEquals(features.liveLibrarian.size, livePairSummary.candidateCount)
         assertEquals(features.humanWasherwoman.size, humanPairSummary.candidateCount)
+        assertEquals(features.evinWasherwoman.size, evinPairSummary.candidateCount)
         assertEquals(
             humanPairSummary.candidateCount,
             humanPairSummary.semanticTrueCount + humanPairSummary.semanticFalseCount,
@@ -286,6 +301,8 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertTrue(humanPairSummary.containsActualDemonSeatCount > 0)
         assertTrue(humanPairSummary.containsActualMinionSeatCount > 0)
         assertTrue(humanPairSummary.allCandidateSeatsActualEvilCount > 0)
+        assertTrue(evinPairSummary.shownRoleDemonBluffUnknownCount > 0)
+        assertTrue(evinPairSummary.containsActualDemonSeatCount > 0)
 
         val report = Sde2D5FExpertObservedPolicyFeatureReportBuilder.render(features)
         assertTrue(report.contains("descriptive candidate facts only"))
@@ -294,6 +311,9 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertTrue(report.contains("all candidate seats are actual Evil"))
         assertTrue(report.contains("Drunk shown Empath"))
         assertTrue(report.contains("shown role is Demon bluff"))
+        assertTrue(report.contains("Evin 2019 First Full Playthrough"))
+        assertTrue(report.contains("Demon-bluff membership unknown"))
+        assertTrue(report.contains("UNKNOWN"))
         assertFalse(report.contains("BAD_TOO_STRONG"))
         assertFalse(report.contains("BAD_TOO_WEAK"))
 
