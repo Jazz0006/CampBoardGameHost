@@ -55,6 +55,14 @@ internal data class Sde2D5ExternalHumanPilotResult(
     val report: String,
 )
 
+internal data class Sde2D5FB4FSilverSnapshot(
+    val actualBluffLegal: Boolean,
+    val actualRedHerringLegal: Boolean,
+    val actualDrunkCandidateLegal: Boolean,
+    val actualDrunkSemanticTruth: SemanticTruth?,
+    val actualFullBundleFeasibleForEveryRecipient: Boolean,
+)
+
 internal object Sde2D5ExternalHumanPilotBuilder {
     private const val playerCount = 14
     private const val actualDemonSeat = 2
@@ -90,6 +98,53 @@ internal object Sde2D5ExternalHumanPilotBuilder {
             observations = emptyList<EpistemicObservation>(),
             setupKnowledge = listOf(TroubleBrewingSetupProfiles.standard(playerCount)),
         ).associateBy(PlayerKnowledgeSnapshot::recipientSeat)
+
+    /**
+     * Narrow B4F replay of the durable ct-01 evidence contracts.
+     *
+     * Deliberately omits the historical legacy setup ranking and exhaustive bluff-support sweep from
+     * [build]. B4F only needs production legality plus the observed whole-bundle feasibility check.
+     */
+    fun buildB4FSilverSnapshot(): Sde2D5FB4FSilverSnapshot {
+        val actualBluffLegal = SetupCandidateGenerator
+            .generateDemonBluffCandidates(game, roles)
+            .map { candidate -> (candidate.outcome as SetupClueOutcome.DemonBluffs).roles.toSet() }
+            .any { roles -> roles == actualBluffs }
+
+        val actualRedHerringLegal = SetupCandidateGenerator
+            .generateRedHerringCandidates(game)
+            .map { candidate -> (candidate.outcome as SetupClueOutcome.RedHerring).seat }
+            .any { seat -> seat == actualRedHerringSeat }
+
+        val actualDrunk = FirstNightNumericLegalDomain.generate(
+            game = game,
+            sourceSeat = drunkSeat,
+            abilityRole = RoleId("Empath"),
+            reliability = ReliabilityState.DRUNK,
+        ).singleOrNull { candidate -> candidate.value == 0 }
+
+        val actualPublic = actualPublicObservations(drunkValue = 0)
+        val fullBundleFeasible = (1..playerCount).all { recipientSeat ->
+            evaluate(
+                recipientSeat = recipientSeat,
+                queries = listOf(
+                    ExactHypotheticalObservationBundleQuery(
+                        bundleId = "clocktracker-b4f-full-r$recipientSeat",
+                        recipientSeat = recipientSeat,
+                        observations = actualPublic,
+                    ),
+                ),
+            ).single().afterFeasible
+        }
+
+        return Sde2D5FB4FSilverSnapshot(
+            actualBluffLegal = actualBluffLegal,
+            actualRedHerringLegal = actualRedHerringLegal,
+            actualDrunkCandidateLegal = actualDrunk != null,
+            actualDrunkSemanticTruth = actualDrunk?.semanticTruth,
+            actualFullBundleFeasibleForEveryRecipient = fullBundleFeasible,
+        )
+    }
 
     fun build(): Sde2D5ExternalHumanPilotResult {
         val legalBluffCandidates = SetupCandidateGenerator.generateDemonBluffCandidates(game, roles)
