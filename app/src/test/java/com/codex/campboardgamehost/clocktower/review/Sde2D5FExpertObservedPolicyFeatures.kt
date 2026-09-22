@@ -49,7 +49,7 @@ internal data class Sde2D5FPairCandidatePolicyFeatures(
     val semanticTruth: SemanticTruth,
     val registration: Sde2D5FRegistrationWitnessFeatures,
     val shownRole: RoleId?,
-    val shownRoleIsDemonBluff: Boolean,
+    val shownRoleIsDemonBluff: Boolean?,
     val shownRoleActualInPlaySeats: Set<Int>,
     val shownRoleCandidateMatchSeats: Set<Int>,
     val specialRegistrationRoleMatchSeats: Set<Int>,
@@ -91,6 +91,7 @@ internal data class Sde2D5FPairDomainPolicyFeatureSummary(
     val hasSpecialRegistrationAlternativeCount: Int,
     val requiresSpecialRegistrationCount: Int,
     val shownRoleDemonBluffCount: Int,
+    val shownRoleDemonBluffUnknownCount: Int,
     val shownRoleActualInPlayCount: Int,
     val shownRoleMatchesCandidateCount: Int,
     val specialRegistrationRoleMatchesCandidateCount: Int,
@@ -108,6 +109,7 @@ internal data class Sde2D5FPairDomainPolicyFeatureSummary(
             hasSpecialRegistrationAlternativeCount,
             requiresSpecialRegistrationCount,
             shownRoleDemonBluffCount,
+            shownRoleDemonBluffUnknownCount,
             shownRoleActualInPlayCount,
             shownRoleMatchesCandidateCount,
             specialRegistrationRoleMatchesCandidateCount,
@@ -139,7 +141,7 @@ internal object Sde2D5FExpertObservedPolicyFeatureProjector {
     fun projectPair(
         game: GameState,
         decision: Sde2D5FExpertObservedPairDecisionEvidence,
-        demonBluffs: Set<RoleId>,
+        demonBluffs: Set<RoleId>?,
     ): List<Sde2D5FPairCandidatePolicyFeatures> =
         decision.alternatives.map { alternative ->
             val players = alternative.candidateSeats.map { seat ->
@@ -175,7 +177,11 @@ internal object Sde2D5FExpertObservedPolicyFeatureProjector {
                     alternative.exactRegistrationWitnesses,
                 ),
                 shownRole = shownRole,
-                shownRoleIsDemonBluff = shownRole != null && shownRole in demonBluffs,
+                shownRoleIsDemonBluff = when {
+                    shownRole == null -> false
+                    demonBluffs == null -> null
+                    else -> shownRole in demonBluffs
+                },
                 shownRoleActualInPlaySeats = actualRoleSeats,
                 shownRoleCandidateMatchSeats = candidateMatchSeats,
                 specialRegistrationRoleMatchSeats = specialRoleMatches,
@@ -215,7 +221,9 @@ internal object Sde2D5FExpertObservedPolicyFeatureProjector {
                 candidates.count { it.registration.hasSpecialRegistrationAlternative },
             requiresSpecialRegistrationCount =
                 candidates.count { it.registration.requiresSpecialRegistration },
-            shownRoleDemonBluffCount = candidates.count { it.shownRoleIsDemonBluff },
+            shownRoleDemonBluffCount = candidates.count { it.shownRoleIsDemonBluff == true },
+            shownRoleDemonBluffUnknownCount =
+                candidates.count { it.shownRoleIsDemonBluff == null },
             shownRoleActualInPlayCount =
                 candidates.count { it.shownRoleActualInPlaySeats.isNotEmpty() },
             shownRoleMatchesCandidateCount =
