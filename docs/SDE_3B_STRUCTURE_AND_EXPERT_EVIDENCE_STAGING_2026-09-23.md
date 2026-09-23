@@ -132,7 +132,7 @@ Already implemented on PR #153:
 
 No production cutover.
 
-### SDE-3B1 — historical interaction structure and input binding — NEXT
+### SDE-3B1 — historical interaction structure and input binding — COMPLETE
 
 This is a structural slice, not an expert-policy slice.
 
@@ -162,7 +162,20 @@ Important:
 
 Evidence role in 3B1: **E1 only**. Real games tell us which lifecycle dependencies the structure must be capable of representing. They do not choose candidates.
 
-### SDE-3B2 — confirmation-chain feature projector
+Completion authority: `SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`.
+
+Implemented completion boundary:
+
+- historical structured shadow supports later lifecycle points;
+- canonical `ActionFactTimeline + EpistemicObservationLog` committed-prefix refs are attached to candidates;
+- future facts are rejected as hindsight;
+- contextual inputs use typed owner refs and remain `NotCaptured` until audited by a consumer;
+- Poisoner target ownership is exercised as a player-controlled binding;
+- Drunk shown identity remains setup-owned;
+- FT targets, Red Herring and Demon bluffs are bindable without copying their external owner state;
+- no policy preference changed.
+
+### SDE-3B2 — confirmation-chain feature projector — CURRENT
 
 First new non-strategic feature after the lifecycle/input seam.
 
@@ -373,11 +386,12 @@ Do **not** add another policy reason first.
 
 Next work:
 
-1. audit the current first-night structured shadow and later-night recommendation paths for a shared lifecycle-safe interaction envelope;
-2. map every contextual input owner needed by FT / Poisoner / Red Herring / Drunk shown role / prior observations / Demon succession;
-3. define the smallest typed captured-input/history-reference contract;
-4. implement 3B1 with no preference change;
-5. then build the confirmation-chain projector as the first new non-strategic feature;
-6. use real-game evidence only as semantic regression after the generic projector exists.
+1. perform a 3B2 architecture/fanout audit before production edits;
+2. reuse the semantic idea from review-only whole-bundle leave-one-out confirmation evidence, but keep review/calibration types non-authoritative;
+3. define the smallest generic `ConfirmationChainFeatures` payload;
+4. project support/contradiction/authentication effects from committed-prefix observations plus the current legal candidate, without named-role pairing tables;
+5. preserve recipient-visible knowledge boundaries and the 3B1 no-hindsight guarantee;
+6. add generic tests before using Evidence Lab R02/R04 prefixes as E2 semantic regression;
+7. keep V1 policy unchanged until 3B2 feature semantics are stable.
 
 Keep #153 draft.
