@@ -13,7 +13,8 @@ import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObserva
  *
  * Canonical history remains the only history owner. A historical ability observation is considered
  * healthy only when authoritative replay says its source was FUNCTIONING at that point. For a
- * functioning ability, truthfulness is a rules/legality invariant of the committed observation;
+ * functioning ability, actual truth or legal registered truth is a rules/legality invariant of the
+ * committed observation;
  * player-facing ObservationReliability is never used to infer hidden impairment state.
  *
  * Route independence is candidate-relative and score-free. Current-recipient history reuses the
@@ -192,6 +193,8 @@ internal object HistoricalHealthyInformationUtilityFeatureProjector {
                     HealthyInformationCandidateEvidence(
                         candidateId = candidateId,
                         recipientSeat = exact.recipientSeat,
+                        historyFeasibleBefore =
+                            consequence.diagnostics.before.value.signum() > 0,
                         candidateHistoryFeasibleAfter =
                             consequence.diagnostics.after.value.signum() > 0,
                         currentCandidateHealthy = currentHealthy,

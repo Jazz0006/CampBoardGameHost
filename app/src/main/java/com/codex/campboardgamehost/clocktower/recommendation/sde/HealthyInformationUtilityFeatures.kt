@@ -48,13 +48,20 @@ internal data class HealthyInformationCandidateEvidence(
     val candidateId: String,
     val recipientSeat: Int,
     /**
+     * Whether the committed exact-history baseline is still feasible before this candidate.
+     *
+     * A collapsed baseline cannot supply a currently usable route and must not be blamed on the
+     * next candidate.
+     */
+    val historyFeasibleBefore: Boolean,
+    /**
      * Whether the exact whole-history bundle remains feasible after applying this candidate.
      *
      * This is not a quality threshold. It is a hard semantic fact used to avoid calling a route
      * usable inside an already-impossible candidate history.
      */
     val candidateHistoryFeasibleAfter: Boolean,
-    /** True only when the current output is functioning and true to actual state. */
+    /** True only when the current output is functioning and legal actual/registered truth. */
     val currentCandidateHealthy: Boolean,
     /** Whether the current healthy output still contributes independent exact constraint. */
     val currentCandidateIndependentlyConstraining: Boolean,
@@ -72,6 +79,9 @@ internal data class HealthyInformationCandidateEvidence(
         ) {
             "Healthy-information history may contain each route at most once."
         }
+        require(!candidateHistoryFeasibleAfter || historyFeasibleBefore) {
+            "A hypothetical candidate cannot restore an already-collapsed exact history."
+        }
         require(!currentCandidateIndependentlyConstraining || currentCandidateHealthy) {
             "Only a healthy current candidate may create an independent healthy route."
         }
@@ -81,8 +91,9 @@ internal data class HealthyInformationCandidateEvidence(
 /**
  * Score-free description of healthy-information routes surviving one candidate.
  *
- * "Healthy" means information produced by a functioning ability and true to actual state. The
- * projector tracks route survival and independence only. It deliberately defines no information
+ * "Healthy" means information produced by a functioning ability and legal truth to either actual
+ * state or an explicitly allowed registration state. The projector tracks route survival and
+ * independence only. It deliberately defines no information
  * budget, percentage floor, player-count band, role-specific value or policy ordering.
  */
 internal data class HealthyInformationUtilityFeatures(
@@ -135,11 +146,32 @@ internal object HealthyInformationUtilityFeaturesProjector {
     fun project(
         evidence: HealthyInformationCandidateEvidence,
     ): HealthyInformationUtilityFeatures {
-        val usableBefore = evidence.historicalRoutes
-            .mapTo(linkedSetOf()) { it.routeRef }
-        val independentBefore = evidence.historicalRoutes
-            .filter(HistoricalHealthyInformationRouteEvidence::independentlyUsableBefore)
-            .mapTo(linkedSetOf()) { it.routeRef }
+        val usableBefore =
+            if (evidence.historyFeasibleBefore) {
+                evidence.historicalRoutes.mapTo(linkedSetOf()) { it.routeRef }
+            } else {
+                linkedSetOf()
+            }
+        val independentBefore =
+            if (evidence.historyFeasibleBefore) {
+                evidence.historicalRoutes
+                    .filter(HistoricalHealthyInformationRouteEvidence::independentlyUsableBefore)
+                    .mapTo(linkedSetOf()) { it.routeRef }
+            } else {
+                linkedSetOf()
+            }
+
+        if (!evidence.historyFeasibleBefore) {
+            return HealthyInformationUtilityFeatures(
+                usableHealthyRouteRefsBefore = emptySet(),
+                independentHealthyRouteRefsBefore = emptySet(),
+                usableHealthyRouteRefsAfter = emptySet(),
+                independentHealthyRouteRefsAfter = emptySet(),
+                newlyRedundantHealthyRouteRefs = emptySet(),
+                contradictedHealthyRouteRefs = emptySet(),
+                currentCandidateHealthyRouteRef = null,
+            )
+        }
 
         if (!evidence.candidateHistoryFeasibleAfter) {
             val contradicted = evidence.historicalRoutes
