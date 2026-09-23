@@ -1,7 +1,7 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
-import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
+import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
@@ -27,7 +27,7 @@ internal object HistoricalHealthyInformationUtilityFeatureProjector {
         confirmationByCandidateId: Map<String, FeatureProjection<ConfirmationChainFeatures>>,
         exactCandidates: List<ExactConsequenceCandidate>,
         sdeCandidates: List<SdeDecisionCandidate>,
-        semanticTruthByCandidateId: Map<String, SemanticTruth>,
+        truthRelationByCandidateId: Map<String, TruthRelation>,
         context: ExactConsequenceContext,
     ): Map<String, FeatureProjection<HealthyInformationUtilityFeatures>> {
         require(exactCandidates.isNotEmpty()) {
@@ -46,8 +46,8 @@ internal object HistoricalHealthyInformationUtilityFeatureProjector {
         require(confirmationByCandidateId.keys == candidateIds.toSet()) {
             "Healthy-information projection requires confirmation evidence for every legal candidate."
         }
-        require(semanticTruthByCandidateId.keys.all(candidateIds::contains)) {
-            "Healthy-information semantic truth may reference only legal candidates."
+        require(truthRelationByCandidateId.keys.all(candidateIds::contains)) {
+            "Healthy-information truth relation may reference only legal candidates."
         }
         require(sdeCandidates.all { it.sourceRevision == context.sourceRevision }) {
             "Historical healthy-information candidates must share the exact source revision."
@@ -145,8 +145,8 @@ internal object HistoricalHealthyInformationUtilityFeatureProjector {
                 ?: return@associateWith FeatureProjection.Unavailable(
                     FeatureUnavailableReason.HISTORICAL_INPUT_NOT_CAPTURED,
                 )
-            val semanticTruth = semanticTruthByCandidateId[candidateId]
-            if (currentAbilityState == AbilityState.FUNCTIONING && semanticTruth == null) {
+            val truthRelation = truthRelationByCandidateId[candidateId]
+            if (currentAbilityState == AbilityState.FUNCTIONING && truthRelation == null) {
                 return@associateWith FeatureProjection.Unavailable(
                     FeatureUnavailableReason.HISTORICAL_INPUT_NOT_CAPTURED,
                 )
@@ -182,7 +182,10 @@ internal object HistoricalHealthyInformationUtilityFeatureProjector {
 
             val currentHealthy =
                 currentAbilityState == AbilityState.FUNCTIONING &&
-                    semanticTruth == SemanticTruth.TRUE &&
+                    truthRelation in setOf(
+                        TruthRelation.TRUE_TO_ACTUAL_STATE,
+                        TruthRelation.TRUE_TO_REGISTERED_STATE,
+                    ) &&
                     sde.sourceInteraction.abilityRole != null
             FeatureProjection.Projected(
                 HealthyInformationUtilityFeaturesProjector.project(

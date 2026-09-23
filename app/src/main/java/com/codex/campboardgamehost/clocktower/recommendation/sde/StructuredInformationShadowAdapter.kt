@@ -158,6 +158,9 @@ internal object StructuredInformationShadowAdapter {
                 candidate.candidateId to semanticTruth
             }
         }.toMap()
+        val truthRelationByCandidateId = decisionContext.legalCandidates.associate { candidate ->
+            candidate.candidateId to candidate.evaluation.candidate.truthRelation
+        }
         val planned = informationSnapshot.legalCandidateIds.map { candidateId ->
             PlannedDecisionRef.fromInformationSnapshot(
                 decisionId = decisionId,
@@ -203,7 +206,7 @@ internal object StructuredInformationShadowAdapter {
                         confirmationByCandidateId = confirmationByCandidateId,
                         exactCandidates = exactCandidates,
                         sdeCandidates = sdeCandidates,
-                        semanticTruthByCandidateId = semanticTruthByCandidateId,
+                        truthRelationByCandidateId = truthRelationByCandidateId,
                         context = exactContext,
                     )
                 DecisionFeatureEvaluation.Ready(
