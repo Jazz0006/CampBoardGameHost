@@ -35,7 +35,7 @@ class ExactConsequenceDecisionFeaturesProjectorTest {
         assertTrue(projected is DecisionFeatureEvaluation.Ready)
         val ready = projected as DecisionFeatureEvaluation.Ready
         assertEquals(candidateIds, ready.candidates.map(CandidateDecisionFeatures::candidateId))
-        assertTrue(ready.candidates.all { it.features.strategic is FeatureProjection.Projected })
+        assertTrue(ready.candidates.all { it.features.strategic is FeatureProjection.Projected<*> })
     }
 
     @Test
