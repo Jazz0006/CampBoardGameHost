@@ -61,6 +61,7 @@ Always query live refs before executable edits.
 - SDE-3B1 completion audit: [`SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md)
 - SDE-3B2 completion audit: [`SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md)
 - SDE-3B3 completion audit: [`SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md)
+- SDE-3B4 completion audit: [`SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 - B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
@@ -194,7 +195,9 @@ Current implementation checkpoint on PR #153:
 - actual-state semantic truth is projected into `DecisionFeatures` for the current numeric seam;
 - **3B2 confirmation-chain features are projected from recipient-visible committed history plus each current candidate using exact leave-one-out diagnostics;**
 - **3B3 impaired-narrative features are derived from canonical setup/action/observation history with persistent setup-bound versus temporary action-bound impairment lifetimes;**
-- V1 policy still does not consume confirmation-chain or impaired-narrative features for ranking or rejection;
+- **3B4 healthy-information utility is projected from canonical history, authoritative ability state, upstream legal truth relation and existing confirmation provenance; functioning actual truth and legal registered truth are both healthy, while malfunctioning channels are excluded;**
+- baseline-already-infeasible history cannot be blamed on the current candidate as removal of the last healthy route;
+- V1 policy still does not consume confirmation-chain, impaired-narrative or healthy-information features for ranking or rejection;
 - legacy score/probability/pressure is not imported into SDE policy.
 
 SDE-3B staged status on PR #153:
@@ -202,8 +205,8 @@ SDE-3B staged status on PR #153:
 1. **3B1 historical lifecycle / input binding — COMPLETE** — later structured information can evaluate against the canonical committed prefix; typed contextual input refs preserve external ownership; no-hindsight is enforced; no second history owner exists.
 2. **3B2 confirmation-chain projector — COMPLETE** — generic support/contradiction/independent-contribution, ambiguity restoration, source authentication and multi-channel collapse are projected from exact recipient-visible historical replay; R02/R04-style E2 semantic regressions are bounded by available evidence; V1 policy remains unchanged.
 3. **3B3 impaired-narrative projector — COMPLETE** — score-free role-agnostic projection distinguishes persistent setup-bound versus temporary action-bound impairment episodes, historical compatibility/breaks, forced versus avoidable transitions and detectability; bounded R04/R06 E2 regressions are green and V1 policy remains unchanged.
-4. **3B4 healthy-information utility — CURRENT** — represent remaining usable healthy routes without a numeric misinformation budget;
-5. **3B5 contextual role-function exposure** — diagnostic first, lifecycle-aware, never a named-role blanket rule;
+4. **3B4 healthy-information utility — COMPLETE** — score-free whole-table healthy routes distinguish usable/independent routes before and after, redundancy/contradiction, lost routes and last-route removal; bounded R01/R04 E2 regressions are green; registered truth is preserved without conflating it with actual-state `SemanticTruth`; V1 policy remains unchanged.
+5. **3B5 contextual role-function exposure — CURRENT** — diagnostic first, lifecycle-aware, never a named-role blanket rule;
 6. **3B6 expert-informed V1 soft priorities** — only after matching typed projectors and semantic replay are stable.
 
 Expert evidence participates immediately at the architecture/feature-priority level and later as semantic regression. It becomes candidate preference only after the matching feature is stable. Numeric thresholds and multi-axis tradeoff strength remain SDE-3D.

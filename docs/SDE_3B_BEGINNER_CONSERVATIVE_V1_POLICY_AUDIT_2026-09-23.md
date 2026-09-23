@@ -31,11 +31,11 @@ The production-facing structured shadow currently projects:
 - forced-Evil seats/fraction;
 - actual-state semantic truth where the upstream legal candidate provides it;
 - confirmation-chain impact from exact recipient-visible committed history;
-- impaired-narrative coherence/detectability derived from canonical history and authoritative impairment state for malfunctioning structured interactions; functioning interactions are explicitly `NOT_APPLICABLE`.
+- impaired-narrative coherence/detectability derived from canonical history and authoritative impairment state for malfunctioning structured interactions; functioning interactions are explicitly `NOT_APPLICABLE`;
+- healthy-information utility derived from canonical history, authoritative ability state, upstream legal truth relation and exact confirmation provenance; functioning actual truth and legal registered truth are both healthy routes.
 
 The following remain explicit `FeatureProjection.Unavailable` on that surface:
 
-- healthy-information utility;
 - truth danger / credibility disruption;
 - role-function exposure;
 - bluff narrative;
@@ -239,8 +239,8 @@ The continuation order is revised by the ClocktowerEvidenceLab C0 handoff:
 1. **3B1 structure — COMPLETE:** historical lifecycle-safe shadow + explicit contextual input binding;
 2. **3B2 feature — COMPLETE:** confirmation-chain impact is projected generically from canonical recipient-visible history; V1 policy remains unchanged;
 3. **3B3 feature — COMPLETE:** impaired-narrative coherence/detectability is derived generically from canonical history and authoritative impairment episodes; V1 policy remains unchanged;
-4. **3B4 feature — CURRENT:** healthy-information utility / remaining usable routes;
-5. **3B5 feature:** contextual role-function exposure;
+4. **3B4 feature — COMPLETE:** healthy-information utility derives usable/independent routes, redundancy/contradiction, route loss and last-route removal; functioning registered truth is preserved and collapsed baselines are guarded; V1 policy remains unchanged;
+5. **3B5 feature — CURRENT:** contextual role-function exposure;
 6. **3B6 policy:** only then add expert-informed qualitative soft priorities over stable projectors;
 7. keep seeded tie-breaking for unresolved equivalence;
 8. keep SDE-3C DecisionTrace persistence separate;
@@ -279,7 +279,7 @@ This still satisfies persistence semantically: previous committed observations c
 
 The SDE candidate/shadow path now carries the source `AbilityState` projected from the existing legal-candidate semantics, and 3B1 adds lifecycle-safe canonical-history/input refs. Actual impairment must continue to come from rules/session semantics, not from `ObservationReliability.RECEIVED_AS_FUNCTIONING`, which only describes how information was received by the player.
 
-SDE-3B1 and SDE-3B2 are complete. The immediate next slice is 3B3 impaired-narrative feature semantics. Policy remains unchanged until 3B3 derives narrative features from canonical history rather than inventing a second state owner.
+SDE-3B1 through SDE-3B4 are complete. The immediate next slice is 3B5 contextual role-function exposure. Policy remains unchanged until that projector derives generic lifecycle-aware exposure facts without named-role penalties or a second state owner.
 
 ### Minimal coherence already available
 

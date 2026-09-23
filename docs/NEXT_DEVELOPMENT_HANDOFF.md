@@ -162,7 +162,9 @@ PR/branch boundary:
 - current PR is **#153** and must remain draft until explicit user authorization to merge;
 - current policy audit is `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_POLICY_AUDIT_2026-09-23.md`;
 - completed 3B1 audit is `docs/SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`;
-- completed 3B2 audit is `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`.
+- completed 3B2 audit is `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`;
+- completed 3B3 audit is `docs/SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`;
+- completed 3B4 audit is `docs/SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`.
 
 Current implemented boundary:
 
@@ -174,7 +176,10 @@ Current implemented boundary:
 - seeded selection is deterministic, weight-free and survivor-only;
 - structured shadow carries policy evaluation but production recommendation/confirmation remains unchanged;
 - source ability state and actual-state semantic truth are now projected from existing legal-candidate semantics without importing legacy score/probability;
-- confirmation-chain impact is now projected per candidate from exact recipient-visible committed history, while V1 policy ordering remains strategic-only.
+- confirmation-chain impact is now projected per candidate from exact recipient-visible committed history;
+- impaired-narrative lifecycle/coherence and healthy-information utility are projected as score-free diagnostics;
+- healthy information uses upstream legal `TruthRelation`: both functioning `TRUE_TO_ACTUAL_STATE` and `TRUE_TO_REGISTERED_STATE` are healthy, while actual-state `SemanticTruth` remains a separate feature;
+- V1 policy ordering remains strategic-only.
 
 Revised architecture status after the ClocktowerEvidenceLab C0 handoff:
 
@@ -184,8 +189,8 @@ Revised architecture status after the ClocktowerEvidenceLab C0 handoff:
 - upstream `AbilityState` and canonical action/setup history remain the actual impairment authority; player-facing observation reliability is not used to infer impairment;
 - **3B2 COMPLETE:** generic exact confirmation-chain projection is wired into structured shadow with recipient visibility, strict no-hindsight, explicit capability/unavailable handling, bounded R02/R04-style semantic regression, and no policy preference change;
 - **3B3 COMPLETE:** the shared score-free impaired-narrative projector derives persistent setup-bound and temporary action-bound episodes from canonical history plus authoritative impairment state; structured shadow integration, R04/R06 E2 regressions and policy non-consumption are green;
-- **3B4 CURRENT:** healthy-information utility / remaining usable healthy routes;
-- **3B5:** contextual role-function exposure;
+- **3B4 COMPLETE:** healthy-information utility derives usable/independent whole-table routes, redundancy/contradiction, route loss and last-route removal from canonical history plus existing exact/confirmation evidence; baseline-already-infeasible history is guarded and legal registered truth remains healthy; R01/R04 bounded E2 regressions are green; V1 policy remains unchanged;
+- **3B5 CURRENT:** contextual role-function exposure;
 - only after each projector has semantic replay evidence may expert rationale become a V1 soft preference.
 
 Evidence authority levels are now explicit:
@@ -402,18 +407,18 @@ Current SDE-3B checkpoint:
 - source `AbilityState` and actual-state semantic truth are projected from upstream legal-candidate semantics;
 - canonical semantic history remains the intended owner for cross-night narrative continuity;
 - **3B2 is COMPLETE:** structured confirmation features are production-owned diagnostics but remain shadow-only and policy-neutral;
-- **3B3 is COMPLETE:** structured impaired-narrative features are derived diagnostics over canonical history and authoritative impairment state; V1 policy remains unchanged.
+- **3B3 is COMPLETE:** structured impaired-narrative features are derived diagnostics over canonical history and authoritative impairment state; V1 policy remains unchanged;
+- **3B4 is COMPLETE:** structured healthy-information features are derived diagnostics over canonical history, ability state, legal truth relation and confirmation provenance; functioning registered truth is preserved, collapsed baselines are not blamed on the current candidate, and V1 policy remains unchanged.
 
 Immediate next action:
 
 1. re-query live #153 / main / checks;
-2. begin **3B4 healthy-information utility / remaining usable channels** with an architecture/fanout audit before production edits;
-3. reuse canonical exact/strategic history and existing confirmation provenance rather than creating a separate information-quality state store;
-4. define independently usable healthy routes from authoritative ability state plus semantic truth/history, not legacy score, probability or misinformation pressure;
-5. distinguish preserved healthy routes, lost healthy routes and removal of the last currently usable healthy route without a fixed information budget or percentage threshold;
-6. start with generic score-free feature semantics and RED tests at the shared projector owner;
-7. use Evidence Lab R01/R04 only as bounded E1/E2 semantic regressions after generic semantics are stable;
-8. keep V1 soft preferences unchanged until 3B4 feature semantics are accepted;
-9. do not add numeric bands, fixture-specific rules, DecisionTrace persistence, or production cutover.
+2. begin **3B5 contextual role-function exposure** with an architecture/fanout audit before production edits;
+3. reuse lifecycle, confirmation-chain and existing rules/registration semantics rather than adding a named-role exposure table or new mutable state;
+4. define generic exposure facts: newly exposed versus already independently exposed, confirmation-created exposure, and forced versus avoidable exposure;
+5. keep examples such as Spy/Ravenkeeper as E1/E2 evidence for the dimension, never as production special-case branches;
+6. start with diagnostic score-free feature semantics and generic RED tests;
+7. keep V1 soft preferences unchanged until 3B5 feature semantics are accepted;
+8. do not add numeric bands, fixture-specific rules, DecisionTrace persistence, or production cutover.
 
 Keep #153 draft until explicit user **“授权合并”**.

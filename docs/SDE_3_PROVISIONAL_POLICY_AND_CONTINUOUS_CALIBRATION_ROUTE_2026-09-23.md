@@ -415,7 +415,7 @@ Recommended sequence:
 5. **3B1 COMPLETE:** lifecycle-safe historical shadow/input binding is implemented with canonical committed-prefix refs, typed external-owner bindings and no-hindsight enforcement;
 6. **3B2 COMPLETE:** confirmation-chain impact is projected from canonical recipient-visible committed history with strict no-hindsight, exact leave-one-out contribution semantics and bounded R02/R04 E2 regression; V1 policy remains unchanged;
 7. **3B3 COMPLETE:** impaired-narrative coherence/detectability is derived from canonical history plus authoritative `AbilityState`/impairment episodes, with persistent setup-bound versus temporary action-bound lifetimes, bounded R04/R06 E2 regression and no second mutable history store; V1 policy remains unchanged;
-8. **3B4 CURRENT / 3B5 NEXT:** add healthy-information utility first, then contextual role-function exposure;
+8. **3B4 COMPLETE / 3B5 CURRENT:** healthy-information utility is complete; now add contextual role-function exposure;
 9. **3B6:** introduce expert-informed qualitative V1 soft priorities only after the matching feature projector and semantic replay are stable;
 10. leave versioned `DecisionTrace` / replay persistence to SDE-3C;
 11. reserve numeric thresholds, player-count bands and multi-axis tradeoff calibration for SDE-3D;
@@ -436,14 +436,14 @@ An observed expert choice without rationale is never, by itself, a preference la
 
 ## 14. Success criteria for the next development conversation
 
-The next conversation should **not** resume evidence collection.
+The next conversation should **not** resume evidence collection or reopen completed 3B2–3B4 feature semantics.
 
-It should begin SDE-3A by auditing the live production architecture and produce:
+It should continue SDE-3B5 by auditing contextual role-function exposure and produce:
 
-- one authoritative owner map;
-- proposed typed contracts;
-- explicit reuse map for current legality / topology / bundle infrastructure;
-- legacy surfaces that remain shadow-only versus future retirement targets;
-- smallest first implementation slice and its durable tests.
+- one authoritative owner/reuse map for lifecycle, confirmation, registration and rules semantics;
+- a role-agnostic typed exposure feature contract;
+- explicit forced-versus-avoidable and already-exposed-versus-newly-exposed semantics;
+- generic tests first, followed only by bounded E1/E2 evidence-backed regression;
+- confirmation that V1 policy still does not consume the new dimension until feature semantics are accepted.
 
-No numeric policy calibration is required to begin.
+No numeric policy calibration is required; thresholds and tradeoff strength remain SDE-3D.

@@ -266,7 +266,9 @@ Evidence usage:
 - E3: explicit expert believability/continuity rationale may justify a later soft “avoid needless contradiction” preference;
 - E4 severity remains SDE-3D.
 
-### SDE-3B4 — healthy-information utility / remaining usable channels — CURRENT
+### SDE-3B4 — healthy-information utility / remaining usable channels — COMPLETE
+
+Completion authority: `SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`.
 
 History/confirmation and impaired-narrative semantics are now available.
 
@@ -283,13 +285,22 @@ Initial exact/categorical features may include:
 - which healthy observation routes are preserved/lost;
 - whether a candidate removes the last currently usable healthy route.
 
+Accepted semantics:
+
+- historical healthy routes require authoritative `FUNCTIONING` state at the observation point;
+- current healthy routes accept upstream legal `TRUE_TO_ACTUAL_STATE` or `TRUE_TO_REGISTERED_STATE` without redefining actual-state `SemanticTruth`;
+- usable/independent routes are explicit before and after the candidate;
+- redundancy, contradiction, loss and last-route removal are categorical facts;
+- an already-collapsed exact baseline exposes no usable-before route and cannot be blamed on the candidate;
+- no score, percentage, misinformation budget or policy preference is introduced.
+
 Evidence usage:
 
-- E1/E2: R01/R04;
+- E1/E2: bounded R01/R04 shapes are green;
 - E3 only for exact categorical boundaries that have explicit support;
 - numeric floor stays SDE-3D.
 
-### SDE-3B5 — contextual role-function exposure
+### SDE-3B5 — contextual role-function exposure — CURRENT
 
 Implement only after lifecycle and confirmation context are available, because exposure severity changes with game stage.
 
@@ -411,12 +422,12 @@ Do **not** add another policy reason first.
 
 Next work:
 
-1. perform the 3B3 architecture/fanout audit before production edits;
-2. treat canonical setup/action history plus current authoritative `AbilityState` as impairment truth; `ObservationReliability` is not that authority;
-3. derive narrative features from `ActionFactTimeline + EpistemicObservationLog` rather than persisting a second perceived-world state;
-4. define one role-agnostic feature contract capable of persistent Drunk trajectories and temporary Poisoner episodes without policy special cases;
-5. start with descriptive coherence / contradiction / transition / detectability facts, not a score;
-6. add generic tests first, then bounded R02/R04/R06 E2 semantic regressions;
-7. keep V1 policy unchanged until 3B3 feature semantics are stable.
+1. perform the 3B5 architecture/fanout audit before production edits;
+2. reuse lifecycle, confirmation-chain, registration and rules semantics already owned outside policy;
+3. define role-agnostic exposure facts rather than named-role penalties;
+4. distinguish newly exposed versus already exposed mechanics, new confirmation routes, and forced versus avoidable exposure;
+5. start with diagnostic/categorical facts, not a score or rejection rule;
+6. add generic tests first, then bounded E1/E2 semantic regressions whose source material actually supports the exposure shape;
+7. keep V1 policy unchanged until 3B5 feature semantics are stable.
 
 Keep #153 draft.
