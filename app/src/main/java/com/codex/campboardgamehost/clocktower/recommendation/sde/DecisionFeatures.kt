@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
-import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
 import com.codex.campboardgamehost.clocktower.epistemic.ExactStrategicTopologyBundleDiagnostics
@@ -38,12 +37,6 @@ internal data class StrategicDecisionFeatures(
 internal data class TruthCredibilityFeatures(
     val truthDangerReasonCodes: Set<String> = emptySet(),
     val credibilityDisruptionReasonCodes: Set<String> = emptySet(),
-)
-
-internal data class RoleFunctionExposureFeatures(
-    val exposedSeats: Set<Int> = emptySet(),
-    val exposedRoles: Set<RoleId> = emptySet(),
-    val reasonCodes: Set<String> = emptySet(),
 )
 
 internal data class BluffNarrativeFeatures(
