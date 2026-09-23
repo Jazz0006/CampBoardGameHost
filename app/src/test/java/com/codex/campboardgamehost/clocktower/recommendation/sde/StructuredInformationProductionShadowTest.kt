@@ -114,7 +114,7 @@ class StructuredInformationProductionShadowTest {
             featureEvaluation.candidates.map(CandidateDecisionFeatures::candidateId),
         )
         assertTrue(featureEvaluation.candidates.all {
-            it.features.strategic is FeatureProjection.Projected
+            it.features.strategic is FeatureProjection.Projected<*>
         })
         assertEquals(visibleChoicesBefore, model.choices)
         assertEquals(sessionBeforeShadow, session.state)
