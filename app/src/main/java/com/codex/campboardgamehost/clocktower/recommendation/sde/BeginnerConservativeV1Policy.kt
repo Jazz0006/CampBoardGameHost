@@ -22,6 +22,8 @@ internal object BeginnerConservativeV1PolicyReasons {
 internal object BeginnerConservativeV1PolicyLimitations {
     val PREFERENCE_DIMENSIONS_NOT_PROJECTED =
         PolicyLimitationCode("preference-dimensions-not-projected")
+    val PREFERENCE_EVIDENCE_NOT_AUTHORIZED =
+        PolicyLimitationCode("preference-evidence-not-authorized")
 }
 
 /**
@@ -177,12 +179,12 @@ internal object BeginnerConservativeV1Policy {
 
     private fun preferenceLimitations(
         evaluation: DecisionFeatureEvaluation.Ready,
-    ): Set<PolicyLimitationCode> =
+    ): Set<PolicyLimitationCode> = buildSet {
+        add(BeginnerConservativeV1PolicyLimitations.PREFERENCE_EVIDENCE_NOT_AUTHORIZED)
         if (evaluation.candidates.any { candidate -> candidate.features.hasUnprojectedPreferenceDimension() }) {
-            setOf(BeginnerConservativeV1PolicyLimitations.PREFERENCE_DIMENSIONS_NOT_PROJECTED)
-        } else {
-            emptySet()
+            add(BeginnerConservativeV1PolicyLimitations.PREFERENCE_DIMENSIONS_NOT_PROJECTED)
         }
+    }
 
     private fun DecisionFeatures.hasUnprojectedPreferenceDimension(): Boolean =
         listOf(
