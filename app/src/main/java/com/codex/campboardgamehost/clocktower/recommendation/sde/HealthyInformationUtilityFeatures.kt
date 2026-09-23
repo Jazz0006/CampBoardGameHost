@@ -128,17 +128,13 @@ internal object HealthyInformationUtilityFeaturesProjector {
                         ConfirmationObservationRelation.CONTRADICTS_EXISTING_OBSERVATION
                 }
                 .mapTo(linkedSetOf()) { it.routeRef }
-            val nonContradicted = evidence.historicalRoutes
-                .map { it.routeRef }
-                .filterNotTo(linkedSetOf()) { it in contradicted }
-            // An impossible whole-history bundle cannot claim any route remains usable, even if one
-            // historical route was not itself the direct contradictory edge.
+            // Whole-history infeasibility only means no route can be called usable after this
+            // candidate. It does not prove every healthy route was itself the contradictory edge.
             return HealthyInformationUtilityFeatures(
                 usableHealthyRouteRefsAfter = emptySet(),
                 independentHealthyRouteRefsAfter = emptySet(),
                 newlyRedundantHealthyRouteRefs = emptySet(),
-                contradictedHealthyRouteRefs =
-                    (contradicted + nonContradicted).toCollection(linkedSetOf()),
+                contradictedHealthyRouteRefs = contradicted,
                 currentCandidateHealthyRouteRef = null,
             )
         }
