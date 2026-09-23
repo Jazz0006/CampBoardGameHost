@@ -1,9 +1,9 @@
 # CampBoardGameHost — Next Development Handoff
 
 > Updated: 2026-09-23 Australia/Sydney  
-> Branch: `sde-3a-feature-projection-shadow-pipeline`  
-> PR: **#152 — SDE-3A: complete structured feature projection shadow**  
-> PR #151 is merged as SDE-3A checkpoint 1. PR #152 **MUST remain draft**. Do not merge unless the user explicitly says **“授权合并”**.
+> Branch: `sde-3b-beginner-conservative-v1`  
+> PR: **SDE-3B draft PR — create after first branch commit**  
+> PR #151 and #152 are merged. The SDE-3B PR **MUST remain draft**. Do not merge unless the user explicitly says **“授权合并”**.
 
 ## 1. Read first
 
@@ -61,8 +61,8 @@ Evidence acquisition is now **parallel / external / continuous**. It no longer b
 Current route:
 
 ~~~text
-SDE-3A engine / feature / policy contract                  COMPLETE ON PR #152 / PENDING MERGE
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT AFTER SDE-3A MERGE
+SDE-3A engine / feature / policy contract                  COMPLETE
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       CURRENT
 SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
@@ -145,9 +145,9 @@ Priority:
 
 Do not resume broad source collection in this repository.
 
-## 7. Current engineering target — SDE-3A
+## 7. Current engineering target — SDE-3B
 
-**Do not start by inventing scoring weights.**
+**Do not start by inventing scoring weights or treating unavailable features as neutral.**
 
 First perform a live architecture/fanout audit.
 
