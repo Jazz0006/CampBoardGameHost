@@ -10,6 +10,7 @@
 ```text
 handoffs/     closed or superseded NEXT handoffs
 checkpoints/  completed implementation/test/checkpoint evidence
+               including fn-bundle/ and sde/ campaign histories
 ui/           superseded UI plans and UI campaign closeout evidence
 deferred/     unfinished but explicitly deferred future work
 workflows/    superseded workflow instructions
@@ -38,6 +39,46 @@ checkpoints/d6/
 ```
 
 Use `checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md` as the historical entry point. The individual D6 audit/progress files should not be loaded by default in new sessions.
+
+### 2026-09-20 FN-BUNDLE / SDE checkpoint consolidation
+
+Completed FN-BUNDLE and SDE slice-level audits were moved out of active `docs/` so new sessions do not load obsolete execution details by default.
+
+Historical indexes:
+
+- [`checkpoints/fn-bundle/README.md`](checkpoints/fn-bundle/README.md)
+- [`checkpoints/sde/README.md`](checkpoints/sde/README.md)
+
+Current SDE status must be read from `../CURRENT_DEVELOPMENT_ROADMAP.md`, `../NEXT_DEVELOPMENT_HANDOFF.md`, and the current specialized authority named there.
+
+### 2026-09-20 completed host/UI audit consolidation
+
+Additional completed campaign evidence was moved out of active `docs/`:
+
+- Experienced Night Flow S2–S4 -> [`checkpoints/experienced-night-flow/`](checkpoints/experienced-night-flow/README.md)
+- UI-NAV-1 audit/closeout -> `ui/`
+- superseded R6 impaired-information design -> `checkpoints/sde/`
+- source-string test retirement evidence -> `checkpoints/`
+
+These moves are documentation lifecycle cleanup only; they do not reactivate or change the archived decisions.
+
+### 2026-09-21 D5F policy consolidation
+
+The active D5F route was consolidated around expert-observed calibration.
+
+Three 2026-09-20 active intermediate documents were deleted rather than retained as parallel authorities:
+
+- `SDE_2D5_POLICY_MODEL_CORRECTION_AUDIT_2026-09-20.md`;
+- `SDE_2D5F_EXTREME_FIXTURE_CALIBRATION_SCOPE_CORRECTION_2026-09-20.md`;
+- `SDE_2D5F_REPRESENTATIVE_HEALTHY_INFORMATION_CORPUS_DESIGN_2026-09-20.md`.
+
+Their Git history remains available if historical reconstruction is needed. Current conclusions were folded into:
+
+- `../SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`;
+- `../CURRENT_DEVELOPMENT_ROADMAP.md`;
+- `../NEXT_DEVELOPMENT_HANDOFF.md`.
+
+The previous external-human catalog was renamed/reclassified as an external evidence source catalog. Existing entries are SILVER/QUALITATIVE seeds until expert provenance is independently verified.
 
 ## 2. Handoffs
 

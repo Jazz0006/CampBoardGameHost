@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
+import com.codex.campboardgamehost.clocktower.epistemic.ExactStrategicTopologyBundleDiagnostics
+import com.codex.campboardgamehost.clocktower.epistemic.ExactWorldStructureDiagnostics
 
 /**
  * Exact bounded ratio used by player-count-normalized SDE diagnostics.
@@ -58,11 +60,29 @@ internal object NormalizedStrategicDiagnosticsProjector {
     fun project(
         diagnostic: ExactHypotheticalObservationBundleDiagnostics,
         playerCount: Int,
+    ): NormalizedStrategicDiagnostics =
+        project(
+            before = diagnostic.beforeStructure,
+            after = diagnostic.afterStructure,
+            playerCount = playerCount,
+        )
+
+    fun project(
+        diagnostic: ExactStrategicTopologyBundleDiagnostics,
+        playerCount: Int,
+    ): NormalizedStrategicDiagnostics =
+        project(
+            before = diagnostic.beforeStructure,
+            after = diagnostic.afterStructure,
+            playerCount = playerCount,
+        )
+
+    fun project(
+        before: ExactWorldStructureDiagnostics,
+        after: ExactWorldStructureDiagnostics,
+        playerCount: Int,
     ): NormalizedStrategicDiagnostics {
         require(playerCount > 0) { "Normalized strategic diagnostics require a positive player count." }
-
-        val before = diagnostic.beforeStructure
-        val after = diagnostic.afterStructure
 
         require(after.possibleDemonSeats.all(before.possibleDemonSeats::contains)) {
             "AFTER Demon cover must be a subset of the exact BEFORE cover."

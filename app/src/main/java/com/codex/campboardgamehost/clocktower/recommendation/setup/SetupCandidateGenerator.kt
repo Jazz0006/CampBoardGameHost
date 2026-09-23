@@ -87,7 +87,6 @@ internal object SetupCandidateGenerator {
         val scriptRoles = scriptRoles(game, roleDefinitions)
         val inPlayRoles = game.players.map { it.actualRole }.toSet()
         if (lockedDecisions.groupingBy { it.kind() }.eachCount().any { it.value > 1 }) return emptySequence()
-        if (lockedDecisions.any { it is StorytellerDecision.DrunkShownRole }) return emptySequence()
         val lockedRedHerring = lockedDecisions.filterIsInstance<StorytellerDecision.RedHerring>().singleOrNull()
         val lockedDrunkDecisions = lockedDecisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>()
         val lockedDemonBluffs = lockedDecisions.filterIsInstance<StorytellerDecision.DemonBluffs>().singleOrNull()
@@ -155,7 +154,6 @@ internal object SetupCandidateGenerator {
     internal fun canonicalPlan(decisions: List<StorytellerDecision>): String = decisions.joinToString("|") { decision ->
         when (decision) {
             is StorytellerDecision.RedHerring -> "red-herring:${decision.seat}"
-            is StorytellerDecision.DrunkShownRole -> "drunk-role:${decision.role.value}"
             is StorytellerDecision.DrunkInvestigatorInfo -> listOf(
                 "drunk-investigator",
                 decision.shownMinion.value,

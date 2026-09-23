@@ -235,11 +235,9 @@ internal fun StorytellerRecommendationCard(
                 }
                 is RecommendationUiState.Error -> Text(text("推荐暂时不可用：", "Recommendation unavailable: ") + state.message, color = MaterialTheme.colorScheme.error)
                 is RecommendationUiState.Ready -> selectedPlan?.let { plan ->
-                    val drunkPlayer = cards.firstOrNull { it.clocktowerRole?.enName == "Drunk" }
                     val actionLines = plan.decisions.map { decision ->
                         val line = when (decision) {
                             is StorytellerDecision.RedHerring -> text("红鲱鱼：", "Red herring: ") + seatLabel(decision.seat)
-                            is StorytellerDecision.DrunkShownRole -> text("酒鬼展示身份：", "Show the Drunk as: ") + roleName(decision.role) + drunkPlayer?.let { " · ${it.seatLabel(cards)}" }.orEmpty()
                             is StorytellerDecision.DrunkInvestigatorInfo -> text("酒鬼调查员信息：", "Drunk Investigator information: ") + roleName(decision.shownMinion) + " · " + decision.candidateSeats.joinToString(" / ") { seatLabel(it) }
                             is StorytellerDecision.DemonBluffs -> text("恶魔伪装：", "Demon bluffs: ") + decision.roles.joinToString(text("、", ", ")) { roleName(it) }
                         }
@@ -345,9 +343,6 @@ internal fun RecommendationDecisionEditor(
     val redHerringOptions = cards.filter {
         it.clocktowerTeam == ClocktowerTeam.Townsfolk || it.clocktowerTeam == ClocktowerTeam.Outsider
     }
-    val drunkShownRoleOptions = scriptRoles.filter {
-        it.team == ClocktowerTeam.Townsfolk && it.enName !in inPlayRoleNames
-    }
     val minionRoleOptions = scriptRoles.filter { it.team == ClocktowerTeam.Minion }
     val demonBluffOptions = scriptRoles.filter {
         it.team in setOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider) && it.enName !in inPlayRoleNames
@@ -361,11 +356,16 @@ internal fun RecommendationDecisionEditor(
     }
 
     val redHerring = draftDecisions.filterIsInstance<StorytellerDecision.RedHerring>().singleOrNull()
-    val drunkShownRole = draftDecisions.filterIsInstance<StorytellerDecision.DrunkShownRole>().singleOrNull()
     val drunkInfo = draftDecisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().singleOrNull()
     val demonBluffs = draftDecisions.filterIsInstance<StorytellerDecision.DemonBluffs>().singleOrNull()
-    val isValidDraft = (drunkShownRole?.role != RoleId("Investigator") || drunkInfo?.candidateSeats?.size == 2) &&
-        (demonBluffs == null || demonBluffs.roles.size == 3)
+    val committedDrunkShownRole = cards
+        .firstOrNull { it.clocktowerRole?.enName == "Drunk" }
+        ?.clocktowerShownRole
+        ?.let { RoleId(it.enName) }
+    val isValidDraft =
+        (drunkInfo == null ||
+            (committedDrunkShownRole == RoleId("Investigator") && drunkInfo.candidateSeats.size == 2)) &&
+            (demonBluffs == null || demonBluffs.roles.size == 3)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -400,29 +400,7 @@ internal fun RecommendationDecisionEditor(
                 HorizontalDivider()
             }
 
-            drunkShownRole?.let { current ->
-                Text(text("酒鬼展示身份", "Drunk shown role"), fontWeight = FontWeight.Bold)
-                val committedShownRole = cards.firstOrNull { it.clocktowerRole?.enName == "Drunk" }
-                    ?.clocktowerShownRole
-                Text(
-                    committedShownRole?.let { roleName(it) } ?: roleName(
-                        drunkShownRoleOptions.first { it.enName == current.role.value },
-                    ),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text(
-                        "该身份已经向玩家展示；后续推荐只能围绕它重新优化。",
-                        "This identity has already been shown; later recommendations optimize around it.",
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                HorizontalDivider()
-            }
-
-            if (drunkShownRole?.role == RoleId("Investigator") && drunkInfo != null) {
+            if (committedDrunkShownRole == RoleId("Investigator") && drunkInfo != null) {
                 Text(text("酒鬼调查员展示的爪牙", "Minion shown to the Drunk Investigator"), fontWeight = FontWeight.Bold)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     minionRoleOptions.forEach { role ->

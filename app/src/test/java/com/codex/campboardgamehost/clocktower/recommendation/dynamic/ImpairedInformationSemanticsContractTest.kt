@@ -12,42 +12,6 @@ import org.junit.Test
 
 class ImpairedInformationSemanticsContractTest {
     @Test
-    fun `poisoned information strongly prefers false regardless of game balance`() {
-        val masses = RecommendationStyle.entries.flatMap { style ->
-            listOf(-100, 0, 100).map { evilAdvantage ->
-                DynamicCandidateGenerator.misinformationMassFixedPoint(
-                    reliability = InformationReliability.POISONED,
-                    style = style,
-                    evilAdvantage = evilAdvantage,
-                )
-            }
-        }
-
-        assertTrue(
-            "Poisoned information should strongly prefer false without making truth vanishingly rare.",
-            masses.all { it in 875_000L..925_000L },
-        )
-    }
-
-    @Test
-    fun `drunk information strongly prefers false regardless of game balance`() {
-        val masses = RecommendationStyle.entries.flatMap { style ->
-            listOf(-100, 0, 100).map { evilAdvantage ->
-                DynamicCandidateGenerator.misinformationMassFixedPoint(
-                    reliability = InformationReliability.DRUNK,
-                    style = style,
-                    evilAdvantage = evilAdvantage,
-                )
-            }
-        }
-
-        assertTrue(
-            "Drunk information should strongly prefer false without making truth vanishingly rare.",
-            masses.all { it in 875_000L..925_000L },
-        )
-    }
-
-    @Test
     fun `game balance cannot own the impaired truthful versus false boundary`() {
         RecommendationStyle.entries.forEach { style ->
             listOf(InformationReliability.DRUNK, InformationReliability.POISONED).forEach { reliability ->

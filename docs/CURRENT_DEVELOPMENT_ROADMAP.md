@@ -1,531 +1,242 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-19 Australia/Sydney  
+> Updated: 2026-09-23 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
-## 1. Current state
+## 1. Program status
 
-Completed foundation relevant to the current program:
-
-```text
+~~~text
 D6 decomposition / ownership cleanup                  COMPLETE
-Beginner / Experienced host modes                     COMPLETE
-Same-night effective-state / transaction foundation   COMPLETE
 EPI-MQ capability boundary                            COMPLETE / PR #135
 Exact historical hypothetical bundle seam             COMPLETE / PR #137
 First-night experiment contract                       COMPLETE / PR #138
-FN-BUNDLE-0 candidate-space + pair ownership           COMPLETE / PR #139
-FN-BUNDLE-1 proposition / ShownRoleAt semantics        COMPLETE / PR #140
-FN-BUNDLE-2 healthy whole-bundle exact harness         COMPLETE / PR #142
-SDE-0 BEGINNER strategic-robustness corpus             COMPLETE / PR #143
-SDE-1A global fanout / orchestration seam audit        COMPLETE / PR #144
-SDE-1B thin bounded exact-consequence contracts        COMPLETE / PR #144
-SDE-1C exact-evaluator orchestration differential      COMPLETE / PR #144
-SDE-1D lifecycle ownership / planned freshness         COMPLETE / PR #144
-SDE-1E structured production shadow integration        COMPLETE / PR #144
-SDE-2A Drunk ownership / revision replanning contract  COMPLETE / PR #144
-SDE-2B Spy/Recluse exact registration witness binding  COMPLETE / PR #144
-SDE-2C Poisoner invalidation / broad replanning        COMPLETE / PR #144
-SDE-2D1 Drunk whole-bundle completion                   COMPLETE / PR #145 merged
-SDE-2D2 Demon bluff joint-output migration              COMPLETE / PR #146 merged
-SDE-2D3 strategic-world quotient                        COMPLETE / PR #147 merged
-SDE-2D4 5–15 player generalization / performance        COMPLETE / PR #149 draft
-SDE-2D pre-SDE-3 strategic generalization              CURRENT
-```
+FN-BUNDLE-0 / 1 / 2                                  COMPLETE / PR #139/#140/#142
+SDE-0 BEGINNER strategic corpus                       COMPLETE / PR #143
+SDE-1 orchestration / lifecycle / shadow              COMPLETE / PR #144
+SDE-2D1 Drunk whole-bundle                            COMPLETE / PR #145
+SDE-2D2 Demon bluff joint-output                      COMPLETE / PR #146
+SDE-2D3 strategic-world quotient                      COMPLETE / PR #147
+SDE-2D4 5–15 correctness/performance                  COMPLETE / PR #149
+SDE-2D5 calibration / policy evidence                 PARALLEL / PR #150 draft
+    D5A–D5E                                            COMPLETE
+    D5F infrastructure                                COMPLETE
+    D5F-B3 correction                                 HISTORICAL CHECKPOINT
+    D5F-B4 engineering / evidence checkpoint          COMPLETE UP TO EXTERNAL WAIT
+        B4A clean-corpus retirement                    COMPLETE
+        B4B GOLD source discovery                     DEMAND-DRIVEN
+        B4C expert reconstruction                     COMPLETE FOR CURRENT ANCHORS
+        B4D legal counterfactual recovery              COMPLETE FOR CURRENT EXECUTABLE ANCHORS
+        B4E observed-vs-alternative analysis           CROSS-EXPERT CHECKPOINT COMPLETE
+        B4F-A executable SILVER replay                 COMPLETE
+        B4F-B documentary SILVER comparison            COMPLETE
+        B4F-C target specification                     COMPLETE
+        B4F-C targeted evidence acquisition            EXTERNAL / CONTINUOUS
+D5F-C final gate/band derivation                      BLOCKED ON EVIDENCE
+sealed holdout                                        CLOSED
+SDE-3A engine / feature / policy contract             CURRENT
+SDE-3B BEGINNER_CONSERVATIVE_V1                       NEXT
+SDE-3C shadow / DecisionTrace / replay                 NEXT
+SDE-3D calibrated policy freeze                       BLOCKED ON EVIDENCE
+SDE-3E automatic production cutover                   BLOCKED ON 3D
+~~~
 
-SDE-0 was squash-merged to `main` as:
+## 2. Current branch / PR
 
-`5dd32e085a7db0d3eb14ed8bce3ed3c75f694c6e`
+Branch: `sde-2d5-calibration-policy-evidence`
 
-SDE-1 authority/evidence:
+PR: **#150 — SDE-2D5: calibrate strategic policy evidence**
 
-- `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`
-- `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`
-- `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`
-- `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`
+PR #150 remains **draft**. Do not merge unless the user explicitly says **“授权合并”**.
 
-Final executable validation head for SDE-1E:
+Always query live refs before executable edits.
 
-`e7bb31937db32863e5606044b443818011d16236`
+## 3. Current authorities
 
-Validation:
+- First-night policy: [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
+- External evidence seed: [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv)
+- Current SDE-3 execution route: [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
+- Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
+- B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
+- B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
+- Traveller boundary audit for primary-verified A Fond: [`SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`](SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md)
+- Primary reconstructions: `SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`, `SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`, `SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`
 
-```text
-R2 main-thread boundary        SUCCESS
-Android FAST unit tests        SUCCESS (executed)
-CI gate                        SUCCESS
-ASP contract tests             SKIPPED by classifier
-Real Clingo cross-validation   SKIPPED by classifier
-Full Android/APK step          SKIPPED by classifier
-```
+## 4. Frozen architecture / policy decisions
 
-PR #144 was merged to `main` as:
+- Optimize only variables still controllable at the current lifecycle stage.
+- Rules/canonical producers own legality; epistemic/topology layers own consequences; SDE owns policy/selection.
+- Drunk shown identity is setup-persistent; committed information is immutable.
+- Demon bluffs and Red Herring are persistent once revealed/committed.
+- Fortune Teller target pair and Poisoner target are player-controlled.
+- Spy/Recluse registration is per interaction.
+- BEGINNER thematic prior: Spy normally registers as Good/Townsfolk/Outsider; Recluse normally registers as Evil/Minion/Demon.
+- Actual registration is a fallback when the thematic default materially improves whole-bundle health.
+- Avoid Librarian -> Recluse when a healthy alternative exists; strongly avoid Investigator -> Spy when a healthy alternative exists.
+- Chef/Empath are rule-determined only when every legal registration branch yields the same healthy value.
+- Drunk/poisoned information may accidentally be true; repeated/history-dependent impaired information must use a persistent role-agnostic narrative state so later outputs remain coherent with the perceived world already established.
+- Strategic Evil topology is primary structural evidence, but role-information utility, confirmation chains, role-function exposure, bluff usability and information floor remain separate.
+- No opaque global scalar.
+- No named-role / known-fixture policy patches for cross-interaction coherence. Role-specific code owns legality only; shared semantic/history policy owns narrative continuity.
 
-`89453c902741699b072d11320d85a5561172abe5`
+### Shared impaired-narrative implementation invariant
 
-Current corrective-route authority:
+When D5F/SDE-3 reaches cross-night impaired information, implement one reusable persistent narrative-state mechanism over generic information propositions/history.
 
-`docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+Do not create separate coherence algorithms for individual roles or calibration fixtures.
 
-Always query live `main` before executable edits.
+Acceptance for that future implementation must show:
 
-## 2. CURRENT
+- one shared owner for persistent impaired narrative intent/history;
+- role adapters contribute legal domains / semantic propositions only;
+- previous committed observations constrain later selection;
+- the mechanism generalizes across multiple information shapes;
+- tests prove the abstraction at its shared owner plus representative fanout, rather than hard-coding every named example.
 
-**SDE-2D — PRE-SDE-3 STRATEGIC GENERALIZATION**
+## 5. Calibration correction
 
-The pre-SDE-3 algorithm review is complete. The three previously open questions are now frozen into an executable corrective route:
+The previous D5F route over-relied on synthetic/isolated fixtures and one-person human labels.
 
-`docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`
+Those paths are no longer active.
 
-Do **not** begin SDE-3 until SDE-2D reaches its acceptance gate.
+- The pathological 7-player fixture is historical diagnostic evidence only.
+- The later seven “clean” 7–9 scenarios deliberately excluded Drunk and froze registration-dependent context; do not add diagnostics or labels to them.
+- Their test-only implementation should be deleted if canonical generator/legality tests already protect the durable contracts.
+- Old D5 correction/design documents have been removed from active docs; Git history preserves traceability.
+- Existing human-label manifests are historical/compatibility artifacts, not current policy truth.
 
-### 2.1 SDE-2D1 — Drunk whole-bundle completion — COMPLETE ON MAIN
+## 6. D5F-B4 — expert-observed policy calibration
 
-PR #145 was user-authorized and merged to `main` as `6fc0d99f1a250b91925280ed12ec0b199220b060`. Its final executable acceptance head remains:
+Evidence hierarchy:
 
-`27b17d5e0eedea3367f5a1b69ed2093fb958f1af`
+~~~text
+GOLD
+    verified experienced/trusted Storyteller
+    reconstructable real game
+    explicit rationale preferred
 
-Validation:
+SILVER
+    high-fidelity structured real-game record
+    Storyteller expertise not independently verified
 
-```text
-R2 main-thread boundary        SUCCESS
-Android testFull               SUCCESS
-Debug APK assemble             SUCCESS
-ASP contract tests             SUCCESS
-Real Clingo cross-validation   SUCCESS
-CI gate                        SUCCESS
-```
+QUALITATIVE
+    tutorials / postmortems / repeated experienced-community guidance
 
-Implemented result:
+DIAGNOSTIC_ONLY
+    synthetic / extreme / counterfactual fixtures
+~~~
 
-- supported Drunk pair/numeric/Fortune-Teller information is now a first-class whole-bundle candidate;
-- public claims admit hidden Drunk/Poisoner malfunction explanations without leaking hidden state;
-- exact worlds carry latent non-recipient Drunk shown roles;
-- shared exact evaluation exposes `HealthyCore / FullBundle / DrunkMarginal`;
-- Fortune Teller target pairs remain player-controlled robustness inputs;
-- exact-world finite-resource tests protect one Drunk per world and Trouble Brewing Poisoner/Baron constraints;
-- no production recommendation cutover occurred.
+Current external catalog now contains SILVER / QUALITATIVE seed evidence plus five tracked expert-source cases. **Two primary-verified GOLD decision slices now exist from two independent Storytellers**: A Stud In Scarlet under `st-ben-burns`, and Evin's 2019 first full playthrough under `st-evin`. Evin's postgame primary image verifies Demon bluffs Recluse / Slayer / Soldier, and the postgame review gives explicit Red-Herring rationale: Doug/Chef was selected because Chef information was especially damaging to Evil and Red-Herring contamination could undermine its credibility. The other two executable Ben reconstructions still require primary-video verification. `A Fond Farewell` has primary-verified material Night-1 state and explicit choice-specific rationale, but its executable legal-counterfactual gate is blocked because the live table contains five Travellers and the current production rules/domain model has no Traveller surface.
 
-Frozen direction:
+Primary-source extraction on 2026-09-22 also completed `A Stud In Scarlet` verification from its primary video. The canonical provenance record is [`SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md). The video directly verifies the player-visible outputs; hidden Recluse registration acts remain production-derived legal witnesses rather than primary-observed declarations.
 
-- the Drunk shown role remains PERSISTENT setup/session truth and is never reselected by SDE;
-- the unshown clue is a PLANNED Storyteller decision;
-- supported shown information roles generate all surface-valid outputs, including accidentally truthful outputs;
-- unreliable clue choice is evaluated jointly with the rest of Night 1;
-- evaluation separates `HealthyCore`, `FullBundle` and `DrunkMarginal`;
-- impaired public-claim semantics must distinguish functioning truth from malfunctioning permissiveness without leaking hidden Drunk/Poisoner state.
+Primary-source extraction on 2026-09-22 completed the material `A Fond Farewell` Night-1 reconstruction from the official video, including full radial seating/roles, Traveller alignments, Drunk shown Chef, Demon bluffs, Red Herring, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is [`SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md). This is primary verification, not GOLD admission: Traveller-aware production legality is still missing. The official 2019 Evin video has now been directly inspected. The primary reconstruction recovers the complete eight-seat role map plus the material Night-1 WW/Chef/RH/FT slice and is executable through production legality owners. Postgame primary imagery also verifies Demon bluffs Recluse / Slayer / Soldier, and Evin explicitly explains the Red-Herring choice around Chef truth danger / credibility disruption. See [`SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`](SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md) and [`SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md).
 
-### 2.2 SDE-2D2 — Demon bluff joint-output migration — COMPLETE ON MAIN
+Interpretation rules:
 
-Authority:
+- chosen A does not imply every unchosen B/C/D was bad;
+- explicit rationale/rejection is stronger than silent choice;
+- repeated comparable choices and cross-source consistency strengthen evidence;
+- final game winner is not a Storyteller-quality label;
+- human review is secondary: reconstruction checks, conflict adjudication, and BEGINNER-specific adaptation.
 
-- `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-- PR #146 merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`;
-- final executable acceptance head `6acb708bd734d36d024240f0dea213a882a7714b`.
+## 7. Immediate execution order
 
-Validation:
+### Evidence track — PARALLEL / EXTERNAL
 
-```text
-R2 main-thread boundary        SUCCESS
-Android testFull               SUCCESS
-Debug APK assemble             SUCCESS
-ASP contract tests             SUCCESS
-Real Clingo cross-validation   SUCCESS
-CI gate                        SUCCESS
-```
+Current evidence work has reached a stable checkpoint:
 
-Implemented result:
+- two independent primary-verified GOLD anchors exist: Ben / A Stud and Evin 2019;
+- executable expert and SILVER replay harnesses are green;
+- Red Herring contextual utility is the strongest cross-expert foundation;
+- truth danger / credibility disruption has GOLD + SILVER explicit rationale;
+- targeted evidence gaps are explicitly defined;
+- broad source collection is no longer the default.
 
-- `SetupCandidateGenerator` remains the sole Demon-bluff legality owner;
-- already-legal triplets project losslessly into the SDE candidate shape;
-- each distinct bluff role is evaluated as a strict hypothetical `ShownRoleAt(actualDemonSeat, role)` against the supplied public whole-bundle facts;
-- legal triplets reuse shared per-role exact support rather than re-running a full exact evaluation per triplet;
-- triplet diagnostics expose supported roles, evil-team topology union/intersection and role-topology diversity;
-- the pristine exact evaluator now shares one mechanical-world generation pass across different strict shown-role values for the same constrained seat set while retaining exact per-query role checks;
-- applied/recovered Demon bluffs remain persistent and locked bluffs are rejected from uncommitted replanning;
-- the setup shadow path preserves the exact legacy visible recommendation object and records differential candidate IDs without changing selection;
-- bluff-triplet comparison canonicalizes role ordering across the legal-candidate and legacy-plan producers;
-- the real exact Demon-bluff contract is classified as affected T2/T3 and remains in `:app:testFull`.
+Targeted evidence acquisition continues through ClocktowerEvidenceLab according to:
 
-Production cutover has **not** occurred. `SetupRecommendationService` and its `demon-bluff-ease / bluffDifficulty` compatibility heuristic remain unchanged and visible production behavior remains legacy-owned pending the later explicit cutover stage.
+`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
 
-PR #146 was user-authorized and merged to `main` as `0aa488098f1284e26d8df03f4028cc263bcf9f8a`.
+This track does **not** block SDE-3A/B/C.
 
-### 2.3 SDE-2D3 — strategic-world quotient — COMPLETE ON MAIN
-
-Authority:
-
-- `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
-- branch `sde-2d3-strategic-world-quotient` from merged PR #146 main.
-
-Representation/fanout audit and the first exact quotient migration are complete.
-
-Final executable acceptance head:
-
-`2d491663a899d048b4b69522e9cdde700effa85b`
-
-Validation:
-
-```text
-R2 main-thread boundary        SUCCESS
-Android testFull               SUCCESS
-Debug APK assemble             SUCCESS
-ASP contract tests             SUCCESS
-Real Clingo cross-validation   SUCCESS
-CI gate                        SUCCESS
-```
-
-PR #147 was user-authorized and merged to live `main` as:
-
-`2cab06efeee5692024e065c632deefe765ca1618`
-
-Implemented result:
-
-- existing `possibleDemonSeats` + `evilTeamSeatConfigurations` remain compatibility marginals/coarse sets;
-- `StrategicWorldKey` preserves the joint setup Demon↔Minion topology that those fields lose;
-- the key is projected from immutable `rolesBySeat` using `RoleDefinition.type`;
-- `ExactWorldStructureDiagnostics.strategicWorldKeys` is accumulated in the existing exact world scan with no second enumeration;
-- bounded semantics prove role-permutation collapse, Demon/Minion swap distinction, type-definition ownership and Imp-succession setup stability;
-- Demon-bluff triplet diagnostics now add precise strategic-key union/intersection/pattern beside the existing coarse topology fields;
-- production SDE fanout audit found no second coarse-topology consumer requiring migration;
-- no recommendation-owned solver, `PlayerWorldSet`/ZDD widening, state mutation or production policy cutover was introduced;
-- historical active-Demon state remains a separate cross-night dimension.
-
-Raw role-world cardinality is no longer the primary recommendation unit.
-
-The target strategic identity starts with:
-
-```text
-Demon seat
-+ Minion seat set
-```
-
-A strategic topology survives if at least one mechanically legal assignment/witness can explain the current visible facts and hypothetical bundle.
-
-Mechanical role assignments remain exact correctness witnesses; do not create a second recommendation-owned world solver.
-
-Retain two separate evaluation axes:
-
-- strategic pressure / evil-topology concentration;
-- role-information utility, so useful good-role information is not discarded merely because it leaves evil topology unchanged.
-
-### 2.4 SDE-2D4 — 5–15 player generalization and cost — COMPLETE ON DRAFT PR #149
-
-PR #147 was user-authorized and merged to live `main` as `2cab06efeee5692024e065c632deefe765ca1618`.
-
-D2D4 is complete on branch `sde-2d4-5-15-validation-performance`, draft PR #149.
+### SDE-3A — engine / feature / policy contract — CURRENT
 
 Authority:
 
-- `docs/SDE_2D4_5_15_CORRECTNESS_PERFORMANCE_NORMALIZED_METRICS_AUDIT_2026-09-18.md`;
-- `docs/SDE_2D4_TOPOLOGY_FIRST_FEASIBILITY_FANOUT_AUDIT_2026-09-18.md`;
-- `docs/SDE_2D4_TOPOLOGY_FIRST_BUNDLE_INTEGRATION_AUDIT_2026-09-18.md`.
+`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
 
-Implemented and accepted:
+Start with a live fanout/ownership audit of the current StorytellerDecisionEngine and shadow wiring.
 
-```text
-D4A   normalized strategic diagnostics
-D4B   reproducible source-derived / bounded-prefix scale evidence
-D4C1  exact StrategicWorldKey topology domain
-D4C2  setup role/type/shown-role witness existence
-D4C3  Drunk / Poisoner finite-resource AbilityState feasibility
-D4C4a identity observations + Spy/Recluse registration witness semantics
-D4C4b Chef / Empath / Fortune Teller / Red Herring topology semantics
-D4C4c composable AnyOf / AllOf / supported Not observation branches
-D4C5  parallel exact strategic whole-bundle evaluator with shared witness resources
-D4D   same-world whole-bundle exhaustive differential parity
-D4E   measured 5–15 topology-bundle performance matrix
-```
+The next implementation slice must:
 
-The setup witness tail uses an exact type-quota → role → seat max-flow existence proof rather than Townsfolk/Outsider seat-split enumeration. The bounded exhaustive oracle caught and fixed a real standard-profile Baron contradiction bug; do not restore the old Elvis fallback.
+1. map current decision/candidate/context/result ownership;
+2. map reusable legality, proposition, topology and bundle surfaces;
+3. define minimal generic typed contracts for candidate, feature projection and policy evaluation;
+4. keep legality separate from policy;
+5. keep features interpretable and independent rather than forcing an opaque scalar;
+6. prepare versioned DecisionTrace / replay without automatic production cutover.
 
-D4D proves one shared mechanical witness across complete bundles, including role identity conflict, one Poisoner target, one Drunk resource, Spy/Recluse registration witnesses, Fortune Teller Red Herring, selected registration binding, contradictory bundles, and standard/Baron profiles.
+### SDE-3B — BEGINNER_CONSERVATIVE_V1 — NEXT
 
-D4E measured direct topology feasibility through 15 players. The 15-player standard-profile run had a topology upper bound of 5,460, 4,004 retained strategic keys, and about 766 ms single-bundle CI-JVM latency. The evidence does not justify memoization or compiled constraints at this stage.
+Implement a conservative, explainable first policy using:
 
-The raw mechanical enumerator remains a bounded correctness oracle, not the production discovery representation. `WorldCardinality.Exact` retains exact mechanical-world semantics. No production recommendation consumer has cut over.
+- hard legality/lifecycle boundaries;
+- generic catastrophic / near-catastrophic rejection;
+- healthy-information preservation;
+- contextual Red-Herring utility;
+- coherent impaired narrative;
+- role-function exposure as a soft contextual cost;
+- bluff usability / route diversity;
+- seeded randomness among effectively equivalent healthy survivors.
 
-A T4 governance issue was also resolved: `Sde2D4ScaleBenchmarkTest` is an explicit T3 raw-enumerator evidence harness, not a bounded regression contract. It remains runnable as `:app:sde2D4ScaleBenchmark` but is outside `testFull`; the bounded topology performance and exact differential evidence remain in full/affected validation.
+Do not invent unsupported numeric weights.
 
-Final executable acceptance head:
+### SDE-3C — shadow / DecisionTrace / replay — NEXT
 
-`9d619370a68b97107957a2dde504778f436dae12`
+Before cutover, capture:
 
-Final validation:
+- policy version;
+- candidate set;
+- typed features;
+- rejection/survival reasons;
+- recommendation;
+- actual committed choice;
+- optional human override/reason.
 
-```text
-R2 main-thread boundary        SUCCESS   run 35410931214
-Android testFull               SUCCESS
-Debug APK assemble             SUCCESS
-ASP contract tests             SUCCESS
-Real Clingo cross-validation   SUCCESS
-CI gate                        SUCCESS   run 35410931127
-Android full + APK build       BUILD SUCCESSFUL in 7m 56s
-```
+Historical replay must support comparing multiple policy versions against the same committed game history.
 
-PR #149 remains **draft and unmerged**. Do not merge it without explicit user authorization.
+### SDE-3D / 3E — remain blocked
 
-### 2.5 SDE-2D5 — calibration / policy evidence — NEXT
+Final calibrated policy freeze and automatic production cutover still require stronger external evidence.
 
-After the durable diagnostics exist, expand the calibration corpus across:
+Current unresolved calibration gaps:
 
-- Drunk versus healthy-core cases;
-- bluff-supported versus bluff-fragile cases;
-- equal/similar raw world count but different evil topology;
-- useful role-information with unchanged evil topology;
-- representative player-count regimes.
+- healthy-information floor / middle-band thresholds;
+- role-function exposure severity;
+- independent-expert impaired-information believability;
+- Demon-bluff triplet preference ordering;
+- quantitative multi-axis tradeoff.
 
-Keep the policy interpretable and gate-based; do not introduce an opaque global scalar.
+No automatic online learning is authorized. Policy improvement remains offline, versioned and evidence-reviewed.
 
-### 2.6 Resume gate
+## 8. D5F-C remains blocked
 
-SDE-3 may begin only after:
+Do not derive/freeze gates from old human labels, inspect sealed holdout, tune on holdout, cut production policy, begin SDE-3, or merge PR #150.
 
-1. Drunk whole-bundle semantics are implemented for the supported first-night information roles;
-2. Demon bluff strategic selection has a validated SDE path and committed lifecycle proof;
-3. strategic-world exact/symbolic feasibility has a durable epistemic owner;
-4. player-count-normalized diagnostics are defined where required;
-5. representative 5–15 player correctness/performance evidence exists;
-6. roadmap/handoff are explicitly advanced to SDE-3.
+D5F-C may begin only after expert-observed evidence covers the material first-night policy variables and legal-counterfactual comparisons support repeated interpretable constraints.
 
-## 3. NEXT
+## 9. Compatibility code intentionally retained
 
-```text
-SDE-2D5 — calibration / policy evidence
-SDE-3   — cross-night impaired / registration decisions
-SDE-4   — production cutover + legacy heuristic retirement
-```
+Do not remove merely as part of D5F-B4 evidence work:
 
-Do not start SDE-2D5 on top of an unmerged D2D4 branch unless the user explicitly asks for that workflow. Preferred sequence: user-authorized merge of PR #149, then a fresh D2D5 branch.
+- impaired-information approximate 90/10 false-family bridge;
+- legacy `MalfunctionPolicy`;
+- legacy registration/scoring paths still used by production.
 
-## 4. SDE-1 completion summary
+Their retirement belongs to later production cutover/cleanup.
 
-### SDE-1A — fanout / seam audit — COMPLETE
+## 10. Testing cadence
 
-Frozen results:
+Follow root `AGENTS.md` and [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md).
 
-- `ClocktowerGameSession` remains canonical actual-state/revision/history authority;
-- rules/candidate domains remain legal-outcome owners;
-- `ExactHistoricalHypotheticalObservationBundleEvaluator` remains exact consequence authority;
-- `InformationDecisionContext` remains structured-information freshness/confirmation boundary;
-- flow remains interaction-ordering owner;
-- host UI/coordinator are migration callers, not target authorities;
-- SDE-0 healthy bundle harness remains experiment/evidence infrastructure, not runtime owner;
-- `ConsequenceEvaluator` still has three production caller families that must all be migrated before retirement:
-  - `DynamicCandidateGenerator.evaluation(...)` when state is supplied;
-  - `RegistrationPolicy.generateCandidates(...)`;
-  - `DayRecommendationModule` malfunction path.
-
-### SDE-1B/1C — exact consequence seam — COMPLETE
-
-Implemented under `clocktower/recommendation/sde`:
-
-```text
-ExactConsequenceContext
-ExactConsequenceRequest
-ExactConsequenceCandidate
-CandidateConsequence
-ExactConsequenceEvaluation
-StorytellerDecisionEngine.evaluateExactConsequences(...)
-```
-
-The exact evaluator remains the oracle. SDE does not select, commit, mutate session state, alter interaction ordering, or provide heuristic fallback.
-
-### SDE-1D — lifecycle ownership — COMPLETE
-
-Frozen lifecycle:
-
-```text
-PERSISTENT
-    session/setup-owned durable commitments
-
-COMMITTED
-    session/history-owned executed/shown facts
-
-PLANNED / UNCOMMITTED
-    SDE-owned disposable identity/freshness metadata only
-```
-
-`PlannedDecisionRef` stores only stable decision/candidate identity plus existing revision/semantic freshness provenance.
-
-### SDE-1E — structured production shadow integration — COMPLETE
-
-Validated path:
-
-```text
-existing structured numeric legality/materialization
-→ InformationDecisionContext
-→ StructuredInformationShadowAdapter
-→ StorytellerDecisionEngine
-→ exact historical evaluator
-→ PlannedDecisionRef shadow provenance
-→ existing confirmation
-→ explicit ClocktowerGameSession durable commit
-```
-
-Proof:
-
-- visible choices/recommendations are unchanged;
-- exact diagnostics remain shadow-only;
-- historical baseline revision and current decision revision are explicitly separated;
-- no shadow timeline allocation or observation append occurs;
-- no shadow revision movement occurs;
-- confirmation remains `InformationDecisionContext` ownership;
-- durable observation/revision mutation remains `ClocktowerGameSession` ownership;
-- UI/Compose does not become exact-evaluation authority.
-
-Executable evidence: `e7bb31937db32863e5606044b443818011d16236`.
-
-## 5. SDE-2A/B/C completion summary
-
-SDE-2A/B/C are complete and provide the lifecycle/uncertainty foundation consumed by current SDE-2D.
-
-### 5.1 Drunk — COMPLETE
-
-Authority/evidence:
-
-- `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`
-- executable SHA `6c9d7fe8776fea4723004e22790ba11c1f140b8c`
-- Android FAST and CI gate SUCCESS.
-
-Frozen result:
-
-```text
-Drunk shown role      -> PERSISTENT setup/session truth
-unshown Drunk clue    -> PLANNED / disposable
-shown committed clue  -> COMMITTED / immutable history
-Poisoner draft        -> playerInputRevision invalidation
-Poisoner confirm      -> gameStateRevision invalidation
-```
-
-No SDE-specific dependency store or replanning revision counter was added.
-
-### 5.2 Spy / Recluse — COMPLETE
-
-Authority/evidence:
-
-- `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
-- core exact-registration semantics: `a977c01c0f4ae634dd60e4999759838f4005228c` with R2 / Android FAST / Real Clingo / CI gate SUCCESS;
-- final SDE forwarding and pair projection: `ec970aaa302b7ea6ba5f869aec43cf8f3a82b950` with R2 / Android FAST / CI gate SUCCESS.
-
-Frozen result:
-
-```text
-TroubleBrewingRegistrationDomain -> legality authority
-WorldObservationResult           -> complete successful witness alternatives
-ExactRegistrationWitnessBinding  -> one selected interaction-local witness
-ExactConsequenceCandidate        -> forwards optional witness binding
-PairInformationExactConsequenceAdapter
-                                 -> pure projection from already-legal candidate
-canonical player identity        -> unchanged
-```
-
-### 5.3 Poisoner — COMPLETE
-
-Authority/evidence:
-
-- `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
-- executable SHA `fd90b8dc0433dbd925f0be9f94f3a2693e416f4b`;
-- R2 / Android FAST / CI gate SUCCESS.
-
-Frozen result:
-
-```text
-Poisoner draft          -> playerInputRevision invalidation
-Poisoner confirmation   -> durable hidden Poison action + gameStateRevision invalidation
-uncommitted plans       -> stale across source revision changes
-fresh planning          -> regenerate/re-evaluate through existing owners
-committed observations  -> immutable
-hidden poison target    -> excluded from recipient epistemic baseline
-new lifecycle counter   -> none
-```
-
-Broad replanning was proven with both poisoned Empath and unaffected Chef. The unaffected role may keep the same legal IDs/diagnostics, but its old plan is still stale because its source revision is obsolete.
-
-### 5.4 Acceptance target — COMPLETE
-
-SDE-2 now proves:
-
-```text
-persistent setup commitments
-+ current durable history
-+ interaction-scoped registration/impaired uncertainty
-→ exact consequence evaluation
-→ stale-plan invalidation when source facts change
-→ fresh replanning
-→ existing confirmation/commit authorities
-```
-
-## 6. SDE-2 non-goals
-
-Do not during SDE-2:
-
-- cut all production recommendation selection to SDE;
-- introduce a second session/history/rules authority;
-- turn Spy/Recluse into permanent identity mutations;
-- rewrite committed player-visible information;
-- add cross-night policy beyond what is needed to preserve first-night semantics;
-- retire `ConsequenceEvaluator` before all remaining caller families are migrated;
-- introduce opaque global scalar optimization.
-
-## 7. Frozen architecture decisions
-
-- rules own legal outcomes and registration legality;
-- session/game state remains actual-state and revision authority;
-- flow owns interaction ordering/projection;
-- exact epistemic evaluation owns hypothetical world consequences;
-- `InformationDecisionContext` remains structured-information confirmation boundary;
-- strategic evil topology matters more than raw role-world count;
-- whole-bundle / whole-history interaction matters;
-- Spy/Recluse registration is per interaction;
-- Poisoner may invalidate uncommitted decisions but not committed facts;
-- BEGINNER / ordinary-player policy is the first profile;
-- no opaque global-optimum scalar;
-- lifecycle metadata references, never duplicates, durable session truth;
-- Drunk shown role is persistent input; Drunk clue choice is whole-bundle output until committed;
-- Demon bluff legality remains setup-owned, while uncommitted bluff selection migrates to SDE strategic policy;
-- committed Demon bluffs become persistent inputs and are not replanned;
-- strategic evil topology, not raw role permutation multiplicity, is the primary large-player recommendation unit;
-- mechanical worlds remain exact feasibility/correctness witnesses;
-- role-information utility remains distinct from strategic pressure.
-
-## 8. Testing / acceptance
-
-`AGENTS.md` and `docs/TESTING_STRATEGY.md` remain authoritative.
-
-For SDE-2D:
-
-- begin each executable slice with a focused fanout/ownership audit;
-- add a RED only for a genuine new/changed durable contract;
-- preserve exact rules/epistemic authority while changing strategic representation;
-- prove no committed history rewrite and no second state/world authority;
-- prove Drunk shown-role persistence and committed-bluff persistence;
-- keep expensive corpus/performance work outside ordinary FAST regression;
-- use exact/symbolic cross-check fixtures before reducing dependence on exhaustive enumeration;
-- do not freeze player-count thresholds from 7-player evidence alone.
-
-## 9. Authority documents for a new development conversation
-
-Read in order:
-
-1. root `AGENTS.md`;
-2. `docs/TESTING_STRATEGY.md`;
-3. this roadmap;
-4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
-5. `docs/SDE_1A_ORCHESTRATION_SEAM_AUDIT_2026-09-17.md`;
-6. `docs/SDE_1B_EXACT_CONSEQUENCE_SEAM_NOTE_2026-09-17.md`;
-7. `docs/SDE_1D_LIFECYCLE_OWNERSHIP_NOTE_2026-09-18.md`;
-8. `docs/SDE_1E_STRUCTURED_SHADOW_INTEGRATION_NOTE_2026-09-18.md`;
-9. `docs/SDE_2A_DRUNK_OWNERSHIP_REPLANNING_AUDIT_2026-09-18.md`;
-10. `docs/SDE_2B_REGISTRATION_BRANCH_AUDIT_2026-09-18.md`;
-11. `docs/SDE_2C_POISON_REPLANNING_NOTE_2026-09-18.md`;
-12. `docs/SDE_2D2_DEMON_BLUFF_JOINT_OUTPUT_FANOUT_OWNERSHIP_AUDIT_2026-09-18.md`;
-13. `docs/SDE_2D3_STRATEGIC_WORLD_QUOTIENT_FANOUT_REPRESENTATION_AUDIT_2026-09-18.md`;
-14. `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`;
-15. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` as architecture background;
-16. query live `main` and current checks.
-
-## 10. Stable rule
-
-> **SDE-2D4 is fully implemented and T4 GREEN on draft PR #149 at executable acceptance head `9d619370a68b97107957a2dde504778f436dae12`. Android `testFull`, debug APK, ASP contracts, Real Clingo, R2 and CI gate all succeeded; D4D whole-bundle exhaustive parity and D4E 5–15 performance evidence are recorded. PR #149 remains draft and unmerged pending explicit user authorization. Production recommendation selection has not cut over to topology-first diagnostics, `WorldCardinality.Exact` still means exact mechanical-world cardinality, and no approximation threshold is frozen. After user-authorized merge, the next development frontier is SDE-2D5 calibration / policy evidence. Do not begin SDE-3 yet.**
+Documentation-only cleanup needs exact diff/reference audit, not manufactured runtime tests. Deleting obsolete test-only calibration artifacts requires proving no unique durable contract is lost and then running the smallest affected test tier.

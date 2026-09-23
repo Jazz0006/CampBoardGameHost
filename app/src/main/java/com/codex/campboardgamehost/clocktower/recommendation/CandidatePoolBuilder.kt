@@ -48,7 +48,6 @@ internal object CandidatePoolBuilder {
     ): Int {
         var similarity = 0
         if (first.redHerringSeat != null && first.redHerringSeat == second.redHerringSeat) similarity += 20
-        if (first.drunkShownRole != null && first.drunkShownRole == second.drunkShownRole) similarity += 15
         if (
             first.drunkInvestigatorShownMinion != null &&
             first.drunkInvestigatorShownMinion == second.drunkInvestigatorShownMinion

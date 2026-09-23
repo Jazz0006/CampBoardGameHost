@@ -431,6 +431,23 @@ Avoid both duplication panic and premature generalization.
 - Extract a shared abstraction when the common ownership/contract is stable, not merely because two blocks look syntactically similar.
 - Prefer domain- or responsibility-named abstractions such as `PairInformationLegalDomain`, `NightCheckpointReducer`, or `InformationDecisionCoordinator` over generic helpers.
 
+#### Generalization / anti-fixture policy rule
+
+When a product rule or policy is conceptually shared across roles, scenarios, player counts, phases, or scripts, implementation **MUST** target the shared semantic/ownership boundary rather than encode the currently discussed example.
+
+Before accepting a branch keyed to a named role, exact seat, fixture ID, known setup, or one regression scenario, ask:
+
+1. Does this condition represent a genuine game-rule distinction?
+2. Or is it compensating for a missing shared abstraction/policy owner?
+3. Would another role/scenario with the same semantic shape inherit the behavior automatically?
+4. Is the test proving a durable generic contract, or only the exact example that motivated the change?
+
+If the behavior is policy-level rather than rules-level, prefer a shared typed model over named-role conditionals.
+
+Examples in design discussions are **evidence and acceptance probes**, not permission to implement example-specific branches.
+
+A change is incomplete if the implementation passes the motivating example but semantically equivalent cases still require separate patches.
+
 #### Interaction and callback discipline
 
 A growing callback list is an ownership signal. If an interaction needs many independent `onSelectX`, `onConfirmX`, `onChangeY`, and `onCancelZ` callbacks, check whether a cohesive interaction owner and a typed intent/result contract should exist.

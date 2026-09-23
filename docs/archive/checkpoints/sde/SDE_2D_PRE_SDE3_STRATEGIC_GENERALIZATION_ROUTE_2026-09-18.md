@@ -1,9 +1,10 @@
 # SDE-2D — Pre-SDE-3 Strategic Generalization Route
 
 > Date: 2026-09-18 Australia/Sydney  
-> Status: **CURRENT / REQUIRED BEFORE SDE-3**  
+> Status: **LONG-LIVED / REQUIRED BEFORE SDE-3; current execution lives in roadmap/handoff**  
 > Base checkpoint: PR #144 merged to `main` as `89453c902741699b072d11320d85a5561172abe5`  
-> Parent architecture: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+> Parent architecture: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`  
+> Current D5F policy authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
 
 ## 1. Purpose
 
@@ -74,11 +75,14 @@ For an uncommitted Night-1 planning surface:
 persistent setup truth
 + committed history
 + legal Storyteller-controlled factors
-    - healthy information choices
+    - healthy pair-information display choices where rules leave alternatives
     - Drunk unreliable clue choices
     - Demon bluff triplets
     - Fortune Teller Red Herring
     - legal registration witness choices where applicable
++ healthy numeric information
+    - fixed context only when every legal Spy/Recluse registration branch yields the same value
+    - otherwise the interaction-scoped registration ruling remains Storyteller-controlled
 + player-controlled robustness cases
     - e.g. Fortune Teller target pairs
         ↓
@@ -152,7 +156,27 @@ Policy requirements:
 - remove Drunk from the healthy-bundle “cannot evaluate” boundary for supported shown information roles;
 - preserve shown-role persistence and existing revision invalidation;
 - prove committed Drunk clues remain immutable;
-- include representative Drunk pair, numeric and Fortune Teller-style fixtures as supported capability grows.
+- prove the shared impaired-narrative contract across multiple information-shape families as supported capability grows; named roles/fixtures are examples, not separate policy implementations.
+
+### Persistent impaired narrative state
+
+Whole-bundle treatment of one impaired clue is not sufficient for repeated/history-dependent information.
+
+Before cross-night production cutover, introduce one shared persistent narrative-state concept that carries the believable perceived world created by prior impaired observations.
+
+It must be role-agnostic:
+
+~~~text
+committed impaired observations
++ visible history changes
++ selected counterworld / narrative intent
++ current role-owned legal domain
+    -> coherent next legal output
+~~~
+
+Role-specific modules continue to own legality and proposition construction. They must not each invent their own cross-night misinformation policy.
+
+Do not encode known examples, exact seat layouts or calibration fixtures as policy branches. A special case is allowed only when the game rules themselves distinguish that role/interaction.
 
 ## 5. SDE-2D2 — Demon bluff joint-output migration
 
@@ -309,32 +333,49 @@ For a 15-player Trouble Brewing topology with one Demon and three Minions, the r
 
 This is the intended scale of the primary strategic state, rather than the much larger complete role-assignment space.
 
-## 8. SDE-2D5 — calibration and policy evidence
+## 8. SDE-2D5 — expert-observed calibration and policy evidence
 
-Expand calibration only after the durable diagnostics above exist.
+SDE-2D5 no longer treats synthetic representative fixtures or one-person labels as the primary policy truth.
 
-Required evidence:
+Current calibration authority is the 2026-09-21 first-night policy synthesis.
 
-- Drunk versus healthy-core contrasts;
-- bluff-supported versus bluff-fragile bundles;
-- identical raw-world-count cases with different evil topology;
-- useful role-information cases with unchanged evil topology;
-- representative setups from all four player-count regimes;
-- performance reports kept outside ordinary FAST tests.
+Required evidence flow:
 
-Policy remains interpretable gates/ordering, not one scalar score:
+~~~text
+verified expert/trusted real Storyteller games
+    ↓
+reconstruct committed Night-1 state
+    ↓
+recover exact legal alternatives with production legality owners
+    ↓
+compare observed choice with legal counterfactuals
+    ↓
+extract repeated interpretable preferences
+    ↓
+validate generalization with high-fidelity non-expert/unknown-expertise real logs
+    ↓
+bounded human adjudication
+    ↓
+only then derive D5F-C gates
+~~~
 
-```text
-hard legality
-→ reject catastrophic strategic collapse
-→ reject healthy-core information starvation
-→ reject pathological Drunk misinformation
-→ require viable evil narrative support
-→ prefer robust/diverse bluff support among acceptable survivors
-→ bounded tie-breaking / stable random selection
-```
+Evidence tiers:
 
-Exact thresholds remain calibration outputs, not route assumptions.
+- **GOLD** — verified experienced/trusted Storyteller, reconstructable real game, explicit rationale preferred;
+- **SILVER** — high-fidelity structured real game, expertise not independently verified;
+- **QUALITATIVE** — tutorials/postmortems/repeated experienced-community guidance;
+- **DIAGNOSTIC_ONLY** — synthetic/extreme/counterfactual fixtures.
+
+An observed expert choice does not make every unchosen legal alternative bad. Strong preference evidence requires explicit rationale/rejection, repeated comparable choices, or cross-source consistency.
+
+Thematic registration prior is now part of BEGINNER policy:
+
+- Spy normally uses legal Good/Townsfolk/Outsider registration;
+- Recluse normally uses legal Evil/Minion/Demon registration;
+- this is interaction-scoped, not persistent identity;
+- whole-bundle health may override only for a material benefit.
+
+Do not freeze numeric thresholds or inspect sealed holdout evidence until the expert-observed evidence contract is stable.
 
 ## 9. Implementation order
 
@@ -349,7 +390,7 @@ SDE-2D3  Strategic-world quotient / feasibility seam
     ↓
 SDE-2D4  5–15 player semantic + performance matrix
     ↓
-SDE-2D5  cross-regime calibration / policy evidence
+SDE-2D5  expert-observed calibration / policy evidence
     ↓
 SDE-3    cross-night impaired / registration decisions
 ```
@@ -367,6 +408,7 @@ SDE-2D must not:
 - replace exactness with unlabelled random sampling;
 - use raw world count as the primary strategic objective;
 - collapse strategic pressure and role-information utility into one opaque scalar;
+- implement cross-night impaired coherence as per-role or fixture-specific policy branches;
 - cut all production selection to SDE before the corrective contracts are validated;
 - retire `ConsequenceEvaluator` early;
 - begin cross-night SDE-3 implementation before this route reaches its acceptance gate.

@@ -58,7 +58,6 @@ import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
-import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
@@ -87,7 +86,6 @@ import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
 import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuation
 import com.codex.campboardgamehost.clocktower.session.resolveTroubleBrewingImpSelfKillSuccession
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
-import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationLock
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationPrewarmCoordinator
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationRevealCoordinator
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingFirstNightPrecomputeCoordinator
@@ -300,24 +298,6 @@ private fun Context.loadGameHistory(): List<ArchivedGameReview> {
         }
     }.getOrDefault(emptyList())
 }
-
-private fun List<ArchivedGameReview>.toClocktowerSetupHistory(): CrossGameHistory = CrossGameHistory(
-    asSequence()
-        .filter { it.gameKind == GameKind.Clocktower }
-        .mapNotNull { review ->
-            review.cards
-                .firstOrNull { it.clocktowerRole?.enName == "Drunk" }
-                ?.clocktowerShownRole
-                ?.let { shownRole ->
-                    HistoricalClueSignature(
-                        decisionType = "setup-plan",
-                        drunkShownRole = RoleId(shownRole.enName),
-                    )
-                }
-        }
-        .take(CrossGameHistory.MAX_SAVED_GAMES)
-        .toList(),
-)
 
 private fun Context.archiveGame(record: GameArchiveRecord): List<ArchivedGameReview> {
     if (record.cards.isEmpty()) return loadGameHistory()
@@ -1660,11 +1640,8 @@ internal fun CampBoardGameHostApp() {
                 poisonedPlayerName = null,
             ),
             roles = setupRecommendationRoleDefinitions,
-            lockedDecisions = TroubleBrewingSetupRecommendationLock.lockedDecisions(
-                dealPlan = preparedSetup.dealPlan,
-                roleDefinitions = setupRecommendationRoleDefinitions,
-            ),
-            history = gameHistory.toClocktowerSetupHistory(),
+            lockedDecisions = emptyList(),
+            history = CrossGameHistory(),
         )
         val initialFirstNightPrecomputeRequest = committedCards.toClocktowerGameState(
             script = ClocktowerScript.TroubleBrewing,
@@ -2129,7 +2106,7 @@ internal fun CampBoardGameHostApp() {
                         gameSeed = clocktowerGameSeed,
                         gameStateRevision = clocktowerGameStateRevision,
                         playerInputRevision = clocktowerPlayerInputRevision,
-                        setupHistory = gameHistory.toClocktowerSetupHistory(),
+                        setupHistory = CrossGameHistory(),
                         setupRecommendationResultProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
                                 troubleBrewingSetupRecommendationRevealCoordinator::resultFor
@@ -2329,17 +2306,6 @@ internal fun CampBoardGameHostApp() {
                             if (recommendedRedHerring != null && recommendedRedHerring != clocktowerRedHerring) {
                                 clocktowerRedHerring = recommendedRedHerring
                                 setupChanged = true
-                            }
-                            plan.decisions.filterIsInstance<StorytellerDecision.DrunkShownRole>().singleOrNull()?.let { decision ->
-                                val drunkPlayer = cards.firstOrNull { it.clocktowerRole?.enName == "Drunk" }
-                                val shownRole = clocktowerRolesForScript(currentClocktowerScript)
-                                    .firstOrNull { it.enName == decision.role.value }
-                                // A shown identity is committed as soon as dealing starts. Recommendation
-                                // plans are constrained to it and may only fill a missing legacy value.
-                                if (drunkPlayer != null && shownRole != null && drunkPlayer.clocktowerShownRole == null) {
-                                    setClocktowerShownRole(drunkPlayer.name, shownRole)
-                                    setupChanged = true
-                                }
                             }
                             // Concrete Drunk information is provisional: never carry a
                             // setup recommendation across a later Poisoner decision.

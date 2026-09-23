@@ -11,27 +11,24 @@ class CandidatePoolDiversityTest {
     fun `identical effect signatures have maximum similarity`() {
         val signature = PlanEffectSignature(
             redHerringSeat = 5,
-            drunkShownRole = RoleId("Investigator"),
             drunkInvestigatorShownMinion = RoleId("Poisoner"),
             suspectedSeats = setOf(1, 4),
             demonBluffs = setOf(RoleId("Monk"), RoleId("Soldier"), RoleId("Butler")),
         )
 
-        assertEquals(100, CandidatePoolBuilder.similarityPercent(signature, signature))
+        assertEquals(85, CandidatePoolBuilder.similarityPercent(signature, signature))
     }
 
     @Test
     fun `different decisions reduce similarity`() {
         val first = PlanEffectSignature(
             redHerringSeat = 5,
-            drunkShownRole = RoleId("Investigator"),
             drunkInvestigatorShownMinion = RoleId("Poisoner"),
             suspectedSeats = setOf(1, 4),
             demonBluffs = setOf(RoleId("Monk"), RoleId("Soldier"), RoleId("Butler")),
         )
         val second = PlanEffectSignature(
             redHerringSeat = 2,
-            drunkShownRole = RoleId("Monk"),
             suspectedSeats = emptySet(),
             demonBluffs = setOf(RoleId("Investigator"), RoleId("Soldier"), RoleId("Butler")),
         )

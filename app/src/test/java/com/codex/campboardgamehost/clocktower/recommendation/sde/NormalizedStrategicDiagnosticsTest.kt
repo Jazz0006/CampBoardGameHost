@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
+import com.codex.campboardgamehost.clocktower.epistemic.ExactStrategicTopologyBundleDiagnostics
 import com.codex.campboardgamehost.clocktower.epistemic.ExactWorldStructureDiagnostics
 import com.codex.campboardgamehost.clocktower.epistemic.StrategicWorldKey
 import com.codex.campboardgamehost.clocktower.epistemic.WorldCardinality
@@ -49,6 +50,48 @@ class NormalizedStrategicDiagnosticsTest {
         assertEquals(0.5, metrics.evilTopologyRetention.valueOrNull()!!, 0.0)
         assertEquals(0.5, metrics.evilCoverRetention.valueOrNull()!!, 0.0)
         assertEquals(0.4, metrics.forcedGoodFraction.valueOrNull()!!, 0.0)
+    }
+
+    @Test
+    fun `topology first diagnostics project through the same normalized strategic seam`() {
+        val before = structure(
+            demons = setOf(1, 2, 3, 4),
+            strategicKeys = setOf(
+                key(1, 5, 6),
+                key(1, 5, 7),
+                key(2, 5, 6),
+                key(2, 5, 7),
+                key(3, 5, 6),
+                key(4, 5, 6),
+            ),
+            forcedGood = setOf(8),
+            evilCover = setOf(1, 2, 3, 4, 5, 6),
+        )
+        val after = structure(
+            demons = setOf(1, 2),
+            strategicKeys = setOf(
+                key(1, 5, 6),
+                key(1, 5, 7),
+                key(2, 5, 6),
+            ),
+            forcedGood = setOf(3, 4, 8, 9),
+            evilCover = setOf(1, 2, 5),
+        )
+
+        val metrics = NormalizedStrategicDiagnosticsProjector.project(
+            ExactStrategicTopologyBundleDiagnostics(
+                bundleId = "topology-normalized",
+                recipientSeat = 1,
+                beforeStructure = before,
+                afterStructure = after,
+            ),
+            playerCount = 10,
+        )
+
+        assertEquals(StrategicRatio.Defined(2, 4), metrics.demonCoverRetention)
+        assertEquals(StrategicRatio.Defined(3, 6), metrics.evilTopologyRetention)
+        assertEquals(StrategicRatio.Defined(3, 6), metrics.evilCoverRetention)
+        assertEquals(StrategicRatio.Defined(4, 10), metrics.forcedGoodFraction)
     }
 
     @Test

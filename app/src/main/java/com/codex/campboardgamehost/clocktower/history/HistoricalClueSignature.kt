@@ -6,10 +6,6 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 
 data class HistoricalClueSignature(
     val decisionType: String,
-    // Legacy compatibility field only. Committed Drunk shown identity is not a recommendation-
-    // history dimension: new signatures leave this null, canonical() excludes it, and cooldown
-    // scoring ignores it.
-    val drunkShownRole: RoleId? = null,
     val shownCharacter: RoleId? = null,
     val candidateAlignmentPattern: String? = null,
     val candidateSeatDistance: Int? = null,

@@ -63,6 +63,12 @@ afterEvaluate {
         "com.codex.campboardgamehost.clocktower.review.FirstNightBundleBeginnerCorpusExperiment"
     val sde2D4ScaleBenchmark =
         "com.codex.campboardgamehost.clocktower.epistemic.Sde2D4ScaleBenchmarkTest"
+    val sde2D5CalibrationExperiment =
+        "com.codex.campboardgamehost.clocktower.review.Sde2D5CalibrationExperiment"
+    val sde2D5FExpertObservedCalibrationExperiment =
+        "com.codex.campboardgamehost.clocktower.review.Sde2D5FExpertObservedCalibrationExperiment"
+    val sde2D5FB4FSilverGeneralizationExperiment =
+        "com.codex.campboardgamehost.clocktower.review.Sde2D5FB4FSilverGeneralizationExperiment"
 
     // Corpus generation and raw-enumerator scale measurement are explicit T3 evidence harnesses,
     // not regression tests. Keep them out of the default Android unit-test task so FULL remains
@@ -71,6 +77,9 @@ afterEvaluate {
         filter {
             excludeTestsMatching(fnBundle3CalibrationExperiment)
             excludeTestsMatching(sde2D4ScaleBenchmark)
+            excludeTestsMatching(sde2D5CalibrationExperiment)
+            excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
+            excludeTestsMatching(sde2D5FB4FSilverGeneralizationExperiment)
         }
     }
 
@@ -90,6 +99,9 @@ afterEvaluate {
         filter {
             // testFast is a separate Test task and does not inherit debugUnitTest's filter.
             excludeTestsMatching(fnBundle3CalibrationExperiment)
+            excludeTestsMatching(sde2D5CalibrationExperiment)
+            excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
+            excludeTestsMatching(sde2D5FB4FSilverGeneralizationExperiment)
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest")
@@ -113,6 +125,48 @@ afterEvaluate {
 
         filter {
             includeTestsMatching(sde2D4ScaleBenchmark)
+        }
+
+        outputs.upToDateWhen { false }
+    }
+
+    tasks.register<Test>("sde2D5Calibration") {
+        group = "verification"
+        description = "Runs the explicit SDE-2D5 cross-regime calibration evidence workload."
+        val sourceTask = debugUnitTest.get()
+        testClassesDirs = sourceTask.testClassesDirs
+        classpath = sourceTask.classpath
+
+        filter {
+            includeTestsMatching(sde2D5CalibrationExperiment)
+        }
+
+        outputs.upToDateWhen { false }
+    }
+
+    tasks.register<Test>("sde2D5FExpertObservedCalibration") {
+        group = "verification"
+        description = "Runs the explicit SDE-2D5F-B4 expert-observed evidence workload."
+        val sourceTask = debugUnitTest.get()
+        testClassesDirs = sourceTask.testClassesDirs
+        classpath = sourceTask.classpath
+
+        filter {
+            includeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
+        }
+
+        outputs.upToDateWhen { false }
+    }
+
+    tasks.register<Test>("sde2D5FB4FSilverGeneralization") {
+        group = "verification"
+        description = "Runs the explicit SDE-2D5F-B4F bounded SILVER generalization workload."
+        val sourceTask = debugUnitTest.get()
+        testClassesDirs = sourceTask.testClassesDirs
+        classpath = sourceTask.classpath
+
+        filter {
+            includeTestsMatching(sde2D5FB4FSilverGeneralizationExperiment)
         }
 
         outputs.upToDateWhen { false }

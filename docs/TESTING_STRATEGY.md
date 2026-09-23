@@ -132,7 +132,7 @@ The current FAST exclusions are exactly:
 - `com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyBundleDifferentialTest`
 - `com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputEvaluatorTest`
 
-`FirstNightBundleBeginnerCorpusExperiment` and `Sde2D4ScaleBenchmarkTest` are also excluded from the underlying `:app:testDebugUnitTest` / `:app:testFull` task because they are explicit evidence-generation harnesses rather than bounded regression contracts. They remain directly runnable through `:app:fnBundle3Calibration` and `:app:sde2D4ScaleBenchmark`.
+`FirstNightBundleBeginnerCorpusExperiment`, `Sde2D4ScaleBenchmarkTest`, `Sde2D5CalibrationExperiment`, `Sde2D5FExpertObservedCalibrationExperiment`, and `Sde2D5FB4FSilverGeneralizationExperiment` are also excluded from the underlying `:app:testDebugUnitTest` / `:app:testFull` task because they are explicit evidence-generation harnesses rather than bounded regression contracts. They remain directly runnable through `:app:fnBundle3Calibration`, `:app:sde2D4ScaleBenchmark`, `:app:sde2D5Calibration`, `:app:sde2D5FExpertObservedCalibration`, and `:app:sde2D5FB4FSilverGeneralization`.
 
 `DemonBluffJointOutputEvaluatorTest` is excluded from FAST based on SDE-2D2 CI measurements: even after reducing the fixture to a minimal healthy seven-player domain and sharing strict shown-role world scans inside the exact evaluator, the test still materially extends the ordinary FAST loop because it intentionally performs real exact whole-bundle enumeration and a direct exact-parity probe. It remains in `:app:testFull` and is mandatory for Demon-bluff / exact-epistemic affected validation.
 
@@ -152,12 +152,15 @@ These classifications are not permanent measurements. Re-measure them when the t
 | `DemonBluffJointOutputEvaluatorTest` | multi-minute CI impact in SDE-2D2 edit loops | real exact whole-bundle bluff-role fanout plus direct exact-parity evidence | affected T2 / T3 execution | Demon bluff joint output, exact shown-role fanout, setup/SDE shadow integration |
 | `Sde2D4ScaleBenchmarkTest` | >900s in isolated CI diagnostic | source-derived scale matrix plus raw-enumerator bounded-prefix measurement; no regression latency threshold | explicit T3 evidence harness, dedicated task only | SDE-2D4 raw enumerator scale investigation |
 | `Sde2D4TopologyBundlePerformanceTest` | sub-second measured bundle evaluation through 15 players, plus Gradle overhead | 5–15 topology-first CPU/coarse-heap evidence | T3; excluded from FAST, retained in full regression | topology-first strategic feasibility performance |
+| `Sde2D5CalibrationExperiment` | 5m53s observed when 8 cross-regime topology points were temporarily placed in FAST; historical workflow runs have reached multi-hour duration | deterministic 5–15 STANDARD/BARON calibration evidence generation | explicit T3 evidence harness, dedicated task only | D5 calibration / policy evidence |
+| `Sde2D5FExpertObservedCalibrationExperiment` | about 3.5 minutes end-to-end in GitHub Actions for A Stud + Live + Human Remains topology-first reports | real expert-case committed-prefix counterfactual evidence using topology-first consequence; exhaustive parity remains owned by D4 differential tests | explicit T3 evidence harness, dedicated task/workflow only | D5F-B4 expert-observed reconstruction / consequence evidence |
+| `Sde2D5FB4FSilverGeneralizationExperiment` | about 7 minutes end-to-end in GitHub Actions run #3 after narrowing the historical ct-01 pilot; the retired legacy external-human workflow took about 2h48m | replays only the durable ct-01 legality plus observed whole-bundle-feasibility contracts through production-owned surfaces and emits bounded GOLD-hypothesis generalization evidence | explicit T3 evidence harness, dedicated task/workflow only | D5F-B4F bounded SILVER generalization |
 | `TroubleBrewingTopologySetupWitnessDifferentialTest` | measured-expensive exact differential | topology setup witness parity against bounded exhaustive worlds | affected T2 / T3 execution | topology setup witness semantics |
 | `TroubleBrewingTopologyObservationDifferentialTest` | measured-expensive exact differential | observation witness parity against bounded exhaustive worlds | affected T2 / T3 execution | topology observation semantics |
 | `TroubleBrewingTopologyBundleDifferentialTest` | caused a 5m40s FAST checkpoint when temporarily included | same-world whole-bundle shared-witness parity against exhaustive worlds | affected T2 / T3 execution | topology whole-bundle semantics |
 | `A3EnumerationBenchmarkTest` | approximately 1s | 20 exact enumerations and performance guards | T1/T2 specialized | world enumeration and scalability |
 
-T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `fnBundle3Calibration` and `sde2D4ScaleBenchmark`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
+T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
 
 ## 7. Dependency-aware escalation matrix
 
@@ -272,7 +275,10 @@ Current Android JVM commands:
 `testFull` is a verification/lifecycle task that depends on `:app:testDebugUnitTest`. The underlying debug-unit-test task excludes only explicit non-regression evidence harnesses:
 
 - `FirstNightBundleBeginnerCorpusExperiment` → dedicated `:app:fnBundle3Calibration`;
-- `Sde2D4ScaleBenchmarkTest` → dedicated `:app:sde2D4ScaleBenchmark`.
+- `Sde2D4ScaleBenchmarkTest` → dedicated `:app:sde2D4ScaleBenchmark`;
+- `Sde2D5CalibrationExperiment` → dedicated `:app:sde2D5Calibration`;
+- `Sde2D5FExpertObservedCalibrationExperiment` → dedicated `:app:sde2D5FExpertObservedCalibration`;
+- `Sde2D5FB4FSilverGeneralizationExperiment` → dedicated `:app:sde2D5FB4FSilverGeneralization`.
 
 The SDE-2D4 scale harness remains available and was not deleted. Its isolated CI diagnostic exceeded 900 seconds despite having no stable regression latency threshold, so keeping it inside every T4 would make the acceptance gate unbounded without strengthening a correctness contract.
 
@@ -294,6 +300,24 @@ explicit experiment / scale evidence
 ```
 
 No regression test may disappear from full validation **accidentally**. Moving a class out of full requires an explicit coverage classification, preserved runnable evidence where useful, and acceptance of the changed suite contract.
+
+### 13.1 SDE-3 provisional-policy validation
+
+SDE-3 separates stable engine contracts from continuously recalibrated policy.
+
+Validation should follow the ownership layer:
+
+- legal candidate identity / lifecycle → focused typed domain/orchestration tests;
+- feature projection → deterministic feature-contract tests at the shared projector owner;
+- persistent impaired narrative → cross-role / cross-information-shape history tests;
+- `BEGINNER_CONSERVATIVE_V1` policy → explicit reject/survive/reason-code tests rather than fragile scalar snapshots;
+- `DecisionTrace` → persistence / replay / policy-version contract tests;
+- shadow production integration → typed integration tests proving recommendation does not mutate canonical state;
+- historical expert/SILVER replay → named dedicated T3 evidence harnesses, not ordinary FAST regression.
+
+When evidence later changes policy ordering without changing legality/feature semantics, prefer versioned policy fixtures and replay evidence over rewriting rules tests.
+
+Do not use win/loss as a direct expected value for a Storyteller recommendation test.
 
 ## 14. Maintenance and test retirement
 

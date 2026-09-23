@@ -4,7 +4,6 @@ import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -21,7 +20,7 @@ class SetupRecommendationShownIdentityOwnershipTest {
         assertTrue(plans.isNotEmpty())
         assertTrue(plans.all { plan ->
             plan.decisions.none {
-                it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+                it is StorytellerDecision.DrunkInvestigatorInfo
             }
         })
         val observations = plans.flatMap { it.observations }
@@ -53,27 +52,9 @@ class SetupRecommendationShownIdentityOwnershipTest {
         assertTrue(plans.isNotEmpty())
         assertTrue(plans.all { plan ->
             plan.decisions.none {
-                it is StorytellerDecision.DrunkShownRole ||
-                    it is StorytellerDecision.DrunkInvestigatorInfo
+                it is StorytellerDecision.DrunkInvestigatorInfo
             }
         })
         assertTrue(plans.all { it.observations.isEmpty() })
-    }
-
-    @Test
-    fun `shown identity cannot be supplied as a locked recommendation decision`() {
-        val result = SetupRecommendationService.recommendConstrained(
-            game = TroubleBrewingFixtures.eightPlayerExample(),
-            roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
-            lockedDecisions = listOf(
-                StorytellerDecision.DrunkShownRole(RoleId("Investigator")),
-            ),
-        )
-
-        assertTrue(result.plans.isEmpty())
-        assertEquals(
-            listOf("shown-identity-is-committed-setup-fact"),
-            result.failureCodes,
-        )
     }
 }
