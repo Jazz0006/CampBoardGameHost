@@ -45,9 +45,9 @@ SDE-3E automatic production cutover                   BLOCKED ON 3D
 
 Branch: `sde-3b-beginner-conservative-v1`
 
-PR: **SDE-3B draft PR — create after first branch commit**
+PR: **#153 — SDE-3B: implement BEGINNER_CONSERVATIVE_V1 policy**
 
-PR #151 and PR #152 are merged. SDE-3B must use a new draft PR and must not be merged unless the user explicitly says **“授权合并”**.
+PR #151 and #152 are merged. PR #153 is the current **draft** SDE-3B PR and must not be merged unless the user explicitly says **“授权合并”**.
 
 Always query live refs before executable edits.
 
@@ -179,7 +179,20 @@ PR #152 is merged. SDE-3B proceeds from live `main` on its dedicated branch.
 
 ### SDE-3B — BEGINNER_CONSERVATIVE_V1 — CURRENT
 
-Implement a conservative, explainable first policy using:
+Current implementation checkpoint on PR #153:
+
+- decision-level Ready/Deferred policy contract with explicit limitations;
+- exact zero Evil-topology contradiction gate only — no numeric strength threshold;
+- all otherwise viable candidates remain in an explicit survivor equivalence band;
+- deterministic, order-independent seeded survivor selector with no weights;
+- policy evaluation attached to Chef/Empath structured shadow without visible cutover;
+- source `AbilityState` is preserved from the existing legal candidate owner;
+- actual-state semantic truth is projected into `DecisionFeatures` for the current numeric seam;
+- legacy score/probability/pressure is not imported into SDE policy.
+
+Next SDE-3B work should add real feature projectors before stronger preferences. The highest-priority architecture slice is the shared cross-night impaired-narrative projector derived from canonical semantic history; do not persist a second narrative history.
+
+The full conservative policy direction remains:
 
 - hard legality/lifecycle boundaries;
 - generic catastrophic / near-catastrophic rejection;
