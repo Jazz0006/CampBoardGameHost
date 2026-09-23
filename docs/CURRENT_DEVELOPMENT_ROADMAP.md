@@ -166,7 +166,7 @@ Authority:
 
 `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
 
-The live fanout/ownership audit and score-free contract checkpoint are merged in PR #151. Continue SDE-3A on PR #152 by completing the structured numeric shadow path from legal candidate -> exact consequence -> `DecisionFeatures`, while keeping visible recommendation and canonical commit authority unchanged.
+The live fanout/ownership audit and score-free contract checkpoint are merged in PR #151. PR #152 now contains the structured numeric shadow path from legal candidate -> exact consequence -> `DecisionFeatures`, including explicit deferred-capability handling and Chef/Empath coverage, while visible recommendation and canonical commit authority remain unchanged. SDE-3A acceptance is pending the required `[full-ci]` T4 checkpoint.
 
 The next implementation slice must:
 
