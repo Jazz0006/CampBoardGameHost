@@ -1,0 +1,243 @@
+# SDE-3B — BEGINNER_CONSERVATIVE_V1 Policy Audit
+
+> Date: 2026-09-23 Australia/Sydney  
+> Branch: `sde-3b-beginner-conservative-v1`  
+> Status: architecture / policy pre-flight before SDE-3B production-contract changes
+
+## 1. Baseline
+
+SDE-3A is merged through PR #152 at `2a9051f1b0282bd25d01d46d36fe797857cc429d`.
+
+The current SDE pipeline is deliberately split:
+
+```text
+production legality
+    -> SdeDecisionCandidate
+    -> exact consequence
+    -> DecisionFeatures
+    -> policy
+```
+
+SDE-3B owns only the last step. It must not regenerate legality, mutate canonical session state, select player-controlled targets, or replace visible production recommendation authority.
+
+## 2. Current feature reality
+
+The first production-facing structured numeric shadow currently projects:
+
+- Demon-cover retention;
+- Evil strategic-topology retention;
+- Evil-cover retention;
+- forced-Good seats/fraction;
+- forced-Evil seats/fraction.
+
+The following remain explicit `FeatureProjection.Unavailable` on that surface:
+
+- confirmation-chain impact;
+- healthy-information utility;
+- truth danger / credibility disruption;
+- role-function exposure;
+- semantic truth;
+- impaired narrative coherence / detectability;
+- bluff narrative;
+- candidate collision/support;
+- future flexibility.
+
+This is the most important SDE-3B constraint.
+
+**Unavailable must never be treated as neutral, zero, healthy, or policy-equivalent evidence.**
+
+A provisional policy may act only on the feature evidence actually present. Missing dimensions must remain visible as policy limitations until their projectors exist.
+
+## 3. BEGINNER_CONSERVATIVE_V1 policy boundary
+
+The first V1 implementation should be qualitative and conservative.
+
+Allowed now:
+
+1. preserve upstream candidate identity/order;
+2. refuse to evaluate when the required strategic feature itself is unavailable;
+3. reject an exact structural contradiction where a candidate leaves no credible Evil structure;
+4. otherwise preserve candidates in one survivor equivalence band when current evidence cannot justify ordering them;
+5. expose explicit policy limitations for missing preference dimensions;
+6. later perform deterministic seeded selection only among final survivors.
+
+Not allowed now:
+
+- numeric healthy-information thresholds;
+- weighted sums;
+- fixed player-count cutoffs;
+- fixed role bonuses/penalties;
+- `forcedGoodFraction > X` / `forcedEvilFraction > Y` gates;
+- interpreting a missing projector as a zero cost;
+- using one GOLD/SILVER example as a deterministic rule;
+- selecting Fortune Teller or Poisoner player choices;
+- visible production cutover.
+
+## 4. Hard rejection that is justified without calibration
+
+The only first-slice structural rejection should be an exact **no-credible-Evil-world** condition.
+
+A candidate is structurally contradictory when projected strategic structure has a defined non-empty baseline but retains zero:
+
+- possible Demon-seat cover; or
+- Evil strategic topology; or
+- Evil-seat cover.
+
+This is not a calibrated strength threshold. It is an exact collapse to no viable Evil interpretation.
+
+Do **not** reject merely because:
+
+- only one Demon seat remains;
+- forced-Good or forced-Evil seats appear;
+- a retention ratio is small but non-zero.
+
+Those require policy evidence / feature context not yet frozen.
+
+If every legal candidate reaches the structural contradiction condition, policy must defer rather than invent a survivor.
+
+## 5. Policy readiness / limitations contract
+
+The per-candidate `PolicyEvaluation` from SDE-3A remains valid.
+
+SDE-3B should add a decision-level result:
+
+```text
+BeginnerConservativePolicyEvaluation
+  Ready
+    evaluations[]
+    limitations[]
+  Deferred
+    candidateIds[]
+    reasons[]
+```
+
+Required invariants:
+
+- candidate IDs remain exactly the upstream legal candidate order;
+- `Deferred` never fabricates per-candidate policy results;
+- `Ready` has at least one SURVIVOR;
+- a rejected candidate has an explicit typed reason;
+- all current viable candidates may be SURVIVOR/TIED when unsupported dimensions prevent a justified soft ordering;
+- policy limitations are distinct from candidate rejection reasons.
+
+Initial limitation vocabulary should include:
+
+- preference dimensions not yet projected.
+
+Initial deferral vocabulary should include:
+
+- upstream feature evaluation deferred;
+- strategic feature unavailable;
+- no non-contradictory survivor.
+
+## 6. Initial reason vocabulary
+
+First stable candidate rejection reason:
+
+- `no-credible-evil-world`
+
+Do not pre-create speculative reason codes for features whose production projector does not exist yet.
+
+Future SDE-3B slices may add typed reasons for:
+
+- confirmation-chain collapse;
+- healthy-information starvation;
+- impaired narrative incoherence;
+- obvious role-function exposure;
+- Red-Herring contextual utility;
+- bluff usability;
+- future-flexibility loss.
+
+Those must arrive with their owning feature projector and durable tests.
+
+## 7. Soft preference semantics
+
+The full V1 route allows ordered interpretable soft priorities, but the current numeric feature surface is not rich enough to justify them safely.
+
+Therefore the first policy slice deliberately has this shape:
+
+```text
+legal candidates
+    -> exact structural contradiction gate
+    -> remaining candidates
+    -> one explicit equivalence band
+```
+
+This is not a claim that the candidates are globally equal. It means the current V1 evidence surface does not yet justify a stronger ordering.
+
+The decision-level `limitations` field carries that distinction.
+
+## 8. Seeded survivor selection
+
+Seeded selection belongs in SDE-3B, but should be a separate pure seam after evaluation is stable.
+
+Requirements:
+
+- select only from SURVIVOR candidates;
+- deterministic for the same game/decision seed and candidate set;
+- independent of incidental iteration order;
+- never select a REJECTED or ACCEPTED candidate;
+- no probability weights.
+
+Do not couple seeded selection to visible production recommendation yet.
+
+## 9. First shadow integration
+
+The existing Chef / Empath structured numeric shadow is the first policy consumer.
+
+Target pipeline:
+
+```text
+InformationDecisionContext
+    -> SdeDecisionCandidate
+    -> ExactConsequenceEvaluation
+    -> DecisionFeatureEvaluation
+    -> BeginnerConservativePolicyEvaluation
+```
+
+The result remains shadow-only.
+
+Visible choice ordering, current legacy recommendation, confirmation, and canonical commit must remain unchanged.
+
+## 10. Test strategy
+
+Tests-first for the first policy slice:
+
+- deferred feature evaluation -> policy Deferred;
+- strategic feature unavailable -> policy Deferred;
+- zero Evil structure -> explicit rejection reason;
+- no numeric threshold: any non-zero strategic retention remains viable in the first slice;
+- one viable candidate -> SURVIVOR / Unique;
+- multiple viable candidates -> SURVIVOR / Tied with the complete survivor set;
+- all structurally contradictory -> policy Deferred;
+- candidate order preserved;
+- structured Chef / Empath shadow attaches policy evaluation without mutating visible recommendation or session state.
+
+Use T1 FAST for the logical implementation checkpoint. Run T4 `[full-ci]` only at SDE-3B acceptance.
+
+## 11. Fanout / ownership risk
+
+Low-risk first slice:
+
+- new policy evaluator beside existing shadow output;
+- typed policy readiness / limitation contract;
+- tests at the policy owner.
+
+High-risk and out of scope:
+
+- modifying legacy `DecisionEvaluation<T>`;
+- replacing `SetupEvaluator` or `ConsequenceEvaluator`;
+- changing legal candidate domains;
+- UI cutover;
+- DecisionTrace persistence;
+- broad feature inference inside policy code.
+
+## 12. Implementation sequence
+
+1. establish decision-level policy readiness/limitation contract;
+2. implement the exact no-credible-Evil-world gate;
+3. preserve all other viable candidates as an explicit survivor equivalence band;
+4. attach the result to structured numeric shadow;
+5. add pure seeded survivor selection;
+6. then add additional V1 soft priorities only as their feature projectors become real;
+7. keep SDE-3C trace/replay separate.
