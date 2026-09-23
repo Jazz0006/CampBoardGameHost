@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
@@ -30,6 +31,15 @@ class SdeDecisionCandidateContractTest {
         val candidate = candidate(SdeDecisionInputBindings.NotCaptured)
 
         assertSame(SdeDecisionInputBindings.NotCaptured, candidate.inputBindings)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `ability state cannot exist without a source ability role`() {
+        SdeDecisionSourceInteraction(
+            interactionId = "night:information:seat-3",
+            sourceSeat = 3,
+            abilityState = AbilityState.MALFUNCTIONING_POISONED,
+        )
     }
 
     @Test(expected = IllegalArgumentException::class)
