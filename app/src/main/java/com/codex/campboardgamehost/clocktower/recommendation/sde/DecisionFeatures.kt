@@ -52,11 +52,6 @@ internal data class RoleFunctionExposureFeatures(
     val reasonCodes: Set<String> = emptySet(),
 )
 
-internal data class ImpairedNarrativeFeatures(
-    val coherenceReasonCodes: Set<String> = emptySet(),
-    val detectabilityReasonCodes: Set<String> = emptySet(),
-)
-
 internal data class BluffNarrativeFeatures(
     val claimBurdenReasonCodes: Set<String> = emptySet(),
     val narrativeRouteIds: Set<String> = emptySet(),
