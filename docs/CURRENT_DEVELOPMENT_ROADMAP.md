@@ -34,8 +34,8 @@ SDE-2D5 calibration / policy evidence                 CHECKPOINT MERGED / PARALL
         B4F-C targeted evidence acquisition            EXTERNAL / CONTINUOUS
 D5F-C final gate/band derivation                      BLOCKED ON EVIDENCE
 sealed holdout                                        CLOSED
-SDE-3A engine / feature / policy contract             COMPLETE ON PR #152 / PENDING MERGE
-SDE-3B BEGINNER_CONSERVATIVE_V1                       NEXT AFTER SDE-3A MERGE
+SDE-3A engine / feature / policy contract             COMPLETE / PR #151/#152
+SDE-3B BEGINNER_CONSERVATIVE_V1                       CURRENT
 SDE-3C shadow / DecisionTrace / replay                 NEXT
 SDE-3D calibrated policy freeze                       BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                   BLOCKED ON 3D
@@ -43,11 +43,11 @@ SDE-3E automatic production cutover                   BLOCKED ON 3D
 
 ## 2. Current branch / PR
 
-Branch: `sde-3a-feature-projection-shadow-pipeline`
+Branch: `sde-3b-beginner-conservative-v1`
 
-PR: **#152 — SDE-3A: complete structured feature projection shadow**
+PR: **SDE-3B draft PR — create after first branch commit**
 
-PR #151 is merged as SDE-3A checkpoint 1. PR #152 remains **draft** and must not be merged unless the user explicitly says **“授权合并”**.
+PR #151 and PR #152 are merged. SDE-3B must use a new draft PR and must not be merged unless the user explicitly says **“授权合并”**.
 
 Always query live refs before executable edits.
 
@@ -160,7 +160,7 @@ Targeted evidence acquisition continues through ClocktowerEvidenceLab according 
 
 This track does **not** block SDE-3A/B/C.
 
-### SDE-3A — engine / feature / policy contract — COMPLETE ON DRAFT PR #152 / PENDING MERGE
+### SDE-3A — engine / feature / policy contract — COMPLETE
 
 Authority:
 
@@ -175,9 +175,9 @@ SDE-3A acceptance evidence:
 - R2 workflow run `35806237770`: succeeded;
 - final fanout audit: production changes remain limited to the SDE feature-evaluation adapter and structured shadow integration; no rules, canonical session commit, UI authority, legacy scoring, policy selection, or persistence ownership moved.
 
-Keep PR #152 draft until explicit user authorization to merge. Do not begin SDE-3B on this branch.
+PR #152 is merged. SDE-3B proceeds from live `main` on its dedicated branch.
 
-### SDE-3B — BEGINNER_CONSERVATIVE_V1 — NEXT
+### SDE-3B — BEGINNER_CONSERVATIVE_V1 — CURRENT
 
 Implement a conservative, explainable first policy using:
 
