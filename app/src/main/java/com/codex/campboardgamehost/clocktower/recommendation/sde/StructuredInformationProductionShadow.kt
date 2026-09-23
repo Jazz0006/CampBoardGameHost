@@ -33,6 +33,7 @@ internal object StructuredInformationProductionShadow {
         committedSetup: CommittedClocktowerSetup,
         currentSnapshot: GameSnapshot,
         roleDefinitions: Collection<RoleDefinition>,
+        inputBindings: SdeDecisionInputBindings = SdeDecisionInputBindings.NotCaptured,
         hypothesis: EpistemicHypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
     ): StructuredInformationShadowEvaluation {
         require(currentSnapshot.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1) {
@@ -102,6 +103,7 @@ internal object StructuredInformationProductionShadow {
                 ),
                 sourceRevision = currentRevision,
             ),
+            inputBindings = inputBindings,
         )
     }
 }
