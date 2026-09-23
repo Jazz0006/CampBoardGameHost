@@ -213,9 +213,11 @@ Implemented completion boundary:
 - V1 policy does not use confirmation-chain features to rank/reject candidates;
 - no named-role chain table, numeric threshold, or new policy reason was introduced.
 
-### SDE-3B3 — impaired-narrative coherence projector — CURRENT
+### SDE-3B3 — impaired-narrative coherence projector — COMPLETE
 
-Build after 3B1, and preferably after the confirmation/dependency representation is available.
+Completion authority: `SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`.
+
+Implemented after the lifecycle/input and confirmation/dependency representation became available.
 
 Owner:
 
@@ -247,15 +249,26 @@ Initial feature output should remain descriptive, for example:
 
 Do not create numeric “coherence scores” yet.
 
+Implemented boundary:
+
+- `ImpairmentLifetime` distinguishes persistent setup-bound from temporary action-bound impairment;
+- historical episode membership is derived from canonical setup/action/observation history plus recipient visibility;
+- historical impairment is reconstructed from rules semantics at the observation point, never inferred from `ObservationReliability`;
+- the pure projector classifies no-prior, compatible, break and already-infeasible history plus forced/avoidable transition and categorical detectability;
+- structured shadow attaches `DecisionFeatures.impairedNarrative`;
+- V1 policy does not consume the feature for rejection or ordering;
+- no persisted perceived-world state, score, weight, threshold or named-role policy table exists.
+
 Evidence usage:
 
-- E2: R04 repeated Drunk trajectory and R06 temporary poison;
-- E3: explicit expert believability/continuity rationale may justify a soft “avoid needless contradiction” preference;
+- E2: R04 supplies only the verified persistent Drunk cross-night shape; its unknown shown role is not guessed;
+- E2: R06 supplies the explicit temporary Poisoner → Ravenkeeper death → poisoned false-information lifecycle;
+- E3: explicit expert believability/continuity rationale may justify a later soft “avoid needless contradiction” preference;
 - E4 severity remains SDE-3D.
 
-### SDE-3B4 — healthy-information utility / remaining usable channels
+### SDE-3B4 — healthy-information utility / remaining usable channels — CURRENT
 
-Only after history/confirmation semantics are available.
+History/confirmation and impaired-narrative semantics are now available.
 
 Goal:
 

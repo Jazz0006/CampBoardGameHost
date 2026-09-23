@@ -392,7 +392,7 @@ Expected pattern:
 
 - candidate contract → focused legality/orchestration tests;
 - feature projector → deterministic typed feature tests;
-- persistent impaired narrative owner → cross-role information-shape tests;
+- derived impaired-narrative projector → cross-role / cross-lifetime canonical-history tests;
 - policy → table-driven qualitative ordering / rejection tests;
 - DecisionTrace → persistence/replay contract tests;
 - production shadow wiring → integration tests;
@@ -414,8 +414,8 @@ Recommended sequence:
 4. follow the explicit staging in `SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`;
 5. **3B1 COMPLETE:** lifecycle-safe historical shadow/input binding is implemented with canonical committed-prefix refs, typed external-owner bindings and no-hindsight enforcement;
 6. **3B2 COMPLETE:** confirmation-chain impact is projected from canonical recipient-visible committed history with strict no-hindsight, exact leave-one-out contribution semantics and bounded R02/R04 E2 regression; V1 policy remains unchanged;
-7. **3B3 CURRENT:** derive impaired-narrative coherence from canonical semantic history, with upstream `AbilityState` plus canonical action/setup history as impairment binding and no second mutable history store;
-8. **3B4/3B5:** add healthy-information utility and contextual role-function exposure projectors;
+7. **3B3 COMPLETE:** impaired-narrative coherence/detectability is derived from canonical history plus authoritative `AbilityState`/impairment episodes, with persistent setup-bound versus temporary action-bound lifetimes, bounded R04/R06 E2 regression and no second mutable history store; V1 policy remains unchanged;
+8. **3B4 CURRENT / 3B5 NEXT:** add healthy-information utility first, then contextual role-function exposure;
 9. **3B6:** introduce expert-informed qualitative V1 soft priorities only after the matching feature projector and semantic replay are stable;
 10. leave versioned `DecisionTrace` / replay persistence to SDE-3C;
 11. reserve numeric thresholds, player-count bands and multi-axis tradeoff calibration for SDE-3D;

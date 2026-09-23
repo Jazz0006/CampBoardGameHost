@@ -60,6 +60,7 @@ Always query live refs before executable edits.
 - Current SDE-3B structure / feature / expert-evidence staging: [`SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`](SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md)
 - SDE-3B1 completion audit: [`SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md)
 - SDE-3B2 completion audit: [`SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md)
+- SDE-3B3 completion audit: [`SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 - B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
@@ -192,15 +193,16 @@ Current implementation checkpoint on PR #153:
 - source `AbilityState` is preserved from the existing legal candidate owner;
 - actual-state semantic truth is projected into `DecisionFeatures` for the current numeric seam;
 - **3B2 confirmation-chain features are projected from recipient-visible committed history plus each current candidate using exact leave-one-out diagnostics;**
-- V1 policy still does not consume confirmation-chain features for ranking or rejection;
+- **3B3 impaired-narrative features are derived from canonical setup/action/observation history with persistent setup-bound versus temporary action-bound impairment lifetimes;**
+- V1 policy still does not consume confirmation-chain or impaired-narrative features for ranking or rejection;
 - legacy score/probability/pressure is not imported into SDE policy.
 
 SDE-3B staged status on PR #153:
 
 1. **3B1 historical lifecycle / input binding — COMPLETE** — later structured information can evaluate against the canonical committed prefix; typed contextual input refs preserve external ownership; no-hindsight is enforced; no second history owner exists.
 2. **3B2 confirmation-chain projector — COMPLETE** — generic support/contradiction/independent-contribution, ambiguity restoration, source authentication and multi-channel collapse are projected from exact recipient-visible historical replay; R02/R04-style E2 semantic regressions are bounded by available evidence; V1 policy remains unchanged.
-3. **3B3 impaired-narrative projector — CURRENT** — derive continuity/detectability from canonical history plus authoritative impairment binding, with no second mutable narrative state;
-4. **3B4 healthy-information utility** — represent remaining usable healthy routes without a numeric misinformation budget;
+3. **3B3 impaired-narrative projector — COMPLETE** — score-free role-agnostic projection distinguishes persistent setup-bound versus temporary action-bound impairment episodes, historical compatibility/breaks, forced versus avoidable transitions and detectability; bounded R04/R06 E2 regressions are green and V1 policy remains unchanged.
+4. **3B4 healthy-information utility — CURRENT** — represent remaining usable healthy routes without a numeric misinformation budget;
 5. **3B5 contextual role-function exposure** — diagnostic first, lifecycle-aware, never a named-role blanket rule;
 6. **3B6 expert-informed V1 soft priorities** — only after matching typed projectors and semantic replay are stable.
 

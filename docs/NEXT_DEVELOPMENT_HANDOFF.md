@@ -18,7 +18,8 @@ Use these as the active authorities, in order:
 7. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
 8. `docs/SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`
 9. `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`
-10. this handoff
+10. `docs/SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`
+11. this handoff
 
 Evidence/provenance references when needed:
 
@@ -81,7 +82,7 @@ Stable foundations include:
 - player-controlled targets remain player-owned;
 - Spy/Recluse registration is interaction-scoped;
 - Drunk/poisoned information may be true or false;
-- repeated impaired information needs one shared persistent perceived-world/narrative owner;
+- repeated impaired information needs one shared role-agnostic derived narrative projection over canonical history; no second mutable perceived-world/narrative owner is allowed;
 - Demon bluffs are a joint SDE output until committed;
 - Red Herring is a contextual setup precommit;
 - topology is important but not sufficient;
@@ -182,8 +183,9 @@ Revised architecture status after the ClocktowerEvidenceLab C0 handoff:
 - external owners such as Red Herring / Demon bluffs remain external and are referenced through typed bindings rather than copied into SDE;
 - upstream `AbilityState` and canonical action/setup history remain the actual impairment authority; player-facing observation reliability is not used to infer impairment;
 - **3B2 COMPLETE:** generic exact confirmation-chain projection is wired into structured shadow with recipient visibility, strict no-hindsight, explicit capability/unavailable handling, bounded R02/R04-style semantic regression, and no policy preference change;
-- **3B3 CURRENT:** build the shared role-agnostic impaired-narrative projector as a derived view over canonical history plus authoritative impairment state;
-- **3B4/3B5:** healthy-information utility and contextual role-function exposure;
+- **3B3 COMPLETE:** the shared score-free impaired-narrative projector derives persistent setup-bound and temporary action-bound episodes from canonical history plus authoritative impairment state; structured shadow integration, R04/R06 E2 regressions and policy non-consumption are green;
+- **3B4 CURRENT:** healthy-information utility / remaining usable healthy routes;
+- **3B5:** contextual role-function exposure;
 - only after each projector has semantic replay evidence may expert rationale become a V1 soft preference.
 
 Evidence authority levels are now explicit:
@@ -399,17 +401,19 @@ Current SDE-3B checkpoint:
 - structured numeric shadow carries V1 policy evaluation without changing visible recommendation or canonical commit;
 - source `AbilityState` and actual-state semantic truth are projected from upstream legal-candidate semantics;
 - canonical semantic history remains the intended owner for cross-night narrative continuity;
-- **3B2 is COMPLETE:** structured confirmation features are production-owned diagnostics but remain shadow-only and policy-neutral.
+- **3B2 is COMPLETE:** structured confirmation features are production-owned diagnostics but remain shadow-only and policy-neutral;
+- **3B3 is COMPLETE:** structured impaired-narrative features are derived diagnostics over canonical history and authoritative impairment state; V1 policy remains unchanged.
 
 Immediate next action:
 
 1. re-query live #153 / main / checks;
-2. begin **3B3 impaired-narrative coherence/detectability** with an architecture/fanout audit before production edits;
-3. keep `ActionFactTimeline + EpistemicObservationLog` as the only durable history owners; do not create a persisted perceived-world/narrative state;
-4. use authoritative current `AbilityState` and canonical setup/action history for impairment; never infer actual impairment from player-facing `ObservationReliability`;
-5. distinguish persistent Drunk trajectory pressure from temporary Poisoner episodes inside one generic projector rather than named-role policy branches;
-6. define typed descriptive coherence/transition/detectability features first, with generic RED tests before production implementation;
-7. use Evidence Lab R02/R04/R06 only as bounded E2 semantic regressions after generic semantics are stable;
-8. do not add V1 soft preferences, numeric bands, fixture-specific rules, DecisionTrace persistence, or production cutover during 3B3 feature construction.
+2. begin **3B4 healthy-information utility / remaining usable channels** with an architecture/fanout audit before production edits;
+3. reuse canonical exact/strategic history and existing confirmation provenance rather than creating a separate information-quality state store;
+4. define independently usable healthy routes from authoritative ability state plus semantic truth/history, not legacy score, probability or misinformation pressure;
+5. distinguish preserved healthy routes, lost healthy routes and removal of the last currently usable healthy route without a fixed information budget or percentage threshold;
+6. start with generic score-free feature semantics and RED tests at the shared projector owner;
+7. use Evidence Lab R01/R04 only as bounded E1/E2 semantic regressions after generic semantics are stable;
+8. keep V1 soft preferences unchanged until 3B4 feature semantics are accepted;
+9. do not add numeric bands, fixture-specific rules, DecisionTrace persistence, or production cutover.
 
 Keep #153 draft until explicit user **“授权合并”**.

@@ -30,14 +30,14 @@ The production-facing structured shadow currently projects:
 - forced-Good seats/fraction;
 - forced-Evil seats/fraction;
 - actual-state semantic truth where the upstream legal candidate provides it;
-- confirmation-chain impact from exact recipient-visible committed history.
+- confirmation-chain impact from exact recipient-visible committed history;
+- impaired-narrative coherence/detectability derived from canonical history and authoritative impairment state for malfunctioning structured interactions; functioning interactions are explicitly `NOT_APPLICABLE`.
 
 The following remain explicit `FeatureProjection.Unavailable` on that surface:
 
 - healthy-information utility;
 - truth danger / credibility disruption;
 - role-function exposure;
-- impaired narrative coherence / detectability;
 - bluff narrative;
 - candidate collision/support;
 - future flexibility.
@@ -238,8 +238,8 @@ The continuation order is revised by the ClocktowerEvidenceLab C0 handoff:
 
 1. **3B1 structure — COMPLETE:** historical lifecycle-safe shadow + explicit contextual input binding;
 2. **3B2 feature — COMPLETE:** confirmation-chain impact is projected generically from canonical recipient-visible history; V1 policy remains unchanged;
-3. **3B3 feature — CURRENT:** impaired-narrative coherence/detectability from canonical history;
-4. **3B4 feature:** healthy-information utility / remaining usable routes;
+3. **3B3 feature — COMPLETE:** impaired-narrative coherence/detectability is derived generically from canonical history and authoritative impairment episodes; V1 policy remains unchanged;
+4. **3B4 feature — CURRENT:** healthy-information utility / remaining usable routes;
 5. **3B5 feature:** contextual role-function exposure;
 6. **3B6 policy:** only then add expert-informed qualitative soft priorities over stable projectors;
 7. keep seeded tie-breaking for unresolved equivalence;
