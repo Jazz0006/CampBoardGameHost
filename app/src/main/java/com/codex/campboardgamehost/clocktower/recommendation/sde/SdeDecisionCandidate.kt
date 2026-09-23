@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
@@ -25,10 +26,14 @@ internal data class SdeDecisionSourceInteraction(
     val interactionId: String,
     val sourceSeat: Int? = null,
     val abilityRole: RoleId? = null,
+    val abilityState: AbilityState? = null,
 ) {
     init {
         require(interactionId.isNotBlank()) { "Decision source interaction ID cannot be blank." }
         require(sourceSeat == null || sourceSeat > 0) { "Decision source seat must be positive." }
+        require(abilityState == null || abilityRole != null) {
+            "Decision source ability state requires an ability role."
+        }
     }
 }
 
