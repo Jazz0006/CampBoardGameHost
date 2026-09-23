@@ -44,7 +44,7 @@ class BeginnerConservativeV1PolicyTest {
     fun `undefined strategic baseline defers policy instead of inventing a healthy interpretation`() {
         val result = BeginnerConservativeV1Policy.evaluate(
             ready(
-                "a" to features(demon = StrategicRatio.Undefined),
+                "a" to features(topology = StrategicRatio.Undefined),
                 "b" to features(),
             ),
         )
@@ -82,6 +82,25 @@ class BeginnerConservativeV1PolicyTest {
     }
 
     @Test
+    fun `zero live Demon cover alone is not treated as an impossible historical world`() {
+        val result = BeginnerConservativeV1Policy.evaluate(
+            ready(
+                "dead-demon-history" to features(
+                    demon = StrategicRatio.Defined(0, 3),
+                    topology = StrategicRatio.Defined(2, 6),
+                    evilCover = StrategicRatio.Defined(2, 4),
+                ),
+                "other" to features(),
+            ),
+        ) as BeginnerConservativePolicyEvaluation.Ready
+
+        assertEquals(
+            listOf(PolicyDisposition.SURVIVOR, PolicyDisposition.SURVIVOR),
+            result.evaluations.map(PolicyEvaluation::disposition),
+        )
+    }
+
+    @Test
     fun `non zero strategic retention is not rejected by an invented numeric threshold`() {
         val result = BeginnerConservativeV1Policy.evaluate(
             ready(
@@ -110,8 +129,8 @@ class BeginnerConservativeV1PolicyTest {
     fun `all structurally contradictory candidates defer instead of inventing a survivor`() {
         val result = BeginnerConservativeV1Policy.evaluate(
             ready(
-                "a" to features(demon = StrategicRatio.Defined(0, 5)),
-                "b" to features(evilCover = StrategicRatio.Defined(0, 5)),
+                "a" to features(topology = StrategicRatio.Defined(0, 5)),
+                "b" to features(topology = StrategicRatio.Defined(0, 6)),
             ),
         )
 
