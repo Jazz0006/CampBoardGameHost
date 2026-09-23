@@ -1,0 +1,199 @@
+package com.codex.campboardgamehost.clocktower.recommendation.sde
+
+/**
+ * Stable identity of one usable healthy-information route.
+ *
+ * A route identifies provenance only. It carries no score, probability, weight or assumed amount of
+ * information. Historical observations remain owned by canonical epistemic history.
+ */
+internal sealed interface HealthyInformationRouteRef {
+    val recipientSeat: Int
+
+    data class HistoricalObservation(
+        val recordId: String,
+        override val recipientSeat: Int,
+    ) : HealthyInformationRouteRef {
+        init {
+            require(recordId.isNotBlank()) {
+                "Historical healthy-information record ID cannot be blank."
+            }
+            require(recipientSeat > 0) {
+                "Historical healthy-information recipient seat must be positive."
+            }
+        }
+    }
+
+    data class CurrentCandidate(
+        val candidateId: String,
+        override val recipientSeat: Int,
+    ) : HealthyInformationRouteRef {
+        init {
+            require(candidateId.isNotBlank()) {
+                "Current healthy-information candidate ID cannot be blank."
+            }
+            require(recipientSeat > 0) {
+                "Current healthy-information recipient seat must be positive."
+            }
+        }
+    }
+}
+
+internal data class HistoricalHealthyInformationRouteEvidence(
+    val routeRef: HealthyInformationRouteRef.HistoricalObservation,
+    val independentlyUsableBefore: Boolean,
+    val relationToCurrentCandidate: ConfirmationObservationRelation?,
+)
+
+internal data class HealthyInformationCandidateEvidence(
+    val candidateId: String,
+    val recipientSeat: Int,
+    /**
+     * Whether the exact whole-history bundle remains feasible after applying this candidate.
+     *
+     * This is not a quality threshold. It is a hard semantic fact used to avoid calling a route
+     * usable inside an already-impossible candidate history.
+     */
+    val candidateHistoryFeasibleAfter: Boolean,
+    /** True only when the current output is functioning and true to actual state. */
+    val currentCandidateHealthy: Boolean,
+    /** Whether the current healthy output still contributes independent exact constraint. */
+    val currentCandidateIndependentlyConstraining: Boolean,
+    val historicalRoutes: List<HistoricalHealthyInformationRouteEvidence>,
+) {
+    init {
+        require(candidateId.isNotBlank()) {
+            "Healthy-information evidence requires a stable candidate ID."
+        }
+        require(recipientSeat > 0) {
+            "Healthy-information recipient seat must be positive."
+        }
+        require(
+            historicalRoutes.map { it.routeRef }.distinct().size == historicalRoutes.size,
+        ) {
+            "Healthy-information history may contain each route at most once."
+        }
+        require(!currentCandidateIndependentlyConstraining || currentCandidateHealthy) {
+            "Only a healthy current candidate may create an independent healthy route."
+        }
+    }
+}
+
+/**
+ * Score-free description of healthy-information routes surviving one candidate.
+ *
+ * "Healthy" means information produced by a functioning ability and true to actual state. The
+ * projector tracks route survival and independence only. It deliberately defines no information
+ * budget, percentage floor, player-count band, role-specific value or policy ordering.
+ */
+internal data class HealthyInformationUtilityFeatures(
+    val usableHealthyRouteRefsAfter: Set<HealthyInformationRouteRef>,
+    val independentHealthyRouteRefsAfter: Set<HealthyInformationRouteRef>,
+    val newlyRedundantHealthyRouteRefs: Set<HealthyInformationRouteRef.HistoricalObservation>,
+    val contradictedHealthyRouteRefs: Set<HealthyInformationRouteRef.HistoricalObservation>,
+    val currentCandidateHealthyRouteRef: HealthyInformationRouteRef.CurrentCandidate?,
+) {
+    init {
+        require(independentHealthyRouteRefsAfter.all { it in usableHealthyRouteRefsAfter }) {
+            "Independent healthy routes must remain usable."
+        }
+        require(newlyRedundantHealthyRouteRefs.intersect(contradictedHealthyRouteRefs).isEmpty()) {
+            "A historical healthy route cannot be both redundant and contradicted."
+        }
+        require(contradictedHealthyRouteRefs.none { it in usableHealthyRouteRefsAfter }) {
+            "A contradicted healthy route cannot remain usable."
+        }
+        require(
+            currentCandidateHealthyRouteRef == null ||
+                currentCandidateHealthyRouteRef in usableHealthyRouteRefsAfter,
+        ) {
+            "A projected current healthy route must remain usable."
+        }
+    }
+
+    val hasAnyUsableHealthyRouteAfter: Boolean
+        get() = usableHealthyRouteRefsAfter.isNotEmpty()
+
+    val hasAnyIndependentHealthyRouteAfter: Boolean
+        get() = independentHealthyRouteRefsAfter.isNotEmpty()
+}
+
+internal object HealthyInformationUtilityFeaturesProjector {
+    fun project(
+        evidence: HealthyInformationCandidateEvidence,
+    ): HealthyInformationUtilityFeatures {
+        if (!evidence.candidateHistoryFeasibleAfter) {
+            val contradicted = evidence.historicalRoutes
+                .filter {
+                    it.relationToCurrentCandidate ==
+                        ConfirmationObservationRelation.CONTRADICTS_EXISTING_OBSERVATION
+                }
+                .mapTo(linkedSetOf()) { it.routeRef }
+            val nonContradicted = evidence.historicalRoutes
+                .map { it.routeRef }
+                .filterNotTo(linkedSetOf()) { it in contradicted }
+            // An impossible whole-history bundle cannot claim any route remains usable, even if one
+            // historical route was not itself the direct contradictory edge.
+            return HealthyInformationUtilityFeatures(
+                usableHealthyRouteRefsAfter = emptySet(),
+                independentHealthyRouteRefsAfter = emptySet(),
+                newlyRedundantHealthyRouteRefs = emptySet(),
+                contradictedHealthyRouteRefs =
+                    (contradicted + nonContradicted).toCollection(linkedSetOf()),
+                currentCandidateHealthyRouteRef = null,
+            )
+        }
+
+        val contradicted = evidence.historicalRoutes
+            .filter {
+                it.relationToCurrentCandidate ==
+                    ConfirmationObservationRelation.CONTRADICTS_EXISTING_OBSERVATION
+            }
+            .mapTo(linkedSetOf()) { it.routeRef }
+        val redundant = evidence.historicalRoutes
+            .filter {
+                it.independentlyUsableBefore &&
+                    it.relationToCurrentCandidate ==
+                        ConfirmationObservationRelation.SUPPORTS_EXISTING_OBSERVATION
+            }
+            .mapTo(linkedSetOf()) { it.routeRef }
+
+        val usableHistorical = evidence.historicalRoutes
+            .map { it.routeRef }
+            .filterNotTo(linkedSetOf()) { it in contradicted }
+        val independentHistorical = evidence.historicalRoutes
+            .filter { route ->
+                route.independentlyUsableBefore &&
+                    route.routeRef !in contradicted &&
+                    route.routeRef !in redundant
+            }
+            .mapTo(linkedSetOf()) { it.routeRef }
+
+        val current = if (evidence.currentCandidateHealthy) {
+            HealthyInformationRouteRef.CurrentCandidate(
+                candidateId = evidence.candidateId,
+                recipientSeat = evidence.recipientSeat,
+            )
+        } else {
+            null
+        }
+
+        val usableAfter = buildSet<HealthyInformationRouteRef> {
+            addAll(usableHistorical)
+            current?.let(::add)
+        }
+        val independentAfter = buildSet<HealthyInformationRouteRef> {
+            addAll(independentHistorical)
+            if (evidence.currentCandidateIndependentlyConstraining) {
+                add(requireNotNull(current))
+            }
+        }
+
+        return HealthyInformationUtilityFeatures(
+            usableHealthyRouteRefsAfter = usableAfter,
+            independentHealthyRouteRefsAfter = independentAfter,
+            newlyRedundantHealthyRouteRefs = redundant,
+            contradictedHealthyRouteRefs = contradicted,
+            currentCandidateHealthyRouteRef = current,
+        )
+    }
+}

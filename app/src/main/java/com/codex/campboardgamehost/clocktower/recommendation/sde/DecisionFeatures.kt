@@ -35,12 +35,6 @@ internal data class StrategicDecisionFeatures(
     }
 }
 
-internal data class HealthyInformationUtilityFeatures(
-    val preservedInformationIds: Set<String> = emptySet(),
-    val lostInformationIds: Set<String> = emptySet(),
-    val reasonCodes: Set<String> = emptySet(),
-)
-
 internal data class TruthCredibilityFeatures(
     val truthDangerReasonCodes: Set<String> = emptySet(),
     val credibilityDisruptionReasonCodes: Set<String> = emptySet(),
