@@ -17,8 +17,8 @@ Evidence shortage blocks **final policy freeze and automatic production cutover*
 The route is therefore split:
 
 ~~~text
-SDE-3A engine / feature / policy contract                  COMPLETE ON PR #152 / PENDING MERGE
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT AFTER SDE-3A MERGE
+SDE-3A engine / feature / policy contract                  COMPLETE / PR #151/#152
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       CURRENT / PR #153
 SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
@@ -404,18 +404,18 @@ Do not turn expert source examples into fixture-specific production tests.
 
 Start with an architecture/fanout audit before production edits.
 
-PR #150 is merged as the SDE-2D5 evidence/calibration checkpoint. PR #151 merged the first SDE-3A ownership/typed-contract checkpoint. Draft PR #152 completes the SDE-3A structured feature-projection proof and passed the required T4 checkpoint at `dd82af3d8da9c17bc62d5606f045ddcc82c21bf0` (CI `35806237753`, R2 `35806237770`). Keep #152 draft until explicit user authorization to merge. SDE-3B starts only from live `main` after #152 is merged.
+PR #150 is merged as the SDE-2D5 evidence/calibration checkpoint. PR #151/#152 are merged SDE-3A checkpoints. SDE-3B now proceeds on branch `sde-3b-beginner-conservative-v1` in draft PR #153. The first V1 slice implements only an exact zero Evil-topology contradiction gate, explicit survivor equivalence, policy limitations, and weight-free seeded survivor selection; it does not invent calibrated bands. Source `AbilityState` and actual-state semantic truth are projected from existing legal-candidate semantics. Keep #153 draft until explicit user authorization to merge.
 
 Recommended sequence:
 
 1. audit current `StorytellerDecisionEngine`, decision context, candidate/result contracts and production shadow integration;
 2. inventory existing exact/topology diagnostics that can populate the stable feature contract;
 3. define the minimal generic `DecisionCandidate` / `DecisionFeatures` / `PolicyEvaluation` contract without migrating behavior prematurely;
-4. define `BEGINNER_CONSERVATIVE_V1` hard-boundary and reason-code vocabulary;
-5. add versioned `DecisionTrace` / replay contract;
-6. migrate one narrow first-night decision surface into shadow evaluation;
-7. fan out to other first-night Storyteller-controlled surfaces;
-8. only then begin cross-night persistent impaired-narrative implementation;
+4. continue `BEGINNER_CONSERVATIVE_V1` through real typed feature projectors rather than weights;
+5. derive impaired-narrative coherence from canonical semantic history, with upstream `AbilityState` as the impairment binding and no second mutable history store;
+6. audit/generalize the later-night shadow lifecycle boundary before cross-night policy use;
+7. add other feature-backed soft priorities only at their true owners;
+8. leave versioned `DecisionTrace` / replay persistence to SDE-3C;
 9. keep automatic cutover off.
 
 Every shared-contract change requires the AGENTS fanout audit before implementation.
