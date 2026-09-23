@@ -116,6 +116,41 @@ class StructuredInformationProductionShadowTest {
         assertTrue(featureEvaluation.candidates.all {
             it.features.strategic is FeatureProjection.Projected<*>
         })
+
+        val chefModel = prepareNumericInformationUiModel(
+            coordinator = ClocktowerRecommendationCoordinator(),
+            gameId = currentSnapshot.gameId,
+            phase = ClocktowerPhase.FirstNight,
+            round = 1,
+            sequence = 21,
+            actorSeat = 1,
+            abilityRole = RoleId("Chef"),
+            metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+            subjectSeats = currentSnapshot.gameState.players.map { it.seat },
+            trueValue = 1,
+            minimumValue = 0,
+            maximumValue = 2,
+            reliability = InformationReliability.POISONED,
+            recommendationStyle = RecommendationStyle.BALANCED,
+            revision = revision,
+            recommendedValue = 1,
+        )
+        val chefResult = StructuredInformationProductionShadow.evaluateFirstNight(
+            decisionContext = chefModel.shadowDecisionContext,
+            validatedRuleset = validatedRuleset,
+            committedSetup = setup,
+            currentSnapshot = currentSnapshot,
+            roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
+            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+        )
+        assertTrue(chefModel.contextSnapshot.legalCandidateIds.size > 1)
+        assertTrue(chefResult.featureEvaluation is DecisionFeatureEvaluation.Ready)
+        assertEquals(
+            chefModel.contextSnapshot.legalCandidateIds,
+            (chefResult.featureEvaluation as DecisionFeatureEvaluation.Ready)
+                .candidates
+                .map(CandidateDecisionFeatures::candidateId),
+        )
         assertEquals(visibleChoicesBefore, model.choices)
         assertEquals(sessionBeforeShadow, session.state)
 
