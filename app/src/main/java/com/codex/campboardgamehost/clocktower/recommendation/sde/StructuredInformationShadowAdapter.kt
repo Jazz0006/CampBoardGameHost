@@ -172,12 +172,37 @@ internal object StructuredInformationShadowAdapter {
             ),
             context = exactContext,
         )
-        val featureEvaluation = ExactConsequenceDecisionFeaturesProjector.project(
+        val baseFeatureEvaluation = ExactConsequenceDecisionFeaturesProjector.project(
             evaluation = consequences,
             legalCandidateIds = informationSnapshot.legalCandidateIds,
             playerCount = historical.initialSnapshot.gameState.players.size,
             semanticTruthByCandidateId = semanticTruthByCandidateId,
         )
+        val featureEvaluation =
+            if (
+                consequences is ExactConsequenceEvaluation.Ready &&
+                baseFeatureEvaluation is DecisionFeatureEvaluation.Ready
+            ) {
+                val confirmationByCandidateId =
+                    HistoricalConfirmationChainFeatureProjector.project(
+                        fullEvaluation = consequences,
+                        exactCandidates = exactCandidates,
+                        sdeCandidates = sdeCandidates,
+                        context = exactContext,
+                    )
+                DecisionFeatureEvaluation.Ready(
+                    candidates = baseFeatureEvaluation.candidates.map { candidate ->
+                        candidate.copy(
+                            features = candidate.features.copy(
+                                confirmationChainImpact =
+                                    confirmationByCandidateId.getValue(candidate.candidateId),
+                            ),
+                        )
+                    },
+                )
+            } else {
+                baseFeatureEvaluation
+            }
         val policyEvaluation = BeginnerConservativeV1Policy.evaluate(featureEvaluation)
         return StructuredInformationShadowEvaluation(
             informationSnapshot = informationSnapshot,
