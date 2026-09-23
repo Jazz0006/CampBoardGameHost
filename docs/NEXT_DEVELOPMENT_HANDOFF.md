@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-23 Australia/Sydney  
 > Branch: `sde-3b-beginner-conservative-v1`  
-> PR: **SDE-3B draft PR — create after first branch commit**  
+> PR: **#153 — SDE-3B: implement BEGINNER_CONSERVATIVE_V1 policy**  
 > PR #151 and #152 are merged. The SDE-3B PR **MUST remain draft**. Do not merge unless the user explicitly says **“授权合并”**.
 
 ## 1. Read first
@@ -34,7 +34,7 @@ Do not revive archived pre-SDE-3 execution routes as parallel authority.
 Before any executable edit:
 
 1. query live branch HEAD;
-2. query PR #152 state/draft flag and confirm PR #151 remains merged;
+2. query PR #153 state/draft flag and confirm PR #152 remains merged;
 3. query live `main`;
 4. query current checks;
 5. never assume the SHA recorded in a prior chat is still current.
@@ -154,28 +154,29 @@ First perform a live architecture/fanout audit.
 PR/branch boundary:
 
 - PR #150 is the merged SDE-2D5 evidence/calibration checkpoint;
-- PR #151 merged the first SDE-3A contract/ownership checkpoint; PR #152 is the dedicated SDE-3A continuation draft created from that live `main`;
-- do not reuse the merged SDE-2D5 branch for SDE-3 implementation;
-- keep PR #152 draft until explicit user authorization to merge;
-- the completed SDE-3A architecture/fanout audit is `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`.
+- PR #151/#152 are merged SDE-3A checkpoints;
+- current branch is `sde-3b-beginner-conservative-v1`;
+- current PR is **#153** and must remain draft until explicit user authorization to merge;
+- current policy audit is `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_POLICY_AUDIT_2026-09-23.md`.
 
-This avoids carrying two milestone scopes in one PR.
+Current implemented boundary:
 
-First perform the audit below.
+- policy can defer when upstream features or the required strategic topology are unavailable;
+- the only generic hard rejection is exact Evil-topology retention reaching zero;
+- non-zero retention is never rejected through an invented threshold;
+- unsupported preference dimensions remain explicit limitations;
+- viable candidates remain one survivor equivalence band until richer feature projectors justify ordering;
+- seeded selection is deterministic, weight-free and survivor-only;
+- structured shadow carries policy evaluation but production recommendation/confirmation remains unchanged;
+- source ability state and actual-state semantic truth are now projected from existing legal-candidate semantics without importing legacy score/probability.
 
-Audit at minimum:
+Next architecture target:
 
-- current `StorytellerDecisionEngine`;
-- current decision context / request / result types;
-- production shadow integration;
-- setup recommendation ownership still touching SDE-controlled outputs;
-- exact/topology consequence projectors;
-- first-night bundle / proposition materialization;
-- historical/revision state needed for later replay;
-- legacy `ConsequenceEvaluator` and related heuristic consumers;
-- persistence surfaces that could own a future DecisionTrace.
-
-Produce an owner map before shared-contract edits.
+- derive impaired-narrative coherence from canonical `ActionFactTimeline + EpistemicObservationLog`;
+- do not persist a second mutable narrative state;
+- use upstream `AbilityState` to decide whether impaired-narrative policy applies;
+- do not infer impairment from player-facing observation reliability;
+- audit the later-night lifecycle/shadow boundary before widening the current first-night production wrapper.
 
 ## 8. Target SDE-3A contracts
 
@@ -371,23 +372,26 @@ The old external-human auto-workflow that could take ~2h48m has been retired.
 
 ## 16. Next conversation task
 
-SDE-3A is acceptance-complete on draft PR #152 and is **not yet merged**.
+SDE-3A is merged. SDE-3B is active on draft PR #153.
 
-Acceptance evidence:
+Current SDE-3B checkpoint:
 
-- checkpoint commit `dd82af3d8da9c17bc62d5606f045ddcc82c21bf0` used the required `[full-ci]` marker;
-- CI workflow `35806237753` succeeded with full Android unit tests + debug APK, ASP contract tests, and Real Clingo cross-validation;
-- R2 workflow `35806237770` succeeded;
-- final fanout audit confirmed that production changes are additive and shadow-only: `DecisionFeatureEvaluation` plus structured shadow feature attachment;
-- no legality owner, canonical session commit path, UI authority, legacy recommendation/scoring authority, policy selection, or persistence ownership moved;
-- Chef and Empath numeric structured shadow coverage exercises the same generalized path, including multi-candidate poisoned Chef;
-- deferred exact capability remains explicit and does not manufacture feature values.
+- policy audit completed before production edits;
+- Ready/Deferred decision-level policy result and limitation surface implemented;
+- exact zero Evil-topology contradiction gate implemented;
+- no non-zero retention threshold exists;
+- viable candidates remain explicitly tied when evidence cannot order them;
+- seeded survivor-only selector implemented without probability weights;
+- structured numeric shadow carries V1 policy evaluation without changing visible recommendation or canonical commit;
+- source `AbilityState` and actual-state semantic truth are projected from upstream legal-candidate semantics;
+- canonical semantic history remains the intended owner for cross-night narrative continuity.
 
 Immediate next action:
 
-1. re-query live #152 / main / checks before any action;
-2. keep #152 draft and make no further SDE-3A production changes unless a regression is found;
-3. do not start SDE-3B on this branch;
-4. only after explicit user **“授权合并”**, merge #152 and create a fresh branch from live `main` for SDE-3B `BEGINNER_CONSERVATIVE_V1`.
+1. re-query live #153 / main / checks;
+2. finish FAST/R2 validation for the current core checkpoint;
+3. audit the later-night structured shadow lifecycle boundary;
+4. design the shared role-agnostic impaired-narrative feature projector over canonical history;
+5. do not add numeric bands, role-specific coherence branches, DecisionTrace persistence, or production cutover.
 
-Do not invent weights, numeric thresholds, or broad legacy deletion.
+Keep #153 draft until explicit user **“授权合并”**.
