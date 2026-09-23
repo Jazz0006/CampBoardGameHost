@@ -236,8 +236,8 @@ The original core steps 1–5 are now complete on PR #153.
 
 The continuation order is revised by the ClocktowerEvidenceLab C0 handoff:
 
-1. **3B1 structure:** historical lifecycle-safe shadow + explicit contextual input binding;
-2. **3B2 feature:** confirmation-chain impact;
+1. **3B1 structure — COMPLETE:** historical lifecycle-safe shadow + explicit contextual input binding;
+2. **3B2 feature — CURRENT:** confirmation-chain impact;
 3. **3B3 feature:** impaired-narrative coherence/detectability from canonical history;
 4. **3B4 feature:** healthy-information utility / remaining usable routes;
 5. **3B5 feature:** contextual role-function exposure;
@@ -275,15 +275,11 @@ impaired narrative coherence / detectability features
 
 This still satisfies persistence semantically: previous committed observations constrain every later projection because they live in canonical history.
 
-### Important missing binding
+### Ability-state / historical binding status
 
-The current SDE candidate/shadow path does not yet carry one authoritative typed fact saying whether the current source ability is actually functioning or impaired.
+The SDE candidate/shadow path now carries the source `AbilityState` projected from the existing legal-candidate semantics, and 3B1 adds lifecycle-safe canonical-history/input refs. Actual impairment must continue to come from rules/session semantics, not from `ObservationReliability.RECEIVED_AS_FUNCTIONING`, which only describes how information was received by the player.
 
-Do not infer impairment from `ObservationReliability.RECEIVED_AS_FUNCTIONING`: that value describes how the player received the information, and a Drunk/poisoned player normally receives it as apparently functioning.
-
-Before implementing cross-night impaired-narrative preference, audit the existing rules/session owner for current ability state and bind that fact into the feature-projection input without duplicating rules.
-
-This remains a required SDE-3B architecture task, but it is no longer the immediate next code slice. The C0 whole-game handoff shows that a shared historical lifecycle/input-binding seam and confirmation-chain semantics should land first, because both impaired narrative and later expert policy depend on those foundations.
+SDE-3B1 is complete. The immediate next slice is 3B2 confirmation-chain semantics; impaired-narrative policy remains blocked until 3B3 derives narrative features from canonical history rather than inventing a second state owner.
 
 ### Minimal coherence already available
 
