@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
+import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
@@ -115,6 +117,7 @@ internal object StructuredInformationShadowAdapter {
                     interactionId = decisionId,
                     sourceSeat = draft.sourceSeat,
                     abilityRole = draft.sourceAbility,
+                    abilityState = candidate.evaluation.candidate.abilityState,
                 ),
                 sourceRevision = informationSnapshot.revision,
                 inputBindings = SdeDecisionInputBindings.NotCaptured,
@@ -132,6 +135,11 @@ internal object StructuredInformationShadowAdapter {
         }
         val exactCandidates = projectedCandidates.map { it.first }
         val sdeCandidates = projectedCandidates.map { it.second }
+        val semanticTruthByCandidateId = decisionContext.legalCandidates.mapNotNull { candidate ->
+            candidate.evaluation.candidate.truthRelation.toSemanticTruthOrNull()?.let { semanticTruth ->
+                candidate.candidateId to semanticTruth
+            }
+        }.toMap()
         val planned = informationSnapshot.legalCandidateIds.map { candidateId ->
             PlannedDecisionRef.fromInformationSnapshot(
                 decisionId = decisionId,
@@ -150,6 +158,7 @@ internal object StructuredInformationShadowAdapter {
             evaluation = consequences,
             legalCandidateIds = informationSnapshot.legalCandidateIds,
             playerCount = historical.initialSnapshot.gameState.players.size,
+            semanticTruthByCandidateId = semanticTruthByCandidateId,
         )
         val policyEvaluation = BeginnerConservativeV1Policy.evaluate(featureEvaluation)
         return StructuredInformationShadowEvaluation(
@@ -160,6 +169,12 @@ internal object StructuredInformationShadowAdapter {
             featureEvaluation = featureEvaluation,
             policyEvaluation = policyEvaluation,
         )
+    }
+
+    private fun TruthRelation.toSemanticTruthOrNull(): SemanticTruth? = when (this) {
+        TruthRelation.TRUE_TO_ACTUAL_STATE -> SemanticTruth.TRUE
+        TruthRelation.FALSE_TO_ACTUAL_STATE -> SemanticTruth.FALSE
+        else -> null
     }
 
     private fun EpistemicObservationDraft.toHypotheticalObservation(
