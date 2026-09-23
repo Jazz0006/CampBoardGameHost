@@ -21,6 +21,7 @@ internal data class StructuredInformationShadowEvaluation(
     val sdeCandidates: List<SdeDecisionCandidate>,
     val plannedDecisions: List<PlannedDecisionRef>,
     val consequences: ExactConsequenceEvaluation,
+    val featureEvaluation: DecisionFeatureEvaluation,
 ) {
     init {
         require(sdeCandidates.map(SdeDecisionCandidate::candidateId) == informationSnapshot.legalCandidateIds) {
@@ -34,6 +35,24 @@ internal data class StructuredInformationShadowEvaluation(
         }
         require(sdeCandidates.all { it.sourceRevision == informationSnapshot.revision }) {
             "Structured SDE candidates must preserve the source information revision."
+        }
+        require(featureEvaluation.candidateIds == informationSnapshot.legalCandidateIds) {
+            "Structured feature projection must preserve the source legal-candidate order."
+        }
+        when (consequences) {
+            is ExactConsequenceEvaluation.Ready ->
+                require(featureEvaluation is DecisionFeatureEvaluation.Ready) {
+                    "Ready exact consequences require ready DecisionFeatures."
+                }
+
+            is ExactConsequenceEvaluation.Deferred -> {
+                require(featureEvaluation is DecisionFeatureEvaluation.Deferred) {
+                    "Deferred exact consequences require deferred DecisionFeatures."
+                }
+                require(featureEvaluation.missingCapabilities == consequences.missingCapabilities) {
+                    "Deferred feature evaluation must preserve exact missing capabilities."
+                }
+            }
         }
     }
 }
@@ -120,11 +139,17 @@ internal object StructuredInformationShadowAdapter {
             ),
             context = exactContext,
         )
+        val featureEvaluation = ExactConsequenceDecisionFeaturesProjector.project(
+            evaluation = consequences,
+            legalCandidateIds = informationSnapshot.legalCandidateIds,
+            playerCount = historical.initialSnapshot.gameState.players.size,
+        )
         return StructuredInformationShadowEvaluation(
             informationSnapshot = informationSnapshot,
             sdeCandidates = sdeCandidates,
             plannedDecisions = planned,
             consequences = consequences,
+            featureEvaluation = featureEvaluation,
         )
     }
 
