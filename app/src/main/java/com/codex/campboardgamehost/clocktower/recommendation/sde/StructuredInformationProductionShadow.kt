@@ -36,6 +36,38 @@ internal object StructuredInformationProductionShadow {
         inputBindings: SdeDecisionInputBindings = SdeDecisionInputBindings.NotCaptured,
         hypothesis: EpistemicHypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
     ): StructuredInformationShadowEvaluation {
+        require(decisionContext.legalCandidates.all { candidate ->
+            candidate.draft.phase == StorytellerPhase.FIRST_NIGHT && candidate.draft.round == 1
+        }) {
+            "First-night structured shadow only accepts round-one FIRST_NIGHT candidates."
+        }
+        return evaluateHistorical(
+            decisionContext = decisionContext,
+            validatedRuleset = validatedRuleset,
+            committedSetup = committedSetup,
+            currentSnapshot = currentSnapshot,
+            roleDefinitions = roleDefinitions,
+            inputBindings = inputBindings,
+            hypothesis = hypothesis,
+        )
+    }
+
+    /**
+     * Lifecycle-safe read-only shadow over the canonical committed prefix.
+     *
+     * The immutable setup supplies the replay baseline; the current snapshot supplies the complete
+     * committed action/observation prefix. The candidate itself may belong to any lifecycle point at
+     * or after that baseline. This method still owns no production recommendation or commit action.
+     */
+    fun <T : DynamicInformationOutcome> evaluateHistorical(
+        decisionContext: InformationDecisionContext<T>,
+        validatedRuleset: ValidatedClocktowerRuleset,
+        committedSetup: CommittedClocktowerSetup,
+        currentSnapshot: GameSnapshot,
+        roleDefinitions: Collection<RoleDefinition>,
+        inputBindings: SdeDecisionInputBindings = SdeDecisionInputBindings.NotCaptured,
+        hypothesis: EpistemicHypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+    ): StructuredInformationShadowEvaluation {
         require(currentSnapshot.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1) {
             "Structured production shadow requires GLOBAL_V1 semantic history."
         }
