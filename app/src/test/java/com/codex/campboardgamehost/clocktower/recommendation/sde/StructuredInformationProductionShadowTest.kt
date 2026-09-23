@@ -344,6 +344,31 @@ class StructuredInformationProductionShadowTest {
         assertEquals(model.contextSnapshot.legalCandidateIds, result.policyEvaluation.candidateIds)
         assertEquals(choicesBefore, model.choices)
         assertEquals(sessionBeforeShadow, session.state)
+
+        session.commitGlobalActionFact(
+            ActionFactDraft.Protect(
+                actionId = "future:night-2:protect",
+                phase = StorytellerPhase.NIGHT,
+                round = 2,
+                sequence = 2,
+                targetSeat = empathPlayer.seat,
+            ),
+        )
+        val snapshotWithFutureFact = session.toGameSnapshot(rulesetRef)
+        try {
+            StructuredInformationProductionShadow.evaluateHistorical(
+                decisionContext = model.shadowDecisionContext,
+                validatedRuleset = validatedRuleset,
+                committedSetup = setup,
+                currentSnapshot = snapshotWithFutureFact,
+                roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
+                inputBindings = historicalBindings,
+                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            )
+            throw AssertionError("Historical shadow must reject facts committed after the decision point.")
+        } catch (expected: IllegalArgumentException) {
+            assertTrue(expected.message.orEmpty().contains("committed prefix"))
+        }
     }
 
 }
