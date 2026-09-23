@@ -167,14 +167,10 @@ internal object BeginnerConservativeV1Policy {
     }
 
     private fun StrategicDecisionFeatures.hasUndefinedBaseline(): Boolean =
-        demonCoverRetention is StrategicRatio.Undefined ||
-            evilTopologyRetention is StrategicRatio.Undefined ||
-            evilCoverRetention is StrategicRatio.Undefined
+        evilTopologyRetention is StrategicRatio.Undefined
 
     private fun StrategicDecisionFeatures.hasNoCredibleEvilWorld(): Boolean =
-        demonCoverRetention.isDefinedZero() ||
-            evilTopologyRetention.isDefinedZero() ||
-            evilCoverRetention.isDefinedZero()
+        evilTopologyRetention.isDefinedZero()
 
     private fun StrategicRatio.isDefinedZero(): Boolean =
         this is StrategicRatio.Defined && numerator == 0
