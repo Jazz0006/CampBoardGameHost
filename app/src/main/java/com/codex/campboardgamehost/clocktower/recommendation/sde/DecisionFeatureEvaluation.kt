@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicEvaluationCapability
 
 internal data class CandidateDecisionFeatures(
@@ -59,12 +60,16 @@ internal object ExactConsequenceDecisionFeaturesProjector {
         evaluation: ExactConsequenceEvaluation,
         legalCandidateIds: List<String>,
         playerCount: Int,
+        semanticTruthByCandidateId: Map<String, SemanticTruth> = emptyMap(),
     ): DecisionFeatureEvaluation {
         require(legalCandidateIds.isNotEmpty()) { "Feature projection requires legal candidates." }
         require(legalCandidateIds.all(String::isNotBlank) && legalCandidateIds.distinct().size == legalCandidateIds.size) {
             "Legal candidate IDs must be non-blank and unique."
         }
         require(playerCount > 0) { "Player count must be positive." }
+        require(semanticTruthByCandidateId.keys.all(legalCandidateIds::contains)) {
+            "Semantic-truth projection may only reference upstream legal candidates."
+        }
 
         return when (evaluation) {
             is ExactConsequenceEvaluation.Ready -> {
@@ -79,6 +84,7 @@ internal object ExactConsequenceDecisionFeaturesProjector {
                             features = DecisionFeaturesProjector.project(
                                 diagnostic = consequence.diagnostics,
                                 playerCount = playerCount,
+                                semanticTruth = semanticTruthByCandidateId[consequence.candidateId],
                             ),
                         )
                     },
