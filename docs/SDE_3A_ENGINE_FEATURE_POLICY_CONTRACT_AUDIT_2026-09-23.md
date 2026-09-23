@@ -2,9 +2,11 @@
 
 > Date: 2026-09-23 Australia/Sydney
 > Repository: `Jazz0006/CampBoardGameHost`
-> Branch: `sde-3a-engine-feature-policy-contract`
+> Checkpoint PR #151: merged  
+> Continuation branch: `sde-3a-feature-projection-shadow-pipeline`  
+> Continuation PR: #152 (draft)
 > Base: live `main` at `c5b6e4d6f1dec8a68e7df3e8989e3b47425c080f`
-> Status: architecture pre-flight before SDE-3A production-contract changes
+> Status: architecture pre-flight and first score-free contract checkpoint complete; structured feature-projection continuation in progress
 
 ## 1. Boundary correction
 
@@ -438,6 +440,6 @@ Before SDE-3A acceptance, run the repository full gate per `TESTING_STRATEGY.md`
 
 ## 15. SDE-3A exit direction
 
-The first SDE-3A slice is complete when the repository has one stable, score-free typed SDE envelope and feature/policy result contract that can consume existing legal candidates and consequence primitives without taking their ownership.
+PR #151 established the stable score-free SDE envelope and feature/policy result contract. PR #152 continues the same milestone by proving the legal-candidate -> exact-consequence -> `DecisionFeatures` path in the structured numeric shadow, including explicit deferred-capability handling, before SDE-3B begins.
 
 SDE-3B can then implement `BEGINNER_CONSERVATIVE_V1` as explicit reasoned filtering/preferences over those features. SDE-3C can persist and replay traces. Evidence calibration remains an offline/versioned input to later policy versions and SDE-3D, not an online learner.
