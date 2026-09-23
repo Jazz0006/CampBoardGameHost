@@ -241,3 +241,53 @@ High-risk and out of scope:
 5. add pure seeded survivor selection;
 6. then add additional V1 soft priorities only as their feature projectors become real;
 7. keep SDE-3C trace/replay separate.
+
+
+## 13. Cross-night impaired narrative ownership audit
+
+The repository already has the correct canonical history owners:
+
+- `EpistemicObservationLog` stores durable player-visible semantic observations;
+- `ActionFactTimeline` stores durable mechanical history;
+- both support one global timeline ordering;
+- `ExactHistoricalHypotheticalObservationBundleEvaluator` replays that history and evaluates a hypothetical next observation against the surviving historical world set.
+
+Therefore SDE-3B should **not** persist a second mutable perceived-world history.
+
+The required “persistent impaired narrative state” should be implemented as a **derived role-agnostic projection over canonical history**:
+
+```text
+canonical action timeline
++ canonical observation log
++ current legal candidate proposition
++ source impairment binding
+    ->
+historical perceived-world consequence
+    ->
+impaired narrative coherence / detectability features
+```
+
+This still satisfies persistence semantically: previous committed observations constrain every later projection because they live in canonical history.
+
+### Important missing binding
+
+The current SDE candidate/shadow path does not yet carry one authoritative typed fact saying whether the current source ability is actually functioning or impaired.
+
+Do not infer impairment from `ObservationReliability.RECEIVED_AS_FUNCTIONING`: that value describes how the player received the information, and a Drunk/poisoned player normally receives it as apparently functioning.
+
+Before implementing cross-night impaired-narrative preference, audit the existing rules/session owner for current ability state and bind that fact into the feature-projection input without duplicating rules.
+
+This is the next SDE-3B architecture task after the core evaluator/selector checkpoint.
+
+### Minimal coherence already available
+
+The current exact consequence path already detects the strongest possible narrative failure: adding a candidate can reduce the recipient's historically credible world set to zero. The first V1 `no-credible-evil-world` gate therefore provides a minimal contradiction guard.
+
+It does **not** yet measure:
+
+- simplicity of the surviving perceived world;
+- unnecessary narrative switching;
+- impairment detectability among several still-credible continuations;
+- transition cost after deaths/role changes/public claims.
+
+Those require the shared derived narrative projector, not additional thresholds inside the policy evaluator.
