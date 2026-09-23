@@ -54,6 +54,9 @@ class ConfirmationChainFeaturesProjectorTest {
         )
         assertEquals(setOf("support"), support.supportingObservationIds)
         assertTrue(support.historicalObservationImpacts.single().authenticatesDistinctSource)
+        assertTrue(
+            support.historicalObservationImpacts.single().wasIndependentlyConstrainingBefore,
+        )
 
         val contradiction = ConfirmationChainFeaturesProjector.project(
             currentSource = currentSource,
@@ -130,6 +133,9 @@ class ConfirmationChainFeaturesProjectorTest {
             none.historicalObservationImpacts.single().relation,
         )
         assertFalse(none.historicalObservationImpacts.single().restoration.restoresAnyAmbiguity)
+        assertFalse(
+            none.historicalObservationImpacts.single().wasIndependentlyConstrainingBefore,
+        )
     }
 
     @Test
