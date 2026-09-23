@@ -2,14 +2,10 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
-import com.codex.campboardgamehost.clocktower.domain.DynamicActionReducer
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
-import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
-import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
-import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 
 /**
  * Derives impairment-narrative inputs from canonical setup/action/observation history.
@@ -149,7 +145,7 @@ internal object HistoricalImpairedNarrativeFeatureProjector {
                     episodeStart == null || globalSequence > episodeStart
                 }
                 .filter { record ->
-                    abilityStateAtObservation(
+                    HistoricalInformationAbilityStateResolver.resolve(
                         record = record,
                         context = context,
                     ) == currentState
@@ -181,51 +177,6 @@ internal object HistoricalImpairedNarrativeFeatureProjector {
             FeatureUnavailableReason.HISTORICAL_INPUT_NOT_CAPTURED,
         ),
     )
-
-    private fun abilityStateAtObservation(
-        record: RecordedEpistemicObservation,
-        context: ExactConsequenceContext,
-    ): AbilityState? {
-        val sourceSeat = record.sourceSeat ?: return null
-        val sourceAbility = record.sourceAbility ?: return null
-        val binding = record.timelineBinding as? ObservationTimelineBinding.Global ?: return null
-        val historical = context.exactContext
-        val actionsBeforeObservation = historical.actionTimeline.entries
-            .filter { it.point.globalSequence < binding.point.globalSequence }
-
-        val reduced = DynamicActionReducer.reduce(
-            initialSnapshot = historical.initialSnapshot,
-            initialPhase = historical.initialPhase,
-            initialRound = historical.initialRound,
-            facts = actionsBeforeObservation.map { it.fact },
-        )
-        val player = reduced.snapshot.gameState.playerAt(sourceSeat) ?: return null
-
-        val activePoisonTarget = actionsBeforeObservation
-            .asReversed()
-            .firstOrNull { it.fact is ActionFact.Poison }
-            ?.fact
-            ?.let { it as ActionFact.Poison }
-            ?.targetSeat
-
-        val state = AbilityFunctioningSemantics.stateForEstablishedInteraction(
-            subject = AbilitySubject(
-                actualRole = player.actualRole.value,
-                shownRole = player.shownRole?.value,
-                isPoisoned = activePoisonTarget == sourceSeat,
-                isAlive = player.alive,
-            ),
-            role = sourceAbility.value,
-        ) ?: return null
-
-        return state.toSdeAbilityState()
-    }
-
-    private fun AbilityFunctioningState.toSdeAbilityState(): AbilityState = when (this) {
-        AbilityFunctioningState.FUNCTIONING -> AbilityState.FUNCTIONING
-        AbilityFunctioningState.DRUNK -> AbilityState.MALFUNCTIONING_DRUNK
-        AbilityFunctioningState.POISONED -> AbilityState.MALFUNCTIONING_POISONED
-    }
 
     private fun RecordedEpistemicObservation.isVisibleTo(recipientSeat: Int): Boolean =
         visibility == ObservationVisibility.PUBLIC || recipientSeat in recipientSeats
