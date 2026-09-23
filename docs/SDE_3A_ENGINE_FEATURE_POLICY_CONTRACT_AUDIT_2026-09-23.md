@@ -6,7 +6,7 @@
 > Continuation branch: `sde-3a-feature-projection-shadow-pipeline`  
 > Continuation PR: #152 (draft)
 > Base: live `main` at `c5b6e4d6f1dec8a68e7df3e8989e3b47425c080f`
-> Status: architecture pre-flight and first score-free contract checkpoint complete; structured feature-projection continuation in progress
+> Status: SDE-3A architecture, score-free contract, structured feature-projection proof, T4 acceptance, and final fanout audit complete on draft PR #152; pending merge
 
 ## 1. Boundary correction
 
@@ -440,6 +440,6 @@ Before SDE-3A acceptance, run the repository full gate per `TESTING_STRATEGY.md`
 
 ## 15. SDE-3A exit direction
 
-PR #151 established the stable score-free SDE envelope and feature/policy result contract. PR #152 continues the same milestone by proving the legal-candidate -> exact-consequence -> `DecisionFeatures` path in the structured numeric shadow, including explicit deferred-capability handling, before SDE-3B begins.
+PR #151 established the stable score-free SDE envelope and feature/policy result contract. PR #152 completes the same milestone by proving the legal-candidate -> exact-consequence -> `DecisionFeatures` path in the structured numeric shadow, including explicit deferred-capability handling and generalized Chef/Empath coverage. T4 acceptance passed at checkpoint `dd82af3d8da9c17bc62d5606f045ddcc82c21bf0`: CI workflow `35806237753` succeeded with full Android unit tests + debug APK, ASP contract tests, and Real Clingo cross-validation; R2 workflow `35806237770` also succeeded. Final fanout review found no ownership expansion into rules, canonical session commit, UI, legacy scoring, policy selection, or persistence. SDE-3A is therefore acceptance-complete on draft PR #152 and awaits explicit merge authorization before SDE-3B begins.
 
 SDE-3B can then implement `BEGINNER_CONSERVATIVE_V1` as explicit reasoned filtering/preferences over those features. SDE-3C can persist and replay traces. Evidence calibration remains an offline/versioned input to later policy versions and SDE-3D, not an online learner.
