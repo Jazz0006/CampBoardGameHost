@@ -1,9 +1,9 @@
 # CampBoardGameHost — Next Development Handoff
 
 > Updated: 2026-09-23 Australia/Sydney  
-> Branch: `sde-2d5-calibration-policy-evidence`  
-> PR: **#150 — SDE-2D5: calibrate strategic policy evidence**  
-> PR #150 **MUST remain draft**. Do not merge unless the user explicitly says **“授权合并”**.
+> Branch: `sde-3a-engine-feature-policy-contract`  
+> PR: **#151 — SDE-3A: establish engine feature policy contracts**  
+> PR #150 is merged. PR #151 **MUST remain draft**. Do not merge unless the user explicitly says **“授权合并”**.
 
 ## 1. Read first
 
@@ -34,7 +34,7 @@ Do not revive archived pre-SDE-3 execution routes as parallel authority.
 Before any executable edit:
 
 1. query live branch HEAD;
-2. query PR #150 state/draft flag;
+2. query PR #151 state/draft flag and confirm PR #150 remains merged;
 3. query live `main`;
 4. query current checks;
 5. never assume the SHA recorded in a prior chat is still current.
@@ -153,11 +153,11 @@ First perform a live architecture/fanout audit.
 
 PR/branch boundary:
 
-- PR #150 remains the SDE-2D5 evidence/calibration checkpoint;
-- the SDE-3A audit may be performed read-only while #150 is draft;
-- do not put SDE-3 production implementation into the current calibration branch;
-- after the audit is accepted, #150 may be merged **only after explicit user authorization**;
-- then create a dedicated SDE-3 branch/PR from live `main`.
+- PR #150 is the merged SDE-2D5 evidence/calibration checkpoint;
+- PR #151 is the dedicated SDE-3A draft PR created from live `main`;
+- do not reuse the merged SDE-2D5 branch for SDE-3 implementation;
+- keep PR #151 draft until explicit user authorization to merge;
+- the completed SDE-3A architecture/fanout audit is `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`.
 
 This avoids carrying two milestone scopes in one PR.
 
@@ -371,7 +371,7 @@ The old external-human auto-workflow that could take ~2h48m has been retired.
 
 ## 16. Next conversation task
 
-Start **SDE-3A architecture / fanout audit**.
+Continue **SDE-3A engine / feature / policy contract** from the completed architecture/fanout audit and validate the first score-free structured-information shadow slice.
 
 Do not modify production code until the audit answers:
 

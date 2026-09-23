@@ -5,6 +5,7 @@
 > Status: **CURRENT SDE-3 EXECUTION AUTHORITY**  
 > Parent architecture: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`  
 > Current evidence authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
+> Current SDE-3A audit: `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`  
 > Targeted evidence contract: `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
 
 ## 1. Decision
@@ -403,7 +404,7 @@ Do not turn expert source examples into fixture-specific production tests.
 
 Start with an architecture/fanout audit before production edits.
 
-The audit may begin while PR #150 remains draft, but **SDE-3 production implementation must not be added to the SDE-2D5 calibration branch**. PR #150 is an evidence/calibration checkpoint. After the audit is accepted, wait for explicit user authorization to merge #150; then create a dedicated SDE-3 branch/PR from live `main`. If #150 is not yet merged, keep the SDE-3A work read-only/design-only rather than creating an accidental stacked production migration.
+PR #150 is merged as the SDE-2D5 evidence/calibration checkpoint. SDE-3A now proceeds on dedicated branch `sde-3a-engine-feature-policy-contract` in draft PR #151. Keep #151 draft until explicit user authorization to merge, and do not place SDE-3 implementation back onto the merged SDE-2D5 branch.
 
 Recommended sequence:
 

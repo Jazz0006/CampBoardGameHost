@@ -45,7 +45,7 @@ class DecisionFeaturesTest {
             semanticTruth = SemanticTruth.TRUE,
         )
 
-        val strategic = (features.strategic as FeatureProjection.Projected).value
+        val strategic = (features.strategic as FeatureProjection.Projected<StrategicDecisionFeatures>).value
         assertEquals(StrategicRatio.Defined(1, 3), strategic.demonCoverRetention)
         assertEquals(StrategicRatio.Defined(2, 4), strategic.evilTopologyRetention)
         assertEquals(StrategicRatio.Defined(3, 3), strategic.evilCoverRetention)
@@ -53,7 +53,7 @@ class DecisionFeaturesTest {
         assertEquals(StrategicRatio.Defined(1, 5), strategic.forcedEvilFraction)
         assertEquals(setOf(4, 5), strategic.forcedGoodSeats)
         assertEquals(setOf(1), strategic.forcedEvilSeats)
-        assertEquals(SemanticTruth.TRUE, (features.semanticTruth as FeatureProjection.Projected).value)
+        assertEquals(SemanticTruth.TRUE, (features.semanticTruth as FeatureProjection.Projected<SemanticTruth>).value)
         assertTrue(features.confirmationChainImpact is FeatureProjection.Unavailable)
         assertTrue(features.impairedNarrative is FeatureProjection.Unavailable)
     }
