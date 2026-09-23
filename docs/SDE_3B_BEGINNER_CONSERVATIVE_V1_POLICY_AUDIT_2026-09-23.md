@@ -232,13 +232,21 @@ High-risk and out of scope:
 
 ## 12. Implementation sequence
 
-1. establish decision-level policy readiness/limitation contract;
-2. implement the exact no-credible-Evil-world gate;
-3. preserve all other viable candidates as an explicit survivor equivalence band;
-4. attach the result to structured numeric shadow;
-5. add pure seeded survivor selection;
-6. then add additional V1 soft priorities only as their feature projectors become real;
-7. keep SDE-3C trace/replay separate.
+The original core steps 1–5 are now complete on PR #153.
+
+The continuation order is revised by the ClocktowerEvidenceLab C0 handoff:
+
+1. **3B1 structure:** historical lifecycle-safe shadow + explicit contextual input binding;
+2. **3B2 feature:** confirmation-chain impact;
+3. **3B3 feature:** impaired-narrative coherence/detectability from canonical history;
+4. **3B4 feature:** healthy-information utility / remaining usable routes;
+5. **3B5 feature:** contextual role-function exposure;
+6. **3B6 policy:** only then add expert-informed qualitative soft priorities over stable projectors;
+7. keep seeded tie-breaking for unresolved equivalence;
+8. keep SDE-3C DecisionTrace persistence separate;
+9. keep numeric thresholds and multi-axis calibration in SDE-3D.
+
+See `SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md` for the evidence authority model.
 
 
 ## 13. Cross-night impaired narrative ownership audit
@@ -275,7 +283,7 @@ Do not infer impairment from `ObservationReliability.RECEIVED_AS_FUNCTIONING`: t
 
 Before implementing cross-night impaired-narrative preference, audit the existing rules/session owner for current ability state and bind that fact into the feature-projection input without duplicating rules.
 
-This is the next SDE-3B architecture task after the core evaluator/selector checkpoint.
+This remains a required SDE-3B architecture task, but it is no longer the immediate next code slice. The C0 whole-game handoff shows that a shared historical lifecycle/input-binding seam and confirmation-chain semantics should land first, because both impaired narrative and later expert policy depend on those foundations.
 
 ### Minimal coherence already available
 
