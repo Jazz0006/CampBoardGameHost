@@ -154,7 +154,7 @@ class StructuredInformationShadowAdapterTest {
             round = 1,
             sequence = 1,
             sourceSeat = 2,
-            sourceAbility = RoleId("PriorChannel"),
+            sourceAbility = RoleId("Empath"),
             visibility = ObservationVisibility.PRIVATE,
             recipientSeats = setOf(2),
             reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
@@ -190,7 +190,7 @@ class StructuredInformationShadowAdapterTest {
         assertTrue(confirmation is FeatureProjection.Projected)
         confirmation as FeatureProjection.Projected
         assertEquals(setOf(historicalRecord.recordId), confirmation.value.supportingObservationIds)
-        assertTrue(confirmation.value.historicalObservationImpacts.single().authenticatesDistinctSource)
+        assertTrue(!confirmation.value.historicalObservationImpacts.single().authenticatesDistinctSource)
         assertEquals(listOf(historicalRecord), observationLog.records)
     }
 

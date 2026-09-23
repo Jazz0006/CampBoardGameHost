@@ -342,7 +342,7 @@ class HistoricalConfirmationChainFeatureProjectorTest {
         observations = listOf(
             EpistemicObservation(
                 observationId = "observation:$id",
-                snapshotId = FormalGameState.from(snapshot, phase, round).snapshotId,
+                snapshotId = formal.snapshotId,
                 phase = phase,
                 round = round,
                 sequence = sequence,
