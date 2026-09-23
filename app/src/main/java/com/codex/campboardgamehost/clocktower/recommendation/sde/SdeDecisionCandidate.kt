@@ -3,6 +3,7 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 
 /** Exact lifecycle point for one SDE candidate without owning session state. */
