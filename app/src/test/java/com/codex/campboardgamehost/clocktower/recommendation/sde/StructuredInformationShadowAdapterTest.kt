@@ -95,6 +95,45 @@ class StructuredInformationShadowAdapterTest {
     }
 
     @Test
+    fun `historical confirmation features are attached without changing v1 policy ordering`() {
+        val revision = InformationDecisionRevision(
+            gameStateRevision = snapshot.gameStateRevision,
+            playerInputRevision = snapshot.playerInputRevision,
+        )
+        val decisionContext = structuredEmpathContext(revision)
+        val shadow = StructuredInformationShadowAdapter.evaluate(
+            decisionContext = decisionContext,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = validatedRuleset,
+                exactContext = exactHistoricalContext(ActionFactTimeline(emptyList()), EpistemicObservationLog()),
+            ),
+        )
+
+        val features = shadow.featureEvaluation as DecisionFeatureEvaluation.Ready
+        features.candidates.forEach { candidate ->
+            val confirmation = candidate.features.confirmationChainImpact
+            assertTrue(confirmation is FeatureProjection.Projected)
+            confirmation as FeatureProjection.Projected
+            assertTrue(confirmation.value.historicalObservationImpacts.isEmpty())
+        }
+
+        val strategicOnly = DecisionFeatureEvaluation.Ready(
+            candidates = features.candidates.map { candidate ->
+                candidate.copy(
+                    features = candidate.features.copy(
+                        confirmationChainImpact =
+                            FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET),
+                    ),
+                )
+            },
+        )
+        assertEquals(
+            BeginnerConservativeV1Policy.evaluate(strategicOnly),
+            shadow.policyEvaluation,
+        )
+    }
+
+    @Test
     fun `exact deferral stays separate from structured recommendation authority`() {
         val revision = InformationDecisionRevision(
             gameStateRevision = snapshot.gameStateRevision,
