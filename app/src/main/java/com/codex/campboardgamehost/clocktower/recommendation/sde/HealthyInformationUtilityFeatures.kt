@@ -86,6 +86,8 @@ internal data class HealthyInformationCandidateEvidence(
  * budget, percentage floor, player-count band, role-specific value or policy ordering.
  */
 internal data class HealthyInformationUtilityFeatures(
+    val usableHealthyRouteRefsBefore: Set<HealthyInformationRouteRef.HistoricalObservation>,
+    val independentHealthyRouteRefsBefore: Set<HealthyInformationRouteRef.HistoricalObservation>,
     val usableHealthyRouteRefsAfter: Set<HealthyInformationRouteRef>,
     val independentHealthyRouteRefsAfter: Set<HealthyInformationRouteRef>,
     val newlyRedundantHealthyRouteRefs: Set<HealthyInformationRouteRef.HistoricalObservation>,
@@ -93,6 +95,9 @@ internal data class HealthyInformationUtilityFeatures(
     val currentCandidateHealthyRouteRef: HealthyInformationRouteRef.CurrentCandidate?,
 ) {
     init {
+        require(independentHealthyRouteRefsBefore.all { it in usableHealthyRouteRefsBefore }) {
+            "Independent pre-candidate healthy routes must be usable."
+        }
         require(independentHealthyRouteRefsAfter.all { it in usableHealthyRouteRefsAfter }) {
             "Independent healthy routes must remain usable."
         }
@@ -115,12 +120,27 @@ internal data class HealthyInformationUtilityFeatures(
 
     val hasAnyIndependentHealthyRouteAfter: Boolean
         get() = independentHealthyRouteRefsAfter.isNotEmpty()
+
+    val lostHealthyRouteRefs: Set<HealthyInformationRouteRef.HistoricalObservation>
+        get() = usableHealthyRouteRefsBefore
+            .filterNotTo(linkedSetOf()) { it in usableHealthyRouteRefsAfter }
+
+    val removesLastUsableHealthyRoute: Boolean
+        get() =
+            usableHealthyRouteRefsBefore.isNotEmpty() &&
+                usableHealthyRouteRefsAfter.isEmpty()
 }
 
 internal object HealthyInformationUtilityFeaturesProjector {
     fun project(
         evidence: HealthyInformationCandidateEvidence,
     ): HealthyInformationUtilityFeatures {
+        val usableBefore = evidence.historicalRoutes
+            .mapTo(linkedSetOf()) { it.routeRef }
+        val independentBefore = evidence.historicalRoutes
+            .filter(HistoricalHealthyInformationRouteEvidence::independentlyUsableBefore)
+            .mapTo(linkedSetOf()) { it.routeRef }
+
         if (!evidence.candidateHistoryFeasibleAfter) {
             val contradicted = evidence.historicalRoutes
                 .filter {
@@ -131,6 +151,8 @@ internal object HealthyInformationUtilityFeaturesProjector {
             // Whole-history infeasibility only means no route can be called usable after this
             // candidate. It does not prove every healthy route was itself the contradictory edge.
             return HealthyInformationUtilityFeatures(
+                usableHealthyRouteRefsBefore = usableBefore,
+                independentHealthyRouteRefsBefore = independentBefore,
                 usableHealthyRouteRefsAfter = emptySet(),
                 independentHealthyRouteRefsAfter = emptySet(),
                 newlyRedundantHealthyRouteRefs = emptySet(),
@@ -185,6 +207,8 @@ internal object HealthyInformationUtilityFeaturesProjector {
         }
 
         return HealthyInformationUtilityFeatures(
+            usableHealthyRouteRefsBefore = usableBefore,
+            independentHealthyRouteRefsBefore = independentBefore,
             usableHealthyRouteRefsAfter = usableAfter,
             independentHealthyRouteRefsAfter = independentAfter,
             newlyRedundantHealthyRouteRefs = redundant,
