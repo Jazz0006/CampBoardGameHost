@@ -98,7 +98,13 @@ class StructuredInformationProductionShadowTest {
         )
 
         assertEquals(model.contextSnapshot, result.informationSnapshot)
+        assertEquals(model.contextSnapshot.legalCandidateIds, result.sdeCandidates.map { it.candidateId })
         assertEquals(model.contextSnapshot.legalCandidateIds, result.plannedDecisions.map { it.candidateId })
+        assertTrue(result.sdeCandidates.all { it.sourceRevision == revision })
+        assertTrue(result.sdeCandidates.all {
+            it.legalityProvenance.candidateSpaceIdentity == model.contextSnapshot.semanticIdentity
+        })
+        assertTrue(result.sdeCandidates.all { it.inputBindings === SdeDecisionInputBindings.NotCaptured })
         assertTrue(result.plannedDecisions.all { it.sourceRevision == revision })
         assertEquals(visibleChoicesBefore, model.choices)
         assertEquals(sessionBeforeShadow, session.state)
