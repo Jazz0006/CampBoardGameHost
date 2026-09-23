@@ -158,7 +158,8 @@ PR/branch boundary:
 - PR #151/#152 are merged SDE-3A checkpoints;
 - current branch is `sde-3b-beginner-conservative-v1`;
 - current PR is **#153** and must remain draft until explicit user authorization to merge;
-- current policy audit is `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_POLICY_AUDIT_2026-09-23.md`.
+- current policy audit is `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_POLICY_AUDIT_2026-09-23.md`;
+- completed 3B1 audit is `docs/SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`.
 
 Current implemented boundary:
 
@@ -171,12 +172,13 @@ Current implemented boundary:
 - structured shadow carries policy evaluation but production recommendation/confirmation remains unchanged;
 - source ability state and actual-state semantic truth are now projected from existing legal-candidate semantics without importing legacy score/probability.
 
-Revised architecture target after the ClocktowerEvidenceLab C0 handoff:
+Revised architecture status after the ClocktowerEvidenceLab C0 handoff:
 
-- **3B1 first:** audit/generalize the later-night lifecycle/shadow boundary and bind policy-relevant historical inputs explicitly;
-- keep `ActionFactTimeline + EpistemicObservationLog` as canonical history; do not persist a second mutable narrative state;
-- use upstream `AbilityState` and canonical action/setup history for actual impairment semantics; do not infer impairment from player-facing observation reliability;
-- **3B2 next:** build a generic confirmation-chain projector before stronger policy preferences;
+- **3B1 COMPLETE:** lifecycle-safe historical structured shadow, canonical committed-prefix refs, typed contextual input binding, and no-hindsight enforcement are implemented and audited;
+- `ActionFactTimeline + EpistemicObservationLog` remain canonical history; no second mutable narrative state exists;
+- external owners such as Red Herring / Demon bluffs remain external and are referenced through typed bindings rather than copied into SDE;
+- upstream `AbilityState` and canonical action/setup history remain the actual impairment authority; player-facing observation reliability is not used to infer impairment;
+- **3B2 CURRENT:** build a generic confirmation-chain projector before stronger policy preferences;
 - **3B3:** build the shared role-agnostic impaired-narrative projector;
 - **3B4/3B5:** healthy-information utility and contextual role-function exposure;
 - only after each projector has semantic replay evidence may expert rationale become a V1 soft preference.
@@ -398,11 +400,13 @@ Current SDE-3B checkpoint:
 Immediate next action:
 
 1. re-query live #153 / main / checks;
-2. perform **3B1 historical interaction / input-binding audit** before adding any new policy reason;
-3. identify the shared lifecycle-safe envelope and owners for FT targets, Poisoner target, Red Herring, Drunk shown identity, prior observations and Demon succession;
-4. implement the smallest structure-only binding slice with no preference change;
-5. then implement **3B2 confirmation-chain impact** as the first new non-strategic projector and validate it with generic tests plus matching Evidence Lab replay prefixes;
-6. only after that proceed to 3B3 impaired narrative;
-7. do not add numeric bands, fixture-specific expert rules, DecisionTrace persistence, or production cutover.
+2. begin **3B2 confirmation-chain impact** with an architecture/fanout audit, not a policy rule;
+3. inspect and reuse the review-only `Sde2D5BundleConfirmationChainEvidenceProjector` / leave-one-out idea without moving the review type into production authority;
+4. define the minimal production `ConfirmationChainFeatures` payload and its exact historical inputs;
+5. implement a generic projector over committed-prefix observations/current candidate with no named-role pair table;
+6. validate with generic unit tests first, then Evidence Lab R02/R04-style prefixes as E2 semantic regression with strict no-hindsight;
+7. do not modify V1 soft preference until the projector is stable;
+8. only after 3B2 semantic acceptance proceed to 3B3 impaired narrative;
+9. do not add numeric bands, fixture-specific expert rules, DecisionTrace persistence, or production cutover.
 
 Keep #153 draft until explicit user **“授权合并”**.
