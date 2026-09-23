@@ -22,6 +22,7 @@ internal data class StructuredInformationShadowEvaluation(
     val plannedDecisions: List<PlannedDecisionRef>,
     val consequences: ExactConsequenceEvaluation,
     val featureEvaluation: DecisionFeatureEvaluation,
+    val policyEvaluation: BeginnerConservativePolicyEvaluation,
 ) {
     init {
         require(sdeCandidates.map(SdeDecisionCandidate::candidateId) == informationSnapshot.legalCandidateIds) {
@@ -38,6 +39,12 @@ internal data class StructuredInformationShadowEvaluation(
         }
         require(featureEvaluation.candidateIds == informationSnapshot.legalCandidateIds) {
             "Structured feature projection must preserve the source legal-candidate order."
+        }
+        require(policyEvaluation.candidateIds == informationSnapshot.legalCandidateIds) {
+            "Structured policy evaluation must preserve the source legal-candidate order."
+        }
+        require(policyEvaluation.policyVersion == PolicyVersions.BEGINNER_CONSERVATIVE_V1) {
+            "Structured policy evaluation must use BEGINNER_CONSERVATIVE_V1."
         }
         when (consequences) {
             is ExactConsequenceEvaluation.Ready ->
@@ -144,12 +151,14 @@ internal object StructuredInformationShadowAdapter {
             legalCandidateIds = informationSnapshot.legalCandidateIds,
             playerCount = historical.initialSnapshot.gameState.players.size,
         )
+        val policyEvaluation = BeginnerConservativeV1Policy.evaluate(featureEvaluation)
         return StructuredInformationShadowEvaluation(
             informationSnapshot = informationSnapshot,
             sdeCandidates = sdeCandidates,
             plannedDecisions = planned,
             consequences = consequences,
             featureEvaluation = featureEvaluation,
+            policyEvaluation = policyEvaluation,
         )
     }
 
