@@ -4,11 +4,13 @@ import com.codex.campboardgamehost.ClocktowerPhase
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.prepareNumericInformationUiModel
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 import com.codex.campboardgamehost.clocktower.epistemic.A4RuntimeFixtures
@@ -102,6 +104,9 @@ class StructuredInformationProductionShadowTest {
         assertEquals(model.contextSnapshot.legalCandidateIds, result.plannedDecisions.map { it.candidateId })
         assertTrue(result.sdeCandidates.all { it.sourceRevision == revision })
         assertTrue(result.sdeCandidates.all {
+            it.sourceInteraction.abilityState == AbilityState.FUNCTIONING
+        })
+        assertTrue(result.sdeCandidates.all {
             it.legalityProvenance.candidateSpaceIdentity == model.contextSnapshot.semanticIdentity
         })
         assertTrue(result.sdeCandidates.all { it.inputBindings === SdeDecisionInputBindings.NotCaptured })
@@ -117,6 +122,9 @@ class StructuredInformationProductionShadowTest {
         )
         assertTrue(featureEvaluation.candidates.all {
             it.features.strategic is FeatureProjection.Projected<*>
+        })
+        assertTrue(featureEvaluation.candidates.all {
+            (it.features.semanticTruth as FeatureProjection.Projected<*>).value == SemanticTruth.TRUE
         })
 
         val chefModel = prepareNumericInformationUiModel(
@@ -147,6 +155,9 @@ class StructuredInformationProductionShadowTest {
         )
         assertTrue(chefModel.contextSnapshot.legalCandidateIds.size > 1)
         assertTrue(chefResult.featureEvaluation is DecisionFeatureEvaluation.Ready)
+        assertTrue(chefResult.sdeCandidates.all {
+            it.sourceInteraction.abilityState == AbilityState.MALFUNCTIONING_POISONED
+        })
         assertEquals(PolicyVersions.BEGINNER_CONSERVATIVE_V1, chefResult.policyEvaluation.policyVersion)
         assertEquals(chefModel.contextSnapshot.legalCandidateIds, chefResult.policyEvaluation.candidateIds)
         assertEquals(
@@ -155,6 +166,10 @@ class StructuredInformationProductionShadowTest {
                 .candidates
                 .map(CandidateDecisionFeatures::candidateId),
         )
+        val chefTruths = chefResult.featureEvaluation.candidates.map {
+            (it.features.semanticTruth as FeatureProjection.Projected<SemanticTruth>).value
+        }.toSet()
+        assertEquals(setOf(SemanticTruth.TRUE, SemanticTruth.FALSE), chefTruths)
         assertEquals(visibleChoicesBefore, model.choices)
         assertEquals(sessionBeforeShadow, session.state)
 
