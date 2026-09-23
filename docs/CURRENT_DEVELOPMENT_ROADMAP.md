@@ -43,11 +43,11 @@ SDE-3E automatic production cutover                   BLOCKED ON 3D
 
 ## 2. Current branch / PR
 
-Branch: `sde-3a-engine-feature-policy-contract`
+Branch: `sde-3a-feature-projection-shadow-pipeline`
 
-PR: **#151 — SDE-3A: establish engine feature policy contracts**
+PR: **#152 — SDE-3A: complete structured feature projection shadow**
 
-PR #150 is merged. PR #151 remains **draft** and must not be merged unless the user explicitly says **“授权合并”**.
+PR #151 is merged as SDE-3A checkpoint 1. PR #152 remains **draft** and must not be merged unless the user explicitly says **“授权合并”**.
 
 Always query live refs before executable edits.
 
@@ -166,7 +166,7 @@ Authority:
 
 `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
 
-The live fanout/ownership audit is complete; continue from the score-free typed contract and structured-information shadow slice on PR #151.
+The live fanout/ownership audit and score-free contract checkpoint are merged in PR #151. Continue SDE-3A on PR #152 by completing the structured numeric shadow path from legal candidate -> exact consequence -> `DecisionFeatures`, while keeping visible recommendation and canonical commit authority unchanged.
 
 The next implementation slice must:
 
