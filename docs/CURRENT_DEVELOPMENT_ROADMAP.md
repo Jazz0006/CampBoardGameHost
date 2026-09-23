@@ -18,7 +18,7 @@ SDE-2D1 Drunk whole-bundle                            COMPLETE / PR #145
 SDE-2D2 Demon bluff joint-output                      COMPLETE / PR #146
 SDE-2D3 strategic-world quotient                      COMPLETE / PR #147
 SDE-2D4 5–15 correctness/performance                  COMPLETE / PR #149
-SDE-2D5 calibration / policy evidence                 PARALLEL / PR #150 draft
+SDE-2D5 calibration / policy evidence                 CHECKPOINT MERGED / PARALLEL EVIDENCE
     D5A–D5E                                            COMPLETE
     D5F infrastructure                                COMPLETE
     D5F-B3 correction                                 HISTORICAL CHECKPOINT
@@ -43,11 +43,11 @@ SDE-3E automatic production cutover                   BLOCKED ON 3D
 
 ## 2. Current branch / PR
 
-Branch: `sde-2d5-calibration-policy-evidence`
+Branch: `sde-3a-engine-feature-policy-contract`
 
-PR: **#150 — SDE-2D5: calibrate strategic policy evidence**
+PR: **#151 — SDE-3A: establish engine feature policy contracts**
 
-PR #150 remains **draft**. Do not merge unless the user explicitly says **“授权合并”**.
+PR #150 is merged. PR #151 remains **draft** and must not be merged unless the user explicitly says **“授权合并”**.
 
 Always query live refs before executable edits.
 
@@ -56,6 +56,7 @@ Always query live refs before executable edits.
 - First-night policy: [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
 - External evidence seed: [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv)
 - Current SDE-3 execution route: [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
+- Current SDE-3A ownership/contract audit: [`SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`](SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 - B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
@@ -165,7 +166,7 @@ Authority:
 
 `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
 
-Start with a live fanout/ownership audit of the current StorytellerDecisionEngine and shadow wiring.
+The live fanout/ownership audit is complete; continue from the score-free typed contract and structured-information shadow slice on PR #151.
 
 The next implementation slice must:
 
@@ -221,7 +222,7 @@ No automatic online learning is authorized. Policy improvement remains offline, 
 
 ## 8. D5F-C remains blocked
 
-Do not derive/freeze gates from old human labels, inspect sealed holdout, tune on holdout, cut production policy, begin SDE-3, or merge PR #150.
+Do not derive/freeze gates from old human labels, inspect sealed holdout for tuning, tune on holdout, freeze unsupported numeric policy, or cut automatic production policy.
 
 D5F-C may begin only after expert-observed evidence covers the material first-night policy variables and legal-counterfactual comparisons support repeated interpretable constraints.
 

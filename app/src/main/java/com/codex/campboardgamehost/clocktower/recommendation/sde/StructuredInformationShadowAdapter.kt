@@ -18,15 +18,22 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapsho
  */
 internal data class StructuredInformationShadowEvaluation(
     val informationSnapshot: InformationDecisionSnapshot,
+    val sdeCandidates: List<SdeDecisionCandidate>,
     val plannedDecisions: List<PlannedDecisionRef>,
     val consequences: ExactConsequenceEvaluation,
 ) {
     init {
+        require(sdeCandidates.map(SdeDecisionCandidate::candidateId) == informationSnapshot.legalCandidateIds) {
+            "Structured SDE candidates must preserve the source legal-candidate order."
+        }
         require(plannedDecisions.map(PlannedDecisionRef::candidateId) == informationSnapshot.legalCandidateIds) {
             "Structured information shadow plans must preserve the source legal-candidate order."
         }
         require(plannedDecisions.all { it.isCurrentFor(informationSnapshot) }) {
             "Structured information shadow plans must be bound to the source information snapshot."
+        }
+        require(sdeCandidates.all { it.sourceRevision == informationSnapshot.revision }) {
+            "Structured SDE candidates must preserve the source information revision."
         }
     }
 }
@@ -57,7 +64,7 @@ internal object StructuredInformationShadowAdapter {
             round = historical.initialRound,
         ).snapshotId
         val decisionId = informationSnapshot.semanticIdentity
-        val exactCandidates = decisionContext.legalCandidates.map { candidate ->
+        val projectedCandidates = decisionContext.legalCandidates.map { candidate ->
             val draft = candidate.draft
             require(draft.visibility == ObservationVisibility.PRIVATE && draft.recipientSeats.size == 1) {
                 "The first structured-information shadow slice requires one private recipient per candidate."
@@ -65,12 +72,40 @@ internal object StructuredInformationShadowAdapter {
             require(draft.phase == historical.initialPhase && draft.round == historical.initialRound) {
                 "Structured information shadow candidates must belong to the exact historical phase and round."
             }
-            ExactConsequenceCandidate(
+            val exact = ExactConsequenceCandidate(
                 candidateId = candidate.candidateId,
                 recipientSeat = draft.recipientSeats.single(),
                 observations = listOf(draft.toHypotheticalObservation(formalSnapshotId)),
             )
+            val sde = SdeDecisionCandidate(
+                decisionId = decisionId,
+                candidateId = candidate.candidateId,
+                lifecycleStage = SdeDecisionLifecycleStage.Interaction(
+                    phase = draft.phase,
+                    round = draft.round,
+                    sequence = draft.sequence,
+                ),
+                sourceInteraction = SdeDecisionSourceInteraction(
+                    interactionId = decisionId,
+                    sourceSeat = draft.sourceSeat,
+                    abilityRole = draft.sourceAbility,
+                ),
+                sourceRevision = informationSnapshot.revision,
+                inputBindings = SdeDecisionInputBindings.NotCaptured,
+                legalOutcomeIdentity = candidate.candidateId,
+                hypotheticalRef = SdeDecisionHypotheticalRef(
+                    observationRecordIds = listOf(draft.recordId),
+                ),
+                legalityProvenance = SdeDecisionLegalityProvenance(
+                    ownerId = "information-decision-context-v1",
+                    candidateSpaceIdentity = informationSnapshot.semanticIdentity,
+                    candidateSchemaVersion = candidate.evaluation.candidate.metadata.candidateSchemaVersion,
+                ),
+            )
+            exact to sde
         }
+        val exactCandidates = projectedCandidates.map { it.first }
+        val sdeCandidates = projectedCandidates.map { it.second }
         val planned = informationSnapshot.legalCandidateIds.map { candidateId ->
             PlannedDecisionRef.fromInformationSnapshot(
                 decisionId = decisionId,
@@ -87,6 +122,7 @@ internal object StructuredInformationShadowAdapter {
         )
         return StructuredInformationShadowEvaluation(
             informationSnapshot = informationSnapshot,
+            sdeCandidates = sdeCandidates,
             plannedDecisions = planned,
             consequences = consequences,
         )
