@@ -58,6 +58,7 @@ Always query live refs before executable edits.
 - Current SDE-3 execution route: [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
 - Current SDE-3A ownership/contract audit: [`SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`](SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md)
 - Current SDE-3B structure / feature / expert-evidence staging: [`SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`](SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md)
+- SDE-3B1 completion audit: [`SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 - B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
@@ -191,10 +192,10 @@ Current implementation checkpoint on PR #153:
 - actual-state semantic truth is projected into `DecisionFeatures` for the current numeric seam;
 - legacy score/probability/pressure is not imported into SDE policy.
 
-Next SDE-3B work follows the staged route in `SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`:
+SDE-3B staged status on PR #153:
 
-1. **3B1 structure first** — generalize a lifecycle-safe historical shadow/input-binding seam and replace policy-relevant `NotCaptured` inputs with explicit canonical refs;
-2. **3B2 confirmation-chain projector** — first new non-strategic feature, because it has repeated whole-game + independent expert support and is required to reason about later authentication/collapse;
+1. **3B1 historical lifecycle / input binding — COMPLETE** — later structured information can evaluate against the canonical committed prefix; typed contextual input refs preserve external ownership; no-hindsight is enforced; no second history owner exists.
+2. **3B2 confirmation-chain projector — CURRENT** — first new non-strategic feature, because it has repeated whole-game + independent expert support and is required to reason about later authentication/collapse;
 3. **3B3 impaired-narrative projector** — derive continuity/detectability from canonical history plus authoritative impairment binding, with no second mutable narrative state;
 4. **3B4 healthy-information utility** — represent remaining usable healthy routes without a numeric misinformation budget;
 5. **3B5 contextual role-function exposure** — diagnostic first, lifecycle-aware, never a named-role blanket rule;
