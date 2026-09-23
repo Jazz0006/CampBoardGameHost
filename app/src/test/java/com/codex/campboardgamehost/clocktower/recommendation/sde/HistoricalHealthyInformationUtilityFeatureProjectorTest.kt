@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
@@ -132,7 +133,7 @@ class HistoricalHealthyInformationUtilityFeatureProjectorTest {
     }
 
     @Test
-    fun `poisoned historical observation is not counted as a healthy route`() {
+    fun `R01 bounded shape keeps functioning route separate from temporary poison channel`() {
         val poison = TimelineBoundActionFact(
             fact = ActionFact.Poison("poison-empath", 0, 2),
             point = TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 0, 0),
@@ -194,6 +195,95 @@ class HistoricalHealthyInformationUtilityFeatureProjectorTest {
         val feature = (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
         assertFalse(
             HealthyInformationRouteRef.HistoricalObservation(poisonedEmpath.recordId, 2) in
+                feature.usableHealthyRouteRefsAfter,
+        )
+        assertEquals(
+            HealthyInformationRouteRef.CurrentCandidate(exactCandidate.candidateId, 1),
+            feature.currentCandidateHealthyRouteRef,
+        )
+    }
+
+    @Test
+    fun `R04 bounded shape excludes persistent Drunk channel from healthy routes`() {
+        // R04 verifies only the persistent Drunk + parallel healthy-channel shape. Its exact shown
+        // role is still unknown, so this generic fixture must not be read as an R04 replay.
+        val drunkSnapshot = snapshot.copy(
+            gameState = snapshot.gameState.copy(
+                players = snapshot.gameState.players.map { player ->
+                    if (player.seat == 2) {
+                        player.copy(
+                            actualRole = RoleId("Drunk"),
+                            actualType = CharacterType.OUTSIDER,
+                            shownRole = RoleId("Empath"),
+                        )
+                    } else {
+                        player
+                    }
+                },
+            ),
+        )
+        val drunkRecord = numericRecord(
+            id = "drunk-channel-zero",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 0,
+            globalSequence = 0,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Empath"),
+            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+            subjectSeats = listOf(1, 3),
+            value = 0,
+        )
+        val observationLog = EpistemicObservationLog(listOf(drunkRecord))
+        val exactCandidate = currentCandidate(
+            id = "current-chef-one",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            sourceSeat = 1,
+            sourceAbility = RoleId("Chef"),
+            metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+            subjectSeats = drunkSnapshot.gameState.players.map { it.seat },
+            value = 1,
+            baseSnapshot = drunkSnapshot,
+        )
+        val sde = sdeCandidate(
+            candidate = exactCandidate,
+            abilityState = AbilityState.FUNCTIONING,
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            timeline = ActionFactTimeline(),
+            observationLog = observationLog,
+            baseSnapshot = drunkSnapshot,
+        )
+
+        val projected = HistoricalHealthyInformationUtilityFeatureProjector.project(
+            fullEvaluation = readyConsequence(exactCandidate, before = 10, after = 5),
+            confirmationByCandidateId = mapOf(
+                exactCandidate.candidateId to FeatureProjection.Projected(
+                    ConfirmationChainFeatures(
+                        candidateRemovedExactWorldCount = BigInteger.valueOf(5),
+                        candidateChannel = ConfirmationChannelRef.Source(1, RoleId("Chef")),
+                    ),
+                ),
+            ),
+            exactCandidates = listOf(exactCandidate),
+            sdeCandidates = listOf(sde),
+            semanticTruthByCandidateId = mapOf(exactCandidate.candidateId to SemanticTruth.TRUE),
+            context = ExactConsequenceContext(
+                validatedRuleset,
+                exactContext(
+                    timeline = ActionFactTimeline(),
+                    observationLog = observationLog,
+                    baseSnapshot = drunkSnapshot,
+                ),
+            ),
+        )
+
+        val feature = (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
+        assertFalse(
+            HealthyInformationRouteRef.HistoricalObservation(drunkRecord.recordId, 2) in
                 feature.usableHealthyRouteRefsAfter,
         )
         assertEquals(
@@ -305,6 +395,7 @@ class HistoricalHealthyInformationUtilityFeatureProjectorTest {
         metric: NumericMetric,
         subjectSeats: List<Int>,
         value: Int,
+        baseSnapshot: com.codex.campboardgamehost.clocktower.domain.GameSnapshot = snapshot,
     ) = ExactConsequenceCandidate(
         candidateId = id,
         recipientSeat = sourceSeat,
@@ -312,7 +403,7 @@ class HistoricalHealthyInformationUtilityFeatureProjectorTest {
             EpistemicObservation(
                 observationId = "observation:$id",
                 snapshotId = FormalGameState.from(
-                    snapshot,
+                    baseSnapshot,
                     StorytellerPhase.FIRST_NIGHT,
                     1,
                 ).snapshotId,
@@ -342,6 +433,7 @@ class HistoricalHealthyInformationUtilityFeatureProjectorTest {
         sequence: Int,
         timeline: ActionFactTimeline,
         observationLog: EpistemicObservationLog,
+        baseSnapshot: com.codex.campboardgamehost.clocktower.domain.GameSnapshot = snapshot,
     ) = SdeDecisionCandidate(
         decisionId = "healthy-decision",
         candidateId = candidate.candidateId,
@@ -353,12 +445,12 @@ class HistoricalHealthyInformationUtilityFeatureProjectorTest {
             abilityState = abilityState,
         ),
         sourceRevision = InformationDecisionRevision(
-            gameStateRevision = snapshot.gameStateRevision,
-            playerInputRevision = snapshot.playerInputRevision,
+            gameStateRevision = baseSnapshot.gameStateRevision,
+            playerInputRevision = baseSnapshot.playerInputRevision,
         ),
         inputBindings = SdeDecisionInputBindings.Captured(),
         historyPrefixRef = SdeHistoricalPrefixRef.Global(
-            gameId = snapshot.gameId,
+            gameId = baseSnapshot.gameId,
             actionRefs = timeline.entries.map {
                 SdeHistoricalActionRef(it.fact.actionId, it.point.globalSequence)
             },
@@ -379,12 +471,13 @@ class HistoricalHealthyInformationUtilityFeatureProjectorTest {
     private fun exactContext(
         timeline: ActionFactTimeline,
         observationLog: EpistemicObservationLog,
+        baseSnapshot: com.codex.campboardgamehost.clocktower.domain.GameSnapshot = snapshot,
     ) = ExactHistoricalHypotheticalContext(
-        initialSnapshot = snapshot,
+        initialSnapshot = baseSnapshot,
         initialPhase = StorytellerPhase.FIRST_NIGHT,
         initialRound = 1,
         actionTimeline = timeline,
-        perceivedRolesBySeat = snapshot.gameState.players.associate { player ->
+        perceivedRolesBySeat = baseSnapshot.gameState.players.associate { player ->
             player.seat to (player.shownRole ?: player.actualRole)
         },
         observationLog = observationLog,
