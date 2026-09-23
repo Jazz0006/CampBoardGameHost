@@ -290,6 +290,95 @@ class StructuredInformationShadowAdapterTest {
     }
 
     @Test
+    fun `whole table healthy route reaches structured feature without changing v1 policy`() {
+        val revision = InformationDecisionRevision(
+            gameStateRevision = snapshot.gameStateRevision,
+            playerInputRevision = snapshot.playerInputRevision,
+        )
+        val chefRecord = RecordedEpistemicObservation(
+            recordId = "history:chef-one",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 0,
+            sourceSeat = 1,
+            sourceAbility = RoleId("Chef"),
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(1),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.NumericResult(
+                metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+                sourceSeat = 1,
+                subjectSeats = snapshot.gameState.players.map { it.seat },
+                value = 1,
+            ),
+            timelineBinding = ObservationTimelineBinding.Global(
+                TimelinePoint(
+                    phase = StorytellerPhase.FIRST_NIGHT,
+                    round = 1,
+                    sequence = 0,
+                    globalSequence = 0,
+                ),
+            ),
+        )
+        val decisionContext = structuredEmpathContext(revision, sequence = 1)
+        val shadow = StructuredInformationShadowAdapter.evaluate(
+            decisionContext = decisionContext,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = validatedRuleset,
+                exactContext = exactHistoricalContext(
+                    timeline = ActionFactTimeline(emptyList()),
+                    observationLog = EpistemicObservationLog(listOf(chefRecord)),
+                ),
+            ),
+        )
+
+        val truthfulCandidate = decisionContext.legalCandidates.single {
+            (it.draft.proposition as InformationProposition.NumericResult).value == 0
+        }
+        val features = shadow.featureEvaluation as DecisionFeatureEvaluation.Ready
+        val healthy = features.candidates
+            .single { it.candidateId == truthfulCandidate.candidateId }
+            .features
+            .healthyInformationUtility
+        assertTrue(healthy is FeatureProjection.Projected)
+        healthy as FeatureProjection.Projected
+        assertTrue(
+            HealthyInformationRouteRef.HistoricalObservation(
+                chefRecord.recordId,
+                1,
+            ) in healthy.value.usableHealthyRouteRefsAfter,
+        )
+        assertTrue(
+            HealthyInformationRouteRef.HistoricalObservation(
+                chefRecord.recordId,
+                1,
+            ) in healthy.value.independentHealthyRouteRefsAfter,
+        )
+        assertEquals(
+            HealthyInformationRouteRef.CurrentCandidate(
+                truthfulCandidate.candidateId,
+                2,
+            ),
+            healthy.value.currentCandidateHealthyRouteRef,
+        )
+
+        val withoutHealthyInformation = DecisionFeatureEvaluation.Ready(
+            candidates = features.candidates.map { candidate ->
+                candidate.copy(
+                    features = candidate.features.copy(
+                        healthyInformationUtility =
+                            FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET),
+                    ),
+                )
+            },
+        )
+        assertEquals(
+            BeginnerConservativeV1Policy.evaluate(withoutHealthyInformation),
+            shadow.policyEvaluation,
+        )
+    }
+
+    @Test
     fun `exact deferral stays separate from structured recommendation authority`() {
         val revision = InformationDecisionRevision(
             gameStateRevision = snapshot.gameStateRevision,
