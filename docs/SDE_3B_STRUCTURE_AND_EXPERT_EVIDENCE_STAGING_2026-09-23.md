@@ -175,7 +175,7 @@ Implemented completion boundary:
 - FT targets, Red Herring and Demon bluffs are bindable without copying their external owner state;
 - no policy preference changed.
 
-### SDE-3B2 — confirmation-chain feature projector — CURRENT
+### SDE-3B2 — confirmation-chain feature projector — COMPLETE
 
 First new non-strategic feature after the lifecycle/input seam.
 
@@ -197,11 +197,23 @@ Do not hard-code Ravenkeeper → Undertaker, Investigator → Undertaker, or any
 
 Evidence usage:
 
-- E1 now to define the feature;
-- E2 after projector exists, using R02/R04-style histories;
-- E3 only after qualified rationale is mapped to a generic policy reason.
+- E1 defined the feature boundary;
+- E2 is now represented by bounded R02/R04-style semantic regressions with strict no-hindsight;
+- E3 remains deferred until a generic policy reason is separately justified.
 
-### SDE-3B3 — impaired-narrative coherence projector
+Completion authority: `SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`.
+
+Implemented completion boundary:
+
+- pure score-free `ConfirmationChainFeaturesProjector` owns support / contradiction / independent-contribution classification plus exact ambiguity-restoration facts;
+- `HistoricalConfirmationChainFeatureProjector` owns leave-one-out orchestration over canonical committed observations without persisting/copying history;
+- recipient visibility is enforced before a historical observation can contribute to a candidate's chain;
+- future observations are rejected by the 3B1 committed-prefix boundary;
+- structured shadow attaches the projection to `DecisionFeatures.confirmationChainImpact`;
+- V1 policy does not use confirmation-chain features to rank/reject candidates;
+- no named-role chain table, numeric threshold, or new policy reason was introduced.
+
+### SDE-3B3 — impaired-narrative coherence projector — CURRENT
 
 Build after 3B1, and preferably after the confirmation/dependency representation is available.
 
@@ -386,12 +398,12 @@ Do **not** add another policy reason first.
 
 Next work:
 
-1. perform a 3B2 architecture/fanout audit before production edits;
-2. reuse the semantic idea from review-only whole-bundle leave-one-out confirmation evidence, but keep review/calibration types non-authoritative;
-3. define the smallest generic `ConfirmationChainFeatures` payload;
-4. project support/contradiction/authentication effects from committed-prefix observations plus the current legal candidate, without named-role pairing tables;
-5. preserve recipient-visible knowledge boundaries and the 3B1 no-hindsight guarantee;
-6. add generic tests before using Evidence Lab R02/R04 prefixes as E2 semantic regression;
-7. keep V1 policy unchanged until 3B2 feature semantics are stable.
+1. perform the 3B3 architecture/fanout audit before production edits;
+2. treat canonical setup/action history plus current authoritative `AbilityState` as impairment truth; `ObservationReliability` is not that authority;
+3. derive narrative features from `ActionFactTimeline + EpistemicObservationLog` rather than persisting a second perceived-world state;
+4. define one role-agnostic feature contract capable of persistent Drunk trajectories and temporary Poisoner episodes without policy special cases;
+5. start with descriptive coherence / contradiction / transition / detectability facts, not a score;
+6. add generic tests first, then bounded R02/R04/R06 E2 semantic regressions;
+7. keep V1 policy unchanged until 3B3 feature semantics are stable.
 
 Keep #153 draft.

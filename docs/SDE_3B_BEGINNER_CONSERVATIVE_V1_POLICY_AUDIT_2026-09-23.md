@@ -22,21 +22,21 @@ SDE-3B owns only the last step. It must not regenerate legality, mutate canonica
 
 ## 2. Current feature reality
 
-The first production-facing structured numeric shadow currently projects:
+The production-facing structured shadow currently projects:
 
 - Demon-cover retention;
 - Evil strategic-topology retention;
 - Evil-cover retention;
 - forced-Good seats/fraction;
-- forced-Evil seats/fraction.
+- forced-Evil seats/fraction;
+- actual-state semantic truth where the upstream legal candidate provides it;
+- confirmation-chain impact from exact recipient-visible committed history.
 
 The following remain explicit `FeatureProjection.Unavailable` on that surface:
 
-- confirmation-chain impact;
 - healthy-information utility;
 - truth danger / credibility disruption;
 - role-function exposure;
-- semantic truth;
 - impaired narrative coherence / detectability;
 - bluff narrative;
 - candidate collision/support;
@@ -237,8 +237,8 @@ The original core steps 1–5 are now complete on PR #153.
 The continuation order is revised by the ClocktowerEvidenceLab C0 handoff:
 
 1. **3B1 structure — COMPLETE:** historical lifecycle-safe shadow + explicit contextual input binding;
-2. **3B2 feature — CURRENT:** confirmation-chain impact;
-3. **3B3 feature:** impaired-narrative coherence/detectability from canonical history;
+2. **3B2 feature — COMPLETE:** confirmation-chain impact is projected generically from canonical recipient-visible history; V1 policy remains unchanged;
+3. **3B3 feature — CURRENT:** impaired-narrative coherence/detectability from canonical history;
 4. **3B4 feature:** healthy-information utility / remaining usable routes;
 5. **3B5 feature:** contextual role-function exposure;
 6. **3B6 policy:** only then add expert-informed qualitative soft priorities over stable projectors;
@@ -279,7 +279,7 @@ This still satisfies persistence semantically: previous committed observations c
 
 The SDE candidate/shadow path now carries the source `AbilityState` projected from the existing legal-candidate semantics, and 3B1 adds lifecycle-safe canonical-history/input refs. Actual impairment must continue to come from rules/session semantics, not from `ObservationReliability.RECEIVED_AS_FUNCTIONING`, which only describes how information was received by the player.
 
-SDE-3B1 is complete. The immediate next slice is 3B2 confirmation-chain semantics; impaired-narrative policy remains blocked until 3B3 derives narrative features from canonical history rather than inventing a second state owner.
+SDE-3B1 and SDE-3B2 are complete. The immediate next slice is 3B3 impaired-narrative feature semantics. Policy remains unchanged until 3B3 derives narrative features from canonical history rather than inventing a second state owner.
 
 ### Minimal coherence already available
 

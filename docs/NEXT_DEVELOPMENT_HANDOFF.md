@@ -17,7 +17,8 @@ Use these as the active authorities, in order:
 6. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
 7. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
 8. `docs/SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`
-9. this handoff
+9. `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`
+10. this handoff
 
 Evidence/provenance references when needed:
 
@@ -159,7 +160,8 @@ PR/branch boundary:
 - current branch is `sde-3b-beginner-conservative-v1`;
 - current PR is **#153** and must remain draft until explicit user authorization to merge;
 - current policy audit is `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_POLICY_AUDIT_2026-09-23.md`;
-- completed 3B1 audit is `docs/SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`.
+- completed 3B1 audit is `docs/SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`;
+- completed 3B2 audit is `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`.
 
 Current implemented boundary:
 
@@ -170,7 +172,8 @@ Current implemented boundary:
 - viable candidates remain one survivor equivalence band until richer feature projectors justify ordering;
 - seeded selection is deterministic, weight-free and survivor-only;
 - structured shadow carries policy evaluation but production recommendation/confirmation remains unchanged;
-- source ability state and actual-state semantic truth are now projected from existing legal-candidate semantics without importing legacy score/probability.
+- source ability state and actual-state semantic truth are now projected from existing legal-candidate semantics without importing legacy score/probability;
+- confirmation-chain impact is now projected per candidate from exact recipient-visible committed history, while V1 policy ordering remains strategic-only.
 
 Revised architecture status after the ClocktowerEvidenceLab C0 handoff:
 
@@ -178,8 +181,8 @@ Revised architecture status after the ClocktowerEvidenceLab C0 handoff:
 - `ActionFactTimeline + EpistemicObservationLog` remain canonical history; no second mutable narrative state exists;
 - external owners such as Red Herring / Demon bluffs remain external and are referenced through typed bindings rather than copied into SDE;
 - upstream `AbilityState` and canonical action/setup history remain the actual impairment authority; player-facing observation reliability is not used to infer impairment;
-- **3B2 CURRENT:** build a generic confirmation-chain projector before stronger policy preferences;
-- **3B3:** build the shared role-agnostic impaired-narrative projector;
+- **3B2 COMPLETE:** generic exact confirmation-chain projection is wired into structured shadow with recipient visibility, strict no-hindsight, explicit capability/unavailable handling, bounded R02/R04-style semantic regression, and no policy preference change;
+- **3B3 CURRENT:** build the shared role-agnostic impaired-narrative projector as a derived view over canonical history plus authoritative impairment state;
 - **3B4/3B5:** healthy-information utility and contextual role-function exposure;
 - only after each projector has semantic replay evidence may expert rationale become a V1 soft preference.
 
@@ -395,18 +398,18 @@ Current SDE-3B checkpoint:
 - seeded survivor-only selector implemented without probability weights;
 - structured numeric shadow carries V1 policy evaluation without changing visible recommendation or canonical commit;
 - source `AbilityState` and actual-state semantic truth are projected from upstream legal-candidate semantics;
-- canonical semantic history remains the intended owner for cross-night narrative continuity.
+- canonical semantic history remains the intended owner for cross-night narrative continuity;
+- **3B2 is COMPLETE:** structured confirmation features are production-owned diagnostics but remain shadow-only and policy-neutral.
 
 Immediate next action:
 
 1. re-query live #153 / main / checks;
-2. begin **3B2 confirmation-chain impact** with an architecture/fanout audit, not a policy rule;
-3. inspect and reuse the review-only `Sde2D5BundleConfirmationChainEvidenceProjector` / leave-one-out idea without moving the review type into production authority;
-4. define the minimal production `ConfirmationChainFeatures` payload and its exact historical inputs;
-5. implement a generic projector over committed-prefix observations/current candidate with no named-role pair table;
-6. validate with generic unit tests first, then Evidence Lab R02/R04-style prefixes as E2 semantic regression with strict no-hindsight;
-7. do not modify V1 soft preference until the projector is stable;
-8. only after 3B2 semantic acceptance proceed to 3B3 impaired narrative;
-9. do not add numeric bands, fixture-specific expert rules, DecisionTrace persistence, or production cutover.
+2. begin **3B3 impaired-narrative coherence/detectability** with an architecture/fanout audit before production edits;
+3. keep `ActionFactTimeline + EpistemicObservationLog` as the only durable history owners; do not create a persisted perceived-world/narrative state;
+4. use authoritative current `AbilityState` and canonical setup/action history for impairment; never infer actual impairment from player-facing `ObservationReliability`;
+5. distinguish persistent Drunk trajectory pressure from temporary Poisoner episodes inside one generic projector rather than named-role policy branches;
+6. define typed descriptive coherence/transition/detectability features first, with generic RED tests before production implementation;
+7. use Evidence Lab R02/R04/R06 only as bounded E2 semantic regressions after generic semantics are stable;
+8. do not add V1 soft preferences, numeric bands, fixture-specific rules, DecisionTrace persistence, or production cutover during 3B3 feature construction.
 
 Keep #153 draft until explicit user **“授权合并”**.
