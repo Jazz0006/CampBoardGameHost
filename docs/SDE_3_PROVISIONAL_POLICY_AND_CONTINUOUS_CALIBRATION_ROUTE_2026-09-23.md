@@ -17,8 +17,8 @@ Evidence shortage blocks **final policy freeze and automatic production cutover*
 The route is therefore split:
 
 ~~~text
-SDE-3A engine / feature / policy contract                  CURRENT
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT
+SDE-3A engine / feature / policy contract                  COMPLETE ON PR #152 / PENDING MERGE
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT AFTER SDE-3A MERGE
 SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
@@ -404,7 +404,7 @@ Do not turn expert source examples into fixture-specific production tests.
 
 Start with an architecture/fanout audit before production edits.
 
-PR #150 is merged as the SDE-2D5 evidence/calibration checkpoint. SDE-3A now proceeds on dedicated branch `sde-3a-engine-feature-policy-contract` in draft PR #151. Keep #151 draft until explicit user authorization to merge, and do not place SDE-3 implementation back onto the merged SDE-2D5 branch.
+PR #150 is merged as the SDE-2D5 evidence/calibration checkpoint. PR #151 merged the first SDE-3A ownership/typed-contract checkpoint. Draft PR #152 completes the SDE-3A structured feature-projection proof and passed the required T4 checkpoint at `dd82af3d8da9c17bc62d5606f045ddcc82c21bf0` (CI `35806237753`, R2 `35806237770`). Keep #152 draft until explicit user authorization to merge. SDE-3B starts only from live `main` after #152 is merged.
 
 Recommended sequence:
 

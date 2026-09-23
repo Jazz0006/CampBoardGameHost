@@ -1,9 +1,9 @@
 # CampBoardGameHost — Next Development Handoff
 
 > Updated: 2026-09-23 Australia/Sydney  
-> Branch: `sde-3a-engine-feature-policy-contract`  
-> PR: **#151 — SDE-3A: establish engine feature policy contracts**  
-> PR #150 is merged. PR #151 **MUST remain draft**. Do not merge unless the user explicitly says **“授权合并”**.
+> Branch: `sde-3a-feature-projection-shadow-pipeline`  
+> PR: **#152 — SDE-3A: complete structured feature projection shadow**  
+> PR #151 is merged as SDE-3A checkpoint 1. PR #152 **MUST remain draft**. Do not merge unless the user explicitly says **“授权合并”**.
 
 ## 1. Read first
 
@@ -34,7 +34,7 @@ Do not revive archived pre-SDE-3 execution routes as parallel authority.
 Before any executable edit:
 
 1. query live branch HEAD;
-2. query PR #151 state/draft flag and confirm PR #150 remains merged;
+2. query PR #152 state/draft flag and confirm PR #151 remains merged;
 3. query live `main`;
 4. query current checks;
 5. never assume the SHA recorded in a prior chat is still current.
@@ -61,8 +61,8 @@ Evidence acquisition is now **parallel / external / continuous**. It no longer b
 Current route:
 
 ~~~text
-SDE-3A engine / feature / policy contract                  CURRENT
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT
+SDE-3A engine / feature / policy contract                  COMPLETE ON PR #152 / PENDING MERGE
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT AFTER SDE-3A MERGE
 SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
@@ -154,9 +154,9 @@ First perform a live architecture/fanout audit.
 PR/branch boundary:
 
 - PR #150 is the merged SDE-2D5 evidence/calibration checkpoint;
-- PR #151 is the dedicated SDE-3A draft PR created from live `main`;
+- PR #151 merged the first SDE-3A contract/ownership checkpoint; PR #152 is the dedicated SDE-3A continuation draft created from that live `main`;
 - do not reuse the merged SDE-2D5 branch for SDE-3 implementation;
-- keep PR #151 draft until explicit user authorization to merge;
+- keep PR #152 draft until explicit user authorization to merge;
 - the completed SDE-3A architecture/fanout audit is `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`.
 
 This avoids carrying two milestone scopes in one PR.
@@ -371,18 +371,23 @@ The old external-human auto-workflow that could take ~2h48m has been retired.
 
 ## 16. Next conversation task
 
-Continue **SDE-3A engine / feature / policy contract** from the completed architecture/fanout audit and validate the first score-free structured-information shadow slice.
+SDE-3A is acceptance-complete on draft PR #152 and is **not yet merged**.
 
-Do not modify production code until the audit answers:
+Acceptance evidence:
 
-1. Which current type should own the legal candidate identity?
-2. Which existing projectors already expose the required feature primitives?
-3. Which feature primitives are missing versus merely hidden in old reports?
-4. Where should policy evaluation live?
-5. What is the minimal DecisionTrace persistence boundary?
-6. Which current production path can be migrated first in shadow mode without cutover?
-7. Which legacy owners remain authoritative during the migration?
+- checkpoint commit `dd82af3d8da9c17bc62d5606f045ddcc82c21bf0` used the required `[full-ci]` marker;
+- CI workflow `35806237753` succeeded with full Android unit tests + debug APK, ASP contract tests, and Real Clingo cross-validation;
+- R2 workflow `35806237770` succeeded;
+- final fanout audit confirmed that production changes are additive and shadow-only: `DecisionFeatureEvaluation` plus structured shadow feature attachment;
+- no legality owner, canonical session commit path, UI authority, legacy recommendation/scoring authority, policy selection, or persistence ownership moved;
+- Chef and Empath numeric structured shadow coverage exercises the same generalized path, including multi-candidate poisoned Chef;
+- deferred exact capability remains explicit and does not manufacture feature values.
 
-Then propose the smallest testable SDE-3A implementation slice.
+Immediate next action:
 
-Do not begin with weights, numeric thresholds, or broad legacy deletion.
+1. re-query live #152 / main / checks before any action;
+2. keep #152 draft and make no further SDE-3A production changes unless a regression is found;
+3. do not start SDE-3B on this branch;
+4. only after explicit user **“授权合并”**, merge #152 and create a fresh branch from live `main` for SDE-3B `BEGINNER_CONSERVATIVE_V1`.
+
+Do not invent weights, numeric thresholds, or broad legacy deletion.
