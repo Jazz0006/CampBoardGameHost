@@ -10,6 +10,7 @@ internal enum class FeatureUnavailableReason {
     NOT_PROJECTED_YET,
     NOT_APPLICABLE,
     MISSING_CAPABILITY,
+    HISTORICAL_INPUT_NOT_CAPTURED,
 }
 
 internal sealed interface FeatureProjection<out T> {

@@ -196,7 +196,7 @@ internal object StructuredInformationShadowAdapter {
         val observationRefs = historical.observationLog.records.map { record ->
             val binding = record.timelineBinding as? ObservationTimelineBinding.Global
                 ?: return SdeHistoricalPrefixRef.NotCaptured
-            require(binding.point.isStrictlyBefore(decisionPoint)) {
+            require(binding.point.isStrictlyBeforeSdeDecision(decisionPoint)) {
                 "Historical SDE evaluation requires a committed prefix; observation ${record.recordId} is not before the decision point."
             }
             SdeHistoricalObservationRef(
@@ -205,7 +205,7 @@ internal object StructuredInformationShadowAdapter {
             )
         }
         val actionRefs = historical.actionTimeline.entries.map { entry ->
-            require(entry.point.isStrictlyBefore(decisionPoint)) {
+            require(entry.point.isStrictlyBeforeSdeDecision(decisionPoint)) {
                 "Historical SDE evaluation requires a committed prefix; action ${entry.fact.actionId} is not before the decision point."
             }
             SdeHistoricalActionRef(
@@ -218,14 +218,6 @@ internal object StructuredInformationShadowAdapter {
             actionRefs = actionRefs,
             observationRefs = observationRefs,
         )
-    }
-
-    private fun TimelinePoint.isStrictlyBefore(
-        decisionPoint: SdeDecisionLifecycleStage.Interaction,
-    ): Boolean = when {
-        round != decisionPoint.round -> round < decisionPoint.round
-        phase != decisionPoint.phase -> phase.ordinal < decisionPoint.phase.ordinal
-        else -> sequence < decisionPoint.sequence
     }
 
     private fun TruthRelation.toSemanticTruthOrNull(): SemanticTruth? = when (this) {

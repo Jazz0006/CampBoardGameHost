@@ -21,6 +21,14 @@ internal sealed interface SdeDecisionLifecycleStage {
     }
 }
 
+internal fun TimelinePoint.isStrictlyBeforeSdeDecision(
+    decisionPoint: SdeDecisionLifecycleStage.Interaction,
+): Boolean = when {
+    round != decisionPoint.round -> round < decisionPoint.round
+    phase != decisionPoint.phase -> phase.ordinal < decisionPoint.phase.ordinal
+    else -> sequence < decisionPoint.sequence
+}
+
 /** Stable identity of the interaction that asked for a Storyteller-controlled result. */
 internal data class SdeDecisionSourceInteraction(
     val interactionId: String,
