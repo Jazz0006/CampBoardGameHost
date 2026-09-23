@@ -133,6 +133,7 @@ internal object DecisionFeaturesProjector {
     ): DecisionFeatures = project(
         normalized = NormalizedStrategicDiagnosticsProjector.project(diagnostic, playerCount),
         afterStructure = diagnostic.afterStructure,
+        playerCount = playerCount,
         semanticTruth = semanticTruth,
     )
 
@@ -143,26 +144,37 @@ internal object DecisionFeaturesProjector {
     ): DecisionFeatures = project(
         normalized = NormalizedStrategicDiagnosticsProjector.project(diagnostic, playerCount),
         afterStructure = diagnostic.afterStructure,
+        playerCount = playerCount,
         semanticTruth = semanticTruth,
     )
 
     private fun project(
         normalized: NormalizedStrategicDiagnostics,
         afterStructure: ExactWorldStructureDiagnostics,
+        playerCount: Int,
         semanticTruth: SemanticTruth?,
-    ): DecisionFeatures = DecisionFeatures(
+    ): DecisionFeatures {
+        require(playerCount > 0) { "Player count must be positive." }
+        require(afterStructure.forcedEvilSeats.all { it in 1..playerCount }) {
+            "Forced-evil seats must belong to the current player range."
+        }
+        return DecisionFeatures(
         strategic = FeatureProjection.Projected(
             StrategicDecisionFeatures(
                 demonCoverRetention = normalized.demonCoverRetention,
                 evilTopologyRetention = normalized.evilTopologyRetention,
                 evilCoverRetention = normalized.evilCoverRetention,
                 forcedGoodFraction = normalized.forcedGoodFraction,
-                forcedEvilFraction = normalized.forcedEvilFraction,
+                forcedEvilFraction = StrategicRatio.Defined(
+                    numerator = afterStructure.forcedEvilSeats.size,
+                    denominator = playerCount,
+                ),
                 forcedGoodSeats = afterStructure.forcedGoodSeats,
                 forcedEvilSeats = afterStructure.forcedEvilSeats,
             ),
         ),
-        semanticTruth = semanticTruth?.let { FeatureProjection.Projected(it) }
-            ?: FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET),
-    )
+            semanticTruth = semanticTruth?.let { FeatureProjection.Projected(it) }
+                ?: FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET),
+        )
+    }
 }

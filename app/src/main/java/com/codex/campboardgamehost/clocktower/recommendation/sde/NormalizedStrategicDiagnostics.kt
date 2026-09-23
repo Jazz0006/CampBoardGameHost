@@ -49,7 +49,6 @@ internal data class NormalizedStrategicDiagnostics(
     val evilTopologyRetention: StrategicRatio,
     val evilCoverRetention: StrategicRatio,
     val forcedGoodFraction: StrategicRatio.Defined,
-    val forcedEvilFraction: StrategicRatio.Defined,
 )
 
 /**
@@ -97,9 +96,6 @@ internal object NormalizedStrategicDiagnosticsProjector {
         require(after.forcedGoodSeats.all { it in 1..playerCount }) {
             "Forced-good seats must belong to the current player range."
         }
-        require(after.forcedEvilSeats.all { it in 1..playerCount }) {
-            "Forced-evil seats must belong to the current player range."
-        }
 
         return NormalizedStrategicDiagnostics(
             demonCoverRetention = StrategicRatio.bounded(
@@ -116,10 +112,6 @@ internal object NormalizedStrategicDiagnosticsProjector {
             ),
             forcedGoodFraction = StrategicRatio.Defined(
                 numerator = after.forcedGoodSeats.size,
-                denominator = playerCount,
-            ),
-            forcedEvilFraction = StrategicRatio.Defined(
-                numerator = after.forcedEvilSeats.size,
                 denominator = playerCount,
             ),
         )

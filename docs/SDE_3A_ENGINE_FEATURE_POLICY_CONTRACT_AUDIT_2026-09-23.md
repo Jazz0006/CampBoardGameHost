@@ -135,7 +135,7 @@ These are inputs to consequence/policy evaluation, never SDE-selected candidates
 | Evil topology retention | `StrategicWorldKey`, exact/topology strategic-world sets | ready |
 | Evil cover retention | exact/topology `evilCoverSeats`; normalized projector | ready |
 | forced-Good effect | exact/topology `forcedGoodSeats`; normalized forced-Good fraction | ready |
-| forced-Evil effect | exact/topology `forcedEvilSeats`; Drunk marginal diagnostics | primitive ready; normalized projector should expose it |
+| forced-Evil effect | exact/topology `forcedEvilSeats`; Drunk marginal diagnostics | primitive ready; SDE feature projector can normalize it without widening the legacy diagnostics contract |
 | exact hypothetical bundle | `ExactHistoricalHypotheticalObservationBundleEvaluator` | ready |
 | topology-first bundle | `TroubleBrewingTopologyHypotheticalBundleEvaluator` | ready |
 | registration witness | `ExactRegistrationWitnessBinding` + registration domain | ready |
@@ -379,7 +379,7 @@ Fortune Teller should follow only after target bindings are treated as committed
 1. add SDE-specific typed candidate identity/provenance contract without modifying legacy `domain.DecisionCandidate<T>`;
 2. add typed `DecisionFeatures` availability contract;
 3. expose the already-existing normalized strategic diagnostics through the new feature contract;
-4. add forced-Evil normalized projection from the already-existing exact structure primitive;
+4. add forced-Evil normalized projection inside the SDE feature projector from the already-existing exact structure primitive;
 5. add typed `PolicyEvaluation` / policy-version / reason / equivalence contracts only — no policy scoring yet;
 6. adapt the existing structured-information shadow to preserve candidate identity, revision, legality provenance, and exact hypothetical reference;
 7. keep visible recommendation, confirmation, commit, and UI unchanged;
