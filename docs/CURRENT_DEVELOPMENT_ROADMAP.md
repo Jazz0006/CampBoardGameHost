@@ -34,8 +34,8 @@ SDE-2D5 calibration / policy evidence                 CHECKPOINT MERGED / PARALL
         B4F-C targeted evidence acquisition            EXTERNAL / CONTINUOUS
 D5F-C final gate/band derivation                      BLOCKED ON EVIDENCE
 sealed holdout                                        CLOSED
-SDE-3A engine / feature / policy contract             CURRENT
-SDE-3B BEGINNER_CONSERVATIVE_V1                       NEXT
+SDE-3A engine / feature / policy contract             COMPLETE ON PR #152 / PENDING MERGE
+SDE-3B BEGINNER_CONSERVATIVE_V1                       NEXT AFTER SDE-3A MERGE
 SDE-3C shadow / DecisionTrace / replay                 NEXT
 SDE-3D calibrated policy freeze                       BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                   BLOCKED ON 3D
@@ -160,22 +160,22 @@ Targeted evidence acquisition continues through ClocktowerEvidenceLab according 
 
 This track does **not** block SDE-3A/B/C.
 
-### SDE-3A — engine / feature / policy contract — CURRENT
+### SDE-3A — engine / feature / policy contract — COMPLETE ON DRAFT PR #152 / PENDING MERGE
 
 Authority:
 
 `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
 
-The live fanout/ownership audit and score-free contract checkpoint are merged in PR #151. PR #152 now contains the structured numeric shadow path from legal candidate -> exact consequence -> `DecisionFeatures`, including explicit deferred-capability handling and Chef/Empath coverage, while visible recommendation and canonical commit authority remain unchanged. SDE-3A acceptance is pending the required `[full-ci]` T4 checkpoint.
+PR #151 established the ownership audit and score-free typed contract. PR #152 completes the structured numeric shadow path from legal candidate -> exact consequence -> `DecisionFeatures`, including explicit deferred-capability handling and Chef/Empath coverage, while visible recommendation and canonical commit authority remain unchanged.
 
-The next implementation slice must:
+SDE-3A acceptance evidence:
 
-1. map current decision/candidate/context/result ownership;
-2. map reusable legality, proposition, topology and bundle surfaces;
-3. define minimal generic typed contracts for candidate, feature projection and policy evaluation;
-4. keep legality separate from policy;
-5. keep features interpretable and independent rather than forcing an opaque scalar;
-6. prepare versioned DecisionTrace / replay without automatic production cutover.
+- T4 checkpoint commit: `dd82af3d8da9c17bc62d5606f045ddcc82c21bf0`;
+- CI workflow run `35806237753`: full Android unit tests + debug APK, ASP contract tests, and Real Clingo cross-validation all succeeded;
+- R2 workflow run `35806237770`: succeeded;
+- final fanout audit: production changes remain limited to the SDE feature-evaluation adapter and structured shadow integration; no rules, canonical session commit, UI authority, legacy scoring, policy selection, or persistence ownership moved.
+
+Keep PR #152 draft until explicit user authorization to merge. Do not begin SDE-3B on this branch.
 
 ### SDE-3B — BEGINNER_CONSERVATIVE_V1 — NEXT
 
