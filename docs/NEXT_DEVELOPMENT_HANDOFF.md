@@ -61,8 +61,8 @@ Evidence acquisition is now **parallel / external / continuous**. It no longer b
 Current route:
 
 ~~~text
-SDE-3A engine / feature / policy contract                  CURRENT
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT
+SDE-3A engine / feature / policy contract                  COMPLETE ON PR #152 / PENDING MERGE
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT AFTER SDE-3A MERGE
 SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
@@ -371,18 +371,23 @@ The old external-human auto-workflow that could take ~2h48m has been retired.
 
 ## 16. Next conversation task
 
-Continue **SDE-3A engine / feature / policy contract** on PR #152. The score-free structured numeric shadow path from legal candidate -> exact consequence -> `DecisionFeatures` is implemented and FAST/R2 validation is green, including explicit Deferred capability semantics and Chef/Empath coverage. The immediate task is the required T4 `[full-ci]` acceptance checkpoint, followed by a final SDE-3A contract/fanout audit. Do not begin SDE-3B policy selection or merge #152 until that acceptance audit is complete and the user explicitly authorizes merge.
+SDE-3A is acceptance-complete on draft PR #152 and is **not yet merged**.
 
-Do not modify production code until the audit answers:
+Acceptance evidence:
 
-1. Which current type should own the legal candidate identity?
-2. Which existing projectors already expose the required feature primitives?
-3. Which feature primitives are missing versus merely hidden in old reports?
-4. Where should policy evaluation live?
-5. What is the minimal DecisionTrace persistence boundary?
-6. Which current production path can be migrated first in shadow mode without cutover?
-7. Which legacy owners remain authoritative during the migration?
+- checkpoint commit `dd82af3d8da9c17bc62d5606f045ddcc82c21bf0` used the required `[full-ci]` marker;
+- CI workflow `35806237753` succeeded with full Android unit tests + debug APK, ASP contract tests, and Real Clingo cross-validation;
+- R2 workflow `35806237770` succeeded;
+- final fanout audit confirmed that production changes are additive and shadow-only: `DecisionFeatureEvaluation` plus structured shadow feature attachment;
+- no legality owner, canonical session commit path, UI authority, legacy recommendation/scoring authority, policy selection, or persistence ownership moved;
+- Chef and Empath numeric structured shadow coverage exercises the same generalized path, including multi-candidate poisoned Chef;
+- deferred exact capability remains explicit and does not manufacture feature values.
 
-Then propose the smallest testable SDE-3A implementation slice.
+Immediate next action:
 
-Do not begin with weights, numeric thresholds, or broad legacy deletion.
+1. re-query live #152 / main / checks before any action;
+2. keep #152 draft and make no further SDE-3A production changes unless a regression is found;
+3. do not start SDE-3B on this branch;
+4. only after explicit user **“授权合并”**, merge #152 and create a fresh branch from live `main` for SDE-3B `BEGINNER_CONSERVATIVE_V1`.
+
+Do not invent weights, numeric thresholds, or broad legacy deletion.
