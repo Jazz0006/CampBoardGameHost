@@ -197,12 +197,23 @@ internal object StructuredInformationShadowAdapter {
                         sdeCandidates = sdeCandidates,
                         context = exactContext,
                     )
+                val healthyInformationByCandidateId =
+                    HistoricalHealthyInformationUtilityFeatureProjector.project(
+                        fullEvaluation = consequences,
+                        confirmationByCandidateId = confirmationByCandidateId,
+                        exactCandidates = exactCandidates,
+                        sdeCandidates = sdeCandidates,
+                        semanticTruthByCandidateId = semanticTruthByCandidateId,
+                        context = exactContext,
+                    )
                 DecisionFeatureEvaluation.Ready(
                     candidates = baseFeatureEvaluation.candidates.map { candidate ->
                         candidate.copy(
                             features = candidate.features.copy(
                                 confirmationChainImpact =
                                     confirmationByCandidateId.getValue(candidate.candidateId),
+                                healthyInformationUtility =
+                                    healthyInformationByCandidateId.getValue(candidate.candidateId),
                                 impairedNarrative =
                                     impairedNarrativeByCandidateId.getValue(candidate.candidateId),
                             ),
