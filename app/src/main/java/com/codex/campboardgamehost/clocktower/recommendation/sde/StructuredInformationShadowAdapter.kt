@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraf
 import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionContext
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
@@ -94,17 +95,31 @@ internal object StructuredInformationShadowAdapter {
             round = historical.initialRound,
         ).snapshotId
         val decisionId = informationSnapshot.semanticIdentity
-        val historyPrefixRef = exactContext.toHistoricalPrefixRef()
+        val lifecycleStages = decisionContext.legalCandidates.map { candidate ->
+            SdeDecisionLifecycleStage.Interaction(
+                phase = candidate.draft.phase,
+                round = candidate.draft.round,
+                sequence = candidate.draft.sequence,
+            )
+        }.distinct()
+        require(lifecycleStages.size == 1) {
+            "One structured information decision must share one lifecycle point across every legal candidate."
+        }
+        val lifecycleStage = lifecycleStages.single()
+        require(
+            lifecycleStage.round > historical.initialRound ||
+                (
+                    lifecycleStage.round == historical.initialRound &&
+                        lifecycleStage.phase.ordinal >= historical.initialPhase.ordinal
+                    ),
+        ) {
+            "Structured information shadow candidates cannot precede the exact historical baseline."
+        }
+        val historyPrefixRef = exactContext.toHistoricalPrefixRef(lifecycleStage)
         val projectedCandidates = decisionContext.legalCandidates.map { candidate ->
             val draft = candidate.draft
             require(draft.visibility == ObservationVisibility.PRIVATE && draft.recipientSeats.size == 1) {
                 "The first structured-information shadow slice requires one private recipient per candidate."
-            }
-            require(
-                draft.round > historical.initialRound ||
-                    (draft.round == historical.initialRound && draft.phase.ordinal >= historical.initialPhase.ordinal),
-            ) {
-                "Structured information shadow candidates cannot precede the exact historical baseline."
             }
             val exact = ExactConsequenceCandidate(
                 candidateId = candidate.candidateId,
@@ -114,11 +129,7 @@ internal object StructuredInformationShadowAdapter {
             val sde = SdeDecisionCandidate(
                 decisionId = decisionId,
                 candidateId = candidate.candidateId,
-                lifecycleStage = SdeDecisionLifecycleStage.Interaction(
-                    phase = draft.phase,
-                    round = draft.round,
-                    sequence = draft.sequence,
-                ),
+                lifecycleStage = lifecycleStage,
                 sourceInteraction = SdeDecisionSourceInteraction(
                     interactionId = decisionId,
                     sourceSeat = draft.sourceSeat,
@@ -178,26 +189,43 @@ internal object StructuredInformationShadowAdapter {
         )
     }
 
-    private fun ExactConsequenceContext.toHistoricalPrefixRef(): SdeHistoricalPrefixRef {
+    private fun ExactConsequenceContext.toHistoricalPrefixRef(
+        decisionPoint: SdeDecisionLifecycleStage.Interaction,
+    ): SdeHistoricalPrefixRef {
         val historical = exactContext
         val observationRefs = historical.observationLog.records.map { record ->
             val binding = record.timelineBinding as? ObservationTimelineBinding.Global
                 ?: return SdeHistoricalPrefixRef.NotCaptured
+            require(binding.point.isStrictlyBefore(decisionPoint)) {
+                "Historical SDE evaluation requires a committed prefix; observation ${record.recordId} is not before the decision point."
+            }
             SdeHistoricalObservationRef(
                 recordId = record.recordId,
                 globalSequence = binding.point.globalSequence,
             )
         }
+        val actionRefs = historical.actionTimeline.entries.map { entry ->
+            require(entry.point.isStrictlyBefore(decisionPoint)) {
+                "Historical SDE evaluation requires a committed prefix; action ${entry.fact.actionId} is not before the decision point."
+            }
+            SdeHistoricalActionRef(
+                actionId = entry.fact.actionId,
+                globalSequence = entry.point.globalSequence,
+            )
+        }
         return SdeHistoricalPrefixRef.Global(
             gameId = historical.initialSnapshot.gameId,
-            actionRefs = historical.actionTimeline.entries.map { entry ->
-                SdeHistoricalActionRef(
-                    actionId = entry.fact.actionId,
-                    globalSequence = entry.point.globalSequence,
-                )
-            },
+            actionRefs = actionRefs,
             observationRefs = observationRefs,
         )
+    }
+
+    private fun TimelinePoint.isStrictlyBefore(
+        decisionPoint: SdeDecisionLifecycleStage.Interaction,
+    ): Boolean = when {
+        round != decisionPoint.round -> round < decisionPoint.round
+        phase != decisionPoint.phase -> phase.ordinal < decisionPoint.phase.ordinal
+        else -> sequence < decisionPoint.sequence
     }
 
     private fun TruthRelation.toSemanticTruthOrNull(): SemanticTruth? = when (this) {
