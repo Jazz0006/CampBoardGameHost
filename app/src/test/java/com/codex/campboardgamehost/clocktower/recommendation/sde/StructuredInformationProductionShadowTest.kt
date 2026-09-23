@@ -155,6 +155,7 @@ class StructuredInformationProductionShadowTest {
         )
         assertTrue(chefModel.contextSnapshot.legalCandidateIds.size > 1)
         assertTrue(chefResult.featureEvaluation is DecisionFeatureEvaluation.Ready)
+        val chefFeatureEvaluation = chefResult.featureEvaluation as DecisionFeatureEvaluation.Ready
         assertTrue(chefResult.sdeCandidates.all {
             it.sourceInteraction.abilityState == AbilityState.MALFUNCTIONING_POISONED
         })
@@ -162,11 +163,9 @@ class StructuredInformationProductionShadowTest {
         assertEquals(chefModel.contextSnapshot.legalCandidateIds, chefResult.policyEvaluation.candidateIds)
         assertEquals(
             chefModel.contextSnapshot.legalCandidateIds,
-            (chefResult.featureEvaluation as DecisionFeatureEvaluation.Ready)
-                .candidates
-                .map(CandidateDecisionFeatures::candidateId),
+            chefFeatureEvaluation.candidates.map(CandidateDecisionFeatures::candidateId),
         )
-        val chefTruths = chefResult.featureEvaluation.candidates.map {
+        val chefTruths = chefFeatureEvaluation.candidates.map {
             (it.features.semanticTruth as FeatureProjection.Projected<SemanticTruth>).value
         }.toSet()
         assertEquals(setOf(SemanticTruth.TRUE, SemanticTruth.FALSE), chefTruths)
