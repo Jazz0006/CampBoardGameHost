@@ -106,6 +106,16 @@ class StructuredInformationProductionShadowTest {
         })
         assertTrue(result.sdeCandidates.all { it.inputBindings === SdeDecisionInputBindings.NotCaptured })
         assertTrue(result.plannedDecisions.all { it.sourceRevision == revision })
+        assertTrue(result.consequences is ExactConsequenceEvaluation.Ready)
+        assertTrue(result.featureEvaluation is DecisionFeatureEvaluation.Ready)
+        val featureEvaluation = result.featureEvaluation as DecisionFeatureEvaluation.Ready
+        assertEquals(
+            model.contextSnapshot.legalCandidateIds,
+            featureEvaluation.candidates.map(CandidateDecisionFeatures::candidateId),
+        )
+        assertTrue(featureEvaluation.candidates.all {
+            it.features.strategic is FeatureProjection.Projected
+        })
         assertEquals(visibleChoicesBefore, model.choices)
         assertEquals(sessionBeforeShadow, session.state)
 
