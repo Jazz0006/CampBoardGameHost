@@ -120,7 +120,10 @@ class BeginnerConservativeV1PolicyTest {
         val tie = result.evaluations.map { it.equivalenceState as PolicyEquivalenceState.Tied }
         assertTrue(tie.all { it.candidateIds == setOf("narrow", "broad") })
         assertEquals(
-            setOf(BeginnerConservativeV1PolicyLimitations.PREFERENCE_DIMENSIONS_NOT_PROJECTED),
+            setOf(
+                BeginnerConservativeV1PolicyLimitations.PREFERENCE_DIMENSIONS_NOT_PROJECTED,
+                BeginnerConservativeV1PolicyLimitations.PREFERENCE_EVIDENCE_NOT_AUTHORIZED,
+            ),
             result.limitations,
         )
     }
