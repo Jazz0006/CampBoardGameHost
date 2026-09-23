@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionContext
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
@@ -75,6 +76,7 @@ internal object StructuredInformationShadowAdapter {
     fun <T : DynamicInformationOutcome> evaluate(
         decisionContext: InformationDecisionContext<T>,
         exactContext: ExactConsequenceContext,
+        inputBindings: SdeDecisionInputBindings = SdeDecisionInputBindings.NotCaptured,
     ): StructuredInformationShadowEvaluation {
         val informationSnapshot = decisionContext.snapshot
         val exactRevision = InformationDecisionRevision(
@@ -92,6 +94,7 @@ internal object StructuredInformationShadowAdapter {
             round = historical.initialRound,
         ).snapshotId
         val decisionId = informationSnapshot.semanticIdentity
+        val historyPrefixRef = exactContext.toHistoricalPrefixRef()
         val projectedCandidates = decisionContext.legalCandidates.map { candidate ->
             val draft = candidate.draft
             require(draft.visibility == ObservationVisibility.PRIVATE && draft.recipientSeats.size == 1) {
@@ -120,7 +123,8 @@ internal object StructuredInformationShadowAdapter {
                     abilityState = candidate.evaluation.candidate.abilityState,
                 ),
                 sourceRevision = informationSnapshot.revision,
-                inputBindings = SdeDecisionInputBindings.NotCaptured,
+                inputBindings = inputBindings,
+                historyPrefixRef = historyPrefixRef,
                 legalOutcomeIdentity = candidate.candidateId,
                 hypotheticalRef = SdeDecisionHypotheticalRef(
                     observationRecordIds = listOf(draft.recordId),
@@ -168,6 +172,28 @@ internal object StructuredInformationShadowAdapter {
             consequences = consequences,
             featureEvaluation = featureEvaluation,
             policyEvaluation = policyEvaluation,
+        )
+    }
+
+    private fun ExactConsequenceContext.toHistoricalPrefixRef(): SdeHistoricalPrefixRef {
+        val historical = exactContext
+        val observationRefs = historical.observationLog.records.map { record ->
+            val binding = record.timelineBinding as? ObservationTimelineBinding.Global
+                ?: return SdeHistoricalPrefixRef.NotCaptured
+            SdeHistoricalObservationRef(
+                recordId = record.recordId,
+                globalSequence = binding.point.globalSequence,
+            )
+        }
+        return SdeHistoricalPrefixRef.Global(
+            gameId = historical.initialSnapshot.gameId,
+            actionRefs = historical.actionTimeline.entries.map { entry ->
+                SdeHistoricalActionRef(
+                    actionId = entry.fact.actionId,
+                    globalSequence = entry.point.globalSequence,
+                )
+            },
+            observationRefs = observationRefs,
         )
     }
 
