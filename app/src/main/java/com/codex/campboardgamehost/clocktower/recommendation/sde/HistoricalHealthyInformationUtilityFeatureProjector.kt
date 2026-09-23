@@ -3,9 +3,6 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalObservationBundleEvaluator
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleEvaluation
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
@@ -19,9 +16,10 @@ import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObserva
  * functioning ability, truthfulness is a rules/legality invariant of the committed observation;
  * player-facing ObservationReliability is never used to infer hidden impairment state.
  *
- * Route independence is exact and score-free. Current-recipient history reuses the existing
- * confirmation leave-one-out evidence; other recipients receive only the additional pre-candidate
- * leave-one-out needed to decide whether their healthy route independently constrained worlds.
+ * Route independence is candidate-relative and score-free. Current-recipient history reuses the
+ * existing exact confirmation leave-one-out evidence. A functioning route delivered to another
+ * recipient is a separate whole-table information channel and does not trigger another world
+ * enumeration merely to prove that recipient boundary.
  */
 internal object HistoricalHealthyInformationUtilityFeatureProjector {
     fun project(
@@ -134,101 +132,6 @@ internal object HistoricalHealthyInformationUtilityFeatureProjector {
             }
         }
 
-        val independenceByRoute =
-            linkedMapOf<HealthyInformationRouteRef.HistoricalObservation, Boolean>()
-
-        healthyHistoricalRoutes.forEach { route ->
-            val matchingConfirmationValues = exactCandidates
-                .filter { it.recipientSeat == route.routeRef.recipientSeat }
-                .mapNotNull { candidate ->
-                    when (val projection = confirmationByCandidateId.getValue(candidate.candidateId)) {
-                        is FeatureProjection.Unavailable ->
-                            return unavailable(candidateIds, projection.reason)
-
-                        is FeatureProjection.Projected ->
-                            projection.value.historicalObservationImpacts
-                                .singleOrNull {
-                                    it.provenance.observationRef.recordId == route.record.recordId
-                                }
-                                ?.wasIndependentlyConstrainingBefore
-                    }
-                }
-            if (matchingConfirmationValues.isNotEmpty()) {
-                require(matchingConfirmationValues.distinct().size == 1) {
-                    "Pre-candidate healthy-route independence cannot vary across candidates."
-                }
-                independenceByRoute[route.routeRef] = matchingConfirmationValues.single()
-            }
-        }
-
-        val routesNeedingExactIndependence = healthyHistoricalRoutes.filter {
-            it.routeRef !in independenceByRoute
-        }
-        if (routesNeedingExactIndependence.isNotEmpty()) {
-            val recipientSeats = routesNeedingExactIndependence
-                .map { it.routeRef.recipientSeat }
-                .distinct()
-                .sorted()
-            val fullQueries = recipientSeats.mapIndexed { index, recipientSeat ->
-                ExactHypotheticalObservationBundleQuery(
-                    bundleId = "sde-healthy-baseline:" + index + ":" + recipientSeat,
-                    recipientSeat = recipientSeat,
-                    observations = emptyList(),
-                )
-            }
-            val fullBaselines = when (
-                val evaluation = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
-                    validatedRuleset = context.validatedRuleset,
-                    context = historical,
-                    queries = fullQueries,
-                )
-            ) {
-                is ExactHypotheticalObservationBundleEvaluation.Deferred ->
-                    return unavailable(candidateIds, FeatureUnavailableReason.MISSING_CAPABILITY)
-
-                is ExactHypotheticalObservationBundleEvaluation.Ready -> {
-                    require(evaluation.diagnostics.size == recipientSeats.size) {
-                        "Healthy-information baseline evaluation must preserve recipient count."
-                    }
-                    recipientSeats.zip(evaluation.diagnostics).associate { (recipient, diagnostic) ->
-                        recipient to diagnostic.before.value
-                    }
-                }
-            }
-
-            routesNeedingExactIndependence.forEachIndexed { index, route ->
-                val omitted = historical.copy(
-                    observationLog = historical.observationLog.copy(
-                        records = historical.observationLog.records.filterNot {
-                            it.recordId == route.record.recordId
-                        },
-                    ),
-                )
-                val query = ExactHypotheticalObservationBundleQuery(
-                    bundleId =
-                        "sde-healthy-loo:" + index + ":" + route.record.recordId + ":" +
-                            route.routeRef.recipientSeat,
-                    recipientSeat = route.routeRef.recipientSeat,
-                    observations = emptyList(),
-                )
-                val omittedCardinality = when (
-                    val evaluation = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
-                        validatedRuleset = context.validatedRuleset,
-                        context = omitted,
-                        queries = listOf(query),
-                    )
-                ) {
-                    is ExactHypotheticalObservationBundleEvaluation.Deferred ->
-                        return unavailable(candidateIds, FeatureUnavailableReason.MISSING_CAPABILITY)
-
-                    is ExactHypotheticalObservationBundleEvaluation.Ready ->
-                        evaluation.diagnostics.single().before.value
-                }
-                independenceByRoute[route.routeRef] =
-                    omittedCardinality > fullBaselines.getValue(route.routeRef.recipientSeat)
-            }
-        }
-
         val exactByCandidateId = exactCandidates.associateBy(ExactConsequenceCandidate::candidateId)
         val sdeByCandidateId = sdeCandidates.associateBy(SdeDecisionCandidate::candidateId)
         val consequenceByCandidateId =
@@ -261,8 +164,8 @@ internal object HistoricalHealthyInformationUtilityFeatureProjector {
             }
 
             val routeEvidence = healthyHistoricalRoutes.map { route ->
-                val relation = if (route.routeRef.recipientSeat == exact.recipientSeat) {
-                    impactByRecordId[route.record.recordId]?.relation
+                val sameRecipientImpact = if (route.routeRef.recipientSeat == exact.recipientSeat) {
+                    impactByRecordId[route.record.recordId]
                         ?: return@associateWith FeatureProjection.Unavailable(
                             FeatureUnavailableReason.HISTORICAL_INPUT_NOT_CAPTURED,
                         )
@@ -271,8 +174,9 @@ internal object HistoricalHealthyInformationUtilityFeatureProjector {
                 }
                 HistoricalHealthyInformationRouteEvidence(
                     routeRef = route.routeRef,
-                    independentlyUsableBefore = independenceByRoute.getValue(route.routeRef),
-                    relationToCurrentCandidate = relation,
+                    independentlyUsableBefore =
+                        sameRecipientImpact?.wasIndependentlyConstrainingBefore ?: true,
+                    relationToCurrentCandidate = sameRecipientImpact?.relation,
                 )
             }
 
