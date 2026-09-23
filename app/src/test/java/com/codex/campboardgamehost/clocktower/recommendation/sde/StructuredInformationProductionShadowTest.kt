@@ -13,9 +13,15 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.A4RuntimeFixtures
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
@@ -204,4 +210,122 @@ class StructuredInformationProductionShadowTest {
             session.state.epistemicObservationLog.records.size,
         )
     }
+    @Test
+    fun `historical shadow evaluates a night two interaction against the canonical committed prefix`() {
+        val fixture = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
+        val session = ClocktowerGameSession.create(
+            gameId = fixture.gameId,
+            gameSeed = fixture.gameSeed,
+            rulesetRef = rulesetRef,
+            initialState = fixture.gameState,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        val firstPlayer = fixture.gameState.players.first()
+        session.commitGlobalEpistemicObservation(
+            EpistemicObservationDraft(
+                recordId = "history:shown-role:seat-1",
+                phase = StorytellerPhase.FIRST_NIGHT,
+                round = 1,
+                sequence = 1,
+                sourceSeat = null,
+                sourceAbility = null,
+                visibility = ObservationVisibility.PRIVATE,
+                recipientSeats = setOf(firstPlayer.seat),
+                reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+                proposition = InformationProposition.ShownRoleAt(
+                    seat = firstPlayer.seat,
+                    role = firstPlayer.shownRole ?: firstPlayer.actualRole,
+                ),
+            ),
+        )
+        session.commitGlobalActionFact(
+            ActionFactDraft.PhaseAdvance(
+                actionId = "phase:night-2",
+                phase = StorytellerPhase.FIRST_NIGHT,
+                round = 1,
+                sequence = 2,
+                nextPhase = StorytellerPhase.NIGHT,
+                nextRound = 2,
+            ),
+        )
+        session.commitGlobalActionFact(
+            ActionFactDraft.Poison(
+                actionId = "poison:night-2:seat-1",
+                phase = StorytellerPhase.NIGHT,
+                round = 2,
+                sequence = 0,
+                targetSeat = firstPlayer.seat,
+            ),
+        )
+        val currentSnapshot = session.toGameSnapshot(rulesetRef)
+        val setup = CommittedClocktowerSetup(
+            script = currentSnapshot.gameState.script,
+            setupSeed = currentSnapshot.gameSeed,
+            assignments = currentSnapshot.gameState.players.map { player ->
+                CommittedSetupSeat(
+                    seat = player.seat,
+                    actualRole = player.actualRole,
+                    shownRole = player.shownRole ?: player.actualRole,
+                )
+            },
+            provenance = SetupProvenance(
+                sourceKind = SetupSourceKind.GENERATED,
+                providerId = "sde-3b-historical-shadow-test",
+            ),
+        )
+        val revision = InformationDecisionRevision(
+            gameStateRevision = currentSnapshot.gameStateRevision,
+            playerInputRevision = currentSnapshot.playerInputRevision,
+        )
+        val model = prepareNumericInformationUiModel(
+            coordinator = ClocktowerRecommendationCoordinator(),
+            gameId = currentSnapshot.gameId,
+            phase = ClocktowerPhase.Night,
+            round = 2,
+            sequence = 1,
+            actorSeat = firstPlayer.seat,
+            abilityRole = RoleId("Empath"),
+            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+            subjectSeats = listOf(2, currentSnapshot.gameState.players.size),
+            trueValue = 0,
+            minimumValue = 0,
+            maximumValue = 2,
+            reliability = InformationReliability.POISONED,
+            recommendationStyle = RecommendationStyle.BALANCED,
+            revision = revision,
+            recommendedValue = 0,
+        )
+        val choicesBefore = model.choices.toList()
+        val sessionBeforeShadow = session.state
+
+        val result = StructuredInformationProductionShadow.evaluateHistorical(
+            decisionContext = model.shadowDecisionContext,
+            validatedRuleset = validatedRuleset,
+            committedSetup = setup,
+            currentSnapshot = currentSnapshot,
+            roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
+            inputBindings = SdeDecisionInputBindings.Captured(),
+            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+        )
+
+        assertTrue(result.sdeCandidates.all {
+            it.lifecycleStage == SdeDecisionLifecycleStage.Interaction(
+                phase = StorytellerPhase.NIGHT,
+                round = 2,
+                sequence = 1,
+            )
+        })
+        assertTrue(result.sdeCandidates.all { it.inputBindings == SdeDecisionInputBindings.Captured() })
+        assertTrue(result.sdeCandidates.all { candidate ->
+            val prefix = candidate.historyPrefixRef as SdeHistoricalPrefixRef.Global
+            prefix.observationRefs.map(SdeHistoricalObservationRef::recordId) ==
+                listOf("history:shown-role:seat-1") &&
+                prefix.actionRefs.map(SdeHistoricalActionRef::actionId) ==
+                listOf("phase:night-2", "poison:night-2:seat-1")
+        })
+        assertEquals(model.contextSnapshot.legalCandidateIds, result.policyEvaluation.candidateIds)
+        assertEquals(choicesBefore, model.choices)
+        assertEquals(sessionBeforeShadow, session.state)
+    }
+
 }
