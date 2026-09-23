@@ -88,6 +88,12 @@ internal data class HistoricalObservationConfirmationImpact(
     val relation: ConfirmationObservationRelation,
     val restoration: ConfirmationAmbiguityRestoration,
     val authenticatesDistinctSource: Boolean,
+    /**
+     * Whether this historical observation removed at least one exact world before the current
+     * candidate was applied. This is derived from the same leave-one-out exact scan; downstream
+     * features can reuse it without re-enumerating history.
+     */
+    val wasIndependentlyConstrainingBefore: Boolean = false,
 )
 
 internal data class ConfirmationChainFeatures(
@@ -239,6 +245,8 @@ internal object ConfirmationChainFeaturesProjector {
                 authenticatesDistinctSource =
                     relation == ConfirmationObservationRelation.SUPPORTS_EXISTING_OBSERVATION &&
                         historicalChannel != candidateChannel,
+                wasIndependentlyConstrainingBefore =
+                    without.before.value > full.before.value,
             )
         }
 
