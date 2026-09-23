@@ -100,8 +100,11 @@ internal object StructuredInformationShadowAdapter {
             require(draft.visibility == ObservationVisibility.PRIVATE && draft.recipientSeats.size == 1) {
                 "The first structured-information shadow slice requires one private recipient per candidate."
             }
-            require(draft.phase == historical.initialPhase && draft.round == historical.initialRound) {
-                "Structured information shadow candidates must belong to the exact historical phase and round."
+            require(
+                draft.round > historical.initialRound ||
+                    (draft.round == historical.initialRound && draft.phase.ordinal >= historical.initialPhase.ordinal),
+            ) {
+                "Structured information shadow candidates cannot precede the exact historical baseline."
             }
             val exact = ExactConsequenceCandidate(
                 candidateId = candidate.candidateId,
