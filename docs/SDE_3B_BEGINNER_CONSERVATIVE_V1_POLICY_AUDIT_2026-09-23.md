@@ -77,13 +77,11 @@ Not allowed now:
 
 The only first-slice structural rejection should be an exact **no-credible-Evil-world** condition.
 
-A candidate is structurally contradictory when projected strategic structure has a defined non-empty baseline but retains zero:
-
-- possible Demon-seat cover; or
-- Evil strategic topology; or
-- Evil-seat cover.
+A candidate is structurally contradictory in the first generic V1 gate only when **Evil strategic-topology retention is defined and reaches zero**.
 
 This is not a calibrated strength threshold. It is an exact collapse to no viable Evil interpretation.
+
+Do not use live Demon-cover retention as this generic contradiction test. In later historical phases the Demon may already be dead, so live possible-Demon-seat cover can legitimately be zero while coherent historical worlds still exist. Evil-cover and Demon-cover remain descriptive inputs until a lifecycle-aware policy rule explicitly owns them.
 
 Do **not** reject merely because:
 
