@@ -15,16 +15,15 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionContext
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 
 /**
- * Production-facing, read-only bridge for SDE-1E's first structured-information shadow proof.
+ * Production-facing, read-only bridge for structured SDE shadow evaluation.
  *
  * Durable setup identity comes from [CommittedClocktowerSetup]. Current history and freshness come
  * from the canonical [GameSnapshot] supplied by ClocktowerGameSession. This bridge owns neither of
  * those facts and never writes back to either source.
  *
- * SDE-1E is deliberately limited to round-one first-night information: every player is still alive,
- * setup identities have not changed, and transient first-night effects are replayed from the current
- * semantic timeline rather than baked into the setup baseline. Broader historical phases belong to
- * later SDE slices.
+ * [evaluateFirstNight] retains the original round-one compatibility boundary. [evaluateHistorical]
+ * replays the same immutable setup baseline through the canonical committed action/observation
+ * prefix, allowing later interactions without introducing a second historical state owner.
  */
 internal object StructuredInformationProductionShadow {
     fun <T : DynamicInformationOutcome> evaluateFirstNight(
