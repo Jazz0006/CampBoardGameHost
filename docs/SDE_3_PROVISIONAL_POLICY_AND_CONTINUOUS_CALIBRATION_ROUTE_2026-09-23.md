@@ -413,8 +413,8 @@ Recommended sequence:
 3. define the minimal generic `DecisionCandidate` / `DecisionFeatures` / `PolicyEvaluation` contract without migrating behavior prematurely;
 4. follow the explicit staging in `SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`;
 5. **3B1 COMPLETE:** lifecycle-safe historical shadow/input binding is implemented with canonical committed-prefix refs, typed external-owner bindings and no-hindsight enforcement;
-6. **3B2 CURRENT:** implement confirmation-chain impact as the first new non-strategic projector;
-7. **3B3:** derive impaired-narrative coherence from canonical semantic history, with upstream `AbilityState` plus canonical action/setup history as impairment binding and no second mutable history store;
+6. **3B2 COMPLETE:** confirmation-chain impact is projected from canonical recipient-visible committed history with strict no-hindsight, exact leave-one-out contribution semantics and bounded R02/R04 E2 regression; V1 policy remains unchanged;
+7. **3B3 CURRENT:** derive impaired-narrative coherence from canonical semantic history, with upstream `AbilityState` plus canonical action/setup history as impairment binding and no second mutable history store;
 8. **3B4/3B5:** add healthy-information utility and contextual role-function exposure projectors;
 9. **3B6:** introduce expert-informed qualitative V1 soft priorities only after the matching feature projector and semantic replay are stable;
 10. leave versioned `DecisionTrace` / replay persistence to SDE-3C;
