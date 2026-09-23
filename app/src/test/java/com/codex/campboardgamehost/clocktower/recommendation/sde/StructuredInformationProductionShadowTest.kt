@@ -108,6 +108,8 @@ class StructuredInformationProductionShadowTest {
         assertTrue(result.plannedDecisions.all { it.sourceRevision == revision })
         assertTrue(result.consequences is ExactConsequenceEvaluation.Ready)
         assertTrue(result.featureEvaluation is DecisionFeatureEvaluation.Ready)
+        assertEquals(PolicyVersions.BEGINNER_CONSERVATIVE_V1, result.policyEvaluation.policyVersion)
+        assertEquals(model.contextSnapshot.legalCandidateIds, result.policyEvaluation.candidateIds)
         val featureEvaluation = result.featureEvaluation as DecisionFeatureEvaluation.Ready
         assertEquals(
             model.contextSnapshot.legalCandidateIds,
@@ -145,6 +147,8 @@ class StructuredInformationProductionShadowTest {
         )
         assertTrue(chefModel.contextSnapshot.legalCandidateIds.size > 1)
         assertTrue(chefResult.featureEvaluation is DecisionFeatureEvaluation.Ready)
+        assertEquals(PolicyVersions.BEGINNER_CONSERVATIVE_V1, chefResult.policyEvaluation.policyVersion)
+        assertEquals(chefModel.contextSnapshot.legalCandidateIds, chefResult.policyEvaluation.candidateIds)
         assertEquals(
             chefModel.contextSnapshot.legalCandidateIds,
             (chefResult.featureEvaluation as DecisionFeatureEvaluation.Ready)
