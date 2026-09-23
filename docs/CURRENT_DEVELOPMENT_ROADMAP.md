@@ -63,6 +63,7 @@ Always query live refs before executable edits.
 - SDE-3B3 completion audit: [`SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md)
 - SDE-3B4 completion audit: [`SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md)
 - SDE-3B5 architecture audit: [`SDE_3B5_ROLE_FUNCTION_EXPOSURE_ARCHITECTURE_AUDIT_2026-09-23.md`](SDE_3B5_ROLE_FUNCTION_EXPOSURE_ARCHITECTURE_AUDIT_2026-09-23.md)
+- SDE-3B5 completion audit: [`SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 - B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
@@ -79,7 +80,7 @@ Always query live refs before executable edits.
 - Spy/Recluse registration is per interaction.
 - BEGINNER thematic prior: Spy normally registers as Good/Townsfolk/Outsider; Recluse normally registers as Evil/Minion/Demon.
 - Actual registration is a fallback when the thematic default materially improves whole-bundle health.
-- Avoid Librarian -> Recluse when a healthy alternative exists; strongly avoid Investigator -> Spy when a healthy alternative exists.
+- Role-function exposure is a generic contextual diagnostic, not a frozen named-role preference; current evidence does not justify Librarian/Recluse or Investigator/Spy severity.
 - Chef/Empath are rule-determined only when every legal registration branch yields the same healthy value.
 - Drunk/poisoned information may accidentally be true; repeated/history-dependent impaired information must use one role-agnostic **derived narrative projection over canonical history** so later outputs can be checked for coherence without introducing a second mutable narrative state.
 - Strategic Evil topology is primary structural evidence, but role-information utility, confirmation chains, role-function exposure, bluff usability and information floor remain separate.
@@ -207,8 +208,8 @@ SDE-3B staged status on PR #153:
 2. **3B2 confirmation-chain projector — COMPLETE** — generic support/contradiction/independent-contribution, ambiguity restoration, source authentication and multi-channel collapse are projected from exact recipient-visible historical replay; R02/R04-style E2 semantic regressions are bounded by available evidence; V1 policy remains unchanged.
 3. **3B3 impaired-narrative projector — COMPLETE** — score-free role-agnostic projection distinguishes persistent setup-bound versus temporary action-bound impairment episodes, historical compatibility/breaks, forced versus avoidable transitions and detectability; bounded R04/R06 E2 regressions are green and V1 policy remains unchanged.
 4. **3B4 healthy-information utility — COMPLETE** — score-free whole-table healthy routes distinguish usable/independent routes before and after, redundancy/contradiction, lost routes and last-route removal; bounded R01/R04 E2 regressions are green; registered truth is preserved without conflating it with actual-state `SemanticTruth`; V1 policy remains unchanged.
-5. **3B5 contextual role-function exposure — CURRENT** — diagnostic first, lifecycle-aware, never a named-role blanket rule;
-6. **3B6 expert-informed V1 soft priorities** — only after matching typed projectors and semantic replay are stable.
+5. **3B5 contextual role-function exposure — COMPLETE** — score-free registration-ambiguity exposure, historical/confirmation context and bounded `goldcand-ben-03` E2 regression are accepted; severity remains E3-gated;
+6. **3B6 expert-informed V1 soft priorities — CURRENT** — audit E3 eligibility before adding any policy reason.
 
 Expert evidence participates immediately at the architecture/feature-priority level and later as semantic regression. It becomes candidate preference only after the matching feature is stable. Numeric thresholds and multi-axis tradeoff strength remain SDE-3D.
 
@@ -219,7 +220,7 @@ The full conservative policy direction remains:
 - healthy-information preservation;
 - contextual Red-Herring utility;
 - coherent impaired narrative;
-- role-function exposure as a soft contextual cost;
+- role-function exposure retained as a diagnostic until qualifying E3 evidence supports a soft contextual reason;
 - bluff usability / route diversity;
 - seeded randomness among effectively equivalent healthy survivors.
 
