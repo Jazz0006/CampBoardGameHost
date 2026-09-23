@@ -110,6 +110,12 @@ class StructuredInformationProductionShadowTest {
             it.legalityProvenance.candidateSpaceIdentity == model.contextSnapshot.semanticIdentity
         })
         assertTrue(result.sdeCandidates.all { it.inputBindings === SdeDecisionInputBindings.NotCaptured })
+        assertTrue(result.sdeCandidates.all {
+            val prefix = it.historyPrefixRef as SdeHistoricalPrefixRef.Global
+            prefix.gameId == currentSnapshot.gameId &&
+                prefix.actionRefs.isEmpty() &&
+                prefix.observationRefs.isEmpty()
+        })
         assertTrue(result.plannedDecisions.all { it.sourceRevision == revision })
         assertTrue(result.consequences is ExactConsequenceEvaluation.Ready)
         assertTrue(result.featureEvaluation is DecisionFeatureEvaluation.Ready)
@@ -145,12 +151,22 @@ class StructuredInformationProductionShadowTest {
             revision = revision,
             recommendedValue = 1,
         )
+        val chefBindings = SdeDecisionInputBindings.Captured(
+            committedInputRefs = setOf(
+                CommittedDecisionInputRef(
+                    inputId = "shown-identity:setup",
+                    ownerId = "committed-clocktower-setup",
+                    kind = SdeCommittedDecisionInputKind.SETUP_SHOWN_IDENTITY,
+                ),
+            ),
+        )
         val chefResult = StructuredInformationProductionShadow.evaluateFirstNight(
             decisionContext = chefModel.shadowDecisionContext,
             validatedRuleset = validatedRuleset,
             committedSetup = setup,
             currentSnapshot = currentSnapshot,
             roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
+            inputBindings = chefBindings,
             hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
         )
         assertTrue(chefModel.contextSnapshot.legalCandidateIds.size > 1)
@@ -159,6 +175,7 @@ class StructuredInformationProductionShadowTest {
         assertTrue(chefResult.sdeCandidates.all {
             it.sourceInteraction.abilityState == AbilityState.MALFUNCTIONING_POISONED
         })
+        assertTrue(chefResult.sdeCandidates.all { it.inputBindings == chefBindings })
         assertEquals(PolicyVersions.BEGINNER_CONSERVATIVE_V1, chefResult.policyEvaluation.policyVersion)
         assertEquals(chefModel.contextSnapshot.legalCandidateIds, chefResult.policyEvaluation.candidateIds)
         assertEquals(
