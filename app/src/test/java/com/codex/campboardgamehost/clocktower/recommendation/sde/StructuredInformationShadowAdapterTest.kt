@@ -15,7 +15,10 @@ import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheti
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
+import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import com.codex.campboardgamehost.clocktower.epistemic.A4RuntimeFixtures
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGenerationContext
@@ -134,6 +137,64 @@ class StructuredInformationShadowAdapterTest {
     }
 
     @Test
+    fun `committed historical support reaches structured confirmation feature`() {
+        val revision = InformationDecisionRevision(
+            gameStateRevision = snapshot.gameStateRevision,
+            playerInputRevision = snapshot.playerInputRevision,
+        )
+        val proposition = InformationProposition.NumericResult(
+            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+            sourceSeat = 2,
+            subjectSeats = listOf(1, 3),
+            value = 0,
+        )
+        val historicalRecord = RecordedEpistemicObservation(
+            recordId = "history:empath-zero",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            sourceSeat = 2,
+            sourceAbility = RoleId("PriorChannel"),
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(2),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = proposition,
+            timelineBinding = ObservationTimelineBinding.Global(
+                TimelinePoint(
+                    phase = StorytellerPhase.FIRST_NIGHT,
+                    round = 1,
+                    sequence = 1,
+                    globalSequence = 0,
+                ),
+            ),
+        )
+        val observationLog = EpistemicObservationLog(listOf(historicalRecord))
+        val decisionContext = structuredEmpathContext(revision, sequence = 2)
+
+        val shadow = StructuredInformationShadowAdapter.evaluate(
+            decisionContext = decisionContext,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = validatedRuleset,
+                exactContext = exactHistoricalContext(ActionFactTimeline(emptyList()), observationLog),
+            ),
+        )
+
+        val candidateId = decisionContext.legalCandidates
+            .single { it.draft.proposition == proposition }
+            .candidateId
+        val features = shadow.featureEvaluation as DecisionFeatureEvaluation.Ready
+        val confirmation = features.candidates
+            .single { it.candidateId == candidateId }
+            .features
+            .confirmationChainImpact
+        assertTrue(confirmation is FeatureProjection.Projected)
+        confirmation as FeatureProjection.Projected
+        assertEquals(setOf(historicalRecord.recordId), confirmation.value.supportingObservationIds)
+        assertTrue(confirmation.value.historicalObservationImpacts.single().authenticatesDistinctSource)
+        assertEquals(listOf(historicalRecord), observationLog.records)
+    }
+
+    @Test
     fun `exact deferral stays separate from structured recommendation authority`() {
         val revision = InformationDecisionRevision(
             gameStateRevision = snapshot.gameStateRevision,
@@ -166,8 +227,10 @@ class StructuredInformationShadowAdapterTest {
         )
     }
 
-    private fun structuredEmpathContext(revision: InformationDecisionRevision) =
-        ClocktowerRecommendationCoordinator().let { coordinator ->
+    private fun structuredEmpathContext(
+        revision: InformationDecisionRevision,
+        sequence: Int = 0,
+    ) = ClocktowerRecommendationCoordinator().let { coordinator ->
             val evaluations = coordinator.resolveNumberInformation(
                 InformationResolutionRequest.Number(
                     context = UnreliableNumberContext(
@@ -193,15 +256,18 @@ class StructuredInformationShadowAdapterTest {
                 recommendedCandidateIds = recommendedCandidateIds,
                 revision = revision,
                 semanticIdentity = "numeric|Empath|${snapshot.gameId}|FIRST_NIGHT|1|0|2|LIVING_EVIL_NEIGHBOURS",
-                draftOf = { evaluation -> empathDraft(evaluation.candidate.outcome) },
+                draftOf = { evaluation -> empathDraft(evaluation.candidate.outcome, sequence) },
             )
         }
 
-    private fun empathDraft(outcome: DynamicInformationOutcome.Number) = EpistemicObservationDraft(
+    private fun empathDraft(
+        outcome: DynamicInformationOutcome.Number,
+        sequence: Int = 0,
+    ) = EpistemicObservationDraft(
         recordId = "sde-1e-empath-${outcome.value}",
         phase = StorytellerPhase.FIRST_NIGHT,
         round = 1,
-        sequence = 0,
+        sequence = sequence,
         sourceSeat = 2,
         sourceAbility = RoleId("Empath"),
         visibility = ObservationVisibility.PRIVATE,
