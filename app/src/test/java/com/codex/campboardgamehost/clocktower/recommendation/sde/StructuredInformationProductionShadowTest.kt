@@ -5,6 +5,7 @@ import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.prepareNumericInformationUiModel
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
+import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
@@ -220,7 +221,7 @@ class StructuredInformationProductionShadowTest {
             initialState = fixture.gameState,
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        val firstPlayer = fixture.gameState.players.first()
+        val empathPlayer = fixture.gameState.players.single { player -> player.actualRole.value == "Empath" }
         session.commitGlobalEpistemicObservation(
             EpistemicObservationDraft(
                 recordId = "history:shown-role:seat-1",
@@ -230,11 +231,11 @@ class StructuredInformationProductionShadowTest {
                 sourceSeat = null,
                 sourceAbility = null,
                 visibility = ObservationVisibility.PRIVATE,
-                recipientSeats = setOf(firstPlayer.seat),
+                recipientSeats = setOf(empathPlayer.seat),
                 reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
                 proposition = InformationProposition.ShownRoleAt(
-                    seat = firstPlayer.seat,
-                    role = firstPlayer.shownRole ?: firstPlayer.actualRole,
+                    seat = empathPlayer.seat,
+                    role = empathPlayer.shownRole ?: empathPlayer.actualRole,
                 ),
             ),
         )
@@ -254,7 +255,7 @@ class StructuredInformationProductionShadowTest {
                 phase = StorytellerPhase.NIGHT,
                 round = 2,
                 sequence = 0,
-                targetSeat = firstPlayer.seat,
+                targetSeat = empathPlayer.seat,
             ),
         )
         val currentSnapshot = session.toGameSnapshot(rulesetRef)
@@ -277,17 +278,25 @@ class StructuredInformationProductionShadowTest {
             gameStateRevision = currentSnapshot.gameStateRevision,
             playerInputRevision = currentSnapshot.playerInputRevision,
         )
+        val playerCount = currentSnapshot.gameState.players.size
+        val neighbourSeats = listOf(
+            if (empathPlayer.seat == 1) playerCount else empathPlayer.seat - 1,
+            if (empathPlayer.seat == playerCount) 1 else empathPlayer.seat + 1,
+        )
+        val empathTrueValue = neighbourSeats.count { seat ->
+            currentSnapshot.gameState.playerAt(seat)?.actualAlignment == Alignment.EVIL
+        }
         val model = prepareNumericInformationUiModel(
             coordinator = ClocktowerRecommendationCoordinator(),
             gameId = currentSnapshot.gameId,
             phase = ClocktowerPhase.Night,
             round = 2,
             sequence = 1,
-            actorSeat = firstPlayer.seat,
+            actorSeat = empathPlayer.seat,
             abilityRole = RoleId("Empath"),
             metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
-            subjectSeats = listOf(2, currentSnapshot.gameState.players.size),
-            trueValue = 0,
+            subjectSeats = neighbourSeats,
+            trueValue = empathTrueValue,
             minimumValue = 0,
             maximumValue = 2,
             reliability = InformationReliability.POISONED,
