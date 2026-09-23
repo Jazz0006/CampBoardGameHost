@@ -34,12 +34,6 @@ internal data class StrategicDecisionFeatures(
     }
 }
 
-internal data class ConfirmationChainFeatures(
-    val supportedSeats: Set<Int> = emptySet(),
-    val contradictedSeats: Set<Int> = emptySet(),
-    val reasonCodes: Set<String> = emptySet(),
-)
-
 internal data class HealthyInformationUtilityFeatures(
     val preservedInformationIds: Set<String> = emptySet(),
     val lostInformationIds: Set<String> = emptySet(),
