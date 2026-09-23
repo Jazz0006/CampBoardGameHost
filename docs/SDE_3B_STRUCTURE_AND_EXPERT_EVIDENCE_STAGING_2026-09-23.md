@@ -300,22 +300,22 @@ Evidence usage:
 - E3 only for exact categorical boundaries that have explicit support;
 - numeric floor stays SDE-3D.
 
-### SDE-3B5 — contextual role-function exposure — CURRENT
+### SDE-3B5 — contextual role-function exposure — COMPLETE
 
-Implement only after lifecycle and confirmation context are available, because exposure severity changes with game stage.
+Completion authority: `SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`.
 
-Examples such as Spy/Ravenkeeper are evidence for the dimension, not special cases.
+Accepted semantics:
 
-Feature should capture generic exposure mechanics such as:
+- one role-agnostic, score-free exposure contract;
+- registration ambiguity is the first rules-backed capability;
+- direct exposure is distinguished from already exposed and newly exposed state;
+- distinct-source confirmation amplification is reused from the 3B2 provenance rather than recomputed;
+- exposure shared by every legal candidate is forced; exposure with a preserving legal alternative is avoidable;
+- canonical history and recipient visibility are reused without a second exposure ledger;
+- the bounded `goldcand-ben-03` reconstruction validates the registration-ambiguity semantic shape without becoming a preference label;
+- V1 policy remains unchanged.
 
-- whether a candidate directly reveals a hidden mechanic/role whose function depends on ambiguity;
-- whether the information is already independently exposed;
-- whether the candidate creates a new confirmation route;
-- whether exposure is forced or avoidable.
-
-At first this should remain diagnostic / limitation-bearing.
-
-Do not turn it into a universal reject until replayable expert evidence contains explicit considered alternatives.
+The current evidence still does **not** support exposure severity. Direct exposure remains legal, can be forced, and must not become a universal reject or named-role preference without qualifying E3 evidence.
 
 ### SDE-3B6 — expert-informed V1 soft priorities
 
@@ -337,14 +337,17 @@ No total score.
 
 Candidate ordering should remain partial. When evidence does not justify an ordering, retain a tie and use the existing seeded selector.
 
-Potential first qualitative preferences, subject to completed feature evidence:
+Potential first qualitative preferences must pass the E3 gate independently of projector completion.
 
-1. avoid an avoidable historical narrative contradiction;
-2. avoid a clearly destructive confirmation-chain collapse when a healthier alternative exists;
-3. avoid eliminating the last usable healthy-information route;
-4. keep contextual role-function exposure as a cost, not a blanket prohibition.
+Candidate areas for 3B6 audit include:
 
-Red Herring and Demon-bluff policy should enter only when their contextual feature projectors exist.
+1. avoid an avoidable historical narrative contradiction where explicit qualified rationale supports that rule;
+2. avoid a clearly destructive confirmation-chain collapse when a healthier alternative exists, if the evidence supports that categorical boundary;
+3. preserve the last usable healthy-information route where the evidence supports that categorical boundary.
+
+**Role-function exposure is not currently eligible for a V1 preference.** Gap C still lacks the explicit considered-alternative rationale required to choose severity. Projector completion alone is not policy authority.
+
+Red Herring and Demon-bluff policy should enter only when their contextual feature projectors and matching E3 evidence exist.
 
 ## 4. Where SDE-3C now begins
 
@@ -399,7 +402,8 @@ This is the default path for every new expert-derived idea.
 | R04 long trajectory / moving poison / Demon transfers | lifecycle + input binding | confirmation, narrative, future flexibility | no numeric weights |
 | R06 poison → RK false info | impairment episode boundary | temporary-poison narrative | qualitative only |
 | R01 parallel true/false channels | whole-bundle requirement | healthy-information utility | no budget threshold |
-| Beardy RK/Spy guidance | feature existence / lifecycle context | role exposure + confirmation semantics | soft reason only if generic |
+| Beardy RK/Spy guidance | feature existence / lifecycle context | role exposure + confirmation semantics | feature-existence support only unless rationale meets E3 |
+| goldcand-ben-03 / Live and Imp-Person | interaction-scoped registration + direct identity exposure | 3B5 registration-ambiguity E2 regression | no preference label; specific N1 choice rationale is absent |
 | Ben/Evin explicit rationale already in SDE corpus | contextual feature motivation | RH / impaired believability regressions | qualitative support, not weight |
 
 ## 7. Stop conditions
@@ -418,16 +422,16 @@ In those cases keep the candidate set tied and expose the limitation.
 
 ## 8. Immediate next action on PR #153
 
-Do **not** add another policy reason first.
+SDE-3B5 is complete. Begin **SDE-3B6 — expert-informed V1 soft priorities** with an evidence-eligibility audit before production policy edits.
 
 Next work:
 
-1. perform the 3B5 architecture/fanout audit before production edits;
-2. reuse lifecycle, confirmation-chain, registration and rules semantics already owned outside policy;
-3. define role-agnostic exposure facts rather than named-role penalties;
-4. distinguish newly exposed versus already exposed mechanics, new confirmation routes, and forced versus avoidable exposure;
-5. start with diagnostic/categorical facts, not a score or rejection rule;
-6. add generic tests first, then bounded E1/E2 semantic regressions whose source material actually supports the exposure shape;
-7. keep V1 policy unchanged until 3B5 feature semantics are stable.
+1. re-query live PR #153 / main / checks;
+2. enumerate each completed feature family that could affect V1 ordering;
+3. map every proposed qualitative reason to explicit E3 evidence and its provenance/independence limits;
+4. reject any proposed policy reason whose support is only E1/E2, silent observed choice, or an unsupported numeric threshold;
+5. keep role-function exposure diagnostic until targeted Gap C obtains qualifying E3 rationale;
+6. preserve partial ordering and seeded ties wherever evidence does not distinguish survivors;
+7. add a durable policy RED only after one generic E3-backed reason is selected and specified.
 
 Keep #153 draft.
