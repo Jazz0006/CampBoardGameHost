@@ -73,6 +73,34 @@ class HealthyInformationUtilityFeaturesProjectorTest {
     }
 
     @Test
+    fun `infeasible whole history does not falsely label an unrelated healthy route contradicted`() {
+        val route = historical("unrelated-route", recipientSeat = 4)
+
+        val features = HealthyInformationUtilityFeaturesProjector.project(
+            HealthyInformationCandidateEvidence(
+                candidateId = "candidate",
+                recipientSeat = 2,
+                candidateHistoryFeasibleAfter = false,
+                currentCandidateHealthy = false,
+                currentCandidateIndependentlyConstraining = false,
+                historicalRoutes = listOf(
+                    routeEvidence(
+                        ref = route,
+                        independentlyUsableBefore = true,
+                        relationToCurrentCandidate =
+                            ConfirmationObservationRelation.NO_CONTRIBUTION,
+                    ),
+                ),
+            ),
+        )
+
+        assertTrue(features.usableHealthyRouteRefsAfter.isEmpty())
+        assertTrue(features.independentHealthyRouteRefsAfter.isEmpty())
+        assertTrue(features.contradictedHealthyRouteRefs.isEmpty())
+        assertTrue(features.newlyRedundantHealthyRouteRefs.isEmpty())
+    }
+
+    @Test
     fun `functioning informative candidate creates a healthy independent route without a budget`() {
         val features = HealthyInformationUtilityFeaturesProjector.project(
             HealthyInformationCandidateEvidence(
