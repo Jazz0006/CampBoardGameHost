@@ -16,7 +16,8 @@ Use these as the active authorities, in order:
 5. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 6. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
 7. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
-8. this handoff
+8. `docs/SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`
+9. this handoff
 
 Evidence/provenance references when needed:
 
@@ -170,13 +171,21 @@ Current implemented boundary:
 - structured shadow carries policy evaluation but production recommendation/confirmation remains unchanged;
 - source ability state and actual-state semantic truth are now projected from existing legal-candidate semantics without importing legacy score/probability.
 
-Next architecture target:
+Revised architecture target after the ClocktowerEvidenceLab C0 handoff:
 
-- derive impaired-narrative coherence from canonical `ActionFactTimeline + EpistemicObservationLog`;
-- do not persist a second mutable narrative state;
-- use upstream `AbilityState` to decide whether impaired-narrative policy applies;
-- do not infer impairment from player-facing observation reliability;
-- audit the later-night lifecycle/shadow boundary before widening the current first-night production wrapper.
+- **3B1 first:** audit/generalize the later-night lifecycle/shadow boundary and bind policy-relevant historical inputs explicitly;
+- keep `ActionFactTimeline + EpistemicObservationLog` as canonical history; do not persist a second mutable narrative state;
+- use upstream `AbilityState` and canonical action/setup history for actual impairment semantics; do not infer impairment from player-facing observation reliability;
+- **3B2 next:** build a generic confirmation-chain projector before stronger policy preferences;
+- **3B3:** build the shared role-agnostic impaired-narrative projector;
+- **3B4/3B5:** healthy-information utility and contextual role-function exposure;
+- only after each projector has semantic replay evidence may expert rationale become a V1 soft preference.
+
+Evidence authority levels are now explicit:
+- E1 architecture/feature existence — use now;
+- E2 real-game semantic regression — use after structure/projector exists;
+- E3 qualified expert qualitative policy — use only after feature stability;
+- E4 numeric thresholds/tradeoffs — defer to SDE-3D.
 
 ## 8. Target SDE-3A contracts
 
@@ -389,9 +398,11 @@ Current SDE-3B checkpoint:
 Immediate next action:
 
 1. re-query live #153 / main / checks;
-2. finish FAST/R2 validation for the current core checkpoint;
-3. audit the later-night structured shadow lifecycle boundary;
-4. design the shared role-agnostic impaired-narrative feature projector over canonical history;
-5. do not add numeric bands, role-specific coherence branches, DecisionTrace persistence, or production cutover.
+2. perform **3B1 historical interaction / input-binding audit** before adding any new policy reason;
+3. identify the shared lifecycle-safe envelope and owners for FT targets, Poisoner target, Red Herring, Drunk shown identity, prior observations and Demon succession;
+4. implement the smallest structure-only binding slice with no preference change;
+5. then implement **3B2 confirmation-chain impact** as the first new non-strategic projector and validate it with generic tests plus matching Evidence Lab replay prefixes;
+6. only after that proceed to 3B3 impaired narrative;
+7. do not add numeric bands, fixture-specific expert rules, DecisionTrace persistence, or production cutover.
 
 Keep #153 draft until explicit user **“授权合并”**.
