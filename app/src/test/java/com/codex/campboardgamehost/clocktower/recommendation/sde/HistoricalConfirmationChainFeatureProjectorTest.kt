@@ -102,6 +102,60 @@ class HistoricalConfirmationChainFeatureProjectorTest {
     }
 
     @Test
+    fun `ignores historical observations that are not visible to the candidate recipient`() {
+        val privateRecord = record(
+            id = "history:private-other-seat",
+            sequence = 1,
+            globalSequence = 0,
+            sourceSeat = 2,
+            sourceAbility = RoleId("private-channel"),
+            proposition = InformationProposition.Not(
+                InformationProposition.RoleAt(4, RoleId("Poisoner")),
+            ),
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(2),
+        )
+        val historical = exactContext(EpistemicObservationLog(listOf(privateRecord)))
+        val exactCandidate = candidate(
+            id = "candidate:private-isolation",
+            proposition = privateRecord.proposition,
+        )
+        val context = ExactConsequenceContext(
+            validatedRuleset = validatedRuleset,
+            exactContext = historical,
+        )
+        val full = StorytellerDecisionEngine.evaluateExactConsequences(
+            request = ExactConsequenceRequest("decision", listOf(exactCandidate)),
+            context = context,
+        ) as ExactConsequenceEvaluation.Ready
+
+        val projected = HistoricalConfirmationChainFeatureProjector.project(
+            fullEvaluation = full,
+            exactCandidates = listOf(exactCandidate),
+            sdeCandidates = listOf(
+                sdeCandidate(
+                    candidateId = exactCandidate.candidateId,
+                    observationIds = exactCandidate.observations.map(EpistemicObservation::observationId),
+                    historyRefs = listOf(
+                        SdeHistoricalObservationRef(
+                            recordId = privateRecord.recordId,
+                            globalSequence = 0,
+                        ),
+                    ),
+                ),
+            ),
+            context = context,
+        )
+
+        val confirmation =
+            (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
+        assertTrue(confirmation.historicalObservationImpacts.isEmpty())
+        assertTrue(confirmation.supportingObservationIds.isEmpty())
+        assertTrue(confirmation.contradictedObservationIds.isEmpty())
+        assertTrue(confirmation.independentlyContributingObservationIds.isEmpty())
+    }
+
+    @Test
     fun `missing exact capability leaves confirmation feature explicitly unavailable`() {
         val historicalRecord = record(
             id = "history:not-poisoner",
@@ -351,6 +405,8 @@ class HistoricalConfirmationChainFeatureProjectorTest {
         proposition: InformationProposition,
         phase: StorytellerPhase = StorytellerPhase.FIRST_NIGHT,
         round: Int = 1,
+        visibility: ObservationVisibility = ObservationVisibility.PUBLIC,
+        recipientSeats: Set<Int> = emptySet(),
     ) = RecordedEpistemicObservation(
         recordId = id,
         phase = phase,
@@ -358,8 +414,8 @@ class HistoricalConfirmationChainFeatureProjectorTest {
         sequence = sequence,
         sourceSeat = sourceSeat,
         sourceAbility = sourceAbility,
-        visibility = ObservationVisibility.PUBLIC,
-        recipientSeats = emptySet(),
+        visibility = visibility,
+        recipientSeats = recipientSeats,
         reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
         proposition = proposition,
         timelineBinding = ObservationTimelineBinding.Global(
