@@ -307,13 +307,22 @@ class StructuredInformationProductionShadowTest {
         val choicesBefore = model.choices.toList()
         val sessionBeforeShadow = session.state
 
+        val historicalBindings = SdeDecisionInputBindings.Captured(
+            playerControlledInputRefs = setOf(
+                PlayerControlledDecisionInputRef(
+                    inputId = "poison:night-2:seat-${empathPlayer.seat}",
+                    ownerId = "action-fact-timeline",
+                    kind = SdePlayerControlledDecisionInputKind.TARGET_SELECTION,
+                ),
+            ),
+        )
         val result = StructuredInformationProductionShadow.evaluateHistorical(
             decisionContext = model.shadowDecisionContext,
             validatedRuleset = validatedRuleset,
             committedSetup = setup,
             currentSnapshot = currentSnapshot,
             roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
-            inputBindings = SdeDecisionInputBindings.Captured(),
+            inputBindings = historicalBindings,
             hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
         )
 
@@ -324,7 +333,7 @@ class StructuredInformationProductionShadowTest {
                 sequence = 1,
             )
         })
-        assertTrue(result.sdeCandidates.all { it.inputBindings == SdeDecisionInputBindings.Captured() })
+        assertTrue(result.sdeCandidates.all { it.inputBindings == historicalBindings })
         assertTrue(result.sdeCandidates.all { candidate ->
             val prefix = candidate.historyPrefixRef as SdeHistoricalPrefixRef.Global
             prefix.observationRefs.map(SdeHistoricalObservationRef::recordId) ==
