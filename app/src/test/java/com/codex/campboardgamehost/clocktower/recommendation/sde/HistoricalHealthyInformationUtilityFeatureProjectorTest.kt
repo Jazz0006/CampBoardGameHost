@@ -4,7 +4,10 @@ import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
@@ -130,6 +133,90 @@ class HistoricalHealthyInformationUtilityFeatureProjectorTest {
         assertEquals(currentRoute, feature.currentCandidateHealthyRouteRef)
         assertTrue(currentRoute in feature.usableHealthyRouteRefsAfter)
         assertFalse(currentRoute in feature.independentHealthyRouteRefsAfter)
+    }
+
+    @Test
+    fun `functioning registration-dependent false history is not counted as healthy actual truth`() {
+        val registrationSnapshot = snapshot.copy(
+            gameState = GameState(
+                script = snapshot.gameState.script,
+                players = listOf(
+                    PlayerState(1, "P1", RoleId("Chef"), Alignment.GOOD, CharacterType.TOWNSFOLK),
+                    PlayerState(2, "P2", RoleId("Recluse"), Alignment.GOOD, CharacterType.OUTSIDER),
+                    PlayerState(3, "P3", RoleId("Poisoner"), Alignment.EVIL, CharacterType.MINION),
+                    PlayerState(4, "P4", RoleId("Empath"), Alignment.GOOD, CharacterType.TOWNSFOLK),
+                    PlayerState(5, "P5", RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON),
+                ),
+                seed = snapshot.gameState.seed,
+            ),
+        )
+        val chefViaRecluseRegistration = numericRecord(
+            id = "chef-one-via-recluse-registration",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 0,
+            globalSequence = 0,
+            sourceSeat = 1,
+            sourceAbility = RoleId("Chef"),
+            metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+            subjectSeats = registrationSnapshot.gameState.players.map { it.seat },
+            value = 1,
+        )
+        val observationLog = EpistemicObservationLog(listOf(chefViaRecluseRegistration))
+        val exactCandidate = currentCandidate(
+            id = "current-empath-two",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            sourceSeat = 4,
+            sourceAbility = RoleId("Empath"),
+            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+            subjectSeats = listOf(3, 5),
+            value = 2,
+            baseSnapshot = registrationSnapshot,
+        )
+        val sde = sdeCandidate(
+            candidate = exactCandidate,
+            abilityState = AbilityState.FUNCTIONING,
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            timeline = ActionFactTimeline(),
+            observationLog = observationLog,
+            baseSnapshot = registrationSnapshot,
+        )
+
+        val projected = HistoricalHealthyInformationUtilityFeatureProjector.project(
+            fullEvaluation = readyConsequence(exactCandidate, before = 10, after = 5),
+            confirmationByCandidateId = mapOf(
+                exactCandidate.candidateId to FeatureProjection.Projected(
+                    ConfirmationChainFeatures(
+                        candidateRemovedExactWorldCount = BigInteger.valueOf(5),
+                        candidateChannel = ConfirmationChannelRef.Source(4, RoleId("Empath")),
+                    ),
+                ),
+            ),
+            exactCandidates = listOf(exactCandidate),
+            sdeCandidates = listOf(sde),
+            semanticTruthByCandidateId = mapOf(exactCandidate.candidateId to SemanticTruth.TRUE),
+            context = ExactConsequenceContext(
+                validatedRuleset,
+                exactContext(
+                    timeline = ActionFactTimeline(),
+                    observationLog = observationLog,
+                    baseSnapshot = registrationSnapshot,
+                ),
+            ),
+        )
+
+        val feature =
+            (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
+        val registrationOnlyRoute = HealthyInformationRouteRef.HistoricalObservation(
+            chefViaRecluseRegistration.recordId,
+            1,
+        )
+        assertFalse(registrationOnlyRoute in feature.usableHealthyRouteRefsBefore)
+        assertFalse(registrationOnlyRoute in feature.usableHealthyRouteRefsAfter)
     }
 
     @Test
