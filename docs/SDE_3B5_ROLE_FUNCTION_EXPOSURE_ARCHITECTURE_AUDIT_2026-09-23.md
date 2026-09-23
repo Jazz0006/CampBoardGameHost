@@ -3,7 +3,7 @@
 > Date: 2026-09-23 Australia/Sydney  
 > Branch: `sde-3b-beginner-conservative-v1`  
 > PR: **#153 — draft**  
-> Status: **ARCHITECTURE / FANOUT AUDIT COMPLETE; IMPLEMENTATION NOT YET ACCEPTED**
+> Status: **COMPLETE — implementation accepted; see `SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`**
 
 ## 1. Audit conclusion
 
@@ -125,32 +125,27 @@ That decision requires a fanout check after the pair projector exists.
 
 ## 9. Implementation order
 
-### SDE-3B5A — pure typed exposure semantics — NEXT
+### SDE-3B5A — pure typed exposure semantics — COMPLETE
 
-Tests first.
+Role-agnostic score-free direct/new/already/confirmation/forced/avoidable semantics are accepted.
 
-Define role-agnostic candidate-set projection for:
+### SDE-3B5B — pair-information registration-ambiguity projection — COMPLETE
 
-- exposed targets;
-- newly versus already exposed;
-- confirmation-amplified exposure;
-- forced versus avoidable exposure.
+`PairInformationRegistrationAmbiguityExposureProjector` reuses `NaturalPairInformationCandidateGenerator`, `PairInformationLegalDomain`, `TroubleBrewingRegistrationDomain`, `RegistrationFact` and the selected witness bound by `PairInformationExactConsequenceAdapter`.
 
-No rules lookup and no policy.
+Production contains no Librarian/Recluse or Investigator/Spy policy branch.
 
-### SDE-3B5B — pair-information registration-ambiguity projection
+### SDE-3B5C — historical / confirmation integration — COMPLETE
 
-Reuse `PairInformationLegalDomain`, `TroubleBrewingRegistrationDomain` and existing registration witnesses.
+`HistoricalRoleFunctionExposureFeatureProjector` reuses canonical history, committed-prefix chronology, recipient visibility and existing confirmation provenance. No durable exposure state was added.
 
-Production must contain no Librarian/Recluse or Investigator/Spy policy branch.
+### SDE-3B5D — bounded E1/E2 regression and completion audit — COMPLETE
 
-### SDE-3B5C — historical / confirmation integration
+The existing `goldcand-ben-03` executable reconstruction validates the supported semantic shape without turning its observed choice into a preference label. Severity remains deferred to a qualifying E3 evidence gate.
 
-Reuse canonical history and confirmation provenance. Add no durable exposure state.
+Completion authority:
 
-### SDE-3B5D — bounded E1/E2 regression and completion audit
-
-Use only evidence whose source actually establishes the semantic shape. Severity remains deferred to 3B6/E3.
+`SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`
 
 ## 10. Non-goals
 
@@ -166,15 +161,10 @@ Use only evidence whose source actually establishes the semantic shape. Severity
 - change V1 policy ordering;
 - run T4 before overall SDE-3B acceptance.
 
-## 11. Immediate implementation target
+## 11. Completion boundary
 
-Start SDE-3B5A with the pure shared contract.
+SDE-3B5 is complete as a semantic/projector slice.
 
-The first RED should prove that, across one legal candidate set:
+The current structured numeric shadow is not generalized merely to carry pair-information exposure. Pair information keeps its separate exact-consequence path until a clean production envelope is introduced.
 
-- a target exposed by every candidate is **forced**;
-- a target exposed by only some candidates is **avoidable**;
-- an already exposed target is not reported as newly exposed;
-- confirmation amplification stays separate from exposure novelty.
-
-Only after that contract is green should rules-backed pair-information evidence be added.
+Role-function exposure remains diagnostic: the current evidence validates feature existence and semantics, not policy severity. SDE-3B6 must not promote this feature to a V1 preference unless the targeted Gap C E3 evidence requirement is independently satisfied.
