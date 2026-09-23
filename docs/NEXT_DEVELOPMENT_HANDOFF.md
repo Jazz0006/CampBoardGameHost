@@ -371,7 +371,7 @@ The old external-human auto-workflow that could take ~2h48m has been retired.
 
 ## 16. Next conversation task
 
-Continue **SDE-3A engine / feature / policy contract** on PR #152. Complete and validate the score-free structured numeric shadow path from legal candidate -> exact consequence -> `DecisionFeatures`; do not begin SDE-3B policy selection yet.
+Continue **SDE-3A engine / feature / policy contract** on PR #152. The score-free structured numeric shadow path from legal candidate -> exact consequence -> `DecisionFeatures` is implemented and FAST/R2 validation is green, including explicit Deferred capability semantics and Chef/Empath coverage. The immediate task is the required T4 `[full-ci]` acceptance checkpoint, followed by a final SDE-3A contract/fanout audit. Do not begin SDE-3B policy selection or merge #152 until that acceptance audit is complete and the user explicitly authorizes merge.
 
 Do not modify production code until the audit answers:
 
