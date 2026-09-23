@@ -1,6 +1,6 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-09-23 Australia/Sydney  
+> Updated: 2026-09-24 Australia/Sydney  
 > Branch: `sde-3b-beginner-conservative-v1`  
 > PR: **#153 — SDE-3B: implement BEGINNER_CONSERVATIVE_V1 policy**  
 > PR #151 and #152 are merged. The SDE-3B PR **MUST remain draft**. Do not merge unless the user explicitly says **“授权合并”**.
@@ -19,7 +19,9 @@ Use these as the active authorities, in order:
 8. `docs/SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`
 9. `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`
 10. `docs/SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`
-11. this handoff
+11. `docs/SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`
+12. `docs/SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`
+13. this handoff
 
 Evidence/provenance references when needed:
 
@@ -165,7 +167,8 @@ PR/branch boundary:
 - completed 3B2 audit is `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`;
 - completed 3B3 audit is `docs/SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`;
 - completed 3B4 audit is `docs/SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`.
-- current 3B5 architecture audit is `docs/SDE_3B5_ROLE_FUNCTION_EXPOSURE_ARCHITECTURE_AUDIT_2026-09-23.md`.
+- completed 3B5 architecture audit is `docs/SDE_3B5_ROLE_FUNCTION_EXPOSURE_ARCHITECTURE_AUDIT_2026-09-23.md`;
+- completed 3B5 implementation audit is `docs/SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`.
 
 Current implemented boundary:
 
@@ -191,7 +194,8 @@ Revised architecture status after the ClocktowerEvidenceLab C0 handoff:
 - **3B2 COMPLETE:** generic exact confirmation-chain projection is wired into structured shadow with recipient visibility, strict no-hindsight, explicit capability/unavailable handling, bounded R02/R04-style semantic regression, and no policy preference change;
 - **3B3 COMPLETE:** the shared score-free impaired-narrative projector derives persistent setup-bound and temporary action-bound episodes from canonical history plus authoritative impairment state; structured shadow integration, R04/R06 E2 regressions and policy non-consumption are green;
 - **3B4 COMPLETE:** healthy-information utility derives usable/independent whole-table routes, redundancy/contradiction, route loss and last-route removal from canonical history plus existing exact/confirmation evidence; baseline-already-infeasible history is guarded and legal registered truth remains healthy; R01/R04 bounded E2 regressions are green; V1 policy remains unchanged;
-- **3B5 CURRENT:** contextual role-function exposure;
+- **3B5 COMPLETE:** generic score-free role-function exposure semantics cover direct/new/already/confirmation-amplified and forced/avoidable exposure; registration ambiguity is the first rules-backed mechanism; canonical history/confirmation are reused; bounded `goldcand-ben-03` E2 regression is green; V1 policy remains unchanged;
+- **3B6 CURRENT:** expert-informed V1 soft-priority evidence eligibility and policy audit.
 - only after each projector has semantic replay evidence may expert rationale become a V1 soft preference.
 
 Evidence authority levels are now explicit:
@@ -414,12 +418,12 @@ Current SDE-3B checkpoint:
 Immediate next action:
 
 1. re-query live #153 / main / checks;
-2. begin **3B5 contextual role-function exposure** with an architecture/fanout audit before production edits;
-3. reuse lifecycle, confirmation-chain and existing rules/registration semantics rather than adding a named-role exposure table or new mutable state;
-4. define generic exposure facts: newly exposed versus already independently exposed, confirmation-created exposure, and forced versus avoidable exposure;
-5. keep examples such as Spy/Ravenkeeper as E1/E2 evidence for the dimension, never as production special-case branches;
-6. start with diagnostic score-free feature semantics and generic RED tests;
-7. keep V1 soft preferences unchanged until 3B5 feature semantics are accepted;
-8. do not add numeric bands, fixture-specific rules, DecisionTrace persistence, or production cutover.
+2. begin **3B6 expert-informed V1 soft priorities** with an evidence-eligibility / policy fanout audit before production policy edits;
+3. enumerate completed feature families and identify which proposed qualitative reasons have qualifying E3 support;
+4. preserve explicit ties for dimensions supported only by E1/E2 or silent observed choices;
+5. keep role-function exposure diagnostic: targeted Gap C still lacks qualifying severity rationale;
+6. select at most the smallest generic E3-backed policy reason for the first tests-first 3B6 slice;
+7. add no global score, probability weight, unsupported threshold, named-role preference, DecisionTrace persistence, or production cutover;
+8. reserve T4 `[full-ci]` for the overall SDE-3B acceptance checkpoint.
 
 Keep #153 draft until explicit user **“授权合并”**.
