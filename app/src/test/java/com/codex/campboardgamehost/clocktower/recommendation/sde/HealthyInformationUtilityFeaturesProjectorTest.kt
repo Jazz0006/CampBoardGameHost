@@ -34,8 +34,12 @@ class HealthyInformationUtilityFeaturesProjectorTest {
             ),
         )
 
+        assertEquals(setOf(otherRecipient, sameRecipient), features.usableHealthyRouteRefsBefore)
+        assertEquals(setOf(otherRecipient, sameRecipient), features.independentHealthyRouteRefsBefore)
         assertEquals(setOf(otherRecipient, sameRecipient), features.usableHealthyRouteRefsAfter)
         assertEquals(setOf(otherRecipient), features.independentHealthyRouteRefsAfter)
+        assertTrue(features.lostHealthyRouteRefs.isEmpty())
+        assertFalse(features.removesLastUsableHealthyRoute)
         assertEquals(setOf(sameRecipient), features.newlyRedundantHealthyRouteRefs)
         assertTrue(features.contradictedHealthyRouteRefs.isEmpty())
         assertTrue(features.hasAnyUsableHealthyRouteAfter)
@@ -65,7 +69,11 @@ class HealthyInformationUtilityFeaturesProjectorTest {
             ),
         )
 
+        assertEquals(setOf(route), features.usableHealthyRouteRefsBefore)
+        assertEquals(setOf(route), features.independentHealthyRouteRefsBefore)
         assertEquals(setOf(route), features.contradictedHealthyRouteRefs)
+        assertEquals(setOf(route), features.lostHealthyRouteRefs)
+        assertTrue(features.removesLastUsableHealthyRoute)
         assertTrue(features.usableHealthyRouteRefsAfter.isEmpty())
         assertTrue(features.independentHealthyRouteRefsAfter.isEmpty())
         assertFalse(features.hasAnyUsableHealthyRouteAfter)
@@ -98,6 +106,9 @@ class HealthyInformationUtilityFeaturesProjectorTest {
         assertTrue(features.independentHealthyRouteRefsAfter.isEmpty())
         assertTrue(features.contradictedHealthyRouteRefs.isEmpty())
         assertTrue(features.newlyRedundantHealthyRouteRefs.isEmpty())
+        assertEquals(setOf(route), features.usableHealthyRouteRefsBefore)
+        assertEquals(setOf(route), features.lostHealthyRouteRefs)
+        assertTrue(features.removesLastUsableHealthyRoute)
     }
 
     @Test
@@ -118,6 +129,9 @@ class HealthyInformationUtilityFeaturesProjectorTest {
             recipientSeat = 3,
         )
         assertEquals(current, features.currentCandidateHealthyRouteRef)
+        assertTrue(features.usableHealthyRouteRefsBefore.isEmpty())
+        assertTrue(features.independentHealthyRouteRefsBefore.isEmpty())
+        assertFalse(features.removesLastUsableHealthyRoute)
         assertEquals(setOf(current), features.usableHealthyRouteRefsAfter)
         assertEquals(setOf(current), features.independentHealthyRouteRefsAfter)
         assertTrue(features.hasAnyUsableHealthyRouteAfter)
