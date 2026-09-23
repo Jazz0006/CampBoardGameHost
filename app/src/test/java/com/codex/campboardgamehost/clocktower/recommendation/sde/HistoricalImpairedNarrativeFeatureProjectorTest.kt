@@ -43,6 +43,9 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
 
     @Test
     fun `persistent setup bound impairment carries its source narrative across nights`() {
+        // Evidence Lab R04 establishes this lifecycle shape: one Drunk information stream persists
+        // across nights. R04's shown role is still unknown, so Empath here is generic test data,
+        // not a claim about R04's missing grimoire field.
         val snapshot = A4RuntimeFixtures.snapshot().copy(
             rulesetRef = rulesetRef,
             gameState = A4RuntimeFixtures.snapshot().gameState.copy(
@@ -171,6 +174,70 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
     }
 
     @Test
+    fun `R06 derived poison death trigger remains a temporary active impairment episode`() {
+        // Evidence Lab R06 directly observes Poisoner -> Ravenkeeper death -> poisoned false
+        // Ravenkeeper information. This is a bounded lifecycle regression, not a full game replay.
+        val base = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
+        val snapshot = base.copy(
+            gameState = base.gameState.copy(
+                players = base.gameState.players.map { player ->
+                    if (player.seat == 2) {
+                        player.copy(
+                            actualRole = RoleId("Ravenkeeper"),
+                            shownRole = RoleId("Ravenkeeper"),
+                        )
+                    } else {
+                        player
+                    }
+                },
+            ),
+        )
+        val poison = poison("r06-poison", 0, StorytellerPhase.NIGHT, 4, 0, 2)
+        val death = TimelineBoundActionFact(
+            ActionFact.Death("r06-death", 1, 2),
+            TimelinePoint(StorytellerPhase.NIGHT, 4, 1, 1),
+        )
+        val timeline = ActionFactTimeline(listOf(poison, death))
+        val exactContext = exactContext(snapshot, timeline, EpistemicObservationLog())
+        val exactCandidate = candidate(
+            snapshot = snapshot,
+            id = "r06-ravenkeeper-result",
+            phase = StorytellerPhase.NIGHT,
+            round = 4,
+            sequence = 2,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Ravenkeeper"),
+        )
+        val sdeCandidate = sdeCandidate(
+            snapshot = snapshot,
+            candidateId = exactCandidate.candidateId,
+            observationIds = exactCandidate.observations.map(EpistemicObservation::observationId),
+            abilityState = AbilityState.MALFUNCTIONING_POISONED,
+            phase = StorytellerPhase.NIGHT,
+            round = 4,
+            sequence = 2,
+            actionRefs = timeline.entries,
+            observationRefs = emptyList(),
+            sourceAbility = RoleId("Ravenkeeper"),
+        )
+
+        val projected = HistoricalImpairedNarrativeFeatureProjector.project(
+            confirmationByCandidateId = mapOf(
+                exactCandidate.candidateId to FeatureProjection.Projected(confirmation()),
+            ),
+            exactCandidates = listOf(exactCandidate),
+            sdeCandidates = listOf(sdeCandidate),
+            context = ExactConsequenceContext(validatedRuleset, exactContext),
+        )
+
+        val feature =
+            (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
+        assertEquals(ImpairmentLifetime.TEMPORARY_ACTION_BOUND, feature.impairmentLifetime)
+        assertEquals(ImpairedNarrativeRelation.NO_PRIOR_IMPAIRED_NARRATIVE, feature.relation)
+        assertTrue(feature.priorImpairedObservationIds.isEmpty())
+    }
+
+    @Test
     fun `temporary impairment without a canonical active episode is explicitly unavailable`() {
         val snapshot = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
         val exactContext = exactContext(snapshot, ActionFactTimeline(), EpistemicObservationLog())
@@ -257,6 +324,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         sequence: Int,
         actionRefs: List<TimelineBoundActionFact>,
         observationRefs: List<RecordedEpistemicObservation>,
+        sourceAbility: RoleId = RoleId("Empath"),
     ) = SdeDecisionCandidate(
         decisionId = "decision",
         candidateId = candidateId,
@@ -264,7 +332,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         sourceInteraction = SdeDecisionSourceInteraction(
             interactionId = "decision",
             sourceSeat = 2,
-            abilityRole = RoleId("Empath"),
+            abilityRole = sourceAbility,
             abilityState = abilityState,
         ),
         sourceRevision = InformationDecisionRevision(

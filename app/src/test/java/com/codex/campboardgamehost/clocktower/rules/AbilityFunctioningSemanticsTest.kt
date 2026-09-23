@@ -45,6 +45,21 @@ class AbilityFunctioningSemanticsTest {
     }
 
     @Test
+    fun `established death trigger keeps poison state after death`() {
+        val subject = subject(
+            actual = "Ravenkeeper",
+            poisoned = true,
+            alive = false,
+        )
+
+        assertEquals(null, AbilityFunctioningSemantics.stateFor(subject, "Ravenkeeper"))
+        assertEquals(
+            AbilityFunctioningState.POISONED,
+            AbilityFunctioningSemantics.stateForEstablishedInteraction(subject, "Ravenkeeper"),
+        )
+    }
+
+    @Test
     fun `mechanical roles require healthy actual ownership`() {
         listOf("Monk", "Soldier", "Slayer", "Virgin", "Mayor").forEach { role ->
             assertTrue(AbilityFunctioningSemantics.functionsAs(subject(role), role))
@@ -150,6 +165,15 @@ class AbilityFunctioningSemanticsTest {
         }
     }
 
-    private fun subject(actual: String, shown: String = actual, poisoned: Boolean = false) =
-        AbilitySubject(actualRole = actual, shownRole = shown, isPoisoned = poisoned, isAlive = true)
+    private fun subject(
+        actual: String,
+        shown: String = actual,
+        poisoned: Boolean = false,
+        alive: Boolean = true,
+    ) = AbilitySubject(
+        actualRole = actual,
+        shownRole = shown,
+        isPoisoned = poisoned,
+        isAlive = alive,
+    )
 }
