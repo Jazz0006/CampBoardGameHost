@@ -15,6 +15,7 @@ class HealthyInformationUtilityFeaturesProjectorTest {
             HealthyInformationCandidateEvidence(
                 candidateId = "candidate",
                 recipientSeat = 2,
+                historyFeasibleBefore = true,
                 candidateHistoryFeasibleAfter = true,
                 currentCandidateHealthy = false,
                 currentCandidateIndependentlyConstraining = false,
@@ -55,6 +56,7 @@ class HealthyInformationUtilityFeaturesProjectorTest {
             HealthyInformationCandidateEvidence(
                 candidateId = "candidate",
                 recipientSeat = 2,
+                historyFeasibleBefore = true,
                 candidateHistoryFeasibleAfter = false,
                 currentCandidateHealthy = false,
                 currentCandidateIndependentlyConstraining = false,
@@ -88,6 +90,7 @@ class HealthyInformationUtilityFeaturesProjectorTest {
             HealthyInformationCandidateEvidence(
                 candidateId = "candidate",
                 recipientSeat = 2,
+                historyFeasibleBefore = true,
                 candidateHistoryFeasibleAfter = false,
                 currentCandidateHealthy = false,
                 currentCandidateIndependentlyConstraining = false,
@@ -112,11 +115,43 @@ class HealthyInformationUtilityFeaturesProjectorTest {
     }
 
     @Test
+    fun `already infeasible baseline does not blame candidate for removing last healthy route`() {
+        val route = historical("preexisting-route", recipientSeat = 2)
+
+        val features = HealthyInformationUtilityFeaturesProjector.project(
+            HealthyInformationCandidateEvidence(
+                candidateId = "candidate",
+                recipientSeat = 2,
+                historyFeasibleBefore = false,
+                candidateHistoryFeasibleAfter = false,
+                currentCandidateHealthy = false,
+                currentCandidateIndependentlyConstraining = false,
+                historicalRoutes = listOf(
+                    routeEvidence(
+                        ref = route,
+                        independentlyUsableBefore = true,
+                        relationToCurrentCandidate =
+                            ConfirmationObservationRelation.BASELINE_ALREADY_COLLAPSED,
+                    ),
+                ),
+            ),
+        )
+
+        assertTrue(features.usableHealthyRouteRefsBefore.isEmpty())
+        assertTrue(features.independentHealthyRouteRefsBefore.isEmpty())
+        assertTrue(features.usableHealthyRouteRefsAfter.isEmpty())
+        assertTrue(features.lostHealthyRouteRefs.isEmpty())
+        assertFalse(features.removesLastUsableHealthyRoute)
+        assertTrue(features.contradictedHealthyRouteRefs.isEmpty())
+    }
+
+    @Test
     fun `functioning informative candidate creates a healthy independent route without a budget`() {
         val features = HealthyInformationUtilityFeaturesProjector.project(
             HealthyInformationCandidateEvidence(
                 candidateId = "healthy-current",
                 recipientSeat = 3,
+                historyFeasibleBefore = true,
                 candidateHistoryFeasibleAfter = true,
                 currentCandidateHealthy = true,
                 currentCandidateIndependentlyConstraining = true,
@@ -146,6 +181,7 @@ class HealthyInformationUtilityFeaturesProjectorTest {
             HealthyInformationCandidateEvidence(
                 candidateId = "healthy-redundant",
                 recipientSeat = 5,
+                historyFeasibleBefore = true,
                 candidateHistoryFeasibleAfter = true,
                 currentCandidateHealthy = true,
                 currentCandidateIndependentlyConstraining = false,
