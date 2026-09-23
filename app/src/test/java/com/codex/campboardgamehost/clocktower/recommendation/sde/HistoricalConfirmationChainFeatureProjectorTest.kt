@@ -156,6 +156,8 @@ class HistoricalConfirmationChainFeatureProjectorTest {
 
     @Test
     fun `rejects future historical observation before leave one out replay`() {
+        // Evidence Lab E2 mapping: R02 has a Night-2 Undertaker confirmation that must not
+        // enter the earlier Night-1 decision prefix. This test remains role-agnostic.
         val futureRecord = record(
             id = "future:claim",
             sequence = 3,
@@ -197,6 +199,70 @@ class HistoricalConfirmationChainFeatureProjectorTest {
         }
     }
 
+    @Test
+    fun `R04 derived multi night prefix can contribute to a later confirmation projection`() {
+        // Evidence Lab R04 is not fully replay-ready. This regression uses only its validated
+        // lifecycle shape: an earlier-night observation is committed before a later-night
+        // Storyteller information decision. The proposition itself remains generic test data.
+        val historicalRecord = record(
+            id = "evidence:r04:earlier-observation",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 1,
+            globalSequence = 0,
+            sourceSeat = 2,
+            sourceAbility = RoleId("earlier-channel"),
+            proposition = InformationProposition.Not(
+                InformationProposition.RoleAt(4, RoleId("Poisoner")),
+            ),
+        )
+        val historical = exactContext(EpistemicObservationLog(listOf(historicalRecord)))
+        val exactCandidate = candidate(
+            id = "evidence:r04:later-candidate",
+            proposition = historicalRecord.proposition,
+            phase = StorytellerPhase.NIGHT,
+            round = 4,
+            sequence = 2,
+        )
+        val context = ExactConsequenceContext(
+            validatedRuleset = validatedRuleset,
+            exactContext = historical,
+        )
+        val full = StorytellerDecisionEngine.evaluateExactConsequences(
+            request = ExactConsequenceRequest("evidence:r04:decision", listOf(exactCandidate)),
+            context = context,
+        ) as ExactConsequenceEvaluation.Ready
+
+        val projected = HistoricalConfirmationChainFeatureProjector.project(
+            fullEvaluation = full,
+            exactCandidates = listOf(exactCandidate),
+            sdeCandidates = listOf(
+                sdeCandidate(
+                    candidateId = exactCandidate.candidateId,
+                    observationIds = exactCandidate.observations.map(EpistemicObservation::observationId),
+                    historyRefs = listOf(
+                        SdeHistoricalObservationRef(
+                            recordId = historicalRecord.recordId,
+                            globalSequence = 0,
+                        ),
+                    ),
+                    phase = StorytellerPhase.NIGHT,
+                    round = 4,
+                    sequence = 2,
+                ),
+            ),
+            context = context,
+        )
+
+        val confirmation =
+            (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
+        assertEquals(setOf(historicalRecord.recordId), confirmation.supportingObservationIds)
+        assertEquals(
+            ConfirmationObservationRelation.SUPPORTS_EXISTING_OBSERVATION,
+            confirmation.historicalObservationImpacts.single().relation,
+        )
+    }
+
     private fun exactContext(
         observationLog: EpistemicObservationLog,
     ) = ExactHistoricalHypotheticalContext(
@@ -213,16 +279,19 @@ class HistoricalConfirmationChainFeatureProjectorTest {
     private fun candidate(
         id: String,
         proposition: InformationProposition,
+        phase: StorytellerPhase = StorytellerPhase.FIRST_NIGHT,
+        round: Int = 1,
+        sequence: Int = 2,
     ) = ExactConsequenceCandidate(
         candidateId = id,
         recipientSeat = 1,
         observations = listOf(
             EpistemicObservation(
                 observationId = "observation:$id",
-                snapshotId = formal.snapshotId,
-                phase = StorytellerPhase.FIRST_NIGHT,
-                round = 1,
-                sequence = 2,
+                snapshotId = FormalGameState.from(snapshot, phase, round).snapshotId,
+                phase = phase,
+                round = round,
+                sequence = sequence,
                 sourceSeat = 1,
                 sourceAbility = RoleId("current-channel"),
                 visibility = ObservationVisibility.PRIVATE,
@@ -237,13 +306,16 @@ class HistoricalConfirmationChainFeatureProjectorTest {
         candidateId: String,
         observationIds: List<String>,
         historyRefs: List<SdeHistoricalObservationRef>,
+        phase: StorytellerPhase = StorytellerPhase.FIRST_NIGHT,
+        round: Int = 1,
+        sequence: Int = 2,
     ) = SdeDecisionCandidate(
         decisionId = "decision",
         candidateId = candidateId,
         lifecycleStage = SdeDecisionLifecycleStage.Interaction(
-            phase = StorytellerPhase.FIRST_NIGHT,
-            round = 1,
-            sequence = 2,
+            phase = phase,
+            round = round,
+            sequence = sequence,
         ),
         sourceInteraction = SdeDecisionSourceInteraction(
             interactionId = "decision",
@@ -277,10 +349,12 @@ class HistoricalConfirmationChainFeatureProjectorTest {
         sourceSeat: Int?,
         sourceAbility: RoleId?,
         proposition: InformationProposition,
+        phase: StorytellerPhase = StorytellerPhase.FIRST_NIGHT,
+        round: Int = 1,
     ) = RecordedEpistemicObservation(
         recordId = id,
-        phase = StorytellerPhase.FIRST_NIGHT,
-        round = 1,
+        phase = phase,
+        round = round,
         sequence = sequence,
         sourceSeat = sourceSeat,
         sourceAbility = sourceAbility,
@@ -290,8 +364,8 @@ class HistoricalConfirmationChainFeatureProjectorTest {
         proposition = proposition,
         timelineBinding = ObservationTimelineBinding.Global(
             TimelinePoint(
-                phase = StorytellerPhase.FIRST_NIGHT,
-                round = 1,
+                phase = phase,
+                round = round,
                 sequence = sequence,
                 globalSequence = globalSequence,
             ),
