@@ -190,12 +190,21 @@ internal object StructuredInformationShadowAdapter {
                         sdeCandidates = sdeCandidates,
                         context = exactContext,
                     )
+                val impairedNarrativeByCandidateId =
+                    HistoricalImpairedNarrativeFeatureProjector.project(
+                        confirmationByCandidateId = confirmationByCandidateId,
+                        exactCandidates = exactCandidates,
+                        sdeCandidates = sdeCandidates,
+                        context = exactContext,
+                    )
                 DecisionFeatureEvaluation.Ready(
                     candidates = baseFeatureEvaluation.candidates.map { candidate ->
                         candidate.copy(
                             features = candidate.features.copy(
                                 confirmationChainImpact =
                                     confirmationByCandidateId.getValue(candidate.candidateId),
+                                impairedNarrative =
+                                    impairedNarrativeByCandidateId.getValue(candidate.candidateId),
                             ),
                         )
                     },
