@@ -55,8 +55,8 @@ class HistoricalConfirmationChainFeatureProjectorTest {
         )
         val exactContext = exactContext(EpistemicObservationLog(listOf(historicalRecord)))
         val exactCandidate = candidate(
-            id = "candidate:imp",
-            proposition = InformationProposition.RoleAt(4, RoleId("Imp")),
+            id = "candidate:confirm",
+            proposition = historicalRecord.proposition,
         )
         val sdeCandidate = sdeCandidate(
             candidateId = exactCandidate.candidateId,
