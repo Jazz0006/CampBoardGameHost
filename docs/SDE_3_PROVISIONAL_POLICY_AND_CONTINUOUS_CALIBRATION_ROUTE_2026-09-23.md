@@ -411,14 +411,28 @@ Recommended sequence:
 1. audit current `StorytellerDecisionEngine`, decision context, candidate/result contracts and production shadow integration;
 2. inventory existing exact/topology diagnostics that can populate the stable feature contract;
 3. define the minimal generic `DecisionCandidate` / `DecisionFeatures` / `PolicyEvaluation` contract without migrating behavior prematurely;
-4. continue `BEGINNER_CONSERVATIVE_V1` through real typed feature projectors rather than weights;
-5. derive impaired-narrative coherence from canonical semantic history, with upstream `AbilityState` as the impairment binding and no second mutable history store;
-6. audit/generalize the later-night shadow lifecycle boundary before cross-night policy use;
-7. add other feature-backed soft priorities only at their true owners;
-8. leave versioned `DecisionTrace` / replay persistence to SDE-3C;
-9. keep automatic cutover off.
+4. follow the explicit staging in `SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`;
+5. **3B1:** generalize lifecycle-safe historical shadow/input binding before contextual policy consumes history;
+6. **3B2:** implement confirmation-chain impact as the first new non-strategic projector;
+7. **3B3:** derive impaired-narrative coherence from canonical semantic history, with upstream `AbilityState` plus canonical action/setup history as impairment binding and no second mutable history store;
+8. **3B4/3B5:** add healthy-information utility and contextual role-function exposure projectors;
+9. **3B6:** introduce expert-informed qualitative V1 soft priorities only after the matching feature projector and semantic replay are stable;
+10. leave versioned `DecisionTrace` / replay persistence to SDE-3C;
+11. reserve numeric thresholds, player-count bands and multi-axis tradeoff calibration for SDE-3D;
+12. keep automatic cutover off.
 
 Every shared-contract change requires the AGENTS fanout audit before implementation.
+
+### Expert-evidence authority rule
+
+Evidence may enter at four different stages and must not be promoted early:
+
+- **E1 architecture evidence:** whole games justify feature existence/lifecycle dependencies now;
+- **E2 semantic regression evidence:** reconstructed prefixes validate generic projectors after structural seams exist;
+- **E3 qualitative policy evidence:** explicit qualified rationale or strong cross-expert support may become typed soft reasons only after feature stability;
+- **E4 calibration evidence:** numeric thresholds/weights/tradeoff strength remain SDE-3D.
+
+An observed expert choice without rationale is never, by itself, a preference label.
 
 ## 14. Success criteria for the next development conversation
 
