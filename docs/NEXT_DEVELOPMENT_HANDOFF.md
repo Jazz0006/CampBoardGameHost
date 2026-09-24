@@ -2,8 +2,8 @@
 
 > Updated: 2026-09-24 Australia/Sydney  
 > Branch: `sde-3c-decision-trace-shadow-replay`  
-> Latest remotely accepted SDE-3C HEAD: `9cffa4e94b088342e1808c9945febb790a0b0232`  
-> Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. At that exact HEAD, GitHub CI #3433 and R2 #3188 were SUCCESS; the PR was open, draft, and mergeable. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**.
+> SDE-3C3B accepted code HEAD: `9cffa4e94b088342e1808c9945febb790a0b0232` — GitHub CI #3433 and R2 #3188 SUCCESS.  
+> Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. Re-query the live branch/PR/checks before the next executable slice because documentation-only closeout commits may advance the branch HEAD.
 
 ## 1. Read first
 
