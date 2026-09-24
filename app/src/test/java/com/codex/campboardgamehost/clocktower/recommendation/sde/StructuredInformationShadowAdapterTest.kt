@@ -3,6 +3,7 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptSource
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -15,7 +16,10 @@ import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheti
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
+import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import com.codex.campboardgamehost.clocktower.epistemic.A4RuntimeFixtures
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGenerationContext
@@ -95,6 +99,286 @@ class StructuredInformationShadowAdapterTest {
     }
 
     @Test
+    fun `historical confirmation features are attached without changing v1 policy ordering`() {
+        val revision = InformationDecisionRevision(
+            gameStateRevision = snapshot.gameStateRevision,
+            playerInputRevision = snapshot.playerInputRevision,
+        )
+        val decisionContext = structuredEmpathContext(revision)
+        val shadow = StructuredInformationShadowAdapter.evaluate(
+            decisionContext = decisionContext,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = validatedRuleset,
+                exactContext = exactHistoricalContext(ActionFactTimeline(emptyList()), EpistemicObservationLog()),
+            ),
+        )
+
+        val features = shadow.featureEvaluation as DecisionFeatureEvaluation.Ready
+        features.candidates.forEach { candidate ->
+            val confirmation = candidate.features.confirmationChainImpact
+            assertTrue(confirmation is FeatureProjection.Projected)
+            confirmation as FeatureProjection.Projected
+            assertTrue(confirmation.value.historicalObservationImpacts.isEmpty())
+        }
+
+        val strategicOnly = DecisionFeatureEvaluation.Ready(
+            candidates = features.candidates.map { candidate ->
+                candidate.copy(
+                    features = candidate.features.copy(
+                        confirmationChainImpact =
+                            FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET),
+                    ),
+                )
+            },
+        )
+        assertEquals(
+            BeginnerConservativeV1Policy.evaluate(strategicOnly),
+            shadow.policyEvaluation,
+        )
+    }
+
+    @Test
+    fun `committed historical support reaches structured confirmation feature`() {
+        val revision = InformationDecisionRevision(
+            gameStateRevision = snapshot.gameStateRevision,
+            playerInputRevision = snapshot.playerInputRevision,
+        )
+        val proposition = InformationProposition.NumericResult(
+            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+            sourceSeat = 2,
+            subjectSeats = listOf(1, 3),
+            value = 0,
+        )
+        val historicalRecord = RecordedEpistemicObservation(
+            recordId = "history:empath-zero",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Empath"),
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(2),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = proposition,
+            timelineBinding = ObservationTimelineBinding.Global(
+                TimelinePoint(
+                    phase = StorytellerPhase.FIRST_NIGHT,
+                    round = 1,
+                    sequence = 1,
+                    globalSequence = 0,
+                ),
+            ),
+        )
+        val observationLog = EpistemicObservationLog(listOf(historicalRecord))
+        val decisionContext = structuredEmpathContext(revision, sequence = 2)
+
+        val shadow = StructuredInformationShadowAdapter.evaluate(
+            decisionContext = decisionContext,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = validatedRuleset,
+                exactContext = exactHistoricalContext(ActionFactTimeline(emptyList()), observationLog),
+            ),
+        )
+
+        val candidateId = decisionContext.legalCandidates
+            .single { it.draft.proposition == proposition }
+            .candidateId
+        val features = shadow.featureEvaluation as DecisionFeatureEvaluation.Ready
+        val confirmation = features.candidates
+            .single { it.candidateId == candidateId }
+            .features
+            .confirmationChainImpact
+        assertTrue(confirmation is FeatureProjection.Projected)
+        confirmation as FeatureProjection.Projected
+        assertEquals(setOf(historicalRecord.recordId), confirmation.value.supportingObservationIds)
+        assertTrue(!confirmation.value.historicalObservationImpacts.single().authenticatesDistinctSource)
+        assertEquals(listOf(historicalRecord), observationLog.records)
+    }
+
+    @Test
+    fun `drunk historical narrative reaches structured features without changing v1 policy`() {
+        val drunkSnapshot = snapshot.copy(
+            gameState = snapshot.gameState.copy(
+                players = snapshot.gameState.players.map { player ->
+                    if (player.seat == 2) {
+                        player.copy(
+                            actualRole = RoleId("Drunk"),
+                            actualType = CharacterType.OUTSIDER,
+                            shownRole = RoleId("Empath"),
+                        )
+                    } else {
+                        player
+                    }
+                },
+            ),
+        )
+        val revision = InformationDecisionRevision(
+            gameStateRevision = drunkSnapshot.gameStateRevision,
+            playerInputRevision = drunkSnapshot.playerInputRevision,
+        )
+        val historicalRecord = RecordedEpistemicObservation(
+            recordId = "history:drunk-empath-zero",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Empath"),
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(2),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.NumericResult(
+                metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                sourceSeat = 2,
+                subjectSeats = listOf(1, 3),
+                value = 0,
+            ),
+            timelineBinding = ObservationTimelineBinding.Global(
+                TimelinePoint(
+                    phase = StorytellerPhase.FIRST_NIGHT,
+                    round = 1,
+                    sequence = 1,
+                    globalSequence = 0,
+                ),
+            ),
+        )
+        val decisionContext = structuredEmpathContext(
+            revision = revision,
+            sequence = 2,
+            reliability = InformationReliability.DRUNK,
+        )
+        val shadow = StructuredInformationShadowAdapter.evaluate(
+            decisionContext = decisionContext,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = validatedRuleset,
+                exactContext = exactHistoricalContext(
+                    timeline = ActionFactTimeline(emptyList()),
+                    observationLog = EpistemicObservationLog(listOf(historicalRecord)),
+                    initialSnapshot = drunkSnapshot,
+                ),
+            ),
+        )
+
+        val features = shadow.featureEvaluation as DecisionFeatureEvaluation.Ready
+        features.candidates.forEach { candidate ->
+            val impaired = candidate.features.impairedNarrative
+            assertTrue(impaired is FeatureProjection.Projected)
+            impaired as FeatureProjection.Projected
+            assertEquals(
+                ImpairmentLifetime.PERSISTENT_SETUP_BOUND,
+                impaired.value.impairmentLifetime,
+            )
+            assertEquals(
+                setOf(historicalRecord.recordId),
+                impaired.value.priorImpairedObservationIds,
+            )
+        }
+
+        val withoutImpairedNarrative = DecisionFeatureEvaluation.Ready(
+            candidates = features.candidates.map { candidate ->
+                candidate.copy(
+                    features = candidate.features.copy(
+                        impairedNarrative =
+                            FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET),
+                    ),
+                )
+            },
+        )
+        assertEquals(
+            BeginnerConservativeV1Policy.evaluate(withoutImpairedNarrative),
+            shadow.policyEvaluation,
+        )
+    }
+
+    @Test
+    fun `whole table healthy route reaches structured feature without changing v1 policy`() {
+        val revision = InformationDecisionRevision(
+            gameStateRevision = snapshot.gameStateRevision,
+            playerInputRevision = snapshot.playerInputRevision,
+        )
+        val chefRecord = RecordedEpistemicObservation(
+            recordId = "history:chef-one",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 0,
+            sourceSeat = 1,
+            sourceAbility = RoleId("Chef"),
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(1),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.NumericResult(
+                metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+                sourceSeat = 1,
+                subjectSeats = snapshot.gameState.players.map { it.seat },
+                value = 1,
+            ),
+            timelineBinding = ObservationTimelineBinding.Global(
+                TimelinePoint(
+                    phase = StorytellerPhase.FIRST_NIGHT,
+                    round = 1,
+                    sequence = 0,
+                    globalSequence = 0,
+                ),
+            ),
+        )
+        val decisionContext = structuredEmpathContext(revision, sequence = 1)
+        val shadow = StructuredInformationShadowAdapter.evaluate(
+            decisionContext = decisionContext,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = validatedRuleset,
+                exactContext = exactHistoricalContext(
+                    timeline = ActionFactTimeline(emptyList()),
+                    observationLog = EpistemicObservationLog(listOf(chefRecord)),
+                ),
+            ),
+        )
+
+        val truthfulCandidate = decisionContext.legalCandidates.single {
+            (it.draft.proposition as InformationProposition.NumericResult).value == 0
+        }
+        val features = shadow.featureEvaluation as DecisionFeatureEvaluation.Ready
+        val healthy = features.candidates
+            .single { it.candidateId == truthfulCandidate.candidateId }
+            .features
+            .healthyInformationUtility
+        assertTrue(healthy is FeatureProjection.Projected)
+        healthy as FeatureProjection.Projected
+        assertTrue(
+            HealthyInformationRouteRef.HistoricalObservation(
+                chefRecord.recordId,
+                1,
+            ) in healthy.value.usableHealthyRouteRefsAfter,
+        )
+        assertTrue(
+            HealthyInformationRouteRef.HistoricalObservation(
+                chefRecord.recordId,
+                1,
+            ) in healthy.value.independentHealthyRouteRefsAfter,
+        )
+        assertEquals(
+            HealthyInformationRouteRef.CurrentCandidate(
+                truthfulCandidate.candidateId,
+                2,
+            ),
+            healthy.value.currentCandidateHealthyRouteRef,
+        )
+
+        val withoutHealthyInformation = DecisionFeatureEvaluation.Ready(
+            candidates = features.candidates.map { candidate ->
+                candidate.copy(
+                    features = candidate.features.copy(
+                        healthyInformationUtility =
+                            FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET),
+                    ),
+                )
+            },
+        )
+        assertEquals(
+            BeginnerConservativeV1Policy.evaluate(withoutHealthyInformation),
+            shadow.policyEvaluation,
+        )
+    }
+
+    @Test
     fun `exact deferral stays separate from structured recommendation authority`() {
         val revision = InformationDecisionRevision(
             gameStateRevision = snapshot.gameStateRevision,
@@ -127,8 +411,11 @@ class StructuredInformationShadowAdapterTest {
         )
     }
 
-    private fun structuredEmpathContext(revision: InformationDecisionRevision) =
-        ClocktowerRecommendationCoordinator().let { coordinator ->
+    private fun structuredEmpathContext(
+        revision: InformationDecisionRevision,
+        sequence: Int = 0,
+        reliability: InformationReliability = InformationReliability.RELIABLE,
+    ) = ClocktowerRecommendationCoordinator().let { coordinator ->
             val evaluations = coordinator.resolveNumberInformation(
                 InformationResolutionRequest.Number(
                     context = UnreliableNumberContext(
@@ -140,7 +427,7 @@ class StructuredInformationShadowAdapterTest {
                     generation = DynamicGenerationContext(
                         abilityRole = RoleId("Empath"),
                         recipientSeat = 2,
-                        reliability = InformationReliability.RELIABLE,
+                        reliability = reliability,
                         style = RecommendationStyle.BALANCED,
                         targetSeats = setOf(1, 3),
                     ),
@@ -154,15 +441,18 @@ class StructuredInformationShadowAdapterTest {
                 recommendedCandidateIds = recommendedCandidateIds,
                 revision = revision,
                 semanticIdentity = "numeric|Empath|${snapshot.gameId}|FIRST_NIGHT|1|0|2|LIVING_EVIL_NEIGHBOURS",
-                draftOf = { evaluation -> empathDraft(evaluation.candidate.outcome) },
+                draftOf = { evaluation -> empathDraft(evaluation.candidate.outcome, sequence) },
             )
         }
 
-    private fun empathDraft(outcome: DynamicInformationOutcome.Number) = EpistemicObservationDraft(
+    private fun empathDraft(
+        outcome: DynamicInformationOutcome.Number,
+        sequence: Int = 0,
+    ) = EpistemicObservationDraft(
         recordId = "sde-1e-empath-${outcome.value}",
         phase = StorytellerPhase.FIRST_NIGHT,
         round = 1,
-        sequence = 0,
+        sequence = sequence,
         sourceSeat = 2,
         sourceAbility = RoleId("Empath"),
         visibility = ObservationVisibility.PRIVATE,
@@ -179,12 +469,15 @@ class StructuredInformationShadowAdapterTest {
     private fun exactHistoricalContext(
         timeline: ActionFactTimeline,
         observationLog: EpistemicObservationLog,
+        initialSnapshot: com.codex.campboardgamehost.clocktower.domain.GameSnapshot = snapshot,
     ) = ExactHistoricalHypotheticalContext(
-        initialSnapshot = snapshot,
+        initialSnapshot = initialSnapshot,
         initialPhase = StorytellerPhase.FIRST_NIGHT,
         initialRound = 1,
         actionTimeline = timeline,
-        perceivedRolesBySeat = perceived,
+        perceivedRolesBySeat = initialSnapshot.gameState.players.associate { player ->
+            player.seat to (player.shownRole ?: player.actualRole)
+        },
         observationLog = observationLog,
         hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
         roleDefinitions = roles,

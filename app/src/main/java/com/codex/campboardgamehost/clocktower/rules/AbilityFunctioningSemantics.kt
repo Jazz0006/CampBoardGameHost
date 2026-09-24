@@ -28,13 +28,27 @@ internal object AbilityFunctioningSemantics {
     fun interactsAs(subject: AbilitySubject, role: String): Boolean =
         subject.isAlive && perceivedRole(subject) == role
 
-    fun stateFor(subject: AbilitySubject, role: String): AbilityFunctioningState? {
-        if (!interactsAs(subject, role)) return null
+    /**
+     * Resolves functioning state after another authority has already established that this
+     * interaction occurs. This deliberately does not require the subject to be alive: death-trigger
+     * information may resolve after a death fact while poison from an earlier action still applies
+     * to that interaction.
+     */
+    fun stateForEstablishedInteraction(
+        subject: AbilitySubject,
+        role: String,
+    ): AbilityFunctioningState? {
+        if (perceivedRole(subject) != role) return null
         return when {
             subject.isPoisoned -> AbilityFunctioningState.POISONED
             subject.actualRole == "Drunk" -> AbilityFunctioningState.DRUNK
             else -> AbilityFunctioningState.FUNCTIONING
         }
+    }
+
+    fun stateFor(subject: AbilitySubject, role: String): AbilityFunctioningState? {
+        if (!subject.isAlive) return null
+        return stateForEstablishedInteraction(subject, role)
     }
 
     fun functionsAs(subject: AbilitySubject, role: String): Boolean =

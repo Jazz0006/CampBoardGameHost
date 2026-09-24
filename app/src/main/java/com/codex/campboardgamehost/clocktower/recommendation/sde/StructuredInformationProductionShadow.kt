@@ -15,16 +15,15 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionContext
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 
 /**
- * Production-facing, read-only bridge for SDE-1E's first structured-information shadow proof.
+ * Production-facing, read-only bridge for structured SDE shadow evaluation.
  *
  * Durable setup identity comes from [CommittedClocktowerSetup]. Current history and freshness come
  * from the canonical [GameSnapshot] supplied by ClocktowerGameSession. This bridge owns neither of
  * those facts and never writes back to either source.
  *
- * SDE-1E is deliberately limited to round-one first-night information: every player is still alive,
- * setup identities have not changed, and transient first-night effects are replayed from the current
- * semantic timeline rather than baked into the setup baseline. Broader historical phases belong to
- * later SDE slices.
+ * [evaluateFirstNight] retains the original round-one compatibility boundary. [evaluateHistorical]
+ * replays the same immutable setup baseline through the canonical committed action/observation
+ * prefix, allowing later interactions without introducing a second historical state owner.
  */
 internal object StructuredInformationProductionShadow {
     fun <T : DynamicInformationOutcome> evaluateFirstNight(
@@ -33,6 +32,39 @@ internal object StructuredInformationProductionShadow {
         committedSetup: CommittedClocktowerSetup,
         currentSnapshot: GameSnapshot,
         roleDefinitions: Collection<RoleDefinition>,
+        inputBindings: SdeDecisionInputBindings = SdeDecisionInputBindings.NotCaptured,
+        hypothesis: EpistemicHypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+    ): StructuredInformationShadowEvaluation {
+        require(decisionContext.legalCandidates.all { candidate ->
+            candidate.draft.phase == StorytellerPhase.FIRST_NIGHT && candidate.draft.round == 1
+        }) {
+            "First-night structured shadow only accepts round-one FIRST_NIGHT candidates."
+        }
+        return evaluateHistorical(
+            decisionContext = decisionContext,
+            validatedRuleset = validatedRuleset,
+            committedSetup = committedSetup,
+            currentSnapshot = currentSnapshot,
+            roleDefinitions = roleDefinitions,
+            inputBindings = inputBindings,
+            hypothesis = hypothesis,
+        )
+    }
+
+    /**
+     * Lifecycle-safe read-only shadow over the canonical committed prefix.
+     *
+     * The immutable setup supplies the replay baseline; the current snapshot supplies the complete
+     * committed action/observation prefix. The candidate itself may belong to any lifecycle point at
+     * or after that baseline. This method still owns no production recommendation or commit action.
+     */
+    fun <T : DynamicInformationOutcome> evaluateHistorical(
+        decisionContext: InformationDecisionContext<T>,
+        validatedRuleset: ValidatedClocktowerRuleset,
+        committedSetup: CommittedClocktowerSetup,
+        currentSnapshot: GameSnapshot,
+        roleDefinitions: Collection<RoleDefinition>,
+        inputBindings: SdeDecisionInputBindings = SdeDecisionInputBindings.NotCaptured,
         hypothesis: EpistemicHypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
     ): StructuredInformationShadowEvaluation {
         require(currentSnapshot.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1) {
@@ -102,6 +134,7 @@ internal object StructuredInformationProductionShadow {
                 ),
                 sourceRevision = currentRevision,
             ),
+            inputBindings = inputBindings,
         )
     }
 }

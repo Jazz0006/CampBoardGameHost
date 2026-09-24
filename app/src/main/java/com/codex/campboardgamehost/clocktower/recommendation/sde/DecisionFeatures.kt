@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
-import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
 import com.codex.campboardgamehost.clocktower.epistemic.ExactStrategicTopologyBundleDiagnostics
@@ -10,6 +9,7 @@ internal enum class FeatureUnavailableReason {
     NOT_PROJECTED_YET,
     NOT_APPLICABLE,
     MISSING_CAPABILITY,
+    HISTORICAL_INPUT_NOT_CAPTURED,
 }
 
 internal sealed interface FeatureProjection<out T> {
@@ -34,32 +34,9 @@ internal data class StrategicDecisionFeatures(
     }
 }
 
-internal data class ConfirmationChainFeatures(
-    val supportedSeats: Set<Int> = emptySet(),
-    val contradictedSeats: Set<Int> = emptySet(),
-    val reasonCodes: Set<String> = emptySet(),
-)
-
-internal data class HealthyInformationUtilityFeatures(
-    val preservedInformationIds: Set<String> = emptySet(),
-    val lostInformationIds: Set<String> = emptySet(),
-    val reasonCodes: Set<String> = emptySet(),
-)
-
 internal data class TruthCredibilityFeatures(
     val truthDangerReasonCodes: Set<String> = emptySet(),
     val credibilityDisruptionReasonCodes: Set<String> = emptySet(),
-)
-
-internal data class RoleFunctionExposureFeatures(
-    val exposedSeats: Set<Int> = emptySet(),
-    val exposedRoles: Set<RoleId> = emptySet(),
-    val reasonCodes: Set<String> = emptySet(),
-)
-
-internal data class ImpairedNarrativeFeatures(
-    val coherenceReasonCodes: Set<String> = emptySet(),
-    val detectabilityReasonCodes: Set<String> = emptySet(),
 )
 
 internal data class BluffNarrativeFeatures(

@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
@@ -13,8 +14,20 @@ class SdeDecisionCandidateContractTest {
     @Test
     fun `candidate keeps player-controlled inputs separate from committed storyteller inputs`() {
         val bindings = SdeDecisionInputBindings.Captured(
-            committedInputRefs = setOf(CommittedDecisionInputRef("setup:red-herring:seat-4")),
-            playerControlledInputRefs = setOf(PlayerControlledDecisionInputRef("ft-targets:2,7")),
+            committedInputRefs = setOf(
+                CommittedDecisionInputRef(
+                    inputId = "setup:red-herring:seat-4",
+                    ownerId = "clocktower-setup-commitments",
+                    kind = SdeCommittedDecisionInputKind.RED_HERRING,
+                ),
+            ),
+            playerControlledInputRefs = setOf(
+                PlayerControlledDecisionInputRef(
+                    inputId = "ft-targets:2,7",
+                    ownerId = "fortune-teller-target-selection",
+                    kind = SdePlayerControlledDecisionInputKind.TARGET_SELECTION,
+                ),
+            ),
         )
 
         val candidate = candidate(bindings)
@@ -33,10 +46,58 @@ class SdeDecisionCandidateContractTest {
     }
 
     @Test(expected = IllegalArgumentException::class)
+    fun `ability state cannot exist without a source ability role`() {
+        SdeDecisionSourceInteraction(
+            interactionId = "night:information:seat-3",
+            sourceSeat = 3,
+            abilityState = AbilityState.MALFUNCTIONING_POISONED,
+        )
+    }
+
+    @Test
+    fun `global history prefix keeps canonical action and observation identities without copying state`() {
+        val prefix = SdeHistoricalPrefixRef.Global(
+            gameId = "game-1",
+            actionRefs = listOf(
+                SdeHistoricalActionRef("poison-night-2", 11L),
+                SdeHistoricalActionRef("death-night-2", 13L),
+            ),
+            observationRefs = listOf(
+                SdeHistoricalObservationRef("empath-night-1", 4L),
+                SdeHistoricalObservationRef("undertaker-night-2", 12L),
+            ),
+        )
+
+        assertEquals(listOf(11L, 13L), prefix.actionRefs.map(SdeHistoricalActionRef::globalSequence))
+        assertEquals(listOf(4L, 12L), prefix.observationRefs.map(SdeHistoricalObservationRef::globalSequence))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `history prefix rejects cross-type global-sequence collisions`() {
+        SdeHistoricalPrefixRef.Global(
+            gameId = "game-1",
+            actionRefs = listOf(SdeHistoricalActionRef("poison", 7L)),
+            observationRefs = listOf(SdeHistoricalObservationRef("shown-info", 7L)),
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
     fun `same input cannot be owned as both committed and player controlled`() {
         SdeDecisionInputBindings.Captured(
-            committedInputRefs = setOf(CommittedDecisionInputRef("same-input")),
-            playerControlledInputRefs = setOf(PlayerControlledDecisionInputRef("same-input")),
+            committedInputRefs = setOf(
+                CommittedDecisionInputRef(
+                    inputId = "same-input",
+                    ownerId = "setup-owner",
+                    kind = SdeCommittedDecisionInputKind.OTHER,
+                ),
+            ),
+            playerControlledInputRefs = setOf(
+                PlayerControlledDecisionInputRef(
+                    inputId = "same-input",
+                    ownerId = "player-owner",
+                    kind = SdePlayerControlledDecisionInputKind.OTHER,
+                ),
+            ),
         )
     }
 
@@ -55,6 +116,11 @@ class SdeDecisionCandidateContractTest {
         ),
         sourceRevision = revision,
         inputBindings = inputBindings,
+        historyPrefixRef = SdeHistoricalPrefixRef.Global(
+            gameId = "game-1",
+            actionRefs = emptyList(),
+            observationRefs = emptyList(),
+        ),
         legalOutcomeIdentity = "candidate-yes",
         hypotheticalRef = SdeDecisionHypotheticalRef(
             observationRecordIds = listOf("ft-result-candidate-yes"),

@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicEvaluationCapability
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
 import com.codex.campboardgamehost.clocktower.epistemic.ExactWorldStructureDiagnostics
@@ -36,6 +37,32 @@ class ExactConsequenceDecisionFeaturesProjectorTest {
         val ready = projected as DecisionFeatureEvaluation.Ready
         assertEquals(candidateIds, ready.candidates.map(CandidateDecisionFeatures::candidateId))
         assertTrue(ready.candidates.all { it.features.strategic is FeatureProjection.Projected<*> })
+    }
+
+    @Test
+    fun `semantic truth projection stays candidate keyed and does not invent missing values`() {
+        val candidateIds = listOf("numeric:0", "numeric:1")
+        val evaluation = ExactConsequenceEvaluation.Ready(
+            consequences = candidateIds.map { candidateId ->
+                CandidateConsequence(
+                    candidateId = candidateId,
+                    diagnostics = diagnostics(candidateId, setOf(1, 2)),
+                )
+            },
+        )
+
+        val projected = ExactConsequenceDecisionFeaturesProjector.project(
+            evaluation = evaluation,
+            legalCandidateIds = candidateIds,
+            playerCount = 5,
+            semanticTruthByCandidateId = mapOf("numeric:1" to SemanticTruth.TRUE),
+        ) as DecisionFeatureEvaluation.Ready
+
+        assertTrue(projected.candidates[0].features.semanticTruth is FeatureProjection.Unavailable)
+        assertEquals(
+            SemanticTruth.TRUE,
+            (projected.candidates[1].features.semanticTruth as FeatureProjection.Projected<SemanticTruth>).value,
+        )
     }
 
     @Test
