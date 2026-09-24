@@ -122,13 +122,13 @@ class StructuredInformationShadowAdapterTest {
             ),
         )
 
-        val trace = DecisionTraceFactory.fromStructuredShadow(
-            shadow = shadow,
-            evidenceCheckpoint = EvidenceCheckpointId("sde-3b-merged-2026-09-24"),
-        )
+        val trace = DecisionTraceFactory.fromStructuredShadow(shadow = shadow)
 
         assertEquals(DecisionTrace.CURRENT_SCHEMA_VERSION, trace.schemaVersion)
-        assertEquals(EvidenceCheckpointId("sde-3b-merged-2026-09-24"), trace.evidenceCheckpoint)
+        assertEquals(
+            StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1.evidenceCheckpoint,
+            trace.evidenceCheckpoint,
+        )
         assertEquals(decisionContext.semanticIdentity, trace.decisionId)
         assertEquals(revision, trace.sourceRevision)
         assertEquals(decisionContext.snapshot.legalCandidateIds, trace.legalCandidateIds)
@@ -448,9 +448,10 @@ class StructuredInformationShadowAdapterTest {
 
         assertTrue(shadow.consequences is ExactConsequenceEvaluation.Deferred)
         assertNull(shadow.policySelection)
-        val trace = DecisionTraceFactory.fromStructuredShadow(
-            shadow = shadow,
-            evidenceCheckpoint = EvidenceCheckpointId("sde-3b-merged-2026-09-24"),
+        val trace = DecisionTraceFactory.fromStructuredShadow(shadow = shadow)
+        assertEquals(
+            StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1.evidenceCheckpoint,
+            trace.evidenceCheckpoint,
         )
         assertTrue(trace.policySnapshot is DecisionTracePolicySnapshot.Deferred)
         assertNull(trace.policySelection)

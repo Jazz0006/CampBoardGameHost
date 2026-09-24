@@ -13,9 +13,15 @@ import org.junit.Test
 class MultiPolicyReplayTest {
     @Test
     fun productionReplayRegistryExposesOnlyTheRealV1Policy() {
+        val registry = DecisionPolicyReplayRegistry.production()
+
         assertEquals(
             setOf(PolicyVersions.BEGINNER_CONSERVATIVE_V1),
-            DecisionPolicyReplayRegistry.production().supportedVersions,
+            registry.supportedVersions,
+        )
+        assertEquals(
+            StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1,
+            registry.requireRunner(PolicyVersions.BEGINNER_CONSERVATIVE_V1).definition,
         )
     }
 
@@ -47,8 +53,14 @@ class MultiPolicyReplayTest {
         val versionB = PolicyVersion("TEST_REPLAY_B")
         val registry = DecisionPolicyReplayRegistry(
             listOf(
-                TestReplayRunner(versionA, selectedCandidateId = "candidate-a"),
-                TestReplayRunner(versionB, selectedCandidateId = "candidate-b"),
+                TestReplayRunner(
+                    definition = testDefinition(versionA, "test-evidence-a"),
+                    selectedCandidateId = "candidate-a",
+                ),
+                TestReplayRunner(
+                    definition = testDefinition(versionB, "test-evidence-b"),
+                    selectedCandidateId = "candidate-b",
+                ),
             ),
         )
 
@@ -56,10 +68,6 @@ class MultiPolicyReplayTest {
             sourceTrace = source,
             recomputedInput = recomputed,
             policyVersions = listOf(versionB, versionA),
-            evidenceCheckpoints = mapOf(
-                versionA to EvidenceCheckpointId("test-evidence-a"),
-                versionB to EvidenceCheckpointId("test-evidence-b"),
-            ),
             registry = registry,
         )
 
@@ -91,21 +99,21 @@ class MultiPolicyReplayTest {
         assertThrows(IllegalArgumentException::class.java) {
             DecisionPolicyReplayRegistry(
                 listOf(
-                    TestReplayRunner(version, "candidate-a"),
-                    TestReplayRunner(version, "candidate-b"),
+                    TestReplayRunner(testDefinition(version), "candidate-a"),
+                    TestReplayRunner(testDefinition(version), "candidate-b"),
                 ),
             )
         }
     }
 
     @Test
-    fun replayRejectsUnknownDuplicateAndCheckpointMismatchedPolicyRequests() {
+    fun replayRejectsUnknownAndDuplicatePolicyRequests() {
         val source = sourceTrace()
         val recomputed = replayInput()
         val versionA = PolicyVersion("TEST_REPLAY_A")
         val versionB = PolicyVersion("TEST_REPLAY_B")
         val registry = DecisionPolicyReplayRegistry(
-            listOf(TestReplayRunner(versionA, "candidate-a")),
+            listOf(TestReplayRunner(testDefinition(versionA), "candidate-a")),
         )
 
         assertThrows(IllegalArgumentException::class.java) {
@@ -113,7 +121,6 @@ class MultiPolicyReplayTest {
                 sourceTrace = source,
                 recomputedInput = recomputed,
                 policyVersions = listOf(versionB),
-                evidenceCheckpoints = mapOf(versionB to EvidenceCheckpointId("evidence-b")),
                 registry = registry,
             )
         }
@@ -122,28 +129,6 @@ class MultiPolicyReplayTest {
                 sourceTrace = source,
                 recomputedInput = recomputed,
                 policyVersions = listOf(versionA, versionA),
-                evidenceCheckpoints = mapOf(versionA to EvidenceCheckpointId("evidence-a")),
-                registry = registry,
-            )
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            MultiPolicyReplayEngine.replay(
-                sourceTrace = source,
-                recomputedInput = recomputed,
-                policyVersions = listOf(versionA),
-                evidenceCheckpoints = emptyMap(),
-                registry = registry,
-            )
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            MultiPolicyReplayEngine.replay(
-                sourceTrace = source,
-                recomputedInput = recomputed,
-                policyVersions = listOf(versionA),
-                evidenceCheckpoints = mapOf(
-                    versionA to EvidenceCheckpointId("evidence-a"),
-                    versionB to EvidenceCheckpointId("unexpected-evidence-b"),
-                ),
                 registry = registry,
             )
         }
@@ -154,8 +139,9 @@ class MultiPolicyReplayTest {
         val source = sourceTrace()
         val base = replayInput()
         val version = PolicyVersion("TEST_REPLAY_A")
-        val registry = DecisionPolicyReplayRegistry(listOf(TestReplayRunner(version, "candidate-a")))
-        val checkpoints = mapOf(version to EvidenceCheckpointId("test-evidence"))
+        val registry = DecisionPolicyReplayRegistry(
+            listOf(TestReplayRunner(testDefinition(version), "candidate-a")),
+        )
 
         val mismatches = listOf(
             base.copy(decisionId = "other-decision"),
@@ -186,7 +172,6 @@ class MultiPolicyReplayTest {
                     sourceTrace = source,
                     recomputedInput = mismatched,
                     policyVersions = listOf(version),
-                    evidenceCheckpoints = checkpoints,
                     registry = registry,
                 )
             }
@@ -205,9 +190,8 @@ class MultiPolicyReplayTest {
             sourceTrace = source,
             recomputedInput = recomputed,
             policyVersions = listOf(version),
-            evidenceCheckpoints = mapOf(version to EvidenceCheckpointId("test-evidence")),
             registry = DecisionPolicyReplayRegistry(
-                listOf(TestReplayRunner(version, "candidate-a")),
+                listOf(TestReplayRunner(testDefinition(version), "candidate-a")),
             ),
         )
 
@@ -216,9 +200,11 @@ class MultiPolicyReplayTest {
     }
 
     private class TestReplayRunner(
-        override val policyVersion: PolicyVersion,
+        override val definition: StorytellerPolicyDefinition,
         private val selectedCandidateId: String,
     ) : DecisionPolicyReplayRunner {
+        private val policyVersion: PolicyVersion
+            get() = definition.policyVersion
         override fun run(
             featureEvaluation: DecisionFeatureEvaluation,
             decisionId: String,
@@ -251,6 +237,15 @@ class MultiPolicyReplayTest {
             )
         }
     }
+
+    private fun testDefinition(
+        policyVersion: PolicyVersion,
+        evidenceCheckpoint: String = "test-evidence",
+    ): StorytellerPolicyDefinition = StorytellerPolicyDefinition(
+        policyVersion = policyVersion,
+        evidenceCheckpoint = EvidenceCheckpointId(evidenceCheckpoint),
+        selectionMethod = PolicySelectionMethod.SEEDED_HASH_V1,
+    )
 
     private fun sourceTrace(): DecisionTrace {
         val candidateIds = CANDIDATE_IDS
