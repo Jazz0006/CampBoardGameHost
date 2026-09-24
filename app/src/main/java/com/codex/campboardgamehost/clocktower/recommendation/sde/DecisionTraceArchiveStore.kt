@@ -1,11 +1,15 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
+import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
+import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
+
 /**
  * Durable adapter for the immutable DecisionTrace archive.
  *
  * The store owns no mutable game/history state. Every operation reconstructs one complete immutable
  * archive from raw persistence, applies the archive contract, and writes a complete replacement only
- * when a new trace was actually admitted.
+ * when a new trace was admitted or one existing Pending trace was authoritatively finalized.
  */
 internal class DecisionTraceArchiveStore(
     private val readRaw: () -> String?,
@@ -20,6 +24,38 @@ internal class DecisionTraceArchiveStore(
     fun append(trace: DecisionTrace): Boolean {
         val current = load()
         val updated = current.append(trace)
+        if (updated === current) return true
+        return writeRaw(DecisionTraceArchiveJsonCodec.encode(updated))
+    }
+
+    /**
+     * Finalizes one persisted pending trace only from evidence that canonical observation commit has
+     * already succeeded. This method neither confirms the choice nor mutates canonical history.
+     */
+    fun correlateCommittedChoice(
+        key: DecisionTraceKey,
+        confirmed: ConfirmedInformationDecision,
+        committedObservation: RecordedEpistemicObservation,
+        postCommitSession: ClocktowerSessionView,
+        overrideReason: DecisionTraceOverrideReason? = null,
+    ): Boolean {
+        val current = load()
+        val existing = requireNotNull(current.find(key)) {
+            "DecisionTrace correlation requires an existing archive entry."
+        }
+        val pending = when (existing.actualChoice) {
+            DecisionTraceActualChoice.Pending -> existing
+            is DecisionTraceActualChoice.Committed ->
+                existing.copy(actualChoice = DecisionTraceActualChoice.Pending)
+        }
+        val finalized = DecisionTraceAuthoritativeChoiceCorrelator.finalize(
+            trace = pending,
+            confirmed = confirmed,
+            committedObservation = committedObservation,
+            postCommitSession = postCommitSession,
+            overrideReason = overrideReason,
+        )
+        val updated = current.finalizeActualChoice(finalized)
         if (updated === current) return true
         return writeRaw(DecisionTraceArchiveJsonCodec.encode(updated))
     }

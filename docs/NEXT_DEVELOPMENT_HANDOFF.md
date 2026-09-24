@@ -27,7 +27,9 @@ Use these as the active authorities, in order:
 16. `docs/SDE_3C0_DECISION_TRACE_SHADOW_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`
 17. `docs/SDE_3C3B_PERSISTENCE_CODEC_STORAGE_ARCHITECTURE_AUDIT_2026-09-24.md`
 18. `docs/SDE_3C3B_STRICT_PERSISTENCE_CODEC_STORAGE_COMPLETION_AUDIT_2026-09-24.md`
-19. this handoff
+19. `docs/SDE_3C4_AUTHORITATIVE_CHOICE_CORRELATION_ARCHITECTURE_AUDIT_2026-09-24.md`
+20. `docs/SDE_3C4_AUTHORITATIVE_CHOICE_CORRELATION_COMPLETION_AUDIT_2026-09-24.md`
+21. this handoff
 
 Evidence/provenance references when needed:
 
@@ -289,7 +291,9 @@ Current implementation checkpoint:
 - 3C1/3C2/3C3A were accepted at remote HEAD `a75f482dd5a9aa5a128525c2cfb47be127ded72b` with CI #3432 and R2 #3187 SUCCESS.
 - **3C3B COMPLETE:** strict deterministic `DecisionTraceArchiveJsonCodec`, stateless immutable-archive `DecisionTraceArchiveStore`, dedicated SharedPreferences transport, and tests-first malformed/version/duplicate/conflict/canonical-prefix/idempotence coverage are implemented. Persistence is not wired as an automatic side effect of the read-only shadow evaluator; actual authoritative-choice correlation remains 3C4.
 - Oracle `test:fast` was invoked before and after the 3C3B implementation, but both attempts are blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK. Independent GitHub acceptance at exact HEAD `9cffa4e94b088342e1808c9945febb790a0b0232` is CI #3433 SUCCESS and R2 #3188 SUCCESS.
-- **NEXT: 3C4 authoritative-choice correlation**, followed by 3C5 multi-policy replay.
+- **3C4 CODE COMPLETE / REMOTE ACCEPTANCE PENDING:** authoritative correlation requires exact semantic identity, source revision, complete candidate domain, lifecycle, matching committed observation, and a canonical post-commit session view proving the record is actually persisted. `DecisionTraceArchive` permits only the narrow same-key `Pending -> Committed` actual-choice transition; exact retries are idempotent and conflicts fail closed.
+- Oracle `test:fast` was invoked before and after the 3C4 production implementation, but both attempts remain blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK.
+- **NEXT GATE:** commit/push 3C4 and obtain independent GitHub CI/R2 acceptance. After acceptance, proceed to 3C5 multi-policy replay.
 
 Before automatic cutover, persist a replayable diagnostic trace with:
 

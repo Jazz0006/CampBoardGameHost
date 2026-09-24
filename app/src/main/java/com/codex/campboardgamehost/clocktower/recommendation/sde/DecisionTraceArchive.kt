@@ -68,6 +68,38 @@ internal class DecisionTraceArchive(
         return this
     }
 
+    /**
+     * The only supported same-key content transition: a previously captured Pending trace may gain
+     * one authoritative committed choice. Every other field must remain exactly unchanged.
+     */
+    fun finalizeActualChoice(finalizedTrace: DecisionTrace): DecisionTraceArchive {
+        val committedChoice = finalizedTrace.actualChoice as? DecisionTraceActualChoice.Committed
+            ?: throw IllegalArgumentException(
+                "DecisionTrace finalization requires a committed actual choice.",
+            )
+        val key = finalizedTrace.archiveKey
+        val index = traces.indexOfFirst { it.archiveKey == key }
+        require(index >= 0) {
+            "DecisionTrace finalization requires an existing pending archive entry."
+        }
+
+        val existing = traces[index]
+        if (existing == finalizedTrace) return this
+
+        require(existing.actualChoice is DecisionTraceActualChoice.Pending) {
+            "DecisionTrace actual choice is already committed with different content."
+        }
+        require(existing.copy(actualChoice = committedChoice) == finalizedTrace) {
+            "DecisionTrace finalization may change only actualChoice."
+        }
+
+        return DecisionTraceArchive(
+            traces.toMutableList().apply {
+                this[index] = finalizedTrace
+            },
+        )
+    }
+
     fun find(key: DecisionTraceKey): DecisionTrace? =
         traces.firstOrNull { it.archiveKey == key }
 
