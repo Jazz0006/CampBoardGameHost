@@ -128,6 +128,15 @@ class StructuredInformationProductionShadowTest {
         assertTrue(result.featureEvaluation is DecisionFeatureEvaluation.Ready)
         assertEquals(PolicyVersions.BEGINNER_CONSERVATIVE_V1, result.policyEvaluation.policyVersion)
         assertEquals(model.contextSnapshot.legalCandidateIds, result.policyEvaluation.candidateIds)
+        assertEquals(
+            BeginnerConservativeV1Selector.select(
+                evaluation = result.policyEvaluation,
+                decisionId = model.contextSnapshot.semanticIdentity,
+                selectionSeed = currentSnapshot.gameSeed,
+            ),
+            result.policySelection,
+        )
+        assertNotNull(result.policySelection)
         val featureEvaluation = result.featureEvaluation as DecisionFeatureEvaluation.Ready
         assertEquals(
             model.contextSnapshot.legalCandidateIds,
