@@ -70,6 +70,8 @@ Always query live refs before executable edits.
 - SDE-3B6 completion audit: [`SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md)
 - SDE-3B final completion/T4 audit: [`SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md)
 - SDE-3C0 architecture/fanout/persistence audit: [`SDE_3C0_DECISION_TRACE_SHADOW_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3C0_DECISION_TRACE_SHADOW_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md)
+- SDE-3C3B persistence/storage architecture audit: [`SDE_3C3B_PERSISTENCE_CODEC_STORAGE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3C3B_PERSISTENCE_CODEC_STORAGE_ARCHITECTURE_AUDIT_2026-09-24.md)
+- SDE-3C3B completion audit: [`SDE_3C3B_STRICT_PERSISTENCE_CODEC_STORAGE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3C3B_STRICT_PERSISTENCE_CODEC_STORAGE_COMPLETION_AUDIT_2026-09-24.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 - B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
@@ -239,14 +241,14 @@ Do not invent unsupported numeric weights.
 Current code checkpoint:
 
 1. **3C0 architecture / fanout / persistence audit — COMPLETE** — `StructuredInformationShadowAdapter` is the common aggregation owner; `InformationDecisionContext` remains legal/confirmation authority; canonical timelines remain the only game-history owners; DecisionTrace gets a separate diagnostic owner.
-2. **3C1 production shadow recommendation — IMPLEMENTED / REMOTE ACCEPTANCE PENDING** — Ready V1 shadow evaluation now carries deterministic `PolicySelection`; Deferred policy carries no selection; visible legacy recommendation and canonical commit paths are unchanged.
-3. **3C2 typed DecisionTrace contract — IMPLEMENTED / REMOTE ACCEPTANCE PENDING** — versioned trace records evidence checkpoint, lifecycle/revision, canonical-prefix reference, complete candidate IDs, typed feature evaluation, policy-neutral Ready/Deferred snapshot, shadow recommendation, and pending/committed actual-choice shape.
-4. **3C3A replay archive ownership — IMPLEMENTED / REMOTE ACCEPTANCE PENDING** — immutable archive admits only traces bound to canonical global history prefixes; same decision/revision/policy key is idempotent only for identical trace content and conflicts otherwise.
-5. **3C3B persistence codec / storage integration — NEXT** — add strict versioned serialization and durable storage without turning recovery or semantic timelines into DecisionTrace semantic owners.
+2. **3C1 production shadow recommendation — COMPLETE** — Ready V1 shadow evaluation carries deterministic `PolicySelection`; Deferred policy carries no selection; visible legacy recommendation and canonical commit paths are unchanged. Accepted by GitHub CI/R2 before the SDE-3C3B Oracle checkpoint.
+3. **3C2 typed DecisionTrace contract — COMPLETE** — versioned trace records evidence checkpoint, lifecycle/revision, canonical-prefix reference, complete candidate IDs, typed feature evaluation, policy-neutral Ready/Deferred snapshot, shadow recommendation, and pending/committed actual-choice shape. Accepted by GitHub CI/R2 before the SDE-3C3B Oracle checkpoint.
+4. **3C3A replay archive ownership — COMPLETE** — immutable archive admits only traces bound to canonical global history prefixes; same decision/revision/policy key is idempotent only for identical trace content and conflicts otherwise. Accepted by GitHub CI/R2 before the SDE-3C3B Oracle checkpoint.
+5. **3C3B strict persistence codec / storage integration — CODE COMPLETE / REMOTE ACCEPTANCE PENDING** — adds a strict deterministic archive codec, immutable raw-store adapter, and dedicated SharedPreferences transport. Malformed/incompatible payloads and duplicate/conflicting keys fail closed; storage remains diagnostic and is not auto-invoked from the read-only production shadow.
 6. **3C4 authoritative-choice correlation — AFTER 3C3B** — finalize matching traces only after successful authoritative confirmation/commit, with revision/domain guards and optional override rationale.
 7. **3C5 multi-policy replay — AFTER 3C4** — evaluate multiple explicit policy versions against the same canonical committed prefix without mutating historical truth.
 
-Validation note: Oracle `test:fast` reaches Gradle but is blocked before Kotlin compilation because the ARM64 host has no Android SDK. GitHub CI remains the required independent Android acceptance surface for these checkpoints; current code must not be called GREEN until that remote validation is observed.
+Validation note: Oracle `test:fast` reaches Gradle but is blocked before Kotlin compilation because the ARM64 host has no Android SDK. GitHub CI/R2 already accepted 3C1, 3C2 and 3C3A at the prior remote checkpoint; 3C3B remains code-complete but must not be called GREEN until its own independent remote validation is observed.
 
 Before cutover, the durable trace still must capture policy/evidence versioning, the complete candidate/feature/reason record, recommendation, actual committed choice and optional human override rationale. Historical replay must support comparing multiple policy versions against the same committed game history.
 

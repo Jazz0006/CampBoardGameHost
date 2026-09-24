@@ -2,8 +2,8 @@
 
 > Updated: 2026-09-24 Australia/Sydney  
 > Branch: `sde-3c-decision-trace-shadow-replay`  
-> Last SDE-3C code checkpoint before this documentation sync: `566184133297cd6729c0cb03af575f37365009c0`  
-> PR: **not yet created at this checkpoint** because the GitHub control-plane tool disappeared from the current conversation after Mini MCP use. The next GitHub-capable conversation should create the SDE-3C PR as **draft**. Do not merge unless the user explicitly says **“授权合并”**. PR #153 is merged.
+> Last remotely accepted SDE-3C HEAD before SDE-3C3B: `a75f482dd5a9aa5a128525c2cfb47be127ded72b`  
+> Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. At the accepted HEAD, GitHub CI #3432 and R2 #3187 were SUCCESS and mergeable state was clean. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. The Oracle working tree now contains uncommitted SDE-3C3B changes on top of that accepted HEAD.
 
 ## 1. Read first
 
@@ -25,7 +25,9 @@ Use these as the active authorities, in order:
 14. `docs/SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md`
 15. `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md`
 16. `docs/SDE_3C0_DECISION_TRACE_SHADOW_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`
-17. this handoff
+17. `docs/SDE_3C3B_PERSISTENCE_CODEC_STORAGE_ARCHITECTURE_AUDIT_2026-09-24.md`
+18. `docs/SDE_3C3B_STRICT_PERSISTENCE_CODEC_STORAGE_COMPLETION_AUDIT_2026-09-24.md`
+19. this handoff
 
 Evidence/provenance references when needed:
 
@@ -281,11 +283,13 @@ Examples of acceptable V1 intent:
 Current implementation checkpoint:
 
 - **3C0 COMPLETE:** architecture/fanout/persistence ownership audit is committed; DecisionTrace is explicitly diagnostic/replay state, never canonical game state.
-- **3C1 IMPLEMENTED / REMOTE ACCEPTANCE PENDING:** structured production shadow carries deterministic V1 `PolicySelection?`; Ready selects a survivor using stable decision identity + canonical game seed, Deferred has no selection, and visible recommendation/confirmation remains untouched.
-- **3C2 IMPLEMENTED / REMOTE ACCEPTANCE PENDING:** `DecisionTrace` and a policy-version-neutral Ready/Deferred policy snapshot are implemented with schema version, evidence checkpoint, lifecycle/revision, canonical prefix reference, complete candidate IDs, typed features, recommendation and pending/committed actual-choice shape.
-- **3C3A IMPLEMENTED / REMOTE ACCEPTANCE PENDING:** `DecisionTraceArchive` is a separate immutable replay archive keyed by canonical game/decision/lifecycle/revision/policy identity. Only `Global` history-prefix traces may enter it; identical append is idempotent and same-key different-content append fails closed.
-- Oracle `test:fast` is still blocked before Kotlin compilation by missing Android SDK. Do not call these checkpoints GREEN until GitHub CI is observed.
-- **NEXT: 3C3B strict persistence codec/storage integration**, followed by 3C4 authoritative-choice correlation and 3C5 multi-policy replay.
+- **3C1 COMPLETE:** structured production shadow carries deterministic V1 `PolicySelection?`; Ready selects a survivor using stable decision identity + canonical game seed, Deferred has no selection, and visible recommendation/confirmation remains untouched.
+- **3C2 COMPLETE:** `DecisionTrace` and a policy-version-neutral Ready/Deferred policy snapshot are implemented with schema version, evidence checkpoint, lifecycle/revision, canonical prefix reference, complete candidate IDs, typed features, recommendation and pending/committed actual-choice shape.
+- **3C3A COMPLETE:** `DecisionTraceArchive` is a separate immutable replay archive keyed by canonical game/decision/lifecycle/revision/policy identity. Only `Global` history-prefix traces may enter it; identical append is idempotent and same-key different-content append fails closed.
+- 3C1/3C2/3C3A were accepted at remote HEAD `a75f482dd5a9aa5a128525c2cfb47be127ded72b` with CI #3432 and R2 #3187 SUCCESS.
+- **3C3B CODE COMPLETE / REMOTE ACCEPTANCE PENDING:** strict deterministic `DecisionTraceArchiveJsonCodec`, stateless immutable-archive `DecisionTraceArchiveStore`, dedicated SharedPreferences transport, and tests-first malformed/version/duplicate/conflict/canonical-prefix/idempotence coverage are implemented. Persistence is not wired as an automatic side effect of the read-only shadow evaluator; actual authoritative-choice correlation remains 3C4.
+- Oracle `test:fast` was invoked before and after the 3C3B implementation, but both attempts are blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK. Do not call 3C3B GREEN until its own GitHub CI/R2 acceptance is observed.
+- **NEXT GATE:** inspect final diff/status, then commit/push through the Mini MCP safe Git workflow and obtain remote CI/R2 acceptance for 3C3B. After that, proceed to 3C4 authoritative-choice correlation, then 3C5 multi-policy replay.
 
 Before automatic cutover, persist a replayable diagnostic trace with:
 
