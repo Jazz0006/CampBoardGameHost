@@ -100,3 +100,7 @@ The next step is the overall SDE-3B T4 acceptance checkpoint:
 5. do not merge or mark ready without explicit project-owner authorization.
 
 After successful T4 acceptance, the next engineering phase is SDE-3C DecisionTrace / replay.
+
+## 8. T4 trigger checkpoint
+
+This documentation-only checkpoint requests the repository's reserved overall SDE-3B `[full-ci]` acceptance path. No production semantics change in this commit.
