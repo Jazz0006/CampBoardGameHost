@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-24 Australia/Sydney  
 > Branch: `sde-3c-decision-trace-shadow-replay`  
-> SDE-3C3B accepted code HEAD: `9cffa4e94b088342e1808c9945febb790a0b0232` — GitHub CI #3433 and R2 #3188 SUCCESS.  
+> SDE-3C4 accepted code HEAD: `bf5c2c763e33f69ce6a12567be25e5224c10270b` — GitHub CI #3436 and R2 #3191 SUCCESS.  
 > Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. Re-query the live branch/PR/checks before the next executable slice because documentation-only closeout commits may advance the branch HEAD.
 
 ## 1. Read first
@@ -48,7 +48,7 @@ Before any executable edit:
 
 1. query live branch HEAD for `sde-3c-decision-trace-shadow-replay`;
 2. confirm PR #153 remains merged and query live `main`;
-3. create/find the SDE-3C PR when GitHub control-plane access is available and confirm it is **draft**;
+3. confirm Draft PR #154 remains open and **draft**;
 4. query current CI/R2 checks for the exact SDE-3C head;
 5. never assume the SHA recorded in a prior chat is still current.
 
@@ -76,7 +76,7 @@ Current route:
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / T4 ACCEPTED / PR #153 MERGED
-SDE-3C shadow recommendation / DecisionTrace / replay       CURRENT / 3C0–3C3A CODE CHECKPOINT
+SDE-3C shadow recommendation / DecisionTrace / replay       CURRENT / 3C0–3C4 COMPLETE / NEXT 3C5
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
 ~~~
@@ -291,9 +291,9 @@ Current implementation checkpoint:
 - 3C1/3C2/3C3A were accepted at remote HEAD `a75f482dd5a9aa5a128525c2cfb47be127ded72b` with CI #3432 and R2 #3187 SUCCESS.
 - **3C3B COMPLETE:** strict deterministic `DecisionTraceArchiveJsonCodec`, stateless immutable-archive `DecisionTraceArchiveStore`, dedicated SharedPreferences transport, and tests-first malformed/version/duplicate/conflict/canonical-prefix/idempotence coverage are implemented. Persistence is not wired as an automatic side effect of the read-only shadow evaluator; actual authoritative-choice correlation remains 3C4.
 - Oracle `test:fast` was invoked before and after the 3C3B implementation, but both attempts are blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK. Independent GitHub acceptance at exact HEAD `9cffa4e94b088342e1808c9945febb790a0b0232` is CI #3433 SUCCESS and R2 #3188 SUCCESS.
-- **3C4 CODE COMPLETE / REMOTE ACCEPTANCE PENDING:** authoritative correlation requires exact semantic identity, source revision, complete candidate domain, lifecycle, matching committed observation, and a canonical post-commit session view proving the record is actually persisted. `DecisionTraceArchive` permits only the narrow same-key `Pending -> Committed` actual-choice transition; exact retries are idempotent and conflicts fail closed.
+- **3C4 COMPLETE:** authoritative correlation requires exact semantic identity, source revision, complete candidate domain, lifecycle, matching committed observation, and a canonical post-commit session view proving the record is actually persisted. `DecisionTraceArchive` permits only the narrow same-key `Pending -> Committed` actual-choice transition; exact retries are idempotent and conflicts fail closed. Independent GitHub acceptance at exact code HEAD `bf5c2c763e33f69ce6a12567be25e5224c10270b` is CI #3436 SUCCESS and R2 #3191 SUCCESS.
 - Oracle `test:fast` was invoked before and after the 3C4 production implementation, but both attempts remain blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK.
-- **NEXT GATE:** commit/push 3C4 and obtain independent GitHub CI/R2 acceptance. After acceptance, proceed to 3C5 multi-policy replay.
+- **NEXT:** proceed to 3C5 multi-policy replay.
 
 Before automatic cutover, persist a replayable diagnostic trace with:
 
