@@ -31,7 +31,7 @@ GitHub remote state
   = independent remote acceptance surface
 
 Mini MCP GitHub control plane
-  = preferred PR / CI / merge-gate interface when the live M8G tools are exposed
+  = preferred PR / CI / merge-gate interface only after the live runtime has completed the M8G5 acceptance gate
   = exact-head/base remote audit and bounded CI evidence
   = guarded PR lifecycle and merge operations
 
@@ -55,11 +55,11 @@ Codex/Luna must not independently redesign a requested slice, broaden scope, sub
 - Prefer `create_file`, `apply_patch`, or `apply_patches` over whole-file replacement. For existing-file edits, use the returned expected revision, exact semantic anchors, unique-match requirements, and fail closed on stale or ambiguous state.
 - After Mini MCP edits, inspect local `git_diff` and `git_status` before treating the slice as ready for validation or remote acceptance.
 - **File size alone MUST NOT determine the writer or execution path.** A large file may remain on the primary Mini MCP path when the intended change can be represented safely through bounded exact edits.
-- When the live Mini MCP runtime exposes the reviewed M8G GitHub tools, use Mini MCP as the normal PR / CI / review-state / guarded lifecycle control-plane interface. GitHub Connector remains the fallback when Mini MCP is unavailable, stale, lacks required credentials, or intentionally does not expose the needed GitHub-native capability.
+- Only after the live Mini MCP runtime both exposes the reviewed M8G GitHub tools and has completed the M8G5 acceptance gate in `docs/MINI_MCP_REMOTE_PR_CONTROL_PLANE_ADOPTION_2026-09-24.md` should Mini MCP become the normal PR / CI / review-state / guarded lifecycle control-plane interface. Until that gate completes, or whenever Mini MCP is unavailable, stale, lacks required credentials, or intentionally does not expose the needed GitHub-native capability, use GitHub Connector as the fallback.
 - The GitHub Actions one-shot patch workflow remains a valid exceptional remote fallback, not the automatic first choice merely because a file is large or connector output would be truncated.
 - Codex/Luna **MUST NOT** be used merely because it is already involved in the task or because a file is large. Use it only when the primary controlled workspace and GitHub fallbacks cannot safely or practically perform the work.
 - Mini MCP **owns the guarded local Git write path** for this repository when the live runtime exposes the reviewed safe-Git tools: state review -> explicit-path stage -> staged diff review -> commit -> network-observed remote audit -> push.
-- Mini MCP also owns the preferred minimal GitHub remote-control path when the live M8G surface is present: PR audit -> bounded CI drill-down -> guarded ready/draft transition -> guarded merge. GitHub actual state remains canonical, and a real merge still requires clear user authorization plus the server-enforced exact-state gates.
+- After M8G5 acceptance has completed for the live runtime, Mini MCP also owns the preferred minimal GitHub remote-control path: PR audit -> bounded CI drill-down -> guarded ready/draft transition -> guarded merge. GitHub actual state remains canonical, and a real merge still requires clear user authorization plus the server-enforced exact-state gates.
 
 ## 2. Execution-path priority
 
@@ -80,8 +80,8 @@ Chat live-state / architecture / scope audit
 -> configured focused validation when the execution target supports it
 -> broader checkpoint validation according to TESTING_STRATEGY
 -> Mini MCP guarded stage / staged-diff review / commit / remote audit / push
--> Mini MCP github_pr_audit / github_ci_detail when the live M8G surface is present
--> GitHub Connector fallback only when the required remote capability is unavailable through Mini MCP
+-> Mini MCP github_pr_audit / github_ci_detail after M8G5 acceptance has completed for the live runtime
+-> GitHub Connector fallback before that acceptance gate, or when the required remote capability is unavailable through Mini MCP
 ```
 
 Use exact repository-relative paths and stable semantic anchors. Do not patch by absolute line number. Do not silently relax stale-revision, zero-match, or multiple-match failures into fuzzy edits.
@@ -96,11 +96,11 @@ Use GitHub Connector when:
 
 - Mini MCP is unavailable in the current conversation/runtime;
 - the configured repository alias is unavailable;
-- GitHub-native remote state or control-plane operations are required;
+- the required GitHub-native remote-state or control-plane capability is not exposed by the accepted live Mini MCP M8G surface;
 - a direct remote edit is simpler while still preserving complete safe read/write, exact diff review, and stale-state protection;
 - bootstrap or recovery specifically requires the remote repository rather than the local workspace.
 
-GitHub remains the canonical source for remote branch/PR state, CI/checks, mergeability, reviews, and final merge state. Mini MCP is the preferred interface to that state when its live M8G tools are available; GitHub Connector is the fallback interface.
+GitHub remains the canonical source for remote branch/PR state, CI/checks, mergeability, reviews, and final merge state. After the live runtime completes M8G5 acceptance, Mini MCP is the preferred interface to the M8G capabilities it exposes; GitHub Connector remains the fallback for unsupported capabilities, unavailable or stale Mini MCP state, credential failures, and pre-acceptance operation.
 
 ### Path C — GitHub Actions one-shot exceptional patch
 
