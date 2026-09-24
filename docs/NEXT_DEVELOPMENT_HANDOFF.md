@@ -1,9 +1,9 @@
 # CampBoardGameHost — Next Development Handoff
 
 > Updated: 2026-09-24 Australia/Sydney  
-> Branch: `sde-3b-beginner-conservative-v1`  
-> PR: **#153 — SDE-3B: implement BEGINNER_CONSERVATIVE_V1 policy**  
-> PR #151 and #152 are merged. The SDE-3B PR **MUST remain draft**. Do not merge unless the user explicitly says **“授权合并”**.
+> Branch: `sde-3c-decision-trace-shadow-replay`  
+> Last SDE-3C code checkpoint before this documentation sync: `566184133297cd6729c0cb03af575f37365009c0`  
+> PR: **not yet created at this checkpoint** because the GitHub control-plane tool disappeared from the current conversation after Mini MCP use. The next GitHub-capable conversation should create the SDE-3C PR as **draft**. Do not merge unless the user explicitly says **“授权合并”**. PR #153 is merged.
 
 ## 1. Read first
 
@@ -24,7 +24,8 @@ Use these as the active authorities, in order:
 13. `docs/SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md`
 14. `docs/SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md`
 15. `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md`
-16. this handoff
+16. `docs/SDE_3C0_DECISION_TRACE_SHADOW_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`
+17. this handoff
 
 Evidence/provenance references when needed:
 
@@ -41,13 +42,13 @@ Do not revive archived pre-SDE-3 execution routes as parallel authority.
 
 Before any executable edit:
 
-1. query live branch HEAD;
-2. query PR #153 state/draft flag and confirm PR #152 remains merged;
-3. query live `main`;
-4. query current checks;
+1. query live branch HEAD for `sde-3c-decision-trace-shadow-replay`;
+2. confirm PR #153 remains merged and query live `main`;
+3. create/find the SDE-3C PR when GitHub control-plane access is available and confirm it is **draft**;
+4. query current CI/R2 checks for the exact SDE-3C head;
 5. never assume the SHA recorded in a prior chat is still current.
 
-The PR must stay **draft**.
+The SDE-3C PR must stay **draft** once created.
 
 ## 3. Current program state
 
@@ -70,8 +71,8 @@ Current route:
 
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / T4 ACCEPTED / PR #153 DRAFT
-SDE-3C shadow recommendation / DecisionTrace / replay       NEXT AFTER SDE-3B MERGE
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / T4 ACCEPTED / PR #153 MERGED
+SDE-3C shadow recommendation / DecisionTrace / replay       CURRENT / 3C0–3C3A CODE CHECKPOINT
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
 ~~~
@@ -163,8 +164,9 @@ PR/branch boundary:
 
 - PR #150 is the merged SDE-2D5 evidence/calibration checkpoint;
 - PR #151/#152 are merged SDE-3A checkpoints;
-- current branch is `sde-3b-beginner-conservative-v1`;
-- current PR is **#153** and must remain draft until explicit user authorization to merge;
+- PR #153 is the merged SDE-3B checkpoint;
+- current branch is `sde-3c-decision-trace-shadow-replay`;
+- no SDE-3C PR had been created when this handoff was updated because GitHub control-plane tools were unavailable in the conversation; create it as draft when available;
 - current policy audit is `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_POLICY_AUDIT_2026-09-23.md`;
 - completed 3B1 audit is `docs/SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`;
 - completed 3B2 audit is `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`;
@@ -275,6 +277,15 @@ Examples of acceptable V1 intent:
 - use randomness instead of fake precision when evidence does not distinguish survivors.
 
 ## 10. SDE-3C trace/replay requirement
+
+Current implementation checkpoint:
+
+- **3C0 COMPLETE:** architecture/fanout/persistence ownership audit is committed; DecisionTrace is explicitly diagnostic/replay state, never canonical game state.
+- **3C1 IMPLEMENTED / REMOTE ACCEPTANCE PENDING:** structured production shadow carries deterministic V1 `PolicySelection?`; Ready selects a survivor using stable decision identity + canonical game seed, Deferred has no selection, and visible recommendation/confirmation remains untouched.
+- **3C2 IMPLEMENTED / REMOTE ACCEPTANCE PENDING:** `DecisionTrace` and a policy-version-neutral Ready/Deferred policy snapshot are implemented with schema version, evidence checkpoint, lifecycle/revision, canonical prefix reference, complete candidate IDs, typed features, recommendation and pending/committed actual-choice shape.
+- **3C3A IMPLEMENTED / REMOTE ACCEPTANCE PENDING:** `DecisionTraceArchive` is a separate immutable replay archive keyed by canonical game/decision/lifecycle/revision/policy identity. Only `Global` history-prefix traces may enter it; identical append is idempotent and same-key different-content append fails closed.
+- Oracle `test:fast` is still blocked before Kotlin compilation by missing Android SDK. Do not call these checkpoints GREEN until GitHub CI is observed.
+- **NEXT: 3C3B strict persistence codec/storage integration**, followed by 3C4 authoritative-choice correlation and 3C5 multi-policy replay.
 
 Before automatic cutover, persist a replayable diagnostic trace with:
 

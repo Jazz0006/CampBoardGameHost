@@ -558,9 +558,9 @@ Authority:
 Split:
 
 ~~~text
-SDE-3A engine / feature / policy contract                  CURRENT
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT
-SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
+SDE-3A engine / feature / policy contract                  COMPLETE / PR #151/#152
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / PR #153
+SDE-3C shadow recommendation / DecisionTrace / replay       CURRENT / 3C0–3C3A CODE CHECKPOINT
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
 ~~~
