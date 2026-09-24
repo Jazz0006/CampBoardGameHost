@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-24 Australia/Sydney  
 > Branch: `sde-3c-decision-trace-shadow-replay`  
-> SDE-3C5 accepted code HEAD: `db7d5575dd28dc5f584be34b3556b511ccaf3e35` — GitHub CI #3440 and R2 #3195 SUCCESS.  
+> SDE-3D1 accepted code HEAD: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. SDE-3C5 structural checkpoint: `db7d5575dd28dc5f584be34b3556b511ccaf3e35`.  
 > Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. Re-query the live branch/PR/checks before the next executable slice because documentation-only closeout commits may advance the branch HEAD.
 
 ## 1. Read first
@@ -32,7 +32,9 @@ Use these as the active authorities, in order:
 21. `docs/SDE_3C5_MULTI_POLICY_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`
 22. `docs/SDE_3C5_MULTI_POLICY_REPLAY_COMPLETION_AUDIT_2026-09-24.md`
 23. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
-24. this handoff
+24. `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_ARCHITECTURE_AUDIT_2026-09-24.md`
+25. `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`
+26. this handoff
 
 Evidence/provenance references when needed:
 
@@ -350,7 +352,7 @@ SDE-3D is active. Its current authority is:
 
 `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
 
-The accepted `BEGINNER_CONSERVATIVE_V1` semantics are ready to become an immutable provisional baseline. Do not create V2 until a real evidence-authorized candidate-ordering or rejection semantic exists.
+The accepted `BEGINNER_CONSERVATIVE_V1` semantics are now frozen as an immutable provisional baseline. Its production definition binds policy version `BEGINNER_CONSERVATIVE_V1`, evidence checkpoint `sde-3b-merged-2026-09-24`, and selector method `SEEDED_HASH_V1`. Do not mutate those semantics under V1 or create V2 until a real evidence-authorized candidate-ordering or rejection semantic exists.
 
 Still evidence-gated:
 
@@ -435,9 +437,10 @@ The old external-human auto-workflow that could take ~2h48m has been retired.
 
 SDE-3A and SDE-3B are merged. SDE-3C is structurally COMPLETE on Draft PR #154 and must remain draft/unmerged until explicit project-owner authorization.
 
-SDE-3D0 is now COMPLETE as an architecture/evidence route. The current conclusion is:
+SDE-3D0 and SDE-3D1 are COMPLETE. The current conclusion is:
 
-- V1 is ready to become an immutable provisional baseline;
+- V1 is an immutable provisional baseline; trace/replay provenance now derives from its frozen definition;
+- the V1 selector has a stable `SEEDED_HASH_V1` golden and must not silently change under the same version;
 - SDE-3D is partially evidence-blocked, not globally blocked;
 - production cutover is surface-scoped;
 - quantitative Gap E is not mandatory unless a future policy explicitly adopts numeric weighting;
@@ -447,9 +450,9 @@ Immediate next action:
 
 1. re-query live branch / PR #154 / checks before executable work;
 2. keep #154 **draft** and do not merge or mark ready without explicit project-owner authorization;
-3. begin **SDE-3D1 — BEGINNER_CONSERVATIVE_V1 immutable baseline freeze** with a contract/fanout audit before production edits;
-4. inventory policy-version identity, evidence-checkpoint identity, DecisionTrace/replay binding, and the tests that currently define V1 recommendation semantics;
-5. identify any path that could silently change V1 recommendation behavior without changing the policy version;
-6. add code only if the audit reveals a real version-integrity contract gap; do not add new candidate ordering;
-7. after V1 freeze, the next feature-development audit candidate is truth danger / credibility disruption plus contextual Red-Herring projection;
-8. keep automatic production cutover blocked per decision surface until the SDE-3E gates are satisfied.
+3. begin **SDE-3D2 — calibration-ready missing feature completion** with an architecture/evidence/fanout audit before production edits;
+4. first audit truth danger / credibility disruption and contextual Red-Herring downstream policy input against existing Evin GOLD + SILVER / Ben contextual evidence;
+5. identify the existing production owners for Red Herring setup commitment, legal candidate semantics, healthy truthful-channel danger, confirmation/history context and exact/topology consequences;
+6. define the smallest generic typed descriptive feature seam; do not encode a Red-Herring role/seat heuristic or candidate preference;
+7. use current real-game evidence as E1/E2 semantic validation only unless a separate policy predicate independently satisfies E3;
+8. keep V1 immutable and automatic production cutover blocked per decision surface until the SDE-3E gates are satisfied.

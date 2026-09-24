@@ -8,6 +8,7 @@
 > Current SDE-3A audit: `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`  
 > Current SDE-3C audit: `docs/SDE_3C5_MULTI_POLICY_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`  
 > Current SDE-3D0 audit: `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`  
+> Current SDE-3D1 freeze audit: `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`  
 > Targeted evidence contract: `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
 
 ## 1. Decision
@@ -22,7 +23,7 @@ The route is therefore split:
 SDE-3A engine / feature / policy contract                  COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / PR #153 MERGED
 SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0-3C5
-SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0-3D1 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
 SDE-3E automatic production cutover                         BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
@@ -336,7 +337,7 @@ SDE-3D0 established that calibration/freeze is **surface-scoped**, not one monol
 
 `SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
 
-The accepted `BEGINNER_CONSERVATIVE_V1` semantics are ready to become an immutable provisional baseline. V1 must not silently absorb later evidence-driven ordering changes.
+The accepted `BEGINNER_CONSERVATIVE_V1` semantics are now frozen as an immutable provisional baseline. Its release definition binds `BEGINNER_CONSERVATIVE_V1`, evidence checkpoint `sde-3b-merged-2026-09-24`, and selection method `SEEDED_HASH_V1`. V1 must not silently absorb later evidence-driven ordering or selector changes.
 
 Current evidence gaps still block specific policy semantics:
 
@@ -357,9 +358,9 @@ SDE-3D must still not:
 Current execution slices are:
 
 1. 3D0 calibrated freeze / cutover-gate architecture — COMPLETE;
-2. 3D1 V1 immutable baseline freeze — NEXT;
-3. 3D2 calibration-ready missing feature completion;
-4. 3D3 first evidence-authorized policy delta / first real V2;
+2. 3D1 V1 immutable baseline freeze — COMPLETE at `f562887cf4e90d02d364eef5534a1f709922a0f8`, CI #3446 / R2 #3201;
+3. 3D2 calibration-ready missing feature completion — NEXT; begin with truth danger / credibility disruption plus contextual Red-Herring descriptive projection while keeping V1 policy-neutral;
+4. 3D3 first evidence-authorized policy delta / first real V2 — waiting for a qualifying E3 predicate;
 5. 3D4 V1/V2 canonical real-corpus replay;
 6. 3D5 surface-scoped calibrated freeze.
 

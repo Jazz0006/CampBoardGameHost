@@ -3,7 +3,7 @@
 > Date: 2026-09-24 Australia/Sydney  
 > Branch: `sde-3c-decision-trace-shadow-replay`  
 > Entry HEAD: `82fe839284d3244cbefc2e195c8ad778d1361b83`  
-> Status: **ARCHITECTURE ACCEPTED — IMPLEMENTATION NOT YET COMPLETE**
+> Status: **ARCHITECTURE ACCEPTED — IMPLEMENTATION COMPLETE; SEE COMPLETION AUDIT**
 
 ## 1. Purpose
 

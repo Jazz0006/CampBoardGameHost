@@ -37,7 +37,7 @@ sealed holdout                                        CLOSED
 SDE-3A engine / feature / policy contract             COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1                       COMPLETE / T4 ACCEPTED / PR #153 MERGED
 SDE-3C shadow / DecisionTrace / replay                 COMPLETE / 3C0–3C5
-SDE-3D calibrated policy freeze                       IN PROGRESS / 3D0 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
+SDE-3D calibrated policy freeze                       IN PROGRESS / 3D0–3D1 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
@@ -45,9 +45,9 @@ SDE-3E automatic production cutover                   BLOCKED PER SURFACE ON 3D 
 
 Branch: `sde-3c-decision-trace-shadow-replay`
 
-Last accepted SDE-3C code checkpoint: `db7d5575dd28dc5f584be34b3556b511ccaf3e35` — GitHub CI #3440 and R2 #3195 SUCCESS.
+Last accepted SDE-3D1 code checkpoint: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. The earlier SDE-3C5 structural checkpoint remains `db7d5575dd28dc5f584be34b3556b511ccaf3e35`.
 
-Draft PR #154 — `SDE-3C: add DecisionTrace shadow replay` — is open, draft and mergeable at that accepted exact head. Keep it **draft** and do not merge unless the user explicitly says **“授权合并”**.
+Draft PR #154 — `SDE-3C: add DecisionTrace shadow replay` — remains open, draft and mergeable at the accepted SDE-3D1 exact head. Keep it **draft** and do not merge unless the user explicitly says **“授权合并”**.
 
 PR #153 is merged into `main`; merged `main` entry SHA is `7045ae746fd11a26371127c584c91e2a183c4c75`.
 
@@ -73,6 +73,8 @@ Always query live refs before executable edits.
 - SDE-3C3B persistence/storage architecture audit: [`SDE_3C3B_PERSISTENCE_CODEC_STORAGE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3C3B_PERSISTENCE_CODEC_STORAGE_ARCHITECTURE_AUDIT_2026-09-24.md)
 - SDE-3C3B completion audit: [`SDE_3C3B_STRICT_PERSISTENCE_CODEC_STORAGE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3C3B_STRICT_PERSISTENCE_CODEC_STORAGE_COMPLETION_AUDIT_2026-09-24.md)
 - SDE-3D0 calibrated-freeze / cutover-gate audit: [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md)
+- SDE-3D1 V1 freeze architecture audit: [`SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_ARCHITECTURE_AUDIT_2026-09-24.md)
+- SDE-3D1 V1 freeze completion audit: [`SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 - B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
@@ -257,7 +259,7 @@ Before cutover, the durable trace still must capture policy/evidence versioning,
 
 Authority: `SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`.
 
-SDE-3D is no longer treated as one monolithic evidence gate. The accepted V1 semantics are ready to become an immutable provisional baseline, while individual preference/rejection surfaces remain evidence-gated.
+SDE-3D is no longer treated as one monolithic evidence gate. The accepted V1 semantics are now frozen as an immutable provisional baseline, while individual preference/rejection surfaces remain evidence-gated.
 
 Current unresolved calibration gaps remain:
 
@@ -272,8 +274,8 @@ Gap E does **not** block a qualitative partial-order production policy. Do not i
 Current slices:
 
 1. **3D0 calibrated freeze / cutover gate architecture — COMPLETE**;
-2. **3D1 V1 immutable baseline freeze — NEXT**;
-3. **3D2 calibration-ready missing feature completion — AFTER V1 FREEZE**;
+2. **3D1 V1 immutable baseline freeze — COMPLETE** — frozen definition binds V1 policy version, `sde-3b-merged-2026-09-24` evidence checkpoint and `SEEDED_HASH_V1`; accepted at `f562887cf4e90d02d364eef5534a1f709922a0f8` with CI #3446 and R2 #3201;
+3. **3D2 calibration-ready missing feature completion — NEXT** — begin with truth-danger / credibility-disruption plus contextual Red-Herring architecture/evidence audit; feature work remains policy-neutral;
 4. **3D3 first evidence-authorized policy delta — WAITING FOR QUALIFYING E3**;
 5. **3D4 V1/V2 canonical real-corpus replay — REQUIRES REAL V2**;
 6. **3D5 surface-scoped calibrated freeze — REQUIRES A CUTOVER-ELIGIBLE SURFACE**.
