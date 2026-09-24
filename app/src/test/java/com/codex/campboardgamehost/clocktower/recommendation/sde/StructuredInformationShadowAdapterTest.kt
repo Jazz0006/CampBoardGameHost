@@ -108,6 +108,45 @@ class StructuredInformationShadowAdapterTest {
     }
 
     @Test
+    fun `decision trace captures versioned shadow evaluation without becoming canonical history`() {
+        val revision = InformationDecisionRevision(
+            gameStateRevision = snapshot.gameStateRevision,
+            playerInputRevision = snapshot.playerInputRevision,
+        )
+        val decisionContext = structuredEmpathContext(revision)
+        val shadow = StructuredInformationShadowAdapter.evaluate(
+            decisionContext = decisionContext,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = validatedRuleset,
+                exactContext = exactHistoricalContext(ActionFactTimeline(emptyList()), EpistemicObservationLog()),
+            ),
+        )
+
+        val trace = DecisionTraceFactory.fromStructuredShadow(
+            shadow = shadow,
+            evidenceCheckpoint = EvidenceCheckpointId("sde-3b-merged-2026-09-24"),
+        )
+
+        assertEquals(DecisionTrace.CURRENT_SCHEMA_VERSION, trace.schemaVersion)
+        assertEquals(EvidenceCheckpointId("sde-3b-merged-2026-09-24"), trace.evidenceCheckpoint)
+        assertEquals(decisionContext.semanticIdentity, trace.decisionId)
+        assertEquals(revision, trace.sourceRevision)
+        assertEquals(decisionContext.snapshot.legalCandidateIds, trace.legalCandidateIds)
+        assertEquals(shadow.featureEvaluation, trace.featureEvaluation)
+        assertEquals(shadow.policySelection, trace.policySelection)
+        assertTrue(trace.actualChoice is DecisionTraceActualChoice.Pending)
+        val policySnapshot = trace.policySnapshot as DecisionTracePolicySnapshot.Ready
+        val policyEvaluation = shadow.policyEvaluation as BeginnerConservativePolicyEvaluation.Ready
+        assertEquals(policyEvaluation.policyVersion, policySnapshot.policyVersion)
+        assertEquals(policyEvaluation.evaluations, policySnapshot.evaluations)
+        assertEquals(policyEvaluation.limitations, policySnapshot.limitations)
+        val prefix = trace.historyPrefixRef as SdeHistoricalPrefixRef.Global
+        assertEquals(snapshot.gameId, prefix.gameId)
+        assertTrue(prefix.actionRefs.isEmpty())
+        assertTrue(prefix.observationRefs.isEmpty())
+    }
+
+    @Test
     fun `historical confirmation features are attached without changing v1 policy ordering`() {
         val revision = InformationDecisionRevision(
             gameStateRevision = snapshot.gameStateRevision,
