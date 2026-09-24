@@ -21,7 +21,9 @@ Use these as the active authorities, in order:
 10. `docs/SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`
 11. `docs/SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`
 12. `docs/SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`
-13. this handoff
+13. `docs/SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md`
+14. `docs/SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md`
+15. this handoff
 
 Evidence/provenance references when needed:
 
@@ -67,7 +69,7 @@ Current route:
 
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       CURRENT
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       IMPLEMENTATION COMPLETE / T4 ACCEPTANCE CURRENT
 SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
@@ -195,7 +197,7 @@ Revised architecture status after the ClocktowerEvidenceLab C0 handoff:
 - **3B3 COMPLETE:** the shared score-free impaired-narrative projector derives persistent setup-bound and temporary action-bound episodes from canonical history plus authoritative impairment state; structured shadow integration, R04/R06 E2 regressions and policy non-consumption are green;
 - **3B4 COMPLETE:** healthy-information utility derives usable/independent whole-table routes, redundancy/contradiction, route loss and last-route removal from canonical history plus existing exact/confirmation evidence; baseline-already-infeasible history is guarded and legal registered truth remains healthy; R01/R04 bounded E2 regressions are green; V1 policy remains unchanged;
 - **3B5 COMPLETE:** generic score-free role-function exposure semantics cover direct/new/already/confirmation-amplified and forced/avoidable exposure; registration ambiguity is the first rules-backed mechanism; canonical history/confirmation are reused; bounded `goldcand-ben-03` E2 regression is green; V1 policy remains unchanged;
-- **3B6 CURRENT:** expert-informed V1 soft-priority evidence eligibility and policy audit.
+- **3B6 COMPLETE:** the E3 eligibility audit authorizes no new soft ordering at this checkpoint; `preference-evidence-not-authorized` is explicit, survivor ties remain intact, and no new policy reason was introduced.
 - only after each projector has semantic replay evidence may expert rationale become a V1 soft preference.
 
 Evidence authority levels are now explicit:
@@ -418,12 +420,11 @@ Current SDE-3B checkpoint:
 Immediate next action:
 
 1. re-query live #153 / main / checks;
-2. begin **3B6 expert-informed V1 soft priorities** with an evidence-eligibility / policy fanout audit before production policy edits;
-3. enumerate completed feature families and identify which proposed qualitative reasons have qualifying E3 support;
-4. preserve explicit ties for dimensions supported only by E1/E2 or silent observed choices;
-5. keep role-function exposure diagnostic: targeted Gap C still lacks qualifying severity rationale;
-6. select at most the smallest generic E3-backed policy reason for the first tests-first 3B6 slice;
-7. add no global score, probability weight, unsupported threshold, named-role preference, DecisionTrace persistence, or production cutover;
-8. reserve T4 `[full-ci]` for the overall SDE-3B acceptance checkpoint.
+2. run the reserved **overall SDE-3B T4 `[full-ci]` acceptance checkpoint**;
+3. require full Android JVM acceptance plus every selected subsystem validation and R2 to succeed;
+4. after T4, perform final PR diff/fanout/draft-state audit and record the acceptance evidence;
+5. keep PR #153 draft — do not merge or mark ready without explicit user authorization;
+6. after accepted SDE-3B T4, hand off to **SDE-3C DecisionTrace / replay**;
+7. do not add new soft priorities, numeric calibration, production cutover, or evidence-unsupported policy rules during this checkpoint.
 
 Keep #153 draft until explicit user **“授权合并”**.
