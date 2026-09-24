@@ -36,7 +36,7 @@ D5F-C final gate/band derivation                      BLOCKED ON EVIDENCE
 sealed holdout                                        CLOSED
 SDE-3A engine / feature / policy contract             COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1                       COMPLETE / T4 ACCEPTED / PR #153 MERGED
-SDE-3C shadow / DecisionTrace / replay                 CURRENT / 3C0–3C3A CODE CHECKPOINT
+SDE-3C shadow / DecisionTrace / replay                 CURRENT / 3C0–3C4 COMPLETE / NEXT 3C5
 SDE-3D calibrated policy freeze                       BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                   BLOCKED ON 3D
 ~~~
@@ -45,9 +45,9 @@ SDE-3E automatic production cutover                   BLOCKED ON 3D
 
 Branch: `sde-3c-decision-trace-shadow-replay`
 
-Last SDE-3C code checkpoint before this documentation sync: `566184133297cd6729c0cb03af575f37365009c0`
+Last accepted SDE-3C code checkpoint: `bf5c2c763e33f69ce6a12567be25e5224c10270b` — GitHub CI #3436 and R2 #3191 SUCCESS.
 
-PR: **not yet created at this checkpoint** because the GitHub control-plane tool disappeared from the current conversation after Mini MCP use. The next GitHub-capable conversation should create the SDE-3C PR as **draft** and must not merge it unless the user explicitly says **“授权合并”**.
+Draft PR #154 — `SDE-3C: add DecisionTrace shadow replay` — is open, draft and mergeable at that accepted exact head. Keep it **draft** and do not merge unless the user explicitly says **“授权合并”**.
 
 PR #153 is merged into `main`; merged `main` entry SHA is `7045ae746fd11a26371127c584c91e2a183c4c75`.
 
@@ -245,10 +245,10 @@ Current code checkpoint:
 3. **3C2 typed DecisionTrace contract — COMPLETE** — versioned trace records evidence checkpoint, lifecycle/revision, canonical-prefix reference, complete candidate IDs, typed feature evaluation, policy-neutral Ready/Deferred snapshot, shadow recommendation, and pending/committed actual-choice shape. Accepted by GitHub CI/R2 before the SDE-3C3B Oracle checkpoint.
 4. **3C3A replay archive ownership — COMPLETE** — immutable archive admits only traces bound to canonical global history prefixes; same decision/revision/policy key is idempotent only for identical trace content and conflicts otherwise. Accepted by GitHub CI/R2 before the SDE-3C3B Oracle checkpoint.
 5. **3C3B strict persistence codec / storage integration — COMPLETE** — adds a strict deterministic archive codec, immutable raw-store adapter, and dedicated SharedPreferences transport. Malformed/incompatible payloads and duplicate/conflicting keys fail closed; storage remains diagnostic and is not auto-invoked from the read-only production shadow. Accepted at remote HEAD `9cffa4e94b088342e1808c9945febb790a0b0232` with CI #3433 and R2 #3188 SUCCESS.
-6. **3C4 authoritative-choice correlation — CODE COMPLETE / REMOTE ACCEPTANCE PENDING** — finalizes only an existing pending trace after exact authoritative confirmation plus canonical post-commit observation/session evidence; identity/revision/domain/lifecycle mismatches, preflight-only records, and conflicting retries fail closed. The only permitted same-key archive transition is identical content except `actualChoice: Pending -> Committed`.
-7. **3C5 multi-policy replay — AFTER 3C4 REMOTE ACCEPTANCE** — evaluate multiple explicit policy versions against the same canonical committed prefix without mutating historical truth.
+6. **3C4 authoritative-choice correlation — COMPLETE** — finalizes only an existing pending trace after exact authoritative confirmation plus canonical post-commit observation/session evidence; identity/revision/domain/lifecycle mismatches, preflight-only records, and conflicting retries fail closed. The only permitted same-key archive transition is identical content except `actualChoice: Pending -> Committed`. Accepted at exact code HEAD `bf5c2c763e33f69ce6a12567be25e5224c10270b` with CI #3436 and R2 #3191 SUCCESS.
+7. **3C5 multi-policy replay — NEXT** — evaluate multiple explicit policy versions against the same canonical committed prefix without mutating historical truth.
 
-Validation note: Oracle `test:fast` remains blocked before Kotlin compilation because the ARM64 host has no Android SDK. Independent GitHub validation accepted 3C1/3C2/3C3A at the prior checkpoint and accepted 3C3B at remote HEAD `9cffa4e94b088342e1808c9945febb790a0b0232` with CI #3433 and R2 #3188 SUCCESS. 3C4 now requires its own remote CI/R2 acceptance.
+Validation note: Oracle `test:fast` remains blocked before Kotlin compilation because the ARM64 host has no Android SDK. Independent GitHub validation accepted 3C1/3C2/3C3A at the prior checkpoint, accepted 3C3B at remote HEAD `9cffa4e94b088342e1808c9945febb790a0b0232` with CI #3433 and R2 #3188 SUCCESS, and accepted 3C4 at exact code HEAD `bf5c2c763e33f69ce6a12567be25e5224c10270b` with CI #3436 and R2 #3191 SUCCESS.
 
 Before cutover, the durable trace still must capture policy/evidence versioning, the complete candidate/feature/reason record, recommendation, actual committed choice and optional human override rationale. Historical replay must support comparing multiple policy versions against the same committed game history.
 
