@@ -35,8 +35,8 @@ SDE-2D5 calibration / policy evidence                 CHECKPOINT MERGED / PARALL
 D5F-C final gate/band derivation                      BLOCKED ON EVIDENCE
 sealed holdout                                        CLOSED
 SDE-3A engine / feature / policy contract             COMPLETE / PR #151/#152
-SDE-3B BEGINNER_CONSERVATIVE_V1                       IMPLEMENTATION COMPLETE / T4 PENDING
-SDE-3C shadow / DecisionTrace / replay                 NEXT
+SDE-3B BEGINNER_CONSERVATIVE_V1                       COMPLETE / T4 ACCEPTED / PR #153 DRAFT
+SDE-3C shadow / DecisionTrace / replay                 NEXT AFTER SDE-3B MERGE
 SDE-3D calibrated policy freeze                       BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                   BLOCKED ON 3D
 ~~~
@@ -66,6 +66,7 @@ Always query live refs before executable edits.
 - SDE-3B5 completion audit: [`SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md)
 - SDE-3B6 eligibility audit: [`SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md`](SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md)
 - SDE-3B6 completion audit: [`SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md)
+- SDE-3B final completion/T4 audit: [`SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 - B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
@@ -186,7 +187,7 @@ SDE-3A acceptance evidence:
 
 PR #152 is merged. SDE-3B proceeds from live `main` on its dedicated branch.
 
-### SDE-3B — BEGINNER_CONSERVATIVE_V1 — CURRENT
+### SDE-3B — BEGINNER_CONSERVATIVE_V1 — COMPLETE / T4 ACCEPTED
 
 Current implementation checkpoint on PR #153:
 
@@ -213,7 +214,7 @@ SDE-3B staged status on PR #153:
 5. **3B5 contextual role-function exposure — COMPLETE** — score-free registration-ambiguity exposure, historical/confirmation context and bounded `goldcand-ben-03` E2 regression are accepted; severity remains E3-gated;
 6. **3B6 expert-informed V1 soft priorities — COMPLETE** — current E3 audit authorizes no new soft ordering; Ready policy results explicitly report `preference-evidence-not-authorized`, while viable survivors remain tied and the existing zero-topology gate is unchanged.
 
-Overall SDE-3B implementation is complete for the current evidence checkpoint. The next step is the reserved T4 `[full-ci]` acceptance checkpoint; PR #153 remains draft.
+Overall SDE-3B implementation and reserved T4 `[full-ci]` acceptance are complete for the current evidence checkpoint. T4 head `30caec3dcd546f4395238809d1f1d285688cd814` passed CI #3427 (full Android JVM + debug APK, ASP contracts, Real Clingo, aggregate CI gate) and R2 #3183. PR #153 remains draft and unmerged.
 
 Expert evidence participates immediately at the architecture/feature-priority level and later as semantic regression. It becomes candidate preference only after the matching feature is stable. Numeric thresholds and multi-axis tradeoff strength remain SDE-3D.
 
@@ -230,7 +231,7 @@ The full conservative policy direction remains:
 
 Do not invent unsupported numeric weights.
 
-### SDE-3C — shadow / DecisionTrace / replay — NEXT
+### SDE-3C — shadow / DecisionTrace / replay — NEXT AFTER SDE-3B MERGE
 
 Before cutover, capture:
 
