@@ -23,7 +23,8 @@ Use these as the active authorities, in order:
 12. `docs/SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`
 13. `docs/SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md`
 14. `docs/SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md`
-15. this handoff
+15. `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md`
+16. this handoff
 
 Evidence/provenance references when needed:
 
@@ -69,8 +70,8 @@ Current route:
 
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       IMPLEMENTATION COMPLETE / T4 ACCEPTANCE CURRENT
-SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / T4 ACCEPTED / PR #153 DRAFT
+SDE-3C shadow recommendation / DecisionTrace / replay       NEXT AFTER SDE-3B MERGE
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
 ~~~
@@ -152,7 +153,7 @@ Priority:
 
 Do not resume broad source collection in this repository.
 
-## 7. Current engineering target — SDE-3B
+## 7. Completed engineering checkpoint — SDE-3B
 
 **Do not start by inventing scoring weights or treating unavailable features as neutral.**
 
@@ -419,12 +420,12 @@ Current SDE-3B checkpoint:
 
 Immediate next action:
 
-1. re-query live #153 / main / checks;
-2. run the reserved **overall SDE-3B T4 `[full-ci]` acceptance checkpoint**;
-3. require full Android JVM acceptance plus every selected subsystem validation and R2 to succeed;
-4. after T4, perform final PR diff/fanout/draft-state audit and record the acceptance evidence;
-5. keep PR #153 draft — do not merge or mark ready without explicit user authorization;
-6. after accepted SDE-3B T4, hand off to **SDE-3C DecisionTrace / replay**;
-7. do not add new soft priorities, numeric calibration, production cutover, or evidence-unsupported policy rules during this checkpoint.
+1. re-query live #153 / main / checks before any further mutation;
+2. preserve PR #153 as **draft and unmerged** until explicit project-owner authorization;
+3. SDE-3B T4 acceptance is complete at `30caec3dcd546f4395238809d1f1d285688cd814`: CI #3427 and R2 #3183 succeeded;
+4. do not add more SDE-3B semantics after this accepted checkpoint unless a real acceptance defect is found;
+5. after explicit authorization and merge of #153, begin **SDE-3C DecisionTrace / replay** with an architecture/fanout audit before persistence edits;
+6. SDE-3C must preserve canonical history, version policy identity, capture typed feature/policy snapshots, and support replay without turning V1 into production authority;
+7. SDE-3D numeric calibration and SDE-3E automatic cutover remain blocked.
 
 Keep #153 draft until explicit user **“授权合并”**.
