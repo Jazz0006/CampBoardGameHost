@@ -30,7 +30,10 @@ internal data class DecisionPolicyReplayRun(
 }
 
 internal interface DecisionPolicyReplayRunner {
+    val definition: StorytellerPolicyDefinition
+
     val policyVersion: PolicyVersion
+        get() = definition.policyVersion
 
     fun run(
         featureEvaluation: DecisionFeatureEvaluation,
@@ -40,7 +43,8 @@ internal interface DecisionPolicyReplayRunner {
 }
 
 internal object BeginnerConservativeV1ReplayRunner : DecisionPolicyReplayRunner {
-    override val policyVersion: PolicyVersion = PolicyVersions.BEGINNER_CONSERVATIVE_V1
+    override val definition: StorytellerPolicyDefinition =
+        StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1
 
     override fun run(
         featureEvaluation: DecisionFeatureEvaluation,

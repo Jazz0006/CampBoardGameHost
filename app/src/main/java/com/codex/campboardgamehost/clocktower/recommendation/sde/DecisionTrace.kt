@@ -3,15 +3,6 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 
-/** Stable identifier for the external evidence/corpus checkpoint used by one policy evaluation. */
-internal data class EvidenceCheckpointId(
-    val value: String,
-) {
-    init {
-        require(value.isNotBlank()) { "Evidence checkpoint ID cannot be blank." }
-    }
-}
-
 /** Policy-neutral persisted/replay diagnostic code for a decision-level deferral. */
 internal data class PolicyDeferralCode(
     val value: String,
@@ -177,8 +168,18 @@ internal data class DecisionTrace(
 internal object DecisionTraceFactory {
     fun fromStructuredShadow(
         shadow: StructuredInformationShadowEvaluation,
-        evidenceCheckpoint: EvidenceCheckpointId,
     ): DecisionTrace {
+        val definition = StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1
+        require(shadow.policyEvaluation.policyVersion == definition.policyVersion) {
+            "Structured shadow trace policy version must match the frozen V1 definition."
+        }
+        require(
+            shadow.policySelection == null ||
+                shadow.policySelection.method == definition.selectionMethod
+        ) {
+            "Structured shadow trace selection method must match the frozen V1 definition."
+        }
+
         val candidates = shadow.sdeCandidates
         require(candidates.isNotEmpty()) { "Structured shadow trace requires SDE candidates." }
 
@@ -200,7 +201,7 @@ internal object DecisionTraceFactory {
         }
 
         return DecisionTrace(
-            evidenceCheckpoint = evidenceCheckpoint,
+            evidenceCheckpoint = definition.evidenceCheckpoint,
             decisionId = decisionIds.single(),
             lifecycleStage = lifecycleStages.single(),
             sourceRevision = sourceRevisions.single(),

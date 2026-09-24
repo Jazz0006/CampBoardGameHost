@@ -46,6 +46,20 @@ class MultiPolicyReplayTest {
     }
 
     @Test
+    fun productionV1ReplayUsesFrozenPolicyDefinitionEvidenceCheckpoint() {
+        val trace = MultiPolicyReplayEngine.replay(
+            sourceTrace = sourceTrace(),
+            recomputedInput = replayInput(),
+            policyVersions = listOf(PolicyVersions.BEGINNER_CONSERVATIVE_V1),
+        ).single()
+
+        assertEquals(
+            StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1.evidenceCheckpoint,
+            trace.evidenceCheckpoint,
+        )
+    }
+
+    @Test
     fun multipleExplicitPolicyVersionsReplayTheSameRecomputedCanonicalInputInRequestedOrder() {
         val source = sourceTrace()
         val recomputed = replayInput()
@@ -203,8 +217,6 @@ class MultiPolicyReplayTest {
         override val definition: StorytellerPolicyDefinition,
         private val selectedCandidateId: String,
     ) : DecisionPolicyReplayRunner {
-        private val policyVersion: PolicyVersion
-            get() = definition.policyVersion
         override fun run(
             featureEvaluation: DecisionFeatureEvaluation,
             decisionId: String,

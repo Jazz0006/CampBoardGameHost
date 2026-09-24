@@ -80,7 +80,6 @@ internal object MultiPolicyReplayEngine {
         sourceTrace: DecisionTrace,
         recomputedInput: MultiPolicyReplayInput,
         policyVersions: List<PolicyVersion>,
-        evidenceCheckpoints: Map<PolicyVersion, EvidenceCheckpointId>,
         registry: DecisionPolicyReplayRegistry = DecisionPolicyReplayRegistry.production(),
     ): List<DecisionTrace> {
         require(policyVersions.isNotEmpty()) {
@@ -88,9 +87,6 @@ internal object MultiPolicyReplayEngine {
         }
         require(policyVersions.distinct().size == policyVersions.size) {
             "Multi-policy replay policy versions must be unique."
-        }
-        require(evidenceCheckpoints.keys == policyVersions.toSet()) {
-            "Multi-policy replay requires exactly one evidence checkpoint per requested policy version."
         }
 
         require(sourceTrace.decisionId == recomputedInput.decisionId) {
@@ -128,9 +124,15 @@ internal object MultiPolicyReplayEngine {
             require(run.policySelection == null || run.policySelection.policyVersion == policyVersion) {
                 "Policy replay selection version does not match the requested policy version."
             }
+            require(
+                run.policySelection == null ||
+                    run.policySelection.method == runner.definition.selectionMethod
+            ) {
+                "Policy replay selection method does not match the frozen policy definition."
+            }
 
             DecisionTrace(
-                evidenceCheckpoint = evidenceCheckpoints.getValue(policyVersion),
+                evidenceCheckpoint = runner.definition.evidenceCheckpoint,
                 decisionId = recomputedInput.decisionId,
                 lifecycleStage = recomputedInput.lifecycleStage,
                 sourceRevision = recomputedInput.sourceRevision,
