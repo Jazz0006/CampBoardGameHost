@@ -105,17 +105,21 @@ For `clocktower`, Mini MCP merge is enabled only through configured guarded squa
 
 If the merge request may have reached GitHub but the response or post-read is lost, treat the result as ambiguous. Re-audit the PR before any retry.
 
-## Credential separation
+## Credential model
 
-The Mini MCP runtime owns three separate GitHub credentials:
+The default single-developer deployment uses one server-owned selected-repository GitHub credential:
 
-- read credential;
-- ready/draft transition credential;
-- merge credential.
+`MINI_MCP_GITHUB_TOKEN`
 
-Their values must be distinct.
+Mini MCP resolves that token into the internal read, ready/draft, and merge credential slots. This simplifies operator maintenance without changing the public MCP surface or any exact-state/CI/merge safety gate.
 
-The merge credential must belong to a dedicated non-admin/non-bypass principal. Do not use repository-owner/admin credentials as the normal merge principal, because possession of bypass authority would weaken the server-enforced no-bypass model.
+Optional hardened deployments may override one or more traffic classes with:
+
+- `MINI_MCP_GITHUB_READ_TOKEN`;
+- `MINI_MCP_GITHUB_WRITE_TOKEN`;
+- `MINI_MCP_GITHUB_MERGE_TOKEN`.
+
+A dedicated non-admin/non-bypass merge principal remains an optional team/production hardening measure, not a requirement for this personal M8G5 canary.
 
 Secrets never belong in this repository, documentation, prompts, or MCP caller input.
 
@@ -147,9 +151,8 @@ The adoption canary is complete only after a real controlled Draft PR proves:
 2. real PR audit against exact head/base;
 3. real CI/check inspection;
 4. reversible draft/ready transition and post-condition;
-5. merge credential principal verified as non-admin/non-bypass;
-6. explicitly authorized guarded merge;
-7. post-merge audit;
-8. normal project guidance updated to this workflow.
+5. explicitly authorized guarded merge;
+6. post-merge audit;
+7. normal project guidance updated to this workflow.
 
 Until those runtime checks pass, treat this document as the target operating model rather than proof that deployment is complete.
