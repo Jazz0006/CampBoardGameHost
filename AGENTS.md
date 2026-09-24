@@ -51,7 +51,7 @@ Codex/Luna must not independently redesign a requested slice, broaden scope, sub
 - GitHub Connector remains the fallback writer when Mini MCP is unavailable or unsuitable and remains the normal GitHub-native control-plane surface.
 - The GitHub Actions one-shot patch workflow remains a valid exceptional remote fallback, not the automatic first choice merely because a file is large or connector output would be truncated.
 - Codex/Luna **MUST NOT** be used merely because it is already involved in the task or because a file is large. Use it only when the primary controlled workspace and GitHub fallbacks cannot safely or practically perform the work.
-- Mini MCP does **not currently own stage / commit / push** for this repository. Until a later safe-Git-write capability is implemented, deployed, runtime-canary verified, and separately adopted here, commits and pushes must use an existing authorized path.
+- Mini MCP **owns the guarded local Git write path** for this repository when the live runtime exposes the reviewed safe-Git tools: state review -> explicit-path stage -> staged diff review -> commit -> network-observed remote audit -> push. GitHub Connector remains the canonical PR / CI / review / merge control plane, and merge still requires explicit user authorization.
 
 ## 2. Execution-path priority
 
@@ -71,7 +71,7 @@ Chat live-state / architecture / scope audit
 -> Mini MCP git_diff / git_status
 -> configured focused validation when the execution target supports it
 -> broader checkpoint validation according to TESTING_STRATEGY
--> authorized commit / push path
+-> Mini MCP guarded stage / staged-diff review / commit / remote audit / push
 -> GitHub remote parent / diff / CI / PR audit
 ```
 
@@ -125,7 +125,7 @@ Every Luna instruction **MUST be one continuous fenced code block** suitable for
 
 If the specified patch cannot apply because the live API/signature differs materially, Luna must stop and report the conflict rather than invent an equivalent implementation.
 
-The migration rationale and current Mini MCP capability boundary are recorded in `docs/MINI_MCP_DEVELOPMENT_WORKFLOW_ADOPTION_AUDIT_2026-09-23.md`. Older connector/Luna workflow documents remain useful only where they do not conflict with this root agreement.
+The current Mini MCP capability boundary is defined by this root agreement and the live configured tool surface. Older connector/Luna workflow documents remain useful only where they do not conflict with this root agreement.
 
 ## 3. Behavior-first, risk-based development and validation cadence
 
