@@ -3,7 +3,8 @@
 > Date: 2026-09-24 Australia/Sydney  
 > Branch: `sde-3c-decision-trace-shadow-replay`  
 > Oracle base HEAD before this checkpoint: `a75f482dd5a9aa5a128525c2cfb47be127ded72b`  
-> Status: **CODE COMPLETE / REMOTE ACCEPTANCE PENDING**
+> Status: **COMPLETE / REMOTE ACCEPTED**  
+> Accepted HEAD: `9cffa4e94b088342e1808c9945febb790a0b0232` — CI #3433 SUCCESS, R2 #3188 SUCCESS
 
 ## 1. Scope completed
 
@@ -99,10 +100,9 @@ Therefore:
 - there is **no local RED/GREEN execution evidence** for the new Kotlin tests;
 - there is also no observed Kotlin compiler failure from this checkpoint, because compilation was
   never reached;
-- the checkpoint must remain **REMOTE ACCEPTANCE PENDING** until the independent Android CI/R2
-  surface validates it.
+- independent GitHub acceptance is the executable Android evidence for this checkpoint.
 
-This is an infrastructure limitation of the Oracle host, not a passed test claim.
+At exact remote HEAD `9cffa4e94b088342e1808c9945febb790a0b0232`, CI #3433 and R2 #3188 both completed successfully. The Oracle limitation remains an infrastructure constraint rather than local GREEN evidence.
 
 ## 5. Boundary checks
 
@@ -114,11 +114,11 @@ Confirmed by production-source search:
 - no ActionFactTimeline/EpistemicObservationLog mutation was added;
 - no role-specific persistence branch or fixture-specific production branch was introduced.
 
-## 6. Next gate
+## 6. Completion gate and next slice
 
-After commit/push and remote CI/R2 acceptance, SDE-3C3B can be marked fully COMPLETE.
+SDE-3C3B is fully COMPLETE after remote acceptance at exact HEAD `9cffa4e94b088342e1808c9945febb790a0b0232` with CI #3433 and R2 #3188 SUCCESS.
 
-Then proceed to **SDE-3C4 authoritative-choice correlation**:
+Proceed to **SDE-3C4 authoritative-choice correlation**:
 
 - correlate only after successful authoritative confirmation/commit;
 - require matching decision/lifecycle/revision/domain identity;
