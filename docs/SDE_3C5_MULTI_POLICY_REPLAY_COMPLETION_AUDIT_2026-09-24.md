@@ -3,7 +3,7 @@
 > Date: 2026-09-24 Australia/Sydney  
 > Branch: sde-3c-decision-trace-shadow-replay  
 > Entry HEAD: 54ba922c7097d128d676c35e0d7ed595b0fa2d4b  
-> Status: **CODE COMPLETE / REMOTE ACCEPTANCE PENDING**
+> Status: **COMPLETE**
 
 ## 1. Scope completed
 
@@ -139,8 +139,9 @@ SDK location not found.
 Define ANDROID_HOME or sdk.dir in /home/opc/repos/CampBoardGameHost/local.properties.
 ~~~
 
-Therefore no local Kotlin GREEN claim is made. GitHub CI/R2 remains the required independent Android
-acceptance surface.
+Therefore no local Kotlin GREEN claim is made. Independent remote acceptance was obtained on exact
+code HEAD `db7d5575dd28dc5f584be34b3556b511ccaf3e35`: GitHub CI #3440 SUCCESS and R2 #3195 SUCCESS.
+PR #154 remained open, draft, mergeable, and pointed at that exact code HEAD during acceptance.
 
 ## 7. Authority / fanout result
 
@@ -156,11 +157,12 @@ SDE-3C5 does not change:
 The new replay types currently have no UI or production commit caller. They are offline diagnostic
 infrastructure.
 
-## 8. Next gate
+## 8. Completion and next gate
 
-After commit/push and independent GitHub CI/R2 acceptance, SDE-3C5 can be marked COMPLETE.
+SDE-3C5 is formally **COMPLETE** at accepted exact code HEAD
+`db7d5575dd28dc5f584be34b3556b511ccaf3e35` with CI #3440 and R2 #3195 SUCCESS.
 
-At that point SDE-3C is structurally complete for the current route:
+SDE-3C is structurally complete for the current route:
 
 - deterministic shadow recommendation;
 - typed/versioned DecisionTrace;
