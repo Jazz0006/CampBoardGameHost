@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-24 Australia/Sydney  
 > Branch: `sde-3c-decision-trace-shadow-replay`  
-> SDE-3C4 accepted code HEAD: `bf5c2c763e33f69ce6a12567be25e5224c10270b` — GitHub CI #3436 and R2 #3191 SUCCESS.  
+> SDE-3C5 accepted code HEAD: `db7d5575dd28dc5f584be34b3556b511ccaf3e35` — GitHub CI #3440 and R2 #3195 SUCCESS.  
 > Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. Re-query the live branch/PR/checks before the next executable slice because documentation-only closeout commits may advance the branch HEAD.
 
 ## 1. Read first
@@ -78,7 +78,7 @@ Current route:
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / T4 ACCEPTED / PR #153 MERGED
-SDE-3C shadow recommendation / DecisionTrace / replay       CURRENT / 3C0–3C4 COMPLETE / NEXT 3C5
+SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0–3C5
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
 ~~~
@@ -295,9 +295,8 @@ Current implementation checkpoint:
 - Oracle `test:fast` was invoked before and after the 3C3B implementation, but both attempts are blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK. Independent GitHub acceptance at exact HEAD `9cffa4e94b088342e1808c9945febb790a0b0232` is CI #3433 SUCCESS and R2 #3188 SUCCESS.
 - **3C4 COMPLETE:** authoritative correlation requires exact semantic identity, source revision, complete candidate domain, lifecycle, matching committed observation, and a canonical post-commit session view proving the record is actually persisted. `DecisionTraceArchive` permits only the narrow same-key `Pending -> Committed` actual-choice transition; exact retries are idempotent and conflicts fail closed. Independent GitHub acceptance at exact code HEAD `bf5c2c763e33f69ce6a12567be25e5224c10270b` is CI #3436 SUCCESS and R2 #3191 SUCCESS.
 - Oracle `test:fast` was invoked before and after the 3C4 production implementation, but both attempts remain blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK.
-- **3C5 CODE COMPLETE / REMOTE ACCEPTANCE PENDING:** replay consumes freshly recomputed policy-neutral features from the canonical structured shadow path rather than persisted old trace features; explicit policy-version runners are selected through a fail-closed registry, production registers only real V1, replay preserves source identity/prefix/domain plus authoritative actual choice, and results are returned without mutating history or auto-persisting.
+- **3C5 COMPLETE:** replay consumes freshly recomputed policy-neutral features from the canonical structured shadow path rather than persisted old trace features; explicit policy-version runners are selected through a fail-closed registry, production registers only real V1, replay preserves source identity/prefix/domain plus authoritative actual choice, and results are returned without mutating history or auto-persisting. Independent GitHub acceptance at exact code HEAD `db7d5575dd28dc5f584be34b3556b511ccaf3e35` is CI #3440 SUCCESS and R2 #3195 SUCCESS.
 - Oracle `test:fast` was invoked before and after the 3C5 production implementation, but both attempts remain blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK.
-- **NEXT GATE:** commit/push 3C5 and obtain independent GitHub CI/R2 acceptance. If accepted, SDE-3C is structurally complete and the route returns to the documented SDE-3D calibration/evidence gate.
 
 Before automatic cutover, persist a replayable diagnostic trace with:
 
