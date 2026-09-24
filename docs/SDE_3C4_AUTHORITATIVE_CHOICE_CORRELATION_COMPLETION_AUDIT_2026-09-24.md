@@ -3,7 +3,7 @@
 > Date: 2026-09-24 Australia/Sydney  
 > Branch: `sde-3c-decision-trace-shadow-replay`  
 > Entry HEAD: `de707e689539db759567da2ec1e8c81a5cdc6724`  
-> Status: **CODE COMPLETE / REMOTE ACCEPTANCE PENDING**
+> Status: **COMPLETE**
 
 ## 1. Scope completed
 
@@ -106,8 +106,12 @@ Define ANDROID_HOME or sdk.dir in /home/opc/repos/CampBoardGameHost/local.proper
 ```
 
 Therefore there is no local Kotlin RED/GREEN execution evidence for 3C4. This remains the known
-Oracle Android SDK limitation, not a passed-test claim. GitHub CI/R2 is the required independent
-Android acceptance surface.
+Oracle Android SDK limitation, not a passed-test claim.
+
+Independent remote acceptance was obtained on exact code HEAD
+`bf5c2c763e33f69ce6a12567be25e5224c10270b`: GitHub CI #3436 SUCCESS and R2 #3191 SUCCESS.
+Both workflow runs were retrieved for that exact commit, while PR #154 remained open, draft,
+mergeable, and pointed at the same exact code HEAD.
 
 ## 6. Ownership / fanout result
 
@@ -126,11 +130,12 @@ The production app still does not auto-persist the read-only shadow evaluator as
 SDE-3C4 supplies the safe correlation boundary required when a pending trace is captured; production
 cutover remains outside this slice.
 
-## 7. Next gate
+## 7. Completion and next gate
 
-After commit/push and independent GitHub CI/R2 acceptance, SDE-3C4 can be marked fully COMPLETE.
+SDE-3C4 is formally **COMPLETE** at accepted exact code HEAD
+`bf5c2c763e33f69ce6a12567be25e5224c10270b` with CI #3436 and R2 #3191 SUCCESS.
 
-Then proceed to **SDE-3C5 multi-policy replay**:
+Proceed to **SDE-3C5 multi-policy replay**:
 
 - evaluate multiple explicit policy versions against the same canonical committed prefix;
 - preserve exact historical truth and actual-choice correlation;
