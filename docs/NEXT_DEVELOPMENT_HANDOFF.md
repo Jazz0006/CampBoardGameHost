@@ -29,7 +29,9 @@ Use these as the active authorities, in order:
 18. `docs/SDE_3C3B_STRICT_PERSISTENCE_CODEC_STORAGE_COMPLETION_AUDIT_2026-09-24.md`
 19. `docs/SDE_3C4_AUTHORITATIVE_CHOICE_CORRELATION_ARCHITECTURE_AUDIT_2026-09-24.md`
 20. `docs/SDE_3C4_AUTHORITATIVE_CHOICE_CORRELATION_COMPLETION_AUDIT_2026-09-24.md`
-21. this handoff
+21. `docs/SDE_3C5_MULTI_POLICY_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`
+22. `docs/SDE_3C5_MULTI_POLICY_REPLAY_COMPLETION_AUDIT_2026-09-24.md`
+23. this handoff
 
 Evidence/provenance references when needed:
 
@@ -293,7 +295,9 @@ Current implementation checkpoint:
 - Oracle `test:fast` was invoked before and after the 3C3B implementation, but both attempts are blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK. Independent GitHub acceptance at exact HEAD `9cffa4e94b088342e1808c9945febb790a0b0232` is CI #3433 SUCCESS and R2 #3188 SUCCESS.
 - **3C4 COMPLETE:** authoritative correlation requires exact semantic identity, source revision, complete candidate domain, lifecycle, matching committed observation, and a canonical post-commit session view proving the record is actually persisted. `DecisionTraceArchive` permits only the narrow same-key `Pending -> Committed` actual-choice transition; exact retries are idempotent and conflicts fail closed. Independent GitHub acceptance at exact code HEAD `bf5c2c763e33f69ce6a12567be25e5224c10270b` is CI #3436 SUCCESS and R2 #3191 SUCCESS.
 - Oracle `test:fast` was invoked before and after the 3C4 production implementation, but both attempts remain blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK.
-- **NEXT:** proceed to 3C5 multi-policy replay.
+- **3C5 CODE COMPLETE / REMOTE ACCEPTANCE PENDING:** replay consumes freshly recomputed policy-neutral features from the canonical structured shadow path rather than persisted old trace features; explicit policy-version runners are selected through a fail-closed registry, production registers only real V1, replay preserves source identity/prefix/domain plus authoritative actual choice, and results are returned without mutating history or auto-persisting.
+- Oracle `test:fast` was invoked before and after the 3C5 production implementation, but both attempts remain blocked during Gradle configuration before Kotlin compilation because the Oracle host has no Android SDK.
+- **NEXT GATE:** commit/push 3C5 and obtain independent GitHub CI/R2 acceptance. If accepted, SDE-3C is structurally complete and the route returns to the documented SDE-3D calibration/evidence gate.
 
 Before automatic cutover, persist a replayable diagnostic trace with:
 

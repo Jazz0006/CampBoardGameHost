@@ -6,7 +6,7 @@
 > Parent architecture: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`  
 > Current evidence authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
 > Current SDE-3A audit: `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`  
-> Current SDE-3C audit: `docs/SDE_3C0_DECISION_TRACE_SHADOW_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`  
+> Current SDE-3C audit: `docs/SDE_3C5_MULTI_POLICY_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`  
 > Targeted evidence contract: `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
 
 ## 1. Decision
@@ -20,7 +20,7 @@ The route is therefore split:
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / PR #153 MERGED
-SDE-3C shadow recommendation / DecisionTrace / replay       CURRENT / 3C0–3C3A CODE CHECKPOINT
+SDE-3C shadow recommendation / DecisionTrace / replay       CURRENT / 3C5 CODE COMPLETE, REMOTE ACCEPTANCE PENDING
 SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                         BLOCKED ON 3D
 ~~~

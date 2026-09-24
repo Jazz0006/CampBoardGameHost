@@ -207,39 +207,40 @@ internal object DecisionTraceFactory {
             historyPrefixRef = historyPrefixes.single(),
             legalCandidateIds = legalCandidateIds,
             featureEvaluation = shadow.featureEvaluation,
-            policySnapshot = shadow.policyEvaluation.toTraceSnapshot(),
+            policySnapshot = shadow.policyEvaluation.toDecisionTracePolicySnapshot(),
             policySelection = shadow.policySelection,
         )
     }
 
-    private fun BeginnerConservativePolicyEvaluation.toTraceSnapshot(): DecisionTracePolicySnapshot =
-        when (this) {
-            is BeginnerConservativePolicyEvaluation.Ready ->
-                DecisionTracePolicySnapshot.Ready(
-                    policyVersion = policyVersion,
-                    evaluations = evaluations,
-                    limitations = limitations,
-                )
-
-            is BeginnerConservativePolicyEvaluation.Deferred ->
-                DecisionTracePolicySnapshot.Deferred(
-                    policyVersion = policyVersion,
-                    candidateIds = candidateIds,
-                    reasons = reasons.mapTo(linkedSetOf()) { it.toTraceCode() },
-                )
-        }
-
-    private fun BeginnerConservativePolicyDeferralReason.toTraceCode(): PolicyDeferralCode =
-        PolicyDeferralCode(
-            when (this) {
-                BeginnerConservativePolicyDeferralReason.UPSTREAM_FEATURE_EVALUATION_DEFERRED ->
-                    "beginner-conservative-v1.upstream-feature-evaluation-deferred"
-                BeginnerConservativePolicyDeferralReason.STRATEGIC_FEATURE_UNAVAILABLE ->
-                    "beginner-conservative-v1.strategic-feature-unavailable"
-                BeginnerConservativePolicyDeferralReason.STRATEGIC_BASELINE_UNDEFINED ->
-                    "beginner-conservative-v1.strategic-baseline-undefined"
-                BeginnerConservativePolicyDeferralReason.NO_NON_CONTRADICTORY_SURVIVOR ->
-                    "beginner-conservative-v1.no-non-contradictory-survivor"
-            },
-        )
 }
+
+internal fun BeginnerConservativePolicyEvaluation.toDecisionTracePolicySnapshot(): DecisionTracePolicySnapshot =
+    when (this) {
+        is BeginnerConservativePolicyEvaluation.Ready ->
+            DecisionTracePolicySnapshot.Ready(
+                policyVersion = policyVersion,
+                evaluations = evaluations,
+                limitations = limitations,
+            )
+
+        is BeginnerConservativePolicyEvaluation.Deferred ->
+            DecisionTracePolicySnapshot.Deferred(
+                policyVersion = policyVersion,
+                candidateIds = candidateIds,
+                reasons = reasons.mapTo(linkedSetOf()) { it.toDecisionTraceDeferralCode() },
+            )
+    }
+
+private fun BeginnerConservativePolicyDeferralReason.toDecisionTraceDeferralCode(): PolicyDeferralCode =
+    PolicyDeferralCode(
+        when (this) {
+            BeginnerConservativePolicyDeferralReason.UPSTREAM_FEATURE_EVALUATION_DEFERRED ->
+                "beginner-conservative-v1.upstream-feature-evaluation-deferred"
+            BeginnerConservativePolicyDeferralReason.STRATEGIC_FEATURE_UNAVAILABLE ->
+                "beginner-conservative-v1.strategic-feature-unavailable"
+            BeginnerConservativePolicyDeferralReason.STRATEGIC_BASELINE_UNDEFINED ->
+                "beginner-conservative-v1.strategic-baseline-undefined"
+            BeginnerConservativePolicyDeferralReason.NO_NON_CONTRADICTORY_SURVIVOR ->
+                "beginner-conservative-v1.no-non-contradictory-survivor"
+        },
+    )

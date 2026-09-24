@@ -28,6 +28,7 @@ internal data class StructuredInformationShadowEvaluation(
     val featureEvaluation: DecisionFeatureEvaluation,
     val policyEvaluation: BeginnerConservativePolicyEvaluation,
     val policySelection: PolicySelection?,
+    val selectionSeed: Long,
 ) {
     init {
         require(sdeCandidates.map(SdeDecisionCandidate::candidateId) == informationSnapshot.legalCandidateIds) {
@@ -262,6 +263,7 @@ internal object StructuredInformationShadowAdapter {
             featureEvaluation = featureEvaluation,
             policyEvaluation = policyEvaluation,
             policySelection = policySelection,
+            selectionSeed = historical.initialSnapshot.gameSeed,
         )
     }
 
