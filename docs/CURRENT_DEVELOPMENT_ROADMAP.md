@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-23 Australia/Sydney  
+> Updated: 2026-09-24 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -35,7 +35,7 @@ SDE-2D5 calibration / policy evidence                 CHECKPOINT MERGED / PARALL
 D5F-C final gate/band derivation                      BLOCKED ON EVIDENCE
 sealed holdout                                        CLOSED
 SDE-3A engine / feature / policy contract             COMPLETE / PR #151/#152
-SDE-3B BEGINNER_CONSERVATIVE_V1                       CURRENT
+SDE-3B BEGINNER_CONSERVATIVE_V1                       IMPLEMENTATION COMPLETE / T4 PENDING
 SDE-3C shadow / DecisionTrace / replay                 NEXT
 SDE-3D calibrated policy freeze                       BLOCKED ON EVIDENCE
 SDE-3E automatic production cutover                   BLOCKED ON 3D
@@ -64,6 +64,8 @@ Always query live refs before executable edits.
 - SDE-3B4 completion audit: [`SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md)
 - SDE-3B5 architecture audit: [`SDE_3B5_ROLE_FUNCTION_EXPOSURE_ARCHITECTURE_AUDIT_2026-09-23.md`](SDE_3B5_ROLE_FUNCTION_EXPOSURE_ARCHITECTURE_AUDIT_2026-09-23.md)
 - SDE-3B5 completion audit: [`SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md)
+- SDE-3B6 eligibility audit: [`SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md`](SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md)
+- SDE-3B6 completion audit: [`SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 - B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
@@ -209,7 +211,9 @@ SDE-3B staged status on PR #153:
 3. **3B3 impaired-narrative projector — COMPLETE** — score-free role-agnostic projection distinguishes persistent setup-bound versus temporary action-bound impairment episodes, historical compatibility/breaks, forced versus avoidable transitions and detectability; bounded R04/R06 E2 regressions are green and V1 policy remains unchanged.
 4. **3B4 healthy-information utility — COMPLETE** — score-free whole-table healthy routes distinguish usable/independent routes before and after, redundancy/contradiction, lost routes and last-route removal; bounded R01/R04 E2 regressions are green; registered truth is preserved without conflating it with actual-state `SemanticTruth`; V1 policy remains unchanged.
 5. **3B5 contextual role-function exposure — COMPLETE** — score-free registration-ambiguity exposure, historical/confirmation context and bounded `goldcand-ben-03` E2 regression are accepted; severity remains E3-gated;
-6. **3B6 expert-informed V1 soft priorities — CURRENT** — audit E3 eligibility before adding any policy reason.
+6. **3B6 expert-informed V1 soft priorities — COMPLETE** — current E3 audit authorizes no new soft ordering; Ready policy results explicitly report `preference-evidence-not-authorized`, while viable survivors remain tied and the existing zero-topology gate is unchanged.
+
+Overall SDE-3B implementation is complete for the current evidence checkpoint. The next step is the reserved T4 `[full-ci]` acceptance checkpoint; PR #153 remains draft.
 
 Expert evidence participates immediately at the architecture/feature-priority level and later as semantic regression. It becomes candidate preference only after the matching feature is stable. Numeric thresholds and multi-axis tradeoff strength remain SDE-3D.
 
