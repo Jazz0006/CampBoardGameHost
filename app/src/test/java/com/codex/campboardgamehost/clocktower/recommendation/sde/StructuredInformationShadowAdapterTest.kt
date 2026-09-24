@@ -31,6 +31,7 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 import com.codex.campboardgamehost.clocktower.session.InformationResolutionRequest
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -96,6 +97,14 @@ class StructuredInformationShadowAdapterTest {
         assertEquals(timelineBefore, timeline.reducerFacts())
         assertEquals(observationsBefore, observationLog.records)
         assertEquals(revision, shadow.informationSnapshot.revision)
+        assertEquals(
+            BeginnerConservativeV1Selector.select(
+                evaluation = shadow.policyEvaluation,
+                decisionId = decisionContext.semanticIdentity,
+                selectionSeed = snapshot.gameSeed,
+            ),
+            shadow.policySelection,
+        )
     }
 
     @Test
@@ -399,6 +408,7 @@ class StructuredInformationShadowAdapterTest {
         )
 
         assertTrue(shadow.consequences is ExactConsequenceEvaluation.Deferred)
+        assertNull(shadow.policySelection)
         assertEquals(recommendedBefore, shadow.informationSnapshot.recommendedCandidateIds)
         assertEquals(decisionContext.snapshot.legalCandidateIds, shadow.plannedDecisions.map(PlannedDecisionRef::candidateId))
         val recommendedCandidateId = recommendedBefore.single()
