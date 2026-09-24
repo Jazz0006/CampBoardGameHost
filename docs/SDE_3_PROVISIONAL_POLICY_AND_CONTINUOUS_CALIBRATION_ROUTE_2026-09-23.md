@@ -7,22 +7,23 @@
 > Current evidence authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
 > Current SDE-3A audit: `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`  
 > Current SDE-3C audit: `docs/SDE_3C5_MULTI_POLICY_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`  
+> Current SDE-3D0 audit: `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`  
 > Targeted evidence contract: `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
 
 ## 1. Decision
 
 The Storyteller project must continue even though final expert-policy calibration is incomplete.
 
-Evidence shortage blocks **final policy freeze and automatic production cutover**, not the engineering architecture that makes future calibration possible.
+Evidence shortage blocks **unsupported policy preferences and per-surface automatic production cutover**, not freezing the accepted V1 baseline or continuing the engineering architecture that makes future calibration possible.
 
 The route is therefore split:
 
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / PR #153 MERGED
-SDE-3C shadow recommendation / DecisionTrace / replay       CURRENT / 3C5 CODE COMPLETE, REMOTE ACCEPTANCE PENDING
-SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
-SDE-3E automatic production cutover                         BLOCKED ON 3D
+SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0-3C5
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
+SDE-3E automatic production cutover                         BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
 External evidence collection continues in parallel rather than sitting on the critical engineering path.
@@ -329,37 +330,57 @@ Current target gaps are defined in:
 
 Targeted evidence acquisition continues in parallel with SDE-3A/B/C.
 
-## 9. SDE-3D — calibrated policy freeze — BLOCKED
+## 9. SDE-3D — calibrated policy freeze — IN PROGRESS
 
-The following remain insufficient for final calibrated gates / orderings:
+SDE-3D0 established that calibration/freeze is **surface-scoped**, not one monolithic gate. The full decision is recorded in:
 
-- healthy-information floor / middle-band numeric thresholds;
+`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
+
+The accepted `BEGINNER_CONSERVATIVE_V1` semantics are ready to become an immutable provisional baseline. V1 must not silently absorb later evidence-driven ordering changes.
+
+Current evidence gaps still block specific policy semantics:
+
+- healthy-information floor / middle-band preference strength;
 - role-function exposure severity;
-- independent-expert impaired-information believability;
+- independent-expert impaired-information believability / cross-night continuity strength;
 - Demon-bluff triplet preference ordering;
-- quantitative multi-axis tradeoffs.
+- quantitative multi-axis tradeoffs **only if** a future policy chooses to require numeric weighting.
 
-Therefore SDE-3D must not:
+SDE-3D must still not:
 
 - freeze arbitrary scalar weights;
 - publish unsupported player-count thresholds;
 - convert one expert observation into a deterministic rule;
-- claim calibrated expert parity.
+- claim calibrated expert parity;
+- create a placeholder V2 without a real semantic policy delta.
 
-Evidence collection can progressively unblock individual policy dimensions.
+Current execution slices are:
 
-## 10. SDE-3E — automatic production cutover — BLOCKED
+1. 3D0 calibrated freeze / cutover-gate architecture — COMPLETE;
+2. 3D1 V1 immutable baseline freeze — NEXT;
+3. 3D2 calibration-ready missing feature completion;
+4. 3D3 first evidence-authorized policy delta / first real V2;
+5. 3D4 V1/V2 canonical real-corpus replay;
+6. 3D5 surface-scoped calibrated freeze.
 
-Automatic cutover requires:
+Evidence collection can progressively unblock individual policy dimensions without blocking unrelated surfaces.
 
-1. SDE-3A typed contracts stable;
-2. SDE-3B conservative policy regression-safe;
-3. SDE-3C shadow / trace / replay demonstrated on real scenarios;
-4. SDE-3D evidence gate satisfied for the policy surface being cut over;
-5. product UX preserves manual Experienced-mode override;
-6. old authoritative heuristic path has a completed fanout retirement plan.
+## 10. SDE-3E — automatic production cutover — BLOCKED PER SURFACE
 
-Until then, recommendations may run in shadow / advisory form.
+Automatic cutover is evaluated for each decision surface. A surface requires:
+
+1. stable SDE-3A typed contracts;
+2. regression-safe SDE-3B/3D policy semantics;
+3. SDE-3C DecisionTrace / replay support;
+4. an explicit frozen policy version for that surface;
+5. stable projectors for every feature the policy actually consumes;
+6. evidence authority appropriate to every active rejection/preference;
+7. accepted canonical real-game replay for the policy version/surface;
+8. product UX preserving manual Experienced-mode override;
+9. explicit legacy/manual/deferred fallback for unsupported or unavailable dimensions;
+10. a completed fanout-retirement plan before removing the old authority.
+
+A technically available seeded V1 selection does not authorize cutover when material dimensions remain unresolved and the policy is choosing among a large equivalence class. Those surfaces remain shadow/advisory, manual, legacy-authoritative or explicitly deferred.
 
 ## 11. Legacy retirement boundary
 

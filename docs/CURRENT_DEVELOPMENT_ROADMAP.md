@@ -37,8 +37,8 @@ sealed holdout                                        CLOSED
 SDE-3A engine / feature / policy contract             COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1                       COMPLETE / T4 ACCEPTED / PR #153 MERGED
 SDE-3C shadow / DecisionTrace / replay                 COMPLETE / 3C0–3C5
-SDE-3D calibrated policy freeze                       BLOCKED ON EVIDENCE
-SDE-3E automatic production cutover                   BLOCKED ON 3D
+SDE-3D calibrated policy freeze                       IN PROGRESS / 3D0 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
+SDE-3E automatic production cutover                   BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
 ## 2. Current branch / PR
@@ -72,6 +72,7 @@ Always query live refs before executable edits.
 - SDE-3C0 architecture/fanout/persistence audit: [`SDE_3C0_DECISION_TRACE_SHADOW_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3C0_DECISION_TRACE_SHADOW_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md)
 - SDE-3C3B persistence/storage architecture audit: [`SDE_3C3B_PERSISTENCE_CODEC_STORAGE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3C3B_PERSISTENCE_CODEC_STORAGE_ARCHITECTURE_AUDIT_2026-09-24.md)
 - SDE-3C3B completion audit: [`SDE_3C3B_STRICT_PERSISTENCE_CODEC_STORAGE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3C3B_STRICT_PERSISTENCE_CODEC_STORAGE_COMPLETION_AUDIT_2026-09-24.md)
+- SDE-3D0 calibrated-freeze / cutover-gate audit: [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md)
 - Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
 - B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
@@ -252,17 +253,38 @@ Validation note: Oracle `test:fast` remains blocked before Kotlin compilation be
 
 Before cutover, the durable trace still must capture policy/evidence versioning, the complete candidate/feature/reason record, recommendation, actual committed choice and optional human override rationale. Historical replay must support comparing multiple policy versions against the same committed game history.
 
-### SDE-3D / 3E — remain blocked
+### SDE-3D — IN PROGRESS / SDE-3D0 COMPLETE
 
-Final calibrated policy freeze and automatic production cutover still require stronger external evidence.
+Authority: `SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`.
 
-Current unresolved calibration gaps:
+SDE-3D is no longer treated as one monolithic evidence gate. The accepted V1 semantics are ready to become an immutable provisional baseline, while individual preference/rejection surfaces remain evidence-gated.
 
-- healthy-information floor / middle-band thresholds;
+Current unresolved calibration gaps remain:
+
+- healthy-information floor / middle-band policy boundary — highest-value current policy blocker;
 - role-function exposure severity;
-- independent-expert impaired-information believability;
+- independent-expert impaired-information believability / cross-night continuity strength;
 - Demon-bluff triplet preference ordering;
-- quantitative multi-axis tradeoff.
+- quantitative multi-axis tradeoff only if a future policy explicitly requires numeric weighting.
+
+Gap E does **not** block a qualitative partial-order production policy. Do not invent weights, thresholds or player-count coefficients merely to complete SDE-3D.
+
+Current slices:
+
+1. **3D0 calibrated freeze / cutover gate architecture — COMPLETE**;
+2. **3D1 V1 immutable baseline freeze — NEXT**;
+3. **3D2 calibration-ready missing feature completion — AFTER V1 FREEZE**;
+4. **3D3 first evidence-authorized policy delta — WAITING FOR QUALIFYING E3**;
+5. **3D4 V1/V2 canonical real-corpus replay — REQUIRES REAL V2**;
+6. **3D5 surface-scoped calibrated freeze — REQUIRES A CUTOVER-ELIGIBLE SURFACE**.
+
+Do not create a placeholder V2. Any new candidate rejection, preference or survivor-refinement semantic after V1 freeze requires a new explicit policy version.
+
+### SDE-3E — BLOCKED PER SURFACE
+
+Automatic cutover is not one global switch. A decision surface remains blocked until its frozen policy version, consumed features, evidence-authorized predicates, canonical replay, DecisionTrace correlation, manual override and explicit unsupported-surface fallback are all accepted.
+
+A technically available V1 seeded selection is not sufficient for cutover when material dimensions remain unsupported and all non-catastrophic candidates are still one large equivalence class.
 
 No automatic online learning is authorized. Policy improvement remains offline, versioned and evidence-reviewed.
 
