@@ -448,6 +448,12 @@ class StructuredInformationShadowAdapterTest {
 
         assertTrue(shadow.consequences is ExactConsequenceEvaluation.Deferred)
         assertNull(shadow.policySelection)
+        val trace = DecisionTraceFactory.fromStructuredShadow(
+            shadow = shadow,
+            evidenceCheckpoint = EvidenceCheckpointId("sde-3b-merged-2026-09-24"),
+        )
+        assertTrue(trace.policySnapshot is DecisionTracePolicySnapshot.Deferred)
+        assertNull(trace.policySelection)
         assertEquals(recommendedBefore, shadow.informationSnapshot.recommendedCandidateIds)
         assertEquals(decisionContext.snapshot.legalCandidateIds, shadow.plannedDecisions.map(PlannedDecisionRef::candidateId))
         val recommendedCandidateId = recommendedBefore.single()
