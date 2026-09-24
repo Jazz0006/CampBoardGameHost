@@ -1,6 +1,6 @@
 # SDE-3 — Provisional Policy and Continuous Calibration Route
 
-> Date: 2026-09-23 Australia/Sydney  
+> Updated: 2026-09-25 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT SDE-3 EXECUTION AUTHORITY**  
 > Parent architecture: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`  
@@ -425,48 +425,53 @@ Do not turn expert source examples into fixture-specific production tests.
 
 ## 13. Immediate implementation order
 
-Start with an architecture/fanout audit before production edits.
+Start every new shared-contract or production-feature slice with the AGENTS architecture/fanout pre-flight.
 
-PR #150 is merged as the SDE-2D5 evidence/calibration checkpoint. PR #151/#152 are merged SDE-3A checkpoints. SDE-3B now proceeds on branch `sde-3b-beginner-conservative-v1` in draft PR #153. The first V1 slice implements only an exact zero Evil-topology contradiction gate, explicit survivor equivalence, policy limitations, and weight-free seeded survivor selection; it does not invent calibrated bands. Source `AbilityState` and actual-state semantic truth are projected from existing legal-candidate semantics. Keep #153 draft until explicit user authorization to merge.
+Current control-plane state:
+
+- PR #150 is merged as the SDE-2D5 evidence/calibration checkpoint;
+- PR #151/#152 are merged SDE-3A checkpoints;
+- PR #153 is merged SDE-3B / accepted V1 checkpoint;
+- Draft PR #154 contains SDE-3C plus the current SDE-3D0/3D1 continuation and must remain draft until explicit user authorization;
+- SDE-3C0–3C5 are COMPLETE;
+- SDE-3D0 and SDE-3D1 are COMPLETE;
+- the accepted V1 code checkpoint is `f562887cf4e90d02d364eef5534a1f709922a0f8`;
+- the current live documentation/synchronization HEAD is `36e8e6826b35b56934ac2606618e35ea5f6421ca`, accepted by CI #3447 and R2 #3202.
 
 Recommended sequence:
 
-1. audit current `StorytellerDecisionEngine`, decision context, candidate/result contracts and production shadow integration;
-2. inventory existing exact/topology diagnostics that can populate the stable feature contract;
-3. define the minimal generic `DecisionCandidate` / `DecisionFeatures` / `PolicyEvaluation` contract without migrating behavior prematurely;
-4. follow the explicit staging in `SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`;
-5. **3B1 COMPLETE:** lifecycle-safe historical shadow/input binding is implemented with canonical committed-prefix refs, typed external-owner bindings and no-hindsight enforcement;
-6. **3B2 COMPLETE:** confirmation-chain impact is projected from canonical recipient-visible committed history with strict no-hindsight, exact leave-one-out contribution semantics and bounded R02/R04 E2 regression; V1 policy remains unchanged;
-7. **3B3 COMPLETE:** impaired-narrative coherence/detectability is derived from canonical history plus authoritative `AbilityState`/impairment episodes, with persistent setup-bound versus temporary action-bound lifetimes, bounded R04/R06 E2 regression and no second mutable history store; V1 policy remains unchanged;
-8. **3B4 COMPLETE / 3B5 CURRENT:** healthy-information utility is complete; now add contextual role-function exposure;
-9. **3B6:** introduce expert-informed qualitative V1 soft priorities only after the matching feature projector and semantic replay are stable;
-10. leave versioned `DecisionTrace` / replay persistence to SDE-3C;
-11. reserve numeric thresholds, player-count bands and multi-axis tradeoff calibration for SDE-3D;
-12. keep automatic cutover off.
-
-Every shared-contract change requires the AGENTS fanout audit before implementation.
+1. **SDE-3D2 — calibration-ready missing feature completion:** perform an architecture/evidence/fanout audit for truth danger / credibility disruption and contextual Red-Herring downstream policy input before production edits;
+2. identify and reuse the existing owners for Red Herring setup commitment, legal candidate semantics, canonical history/confirmation context, healthy truthful-channel consequences, and exact/topology consequence projection;
+3. define the smallest generic descriptive feature seam that represents downstream truth danger / credibility disruption without encoding named-seat, named-role or fixture-specific preference rules;
+4. use existing Evin GOLD + SILVER and Ben contextual evidence as E1/E2 justification and semantic regression evidence; feature completion alone must not alter V1 ordering;
+5. keep `BEGINNER_CONSERVATIVE_V1` immutable, including its frozen evidence checkpoint and `SEEDED_HASH_V1` selection contract;
+6. wait for a genuinely qualifying E3 predicate before creating the first real `BEGINNER_CONSERVATIVE_V2`; do not create a placeholder V2;
+7. once a real V2 exists, use SDE-3C5 to replay V1 and V2 over the same canonical real-game histories without mutating historical truth;
+8. freeze only cutover-eligible decision surfaces whose active predicates, projectors, evidence authority and replay gates are satisfied;
+9. enter SDE-3E per surface, retaining legacy/manual/deferred fallback wherever material dimensions remain unsupported.
 
 ### Expert-evidence authority rule
 
 Evidence may enter at four different stages and must not be promoted early:
 
-- **E1 architecture evidence:** whole games justify feature existence/lifecycle dependencies now;
+- **E1 architecture evidence:** whole games justify feature existence/lifecycle dependencies;
 - **E2 semantic regression evidence:** reconstructed prefixes validate generic projectors after structural seams exist;
 - **E3 qualitative policy evidence:** explicit qualified rationale or strong cross-expert support may become typed soft reasons only after feature stability;
-- **E4 calibration evidence:** numeric thresholds/weights/tradeoff strength remain SDE-3D.
+- **E4 calibration evidence:** numeric thresholds/weights/tradeoff strength are required only for policy semantics that actually depend on numeric calibration.
 
-An observed expert choice without rationale is never, by itself, a preference label.
+An observed expert choice without rationale is never, by itself, a preference label. Synthetic/extreme fixtures remain diagnostic rather than primary calibration truth, and modifier-rich real Trouble Brewing bundles must not be excluded merely to obtain cleaner metrics.
 
 ## 14. Success criteria for the next development conversation
 
-The next conversation should **not** resume evidence collection or reopen completed 3B2–3B4 feature semantics.
+The next conversation should begin **SDE-3D2**, not reopen SDE-3B or replay infrastructure.
 
-It should continue SDE-3B5 by auditing contextual role-function exposure and produce:
+It should produce, before production edits:
 
-- one authoritative owner/reuse map for lifecycle, confirmation, registration and rules semantics;
-- a role-agnostic typed exposure feature contract;
-- explicit forced-versus-avoidable and already-exposed-versus-newly-exposed semantics;
-- generic tests first, followed only by bounded E1/E2 evidence-backed regression;
-- confirmation that V1 policy still does not consume the new dimension until feature semantics are accepted.
+- one authoritative owner/reuse map for Red Herring commitment, legal candidate semantics, canonical history/confirmation context and downstream consequence projection;
+- an explicit account of what current Evin/Ben/SILVER evidence supports at E1/E2 versus what remains below E3;
+- one role-agnostic typed descriptive contract for truth danger / credibility disruption and contextual Red-Herring consequence;
+- explicit proof that the proposed feature does not duplicate legality, mutate Red Herring ownership, or import legacy scalar scoring;
+- a tests-first acceptance plan at the true feature owner plus bounded real-game semantic regression;
+- confirmation that V1 remains policy-neutral with respect to the new feature.
 
-No numeric policy calibration is required; thresholds and tradeoff strength remain SDE-3D.
+No V2, numeric threshold, global weight, automatic cutover or Traveller expansion is authorized by SDE-3D2 itself.

@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-24 Australia/Sydney  
+> Updated: 2026-09-25 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -45,9 +45,9 @@ SDE-3E automatic production cutover                   BLOCKED PER SURFACE ON 3D 
 
 Branch: `sde-3c-decision-trace-shadow-replay`
 
-Last accepted SDE-3D1 code checkpoint: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. The earlier SDE-3C5 structural checkpoint remains `db7d5575dd28dc5f584be34b3556b511ccaf3e35`.
+Last accepted SDE-3D1 code checkpoint: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. Current live documentation/synchronization HEAD: `36e8e6826b35b56934ac2606618e35ea5f6421ca` — GitHub CI #3447 and R2 #3202 SUCCESS. The earlier SDE-3C5 structural checkpoint remains `db7d5575dd28dc5f584be34b3556b511ccaf3e35`.
 
-Draft PR #154 — `SDE-3C: add DecisionTrace shadow replay` — remains open, draft and mergeable at the accepted SDE-3D1 exact head. Keep it **draft** and do not merge unless the user explicitly says **“授权合并”**.
+Draft PR #154 — `SDE-3C: add DecisionTrace shadow replay` — remains open, draft and mergeable at live HEAD `36e8e6826b35b56934ac2606618e35ea5f6421ca`. Keep it **draft** and do not merge unless the user explicitly says **“授权合并”**.
 
 PR #153 is merged into `main`; merged `main` entry SHA is `7045ae746fd11a26371127c584c91e2a183c4c75`.
 
@@ -239,7 +239,7 @@ The full conservative policy direction remains:
 
 Do not invent unsupported numeric weights.
 
-### SDE-3C — shadow / DecisionTrace / replay — CURRENT
+### SDE-3C — shadow / DecisionTrace / replay — COMPLETE
 
 Current code checkpoint:
 
@@ -255,7 +255,7 @@ Validation note: Oracle `test:fast` remains blocked before Kotlin compilation be
 
 Before cutover, the durable trace still must capture policy/evidence versioning, the complete candidate/feature/reason record, recommendation, actual committed choice and optional human override rationale. Historical replay must support comparing multiple policy versions against the same committed game history.
 
-### SDE-3D — IN PROGRESS / SDE-3D0 COMPLETE
+### SDE-3D — IN PROGRESS / SDE-3D0–3D1 COMPLETE / SDE-3D2 NEXT
 
 Authority: `SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`.
 

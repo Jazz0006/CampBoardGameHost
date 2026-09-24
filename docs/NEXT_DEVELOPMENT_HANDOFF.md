@@ -1,8 +1,8 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-09-24 Australia/Sydney  
+> Updated: 2026-09-25 Australia/Sydney  
 > Branch: `sde-3c-decision-trace-shadow-replay`  
-> SDE-3D1 accepted code HEAD: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. SDE-3C5 structural checkpoint: `db7d5575dd28dc5f584be34b3556b511ccaf3e35`.  
+> SDE-3D1 accepted code HEAD: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. Current live documentation/synchronization HEAD: `36e8e6826b35b56934ac2606618e35ea5f6421ca` — GitHub CI #3447 and R2 #3202 SUCCESS. SDE-3C5 structural checkpoint: `db7d5575dd28dc5f584be34b3556b511ccaf3e35`.  
 > Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. Re-query the live branch/PR/checks before the next executable slice because documentation-only closeout commits may advance the branch HEAD.
 
 ## 1. Read first
@@ -82,7 +82,7 @@ Current route:
 SDE-3A engine / feature / policy contract                  COMPLETE
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / T4 ACCEPTED / PR #153 MERGED
 SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0–3C5
-SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 NEXT / PARTIALLY EVIDENCE-BLOCKED
 SDE-3E automatic production cutover                         BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
