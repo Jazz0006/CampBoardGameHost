@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-25 Australia/Sydney  
 > Local continuation branch: `codex/sde-history-prefix-route-closure`; upstream development branch: `sde-3c-decision-trace-shadow-replay`
-> SDE-3D1 accepted code HEAD: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. SDE-3C5 structural checkpoint: `db7d5575dd28dc5f584be34b3556b511ccaf3e35`. Documentation-only commits may advance the branch; always re-query the exact live head/checks.  
+> C0–C3 integration code HEAD: `8855d4615a4c24a4c3141241f360cfe70d8d239e` — synchronized to both remote branches; GitHub full CI #3451 / run `36126033315` SUCCESS. R2 remains pending because the existing PR/main conflict prevented automatic PR checks.
 > Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. Re-query the live branch/PR/checks before the next executable slice because documentation-only closeout commits may advance the branch HEAD.
 
 ## 1. Read first
@@ -40,7 +40,7 @@ Before any executable edit:
 
 1. inspect local Git status, branch and diff; preserve unrelated user files;
 2. use local filesystem, Git and Gradle for this user-authorized Codex continuation; do not use Mini MCP or Oracle VM;
-3. work from `codex/sde-history-prefix-route-closure`, based on `72892edb3b21f3c7bb781f5cd2affc1427a31d9f`; inspect live refs before assuming this remains the checkout;
+3. work from `codex/sde-history-prefix-route-closure`; code checkpoint `8855d461` is synchronized to the Draft PR head; inspect live refs before assuming this remains current;
 4. before remote acceptance, independently query the exact PR head/base and CI/R2; local validation does not establish remote state;
 5. never infer current implementation or acceptance from memory or a historical checkpoint.
 
@@ -71,7 +71,7 @@ Current route:
 SDE-3A engine / feature / policy contract                  COMPLETE
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / T4 ACCEPTED / PR #153 MERGED
 SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0–3C5
-SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 AFTER INTEGRATION CLOSURE
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 NEXT
 SDE-3E automatic production cutover                         BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
@@ -437,7 +437,7 @@ SDE-3D0 and SDE-3D1 are COMPLETE. The current conclusion is:
 
 Immediate next action:
 
-C0–C3 are locally implemented in the working tree; remote acceptance remains pending. C1 supplies strict durable replay input, C2 proves the real restored numeric-information loop, and C3 connects a measured Debug-only diagnostic shadow with exact 5-player/16-history/1500-ms admission and post-commit failure isolation. Final local FAST/debug assembly is GREEN: 1528 tests / 352 suites, 0 failures or skips, plus successful APK assembly and `git diff --check`.
+C0–C3 are implemented and synchronized at code HEAD `8855d461`. C1 supplies strict durable replay input, C2 proves the real restored numeric-information loop, and C3 connects a measured Debug-only diagnostic shadow with exact 5-player/16-history/1500-ms admission and post-commit failure isolation. Local FAST/debug assembly is GREEN: 1528 tests / 352 suites, 0 failures or skips, plus successful APK assembly and `git diff --check`. Remote full CI #3451 is GREEN for Android full/debug APK, ASP contract, Real Clingo and the final gate. R2 remains pending until the separately authorized PR/main conflict resolution allows normal PR checks.
 
 1. inspect the local C0–C3 diff and final validation record; preserve `.DS_Store` and unrelated work;
 2. begin **C4 / SDE-3D2 with the required architecture, evidence and producer/consumer fanout audit before production edits**;

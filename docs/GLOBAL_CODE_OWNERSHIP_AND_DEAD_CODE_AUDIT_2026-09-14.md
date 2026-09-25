@@ -4,6 +4,7 @@
 > Status: **HISTORICAL AUDIT / implementation snapshot, not current execution authority**. The original snapshot recorded steps 1–3 complete, step 4 awaiting acceptance and steps 5–6 remaining. Current completion and priority are maintained only in [roadmap](CURRENT_DEVELOPMENT_ROADMAP.md).
 > Baseline: PR #123 campaign head `486473bac8ab0c717ca84a54a32db035e9413901`
 > Current implementation heads: step 1 `8f5d7668`; step 2 `590cac55`; step 3 merged as `b7756062`; step 4 PR #127 code head `fec12982`
+> Current-route note (2026-09-25): SDE integration C0–C3 is complete at `8855d461` with full CI #3451 success; ownership and next priority remain governed by the roadmap. R2/base integration is still pending.
 
 ## 1. Scope and method
 

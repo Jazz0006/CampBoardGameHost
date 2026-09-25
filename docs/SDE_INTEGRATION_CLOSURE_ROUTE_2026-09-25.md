@@ -12,10 +12,10 @@ SDE-3C0–3C5 completed typed modules and bounded tests, not application integra
 
 | Checkpoint | Bounded implementation | Exit evidence |
 | --- | --- | --- |
-| C0 — correlation and route closure | Validate exact pre-commit history at the common correlator; reconcile current policy and documentation | Typed RED/GREEN; archive no-write-on-rejection and retry coverage; affected tests, FAST and debug build; explicit remote acceptance status |
-| C1 — replay input contract | **LOCALLY COMPLETE** — versioned, read-only replay input/export using existing setup, rules/script identity, seed, canonical actions and observations | Fresh/durable origin is explicit; deterministic round-trip and baseline reconstruction covered; missing/unsupported/unknown shape fails closed; no process-memory-only setup prerequisite |
-| C2 — offline vertical slice | **LOCALLY COMPLETE** — one existing numeric-information interaction through real legal candidate owner, historical consequences/features, trace, authoritative choice, archive reload and replay | Reconstructed real-game prefix plus deterministic typed integration test; equal version/seed/input gives equal output; manual choice preserved; no fabricated feature bundle presented as end-to-end proof |
-| C3 — measured, controlled runtime shadow | **LOCALLY COMPLETE** — measured actual historical chain and connected the same slice as diagnostic-only shadow | 5-player actual-chain/history-depth measurements plus explicit 6–15 admission rejection; documented budget; cancellation, stale revision, restore, unavailable capability and I/O failure coverage; diagnostic failure never blocks a valid canonical commit |
+| C0 — correlation and route closure | **COMPLETE at `8855d461`** — validate exact pre-commit history at the common correlator; reconcile current policy and documentation | Typed RED/GREEN; archive no-write-on-rejection and retry coverage; affected tests, FAST and debug build; explicit remote acceptance status |
+| C1 — replay input contract | **COMPLETE at `8855d461`** — versioned, read-only replay input/export using existing setup, rules/script identity, seed, canonical actions and observations | Fresh/durable origin is explicit; deterministic round-trip and baseline reconstruction covered; missing/unsupported/unknown shape fails closed; no process-memory-only setup prerequisite |
+| C2 — offline vertical slice | **COMPLETE at `8855d461`** — one existing numeric-information interaction through real legal candidate owner, historical consequences/features, trace, authoritative choice, archive reload and replay | Reconstructed real-game prefix plus deterministic typed integration test; equal version/seed/input gives equal output; manual choice preserved; no fabricated feature bundle presented as end-to-end proof |
+| C3 — measured, controlled runtime shadow | **COMPLETE at `8855d461`** — measured actual historical chain and connected the same slice as diagnostic-only shadow | 5-player actual-chain/history-depth measurements plus explicit 6–15 admission rejection; documented budget; cancellation, stale revision, restore, unavailable capability and I/O failure coverage; diagnostic failure never blocks a valid canonical commit |
 | C4 — resume SDE-3D2 | Add generic truth-danger / credibility-disruption and contextual Red-Herring descriptive features through the accepted loop | Owner/fanout audit, E1/E2 semantic evidence, replay regressions; V1 output and frozen definition unchanged |
 | C5 — evidence-backed policy and cutover | Create a new policy version only for independently qualified predicates, then evaluate per decision surface | E3/E4 as applicable, same-history version comparison, 3D0 gates, explicit fallback/override and legacy retirement plan; separate user authorization for release/merge |
 
@@ -28,7 +28,7 @@ Do not implement all checkpoints as one broad patch. Each checkpoint ends with a
 - Decode requires exact root/nested shape and the supported schema version. It reuses existing action/observation codecs and existing semantic-history invariants; it does not invent a parallel history codec or tolerate legacy-local inference.
 - Reconstructed `GameSnapshot` is an initial-baseline projection with canonical history attached. Role definitions are resolved from the exact external ruleset identity; missing definitions fail closed. It is designed for C2 offline replay, not direct live-session restoration.
 - C1 deliberately adds no App/Compose caller, SharedPreferences owner, generic recovery-schema change or policy output. C2 will consume this contract through one real numeric-information vertical slice.
-- Local checkpoint evidence: focused C1/production-shadow/multi-policy replay GREEN; FAST 1521 tests / 350 suites with no failures, errors or skips; debug assembly and `git diff --check` GREEN. Remote T4/CI/R2 remains pending.
+- Local C1 checkpoint evidence: focused C1/production-shadow/multi-policy replay GREEN; FAST 1521 tests / 350 suites with no failures, errors or skips; debug assembly and `git diff --check` GREEN. The later combined C0–C3 checkpoint received full CI #3451 success; R2 remains pending.
 
 ## C2/C3 architecture pre-flight
 
@@ -55,7 +55,8 @@ Do not implement all checkpoints as one broad patch. Each checkpoint ends with a
 - Stale identity, cancellation, elapsed-budget breach, unsupported player count, storage rejection and thrown I/O fail without trace publication. Missing exact capability is persisted and reported explicitly as `STORED_DEFERRED`, never fabricated as ready.
 - Structured confirmation still commits through `ClocktowerGameSession` first. Optional pending-trace lookup and exact correlation happen only afterward through a failure-isolated diagnostic coordinator; absence or failure cannot block a valid canonical commit.
 - C1 strict durable restore plus the C2 restored real-prefix regression is the restore evidence for C3. The App does not gain a second recovery or mutable history owner.
-- Final local checkpoint: focused C1–C3/correlation tests GREEN; `:app:testFast :app:assembleDebug` succeeded in 2m52s with **1528 tests / 352 suites, 0 failures or skips** and a successful debug APK assembly; `git diff --check` GREEN. These are not device UX, remote T4/CI/R2 or release acceptance. C4/3D2 may begin locally, while remote acceptance remains separately pending.
+- Final local checkpoint: focused C1–C3/correlation tests GREEN; `:app:testFast :app:assembleDebug` succeeded in 2m52s with **1528 tests / 352 suites, 0 failures or skips** and a successful debug APK assembly; `git diff --check` GREEN.
+- Exact code HEAD `8855d461` is synchronized to Draft PR #154 and passed manually dispatched full CI #3451 / run `36126033315`: Android full JVM + debug APK, ASP contract, Real Clingo cross-validation and final CI gate. The PR/main conflict is unchanged and unauthorized to resolve here; it prevented automatic PR checks/R2, so R2 remains a separate merge gate. C4/3D2 may begin without treating the branch as merge-ready.
 
 ## C0 invariant and ownership
 
@@ -71,6 +72,6 @@ Do not implement all checkpoints as one broad patch. Each checkpoint ends with a
 
 `BEGINNER_CONSERVATIVE_V1` is frozen: exact zero Evil-topology rejection, otherwise survivor equivalence with `SEEDED_HASH_V1`. Descriptive features do not imply preferences. Librarian→Recluse / Investigator→Spy avoidance severity lacks E3 authorization; examples are diagnostic probes, not named-role policy branches. Narrative coherence is derived from canonical history, never a second mutable narrative state.
 
-Local tests/build are local evidence only. Before remote acceptance, inspect the exact pushed head, resolve base conflicts with explicit authority, and obtain the applicable full CI/R2 gate. The prior `f562887c` FAST/R2 success is not T4 for this work. Do not merge, mark ready, rebase or push as an implicit consequence of this document.
+Local and remote evidence is exact-head scoped. `8855d461` has full CI #3451 success, but R2 and base-conflict resolution remain outstanding. Do not merge, mark ready or rebase as an implicit consequence of this document.
 
 Execution environment for this continuation: local Codex filesystem, Git and Gradle as explicitly requested; no Mini MCP or Oracle VM dependency.

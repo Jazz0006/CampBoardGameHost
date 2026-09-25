@@ -34,10 +34,12 @@ sealed holdout                         CLOSED
 SDE-3A engine/feature/policy contract  COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1        COMPLETE / PR #153 MERGED
 SDE-3C DecisionTrace/replay            COMPLETE / 3C0–3C5
-SDE integration closure               C0–C3 LOCALLY COMPLETE / REMOTE ACCEPTANCE PENDING
+SDE integration closure               C0–C3 COMPLETE / HEAD 8855d461 / FULL CI #3451 SUCCESS
 SDE-3D calibrated policy freeze        IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 NEXT
 SDE-3E automatic production cutover    BLOCKED PER DECISION SURFACE
 ~~~
+
+远端验收边界：代码 HEAD `8855d461` 已同步到 Draft PR #154，手动 full CI #3451 成功（Android full/debug APK、ASP contract、Real Clingo、最终 gate）。PR 与 `main` 的既有冲突仍未获授权处理，因此自动 PR checks/R2 未触发；不得把 full CI 成功表述为 R2 或可合并状态。
 
 ## 当前政策核心
 

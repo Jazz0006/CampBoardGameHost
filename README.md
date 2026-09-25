@@ -8,6 +8,8 @@
 
 当前路线的实现与验收契约见 [SDE 集成闭环路线](docs/SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md)：历史关联校验 → 持久回放输入 → 离线端到端闭环 → 性能验证与受控影子接线 → 描述特征补齐 → 证据授权的政策演进。
 
+C0–C3 集成闭环代码已在 `8855d461` 完成并同步到 Draft PR #154；GitHub full CI #3451 成功。下一步是 C4 / SDE-3D2 架构、证据与 fanout 审计。PR 与 `main` 的既有冲突及 R2 复验仍是独立整合门禁。
+
 D6 之后继续保持：`ClocktowerGameSession` 是 canonical writable game/session authority；Planner/Reducer 负责纯语义与 durable intent planning；App 保留跨 owner 的 Compose-facing application choreography。大 composition root 本身不再作为继续拆分的充分理由。
 
 A4/ZDD 仍不切换到 production。

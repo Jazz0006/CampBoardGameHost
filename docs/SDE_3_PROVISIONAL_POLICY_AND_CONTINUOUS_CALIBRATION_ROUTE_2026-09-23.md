@@ -13,7 +13,7 @@
 
 ## 1. Decision
 
-Execution amendment (2026-09-25): complete the [integration closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) before SDE-3D2. Typed 3C module completion is not App reachability or a durable end-to-end replay loop. C0 fixes correlation; C1–C3 establish replay inputs, offline integration and measured runtime shadow. Roadmap remains the single status authority.
+Execution amendment (2026-09-25): the [integration closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) completed C0–C3 at `8855d461`; full CI #3451 succeeded and C4/3D2 is next. R2/base integration remains pending. Roadmap remains the single status authority.
 
 The Storyteller project must continue even though final expert-policy calibration is incomplete.
 
@@ -466,7 +466,7 @@ An observed expert choice without rationale is never, by itself, a preference la
 
 ## 14. Success criteria for the next development conversation
 
-Integration C0–C3 is locally complete; exact-head remote acceptance remains pending. The next implementation conversation begins **C4 / SDE-3D2 architecture, evidence and fanout audit**, reusing the accepted replay/shadow loop rather than rewriting it.
+Integration C0–C3 is complete at exact code HEAD `8855d461`; full CI #3451 succeeded and R2/base integration remains pending. The next implementation conversation begins **C4 / SDE-3D2 architecture, evidence and fanout audit**, reusing the accepted replay/shadow loop rather than rewriting it.
 
 After C1–C3, the SDE-3D2 conversation should produce, before production edits:
 
