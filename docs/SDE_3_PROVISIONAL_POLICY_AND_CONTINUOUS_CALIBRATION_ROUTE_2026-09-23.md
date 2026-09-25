@@ -5,10 +5,10 @@
 > Status: **CURRENT SDE-3 EXECUTION AUTHORITY**  
 > Parent architecture: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`  
 > Current evidence authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
-> Current SDE-3A audit: `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`  
-> Current SDE-3C audit: `docs/SDE_3C5_MULTI_POLICY_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`  
-> Current SDE-3D0 audit: `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`  
-> Current SDE-3D1 freeze audit: `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`  
+> Historical SDE-3A completion audit: `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`  
+> Historical SDE-3C completion reference: `docs/SDE_3C5_MULTI_POLICY_REPLAY_COMPLETION_AUDIT_2026-09-24.md`  
+> Current SDE-3D gate audit: `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`  
+> Frozen V1 baseline: `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`  
 > Targeted evidence contract: `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
 
 ## 1. Decision
@@ -436,7 +436,7 @@ Current control-plane state:
 - SDE-3C0–3C5 are COMPLETE;
 - SDE-3D0 and SDE-3D1 are COMPLETE;
 - the accepted V1 code checkpoint is `f562887cf4e90d02d364eef5534a1f709922a0f8`;
-- the current live documentation/synchronization HEAD is `36e8e6826b35b56934ac2606618e35ea5f6421ca`, accepted by CI #3447 and R2 #3202.
+- documentation-only synchronization commits may advance the branch after the accepted code checkpoint; query the live branch/PR head and checks rather than relying on a hard-coded documentation SHA.
 
 Recommended sequence:
 

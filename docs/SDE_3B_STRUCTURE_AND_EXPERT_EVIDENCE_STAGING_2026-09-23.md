@@ -2,9 +2,9 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `sde-3b-beginner-conservative-v1`  
-> PR: #153 (draft)  
+> PR: #153 (**MERGED**)  
 > Evidence input: `Jazz0006/ClocktowerEvidenceLab` / `e1-domain-persistence-foundation` / `docs/C0_TB_TO_CAMPBOARDGAMEHOST_SDE_HANDOFF_2026-09-23.md`  
-> Status: **CURRENT SDE-3B EXECUTION ORDER**
+> Status: **HISTORICAL COMPLETED SDE-3B STAGING RECORD — not current execution authority**
 
 ## 1. Why the SDE-3B route changes
 
@@ -420,18 +420,18 @@ Do not promote an expert-derived idea into policy when any of the following is t
 
 In those cases keep the candidate set tied and expose the limitation.
 
-## 8. Immediate next action on PR #153
+## 8. Historical completion boundary
 
-SDE-3B5 is complete. Begin **SDE-3B6 — expert-informed V1 soft priorities** with an evidence-eligibility audit before production policy edits.
+SDE-3B1–3B6 are complete and PR #153 has merged. The evidence-eligibility audit ultimately authorized **no new soft ordering** inside V1.
 
-Next work:
+The durable conclusions from this staging record are:
 
-1. re-query live PR #153 / main / checks;
-2. enumerate each completed feature family that could affect V1 ordering;
-3. map every proposed qualitative reason to explicit E3 evidence and its provenance/independence limits;
-4. reject any proposed policy reason whose support is only E1/E2, silent observed choice, or an unsupported numeric threshold;
-5. keep role-function exposure diagnostic until targeted Gap C obtains qualifying E3 rationale;
-6. preserve partial ordering and seeded ties wherever evidence does not distinguish survivors;
-7. add a durable policy RED only after one generic E3-backed reason is selected and specified.
+1. structure precedes feature semantics, and feature semantics precede policy;
+2. E1/E2 evidence may justify architecture/projectors and semantic regression without authorizing candidate preference;
+3. E3 is required before a qualitative policy predicate may affect ordering/rejection;
+4. unsupported dimensions remain explicit rather than being silently scored;
+5. role-function exposure remains diagnostic until severity evidence exists;
+6. `BEGINNER_CONSERVATIVE_V1` is now frozen and immutable;
+7. any future evidence-authorized candidate preference/rejection must use a new explicit policy version.
 
-Keep #153 draft.
+Current execution continues at **SDE-3D2** according to `CURRENT_DEVELOPMENT_ROADMAP.md` and `NEXT_DEVELOPMENT_HANDOFF.md`.

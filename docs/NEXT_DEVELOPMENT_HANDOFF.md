@@ -2,48 +2,34 @@
 
 > Updated: 2026-09-25 Australia/Sydney  
 > Branch: `sde-3c-decision-trace-shadow-replay`  
-> SDE-3D1 accepted code HEAD: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. Current live documentation/synchronization HEAD: `36e8e6826b35b56934ac2606618e35ea5f6421ca` — GitHub CI #3447 and R2 #3202 SUCCESS. SDE-3C5 structural checkpoint: `db7d5575dd28dc5f584be34b3556b511ccaf3e35`.  
+> SDE-3D1 accepted code HEAD: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. SDE-3C5 structural checkpoint: `db7d5575dd28dc5f584be34b3556b511ccaf3e35`. Documentation-only commits may advance the branch; always re-query the exact live head/checks.  
 > Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. Re-query the live branch/PR/checks before the next executable slice because documentation-only closeout commits may advance the branch HEAD.
 
 ## 1. Read first
 
-Use these as the active authorities, in order:
+Use this reduced current-authority set, in order:
 
 1. root `AGENTS.md`
 2. `docs/TESTING_STRATEGY.md`
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-4. `docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
-5. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
-6. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
-7. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
-8. `docs/SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`
-9. `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`
-10. `docs/SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`
-11. `docs/SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`
-12. `docs/SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`
-13. `docs/SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md`
-14. `docs/SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md`
-15. `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md`
-16. `docs/SDE_3C0_DECISION_TRACE_SHADOW_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`
-17. `docs/SDE_3C3B_PERSISTENCE_CODEC_STORAGE_ARCHITECTURE_AUDIT_2026-09-24.md`
-18. `docs/SDE_3C3B_STRICT_PERSISTENCE_CODEC_STORAGE_COMPLETION_AUDIT_2026-09-24.md`
-19. `docs/SDE_3C4_AUTHORITATIVE_CHOICE_CORRELATION_ARCHITECTURE_AUDIT_2026-09-24.md`
-20. `docs/SDE_3C4_AUTHORITATIVE_CHOICE_CORRELATION_COMPLETION_AUDIT_2026-09-24.md`
-21. `docs/SDE_3C5_MULTI_POLICY_REPLAY_ARCHITECTURE_AUDIT_2026-09-24.md`
-22. `docs/SDE_3C5_MULTI_POLICY_REPLAY_COMPLETION_AUDIT_2026-09-24.md`
-23. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
-24. `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_ARCHITECTURE_AUDIT_2026-09-24.md`
-25. `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`
-26. this handoff
+4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
+5. `docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
+6. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
+7. `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`
+8. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
+9. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
+10. this handoff
 
-Evidence/provenance references when needed:
+Read older SDE-3A/B/C architecture/completion audits only when a specific implementation-owner or regression question requires them. They are completion evidence, not startup context, and their historical PR/`NEXT` statements are not current authority.
+
+Evidence/provenance references for SDE-3D2 when needed:
 
 - `docs/SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`
-- `docs/SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`
 - `docs/SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`
 - `docs/SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`
-- `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`
+- `docs/SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`
 - `docs/SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`
+- `docs/SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md` only if Traveller-containing evidence becomes material.
 
 Do not revive archived pre-SDE-3 execution routes as parallel authority.
 
@@ -175,8 +161,8 @@ PR/branch boundary:
 - PR #151/#152 are merged SDE-3A checkpoints;
 - PR #153 is the merged SDE-3B checkpoint;
 - current branch is `sde-3c-decision-trace-shadow-replay`;
-- no SDE-3C PR had been created when this handoff was updated because GitHub control-plane tools were unavailable in the conversation; create it as draft when available;
-- current policy audit is `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_POLICY_AUDIT_2026-09-23.md`;
+- Draft PR #154 exists on `sde-3c-decision-trace-shadow-replay`; it contains completed SDE-3C plus the current SDE-3D continuation and must remain draft until explicit project-owner authorization;
+- historical V1 policy pre-flight is `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_POLICY_AUDIT_2026-09-23.md`; current V1 release authority is the SDE-3D1 frozen-baseline completion audit;
 - completed 3B1 audit is `docs/SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`;
 - completed 3B2 audit is `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`;
 - completed 3B3 audit is `docs/SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`;
@@ -210,7 +196,7 @@ Revised architecture status after the ClocktowerEvidenceLab C0 handoff:
 - **3B4 COMPLETE:** healthy-information utility derives usable/independent whole-table routes, redundancy/contradiction, route loss and last-route removal from canonical history plus existing exact/confirmation evidence; baseline-already-infeasible history is guarded and legal registered truth remains healthy; R01/R04 bounded E2 regressions are green; V1 policy remains unchanged;
 - **3B5 COMPLETE:** generic score-free role-function exposure semantics cover direct/new/already/confirmation-amplified and forced/avoidable exposure; registration ambiguity is the first rules-backed mechanism; canonical history/confirmation are reused; bounded `goldcand-ben-03` E2 regression is green; V1 policy remains unchanged;
 - **3B6 COMPLETE:** the E3 eligibility audit authorizes no new soft ordering at this checkpoint; `preference-evidence-not-authorized` is explicit, survivor ties remain intact, and no new policy reason was introduced.
-- only after each projector has semantic replay evidence may expert rationale become a V1 soft preference.
+- projector completion and semantic replay may make a dimension policy-eligible, but V1 is now immutable; any newly authorized candidate preference/rejection must enter through a new explicit policy version.
 
 Evidence authority levels are now explicit:
 - E1 architecture/feature existence — use now;
