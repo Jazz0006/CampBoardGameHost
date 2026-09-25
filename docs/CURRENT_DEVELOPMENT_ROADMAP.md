@@ -57,6 +57,7 @@ Always query live refs before executable edits.
 
 Read these first for current execution:
 
+- Development workflow / Mini MCP / memory: [`MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md`](MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md)
 - Current state / priority: [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
 - Current handoff: [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md)
 - Current SDE-3 route: [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
@@ -67,6 +68,8 @@ Read these first for current execution:
 - Global architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 
 Read historical slice audits only when a specific ownership/semantic question requires them. In particular, SDE-3A/B/C completion documents are no longer mandatory startup context and their embedded historical PR/"next" state is not current authority.
+
+For substantive work, use one bounded Mini MCP memory search after live repo-state inspection and before broad repository archaeology. Memory is advisory only: verify mutable facts live, and at meaningful checkpoints choose `ADD / UPDATE / SUPERSEDE / NONE` rather than logging every session.
 
 Evidence/provenance references on demand:
 

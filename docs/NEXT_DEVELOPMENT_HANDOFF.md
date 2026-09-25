@@ -11,14 +11,15 @@ Use this reduced current-authority set, in order:
 
 1. root `AGENTS.md`
 2. `docs/TESTING_STRATEGY.md`
-3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
-5. `docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
-6. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
-7. `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`
-8. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
-9. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
-10. this handoff
+3. `docs/MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md`
+4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
+5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
+6. `docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
+7. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
+8. `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`
+9. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
+10. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
+11. this handoff
 
 Read older SDE-3A/B/C architecture/completion audits only when a specific implementation-owner or regression question requires them. They are completion evidence, not startup context, and their historical PR/`NEXT` statements are not current authority.
 
@@ -33,15 +34,19 @@ Evidence/provenance references for SDE-3D2 when needed:
 
 Do not revive archived pre-SDE-3 execution routes as parallel authority.
 
-## 2. Live-state rule
+## 2. Live-state + memory startup rule
 
 Before any executable edit:
 
-1. query live branch HEAD for `sde-3c-decision-trace-shadow-replay`;
-2. confirm PR #153 remains merged and query live `main`;
-3. confirm Draft PR #154 remains open and **draft**;
-4. query current CI/R2 checks for the exact SDE-3C head;
-5. never assume the SHA recorded in a prior chat is still current.
+1. use Mini MCP `repo_info` / `git_state` for the live Oracle checkout;
+2. for substantive work, run one bounded task-specific `memory_search({ repo: "clocktower" })`; call `memory_get` only for promising candidates;
+3. query live branch HEAD for `sde-3c-decision-trace-shadow-replay`;
+4. confirm PR #153 remains merged and query live `main`;
+5. confirm Draft PR #154 remains open and **draft** using Mini MCP `github_pr_audit` by default;
+6. query current CI/R2 checks for the exact active PR head;
+7. never assume a SHA, PR state, CI result, or implementation fact from memory/prior chat is still current.
+
+At a meaningful checkpoint, choose `ADD / UPDATE / SUPERSEDE / NONE` for durable Mini MCP memory. Do not store ordinary HEAD/CI state, every commit/test result, or copied handoff prose.
 
 The SDE-3C PR must stay **draft** once created.
 
