@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT ARCHITECTURE / PRODUCT ROUTE**  
 > Current D5F policy authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
-> Current implementation entry: **SDE-3A provisional engine / feature / policy contract**  
+> Current implementation entry: **SDE-3D2 calibration-ready missing feature completion**  
 > Supersedes as execution authority: first-night-only EPI-MQ routes, earlier productive-uncertainty scoring plans, and the older revision-driven dynamic-decision implementation plan.
 
 ## 1. Product target
@@ -558,16 +558,16 @@ Authority:
 Split:
 
 ~~~text
-SDE-3A engine / feature / policy contract                  CURRENT
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT
-SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
-SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
-SDE-3E automatic production cutover                         BLOCKED ON 3D
+SDE-3A engine / feature / policy contract                  COMPLETE / PR #151/#152
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / PR #153 MERGED
+SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0–3C5
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 NEXT
+SDE-3E automatic production cutover                         BLOCKED PER DECISION SURFACE
 ~~~
 
-SDE-3A/B/C may proceed while ClocktowerEvidenceLab continues targeted source collection.
+ClocktowerEvidenceLab continues targeted source collection in parallel. SDE-3D is only partially evidence-blocked: evidence gaps block the specific policy semantics they govern rather than the entire engineering phase.
 
-The first usable policy should be conservative, versioned and explainable. It may use hard boundaries plus interpretable soft priorities, but it must not invent unsupported scalar weights merely to manufacture precision.
+`BEGINNER_CONSERVATIVE_V1` is now an immutable provisional baseline. A new policy version is required for any later candidate rejection, preference or survivor-refinement semantic. The first usable production policy should remain conservative, versioned and explainable; it may use hard boundaries plus evidence-backed partial ordering, but it must not invent unsupported scalar weights merely to manufacture precision.
 
 The long-term engine separates:
 

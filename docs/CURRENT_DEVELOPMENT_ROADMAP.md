@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-24 Australia/Sydney  
+> Updated: 2026-09-25 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -35,43 +35,45 @@ SDE-2D5 calibration / policy evidence                 CHECKPOINT MERGED / PARALL
 D5F-C final gate/band derivation                      BLOCKED ON EVIDENCE
 sealed holdout                                        CLOSED
 SDE-3A engine / feature / policy contract             COMPLETE / PR #151/#152
-SDE-3B BEGINNER_CONSERVATIVE_V1                       COMPLETE / T4 ACCEPTED / PR #153 DRAFT
-SDE-3C shadow / DecisionTrace / replay                 NEXT AFTER SDE-3B MERGE
-SDE-3D calibrated policy freeze                       BLOCKED ON EVIDENCE
-SDE-3E automatic production cutover                   BLOCKED ON 3D
+SDE-3B BEGINNER_CONSERVATIVE_V1                       COMPLETE / T4 ACCEPTED / PR #153 MERGED
+SDE-3C shadow / DecisionTrace / replay                 COMPLETE / 3C0–3C5
+SDE-3D calibrated policy freeze                       IN PROGRESS / 3D0–3D1 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
+SDE-3E automatic production cutover                   BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
 ## 2. Current branch / PR
 
-Branch: `sde-3b-beginner-conservative-v1`
+Branch: `sde-3c-decision-trace-shadow-replay`
 
-PR: **#153 — SDE-3B: implement BEGINNER_CONSERVATIVE_V1 policy**
+Last accepted SDE-3D1 code checkpoint: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. The earlier SDE-3C5 structural checkpoint remains `db7d5575dd28dc5f584be34b3556b511ccaf3e35`. Documentation-only synchronization commits may advance the branch after these code checkpoints; always query the live branch/PR head.
 
-PR #151 and #152 are merged. PR #153 is the current **draft** SDE-3B PR and must not be merged unless the user explicitly says **“授权合并”**.
+Draft PR #154 — `SDE-3C: add DecisionTrace shadow replay` — remains the active SDE-3C/3D continuation PR. Query its exact live head/checks before executable work. Keep it **draft** and do not merge unless the user explicitly says **“授权合并”**.
+
+PR #153 is merged into `main`; merged `main` entry SHA is `7045ae746fd11a26371127c584c91e2a183c4c75`.
 
 Always query live refs before executable edits.
 
 ## 3. Current authorities
 
-- First-night policy: [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
-- External evidence seed: [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv)
-- Current SDE-3 execution route: [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
-- Current SDE-3A ownership/contract audit: [`SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`](SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md)
-- Current SDE-3B structure / feature / expert-evidence staging: [`SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`](SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md)
-- SDE-3B1 completion audit: [`SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md)
-- SDE-3B2 completion audit: [`SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md)
-- SDE-3B3 completion audit: [`SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md)
-- SDE-3B4 completion audit: [`SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md)
-- SDE-3B5 architecture audit: [`SDE_3B5_ROLE_FUNCTION_EXPOSURE_ARCHITECTURE_AUDIT_2026-09-23.md`](SDE_3B5_ROLE_FUNCTION_EXPOSURE_ARCHITECTURE_AUDIT_2026-09-23.md)
-- SDE-3B5 completion audit: [`SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md)
-- SDE-3B6 eligibility audit: [`SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md`](SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md)
-- SDE-3B6 completion audit: [`SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md)
-- SDE-3B final completion/T4 audit: [`SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md)
-- Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
-- B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
-- B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
-- Traveller boundary audit for primary-verified A Fond: [`SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`](SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md)
-- Primary reconstructions: `SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`, `SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`, `SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+Read these first for current execution:
+
+- Current state / priority: [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
+- Current handoff: [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md)
+- Current SDE-3 route: [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
+- SDE-3D freeze/cutover gate: [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md)
+- Frozen V1 release definition: [`SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md)
+- First-night policy/evidence synthesis: [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
+- Targeted evidence gaps: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
+- Global architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
+
+Read historical slice audits only when a specific ownership/semantic question requires them. In particular, SDE-3A/B/C completion documents are no longer mandatory startup context and their embedded historical PR/"next" state is not current authority.
+
+Evidence/provenance references on demand:
+
+- [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv)
+- [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
+- primary reconstructions for Ben / A Stud, Evin 2019 and A Fond Farewell;
+- Traveller boundary audit only when Traveller-containing evidence is relevant.
 
 ## 4. Frozen architecture / policy decisions
 
@@ -185,7 +187,7 @@ SDE-3A acceptance evidence:
 - R2 workflow run `35806237770`: succeeded;
 - final fanout audit: production changes remain limited to the SDE feature-evaluation adapter and structured shadow integration; no rules, canonical session commit, UI authority, legacy scoring, policy selection, or persistence ownership moved.
 
-PR #152 is merged. SDE-3B proceeds from live `main` on its dedicated branch.
+PR #151/#152/#153 are merged. SDE-3C proceeds from merged `main` on `sde-3c-decision-trace-shadow-replay`.
 
 ### SDE-3B — BEGINNER_CONSERVATIVE_V1 — COMPLETE / T4 ACCEPTED
 
@@ -214,7 +216,7 @@ SDE-3B staged status on PR #153:
 5. **3B5 contextual role-function exposure — COMPLETE** — score-free registration-ambiguity exposure, historical/confirmation context and bounded `goldcand-ben-03` E2 regression are accepted; severity remains E3-gated;
 6. **3B6 expert-informed V1 soft priorities — COMPLETE** — current E3 audit authorizes no new soft ordering; Ready policy results explicitly report `preference-evidence-not-authorized`, while viable survivors remain tied and the existing zero-topology gate is unchanged.
 
-Overall SDE-3B implementation and reserved T4 `[full-ci]` acceptance are complete for the current evidence checkpoint. T4 head `30caec3dcd546f4395238809d1f1d285688cd814` passed CI #3427 (full Android JVM + debug APK, ASP contracts, Real Clingo, aggregate CI gate) and R2 #3183. PR #153 remains draft and unmerged.
+Overall SDE-3B implementation and reserved T4 `[full-ci]` acceptance are complete for the current evidence checkpoint. T4 head `30caec3dcd546f4395238809d1f1d285688cd814` passed CI #3427 (full Android JVM + debug APK, ASP contracts, Real Clingo, aggregate CI gate) and R2 #3183. PR #153 has since been merged into `main`.
 
 Expert evidence participates immediately at the architecture/feature-priority level and later as semantic regression. It becomes candidate preference only after the matching feature is stable. Numeric thresholds and multi-axis tradeoff strength remain SDE-3D.
 
@@ -231,39 +233,62 @@ The full conservative policy direction remains:
 
 Do not invent unsupported numeric weights.
 
-### SDE-3C — shadow / DecisionTrace / replay — NEXT AFTER SDE-3B MERGE
+### SDE-3C — shadow / DecisionTrace / replay — COMPLETE
 
-Before cutover, capture:
+Current code checkpoint:
 
-- policy version;
-- candidate set;
-- typed features;
-- rejection/survival reasons;
-- recommendation;
-- actual committed choice;
-- optional human override/reason.
+1. **3C0 architecture / fanout / persistence audit — COMPLETE** — `StructuredInformationShadowAdapter` is the common aggregation owner; `InformationDecisionContext` remains legal/confirmation authority; canonical timelines remain the only game-history owners; DecisionTrace gets a separate diagnostic owner.
+2. **3C1 production shadow recommendation — COMPLETE** — Ready V1 shadow evaluation carries deterministic `PolicySelection`; Deferred policy carries no selection; visible legacy recommendation and canonical commit paths are unchanged. Accepted by GitHub CI/R2 before the SDE-3C3B Oracle checkpoint.
+3. **3C2 typed DecisionTrace contract — COMPLETE** — versioned trace records evidence checkpoint, lifecycle/revision, canonical-prefix reference, complete candidate IDs, typed feature evaluation, policy-neutral Ready/Deferred snapshot, shadow recommendation, and pending/committed actual-choice shape. Accepted by GitHub CI/R2 before the SDE-3C3B Oracle checkpoint.
+4. **3C3A replay archive ownership — COMPLETE** — immutable archive admits only traces bound to canonical global history prefixes; same decision/revision/policy key is idempotent only for identical trace content and conflicts otherwise. Accepted by GitHub CI/R2 before the SDE-3C3B Oracle checkpoint.
+5. **3C3B strict persistence codec / storage integration — COMPLETE** — adds a strict deterministic archive codec, immutable raw-store adapter, and dedicated SharedPreferences transport. Malformed/incompatible payloads and duplicate/conflicting keys fail closed; storage remains diagnostic and is not auto-invoked from the read-only production shadow. Accepted at remote HEAD `9cffa4e94b088342e1808c9945febb790a0b0232` with CI #3433 and R2 #3188 SUCCESS.
+6. **3C4 authoritative-choice correlation — COMPLETE** — finalizes only an existing pending trace after exact authoritative confirmation plus canonical post-commit observation/session evidence; identity/revision/domain/lifecycle mismatches, preflight-only records, and conflicting retries fail closed. The only permitted same-key archive transition is identical content except `actualChoice: Pending -> Committed`. Accepted at exact code HEAD `bf5c2c763e33f69ce6a12567be25e5224c10270b` with CI #3436 and R2 #3191 SUCCESS.
+7. **3C5 multi-policy replay — COMPLETE** — introduces an explicit policy replay runner/registry, production registry containing only real V1, policy-neutral replay input extracted from freshly recomputed canonical shadow features, exact source-trace identity/prefix/domain correlation, per-policy evidence checkpoints, deterministic requested-version ordering, and preservation of authoritative actual choice without mutating historical truth or auto-persisting replay output. Accepted at exact code HEAD `db7d5575dd28dc5f584be34b3556b511ccaf3e35` with CI #3440 and R2 #3195 SUCCESS.
 
-Historical replay must support comparing multiple policy versions against the same committed game history.
+Validation note: Oracle `test:fast` remains blocked before Kotlin compilation because the ARM64 host has no Android SDK. Independent GitHub validation accepted 3C1/3C2/3C3A at the prior checkpoint, accepted 3C3B at remote HEAD `9cffa4e94b088342e1808c9945febb790a0b0232` with CI #3433 and R2 #3188 SUCCESS, and accepted 3C4 at exact code HEAD `bf5c2c763e33f69ce6a12567be25e5224c10270b` with CI #3436 and R2 #3191 SUCCESS, and accepted 3C5 at exact code HEAD `db7d5575dd28dc5f584be34b3556b511ccaf3e35` with CI #3440 and R2 #3195 SUCCESS.
 
-### SDE-3D / 3E — remain blocked
+Before cutover, the durable trace still must capture policy/evidence versioning, the complete candidate/feature/reason record, recommendation, actual committed choice and optional human override rationale. Historical replay must support comparing multiple policy versions against the same committed game history.
 
-Final calibrated policy freeze and automatic production cutover still require stronger external evidence.
+### SDE-3D — IN PROGRESS / SDE-3D0–3D1 COMPLETE / SDE-3D2 NEXT
 
-Current unresolved calibration gaps:
+Authority: `SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`.
 
-- healthy-information floor / middle-band thresholds;
+SDE-3D is no longer treated as one monolithic evidence gate. The accepted V1 semantics are now frozen as an immutable provisional baseline, while individual preference/rejection surfaces remain evidence-gated.
+
+Current unresolved calibration gaps remain:
+
+- healthy-information floor / middle-band policy boundary — highest-value current policy blocker;
 - role-function exposure severity;
-- independent-expert impaired-information believability;
+- independent-expert impaired-information believability / cross-night continuity strength;
 - Demon-bluff triplet preference ordering;
-- quantitative multi-axis tradeoff.
+- quantitative multi-axis tradeoff only if a future policy explicitly requires numeric weighting.
+
+Gap E does **not** block a qualitative partial-order production policy. Do not invent weights, thresholds or player-count coefficients merely to complete SDE-3D.
+
+Current slices:
+
+1. **3D0 calibrated freeze / cutover gate architecture — COMPLETE**;
+2. **3D1 V1 immutable baseline freeze — COMPLETE** — frozen definition binds V1 policy version, `sde-3b-merged-2026-09-24` evidence checkpoint and `SEEDED_HASH_V1`; accepted at `f562887cf4e90d02d364eef5534a1f709922a0f8` with CI #3446 and R2 #3201;
+3. **3D2 calibration-ready missing feature completion — NEXT** — begin with truth-danger / credibility-disruption plus contextual Red-Herring architecture/evidence audit; feature work remains policy-neutral;
+4. **3D3 first evidence-authorized policy delta — WAITING FOR QUALIFYING E3**;
+5. **3D4 V1/V2 canonical real-corpus replay — REQUIRES REAL V2**;
+6. **3D5 surface-scoped calibrated freeze — REQUIRES A CUTOVER-ELIGIBLE SURFACE**.
+
+Do not create a placeholder V2. Any new candidate rejection, preference or survivor-refinement semantic after V1 freeze requires a new explicit policy version.
+
+### SDE-3E — BLOCKED PER SURFACE
+
+Automatic cutover is not one global switch. A decision surface remains blocked until its frozen policy version, consumed features, evidence-authorized predicates, canonical replay, DecisionTrace correlation, manual override and explicit unsupported-surface fallback are all accepted.
+
+A technically available V1 seeded selection is not sufficient for cutover when material dimensions remain unsupported and all non-catastrophic candidates are still one large equivalence class.
 
 No automatic online learning is authorized. Policy improvement remains offline, versioned and evidence-reviewed.
 
-## 8. D5F-C remains blocked
+## 8. Historical D5F-C numeric gate route — still evidence-blocked / not the current critical path
 
 Do not derive/freeze gates from old human labels, inspect sealed holdout for tuning, tune on holdout, freeze unsupported numeric policy, or cut automatic production policy.
 
-D5F-C may begin only after expert-observed evidence covers the material first-night policy variables and legal-counterfactual comparisons support repeated interpretable constraints.
+The old D5F-C goal of deriving final numeric gates/bands remains evidence-blocked. SDE-3D0 supersedes the assumption that this must finish before engineering can progress: qualitative, surface-scoped policy may advance without numeric weights, while any future threshold/band semantics still require the corresponding stronger evidence.
 
 ## 9. Compatibility code intentionally retained
 

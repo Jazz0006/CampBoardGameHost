@@ -13,7 +13,7 @@ This audit implements the focused pre-executable gate required by:
 - `docs/TESTING_STRATEGY.md`;
 - `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 - `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
-- `docs/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`.
+- `docs/archive/checkpoints/sde/SDE_2D_PRE_SDE3_STRATEGIC_GENERALIZATION_ROUTE_2026-09-18.md`.
 
 The target is **SDE-2D1 only**:
 
