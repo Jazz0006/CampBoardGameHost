@@ -7,6 +7,8 @@
 
 ## 1. Audit decision
 
+Execution follow-up (2026-09-25): 3D1 is complete. Before the proposed 3D2 feature work, apply [integration closure C0–C3](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md). This preserves the evidence/cutover gates below; structural 3C completion does not establish runtime reachability or durable end-to-end replay. Current status belongs to the roadmap, not this historical audit.
+
 SDE-3C is structurally complete. The next phase must not be modeled as one monolithic
 "collect every missing expert datum, derive final weights, then freeze everything" gate.
 

@@ -13,6 +13,8 @@
 
 ## 1. Decision
 
+Execution amendment (2026-09-25): complete the [integration closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) before SDE-3D2. Typed 3C module completion is not App reachability or a durable end-to-end replay loop. C0 fixes correlation; C1–C3 establish replay inputs, offline integration and measured runtime shadow. Roadmap remains the single status authority.
+
 The Storyteller project must continue even though final expert-policy calibration is incomplete.
 
 Evidence shortage blocks **unsupported policy preferences and per-surface automatic production cutover**, not freezing the accepted V1 baseline or continuing the engineering architecture that makes future calibration possible.
@@ -43,7 +45,7 @@ Name the first provisional profile:
 
 It is deliberately conservative and versioned.
 
-It may improve later as EvidenceLab supplies stronger expert evidence.
+Later improvements require a new qualified policy version; the frozen V1 definition itself must not change.
 
 ## 3. Stable architecture versus continuously calibrated policy
 
@@ -186,7 +188,7 @@ A later evidence-driven policy may introduce calibrated bands or pairwise orderi
 
 ## 5. SDE-3B — BEGINNER_CONSERVATIVE_V1
 
-V1 may use evidence-backed qualitative constraints even when final numeric thresholds are unknown.
+Future versions may use qualified qualitative constraints without numeric thresholds; frozen V1 remains limited to its accepted zero-topology gate and seeded survivor equivalence.
 
 ### 5.1 Hard boundaries
 
@@ -199,9 +201,9 @@ Always preserve:
 - setup persistence of shown identity / Red Herring / revealed Demon bluffs;
 - interaction-local Spy/Recluse registration semantics.
 
-### 5.2 Conservative reject / avoid conditions
+### 5.2 Future policy hypotheses — not frozen V1 predicates
 
-V1 may reject or strongly avoid candidates that are clearly bad for reasons already established by rules, architecture, or repeated evidence, for example:
+Frozen V1 rejects only exact zero Evil topology and otherwise preserves survivor equivalence. The following are future policy hypotheses requiring independently qualified evidence and a new version, not permissions to expand V1:
 
 - catastrophic Evil-topology / confirmation collapse when healthy alternatives exist;
 - a whole bundle that leaves Good with effectively no usable healthy information;
@@ -213,7 +215,7 @@ These conditions must be expressed through generic features, not named fixture b
 
 ### 5.3 Contextual soft priorities
 
-Among survivors, V1 may prefer:
+V1 does not rank survivors by the following dimensions. Future evidence-backed versions may investigate:
 
 - more credible Evil cover without making Good information inert;
 - fewer destructive confirmation chains;
@@ -359,7 +361,7 @@ Current execution slices are:
 
 1. 3D0 calibrated freeze / cutover-gate architecture — COMPLETE;
 2. 3D1 V1 immutable baseline freeze — COMPLETE at `f562887cf4e90d02d364eef5534a1f709922a0f8`, CI #3446 / R2 #3201;
-3. 3D2 calibration-ready missing feature completion — NEXT; begin with truth danger / credibility disruption plus contextual Red-Herring descriptive projection while keeping V1 policy-neutral;
+3. 3D2 calibration-ready missing feature completion — AFTER integration C1–C3; begin with truth danger / credibility disruption plus contextual Red-Herring descriptive projection while keeping V1 policy-neutral;
 4. 3D3 first evidence-authorized policy delta / first real V2 — waiting for a qualifying E3 predicate;
 5. 3D4 V1/V2 canonical real-corpus replay;
 6. 3D5 surface-scoped calibrated freeze.
@@ -440,6 +442,7 @@ Current control-plane state:
 
 Recommended sequence:
 
+0. **Integration C0–C3:** exact history correlation, durable replay input, offline vertical slice, measured diagnostic runtime shadow, as specified in the integration closure contract. The following steps begin only after those exit gates.
 1. **SDE-3D2 — calibration-ready missing feature completion:** perform an architecture/evidence/fanout audit for truth danger / credibility disruption and contextual Red-Herring downstream policy input before production edits;
 2. identify and reuse the existing owners for Red Herring setup commitment, legal candidate semantics, canonical history/confirmation context, healthy truthful-channel consequences, and exact/topology consequence projection;
 3. define the smallest generic descriptive feature seam that represents downstream truth danger / credibility disruption without encoding named-seat, named-role or fixture-specific preference rules;
@@ -463,9 +466,9 @@ An observed expert choice without rationale is never, by itself, a preference la
 
 ## 14. Success criteria for the next development conversation
 
-The next conversation should begin **SDE-3D2**, not reopen SDE-3B or replay infrastructure.
+Integration C0–C3 is locally complete; exact-head remote acceptance remains pending. The next implementation conversation begins **C4 / SDE-3D2 architecture, evidence and fanout audit**, reusing the accepted replay/shadow loop rather than rewriting it.
 
-It should produce, before production edits:
+After C1–C3, the SDE-3D2 conversation should produce, before production edits:
 
 - one authoritative owner/reuse map for Red Herring commitment, legal candidate semantics, canonical history/confirmation context and downstream consequence projection;
 - an explicit account of what current Evin/Ben/SILVER evidence supports at E1/E2 versus what remains below E3;

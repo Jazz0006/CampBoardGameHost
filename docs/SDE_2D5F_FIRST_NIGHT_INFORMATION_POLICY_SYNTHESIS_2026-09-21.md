@@ -2,10 +2,12 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `sde-2d5-calibration-policy-evidence`  
-> PR: #150 (**must remain draft**)  
-> Status: **design authority for the current first-night BEGINNER policy synthesis; production cutover is not authorized**
+> Historical PR: #150 (merged evidence checkpoint; not the active PR)
+> Status: **evidence/design synthesis, not frozen V1 executable policy**. Current status/priority belongs to the roadmap; V1 behavior belongs to its immutable release definition. Production cutover is not authorized.
 
 ## 1. Purpose
+
+2026-09-25 clarification: thematic defaults, healthy middle bands and contextual costs below express design hypotheses, not additional accepted V1 ranking/rejection rules. The accepted V1 contract is exact zero Evil-topology rejection with seeded survivor equivalence. Follow [integration closure](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) before extending descriptive features or proposing a new policy version.
 
 This document records the current best model for how the app should construct and present Trouble Brewing first-night information after roles, the Drunk's shown identity, and seating are committed.
 
@@ -113,9 +115,9 @@ A useful policy statement is:
 
 > **Registration follows role fantasy by default; whole-bundle health may override it only for a material gameplay benefit.**
 
-## 5. Role-function exposure should normally be avoided
+## 5. Role-function exposure — descriptive feature, policy severity unqualified
 
-Two legal first-night outcomes are especially undesirable when alternatives exist:
+The following examples motivated exposure diagnostics. The original named-role avoidance proposals are superseded by the SDE-3B6 evidence decision: no qualified E3 preference is authorized. Frozen V1 uses neither example to rank/reject candidates. Preserve these as hypotheses and rules-domain probes, not executable policy.
 
 ### 5.1 Librarian -> Recluse
 
@@ -123,7 +125,7 @@ A Librarian clue that directly identifies the Recluse pair can explain away late
 
 Policy:
 
-`AVOID_IF_HEALTHY_ALTERNATIVE_EXISTS`
+Historical proposal (not accepted): `AVOID_IF_HEALTHY_ALTERNATIVE_EXISTS`.
 
 This must not become illegal.
 
@@ -143,7 +145,7 @@ Directly pointing the Investigator at the actual Spy exposes the Minion whose ro
 
 Policy:
 
-`STRONGLY_AVOID_IF_HEALTHY_ALTERNATIVE_EXISTS`
+Historical proposal (not accepted): `STRONGLY_AVOID_IF_HEALTHY_ALTERNATIVE_EXISTS`.
 
 This also must not become illegal.
 
@@ -157,7 +159,7 @@ no Recluse available as a legal Minion-registration anchor
 => Investigator must point to Spy in a legal pair
 ~~~
 
-If a Recluse is present, using a legal Recluse-as-Minion registration is normally thematically preferable to exposing the real Spy, subject to whole-bundle health.
+If a Recluse is present, its legal Minion registration is an alternative to evaluate descriptively; that fact alone does not authorize preferring it to the real Spy.
 
 This motivates a general diagnostic:
 
@@ -280,13 +282,13 @@ Useful considerations include:
 
 Do not waste an independent misinformation route without a table-level reason.
 
-## 11. Persistent impaired narrative state
+## 11. Derived impaired narrative projection
 
 The Drunk's shown identity is committed at setup and is not reselected by the later SDE.
 
 Do not model an impaired information role as a sequence of independent per-interaction false outputs.
 
-The policy needs a **persistent impaired narrative state**: a role-agnostic representation of the world that the affected player is being led to believe, together with the already-committed observations that constrain future misinformation.
+The shared feature layer needs a **derived narrative projection over canonical history**: a role-agnostic representation constrained by already-committed observations. Setup, actions and observations retain ownership; no second mutable narrative state or independently persisted counterworld becomes authoritative. Frozen V1 does not rank this feature.
 
 Conceptually:
 
@@ -296,7 +298,7 @@ perceived role
 + current public / player-visible history
 + selected believable counterworld assumptions
         ↓
-persistent impaired narrative state
+derived narrative projection over canonical history
         ↓
 current legal output domain
         ↓
@@ -304,7 +306,7 @@ choose the next output that best preserves
 the same believable perceived world when feasible
 ~~~
 
-For the Drunk, this persistent state is commonly a shadow world: a coherent alternative interpretation of seats, alignments, roles, registrations or other facts that explains the information already shown to that player.
+For the Drunk, the derived projection describes coherent alternative interpretations of seats, alignments, roles or registrations that explain prior information; it is recomputable from canonical inputs.
 
 The same abstraction must work across **information shapes**, not named roles:
 
@@ -533,7 +535,7 @@ Current provisional-policy authority:
 
 The current policy direction is:
 
-> **Enumerate every legal first-night information outcome, preserve role/lifecycle ownership, prefer Spy-as-Good and Recluse-as-Evil registration by default, avoid directly exposing Recluse to the Librarian or Spy to the Investigator when healthy alternatives exist, and select information as a whole-table bundle whose goal is a playable middle band rather than a maximum/minimum metric. Impaired misinformation must preserve a believable cross-interaction perceived world through a shared role-agnostic narrative state rather than independent per-role lies.**
+> **Enumerate legal outcomes and preserve lifecycle/canonical-history ownership. Frozen V1 rejects exact zero Evil topology and otherwise uses an equivalence band with seeded selection. Thematic registration and exposure preferences remain evidence-gated hypotheses, not additional V1 rules. Narrative coherence is a shared role-agnostic projection over canonical history. Future policy evolution must be versioned and validated through the durable replay/shadow loop.**
 
 
 ## 19. Active documentation authority
@@ -669,7 +671,7 @@ The current code already has most of the required seams:
 - strategic consequence: `TroubleBrewingTopologyHypotheticalBundleEvaluator`;
 - committed/unshown lifecycle boundary: session first-night information lifecycle and revisions.
 
-The next implementation slice should therefore be an **evidence reconstruction/projection harness**, not new production selection code.
+At that historical evidence checkpoint, the next slice was an **evidence reconstruction/projection harness**, not new production selection code. It is not today's continuation instruction; use the roadmap and integration closure contract.
 
 ### Current executable B4 consequence boundary
 
@@ -826,7 +828,6 @@ They all converge on the shared `TroubleBrewingFirstNightDrunkWholeBundleExactEv
 
 `TroubleBrewingFirstNightInformationPropositionMaterializer` also contains named roles, but those branches encode different proposition semantics and therefore belong at the rules/semantic adapter boundary.
 
-One future-risk area remains: the role-named Fortune Teller adapter must not become a template for role-specific cross-night coherence policy. When persistent impaired narrative state is implemented, continuation policy must move through shared semantic/history abstractions so equivalent boolean/target-check information in future scripts inherits the same behavior automatically.
+One continuing risk remains: the role-named Fortune Teller adapter must not become a template for role-specific cross-night coherence policy. Extensions must reuse the shared derived narrative/history abstractions so equivalent boolean/target-check information in future scripts inherits the same behavior automatically, without introducing a second mutable narrative state.
 
 Legacy `ImpairedInformationPolicy`, `RegistrationPolicy`, and the approximate impaired truthful/false-family bridge remain compatibility code by explicit roadmap decision. They are not evidence that the new D5F policy should be implemented through those legacy scalar heuristics.
-

@@ -59,4 +59,34 @@ internal class DecisionTraceArchiveStore(
         if (updated === current) return true
         return writeRaw(DecisionTraceArchiveJsonCodec.encode(updated))
     }
+
+    /**
+     * Correlates the only pending diagnostic trace for this canonical decision, when one exists.
+     * Absence is expected when runtime shadow evaluation was ineligible, stale, cancelled or failed.
+     */
+    fun correlateCommittedChoiceIfPresent(
+        policyVersion: PolicyVersion,
+        confirmed: ConfirmedInformationDecision,
+        committedObservation: RecordedEpistemicObservation,
+        postCommitSession: ClocktowerSessionView,
+        overrideReason: DecisionTraceOverrideReason? = null,
+    ): Boolean {
+        val matches = load().traces.filter { trace ->
+            trace.decisionId == confirmed.contextSnapshot.semanticIdentity &&
+                trace.sourceRevision == confirmed.contextSnapshot.revision &&
+                trace.policySnapshot.policyVersion == policyVersion &&
+                trace.actualChoice is DecisionTraceActualChoice.Pending
+        }
+        if (matches.isEmpty()) return true
+        require(matches.size == 1) {
+            "DecisionTrace correlation requires exactly one matching pending diagnostic trace."
+        }
+        return correlateCommittedChoice(
+            key = matches.single().archiveKey,
+            confirmed = confirmed,
+            committedObservation = committedObservation,
+            postCommitSession = postCommitSession,
+            overrideReason = overrideReason,
+        )
+    }
 }

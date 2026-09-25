@@ -4,17 +4,9 @@
 
 ## 当前开发状态
 
-Persistence Simplification 已完成；D6.1 / D6.2 架构与 UI-composition decomposition 已完成并合入。D6 的可安全、高收益拆分已经结束；R3 对 `CampBoardGameHostApp.kt` 深层事务应用边界的 read-only viability audit 得出 **NO-GO**，因此不再为了缩小文件而继续创建 transaction controller / callback bag / second coordinator。
+当前工程主线是 Storyteller Decision Engine（SDE）。最新完成状态和下一步只以[开发路线](docs/CURRENT_DEVELOPMENT_ROADMAP.md)与[当前交接](docs/NEXT_DEVELOPMENT_HANDOFF.md)为准；这里不复制易过期的阶段状态。
 
-当前 active campaign 已切换为：
-
-```text
-square-table Storyteller UI consolidation / UI-R5 real-device stabilization
--> EPI-MQ / Productive Uncertainty
--> UX-R6 legacy recommendation-provider replacement
-```
-
-UI-R5 的目标是统一现有方桌 Storyteller 交互语言并完成真机稳定性，而不是修改推荐算法、规则语义或 Persistence/Recovery 架构。完成 UI-R5 并通过真机验收后，才进入 EPI-MQ / Productive Uncertainty。
+当前路线的实现与验收契约见 [SDE 集成闭环路线](docs/SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md)：历史关联校验 → 持久回放输入 → 离线端到端闭环 → 性能验证与受控影子接线 → 描述特征补齐 → 证据授权的政策演进。
 
 D6 之后继续保持：`ClocktowerGameSession` 是 canonical writable game/session authority；Planner/Reducer 负责纯语义与 durable intent planning；App 保留跨 owner 的 Compose-facing application choreography。大 composition root 本身不再作为继续拆分的充分理由。
 

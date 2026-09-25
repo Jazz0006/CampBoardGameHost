@@ -82,6 +82,30 @@ internal object DecisionTraceAuthoritativeChoiceCorrelator {
             "Post-commit semantic timeline cursor has not advanced beyond the committed observation."
         }
 
+        // Reconstruct only the prefix before this commit, not the entire current session:
+        // an idempotent archive retry may arrive after subsequent observations/actions.
+        val commitSequence = globalBinding.point.globalSequence
+        val actionRefs = postCommitSession.actionTimeline.entries
+            .filter { it.point.globalSequence < commitSequence }
+            .map { entry ->
+                require(entry.point.isStrictlyBeforeSdeDecision(expectedLifecycle)) {
+                    "Pre-commit action history is not strictly before the traced decision."
+                }
+                SdeHistoricalActionRef(entry.fact.actionId, entry.point.globalSequence)
+            }
+        val observationRefs = postCommitSession.epistemicObservationLog.records.mapNotNull { record ->
+            val binding = record.timelineBinding as? ObservationTimelineBinding.Global
+                ?: throw IllegalArgumentException("Canonical correlation history must be globally bound.")
+            if (binding.point.globalSequence >= commitSequence) return@mapNotNull null
+            require(binding.point.isStrictlyBeforeSdeDecision(expectedLifecycle)) {
+                "Pre-commit observation history is not strictly before the traced decision."
+            }
+            SdeHistoricalObservationRef(record.recordId, binding.point.globalSequence)
+        }
+        require(globalPrefix.actionRefs == actionRefs && globalPrefix.observationRefs == observationRefs) {
+            "DecisionTrace history prefix does not match the complete canonical pre-commit history."
+        }
+
         val manualOverride = confirmed.source == InformationDecisionSource.MANUAL
         require(overrideReason == null || manualOverride) {
             "Override rationale requires an explicit manual authoritative choice."

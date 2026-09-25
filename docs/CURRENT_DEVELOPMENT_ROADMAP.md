@@ -43,7 +43,52 @@ SDE-3E automatic production cutover                   BLOCKED PER SURFACE ON 3D 
 
 ## 2. Current branch / PR
 
-Branch: `sde-3c-decision-trace-shadow-replay`
+Local continuation: `codex/sde-history-prefix-route-closure`, based on development head `72892edb3b21f3c7bb781f5cd2affc1427a31d9f`. This is not `main`, and local edits are not remote acceptance. The audited `main` was `cc5adee5`; the development/main merge conflict in `AGENTS.md` remains a separate, unauthorized integration action.
+
+### Current priority: integration closure before 3D2
+
+Follow [SDE integration closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md): C0 correlation/route closure → C1 durable replay input → C2 offline vertical slice → C3 measured runtime shadow (**C0–C3 locally complete**) → C4 resume 3D2 (**next**) → C5 evidence-backed policy/cutover.
+
+| Dimension | Current assessment |
+| --- | --- |
+| Typed contracts / modules | 3C0–3C5 and 3D0–3D1 complete; preserve those checkpoints |
+| Runtime reachability | Debug-only Trouble Brewing 5-player structured-number shadow is connected with cancellation, identity/budget gates and failure isolation; visible/canonical authority is unchanged |
+| Durable replay loop | C1 strict export/restore plus C2 real historical decision → trace → canonical choice → reload → replay loop complete locally |
+| Acceptance | Prior `f562887c` CI ran FAST, not Android full/assemble; latest closure needs its own local evidence and exact-head remote T4/CI/R2 before acceptance |
+
+Use local filesystem/Git/Gradle for this explicitly authorized Codex continuation. Mini MCP / Oracle VM are not prerequisites.
+
+### C0 local verification — 2026-09-25
+
+C0 code/document implementation is locally complete; remote acceptance is pending. C1–C3 have since completed locally; C4/3D2 is now next.
+
+- Typed RED: `:app:testFast --tests '*DecisionTraceAuthoritativeChoiceCorrelationTest'` executed 8 tests; the 2 new regressions failed on the original correlator (missing/invalid history accepted).
+- Focused GREEN: correlation, archive/persistence, multi-policy replay and immutable V1 definition tests passed after the common-owner fix.
+- Checkpoint: `./gradlew :app:testFast :app:assembleDebug --no-daemon` succeeded locally in 2m57s; FAST actually executed **1518 tests / 349 suites, 0 failures/errors/skipped**, and debug APK assembly succeeded. Unchanged compilation dependencies reused Gradle cache/up-to-date outputs.
+- `git diff --check` passed; local Markdown links in the 10 changed/new documentation files resolved.
+- No schema, V1 policy, rules/solver, canonical commit or App wiring changes. No tests retired. The store is the sole production correlator caller and inherits the fix.
+- T4/full JVM, Real Clingo and exact-head remote CI/R2 were not run for this local repair. They remain applicable acceptance gates, not implied by FAST/build success. No commit, push, rebase, ready transition or merge was performed.
+
+### C1 local implementation — 2026-09-25
+
+- Added the versioned immutable `SdeHistoricalReplayInput`, fresh/durable materialization provenance, strict JSON codec and reconstruction of committed setup plus baseline `GameSnapshot`.
+- The contract carries exact ruleset identity, setup provenance/assignments, seed, canonical player-seat names, revisions, action timeline, observations and global cursor. It reuses existing timeline/observation codecs and owners.
+- Typed RED first proved the seam absent; a second RED proved caller-owned lists could mutate the first implementation. Both are GREEN after implementation and defensive copying.
+- Focused C1 + production-shadow + multi-policy-replay tests pass.
+- Checkpoint: `./gradlew :app:testFast :app:assembleDebug --no-daemon` succeeded locally in 2m57s; FAST actually executed **1521 tests / 350 suites, 0 failures/errors/skipped**, and debug APK assembly succeeded. Unchanged tasks reused Gradle up-to-date outputs.
+- `git diff --check` passed and all local links in the 10 changed/new Markdown documents resolve.
+- C1 itself added no App wiring, recovery-schema migration, UI, policy or gameplay mutation. C2/C3 subsequently consumed this contract through their bounded offline/runtime seams.
+
+### C2/C3 local implementation — 2026-09-25
+
+- C2 proves a restored real Empath Night-2 decision across canonical history, exact historical features, pending trace, manual canonical choice, archive reload and deterministic V1 replay.
+- C3 wires the same typed context through a Debug-only diagnostic shadow. Production admission is intentionally limited to Trouble Brewing, exactly 5 players, at most 16 history entries and 1500 ms. Stale/cancelled/over-budget/ineligible/I/O paths do not publish a trace or block canonical commit; missing exact capability remains an explicit stored deferral.
+- Forced local samples: 5 players/history 0 = 62–68 ms and 0-byte coarse heap delta; 5 players/history 3 = 235–563 ms and 34,786,984–69,759,576-byte coarse heap delta. The 6/8/12/15 probes are fast admission rejection only (319–371/5–7/2–3/2 µs); broader actual-chain support is not claimed.
+- App fanout is two narrow callbacks: prepared structured-number decision and confirmed structured decision. Legality/confirmation, session commit, historical evaluation and archive ownership remain in their existing typed owners.
+- Focused C1–C3/correlation tests and production compilation are GREEN. Final `:app:testFast :app:assembleDebug` succeeded in 2m52s: **1528 tests / 352 suites, 0 failures or skips**, plus successful debug APK assembly. `git diff --check` is GREEN; exact-head remote T4/CI/R2 remains pending.
+- **Next local slice: C4 / SDE-3D2 architecture, evidence and fanout audit before feature production edits.** V1 stays immutable and no placeholder V2 is authorized.
+
+Upstream development branch: `sde-3c-decision-trace-shadow-replay` (local continuation branch above).
 
 Last accepted SDE-3D1 code checkpoint: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. The earlier SDE-3C5 structural checkpoint remains `db7d5575dd28dc5f584be34b3556b511ccaf3e35`. Documentation-only synchronization commits may advance the branch after these code checkpoints; always query the live branch/PR head.
 
@@ -57,7 +102,7 @@ Always query live refs before executable edits.
 
 Read these first for current execution:
 
-- Development workflow / Mini MCP / memory: [`MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md`](MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md)
+- Integration implementation / acceptance: [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md)
 - Current state / priority: [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
 - Current handoff: [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md)
 - Current SDE-3 route: [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
@@ -69,7 +114,7 @@ Read these first for current execution:
 
 Read historical slice audits only when a specific ownership/semantic question requires them. In particular, SDE-3A/B/C completion documents are no longer mandatory startup context and their embedded historical PR/"next" state is not current authority.
 
-For substantive work, use one bounded Mini MCP memory search after live repo-state inspection and before broad repository archaeology. Memory is advisory only: verify mutable facts live, and at meaningful checkpoints choose `ADD / UPDATE / SUPERSEDE / NONE` rather than logging every session.
+For this local continuation, inspect files and Git directly. The separate Mini MCP workflow applies only when that environment is selected; memory is advisory, never current-state authority.
 
 Evidence/provenance references on demand:
 
@@ -87,7 +132,7 @@ Evidence/provenance references on demand:
 - Fortune Teller target pair and Poisoner target are player-controlled.
 - Spy/Recluse registration is per interaction.
 - BEGINNER thematic prior: Spy normally registers as Good/Townsfolk/Outsider; Recluse normally registers as Evil/Minion/Demon.
-- Actual registration is a fallback when the thematic default materially improves whole-bundle health.
+- Thematic registration is a design hypothesis, not an extra frozen V1 ordering rule; a future evidence-backed override requires material whole-bundle benefit over the default.
 - Role-function exposure is a generic contextual diagnostic, not a frozen named-role preference; current evidence does not justify Librarian/Recluse or Investigator/Spy severity.
 - Chef/Empath are rule-determined only when every legal registration branch yields the same healthy value.
 - Drunk/poisoned information may accidentally be true; repeated/history-dependent impaired information must use one role-agnostic **derived narrative projection over canonical history** so later outputs can be checked for coherence without introducing a second mutable narrative state.
@@ -223,7 +268,7 @@ Overall SDE-3B implementation and reserved T4 `[full-ci]` acceptance are complet
 
 Expert evidence participates immediately at the architecture/feature-priority level and later as semantic regression. It becomes candidate preference only after the matching feature is stable. Numeric thresholds and multi-axis tradeoff strength remain SDE-3D.
 
-The full conservative policy direction remains:
+The future conservative policy design direction remains (not additional frozen V1 predicates):
 
 - hard legality/lifecycle boundaries;
 - generic catastrophic / near-catastrophic rejection;
@@ -252,7 +297,7 @@ Validation note: Oracle `test:fast` remains blocked before Kotlin compilation be
 
 Before cutover, the durable trace still must capture policy/evidence versioning, the complete candidate/feature/reason record, recommendation, actual committed choice and optional human override rationale. Historical replay must support comparing multiple policy versions against the same committed game history.
 
-### SDE-3D — IN PROGRESS / SDE-3D0–3D1 COMPLETE / SDE-3D2 NEXT
+### SDE-3D — IN PROGRESS / SDE-3D0–3D1 COMPLETE / SDE-3D2 AFTER INTEGRATION CLOSURE
 
 Authority: `SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`.
 
@@ -272,7 +317,7 @@ Current slices:
 
 1. **3D0 calibrated freeze / cutover gate architecture — COMPLETE**;
 2. **3D1 V1 immutable baseline freeze — COMPLETE** — frozen definition binds V1 policy version, `sde-3b-merged-2026-09-24` evidence checkpoint and `SEEDED_HASH_V1`; accepted at `f562887cf4e90d02d364eef5534a1f709922a0f8` with CI #3446 and R2 #3201;
-3. **3D2 calibration-ready missing feature completion — NEXT** — begin with truth-danger / credibility-disruption plus contextual Red-Herring architecture/evidence audit; feature work remains policy-neutral;
+3. **3D2 calibration-ready missing feature completion — NEXT / C1–C3 LOCALLY COMPLETE** — truth-danger / credibility-disruption plus contextual Red-Herring architecture/evidence audit; feature work remains policy-neutral and uses the accepted replay/shadow loop;
 4. **3D3 first evidence-authorized policy delta — WAITING FOR QUALIFYING E3**;
 5. **3D4 V1/V2 canonical real-corpus replay — REQUIRES REAL V2**;
 6. **3D5 surface-scoped calibrated freeze — REQUIRES A CUTOVER-ELIGIBLE SURFACE**.

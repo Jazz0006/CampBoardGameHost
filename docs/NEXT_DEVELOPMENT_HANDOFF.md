@@ -1,7 +1,7 @@
 # CampBoardGameHost — Next Development Handoff
 
 > Updated: 2026-09-25 Australia/Sydney  
-> Branch: `sde-3c-decision-trace-shadow-replay`  
+> Local continuation branch: `codex/sde-history-prefix-route-closure`; upstream development branch: `sde-3c-decision-trace-shadow-replay`
 > SDE-3D1 accepted code HEAD: `f562887cf4e90d02d364eef5534a1f709922a0f8` — GitHub CI #3446 and R2 #3201 SUCCESS. SDE-3C5 structural checkpoint: `db7d5575dd28dc5f584be34b3556b511ccaf3e35`. Documentation-only commits may advance the branch; always re-query the exact live head/checks.  
 > Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. Re-query the live branch/PR/checks before the next executable slice because documentation-only closeout commits may advance the branch HEAD.
 
@@ -11,7 +11,7 @@ Use this reduced current-authority set, in order:
 
 1. root `AGENTS.md`
 2. `docs/TESTING_STRATEGY.md`
-3. `docs/MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md`
+3. `docs/SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
 6. `docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
@@ -34,19 +34,17 @@ Evidence/provenance references for SDE-3D2 when needed:
 
 Do not revive archived pre-SDE-3 execution routes as parallel authority.
 
-## 2. Live-state + memory startup rule
+## 2. Live-state startup rule
 
 Before any executable edit:
 
-1. use Mini MCP `repo_info` / `git_state` for the live Oracle checkout;
-2. for substantive work, run one bounded task-specific `memory_search({ repo: "clocktower" })`; call `memory_get` only for promising candidates;
-3. query live branch HEAD for `sde-3c-decision-trace-shadow-replay`;
-4. confirm PR #153 remains merged and query live `main`;
-5. confirm Draft PR #154 remains open and **draft** using Mini MCP `github_pr_audit` by default;
-6. query current CI/R2 checks for the exact active PR head;
-7. never assume a SHA, PR state, CI result, or implementation fact from memory/prior chat is still current.
+1. inspect local Git status, branch and diff; preserve unrelated user files;
+2. use local filesystem, Git and Gradle for this user-authorized Codex continuation; do not use Mini MCP or Oracle VM;
+3. work from `codex/sde-history-prefix-route-closure`, based on `72892edb3b21f3c7bb781f5cd2affc1427a31d9f`; inspect live refs before assuming this remains the checkout;
+4. before remote acceptance, independently query the exact PR head/base and CI/R2; local validation does not establish remote state;
+5. never infer current implementation or acceptance from memory or a historical checkpoint.
 
-At a meaningful checkpoint, choose `ADD / UPDATE / SUPERSEDE / NONE` for durable Mini MCP memory. Do not store ordinary HEAD/CI state, every commit/test result, or copied handoff prose.
+The Mini MCP workflow document describes the alternative configured environment, not a requirement for this local continuation.
 
 The SDE-3C PR must stay **draft** once created.
 
@@ -73,7 +71,7 @@ Current route:
 SDE-3A engine / feature / policy contract                  COMPLETE
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / T4 ACCEPTED / PR #153 MERGED
 SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0–3C5
-SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 NEXT / PARTIALLY EVIDENCE-BLOCKED
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 AFTER INTEGRATION CLOSURE
 SDE-3E automatic production cutover                         BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
@@ -247,7 +245,7 @@ First provisional profile:
 
 `BEGINNER_CONSERVATIVE_V1`
 
-Preferred policy shape:
+Future policy design shape (not the frozen V1 implementation):
 
 ~~~text
 legal candidates
@@ -265,7 +263,7 @@ seeded random selection
 
 Allow conservative qualitative policy before final numeric calibration.
 
-Examples of acceptable V1 intent:
+Historical design intentions below are future policy hypotheses, not accepted V1 behavior. Frozen V1 implements exact zero-topology rejection and `SEEDED_HASH_V1` survivor equivalence only; it has no ordered soft priorities. Additional predicates require qualified evidence and a new version:
 
 - avoid catastrophic confirmation / Evil-topology collapse when alternatives exist;
 - do not leave Good with effectively no usable information;
@@ -439,11 +437,11 @@ SDE-3D0 and SDE-3D1 are COMPLETE. The current conclusion is:
 
 Immediate next action:
 
-1. re-query live branch / PR #154 / checks before executable work;
-2. keep #154 **draft** and do not merge or mark ready without explicit project-owner authorization;
-3. begin **SDE-3D2 — calibration-ready missing feature completion** with an architecture/evidence/fanout audit before production edits;
-4. first audit truth danger / credibility disruption and contextual Red-Herring downstream policy input against existing Evin GOLD + SILVER / Ben contextual evidence;
-5. identify the existing production owners for Red Herring setup commitment, legal candidate semantics, healthy truthful-channel danger, confirmation/history context and exact/topology consequences;
-6. define the smallest generic typed descriptive feature seam; do not encode a Red-Herring role/seat heuristic or candidate preference;
-7. use current real-game evidence as E1/E2 semantic validation only unless a separate policy predicate independently satisfies E3;
-8. keep V1 immutable and automatic production cutover blocked per decision surface until the SDE-3E gates are satisfied.
+C0–C3 are locally implemented in the working tree; remote acceptance remains pending. C1 supplies strict durable replay input, C2 proves the real restored numeric-information loop, and C3 connects a measured Debug-only diagnostic shadow with exact 5-player/16-history/1500-ms admission and post-commit failure isolation. Final local FAST/debug assembly is GREEN: 1528 tests / 352 suites, 0 failures or skips, plus successful APK assembly and `git diff --check`.
+
+1. inspect the local C0–C3 diff and final validation record; preserve `.DS_Store` and unrelated work;
+2. begin **C4 / SDE-3D2 with the required architecture, evidence and producer/consumer fanout audit before production edits**;
+3. map the shared owner for truth danger / credibility disruption and contextual Red-Herring descriptive projection; classify E1/E2 support separately from still-missing E3 policy authority;
+4. keep `BEGINNER_CONSERVATIVE_V1` immutable and policy-neutral toward new descriptive features; do not create a placeholder V2, numeric weighting or automatic cutover;
+5. preserve C3's controlled runtime boundary: Debug-only, Trouble Brewing, 5 players, at most 16 canonical history entries, 1500 ms, with 6–15 explicitly ineligible until actual-chain budgets exist;
+6. keep #154 draft; main integration conflict, exact-head remote CI/R2 and applicable T4 remain separate acceptance gates. No merge, ready transition, rebase or push is authorized by this handoff.

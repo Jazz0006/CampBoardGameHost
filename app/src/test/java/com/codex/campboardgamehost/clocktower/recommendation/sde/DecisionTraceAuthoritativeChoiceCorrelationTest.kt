@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
@@ -15,17 +16,146 @@ import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBindi
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
+import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DecisionTraceAuthoritativeChoiceCorrelationTest {
+    @Test
+    fun `correlation requires complete exact ordered precommit history`() {
+        val confirmed = confirmedDecision(InformationDecisionSource.MANUAL).let {
+            it.copy(draft = it.draft.copy(sequence = 3))
+        }
+        fun observation(id: String, local: Int, global: Long) = confirmed.draft
+            .copy(recordId = id, sequence = local)
+            .bindGlobal(TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, local, global))
+        val earlier = observation("earlier", 0, 0)
+        val second = observation("second", 2, 2)
+        val committed = confirmed.draft.bindGlobal(
+            TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 3, 3),
+        )
+        val later = observation("later", 4, 4)
+        val action = TimelineBoundActionFact(
+            ActionFact.Poison("poison", 1, 2),
+            TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 1, 1),
+        )
+        val session = postCommitSession(committed, nextTimelineGlobalSequence = 5).copy(
+            actionTimeline = ActionFactTimeline(listOf(action)),
+            epistemicObservationLog = EpistemicObservationLog(listOf(earlier, second, committed, later)),
+        )
+        val prefix = SdeHistoricalPrefixRef.Global(
+            "game-1", listOf(SdeHistoricalActionRef("poison", 1)),
+            listOf(SdeHistoricalObservationRef("earlier", 0), SdeHistoricalObservationRef("second", 2)),
+        )
+        val trace = pendingTrace().copy(
+            lifecycleStage = SdeDecisionLifecycleStage.Interaction(StorytellerPhase.FIRST_NIGHT, 1, 3),
+            historyPrefixRef = prefix,
+        )
+        assertTrue(DecisionTraceAuthoritativeChoiceCorrelator.finalize(
+            trace, confirmed, committed, session,
+        ).actualChoice is DecisionTraceActualChoice.Committed)
+
+        val invalidPrefixes = listOf(
+            prefix.copy(actionRefs = emptyList()),
+            prefix.copy(actionRefs = listOf(SdeHistoricalActionRef("missing", 1))),
+            prefix.copy(actionRefs = listOf(SdeHistoricalActionRef("poison", 6))),
+            prefix.copy(observationRefs = emptyList()),
+            prefix.copy(observationRefs = prefix.observationRefs.take(1)),
+            prefix.copy(observationRefs = prefix.observationRefs.reversed()),
+            prefix.copy(observationRefs = listOf(SdeHistoricalObservationRef("missing", 0), prefix.observationRefs[1])),
+            prefix.copy(observationRefs = listOf(SdeHistoricalObservationRef("earlier", 6), prefix.observationRefs[1])),
+            prefix.copy(observationRefs = prefix.observationRefs + SdeHistoricalObservationRef(committed.recordId, 3)),
+            prefix.copy(observationRefs = prefix.observationRefs + SdeHistoricalObservationRef("later", 4)),
+        )
+        invalidPrefixes.forEach { invalid ->
+            assertThrows("Must reject $invalid", IllegalArgumentException::class.java) {
+                DecisionTraceAuthoritativeChoiceCorrelator.finalize(
+                    trace.copy(historyPrefixRef = invalid), confirmed, committed, session,
+                )
+            }
+        }
+        // A globally earlier record with same/future decision-local time is not valid evidence.
+        listOf(3, 4).forEach { local ->
+            val invalidEarlier = observation("earlier", local, 0)
+            assertThrows(IllegalArgumentException::class.java) {
+                DecisionTraceAuthoritativeChoiceCorrelator.finalize(trace, confirmed, committed,
+                    session.copy(epistemicObservationLog = EpistemicObservationLog(
+                        listOf(invalidEarlier, second, committed, later),
+                    )),
+                )
+            }
+        }
+        val invalidAction = action.copy(point = action.point.copy(sequence = 3))
+        assertThrows(IllegalArgumentException::class.java) {
+            DecisionTraceAuthoritativeChoiceCorrelator.finalize(trace, confirmed, committed,
+                session.copy(actionTimeline = ActionFactTimeline(listOf(invalidAction))),
+            )
+        }
+    }
+
+    @Test
+    fun `missing history is rejected before durable archive write`() {
+        val trace = pendingTrace().copy(historyPrefixRef = SdeHistoricalPrefixRef.Global(
+            "game-1", emptyList(), listOf(SdeHistoricalObservationRef("missing", 0)),
+        ))
+        val confirmed = confirmedDecision(InformationDecisionSource.MANUAL)
+        val committed = confirmed.draft.bindGlobal(TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 0, 1))
+        val raw = DecisionTraceArchiveJsonCodec.encode(DecisionTraceArchive().append(trace))
+        var writes = 0
+        val store = DecisionTraceArchiveStore(readRaw = { raw }, writeRaw = { writes++; true })
+        assertThrows(IllegalArgumentException::class.java) {
+            store.correlateCommittedChoice(trace.archiveKey, confirmed, committed,
+                postCommitSession(committed, nextTimelineGlobalSequence = 2))
+        }
+        assertEquals(0, writes)
+        assertEquals(trace, store.load().find(trace.archiveKey))
+    }
+
+    @Test
+    fun `optional runtime correlation is a no-op when shadow trace is absent`() {
+        val confirmed = confirmedDecision(InformationDecisionSource.RECOMMENDATION_ACCEPTED)
+        val committed = committedObservation(confirmed)
+        var writes = 0
+        val store = DecisionTraceArchiveStore(readRaw = { null }, writeRaw = { writes++; true })
+
+        assertTrue(store.correlateCommittedChoiceIfPresent(
+            policyVersion = PolicyVersions.BEGINNER_CONSERVATIVE_V1,
+            confirmed = confirmed,
+            committedObservation = committed,
+            postCommitSession = postCommitSession(committed),
+        ))
+        assertEquals(0, writes)
+    }
+
+    @Test
+    fun `diagnostic write rejection is isolated after canonical commit evidence exists`() {
+        val trace = pendingTrace()
+        val confirmed = confirmedDecision(InformationDecisionSource.RECOMMENDATION_ACCEPTED)
+        val committed = committedObservation(confirmed)
+        val postCommit = postCommitSession(committed)
+        val raw = DecisionTraceArchiveJsonCodec.encode(DecisionTraceArchive().append(trace))
+        val store = DecisionTraceArchiveStore(readRaw = { raw }, writeRaw = { false })
+
+        val report = SdePostCommitCorrelationCoordinator.correlate(
+            store = store,
+            confirmed = confirmed,
+            committedObservation = committed,
+            postCommitSession = postCommit,
+        )
+
+        assertFalse(report.completed)
+        assertTrue(postCommit.epistemicObservationLog.records.contains(committed))
+        assertEquals(trace, store.load().find(trace.archiveKey))
+    }
+
     @Test
     fun `matching authoritative commit finalizes pending trace`() {
         val trace = pendingTrace()

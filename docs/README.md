@@ -7,7 +7,7 @@
 
 1. root `AGENTS.md`
 2. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
-3. [`MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md`](MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md) — **当前 repository/GitHub/developer-memory 工作流**
+3. [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) — **当前集成闭环的实现与验收契约**；本次按用户要求使用本地 Codex 文件/Git/Gradle，不使用 Mini MCP / Oracle VM
 4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
 6. [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md) — **当前 SDE-3 执行路线**
@@ -18,7 +18,7 @@
 11. [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv) — external evidence catalog
 12. 需要全局 SDE 架构背景时，再读 [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 
-随后使用 Mini MCP 查询 live branch / PR / checks。对实质性开发任务，再做一次 task-specific、bounded `memory_search({ repo: "clocktower" })`，只对相关候选调用 `memory_get`。不要从 memory、Git history、archive、已完成 slice audit 或旧 PR 的 `NEXT / READY / COMPLETE` 推断可实时验证的状态。
+随后检查本地分支、工作区和差异；远端验收时独立查询 exact-head PR / checks。不要从 memory、Git history、archive、已完成 slice audit 或旧 PR 的 `NEXT / READY / COMPLETE` 推断当前状态。其他环境的 Mini MCP 工作流见其专项文档，不作为本次本地工作的前置条件。
 
 ## 当前状态
 
@@ -34,6 +34,7 @@ sealed holdout                         CLOSED
 SDE-3A engine/feature/policy contract  COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1        COMPLETE / PR #153 MERGED
 SDE-3C DecisionTrace/replay            COMPLETE / 3C0–3C5
+SDE integration closure               C0–C3 LOCALLY COMPLETE / REMOTE ACCEPTANCE PENDING
 SDE-3D calibrated policy freeze        IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 NEXT
 SDE-3E automatic production cutover    BLOCKED PER DECISION SURFACE
 ~~~
