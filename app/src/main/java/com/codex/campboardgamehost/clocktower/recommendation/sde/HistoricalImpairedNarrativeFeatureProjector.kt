@@ -2,7 +2,9 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
@@ -16,7 +18,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObserva
  */
 internal object HistoricalImpairedNarrativeFeatureProjector {
     fun project(
-        confirmationByCandidateId: Map<String, FeatureProjection<ConfirmationChainFeatures>>,
         exactCandidates: List<ExactConsequenceCandidate>,
         sdeCandidates: List<SdeDecisionCandidate>,
         context: ExactConsequenceContext,
@@ -30,9 +31,6 @@ internal object HistoricalImpairedNarrativeFeatureProjector {
         }
         require(sdeCandidates.map(SdeDecisionCandidate::candidateId) == candidateIds) {
             "SDE impaired-narrative candidates must preserve exact candidate order."
-        }
-        require(confirmationByCandidateId.keys == candidateIds.toSet()) {
-            "Impaired-narrative projection requires confirmation evidence for every legal candidate."
         }
         require(sdeCandidates.all { it.sourceRevision == context.sourceRevision }) {
             "Historical impaired-narrative candidates must share the exact source revision."
@@ -86,18 +84,24 @@ internal object HistoricalImpairedNarrativeFeatureProjector {
             }
         }
 
-        val evidence = exactCandidates.zip(sdeCandidates).map { (exact, sde) ->
+        val evidenceByCandidateId = linkedMapOf<String, ImpairedNarrativeCandidateEvidence>()
+        val pendingPerceivedNarrative = mutableListOf<PendingPerceivedNarrativeEvidence>()
+
+        exactCandidates.zip(sdeCandidates).forEach { (exact, sde) ->
             val currentState = sde.sourceInteraction.abilityState
                 ?: return unavailable(candidateIds, FeatureUnavailableReason.HISTORICAL_INPUT_NOT_CAPTURED)
 
             if (currentState == AbilityState.FUNCTIONING) {
-                return@map ImpairedNarrativeCandidateEvidence(
+                evidenceByCandidateId[sde.candidateId] = ImpairedNarrativeCandidateEvidence(
                     candidateId = sde.candidateId,
                     abilityState = currentState,
                     impairmentLifetime = null,
                     priorImpairedObservationIds = emptySet(),
-                    confirmation = confirmationByCandidateId.getValue(sde.candidateId),
+                    perceivedConfirmation = FeatureProjection.Unavailable(
+                        FeatureUnavailableReason.NOT_APPLICABLE,
+                    ),
                 )
+                return@forEach
             }
 
             val lifetime = when (currentState) {
@@ -108,11 +112,12 @@ internal object HistoricalImpairedNarrativeFeatureProjector {
             val sourceSeat = sde.sourceInteraction.sourceSeat
             val sourceAbility = sde.sourceInteraction.abilityRole
             if (sourceSeat == null || sourceAbility == null) {
-                return@map unavailableEvidence(
+                evidenceByCandidateId[sde.candidateId] = unavailableEvidence(
                     candidateId = sde.candidateId,
                     abilityState = currentState,
                     lifetime = lifetime,
                 )
+                return@forEach
             }
 
             val episodeStart = when (lifetime) {
@@ -123,11 +128,12 @@ internal object HistoricalImpairedNarrativeFeatureProjector {
                         .firstOrNull { it.fact is ActionFact.Poison }
                     val latestPoison = latestPoisonEntry?.fact as? ActionFact.Poison
                     if (latestPoison?.targetSeat != sourceSeat) {
-                        return@map unavailableEvidence(
+                        evidenceByCandidateId[sde.candidateId] = unavailableEvidence(
                             candidateId = sde.candidateId,
                             abilityState = currentState,
                             lifetime = lifetime,
                         )
+                        return@forEach
                     }
                     latestPoisonEntry.point.globalSequence
                 }
@@ -152,17 +158,161 @@ internal object HistoricalImpairedNarrativeFeatureProjector {
                 }
                 .mapTo(linkedSetOf(), RecordedEpistemicObservation::recordId)
 
-            ImpairedNarrativeCandidateEvidence(
-                candidateId = sde.candidateId,
+            if (priorIds.isEmpty()) {
+                evidenceByCandidateId[sde.candidateId] = ImpairedNarrativeCandidateEvidence(
+                    candidateId = sde.candidateId,
+                    abilityState = currentState,
+                    impairmentLifetime = lifetime,
+                    priorImpairedObservationIds = emptySet(),
+                    perceivedConfirmation = FeatureProjection.Unavailable(
+                        FeatureUnavailableReason.NOT_APPLICABLE,
+                    ),
+                )
+                return@forEach
+            }
+
+            pendingPerceivedNarrative += PendingPerceivedNarrativeEvidence(
+                exactCandidate = exact,
+                sdeCandidate = sde,
                 abilityState = currentState,
                 impairmentLifetime = lifetime,
+                sourceSeat = sourceSeat,
+                sourceAbility = sourceAbility,
+                recipientSeat = exact.recipientSeat,
                 priorImpairedObservationIds = priorIds,
-                confirmation = confirmationByCandidateId.getValue(sde.candidateId),
             )
         }
 
-        return ImpairedNarrativeFeaturesProjector.project(evidence)
+        pendingPerceivedNarrative
+            .groupBy(PendingPerceivedNarrativeEvidence::contextKey)
+            .values
+            .forEach { group ->
+                val key = group.first().contextKey
+                val perceivedObservationLog = historical.observationLog.copy(
+                    records = historical.observationLog.records.map { record ->
+                        if (record.recordId in key.priorImpairedObservationIds) {
+                            record.asPerceivedFunctioning(
+                                sourceSeat = key.sourceSeat,
+                                sourceAbility = key.sourceAbility,
+                            )
+                        } else {
+                            record
+                        }
+                    },
+                )
+                val perceivedContext = context.copy(
+                    exactContext = historical.copy(observationLog = perceivedObservationLog),
+                )
+                val perceivedExactCandidates = group.map { pending ->
+                    pending.exactCandidate.copy(
+                        observations = pending.exactCandidate.observations.map { observation ->
+                            observation.asPerceivedFunctioning(
+                                sourceSeat = key.sourceSeat,
+                                sourceAbility = key.sourceAbility,
+                            )
+                        },
+                    )
+                }
+                val perceivedSdeCandidates = group.map(PendingPerceivedNarrativeEvidence::sdeCandidate)
+                val decisionIds = perceivedSdeCandidates.map(SdeDecisionCandidate::decisionId).distinct()
+                require(decisionIds.size == 1) {
+                    "One perceived impaired narrative group must belong to one decision."
+                }
+                val perceivedConfirmationByCandidateId:
+                    Map<String, FeatureProjection<ConfirmationChainFeatures>> = when (
+                    val evaluation = StorytellerDecisionEngine.evaluateExactConsequences(
+                        request = ExactConsequenceRequest(
+                            decisionId = decisionIds.single() + ":perceived-functioning-narrative",
+                            candidates = perceivedExactCandidates,
+                        ),
+                        context = perceivedContext,
+                    )
+                ) {
+                    is ExactConsequenceEvaluation.Deferred ->
+                        perceivedExactCandidates.associate { candidate ->
+                            candidate.candidateId to FeatureProjection.Unavailable(
+                                FeatureUnavailableReason.MISSING_CAPABILITY,
+                            )
+                        }
+
+                    is ExactConsequenceEvaluation.Ready ->
+                        HistoricalConfirmationChainFeatureProjector.project(
+                            fullEvaluation = evaluation,
+                            exactCandidates = perceivedExactCandidates,
+                            sdeCandidates = perceivedSdeCandidates,
+                            context = perceivedContext,
+                        )
+                }
+
+                group.forEach { pending ->
+                    evidenceByCandidateId[pending.sdeCandidate.candidateId] =
+                        ImpairedNarrativeCandidateEvidence(
+                            candidateId = pending.sdeCandidate.candidateId,
+                            abilityState = pending.abilityState,
+                            impairmentLifetime = pending.impairmentLifetime,
+                            priorImpairedObservationIds = pending.priorImpairedObservationIds,
+                            perceivedConfirmation = perceivedConfirmationByCandidateId.getValue(
+                                pending.sdeCandidate.candidateId,
+                            ),
+                        )
+                }
+            }
+
+        return ImpairedNarrativeFeaturesProjector.project(
+            candidateIds.map(evidenceByCandidateId::getValue),
+        )
     }
+
+    private data class PerceivedNarrativeContextKey(
+        val sourceSeat: Int,
+        val sourceAbility: RoleId,
+        val recipientSeat: Int,
+        val priorImpairedObservationIds: Set<String>,
+    )
+
+    private data class PendingPerceivedNarrativeEvidence(
+        val exactCandidate: ExactConsequenceCandidate,
+        val sdeCandidate: SdeDecisionCandidate,
+        val abilityState: AbilityState,
+        val impairmentLifetime: ImpairmentLifetime,
+        val sourceSeat: Int,
+        val sourceAbility: RoleId,
+        val recipientSeat: Int,
+        val priorImpairedObservationIds: Set<String>,
+    ) {
+        val contextKey: PerceivedNarrativeContextKey = PerceivedNarrativeContextKey(
+            sourceSeat = sourceSeat,
+            sourceAbility = sourceAbility,
+            recipientSeat = recipientSeat,
+            priorImpairedObservationIds = priorImpairedObservationIds,
+        )
+    }
+
+    private fun EpistemicObservation.asPerceivedFunctioning(
+        sourceSeat: Int,
+        sourceAbility: RoleId,
+    ): EpistemicObservation {
+        require(this.sourceSeat == sourceSeat && this.sourceAbility == sourceAbility) {
+            "Perceived narrative candidate observations must belong to the impaired source."
+        }
+        // Ephemeral derived replay only: bypass the malfunction short-circuit so the proposition is
+        // evaluated as the player believes their functioning ability would produce it. Canonical
+        // impairment state and durable observation reliability are not changed.
+        return copy(reliability = ObservationReliability.NOT_ABILITY_INFORMATION)
+    }
+
+    private fun RecordedEpistemicObservation.asPerceivedFunctioning(
+        sourceSeat: Int,
+        sourceAbility: RoleId,
+    ): RecordedEpistemicObservation {
+        require(this.sourceSeat == sourceSeat && this.sourceAbility == sourceAbility) {
+            "Perceived narrative history must belong to the impaired source."
+        }
+        // Keep record identity/timeline/proposition intact; only the derived replay interpretation
+        // changes. The canonical observation log remains the sole durable history owner.
+        return copy(reliability = ObservationReliability.NOT_ABILITY_INFORMATION)
+    }
+
 
     private fun unavailableEvidence(
         candidateId: String,
@@ -173,7 +323,7 @@ internal object HistoricalImpairedNarrativeFeatureProjector {
         abilityState = abilityState,
         impairmentLifetime = lifetime,
         priorImpairedObservationIds = emptySet(),
-        confirmation = FeatureProjection.Unavailable(
+        perceivedConfirmation = FeatureProjection.Unavailable(
             FeatureUnavailableReason.HISTORICAL_INPUT_NOT_CAPTURED,
         ),
     )
