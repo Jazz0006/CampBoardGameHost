@@ -161,7 +161,8 @@ internal data class DecisionTrace(
     }
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 1
+        const val LEGACY_SCHEMA_VERSION: Int = 1
+        const val CURRENT_SCHEMA_VERSION: Int = 2
     }
 }
 
