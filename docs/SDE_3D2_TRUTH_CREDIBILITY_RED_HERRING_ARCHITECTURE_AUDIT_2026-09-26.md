@@ -405,7 +405,38 @@ If the persisted feature shape changes:
 - replay recomputes the feature from canonical input rather than trusting old persisted feature values;
 - historical truth remains immutable.
 
-## 10. C4 audit conclusion
+## 10. Implementation checkpoint — 2026-09-26
+
+The first policy-neutral C4 implementation slices are now accepted:
+
+- **T0-A COMPLETE:** `TruthCredibilityFeatures` now has typed truth-danger, credibility-disruption and unresolved-source material. The legacy string reason-code fields remain only as schema-v1 compatibility material. Schema-v1 persistence fails closed when typed material is present instead of silently dropping provenance.
+- **T0-B COMPLETE:** `RedHerringSetupPrecommitAdapter` consumes only `SetupCandidateGenerator.generateRedHerringCandidates(game)`, emits `SetupPrecommit` SDE candidates plus future `RED_HERRING` commitment identities, keeps bindings uncommitted, separates rule-determined and unresolved healthy sources, and preserves the Night-1 audit exclusion of player-controlled Fortune Teller targets.
+- **Exact truth-danger projection COMPLETE:** `ExactTruthDangerSourceProjector` delegates numeric truth to existing rules semantics, proposition construction to the existing first-night materializer, and consequence evaluation to `ExactHistoricalHypotheticalObservationBundleEvaluator`. It produces exact-world reduction, removed strategic-world keys and removed Demon seats with no score or ordering.
+- **Evin E2 COMPLETE:** the primary-verified Evin reconstruction proves seat 1 / Doug as a legal Red Herring target, Chef 1 as the rule-determined strategic truth anchor, typed Red-Herring credibility disruption for that source, explicit unresolved Washerwoman material, and no setup-time consumption of Claire's later Fortune Teller target pair.
+
+Acceptance evidence:
+
+- validation-only Draft PR #158 exact head: `f181780bac2ff7759a880821ab664d7d23952131`;
+- CI #3468: Android FULL + debug APK, ASP contracts, Real Clingo and final CI gate SUCCESS;
+- R2 #3221 SUCCESS;
+- no failed or pending checks at acceptance.
+
+The exact 10 accepted C4 code/test blobs were then persisted as one fast-forward formal-branch commit:
+
+`d39b336145b19ba29690a5b2dd14ed38273a6cc5`
+
+The validation-only `AGENTS.md` synchronization was not copied into that formal checkpoint. CI #3468 / R2 #3221 belong to the blob-equivalent validation head, not directly to the formal commit.
+
+The next C4 gate is:
+
+1. V1 invariance regressions;
+2. explicit DecisionTrace schema evolution for typed truth/credibility material;
+3. bounded schema-v1 historical compatibility and deterministic replay recomputation;
+4. wider production fanout only after those persistence/replay guarantees are green.
+
+No placeholder V2 is authorized.
+
+## 11. C4 audit conclusion
 
 The repository already contains most of the structural ingredients required for C4:
 

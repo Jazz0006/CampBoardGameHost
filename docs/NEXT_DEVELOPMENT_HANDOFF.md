@@ -104,19 +104,32 @@ Stop point for the next conversation:
 - PR #156 remains Draft and validation-only; do not merge it.
 - No merge, ready transition, policy V2, production cutover, or C4 scoring edit is authorized.
 
-Working tree contains both the CR-A code/tests above and the ongoing documentation synchronization from the post-audit cleanup. Preserve all unrelated/uncommitted files and inspect exact diff before any stage/commit operation.
+The Oracle working tree is still intentionally dirty and remains behind the remote formal branch. Preserve the staged `AGENTS.md` change and all unrelated/uncommitted documentation; do not reset, clean, checkout-overwrite or bypass stale-state protection. Current `git_state` queries work again, but safe branch lifecycle mutation is still blocked by the dirty tree.
+
+C4 implementation checkpoint:
+
+- T0-A typed truth/credibility feature owner: **COMPLETE**.
+- T0-B Red-Herring setup-precommit adapter: **COMPLETE**.
+- Exact truth-danger source projector over existing exact epistemic authority: **COMPLETE**.
+- Evin E2 semantic regression: **COMPLETE**.
+- Validation-only Draft PR #158 exact head: `f181780bac2ff7759a880821ab664d7d23952131`.
+- CI #3468: Android FULL, ASP contracts, Real Clingo and final gate all SUCCESS.
+- R2 #3221: SUCCESS.
+- Formal branch code checkpoint: `d39b336145b19ba29690a5b2dd14ed38273a6cc5`.
+- The formal checkpoint contains exactly the 10 accepted C4 code/test files; validation-only `AGENTS.md` synchronization was excluded.
 
 Next executable order:
 
 ```text
-inspect live formal branch + preserve dirty working tree
--> verify the remote formal branch contains the accepted CR-A/B/C code/test + synchronized docs
--> keep #154 and validation-only #156 Draft / unmerged
--> begin C4 / SDE-3D2 policy-neutral truth-danger / credibility-disruption production implementation
--> repair Mini MCP large-worktree `git_state` hashing before the next local stage/commit/fast-forward operation
+preserve dirty Oracle working tree
+-> keep #154, #156 and #158 Draft / unmerged
+-> add V1 invariance regressions for truth/credibility projection
+-> design and implement explicit DecisionTrace schema evolution for typed truth/credibility
+-> prove v1 historical compatibility + deterministic replay recomputation
+-> only then continue wider production fanout / integration
 ```
 
-Mini MCP currently cannot produce `git_state` for this large dirty working tree because its worktree-state implementation exceeds the 131072-byte Git-output bound before hashing. Do not bypass `git_stage` stale-state protection. This checkpoint therefore uses a GitHub tree/commit/ref fast-forward fallback to persist the exact accepted files while preserving the Oracle working tree unchanged. Query and record the resulting formal branch head before starting C4; repair the Mini MCP state-hash implementation before relying on local Git writes again.
+Do not claim CI #3468 or R2 #3221 ran directly on formal commit `d39b3361`; those checks ran on blob-equivalent validation head `f181780b`. The GitHub tree/commit/ref fallback remains the safe persistence path while the Oracle working tree cannot be cleanly fast-forwarded.
 
 ## 4. Why SDE-3 may proceed now
 
