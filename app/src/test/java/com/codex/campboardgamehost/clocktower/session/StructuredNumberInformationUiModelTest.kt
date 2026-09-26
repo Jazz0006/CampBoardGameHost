@@ -127,7 +127,7 @@ class StructuredNumberInformationUiModelTest {
         evaluations = evaluations,
         recommendedCandidateIds = recommendedCandidateIds,
         revision = revision,
-        semanticIdentity = "empath-night-2",
+        requestIdentity = InformationDecisionRequestIdentity("test-game", "empath-night-2"),
         draftOf = { evaluation -> draft(evaluation) },
     )
 

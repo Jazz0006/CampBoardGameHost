@@ -8,3 +8,4 @@ captures/
 app/build/
 *.apk
 *.aab
+.DS_Store

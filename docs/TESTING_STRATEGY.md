@@ -309,10 +309,12 @@ Validation should follow the ownership layer:
 
 - legal candidate identity / lifecycle → focused typed domain/orchestration tests;
 - feature projection → deterministic feature-contract tests at the shared projector owner;
-- persistent impaired narrative → cross-role / cross-information-shape history tests;
+- persistent impaired narrative → cross-role / cross-information-shape history tests that distinguish mechanical impairment credibility from player-believable functioning narrative continuity;
 - `BEGINNER_CONSERVATIVE_V1` policy → explicit reject/survive/reason-code tests rather than fragile scalar snapshots;
+- replay identity → typed same-game/request binding tests, including different-game/same-revision rejection before exact evaluation or trace persistence;
+- replay codec → strict nested schema/type fail-closed tests for action/observation/proposition material, while legacy save compatibility remains separately characterized;
 - `DecisionTrace` → persistence / replay / policy-version contract tests;
-- shadow production integration → typed integration tests proving recommendation does not mutate canonical state;
+- shadow production integration → typed integration tests proving recommendation does not mutate canonical state; persistence timing tests must distinguish evaluation, diagnostic I/O and total latency when runtime hardening is implemented;
 - historical expert/SILVER replay → named dedicated T3 evidence harnesses, not ordinary FAST regression.
 
 When evidence later changes policy ordering without changing legality/feature semantics, prefer versioned policy fixtures and replay evidence over rewriting rules tests.

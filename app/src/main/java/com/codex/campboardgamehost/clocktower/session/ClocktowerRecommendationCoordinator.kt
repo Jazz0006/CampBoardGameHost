@@ -166,13 +166,13 @@ internal class ClocktowerRecommendationCoordinator(
         evaluations: List<DecisionEvaluation<T>>,
         recommendedCandidateIds: Set<String>,
         revision: InformationDecisionRevision,
-        semanticIdentity: String,
+        requestIdentity: InformationDecisionRequestIdentity,
         draftOf: (DecisionEvaluation<T>) -> EpistemicObservationDraft,
     ): InformationDecisionContext<T> = InformationDecisionContext.fromEvaluations(
         evaluations = evaluations,
         recommendedCandidateIds = recommendedCandidateIds,
         revision = revision,
-        semanticIdentity = semanticIdentity,
+        requestIdentity = requestIdentity,
         draftOf = draftOf,
     )
 

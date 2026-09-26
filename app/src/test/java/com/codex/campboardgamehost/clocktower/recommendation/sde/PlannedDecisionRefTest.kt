@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
 import org.junit.Assert.assertEquals
@@ -13,7 +14,10 @@ class PlannedDecisionRefTest {
         playerInputRevision = 11L,
     )
     private val sourceSnapshot = InformationDecisionSnapshot(
-        semanticIdentity = "information-decision|7|11|empath-0,empath-1",
+        requestIdentity = InformationDecisionRequestIdentity(
+            gameId = "game-1",
+            requestId = "information-decision|7|11|empath-0,empath-1",
+        ),
         revision = sourceRevision,
         legalCandidateIds = listOf("empath-0", "empath-1"),
         recommendedCandidateIds = setOf("empath-0"),
@@ -60,7 +64,9 @@ class PlannedDecisionRefTest {
     fun `candidate space identity change invalidates snapshot-bound planned decision at same revision`() {
         val planned = plannedInformationDecision()
         val changedCandidateSpace = sourceSnapshot.copy(
-            semanticIdentity = "information-decision|7|11|empath-0,empath-2",
+            requestIdentity = sourceSnapshot.requestIdentity.copy(
+                requestId = "information-decision|7|11|empath-0,empath-2",
+            ),
             legalCandidateIds = listOf("empath-0", "empath-2"),
         )
 
@@ -75,7 +81,7 @@ class PlannedDecisionRefTest {
             sourceRevision = sourceRevision,
         )
         val unrelatedInformationSnapshot = sourceSnapshot.copy(
-            semanticIdentity = "unrelated-candidate-space",
+            requestIdentity = sourceSnapshot.requestIdentity.copy(requestId = "unrelated-candidate-space"),
         )
 
         assertTrue(planned.isCurrentFor(sourceRevision))

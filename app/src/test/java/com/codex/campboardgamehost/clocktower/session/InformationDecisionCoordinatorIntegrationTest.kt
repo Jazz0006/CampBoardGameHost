@@ -29,7 +29,7 @@ class InformationDecisionCoordinatorIntegrationTest {
             evaluations = listOf(evaluation),
             recommendedCandidateIds = setOf("recommended"),
             revision = revision,
-            semanticIdentity = "night-2-empath-seat-2",
+            requestIdentity = InformationDecisionRequestIdentity("game-1", "night-2-empath-seat-2"),
             draftOf = { draft(it) },
         )
         val accepted = context.confirm(
