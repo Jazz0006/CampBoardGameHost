@@ -409,32 +409,35 @@ If the persisted feature shape changes:
 
 The first policy-neutral C4 implementation slices are now accepted:
 
-- **T0-A COMPLETE:** `TruthCredibilityFeatures` now has typed truth-danger, credibility-disruption and unresolved-source material. The legacy string reason-code fields remain only as schema-v1 compatibility material. Schema-v1 persistence fails closed when typed material is present instead of silently dropping provenance.
+- **T0-A COMPLETE:** `TruthCredibilityFeatures` has typed truth-danger, credibility-disruption and unresolved-source material. The legacy string reason-code fields remain only for schema-v1 read compatibility; current schema-v2 persistence serializes typed provenance explicitly.
 - **T0-B COMPLETE:** `RedHerringSetupPrecommitAdapter` consumes only `SetupCandidateGenerator.generateRedHerringCandidates(game)`, emits `SetupPrecommit` SDE candidates plus future `RED_HERRING` commitment identities, keeps bindings uncommitted, separates rule-determined and unresolved healthy sources, and preserves the Night-1 audit exclusion of player-controlled Fortune Teller targets.
 - **Exact truth-danger projection COMPLETE:** `ExactTruthDangerSourceProjector` delegates numeric truth to existing rules semantics, proposition construction to the existing first-night materializer, and consequence evaluation to `ExactHistoricalHypotheticalObservationBundleEvaluator`. It produces exact-world reduction, removed strategic-world keys and removed Demon seats with no score or ordering.
 - **Evin E2 COMPLETE:** the primary-verified Evin reconstruction proves seat 1 / Doug as a legal Red Herring target, Chef 1 as the rule-determined strategic truth anchor, typed Red-Herring credibility disruption for that source, explicit unresolved Washerwoman material, and no setup-time consumption of Claire's later Fortune Teller target pair.
 
-Acceptance evidence:
+Initial feature/projection acceptance evidence:
 
-- validation-only Draft PR #158 exact head: `f181780bac2ff7759a880821ab664d7d23952131`;
-- CI #3468: Android FULL + debug APK, ASP contracts, Real Clingo and final CI gate SUCCESS;
-- R2 #3221 SUCCESS;
-- no failed or pending checks at acceptance.
+- validation-only Draft PR #158 exact head `f181780bac2ff7759a880821ab664d7d23952131`;
+- CI #3468 and R2 #3221 SUCCESS;
+- formal implementation checkpoint `d39b336145b19ba29690a5b2dd14ed38273a6cc5`.
 
-The exact 10 accepted C4 code/test blobs were then persisted as one fast-forward formal-branch commit:
+The persistence/invariance gate is also now accepted:
 
-`d39b336145b19ba29690a5b2dd14ed38273a6cc5`
+- **V1 invariance COMPLETE:** projecting typed truth/credibility does not alter V1 rejection reasons, survivor equivalence, `SEEDED_HASH_V1` selection, or the frozen evidence checkpoint. Limitation metadata may accurately shrink when a previously unprojected dimension becomes available, but policy behavior does not change.
+- **DecisionTrace schema evolution COMPLETE:** `DecisionTrace.CURRENT_SCHEMA_VERSION == 2`; the archive envelope remains format v1. Schema-v2 encodes typed truth-danger source impacts, typed credibility-disruption provenance, unresolved source refs and legacy reason-code fields deterministically.
+- **Bounded schema-v1 migration COMPLETE:** persisted trace schema v1 keeps its strict legacy truth/credibility shape, is accepted read-only, and migrates into the current in-memory schema with typed sets empty rather than fabricated.
+- **Replay recomputation COMPLETE:** multi-policy replay continues to use freshly recomputed canonical feature input; the persisted historical feature snapshot is identity/diagnostic history, not policy input.
 
-The validation-only `AGENTS.md` synchronization was not copied into that formal checkpoint. CI #3468 / R2 #3221 belong to the blob-equivalent validation head, not directly to the formal commit.
+Latest acceptance evidence:
 
-The next C4 gate is:
+- validation-only Draft PR #158 exact head: `1299fba4fe9f884e468f85639e56ec0b0926794b`;
+- CI #3470: Android FULL + debug APK, ASP contracts, Real Clingo and final CI gate SUCCESS;
+- R2 #3223 SUCCESS;
+- 6/6 checks successful, no unresolved review threads;
+- formal schema/invariance checkpoint: `5e563b377df8988cca805d8e34aef7e5823e209f`.
 
-1. V1 invariance regressions;
-2. explicit DecisionTrace schema evolution for typed truth/credibility material;
-3. bounded schema-v1 historical compatibility and deterministic replay recomputation;
-4. wider production fanout only after those persistence/replay guarantees are green.
+The validation-only branch briefly contained one malformed large-file sync commit whose codec text included display line-number prefixes; Android compile rejected it. The next validation commit restored the exact clean source and passed the full gate. This was a transport/synchronization defect, not an accepted code state and not part of the formal branch.
 
-No placeholder V2 is authorized.
+The next C4 gate is a bounded **production fanout / integration-closure audit**. Determine which currently reachable production shadow/replay paths must populate `truthCredibility`, add only the minimum wiring and fanout regressions, and keep `BEGINNER_CONSERVATIVE_V1` policy-neutral. No placeholder V2 is authorized.
 
 ## 11. C4 audit conclusion
 

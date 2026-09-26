@@ -112,24 +112,27 @@ C4 implementation checkpoint:
 - T0-B Red-Herring setup-precommit adapter: **COMPLETE**.
 - Exact truth-danger source projector over existing exact epistemic authority: **COMPLETE**.
 - Evin E2 semantic regression: **COMPLETE**.
-- Validation-only Draft PR #158 exact head: `f181780bac2ff7759a880821ab664d7d23952131`.
-- CI #3468: Android FULL, ASP contracts, Real Clingo and final gate all SUCCESS.
-- R2 #3221: SUCCESS.
-- Formal branch code checkpoint: `d39b336145b19ba29690a5b2dd14ed38273a6cc5`.
-- The formal checkpoint contains exactly the 10 accepted C4 code/test files; validation-only `AGENTS.md` synchronization was excluded.
+- V1 invariance regression: **COMPLETE** — rejection reasons, survivor equivalence, `SEEDED_HASH_V1` selection and the frozen evidence checkpoint are unchanged when typed truth/credibility is projected.
+- DecisionTrace typed persistence: **COMPLETE** — current trace schema is v2; archive envelope remains format v1; schema-v1 traces retain bounded read compatibility and migrate into the current in-memory schema without inventing typed provenance.
+- Replay recomputation regression: **COMPLETE** — replay policy input comes from freshly recomputed canonical features rather than the historical trace feature snapshot.
+- Latest validation-only Draft PR #158 exact head: `1299fba4fe9f884e468f85639e56ec0b0926794b`.
+- CI #3470: Android FULL, ASP contracts, Real Clingo and final gate all SUCCESS.
+- R2 #3223: SUCCESS.
+- Formal branch schema/invariance checkpoint: `5e563b377df8988cca805d8e34aef7e5823e209f`.
+- Earlier formal C4 implementation checkpoint: `d39b336145b19ba29690a5b2dd14ed38273a6cc5`.
 
 Next executable order:
 
 ```text
 preserve dirty Oracle working tree
 -> keep #154, #156 and #158 Draft / unmerged
--> add V1 invariance regressions for truth/credibility projection
--> design and implement explicit DecisionTrace schema evolution for typed truth/credibility
--> prove v1 historical compatibility + deterministic replay recomputation
--> only then continue wider production fanout / integration
+-> audit actual production caller fanout for truthCredibility / setup-precommit Red Herring
+-> identify the minimum wiring needed to populate the typed feature in reachable production shadow/replay paths
+-> add fanout/integration regressions while keeping BEGINNER_CONSERVATIVE_V1 policy-neutral
+-> rerun exact-head FULL CI/R2 before declaring C4 production integration complete
 ```
 
-Do not claim CI #3468 or R2 #3221 ran directly on formal commit `d39b3361`; those checks ran on blob-equivalent validation head `f181780b`. The GitHub tree/commit/ref fallback remains the safe persistence path while the Oracle working tree cannot be cleanly fast-forwarded.
+Do not claim CI #3470 or R2 #3223 ran directly on formal commit `5e563b37`; those checks ran on blob-equivalent validation head `1299fba4`. The GitHub tree/commit/ref fallback remains the safe persistence path while the Oracle working tree cannot be cleanly fast-forwarded.
 
 ## 4. Why SDE-3 may proceed now
 
