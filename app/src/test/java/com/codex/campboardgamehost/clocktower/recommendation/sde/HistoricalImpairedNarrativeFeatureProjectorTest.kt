@@ -10,12 +10,14 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.A4RuntimeFixtures
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
+import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalContext
 import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
@@ -24,7 +26,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
-import java.math.BigInteger
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -97,11 +98,6 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         )
 
         val projected = HistoricalImpairedNarrativeFeatureProjector.project(
-            confirmationByCandidateId = mapOf(
-                exactCandidate.candidateId to FeatureProjection.Projected(
-                    confirmation(first, second),
-                ),
-            ),
             exactCandidates = listOf(exactCandidate),
             sdeCandidates = listOf(sdeCandidate),
             context = ExactConsequenceContext(validatedRuleset, exactContext),
@@ -114,6 +110,317 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
             ImpairedNarrativeRelation.COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE,
             feature.relation,
         )
+    }
+
+    @Test
+    fun `mechanical impairment explanation does not hide a perceived functioning narrative break`() {
+        val base = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
+        val snapshot = base.copy(
+            gameState = base.gameState.copy(
+                players = base.gameState.players.map { player ->
+                    if (player.seat == 2) {
+                        player.copy(
+                            actualRole = RoleId("Drunk"),
+                            actualAlignment = Alignment.GOOD,
+                            actualType = CharacterType.OUTSIDER,
+                            shownRole = RoleId("Empath"),
+                        )
+                    } else {
+                        player
+                    }
+                },
+            ),
+        )
+        val prior = record(
+            id = "drunk-prior-role-location",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 2,
+            globalSequence = 0,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Empath"),
+            proposition = InformationProposition.RoleAt(4, RoleId("Poisoner")),
+        )
+        val observationLog = EpistemicObservationLog(listOf(prior))
+        val exactContext = exactContext(snapshot, ActionFactTimeline(), observationLog)
+        val exactCandidate = candidate(
+            snapshot = snapshot,
+            id = "current-conflicting-role-location",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 2,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Empath"),
+            proposition = InformationProposition.RoleAt(4, RoleId("Imp")),
+        )
+        val sdeCandidate = sdeCandidate(
+            snapshot = snapshot,
+            candidateId = exactCandidate.candidateId,
+            observationIds = exactCandidate.observations.map(EpistemicObservation::observationId),
+            abilityState = AbilityState.MALFUNCTIONING_DRUNK,
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 2,
+            actionRefs = emptyList(),
+            observationRefs = listOf(prior),
+        )
+
+        val projected = HistoricalImpairedNarrativeFeatureProjector.project(
+            exactCandidates = listOf(exactCandidate),
+            sdeCandidates = listOf(sdeCandidate),
+            context = ExactConsequenceContext(validatedRuleset, exactContext),
+        )
+
+        val feature =
+            (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
+        assertEquals(
+            ImpairedNarrativeRelation.BREAKS_PRIOR_IMPAIRED_NARRATIVE,
+            feature.relation,
+        )
+        assertEquals(setOf(prior.recordId), feature.contradictoryPriorObservationIds)
+        assertEquals(NarrativeTransitionNecessity.FORCED, feature.transitionNecessity)
+    }
+
+    @Test
+    fun `perceived functioning replay does not normalize a different impaired source`() {
+        val base = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
+        val snapshot = base.copy(
+            gameState = base.gameState.copy(
+                players = base.gameState.players.map { player ->
+                    if (player.seat == 2) {
+                        player.copy(
+                            actualRole = RoleId("Drunk"),
+                            actualAlignment = Alignment.GOOD,
+                            actualType = CharacterType.OUTSIDER,
+                            shownRole = RoleId("Empath"),
+                        )
+                    } else {
+                        player
+                    }
+                },
+            ),
+        )
+        val poisonOtherSource = poison("poison-washerwoman", 0, StorytellerPhase.NIGHT, 2, 0, 3)
+        val otherSource = RecordedEpistemicObservation(
+            recordId = "poisoned-other-source",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 1,
+            sourceSeat = 3,
+            sourceAbility = RoleId("Washerwoman"),
+            visibility = ObservationVisibility.PUBLIC,
+            recipientSeats = emptySet(),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.RoleAt(4, RoleId("Imp")),
+            timelineBinding = ObservationTimelineBinding.Global(
+                TimelinePoint(StorytellerPhase.NIGHT, 2, 1, 1),
+            ),
+        )
+        val currentSourcePrior = record(
+            id = "drunk-source-prior",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 2,
+            globalSequence = 2,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Empath"),
+            proposition = InformationProposition.RoleAt(4, RoleId("Poisoner")),
+        )
+        val timeline = ActionFactTimeline(listOf(poisonOtherSource))
+        val observationLog = EpistemicObservationLog(listOf(otherSource, currentSourcePrior))
+        val exactContext = exactContext(snapshot, timeline, observationLog)
+        val exactCandidate = candidate(
+            snapshot = snapshot,
+            id = "drunk-source-compatible",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 3,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Empath"),
+            proposition = InformationProposition.RoleAt(4, RoleId("Poisoner")),
+        )
+        val sdeCandidate = sdeCandidate(
+            snapshot = snapshot,
+            candidateId = exactCandidate.candidateId,
+            observationIds = exactCandidate.observations.map(EpistemicObservation::observationId),
+            abilityState = AbilityState.MALFUNCTIONING_DRUNK,
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 3,
+            actionRefs = timeline.entries,
+            observationRefs = listOf(otherSource, currentSourcePrior),
+        )
+
+        val projected = HistoricalImpairedNarrativeFeatureProjector.project(
+            exactCandidates = listOf(exactCandidate),
+            sdeCandidates = listOf(sdeCandidate),
+            context = ExactConsequenceContext(validatedRuleset, exactContext),
+        )
+
+        val feature =
+            (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
+        assertEquals(
+            ImpairedNarrativeRelation.COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE,
+            feature.relation,
+        )
+    }
+
+    @Test
+    fun `persistent drunk numeric information may be accidentally true without breaking the narrative`() {
+        val base = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
+        val snapshot = base.copy(
+            gameState = base.gameState.copy(
+                players = base.gameState.players.map { player ->
+                    if (player.seat == 2) {
+                        player.copy(
+                            actualRole = RoleId("Drunk"),
+                            actualAlignment = Alignment.GOOD,
+                            actualType = CharacterType.OUTSIDER,
+                            shownRole = RoleId("Empath"),
+                        )
+                    } else {
+                        player
+                    }
+                },
+            ),
+        )
+        val numericZero = InformationProposition.NumericResult(
+            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+            sourceSeat = 2,
+            subjectSeats = listOf(1, 3),
+            value = 0,
+        )
+        val prior = record(
+            id = "drunk-accidentally-true-numeric",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 2,
+            globalSequence = 0,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Empath"),
+            proposition = numericZero,
+        )
+        val exactContext = exactContext(
+            snapshot,
+            ActionFactTimeline(),
+            EpistemicObservationLog(listOf(prior)),
+        )
+        val exactCandidate = candidate(
+            snapshot = snapshot,
+            id = "drunk-current-numeric-zero",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 2,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Empath"),
+            proposition = numericZero,
+        )
+        val sdeCandidate = sdeCandidate(
+            snapshot = snapshot,
+            candidateId = exactCandidate.candidateId,
+            observationIds = exactCandidate.observations.map(EpistemicObservation::observationId),
+            abilityState = AbilityState.MALFUNCTIONING_DRUNK,
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 2,
+            actionRefs = emptyList(),
+            observationRefs = listOf(prior),
+        )
+
+        val projected = HistoricalImpairedNarrativeFeatureProjector.project(
+            exactCandidates = listOf(exactCandidate),
+            sdeCandidates = listOf(sdeCandidate),
+            context = ExactConsequenceContext(validatedRuleset, exactContext),
+        )
+
+        val feature =
+            (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
+        assertEquals(
+            ImpairedNarrativeRelation.COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE,
+            feature.relation,
+        )
+        assertTrue(feature.contradictoryPriorObservationIds.isEmpty())
+    }
+
+    @Test
+    fun `temporary poisoned boolean information detects a perceived functioning narrative break`() {
+        val base = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
+        val snapshot = base.copy(
+            gameState = base.gameState.copy(
+                players = base.gameState.players.map { player ->
+                    if (player.seat == 2) {
+                        player.copy(
+                            actualRole = RoleId("Fortune Teller"),
+                            actualAlignment = Alignment.GOOD,
+                            actualType = CharacterType.TOWNSFOLK,
+                            shownRole = RoleId("Fortune Teller"),
+                        )
+                    } else {
+                        player
+                    }
+                },
+            ),
+        )
+        val poison = poison("poison-ft", 0, StorytellerPhase.NIGHT, 2, 0, 2)
+        val prior = record(
+            id = "poisoned-ft-yes",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 1,
+            globalSequence = 1,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Fortune Teller"),
+            proposition = InformationProposition.BooleanResult(
+                metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                sourceSeat = 2,
+                subjectSeats = listOf(4, 5),
+                value = true,
+            ),
+        )
+        val timeline = ActionFactTimeline(listOf(poison))
+        val exactContext = exactContext(snapshot, timeline, EpistemicObservationLog(listOf(prior)))
+        val exactCandidate = candidate(
+            snapshot = snapshot,
+            id = "poisoned-ft-no",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 2,
+            sourceSeat = 2,
+            sourceAbility = RoleId("Fortune Teller"),
+            proposition = InformationProposition.BooleanResult(
+                metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                sourceSeat = 2,
+                subjectSeats = listOf(4, 5),
+                value = false,
+            ),
+        )
+        val sdeCandidate = sdeCandidate(
+            snapshot = snapshot,
+            candidateId = exactCandidate.candidateId,
+            observationIds = exactCandidate.observations.map(EpistemicObservation::observationId),
+            abilityState = AbilityState.MALFUNCTIONING_POISONED,
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 2,
+            actionRefs = timeline.entries,
+            observationRefs = listOf(prior),
+            sourceAbility = RoleId("Fortune Teller"),
+        )
+
+        val projected = HistoricalImpairedNarrativeFeatureProjector.project(
+            exactCandidates = listOf(exactCandidate),
+            sdeCandidates = listOf(sdeCandidate),
+            context = ExactConsequenceContext(validatedRuleset, exactContext),
+        )
+
+        val feature =
+            (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
+        assertEquals(
+            ImpairedNarrativeRelation.BREAKS_PRIOR_IMPAIRED_NARRATIVE,
+            feature.relation,
+        )
+        assertEquals(setOf(prior.recordId), feature.contradictoryPriorObservationIds)
+        assertEquals(NarrativeTransitionNecessity.FORCED, feature.transitionNecessity)
     }
 
     @Test
@@ -157,11 +464,6 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         )
 
         val projected = HistoricalImpairedNarrativeFeatureProjector.project(
-            confirmationByCandidateId = mapOf(
-                exactCandidate.candidateId to FeatureProjection.Projected(
-                    confirmation(oldObservation, currentObservation),
-                ),
-            ),
             exactCandidates = listOf(exactCandidate),
             sdeCandidates = listOf(sdeCandidate),
             context = ExactConsequenceContext(validatedRuleset, exactContext),
@@ -222,9 +524,6 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         )
 
         val projected = HistoricalImpairedNarrativeFeatureProjector.project(
-            confirmationByCandidateId = mapOf(
-                exactCandidate.candidateId to FeatureProjection.Projected(confirmation()),
-            ),
             exactCandidates = listOf(exactCandidate),
             sdeCandidates = listOf(sdeCandidate),
             context = ExactConsequenceContext(validatedRuleset, exactContext),
@@ -255,9 +554,6 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         )
 
         val projected = HistoricalImpairedNarrativeFeatureProjector.project(
-            confirmationByCandidateId = mapOf(
-                exactCandidate.candidateId to FeatureProjection.Projected(confirmation()),
-            ),
             exactCandidates = listOf(exactCandidate),
             sdeCandidates = listOf(sdeCandidate),
             context = ExactConsequenceContext(validatedRuleset, exactContext),
@@ -294,6 +590,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         sequence: Int,
         sourceSeat: Int,
         sourceAbility: RoleId,
+        proposition: InformationProposition = InformationProposition.RoleAt(4, RoleId("Poisoner")),
     ) = ExactConsequenceCandidate(
         candidateId = id,
         recipientSeat = sourceSeat,
@@ -309,7 +606,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
                 visibility = ObservationVisibility.PRIVATE,
                 recipientSeats = setOf(sourceSeat),
                 reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
-                proposition = InformationProposition.RoleAt(4, RoleId("Poisoner")),
+                proposition = proposition,
             ),
         ),
     )
@@ -365,6 +662,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         globalSequence: Long,
         sourceSeat: Int,
         sourceAbility: RoleId,
+        proposition: InformationProposition = InformationProposition.RoleAt(4, RoleId("Poisoner")),
     ) = RecordedEpistemicObservation(
         recordId = id,
         phase = phase,
@@ -375,7 +673,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         visibility = ObservationVisibility.PRIVATE,
         recipientSeats = setOf(sourceSeat),
         reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
-        proposition = InformationProposition.RoleAt(4, RoleId("Poisoner")),
+        proposition = proposition,
         timelineBinding = ObservationTimelineBinding.Global(
             TimelinePoint(phase, round, sequence, globalSequence),
         ),
@@ -393,29 +691,4 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         TimelinePoint(phase, round, sequence, globalSequence),
     )
 
-    private fun confirmation(
-        vararg records: RecordedEpistemicObservation,
-    ) = ConfirmationChainFeatures(
-        candidateChannel = ConfirmationChannelRef.Interaction("decision"),
-        historicalObservationImpacts = records.map { record ->
-            HistoricalObservationConfirmationImpact(
-                provenance = ConfirmationObservationProvenance(
-                    observationRef = SdeHistoricalObservationRef(
-                        record.recordId,
-                        (record.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence,
-                    ),
-                    sourceSeat = record.sourceSeat,
-                    sourceAbility = record.sourceAbility,
-                    channel = ConfirmationChannelRef.Observation(record.recordId),
-                ),
-                relation = ConfirmationObservationRelation.NO_CONTRIBUTION,
-                restoration = ConfirmationAmbiguityRestoration(
-                    BigInteger.ZERO,
-                    emptySet(),
-                    emptySet(),
-                ),
-                authenticatesDistinctSource = false,
-            )
-        },
-    )
 }
