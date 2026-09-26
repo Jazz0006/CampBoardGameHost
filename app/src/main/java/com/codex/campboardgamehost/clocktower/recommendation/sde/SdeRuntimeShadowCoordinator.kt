@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionContext
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
@@ -14,18 +15,28 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
 
 internal data class SdeRuntimeShadowIdentity(
-    val gameId: String,
+    val requestIdentity: InformationDecisionRequestIdentity,
     val gameStateRevision: Long,
     val playerInputRevision: Long,
     val nextTimelineGlobalSequence: Long,
 ) {
+    val gameId: String get() = requestIdentity.gameId
+
     companion object {
-        fun from(input: SdeHistoricalReplayInput) = SdeRuntimeShadowIdentity(
-            input.gameId,
-            input.gameStateRevision,
-            input.playerInputRevision,
-            input.nextTimelineGlobalSequence,
-        )
+        fun from(
+            input: SdeHistoricalReplayInput,
+            requestIdentity: InformationDecisionRequestIdentity,
+        ): SdeRuntimeShadowIdentity {
+            require(requestIdentity.gameId == input.gameId) {
+                "Runtime shadow request identity must belong to the replay game."
+            }
+            return SdeRuntimeShadowIdentity(
+                requestIdentity = requestIdentity,
+                gameStateRevision = input.gameStateRevision,
+                playerInputRevision = input.playerInputRevision,
+                nextTimelineGlobalSequence = input.nextTimelineGlobalSequence,
+            )
+        }
     }
 }
 
@@ -110,7 +121,13 @@ internal object SdeRuntimeShadowCoordinator {
         ) {
             return SdeRuntimeShadowReport(SdeRuntimeShadowOutcome.INELIGIBLE)
         }
-        val expectedIdentity = SdeRuntimeShadowIdentity.from(replayInput)
+        if (decisionContext.requestIdentity.gameId != replayInput.gameId) {
+            return SdeRuntimeShadowReport(SdeRuntimeShadowOutcome.STALE)
+        }
+        val expectedIdentity = SdeRuntimeShadowIdentity.from(
+            input = replayInput,
+            requestIdentity = decisionContext.requestIdentity,
+        )
         if (currentIdentity() != expectedIdentity) {
             return SdeRuntimeShadowReport(SdeRuntimeShadowOutcome.STALE)
         }
