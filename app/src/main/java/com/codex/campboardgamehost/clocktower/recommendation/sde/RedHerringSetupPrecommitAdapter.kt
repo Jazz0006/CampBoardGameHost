@@ -1,13 +1,19 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleCandidateFactorAudit
+import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleCandidateFactorKind
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleEntryControl
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleProfileExposure
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightBundleCandidateSpaceAuditor
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
+import com.codex.campboardgamehost.clocktower.rules.FirstNightNumericInformationSemantics
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 
 internal data class RedHerringSetupPrecommitCandidateProjection(
@@ -31,10 +37,13 @@ internal data class RedHerringSetupPrecommitCandidateProjection(
 
 internal data class RedHerringSetupPrecommitProjection(
     val candidates: List<RedHerringSetupPrecommitCandidateProjection>,
-    val ruleDeterminedHealthySourceRefs: Set<ConfirmationChannelRef.Source>,
+    val ruleDeterminedHealthySourceClaims: Set<TruthDangerExactSourceClaim>,
     val unresolvedHealthySourceRefs: Set<ConfirmationChannelRef.Source>,
     val excludedPlayerControlledElementIds: Set<String>,
 ) {
+    val ruleDeterminedHealthySourceRefs: Set<ConfirmationChannelRef.Source>
+        get() = ruleDeterminedHealthySourceClaims.mapTo(linkedSetOf(), TruthDangerExactSourceClaim::source)
+
     init {
         require(
             candidates.map { it.sdeCandidate.candidateId }.distinct().size == candidates.size,
@@ -80,7 +89,7 @@ internal object RedHerringSetupPrecommitAdapter {
             game = game,
             roleDefinitions = roleDefinitions,
         )
-        val healthySourcesByControl = audit.factors
+        val healthySourceFactors = audit.factors
             .asSequence()
             .filter { it.profileExposure == FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO }
             .mapNotNull { factor ->
@@ -94,20 +103,27 @@ internal object RedHerringSetupPrecommitAdapter {
                 ) {
                     return@mapNotNull null
                 }
-                factor.control to ConfirmationChannelRef.Source(
+                factor to ConfirmationChannelRef.Source(
                     sourceSeat = sourceSeat,
                     sourceAbility = player.actualRole,
                 )
             }
             .toList()
 
-        val ruleDeterminedSources = healthySourcesByControl
-            .filter { (control, _) -> control == FirstNightBundleEntryControl.RULE_DETERMINED }
+        val ruleDeterminedClaims = healthySourceFactors
+            .filter { (factor, _) -> factor.control == FirstNightBundleEntryControl.RULE_DETERMINED }
+            .mapTo(linkedSetOf()) { (factor, source) ->
+                materializeRuleDeterminedClaim(
+                    game = game,
+                    roleDefinitions = roleDefinitions,
+                    factor = factor,
+                    source = source,
+                )
+            }
+        val unresolvedSources = healthySourceFactors
+            .filter { (factor, _) -> factor.control == FirstNightBundleEntryControl.STORYTELLER_CONTROLLED }
             .mapTo(linkedSetOf()) { (_, source) -> source }
-        val unresolvedSources = healthySourcesByControl
-            .filter { (control, _) -> control == FirstNightBundleEntryControl.STORYTELLER_CONTROLLED }
-            .mapTo(linkedSetOf()) { (_, source) -> source }
-        val healthySources = ruleDeterminedSources + unresolvedSources
+        val healthySources = ruleDeterminedClaims.map(TruthDangerExactSourceClaim::source) + unresolvedSources
 
         val decisionId = "setup:red-herring:$gameId"
         val projectedCandidates = SetupCandidateGenerator.generateRedHerringCandidates(game)
@@ -163,9 +179,45 @@ internal object RedHerringSetupPrecommitAdapter {
 
         return RedHerringSetupPrecommitProjection(
             candidates = projectedCandidates,
-            ruleDeterminedHealthySourceRefs = ruleDeterminedSources,
+            ruleDeterminedHealthySourceClaims = ruleDeterminedClaims,
             unresolvedHealthySourceRefs = unresolvedSources,
             excludedPlayerControlledElementIds = audit.excludedPlayerControlledElements,
+        )
+    }
+
+    private fun materializeRuleDeterminedClaim(
+        game: GameState,
+        roleDefinitions: List<RoleDefinition>,
+        factor: FirstNightBundleCandidateFactorAudit,
+        source: ConfirmationChannelRef.Source,
+    ): TruthDangerExactSourceClaim {
+        require(factor.kind == FirstNightBundleCandidateFactorKind.FIXED_NUMERIC_INFORMATION) {
+            "Unsupported rule-determined healthy factor kind ${factor.kind}; add canonical materialization before projecting truth danger."
+        }
+        val sourceSeat = requireNotNull(source.sourceSeat)
+        val sourceAbility = requireNotNull(source.sourceAbility)
+        val truthValues = FirstNightNumericInformationSemantics
+            .healthyTruthValues(game, sourceSeat)
+            .toSortedSet()
+        require(truthValues.size == 1) {
+            "Rule-determined healthy numeric source must have exactly one canonical truth value."
+        }
+        val value = truthValues.single()
+        require(factor.optionIds == listOf("value-$value")) {
+            "Rule-determined healthy factor options drifted from canonical numeric semantics."
+        }
+        val proposition = TroubleBrewingFirstNightInformationPropositionMaterializer.materialize(
+            game = game,
+            information = EffectDraft.PlayerInformation(
+                recipientSeat = sourceSeat,
+                sourceAbility = sourceAbility,
+                value = InformationValue.Number(value),
+            ),
+            roleDefinitions = roleDefinitions,
+        )
+        return TruthDangerExactSourceClaim(
+            source = source,
+            proposition = proposition,
         )
     }
 }
