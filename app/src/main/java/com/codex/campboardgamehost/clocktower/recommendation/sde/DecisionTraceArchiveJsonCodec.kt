@@ -684,14 +684,18 @@ internal object DecisionTraceArchiveJsonCodec {
             )
         }
 
-    private fun encodeTruthCredibility(value: TruthCredibilityFeatures): JSONObject =
-        JSONObject().apply {
+    private fun encodeTruthCredibility(value: TruthCredibilityFeatures): JSONObject {
+        require(!value.hasTypedMaterial) {
+            "DecisionTrace schema v1 cannot persist typed truth/credibility material."
+        }
+        return JSONObject().apply {
             put("truthDangerReasonCodes", strings(value.truthDangerReasonCodes.sorted()))
             put(
                 "credibilityDisruptionReasonCodes",
                 strings(value.credibilityDisruptionReasonCodes.sorted()),
             )
         }
+    }
 
     private fun decodeTruthCredibility(json: JSONObject): TruthCredibilityFeatures {
         json.requireExactKeys(
