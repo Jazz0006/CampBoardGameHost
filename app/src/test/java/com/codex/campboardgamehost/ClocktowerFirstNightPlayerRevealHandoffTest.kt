@@ -121,7 +121,9 @@ class ClocktowerFirstNightPlayerRevealHandoffTest {
         assertTrue(clocktowerInformationPublicationAllowed(confirmed, model.contextSnapshot, revision))
         val rejected = listOf(
             null to revision,
-            model.contextSnapshot.copy(semanticIdentity = "other-decision") to revision,
+            model.contextSnapshot.copy(
+                requestIdentity = model.contextSnapshot.requestIdentity.copy(requestId = "other-decision"),
+            ) to revision,
             model.contextSnapshot to revision.copy(gameStateRevision = 7),
             model.contextSnapshot to revision.copy(playerInputRevision = 7),
         )
