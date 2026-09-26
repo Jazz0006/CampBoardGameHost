@@ -195,7 +195,9 @@ class ClocktowerPlayerDisplayResolutionTest {
         val confirmed = requireNotNull(model.acceptRecommendation(
             model.choices.single { it.recommended }.candidateId, revision,
         ).confirmed)
-        val expected = model.contextSnapshot.copy(semanticIdentity = "different interaction")
+        val expected = model.contextSnapshot.copy(
+            requestIdentity = model.contextSnapshot.requestIdentity.copy(requestId = "different interaction"),
+        )
         val resolved = resolveClocktowerBooleanPlayerDisplay(
             unresolvedStep(pairOption("Chef", 2, 5)), null, confirmed, expected,
         )
