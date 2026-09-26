@@ -218,7 +218,6 @@ internal object StructuredInformationShadowAdapter {
                     )
                 val impairedNarrativeByCandidateId =
                     HistoricalImpairedNarrativeFeatureProjector.project(
-                        confirmationByCandidateId = confirmationByCandidateId,
                         exactCandidates = exactCandidates,
                         sdeCandidates = sdeCandidates,
                         context = exactContext,
