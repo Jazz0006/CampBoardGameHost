@@ -106,10 +106,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         val feature = (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
         assertEquals(ImpairmentLifetime.PERSISTENT_SETUP_BOUND, feature.impairmentLifetime)
         assertEquals(setOf(first.recordId, second.recordId), feature.priorImpairedObservationIds)
-        assertEquals(
-            ImpairedNarrativeRelation.COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE,
-            feature.relation,
-        )
+        assertExpectedRelation(ImpairedNarrativeRelation.COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE, feature)
     }
 
     @Test
@@ -173,10 +170,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
 
         val feature =
             (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
-        assertEquals(
-            ImpairedNarrativeRelation.BREAKS_PRIOR_IMPAIRED_NARRATIVE,
-            feature.relation,
-        )
+        assertExpectedRelation(ImpairedNarrativeRelation.BREAKS_PRIOR_IMPAIRED_NARRATIVE, feature)
         assertEquals(setOf(prior.recordId), feature.contradictoryPriorObservationIds)
         assertEquals(NarrativeTransitionNecessity.FORCED, feature.transitionNecessity)
     }
@@ -259,10 +253,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
 
         val feature =
             (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
-        assertEquals(
-            ImpairedNarrativeRelation.COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE,
-            feature.relation,
-        )
+        assertExpectedRelation(ImpairedNarrativeRelation.COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE, feature)
     }
 
     @Test
@@ -335,10 +326,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
 
         val feature =
             (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
-        assertEquals(
-            ImpairedNarrativeRelation.COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE,
-            feature.relation,
-        )
+        assertExpectedRelation(ImpairedNarrativeRelation.COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE, feature)
         assertTrue(feature.contradictoryPriorObservationIds.isEmpty())
     }
 
@@ -415,10 +403,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
 
         val feature =
             (projected.getValue(exactCandidate.candidateId) as FeatureProjection.Projected).value
-        assertEquals(
-            ImpairedNarrativeRelation.BREAKS_PRIOR_IMPAIRED_NARRATIVE,
-            feature.relation,
-        )
+        assertExpectedRelation(ImpairedNarrativeRelation.BREAKS_PRIOR_IMPAIRED_NARRATIVE, feature)
         assertEquals(setOf(prior.recordId), feature.contradictoryPriorObservationIds)
         assertEquals(NarrativeTransitionNecessity.FORCED, feature.transitionNecessity)
     }
@@ -565,6 +550,19 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         )
     }
 
+    private fun assertExpectedRelation(
+        expected: ImpairedNarrativeRelation,
+        feature: ImpairedNarrativeFeatures,
+    ) {
+        if (feature.relation == expected) return
+        when (feature.relation) {
+            ImpairedNarrativeRelation.NO_PRIOR_IMPAIRED_NARRATIVE -> throw IllegalStateException()
+            ImpairedNarrativeRelation.COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE ->
+                throw UnsupportedOperationException()
+            ImpairedNarrativeRelation.BREAKS_PRIOR_IMPAIRED_NARRATIVE -> throw IllegalArgumentException()
+            ImpairedNarrativeRelation.PRIOR_NARRATIVE_ALREADY_INFEASIBLE -> throw NoSuchElementException()
+        }
+    }
     private fun exactContext(
         snapshot: com.codex.campboardgamehost.clocktower.domain.GameSnapshot,
         timeline: ActionFactTimeline,
