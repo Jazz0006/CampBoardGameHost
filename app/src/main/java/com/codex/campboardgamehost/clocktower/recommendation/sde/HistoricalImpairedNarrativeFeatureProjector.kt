@@ -323,6 +323,7 @@ internal object HistoricalImpairedNarrativeFeatureProjector {
         abilityState = abilityState,
         impairmentLifetime = lifetime,
         priorImpairedObservationIds = emptySet(),
+        unavailableReason = FeatureUnavailableReason.HISTORICAL_INPUT_NOT_CAPTURED,
         perceivedConfirmation = FeatureProjection.Unavailable(
             FeatureUnavailableReason.HISTORICAL_INPUT_NOT_CAPTURED,
         ),
