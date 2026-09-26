@@ -157,7 +157,7 @@ class InformationDecisionFoundationTest {
         evaluations = evaluations,
         recommendedCandidateIds = recommendedCandidateIds,
         revision = currentRevision,
-        semanticIdentity = semanticIdentity,
+        requestIdentity = InformationDecisionRequestIdentity("test-game", semanticIdentity),
         draftOf = { evaluation -> draft(evaluation) },
     )
 
