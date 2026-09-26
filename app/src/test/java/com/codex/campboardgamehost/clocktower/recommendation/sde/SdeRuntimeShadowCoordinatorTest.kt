@@ -109,6 +109,33 @@ class SdeRuntimeShadowCoordinatorTest {
     }
 
     @Test
+    fun `mismatched request identity is stale before evaluation or trace persistence`() = runBlocking {
+        val scenario = scenario()
+        var evaluated = false
+        var writes = 0
+        val mismatchedIdentity = scenario.identity.copy(
+            requestIdentity = scenario.identity.requestIdentity.copy(requestId = "different-request"),
+        )
+
+        val report = SdeRuntimeShadowCoordinator.evaluate(
+            replayInput = scenario.input,
+            decisionContext = scenario.model.shadowDecisionContext,
+            validatedRuleset = ruleset,
+            roleDefinitions = roles,
+            currentIdentity = { mismatchedIdentity },
+            appendTrace = { writes++; true },
+            evaluateOffline = {
+                evaluated = true
+                error("mismatched request identity must be rejected before evaluation")
+            },
+        )
+
+        assertEquals(SdeRuntimeShadowOutcome.STALE, report.outcome)
+        assertTrue(!evaluated)
+        assertEquals(0, writes)
+    }
+
+    @Test
     fun `cancellation propagates and prevents diagnostic persistence`() = runBlocking {
         val scenario = scenario()
         var writes = 0
@@ -177,7 +204,11 @@ class SdeRuntimeShadowCoordinatorTest {
             neighbours, 0, 0, 2, InformationReliability.RELIABLE, RecommendationStyle.BALANCED,
             revision, recommendedValue = 0,
         )
-        return Scenario(input, model, SdeRuntimeShadowIdentity.from(input))
+        return Scenario(
+            input,
+            model,
+            SdeRuntimeShadowIdentity.from(input, model.shadowDecisionContext.requestIdentity),
+        )
     }
 
     private data class Scenario(

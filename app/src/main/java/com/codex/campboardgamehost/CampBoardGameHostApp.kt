@@ -918,11 +918,11 @@ internal fun CampBoardGameHostApp() {
             currentIdentity = {
                 clocktowerGameSession?.view?.let { view ->
                     SdeRuntimeShadowIdentity(
-                        gameId = view.gameId,
+                        requestIdentity = model.shadowDecisionContext.requestIdentity,
                         gameStateRevision = view.gameStateRevision,
                         playerInputRevision = view.playerInputRevision,
                         nextTimelineGlobalSequence = view.nextTimelineGlobalSequence,
-                    )
+                    ).takeIf { it.gameId == view.gameId }
                 }
             },
             appendTrace = decisionTraceArchiveStore::append,

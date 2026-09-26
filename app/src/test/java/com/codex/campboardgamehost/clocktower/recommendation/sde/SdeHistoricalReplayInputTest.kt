@@ -117,6 +117,50 @@ class SdeHistoricalReplayInputTest {
     }
 
     @Test
+    fun `strict restore rejects malformed nested action observation and proposition material`() {
+        val raw = nestedReplayRaw()
+
+        val invalidPayloads = listOf(
+            JSONObject(raw.toString()).apply {
+                getJSONArray("actionTimeline").getJSONObject(0).getJSONObject("fact")
+                    .put("unexpected", true)
+            },
+            JSONObject(raw.toString()).apply {
+                getJSONArray("actionTimeline").getJSONObject(0).getJSONObject("point")
+                    .put("round", 1.5)
+            },
+            JSONObject(raw.toString()).apply {
+                getJSONArray("actionTimeline").getJSONObject(0).getJSONObject("fact")
+                    .remove("actionId")
+            },
+            JSONObject(raw.toString()).apply {
+                getJSONArray("observations").getJSONObject(0).put("unexpected", true)
+            },
+            JSONObject(raw.toString()).apply {
+                getJSONArray("observations").getJSONObject(0).put("sourceAbility", 7)
+            },
+            JSONObject(raw.toString()).apply {
+                getJSONArray("observations").getJSONObject(0).getJSONObject("proposition")
+                    .put("unexpected", true)
+            },
+            JSONObject(raw.toString()).apply {
+                getJSONArray("observations").getJSONObject(0).getJSONObject("proposition")
+                    .put("value", 0.5)
+            },
+            JSONObject(raw.toString()).apply {
+                getJSONArray("observations").getJSONObject(0).getJSONObject("proposition")
+                    .put("metric", true)
+            },
+        )
+
+        invalidPayloads.forEach { invalid ->
+            assertThrows(IllegalArgumentException::class.java) {
+                SdeHistoricalReplayInputJsonCodec.decodeStrict(invalid.toString())
+            }
+        }
+    }
+
+    @Test
     fun `strict restore rejects missing unsupported and unknown payload shape`() {
         val fixture = A4RuntimeFixtures.snapshot().copy(
             rulesetRef = rulesetRef,
@@ -136,6 +180,43 @@ class SdeHistoricalReplayInputTest {
                 SdeHistoricalReplayInputJsonCodec.decodeStrict(invalid.toString())
             }
         }
+    }
+
+    private fun nestedReplayRaw(): JSONObject {
+        val fixture = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
+        val setup = setup(fixture.gameState.players.map { it.actualRole to (it.shownRole ?: it.actualRole) })
+        val action = TimelineBoundActionFact(
+            ActionFact.Poison("strict-poison", 0, 2),
+            TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 0, 0),
+        )
+        val observation = EpistemicObservationDraft(
+            recordId = "strict-empath",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            sourceSeat = 1,
+            sourceAbility = RoleId("Empath"),
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(1),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.NumericResult(
+                NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                1,
+                listOf(2, fixture.gameState.players.size),
+                1,
+            ),
+        ).bindGlobal(TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 1, 1))
+        val snapshot = fixture.copy(
+            actionTimeline = ActionFactTimeline(listOf(action)),
+            epistemicObservationLog = EpistemicObservationLog(listOf(observation)),
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+            nextTimelineGlobalSequence = 2,
+        )
+        return JSONObject(
+            SdeHistoricalReplayInputJsonCodec.encode(
+                SdeHistoricalReplayInputFactory.captureFresh(setup, snapshot).input,
+            ),
+        )
     }
 
     private fun setup(

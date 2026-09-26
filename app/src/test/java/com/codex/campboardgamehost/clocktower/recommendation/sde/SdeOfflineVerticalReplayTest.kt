@@ -40,6 +40,59 @@ class SdeOfflineVerticalReplayTest {
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
 
     @Test
+    fun `offline replay rejects a different game even when revisions match`() {
+        val fixture = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
+        val setup = CommittedClocktowerSetup(
+            fixture.gameState.script,
+            fixture.gameSeed,
+            fixture.gameState.players.map {
+                CommittedSetupSeat(it.seat, it.actualRole, it.shownRole ?: it.actualRole)
+            },
+            SetupProvenance(SetupSourceKind.GENERATED, "cr-b-cross-game"),
+        )
+        val input = SdeHistoricalReplayInputFactory.captureFresh(setup, fixture.copy(
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )).input
+        val empath = fixture.gameState.players.single { it.actualRole.value == "Empath" }
+        val count = fixture.gameState.players.size
+        val neighbours = listOf(
+            if (empath.seat == 1) count else empath.seat - 1,
+            if (empath.seat == count) 1 else empath.seat + 1,
+        )
+        val revision = InformationDecisionRevision(input.gameStateRevision, input.playerInputRevision)
+        val model = prepareNumericInformationUiModel(
+            ClocktowerRecommendationCoordinator(), input.gameId, ClocktowerPhase.FirstNight, 1, 1,
+            empath.seat, RoleId("Empath"), NumericMetric.LIVING_EVIL_NEIGHBOURS, neighbours,
+            0, 0, 2, InformationReliability.RELIABLE, RecommendationStyle.BALANCED,
+            revision, recommendedValue = 0,
+        )
+        val foreignInput = SdeHistoricalReplayInput(
+            schemaVersion = input.schemaVersion,
+            gameId = "different-game",
+            gameStateRevision = input.gameStateRevision,
+            playerInputRevision = input.playerInputRevision,
+            rulesetRef = input.rulesetRef,
+            committedSetup = input.committedSetup,
+            playerNamesBySeat = input.playerNamesBySeat,
+            actionTimeline = input.actionTimeline,
+            observationLog = input.observationLog,
+            nextTimelineGlobalSequence = input.nextTimelineGlobalSequence,
+        )
+
+        val failure = runCatching {
+            SdeOfflineReplayCoordinator.evaluate(
+                foreignInput,
+                model.shadowDecisionContext,
+                ruleset,
+                roles,
+            )
+        }.exceptionOrNull()
+
+        assertTrue(failure is IllegalArgumentException)
+        assertTrue(failure?.message?.contains("different game") == true)
+    }
+
+    @Test
     fun `durable input drives real numeric trace commit reload and replay`() {
         val fixture = A4RuntimeFixtures.snapshot().copy(rulesetRef = rulesetRef)
         val session = ClocktowerGameSession.create(

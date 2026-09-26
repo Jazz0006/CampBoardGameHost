@@ -79,7 +79,14 @@ internal data class ImpairedNarrativeCandidateEvidence(
     val abilityState: AbilityState,
     val impairmentLifetime: ImpairmentLifetime?,
     val priorImpairedObservationIds: Set<String>,
-    val confirmation: FeatureProjection<ConfirmationChainFeatures>,
+    val unavailableReason: FeatureUnavailableReason? = null,
+    /**
+     * Confirmation/contradiction evidence in the recipient's source-scoped perceived-functioning
+     * narrative. This must not be the ordinary mechanically-credible confirmation projection:
+     * malfunction may keep a mechanically legal world alive while still breaking the story the
+     * impaired player believes about their own functioning ability.
+     */
+    val perceivedConfirmation: FeatureProjection<ConfirmationChainFeatures>,
 ) {
     init {
         require(candidateId.isNotBlank()) {
@@ -108,8 +115,9 @@ internal data class ImpairedNarrativeCandidateEvidence(
 }
 
 /**
- * Pure projection from authoritative impairment evidence plus already-projected exact confirmation
- * relationships. Exact world replay remains owned by the confirmation/exact layers.
+ * Pure projection from authoritative impairment evidence plus source-scoped perceived-functioning
+ * confirmation relationships. Mechanical legality remains separate; exact world replay remains
+ * owned by the confirmation/exact layers.
  */
 internal object ImpairedNarrativeFeaturesProjector {
     fun project(
@@ -168,14 +176,13 @@ internal object ImpairedNarrativeFeaturesProjector {
     private fun provisional(
         evidence: ImpairedNarrativeCandidateEvidence,
     ): FeatureProjection<ImpairedNarrativeFeatures> {
+        evidence.unavailableReason?.let { reason ->
+            return FeatureProjection.Unavailable(reason)
+        }
         if (evidence.abilityState == AbilityState.FUNCTIONING) {
             return FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_APPLICABLE)
         }
         val lifetime = requireNotNull(evidence.impairmentLifetime)
-        val confirmation = when (val value = evidence.confirmation) {
-            is FeatureProjection.Projected -> value.value
-            is FeatureProjection.Unavailable -> return value
-        }
         if (evidence.priorImpairedObservationIds.isEmpty()) {
             return projected(
                 evidence = evidence,
@@ -185,6 +192,10 @@ internal object ImpairedNarrativeFeaturesProjector {
                 transition = NarrativeTransitionNecessity.NONE,
                 detectability = ImpairedNarrativeDetectabilitySignal.NONE,
             )
+        }
+        val confirmation = when (val value = evidence.perceivedConfirmation) {
+            is FeatureProjection.Projected -> value.value
+            is FeatureProjection.Unavailable -> return value
         }
 
         val impactById = confirmation.historicalObservationImpacts.associateBy {

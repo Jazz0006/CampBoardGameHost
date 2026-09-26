@@ -20,6 +20,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 import org.junit.Assert.assertEquals
@@ -428,7 +429,7 @@ class DecisionTraceAuthoritativeChoiceCorrelationTest {
             warnings = emptyList(),
             draft = draft,
             contextSnapshot = InformationDecisionSnapshot(
-                semanticIdentity = DECISION_ID,
+                requestIdentity = InformationDecisionRequestIdentity("game-1", DECISION_ID),
                 revision = REVISION,
                 legalCandidateIds = listOf("candidate-a", "candidate-b"),
                 recommendedCandidateIds = setOf("candidate-a"),

@@ -26,6 +26,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGene
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 import com.codex.campboardgamehost.clocktower.session.InformationResolutionRequest
@@ -496,7 +497,10 @@ class StructuredInformationShadowAdapterTest {
                 evaluations = evaluations,
                 recommendedCandidateIds = recommendedCandidateIds,
                 revision = revision,
-                semanticIdentity = "numeric|Empath|${snapshot.gameId}|FIRST_NIGHT|1|0|2|LIVING_EVIL_NEIGHBOURS",
+                requestIdentity = InformationDecisionRequestIdentity(
+                    snapshot.gameId,
+                    "numeric|Empath|${snapshot.gameId}|FIRST_NIGHT|1|0|2|LIVING_EVIL_NEIGHBOURS",
+                ),
                 draftOf = { evaluation -> empathDraft(evaluation.candidate.outcome, sequence) },
             )
         }
