@@ -459,8 +459,8 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
                 },
             ),
         )
-        val knownDemon = RecordedEpistemicObservation(
-            recordId = "known-imp-shown-role",
+        val shownWasherwoman = RecordedEpistemicObservation(
+            recordId = "shown-washerwoman-seat-3",
             phase = StorytellerPhase.FIRST_NIGHT,
             round = 1,
             sequence = 0,
@@ -469,24 +469,39 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
             visibility = ObservationVisibility.PUBLIC,
             recipientSeats = emptySet(),
             reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
-            proposition = InformationProposition.ShownRoleAt(5, RoleId("Imp")),
+            proposition = InformationProposition.ShownRoleAt(3, RoleId("Washerwoman")),
             timelineBinding = ObservationTimelineBinding.Global(
                 TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 0, 0),
             ),
         )
-        val poison = poison("poison-ft", 1, StorytellerPhase.NIGHT, 2, 0, 2)
+        val shownPoisoner = RecordedEpistemicObservation(
+            recordId = "shown-poisoner-seat-4",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+            sourceSeat = null,
+            sourceAbility = null,
+            visibility = ObservationVisibility.PUBLIC,
+            recipientSeats = emptySet(),
+            reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+            proposition = InformationProposition.ShownRoleAt(4, RoleId("Poisoner")),
+            timelineBinding = ObservationTimelineBinding.Global(
+                TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 1, 1),
+            ),
+        )
+        val poison = poison("poison-ft", 2, StorytellerPhase.NIGHT, 2, 0, 2)
         val prior = record(
             id = "poisoned-ft-yes",
             phase = StorytellerPhase.NIGHT,
             round = 2,
             sequence = 1,
-            globalSequence = 2,
+            globalSequence = 3,
             sourceSeat = 2,
             sourceAbility = RoleId("Fortune Teller"),
             proposition = InformationProposition.BooleanResult(
                 metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
                 sourceSeat = 2,
-                subjectSeats = listOf(4, 5),
+                subjectSeats = listOf(3, 4),
                 value = true,
             ),
         )
@@ -494,7 +509,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
         val exactContext = exactContext(
             snapshot,
             timeline,
-            EpistemicObservationLog(listOf(knownDemon, prior)),
+            EpistemicObservationLog(listOf(shownWasherwoman, shownPoisoner, prior)),
         )
         val exactCandidate = candidate(
             snapshot = snapshot,
@@ -507,7 +522,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
             proposition = InformationProposition.BooleanResult(
                 metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
                 sourceSeat = 2,
-                subjectSeats = listOf(4, 5),
+                subjectSeats = listOf(3, 4),
                 value = false,
             ),
         )
@@ -520,7 +535,7 @@ class HistoricalImpairedNarrativeFeatureProjectorTest {
             round = 2,
             sequence = 2,
             actionRefs = timeline.entries,
-            observationRefs = listOf(knownDemon, prior),
+            observationRefs = listOf(shownWasherwoman, shownPoisoner, prior),
             sourceAbility = RoleId("Fortune Teller"),
         )
 
