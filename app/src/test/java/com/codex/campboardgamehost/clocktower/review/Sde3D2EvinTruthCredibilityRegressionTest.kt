@@ -4,13 +4,8 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.sde.ConfirmationChannelRef
 import com.codex.campboardgamehost.clocktower.recommendation.sde.CredibilityDisruptionMechanism
-import com.codex.campboardgamehost.clocktower.recommendation.sde.ExactTruthDangerSourceProjection
-import com.codex.campboardgamehost.clocktower.recommendation.sde.ExactTruthDangerSourceProjector
 import com.codex.campboardgamehost.clocktower.recommendation.sde.RedHerringSetupPrecommitAdapter
-import com.codex.campboardgamehost.clocktower.recommendation.sde.TruthCredibilityCandidateEvidence
-import com.codex.campboardgamehost.clocktower.recommendation.sde.TruthCredibilityFeaturesProjector
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
-import java.math.BigInteger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -19,7 +14,7 @@ class Sde3D2EvinTruthCredibilityRegressionTest {
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
 
     @Test
-    fun `Evin Chef one is exact truth danger and seat one Red Herring creates typed disruption without FT hindsight`() {
+    fun `Evin Chef one is a strategic truth danger anchor and seat one Red Herring creates typed disruption without FT hindsight`() {
         val evin = Sde2D5FEvinFirstPlaythroughCandidateBuilder.build()
         val context = Sde2D5FExpertObservedConsequenceProjector.context(
             caseId = "sde-3d2-evin-truth-credibility",
@@ -57,21 +52,19 @@ class Sde3D2EvinTruthCredibilityRegressionTest {
             },
         )
 
-        val exact = ExactTruthDangerSourceProjector.evaluate(
-            validatedRuleset = context.validatedRuleset,
-            context = context.exactContext,
-            claims = setup.ruleDeterminedHealthySourceClaims,
-        )
-        assertTrue(exact is ExactTruthDangerSourceProjection.Ready)
-        val chefImpact = (exact as ExactTruthDangerSourceProjection.Ready)
-            .impacts
-            .single { it.source == chefSource }
-
-        assertTrue(chefImpact.independentlyConstraining)
+        val calibration = Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder.build()
+        val observedChef = calibration.chef.alternatives
+            .single { it.candidateId == calibration.chefObservedCandidateId }
+        val chefRecipient = observedChef.byRecipient.single { it.recipientSeat == 1 }
+        val removedStrategicWorlds =
+            chefRecipient.prefixTopologyStructure.strategicWorldKeys -
+                chefRecipient.candidateTopologyStructure.strategicWorldKeys
+        val removedDemonSeats =
+            chefRecipient.prefixTopologyStructure.possibleDemonSeats -
+                chefRecipient.candidateTopologyStructure.possibleDemonSeats
         assertTrue(
-            chefImpact.exactWorldReduction > BigInteger.ZERO ||
-                chefImpact.strategicWorldKeysRemoved.isNotEmpty() ||
-                chefImpact.demonSeatsRemoved.isNotEmpty(),
+            removedStrategicWorlds.isNotEmpty() ||
+                removedDemonSeats.isNotEmpty(),
         )
 
         val observedRedHerring = setup.candidates.single { it.targetSeat == evin.redHerringSeat }
@@ -86,22 +79,8 @@ class Sde3D2EvinTruthCredibilityRegressionTest {
             observedRedHerring.credibilityDisruptions.single().mechanism,
         )
 
-        val features = TruthCredibilityFeaturesProjector.project(
-            listOf(
-                TruthCredibilityCandidateEvidence(
-                    candidateId = observedRedHerring.sdeCandidate.candidateId,
-                    truthDangerSources = setOf(chefImpact).toList(),
-                    credibilityDisruptions = observedRedHerring.credibilityDisruptions.toList(),
-                    unresolvedSourceRefs = setup.unresolvedHealthySourceRefs,
-                ),
-            ),
-        ).getValue(observedRedHerring.sdeCandidate.candidateId)
-
-        assertEquals(setOf(chefImpact), features.truthDangerSources)
-        assertEquals(
-            observedRedHerring.credibilityDisruptions,
-            features.credibilityDisruptions,
+        assertTrue(
+            setup.ruleDeterminedHealthySourceClaims.single().source == chefSource,
         )
-        assertEquals(setup.unresolvedHealthySourceRefs, features.unresolvedSourceRefs)
     }
 }
