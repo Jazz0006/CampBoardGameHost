@@ -22,6 +22,7 @@ internal object SdeOfflineReplayCoordinator {
         inputBindings: SdeDecisionInputBindings = SdeDecisionInputBindings.NotCaptured,
         hypothesis: EpistemicHypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
     ): SdeOfflineReplayEvaluation {
+        // Typed game identity is a hard replay boundary; never parse request/semantic strings for it.
         require(decisionContext.requestIdentity.gameId == replayInput.gameId) {
             "Replay input belongs to a different game than the information decision request."
         }
