@@ -1,9 +1,11 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicEvaluationCapability
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
+import java.math.BigInteger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
@@ -57,6 +59,55 @@ class MultiPolicyReplayTest {
             StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1.evidenceCheckpoint,
             trace.evidenceCheckpoint,
         )
+    }
+
+    @Test
+    fun `replay persists freshly recomputed typed truth credibility instead of trusting historical trace features`() {
+        val source = ConfirmationChannelRef.Source(
+            sourceSeat = 1,
+            sourceAbility = RoleId("Chef"),
+        )
+        val base = replayInput()
+        val ready = base.featureEvaluation as DecisionFeatureEvaluation.Ready
+        val enriched = DecisionFeatureEvaluation.Ready(
+            ready.candidates.map { candidate ->
+                candidate.copy(
+                    features = candidate.features.copy(
+                        truthCredibility = FeatureProjection.Projected(
+                            TruthCredibilityFeatures(
+                                truthDangerSources = setOf(
+                                    TruthDangerSourceImpact(
+                                        source = source,
+                                        exactWorldReduction = BigInteger.ONE,
+                                        strategicWorldKeysRemoved = emptySet(),
+                                        demonSeatsRemoved = emptySet(),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            },
+        )
+        val recomputed = base.copy(featureEvaluation = enriched)
+
+        val trace = MultiPolicyReplayEngine.replay(
+            sourceTrace = sourceTrace(),
+            recomputedInput = recomputed,
+            policyVersions = listOf(PolicyVersions.BEGINNER_CONSERVATIVE_V1),
+        ).single()
+
+        assertEquals(enriched, trace.featureEvaluation)
+        assertTrue(sourceTrace().featureEvaluation is DecisionFeatureEvaluation.Deferred)
+        val projected =
+            ((trace.featureEvaluation as DecisionFeatureEvaluation.Ready)
+                .candidates
+                .first()
+                .features
+                .truthCredibility as FeatureProjection.Projected)
+                .value
+        assertTrue(projected.hasTypedMaterial)
+        assertEquals(setOf(source), projected.truthDangerSources.mapTo(linkedSetOf()) { it.source })
     }
 
     @Test

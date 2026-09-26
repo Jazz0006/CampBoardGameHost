@@ -78,19 +78,25 @@ internal object DecisionTraceArchiveJsonCodec {
             "policySelection",
             "actualChoice",
         )
-        val schemaVersion = json.requiredInt("schemaVersion")
-        require(schemaVersion == DecisionTrace.CURRENT_SCHEMA_VERSION) {
-            "Unsupported DecisionTrace schema version " + schemaVersion + "."
+        val persistedSchemaVersion = json.requiredInt("schemaVersion")
+        require(
+            persistedSchemaVersion == DecisionTrace.LEGACY_SCHEMA_VERSION ||
+                persistedSchemaVersion == DecisionTrace.CURRENT_SCHEMA_VERSION,
+        ) {
+            "Unsupported DecisionTrace schema version " + persistedSchemaVersion + "."
         }
         return DecisionTrace(
-            schemaVersion = schemaVersion,
+            schemaVersion = DecisionTrace.CURRENT_SCHEMA_VERSION,
             evidenceCheckpoint = EvidenceCheckpointId(json.requiredNonBlankString("evidenceCheckpoint")),
             decisionId = json.requiredNonBlankString("decisionId"),
             lifecycleStage = decodeLifecycle(json.requiredObject("lifecycleStage")),
             sourceRevision = decodeRevision(json.requiredObject("sourceRevision")),
             historyPrefixRef = decodeGlobalPrefix(json.requiredObject("historyPrefix")),
             legalCandidateIds = json.requiredStringList("legalCandidateIds"),
-            featureEvaluation = decodeFeatureEvaluation(json.requiredObject("featureEvaluation")),
+            featureEvaluation = decodeFeatureEvaluation(
+                json.requiredObject("featureEvaluation"),
+                persistedSchemaVersion,
+            ),
             policySnapshot = decodePolicySnapshot(json.requiredObject("policySnapshot")),
             policySelection = json.requiredNullableObject("policySelection")?.let(::decodePolicySelection),
             actualChoice = decodeActualChoice(json.requiredObject("actualChoice")),
@@ -215,7 +221,10 @@ internal object DecisionTraceArchiveJsonCodec {
             }
         }
 
-    private fun decodeFeatureEvaluation(json: JSONObject): DecisionFeatureEvaluation =
+    private fun decodeFeatureEvaluation(
+        json: JSONObject,
+        traceSchemaVersion: Int,
+    ): DecisionFeatureEvaluation =
         when (json.requiredNonBlankString("kind")) {
             "ready" -> {
                 json.requireExactKeys("kind", "candidates")
@@ -224,7 +233,10 @@ internal object DecisionTraceArchiveJsonCodec {
                         candidate.requireExactKeys("candidateId", "features")
                         CandidateDecisionFeatures(
                             candidateId = candidate.requiredNonBlankString("candidateId"),
-                            features = decodeFeatures(candidate.requiredObject("features")),
+                            features = decodeFeatures(
+                                candidate.requiredObject("features"),
+                                traceSchemaVersion,
+                            ),
                         )
                     },
                 )
@@ -268,7 +280,10 @@ internal object DecisionTraceArchiveJsonCodec {
         )
     }
 
-    private fun decodeFeatures(json: JSONObject): DecisionFeatures {
+    private fun decodeFeatures(
+        json: JSONObject,
+        traceSchemaVersion: Int,
+    ): DecisionFeatures {
         json.requireExactKeys(
             "strategic",
             "confirmationChainImpact",
@@ -297,8 +312,9 @@ internal object DecisionTraceArchiveJsonCodec {
             truthCredibility =
                 decodeObjectProjection(
                     json.requiredObject("truthCredibility"),
-                    ::decodeTruthCredibility,
-                ),
+                ) { value ->
+                    decodeTruthCredibility(value, traceSchemaVersion)
+                },
             roleFunctionExposure =
                 decodeObjectProjection(
                     json.requiredObject("roleFunctionExposure"),
@@ -684,31 +700,191 @@ internal object DecisionTraceArchiveJsonCodec {
             )
         }
 
-    private fun encodeTruthCredibility(value: TruthCredibilityFeatures): JSONObject {
-        require(!value.hasTypedMaterial) {
-            "DecisionTrace schema v1 cannot persist typed truth/credibility material."
-        }
-        return JSONObject().apply {
+    private fun encodeTruthCredibility(value: TruthCredibilityFeatures): JSONObject =
+        JSONObject().apply {
+            put(
+                "truthDangerSources",
+                JSONArray().apply {
+                    value.truthDangerSources
+                        .sortedWith(
+                            compareBy<TruthDangerSourceImpact>(
+                                { it.source.sourceSeat ?: Int.MIN_VALUE },
+                                { it.source.sourceAbility?.value ?: "" },
+                            ),
+                        )
+                        .forEach { put(encodeTruthDangerSourceImpact(it)) }
+                },
+            )
+            put(
+                "credibilityDisruptions",
+                JSONArray().apply {
+                    value.credibilityDisruptions
+                        .sortedWith(
+                            compareBy<CredibilityDisruptionImpact>(
+                                { it.committedInputRef.inputId },
+                                { it.committedInputRef.ownerId },
+                                { it.committedInputRef.kind.name },
+                                { it.affectedSource.sourceSeat ?: Int.MIN_VALUE },
+                                { it.affectedSource.sourceAbility?.value ?: "" },
+                                { it.mechanism.name },
+                            ),
+                        )
+                        .forEach { put(encodeCredibilityDisruptionImpact(it)) }
+                },
+            )
+            put(
+                "unresolvedSourceRefs",
+                JSONArray().apply {
+                    value.unresolvedSourceRefs
+                        .sortedWith(
+                            compareBy<ConfirmationChannelRef.Source>(
+                                { it.sourceSeat ?: Int.MIN_VALUE },
+                                { it.sourceAbility?.value ?: "" },
+                            ),
+                        )
+                        .forEach { put(encodeConfirmationChannel(it)) }
+                },
+            )
             put("truthDangerReasonCodes", strings(value.truthDangerReasonCodes.sorted()))
             put(
                 "credibilityDisruptionReasonCodes",
                 strings(value.credibilityDisruptionReasonCodes.sorted()),
             )
         }
+
+    private fun decodeTruthCredibility(
+        json: JSONObject,
+        traceSchemaVersion: Int,
+    ): TruthCredibilityFeatures =
+        when (traceSchemaVersion) {
+            DecisionTrace.LEGACY_SCHEMA_VERSION -> {
+                json.requireExactKeys(
+                    "truthDangerReasonCodes",
+                    "credibilityDisruptionReasonCodes",
+                )
+                TruthCredibilityFeatures(
+                    truthDangerReasonCodes =
+                        json.requiredStringSet("truthDangerReasonCodes"),
+                    credibilityDisruptionReasonCodes =
+                        json.requiredStringSet("credibilityDisruptionReasonCodes"),
+                )
+            }
+
+            DecisionTrace.CURRENT_SCHEMA_VERSION -> {
+                json.requireExactKeys(
+                    "truthDangerSources",
+                    "credibilityDisruptions",
+                    "unresolvedSourceRefs",
+                    "truthDangerReasonCodes",
+                    "credibilityDisruptionReasonCodes",
+                )
+                TruthCredibilityFeatures(
+                    truthDangerSources =
+                        json.requiredArray("truthDangerSources")
+                            .mapObjects("truthDangerSources", ::decodeTruthDangerSourceImpact)
+                            .toSetStrict("truthDangerSources"),
+                    credibilityDisruptions =
+                        json.requiredArray("credibilityDisruptions")
+                            .mapObjects(
+                                "credibilityDisruptions",
+                                ::decodeCredibilityDisruptionImpact,
+                            )
+                            .toSetStrict("credibilityDisruptions"),
+                    unresolvedSourceRefs =
+                        json.requiredArray("unresolvedSourceRefs")
+                            .mapObjects("unresolvedSourceRefs", ::decodeConfirmationSource)
+                            .toSetStrict("unresolvedSourceRefs"),
+                    truthDangerReasonCodes =
+                        json.requiredStringSet("truthDangerReasonCodes"),
+                    credibilityDisruptionReasonCodes =
+                        json.requiredStringSet("credibilityDisruptionReasonCodes"),
+                )
+            }
+
+            else -> throw IllegalArgumentException(
+                "Unsupported DecisionTrace truth/credibility schema version $traceSchemaVersion.",
+            )
+        }
+
+    private fun encodeTruthDangerSourceImpact(
+        value: TruthDangerSourceImpact,
+    ): JSONObject =
+        JSONObject().apply {
+            put("source", encodeConfirmationChannel(value.source))
+            put("exactWorldReduction", value.exactWorldReduction.toString())
+            put(
+                "strategicWorldKeysRemoved",
+                strategicWorldKeys(value.strategicWorldKeysRemoved),
+            )
+            put("demonSeatsRemoved", ints(value.demonSeatsRemoved.sorted()))
+        }
+
+    private fun decodeTruthDangerSourceImpact(
+        json: JSONObject,
+    ): TruthDangerSourceImpact {
+        json.requireExactKeys(
+            "source",
+            "exactWorldReduction",
+            "strategicWorldKeysRemoved",
+            "demonSeatsRemoved",
+        )
+        return TruthDangerSourceImpact(
+            source = decodeConfirmationSource(json.requiredObject("source")),
+            exactWorldReduction = json.requiredBigInteger("exactWorldReduction"),
+            strategicWorldKeysRemoved =
+                json.requiredStrategicWorldKeySet("strategicWorldKeysRemoved"),
+            demonSeatsRemoved =
+                json.requiredIntList("demonSeatsRemoved")
+                    .toSetStrict("demonSeatsRemoved"),
+        )
     }
 
-    private fun decodeTruthCredibility(json: JSONObject): TruthCredibilityFeatures {
-        json.requireExactKeys(
-            "truthDangerReasonCodes",
-            "credibilityDisruptionReasonCodes",
-        )
-        return TruthCredibilityFeatures(
-            truthDangerReasonCodes =
-                json.requiredStringSet("truthDangerReasonCodes"),
-            credibilityDisruptionReasonCodes =
-                json.requiredStringSet("credibilityDisruptionReasonCodes"),
+    private fun encodeCredibilityDisruptionImpact(
+        value: CredibilityDisruptionImpact,
+    ): JSONObject =
+        JSONObject().apply {
+            put("committedInputRef", encodeCommittedDecisionInputRef(value.committedInputRef))
+            put("affectedSource", encodeConfirmationChannel(value.affectedSource))
+            put("mechanism", value.mechanism.name)
+        }
+
+    private fun decodeCredibilityDisruptionImpact(
+        json: JSONObject,
+    ): CredibilityDisruptionImpact {
+        json.requireExactKeys("committedInputRef", "affectedSource", "mechanism")
+        return CredibilityDisruptionImpact(
+            committedInputRef =
+                decodeCommittedDecisionInputRef(json.requiredObject("committedInputRef")),
+            affectedSource = decodeConfirmationSource(json.requiredObject("affectedSource")),
+            mechanism = json.requiredEnum("mechanism"),
         )
     }
+
+    private fun encodeCommittedDecisionInputRef(
+        value: CommittedDecisionInputRef,
+    ): JSONObject =
+        JSONObject().apply {
+            put("inputId", value.inputId)
+            put("ownerId", value.ownerId)
+            put("kind", value.kind.name)
+        }
+
+    private fun decodeCommittedDecisionInputRef(
+        json: JSONObject,
+    ): CommittedDecisionInputRef {
+        json.requireExactKeys("inputId", "ownerId", "kind")
+        return CommittedDecisionInputRef(
+            inputId = json.requiredNonBlankString("inputId"),
+            ownerId = json.requiredNonBlankString("ownerId"),
+            kind = json.requiredEnum("kind"),
+        )
+    }
+
+    private fun decodeConfirmationSource(
+        json: JSONObject,
+    ): ConfirmationChannelRef.Source =
+        decodeConfirmationChannel(json) as? ConfirmationChannelRef.Source
+            ?: throw IllegalArgumentException("Truth/credibility source must use source channel kind.")
 
     private fun encodeRoleFunctionExposure(
         value: RoleFunctionExposureFeatures,
@@ -821,7 +997,6 @@ internal object DecisionTraceArchiveJsonCodec {
             )
             put("narrativeRouteIds", strings(value.narrativeRouteIds.sorted()))
         }
-
     private fun decodeBluffNarrative(json: JSONObject): BluffNarrativeFeatures {
         json.requireExactKeys("claimBurdenReasonCodes", "narrativeRouteIds")
         return BluffNarrativeFeatures(

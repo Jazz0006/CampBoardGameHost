@@ -11,6 +11,7 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 import java.math.BigInteger
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -78,12 +79,29 @@ class DecisionTraceArchivePersistenceTest {
     }
 
     @Test
-    fun `schema v1 codec rejects typed truth credibility material instead of dropping it`() {
+    fun `current trace schema deterministically round trips typed truth credibility material`() {
         val trace = readyTrace()
         val ready = trace.featureEvaluation as DecisionFeatureEvaluation.Ready
         val source = ConfirmationChannelRef.Source(
             sourceSeat = 1,
             sourceAbility = RoleId("Chef"),
+        )
+        val unresolved = ConfirmationChannelRef.Source(
+            sourceSeat = 3,
+            sourceAbility = RoleId("Washerwoman"),
+        )
+        val strategicWorld = StrategicWorldKey(
+            demonSeat = 5,
+            minionSeats = listOf(6),
+        )
+        val disruption = CredibilityDisruptionImpact(
+            committedInputRef = CommittedDecisionInputRef(
+                inputId = "red-herring-seat-1",
+                ownerId = "SetupCandidateGenerator",
+                kind = SdeCommittedDecisionInputKind.RED_HERRING,
+            ),
+            affectedSource = source,
+            mechanism = CredibilityDisruptionMechanism.RED_HERRING_FALSE_POSITIVE,
         )
         val typed = ready.candidates.mapIndexed { index, candidate ->
             if (index != 0) {
@@ -97,10 +115,14 @@ class DecisionTraceArchivePersistenceTest {
                                     TruthDangerSourceImpact(
                                         source = source,
                                         exactWorldReduction = BigInteger.ONE,
-                                        strategicWorldKeysRemoved = emptySet(),
-                                        demonSeatsRemoved = emptySet(),
+                                        strategicWorldKeysRemoved = setOf(strategicWorld),
+                                        demonSeatsRemoved = setOf(5),
                                     ),
                                 ),
+                                credibilityDisruptions = setOf(disruption),
+                                unresolvedSourceRefs = setOf(unresolved),
+                                truthDangerReasonCodes = setOf("legacy-truth"),
+                                credibilityDisruptionReasonCodes = setOf("legacy-credibility"),
                             ),
                         ),
                     ),
@@ -111,11 +133,71 @@ class DecisionTraceArchivePersistenceTest {
             featureEvaluation = DecisionFeatureEvaluation.Ready(typed),
         )
 
-        assertThrows(IllegalArgumentException::class.java) {
+        val archive = DecisionTraceArchive().append(typedTrace)
+        val encoded = DecisionTraceArchiveJsonCodec.encode(archive)
+        val decoded = DecisionTraceArchiveJsonCodec.decode(encoded)
+
+        assertEquals(DecisionTrace.CURRENT_SCHEMA_VERSION, typedTrace.schemaVersion)
+        assertEquals(archive, decoded)
+        assertEquals(encoded, DecisionTraceArchiveJsonCodec.encode(decoded))
+    }
+
+    @Test
+    fun `schema v1 legacy truth credibility payload migrates to current trace schema without inventing typed material`() {
+        val current = JSONObject(
             DecisionTraceArchiveJsonCodec.encode(
-                DecisionTraceArchive().append(typedTrace),
-            )
+                DecisionTraceArchive().append(readyTrace()),
+            ),
+        )
+        val trace = current.getJSONArray("traces").getJSONObject(0)
+        trace.put("schemaVersion", DecisionTrace.LEGACY_SCHEMA_VERSION)
+        val candidates = trace
+            .getJSONObject("featureEvaluation")
+            .getJSONArray("candidates")
+        for (index in 0 until candidates.length()) {
+            val truth = candidates
+                .getJSONObject(index)
+                .getJSONObject("features")
+                .getJSONObject("truthCredibility")
+            if (truth.getString("kind") == "projected") {
+                val currentValue = truth.getJSONObject("value")
+                truth.put(
+                    "value",
+                    JSONObject().apply {
+                        put(
+                            "truthDangerReasonCodes",
+                            currentValue.getJSONArray("truthDangerReasonCodes"),
+                        )
+                        put(
+                            "credibilityDisruptionReasonCodes",
+                            currentValue.getJSONArray("credibilityDisruptionReasonCodes"),
+                        )
+                    },
+                )
+            }
         }
+
+        val decoded = DecisionTraceArchiveJsonCodec.decode(current.toString())
+        val migrated = decoded.traces.single()
+        assertEquals(DecisionTrace.CURRENT_SCHEMA_VERSION, migrated.schemaVersion)
+        val migratedFeatures =
+            (migrated.featureEvaluation as DecisionFeatureEvaluation.Ready)
+                .candidates
+                .first()
+                .features
+                .truthCredibility as FeatureProjection.Projected
+        assertFalse(migratedFeatures.value.hasTypedMaterial)
+        assertEquals(setOf("truth-danger"), migratedFeatures.value.truthDangerReasonCodes)
+        assertEquals(
+            setOf("credibility-disruption"),
+            migratedFeatures.value.credibilityDisruptionReasonCodes,
+        )
+
+        val reencoded = JSONObject(DecisionTraceArchiveJsonCodec.encode(decoded))
+        assertEquals(
+            DecisionTrace.CURRENT_SCHEMA_VERSION,
+            reencoded.getJSONArray("traces").getJSONObject(0).getInt("schemaVersion"),
+        )
     }
 
     @Test

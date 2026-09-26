@@ -89,9 +89,9 @@ internal data class TruthCredibilityCandidateEvidence(
 /**
  * Typed, role-agnostic truth-danger / credibility-disruption feature surface.
  *
- * The legacy reason-code sets remain only for DecisionTrace schema-v1 compatibility. New C4
- * projection must use the typed fields. The v1 codec rejects non-empty typed fields rather than
- * silently dropping provenance; trace schema evolution is a separate C4 integration step.
+ * The legacy reason-code sets remain only for DecisionTrace schema-v1 read compatibility. New C4
+ * projection and schema-v2 persistence use the typed fields; legacy reads migrate into the current
+ * in-memory trace schema without inventing typed provenance.
  */
 internal data class TruthCredibilityFeatures(
     val truthDangerSources: Set<TruthDangerSourceImpact> = emptySet(),
