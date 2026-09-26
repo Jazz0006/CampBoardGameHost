@@ -78,6 +78,47 @@ class DecisionTraceArchivePersistenceTest {
     }
 
     @Test
+    fun `schema v1 codec rejects typed truth credibility material instead of dropping it`() {
+        val trace = readyTrace()
+        val ready = trace.featureEvaluation as DecisionFeatureEvaluation.Ready
+        val source = ConfirmationChannelRef.Source(
+            sourceSeat = 1,
+            sourceAbility = RoleId("Chef"),
+        )
+        val typed = ready.candidates.mapIndexed { index, candidate ->
+            if (index != 0) {
+                candidate
+            } else {
+                candidate.copy(
+                    features = candidate.features.copy(
+                        truthCredibility = FeatureProjection.Projected(
+                            TruthCredibilityFeatures(
+                                truthDangerSources = setOf(
+                                    TruthDangerSourceImpact(
+                                        source = source,
+                                        exactWorldReduction = BigInteger.ONE,
+                                        strategicWorldKeysRemoved = emptySet(),
+                                        demonSeatsRemoved = emptySet(),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            }
+        }
+        val typedTrace = trace.copy(
+            featureEvaluation = DecisionFeatureEvaluation.Ready(typed),
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            DecisionTraceArchiveJsonCodec.encode(
+                DecisionTraceArchive().append(typedTrace),
+            )
+        }
+    }
+
+    @Test
     fun `codec rejects non canonical prefixes and duplicate archive keys`() {
         val encoded = DecisionTraceArchiveJsonCodec.encode(
             DecisionTraceArchive().append(readyTrace()),
