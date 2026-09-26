@@ -437,7 +437,18 @@ Latest acceptance evidence:
 
 The validation-only branch briefly contained one malformed large-file sync commit whose codec text included display line-number prefixes; Android compile rejected it. The next validation commit restored the exact clean source and passed the full gate. This was a transport/synchronization defect, not an accepted code state and not part of the formal branch.
 
-The next C4 gate is a bounded **production fanout / integration-closure audit**. Determine which currently reachable production shadow/replay paths must populate `truthCredibility`, add only the minimum wiring and fanout regressions, and keep `BEGINNER_CONSERVATIVE_V1` policy-neutral. No placeholder V2 is authorized.
+The bounded production fanout audit is now complete for the setup-precommit lifecycle:
+
+- `StructuredInformationShadowAdapter` remains interaction-only; Red Herring is not forced through that boundary.
+- `ClocktowerRecommendationCoordinator.evaluateSetupRedHerringShadow` mirrors the existing Demon-bluff setup-shadow ownership pattern and is the narrow production seam for C4 setup-precommit diagnostics.
+- The seam consumes `RedHerringSetupPrecommitAdapter` output, evaluates rule-determined healthy sources exactly once, and projects the resulting truth-danger impacts plus candidate-specific credibility disruptions into `DecisionFeatureEvaluation`.
+- The exact existing `SetupRecommendationService.ConstrainedResult` is retained by identity; SDE cannot rewrite legacy plans, scores, selection, setup commitment or presentation.
+- Visible legacy Red-Herring targets are correlated back to setup-owned legal candidate IDs and must be present in the SDE diagnostic domain.
+- The App setup-prewarm path is intentionally not synchronously wired to exact C4 evaluation because it currently receives only `SetupCoordinationRequest` and adding an exact-evaluation dependency there would alter a latency/cutover boundary rather than remain a bounded diagnostic seam.
+- Validation exact head `c9835a7dfdfe04e65e7b934784cbc91e1a0f9fd0` passed CI #3471 and R2 #3224, including Android FULL, ASP contracts, Real Clingo and final CI gate.
+- Formal fanout code checkpoint: `77369a893bb457c8720df00b907e50a4e2550a45`.
+
+One ownership gap remains explicit before C4 can be treated as fully closed: the App already commits and persists the selected Red Herring externally, but no production caller yet binds that existing commitment into `SdeDecisionInputBindings` as `SdeCommittedDecisionInputKind.RED_HERRING`. The next audit must establish a typed, non-parsing correlation seam to the precommit `CommittedDecisionInputRef` without copying the setup state or fabricating interaction-stage consumers.
 
 ## 11. C4 audit conclusion
 

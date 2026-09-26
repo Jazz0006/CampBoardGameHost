@@ -121,18 +121,29 @@ C4 implementation checkpoint:
 - Formal branch schema/invariance checkpoint: `5e563b377df8988cca805d8e34aef7e5823e209f`.
 - Earlier formal C4 implementation checkpoint: `d39b336145b19ba29690a5b2dd14ed38273a6cc5`.
 
+Production fanout checkpoint:
+
+- `ClocktowerRecommendationCoordinator.evaluateSetupRedHerringShadow` is now the narrow setup-precommit production seam.
+- It returns the exact existing visible setup result object unchanged.
+- `SetupCandidateGenerator` remains the Red-Herring legality owner.
+- `ExactTruthDangerSourceProjector` supplies rule-determined healthy-source consequence; unresolved Storyteller-controlled sources remain explicit.
+- The shadow populates typed `truthCredibility` per legal Red-Herring candidate and maps any already-visible legacy choices back to the same legal candidate IDs.
+- The App setup prewarm path is intentionally not auto-wired to this exact shadow: that path currently has no exact-context input, and adding synchronous exact evaluation there would broaden latency/cutover behavior rather than remain diagnostic-only.
+- Validation-only Draft PR #158 exact head `c9835a7dfdfe04e65e7b934784cbc91e1a0f9fd0` passed CI #3471 + R2 #3224 with Android FULL, ASP, Real Clingo and final gate SUCCESS.
+- Formal fanout code checkpoint: `77369a893bb457c8720df00b907e50a4e2550a45`.
+
 Next executable order:
 
 ```text
 preserve dirty Oracle working tree
 -> keep #154, #156 and #158 Draft / unmerged
--> audit actual production caller fanout for truthCredibility / setup-precommit Red Herring
--> identify the minimum wiring needed to populate the typed feature in reachable production shadow/replay paths
--> add fanout/integration regressions while keeping BEGINNER_CONSERVATIVE_V1 policy-neutral
--> rerun exact-head FULL CI/R2 before declaring C4 production integration complete
+-> audit the existing App-owned committed Red-Herring value against SdeCommittedDecisionInputKind.RED_HERRING
+-> define a typed, non-parsing binding/correlation seam from the external commitment to the existing proposed CommittedDecisionInputRef
+-> prove no new state owner and no player-controlled Fortune Teller hindsight
+-> only wire interaction/runtime consumers if a real current consumer exists; otherwise keep the boundary explicit instead of inventing dead plumbing
 ```
 
-Do not claim CI #3470 or R2 #3223 ran directly on formal commit `5e563b37`; those checks ran on blob-equivalent validation head `1299fba4`. The GitHub tree/commit/ref fallback remains the safe persistence path while the Oracle working tree cannot be cleanly fast-forwarded.
+Do not claim CI #3471 or R2 #3224 ran directly on formal commit `77369a89`; those checks ran on the blob-equivalent validation head `c9835a7d`. The GitHub tree/commit/ref fallback remains the safe persistence path while the Oracle working tree cannot be cleanly fast-forwarded.
 
 ## 4. Why SDE-3 may proceed now
 
