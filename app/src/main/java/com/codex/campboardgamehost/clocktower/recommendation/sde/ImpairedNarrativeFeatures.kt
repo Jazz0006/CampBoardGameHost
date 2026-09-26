@@ -79,6 +79,7 @@ internal data class ImpairedNarrativeCandidateEvidence(
     val abilityState: AbilityState,
     val impairmentLifetime: ImpairmentLifetime?,
     val priorImpairedObservationIds: Set<String>,
+    val unavailableReason: FeatureUnavailableReason? = null,
     /**
      * Confirmation/contradiction evidence in the recipient's source-scoped perceived-functioning
      * narrative. This must not be the ordinary mechanically-credible confirmation projection:
@@ -175,6 +176,9 @@ internal object ImpairedNarrativeFeaturesProjector {
     private fun provisional(
         evidence: ImpairedNarrativeCandidateEvidence,
     ): FeatureProjection<ImpairedNarrativeFeatures> {
+        evidence.unavailableReason?.let { reason ->
+            return FeatureProjection.Unavailable(reason)
+        }
         if (evidence.abilityState == AbilityState.FUNCTIONING) {
             return FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_APPLICABLE)
         }
