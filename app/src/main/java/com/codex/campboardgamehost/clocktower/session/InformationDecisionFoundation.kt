@@ -30,6 +30,23 @@ internal data class InformationDecisionRevision(
     }
 }
 
+/**
+ * Typed identity boundary for one information-decision request.
+ *
+ * [gameId] binds the request to the canonical game/session. [requestId] is the existing stable
+ * semantic decision identity used for UI/trace correlation; callers must never parse it to recover
+ * the game identity.
+ */
+internal data class InformationDecisionRequestIdentity(
+    val gameId: String,
+    val requestId: String,
+) {
+    init {
+        require(gameId.isNotBlank()) { "Information decision game ID cannot be blank." }
+        require(requestId.isNotBlank()) { "Information decision request ID cannot be blank." }
+    }
+}
+
 internal enum class InformationDecisionHardBlockReason {
     STALE_CONTEXT,
     ILLEGAL_CANDIDATE,
@@ -46,13 +63,15 @@ internal data class InformationDecisionWarning(
 
 /** Immutable identity of the validated candidate space that produced a confirmation. */
 internal data class InformationDecisionSnapshot(
-    val semanticIdentity: String,
+    val requestIdentity: InformationDecisionRequestIdentity,
     val revision: InformationDecisionRevision,
     val legalCandidateIds: List<String>,
     val recommendedCandidateIds: Set<String>,
 ) {
+    val semanticIdentity: String get() = requestIdentity.requestId
+    val gameId: String get() = requestIdentity.gameId
+
     init {
-        require(semanticIdentity.isNotBlank()) { "Information decision snapshot identity cannot be blank." }
         require(legalCandidateIds.isNotEmpty()) { "Information decision snapshot requires legal candidates." }
         require(recommendedCandidateIds.all(legalCandidateIds::contains)) {
             "Snapshot recommendations must belong to the snapshot legal candidates."
@@ -106,15 +125,16 @@ internal data class InformationDecisionConfirmation(
  * role-shape evidence before an unbound [EpistemicObservationDraft] can be obtained.
  */
 internal class InformationDecisionContext<T : DynamicInformationOutcome> private constructor(
-    val semanticIdentity: String,
+    val requestIdentity: InformationDecisionRequestIdentity,
     val revision: InformationDecisionRevision,
     val legalCandidates: List<InformationDecisionCandidate<T>>,
     val recommendedCandidateIds: Set<String>,
 ) {
+    val semanticIdentity: String get() = requestIdentity.requestId
+    val gameId: String get() = requestIdentity.gameId
     private val candidatesById = legalCandidates.associateBy { it.candidateId }
 
     init {
-        require(semanticIdentity.isNotBlank()) { "semanticIdentity cannot be blank." }
         require(legalCandidates.isNotEmpty()) { "Information decision requires at least one legal candidate." }
         require(candidatesById.size == legalCandidates.size) { "Information candidate IDs must be unique." }
         require(recommendedCandidateIds.all(candidatesById::containsKey)) {
@@ -123,7 +143,7 @@ internal class InformationDecisionContext<T : DynamicInformationOutcome> private
     }
 
     val snapshot: InformationDecisionSnapshot = InformationDecisionSnapshot(
-        semanticIdentity = semanticIdentity,
+        requestIdentity = requestIdentity,
         revision = revision,
         legalCandidateIds = legalCandidates.map(InformationDecisionCandidate<T>::candidateId),
         recommendedCandidateIds = recommendedCandidateIds,
@@ -190,7 +210,7 @@ internal class InformationDecisionContext<T : DynamicInformationOutcome> private
             evaluations: List<DecisionEvaluation<T>>,
             recommendedCandidateIds: Set<String>,
             revision: InformationDecisionRevision,
-            semanticIdentity: String = defaultSemanticIdentity(evaluations, revision),
+            requestIdentity: InformationDecisionRequestIdentity,
             draftOf: (DecisionEvaluation<T>) -> EpistemicObservationDraft,
         ): InformationDecisionContext<T> {
             require(evaluations.isNotEmpty()) { "Information decision evaluations cannot be empty." }
@@ -208,23 +228,11 @@ internal class InformationDecisionContext<T : DynamicInformationOutcome> private
                 }
 
             return InformationDecisionContext(
-                semanticIdentity = semanticIdentity,
+                requestIdentity = requestIdentity,
                 revision = revision,
                 legalCandidates = legal,
                 recommendedCandidateIds = recommendedCandidateIds,
             )
-        }
-
-        private fun <T : DynamicInformationOutcome> defaultSemanticIdentity(
-            evaluations: List<DecisionEvaluation<T>>,
-            revision: InformationDecisionRevision,
-        ): String = buildString {
-            append("information-decision|")
-            append(revision.gameStateRevision)
-            append('|')
-            append(revision.playerInputRevision)
-            append('|')
-            append(evaluations.map { it.candidate.candidateId }.sorted().joinToString(","))
         }
 
         private fun isValidatedLegalInformationCandidate(

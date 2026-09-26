@@ -6,7 +6,7 @@
 > Continuation branch: `sde-3a-feature-projection-shadow-pipeline`  
 > Continuation PR: #152 (draft)
 > Base: live `main` at `c5b6e4d6f1dec8a68e7df3e8989e3b47425c080f`
-> Status: SDE-3A architecture, score-free contract, structured feature-projection proof, T4 acceptance, and final fanout audit complete on draft PR #152; pending merge
+> Status: **HISTORICAL COMPLETION AUDIT — SDE-3A COMPLETE; PR #151/#152 MERGED. Current execution authority is `CURRENT_DEVELOPMENT_ROADMAP.md` / `NEXT_DEVELOPMENT_HANDOFF.md`.**
 
 ## 1. Boundary correction
 
@@ -15,11 +15,11 @@ SDE-2D5 is merged. Evidence collection no longer blocks SDE-3A/B/C.
 The current route is:
 
 ```text
-SDE-3A engine / feature / policy contract
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy
-SDE-3C shadow recommendation / DecisionTrace / replay
-SDE-3D calibrated policy freeze                 BLOCKED ON EVIDENCE
-SDE-3E automatic production cutover             BLOCKED ON 3D
+SDE-3A engine / feature / policy contract          COMPLETE
+SDE-3B BEGINNER_CONSERVATIVE_V1 policy           COMPLETE / V1 FROZEN
+SDE-3C shadow / DecisionTrace / replay            COMPLETE
+SDE-3D calibrated policy freeze                   IN PROGRESS / SURFACE-SCOPED
+SDE-3E automatic production cutover               BLOCKED PER SURFACE
 ```
 
 Older statements that PR #150 is still draft or that all of SDE-3 is blocked are historical drift and are not authority for this branch.

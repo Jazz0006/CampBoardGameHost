@@ -2,7 +2,7 @@
 
 > Date: 2026-09-23 Australia/Sydney  
 > Branch: `sde-3b-beginner-conservative-v1`  
-> Status: architecture / policy pre-flight before SDE-3B production-contract changes
+> Status: **HISTORICAL POLICY PRE-FLIGHT — SDE-3B COMPLETE / V1 NOW FROZEN BY SDE-3D1; not current execution authority**
 
 ## 1. Baseline
 

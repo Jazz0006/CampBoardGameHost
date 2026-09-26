@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT ARCHITECTURE / PRODUCT ROUTE**  
 > Current D5F policy authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
-> Current implementation entry: **SDE-3A provisional engine / feature / policy contract**  
+> Current implementation entry: **Integration C0–C3 complete at `8855d461` / full CI #3451 successful; SDE-3D2 audit next**, per [closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md). R2/base integration remains pending.
 > Supersedes as execution authority: first-night-only EPI-MQ routes, earlier productive-uncertainty scoring plans, and the older revision-driven dynamic-decision implementation plan.
 
 ## 1. Product target
@@ -248,7 +248,7 @@ Registration is **per interaction**, never a persistent global boolean or canoni
 
 Rules own the complete legal registration domain for the current interaction.
 
-BEGINNER policy applies a thematic default:
+The BEGINNER design hypothesis proposes a thematic default (not an implemented frozen V1 preference):
 
 ~~~text
 Spy
@@ -264,9 +264,9 @@ The thematic default is a strong prior. Override it only when the default materi
 
 Role-function exposure is separately relevant:
 
-- avoid Librarian -> Recluse when a healthy alternative exists;
-- strongly avoid Investigator -> Spy when a healthy alternative exists;
-- accept either when rules force the outcome.
+- Librarian -> Recluse and Investigator -> Spy are motivating diagnostic examples, not authorized named-role avoidance rules;
+- generic role-function exposure is descriptive; avoidance severity remains below the E3 policy gate;
+- forced legal outcomes remain legal. Frozen V1 does not rank by exposure.
 
 If poison/drunkenness disables special registration at the interaction point, effective-state legality removes the special candidate.
 
@@ -331,7 +331,7 @@ Shared Storyteller policy/history answers:
 
 > Which legal outcome is appropriate for this state, phase, skill profile, accumulated public information and previously established impaired narrative?
 
-For repeated or history-dependent impaired information, maintain one persistent role-agnostic narrative state representing the believable world already communicated to the affected player.
+For repeated or history-dependent impaired information, derive one role-agnostic narrative projection from canonical setup/action/observation history. It represents the believable world already communicated, not a second mutable or independently persisted truth store.
 
 Examples may include recurring numeric checks, repeated boolean/target checks, later-event role identification, pair/categorical information and future-script abilities. These examples are non-exhaustive and must not produce separate policy algorithms.
 
@@ -488,9 +488,9 @@ Keep expensive corpus/reconstruction work outside ordinary FAST regression.
 - role-information utility remains distinct from strategic pressure;
 - whole-bundle / whole-history interaction matters;
 - Spy/Recluse registration is per interaction;
-- BEGINNER registration policy has a thematic strong prior: Spy normally hides as Good and Recluse normally registers as Evil, with material whole-bundle override;
+- BEGINNER thematic registration is a future evidence-gated design hypothesis, not a frozen V1 preference: Spy hiding as Good / Recluse registering as Evil and contextual overrides must not become named-role ranking shortcuts;
 - Poisoner can invalidate uncommitted decisions;
-- repeated/history-dependent impaired information uses shared persistent narrative state rather than named-role policy branches;
+- repeated/history-dependent impaired information uses a shared derived narrative projection over canonical history rather than named-role policy branches or a second mutable state;
 - Drunk shown role is persistent while the unshown clue is a whole-bundle output;
 - uncommitted Demon bluff triplets are SDE outputs; committed bluff triplets are persistent later inputs;
 - Demon bluff legality remains setup-owned;
@@ -558,16 +558,16 @@ Authority:
 Split:
 
 ~~~text
-SDE-3A engine / feature / policy contract                  CURRENT
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       NEXT
-SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
-SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
-SDE-3E automatic production cutover                         BLOCKED ON 3D
+SDE-3A engine / feature / policy contract                  COMPLETE / PR #151/#152
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / PR #153 MERGED
+SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0–3C5
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 NEXT
+SDE-3E automatic production cutover                         BLOCKED PER DECISION SURFACE
 ~~~
 
-SDE-3A/B/C may proceed while ClocktowerEvidenceLab continues targeted source collection.
+ClocktowerEvidenceLab continues targeted source collection in parallel. SDE-3D is only partially evidence-blocked: evidence gaps block the specific policy semantics they govern rather than the entire engineering phase.
 
-The first usable policy should be conservative, versioned and explainable. It may use hard boundaries plus interpretable soft priorities, but it must not invent unsupported scalar weights merely to manufacture precision.
+`BEGINNER_CONSERVATIVE_V1` is now an immutable provisional baseline. A new policy version is required for any later candidate rejection, preference or survivor-refinement semantic. The first usable production policy should remain conservative, versioned and explainable; it may use hard boundaries plus evidence-backed partial ordering, but it must not invent unsupported scalar weights merely to manufacture precision.
 
 The long-term engine separates:
 
@@ -622,7 +622,7 @@ Read:
 6. this route as architecture background;
 7. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`;
 8. query live branch / PR / checks;
-9. continue SDE-3A from the handoff.
+9. continue integration closure from the handoff; SDE-3A is complete. Use local Codex tools for the current user-authorized continuation.
 
 Do not resume broad evidence collection in the app repo. Targeted source acquisition belongs to the external evidence pipeline.
 

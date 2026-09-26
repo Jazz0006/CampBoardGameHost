@@ -11,6 +11,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGene
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.StructuredBooleanInformationUiModel
@@ -88,7 +89,10 @@ internal fun prepareBooleanInformationUiModel(
         evaluations = evaluations,
         recommendedCandidateIds = recommendedIds,
         revision = revision,
-        semanticIdentity = "boolean|${abilityRole.value}|$gameId|${phase.name}|$round|$sequence|$actorSeat|${metric.name}|${subjectSeats.joinToString(",")}",
+        requestIdentity = InformationDecisionRequestIdentity(
+            gameId = gameId,
+            requestId = "boolean|${abilityRole.value}|$gameId|${phase.name}|$round|$sequence|$actorSeat|${metric.name}|${subjectSeats.joinToString(",")}",
+        ),
         draftOf = { evaluation ->
             val value = when (evaluation.candidate.outcome.id) {
                 "yes" -> true

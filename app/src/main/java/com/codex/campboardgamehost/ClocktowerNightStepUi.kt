@@ -33,6 +33,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
+import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 
 @Composable
@@ -78,6 +79,7 @@ internal fun ClocktowerNightStepCardLocalized(
     onSelectChambermaidFirst: (String) -> Unit,
     onSelectChambermaidSecond: (String) -> Unit,
     onApplyRecommendedDisplayOption: (ClocktowerDisplayOption) -> Unit,
+    onStructuredNumberDecisionPrepared: suspend (StructuredNumberInformationUiModel) -> Unit,
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
@@ -315,6 +317,9 @@ internal fun ClocktowerNightStepCardLocalized(
     )
     val numericPreparation = clocktowerNumericInformationPreparation(step, structuredActorSeat, structuredRecommendedOption)
     val structuredNumberUiModel = numericPreparation?.prepareUiModel(recommendationCoordinator, informationIdentity, structuredStyle)
+    LaunchedEffect(structuredNumberUiModel?.semanticStateKey) {
+        structuredNumberUiModel?.let { onStructuredNumberDecisionPrepared(it) }
+    }
     fun structuredEmpathSelectionIsTruthful(value: Int): Boolean =
         numericPreparation?.isTruthful(value, projectedFirstNightInformationCandidates) ?: false
     val chefPlayers = cards.toClocktowerPlayerStates(poisonedPlayerName = null)
