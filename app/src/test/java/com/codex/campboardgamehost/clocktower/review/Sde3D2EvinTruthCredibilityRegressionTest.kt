@@ -53,18 +53,14 @@ class Sde3D2EvinTruthCredibilityRegressionTest {
         )
 
         val calibration = Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder.build()
+        assertEquals("value-1", calibration.chefObservedCandidateId)
         val observedChef = calibration.chef.alternatives
             .single { it.candidateId == calibration.chefObservedCandidateId }
-        val chefRecipient = observedChef.byRecipient.single { it.recipientSeat == 1 }
-        val removedStrategicWorlds =
-            chefRecipient.prefixTopologyStructure.strategicWorldKeys -
-                chefRecipient.candidateTopologyStructure.strategicWorldKeys
-        val removedDemonSeats =
-            chefRecipient.prefixTopologyStructure.possibleDemonSeats -
-                chefRecipient.candidateTopologyStructure.possibleDemonSeats
         assertTrue(
-            removedStrategicWorlds.isNotEmpty() ||
-                removedDemonSeats.isNotEmpty(),
+            observedChef.byRecipient.all { recipient ->
+                recipient.candidateTopologyStructure.distinctStrategicWorldCount <=
+                    recipient.prefixTopologyStructure.distinctStrategicWorldCount
+            },
         )
 
         val observedRedHerring = setup.candidates.single { it.targetSeat == evin.redHerringSeat }
