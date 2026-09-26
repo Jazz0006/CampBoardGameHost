@@ -45,13 +45,16 @@ internal object SdeHistoricalReplayInputJsonCodec {
         require(schemaVersion == SdeHistoricalReplayInput.CURRENT_SCHEMA_VERSION) {
             "Unsupported SDE historical replay input version $schemaVersion."
         }
+        val actionTimelineJson = root.requiredArray("actionTimeline")
+        validateActionTimeline(actionTimelineJson)
         val actionTimeline = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(
             JSONObject().put(
                 ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
-                root.requiredArray("actionTimeline"),
+                actionTimelineJson,
             ),
         )
         val observations = root.requiredArray("observations").mapObjects("observations") { value ->
+            validateRecordedObservation(value)
             EpistemicSemanticJson.decodeRecordedEpistemicObservation(value.toString())
         }
         return SdeHistoricalReplayMaterialization(
@@ -137,6 +140,189 @@ internal object SdeHistoricalReplayInputJsonCodec {
         )
     }
 
+    /**
+     * Replay-specific strict validation. The shared persistence/epistemic decoders intentionally
+     * retain compatibility behavior for older save surfaces, so SDE durable replay validates its
+     * complete nested wire shape and primitive types before delegating semantic decoding to them.
+     */
+    private fun validateActionTimeline(timeline: JSONArray) {
+        timeline.mapObjects("actionTimeline") { entry ->
+            entry.requireExactKeys(setOf("fact", "point"), "actionTimeline entry")
+            validateActionFact(entry.requiredObject("fact"))
+            validateTimelinePoint(entry.requiredObject("point"), "actionTimeline point")
+        }
+    }
+
+    private fun validateActionFact(fact: JSONObject) {
+        val kind = fact.requiredString("kind")
+        val expectedKeys = when (kind) {
+            "poison", "protect", "attack", "execution", "death" ->
+                setOf("actionId", "sequence", "kind", "targetSeat")
+            "role-change" ->
+                setOf("actionId", "sequence", "kind", "targetSeat", "role", "alignment", "type")
+            "phase-advance" ->
+                setOf("actionId", "sequence", "kind", "phase", "round")
+            else -> throw IllegalArgumentException("Unknown action fact kind '$kind'.")
+        }
+        fact.requireExactKeys(expectedKeys, "action fact '$kind'")
+        fact.requiredString("actionId")
+        fact.requiredLong("sequence")
+        when (kind) {
+            "poison" -> fact.requiredNullableInt("targetSeat")
+            "protect", "attack", "execution", "death" -> fact.requiredInt("targetSeat")
+            "role-change" -> {
+                fact.requiredInt("targetSeat")
+                fact.requiredString("role")
+                fact.requiredString("alignment")
+                fact.requiredString("type")
+            }
+            "phase-advance" -> {
+                fact.requiredString("phase")
+                fact.requiredInt("round")
+            }
+        }
+    }
+
+    private fun validateRecordedObservation(observation: JSONObject) {
+        observation.requireExactKeys(
+            setOf(
+                "recordId", "phase", "round", "sequence", "sourceSeat", "sourceAbility",
+                "visibility", "recipientSeats", "reliability", "proposition", "schemaVersion",
+                "timelineBinding",
+            ),
+            "recorded observation",
+        )
+        observation.requiredString("recordId")
+        observation.requiredString("phase")
+        observation.requiredInt("round")
+        observation.requiredInt("sequence")
+        observation.requiredNullableInt("sourceSeat")
+        observation.requiredNullableString("sourceAbility")
+        observation.requiredString("visibility")
+        observation.requiredArray("recipientSeats").requireIntegers("recipientSeats")
+        observation.requiredString("reliability")
+        observation.requiredInt("schemaVersion")
+        validateProposition(observation.requiredObject("proposition"), "proposition")
+
+        val binding = observation.requiredObject("timelineBinding")
+        binding.requireExactKeys(setOf("kind", "point"), "observation timelineBinding")
+        require(binding.requiredString("kind") == "global") {
+            "Replay observations require a global timeline binding."
+        }
+        validateTimelinePoint(binding.requiredObject("point"), "observation timeline point")
+    }
+
+    private fun validateTimelinePoint(point: JSONObject, owner: String) {
+        point.requireExactKeys(setOf("phase", "round", "sequence", "globalSequence"), owner)
+        point.requiredString("phase")
+        point.requiredInt("round")
+        point.requiredInt("sequence")
+        point.requiredLong("globalSequence")
+    }
+
+    private fun validateProposition(proposition: JSONObject, owner: String) {
+        val kind = proposition.requiredString("kind")
+        val expectedKeys = when (kind) {
+            "role-at", "shown-role-at" -> setOf("kind", "role", "seat")
+            "alignment-at" -> setOf("alignment", "kind", "seat")
+            "character-type-at" -> setOf("characterType", "kind", "seat")
+            "alive-at" -> setOf("alive", "kind", "seat")
+            "ability-state-at" -> setOf("abilityRole", "abilityState", "kind", "seat")
+            "role-in-play" -> setOf("inPlay", "kind", "role")
+            "player-count" -> setOf("kind", "value")
+            "setup-profile" -> setOf("demons", "kind", "minions", "outsiders", "townsfolk")
+            "any-of" -> setOf("alternatives", "kind")
+            "all-of" -> setOf("kind", "propositions")
+            "not" -> setOf("kind", "proposition")
+            "numeric-result" -> setOf("kind", "metric", "sourceSeat", "subjectSeats", "value")
+            "boolean-result" -> setOf("kind", "metric", "sourceSeat", "subjectSeats", "value")
+            "grimoire-state" -> if (proposition.has("truthBinding")) {
+                setOf("kind", "seats", "truthBinding")
+            } else {
+                setOf("kind", "seats")
+            }
+            else -> throw IllegalArgumentException("Unknown InformationProposition kind '$kind'.")
+        }
+        proposition.requireExactKeys(expectedKeys, "$owner '$kind'")
+
+        when (kind) {
+            "role-at", "shown-role-at" -> {
+                proposition.requiredString("role")
+                proposition.requiredInt("seat")
+            }
+            "alignment-at" -> {
+                proposition.requiredString("alignment")
+                proposition.requiredInt("seat")
+            }
+            "character-type-at" -> {
+                proposition.requiredString("characterType")
+                proposition.requiredInt("seat")
+            }
+            "alive-at" -> {
+                proposition.requiredBoolean("alive")
+                proposition.requiredInt("seat")
+            }
+            "ability-state-at" -> {
+                proposition.requiredString("abilityRole")
+                proposition.requiredString("abilityState")
+                proposition.requiredInt("seat")
+            }
+            "role-in-play" -> {
+                proposition.requiredBoolean("inPlay")
+                proposition.requiredString("role")
+            }
+            "player-count" -> proposition.requiredInt("value")
+            "setup-profile" -> {
+                proposition.requiredInt("townsfolk")
+                proposition.requiredInt("outsiders")
+                proposition.requiredInt("minions")
+                proposition.requiredInt("demons")
+            }
+            "any-of" -> proposition.requiredArray("alternatives").mapObjects("$owner.alternatives") {
+                validateProposition(it, "$owner.alternatives")
+            }
+            "all-of" -> proposition.requiredArray("propositions").mapObjects("$owner.propositions") {
+                validateProposition(it, "$owner.propositions")
+            }
+            "not" -> validateProposition(proposition.requiredObject("proposition"), "$owner.not")
+            "numeric-result" -> {
+                proposition.requiredString("metric")
+                proposition.requiredInt("sourceSeat")
+                proposition.requiredArray("subjectSeats").requireIntegers("$owner.subjectSeats")
+                proposition.requiredInt("value")
+            }
+            "boolean-result" -> {
+                proposition.requiredString("metric")
+                proposition.requiredInt("sourceSeat")
+                proposition.requiredArray("subjectSeats").requireIntegers("$owner.subjectSeats")
+                proposition.requiredBoolean("value")
+            }
+            "grimoire-state" -> {
+                if (proposition.has("truthBinding")) proposition.requiredString("truthBinding")
+                proposition.requiredArray("seats").mapObjects("$owner.seats") { seat ->
+                    validateGrimoireSeat(seat)
+                }
+            }
+        }
+    }
+
+    private fun validateGrimoireSeat(seat: JSONObject) {
+        seat.requireExactKeys(
+            setOf("alive", "displayedRole", "ruleReminderTokens", "seat"),
+            "grimoire seat",
+        )
+        seat.requiredBoolean("alive")
+        seat.requiredString("displayedRole")
+        seat.requiredInt("seat")
+        seat.requiredArray("ruleReminderTokens").mapObjects("grimoire ruleReminderTokens") { token ->
+            token.requireExactKeys(setOf("label", "occurrence", "scope", "sourceRole"), "grimoire token")
+            token.requiredString("label")
+            token.requiredInt("occurrence")
+            token.requiredString("scope")
+            token.requiredString("sourceRole")
+        }
+    }
+
     private fun JSONObject.requireExactKeys(expected: Set<String>, owner: String) {
         val actual = keys().asSequence().toSet()
         require(actual == expected) {
@@ -163,6 +349,17 @@ internal object SdeHistoricalReplayInputJsonCodec {
         return requiredString(key)
     }
 
+    private fun JSONObject.requiredBoolean(key: String): Boolean {
+        require(has(key) && !isNull(key)) { "$key is required." }
+        return opt(key) as? Boolean ?: throw IllegalArgumentException("$key must be a boolean.")
+    }
+
+    private fun JSONObject.requiredNullableInt(key: String): Int? {
+        require(has(key)) { "$key is required." }
+        if (isNull(key)) return null
+        return requiredInt(key)
+    }
+
     private fun JSONObject.requiredInt(key: String): Int {
         val value = requiredLong(key)
         require(value in Int.MIN_VALUE..Int.MAX_VALUE) { "$key is outside Int range." }
@@ -180,6 +377,15 @@ internal object SdeHistoricalReplayInputJsonCodec {
         val value = requiredString(key)
         return enumValues<T>().firstOrNull { it.name == value }
             ?: throw IllegalArgumentException("Unknown $key '$value'.")
+    }
+
+    private fun JSONArray.requireIntegers(owner: String) {
+        for (index in 0 until length()) {
+            val value = opt(index)
+            require(value is Byte || value is Short || value is Int || value is Long) {
+                "$owner[$index] must be an integer."
+            }
+        }
     }
 
     private fun JSONArray.mapStrings(owner: String): List<String> = buildList {
