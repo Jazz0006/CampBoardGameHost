@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-25 Australia/Sydney  
+> Updated: 2026-09-26 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -36,31 +36,33 @@ D5F-C final gate/band derivation                      BLOCKED ON EVIDENCE
 sealed holdout                                        CLOSED
 SDE-3A engine / feature / policy contract             COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1                       COMPLETE / T4 ACCEPTED / PR #153 MERGED
-SDE-3C shadow / DecisionTrace / replay                 COMPLETE / 3C0–3C5
-SDE-3D calibrated policy freeze                       IN PROGRESS / 3D0–3D1 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
+SDE-3C shadow / DecisionTrace / replay                 COMPLETE / 3C0–3C5 HISTORICAL CHECKPOINT
+Post-audit correctness repair                         CR-A/CR-B/CR-C COMPLETE / COMBINED ACCEPTANCE GREEN
+SDE-3D calibrated policy freeze                       IN PROGRESS / 3D0–3D1 COMPLETE / C4 AUDIT COMPLETE / EDITS AFTER REPAIR
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
 ## 2. Current branch / PR
 
-Local continuation: `codex/sde-history-prefix-route-closure`; C0–C3 code checkpoint `8855d4615a4c24a4c3141241f360cfe70d8d239e` is pushed both to this remote branch and the Draft PR #154 head `sde-3c-decision-trace-shadow-replay`. This is not `main`. The audited `main` remains `cc5adee5`; the development/main merge conflict in `AGENTS.md` remains a separate, unauthorized integration action.
+Local continuation: `codex/sde-history-prefix-route-closure`; accepted C0–C3 production code checkpoint remains `8855d4615a4c24a4c3141241f360cfe70d8d239e`. The later audit-artifact branch checkpoint is `07563657b510a3ca027e163831dc8e60bbc0243a`; it does not represent a production fix. This is not `main`. The audited `main` remains `cc5adee5`; the development/main merge conflict remains a separate, unauthorized integration action.
 
-### Current priority: integration closure before 3D2
+### Current priority: persist accepted correctness repair, then begin 3D2/C4 production implementation
 
-Follow [SDE integration closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md): C0 correlation/route closure → C1 durable replay input → C2 offline vertical slice → C3 measured runtime shadow (**C0–C3 complete at `8855d461`**) → C4 resume 3D2 (**next**) → C5 evidence-backed policy/cutover.
+The C0–C3 historical integration checkpoint remains accepted at `8855d461`. The three defects discovered by the 2026-09-25 audit have now been repaired and accepted: **CR-A impaired-narrative semantic correctness, CR-B typed game/request identity binding, and CR-C strict nested replay decoding are COMPLETE**. Validation-only Draft PR #156 exact head `4245ddb8c12782775a6b4c237f5dd7f0f1ce92c0` passed CI #3459 and R2 #3212 with Android FULL `:app:testFull :app:assembleDebug`, ASP contracts, Real Clingo cross-validation and final CI gate all GREEN. One malformed Fortune Teller regression fixture was exposed by the full gate and corrected to a Red-Herring-specific conflict without changing production projector semantics. This checkpoint is now being persisted directly to the formal development branch through a GitHub tree/commit/ref fast-forward fallback because Mini MCP `git_state` cannot hash the large dirty worktree within its 131072-byte output bound; the Oracle working tree is intentionally not reset or overwritten. The C4 architecture/evidence/fanout audit is already complete in [SDE-3D2 truth/credibility + Red Herring audit](SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md), so C4 production implementation is the next engineering slice after this remote persistence checkpoint. IF-D durable App replay capture/rebuild and RH-E serialized diagnostic persistence/timing remain required follow-ups.
 
 | Dimension | Current assessment |
 | --- | --- |
-| Typed contracts / modules | 3C0–3C5 and 3D0–3D1 complete; preserve those checkpoints |
-| Runtime reachability | Debug-only Trouble Brewing 5-player structured-number shadow is connected with cancellation, identity/budget gates and failure isolation; visible/canonical authority is unchanged |
-| Durable replay loop | C1 strict export/restore plus C2 real historical decision → trace → canonical choice → reload → replay loop complete locally |
-| Acceptance | Local FAST/debug build GREEN; exact code HEAD `8855d461` full CI #3451 SUCCESS. PR/main conflict prevented automatic PR checks and R2; R2 plus conflict resolution remain separate merge gates |
+| Typed contracts / modules | 3C0–3C5 and 3D0–3D1 historical checkpoints remain valid; CR-A/B/C repair defects inside those accepted boundaries rather than replacing them |
+| Runtime reachability | Debug-only Trouble Brewing 5-player structured-number shadow is connected; RH-E remains open because archive I/O/timing is not yet a complete end-to-end latency boundary |
+| Durable replay loop | C1 transport + C2 offline replay seam exist; CR-C strict nested replay decoding is accepted. IF-D remains open for cold-start App request reconstruction |
+| Identity integrity | CR-B typed `InformationDecisionRequestIdentity(gameId, requestId)` is fully propagated through production adapters and replay/runtime pre-evaluation gates; cross-game same-revision and stale request identity regressions are accepted |
+| Acceptance | `8855d461` full CI #3451 remains historical C0–C3 evidence. Combined CR-A/B/C acceptance is validation head `4245ddb8` with CI #3459 + R2 #3212 fully GREEN. The accepted files are persisted to the formal development branch by the current tree/commit/ref checkpoint; Oracle local HEAD alignment remains a Mini MCP tooling follow-up |
 
-Use local filesystem/Git/Gradle for this explicitly authorized Codex continuation. Mini MCP / Oracle VM are not prerequisites.
+Execution path follows current root `AGENTS.md`: use configured Mini MCP `clocktower` by default when available, and use alternate environments only for capability gaps or explicit user instruction.
 
 ### C0 local verification — 2026-09-25
 
-C0 code/document implementation is complete at the remotely synchronized C0–C3 checkpoint `8855d461`. C4/3D2 is now next.
+C0 code/document implementation remains complete at the accepted C0–C3 checkpoint `8855d461`. The next production slice is now CR-A/B/C correctness repair, not C4/3D2.
 
 - Typed RED: `:app:testFast --tests '*DecisionTraceAuthoritativeChoiceCorrelationTest'` executed 8 tests; the 2 new regressions failed on the original correlator (missing/invalid history accepted).
 - Focused GREEN: correlation, archive/persistence, multi-policy replay and immutable V1 definition tests passed after the common-owner fix.
@@ -71,7 +73,7 @@ C0 code/document implementation is complete at the remotely synchronized C0–C3
 
 ### C1 local implementation — 2026-09-25
 
-- Added the versioned immutable `SdeHistoricalReplayInput`, fresh/durable materialization provenance, strict JSON codec and reconstruction of committed setup plus baseline `GameSnapshot`.
+- Added the versioned immutable `SdeHistoricalReplayInput`, fresh/durable materialization provenance, replay JSON codec and reconstruction of committed setup plus baseline `GameSnapshot`. Post-audit correction: top-level strictness exists, but nested action/observation/proposition semantics are not yet fully fail-closed; CR-C owns that repair.
 - The contract carries exact ruleset identity, setup provenance/assignments, seed, canonical player-seat names, revisions, action timeline, observations and global cursor. It reuses existing timeline/observation codecs and owners.
 - Typed RED first proved the seam absent; a second RED proved caller-owned lists could mutate the first implementation. Both are GREEN after implementation and defensive copying.
 - Focused C1 + production-shadow + multi-policy-replay tests pass.
@@ -87,7 +89,7 @@ C0 code/document implementation is complete at the remotely synchronized C0–C3
 - App fanout is two narrow callbacks: prepared structured-number decision and confirmed structured decision. Legality/confirmation, session commit, historical evaluation and archive ownership remain in their existing typed owners.
 - Focused C1–C3/correlation tests and production compilation are GREEN. Final `:app:testFast :app:assembleDebug` succeeded in 2m52s: **1528 tests / 352 suites, 0 failures or skips**, plus successful debug APK assembly. `git diff --check` is GREEN.
 - Exact code HEAD `8855d461` was pushed to Draft PR #154 and accepted by manually dispatched full CI #3451 / run `36126033315`: Android full JVM + debug APK, ASP contract, Real Clingo cross-validation and final CI gate all succeeded. The PR remains `DIRTY` against `main`; automatic PR checks/R2 did not run, so R2 and conflict resolution remain explicit merge gates rather than implied successes.
-- **Next local slice: C4 / SDE-3D2 architecture, evidence and fanout audit before feature production edits.** V1 stays immutable and no placeholder V2 is authorized.
+- **Current repair checkpoint:** CR-A / CR-B / CR-C are COMPLETE and combined acceptance is GREEN at validation-only exact head `4245ddb8c12782775a6b4c237f5dd7f0f1ce92c0` with CI #3459 + R2 #3212. The C4 / SDE-3D2 architecture/evidence/fanout audit is also COMPLETE. Next executable work is to persist the accepted repair on the formal development branch, synchronize current docs, then begin C4 policy-neutral truth-danger / credibility-disruption production implementation. V1 stays immutable and no placeholder V2 is authorized.
 
 Upstream development branch: `sde-3c-decision-trace-shadow-replay` (local continuation branch above).
 
@@ -103,7 +105,9 @@ Always query live refs before executable edits.
 
 Read these first for current execution:
 
-- Integration implementation / acceptance: [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md)
+- Current correctness repair gate: [`SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md)
+- Completed C4 architecture/evidence/fanout audit: [`SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md`](SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md)
+- Historical C0–C3 integration implementation / acceptance: [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md)
 - Current state / priority: [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
 - Current handoff: [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md)
 - Current SDE-3 route: [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
@@ -298,7 +302,7 @@ Validation note: Oracle `test:fast` remains blocked before Kotlin compilation be
 
 Before cutover, the durable trace still must capture policy/evidence versioning, the complete candidate/feature/reason record, recommendation, actual committed choice and optional human override rationale. Historical replay must support comparing multiple policy versions against the same committed game history.
 
-### SDE-3D — IN PROGRESS / SDE-3D0–3D1 COMPLETE / SDE-3D2 NEXT
+### SDE-3D — IN PROGRESS / SDE-3D0–3D1 COMPLETE / POST-AUDIT REPAIR BEFORE 3D2
 
 Authority: `SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`.
 
@@ -318,10 +322,11 @@ Current slices:
 
 1. **3D0 calibrated freeze / cutover gate architecture — COMPLETE**;
 2. **3D1 V1 immutable baseline freeze — COMPLETE** — frozen definition binds V1 policy version, `sde-3b-merged-2026-09-24` evidence checkpoint and `SEEDED_HASH_V1`; accepted at `f562887cf4e90d02d364eef5534a1f709922a0f8` with CI #3446 and R2 #3201;
-3. **3D2 calibration-ready missing feature completion — NEXT / C1–C3 LOCALLY COMPLETE** — truth-danger / credibility-disruption plus contextual Red-Herring architecture/evidence audit; feature work remains policy-neutral and uses the accepted replay/shadow loop;
-4. **3D3 first evidence-authorized policy delta — WAITING FOR QUALIFYING E3**;
-5. **3D4 V1/V2 canonical real-corpus replay — REQUIRES REAL V2**;
-6. **3D5 surface-scoped calibrated freeze — REQUIRES A CUTOVER-ELIGIBLE SURFACE**.
+3. **Post-audit correctness repair — NEXT / HARD PRECONDITION FOR 3D2 PRODUCTION EDITS** — CR-A impaired-narrative semantic correctness, CR-B typed game/request identity binding, CR-C strict nested replay decoding; preserve V1 and canonical owners;
+4. **3D2 calibration-ready missing feature completion — AFTER CR-A/B/C** — truth-danger / credibility-disruption plus contextual Red-Herring architecture/evidence audit and policy-neutral feature work;
+5. **3D3 first evidence-authorized policy delta — WAITING FOR QUALIFYING E3**;
+6. **3D4 V1/V2 canonical real-corpus replay — REQUIRES REAL V2**;
+7. **3D5 surface-scoped calibrated freeze — REQUIRES A CUTOVER-ELIGIBLE SURFACE**.
 
 Do not create a placeholder V2. Any new candidate rejection, preference or survivor-refinement semantic after V1 freeze requires a new explicit policy version.
 

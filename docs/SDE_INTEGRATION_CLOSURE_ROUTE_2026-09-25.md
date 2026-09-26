@@ -1,8 +1,8 @@
 # SDE integration closure — implementation and acceptance contract
 
 > Updated: 2026-09-25 Australia/Sydney
-> Scope: close the canonical-history / durable replay / runtime shadow loop before adding SDE-3D2 features.
-> Current status belongs only to [roadmap](CURRENT_DEVELOPMENT_ROADMAP.md); the continuation point belongs to [handoff](NEXT_DEVELOPMENT_HANDOFF.md).
+> Scope: historical C0–C3 canonical-history / replay / runtime-shadow integration contract and acceptance record.
+> Post-audit amendment: the accepted checkpoint remains historical evidence, but CR-A/B/C in [SDE post-audit correctness repair route](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) must close before SDE-3D2 production feature edits. Current status belongs only to [roadmap](CURRENT_DEVELOPMENT_ROADMAP.md); the continuation point belongs to [handoff](NEXT_DEVELOPMENT_HANDOFF.md).
 
 ## Why this precedes 3D2
 
@@ -13,10 +13,11 @@ SDE-3C0–3C5 completed typed modules and bounded tests, not application integra
 | Checkpoint | Bounded implementation | Exit evidence |
 | --- | --- | --- |
 | C0 — correlation and route closure | **COMPLETE at `8855d461`** — validate exact pre-commit history at the common correlator; reconcile current policy and documentation | Typed RED/GREEN; archive no-write-on-rejection and retry coverage; affected tests, FAST and debug build; explicit remote acceptance status |
-| C1 — replay input contract | **COMPLETE at `8855d461`** — versioned, read-only replay input/export using existing setup, rules/script identity, seed, canonical actions and observations | Fresh/durable origin is explicit; deterministic round-trip and baseline reconstruction covered; missing/unsupported/unknown shape fails closed; no process-memory-only setup prerequisite |
+| C1 — replay input contract | **COMPLETE at `8855d461` as historical transport/reconstruction checkpoint** — versioned, read-only replay input/export using existing setup, rules/script identity, seed, canonical actions and observations | Fresh/durable origin and deterministic round-trip/baseline reconstruction were covered; post-audit CR-C remains required because nested unknown fields/types are not yet fully fail-closed |
 | C2 — offline vertical slice | **COMPLETE at `8855d461`** — one existing numeric-information interaction through real legal candidate owner, historical consequences/features, trace, authoritative choice, archive reload and replay | Reconstructed real-game prefix plus deterministic typed integration test; equal version/seed/input gives equal output; manual choice preserved; no fabricated feature bundle presented as end-to-end proof |
 | C3 — measured, controlled runtime shadow | **COMPLETE at `8855d461`** — measured actual historical chain and connected the same slice as diagnostic-only shadow | 5-player actual-chain/history-depth measurements plus explicit 6–15 admission rejection; documented budget; cancellation, stale revision, restore, unavailable capability and I/O failure coverage; diagnostic failure never blocks a valid canonical commit |
-| C4 — resume SDE-3D2 | Add generic truth-danger / credibility-disruption and contextual Red-Herring descriptive features through the accepted loop | Owner/fanout audit, E1/E2 semantic evidence, replay regressions; V1 output and frozen definition unchanged |
+| CR-A/B/C — post-audit correctness repair | Repair impaired-narrative semantic continuity, typed game/request identity, and strict nested replay decoding without replacing canonical owners | Shared-owner typed RED/GREEN, fanout audit, affected regressions, FAST/debug validation; V1 unchanged |
+| C4 — resume SDE-3D2 | After CR-A/B/C, add generic truth-danger / credibility-disruption and contextual Red-Herring descriptive features through the repaired loop | Owner/fanout audit, E1/E2 semantic evidence, replay regressions; V1 output and frozen definition unchanged |
 | C5 — evidence-backed policy and cutover | Create a new policy version only for independently qualified predicates, then evaluate per decision surface | E3/E4 as applicable, same-history version comparison, 3D0 gates, explicit fallback/override and legacy retirement plan; separate user authorization for release/merge |
 
 Do not implement all checkpoints as one broad patch. Each checkpoint ends with an updated roadmap/handoff and its actual evidence. External targeted evidence acquisition continues in parallel. C1 does not authorize a general save-game redesign, Traveller expansion, a second solver or a second mutable truth store. Durable replay input is a versioned projection/export of existing authorities, not a competing authority. Define immutable input identity and compatibility before wiring UI.
@@ -24,8 +25,8 @@ Do not implement all checkpoints as one broad patch. Each checkpoint ends with a
 ## C1 accepted local contract
 
 - `SdeHistoricalReplayInput` is the immutable transport projection. Schema v1 contains game/revision identity, exact `RulesetRef`, committed setup (including provenance and actual/shown roles), canonical seat names, seed through committed setup, action timeline, observation log and global cursor.
-- `captureFresh` accepts only matching setup/snapshot script, seed and seats under `GLOBAL_V1`. The strict JSON decoder marks the materialization as `DURABLE_EXPORT`, so fresh and restored provenance is explicit without changing semantic input equality.
-- Decode requires exact root/nested shape and the supported schema version. It reuses existing action/observation codecs and existing semantic-history invariants; it does not invent a parallel history codec or tolerate legacy-local inference.
+- `captureFresh` accepts only matching setup/snapshot script, seed and seats under `GLOBAL_V1`. The replay decoder marks restored materialization as `DURABLE_EXPORT`, so fresh and restored provenance is explicit without changing semantic input equality; CR-C owns the remaining nested strictness defect.
+- The accepted C1 implementation requires the supported schema version and exact top-level/ruleset/setup shape, then reuses existing action/observation codecs. Post-audit correction: those compatibility decoders do **not** currently enforce exact nested action/observation/proposition shape or numeric types; CR-C must make the SDE replay path fully fail-closed without globally changing legacy save compatibility.
 - Reconstructed `GameSnapshot` is an initial-baseline projection with canonical history attached. Role definitions are resolved from the exact external ruleset identity; missing definitions fail closed. It is designed for C2 offline replay, not direct live-session restoration.
 - C1 deliberately adds no App/Compose caller, SharedPreferences owner, generic recovery-schema change or policy output. C2 will consume this contract through one real numeric-information vertical slice.
 - Local C1 checkpoint evidence: focused C1/production-shadow/multi-policy replay GREEN; FAST 1521 tests / 350 suites with no failures, errors or skips; debug assembly and `git diff --check` GREEN. The later combined C0–C3 checkpoint received full CI #3451 success; R2 remains pending.
@@ -54,9 +55,9 @@ Do not implement all checkpoints as one broad patch. Each checkpoint ends with a
 - The production budget leaves more than 2.5x elapsed headroom over the observed depth-3 chain. Broader player counts remain disabled until their actual historical chain is independently measured and budgeted; this checkpoint does not generalize the 5-player result.
 - Stale identity, cancellation, elapsed-budget breach, unsupported player count, storage rejection and thrown I/O fail without trace publication. Missing exact capability is persisted and reported explicitly as `STORED_DEFERRED`, never fabricated as ready.
 - Structured confirmation still commits through `ClocktowerGameSession` first. Optional pending-trace lookup and exact correlation happen only afterward through a failure-isolated diagnostic coordinator; absence or failure cannot block a valid canonical commit.
-- C1 strict durable restore plus the C2 restored real-prefix regression is the restore evidence for C3. The App does not gain a second recovery or mutable history owner.
+- C1 durable restore plus the C2 restored real-prefix regression is valid transport/offline composition evidence for C3. It does **not** prove that a cold-start App can rebuild the complete decision request from persisted bytes alone; IF-D owns that later App integration closure. The App must still not gain a second recovery or mutable history owner.
 - Final local checkpoint: focused C1–C3/correlation tests GREEN; `:app:testFast :app:assembleDebug` succeeded in 2m52s with **1528 tests / 352 suites, 0 failures or skips** and a successful debug APK assembly; `git diff --check` GREEN.
-- Exact code HEAD `8855d461` is synchronized to Draft PR #154 and passed manually dispatched full CI #3451 / run `36126033315`: Android full JVM + debug APK, ASP contract, Real Clingo cross-validation and final CI gate. The PR/main conflict is unchanged and unauthorized to resolve here; it prevented automatic PR checks/R2, so R2 remains a separate merge gate. C4/3D2 may begin without treating the branch as merge-ready.
+- Exact code HEAD `8855d461` is synchronized to Draft PR #154 and passed manually dispatched full CI #3451 / run `36126033315`: Android full JVM + debug APK, ASP contract, Real Clingo cross-validation and final CI gate. The PR/main conflict is unchanged and unauthorized to resolve here; it prevented automatic PR checks/R2, so R2 remains a separate merge gate. Post-audit, CR-A/B/C must be accepted before C4/3D2 production feature edits.
 
 ## C0 invariant and ownership
 
@@ -74,4 +75,4 @@ Do not implement all checkpoints as one broad patch. Each checkpoint ends with a
 
 Local and remote evidence is exact-head scoped. `8855d461` has full CI #3451 success, but R2 and base-conflict resolution remain outstanding. Do not merge, mark ready or rebase as an implicit consequence of this document.
 
-Execution environment for this continuation: local Codex filesystem, Git and Gradle as explicitly requested; no Mini MCP or Oracle VM dependency.
+Execution environment is governed by current root `AGENTS.md`: use configured Mini MCP by default when available, with other environments only when capability or explicit user instruction requires them.

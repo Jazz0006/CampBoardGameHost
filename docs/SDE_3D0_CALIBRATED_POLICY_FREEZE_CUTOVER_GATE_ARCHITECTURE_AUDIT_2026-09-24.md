@@ -7,7 +7,7 @@
 
 ## 1. Audit decision
 
-Execution follow-up (2026-09-25): 3D1 is complete. [Integration closure C0–C3](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) completed at `8855d461` with full CI #3451 success; C4/3D2 is next. This preserves the evidence/cutover gates below and does not authorize V2 or automatic production cutover. R2/base integration remains pending. Current status belongs to the roadmap, not this historical audit.
+Execution follow-up (2026-09-25): 3D1 is complete. [Integration closure C0–C3](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) reached an accepted checkpoint at `8855d461` with full CI #3451 success. A later audit found bounded replay/feature correctness defects; [CR-A/B/C correctness repair](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) now precedes C4/3D2 production feature edits. This preserves the evidence/cutover gates below and does not authorize V2 or automatic production cutover. R2/base integration remains pending. Current status belongs to the roadmap, not this historical audit.
 
 SDE-3C is structurally complete. The next phase must not be modeled as one monolithic
 "collect every missing expert datum, derive final weights, then freeze everything" gate.
@@ -307,6 +307,8 @@ Goal:
 This is an engineering/version-governance slice, not a calibration slice.
 
 ### SDE-3D2 — calibration-ready feature completion
+
+Post-audit prerequisite: CR-A impaired-narrative semantics, CR-B typed game/request identity, and CR-C strict nested replay decoding must be accepted before production feature edits in this slice. The architecture/evidence/fanout audit may be prepared earlier.
 
 Only add missing projectors that already have enough E1/E2/cross-expert basis to justify a stable
 feature surface.

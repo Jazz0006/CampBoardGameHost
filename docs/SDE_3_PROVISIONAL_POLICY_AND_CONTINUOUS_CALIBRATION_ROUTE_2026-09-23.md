@@ -13,7 +13,7 @@
 
 ## 1. Decision
 
-Execution amendment (2026-09-25): the [integration closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) completed C0–C3 at `8855d461`; full CI #3451 succeeded and C4/3D2 is next. R2/base integration remains pending. Roadmap remains the single status authority.
+Execution amendment (2026-09-25): the [integration closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) reached an accepted C0–C3 checkpoint at `8855d461` with full CI #3451 success. A later audit found three bounded correctness defects; [post-audit correctness repair](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) CR-A/B/C is now the hard production prerequisite before C4/3D2 feature edits. R2/base integration remains pending. Roadmap remains the single status authority.
 
 The Storyteller project must continue even though final expert-policy calibration is incomplete.
 
@@ -24,7 +24,8 @@ The route is therefore split:
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / PR #153 MERGED
-SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0-3C5
+SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / historical checkpoint preserved
+Post-audit correctness repair                               CR-A / CR-B / CR-C BEFORE 3D2 PRODUCTION EDITS
 SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0-3D1 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
 SDE-3E automatic production cutover                         BLOCKED PER SURFACE ON 3D GATES
 ~~~
@@ -442,16 +443,18 @@ Current control-plane state:
 
 Recommended sequence:
 
-0. **Integration C0–C3:** exact history correlation, durable replay input, offline vertical slice, measured diagnostic runtime shadow, as specified in the integration closure contract. The following steps begin only after those exit gates.
-1. **SDE-3D2 — calibration-ready missing feature completion:** perform an architecture/evidence/fanout audit for truth danger / credibility disruption and contextual Red-Herring downstream policy input before production edits;
-2. identify and reuse the existing owners for Red Herring setup commitment, legal candidate semantics, canonical history/confirmation context, healthy truthful-channel consequences, and exact/topology consequence projection;
-3. define the smallest generic descriptive feature seam that represents downstream truth danger / credibility disruption without encoding named-seat, named-role or fixture-specific preference rules;
-4. use existing Evin GOLD + SILVER and Ben contextual evidence as E1/E2 justification and semantic regression evidence; feature completion alone must not alter V1 ordering;
-5. keep `BEGINNER_CONSERVATIVE_V1` immutable, including its frozen evidence checkpoint and `SEEDED_HASH_V1` selection contract;
-6. wait for a genuinely qualifying E3 predicate before creating the first real `BEGINNER_CONSERVATIVE_V2`; do not create a placeholder V2;
-7. once a real V2 exists, use SDE-3C5 to replay V1 and V2 over the same canonical real-game histories without mutating historical truth;
-8. freeze only cutover-eligible decision surfaces whose active predicates, projectors, evidence authority and replay gates are satisfied;
-9. enter SDE-3E per surface, retaining legacy/manual/deferred fallback wherever material dimensions remain unsupported.
+0. **Integration C0–C3 historical checkpoint:** exact history correlation, durable replay transport, offline vertical slice, measured diagnostic runtime shadow, as specified in the integration closure contract;
+1. **Post-audit correctness repair:** complete CR-A impaired-narrative semantic correctness, CR-B typed game/request identity binding, and CR-C strict nested replay decoding. These are hard prerequisites for SDE-3D2 production feature edits;
+2. **SDE-3D2 — calibration-ready missing feature completion:** after CR-A/B/C, perform an architecture/evidence/fanout audit for truth danger / credibility disruption and contextual Red-Herring downstream policy input before production edits;
+3. identify and reuse the existing owners for Red Herring setup commitment, legal candidate semantics, canonical history/confirmation context, healthy truthful-channel consequences, and exact/topology consequence projection;
+4. define the smallest generic descriptive feature seam that represents downstream truth danger / credibility disruption without encoding named-seat, named-role or fixture-specific preference rules;
+5. use existing Evin GOLD + SILVER and Ben contextual evidence as E1/E2 justification and semantic regression evidence; feature completion alone must not alter V1 ordering;
+6. keep `BEGINNER_CONSERVATIVE_V1` immutable, including its frozen evidence checkpoint and `SEEDED_HASH_V1` selection contract;
+7. complete IF-D durable App replay capture/rebuild before runtime traces are treated as a durable real-game calibration corpus, and RH-E persistence/timing hardening before runtime scope is broadened;
+8. wait for a genuinely qualifying E3 predicate before creating the first real `BEGINNER_CONSERVATIVE_V2`; do not create a placeholder V2;
+9. once a real V2 exists, use SDE-3C5 to replay V1 and V2 over the same canonical real-game histories without mutating historical truth;
+10. freeze only cutover-eligible decision surfaces whose active predicates, projectors, evidence authority and replay gates are satisfied;
+11. enter SDE-3E per surface, retaining legacy/manual/deferred fallback wherever material dimensions remain unsupported.
 
 ### Expert-evidence authority rule
 
@@ -466,9 +469,9 @@ An observed expert choice without rationale is never, by itself, a preference la
 
 ## 14. Success criteria for the next development conversation
 
-Integration C0–C3 is complete at exact code HEAD `8855d461`; full CI #3451 succeeded and R2/base integration remains pending. The next implementation conversation begins **C4 / SDE-3D2 architecture, evidence and fanout audit**, reusing the accepted replay/shadow loop rather than rewriting it.
+Integration C0–C3 remains an accepted historical checkpoint at exact production code HEAD `8855d461`; full CI #3451 succeeded and R2/base integration remains pending. The next implementation conversation begins **CR-A / CR-B / CR-C correctness repair**. The C4 / SDE-3D2 architecture/evidence/fanout audit may be prepared in parallel, but production feature edits wait for the repair gate.
 
-After C1–C3, the SDE-3D2 conversation should produce, before production edits:
+After CR-A/B/C are accepted, the SDE-3D2 conversation should produce, before production edits:
 
 - one authoritative owner/reuse map for Red Herring commitment, legal candidate semantics, canonical history/confirmation context and downstream consequence projection;
 - an explicit account of what current Evin/Ben/SILVER evidence supports at E1/E2 versus what remains below E3;

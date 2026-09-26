@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT ARCHITECTURE / PRODUCT ROUTE**  
 > Current D5F policy authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
-> Current implementation entry: **Integration C0–C3 complete at `8855d461` / full CI #3451 successful; SDE-3D2 audit next**, per [closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md). R2/base integration remains pending.
+> Current implementation entry: **C0–C3 accepted historical checkpoint at `8855d461` / full CI #3451 successful; CR-A/B/C correctness repair next before SDE-3D2 production edits**, per [post-audit repair route](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md). R2/base integration remains pending.
 > Supersedes as execution authority: first-night-only EPI-MQ routes, earlier productive-uncertainty scoring plans, and the older revision-driven dynamic-decision implementation plan.
 
 ## 1. Product target
@@ -560,8 +560,9 @@ Split:
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / PR #153 MERGED
-SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0–3C5
-SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 NEXT
+SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / historical checkpoint preserved
+Post-audit correctness repair                               CR-A / CR-B / CR-C BEFORE 3D2 PRODUCTION EDITS
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 AFTER REPAIR
 SDE-3E automatic production cutover                         BLOCKED PER DECISION SURFACE
 ~~~
 

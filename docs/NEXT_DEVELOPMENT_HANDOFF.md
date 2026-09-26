@@ -1,6 +1,6 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-09-25 Australia/Sydney  
+> Updated: 2026-09-26 Australia/Sydney  
 > Local continuation branch: `codex/sde-history-prefix-route-closure`; upstream development branch: `sde-3c-decision-trace-shadow-replay`
 > C0–C3 integration code HEAD: `8855d4615a4c24a4c3141241f360cfe70d8d239e` — synchronized to both remote branches; GitHub full CI #3451 / run `36126033315` SUCCESS. R2 remains pending because the existing PR/main conflict prevented automatic PR checks.
 > Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. Re-query the live branch/PR/checks before the next executable slice because documentation-only closeout commits may advance the branch HEAD.
@@ -11,15 +11,17 @@ Use this reduced current-authority set, in order:
 
 1. root `AGENTS.md`
 2. `docs/TESTING_STRATEGY.md`
-3. `docs/SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`
-4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
-6. `docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
-7. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
-8. `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`
-9. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
-10. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
-11. this handoff
+3. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`
+4. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md`
+5. `docs/SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`
+6. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
+7. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
+8. `docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
+9. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
+10. `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`
+11. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
+12. `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
+13. this handoff
 
 Read older SDE-3A/B/C architecture/completion audits only when a specific implementation-owner or regression question requires them. They are completion evidence, not startup context, and their historical PR/`NEXT` statements are not current authority.
 
@@ -39,12 +41,12 @@ Do not revive archived pre-SDE-3 execution routes as parallel authority.
 Before any executable edit:
 
 1. inspect local Git status, branch and diff; preserve unrelated user files;
-2. use local filesystem, Git and Gradle for this user-authorized Codex continuation; do not use Mini MCP or Oracle VM;
-3. work from `codex/sde-history-prefix-route-closure`; code checkpoint `8855d461` is synchronized to the Draft PR head; inspect live refs before assuming this remains current;
+2. use the configured Mini MCP `clocktower` workspace by default, following root `AGENTS.md`; use other execution environments only when explicitly required by capability or user instruction;
+3. work from `codex/sde-history-prefix-route-closure`; accepted production code checkpoint remains `8855d461`, while later audit/documentation commits may advance the branch; inspect live refs before assuming any recorded SHA is current;
 4. before remote acceptance, independently query the exact PR head/base and CI/R2; local validation does not establish remote state;
 5. never infer current implementation or acceptance from memory or a historical checkpoint.
 
-The Mini MCP workflow document describes the alternative configured environment, not a requirement for this local continuation.
+Mini MCP is the default configured repository workspace when available. Memory remains advisory only; current code/docs/Git/GitHub state must be re-verified live.
 
 The SDE-3C PR must stay **draft** once created.
 
@@ -70,10 +72,51 @@ Current route:
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / T4 ACCEPTED / PR #153 MERGED
-SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / 3C0–3C5
-SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 NEXT
+SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / historical checkpoint preserved
+Post-audit correctness repair                               CR-A/CR-B/CR-C COMPLETE / COMBINED ACCEPTANCE GREEN
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / C4 AUDIT COMPLETE / EDITS AFTER REPAIR
 SDE-3E automatic production cutover                         BLOCKED PER SURFACE ON 3D GATES
 ~~~
+
+## 3A. 2026-09-26 checkpoint to resume from
+
+Stop point for the next conversation:
+
+- C4 / SDE-3D2 architecture/evidence/fanout audit is **COMPLETE** and recorded in `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md`.
+- C4 production feature edits are no longer blocked by CR-A/B/C. This checkpoint persists the already-accepted repair on the formal development branch through a GitHub tree/commit/ref fast-forward fallback; current docs are synchronized in the same commit.
+- CR-A is **COMPLETE / ACCEPTED**:
+  - source-scoped perceived-functioning replay replaces reuse of mechanically-credible confirmation for impaired narrative;
+  - canonical history remains unchanged and no second mutable perceived-world owner was introduced;
+  - representative tests cover role-location, numeric, boolean, persistent Drunk, temporary Poison, accidental truth, and another impaired source staying mechanically credible;
+  - the full gate exposed one malformed Fortune Teller fixture whose current NO was independently impossible because a queried seat was already fixed as Demon; the fixture was corrected to a Red-Herring-specific YES→NO conflict without changing production projector semantics.
+- CR-B is **COMPLETE / ACCEPTED**:
+  - `InformationDecisionRequestIdentity(gameId, requestId)` is propagated through production numeric/boolean adapters;
+  - offline replay rejects cross-game same-revision contexts before exact evaluation;
+  - runtime shadow rejects stale/mismatched request identity before feature evaluation or trace persistence;
+  - production historical shadow checks typed game identity directly; no production parsing of `semanticIdentity`.
+- CR-C is **COMPLETE / ACCEPTED**:
+  - strict replay-specific nested validation covers action facts/points, observations/bindings, grimoire material and all current proposition variants;
+  - unknown nested keys, fractional integer fields, missing required fields and wrong primitive types fail closed;
+  - deterministic canonical round-trip remains green; legacy save compatibility was not globally tightened.
+- Combined validation-only exact head: `4245ddb8c12782775a6b4c237f5dd7f0f1ce92c0`.
+- CI #3459: Android FULL `:app:testFull :app:assembleDebug`, ASP contracts, Real Clingo and final CI gate all SUCCESS.
+- R2 #3212: SUCCESS.
+- PR #156 remains Draft and validation-only; do not merge it.
+- No merge, ready transition, policy V2, production cutover, or C4 scoring edit is authorized.
+
+Working tree contains both the CR-A code/tests above and the ongoing documentation synchronization from the post-audit cleanup. Preserve all unrelated/uncommitted files and inspect exact diff before any stage/commit operation.
+
+Next executable order:
+
+```text
+inspect live formal branch + preserve dirty working tree
+-> verify the remote formal branch contains the accepted CR-A/B/C code/test + synchronized docs
+-> keep #154 and validation-only #156 Draft / unmerged
+-> begin C4 / SDE-3D2 policy-neutral truth-danger / credibility-disruption production implementation
+-> repair Mini MCP large-worktree `git_state` hashing before the next local stage/commit/fast-forward operation
+```
+
+Mini MCP currently cannot produce `git_state` for this large dirty working tree because its worktree-state implementation exceeds the 131072-byte Git-output bound before hashing. Do not bypass `git_stage` stale-state protection. This checkpoint therefore uses a GitHub tree/commit/ref fast-forward fallback to persist the exact accepted files while preserving the Oracle working tree unchanged. Query and record the resulting formal branch head before starting C4; repair the Mini MCP state-hash implementation before relying on local Git writes again.
 
 ## 4. Why SDE-3 may proceed now
 
@@ -86,7 +129,7 @@ Stable foundations include:
 - player-controlled targets remain player-owned;
 - Spy/Recluse registration is interaction-scoped;
 - Drunk/poisoned information may be true or false;
-- repeated impaired information needs one shared role-agnostic derived narrative projection over canonical history; no second mutable perceived-world/narrative owner is allowed;
+- repeated impaired information needs one shared role-agnostic derived narrative projection over canonical history; no second mutable perceived-world/narrative owner is allowed. The 2026-09-25 audit found a semantic defect in the current projector, and CR-A has now repaired and accepted the shared owner through source-scoped perceived-functioning replay;
 - Demon bluffs are a joint SDE output until committed;
 - Red Herring is a contextual setup precommit;
 - topology is important but not sufficient;
@@ -437,11 +480,13 @@ SDE-3D0 and SDE-3D1 are COMPLETE. The current conclusion is:
 
 Immediate next action:
 
-C0–C3 are implemented and synchronized at code HEAD `8855d461`. C1 supplies strict durable replay input, C2 proves the real restored numeric-information loop, and C3 connects a measured Debug-only diagnostic shadow with exact 5-player/16-history/1500-ms admission and post-commit failure isolation. Local FAST/debug assembly is GREEN: 1528 tests / 352 suites, 0 failures or skips, plus successful APK assembly and `git diff --check`. Remote full CI #3451 is GREEN for Android full/debug APK, ASP contract, Real Clingo and the final gate. R2 remains pending until the separately authorized PR/main conflict resolution allows normal PR checks.
+C0–C3 remain accepted historical checkpoints at production code HEAD `8855d461`, with full CI #3451 GREEN. The later 2026-09-25 audit reproduced three correctness defects: impaired-narrative semantics can confuse mechanical impairment with player-believable continuity; replay does not explicitly bind decision context to the same game; nested replay decoding is not fully fail-closed. It also identified two non-blocking follow-ups: cold-start App replay request reconstruction and serialized diagnostic persistence/timing. See `SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`.
 
-1. inspect the local C0–C3 diff and final validation record; preserve `.DS_Store` and unrelated work;
-2. begin **C4 / SDE-3D2 with the required architecture, evidence and producer/consumer fanout audit before production edits**;
-3. map the shared owner for truth danger / credibility disruption and contextual Red-Herring descriptive projection; classify E1/E2 support separately from still-missing E3 policy authority;
-4. keep `BEGINNER_CONSERVATIVE_V1` immutable and policy-neutral toward new descriptive features; do not create a placeholder V2, numeric weighting or automatic cutover;
-5. preserve C3's controlled runtime boundary: Debug-only, Trouble Brewing, 5 players, at most 16 canonical history entries, 1500 ms, with 6–15 explicitly ineligible until actual-chain budgets exist;
-6. keep #154 draft; main integration conflict, exact-head remote CI/R2 and applicable T4 remain separate acceptance gates. No merge, ready transition, rebase or push is authorized by this handoff.
+1. re-query live branch/status and preserve unrelated user work;
+2. implement **CR-A impaired-narrative semantic correctness** at the shared projector owner with role-agnostic cross-information-shape RED/GREEN coverage;
+3. implement **CR-B typed game/request identity binding** and reject cross-game same-revision replay before exact evaluation/trace persistence;
+4. implement **CR-C strict nested replay decoding** without globally breaking legacy save compatibility;
+5. run affected regressions, FAST/debug assembly and `git diff --check`; re-audit producer/consumer fanout for any shared typed contract change;
+6. only after CR-A/B/C are accepted, begin C4 / SDE-3D2 production feature work for truth danger / credibility disruption and contextual Red-Herring projection. The architecture/evidence/fanout audit may be prepared earlier;
+7. track IF-D durable App replay capture/rebuild and RH-E serialized background persistence/complete timing as required follow-ups before runtime traces are treated as a durable calibration corpus or runtime scope is broadened;
+8. keep `BEGINNER_CONSERVATIVE_V1` immutable, keep #154 draft, and treat main integration conflict, exact-head remote CI/R2 and applicable T4 as separate acceptance gates. No merge or ready transition without explicit user authorization.

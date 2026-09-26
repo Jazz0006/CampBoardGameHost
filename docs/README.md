@@ -7,18 +7,19 @@
 
 1. root `AGENTS.md`
 2. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
-3. [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) — **当前集成闭环的实现与验收契约**；本次按用户要求使用本地 Codex 文件/Git/Gradle，不使用 Mini MCP / Oracle VM
-4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
-5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
-6. [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md) — **当前 SDE-3 执行路线**
-7. [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md) — **3D/3E surface-scoped gate authority**
-8. [`SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md) — **V1 immutable baseline**
-9. [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md) — first-night policy / evidence synthesis
-10. [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md) — targeted evidence acquisition contract
-11. [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv) — external evidence catalog
-12. 需要全局 SDE 架构背景时，再读 [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
+3. [`SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) — **当前 correctness repair 硬前置：CR-A / CR-B / CR-C**
+4. [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) — C0–C3 历史集成闭环契约与已验收边界
+5. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
+6. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
+7. [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md) — **当前 SDE-3 执行路线**
+8. [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md) — **3D/3E surface-scoped gate authority**
+9. [`SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md) — **V1 immutable baseline**
+10. [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md) — first-night policy / evidence synthesis
+11. [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md) — targeted evidence acquisition contract
+12. [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv) — external evidence catalog
+13. 需要全局 SDE 架构背景时，再读 [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 
-随后检查本地分支、工作区和差异；远端验收时独立查询 exact-head PR / checks。不要从 memory、Git history、archive、已完成 slice audit 或旧 PR 的 `NEXT / READY / COMPLETE` 推断当前状态。其他环境的 Mini MCP 工作流见其专项文档，不作为本次本地工作的前置条件。
+随后检查 live 分支、工作区和差异；远端验收时独立查询 exact-head PR / checks。不要从 memory、Git history、archive、已完成 slice audit 或旧 PR 的 `NEXT / READY / COMPLETE` 推断当前状态。执行环境以 root `AGENTS.md` 为准：配置可用时默认使用 Mini MCP，其他环境仅用于能力缺口或明确授权。
 
 ## 当前状态
 
@@ -33,9 +34,10 @@ sealed holdout                         CLOSED
 
 SDE-3A engine/feature/policy contract  COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1        COMPLETE / PR #153 MERGED
-SDE-3C DecisionTrace/replay            COMPLETE / 3C0–3C5
-SDE integration closure               C0–C3 COMPLETE / HEAD 8855d461 / FULL CI #3451 SUCCESS
-SDE-3D calibrated policy freeze        IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 NEXT
+SDE-3C DecisionTrace/replay            COMPLETE / 3C0–3C5 historical checkpoint preserved
+SDE integration closure               C0–C3 CHECKPOINT ACCEPTED / later audit found bounded defects
+Post-audit correctness repair         CR-A / CR-B / CR-C NEXT / HARD GATE BEFORE 3D2 PRODUCTION EDITS
+SDE-3D calibrated policy freeze        IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 BLOCKED ON CR-A/B/C
 SDE-3E automatic production cutover    BLOCKED PER DECISION SURFACE
 ~~~
 
@@ -48,9 +50,9 @@ SDE-3E automatic production cutover    BLOCKED PER DECISION SURFACE
 - Spy / Recluse registration 永远是 interaction-scoped，不修改 canonical identity。
 - Chef / Empath 只有在所有合法 Spy/Recluse registration 分支都得到同一个健康值时才是 rule-determined。
 - 受损信息不等于必须说假话；重复/历史依赖的信息必须通过共享、角色无关的 derived narrative projection over canonical history 维持一致性，不能按角色分别写 policy 特判。
-- confirmation chain、healthy-information utility、impaired narrative、role-function exposure 已有 typed descriptive feature，但 **V1 不使用它们排序**。
+- confirmation chain、healthy-information utility、impaired narrative、role-function exposure 已有 typed descriptive feature，但 **V1 不使用它们排序**；2026-09-25 审计发现 impaired-narrative projector 把“只能靠失常解释”误判为 player-believable continuity，必须先完成 CR-A。
 - role-function exposure 的存在已经被建模；Librarian→Recluse、Investigator→Spy 的 avoidance severity 仍缺 E3 证据，不能把旧设计建议当成当前 V1 policy。
-- Red Herring contextual utility 与 truth danger / credibility disruption 有目前最强的跨专家基础之一；3D2 先建立 descriptive feature surface，仍不得直接产生 preference。
+- Red Herring contextual utility 与 truth danger / credibility disruption 有目前最强的跨专家基础之一；完成 CR-A/B/C 后，3D2 才进入 production descriptive feature work，仍不得直接产生 preference。
 - strategic evil topology 是重要 structural evidence，但不能代替 healthy information、confirmation、role-function exposure、bluff usability、narrative coherence 等维度。
 - 不引入 opaque global scalar；Gap E 只有在未来 policy 真正需要 numeric weighting 时才成为 blocker。
 - automatic production cutover 按 decision surface gating；一个“大 equivalence class + seeded selection”的 V1 结果本身不足以授权 cutover。

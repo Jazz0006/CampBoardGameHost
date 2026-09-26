@@ -5,6 +5,8 @@
 > RED HEAD: `7c7f9b0974b664b2df29b6345a948851ec15e919`  
 > Accepted GREEN code HEAD: `f562887cf4e90d02d364eef5534a1f709922a0f8`  
 > Status: **COMPLETE**
+>
+> **Post-audit amendment — 2026-09-25:** the immutable V1 freeze remains accepted and unchanged. A later audit found bounded replay/feature correctness defects outside the V1 ordering definition; CR-A/B/C in `SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` must close before SDE-3D2 production feature edits. Current execution status belongs to the roadmap/handoff.
 
 ## 1. Completion conclusion
 
@@ -164,9 +166,9 @@ Still unchanged:
 
 ## 9. Next boundary
 
-The next slice is **SDE-3D2 — calibration-ready missing feature completion**.
+The next **feature** slice remains **SDE-3D2 — calibration-ready missing feature completion**, but post-audit CR-A/B/C correctness repair is now its production-edit prerequisite. The 3D2 architecture/evidence/fanout audit may be prepared while repair work proceeds.
 
-Start with an architecture/evidence/fanout audit for:
+After the repair gate, start feature work with an architecture/evidence/fanout audit for:
 
 - truth danger / credibility disruption;
 - contextual Red-Herring downstream policy input.

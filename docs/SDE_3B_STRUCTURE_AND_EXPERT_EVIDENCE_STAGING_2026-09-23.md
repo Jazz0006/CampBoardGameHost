@@ -434,4 +434,4 @@ The durable conclusions from this staging record are:
 6. `BEGINNER_CONSERVATIVE_V1` is now frozen and immutable;
 7. any future evidence-authorized candidate preference/rejection must use a new explicit policy version.
 
-Current execution continues at **SDE-3D2** according to `CURRENT_DEVELOPMENT_ROADMAP.md` and `NEXT_DEVELOPMENT_HANDOFF.md`.
+This remains a historical staging record. Current execution is defined by `CURRENT_DEVELOPMENT_ROADMAP.md`, `NEXT_DEVELOPMENT_HANDOFF.md`, and the 2026-09-25 post-audit correctness repair route; do not infer the next slice from this document.
