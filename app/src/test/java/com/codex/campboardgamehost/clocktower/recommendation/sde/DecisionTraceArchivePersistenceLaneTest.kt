@@ -151,16 +151,17 @@ class DecisionTraceArchivePersistenceLaneTest {
 
     @Test
     fun `physical persistence runs on configured background dispatcher`() = runBlocking {
-        var writeThreadName: String? = null
+        var configuredThread: Thread? = null
+        var writeThread: Thread? = null
         var stored: String? = null
         val dispatcher = Executors.newSingleThreadExecutor { task ->
-            Thread(task, "rh-e-persistence-test")
+            Thread(task, "rh-e-persistence-test").also { configuredThread = it }
         }.asCoroutineDispatcher()
         try {
             val store = DecisionTraceArchiveStore(
                 readRaw = { stored },
                 writeRaw = { raw ->
-                    writeThreadName = Thread.currentThread().name
+                    writeThread = Thread.currentThread()
                     stored = raw
                     true
                 },
@@ -171,7 +172,7 @@ class DecisionTraceArchivePersistenceLaneTest {
                 DecisionTracePersistenceOutcome.COMPLETED,
                 lane.append(pendingTrace("background")).outcome,
             )
-            assertEquals("rh-e-persistence-test", writeThreadName)
+            assertTrue(configuredThread === writeThread)
         } finally {
             dispatcher.close()
         }
