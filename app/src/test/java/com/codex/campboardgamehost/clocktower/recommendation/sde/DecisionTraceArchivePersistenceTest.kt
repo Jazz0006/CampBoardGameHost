@@ -11,7 +11,6 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 import java.math.BigInteger
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -121,8 +120,6 @@ class DecisionTraceArchivePersistenceTest {
                                 ),
                                 credibilityDisruptions = setOf(disruption),
                                 unresolvedSourceRefs = setOf(unresolved),
-                                truthDangerReasonCodes = setOf("legacy-truth"),
-                                credibilityDisruptionReasonCodes = setOf("legacy-credibility"),
                             ),
                         ),
                     ),
@@ -140,64 +137,6 @@ class DecisionTraceArchivePersistenceTest {
         assertEquals(DecisionTrace.CURRENT_SCHEMA_VERSION, typedTrace.schemaVersion)
         assertEquals(archive, decoded)
         assertEquals(encoded, DecisionTraceArchiveJsonCodec.encode(decoded))
-    }
-
-    @Test
-    fun `schema v1 legacy truth credibility payload migrates to current trace schema without inventing typed material`() {
-        val current = JSONObject(
-            DecisionTraceArchiveJsonCodec.encode(
-                DecisionTraceArchive().append(readyTrace()),
-            ),
-        )
-        val trace = current.getJSONArray("traces").getJSONObject(0)
-        trace.put("schemaVersion", DecisionTrace.LEGACY_SCHEMA_VERSION)
-        val candidates = trace
-            .getJSONObject("featureEvaluation")
-            .getJSONArray("candidates")
-        for (index in 0 until candidates.length()) {
-            val truth = candidates
-                .getJSONObject(index)
-                .getJSONObject("features")
-                .getJSONObject("truthCredibility")
-            if (truth.getString("kind") == "projected") {
-                val currentValue = truth.getJSONObject("value")
-                truth.put(
-                    "value",
-                    JSONObject().apply {
-                        put(
-                            "truthDangerReasonCodes",
-                            currentValue.getJSONArray("truthDangerReasonCodes"),
-                        )
-                        put(
-                            "credibilityDisruptionReasonCodes",
-                            currentValue.getJSONArray("credibilityDisruptionReasonCodes"),
-                        )
-                    },
-                )
-            }
-        }
-
-        val decoded = DecisionTraceArchiveJsonCodec.decode(current.toString())
-        val migrated = decoded.traces.single()
-        assertEquals(DecisionTrace.CURRENT_SCHEMA_VERSION, migrated.schemaVersion)
-        val migratedFeatures =
-            (migrated.featureEvaluation as DecisionFeatureEvaluation.Ready)
-                .candidates
-                .first()
-                .features
-                .truthCredibility as FeatureProjection.Projected
-        assertFalse(migratedFeatures.value.hasTypedMaterial)
-        assertEquals(setOf("truth-danger"), migratedFeatures.value.truthDangerReasonCodes)
-        assertEquals(
-            setOf("credibility-disruption"),
-            migratedFeatures.value.credibilityDisruptionReasonCodes,
-        )
-
-        val reencoded = JSONObject(DecisionTraceArchiveJsonCodec.encode(decoded))
-        assertEquals(
-            DecisionTrace.CURRENT_SCHEMA_VERSION,
-            reencoded.getJSONArray("traces").getJSONObject(0).getInt("schemaVersion"),
-        )
     }
 
     @Test
@@ -373,10 +312,7 @@ class DecisionTraceArchivePersistenceTest {
                 ),
             ),
             truthCredibility = FeatureProjection.Projected(
-                TruthCredibilityFeatures(
-                    truthDangerReasonCodes = setOf("truth-danger"),
-                    credibilityDisruptionReasonCodes = setOf("credibility-disruption"),
-                ),
+                TruthCredibilityFeatures(),
             ),
             roleFunctionExposure = FeatureProjection.Projected(
                 RoleFunctionExposureFeatures(
