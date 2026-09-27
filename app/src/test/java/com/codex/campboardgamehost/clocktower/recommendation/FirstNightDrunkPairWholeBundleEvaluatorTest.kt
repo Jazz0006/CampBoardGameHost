@@ -38,6 +38,10 @@ class FirstNightDrunkPairWholeBundleEvaluatorTest {
         sourceRevision = "official",
     )
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
+        // Bounded adapter contract; full-catalog legality has its own domain tests.
+        .filter { it.id.value in setOf(
+            "Washerwoman", "Drunk", "Chef", "Soldier", "Scarlet Woman", "Imp", "Investigator",
+        ) }
 
     @Test
     fun `Drunk shown Investigator evaluates every legal pair candidate against the same HealthyCore`() {

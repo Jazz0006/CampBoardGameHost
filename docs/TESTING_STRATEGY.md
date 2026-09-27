@@ -58,9 +58,9 @@ S2.1 established executable Android JVM suites at commit `99b340635e04abd64341e5
 - `FULL - FAST`: the S2 baseline was exactly 19 testcases from five approved excluded classes; SDE-2D2 later added one measured exact-enumeration class to the exclusion set
 - warmed no-change `testFast`: approximately 5.75–6.25s, with tasks `UP-TO-DATE`
 
-`testFast` retains `A3EnumerationBenchmarkTest`, representative utility tests, integration/wiring tests, and ownership/characterization tests.
+At that historical checkpoint, `testFast` retained `A3EnumerationBenchmarkTest`, representative utility tests, integration/wiring tests, and ownership/characterization tests.
 
-The figures above are historical. On 2026-09-27 at `1299fba4`, FAST executed 1,551 tests in 357 classes with zero failures/skips. The suite-duration sum was 187.842s on the local Apple Silicon Mac; four whole-bundle classes (five testcases) consumed 174.373s, or 92.8%. These now run in affected T2 / FULL. This is not an N3150 timing measurement. See the linked audit for post-change results, exact retirement accounting, and destination-branch integration evidence.
+The figures above are historical. On 2026-09-27 at `1299fba4`, FAST executed 1,551 tests in 357 classes with zero failures/skips. The suite-duration sum was 187.842s on the local Apple Silicon Mac; four whole-bundle classes (five testcases) consumed 174.373s, or 92.8%. The first audit moved these to affected T2 / FULL. The follow-up now keeps bounded Drunk adapters in FAST/FULL and the healthy full-space experiment in a dedicated manual task. This is not an N3150 timing measurement. See the linked audit for post-change results, exact retirement accounting, and destination-branch integration evidence.
 
 ## 3. T0–T4 execution model
 
@@ -109,7 +109,7 @@ The executable Android JVM full-suite entry point is:
 Tier answers: “What kind or cost of test is this?”
 Trigger answers: “When must this test run?”
 
-For example, `FirstNightDrunkPairWholeBundleEvaluatorTest` is expensive because it evaluates the complete pair domain against exact whole-bundle worlds. Drunk pair-domain, shared bundle projection and exact evaluator changes trigger it at the T2/T4 checkpoint. An unrelated UI-only change does not need it during every local edit loop.
+For example, `FirstNightDrunkPairWholeBundleEvaluatorTest` now checks the complete candidate domain of a bounded role catalog. It belongs in FAST and affected T2. Historical full-catalog enumeration is no longer a routine adapter contract; canonical legal-domain and exact evaluator tests remain required.
 
 Similarly, `ZddPlayerWorldSetTest` has T3-like execution characteristics but is an affected T2 requirement for ZDD and epistemic representation changes. Real Clingo is T3 external validation and remains mandatory whenever the change classifier selects exact/oracle semantics or when a T4 checkpoint selects every gate.
 
@@ -123,22 +123,22 @@ The implemented `:app:testFast` task uses default inclusion plus a small explici
 
 The current FAST exclusions are exactly:
 
-- `com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest`
-- `com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest`
-- `com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest`
-- `com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest`
-- `com.codex.campboardgamehost.clocktower.epistemic.Sde2D4ScaleBenchmarkTest`
-- `com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest`
-- `com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleHealthyHarnessAcceptanceTest`
-- `com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkPairWholeBundleEvaluatorTest`
-- `com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkNumericWholeBundleEvaluatorTest`
-- `com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest`
+- `ZddPlayerWorldSetTest` (retained in FULL; affected representation correctness)
+- `FirstNightBundleHealthyHarnessAcceptanceTest`
+- `Sde2D4TopologyBundlePerformanceTest`
+- `FirstNightBundleBeginnerCorpusExperiment`
+- `Sde2D4ScaleBenchmarkTest`
+- `Sde2D5CalibrationExperiment`
+- `Sde2D5FExpertObservedCalibrationExperiment`
+- `Sde2D5FB4FSilverGeneralizationExperiment`
 
-`FirstNightBundleBeginnerCorpusExperiment`, `Sde2D4ScaleBenchmarkTest`, `Sde2D5CalibrationExperiment`, `Sde2D5FExpertObservedCalibrationExperiment`, and `Sde2D5FB4FSilverGeneralizationExperiment` are also excluded from the underlying `:app:testDebugUnitTest` / `:app:testFull` task because they are explicit evidence-generation harnesses rather than bounded regression contracts. They remain directly runnable through `:app:fnBundle3Calibration`, `:app:sde2D4ScaleBenchmark`, `:app:sde2D5Calibration`, `:app:sde2D5FExpertObservedCalibration`, and `:app:sde2D5FB4FSilverGeneralization`.
+All entries except `ZddPlayerWorldSetTest` are also excluded from `testDebugUnitTest` / `testFull` as explicit evidence experiments. The healthy-bundle and topology performance experiments run via `:app:testCostExperiments` (an exact `--tests` filter may select either). The other five keep their existing dedicated tasks: `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`.
+
+The three bounded Drunk adapter classes, expert legality/determinism, and small-sample setup simulation now default to FAST. `A4ZddBenchmarkTest` is deleted: repeated measurements are not an independent correctness oracle; `ZddPlayerWorldSetTest` retains representation parity, filtering and checkpoint proof.
 
 The 2026-09-27 audit restored `SetupMigrationTest`, `DemonBluffJointOutputEvaluatorTest`, and the three `TroubleBrewingTopology*DifferentialTest` classes to FAST: their current bounded fixtures consumed only 0.797s together in FULL. Their historical exclusion costs no longer describe the current tests. They remain mandatory affected contracts.
 
-`A3EnumerationBenchmarkTest` remains in FAST because its measured cost is low.
+`A3EnumerationSmokeTest` keeps one exact enumeration per 8/10/12/15-player fixture, without repeated timing or a hardware-dependent deadline. `TopologyBundleBoundaryTest` retains feasibility/size bounds for 5/8/12/15 players. `A4DeviceBenchmarkHarnessTest` verifies report values directly without running world enumeration.
 
 ## 6. Measured classes and specialized triggers
 
@@ -148,25 +148,24 @@ These classifications are not permanent measurements. Re-measure them when the t
 |---|---:|---|---|---|
 | `SetupMigrationTest` | 0.053s local, 2026-09-27 (historical 31–34s no longer applies) | now four bounded setup/identity contracts; old high-volume loops are gone | restored T1 / affected T2 | setup candidates, committed identity, impaired pair policy |
 | `ZddPlayerWorldSetTest` | 10–11s | repeated enumeration, ZDD conversion, filtering and representation parity | affected T2 / T3 execution | ZDD, epistemic worlds, filtering, registration, checkpoint/restore |
-| `ExpertRecommendationReviewTest` | 5–6s | 24-scenario recommendation quality corpus | T3 | recommendation scoring, legality, setup plans, quality/diversity |
-| `StorytellerV4BaselineSimulationTest` | 3–4s | 1000 setup samples plus 1000 dynamic selections | T3 | selection distribution and simulation semantics |
-| `A4ZddBenchmarkTest` | 2–3s | repeated benchmark, heap and GC measurements | T3 | ZDD construction/filter performance |
+| `ExpertRecommendationReviewTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | all 24 scenarios remain legal/nonempty; stable decisions ignore display names; historical score superiority removed | T1 / affected T2 | recommendation legality and determinism |
+| `StorytellerV4BaselineSimulationTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | 25-sample legality, accounting and determinism; no thousand-game report | T1 / affected T2 | setup/selection semantics |
 | `DemonBluffJointOutputEvaluatorTest` | 0.722s local, 2026-09-27 | current bounded bluff-domain/parity and production integration contracts | restored T1 / affected T2 | Demon bluff joint output, exact shown-role fanout, setup/SDE shadow integration |
 | `Sde2D4ScaleBenchmarkTest` | >900s in isolated CI diagnostic | source-derived scale matrix plus raw-enumerator bounded-prefix measurement; no regression latency threshold | explicit T3 evidence harness, dedicated task only | SDE-2D4 raw enumerator scale investigation |
-| `Sde2D4TopologyBundlePerformanceTest` | sub-second measured bundle evaluation through 15 players, plus Gradle overhead | 5–15 topology-first CPU/coarse-heap evidence | T3; excluded from FAST, retained in full regression | topology-first strategic feasibility performance |
+| `Sde2D4TopologyBundlePerformanceTest` | 1.057s before follow-up | full 5–15 performance report; four-regime correctness smoke retained separately | explicit manual `testCostExperiments` | performance investigation |
 | `Sde2D5CalibrationExperiment` | 5m53s observed when 8 cross-regime topology points were temporarily placed in FAST; historical workflow runs have reached multi-hour duration | deterministic 5–15 STANDARD/BARON calibration evidence generation | explicit T3 evidence harness, dedicated task only | D5 calibration / policy evidence |
 | `Sde2D5FExpertObservedCalibrationExperiment` | about 3.5 minutes end-to-end in GitHub Actions for A Stud + Live + Human Remains topology-first reports | real expert-case committed-prefix counterfactual evidence using topology-first consequence; exhaustive parity remains owned by D4 differential tests | explicit T3 evidence harness, dedicated task/workflow only | D5F-B4 expert-observed reconstruction / consequence evidence |
 | `Sde2D5FB4FSilverGeneralizationExperiment` | about 7 minutes end-to-end in GitHub Actions run #3 after narrowing the historical ct-01 pilot; the retired legacy external-human workflow took about 2h48m | replays only the durable ct-01 legality plus observed whole-bundle-feasibility contracts through production-owned surfaces and emits bounded GOLD-hypothesis generalization evidence | explicit T3 evidence harness, dedicated task/workflow only | D5F-B4F bounded SILVER generalization |
 | `TroubleBrewingTopologySetupWitnessDifferentialTest` | 0.003s local, 2026-09-27 | bounded five-player setup witness parity | restored T1 / affected T2 | topology setup witness semantics |
 | `TroubleBrewingTopologyObservationDifferentialTest` | 0.008s local, 2026-09-27 | bounded observation parity | restored T1 / affected T2 | topology observation semantics |
 | `TroubleBrewingTopologyBundleDifferentialTest` | 0.011s local, 2026-09-27 | bounded same-world whole-bundle shared-witness parity | restored T1 / affected T2 | topology whole-bundle semantics |
-| `A3EnumerationBenchmarkTest` | approximately 1s | 20 exact enumerations and performance guards | T1/T2 specialized | world enumeration and scalability |
-| `FirstNightBundleHealthyHarnessAcceptanceTest` | 71.302s local, 2026-09-27 | 100 projected signatures from 110,000 complete bundles, lossless quotient and exact evaluation | affected T2 / T3 execution; retained in FULL | healthy bundle harness, signature quotient, public-good projection, exact evaluator |
-| `FirstNightDrunkPairWholeBundleEvaluatorTest` | 65.646s local | complete legal pair domain and direct exact parity | affected T2 / T3 execution; retained in FULL | Drunk pair domain, HealthyCore/marginal evaluation, bundle/exact semantics |
-| `FirstNightDrunkNumericWholeBundleEvaluatorTest` | 26.125s local | two whole-bundle numeric domains | affected T2 / T3 execution; retained in FULL | Drunk numeric domain, HealthyCore/marginal evaluation, bundle/exact semantics |
-| `FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest` | 11.300s local | complete Yes/No bundle evaluation for fixed player targets | affected T2 / T3 execution; retained in FULL | Drunk Boolean domain, Fortune Teller targets, bundle/exact semantics |
+| `A3EnumerationSmokeTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | four single-run exact/nonempty fixtures | T1 / affected T2 | world enumeration |
+| `FirstNightBundleHealthyHarnessAcceptanceTest` | 62.635s before follow-up | 110,000 combinations / 100 public signatures, experimental quotient accounting | explicit manual `testCostExperiments` | historical experiment maintenance |
+| `FirstNightDrunkPairWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk Pair adapter / shared exact semantics |
+| `FirstNightDrunkNumericWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk Numeric adapter / shared exact semantics |
+| `FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk FortuneTeller adapter / shared exact semantics |
 
-T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
+T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `testCostExperiments`, `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
 
 ## 7. Dependency-aware escalation matrix
 
@@ -178,15 +177,15 @@ T3 regression tests are invoked through the existing full test machinery with ex
 | Night/day flow | exact flow test | flow/session tests | transaction, integration, and wiring tests | simulation if behavior changes | applicable full |
 | Setup recommendation | exact setup test | recommendation tests | `SetupMigrationTest`, expert review | simulation if selection distribution changes | applicable full |
 | Scoring/selection | exact scoring test | recommendation/selection tests | review, distribution, and setup tests | simulation/benchmark when relevant | applicable full |
-| Epistemic/enumeration | exact epistemic test | cheap epistemic tests | ZDD, A3 golden, and end-to-end golden tests | A3/A4 benchmarks | Android full + Real Clingo |
-| ZDD | exact ZDD method | cheap epistemic tests | `ZddPlayerWorldSetTest` and golden tests | `A4ZddBenchmarkTest`, A3 benchmark | applicable full |
+| Epistemic/enumeration | exact epistemic test | cheap epistemic tests | ZDD, A3 golden, and end-to-end golden tests | manual device/scale experiments when performance is affected | Android full + Real Clingo |
+| ZDD | exact ZDD method | cheap epistemic tests | `ZddPlayerWorldSetTest` and golden tests | manual device benchmark when performance is affected | applicable full |
 | Persistence/schema | exact persistence test | persistence tests | restore, migration, and production-wiring tests | broad migration if applicable | applicable full |
 | Historical timeline/identity | exact history test | history/session tests | historical action/observation wiring | migration corpus if applicable | Android full + Real Clingo |
 | Production wiring/orchestration | typed integration/ownership test when a real coverage gap exists; existing coverage + compile/diff audit for behavior-preserving wiring | ownership and wiring tests | relevant integration/session tests | simulation if central behavior changes | applicable full |
 | ASP/oracle/scenarios | exact harness command | ASP validation and Python tests | affected scenario tests | real Clingo | ASP contracts + Real Clingo |
 | Gradle/build/dependency | exact build check | affected JVM tests | dependent Android tests | all external validation when contract changes | Android full and any additionally selected gates |
 | Shared interfaces/game-state authority | exact contract test when semantics change; existing consumer evidence for pure refactor | all cheap consumers | broad dependent integration tests | all affected expensive tests | applicable full |
-| First-night whole-bundle / Drunk information | legal-domain, public-projection, candidate-space tests | FAST | the four whole-bundle classes above as selected by affected domain; all four for shared exact/public-bundle changes | complete-domain exact and quotient proof | Android full + exact/oracle gates when selected |
+| First-night whole-bundle / Drunk information | legal-domain, public-projection, candidate-space tests | FAST | bounded Drunk adapters plus canonical domain, projection, exact-bundle and topology differential tests | healthy quotient experiment only when that experiment changes | Android full + exact/oracle gates when selected |
 
 The mapping is semantic rather than a giant fragile file-path list.
 

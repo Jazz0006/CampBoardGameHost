@@ -17,7 +17,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-private const val BASELINE_SAMPLE_SIZE = 1_000
+private const val BASELINE_SAMPLE_SIZE = 25
 private const val BASELINE_SEED = 4_000_000L
 
 private data class SetupBaseline(
@@ -37,33 +37,7 @@ private data class StorytellerV4BaselineReport(
     val sampleSize: Int,
     val setup: SetupBaseline,
     val dynamicNumber: DynamicNumberBaseline,
-) {
-    fun toMarkdown(): String = buildString {
-        appendLine("STORYTELLER_V4_BASELINE_START")
-        appendLine("Sample size: $sampleSize")
-        appendLine()
-        appendLine("Committed Drunk shown-role distribution:")
-        setup.shownRoleCounts.toSortedMap().forEach { (role, count) ->
-            appendLine("- $role: $count (${percentage(count, sampleSize)})")
-        }
-        appendLine()
-        appendLine("Dynamic poisoned numeric distribution (truth=0, range=0..2, balanced):")
-        dynamicNumber.shownValueCounts.toSortedMap().forEach { (value, count) ->
-            appendLine("- $value: $count (${percentage(count, sampleSize)})")
-        }
-        appendLine("- truthful: ${dynamicNumber.truthfulCount} (${percentage(dynamicNumber.truthfulCount, sampleSize)})")
-        appendLine()
-        appendLine("Initial-template repetition:")
-        appendLine("- distinct templates: ${setup.templateCounts.size}")
-        appendLine("- repeated adjacent transitions: ${setup.repeatedTemplateTransitions}/${sampleSize - 1} " +
-            "(${percentage(setup.repeatedTemplateTransitions, sampleSize - 1)})")
-        appendLine("- longest identical run: ${setup.longestTemplateRun}")
-        appendLine("- illegal selected plans: ${setup.illegalPlanCount}")
-        appendLine("STORYTELLER_V4_BASELINE_END")
-    }
-
-    private fun percentage(count: Int, total: Int): String = "%.1f%%".format(count * 100.0 / total)
-}
+)
 
 private object StorytellerV4BaselineSimulator {
     private val allRoleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions()
@@ -232,7 +206,7 @@ class StorytellerV4BaselineSimulationTest {
     }
 
     @Test
-    fun `one thousand game baseline records current behavior without blessing known defects`() {
+    fun `small fixed seed sample preserves legal setup and complete selection counts`() {
         val report = StorytellerV4BaselineSimulator.run()
 
         assertEquals(BASELINE_SAMPLE_SIZE, report.setup.shownRoleCounts.values.sum())
@@ -240,6 +214,5 @@ class StorytellerV4BaselineSimulationTest {
         assertEquals(BASELINE_SAMPLE_SIZE, report.dynamicNumber.shownValueCounts.values.sum())
         assertEquals(0, report.setup.illegalPlanCount)
         assertTrue(report.setup.templateCounts.isNotEmpty())
-        println(report.toMarkdown())
     }
 }

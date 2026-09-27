@@ -1,5 +1,7 @@
 # Test suite audit: FAST cost, retired calibration, N3150 workflow
 
+> Historical first-pass audit. The authorized follow-up in [TEST_COST_RETIREMENT_2026-09-27.md](TEST_COST_RETIREMENT_2026-09-27.md) supersedes retention/routing decisions below.
+
 Date: 2026-09-27, Australia/Sydney. Baseline: `1299fba4`.
 Scope: local repository test/configuration maintenance authorized by the user. No production behavior, policy, solver, sample sizes, or exactness assertions changed.
 
@@ -14,7 +16,7 @@ The old 770-test timing baseline no longer described the current suite. Fresh FA
 | `FirstNightDrunkNumericWholeBundleEvaluatorTest` | 2 | 26.125 | affected T2 / FULL |
 | `FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest` | 1 | 11.300 | affected T2 / FULL |
 
-These tests still protect lossless quotienting, complete legal candidate domains, healthy-core/marginal evaluation and exact parity. They were not deleted or weakened. Their affected-change triggers are recorded in `TESTING_STRATEGY.md`; default FULL still discovers them. FAST keeps `FirstNightBundleCandidateSpaceAuditTest`, `PairInformationLegalDomainTest`, `FirstNightNumericLegalDomainTest`, `FirstNightBundleExperimentContractTest`, `FirstNightBundleExperimentExactFixtureTest`, and the rule/flow/feature tests.
+These tests still protect lossless quotienting, complete legal candidate domains, healthy-core/marginal consistency (not independent exact-count parity). They were not deleted or weakened. Their affected-change triggers are recorded in `TESTING_STRATEGY.md`; default FULL still discovers them. FAST keeps `FirstNightBundleCandidateSpaceAuditTest`, `PairInformationLegalDomainTest`, `FirstNightNumericLegalDomainTest`, `FirstNightBundleExperimentContractTest`, `FirstNightBundleExperimentExactFixtureTest`, and the rule/flow/feature tests.
 
 Names and loop counts alone are misleading: `ToleranceCalibrationTest` includes 50,000 samples but took 0.149s. The device benchmark contract tests are also bounded. `A3EnumerationBenchmarkTest` took 1.431s; the Evin C4 regression took 1.921s. These remain in FAST pending measurements on N3150. Do not replace exact assertions or reduce samples just to meet a wall-time target.
 

@@ -1,0 +1,7 @@
+Parent: 119c5464a37bbfce1cd5c6733575a7b5a3a7a6f7
+FAST: 1555 cases / 361 classes
+FULL: 1562 cases / 362 classes
+FULL equals all current source class/@Test counts except seven named manual experiments.
+FAST is a subset of FULL; FULL minus FAST is exactly seven unchanged ZddPlayerWorldSetTest cases.
+Case delta: FULL 1564 - 1 deleted ZDD benchmark - 2 manual experiments + 1 topology smoke = 1562.
+FAST 1546 + 4 bounded Drunk cases + 2 expert + 2 simulation + 1 topology smoke = 1555.
