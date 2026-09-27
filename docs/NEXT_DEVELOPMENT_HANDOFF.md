@@ -132,18 +132,26 @@ Production fanout checkpoint:
 - Validation-only Draft PR #158 exact head `c9835a7dfdfe04e65e7b934784cbc91e1a0f9fd0` passed CI #3471 + R2 #3224 with Android FULL, ASP, Real Clingo and final gate SUCCESS.
 - Formal fanout code checkpoint: `77369a893bb457c8720df00b907e50a4e2550a45`.
 
+C4 committed-input closure:
+
+- `RedHerringCommittedInputBindingAdapter` now provides the typed, non-parsing correlation from the App-owned persisted Red Herring to the exact precommit `CommittedDecisionInputRef`.
+- It owns no state, regenerates no legality, parses no candidate IDs, and carries no player-controlled Fortune Teller target input.
+- No real current production consumer exists, so **no App/UI/runtime wiring was added**. This is an intentional boundary, not an incomplete wiring task.
+- Validation-only Draft PR #158 exact head `564b6d93ef3f08c9331512c186172505485b12bb` passed CI #3472 and R2 #3225 with the exact adapter/test material.
+- Formal continuation commits `fd40ad1e966aa4ed499d9844641170baa7632101` and `d9dd50421f9b7b9d4be9f9173acef81e97320afe` persist the seam and its three regressions after the test-hygiene baseline.
+- **C4 / SDE-3D2 is COMPLETE.** V1 remains unchanged and no policy V2 or cutover is authorized.
+
 Next executable order:
 
 ```text
 preserve dirty Oracle working tree
--> keep #154, #156 and #158 Draft / unmerged
--> audit the existing App-owned committed Red-Herring value against SdeCommittedDecisionInputKind.RED_HERRING
--> define a typed, non-parsing binding/correlation seam from the external commitment to the existing proposed CommittedDecisionInputRef
--> prove no new state owner and no player-controlled Fortune Teller hindsight
--> only wire interaction/runtime consumers if a real current consumer exists; otherwise keep the boundary explicit instead of inventing dead plumbing
+-> keep validation PRs Draft / unmerged
+-> obtain one combined exact-head acceptance after the test-hygiene + C4 closure tree is finalized
+-> proceed to IF-D durable App replay capture/rebuild and RH-E persistence/timing hardening as integration follow-ups
+-> keep C5 evidence-backed policy/cutover blocked until a genuinely qualifying E3/E4 predicate exists
 ```
 
-Do not claim CI #3471 or R2 #3224 ran directly on formal commit `77369a89`; those checks ran on the blob-equivalent validation head `c9835a7d`. The GitHub tree/commit/ref fallback remains the safe persistence path while the Oracle working tree cannot be cleanly fast-forwarded.
+Historical CI/R2 evidence must remain exact-head scoped; do not claim it ran on later formal/documentation commits.
 
 ## 4. Why SDE-3 may proceed now
 
