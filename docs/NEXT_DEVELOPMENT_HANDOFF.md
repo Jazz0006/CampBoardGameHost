@@ -146,12 +146,13 @@ Next executable order:
 ```text
 preserve dirty Oracle working tree
 -> keep validation PRs Draft / unmerged
--> obtain one combined exact-head acceptance after the test-hygiene + C4 closure tree is finalized
--> proceed to IF-D durable App replay capture/rebuild and RH-E persistence/timing hardening as integration follow-ups
+-> combined exact-tree acceptance COMPLETE: formal tree `a4701e0f4873ddd629dfa11163a94d2aa0cb9b8b` mirrored by #160 head `20eeb85790e591fe66363cd1b509bf5dda225342`; CI #3473 + R2 #3226 GREEN
+-> proceed to IF-D durable App replay capture/rebuild
+-> then RH-E persistence/timing hardening
 -> keep C5 evidence-backed policy/cutover blocked until a genuinely qualifying E3/E4 predicate exists
 ```
 
-Historical CI/R2 evidence must remain exact-head scoped; do not claim it ran on later formal/documentation commits.
+Combined acceptance note: formal executable checkpoint `21206a8ca95896ffad83eaba5695a3a571c6cd74` and validation head `20eeb85790e591fe66363cd1b509bf5dda225342` share exact tree `a4701e0f4873ddd629dfa11163a94d2aa0cb9b8b`. CI #3473 and R2 #3226 validate that tree. Historical CI/R2 evidence remains exact-head/tree scoped; do not attribute it to later documentation-only commits without checking tree identity.
 
 ## 4. Why SDE-3 may proceed now
 
