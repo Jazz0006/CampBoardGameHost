@@ -102,17 +102,19 @@ afterEvaluate {
             excludeTestsMatching(sde2D5CalibrationExperiment)
             excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
             excludeTestsMatching(sde2D5FB4FSilverGeneralizationExperiment)
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest")
             excludeTestsMatching(sde2D4ScaleBenchmark)
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologySetupWitnessDifferentialTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyObservationDifferentialTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyBundleDifferentialTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputEvaluatorTest")
+            // 2026-09-27 audit: these five whole-bundle cases consumed 174.373s
+            // of the 187.842s FAST suite sum. Keep their exact parity/quotient proof in FULL
+            // and affected T2, alongside the cheap legal-domain/projection tests in FAST.
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleHealthyHarnessAcceptanceTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkPairWholeBundleEvaluatorTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkNumericWholeBundleEvaluatorTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest")
         }
     }
 

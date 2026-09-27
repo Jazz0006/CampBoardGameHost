@@ -11,8 +11,7 @@ import org.junit.Test
 /**
  * Bounded exact differential oracle for topology-first setup feasibility.
  *
- * Exhaustive mechanical enumeration is intentional correctness evidence here, so this class stays
- * in affected/full validation but outside the ordinary T1 FAST edit loop.
+ * The bounded five-player fixtures remain cheap exact correctness evidence in FAST and FULL.
  */
 class TroubleBrewingTopologySetupWitnessDifferentialTest {
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
