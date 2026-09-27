@@ -265,15 +265,22 @@ Coverage must not be removed merely to satisfy a time target. Conversely, a low-
 
 For actual test execution on the current Gradle wrapper, prefer the task-local `--rerun` option, for example `./gradlew :app:testDebugUnitTest --tests '*PairInformationLegalDomainTest' --rerun`. This reruns the selected Test task while allowing unchanged compile/resource dependencies to remain up-to-date. `--rerun-tasks` forces dependencies too; reserve it for a deliberate complete rebuild or an implementation specification that explicitly requires it. Neither option is the default for routine edits.
 
-### 12.1 Chat + Mini MCP + N3150 execution host
+### 12.1 Current execution environment — GitHub CI/R2 default
 
-- Keep a persistent checkout and Gradle cache on the Android build host. Start conservatively with `--max-workers=2`; measure host memory/CPU before changing heap sizes or worker counts. Do not impose that host-specific tuning on every developer or CI machine.
-- Normal micro-slice: `:app:testDebugUnitTest --tests '<owning class>'` (multiple `--tests` in one invocation when relevant). Use the underlying task so FAST exclusions cannot silently remove the requested expensive class. Gradle must fail if no test matches.
-- Logical checkpoint: `:app:testFast`, plus the triggered T2 filters. T4: `:app:testFull :app:assembleDebug` and selected external gates; use the stronger host/CI where available. Local evidence does not replace remote acceptance.
-- Reuse the daemon for an ongoing local session. Avoid routine `clean`, global `--rerun-tasks`, and assembling an APK after every non-UI test edit. A changed Kotlin test still compiles the shared test source set; filtering only reduces test execution, not the source set's compilation scope.
-- Force only the test task for timing: `./gradlew :app:testFast --rerun --max-workers=2`. Summarize with `python3 tools/testing/summarize_junit.py app/build/test-results/testFast --json /tmp/fast-timing.json`. Save results before another invocation of that task overwrites them.
-- Record revision, host, task/filter, whether tests actually executed, wall time, XML test time, counts/failures/skips. Re-measure on N3150; do not extrapolate Mac timings as host guarantees. Audit any new class dominating FAST before adding it to the exclusion list.
-- Default inclusion remains intact. No timing-based auto-skip, package-wide exclusion, reduced sample count, or weakened exactness assertion is introduced.
+The N3150 Android execution-host experiment is retired from the normal development workflow. Measured end-to-end test time is too slow to justify keeping checkout synchronization, remote worker state and host-specific tuning on the critical path.
+
+Current rules:
+
+- Do **not** block development on syncing, repairing or running N3150 unless the user explicitly reopens that experiment.
+- Oracle Mini MCP task execution is not Android validation when the required Android SDK/toolchain is unavailable.
+- GitHub CI/R2 is the normal Android execution and independent acceptance surface.
+- A compatible user-run local Android environment may provide supplemental evidence, but no current slice is required to obtain N3150 evidence.
+- Normal micro-slice intent remains `:app:testDebugUnitTest --tests '<owning class>'` when focused execution is required. When no suitable local Android host is available, obtain that evidence through the approved GitHub workflow/CI path rather than weakening the test.
+- Logical checkpoint intent remains `:app:testFast` plus triggered T2. T4 remains `:app:testFull :app:assembleDebug` plus selected external gates.
+- Record exact source revision, workflow/run, task/filter, executed-vs-cached status, counts/failures/skips and relevant timing when evaluating CI evidence.
+- Default inclusion remains intact. No timing-based auto-skip, package-wide exclusion, reduced sample count or weakened exactness assertion is introduced merely because local Android execution is unavailable.
+
+Host-specific N3150 tuning and timing data remain historical evidence only; they are not current workflow requirements.
 
 S2.1 verified that `testFast` and `testFull` have separate execution identities, that `testFast` does not invoke `testDebugUnitTest`, and that `testFull` does.
 

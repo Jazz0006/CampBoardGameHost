@@ -623,7 +623,7 @@ Read:
 6. this route as architecture background;
 7. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`;
 8. query live branch / PR / checks;
-9. continue integration closure from the handoff; SDE-3A is complete. Use local Codex tools for the current user-authorized continuation.
+9. continue from the live handoff using the current workflow authority: GitHub Connector by default; Mini MCP + Codex only when complete local context is required for large/truncated-file analysis or mechanical implementation.
 
 Do not resume broad evidence collection in the app repo. Targeted source acquisition belongs to the external evidence pipeline.
 

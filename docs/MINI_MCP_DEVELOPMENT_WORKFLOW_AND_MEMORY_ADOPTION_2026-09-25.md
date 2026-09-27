@@ -1,25 +1,27 @@
 # CampBoardGameHost — Mini MCP Development Workflow & Developer-Memory Adoption
 
 > Date: 2026-09-25 Australia/Sydney  
-> Status: **ACTIVE WORKFLOW AUTHORITY**  
+> Status: **SUPERSEDED / HISTORICAL ADOPTION RECORD — NOT CURRENT EXECUTION AUTHORITY**  
 > Repository alias: `clocktower`  
 > Runtime: ChatGPT -> Secure MCP Tunnel -> always-on Oracle Mini MCP  
 > Parent rules: root `AGENTS.md`
 
-## 1. Decision
+## 1. Historical decision — superseded 2026-09-27
 
-Mini MCP is now the default execution and GitHub-control interface for ordinary CampBoardGameHost development when its reviewed tool surface is available.
+This document records the period when Mini MCP was adopted as the default repository/GitHub control plane.
 
-GitHub itself remains the canonical remote collaboration / PR / CI state. The normal interface used to inspect and mutate that state is now Mini MCP's guarded GitHub surface rather than the GitHub Connector.
+That execution-path decision has been superseded by:
 
-The GitHub Connector remains a fallback for:
+`docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`
 
-- Mini MCP runtime/tool exposure failure;
-- a GitHub capability not yet represented by Mini MCP;
-- bootstrap/recovery where the Oracle workspace itself is unavailable;
-- an explicitly requested independent cross-check.
+Current rule:
 
-Do not switch to GitHub Connector merely because a task involves PRs, CI, reviews, Draft state or merge. Mini MCP now covers those ordinary control-plane operations.
+- GitHub Connector is again the default repository / PR / CI / review interface;
+- Mini MCP + Codex CLI is primarily the complete-local-context / large-file analysis and mechanical editing supplement;
+- Mini MCP GitHub tools are recovery/cross-check rather than the normal control plane;
+- N3150 is not part of the default validation path.
+
+The capability inventory below remains useful historical/reference material, but any statement that Mini MCP is the default execution or GitHub-control interface is non-authoritative.
 
 ## 2. Verified Mini MCP capability boundary
 
@@ -103,17 +105,17 @@ A task result is evidence only when the configured execution host actually suppo
 
 These tools operate against configured repository identity and use server-owned credentials and stale-state guards.
 
-For CampBoardGameHost:
+Historical note for CampBoardGameHost:
 
-- use Mini MCP GitHub tools as the normal PR/CI/review interface;
-- keep the GitHub service itself as canonical remote truth;
-- do not infer current remote state from local Git alone;
-- merge still requires explicit user authorization;
-- after an ambiguous remote write outcome, re-audit instead of blindly retrying.
+- these GitHub tools remain technically available;
+- the 2026-09-27 workflow no longer uses them as the normal PR/CI/review interface;
+- GitHub Connector is the current default control-plane interface;
+- GitHub itself remains canonical remote truth;
+- merge still requires explicit user authorization.
 
-## 3. Default high-efficiency development loop
+## 3. Historical Mini MCP-first loop — superseded
 
-For a substantive task, use this order unless the task clearly requires less:
+The sequence below documents the former Mini MCP-first loop. Do not use it as current execution authority; use `AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` instead.
 
 ~~~text
 1. repo_info / git_state

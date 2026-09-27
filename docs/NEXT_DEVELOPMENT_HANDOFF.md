@@ -10,11 +10,12 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 ## 1. Read first
 
 1. `AGENTS.md`
-2. `docs/TESTING_STRATEGY.md`
-3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-4. this handoff
-5. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` §6 RH-E
-6. `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
+2. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`
+3. `docs/TESTING_STRATEGY.md`
+4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
+5. this handoff
+6. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` §6 RH-E
+7. `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
 
 Only read older SDE slice audits when a concrete ownership/history question requires them.
 
@@ -22,14 +23,9 @@ Only read older SDE slice audits when a concrete ownership/history question requ
 
 Do not assume recorded branch/HEAD/PR state is still live.
 
-Start by checking with Mini MCP:
+Start by checking live remote state through the **GitHub Connector**: `main`, PR #157 exact head/state/draft/mergeability and current checks.
 
-~~~text
-git_state({ repo: "clocktower" })
-git_status({ repo: "clocktower" })
-git_remote_status({ repo: "clocktower" })
-github_pr_audit({ repo: "clocktower", pr: 157 })
-~~~
+If the task is continuing an existing Mini MCP/Codex large-file worktree or otherwise depends on local unpushed state, also inspect the configured local workspace before editing so that current work is never overwritten or lost.
 
 Requirements:
 
@@ -133,7 +129,17 @@ Map at minimum:
 
 Classify each path as serialized-mutation, read-only-safe or intentionally out of scope. Re-run the fanout search after implementation.
 
-## 8. Tests-first acceptance plan
+## 8. Execution / validation workflow
+
+Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as the current execution-path authority:
+
+- GitHub Connector is the default repository / PR / CI / result-analysis interface;
+- Mini MCP + Luna is the large/truncated-file mechanical execution supplement after Chat fixes the design;
+- strong Codex may be used read-only when complete local context is genuinely required before design;
+- N3150 is retired from the default validation path;
+- GitHub CI/R2 is the normal Android validation and independent acceptance surface.
+
+### Tests-first acceptance plan
 
 Use the smallest durable typed seam. Expected coverage includes:
 

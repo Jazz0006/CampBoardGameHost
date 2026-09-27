@@ -157,12 +157,13 @@ Do not resolve #157/main integration merely to start RH-E.
 Read first:
 
 1. `AGENTS.md`
-2. `docs/TESTING_STRATEGY.md`
-3. this roadmap
-4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
-5. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` — RH-E contract and completed repair record
-6. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md` — completed C4 architecture/evidence boundary
-7. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md` — freeze/cutover gates
+2. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`
+3. `docs/TESTING_STRATEGY.md`
+4. this roadmap
+5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
+6. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` — RH-E contract and completed repair record
+7. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md` — completed C4 architecture/evidence boundary
+8. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md` — freeze/cutover gates
 
 Use older SDE-3A/B/C/C0–C3 completion documents only when a specific historical or ownership question requires them.
 
@@ -178,7 +179,7 @@ For RH-E:
 - T3 only when an explicitly expensive/manual evidence surface is affected;
 - T4 logical checkpoint: FULL + assemble + selected external gates / remote acceptance.
 
-N3150 or another supported Android build host may provide local execution evidence; GitHub remains the independent remote acceptance surface.
+GitHub CI/R2 is the normal Android execution and independent remote acceptance surface. The N3150 execution-host experiment is retired from the default workflow; do not block RH-E on synchronizing or running it unless the user explicitly reopens that experiment.
 
 A documentation-only compaction does not require Android regression by itself.
 

@@ -72,9 +72,9 @@ Class timing inventories live in [`artifacts/test-audit-2026-09-27`](../artifact
 
 The dedicated heavyweight calibration experiments were compiled but not executed; this audit removed their obsolete methods without changing the surviving experiment methods. No external ASP/Clingo suite or remote CI/PR operation was performed. Local JVM/build evidence is not remote merge acceptance.
 
-## Workflow to use on N3150
+## Historical N3150 workflow — retired from current execution path
 
-The authoritative command/cadence details are in `TESTING_STRATEGY.md` §12.1. Chat chooses the owning T0 contract; Mini MCP dispatches that bounded command to the Android host and returns revision-bound evidence. N3150 retains its checkout/cache/daemon. Start with two Gradle workers, then measure before tuning further.
+This section records the workflow that was proposed during the audit. It is no longer current execution guidance. `TESTING_STRATEGY.md` §12.1 now retires N3150 from the default path because the measured end-to-end cost is too high; GitHub CI/R2 is the normal Android execution/acceptance surface unless the user explicitly reopens the N3150 experiment.
 
 Use a focused `testDebugUnitTest --tests` invocation for a micro-slice, FAST plus affected heavy tests at a logical checkpoint, and FULL/assemble plus selected external gates for acceptance. Use task-local `--rerun` only when fresh execution is needed. Avoid global `--rerun-tasks`, `clean`, daemon teardown and unnecessary APK assembly in routine edit loops. No Android/N3150 host configuration or remote CI/PR state was changed by this local audit.
 

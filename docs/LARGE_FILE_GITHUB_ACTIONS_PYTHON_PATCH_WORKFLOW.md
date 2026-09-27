@@ -1,9 +1,9 @@
 # Large-file GitHub Actions + Python Patch Workflow
 
-> Role: **NORMATIVE / LARGE-FILE EDITING SOP**  
+> Role: **EXCEPTIONAL FALLBACK / HISTORICAL LARGE-FILE SOP — NOT DEFAULT**  
 > Effective: 2026-08-31  
 > Applies to: `Jazz0006/CampBoardGameHost`  
-> Purpose: safely edit large/truncated source files without replacing the whole file through the connector and without requiring Luna as the first fallback.
+> Current authority: `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`. Mini MCP + Codex/Luna is now the normal large/truncated-file supplement; this GitHub Actions + Python procedure is retained only for cases where the local path is unavailable or a locked remote mutation is uniquely safer.
 
 ## 1. Mandatory writer priority
 
@@ -26,7 +26,7 @@ C. Path B cannot be made safe, repeatedly fails for an environmental reason,
    -> Codex/Luna local implementation
 ```
 
-**For a large source file, Path B is the first choice. Luna is the fallback, not the default.**
+**SUPERSEDED DEFAULT:** the 2026-09-27 workflow uses Chat-designed Mini MCP + Luna local mechanical execution as the normal large/truncated-file path. The one-shot workflow below is exceptional fallback guidance only.
 
 Typical Path B targets include `CampBoardGameHostApp.kt` and other files whose connector output is truncated or whose whole-file replacement would be unnecessarily risky.
 
