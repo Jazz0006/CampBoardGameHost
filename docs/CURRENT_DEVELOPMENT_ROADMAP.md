@@ -171,6 +171,8 @@ Those paths are no longer active.
 - Old D5 correction/design documents have been removed from active docs; Git history preserves traceability.
 - Existing human-label manifests are historical/compatibility artifacts, not current policy truth.
 
+Test maintenance audit (2026-09-27): the seven-scenario clean corpus was already deleted in `82a4200b`. The remaining unused Stage-7A preset builder and the extreme-fixture role-information / confirmation report plus human-label export/validation implementation have now been retired with their test-only contracts. Historical manifest TSVs remain archival evidence. Production feature projectors, canonical legality/generator tests, current expert/SILVER evidence and compatibility behavior tests remain. See [`TEST_SUITE_AUDIT_2026-09-27.md`](TEST_SUITE_AUDIT_2026-09-27.md) for coverage accounting and the N3150 execution workflow.
+
 ## 6. D5F-B4 — expert-observed policy calibration
 
 Evidence hierarchy:

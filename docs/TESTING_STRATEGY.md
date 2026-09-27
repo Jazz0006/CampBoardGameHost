@@ -3,7 +3,7 @@
 > Role: **LONG-LIVED TEST EXECUTION / VALIDATION STRATEGY**
 > Baseline: S1.1/S1.2 measured at `d52f53b4a1821cc000368c393721d1d5a073aafc`
 > Date: 2026-08-30
-> Latest measured FAST routing audit: 2026-09-27 at `1299fba4` (local audit workspace).
+> Latest measured audit: 2026-09-27 — [FAST / retirement / N3150 workflow audit](TEST_SUITE_AUDIT_2026-09-27.md)
 
 ## 1. Purpose
 
@@ -60,7 +60,7 @@ S2.1 established executable Android JVM suites at commit `99b340635e04abd64341e5
 
 `testFast` retains `A3EnumerationBenchmarkTest`, representative utility tests, integration/wiring tests, and ownership/characterization tests.
 
-The figures above are historical. On 2026-09-27 at `1299fba4`, FAST executed 1,551 tests in 357 classes with zero failures/skips. The suite-duration sum was 187.842s on the local Apple Silicon Mac; four whole-bundle classes (five testcases) consumed 174.373s, or 92.8%. These now run in affected T2 / FULL. This is not an N3150 timing measurement. These measurements describe the original local audit workspace; revalidate the destination branch after integration.
+The figures above are historical. On 2026-09-27 at `1299fba4`, FAST executed 1,551 tests in 357 classes with zero failures/skips. The suite-duration sum was 187.842s on the local Apple Silicon Mac; four whole-bundle classes (five testcases) consumed 174.373s, or 92.8%. These now run in affected T2 / FULL. This is not an N3150 timing measurement. See the linked audit for post-change results, exact retirement accounting, and destination-branch integration evidence.
 
 ## 3. T0–T4 execution model
 
