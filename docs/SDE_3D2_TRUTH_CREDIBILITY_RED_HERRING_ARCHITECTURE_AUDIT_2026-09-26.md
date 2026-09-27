@@ -462,21 +462,11 @@ Validation-only Draft PR #158 exact head `564b6d93ef3f08c9331512c186172505485b12
 
 **C4 / SDE-3D2 is therefore COMPLETE as a policy-neutral feature/composition slice.** It does not authorize V2, a Red-Herring preference score, automatic cutover, or broader runtime scope.
 
-## 11. C4 audit conclusion
+## 11. C4 completion conclusion
 
-The repository already contains most of the structural ingredients required for C4:
+C4 now reuses the existing Red-Herring legality owner, setup-precommit lifecycle, exact consequence authority, typed committed-input reference, canonical history/provenance and DecisionTrace/replay surfaces without creating a parallel state owner.
 
-- Red Herring legality owner;
-- typed committed-input reference kind;
-- setup-precommit lifecycle type;
-- Night-1 candidate-product audit with player-controlled FT target explicitly excluded;
-- exact consequence authority;
-- healthy-information and confirmation provenance;
-- an existing but unimplemented `truthCredibility` feature slot.
-
-The missing work is not another heuristic score.
-
-The correct C4 direction is:
+The completed data flow is:
 
 ```text
 existing legal Red Herring candidate
@@ -488,4 +478,6 @@ existing legal Red Herring candidate
 -> V1 remains policy-neutral
 ```
 
-CR-A / CR-B / CR-C are accepted, and the bounded C4 implementation described above is complete. IF-D durable App replay reconstruction and RH-E persistence/timing hardening remain separate integration follow-ups; evidence-backed policy change remains gated on qualifying E3/E4 evidence.
+The App-owned committed Red Herring can be correlated to the exact precommit reference through a typed fail-closed seam, but there is deliberately no runtime consumer until one is required by a real SDE decision surface. No heuristic score, named-role preference, fixture-specific rule, Fortune Teller hindsight, V2 policy, or automatic cutover was introduced.
+
+CR-A / CR-B / CR-C are accepted and **C4 / SDE-3D2 is COMPLETE**. IF-D durable App replay reconstruction and RH-E persistence/timing hardening remain separate integration follow-ups; evidence-backed policy change remains gated on qualifying E3/E4 evidence.
