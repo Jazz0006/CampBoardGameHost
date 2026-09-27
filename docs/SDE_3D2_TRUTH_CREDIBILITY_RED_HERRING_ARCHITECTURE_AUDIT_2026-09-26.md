@@ -481,3 +481,15 @@ existing legal Red Herring candidate
 The App-owned committed Red Herring can be correlated to the exact precommit reference through a typed fail-closed seam, but there is deliberately no runtime consumer until one is required by a real SDE decision surface. No heuristic score, named-role preference, fixture-specific rule, Fortune Teller hindsight, V2 policy, or automatic cutover was introduced.
 
 CR-A / CR-B / CR-C are accepted and **C4 / SDE-3D2 is COMPLETE**. IF-D durable App replay reconstruction and RH-E persistence/timing hardening remain separate integration follow-ups; evidence-backed policy change remains gated on qualifying E3/E4 evidence.
+
+## 12. Combined exact-tree acceptance — 2026-09-27
+
+The final C4 executable tree, including the accepted test-hygiene routing/retirement changes, is formal checkpoint `21206a8ca95896ffad83eaba5695a3a571c6cd74` with tree `a4701e0f4873ddd629dfa11163a94d2aa0cb9b8b`.
+
+Validation-only Draft PR #160 exact head `20eeb85790e591fe66363cd1b509bf5dda225342` uses current `main` as its direct parent and carries that exact same tree. It passed:
+
+- CI #3473 — Classify changes, Android FULL + debug APK, ASP contracts, Real Clingo cross-validation and final CI gate all SUCCESS;
+- R2 main-thread boundary #3226 — SUCCESS;
+- 6/6 checks successful with no unresolved review threads.
+
+PR #160 is validation-only and must not be merged. This acceptance closes C4 engineering/validation. IF-D and RH-E remain separate integration-hardening follow-ups, and C5 remains evidence-gated.
