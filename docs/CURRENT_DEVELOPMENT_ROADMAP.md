@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-26 Australia/Sydney  
+> Updated: 2026-09-27 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -44,11 +44,11 @@ SDE-3E automatic production cutover                   BLOCKED PER SURFACE ON 3D 
 
 ## 2. Current branch / PR
 
-Local continuation: `codex/sde-history-prefix-route-closure`; accepted C0–C3 production code checkpoint remains `8855d4615a4c24a4c3141241f360cfe70d8d239e`. The later audit-artifact branch checkpoint is `07563657b510a3ca027e163831dc8e60bbc0243a`; it does not represent a production fix. This is not `main`. The audited `main` remains `cc5adee5`; the development/main merge conflict remains a separate, unauthorized integration action.
+Current continuation: `codex/sde-history-prefix-route-closure`, represented by Draft PR #157. Before this documentation cleanup the Oracle branch/worktree was clean and exactly aligned with its same-name remote at `03a6c3f39d2cedcbd7a870e4ab2a446e76a1082a`. Live `main` is `cc5adee5baf107e04d8b0d5a7657e9c27d5ed1e2`; it contains the later merged M8G5 documentation/control-plane commit that is not on the continuation, so #157 remains divergent/`dirty`. Main synchronization and conflict resolution are separate, unauthorized integration actions.
 
 ### Current priority: RH-E runtime persistence/timing hardening
 
-The C0–C3 historical integration checkpoint remains accepted at `8855d461`; CR-A/B/C and C4 / SDE-3D2 are COMPLETE. **IF-D durable App replay capture/rebuild is now COMPLETE** at formal executable checkpoint `4d1b6d7f39529402eb9ec1e6032eb80ef9a14e86`, tree `181a1d80d449c2d443a678e10033acda13c777d1`. Validation-only Draft PR #161 exact head `58dca50c26afd2ad6898dda5ce15702c13becaa9` carries the exact same tree and passed CI #3476 + R2 #3229, including Android FULL + debug APK, ASP contracts, Real Clingo, verify-boundary and final CI gate. The RED checkpoint on #161 was `45243101...` / CI #3475 Android compile failure before the production recovery contract existed. Recovery remains the sole short-horizon persistence owner; the SDE replay export is optional/read-only and old v2 recoveries remain compatible. The Oracle dirty working tree remains intentionally untouched. The next executable integration slice is RH-E serialized diagnostic persistence/timing hardening.
+The C0–C3 historical integration checkpoint remains accepted at `8855d461`; CR-A/B/C and C4 / SDE-3D2 are COMPLETE. **IF-D durable App replay capture/rebuild is COMPLETE** at formal executable checkpoint `4d1b6d7f39529402eb9ec1e6032eb80ef9a14e86`, tree `181a1d80d449c2d443a678e10033acda13c777d1`. Validation-only Draft PR #161 exact head `58dca50c26afd2ad6898dda5ce15702c13becaa9` carries the exact same tree and passed CI #3476 + R2 #3229, including Android FULL + debug APK, ASP contracts, Real Clingo, verify-boundary and final CI gate. The RED checkpoint on #161 was `45243101...` / CI #3475 Android compile failure before the production recovery contract existed. Recovery remains the sole short-horizon persistence owner; the SDE replay export is optional/read-only and old v2 recoveries remain compatible. Oracle has been restored to a clean continuation checkpoint. The next executable integration slice is RH-E serialized diagnostic persistence/timing hardening.
 
 | Dimension | Current assessment |
 | --- | --- |
@@ -56,7 +56,7 @@ The C0–C3 historical integration checkpoint remains accepted at `8855d461`; CR
 | Runtime reachability | Debug-only Trouble Brewing 5-player structured-number shadow is connected; RH-E remains open because archive I/O/timing is not yet a complete end-to-end latency boundary |
 | Durable replay loop | C1 transport + C2 offline replay + CR-C strict nested decoding + IF-D Recovery-backed cold-start replay export/rebuild are COMPLETE; exact committed setup provenance survives process death without a second mutable truth store |
 | Identity integrity | CR-B typed `InformationDecisionRequestIdentity(gameId, requestId)` is fully propagated through production adapters and replay/runtime pre-evaluation gates; cross-game same-revision and stale request identity regressions are accepted |
-| Acceptance | C0–C3 historical CI #3451 remains valid; CR-A/B/C is `4245ddb8` / CI #3459 / R2 #3212; C4 exact tree is `21206a8c` / `a4701e0f` mirrored by #160 / CI #3473 / R2 #3226; IF-D exact tree is formal `4d1b6d7f` / `181a1d80` mirrored by #161 `58dca50c` / CI #3476 / R2 #3229. Oracle local HEAD alignment remains intentionally deferred while its dirty tree is preserved |
+| Acceptance | C0–C3 historical CI #3451 remains valid; CR-A/B/C is `4245ddb8` / CI #3459 / R2 #3212; C4 exact tree is `21206a8c` / `a4701e0f` mirrored by #160 / CI #3473 / R2 #3226; IF-D exact tree is formal `4d1b6d7f` / `181a1d80` mirrored by #161 `58dca50c` / CI #3476 / R2 #3229. Oracle continuation/worktree cleanup is complete; live main integration remains a separate unresolved gate |
 
 Execution path follows current root `AGENTS.md`: use configured Mini MCP `clocktower` by default when available, and use alternate environments only for capability gaps or explicit user instruction.
 
@@ -89,15 +89,15 @@ C0 code/document implementation remains complete at the accepted C0–C3 checkpo
 - App fanout is two narrow callbacks: prepared structured-number decision and confirmed structured decision. Legality/confirmation, session commit, historical evaluation and archive ownership remain in their existing typed owners.
 - Focused C1–C3/correlation tests and production compilation are GREEN. Final `:app:testFast :app:assembleDebug` succeeded in 2m52s: **1528 tests / 352 suites, 0 failures or skips**, plus successful debug APK assembly. `git diff --check` is GREEN.
 - Exact code HEAD `8855d461` was pushed to Draft PR #154 and accepted by manually dispatched full CI #3451 / run `36126033315`: Android full JVM + debug APK, ASP contract, Real Clingo cross-validation and final CI gate all succeeded. The PR remains `DIRTY` against `main`; automatic PR checks/R2 did not run, so R2 and conflict resolution remain explicit merge gates rather than implied successes.
-- **C4 / SDE-3D2 COMPLETE:** typed truth/credibility ownership, Red-Herring setup-precommit projection, exact truth-danger consequence, Evin E2 regression, V1 invariance, DecisionTrace schema-v2 persistence/migration, replay recomputation, bounded setup-shadow fanout, and committed-input correlation are all closed. `RedHerringCommittedInputBindingAdapter` correlates the App-owned persisted target through canonical player identity to the exact setup-owned `RED_HERRING` reference without parsing IDs, regenerating legality, moving state ownership, or introducing Fortune Teller target hindsight. No real production consumer currently exists, so no dead App/runtime wiring was added. Validation-only PR #158 exact head `564b6d93ef3f08c9331512c186172505485b12bb` passed CI #3472 + R2 #3225; formal continuation commits `fd40ad1e` + `d9dd5042` persist the final seam/test material after the test-hygiene baseline. V1 policy remains unchanged. Next integration follow-ups are IF-D and RH-E; C5 policy/cutover remains evidence-gated.
+- **C4 / SDE-3D2 COMPLETE:** typed truth/credibility ownership, Red-Herring setup-precommit projection, exact truth-danger consequence, Evin E2 regression, V1 invariance, DecisionTrace schema-v2 persistence/migration, replay recomputation, bounded setup-shadow fanout, and committed-input correlation are all closed. `RedHerringCommittedInputBindingAdapter` correlates the App-owned persisted target through canonical player identity to the exact setup-owned `RED_HERRING` reference without parsing IDs, regenerating legality, moving state ownership, or introducing Fortune Teller target hindsight. No real production consumer currently exists, so no dead App/runtime wiring was added. Validation-only PR #158 exact head `564b6d93ef3f08c9331512c186172505485b12bb` passed CI #3472 + R2 #3225; formal continuation commits `fd40ad1e` + `d9dd5042` persist the final seam/test material after the test-hygiene baseline. V1 policy remains unchanged. IF-D is also complete; RH-E is the remaining short-horizon integration-hardening follow-up. C5 policy/cutover remains evidence-gated.
 
-Upstream development branch: `sde-3c-decision-trace-shadow-replay` (local continuation branch above).
+Historical predecessor branch: `sde-3c-decision-trace-shadow-replay`. Its current remote head is already an ancestor of the formal continuation branch; it is no longer the active development branch.
 
 Latest accepted executable C4 tree checkpoint is formal `21206a8ca95896ffad83eaba5695a3a571c6cd74` with tree `a4701e0f4873ddd629dfa11163a94d2aa0cb9b8b`. Combined validation-only Draft PR #160 exact head `20eeb85790e591fe66363cd1b509bf5dda225342` carries the exact same tree on current `main` and passed CI #3473 + R2 #3226. Earlier C4 evidence remains #158 `564b6d93` / CI #3472 / R2 #3225 for committed-input binding, `c9835a7d` / #3471 / #3224 for fanout, `1299fba4` / #3470 / #3223 for schema/invariance, and `f181780b` / #3468 / #3221 for initial features. CR-A/B/C acceptance remains `4245ddb8` / CI #3459 / R2 #3212. Documentation-only synchronization commits may advance the formal branch; always query live refs and compare tree identity before attributing acceptance.
 
-Draft PR #154 — `SDE-3C: add DecisionTrace shadow replay` — remains the active SDE-3C/3D continuation PR. Query its exact live head/checks before executable work. Keep it **draft** and do not merge unless the user explicitly says **“授权合并”**.
+Draft PR #157 — `SDE correctness repair: close CR-A CR-B CR-C` — is the current continuation PR because its head is `codex/sde-history-prefix-route-closure`. The title reflects its origin rather than the branch's later C4/IF-D contents. Keep it **draft** and do not merge unless the user explicitly says **“授权合并”**. PR #154 is superseded historical SDE-3C lineage and is a cleanup candidate, not the active integration vehicle.
 
-PR #153 is merged into `main`; merged `main` entry SHA is `7045ae746fd11a26371127c584c91e2a183c4c75`.
+PR #153 entered `main` at `7045ae746fd11a26371127c584c91e2a183c4c75`. Live `main` later advanced to `cc5adee5baf107e04d8b0d5a7657e9c27d5ed1e2` through merged PR #155 (M8G5 documentation/control-plane adoption).
 
 Always query live refs before executable edits.
 
@@ -105,7 +105,7 @@ Always query live refs before executable edits.
 
 Read these first for current execution:
 
-- Current correctness repair gate: [`SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md)
+- Completed correctness-repair record plus current IF-D/RH-E integration-hardening contract: [`SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md)
 - Completed C4 architecture/evidence/fanout audit: [`SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md`](SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md)
 - Historical C0–C3 integration implementation / acceptance: [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md)
 - Current state / priority: [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)

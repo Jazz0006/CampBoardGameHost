@@ -1,13 +1,13 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-09-25 Australia/Sydney  
+> 最后整理：2026-09-27 Australia/Sydney  
 > 目标：新开发会话只读取当前权威。历史过程、已撤销路线和中间校准实验不再留在 active docs 中制造歧义。
 
 ## 默认阅读顺序
 
 1. root `AGENTS.md`
 2. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
-3. [`SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) — **当前 correctness repair 硬前置：CR-A / CR-B / CR-C**
+3. [`SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) — **已完成 CR-A/B/C + IF-D，并定义当前 RH-E integration-hardening contract**
 4. [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) — C0–C3 历史集成闭环契约与已验收边界
 5. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 6. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
@@ -35,13 +35,13 @@ sealed holdout                         CLOSED
 SDE-3A engine/feature/policy contract  COMPLETE / PR #151/#152
 SDE-3B BEGINNER_CONSERVATIVE_V1        COMPLETE / PR #153 MERGED
 SDE-3C DecisionTrace/replay            COMPLETE / 3C0–3C5 historical checkpoint preserved
-SDE integration closure               C0–C3 CHECKPOINT ACCEPTED / later audit found bounded defects
-Post-audit correctness repair         CR-A / CR-B / CR-C NEXT / HARD GATE BEFORE 3D2 PRODUCTION EDITS
-SDE-3D calibrated policy freeze        IN PROGRESS / 3D0–3D1 COMPLETE / 3D2 BLOCKED ON CR-A/B/C
-SDE-3E automatic production cutover    BLOCKED PER DECISION SURFACE
+SDE integration closure               C0–C3 HISTORICAL CHECKPOINT ACCEPTED
+Post-audit correctness repair         CR-A / CR-B / CR-C COMPLETE / ACCEPTED
+SDE-3D calibrated policy freeze        3D0–3D1 + C4/SDE-3D2 COMPLETE / IF-D COMPLETE / RH-E NEXT
+SDE-3E automatic production cutover    C5 BLOCKED ON QUALIFYING E3/E4 / PER-SURFACE GATES
 ~~~
 
-远端验收边界：代码 HEAD `8855d461` 已同步到 Draft PR #154，手动 full CI #3451 成功（Android full/debug APK、ASP contract、Real Clingo、最终 gate）。PR 与 `main` 的既有冲突仍未获授权处理，因此自动 PR checks/R2 未触发；不得把 full CI 成功表述为 R2 或可合并状态。
+当前远端边界：正式 continuation 是 `codex/sde-history-prefix-route-closure`，由 Draft PR #157 承载；live `main` 为 `cc5adee5...`，包含 continuation 尚未吸收的 M8G5 文档/control-plane 合并，因此 #157 当前仍是 dirty merge state。C4 exact-tree validation #160（CI #3473 / R2 #3226）与 IF-D validation #161（CI #3476 / R2 #3229）均已 GREEN，但它们是 validation-only，不是 merge target。任何 main integration / ready / merge 仍需单独授权。
 
 ## 当前政策核心
 
@@ -50,9 +50,9 @@ SDE-3E automatic production cutover    BLOCKED PER DECISION SURFACE
 - Spy / Recluse registration 永远是 interaction-scoped，不修改 canonical identity。
 - Chef / Empath 只有在所有合法 Spy/Recluse registration 分支都得到同一个健康值时才是 rule-determined。
 - 受损信息不等于必须说假话；重复/历史依赖的信息必须通过共享、角色无关的 derived narrative projection over canonical history 维持一致性，不能按角色分别写 policy 特判。
-- confirmation chain、healthy-information utility、impaired narrative、role-function exposure 已有 typed descriptive feature，但 **V1 不使用它们排序**；2026-09-25 审计发现 impaired-narrative projector 把“只能靠失常解释”误判为 player-believable continuity，必须先完成 CR-A。
+- confirmation chain、healthy-information utility、impaired narrative、role-function exposure 已有 typed descriptive feature，但 **V1 不使用它们排序**；2026-09-25 审计发现的 impaired-narrative semantic defect 已由 CR-A 在共享 projector owner 修复并验收。
 - role-function exposure 的存在已经被建模；Librarian→Recluse、Investigator→Spy 的 avoidance severity 仍缺 E3 证据，不能把旧设计建议当成当前 V1 policy。
-- Red Herring contextual utility 与 truth danger / credibility disruption 有目前最强的跨专家基础之一；完成 CR-A/B/C 后，3D2 才进入 production descriptive feature work，仍不得直接产生 preference。
+- Red Herring contextual utility 与 truth danger / credibility disruption 有目前最强的跨专家基础之一；CR-A/B/C 与 C4 / SDE-3D2 已完成 typed production descriptive feature closure，但这些特征仍不得在缺少 qualifying E3/E4 evidence 时直接变成新的 preference。
 - strategic evil topology 是重要 structural evidence，但不能代替 healthy information、confirmation、role-function exposure、bluff usability、narrative coherence 等维度。
 - 不引入 opaque global scalar；Gap E 只有在未来 policy 真正需要 numeric weighting 时才成为 blocker。
 - automatic production cutover 按 decision surface gating；一个“大 equivalence class + seeded selection”的 V1 结果本身不足以授权 cutover。

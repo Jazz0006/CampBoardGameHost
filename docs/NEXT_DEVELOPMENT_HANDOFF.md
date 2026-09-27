@@ -1,9 +1,9 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-09-26 Australia/Sydney  
-> Local continuation branch: `codex/sde-history-prefix-route-closure`; upstream development branch: `sde-3c-decision-trace-shadow-replay`
-> C0–C3 integration code HEAD: `8855d4615a4c24a4c3141241f360cfe70d8d239e` — synchronized to both remote branches; GitHub full CI #3451 / run `36126033315` SUCCESS. R2 remains pending because the existing PR/main conflict prevented automatic PR checks.
-> Draft PR: **#154 — `SDE-3C: add DecisionTrace shadow replay`**. Keep the PR **draft**; do not mark ready or merge unless the user explicitly says **“授权合并”**. Re-query the live branch/PR/checks before the next executable slice because documentation-only closeout commits may advance the branch HEAD.
+> Updated: 2026-09-27 Australia/Sydney  
+> Current continuation branch: `codex/sde-history-prefix-route-closure`. The Oracle worktree was restored to a clean, remote-aligned checkpoint before this documentation cleanup.
+> C0–C3 remains historical acceptance evidence; C4 / SDE-3D2 and IF-D are COMPLETE. The next production slice is RH-E persistence/timing hardening.
+> Active continuation Draft PR: **#157 — `SDE correctness repair: close CR-A CR-B CR-C`**. Its title is historical relative to the branch contents; it now carries the formal continuation and remains `dirty` against live `main`. Do not mark ready or merge unless the user explicitly says **“授权合并”**. PR #154 is a superseded historical SDE-3C Draft whose head is already an ancestor of the continuation branch.
 
 ## 1. Read first
 
@@ -42,13 +42,13 @@ Before any executable edit:
 
 1. inspect local Git status, branch and diff; preserve unrelated user files;
 2. use the configured Mini MCP `clocktower` workspace by default, following root `AGENTS.md`; use other execution environments only when explicitly required by capability or user instruction;
-3. work from `codex/sde-history-prefix-route-closure`; accepted production code checkpoint remains `8855d461`, while later audit/documentation commits may advance the branch; inspect live refs before assuming any recorded SHA is current;
+3. work from `codex/sde-history-prefix-route-closure`; C0–C3 checkpoint `8855d461`, C4 checkpoint `21206a8c`, and IF-D checkpoint `4d1b6d7f` are historical exact-head/tree evidence inside the later continuation; inspect live refs before assuming any recorded SHA is current;
 4. before remote acceptance, independently query the exact PR head/base and CI/R2; local validation does not establish remote state;
 5. never infer current implementation or acceptance from memory or a historical checkpoint.
 
 Mini MCP is the default configured repository workspace when available. Memory remains advisory only; current code/docs/Git/GitHub state must be re-verified live.
 
-The SDE-3C PR must stay **draft** once created.
+The active continuation PR #157 must stay **draft**. Historical/validation PRs are cleanup artifacts, never implicit merge targets.
 
 ## 3. Current program state
 
@@ -74,11 +74,11 @@ SDE-3A engine / feature / policy contract                  COMPLETE
 SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / T4 ACCEPTED / PR #153 MERGED
 SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / historical checkpoint preserved
 Post-audit correctness repair                               CR-A/CR-B/CR-C COMPLETE / COMBINED ACCEPTANCE GREEN
-SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 COMPLETE / C4 AUDIT COMPLETE / EDITS AFTER REPAIR
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0–3D1 + C4 COMPLETE / IF-D COMPLETE / RH-E NEXT
 SDE-3E automatic production cutover                         BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
-## 3A. 2026-09-26 checkpoint to resume from
+## 3A. 2026-09-27 checkpoint to resume from
 
 Stop point for the next conversation:
 
@@ -101,10 +101,10 @@ Stop point for the next conversation:
 - Combined validation-only exact head: `4245ddb8c12782775a6b4c237f5dd7f0f1ce92c0`.
 - CI #3459: Android FULL `:app:testFull :app:assembleDebug`, ASP contracts, Real Clingo and final CI gate all SUCCESS.
 - R2 #3212: SUCCESS.
-- PR #156 remains Draft and validation-only; do not merge it.
+- PR #156 is validation-only acceptance evidence and is not a merge target; its remaining PR/branch lifecycle is repository cleanup only.
 - No merge, ready transition, policy V2, production cutover, or C4 scoring edit is authorized.
 
-The Oracle working tree is still intentionally dirty and remains behind the remote formal branch. Preserve the staged `AGENTS.md` change and all unrelated/uncommitted documentation; do not reset, clean, checkout-overwrite or bypass stale-state protection. Current `git_state` queries work again, but safe branch lifecycle mutation is still blocked by the dirty tree.
+The Oracle working tree has been restored to a clean continuation checkpoint and the same-name remote branch is aligned. Preserve that clean baseline: do not reintroduce discarded local copies, overwrite unrelated user work, or bypass stale-state protection. The local `main` ref may lag live `origin/main`; `main` synchronization or conflict resolution is a separate integration action, not part of normal RH-E work.
 
 C4 implementation checkpoint:
 
@@ -144,11 +144,11 @@ C4 committed-input closure:
 Next executable order:
 
 ```text
-preserve dirty Oracle working tree
--> keep validation PRs Draft / unmerged
+keep Oracle continuation worktree clean and same-name remote aligned
+-> converge superseded validation/history PRs and temporary branches through the repository cleanup audit; never merge validation-only PRs
 -> combined exact-tree acceptance COMPLETE: formal tree `a4701e0f4873ddd629dfa11163a94d2aa0cb9b8b` mirrored by #160 head `20eeb85790e591fe66363cd1b509bf5dda225342`; CI #3473 + R2 #3226 GREEN
 -> IF-D durable App replay capture/rebuild COMPLETE: formal `4d1b6d7f` / tree `181a1d80`, exact-tree validation #161 `58dca50c`, CI #3476 + R2 #3229 GREEN
--> proceed to RH-E persistence/timing hardening
+-> proceed to RH-E persistence/timing hardening after cleanup
 -> keep C5 evidence-backed policy/cutover blocked until a genuinely qualifying E3/E4 predicate exists
 ```
 
@@ -239,13 +239,13 @@ Do not resume broad source collection in this repository.
 
 First perform a live architecture/fanout audit.
 
-PR/branch boundary:
+Historical PR/branch boundary at the SDE-3B → SDE-3C transition:
 
 - PR #150 is the merged SDE-2D5 evidence/calibration checkpoint;
 - PR #151/#152 are merged SDE-3A checkpoints;
 - PR #153 is the merged SDE-3B checkpoint;
-- current branch is `sde-3c-decision-trace-shadow-replay`;
-- Draft PR #154 exists on `sde-3c-decision-trace-shadow-replay`; it contains completed SDE-3C plus the current SDE-3D continuation and must remain draft until explicit project-owner authorization;
+- the branch at that historical checkpoint was `sde-3c-decision-trace-shadow-replay`;
+- Draft PR #154 was the SDE-3C continuation vehicle. Its head is now fully contained by `codex/sde-history-prefix-route-closure`; current branch/PR authority is stated at the top of this handoff;
 - historical V1 policy pre-flight is `docs/SDE_3B_BEGINNER_CONSERVATIVE_V1_POLICY_AUDIT_2026-09-23.md`; current V1 release authority is the SDE-3D1 frozen-baseline completion audit;
 - completed 3B1 audit is `docs/SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`;
 - completed 3B2 audit is `docs/SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`;
@@ -505,26 +505,22 @@ The old external-human auto-workflow that could take ~2h48m has been retired.
 
 ## 16. Next conversation task
 
-SDE-3A and SDE-3B are merged. SDE-3C is structurally COMPLETE on Draft PR #154 and must remain draft/unmerged until explicit project-owner authorization.
+SDE-3A and SDE-3B are merged. SDE-3C, CR-A/B/C, C4 / SDE-3D2, and IF-D are complete engineering checkpoints on the formal continuation lineage. `BEGINNER_CONSERVATIVE_V1` remains immutable; C5 / production cutover remains evidence-gated.
 
-SDE-3D0 and SDE-3D1 are COMPLETE. The current conclusion is:
+Current Git/GitHub boundary:
 
-- V1 is an immutable provisional baseline; trace/replay provenance now derives from its frozen definition;
-- the V1 selector has a stable `SEEDED_HASH_V1` golden and must not silently change under the same version;
-- SDE-3D is partially evidence-blocked, not globally blocked;
-- production cutover is surface-scoped;
-- quantitative Gap E is not mandatory unless a future policy explicitly adopts numeric weighting;
-- no placeholder V2 is allowed.
+- canonical continuation branch: `codex/sde-history-prefix-route-closure`;
+- active continuation Draft PR: #157;
+- live `main` contains the later M8G5 documentation/control-plane merge and therefore remains divergent from the continuation; #157 currently reports a dirty merge state;
+- no main merge, rebase, force-push, ready transition, or PR merge is authorized by this handoff;
+- validation-only PRs and their temporary branches may be retired only as repository cleanup after proving their accepted material is already preserved on the formal continuation/history.
 
 Immediate next action:
 
-C0–C3 remain accepted historical checkpoints at production code HEAD `8855d461`, with full CI #3451 GREEN. The later 2026-09-25 audit reproduced three correctness defects: impaired-narrative semantics can confuse mechanical impairment with player-believable continuity; replay does not explicitly bind decision context to the same game; nested replay decoding is not fully fail-closed. It also identified two non-blocking follow-ups: cold-start App replay request reconstruction and serialized diagnostic persistence/timing. See `SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`.
-
-1. re-query live branch/status and preserve unrelated user work;
-2. implement **CR-A impaired-narrative semantic correctness** at the shared projector owner with role-agnostic cross-information-shape RED/GREEN coverage;
-3. implement **CR-B typed game/request identity binding** and reject cross-game same-revision replay before exact evaluation/trace persistence;
-4. implement **CR-C strict nested replay decoding** without globally breaking legacy save compatibility;
-5. run affected regressions, FAST/debug assembly and `git diff --check`; re-audit producer/consumer fanout for any shared typed contract change;
-6. only after CR-A/B/C are accepted, begin C4 / SDE-3D2 production feature work for truth danger / credibility disruption and contextual Red-Herring projection. The architecture/evidence/fanout audit may be prepared earlier;
-7. track IF-D durable App replay capture/rebuild and RH-E serialized background persistence/complete timing as required follow-ups before runtime traces are treated as a durable calibration corpus or runtime scope is broadened;
-8. keep `BEGINNER_CONSERVATIVE_V1` immutable, keep #154 draft, and treat main integration conflict, exact-head remote CI/R2 and applicable T4 as separate acceptance gates. No merge or ready transition without explicit user authorization.
+1. re-query live continuation status and preserve the clean Oracle baseline;
+2. finish the PR/remote-branch/documentation cleanup audit and converge only proven-superseded artifacts;
+3. keep #157 as the current continuation vehicle while development proceeds; defer final main-integration mechanics until the branch is actually ready for integration;
+4. then implement **RH-E serialized diagnostic persistence/timing hardening**: serialized background I/O, atomic/idempotent correlation, separate evaluation/persistence/total timing, backlog/cancellation/slow-storage coverage, and bounded retention/storage-growth behavior;
+5. keep canonical session commit independent of diagnostic persistence failure;
+6. keep C5 / policy V2 / automatic cutover blocked until qualifying E3/E4 evidence exists;
+7. treat final main integration, exact-head CI/R2, and any ready/merge transition as separate acceptance gates requiring explicit user authorization.

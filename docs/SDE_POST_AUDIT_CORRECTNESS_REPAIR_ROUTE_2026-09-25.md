@@ -261,7 +261,7 @@ The combined CR-A / CR-B / CR-C repair checkpoint is accepted on validation-only
 
 The first full-ci attempt intentionally exposed a malformed Fortune Teller regression fixture; fixing that fixture without changing the production projector produced the accepted green checkpoint. This is the expected value of the combined gate, not evidence to weaken it.
 
-CR-A/B/C no longer block C4/SDE-3D2. This checkpoint is being persisted on the formal development branch through a GitHub tree/commit/ref fast-forward fallback because Mini MCP `git_state` cannot hash the current large dirty worktree within its 131072-byte Git-output bound. The local Oracle working tree is intentionally left untouched; once the remote formal branch contains this accepted material, C4 production feature implementation may begin while the Mini MCP state-hash defect is repaired separately.
+CR-A/B/C no longer block C4/SDE-3D2. **Historical execution note:** at the 2026-09-26 acceptance moment, this checkpoint was persisted on the formal development branch through a GitHub tree/commit/ref fast-forward fallback because Mini MCP `git_state` could not hash the then-large dirty worktree within its Git-output bound. That temporary local-state constraint has since been cleared; it must not be read as current repository status. C4 and IF-D subsequently completed on the formal continuation.
 
 ## 9. Parallel C4 architecture/evidence/fanout audit — COMPLETE 2026-09-26
 
