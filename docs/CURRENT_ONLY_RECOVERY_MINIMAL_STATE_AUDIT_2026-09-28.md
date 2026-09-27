@@ -3,7 +3,7 @@
 > Date: 2026-09-28 Australia/Sydney  
 > Branch: `codex/current-only-recovery-cleanup`  
 > Base reviewed before branch creation: `main@5d2982a7492a5092a898436a0386b822ee7343f5`  
-> Status: **BROAD READ-ONLY AUDIT COMPLETE / FOCUSED FIELD DISPOSITION AUDIT NEXT / NO PRODUCTION EDITS YET**
+> Status: **R0 BROAD AUDIT COMPLETE / R1 FIELD DISPOSITION COMPLETE / R2 HIGH-CONFIDENCE CLEANUP NEXT**
 
 ## 1. Product decision
 
@@ -79,6 +79,8 @@ Additional compatibility exists without an explicit legacy version constant:
 - old NightCheckpoint Map decoding contains confirmed-from-draft fallback semantics.
 
 These paths require focused reachability classification. Current production gameplay starts Clocktower sessions in `GLOBAL_V1`; historical/runtime semantic modes must not be deleted merely because they contain “legacy” names. Only persistence compatibility that exists to read obsolete stored shapes is in scope.
+
+R1 refinement: the generic `EpistemicSemanticJson` fallbacks are **not** automatically deletion targets. Some `Legacy*` enum/model values remain valid semantic representations outside active Recovery. The current Recovery path already requires semantic-history compatibility, so a `GLOBAL_V1` recovered session cannot successfully retain `LegacyLocal` observations. This campaign will tighten only compatibility that is both persistence-facing and current-Recovery-reachable; broader epistemic semantic cleanup requires separate ownership evidence.
 
 ## 4. Audit findings — stale exact-progress Recovery surface
 
@@ -262,14 +264,100 @@ Allowed dispositions:
 - **DELETE** — dead/obsolete compatibility or draft persistence surface;
 - **SEPARATE FOLLOW-UP** — valuable question that should not broaden the current slice.
 
+### 9.1 R1 field / wire disposition matrix — COMPLETE
+
+The following matrix is the implementation authority for R2–R7. “Derive” means remove the persisted duplicate only after the derivation contract is covered by typed tests. “Move out” means the data may remain durable, but active gameplay Recovery is the wrong owner.
+
+| Surface | Field / wire key | Disposition | Current authority / reason |
+| --- | --- | --- | --- |
+| Envelope | `recoveryFormatVersion` | **KEEP** | fail-closed current-format marker; not a migration promise |
+| Envelope | `compatibilityToken` | **KEEP** | exact-current contract guard |
+| Envelope | `savedAtMillis` | **KEEP** | <=4h eligibility/freshness |
+| Common | `gameKind` / `currentGameKind` | **KEEP** | selects current game-specific restore contract |
+| Common | `entryPoint` / `screen` | **KEEP** | narrow identity-handoff continuation; omission for `Stable` is current writer behavior |
+| Common | `currentDealIndex` | **KEEP conditionally / R6 normalize** | required for `PassPhone` / `RevealCard`; non-authoritative during stable gameplay |
+| Common | `round` | **KEEP** | current rules/phase/history validation consume it |
+| Common | `cards` | **KEEP** | authoritative dealt/current identity and alive/eliminated state |
+| Common | `records` | **KEEP** | current game/review history; not fully derivable from other retained state |
+| Common | `outcome` / `gameOutcome` | **KEEP** | may encode rule-specific/manual outcome reason not safely reconstructible from cards alone |
+| Undercover | `undercoverCount` | **DERIVE (R6)** | validator already requires equality with count of Undercover cards |
+| Undercover | `includeBlank` | **DERIVE (R6)** | validator already requires equality with presence of Blank card |
+| Undercover | `lastWordsMode` | **DELETE FROM RECOVERY (R6)** | after restore it only repopulates setup/next-game configuration; no current-game consumer found |
+| Werewolf | `WerewolfRecovery` and all Werewolf-specific fields | **DELETE (R2)** | capture rejects Werewolf, strict decoder rejects it, planner rejects it; Archive/review remains separate |
+| Clocktower identity | `script` | **KEEP** | current ruleset/script reconstruction |
+| Clocktower identity | `gameId` | **KEEP** | canonical session/replay/correlation identity |
+| Clocktower identity | `gameSeed` | **KEEP** | deterministic game/setup/replay identity |
+| Clocktower bookkeeping | `troubleBrewingSetupRotationRecord` | **MOVE OUT OF RECOVERY (R7)** | needed only so a later completed game can update cross-game setup rotation |
+| Clocktower diagnostics | `sdeHistoricalReplayInputJson` | **MOVE OUT / SEPARATE FOLLOW-UP (R7)** | IF-D diagnostic durability, explicitly not canonical gameplay truth |
+| Clocktower position | `phase` | **KEEP** | safe semantic re-entry |
+| Clocktower position | `nightStarted` | **KEEP** | prevents repeating already-entered night/social flow |
+| Clocktower position | `nightStepIndex` | **KEEP** | prevents re-waking/replaying already-performed role interactions |
+| Clocktower mechanics | `confirmedAttackTarget` | **KEEP** | confirmed same-night mechanical fact used through Dawn resolution |
+| Clocktower mechanics | `confirmedPoisonTarget` | **KEEP** | active ability-functioning/game-state input across many current consumers |
+| Clocktower mechanics | `confirmedMonkProtectedTarget` | **KEEP** | confirmed protection affects Dawn resolution |
+| Clocktower mechanics | `confirmedMayorRedirectTarget` | **KEEP** | confirmed redirect affects Dawn resolution |
+| Clocktower mechanics | `pendingNewDemonName` | **KEEP** | unresolved Demon succession continuation |
+| Clocktower mechanics | `pendingNightNewDemonIdentityName` | **KEEP** | distinct pending identity-reveal continuation after promotion |
+| Clocktower mechanics | `confirmedDemonSuccessorTarget` | **KEEP** | confirmed succession fact; distinct from pending identity/reveal state |
+| Clocktower mechanics | `redHerring` | **KEEP** | hidden setup fact used by live first-night information logic |
+| Clocktower mechanics | `demonBluffRoleNames` | **KEEP** | applied/published Demon bluff selection must not change after process loss |
+| Clocktower mechanics | `butlerMaster` | **KEEP** | active confirmed social/mechanical choice |
+| Clocktower mechanics | `virginUsed` | **KEEP** | one-shot consumed ability fact |
+| Clocktower mechanics | `slayerUsed` | **KEEP** | one-shot ability authority |
+| Clocktower mechanics | `slayerClaimedNames` | **KEEP** | live UI/rule eligibility consumes claim history; not equivalent to `slayerUsed` |
+| Clocktower mechanics | `artistUsed` | **KEEP** | one-shot ability authority |
+| Clocktower mechanics | `artistClaimedNames` | **KEEP** | live claim/eligibility history; not equivalent to `artistUsed` |
+| Clocktower mechanics | `lastExecutedName` | **KEEP** | later role/rule flows consume execution identity |
+| Clocktower mechanics | `pendingKlutzName` | **KEEP** | mandatory unresolved continuation |
+| Clocktower mechanics | `klutzChoiceName` | **DELETE (R2)** | current writer always persists null and planner requires null; pure draft/UI state |
+| Clocktower mechanics | `klutzReturnToDawn` | **KEEP** | required continuation routing after Klutz resolution |
+| Clocktower mechanics | `ghostVoteAuthority` | **KEEP** | spent ghost-vote authority cannot be safely replayed |
+| Clocktower mechanics | `highestVoteName` | **KEEP** | confirmed day vote state |
+| Clocktower mechanics | `highestVoteCount` | **KEEP** | confirmed day vote state |
+| Clocktower history | `gameStateRevision` | **KEEP** | canonical session/recommendation/SDE revision identity; not reconstructible from retained facts without changing semantics |
+| Clocktower history | `playerInputRevision` | **KEEP** | current session/SDE input revision and replay cross-check identity |
+| Clocktower history | `semanticHistoryMode` | **DERIVE / DELETE FROM RECOVERY (R6)** | all fresh production Clocktower sessions use `GLOBAL_V1`; current-only Recovery has no pre-cutover contract |
+| Clocktower history | `actionTimeline` | **KEEP** | canonical committed semantic action history |
+| Clocktower history | `nextTimelineGlobalSequence` | **DERIVE candidate (R6)** | production commits advance from max committed Global action/observation; direct allocator currently has no production caller |
+| Clocktower history | `events` | **KEEP** | live UI/recommendation logic reads prior events; also reconstructs event counter |
+| Clocktower history | `epistemicObservations` | **KEEP** | canonical published/knowledge history and SDE replay input |
+| Wire-only draft | `clocktowerDemonAttackDraftTarget` | **DELETE (R2)** | current writer emits null only; strict reader protects obsolete shape |
+| Wire-only draft | `clocktowerPoisonTarget` | **DELETE (R2)** | current writer emits null only; confirmed field is authority |
+| Wire-only draft | `clocktowerMonkProtectedTarget` | **DELETE (R2)** | current writer emits null only; confirmed field is authority |
+| Wire-only draft | `clocktowerMayorRedirectTarget` | **DELETE (R2)** | current writer emits null only; confirmed field is authority |
+| Wire-only draft | `clocktowerDemonSuccessorTarget` | **DELETE (R2)** | current writer emits null only; confirmed/pending succession fields are authority |
+| Wire-only draft | `clocktowerKlutzChoiceName` | **DELETE (R2)** | current writer emits null only; pending Klutz obligation is authority |
+| Recovery semantic wire | missing `clocktowerActionTimeline` -> empty | **DELETE FALLBACK (R5)** | current writer always emits timeline; missing current-format durable history must fail closed |
+| SDE replay wire | missing `clocktowerSdeHistoricalReplayInput` | **FOLLOW R7 owner decision** | current writer emits explicit null/value, but field itself is planned for owner review rather than early strictness churn |
+
+### 9.2 Non-Recovery current-only persistence disposition
+
+| Persistence surface | Disposition | Reason |
+| --- | --- | --- |
+| DecisionTrace schema-v1 read/migration | **DELETE (R4)** | local diagnostic history from older development builds has no compatibility requirement |
+| TB setup completion schema-v1 readability | **DELETE (R4)** | old bookkeeping payload has no migration value |
+| TB setup rotation history v1 readability | **DELETE (R4)** | old cross-game development data may be discarded |
+| Current schema/version markers on these stores | **KEEP** | fail-closed contract identity remains useful |
+| Generic `LegacyLocal` / `LEGACY_DISPLAY_ONLY` semantic values | **NOT PART OF R4/R5 BY NAME ALONE** | some remain valid domain/test semantics; require separate reachability/ownership proof |
+
+### 9.3 R1 conclusions
+
+R1 narrows the implementation substantially:
+
+- the large `ClocktowerRecoveryMechanics` surface is mostly real durable game state and should **not** be aggressively collapsed;
+- R2 is safe to focus on unreachable Werewolf Recovery plus fields/wire keys that current writers already guarantee are meaningless;
+- R3 may retire the NightCheckpoint Map persistence shell while keeping typed same-night transaction semantics intact;
+- R6 derivation work is valid but higher risk than R2–R4 and must remain test-backed;
+- bookkeeping/diagnostic transport and persistence-trigger redesign remain intentionally deferred to R7.
+
 ## 10. Planned implementation route
 
 Implementation must stay small and independently reviewable.
 
 ~~~text
 R0  document product contract + broad audit                         COMPLETE
-R1  focused current Recovery field/wire disposition matrix          NEXT
-R2  delete high-confidence dead Recovery surface
+R1  focused current Recovery field/wire disposition matrix          COMPLETE
+R2  delete high-confidence dead Recovery surface                    NEXT
     - WerewolfRecovery persistence-only surface
     - permanently-null obsolete draft wire keys
     - dead Klutz draft Recovery field
@@ -280,8 +368,9 @@ R4  remove explicit current-only compatibility drift
     - TB setup completion v1 read path
     - TB rotation history v1 read path
     - DecisionTrace schema-v1 migration
-R5  tighten implicit old-shape fallback where current writers prove strict fields
-    - epistemic/timeline/grimoire compatibility seams
+R5  tighten current-Recovery-reachable old-shape fallback where current writers prove strict fields
+    - missing current action timeline must fail closed
+    - do not delete generic epistemic `Legacy*` semantics without separate reachability proof
 R6  derive redundant Recovery state only where R1 proves authority
     - Undercover duplicates
     - semantic-history mode
