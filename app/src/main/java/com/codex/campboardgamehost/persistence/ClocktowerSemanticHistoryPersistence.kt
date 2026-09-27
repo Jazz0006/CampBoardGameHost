@@ -40,10 +40,7 @@ internal object ClocktowerSemanticHistoryPersistence {
             ?: throw IllegalArgumentException("Unknown $MODE_KEY '$rawMode'.")
     }
 
-    /**
-     * Additive schema field for production semantic actions. Older active-game saves simply have no
-     * durable action history; they are restored empty rather than reconstructed from UI event text.
-     */
+    /** Current-format durable semantic-action history. */
     fun encodeActionTimeline(timeline: ActionFactTimeline): JSONArray = JSONArray().apply {
         timeline.entries.forEach { entry ->
             put(JSONObject().apply {
@@ -54,7 +51,7 @@ internal object ClocktowerSemanticHistoryPersistence {
     }
 
     fun decodeActionTimeline(json: JSONObject): ActionFactTimeline {
-        if (!json.has(ACTION_TIMELINE_KEY)) return ActionFactTimeline()
+        require(json.has(ACTION_TIMELINE_KEY)) { "$ACTION_TIMELINE_KEY is required." }
         require(!json.isNull(ACTION_TIMELINE_KEY)) { "$ACTION_TIMELINE_KEY cannot be null." }
         val rawTimeline = json.opt(ACTION_TIMELINE_KEY)
         require(rawTimeline is JSONArray) { "$ACTION_TIMELINE_KEY must be an array." }

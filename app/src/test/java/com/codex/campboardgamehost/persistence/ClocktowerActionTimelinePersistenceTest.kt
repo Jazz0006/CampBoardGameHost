@@ -55,10 +55,10 @@ class ClocktowerActionTimelinePersistenceTest {
     }
 
     @Test
-    fun `missing additive action history restores empty without inventing legacy chronology`() {
-        val restored = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(JSONObject())
-
-        assertTrue(restored.entries.isEmpty())
+    fun `missing current action history fails closed`() {
+        assertFails {
+            ClocktowerSemanticHistoryPersistence.decodeActionTimeline(JSONObject())
+        }
     }
 
     @Test
