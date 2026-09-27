@@ -448,7 +448,19 @@ The bounded production fanout audit is now complete for the setup-precommit life
 - Validation exact head `c9835a7dfdfe04e65e7b934784cbc91e1a0f9fd0` passed CI #3471 and R2 #3224, including Android FULL, ASP contracts, Real Clingo and final CI gate.
 - Formal fanout code checkpoint: `77369a893bb457c8720df00b907e50a4e2550a45`.
 
-One ownership gap remains explicit before C4 can be treated as fully closed: the App already commits and persists the selected Red Herring externally, but no production caller yet binds that existing commitment into `SdeDecisionInputBindings` as `SdeCommittedDecisionInputKind.RED_HERRING`. The next audit must establish a typed, non-parsing correlation seam to the precommit `CommittedDecisionInputRef` without copying the setup state or fabricating interaction-stage consumers.
+### Committed-input ownership closure — 2026-09-27
+
+C4's final ownership gap is now closed without adding a second setup owner or an artificial runtime consumer:
+
+- `RedHerringCommittedInputBindingAdapter` resolves the App-owned persisted Red-Herring player name through the canonical `GameState` to one seat, then correlates that seat to the exact setup-precommit candidate's existing `CommittedDecisionInputRef`;
+- the adapter never parses candidate IDs, never regenerates Red-Herring legality, never copies the persisted setup value, and never introduces player-controlled Fortune Teller target inputs;
+- unknown names, duplicate canonical names, and targets outside the setup-owned legal candidate domain fail closed;
+- the returned `SdeDecisionInputBindings.Captured` contains exactly the `RED_HERRING` committed reference and an empty player-controlled set;
+- repository search found no real current production consumer of this binding. Therefore C4 deliberately adds **no App/UI/runtime wiring** for it. The seam remains available for the first real downstream SDE consumer rather than manufacturing dead state propagation.
+
+Validation-only Draft PR #158 exact head `564b6d93ef3f08c9331512c186172505485b12bb` contains this exact adapter/test material and passed CI #3472 plus R2 #3225 with Android FULL, ASP contracts, Real Clingo and final CI gate all successful. Formal continuation commits `fd40ad1e966aa4ed499d9844641170baa7632101` and `d9dd50421f9b7b9d4be9f9173acef81e97320afe` persist the seam and its regressions on top of the accepted test-hygiene baseline.
+
+**C4 / SDE-3D2 is therefore COMPLETE as a policy-neutral feature/composition slice.** It does not authorize V2, a Red-Herring preference score, automatic cutover, or broader runtime scope.
 
 ## 11. C4 audit conclusion
 
@@ -476,4 +488,4 @@ existing legal Red Herring candidate
 -> V1 remains policy-neutral
 ```
 
-Production implementation must wait until CR-A / CR-B / CR-C are accepted.
+CR-A / CR-B / CR-C are accepted, and the bounded C4 implementation described above is complete. IF-D durable App replay reconstruction and RH-E persistence/timing hardening remain separate integration follow-ups; evidence-backed policy change remains gated on qualifying E3/E4 evidence.
