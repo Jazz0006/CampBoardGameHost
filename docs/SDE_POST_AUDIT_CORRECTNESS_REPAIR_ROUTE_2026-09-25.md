@@ -181,24 +181,35 @@ CR-C is **COMPLETE / ACCEPTED**.
 - deterministic canonical round-trip coverage remains in place;
 - exact validation head `4245ddb8c12782775a6b4c237f5dd7f0f1ce92c0` passed full CI #3459 and R2 #3212.
 
-## 5. IF-D — durable App replay capture/rebuild follow-up
+## 5. IF-D — durable App replay capture/rebuild follow-up — COMPLETE 2026-09-27
 
-C1 remains a valid immutable transport contract and C2 remains a valid offline vertical slice, but the App does not yet persist enough material to rebuild a complete decision request after cold start without retained process objects.
+C1 remains the immutable transport contract and C2 remains the offline vertical slice. IF-D now bridges those contracts through the existing emergency Recovery persistence path without introducing a second mutable game-state store.
 
-Required future closure:
+Implemented boundary:
 
 ```text
-canonical setup/history/request identity
-    -> versioned durable replay export
+canonical committed setup + canonical session snapshot
+    -> SdeHistoricalReplayInputFactory
+    -> strict versioned SdeHistoricalReplayInput JSON export
+    -> optional opaque field inside existing Clocktower Recovery v2
     -> process/object destruction
-    -> restore bytes
-    -> canonical legal-candidate owner rebuilds decision context
-    -> features / trace / actual-choice / multi-policy replay
+    -> strict Recovery decode + strict replay decode
+    -> cross-check game / revisions / ruleset / setup identity / player identity / semantic history
+    -> restore exact committed setup provenance
+    -> existing session + legal-candidate owners rebuild later decision contexts
+    -> existing C2 trace / actual-choice / multi-policy replay path
 ```
 
-Do not serialize a parallel mutable game truth.
+The replay export is read-only diagnostic transport. Recovery remains the short-horizon persistence owner; the export does not become a writable game truth. Initial committed setup is not reconstructed from current cards or provenance guesses. This distinction is required because legal role changes may make current cards differ from initial setup.
 
-This must be complete before runtime traces are treated as a durable real-game calibration corpus, but it need not block the SDE-3D2 architecture/evidence/fanout audit or policy-neutral projector work once CR-A/B/C are green.
+Compatibility is bounded: Recovery format remains v2; old v2 payloads without the optional replay field still restore normally, with SDE durable replay unavailable. No Greater Joy does not emit the export because it has no current advanced ruleset ref on this path.
+
+Tests-first evidence:
+- RED validation-only #161 head `45243101c861a5765db108c42537a3506a065048`: CI #3475 failed at Android `compileDebugUnitTestKotlin` while R2/ASP/Clingo were green, proving the new recovery contract was absent;
+- GREEN implementation formal checkpoint `4d1b6d7f39529402eb9ec1e6032eb80ef9a14e86`, tree `181a1d80d449c2d443a678e10033acda13c777d1`;
+- exact-tree validation #161 head `58dca50c26afd2ad6898dda5ce15702c13becaa9` uses the same tree and passed CI #3476 + R2 #3229, including Android FULL + debug APK, ASP contracts, Real Clingo and final CI gate.
+
+IF-D is therefore COMPLETE. Runtime trace collection still must not be broadened until RH-E closes serialized persistence, complete timing/accounting and storage-growth behavior.
 
 ## 6. RH-E — runtime persistence/timing hardening follow-up
 
@@ -222,7 +233,7 @@ Historical completion documents retain their exact-head evidence value:
 - SDE-3B3 established the intended shared impaired-narrative owner and policy-neutral feature seam; CR-A repairs a semantic defect inside that accepted architecture.
 - C1 established the replay transport/reconstruction seam; CR-C repairs strict nested validation.
 - C2/C3 established the bounded offline/runtime composition; CR-B repairs typed identity binding and RH-E documents runtime hardening still required.
-- C1/C2 did not, by themselves, prove App cold-start decision-request reconstruction; IF-D remains open.
+- C1/C2 did not, by themselves, prove App cold-start reconstruction; IF-D now closes that gap through the existing Recovery owner and exact replay export.
 
 Do not rewrite history by marking the old checkpoints as never completed. Current roadmap/handoff must instead show the discovered defects and the repair gate explicitly.
 
