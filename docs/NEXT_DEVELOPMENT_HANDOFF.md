@@ -3,7 +3,7 @@
 > Updated: 2026-09-27 Australia/Sydney  
 > Current continuation: `codex/sde-history-prefix-route-closure`  
 > Active Draft PR: **#157**  
-> Next executable slice: **#157 post-integration exact-head acceptance**
+> Next gate: **explicit PR lifecycle authorization or qualifying E3/E4 evidence**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -16,6 +16,7 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 5. this handoff
 6. `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
 7. `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
+8. `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
 
 Only read older SDE slice audits when a concrete ownership/history question requires them.
 
@@ -108,19 +109,32 @@ Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as authority:
 - N3150 remains retired from the default validation path;
 - GitHub CI/R2 remains the Android validation and independent acceptance surface.
 
-## 7. Next gate — exact-head integration acceptance
+## 7. Main integration gate COMPLETE
 
-The live-main audit found one workflow semantic conflict in root `AGENTS.md` plus one main-only M8G5 workflow document; there were no production/gameplay/SDE semantic conflicts. The authorized merge keeps the newer 2026-09-27 GitHub Connector-first workflow and archives the superseded 2026-09-24 M8G5 document.
+Accepted integration head:
 
-Required next audit:
+`371ebf624898c08747203aceaed1254647867214`
 
-1. refresh live `main`, #157 exact head/state/draft/mergeability and checks;
-2. verify the new #157 head is a two-parent merge of the previous continuation head and the audited live-main head;
-3. confirm no production/test files changed in the integration merge and RH-E accepted executable evidence remains intact;
-4. inspect exact-head CI/R2/check results;
-5. record acceptance or repair only evidence-bound failures.
+Parents:
 
-Do **not** mark ready, merge the PR, rebase or force-push unless the user explicitly authorizes it.
+- previous continuation: `058bef86810e3ac8d1d58b3186ee4efde503ad69`;
+- live main: `cc5adee5baf107e04d8b0d5a7657e9c27d5ed1e2`.
+
+The integration changed workflow/documentation only relative to the previous continuation head. It preserved the 2026-09-27 GitHub Connector-first `AGENTS.md` contract and archived the superseded M8G5 control-plane document.
+
+Remote acceptance:
+
+- CI #3479 GREEN;
+- Android FULL + `assembleDebug` GREEN;
+- ASP contracts GREEN;
+- Real Clingo GREEN;
+- CI gate GREEN;
+- R2 #3232 GREEN;
+- #157 open / Draft / mergeable / current with main.
+
+Detailed completion evidence is archived in `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`.
+
+There is no automatic next SDE production slice: C5/V2 and SDE-3E remain blocked on qualifying E3/E4 evidence. Do **not** mark ready, merge the PR, rebase or force-push unless the user explicitly authorizes it.
 
 ## 8. Scope still blocked
 

@@ -61,20 +61,21 @@ Completion/cleanup detail:
 
 - `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
 - `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
+- `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
 
-## 4. Current priority — #157 post-integration exact-head acceptance
+## 4. Current priority — #157 main integration COMPLETE
 
 RH-E is COMPLETE. The accepted runtime diagnostic contract now has one process-scoped serialized background persistence lane, ordered append/correlation semantics, stale/cancellation protection, bounded retention, and separate evaluation / queue / persistence / total timing. Canonical session state remains authoritative and independent of diagnostic durability.
 
-The live-main integration audit and authorized ancestry integration are complete. The integration is workflow/document-only relative to the accepted continuation: root `AGENTS.md` keeps the newer 2026-09-27 GitHub Connector-first semantics, while the 2026-09-24 M8G5 control-plane document is retained only as superseded history under `docs/archive/workflows/`.
+The live-main integration gate is also COMPLETE. Accepted integration head `371ebf624898c08747203aceaed1254647867214` is a two-parent merge of previous continuation head `058bef86810e3ac8d1d58b3186ee4efde503ad69` and audited live-main head `cc5adee5baf107e04d8b0d5a7657e9c27d5ed1e2`. Relative to the previous continuation head, the merge changed workflow/documentation only; no production or test file changed. Root `AGENTS.md` retains the newer 2026-09-27 GitHub Connector-first semantics and the 2026-09-24 M8G5 control-plane document is archived as superseded history.
 
-The next executable action is exact-head remote acceptance of Draft PR #157:
+Exact-head acceptance is GREEN:
 
-- verify the merge commit has the previous #157 head and live `main` as its two parents;
-- verify #157 is no longer behind/conflicted with `main` and remains Draft;
-- verify the integration merge changed workflow/documentation only and did not alter the accepted RH-E production/test tree;
-- inspect exact-head GitHub CI/R2/check results generated after conflict removal;
-- record the integration acceptance result before any later ready/merge decision.
+- CI #3479: Android FULL + `assembleDebug` GREEN, ASP contracts GREEN, Real Clingo GREEN, CI gate GREEN;
+- R2 #3232: GREEN;
+- #157: open, Draft, mergeable, no longer behind `main`.
+
+No further SDE production slice is automatically unblocked by this integration. C5/V2 and SDE-3E remain blocked on qualifying E3/E4 evidence. Keep #157 Draft until an explicit PR lifecycle decision is authorized.
 
 Do **not** mark #157 ready, merge, rebase or force-push without explicit user authorization.
 
@@ -130,10 +131,10 @@ C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
 ## 8. Immediate execution order
 
 ~~~text
-verify exact integration merge parents + changed-file scope
--> confirm #157 is current with live main and remains Draft
--> inspect exact-head CI / R2 / checks
--> record integration acceptance if GREEN
+#157 main integration COMPLETE / exact-head acceptance GREEN
+-> keep #157 Draft
+-> C5 / V2 and SDE-3E remain blocked on qualifying E3/E4
+-> continue evidence acquisition or another explicitly prioritized slice
 -> wait for explicit authorization before any ready / PR merge / rebase / force-push
 ~~~
 
@@ -159,6 +160,8 @@ Use older SDE-3A/B/C/C0–C3 completion documents only when a specific historica
 Follow `docs/TESTING_STRATEGY.md`.
 
 RH-E completed at T4 with exact-tree CI #3478 and R2 #3231 GREEN, including Android FULL + assemble, ASP contracts and Real Clingo cross-validation.
+
+The #157 live-main integration head `371ebf624898c08747203aceaed1254647867214` also completed exact-head acceptance with CI #3479 and R2 #3232 GREEN. This integration changed workflow/documentation only relative to the previously accepted continuation head.
 
 GitHub CI/R2 remains the normal Android execution and independent remote acceptance surface. The N3150 execution-host experiment remains retired from the default workflow unless the user explicitly reopens it.
 
