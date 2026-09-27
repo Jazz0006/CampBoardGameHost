@@ -20,7 +20,7 @@ SDE-3C DecisionTrace / shadow replay                  COMPLETE
 CR-A / CR-B / CR-C                                    COMPLETE
 C4 / SDE-3D2                                          COMPLETE
 IF-D durable App replay capture/rebuild               COMPLETE
-RH-E runtime persistence/timing hardening             NEXT
+RH-E runtime persistence/timing hardening             COMPLETE
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
 ~~~
@@ -53,39 +53,30 @@ These are historical acceptance identities, not current branch heads:
 | CR-A/B/C | validation head `4245ddb8c12782775a6b4c237f5dd7f0f1ce92c0`; CI #3459 + R2 #3212 GREEN |
 | C4 / SDE-3D2 | formal `21206a8ca95896ffad83eaba5695a3a571c6cd74`, tree `a4701e0f4873ddd629dfa11163a94d2aa0cb9b8b`; exact-tree CI #3473 + R2 #3226 GREEN |
 | IF-D | formal `4d1b6d7f39529402eb9ec1e6032eb80ef9a14e86`, tree `181a1d80d449c2d443a678e10033acda13c777d1`; exact-tree CI #3476 + R2 #3229 GREEN |
+| RH-E | formal `f51a295983e8e203119dd50693af343c1ec23906`, tree `2babb1fba00b46dfc676efb6f090386b7a73826f`; validation-only PR #162 head `bf66363385420f507f92a729b496ff002791dee5`; exact-tree CI #3478 + R2 #3231 GREEN |
 
-Later pre-RH-E changes are documentation/repository cleanup; do not re-label those historical CI/R2 runs as validating a different executable tree.
+Later documentation-only changes must not be re-labelled as validating a different executable tree.
 
-Historical implementation and cleanup detail moved to:
+Completion/cleanup detail:
 
-`docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
+- `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
+- `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
 
-## 4. Current priority — RH-E
+## 4. Current priority — #157 versus live-main integration audit
 
-RH-E closes the remaining runtime diagnostic persistence/timing weakness found by the 2026-09-25 SDE audit.
+RH-E is COMPLETE. The accepted runtime diagnostic contract now has one process-scoped serialized background persistence lane, ordered append/correlation semantics, stale/cancellation protection, bounded retention, and separate evaluation / queue / persistence / total timing. Canonical session state remains authoritative and independent of diagnostic durability.
 
-Required behavior:
+The next executable action is a fresh integration audit of Draft PR #157 against live `main`.
 
-1. move diagnostic archive I/O to one serialized background persistence lane;
-2. preserve atomic append/correlation and existing idempotency semantics;
-3. avoid parallel read-modify-write races and lost trace updates;
-4. record evaluation latency, persistence latency and end-to-end latency separately;
-5. cover slow storage, backlog, cancellation/stale identity and archive growth;
-6. define bounded retention/storage-growth behavior before runtime collection is broadened;
-7. preserve failure isolation: diagnostic persistence failure must never invalidate a successful canonical game commit.
+That audit must:
 
-Canonical session state/history remain authoritative. DecisionTrace storage remains diagnostic only.
+- refresh live `main`, #157 exact head/state/draft/mergeability and remote checks;
+- classify the actual conflict/divergence introduced by the later M8G5 workflow/control-plane merge;
+- distinguish mechanical integration conflicts from semantic/product conflicts;
+- propose the smallest safe integration route and required acceptance evidence;
+- preserve the accepted RH-E executable tree and all later documentation-only records.
 
-Before production edits:
-
-- map every archive producer, append/correlation caller and persistence implementation;
-- identify the single serialization owner and coroutine/lifecycle owner;
-- prove which operations must be ordered together;
-- define cancellation semantics without dropping already-committed canonical game state;
-- define retention before changing storage format or runtime scope;
-- establish the smallest durable typed tests at the persistence owner.
-
-Do not put storage orchestration into the App/Compose root when it belongs in the diagnostic persistence owner.
+The audit is read-only with respect to integration. Do **not** rebase, resolve conflicts, mark #157 ready, merge or force-push without explicit user authorization.
 
 ## 5. Recovery product boundary
 
@@ -139,18 +130,14 @@ C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
 ## 8. Immediate execution order
 
 ~~~text
-verify clean continuation / live PR state
--> RH-E owner + fanout + concurrency audit
--> smallest durable persistence/timing tests
--> RH-E implementation
--> focused GREEN
--> FAST + affected persistence/runtime validation
--> logical-checkpoint FULL/assemble and required remote acceptance
--> update compact roadmap/handoff
--> final main-integration audit
+refresh live main + #157 exact state
+-> audit #157 versus live-main divergence/conflicts
+-> classify integration-only versus semantic conflicts
+-> propose guarded integration + acceptance route
+-> wait for explicit authorization before any rebase/conflict resolution/ready/merge
 ~~~
 
-Do not resolve #157/main integration merely to start RH-E.
+RH-E implementation and remote acceptance are complete; do not reopen it unless new current-version evidence exposes a regression.
 
 ## 9. Current authorities
 
@@ -171,15 +158,9 @@ Use older SDE-3A/B/C/C0–C3 completion documents only when a specific historica
 
 Follow `docs/TESTING_STRATEGY.md`.
 
-For RH-E:
+RH-E completed at T4 with exact-tree CI #3478 and R2 #3231 GREEN, including Android FULL + assemble, ASP contracts and Real Clingo cross-validation.
 
-- T0: owning archive/persistence/concurrency contract;
-- T1: FAST;
-- T2: affected persistence, runtime-shadow, correlation and recovery integration;
-- T3 only when an explicitly expensive/manual evidence surface is affected;
-- T4 logical checkpoint: FULL + assemble + selected external gates / remote acceptance.
-
-GitHub CI/R2 is the normal Android execution and independent remote acceptance surface. The N3150 execution-host experiment is retired from the default workflow; do not block RH-E on synchronizing or running it unless the user explicitly reopens that experiment.
+GitHub CI/R2 remains the normal Android execution and independent remote acceptance surface. The N3150 execution-host experiment remains retired from the default workflow unless the user explicitly reopens it.
 
 A documentation-only compaction does not require Android regression by itself.
 

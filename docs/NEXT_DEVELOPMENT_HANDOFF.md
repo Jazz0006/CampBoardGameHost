@@ -3,7 +3,7 @@
 > Updated: 2026-09-27 Australia/Sydney  
 > Current continuation: `codex/sde-history-prefix-route-closure`  
 > Active Draft PR: **#157**  
-> Next executable slice: **RH-E — serialized diagnostic persistence/timing hardening**
+> Next executable slice: **#157 versus live-main integration audit**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -14,7 +14,7 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 3. `docs/TESTING_STRATEGY.md`
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
-6. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` §6 RH-E
+6. `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
 7. `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
 
 Only read older SDE slice audits when a concrete ownership/history question requires them.
@@ -34,7 +34,7 @@ Requirements:
 - #157 stays Draft;
 - no merge, ready transition, rebase, force-push or main-conflict resolution without explicit authorization.
 
-The local `main` ref may lag live `origin/main`; that is not a reason to mutate it during ordinary RH-E work.
+The local `main` ref may lag live `origin/main`; refresh remote facts before the integration audit, but do not mutate branch ancestry merely to inspect the conflict.
 
 ## 3. Current state
 
@@ -45,14 +45,14 @@ SDE-3C DecisionTrace / replay          COMPLETE
 CR-A / CR-B / CR-C                     COMPLETE
 C4 / SDE-3D2                           COMPLETE
 IF-D durable replay                    COMPLETE
-RH-E                                    NEXT
+RH-E                                    COMPLETE
 C5 / V2                                BLOCKED ON E3/E4
 SDE-3E cutover                         BLOCKED PER SURFACE
 ~~~
 
 Repository cleanup state:
 
-- obsolete/validation-only PRs are closed;
+- validation-only PR #162 is closed without merge after exact-tree RH-E acceptance; older validation-only PRs remain closed;
 - PR #109 is closed after confirming its old half-state is outside the current short-horizon Recovery contract;
 - first-wave temporary validation remote branches are removed;
 - remaining branch pruning is hygiene only and must preserve unique historical documentation/evidence.
@@ -74,115 +74,54 @@ Do **not** introduce old-format compatibility, migration, tolerant reconstructio
 
 #109 must not be resurrected as a compatibility project. A future bug requires a fresh reproduction from a current-format/current-version write.
 
-## 5. RH-E problem statement
+## 5. RH-E accepted checkpoint
 
-Current diagnostic runtime has correct canonical-state isolation but incomplete persistence/timing hardening:
+RH-E is COMPLETE without changing visible recommendation policy.
 
-- evaluation runs off the UI path, but archive load/decode/encode/write and post-commit lookup can still execute synchronously on the caller thread;
-- archive operations are read-modify-write and must not be made naively parallel;
-- current elapsed accounting does not cleanly separate evaluation, persistence and full end-to-end latency;
-- archive growth/retention is not bounded for broader runtime collection.
+Formal executable checkpoint:
 
-RH-E must close these gaps without changing visible recommendation policy.
+- commit `f51a295983e8e203119dd50693af343c1ec23906`;
+- tree `2babb1fba00b46dfc676efb6f090386b7a73826f`.
 
-## 6. RH-E required invariants
+Exact-tree remote acceptance used validation-only Draft PR #162 because #157 remains intentionally conflicted with live `main`:
 
-### Ownership
+- validation head `bf66363385420f507f92a729b496ff002791dee5`;
+- CI #3478 GREEN;
+- R2 #3231 GREEN;
+- Android `:app:testFull :app:assembleDebug` GREEN;
+- ASP contract tests GREEN;
+- Real Clingo cross-validation GREEN.
 
-- canonical game commit remains owned by `ClocktowerGameSession`;
-- diagnostic trace persistence remains non-authoritative;
-- one explicit serialized persistence owner must order archive mutations;
-- App/Compose should only trigger bounded orchestration, not own archive concurrency semantics.
+The accepted runtime contract now has one process-scoped serialized diagnostic persistence lane; ordered append/correlation; stale/cancellation protection; deterministic bounded retention; and separate evaluation / queue / persistence / total latency reporting. Canonical session commit remains authoritative and independent of diagnostic durability.
 
-### Failure isolation
+Detailed audit, concurrency reasoning and the first validation-only test repair are archived in:
 
-- successful canonical commit never depends on diagnostic durability;
-- storage failure cannot roll back or invalidate canonical state;
-- stale identity/cancelled evaluation must not publish a new trace;
-- already-accepted archive mutations must not be lost because a later caller is cancelled.
+`docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
 
-### Ordering / idempotency
+## 6. Current execution workflow
 
-Preserve atomic append semantics, exact pending-trace correlation, successful retry idempotency, no lost update from concurrent read-modify-write, and no duplicate semantic trace created by retry.
-
-### Timing
-
-Expose separate measurements for evaluation, persistence/serialization and total request-to-diagnostic-completion latency.
-
-Do not call the existing evaluation budget an end-to-end hard timeout until persistence is included in the model.
-
-### Storage growth
-
-Before broadening runtime collection, define a bounded retention policy at the archive owner. Do not evict material still required by active correlation or current calibration/export workflows.
-
-## 7. Architecture / fanout audit before edits
-
-Map at minimum:
-
-- `SdeRuntimeShadowCoordinator`;
-- `SdePostCommitCorrelationCoordinator`;
-- `DecisionTraceArchiveStore`;
-- `DecisionTraceArchivePreferencesStorage`;
-- every archive append/correlation/load caller;
-- App callbacks that trigger prepared-decision and post-commit diagnostic work;
-- cancellation/job ownership and lifecycle boundaries.
-
-Classify each path as serialized-mutation, read-only-safe or intentionally out of scope. Re-run the fanout search after implementation.
-
-## 8. Execution / validation workflow
-
-Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as the current execution-path authority:
+Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as authority:
 
 - GitHub Connector is the default repository / PR / CI / result-analysis interface;
 - Mini MCP + Luna is the large/truncated-file mechanical execution supplement after Chat fixes the design;
 - strong Codex may be used read-only when complete local context is genuinely required before design;
-- N3150 is retired from the default validation path;
-- GitHub CI/R2 is the normal Android validation and independent acceptance surface.
+- N3150 remains retired from the default validation path;
+- GitHub CI/R2 remains the Android validation and independent acceptance surface.
 
-### Tests-first acceptance plan
+## 7. Next gate — #157 versus live main
 
-Use the smallest durable typed seam. Expected coverage includes:
+Perform a fresh read-only integration audit before changing ancestry.
 
-- overlapping append/append cannot lose either trace;
-- append/correlate ordering preserves the valid final trace;
-- repeated exact correlation remains idempotent;
-- slow storage does not block canonical commit;
-- queued work reports persistence and total latency correctly;
-- cancellation/stale decision prevents inappropriate publication but does not undo accepted persistence;
-- retention does not evict a trace still required for pending correlation;
-- bounded growth is deterministic;
-- existing codec/migration/replay tests remain green;
-- V1 output/reasons/selection remain unchanged.
+Required audit:
 
-Then:
+1. refresh live `main`, #157 exact head/state/draft/mergeability and checks;
+2. compare #157 against live main and identify the exact conflicting files/hunks;
+3. classify each conflict as mechanical workflow/control-plane integration or semantic/product conflict;
+4. verify that the accepted RH-E executable tree and later docs can be preserved;
+5. propose the smallest guarded integration route and the validation that route would require.
 
-~~~text
-focused RH-E tests
--> affected persistence/runtime-shadow/correlation tests
--> :app:testFast
--> triggered T2
--> logical checkpoint :app:testFull :app:assembleDebug
--> required remote CI/R2 acceptance
-~~~
+Do **not** rebase, resolve conflicts, mark ready, merge or force-push unless the user explicitly authorizes it.
 
-Do not manufacture a RED for pure structural moves; do require RED/GREEN for new concurrency/retention/timing behavior.
+## 8. Scope still blocked
 
-## 9. Explicitly forbidden scope
-
-RH-E does not authorize:
-
-- `BEGINNER_CONSERVATIVE_V2`;
-- new preference weights/thresholds;
-- visible recommendation cutover;
-- broader player-count support;
-- Traveller expansion;
-- second mutable history/recovery store;
-- Recovery version migration;
-- main integration/merge;
-- unrelated UI cleanup.
-
-## 10. Exit condition
-
-RH-E is complete only when serialized persistence ownership, concurrency/idempotency, separate timing, slow-storage/backlog/cancellation behavior and bounded retention are all tested; canonical commit independence remains intact; focused/FAST/affected/full validation passes; required remote acceptance is green; and the compact roadmap/handoff are updated without copying old implementation logs back into them.
-
-After RH-E, perform a fresh #157 versus live-main integration audit.
+Do not start `BEGINNER_CONSERVATIVE_V2`, add new policy weights/thresholds, broaden player-count/Traveller scope, or perform production cutover without the required E3/E4 evidence. C5 and SDE-3E remain blocked as recorded in the roadmap.

@@ -38,11 +38,11 @@ SDE-3B BEGINNER_CONSERVATIVE_V1        COMPLETE / PR #153 MERGED
 SDE-3C DecisionTrace/replay            COMPLETE / 3C0–3C5 historical checkpoint preserved
 SDE integration closure               C0–C3 HISTORICAL CHECKPOINT ACCEPTED
 Post-audit correctness repair         CR-A / CR-B / CR-C COMPLETE / ACCEPTED
-SDE-3D calibrated policy freeze        3D0–3D1 + C4/SDE-3D2 COMPLETE / IF-D COMPLETE / RH-E NEXT
+SDE-3D calibrated policy freeze        3D0–3D1 + C4/SDE-3D2 COMPLETE / IF-D COMPLETE / RH-E COMPLETE
 SDE-3E automatic production cutover    C5 BLOCKED ON QUALIFYING E3/E4 / PER-SURFACE GATES
 ~~~
 
-当前远端边界：正式 continuation 是 `codex/sde-history-prefix-route-closure`，由 Draft PR #157 承载；live `main` 仍包含 continuation 尚未吸收的 M8G5 workflow/control-plane 合并，因此 #157 的 main integration 仍是独立 gate。#160/#161 等 validation-only PR 已在证据进入正式 continuation 后关闭而未合并；#109 也已按 current-format Recovery 边界关闭。任何 main integration / ready / merge 仍需单独授权。历史清理证据见 [`archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`](archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md)。
+当前远端边界：正式 continuation 是 `codex/sde-history-prefix-route-closure`，由 Draft PR #157 承载；live `main` 仍包含 continuation 尚未吸收的 M8G5 workflow/control-plane 合并，因此 #157 的 main integration 仍是独立 gate。#160/#161/#162 等 validation-only PR 已在证据进入正式 continuation 后关闭而未合并；#109 也已按 current-format Recovery 边界关闭。任何 main integration / ready / merge 仍需单独授权。RH-E 验收见 [`archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`](archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md)，历史清理证据见 [`archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`](archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md)。
 
 ## 当前政策核心
 
