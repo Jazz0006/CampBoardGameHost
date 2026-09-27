@@ -27,13 +27,19 @@ SDE-3E automatic production cutover                   BLOCKED PER SURFACE
 
 ## 2. Current repository boundary
 
-Active continuation: `codex/sde-history-prefix-route-closure`.
+Current canonical baseline: `main`.
 
-Active PR: `#157 — SDE correctness repair: close CR-A CR-B CR-C`.
+PR #157 — `SDE correctness repair: close CR-A CR-B CR-C` — was explicitly authorized and squash-merged on 2026-09-27.
 
-The PR title is historical relative to the branch contents. It now carries the accepted continuation through RH-E. Keep it **Draft**. Do not mark ready, merge, rebase or force-push unless explicitly authorized.
+Merged main commit:
 
-The 2026-09-27 live-main integration audit found no production/gameplay/SDE semantic conflict. Live `main` was ahead by one M8G5 workflow/control-plane commit whose only overlap was workflow documentation. The authorized integration merge preserves the newer 2026-09-27 GitHub Connector-first workflow in root `AGENTS.md`, absorbs the live-main ancestry, and archives the superseded 2026-09-24 M8G5 workflow document under `docs/archive/workflows/`.
+`02845a470761a988f0041d8c1027b0e2c58a7e05`
+
+The merged scope contains the accepted continuation through CR-A/B/C, C4/SDE-3D2, IF-D, RH-E, and the audited workflow/document integration. The previous continuation branch `codex/sde-history-prefix-route-closure` is now historical rather than the active development baseline.
+
+There is currently **no active SDE production implementation PR**. Any documentation-only post-merge closure branch/PR is bookkeeping, not a new product-development authority.
+
+The 2026-09-27 live-main integration audit found no production/gameplay/SDE semantic conflict. The accepted resolution preserved the newer GitHub Connector-first workflow in root `AGENTS.md` and archived the superseded 2026-09-24 M8G5 workflow document under `docs/archive/workflows/`.
 
 Repository cleanup before RH-E:
 
@@ -63,21 +69,27 @@ Completion/cleanup detail:
 - `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
 - `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
 
-## 4. Current priority — #157 main integration COMPLETE
+## 4. Current priority — evidence qualification before C5
 
-RH-E is COMPLETE. The accepted runtime diagnostic contract now has one process-scoped serialized background persistence lane, ordered append/correlation semantics, stale/cancellation protection, bounded retention, and separate evaluation / queue / persistence / total timing. Canonical session state remains authoritative and independent of diagnostic durability.
+RH-E and the #157 integration/merge closure are COMPLETE. The accepted runtime diagnostic contract remains unchanged: one process-scoped serialized background persistence lane, ordered append/correlation semantics, stale/cancellation protection, bounded retention, and separate evaluation / queue / persistence / total timing. Canonical session state remains authoritative and independent of diagnostic durability.
 
-The live-main integration gate is also COMPLETE. Accepted integration head `371ebf624898c08747203aceaed1254647867214` is a two-parent merge of previous continuation head `058bef86810e3ac8d1d58b3186ee4efde503ad69` and audited live-main head `cc5adee5baf107e04d8b0d5a7657e9c27d5ed1e2`. Relative to the previous continuation head, the merge changed workflow/documentation only; no production or test file changed. Root `AGENTS.md` retains the newer 2026-09-27 GitHub Connector-first semantics and the 2026-09-24 M8G5 control-plane document is archived as superseded history.
+Pre-merge acceptance remained GREEN through the final #157 exact head:
 
-Exact-head acceptance is GREEN:
+- integration head `371ebf624898c08747203aceaed1254647867214`: CI #3479 GREEN, including Android FULL + `assembleDebug`, ASP contracts, Real Clingo and CI gate; R2 #3232 GREEN;
+- final docs-only PR head `ee3f3e32cd48be4bf634a9f8f70268d022dc84d2`: CI #3480 GREEN and R2 #3233 GREEN;
+- squash merge to `main`: `02845a470761a988f0041d8c1027b0e2c58a7e05`.
 
-- CI #3479: Android FULL + `assembleDebug` GREEN, ASP contracts GREEN, Real Clingo GREEN, CI gate GREEN;
-- R2 #3232: GREEN;
-- #157: open, Draft, mergeable, no longer behind `main`.
+The next SDE gate is **evidence qualification**, not production implementation.
 
-No further SDE production slice is automatically unblocked by this integration. C5/V2 and SDE-3E remain blocked on qualifying E3/E4 evidence. Keep #157 Draft until an explicit PR lifecycle decision is authorized.
+Before C5 may start:
 
-Do **not** mark #157 ready, merge, rebase or force-push without explicit user authorization.
+- sync or inspect the latest relevant Trouble Brewing evidence from ClocktowerEvidenceLab;
+- identify concrete policy predicates supported by complete-game/expert evidence;
+- grade them against E3/E4 provenance and rationale requirements;
+- only if at least one predicate qualifies, define a minimal evidence-backed C5 slice;
+- keep `BEGINNER_CONSERVATIVE_V1` immutable and implement any new preference in a new policy/version boundary.
+
+C5/V2 and SDE-3E remain blocked until that evidence gate is satisfied.
 
 ## 5. Recovery product boundary
 
@@ -131,14 +143,15 @@ C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
 ## 8. Immediate execution order
 
 ~~~text
-#157 main integration COMPLETE / exact-head acceptance GREEN
--> keep #157 Draft
--> C5 / V2 and SDE-3E remain blocked on qualifying E3/E4
--> continue evidence acquisition or another explicitly prioritized slice
--> wait for explicit authorization before any ready / PR merge / rebase / force-push
+main@02845a47... is the clean merged baseline
+-> sync / inspect latest ClocktowerEvidenceLab TB evidence
+-> run E3/E4 qualification audit on concrete policy predicates
+-> if none qualify: continue evidence acquisition, no V2 code
+-> if one qualifies: define the smallest C5 slice on a fresh branch
+-> preserve BEGINNER_CONSERVATIVE_V1 unchanged
 ~~~
 
-RH-E implementation and remote acceptance are complete; do not reopen it unless new current-version evidence exposes a regression.
+RH-E and #157 merge closure are complete; do not reopen them unless new current-version evidence exposes a regression.
 
 ## 9. Current authorities
 
