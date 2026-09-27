@@ -119,6 +119,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputFactory
+import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputJsonCodec
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdePostCommitCorrelationCoordinator
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeRuntimeShadowCoordinator
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeRuntimeShadowIdentity
@@ -1189,6 +1190,32 @@ internal fun CampBoardGameHostApp() {
         }
         val commonCards = cards.toList()
         val commonRecords = records.toList()
+        val sdeHistoricalReplayInputJson = if (currentGameKind == GameKind.Clocktower) {
+            val setup = committedClocktowerSetup
+            val session = clocktowerGameSession
+            val rulesetRef = clocktowerRulesetRef
+            if (setup != null && session != null && rulesetRef != null &&
+                session.view.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+            ) {
+                runCatching {
+                    SdeHistoricalReplayInputJsonCodec.encode(
+                        SdeHistoricalReplayInputFactory.captureFresh(
+                            committedSetup = setup,
+                            currentSnapshot = session.toGameSnapshot(rulesetRef),
+                        ).input,
+                    )
+                }.onFailure { failure ->
+                    Log.w(
+                        SDE_RUNTIME_SHADOW_LOG_TAG,
+                        "recovery_replay_capture_failed:${failure::class.java.simpleName}",
+                    )
+                }.getOrNull()
+            } else {
+                null
+            }
+        } else {
+            null
+        }
         val recoveryGame: RecoveryGame = when (currentGameKind) {
             GameKind.Undercover -> UndercoverRecovery(
                 entryPoint = entryPoint,
@@ -1215,6 +1242,7 @@ internal fun CampBoardGameHostApp() {
                     gameSeed = clocktowerGameSeed,
                 ),
                 troubleBrewingSetupRotationRecord = committedTroubleBrewingSetupRotationRecord,
+                sdeHistoricalReplayInputJson = sdeHistoricalReplayInputJson,
                 position = ClocktowerRecoveryPosition(
                     phase = clocktowerPhase,
                     nightStarted = clocktowerNightStartedState.value,
@@ -1397,6 +1425,8 @@ internal fun CampBoardGameHostApp() {
                     emptySet()
                 }
                 clocktowerRulesetRef = runtime?.rulesetRef
+                committedClocktowerSetup =
+                    runtime?.sdeReplayMaterialization?.input?.toCommittedSetup()
                 clocktowerPhase = safeClocktower?.phase ?: game.position.phase
                 clocktowerNightStartedState.value = game.position.nightStarted
                 clocktowerNightStepIndexState.value =
