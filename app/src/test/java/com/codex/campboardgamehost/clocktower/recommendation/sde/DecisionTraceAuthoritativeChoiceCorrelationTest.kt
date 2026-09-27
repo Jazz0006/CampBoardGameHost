@@ -23,6 +23,7 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevisio
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
@@ -137,7 +138,77 @@ class DecisionTraceAuthoritativeChoiceCorrelationTest {
     }
 
     @Test
-    fun `diagnostic write rejection is isolated after canonical commit evidence exists`() {
+    fun `post commit correlation before stale shadow append leaves no orphan pending trace`() = runBlocking {
+        val confirmed = confirmedDecision(InformationDecisionSource.RECOMMENDATION_ACCEPTED)
+        val committed = committedObservation(confirmed)
+        var raw: String? = null
+        var writes = 0
+        val store = DecisionTraceArchiveStore(
+            readRaw = { raw },
+            writeRaw = { updated ->
+                writes += 1
+                raw = updated
+                true
+            },
+        )
+        val lane = DecisionTraceArchivePersistenceLane(store)
+
+        val correlation = lane.correlateCommittedChoiceIfPresent(
+            policyVersion = PolicyVersions.BEGINNER_CONSERVATIVE_V1,
+            confirmed = confirmed,
+            committedObservation = committed,
+            postCommitSession = postCommitSession(committed),
+        )
+        assertEquals(DecisionTracePersistenceOutcome.COMPLETED, correlation.outcome)
+        assertEquals(0, writes)
+
+        val staleAppend = lane.append(
+            trace = pendingTrace(),
+            stillCurrent = { false },
+        )
+        assertEquals(DecisionTracePersistenceOutcome.STALE, staleAppend.outcome)
+        assertEquals(0, writes)
+        assertTrue(store.load().traces.isEmpty())
+    }
+
+    @Test
+    fun `optional runtime correlation uses one archive read and one finalized write`() {
+        val trace = pendingTrace()
+        val confirmed = confirmedDecision(InformationDecisionSource.RECOMMENDATION_ACCEPTED)
+        val committed = committedObservation(confirmed)
+        var raw = DecisionTraceArchiveJsonCodec.encode(DecisionTraceArchive().append(trace))
+        var reads = 0
+        var writes = 0
+        val store = DecisionTraceArchiveStore(
+            readRaw = {
+                reads += 1
+                raw
+            },
+            writeRaw = { updated ->
+                writes += 1
+                raw = updated
+                true
+            },
+        )
+
+        assertTrue(
+            store.correlateCommittedChoiceIfPresent(
+                policyVersion = PolicyVersions.BEGINNER_CONSERVATIVE_V1,
+                confirmed = confirmed,
+                committedObservation = committed,
+                postCommitSession = postCommitSession(committed),
+            ),
+        )
+        assertEquals(1, reads)
+        assertEquals(1, writes)
+        assertTrue(
+            requireNotNull(store.load().find(trace.archiveKey)).actualChoice
+                is DecisionTraceActualChoice.Committed,
+        )
+    }
+
+    @Test
+    fun `diagnostic write rejection is isolated after canonical commit evidence exists`() = runBlocking {
         val trace = pendingTrace()
         val confirmed = confirmedDecision(InformationDecisionSource.RECOMMENDATION_ACCEPTED)
         val committed = committedObservation(confirmed)
@@ -146,7 +217,7 @@ class DecisionTraceAuthoritativeChoiceCorrelationTest {
         val store = DecisionTraceArchiveStore(readRaw = { raw }, writeRaw = { false })
 
         val report = SdePostCommitCorrelationCoordinator.correlate(
-            store = store,
+            persistenceLane = DecisionTraceArchivePersistenceLane(store),
             confirmed = confirmed,
             committedObservation = committed,
             postCommitSession = postCommit,

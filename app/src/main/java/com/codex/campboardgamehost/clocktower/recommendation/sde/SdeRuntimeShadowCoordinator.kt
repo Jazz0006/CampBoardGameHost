@@ -3,11 +3,11 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
-import com.codex.campboardgamehost.clocktower.session.InformationDecisionContext
-import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
-import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionContext
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -43,10 +43,14 @@ internal data class SdeRuntimeShadowIdentity(
 internal data class SdeRuntimeShadowLimits(
     val supportedPlayerCount: Int = 5,
     val maxHistoricalEntries: Int = 16,
-    val maxElapsedMillis: Long = 1_500,
+    val maxEvaluationMillis: Long = 1_500,
 ) {
     init {
-        require(supportedPlayerCount > 0 && maxHistoricalEntries >= 0 && maxElapsedMillis >= 0)
+        require(
+            supportedPlayerCount > 0 &&
+                maxHistoricalEntries >= 0 &&
+                maxEvaluationMillis >= 0,
+        )
     }
 }
 
@@ -62,32 +66,50 @@ internal enum class SdeRuntimeShadowOutcome {
 
 internal data class SdeRuntimeShadowReport(
     val outcome: SdeRuntimeShadowOutcome,
-    val elapsedMillis: Long = 0,
-    val coarseHeapDeltaBytes: Long = 0,
+    val evaluationMillis: Long = 0L,
+    val persistenceQueueMillis: Long = 0L,
+    val persistenceMillis: Long = 0L,
+    val totalElapsedMillis: Long = 0L,
+    val coarseHeapDeltaBytes: Long = 0L,
     val traceKey: DecisionTraceKey? = null,
     val failureType: String? = null,
 )
 
 internal data class SdePostCommitCorrelationReport(
     val completed: Boolean,
+    val queueMillis: Long = 0L,
+    val persistenceMillis: Long = 0L,
     val failureType: String? = null,
 )
 
 /** Diagnostic follow-up only; callers invoke this after the canonical session commit has succeeded. */
 internal object SdePostCommitCorrelationCoordinator {
-    fun correlate(
-        store: DecisionTraceArchiveStore,
+    suspend fun correlate(
+        persistenceLane: DecisionTraceArchivePersistenceLane,
         confirmed: ConfirmedInformationDecision,
         committedObservation: RecordedEpistemicObservation,
         postCommitSession: ClocktowerSessionView,
     ): SdePostCommitCorrelationReport = try {
-        val completed = store.correlateCommittedChoiceIfPresent(
+        val persistence = persistenceLane.correlateCommittedChoiceIfPresent(
             policyVersion = PolicyVersions.BEGINNER_CONSERVATIVE_V1,
             confirmed = confirmed,
             committedObservation = committedObservation,
             postCommitSession = postCommitSession,
         )
-        SdePostCommitCorrelationReport(completed = completed)
+        SdePostCommitCorrelationReport(
+            completed = persistence.outcome == DecisionTracePersistenceOutcome.COMPLETED,
+            queueMillis = persistence.queueMillis,
+            persistenceMillis = persistence.persistenceMillis,
+            failureType = when (persistence.outcome) {
+                DecisionTracePersistenceOutcome.COMPLETED -> null
+                DecisionTracePersistenceOutcome.REJECTED -> "PersistenceRejected"
+                DecisionTracePersistenceOutcome.STALE -> "PersistenceStale"
+                DecisionTracePersistenceOutcome.FAILED ->
+                    persistence.failureType ?: "PersistenceFailed"
+            },
+        )
+    } catch (cancelled: CancellationException) {
+        throw cancelled
     } catch (failure: Throwable) {
         SdePostCommitCorrelationReport(
             completed = false,
@@ -98,7 +120,9 @@ internal object SdePostCommitCorrelationCoordinator {
 
 /**
  * Failure-isolated diagnostic runtime wrapper over the C2 offline coordinator.
- * Cancellation propagates; all other diagnostic failures are reported and never become game commits.
+ *
+ * Evaluation and diagnostic persistence are separate latency boundaries. Cancellation propagates;
+ * all other diagnostic failures are reported and never become game commits.
  */
 internal object SdeRuntimeShadowCoordinator {
     suspend fun <T : DynamicInformationOutcome> evaluate(
@@ -107,7 +131,10 @@ internal object SdeRuntimeShadowCoordinator {
         validatedRuleset: ValidatedClocktowerRuleset,
         roleDefinitions: Collection<RoleDefinition>,
         currentIdentity: () -> SdeRuntimeShadowIdentity?,
-        appendTrace: (DecisionTrace) -> Boolean,
+        persistTrace: suspend (
+            trace: DecisionTrace,
+            stillCurrent: () -> Boolean,
+        ) -> DecisionTracePersistenceReport,
         limits: SdeRuntimeShadowLimits = SdeRuntimeShadowLimits(),
         nanoTime: () -> Long = System::nanoTime,
         usedHeapBytes: () -> Long = {
@@ -115,8 +142,10 @@ internal object SdeRuntimeShadowCoordinator {
         },
         evaluateOffline: (suspend () -> SdeOfflineReplayEvaluation)? = null,
     ): SdeRuntimeShadowReport {
-        val historyEntries = replayInput.actionTimeline.entries.size + replayInput.observationLog.records.size
-        if (replayInput.committedSetup.playerCount != limits.supportedPlayerCount ||
+        val historyEntries =
+            replayInput.actionTimeline.entries.size + replayInput.observationLog.records.size
+        if (
+            replayInput.committedSetup.playerCount != limits.supportedPlayerCount ||
             historyEntries > limits.maxHistoricalEntries
         ) {
             return SdeRuntimeShadowReport(SdeRuntimeShadowOutcome.INELIGIBLE)
@@ -133,7 +162,8 @@ internal object SdeRuntimeShadowCoordinator {
         }
 
         val heapBefore = usedHeapBytes()
-        val started = nanoTime()
+        val totalStartedAt = nanoTime()
+        var completedEvaluationMillis: Long? = null
         return try {
             coroutineContext.ensureActive()
             val evaluation = evaluateOffline?.invoke() ?: withContext(Dispatchers.Default) {
@@ -145,38 +175,119 @@ internal object SdeRuntimeShadowCoordinator {
                 )
             }
             coroutineContext.ensureActive()
-            val elapsedMillis = ((nanoTime() - started).coerceAtLeast(0L)) / 1_000_000L
+
+            val evaluationFinishedAt = nanoTime()
+            val evaluationMillis = elapsedMillis(totalStartedAt, evaluationFinishedAt)
+            completedEvaluationMillis = evaluationMillis
             val heapDelta = (usedHeapBytes() - heapBefore).coerceAtLeast(0L)
+
             when {
-                currentIdentity() != expectedIdentity -> SdeRuntimeShadowReport(
-                    SdeRuntimeShadowOutcome.STALE, elapsedMillis, heapDelta,
-                )
-                elapsedMillis > limits.maxElapsedMillis -> SdeRuntimeShadowReport(
-                    SdeRuntimeShadowOutcome.OVER_BUDGET, elapsedMillis, heapDelta,
-                )
-                !appendTrace(evaluation.pendingTrace) -> SdeRuntimeShadowReport(
-                    SdeRuntimeShadowOutcome.STORAGE_REJECTED, elapsedMillis, heapDelta,
-                )
-                else -> SdeRuntimeShadowReport(
-                    if (evaluation.pendingTrace.featureEvaluation is DecisionFeatureEvaluation.Deferred) {
-                        SdeRuntimeShadowOutcome.STORED_DEFERRED
-                    } else {
-                        SdeRuntimeShadowOutcome.STORED
-                    },
-                    elapsedMillis,
-                    heapDelta,
-                    evaluation.pendingTrace.archiveKey,
-                )
+                currentIdentity() != expectedIdentity ->
+                    reportBeforePersistence(
+                        outcome = SdeRuntimeShadowOutcome.STALE,
+                        evaluationMillis = evaluationMillis,
+                        totalStartedAt = totalStartedAt,
+                        nanoTime = nanoTime,
+                        heapDelta = heapDelta,
+                    )
+
+                evaluationMillis > limits.maxEvaluationMillis ->
+                    reportBeforePersistence(
+                        outcome = SdeRuntimeShadowOutcome.OVER_BUDGET,
+                        evaluationMillis = evaluationMillis,
+                        totalStartedAt = totalStartedAt,
+                        nanoTime = nanoTime,
+                        heapDelta = heapDelta,
+                    )
+
+                else -> {
+                    val persistence = persistTrace(evaluation.pendingTrace) {
+                        currentIdentity() == expectedIdentity
+                    }
+                    val totalElapsedMillis = elapsedMillis(totalStartedAt, nanoTime())
+                    when (persistence.outcome) {
+                        DecisionTracePersistenceOutcome.COMPLETED ->
+                            SdeRuntimeShadowReport(
+                                outcome =
+                                    if (
+                                        evaluation.pendingTrace.featureEvaluation
+                                            is DecisionFeatureEvaluation.Deferred
+                                    ) {
+                                        SdeRuntimeShadowOutcome.STORED_DEFERRED
+                                    } else {
+                                        SdeRuntimeShadowOutcome.STORED
+                                    },
+                                evaluationMillis = evaluationMillis,
+                                persistenceQueueMillis = persistence.queueMillis,
+                                persistenceMillis = persistence.persistenceMillis,
+                                totalElapsedMillis = totalElapsedMillis,
+                                coarseHeapDeltaBytes = heapDelta,
+                                traceKey = evaluation.pendingTrace.archiveKey,
+                            )
+
+                        DecisionTracePersistenceOutcome.REJECTED ->
+                            SdeRuntimeShadowReport(
+                                outcome = SdeRuntimeShadowOutcome.STORAGE_REJECTED,
+                                evaluationMillis = evaluationMillis,
+                                persistenceQueueMillis = persistence.queueMillis,
+                                persistenceMillis = persistence.persistenceMillis,
+                                totalElapsedMillis = totalElapsedMillis,
+                                coarseHeapDeltaBytes = heapDelta,
+                            )
+
+                        DecisionTracePersistenceOutcome.STALE ->
+                            SdeRuntimeShadowReport(
+                                outcome = SdeRuntimeShadowOutcome.STALE,
+                                evaluationMillis = evaluationMillis,
+                                persistenceQueueMillis = persistence.queueMillis,
+                                persistenceMillis = persistence.persistenceMillis,
+                                totalElapsedMillis = totalElapsedMillis,
+                                coarseHeapDeltaBytes = heapDelta,
+                            )
+
+                        DecisionTracePersistenceOutcome.FAILED ->
+                            SdeRuntimeShadowReport(
+                                outcome = SdeRuntimeShadowOutcome.FAILED,
+                                evaluationMillis = evaluationMillis,
+                                persistenceQueueMillis = persistence.queueMillis,
+                                persistenceMillis = persistence.persistenceMillis,
+                                totalElapsedMillis = totalElapsedMillis,
+                                coarseHeapDeltaBytes = heapDelta,
+                                failureType =
+                                    persistence.failureType ?: "PersistenceFailed",
+                            )
+                    }
+                }
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (failure: Throwable) {
+            val totalElapsedMillis = elapsedMillis(totalStartedAt, nanoTime())
             SdeRuntimeShadowReport(
                 outcome = SdeRuntimeShadowOutcome.FAILED,
-                elapsedMillis = ((nanoTime() - started).coerceAtLeast(0L)) / 1_000_000L,
+                evaluationMillis = completedEvaluationMillis ?: totalElapsedMillis,
+                totalElapsedMillis = totalElapsedMillis,
                 coarseHeapDeltaBytes = (usedHeapBytes() - heapBefore).coerceAtLeast(0L),
                 failureType = failure::class.java.simpleName,
             )
         }
     }
+
+    private fun reportBeforePersistence(
+        outcome: SdeRuntimeShadowOutcome,
+        evaluationMillis: Long,
+        totalStartedAt: Long,
+        nanoTime: () -> Long,
+        heapDelta: Long,
+    ): SdeRuntimeShadowReport =
+        SdeRuntimeShadowReport(
+            outcome = outcome,
+            evaluationMillis = evaluationMillis,
+            totalElapsedMillis = elapsedMillis(totalStartedAt, nanoTime()),
+            coarseHeapDeltaBytes = heapDelta,
+        )
+
+    private fun elapsedMillis(startNanos: Long, endNanos: Long): Long =
+        (endNanos - startNanos).coerceAtLeast(0L) / 1_000_000L
 }
+

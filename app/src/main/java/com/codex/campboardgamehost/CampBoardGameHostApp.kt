@@ -430,9 +430,10 @@ internal fun CampBoardGameHostApp() {
     val activeGameClocktowerRulesetCatalog = remember(baseContext) {
         BuiltInClocktowerRulesetCatalog.fromContext(baseContext)
     }
-    val decisionTraceArchiveStore = remember(baseContext) {
-        DecisionTraceArchivePreferencesStorage.fromContext(baseContext)
+    val decisionTracePersistenceLane = remember(baseContext.applicationContext) {
+        DecisionTraceArchivePreferencesStorage.persistenceLaneFromContext(baseContext)
     }
+    val sdeDiagnosticPersistenceScope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
     var storytellerExperienceMode by remember { mutableStateOf(baseContext.loadStorytellerExperienceMode()) }
@@ -926,11 +927,13 @@ internal fun CampBoardGameHostApp() {
                     ).takeIf { it.gameId == view.gameId }
                 }
             },
-            appendTrace = decisionTraceArchiveStore::append,
+            persistTrace = decisionTracePersistenceLane::append,
         )
         Log.i(
             SDE_RUNTIME_SHADOW_LOG_TAG,
-            "outcome=${report.outcome} elapsedMs=${report.elapsedMillis} " +
+            "outcome=${report.outcome} evaluationMs=${report.evaluationMillis} " +
+                "persistenceQueueMs=${report.persistenceQueueMillis} " +
+                "persistenceMs=${report.persistenceMillis} totalMs=${report.totalElapsedMillis} " +
                 "heapDeltaBytes=${report.coarseHeapDeltaBytes} failure=${report.failureType}",
         )
     }
@@ -948,14 +951,22 @@ internal fun CampBoardGameHostApp() {
         invalidateA4RevisionScope()
         a4ObservationDurabilityGate.markPending(committed.recordId)
 
-        val correlation = SdePostCommitCorrelationCoordinator.correlate(
-            store = decisionTraceArchiveStore,
-            confirmed = confirmed,
-            committedObservation = committed,
-            postCommitSession = session.view,
-        )
-        if (!correlation.completed) {
-            Log.w(SDE_RUNTIME_SHADOW_LOG_TAG, "correlation_failed:${correlation.failureType}")
+        val postCommitSession = session.view
+        sdeDiagnosticPersistenceScope.launch {
+            val correlation = SdePostCommitCorrelationCoordinator.correlate(
+                persistenceLane = decisionTracePersistenceLane,
+                confirmed = confirmed,
+                committedObservation = committed,
+                postCommitSession = postCommitSession,
+            )
+            if (!correlation.completed) {
+                Log.w(
+                    SDE_RUNTIME_SHADOW_LOG_TAG,
+                    "correlation_failed:${correlation.failureType} " +
+                        "queueMs=${correlation.queueMillis} " +
+                        "persistenceMs=${correlation.persistenceMillis}",
+                )
+            }
         }
     }
 

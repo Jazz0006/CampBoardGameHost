@@ -44,17 +44,84 @@ class SdeRuntimeShadowCoordinatorTest {
             validatedRuleset = ruleset,
             roleDefinitions = roles,
             currentIdentity = { scenario.identity },
-            appendTrace = { writes++; true },
-            limits = SdeRuntimeShadowLimits(maxElapsedMillis = 10_000),
+            persistTrace = { _, stillCurrent ->
+                writes += 1
+                assertTrue(stillCurrent())
+                DecisionTracePersistenceReport(DecisionTracePersistenceOutcome.COMPLETED)
+            },
+            limits = SdeRuntimeShadowLimits(maxEvaluationMillis = 10_000),
         )
 
         assertEquals(SdeRuntimeShadowOutcome.STORED, report.outcome)
         assertEquals(1, writes)
-        assertTrue(report.elapsedMillis >= 0)
+        assertTrue(report.evaluationMillis >= 0)
+        assertTrue(report.totalElapsedMillis >= report.evaluationMillis)
         println(
-            "SDE_C3_MEASURE players=5 history=0 elapsedMs=${report.elapsedMillis} " +
+            "SDE_C3_MEASURE players=5 history=0 evaluationMs=${report.evaluationMillis} " +
+                "persistenceQueueMs=${report.persistenceQueueMillis} " +
+                "persistenceMs=${report.persistenceMillis} totalMs=${report.totalElapsedMillis} " +
                 "heapDeltaBytes=${report.coarseHeapDeltaBytes} outcome=${report.outcome}",
         )
+    }
+
+    @Test
+    fun `runtime report separates evaluation persistence queue and total latency`() = runBlocking {
+        val scenario = scenario()
+        val evaluation = SdeOfflineReplayCoordinator.evaluate(
+            scenario.input, scenario.model.shadowDecisionContext, ruleset, roles,
+        )
+        val nanos = listOf(0L, 2_000_000L, 9_000_000L).iterator()
+
+        val report = SdeRuntimeShadowCoordinator.evaluate(
+            replayInput = scenario.input,
+            decisionContext = scenario.model.shadowDecisionContext,
+            validatedRuleset = ruleset,
+            roleDefinitions = roles,
+            currentIdentity = { scenario.identity },
+            persistTrace = { _, stillCurrent ->
+                assertTrue(stillCurrent())
+                DecisionTracePersistenceReport(
+                    outcome = DecisionTracePersistenceOutcome.COMPLETED,
+                    queueMillis = 3L,
+                    persistenceMillis = 4L,
+                )
+            },
+            limits = SdeRuntimeShadowLimits(maxEvaluationMillis = 10_000),
+            nanoTime = { nanos.next() },
+            evaluateOffline = { evaluation },
+        )
+
+        assertEquals(SdeRuntimeShadowOutcome.STORED, report.outcome)
+        assertEquals(2L, report.evaluationMillis)
+        assertEquals(3L, report.persistenceQueueMillis)
+        assertEquals(4L, report.persistenceMillis)
+        assertEquals(9L, report.totalElapsedMillis)
+    }
+
+    @Test
+    fun `sub millisecond evaluation is not replaced by total latency after persistence failure`() = runBlocking {
+        val scenario = scenario()
+        val evaluation = SdeOfflineReplayCoordinator.evaluate(
+            scenario.input, scenario.model.shadowDecisionContext, ruleset, roles,
+        )
+        val nanos = listOf(0L, 500_000L, 9_000_000L).iterator()
+
+        val report = SdeRuntimeShadowCoordinator.evaluate(
+            replayInput = scenario.input,
+            decisionContext = scenario.model.shadowDecisionContext,
+            validatedRuleset = ruleset,
+            roleDefinitions = roles,
+            currentIdentity = { scenario.identity },
+            persistTrace = { _, _ -> error("persistence failure") },
+            limits = SdeRuntimeShadowLimits(maxEvaluationMillis = 10_000),
+            nanoTime = { nanos.next() },
+            evaluateOffline = { evaluation },
+        )
+
+        assertEquals(SdeRuntimeShadowOutcome.FAILED, report.outcome)
+        assertEquals(0L, report.evaluationMillis)
+        assertEquals(9L, report.totalElapsedMillis)
+        assertEquals("IllegalStateException", report.failureType)
     }
 
     @Test
@@ -65,13 +132,23 @@ class SdeRuntimeShadowCoordinatorTest {
         )
         suspend fun run(
             identity: SdeRuntimeShadowIdentity = scenario.identity,
-            limits: SdeRuntimeShadowLimits = SdeRuntimeShadowLimits(maxElapsedMillis = 10_000),
-            write: (DecisionTrace) -> Boolean = { true },
+            limits: SdeRuntimeShadowLimits = SdeRuntimeShadowLimits(maxEvaluationMillis = 10_000),
+            persistence: DecisionTracePersistenceReport =
+                DecisionTracePersistenceReport(DecisionTracePersistenceOutcome.COMPLETED),
             nanos: Iterator<Long> = listOf(0L, 1L, 2L).iterator(),
         ) = SdeRuntimeShadowCoordinator.evaluate(
             scenario.input, scenario.model.shadowDecisionContext, ruleset, roles,
-            currentIdentity = { identity }, appendTrace = write, limits = limits,
-            nanoTime = { nanos.next() }, evaluateOffline = { evaluation },
+            currentIdentity = { identity },
+            persistTrace = { _, stillCurrent ->
+                if (stillCurrent()) {
+                    persistence
+                } else {
+                    DecisionTracePersistenceReport(DecisionTracePersistenceOutcome.STALE)
+                }
+            },
+            limits = limits,
+            nanoTime = { nanos.next() },
+            evaluateOffline = { evaluation },
         )
 
         assertEquals(
@@ -80,11 +157,27 @@ class SdeRuntimeShadowCoordinatorTest {
         )
         assertEquals(
             SdeRuntimeShadowOutcome.OVER_BUDGET,
-            run(limits = SdeRuntimeShadowLimits(maxElapsedMillis = 0),
-                nanos = listOf(0L, 1_000_001L).iterator()).outcome,
+            run(
+                limits = SdeRuntimeShadowLimits(maxEvaluationMillis = 0),
+                nanos = listOf(0L, 1_000_001L, 1_000_002L).iterator(),
+            ).outcome,
         )
-        assertEquals(SdeRuntimeShadowOutcome.STORAGE_REJECTED, run(write = { false }).outcome)
-        assertEquals(SdeRuntimeShadowOutcome.FAILED, run(write = { error("I/O") }).outcome)
+        assertEquals(
+            SdeRuntimeShadowOutcome.STORAGE_REJECTED,
+            run(
+                persistence =
+                    DecisionTracePersistenceReport(DecisionTracePersistenceOutcome.REJECTED),
+            ).outcome,
+        )
+        assertEquals(
+            SdeRuntimeShadowOutcome.FAILED,
+            run(
+                persistence = DecisionTracePersistenceReport(
+                    outcome = DecisionTracePersistenceOutcome.FAILED,
+                    failureType = "IOException",
+                ),
+            ).outcome,
+        )
 
         listOf(6, 8, 12, 15).forEach { playerCount ->
             val tooLarge = scenario.withPlayerNames(
@@ -95,7 +188,10 @@ class SdeRuntimeShadowCoordinatorTest {
             val started = System.nanoTime()
             val ineligible = SdeRuntimeShadowCoordinator.evaluate(
                 tooLarge, scenario.model.shadowDecisionContext, ruleset, roles,
-                currentIdentity = { scenario.identity }, appendTrace = { true },
+                currentIdentity = { scenario.identity },
+                persistTrace = { _, _ ->
+                    DecisionTracePersistenceReport(DecisionTracePersistenceOutcome.COMPLETED)
+                },
                 evaluateOffline = { evaluated = true; evaluation },
             )
             val admissionMicros = (System.nanoTime() - started) / 1_000L
@@ -123,7 +219,10 @@ class SdeRuntimeShadowCoordinatorTest {
             validatedRuleset = ruleset,
             roleDefinitions = roles,
             currentIdentity = { mismatchedIdentity },
-            appendTrace = { writes++; true },
+            persistTrace = { _, _ ->
+                writes += 1
+                DecisionTracePersistenceReport(DecisionTracePersistenceOutcome.COMPLETED)
+            },
             evaluateOffline = {
                 evaluated = true
                 error("mismatched request identity must be rejected before evaluation")
@@ -142,7 +241,11 @@ class SdeRuntimeShadowCoordinatorTest {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             SdeRuntimeShadowCoordinator.evaluate(
                 scenario.input, scenario.model.shadowDecisionContext, ruleset, roles,
-                currentIdentity = { scenario.identity }, appendTrace = { writes++; true },
+                currentIdentity = { scenario.identity },
+                persistTrace = { _, _ ->
+                    writes += 1
+                    DecisionTracePersistenceReport(DecisionTracePersistenceOutcome.COMPLETED)
+                },
                 evaluateOffline = { awaitCancellation() },
             )
         }
@@ -175,7 +278,12 @@ class SdeRuntimeShadowCoordinatorTest {
 
         val report = SdeRuntimeShadowCoordinator.evaluate(
             scenario.input, scenario.model.shadowDecisionContext, ruleset, roles,
-            currentIdentity = { scenario.identity }, appendTrace = { writes++; true },
+            currentIdentity = { scenario.identity },
+            persistTrace = { _, stillCurrent ->
+                writes += 1
+                assertTrue(stillCurrent())
+                DecisionTracePersistenceReport(DecisionTracePersistenceOutcome.COMPLETED)
+            },
             evaluateOffline = { deferred },
         )
 
