@@ -88,12 +88,6 @@ internal object RecoverySnapshotStrictDecoder {
         val actionTimeline = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(json)
         val nextTimelineGlobalSequence = json.requiredLong(ClocktowerSemanticHistoryPersistence.CURSOR_KEY)
 
-        json.requireNull("clocktowerDemonAttackDraftTarget")
-        json.requireNull("clocktowerPoisonTarget")
-        json.requireNull("clocktowerMonkProtectedTarget")
-        json.requireNull("clocktowerMayorRedirectTarget")
-        json.requireNull("clocktowerDemonSuccessorTarget")
-
         return ClocktowerRecovery(
             entryPoint = entryPoint,
             currentDealIndex = currentDealIndex,
@@ -270,11 +264,6 @@ internal object RecoverySnapshotStrictDecoder {
             require(value.isNotBlank()) { "String array entries cannot be blank." }
             add(value)
         }
-    }
-
-    private fun JSONObject.requireNull(key: String) {
-        require(has(key)) { "$key is required." }
-        require(isNull(key)) { "$key must be null in typed recovery; draft interaction state is not durable." }
     }
 
     private fun JSONObject.requiredArray(key: String): JSONArray {

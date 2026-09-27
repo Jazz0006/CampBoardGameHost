@@ -181,10 +181,11 @@ class RecoveryRestorePlannerTest {
         assertEquals("Carol", game.mechanics.confirmedMonkProtectedTarget)
         assertEquals("Demon 2", game.mechanics.confirmedDemonSuccessorTarget)
         assertEquals(listOf("Mayor", "Butler", "Soldier"), game.mechanics.demonBluffRoleNames)
-        assertTrue(json.isNull("clocktowerDemonAttackDraftTarget"))
-        assertTrue(json.isNull("clocktowerPoisonTarget"))
-        assertTrue(json.isNull("clocktowerMonkProtectedTarget"))
-        assertTrue(json.isNull("clocktowerDemonSuccessorTarget"))
+        assertFalse(json.has("clocktowerDemonAttackDraftTarget"))
+        assertFalse(json.has("clocktowerPoisonTarget"))
+        assertFalse(json.has("clocktowerMonkProtectedTarget"))
+        assertFalse(json.has("clocktowerMayorRedirectTarget"))
+        assertFalse(json.has("clocktowerDemonSuccessorTarget"))
     }
 
     @Test

@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
-import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -74,27 +73,25 @@ internal object RecoverySnapshotJsonCodec {
             ClocktowerSemanticHistoryPersistence.encodeActionTimeline(game.history.actionTimeline),
         )
 
-        ClocktowerNightCheckpoint(
-            phaseName = game.position.phase.name,
-            round = game.round,
-            gameStateRevision = game.history.gameStateRevision,
-            playerInputRevision = game.history.playerInputRevision,
-            nightStarted = game.position.nightStarted,
-            nightStepIndex = game.position.nightStepIndex,
-            confirmedAttackTarget = game.mechanics.confirmedAttackTarget,
-            attackDraftTarget = null,
-            confirmedPoisonTarget = game.mechanics.confirmedPoisonTarget,
-            poisonDraftTarget = null,
-            confirmedMonkTarget = game.mechanics.confirmedMonkProtectedTarget,
-            monkDraftTarget = null,
-            confirmedMayorRedirectTarget = game.mechanics.confirmedMayorRedirectTarget,
-            mayorRedirectDraftTarget = null,
-            pendingNewDemonName = game.mechanics.pendingNewDemonName,
-            pendingNightNewDemonIdentityName = game.mechanics.pendingNightNewDemonIdentityName,
-            demonSuccessorDraftTarget = null,
-            confirmedDemonSuccessorTarget = game.mechanics.confirmedDemonSuccessorTarget,
-            nextTimelineGlobalSequence = game.history.nextTimelineGlobalSequence,
-        ).persistedValues().forEach { (key, value) -> put(key, value ?: JSONObject.NULL) }
+        put("clocktowerNightStarted", game.position.nightStarted)
+        put("clocktowerNightStepIndex", game.position.nightStepIndex.coerceAtLeast(0))
+        putNullableString("clocktowerPendingNightDeath", game.mechanics.confirmedAttackTarget)
+        putNullableString("clocktowerConfirmedPoisonTarget", game.mechanics.confirmedPoisonTarget)
+        putNullableString("clocktowerConfirmedMonkProtectedTarget", game.mechanics.confirmedMonkProtectedTarget)
+        putNullableString("clocktowerConfirmedMayorRedirectTarget", game.mechanics.confirmedMayorRedirectTarget)
+        putNullableString("clocktowerPendingNewDemonName", game.mechanics.pendingNewDemonName)
+        putNullableString(
+            "clocktowerPendingNightNewDemonIdentityName",
+            game.mechanics.pendingNightNewDemonIdentityName,
+        )
+        putNullableString(
+            "clocktowerConfirmedDemonSuccessorTarget",
+            game.mechanics.confirmedDemonSuccessorTarget,
+        )
+        put(
+            ClocktowerSemanticHistoryPersistence.CURSOR_KEY,
+            game.history.nextTimelineGlobalSequence.coerceAtLeast(0L),
+        )
 
         putNullableString("clocktowerRedHerring", game.mechanics.redHerring)
         put("clocktowerRecommendedDemonBluffRoleNames", stringsToJsonArray(game.mechanics.demonBluffRoleNames))

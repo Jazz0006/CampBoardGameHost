@@ -42,13 +42,11 @@ class SNE7NightTransactionBehaviorMatrixTest {
     )
 
     @Test
-    fun `confirmed successor survives checkpoint restore and Previous while role change remains authoritative`() {
-        val restored = restore(
-            checkpoint(
-                nightStepIndex = 3,
-                demonSuccessorDraftTarget = "Player 2",
-                confirmedDemonSuccessorTarget = "Player 2",
-            ),
+    fun `confirmed successor survives Previous while role change remains authoritative`() {
+        val restored = checkpoint(
+            nightStepIndex = 3,
+            demonSuccessorDraftTarget = "Player 2",
+            confirmedDemonSuccessorTarget = "Player 2",
         )
 
         val afterPrevious = NightCheckpointReducer.reduce(
@@ -63,12 +61,10 @@ class SNE7NightTransactionBehaviorMatrixTest {
     }
 
     @Test
-    fun `editing successor draft after restore leaves old confirmed successor mechanically authoritative`() {
-        val restored = restore(
-            checkpoint(
-                demonSuccessorDraftTarget = "Player 2",
-                confirmedDemonSuccessorTarget = "Player 2",
-            ),
+    fun `editing successor draft leaves old confirmed successor mechanically authoritative`() {
+        val restored = checkpoint(
+            demonSuccessorDraftTarget = "Player 2",
+            confirmedDemonSuccessorTarget = "Player 2",
         )
 
         val edited = NightCheckpointReducer.reduce(
@@ -85,13 +81,11 @@ class SNE7NightTransactionBehaviorMatrixTest {
 
     @Test
     fun `changed confirmed upstream attack invalidates successor confirmation but preserves its draft`() {
-        val restored = restore(
-            checkpoint(
-                confirmedAttackTarget = "Player 1",
-                attackDraftTarget = "Player 4",
-                demonSuccessorDraftTarget = "Player 2",
-                confirmedDemonSuccessorTarget = "Player 2",
-            ),
+        val restored = checkpoint(
+            confirmedAttackTarget = "Player 1",
+            attackDraftTarget = "Player 4",
+            demonSuccessorDraftTarget = "Player 2",
+            confirmedDemonSuccessorTarget = "Player 2",
         )
 
         val reconfirmed = NightCheckpointReducer.reduce(
@@ -105,14 +99,12 @@ class SNE7NightTransactionBehaviorMatrixTest {
     }
 
     @Test
-    fun `Poisoner becoming Demon ends effective poison while restored raw poison fact remains confirmed`() {
-        val restored = restore(
-            checkpoint(
-                confirmedPoisonTarget = "Player 3",
-                poisonDraftTarget = "Player 3",
-                demonSuccessorDraftTarget = "Player 2",
-                confirmedDemonSuccessorTarget = "Player 2",
-            ),
+    fun `Poisoner becoming Demon ends effective poison while raw poison fact remains confirmed`() {
+        val restored = checkpoint(
+            confirmedPoisonTarget = "Player 3",
+            poisonDraftTarget = "Player 3",
+            demonSuccessorDraftTarget = "Player 2",
+            confirmedDemonSuccessorTarget = "Player 2",
         )
         val effective = projectedAfterSuccessor(restored)
 
@@ -218,16 +210,16 @@ class SNE7NightTransactionBehaviorMatrixTest {
     }
 
     @Test
-    fun `same persisted checkpoint and canonical plan reconstruct identical effective state`() {
-        val persisted = checkpoint(
+    fun `same typed checkpoint and canonical plan reconstruct identical effective state`() {
+        val checkpoint = checkpoint(
             confirmedPoisonTarget = "Player 3",
             poisonDraftTarget = "Player 3",
             demonSuccessorDraftTarget = "Player 2",
             confirmedDemonSuccessorTarget = "Player 2",
-        ).persistedValues()
+        )
 
-        val first = projectedAfterSuccessor(ClocktowerNightCheckpoint.fromPersistedValues(persisted))
-        val second = projectedAfterSuccessor(ClocktowerNightCheckpoint.fromPersistedValues(persisted))
+        val first = projectedAfterSuccessor(checkpoint)
+        val second = projectedAfterSuccessor(checkpoint)
 
         assertEquals(first, second)
         assertEquals(RoleId("Poisoner"), baseRoles()[2])
@@ -290,9 +282,6 @@ class SNE7NightTransactionBehaviorMatrixTest {
         state: ClocktowerEffectiveNightState,
         targetSeat: Int,
     ): Boolean = state.currentRoleId(targetSeat) == RoleId("Imp")
-
-    private fun restore(checkpoint: ClocktowerNightCheckpoint): ClocktowerNightCheckpoint =
-        ClocktowerNightCheckpoint.fromPersistedValues(checkpoint.persistedValues())
 
     private fun baseRoles(): Map<Int, RoleId> = mapOf(
         1 to RoleId("Imp"),

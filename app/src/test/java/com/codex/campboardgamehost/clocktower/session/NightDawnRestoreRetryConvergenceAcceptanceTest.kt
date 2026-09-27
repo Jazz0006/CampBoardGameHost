@@ -97,32 +97,33 @@ class NightDawnRestoreRetryConvergenceAcceptanceTest {
         partiallyMaterializedGame: GameState,
         durablePoisonHistory: ActionFactTimeline,
     ): DawnCommitIntent {
-        val restored = NightTransactionRestoreComposition.restore(
-            persistedCheckpointValues = checkpoint().copy(
-                confirmedPoisonTarget = null,
-                poisonDraftTarget = null,
-                pendingNewDemonName = "Poisoner",
-            ).persistedValues(),
+        val recoveredCheckpoint = checkpoint().copy(
+            confirmedPoisonTarget = null,
+            poisonDraftTarget = null,
+            pendingNewDemonName = "Poisoner",
+        )
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = partiallyMaterializedGame,
+            checkpoint = recoveredCheckpoint,
             canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
             demonSuccessorInteractionId = successorInteraction,
             demonRoleId = imp,
         )
 
-        assertFalse(restored.reconstruction.effectiveState.isMechanicallyAlive(IMP_SEAT))
-        assertEquals(imp, restored.reconstruction.effectiveState.currentRoleId(POISONER_SEAT))
+        assertFalse(reconstruction.effectiveState.isMechanicallyAlive(IMP_SEAT))
+        assertEquals(imp, reconstruction.effectiveState.currentRoleId(POISONER_SEAT))
         assertEquals(imp, partiallyMaterializedGame.playerAt(POISONER_SEAT)?.actualRole)
-        assertEquals(null, restored.checkpoint.confirmedPoisonTarget)
+        assertEquals(null, recoveredCheckpoint.confirmedPoisonTarget)
 
         val deathTransition = NightDawnResolutionPlanner.planValidatedNightDeath(
             baseGameState = partiallyMaterializedGame,
-            checkpoint = restored.checkpoint,
+            checkpoint = recoveredCheckpoint,
             input = NightDawnDeathResolutionInput(
                 originalDeathSeat = IMP_SEAT,
                 mayorSeat = null,
                 mayorRedirectMayApply = false,
                 attackOutcome = DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED,
-                effectiveNightState = restored.reconstruction.effectiveState,
+                effectiveNightState = reconstruction.effectiveState,
                 demonRoleIds = setOf(imp),
             ),
         )
@@ -134,7 +135,7 @@ class NightDawnRestoreRetryConvergenceAcceptanceTest {
         assertEquals(EMPATH_SEAT, durablePreviousPoisonTargetSeat)
         val identityTransition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
             baseGameState = partiallyMaterializedGame,
-            checkpoint = restored.checkpoint,
+            checkpoint = recoveredCheckpoint,
             demonRoleId = imp,
             poisonResolutionInput = null,
             durablePreviousPoisonTargetSeat = durablePreviousPoisonTargetSeat,

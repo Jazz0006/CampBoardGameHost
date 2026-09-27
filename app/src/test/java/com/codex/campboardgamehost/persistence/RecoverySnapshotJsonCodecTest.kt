@@ -93,7 +93,7 @@ class RecoverySnapshotJsonCodecTest {
                     confirmedMonkProtectedTarget = "Carol",
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = "Demon 2",
-                    pendingNightNewDemonIdentityName = "Imp",
+                    pendingNightNewDemonIdentityName = "Demon 2",
                     confirmedDemonSuccessorTarget = "Demon 2",
                     redHerring = "Bob",
                     demonBluffRoleNames = listOf("Chef", "Monk", "Mayor"),
@@ -131,12 +131,13 @@ class RecoverySnapshotJsonCodecTest {
         )
         assertEquals("Bob", json.getString("clocktowerConfirmedPoisonTarget"))
         assertEquals("Carol", json.getString("clocktowerConfirmedMonkProtectedTarget"))
+        assertEquals("Demon 2", json.getString("clocktowerPendingNightNewDemonIdentityName"))
         assertEquals("Demon 2", json.getString("clocktowerConfirmedDemonSuccessorTarget"))
-        assertTrue(json.isNull("clocktowerDemonAttackDraftTarget"))
-        assertTrue(json.isNull("clocktowerPoisonTarget"))
-        assertTrue(json.isNull("clocktowerMonkProtectedTarget"))
-        assertTrue(json.isNull("clocktowerMayorRedirectTarget"))
-        assertTrue(json.isNull("clocktowerDemonSuccessorTarget"))
+        assertFalse(json.has("clocktowerDemonAttackDraftTarget"))
+        assertFalse(json.has("clocktowerPoisonTarget"))
+        assertFalse(json.has("clocktowerMonkProtectedTarget"))
+        assertFalse(json.has("clocktowerMayorRedirectTarget"))
+        assertFalse(json.has("clocktowerDemonSuccessorTarget"))
         assertFalse(json.has("clocktowerDayMode"))
         assertFalse(json.has("clocktowerNominatorName"))
         assertFalse(json.has("clocktowerNomineeName"))
