@@ -3,6 +3,7 @@
 > Role: **LONG-LIVED TEST EXECUTION / VALIDATION STRATEGY**
 > Baseline: S1.1/S1.2 measured at `d52f53b4a1821cc000368c393721d1d5a073aafc`
 > Date: 2026-08-30
+> Latest measured audit: 2026-09-27 — [FAST / retirement / N3150 workflow audit](TEST_SUITE_AUDIT_2026-09-27.md)
 
 ## 1. Purpose
 
@@ -57,7 +58,9 @@ S2.1 established executable Android JVM suites at commit `99b340635e04abd64341e5
 - `FULL - FAST`: the S2 baseline was exactly 19 testcases from five approved excluded classes; SDE-2D2 later added one measured exact-enumeration class to the exclusion set
 - warmed no-change `testFast`: approximately 5.75–6.25s, with tasks `UP-TO-DATE`
 
-`testFast` retains `A3EnumerationBenchmarkTest`, representative utility tests, integration/wiring tests, and ownership/characterization tests.
+At that historical checkpoint, `testFast` retained `A3EnumerationBenchmarkTest`, representative utility tests, integration/wiring tests, and ownership/characterization tests.
+
+The figures above are historical. On 2026-09-27 at `1299fba4`, FAST executed 1,551 tests in 357 classes with zero failures/skips. The suite-duration sum was 187.842s on the local Apple Silicon Mac; four whole-bundle classes (five testcases) consumed 174.373s, or 92.8%. The first audit moved these to affected T2 / FULL. The follow-up now keeps bounded Drunk adapters in FAST/FULL and the healthy full-space experiment in a dedicated manual task. This is not an N3150 timing measurement. See the linked audit for post-change results, exact retirement accounting, and destination-branch integration evidence.
 
 ## 3. T0–T4 execution model
 
@@ -106,7 +109,7 @@ The executable Android JVM full-suite entry point is:
 Tier answers: “What kind or cost of test is this?”
 Trigger answers: “When must this test run?”
 
-For example, `SetupMigrationTest` is a T3 expensive test because its high-volume recommendation loops consume most of Android testcase time. A change to `SetupRecommendationService`, history/cooldown, setup scoring, or family selection triggers it at the T2/T4 checkpoint. An unrelated UI-only change does not need to run it during every local edit loop.
+For example, `FirstNightDrunkPairWholeBundleEvaluatorTest` now checks the complete candidate domain of a bounded role catalog. It belongs in FAST and affected T2. Historical full-catalog enumeration is no longer a routine adapter contract; canonical legal-domain and exact evaluator tests remain required.
 
 Similarly, `ZddPlayerWorldSetTest` has T3-like execution characteristics but is an affected T2 requirement for ZDD and epistemic representation changes. Real Clingo is T3 external validation and remains mandatory whenever the change classifier selects exact/oracle semantics or when a T4 checkpoint selects every gate.
 
@@ -120,47 +123,49 @@ The implemented `:app:testFast` task uses default inclusion plus a small explici
 
 The current FAST exclusions are exactly:
 
-- `com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest`
-- `com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest`
-- `com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest`
-- `com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest`
-- `com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest`
-- `com.codex.campboardgamehost.clocktower.epistemic.Sde2D4ScaleBenchmarkTest`
-- `com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest`
-- `com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologySetupWitnessDifferentialTest`
-- `com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyObservationDifferentialTest`
-- `com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyBundleDifferentialTest`
-- `com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputEvaluatorTest`
+- `ZddPlayerWorldSetTest` (retained in FULL; affected representation correctness)
+- `FirstNightBundleHealthyHarnessAcceptanceTest`
+- `Sde2D4TopologyBundlePerformanceTest`
+- `FirstNightBundleBeginnerCorpusExperiment`
+- `Sde2D4ScaleBenchmarkTest`
+- `Sde2D5CalibrationExperiment`
+- `Sde2D5FExpertObservedCalibrationExperiment`
+- `Sde2D5FB4FSilverGeneralizationExperiment`
 
-`FirstNightBundleBeginnerCorpusExperiment`, `Sde2D4ScaleBenchmarkTest`, `Sde2D5CalibrationExperiment`, `Sde2D5FExpertObservedCalibrationExperiment`, and `Sde2D5FB4FSilverGeneralizationExperiment` are also excluded from the underlying `:app:testDebugUnitTest` / `:app:testFull` task because they are explicit evidence-generation harnesses rather than bounded regression contracts. They remain directly runnable through `:app:fnBundle3Calibration`, `:app:sde2D4ScaleBenchmark`, `:app:sde2D5Calibration`, `:app:sde2D5FExpertObservedCalibration`, and `:app:sde2D5FB4FSilverGeneralization`.
+All entries except `ZddPlayerWorldSetTest` are also excluded from `testDebugUnitTest` / `testFull` as explicit evidence experiments. The healthy-bundle and topology performance experiments run via `:app:testCostExperiments` (an exact `--tests` filter may select either). The other five keep their existing dedicated tasks: `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`.
 
-`DemonBluffJointOutputEvaluatorTest` is excluded from FAST based on SDE-2D2 CI measurements: even after reducing the fixture to a minimal healthy seven-player domain and sharing strict shown-role world scans inside the exact evaluator, the test still materially extends the ordinary FAST loop because it intentionally performs real exact whole-bundle enumeration and a direct exact-parity probe. It remains in `:app:testFull` and is mandatory for Demon-bluff / exact-epistemic affected validation.
+The three bounded Drunk adapter classes, expert legality/determinism, and small-sample setup simulation now default to FAST. `A4ZddBenchmarkTest` is deleted: repeated measurements are not an independent correctness oracle; `ZddPlayerWorldSetTest` retains representation parity, filtering and checkpoint proof.
 
-`A3EnumerationBenchmarkTest` remains in FAST because its measured cost is low.
+The 2026-09-27 audit restored `SetupMigrationTest`, `DemonBluffJointOutputEvaluatorTest`, and the three `TroubleBrewingTopology*DifferentialTest` classes to FAST: their current bounded fixtures consumed only 0.797s together in FULL. Their historical exclusion costs no longer describe the current tests. They remain mandatory affected contracts.
 
-## 6. Known non-FAST classes and specialized triggers
+`A3EnumerationSmokeTest` keeps one exact enumeration per 8/10/12/15-player fixture, without repeated timing or a hardware-dependent deadline. `TopologyBundleBoundaryTest` retains feasibility/size bounds for 5/8/12/15 players. `A4DeviceBenchmarkHarnessTest` verifies report values directly without running world enumeration.
+
+## 6. Measured classes and specialized triggers
 
 These classifications are not permanent measurements. Re-measure them when the test, algorithm, Gradle behavior, or surrounding suite materially changes.
 
 | Class | Approximate measured cost | Reason | Role | Trigger family |
 |---|---:|---|---|---|
-| `SetupMigrationTest` | 31–34s testcase | 1000-sample and 200+200 recommendation/history loops | T3 | setup generation, scoring, family selection, history, determinism |
+| `SetupMigrationTest` | 0.053s local, 2026-09-27 (historical 31–34s no longer applies) | now four bounded setup/identity contracts; old high-volume loops are gone | restored T1 / affected T2 | setup candidates, committed identity, impaired pair policy |
 | `ZddPlayerWorldSetTest` | 10–11s | repeated enumeration, ZDD conversion, filtering and representation parity | affected T2 / T3 execution | ZDD, epistemic worlds, filtering, registration, checkpoint/restore |
-| `ExpertRecommendationReviewTest` | 5–6s | 24-scenario recommendation quality corpus | T3 | recommendation scoring, legality, setup plans, quality/diversity |
-| `StorytellerV4BaselineSimulationTest` | 3–4s | 1000 setup samples plus 1000 dynamic selections | T3 | selection distribution and simulation semantics |
-| `A4ZddBenchmarkTest` | 2–3s | repeated benchmark, heap and GC measurements | T3 | ZDD construction/filter performance |
-| `DemonBluffJointOutputEvaluatorTest` | multi-minute CI impact in SDE-2D2 edit loops | real exact whole-bundle bluff-role fanout plus direct exact-parity evidence | affected T2 / T3 execution | Demon bluff joint output, exact shown-role fanout, setup/SDE shadow integration |
+| `ExpertRecommendationReviewTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | all 24 scenarios remain legal/nonempty; stable decisions ignore display names; historical score superiority removed | T1 / affected T2 | recommendation legality and determinism |
+| `StorytellerV4BaselineSimulationTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | 25-sample legality, accounting and determinism; no thousand-game report | T1 / affected T2 | setup/selection semantics |
+| `DemonBluffJointOutputEvaluatorTest` | 0.722s local, 2026-09-27 | current bounded bluff-domain/parity and production integration contracts | restored T1 / affected T2 | Demon bluff joint output, exact shown-role fanout, setup/SDE shadow integration |
 | `Sde2D4ScaleBenchmarkTest` | >900s in isolated CI diagnostic | source-derived scale matrix plus raw-enumerator bounded-prefix measurement; no regression latency threshold | explicit T3 evidence harness, dedicated task only | SDE-2D4 raw enumerator scale investigation |
-| `Sde2D4TopologyBundlePerformanceTest` | sub-second measured bundle evaluation through 15 players, plus Gradle overhead | 5–15 topology-first CPU/coarse-heap evidence | T3; excluded from FAST, retained in full regression | topology-first strategic feasibility performance |
+| `Sde2D4TopologyBundlePerformanceTest` | 1.057s before follow-up | full 5–15 performance report; four-regime correctness smoke retained separately | explicit manual `testCostExperiments` | performance investigation |
 | `Sde2D5CalibrationExperiment` | 5m53s observed when 8 cross-regime topology points were temporarily placed in FAST; historical workflow runs have reached multi-hour duration | deterministic 5–15 STANDARD/BARON calibration evidence generation | explicit T3 evidence harness, dedicated task only | D5 calibration / policy evidence |
 | `Sde2D5FExpertObservedCalibrationExperiment` | about 3.5 minutes end-to-end in GitHub Actions for A Stud + Live + Human Remains topology-first reports | real expert-case committed-prefix counterfactual evidence using topology-first consequence; exhaustive parity remains owned by D4 differential tests | explicit T3 evidence harness, dedicated task/workflow only | D5F-B4 expert-observed reconstruction / consequence evidence |
 | `Sde2D5FB4FSilverGeneralizationExperiment` | about 7 minutes end-to-end in GitHub Actions run #3 after narrowing the historical ct-01 pilot; the retired legacy external-human workflow took about 2h48m | replays only the durable ct-01 legality plus observed whole-bundle-feasibility contracts through production-owned surfaces and emits bounded GOLD-hypothesis generalization evidence | explicit T3 evidence harness, dedicated task/workflow only | D5F-B4F bounded SILVER generalization |
-| `TroubleBrewingTopologySetupWitnessDifferentialTest` | measured-expensive exact differential | topology setup witness parity against bounded exhaustive worlds | affected T2 / T3 execution | topology setup witness semantics |
-| `TroubleBrewingTopologyObservationDifferentialTest` | measured-expensive exact differential | observation witness parity against bounded exhaustive worlds | affected T2 / T3 execution | topology observation semantics |
-| `TroubleBrewingTopologyBundleDifferentialTest` | caused a 5m40s FAST checkpoint when temporarily included | same-world whole-bundle shared-witness parity against exhaustive worlds | affected T2 / T3 execution | topology whole-bundle semantics |
-| `A3EnumerationBenchmarkTest` | approximately 1s | 20 exact enumerations and performance guards | T1/T2 specialized | world enumeration and scalability |
+| `TroubleBrewingTopologySetupWitnessDifferentialTest` | 0.003s local, 2026-09-27 | bounded five-player setup witness parity | restored T1 / affected T2 | topology setup witness semantics |
+| `TroubleBrewingTopologyObservationDifferentialTest` | 0.008s local, 2026-09-27 | bounded observation parity | restored T1 / affected T2 | topology observation semantics |
+| `TroubleBrewingTopologyBundleDifferentialTest` | 0.011s local, 2026-09-27 | bounded same-world whole-bundle shared-witness parity | restored T1 / affected T2 | topology whole-bundle semantics |
+| `A3EnumerationSmokeTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | four single-run exact/nonempty fixtures | T1 / affected T2 | world enumeration |
+| `FirstNightBundleHealthyHarnessAcceptanceTest` | 62.635s before follow-up | 110,000 combinations / 100 public signatures, experimental quotient accounting | explicit manual `testCostExperiments` | historical experiment maintenance |
+| `FirstNightDrunkPairWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk Pair adapter / shared exact semantics |
+| `FirstNightDrunkNumericWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk Numeric adapter / shared exact semantics |
+| `FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk FortuneTeller adapter / shared exact semantics |
 
-T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
+T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `testCostExperiments`, `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
 
 ## 7. Dependency-aware escalation matrix
 
@@ -172,14 +177,15 @@ T3 regression tests are invoked through the existing full test machinery with ex
 | Night/day flow | exact flow test | flow/session tests | transaction, integration, and wiring tests | simulation if behavior changes | applicable full |
 | Setup recommendation | exact setup test | recommendation tests | `SetupMigrationTest`, expert review | simulation if selection distribution changes | applicable full |
 | Scoring/selection | exact scoring test | recommendation/selection tests | review, distribution, and setup tests | simulation/benchmark when relevant | applicable full |
-| Epistemic/enumeration | exact epistemic test | cheap epistemic tests | ZDD, A3 golden, and end-to-end golden tests | A3/A4 benchmarks | Android full + Real Clingo |
-| ZDD | exact ZDD method | cheap epistemic tests | `ZddPlayerWorldSetTest` and golden tests | `A4ZddBenchmarkTest`, A3 benchmark | applicable full |
+| Epistemic/enumeration | exact epistemic test | cheap epistemic tests | ZDD, A3 golden, and end-to-end golden tests | manual device/scale experiments when performance is affected | Android full + Real Clingo |
+| ZDD | exact ZDD method | cheap epistemic tests | `ZddPlayerWorldSetTest` and golden tests | manual device benchmark when performance is affected | applicable full |
 | Persistence/schema | exact persistence test | persistence tests | restore, migration, and production-wiring tests | broad migration if applicable | applicable full |
 | Historical timeline/identity | exact history test | history/session tests | historical action/observation wiring | migration corpus if applicable | Android full + Real Clingo |
 | Production wiring/orchestration | typed integration/ownership test when a real coverage gap exists; existing coverage + compile/diff audit for behavior-preserving wiring | ownership and wiring tests | relevant integration/session tests | simulation if central behavior changes | applicable full |
 | ASP/oracle/scenarios | exact harness command | ASP validation and Python tests | affected scenario tests | real Clingo | ASP contracts + Real Clingo |
 | Gradle/build/dependency | exact build check | affected JVM tests | dependent Android tests | all external validation when contract changes | Android full and any additionally selected gates |
 | Shared interfaces/game-state authority | exact contract test when semantics change; existing consumer evidence for pure refactor | all cheap consumers | broad dependent integration tests | all affected expensive tests | applicable full |
+| First-night whole-bundle / Drunk information | legal-domain, public-projection, candidate-space tests | FAST | bounded Drunk adapters plus canonical domain, projection, exact-bundle and topology differential tests | healthy quotient experiment only when that experiment changes | Android full + exact/oracle gates when selected |
 
 The mapping is semantic rather than a giant fragile file-path list.
 
@@ -257,7 +263,17 @@ Coverage must not be removed merely to satisfy a time target. Conversely, a low-
 
 `UP-TO-DATE` and `FROM-CACHE` do not mean that tests executed in that invocation. Validation reports must distinguish executed test tasks from skipped or cached tasks.
 
-Use `--rerun-tasks` only when intentionally measuring forced execution or when a focused RED/GREEN proof explicitly requires actual execution. It is not the default normal-development invocation and is not required for every structural edit.
+For actual test execution on the current Gradle wrapper, prefer the task-local `--rerun` option, for example `./gradlew :app:testDebugUnitTest --tests '*PairInformationLegalDomainTest' --rerun`. This reruns the selected Test task while allowing unchanged compile/resource dependencies to remain up-to-date. `--rerun-tasks` forces dependencies too; reserve it for a deliberate complete rebuild or an implementation specification that explicitly requires it. Neither option is the default for routine edits.
+
+### 12.1 Chat + Mini MCP + N3150 execution host
+
+- Keep a persistent checkout and Gradle cache on the Android build host. Start conservatively with `--max-workers=2`; measure host memory/CPU before changing heap sizes or worker counts. Do not impose that host-specific tuning on every developer or CI machine.
+- Normal micro-slice: `:app:testDebugUnitTest --tests '<owning class>'` (multiple `--tests` in one invocation when relevant). Use the underlying task so FAST exclusions cannot silently remove the requested expensive class. Gradle must fail if no test matches.
+- Logical checkpoint: `:app:testFast`, plus the triggered T2 filters. T4: `:app:testFull :app:assembleDebug` and selected external gates; use the stronger host/CI where available. Local evidence does not replace remote acceptance.
+- Reuse the daemon for an ongoing local session. Avoid routine `clean`, global `--rerun-tasks`, and assembling an APK after every non-UI test edit. A changed Kotlin test still compiles the shared test source set; filtering only reduces test execution, not the source set's compilation scope.
+- Force only the test task for timing: `./gradlew :app:testFast --rerun --max-workers=2`. Summarize with `python3 tools/testing/summarize_junit.py app/build/test-results/testFast --json /tmp/fast-timing.json`. Save results before another invocation of that task overwrites them.
+- Record revision, host, task/filter, whether tests actually executed, wall time, XML test time, counts/failures/skips. Re-measure on N3150; do not extrapolate Mac timings as host guarantees. Audit any new class dominating FAST before adding it to the exclusion list.
+- Default inclusion remains intact. No timing-based auto-skip, package-wide exclusion, reduced sample count, or weakened exactness assertion is introduced.
 
 S2.1 verified that `testFast` and `testFull` have separate execution identities, that `testFast` does not invoke `testDebugUnitTest`, and that `testFull` does.
 
@@ -309,10 +325,12 @@ Validation should follow the ownership layer:
 
 - legal candidate identity / lifecycle → focused typed domain/orchestration tests;
 - feature projection → deterministic feature-contract tests at the shared projector owner;
-- persistent impaired narrative → cross-role / cross-information-shape history tests;
+- persistent impaired narrative → cross-role / cross-information-shape history tests that distinguish mechanical impairment credibility from player-believable functioning narrative continuity;
 - `BEGINNER_CONSERVATIVE_V1` policy → explicit reject/survive/reason-code tests rather than fragile scalar snapshots;
+- replay identity → typed same-game/request binding tests, including different-game/same-revision rejection before exact evaluation or trace persistence;
+- replay codec → strict nested schema/type fail-closed tests for action/observation/proposition material, while legacy save compatibility remains separately characterized;
 - `DecisionTrace` → persistence / replay / policy-version contract tests;
-- shadow production integration → typed integration tests proving recommendation does not mutate canonical state;
+- shadow production integration → typed integration tests proving recommendation does not mutate canonical state; persistence timing tests must distinguish evaluation, diagnostic I/O and total latency when runtime hardening is implemented;
 - historical expert/SILVER replay → named dedicated T3 evidence harnesses, not ordinary FAST regression.
 
 When evidence later changes policy ordering without changing legality/feature semantics, prefer versioned policy fixtures and replay evidence over rewriting rules tests.

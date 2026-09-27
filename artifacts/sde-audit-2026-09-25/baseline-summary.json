@@ -1,0 +1,21 @@
+{
+  "testFast": {
+    "suites": 352,
+    "tests": 1528,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "included_classes": "all default FAST classes"
+  },
+  "testDebugUnitTest": {
+    "suites": 2,
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "included_classes": [
+      "com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest",
+      "com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest"
+    ]
+  }
+}

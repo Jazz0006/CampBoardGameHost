@@ -1,0 +1,10 @@
+// Explicit audit probes only. Normal repository test tasks do not include these sources.
+allprojects {
+    afterEvaluate { project ->
+        if (project.path == ':app') {
+            project.android.sourceSets.test.java.srcDir(
+                project.rootProject.file('artifacts/sde-audit-2026-09-25/probes')
+            )
+        }
+    }
+}

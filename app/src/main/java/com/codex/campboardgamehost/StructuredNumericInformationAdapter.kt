@@ -11,6 +11,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGene
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
@@ -84,7 +85,10 @@ internal fun prepareNumericInformationUiModel(
         evaluations = evaluations,
         recommendedCandidateIds = recommendedIds,
         revision = revision,
-        semanticIdentity = "numeric|${abilityRole.value}|$gameId|${phase.name}|$round|$sequence|$actorSeat|${metric.name}",
+        requestIdentity = InformationDecisionRequestIdentity(
+            gameId = gameId,
+            requestId = "numeric|${abilityRole.value}|$gameId|${phase.name}|$round|$sequence|$actorSeat|${metric.name}",
+        ),
         draftOf = { evaluation ->
             val value = evaluation.candidate.outcome.value
             val proposition = InformationProposition.NumericResult(

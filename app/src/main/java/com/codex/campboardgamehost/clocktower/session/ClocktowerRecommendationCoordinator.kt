@@ -38,6 +38,9 @@ import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoo
 import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffSetupShadowAdapter
 import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffSetupShadowEvaluation
 import com.codex.campboardgamehost.clocktower.recommendation.sde.ExactConsequenceContext
+import com.codex.campboardgamehost.clocktower.recommendation.sde.RedHerringSetupPrecommitAdapter
+import com.codex.campboardgamehost.clocktower.recommendation.sde.RedHerringSetupShadowAdapter
+import com.codex.campboardgamehost.clocktower.recommendation.sde.RedHerringSetupShadowEvaluation
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SetupDemonBluffJointOutputAdapter
 import com.codex.campboardgamehost.clocktower.recommendation.sde.TroubleBrewingDemonBluffJointOutputEvaluator
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
@@ -116,6 +119,45 @@ internal class ClocktowerRecommendationCoordinator(
         )
     }
 
+    /**
+     * C4 shadow-only orchestration beside the existing setup recommendation authority.
+     *
+     * Red-Herring legality remains owned by SetupCandidateGenerator. The existing visible setup
+     * result is returned unchanged; SDE only attaches typed truth-danger / credibility-disruption
+     * diagnostics for the same uncommitted legal target domain.
+     */
+    fun evaluateSetupRedHerringShadow(
+        request: SetupCoordinationRequest,
+        visibleResult: SetupRecommendationService.ConstrainedResult,
+        exactContext: ExactConsequenceContext,
+    ): RedHerringSetupShadowEvaluation {
+        require(request.lockedDecisions.none { it is StorytellerDecision.RedHerring }) {
+            "Locked Red Herring is a persistent setup input and must not be replanned by SDE."
+        }
+        require(exactContext.exactContext.initialSnapshot.gameState == request.game) {
+            "Setup Red-Herring shadow evaluation must use the same canonical game state as the setup request."
+        }
+        require(
+            exactContext.exactContext.initialPhase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT &&
+                exactContext.exactContext.initialRound == 1,
+        ) {
+            "Setup Red-Herring shadow evaluation requires the canonical first-night setup baseline."
+        }
+
+        val projection = RedHerringSetupPrecommitAdapter.project(
+            gameId = exactContext.exactContext.initialSnapshot.gameId,
+            game = request.game,
+            roleDefinitions = request.roles,
+            sourceRevision = exactContext.sourceRevision,
+        )
+        return RedHerringSetupShadowAdapter.evaluate(
+            visibleResult = visibleResult,
+            projection = projection,
+            validatedRuleset = exactContext.validatedRuleset,
+            exactContext = exactContext.exactContext,
+        )
+    }
+
     /** B7.3 setup projection: one pool supplies both AUTO and ASSISTED. */
     fun unifiedSetupPool(plans: List<RecommendationPlan>): UnifiedSelectionPool<RecommendationPlan>? =
         plans.takeIf { it.isNotEmpty() }?.let { source ->
@@ -166,13 +208,13 @@ internal class ClocktowerRecommendationCoordinator(
         evaluations: List<DecisionEvaluation<T>>,
         recommendedCandidateIds: Set<String>,
         revision: InformationDecisionRevision,
-        semanticIdentity: String,
+        requestIdentity: InformationDecisionRequestIdentity,
         draftOf: (DecisionEvaluation<T>) -> EpistemicObservationDraft,
     ): InformationDecisionContext<T> = InformationDecisionContext.fromEvaluations(
         evaluations = evaluations,
         recommendedCandidateIds = recommendedCandidateIds,
         revision = revision,
-        semanticIdentity = semanticIdentity,
+        requestIdentity = requestIdentity,
         draftOf = draftOf,
     )
 

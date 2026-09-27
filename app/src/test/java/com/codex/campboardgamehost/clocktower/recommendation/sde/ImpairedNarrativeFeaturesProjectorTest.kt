@@ -18,7 +18,7 @@ class ImpairedNarrativeFeaturesProjectorTest {
                     abilityState = AbilityState.MALFUNCTIONING_DRUNK,
                     lifetime = ImpairmentLifetime.PERSISTENT_SETUP_BOUND,
                     priorIds = priorIds,
-                    confirmation = confirmation(
+                    perceivedConfirmation = confirmation(
                         impact("history-a", ConfirmationObservationRelation.CONTRADICTS_EXISTING_OBSERVATION),
                         impact("history-b", ConfirmationObservationRelation.NO_CONTRIBUTION),
                     ),
@@ -28,7 +28,7 @@ class ImpairedNarrativeFeaturesProjectorTest {
                     abilityState = AbilityState.MALFUNCTIONING_DRUNK,
                     lifetime = ImpairmentLifetime.PERSISTENT_SETUP_BOUND,
                     priorIds = priorIds,
-                    confirmation = confirmation(
+                    perceivedConfirmation = confirmation(
                         impact("history-a", ConfirmationObservationRelation.NO_CONTRIBUTION),
                         impact("history-b", ConfirmationObservationRelation.SUPPORTS_EXISTING_OBSERVATION),
                     ),
@@ -67,7 +67,7 @@ class ImpairedNarrativeFeaturesProjectorTest {
                     abilityState = AbilityState.MALFUNCTIONING_POISONED,
                     lifetime = ImpairmentLifetime.TEMPORARY_ACTION_BOUND,
                     priorIds = setOf("poisoned-history"),
-                    confirmation = confirmation(
+                    perceivedConfirmation = confirmation(
                         impact(
                             "poisoned-history",
                             ConfirmationObservationRelation.CONTRADICTS_EXISTING_OBSERVATION,
@@ -95,7 +95,7 @@ class ImpairedNarrativeFeaturesProjectorTest {
                     abilityState = AbilityState.MALFUNCTIONING_DRUNK,
                     lifetime = ImpairmentLifetime.PERSISTENT_SETUP_BOUND,
                     priorIds = setOf("collapsed-history"),
-                    confirmation = confirmation(
+                    perceivedConfirmation = confirmation(
                         impact(
                             "collapsed-history",
                             ConfirmationObservationRelation.BASELINE_ALREADY_COLLAPSED,
@@ -126,7 +126,7 @@ class ImpairedNarrativeFeaturesProjectorTest {
                     abilityState = AbilityState.FUNCTIONING,
                     impairmentLifetime = null,
                     priorImpairedObservationIds = emptySet(),
-                    confirmation = FeatureProjection.Projected(confirmation()),
+                    perceivedConfirmation = FeatureProjection.Projected(confirmation()),
                 ),
             ),
         )
@@ -142,13 +142,13 @@ class ImpairedNarrativeFeaturesProjectorTest {
         abilityState: AbilityState,
         lifetime: ImpairmentLifetime,
         priorIds: Set<String>,
-        confirmation: ConfirmationChainFeatures,
+        perceivedConfirmation: ConfirmationChainFeatures,
     ) = ImpairedNarrativeCandidateEvidence(
         candidateId = candidateId,
         abilityState = abilityState,
         impairmentLifetime = lifetime,
         priorImpairedObservationIds = priorIds,
-        confirmation = FeatureProjection.Projected(confirmation),
+        perceivedConfirmation = FeatureProjection.Projected(perceivedConfirmation),
     )
 
     private fun confirmation(

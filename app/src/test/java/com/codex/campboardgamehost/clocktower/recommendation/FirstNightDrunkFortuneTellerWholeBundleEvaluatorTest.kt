@@ -34,6 +34,10 @@ class FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest {
         sourceRevision = "official",
     )
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
+        // Bounded adapter contract; full-catalog legality has its own domain tests.
+        .filter { it.id.value in setOf(
+            "Washerwoman", "Drunk", "Chef", "Soldier", "Scarlet Woman", "Imp", "Fortune Teller",
+        ) }
 
     @Test
     fun `Drunk shown Fortune Teller evaluates only Yes No for one player-selected target pair`() {
