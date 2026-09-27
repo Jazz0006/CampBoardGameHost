@@ -31,9 +31,9 @@ Active continuation: `codex/sde-history-prefix-route-closure`.
 
 Active PR: `#157 — SDE correctness repair: close CR-A CR-B CR-C`.
 
-The PR title is historical relative to the branch contents. It now carries the accepted continuation through C4 and IF-D. Keep it **Draft**. Do not mark ready, merge, rebase, force-push or resolve the main conflict unless explicitly authorized.
+The PR title is historical relative to the branch contents. It now carries the accepted continuation through RH-E. Keep it **Draft**. Do not mark ready, merge, rebase or force-push unless explicitly authorized.
 
-Live `main` contains the later merged M8G5 Mini MCP workflow/control-plane commit that is not on the continuation, so #157 remains divergent / dirty against main. This is an integration gate, not a reason to interrupt RH-E.
+The 2026-09-27 live-main integration audit found no production/gameplay/SDE semantic conflict. Live `main` was ahead by one M8G5 workflow/control-plane commit whose only overlap was workflow documentation. The authorized integration merge preserves the newer 2026-09-27 GitHub Connector-first workflow in root `AGENTS.md`, absorbs the live-main ancestry, and archives the superseded 2026-09-24 M8G5 workflow document under `docs/archive/workflows/`.
 
 Repository cleanup before RH-E:
 
@@ -62,21 +62,21 @@ Completion/cleanup detail:
 - `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
 - `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
 
-## 4. Current priority — #157 versus live-main integration audit
+## 4. Current priority — #157 post-integration exact-head acceptance
 
 RH-E is COMPLETE. The accepted runtime diagnostic contract now has one process-scoped serialized background persistence lane, ordered append/correlation semantics, stale/cancellation protection, bounded retention, and separate evaluation / queue / persistence / total timing. Canonical session state remains authoritative and independent of diagnostic durability.
 
-The next executable action is a fresh integration audit of Draft PR #157 against live `main`.
+The live-main integration audit and authorized ancestry integration are complete. The integration is workflow/document-only relative to the accepted continuation: root `AGENTS.md` keeps the newer 2026-09-27 GitHub Connector-first semantics, while the 2026-09-24 M8G5 control-plane document is retained only as superseded history under `docs/archive/workflows/`.
 
-That audit must:
+The next executable action is exact-head remote acceptance of Draft PR #157:
 
-- refresh live `main`, #157 exact head/state/draft/mergeability and remote checks;
-- classify the actual conflict/divergence introduced by the later M8G5 workflow/control-plane merge;
-- distinguish mechanical integration conflicts from semantic/product conflicts;
-- propose the smallest safe integration route and required acceptance evidence;
-- preserve the accepted RH-E executable tree and all later documentation-only records.
+- verify the merge commit has the previous #157 head and live `main` as its two parents;
+- verify #157 is no longer behind/conflicted with `main` and remains Draft;
+- verify the integration merge changed workflow/documentation only and did not alter the accepted RH-E production/test tree;
+- inspect exact-head GitHub CI/R2/check results generated after conflict removal;
+- record the integration acceptance result before any later ready/merge decision.
 
-The audit is read-only with respect to integration. Do **not** rebase, resolve conflicts, mark #157 ready, merge or force-push without explicit user authorization.
+Do **not** mark #157 ready, merge, rebase or force-push without explicit user authorization.
 
 ## 5. Recovery product boundary
 
@@ -130,11 +130,11 @@ C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
 ## 8. Immediate execution order
 
 ~~~text
-refresh live main + #157 exact state
--> audit #157 versus live-main divergence/conflicts
--> classify integration-only versus semantic conflicts
--> propose guarded integration + acceptance route
--> wait for explicit authorization before any rebase/conflict resolution/ready/merge
+verify exact integration merge parents + changed-file scope
+-> confirm #157 is current with live main and remains Draft
+-> inspect exact-head CI / R2 / checks
+-> record integration acceptance if GREEN
+-> wait for explicit authorization before any ready / PR merge / rebase / force-push
 ~~~
 
 RH-E implementation and remote acceptance are complete; do not reopen it unless new current-version evidence exposes a regression.

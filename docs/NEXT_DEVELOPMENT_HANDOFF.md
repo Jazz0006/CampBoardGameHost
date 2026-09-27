@@ -3,7 +3,7 @@
 > Updated: 2026-09-27 Australia/Sydney  
 > Current continuation: `codex/sde-history-prefix-route-closure`  
 > Active Draft PR: **#157**  
-> Next executable slice: **#157 versus live-main integration audit**
+> Next executable slice: **#157 post-integration exact-head acceptance**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -32,9 +32,9 @@ Requirements:
 - preserve the current working tree;
 - do not reset/discard unrelated work;
 - #157 stays Draft;
-- no merge, ready transition, rebase, force-push or main-conflict resolution without explicit authorization.
+- no PR merge, ready transition, rebase or force-push without explicit authorization.
 
-The local `main` ref may lag live `origin/main`; refresh remote facts before the integration audit, but do not mutate branch ancestry merely to inspect the conflict.
+The 2026-09-27 live-main ancestry integration is complete. Do not redo or rewrite that merge; refresh remote facts and exact-head checks before further work.
 
 ## 3. Current state
 
@@ -83,7 +83,7 @@ Formal executable checkpoint:
 - commit `f51a295983e8e203119dd50693af343c1ec23906`;
 - tree `2babb1fba00b46dfc676efb6f090386b7a73826f`.
 
-Exact-tree remote acceptance used validation-only Draft PR #162 because #157 remains intentionally conflicted with live `main`:
+Exact-tree remote acceptance used validation-only Draft PR #162 because #157 was still conflicted with live `main` at that time. The later workflow/document-only integration does not change or relabel that RH-E executable-tree evidence:
 
 - validation head `bf66363385420f507f92a729b496ff002791dee5`;
 - CI #3478 GREEN;
@@ -108,19 +108,19 @@ Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as authority:
 - N3150 remains retired from the default validation path;
 - GitHub CI/R2 remains the Android validation and independent acceptance surface.
 
-## 7. Next gate — #157 versus live main
+## 7. Next gate — exact-head integration acceptance
 
-Perform a fresh read-only integration audit before changing ancestry.
+The live-main audit found one workflow semantic conflict in root `AGENTS.md` plus one main-only M8G5 workflow document; there were no production/gameplay/SDE semantic conflicts. The authorized merge keeps the newer 2026-09-27 GitHub Connector-first workflow and archives the superseded 2026-09-24 M8G5 document.
 
-Required audit:
+Required next audit:
 
 1. refresh live `main`, #157 exact head/state/draft/mergeability and checks;
-2. compare #157 against live main and identify the exact conflicting files/hunks;
-3. classify each conflict as mechanical workflow/control-plane integration or semantic/product conflict;
-4. verify that the accepted RH-E executable tree and later docs can be preserved;
-5. propose the smallest guarded integration route and the validation that route would require.
+2. verify the new #157 head is a two-parent merge of the previous continuation head and the audited live-main head;
+3. confirm no production/test files changed in the integration merge and RH-E accepted executable evidence remains intact;
+4. inspect exact-head CI/R2/check results;
+5. record acceptance or repair only evidence-bound failures.
 
-Do **not** rebase, resolve conflicts, mark ready, merge or force-push unless the user explicitly authorizes it.
+Do **not** mark ready, merge the PR, rebase or force-push unless the user explicitly authorizes it.
 
 ## 8. Scope still blocked
 
