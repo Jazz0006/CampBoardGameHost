@@ -235,13 +235,15 @@ A targeted case should be promoted into CampBoardGameHost B4 evidence only after
 
 ## 9. Current blocker boundary
 
-At this checkpoint:
+At the current SDE-3D checkpoint:
 
 - B4F-A executable SILVER replay: COMPLETE;
 - B4F-B bounded SILVER comparison: COMPLETE;
 - B4F-C target specification: COMPLETE;
-- B4F-C evidence acquisition: **EXTERNAL / WAITING FOR TARGETED CASES**;
-- D5F-C: BLOCKED;
-- SDE-3: BLOCKED.
+- B4F-C evidence acquisition: **EXTERNAL / CONTINUOUS / TARGETED**;
+- historical D5F-C numeric gate/band derivation: still evidence-blocked and no longer the sole production critical path;
+- SDE-3A/B/C: COMPLETE;
+- SDE-3D: **IN PROGRESS / PARTIALLY EVIDENCE-BLOCKED**;
+- SDE-3E: blocked per decision surface until its matching 3D gates are satisfied.
 
-No additional CampBoardGameHost production-policy implementation should be justified by the current evidence set alone.
+The current evidence set may justify stable descriptive feature surfaces and semantic regression where E1/E2 support exists. It does **not** by itself authorize a new candidate preference, rejection, numeric threshold or production V2. Each such policy delta must satisfy the matching E3/E4 gate and use a new explicit policy version after the frozen V1 baseline.

@@ -83,6 +83,8 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableC
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
+import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
+import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
@@ -160,6 +162,8 @@ internal fun ClocktowerJudgeScreen(
     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
+    onStructuredNumberDecisionPrepared: suspend (StructuredNumberInformationUiModel) -> Unit,
+    onCommitConfirmedInformationDecision: (ConfirmedInformationDecision) -> Unit,
     onHostTools: () -> Unit,
     onPreviousFromFirstNightReady: () -> Unit,
     onMovePreviousNightStep: () -> Unit,
@@ -1816,7 +1820,7 @@ internal fun ClocktowerJudgeScreen(
         val actorSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return
         if (!informationDecisionPublicationAllowed(displayStep)) return
         displayStep.informationDecisionConfirmation?.let { confirmation ->
-            onRecordEpistemicObservation(confirmation.draft)
+            onCommitConfirmedInformationDecision(confirmation)
             return
         }
         if (displayStep.displayProposition == null &&
@@ -4181,6 +4185,7 @@ internal fun ClocktowerJudgeScreen(
                         }
                     }
                 },
+                onStructuredNumberDecisionPrepared = onStructuredNumberDecisionPrepared,
                 onShowPlayerDisplay = { displayStep ->
                     performClocktowerPlayerRevealHandoff(
                         authorize = { informationDecisionPublicationAllowed(displayStep) },

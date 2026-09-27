@@ -1,0 +1,32 @@
+Source class/@Test counts match FULL: 363 classes / 1562 cases.
+All final FAST cases exist in FULL.
+FULL - final FAST: 18 cases.
+Baseline FAST -> final FAST: 18 removed, 11 restored.
+
+Removed from FAST (retired or moved to FULL):
+com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleHealthyHarnessAcceptanceTest: 1
+com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest: 1
+com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkNumericWholeBundleEvaluatorTest: 2
+com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkPairWholeBundleEvaluatorTest: 1
+com.codex.campboardgamehost.clocktower.review.Sde2D5BundleConfirmationChainEvidenceTest: 1
+com.codex.campboardgamehost.clocktower.review.Sde2D5FCalibrationReviewExportTest: 3
+com.codex.campboardgamehost.clocktower.review.Sde2D5FHumanLabelManifestTest: 6
+com.codex.campboardgamehost.clocktower.review.Sde2D5RoleInformationContrastEvidenceTest: 3
+
+Restored to FAST:
+com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyBundleDifferentialTest: 1
+com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyObservationDifferentialTest: 1
+com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologySetupWitnessDifferentialTest: 1
+com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputEvaluatorTest: 4
+com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest: 4
+
+Retained in FULL outside FAST:
+com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest: 1
+com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest: 1
+com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest: 7
+com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleHealthyHarnessAcceptanceTest: 1
+com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest: 1
+com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkNumericWholeBundleEvaluatorTest: 2
+com.codex.campboardgamehost.clocktower.recommendation.FirstNightDrunkPairWholeBundleEvaluatorTest: 1
+com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest: 2
+com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest: 2

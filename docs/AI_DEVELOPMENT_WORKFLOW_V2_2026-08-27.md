@@ -1,9 +1,9 @@
 # AI Development Workflow V2 — ChatGPT / GitHub Connector / Codex Luna
 
-> Role: **NORMATIVE / DEVELOPMENT OPERATIONS**  
+> Role: **SUPERSEDED / HISTORICAL DEVELOPMENT OPERATIONS**  
 > Effective: 2026-08-27  
 > Applies to: `Jazz0006/CampBoardGameHost`  
-> Precedence: this document supersedes conflicting execution/testing defaults in `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`. `docs/TESTING_STRATEGY.md` remains authoritative for test-tier definitions.
+> Superseded by: `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`. Retained only for historical lessons; current execution-path decisions must not be inferred from this file.
 
 ## 1. Fixed division of responsibility
 

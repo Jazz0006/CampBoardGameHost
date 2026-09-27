@@ -70,11 +70,17 @@ afterEvaluate {
     val sde2D5FB4FSilverGeneralizationExperiment =
         "com.codex.campboardgamehost.clocktower.review.Sde2D5FB4FSilverGeneralizationExperiment"
 
+    val manualCostExperiments = listOf(
+        "com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleHealthyHarnessAcceptanceTest",
+        "com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest",
+    )
+
     // Corpus generation and raw-enumerator scale measurement are explicit T3 evidence harnesses,
     // not regression tests. Keep them out of the default Android unit-test task so FULL remains
     // bounded while each harness stays directly runnable through its dedicated task below.
     debugUnitTest.configure {
         filter {
+            manualCostExperiments.forEach { excludeTestsMatching(it) }
             excludeTestsMatching(fnBundle3CalibrationExperiment)
             excludeTestsMatching(sde2D4ScaleBenchmark)
             excludeTestsMatching(sde2D5CalibrationExperiment)
@@ -98,22 +104,24 @@ afterEvaluate {
 
         filter {
             // testFast is a separate Test task and does not inherit debugUnitTest's filter.
+            manualCostExperiments.forEach { excludeTestsMatching(it) }
             excludeTestsMatching(fnBundle3CalibrationExperiment)
             excludeTestsMatching(sde2D5CalibrationExperiment)
             excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
             excludeTestsMatching(sde2D5FB4FSilverGeneralizationExperiment)
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest")
             excludeTestsMatching(sde2D4ScaleBenchmark)
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologySetupWitnessDifferentialTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyObservationDifferentialTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.TroubleBrewingTopologyBundleDifferentialTest")
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffJointOutputEvaluatorTest")
         }
+    }
+
+    tasks.register<Test>("testCostExperiments") {
+        group = "verification"
+        description = "Runs historical healthy-bundle and topology performance experiments explicitly."
+        val sourceTask = debugUnitTest.get()
+        testClassesDirs = sourceTask.testClassesDirs
+        classpath = sourceTask.classpath
+        filter { manualCostExperiments.forEach { includeTestsMatching(it) } }
+        outputs.upToDateWhen { false }
     }
 
     tasks.register<Test>("sde2D4ScaleBenchmark") {

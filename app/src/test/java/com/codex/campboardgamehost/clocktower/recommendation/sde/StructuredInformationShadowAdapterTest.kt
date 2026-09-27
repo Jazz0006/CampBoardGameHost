@@ -26,11 +26,13 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGene
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 import com.codex.campboardgamehost.clocktower.session.InformationResolutionRequest
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -96,6 +98,53 @@ class StructuredInformationShadowAdapterTest {
         assertEquals(timelineBefore, timeline.reducerFacts())
         assertEquals(observationsBefore, observationLog.records)
         assertEquals(revision, shadow.informationSnapshot.revision)
+        assertEquals(
+            BeginnerConservativeV1Selector.select(
+                evaluation = shadow.policyEvaluation,
+                decisionId = decisionContext.semanticIdentity,
+                selectionSeed = snapshot.gameSeed,
+            ),
+            shadow.policySelection,
+        )
+    }
+
+    @Test
+    fun `decision trace captures versioned shadow evaluation without becoming canonical history`() {
+        val revision = InformationDecisionRevision(
+            gameStateRevision = snapshot.gameStateRevision,
+            playerInputRevision = snapshot.playerInputRevision,
+        )
+        val decisionContext = structuredEmpathContext(revision)
+        val shadow = StructuredInformationShadowAdapter.evaluate(
+            decisionContext = decisionContext,
+            exactContext = ExactConsequenceContext(
+                validatedRuleset = validatedRuleset,
+                exactContext = exactHistoricalContext(ActionFactTimeline(emptyList()), EpistemicObservationLog()),
+            ),
+        )
+
+        val trace = DecisionTraceFactory.fromStructuredShadow(shadow = shadow)
+
+        assertEquals(DecisionTrace.CURRENT_SCHEMA_VERSION, trace.schemaVersion)
+        assertEquals(
+            StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1.evidenceCheckpoint,
+            trace.evidenceCheckpoint,
+        )
+        assertEquals(decisionContext.semanticIdentity, trace.decisionId)
+        assertEquals(revision, trace.sourceRevision)
+        assertEquals(decisionContext.snapshot.legalCandidateIds, trace.legalCandidateIds)
+        assertEquals(shadow.featureEvaluation, trace.featureEvaluation)
+        assertEquals(shadow.policySelection, trace.policySelection)
+        assertTrue(trace.actualChoice is DecisionTraceActualChoice.Pending)
+        val policySnapshot = trace.policySnapshot as DecisionTracePolicySnapshot.Ready
+        val policyEvaluation = shadow.policyEvaluation as BeginnerConservativePolicyEvaluation.Ready
+        assertEquals(policyEvaluation.policyVersion, policySnapshot.policyVersion)
+        assertEquals(policyEvaluation.evaluations, policySnapshot.evaluations)
+        assertEquals(policyEvaluation.limitations, policySnapshot.limitations)
+        val prefix = trace.historyPrefixRef as SdeHistoricalPrefixRef.Global
+        assertEquals(snapshot.gameId, prefix.gameId)
+        assertTrue(prefix.actionRefs.isEmpty())
+        assertTrue(prefix.observationRefs.isEmpty())
     }
 
     @Test
@@ -399,6 +448,14 @@ class StructuredInformationShadowAdapterTest {
         )
 
         assertTrue(shadow.consequences is ExactConsequenceEvaluation.Deferred)
+        assertNull(shadow.policySelection)
+        val trace = DecisionTraceFactory.fromStructuredShadow(shadow = shadow)
+        assertEquals(
+            StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1.evidenceCheckpoint,
+            trace.evidenceCheckpoint,
+        )
+        assertTrue(trace.policySnapshot is DecisionTracePolicySnapshot.Deferred)
+        assertNull(trace.policySelection)
         assertEquals(recommendedBefore, shadow.informationSnapshot.recommendedCandidateIds)
         assertEquals(decisionContext.snapshot.legalCandidateIds, shadow.plannedDecisions.map(PlannedDecisionRef::candidateId))
         val recommendedCandidateId = recommendedBefore.single()
@@ -440,7 +497,10 @@ class StructuredInformationShadowAdapterTest {
                 evaluations = evaluations,
                 recommendedCandidateIds = recommendedCandidateIds,
                 revision = revision,
-                semanticIdentity = "numeric|Empath|${snapshot.gameId}|FIRST_NIGHT|1|0|2|LIVING_EVIL_NEIGHBOURS",
+                requestIdentity = InformationDecisionRequestIdentity(
+                    snapshot.gameId,
+                    "numeric|Empath|${snapshot.gameId}|FIRST_NIGHT|1|0|2|LIVING_EVIL_NEIGHBOURS",
+                ),
                 draftOf = { evaluation -> empathDraft(evaluation.candidate.outcome, sequence) },
             )
         }

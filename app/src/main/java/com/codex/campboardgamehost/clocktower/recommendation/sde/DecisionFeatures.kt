@@ -34,11 +34,6 @@ internal data class StrategicDecisionFeatures(
     }
 }
 
-internal data class TruthCredibilityFeatures(
-    val truthDangerReasonCodes: Set<String> = emptySet(),
-    val credibilityDisruptionReasonCodes: Set<String> = emptySet(),
-)
-
 internal data class BluffNarrativeFeatures(
     val claimBurdenReasonCodes: Set<String> = emptySet(),
     val narrativeRouteIds: Set<String> = emptySet(),
