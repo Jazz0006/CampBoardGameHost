@@ -1,0 +1,29 @@
+{
+  "tests": 5,
+  "failures": 5,
+  "errors": 0,
+  "skipped": 0,
+  "expected": "Five contract assertions intentionally expose current defects; not a GREEN validation result.",
+  "cases": [
+    {
+      "name": "replay rejects a decision context from another game",
+      "failure": "java.lang.AssertionError: Replay must reject foreign game identity before deriving a trace"
+    },
+    {
+      "name": "elapsed budget includes diagnostic persistence",
+      "failure": "java.lang.AssertionError: Elapsed metrics must account for diagnostic persistence"
+    },
+    {
+      "name": "drunk changing from zero to two without state change exposes narrative break",
+      "failure": "java.lang.AssertionError: expected:<BREAKS_PRIOR_IMPAIRED_NARRATIVE> but was:<COMPATIBLE_WITH_PRIOR_IMPAIRED_NARRATIVE>"
+    },
+    {
+      "name": "strict replay decoder rejects unknown action semantics",
+      "failure": "java.lang.AssertionError: Strict replay input must reject unrecognized nested semantics"
+    },
+    {
+      "name": "strict replay decoder rejects fractional information values",
+      "failure": "java.lang.AssertionError: Strict replay input must not silently truncate information values"
+    }
+  ]
+}

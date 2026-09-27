@@ -1,0 +1,8 @@
+Integration base: 24726c492df215d57c49af19b16bcaa18f68e91c
+First commit: 9c2cdbbc (FAST routing)
+Final FAST: 355 classes / 1546 cases / 13.986 suite seconds / zero failures or skips
+Final FULL: 364 classes / 1564 cases / 188.465 suite seconds / zero failures or skips
+FULL matches the current source class/@Test counts after five dedicated experiment exclusions.
+All FAST cases are in FULL; FULL minus FAST is exactly 18 cases.
+Retirement removed exactly 13 cases from the first-commit FAST inventory.
+AGENTS.md, docs/NEXT_DEVELOPMENT_HANDOFF.md and app/src/main match the integration base.

@@ -32,6 +32,10 @@ class FirstNightDrunkNumericWholeBundleEvaluatorTest {
         sourceRevision = "official",
     )
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
+        // Bounded adapter contract; full-catalog legality has its own domain tests.
+        .filter { it.id.value in setOf(
+            "Washerwoman", "Drunk", "Chef", "Soldier", "Scarlet Woman", "Imp", "Empath",
+        ) }
 
     @Test
     fun `Drunk shown Empath evaluates complete numeric domain against one HealthyCore`() {
