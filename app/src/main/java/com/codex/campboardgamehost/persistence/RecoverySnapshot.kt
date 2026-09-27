@@ -95,6 +95,8 @@ internal data class ClocktowerRecovery(
     override val outcome: GameOutcome?,
     val identity: ClocktowerRecoveryIdentity,
     val troubleBrewingSetupRotationRecord: TroubleBrewingSetupRotationRecord? = null,
+    /** Read-only SDE replay export; canonical recovery facts remain owned by the fields above/below. */
+    val sdeHistoricalReplayInputJson: String? = null,
     val position: ClocktowerRecoveryPosition,
     val mechanics: ClocktowerRecoveryMechanics,
     val history: ClocktowerRecoveryHistory,
@@ -102,6 +104,9 @@ internal data class ClocktowerRecovery(
     override val gameKind: GameKind = GameKind.Clocktower
 
     init {
+        require(sdeHistoricalReplayInputJson == null || sdeHistoricalReplayInputJson.isNotBlank()) {
+            "SDE historical replay export cannot be blank when present."
+        }
         troubleBrewingSetupRotationRecord?.let { record ->
             require(identity.script == ClocktowerScript.TroubleBrewing) {
                 "Only Trouble Brewing recovery can carry Trouble Brewing setup rotation bookkeeping."

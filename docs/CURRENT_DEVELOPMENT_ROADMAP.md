@@ -1,282 +1,169 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-24 Australia/Sydney  
+> Updated: 2026-09-27 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
-> **Single current project-status and execution-priority authority.**
+> **Single current project-status and execution-priority authority.**  
+> Historical checkpoint detail belongs in completion/audit documents under `docs/archive/` or the linked slice audits, not in this live roadmap.
 
 ## 1. Program status
 
 ~~~text
 D6 decomposition / ownership cleanup                  COMPLETE
-EPI-MQ capability boundary                            COMPLETE / PR #135
-Exact historical hypothetical bundle seam             COMPLETE / PR #137
-First-night experiment contract                       COMPLETE / PR #138
-FN-BUNDLE-0 / 1 / 2                                  COMPLETE / PR #139/#140/#142
-SDE-0 BEGINNER strategic corpus                       COMPLETE / PR #143
-SDE-1 orchestration / lifecycle / shadow              COMPLETE / PR #144
-SDE-2D1 Drunk whole-bundle                            COMPLETE / PR #145
-SDE-2D2 Demon bluff joint-output                      COMPLETE / PR #146
-SDE-2D3 strategic-world quotient                      COMPLETE / PR #147
-SDE-2D4 5–15 correctness/performance                  COMPLETE / PR #149
-SDE-2D5 calibration / policy evidence                 CHECKPOINT MERGED / PARALLEL EVIDENCE
-    D5A–D5E                                            COMPLETE
-    D5F infrastructure                                COMPLETE
-    D5F-B3 correction                                 HISTORICAL CHECKPOINT
-    D5F-B4 engineering / evidence checkpoint          COMPLETE UP TO EXTERNAL WAIT
-        B4A clean-corpus retirement                    COMPLETE
-        B4B GOLD source discovery                     DEMAND-DRIVEN
-        B4C expert reconstruction                     COMPLETE FOR CURRENT ANCHORS
-        B4D legal counterfactual recovery              COMPLETE FOR CURRENT EXECUTABLE ANCHORS
-        B4E observed-vs-alternative analysis           CROSS-EXPERT CHECKPOINT COMPLETE
-        B4F-A executable SILVER replay                 COMPLETE
-        B4F-B documentary SILVER comparison            COMPLETE
-        B4F-C target specification                     COMPLETE
-        B4F-C targeted evidence acquisition            EXTERNAL / CONTINUOUS
-D5F-C final gate/band derivation                      BLOCKED ON EVIDENCE
-sealed holdout                                        CLOSED
-SDE-3A engine / feature / policy contract             COMPLETE / PR #151/#152
-SDE-3B BEGINNER_CONSERVATIVE_V1                       COMPLETE / T4 ACCEPTED / PR #153 DRAFT
-SDE-3C shadow / DecisionTrace / replay                 NEXT AFTER SDE-3B MERGE
-SDE-3D calibrated policy freeze                       BLOCKED ON EVIDENCE
-SDE-3E automatic production cutover                   BLOCKED ON 3D
+EPI-MQ capability boundary                            COMPLETE
+SDE-0 / SDE-1                                        COMPLETE
+SDE-2D1 / 2D2 / 2D3                                  COMPLETE
+SDE-2D4 5–15 correctness/performance                  COMPLETE
+SDE-2D5 calibration / policy evidence                 MERGED CHECKPOINT / EVIDENCE CONTINUES
+SDE-3A engine / feature / policy contract             COMPLETE
+SDE-3B BEGINNER_CONSERVATIVE_V1                       COMPLETE / IMMUTABLE V1
+SDE-3C DecisionTrace / shadow replay                  COMPLETE
+CR-A / CR-B / CR-C                                    COMPLETE
+C4 / SDE-3D2                                          COMPLETE
+IF-D durable App replay capture/rebuild               COMPLETE
+RH-E runtime persistence/timing hardening             COMPLETE
+C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
+SDE-3E automatic production cutover                   BLOCKED PER SURFACE
 ~~~
 
-## 2. Current branch / PR
+## 2. Current repository boundary
 
-Branch: `sde-3b-beginner-conservative-v1`
+Active continuation: `codex/sde-history-prefix-route-closure`.
 
-PR: **#153 — SDE-3B: implement BEGINNER_CONSERVATIVE_V1 policy**
+Active PR: `#157 — SDE correctness repair: close CR-A CR-B CR-C`.
 
-PR #151 and #152 are merged. PR #153 is the current **draft** SDE-3B PR and must not be merged unless the user explicitly says **“授权合并”**.
+The PR title is historical relative to the branch contents. It now carries the accepted continuation through RH-E. Keep it **Draft**. Do not mark ready, merge, rebase or force-push unless explicitly authorized.
 
-Always query live refs before executable edits.
+The 2026-09-27 live-main integration audit found no production/gameplay/SDE semantic conflict. Live `main` was ahead by one M8G5 workflow/control-plane commit whose only overlap was workflow documentation. The authorized integration merge preserves the newer 2026-09-27 GitHub Connector-first workflow in root `AGENTS.md`, absorbs the live-main ancestry, and archives the superseded 2026-09-24 M8G5 workflow document under `docs/archive/workflows/`.
 
-## 3. Current authorities
+Repository cleanup before RH-E:
 
-- First-night policy: [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
-- External evidence seed: [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv)
-- Current SDE-3 execution route: [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
-- Current SDE-3A ownership/contract audit: [`SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`](SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md)
-- Current SDE-3B structure / feature / expert-evidence staging: [`SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`](SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md)
-- SDE-3B1 completion audit: [`SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md)
-- SDE-3B2 completion audit: [`SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B2_CONFIRMATION_CHAIN_COMPLETION_AUDIT_2026-09-23.md)
-- SDE-3B3 completion audit: [`SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B3_IMPAIRED_NARRATIVE_COMPLETION_AUDIT_2026-09-23.md)
-- SDE-3B4 completion audit: [`SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md`](SDE_3B4_HEALTHY_INFORMATION_UTILITY_COMPLETION_AUDIT_2026-09-23.md)
-- SDE-3B5 architecture audit: [`SDE_3B5_ROLE_FUNCTION_EXPOSURE_ARCHITECTURE_AUDIT_2026-09-23.md`](SDE_3B5_ROLE_FUNCTION_EXPOSURE_ARCHITECTURE_AUDIT_2026-09-23.md)
-- SDE-3B5 completion audit: [`SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B5_ROLE_FUNCTION_EXPOSURE_COMPLETION_AUDIT_2026-09-24.md)
-- SDE-3B6 eligibility audit: [`SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md`](SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_ELIGIBILITY_AUDIT_2026-09-24.md)
-- SDE-3B6 completion audit: [`SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B6_EXPERT_INFORMED_V1_SOFT_PRIORITY_COMPLETION_AUDIT_2026-09-24.md)
-- SDE-3B final completion/T4 audit: [`SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md`](SDE_3B_BEGINNER_CONSERVATIVE_V1_COMPLETION_AUDIT_2026-09-24.md)
-- Global SDE architecture: [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
-- B4F bounded SILVER generalization: [`SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md`](SDE_2D5F_B4F_SILVER_GENERALIZATION_AUDIT_2026-09-23.md)
-- B4F targeted evidence-gap contract: [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
-- Traveller boundary audit for primary-verified A Fond: [`SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md`](SDE_2D5F_TRAVELLER_MODEL_BOUNDARY_AUDIT_2026-09-22.md)
-- Primary reconstructions: `SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`, `SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`, `SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`
+- validation-only/superseded PRs #148, #154, #156, #158, #160 and #161 are closed without merge;
+- diagnostic PR #109 is closed as obsolete for the current short-horizon Recovery contract after a fresh current-format atomicity audit;
+- temporary validation remote branches from the first cleanup wave are gone;
+- remaining historical branch pruning is hygiene only and must preserve unique archive material.
 
-## 4. Frozen architecture / policy decisions
+Always query live Git/PR state before executable work. Do not rely on a hard-coded live branch HEAD in this document.
 
-- Optimize only variables still controllable at the current lifecycle stage.
-- Rules/canonical producers own legality; epistemic/topology layers own consequences; SDE owns policy/selection.
-- Drunk shown identity is setup-persistent; committed information is immutable.
-- Demon bluffs and Red Herring are persistent once revealed/committed.
-- Fortune Teller target pair and Poisoner target are player-controlled.
-- Spy/Recluse registration is per interaction.
-- BEGINNER thematic prior: Spy normally registers as Good/Townsfolk/Outsider; Recluse normally registers as Evil/Minion/Demon.
-- Actual registration is a fallback when the thematic default materially improves whole-bundle health.
-- Role-function exposure is a generic contextual diagnostic, not a frozen named-role preference; current evidence does not justify Librarian/Recluse or Investigator/Spy severity.
-- Chef/Empath are rule-determined only when every legal registration branch yields the same healthy value.
-- Drunk/poisoned information may accidentally be true; repeated/history-dependent impaired information must use one role-agnostic **derived narrative projection over canonical history** so later outputs can be checked for coherence without introducing a second mutable narrative state.
-- Strategic Evil topology is primary structural evidence, but role-information utility, confirmation chains, role-function exposure, bluff usability and information floor remain separate.
-- No opaque global scalar.
-- No named-role / known-fixture policy patches for cross-interaction coherence. Role-specific code owns legality only; shared semantic/history policy owns narrative continuity.
+## 3. Accepted executable checkpoints
 
-### Shared impaired-narrative implementation invariant
+These are historical acceptance identities, not current branch heads:
 
-When D5F/SDE-3 reaches cross-night impaired information, implement one reusable **derived narrative projector** over generic information propositions and canonical history.
+| Checkpoint | Accepted evidence |
+| --- | --- |
+| CR-A/B/C | validation head `4245ddb8c12782775a6b4c237f5dd7f0f1ce92c0`; CI #3459 + R2 #3212 GREEN |
+| C4 / SDE-3D2 | formal `21206a8ca95896ffad83eaba5695a3a571c6cd74`, tree `a4701e0f4873ddd629dfa11163a94d2aa0cb9b8b`; exact-tree CI #3473 + R2 #3226 GREEN |
+| IF-D | formal `4d1b6d7f39529402eb9ec1e6032eb80ef9a14e86`, tree `181a1d80d449c2d443a678e10033acda13c777d1`; exact-tree CI #3476 + R2 #3229 GREEN |
+| RH-E | formal `f51a295983e8e203119dd50693af343c1ec23906`, tree `2babb1fba00b46dfc676efb6f090386b7a73826f`; validation-only PR #162 head `bf66363385420f507f92a729b496ff002791dee5`; exact-tree CI #3478 + R2 #3231 GREEN |
 
-Do not create separate coherence algorithms for individual roles or calibration fixtures.
+Later documentation-only changes must not be re-labelled as validating a different executable tree.
 
-Acceptance for that future implementation must show:
+Completion/cleanup detail:
 
-- `ActionFactTimeline + EpistemicObservationLog` remain the only durable history owners; the projector owns only derived features;
-- role adapters contribute legal domains / semantic propositions only;
-- previous committed observations constrain later selection;
-- the mechanism generalizes across multiple information shapes;
-- tests prove the abstraction at its shared owner plus representative fanout, rather than hard-coding every named example.
+- `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
+- `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
+- `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
 
-## 5. Calibration correction
+## 4. Current priority — #157 main integration COMPLETE
 
-The previous D5F route over-relied on synthetic/isolated fixtures and one-person human labels.
+RH-E is COMPLETE. The accepted runtime diagnostic contract now has one process-scoped serialized background persistence lane, ordered append/correlation semantics, stale/cancellation protection, bounded retention, and separate evaluation / queue / persistence / total timing. Canonical session state remains authoritative and independent of diagnostic durability.
 
-Those paths are no longer active.
+The live-main integration gate is also COMPLETE. Accepted integration head `371ebf624898c08747203aceaed1254647867214` is a two-parent merge of previous continuation head `058bef86810e3ac8d1d58b3186ee4efde503ad69` and audited live-main head `cc5adee5baf107e04d8b0d5a7657e9c27d5ed1e2`. Relative to the previous continuation head, the merge changed workflow/documentation only; no production or test file changed. Root `AGENTS.md` retains the newer 2026-09-27 GitHub Connector-first semantics and the 2026-09-24 M8G5 control-plane document is archived as superseded history.
 
-- The pathological 7-player fixture is historical diagnostic evidence only.
-- The later seven “clean” 7–9 scenarios deliberately excluded Drunk and froze registration-dependent context; do not add diagnostics or labels to them.
-- Their test-only implementation should be deleted if canonical generator/legality tests already protect the durable contracts.
-- Old D5 correction/design documents have been removed from active docs; Git history preserves traceability.
-- Existing human-label manifests are historical/compatibility artifacts, not current policy truth.
+Exact-head acceptance is GREEN:
 
-## 6. D5F-B4 — expert-observed policy calibration
+- CI #3479: Android FULL + `assembleDebug` GREEN, ASP contracts GREEN, Real Clingo GREEN, CI gate GREEN;
+- R2 #3232: GREEN;
+- #157: open, Draft, mergeable, no longer behind `main`.
 
-Evidence hierarchy:
+No further SDE production slice is automatically unblocked by this integration. C5/V2 and SDE-3E remain blocked on qualifying E3/E4 evidence. Keep #157 Draft until an explicit PR lifecycle decision is authorized.
+
+Do **not** mark #157 ready, merge, rebase or force-push without explicit user authorization.
+
+## 5. Recovery product boundary
+
+Recent Emergency Recovery is intentionally **short-horizon emergency continuation**, not a normal save-game product.
+
+Current validity contract:
 
 ~~~text
-GOLD
-    verified experienced/trusted Storyteller
-    reconstructable real game
-    explicit rationale preferred
-
-SILVER
-    high-fidelity structured real-game record
-    Storyteller expertise not independently verified
-
-QUALITATIVE
-    tutorials / postmortems / repeated experienced-community guidance
-
-DIAGNOSTIC_ONLY
-    synthetic / extreme / counterfactual fixtures
+current RecoverySnapshot format
++ exact current compatibility token
++ <= 4 hour age
+-> validated current recovery plan
 ~~~
 
-Current external catalog now contains SILVER / QUALITATIVE seed evidence plus five tracked expert-source cases. **Two primary-verified GOLD decision slices now exist from two independent Storytellers**: A Stud In Scarlet under `st-ben-burns`, and Evin's 2019 first full playthrough under `st-evin`. Evin's postgame primary image verifies Demon bluffs Recluse / Slayer / Soldier, and the postgame review gives explicit Red-Herring rationale: Doug/Chef was selected because Chef information was especially damaging to Evil and Red-Herring contamination could undermine its credibility. The other two executable Ben reconstructions still require primary-video verification. `A Fond Farewell` has primary-verified material Night-1 state and explicit choice-specific rationale, but its executable legal-counterfactual gate is blocked because the live table contains five Travellers and the current production rules/domain model has no Traveller surface.
+Do not add cross-version migration, old-format reconstruction, tolerant legacy repair or long-term save compatibility unless the product requirement changes explicitly.
 
-Primary-source extraction on 2026-09-22 also completed `A Stud In Scarlet` verification from its primary video. The canonical provenance record is [`SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_A_STUD_IN_SCARLET_PRIMARY_RECONSTRUCTION_2026-09-22.md). The video directly verifies the player-visible outputs; hidden Recluse registration acts remain production-derived legal witnesses rather than primary-observed declarations.
+PR #109 reproduced an old/abnormal event/observation half-state. Current production does not expose a physical persistence window for that intermediate state: the game event and semantic projection execute synchronously before later SideEffect/lifecycle Recovery persistence. #109 was therefore closed rather than converted into legacy compatibility code.
 
-Primary-source extraction on 2026-09-22 completed the material `A Fond Farewell` Night-1 reconstruction from the official video, including full radial seating/roles, Traveller alignments, Drunk shown Chef, Demon bluffs, Red Herring, Poisoner target, Washerwoman clue, Fortune Teller targets, and two explicit Ben rationales. The canonical record is [`SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_A_FOND_FAREWELL_PRIMARY_RECONSTRUCTION_2026-09-22.md). This is primary verification, not GOLD admission: Traveller-aware production legality is still missing. The official 2019 Evin video has now been directly inspected. The primary reconstruction recovers the complete eight-seat role map plus the material Night-1 WW/Chef/RH/FT slice and is executable through production legality owners. Postgame primary imagery also verifies Demon bluffs Recluse / Slayer / Soldier, and Evin explicitly explains the Red-Herring choice around Chef truth danger / credibility disruption. See [`SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md`](SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_SOURCE_AUDIT_2026-09-22.md) and [`SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md`](SDE_2D5F_EVIN_FIRST_PLAYTHROUGH_PRIMARY_RECONSTRUCTION_2026-09-22.md).
+If a future **current-version** crash produces a fresh inconsistent current-format Recovery snapshot, treat it as a new current-format atomicity defect with new evidence.
 
-Interpretation rules:
+## 6. Frozen architecture / policy decisions
 
-- chosen A does not imply every unchosen B/C/D was bad;
-- explicit rationale/rejection is stronger than silent choice;
-- repeated comparable choices and cross-source consistency strengthen evidence;
-- final game winner is not a Storyteller-quality label;
-- human review is secondary: reconstruction checks, conflict adjudication, and BEGINNER-specific adaptation.
+- `BEGINNER_CONSERVATIVE_V1` remains immutable.
+- No placeholder V2.
+- No numeric weights/thresholds without the evidence level required by the affected policy semantics.
+- Legal candidate ownership remains in rules/domain owners; SDE ranks only legal alternatives.
+- Canonical session/history owners remain the only mutable game truth.
+- DecisionTrace/replay/export are read-only diagnostic/calibration projections.
+- Red Herring legality/commit ownership is not moved into SDE policy.
+- Drunk/Poisoned information may be true or false; impaired narrative uses the accepted shared perceived-functioning projection.
+- Spy/Recluse registration remains interaction-scoped.
+- Demon bluffs remain a joint SDE output until committed.
+- No fixture-specific or named-player policy branches.
+- Traveller evidence remains outside the current mainline algorithm unless explicitly brought into scope.
 
-## 7. Immediate execution order
+## 7. Evidence track
 
-### Evidence track — PARALLEL / EXTERNAL
+ClocktowerEvidenceLab continues independently and does not block RH-E.
 
-Current evidence work has reached a stable checkpoint:
+Evidence stages remain:
 
-- two independent primary-verified GOLD anchors exist: Ben / A Stud and Evin 2019;
-- executable expert and SILVER replay harnesses are green;
-- Red Herring contextual utility is the strongest cross-expert foundation;
-- truth danger / credibility disruption has GOLD + SILVER explicit rationale;
-- targeted evidence gaps are explicitly defined;
-- broad source collection is no longer the default.
+- E1 — architecture/lifecycle evidence;
+- E2 — semantic regression evidence;
+- E3 — qualitative policy evidence strong enough to justify a typed preference/reason;
+- E4 — quantitative calibration evidence when a policy genuinely requires numeric strength.
 
-Targeted evidence acquisition continues through ClocktowerEvidenceLab according to:
+Observed expert choices without adequate rationale are not automatically policy labels. Complete real games and expert Storyteller rationale remain preferred over synthetic clean-corpus calibration.
 
-`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
+C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
 
-This track does **not** block SDE-3A/B/C.
+## 8. Immediate execution order
 
-### SDE-3A — engine / feature / policy contract — COMPLETE
+~~~text
+#157 main integration COMPLETE / exact-head acceptance GREEN
+-> keep #157 Draft
+-> C5 / V2 and SDE-3E remain blocked on qualifying E3/E4
+-> continue evidence acquisition or another explicitly prioritized slice
+-> wait for explicit authorization before any ready / PR merge / rebase / force-push
+~~~
 
-Authority:
+RH-E implementation and remote acceptance are complete; do not reopen it unless new current-version evidence exposes a regression.
 
-`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`
+## 9. Current authorities
 
-PR #151 established the ownership audit and score-free typed contract. PR #152 completes the structured numeric shadow path from legal candidate -> exact consequence -> `DecisionFeatures`, including explicit deferred-capability handling and Chef/Empath coverage, while visible recommendation and canonical commit authority remain unchanged.
+Read first:
 
-SDE-3A acceptance evidence:
+1. `AGENTS.md`
+2. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`
+3. `docs/TESTING_STRATEGY.md`
+4. this roadmap
+5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
+6. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` — RH-E contract and completed repair record
+7. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md` — completed C4 architecture/evidence boundary
+8. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md` — freeze/cutover gates
 
-- T4 checkpoint commit: `dd82af3d8da9c17bc62d5606f045ddcc82c21bf0`;
-- CI workflow run `35806237753`: full Android unit tests + debug APK, ASP contract tests, and Real Clingo cross-validation all succeeded;
-- R2 workflow run `35806237770`: succeeded;
-- final fanout audit: production changes remain limited to the SDE feature-evaluation adapter and structured shadow integration; no rules, canonical session commit, UI authority, legacy scoring, policy selection, or persistence ownership moved.
-
-PR #152 is merged. SDE-3B proceeds from live `main` on its dedicated branch.
-
-### SDE-3B — BEGINNER_CONSERVATIVE_V1 — COMPLETE / T4 ACCEPTED
-
-Current implementation checkpoint on PR #153:
-
-- decision-level Ready/Deferred policy contract with explicit limitations;
-- exact zero Evil-topology contradiction gate only — no numeric strength threshold;
-- all otherwise viable candidates remain in an explicit survivor equivalence band;
-- deterministic, order-independent seeded survivor selector with no weights;
-- policy evaluation attached to Chef/Empath structured shadow without visible cutover;
-- source `AbilityState` is preserved from the existing legal candidate owner;
-- actual-state semantic truth is projected into `DecisionFeatures` for the current numeric seam;
-- **3B2 confirmation-chain features are projected from recipient-visible committed history plus each current candidate using exact leave-one-out diagnostics;**
-- **3B3 impaired-narrative features are derived from canonical setup/action/observation history with persistent setup-bound versus temporary action-bound impairment lifetimes;**
-- **3B4 healthy-information utility is projected from canonical history, authoritative ability state, upstream legal truth relation and existing confirmation provenance; functioning actual truth and legal registered truth are both healthy, while malfunctioning channels are excluded;**
-- baseline-already-infeasible history cannot be blamed on the current candidate as removal of the last healthy route;
-- V1 policy still does not consume confirmation-chain, impaired-narrative or healthy-information features for ranking or rejection;
-- legacy score/probability/pressure is not imported into SDE policy.
-
-SDE-3B staged status on PR #153:
-
-1. **3B1 historical lifecycle / input binding — COMPLETE** — later structured information can evaluate against the canonical committed prefix; typed contextual input refs preserve external ownership; no-hindsight is enforced; no second history owner exists.
-2. **3B2 confirmation-chain projector — COMPLETE** — generic support/contradiction/independent-contribution, ambiguity restoration, source authentication and multi-channel collapse are projected from exact recipient-visible historical replay; R02/R04-style E2 semantic regressions are bounded by available evidence; V1 policy remains unchanged.
-3. **3B3 impaired-narrative projector — COMPLETE** — score-free role-agnostic projection distinguishes persistent setup-bound versus temporary action-bound impairment episodes, historical compatibility/breaks, forced versus avoidable transitions and detectability; bounded R04/R06 E2 regressions are green and V1 policy remains unchanged.
-4. **3B4 healthy-information utility — COMPLETE** — score-free whole-table healthy routes distinguish usable/independent routes before and after, redundancy/contradiction, lost routes and last-route removal; bounded R01/R04 E2 regressions are green; registered truth is preserved without conflating it with actual-state `SemanticTruth`; V1 policy remains unchanged.
-5. **3B5 contextual role-function exposure — COMPLETE** — score-free registration-ambiguity exposure, historical/confirmation context and bounded `goldcand-ben-03` E2 regression are accepted; severity remains E3-gated;
-6. **3B6 expert-informed V1 soft priorities — COMPLETE** — current E3 audit authorizes no new soft ordering; Ready policy results explicitly report `preference-evidence-not-authorized`, while viable survivors remain tied and the existing zero-topology gate is unchanged.
-
-Overall SDE-3B implementation and reserved T4 `[full-ci]` acceptance are complete for the current evidence checkpoint. T4 head `30caec3dcd546f4395238809d1f1d285688cd814` passed CI #3427 (full Android JVM + debug APK, ASP contracts, Real Clingo, aggregate CI gate) and R2 #3183. PR #153 remains draft and unmerged.
-
-Expert evidence participates immediately at the architecture/feature-priority level and later as semantic regression. It becomes candidate preference only after the matching feature is stable. Numeric thresholds and multi-axis tradeoff strength remain SDE-3D.
-
-The full conservative policy direction remains:
-
-- hard legality/lifecycle boundaries;
-- generic catastrophic / near-catastrophic rejection;
-- healthy-information preservation;
-- contextual Red-Herring utility;
-- coherent impaired narrative;
-- role-function exposure retained as a diagnostic until qualifying E3 evidence supports a soft contextual reason;
-- bluff usability / route diversity;
-- seeded randomness among effectively equivalent healthy survivors.
-
-Do not invent unsupported numeric weights.
-
-### SDE-3C — shadow / DecisionTrace / replay — NEXT AFTER SDE-3B MERGE
-
-Before cutover, capture:
-
-- policy version;
-- candidate set;
-- typed features;
-- rejection/survival reasons;
-- recommendation;
-- actual committed choice;
-- optional human override/reason.
-
-Historical replay must support comparing multiple policy versions against the same committed game history.
-
-### SDE-3D / 3E — remain blocked
-
-Final calibrated policy freeze and automatic production cutover still require stronger external evidence.
-
-Current unresolved calibration gaps:
-
-- healthy-information floor / middle-band thresholds;
-- role-function exposure severity;
-- independent-expert impaired-information believability;
-- Demon-bluff triplet preference ordering;
-- quantitative multi-axis tradeoff.
-
-No automatic online learning is authorized. Policy improvement remains offline, versioned and evidence-reviewed.
-
-## 8. D5F-C remains blocked
-
-Do not derive/freeze gates from old human labels, inspect sealed holdout for tuning, tune on holdout, freeze unsupported numeric policy, or cut automatic production policy.
-
-D5F-C may begin only after expert-observed evidence covers the material first-night policy variables and legal-counterfactual comparisons support repeated interpretable constraints.
-
-## 9. Compatibility code intentionally retained
-
-Do not remove merely as part of D5F-B4 evidence work:
-
-- impaired-information approximate 90/10 false-family bridge;
-- legacy `MalfunctionPolicy`;
-- legacy registration/scoring paths still used by production.
-
-Their retirement belongs to later production cutover/cleanup.
+Use older SDE-3A/B/C/C0–C3 completion documents only when a specific historical or ownership question requires them.
 
 ## 10. Testing cadence
 
-Follow root `AGENTS.md` and [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md).
+Follow `docs/TESTING_STRATEGY.md`.
 
-Documentation-only cleanup needs exact diff/reference audit, not manufactured runtime tests. Deleting obsolete test-only calibration artifacts requires proving no unique durable contract is lost and then running the smallest affected test tier.
+RH-E completed at T4 with exact-tree CI #3478 and R2 #3231 GREEN, including Android FULL + assemble, ASP contracts and Real Clingo cross-validation.
+
+The #157 live-main integration head `371ebf624898c08747203aceaed1254647867214` also completed exact-head acceptance with CI #3479 and R2 #3232 GREEN. This integration changed workflow/documentation only relative to the previously accepted continuation head.
+
+GitHub CI/R2 remains the normal Android execution and independent remote acceptance surface. The N3150 execution-host experiment remains retired from the default workflow unless the user explicitly reopens it.
+
+A documentation-only compaction does not require Android regression by itself.
+

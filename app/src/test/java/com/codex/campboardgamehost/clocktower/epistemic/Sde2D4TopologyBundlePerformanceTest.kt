@@ -27,7 +27,11 @@ class Sde2D4TopologyBundlePerformanceTest {
 
     @Test
     fun record_topology_first_bundle_cost_for_every_supported_player_count() {
-        for (playerCount in 5..15) {
+        verifyPlayerCounts((5..15).toList(), recordMeasurements = true)
+    }
+
+    internal fun verifyPlayerCounts(playerCounts: List<Int>, recordMeasurements: Boolean) {
+        for (playerCount in playerCounts) {
             val profile = TroubleBrewingSetupProfiles.standard(playerCount)
             val knowledge = PlayerKnowledgeSnapshot(
                 knowledgeSnapshotId = "d4e-$playerCount",
@@ -87,7 +91,7 @@ class Sde2D4TopologyBundlePerformanceTest {
             assertTrue(diagnostic.afterStructure.distinctStrategicWorldCount <= topologyUpperBound)
             assertTrue(diagnostic.afterFeasible)
 
-            println(
+            if (recordMeasurements) println(
                 "SDE_2D4_TOPOLOGY_BUNDLE players=$playerCount " +
                     "topologyUpperBound=$topologyUpperBound " +
                     "beforeKeys=${diagnostic.beforeStructure.distinctStrategicWorldCount} " +

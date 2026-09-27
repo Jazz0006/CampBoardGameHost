@@ -70,6 +70,9 @@ internal object StructuredInformationProductionShadow {
         require(currentSnapshot.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1) {
             "Structured production shadow requires GLOBAL_V1 semantic history."
         }
+        require(decisionContext.requestIdentity.gameId == currentSnapshot.gameId) {
+            "Structured production shadow requires the information request to belong to the current game."
+        }
         require(committedSetup.script == currentSnapshot.gameState.script) {
             "Committed setup and current snapshot must use the same script."
         }

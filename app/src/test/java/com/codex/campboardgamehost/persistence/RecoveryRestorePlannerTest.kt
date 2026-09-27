@@ -1,11 +1,19 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
+import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
+import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
+import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInput
+import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputJsonCodec
+import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputOrigin
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -179,6 +187,58 @@ class RecoveryRestorePlannerTest {
         assertNotNull(runtime)
         assertEquals(TEST_RULESET_REF, runtime?.rulesetRef)
         assertEquals(TEST_ROLE_IDS, runtime?.rulesetBasis?.roleIds)
+        assertEquals(null, runtime?.sdeReplayMaterialization)
+    }
+
+    @Test
+    fun clocktowerPlanRestoresExactDurableSdeReplayExport() {
+        val base = clocktowerSnapshot()
+        val game = base.game as ClocktowerRecovery
+        val replayRaw = sdeReplayRaw(game)
+        val snapshot = base.copy(
+            game = game.copy(sdeHistoricalReplayInputJson = replayRaw),
+        )
+
+        val result = prepare(RecoverySnapshotJsonCodec.encode(snapshot))
+
+        assertTrue(result is RecoveryPlanPreparation.Ready)
+        val runtime = requireNotNull((result as RecoveryPlanPreparation.Ready).plan.clocktowerRuntime)
+        val restored = requireNotNull(runtime.sdeReplayMaterialization)
+        assertEquals(SdeHistoricalReplayInputOrigin.DURABLE_EXPORT, restored.origin)
+        assertEquals(SdeHistoricalReplayInputJsonCodec.decodeStrict(replayRaw).input, restored.input)
+        assertEquals(TEST_RULESET_REF, restored.input.rulesetRef)
+        assertEquals("if-d-test", restored.input.committedSetup.provenance.providerId)
+    }
+
+    @Test
+    fun mismatchedDurableSdeReplayExportFailsBeforeApplication() {
+        val base = clocktowerSnapshot()
+        val game = base.game as ClocktowerRecovery
+        val mismatched = JSONObject(sdeReplayRaw(game))
+            .put("gameId", "different-game")
+            .toString()
+        val snapshot = base.copy(
+            game = game.copy(sdeHistoricalReplayInputJson = mismatched),
+        )
+
+        assertRejected(
+            prepare(RecoverySnapshotJsonCodec.encode(snapshot)),
+            RecoveryRejectionReason.InvalidGameState,
+        )
+    }
+
+    @Test
+    fun malformedDurableSdeReplayExportFailsBeforeApplication() {
+        val base = clocktowerSnapshot()
+        val game = base.game as ClocktowerRecovery
+        val snapshot = base.copy(
+            game = game.copy(sdeHistoricalReplayInputJson = "{broken"),
+        )
+
+        assertRejected(
+            prepare(RecoverySnapshotJsonCodec.encode(snapshot)),
+            RecoveryRejectionReason.InvalidGameState,
+        )
     }
 
     @Test
@@ -347,6 +407,38 @@ class RecoveryRestorePlannerTest {
                     events = emptyList(),
                     epistemicObservations = emptyList(),
                 ),
+            ),
+        )
+    }
+
+    private fun sdeReplayRaw(game: ClocktowerRecovery): String {
+        val setup = CommittedClocktowerSetup(
+            script = ScriptId("trouble_brewing"),
+            setupSeed = game.identity.gameSeed,
+            assignments = game.cards.mapIndexed { index, card ->
+                CommittedSetupSeat(
+                    seat = index + 1,
+                    actualRole = RoleId(requireNotNull(card.clocktowerRole).enName),
+                    shownRole = RoleId(requireNotNull(card.clocktowerShownRole).enName),
+                )
+            },
+            provenance = SetupProvenance(
+                sourceKind = SetupSourceKind.GENERATED,
+                providerId = "if-d-test",
+                candidateId = "candidate-1",
+            ),
+        )
+        return SdeHistoricalReplayInputJsonCodec.encode(
+            SdeHistoricalReplayInput(
+                gameId = game.identity.gameId,
+                gameStateRevision = game.history.gameStateRevision,
+                playerInputRevision = game.history.playerInputRevision,
+                rulesetRef = TEST_RULESET_REF,
+                committedSetup = setup,
+                playerNamesBySeat = game.cards.map(PlayerCard::name),
+                actionTimeline = game.history.actionTimeline,
+                observationLog = EpistemicObservationLog(game.history.epistemicObservations),
+                nextTimelineGlobalSequence = game.history.nextTimelineGlobalSequence,
             ),
         )
     }

@@ -106,6 +106,8 @@ In particular, pre-PR #100 plans that require a distinct WAKE acknowledgement st
 
 `workflows/` contains older process documents replaced by root `AGENTS.md` and current workflow/testing documents.
 
+The 2026-09-24 M8G5 Mini MCP remote-control adoption record is archived as `workflows/MINI_MCP_REMOTE_PR_CONTROL_PLANE_ADOPTION_2026-09-24.md`. It records the then-valid Mini MCP-first control-plane experiment and is superseded by root `AGENTS.md` plus `../AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`, which restore GitHub Connector-first operation and retain Mini MCP/Codex primarily for complete-local-context work.
+
 Do not resurrect an archived workflow merely because a historical handoff references it.
 
 ## 7. Older algorithm / architecture history

@@ -10,131 +10,150 @@ The default collaboration model is:
 
 ```text
 ChatGPT / Chat
-  = live-state audit
-  = architecture and design decisions
-  = scope and slice boundaries
-  = invariant / regression-risk analysis
-  = behavior-first / characterization strategy
+  = architecture / ownership / product semantics
+  = scope / slice / invariant decisions
   = implementation specification
-  = implementation and review through the configured repository workspace
-  = remote PR / CI / merge-gate review
-
-Mini MCP
-  = default repository workspace when configured and available
-  = bounded repository reads and searches
-  = revision-guarded targeted writes
-  = local git status / diff inspection
-  = allow-listed task execution and long-running job lifecycle
-
-GitHub remote state
-  = canonical remote state and history
-  = independent remote acceptance surface
-
-Mini MCP GitHub control plane
-  = preferred PR / CI / merge-gate interface only after the live runtime has completed the M8G5 acceptance gate
-  = exact-head/base remote audit and bounded CI evidence
-  = guarded PR lifecycle and merge operations
+  = test strategy and acceptance criteria
+  = final diff / CI / result analysis
 
 GitHub Connector
-  = fallback GitHub-native interface when Mini MCP is unavailable, stale, or intentionally too narrow
-  = fallback repository writer when Mini MCP is unavailable or unsuitable
+  = default repository and remote-control interface
+  = ordinary read/search/edit work
+  = branch / PR / CI / R2 / review audit
+  = normal post-implementation acceptance workflow
 
-Codex / Luna
-  = exceptional constrained fallback for work that genuinely requires a different execution environment or broader mechanical/local tooling
+Mini MCP + Codex CLI
+  = supplemental complete-local-context path
+  = primarily large/truncated-file editing
+  = optional full-context local analysis when design genuinely requires it
+
+GitHub
+  = canonical remote repository / PR / CI / review state
+  = normal Android validation / independent acceptance surface
 ```
 
-Architecture, decomposition boundaries, product semantics, test strategy, remote audit and checkpoint acceptance are made in Chat unless the user explicitly delegates a decision to Codex/Luna.
+Architecture, decomposition boundaries, product semantics, test strategy, remote audit and checkpoint acceptance are made in Chat unless the user explicitly delegates a decision.
 
-Mini MCP is a controlled repository workspace / execution substrate, not an independent architecture or product-decision owner. Its availability changes how repository work is performed; it does not transfer semantic, scope, acceptance, or merge authority away from Chat and the user.
+The project uses three explicit local-model authority levels:
 
-Codex/Luna must not independently redesign a requested slice, broaden scope, substitute a different architecture, perform remote PR review, or choose a different semantic implementation merely because it is easier locally.
+- **L2 — ChatGPT architecture authority:** always active; owns design, scope, owner selection, invariants and acceptance.
+- **L1 — strong Codex read-only analysis:** optional only when complete local context is materially required before Chat can design safely; return ownership/code-path/risk/patch-plan analysis to Chat before implementation.
+- **L0 — Luna mechanical execution:** default local implementation mode after Chat has fixed the design; read the complete file/worktree, apply the approved change, inspect the diff and make only implementation-local adjustments required by that design.
+
+Luna must not independently redesign a requested slice, broaden scope, substitute a different architecture, perform remote PR acceptance, or choose a different semantic implementation merely because it is easier locally. If the approved plan becomes ambiguous against the real code, stop and report rather than inventing a new design.
 
 ### Repository workspace rule
 
-- When the configured Mini MCP repository alias is available, ChatGPT **MUST normally use Mini MCP as the default repository read/search/edit/diff/status path**.
-- Prefer `create_file`, `apply_patch`, or `apply_patches` over whole-file replacement. For existing-file edits, use the returned expected revision, exact semantic anchors, unique-match requirements, and fail closed on stale or ambiguous state.
-- After Mini MCP edits, inspect local `git_diff` and `git_status` before treating the slice as ready for validation or remote acceptance.
-- **File size alone MUST NOT determine the writer or execution path.** A large file may remain on the primary Mini MCP path when the intended change can be represented safely through bounded exact edits.
-- Only after the live Mini MCP runtime both exposes the reviewed M8G GitHub tools and has completed the M8G5 acceptance gate in `docs/MINI_MCP_REMOTE_PR_CONTROL_PLANE_ADOPTION_2026-09-24.md` should Mini MCP become the normal PR / CI / review-state / guarded lifecycle control-plane interface. Until that gate completes, or whenever Mini MCP is unavailable, stale, lacks required credentials, or intentionally does not expose the needed GitHub-native capability, use GitHub Connector as the fallback.
-- The GitHub Actions one-shot patch workflow remains a valid exceptional remote fallback, not the automatic first choice merely because a file is large or connector output would be truncated.
-- Codex/Luna **MUST NOT** be used merely because it is already involved in the task or because a file is large. Use it only when the primary controlled workspace and GitHub fallbacks cannot safely or practically perform the work.
-- Mini MCP **owns the guarded local Git write path** for this repository when the live runtime exposes the reviewed safe-Git tools: state review -> explicit-path stage -> staged diff review -> commit -> network-observed remote audit -> push.
-- After M8G5 acceptance has completed for the live runtime, Mini MCP also owns the preferred minimal GitHub remote-control path: PR audit -> bounded CI drill-down -> guarded ready/draft transition -> guarded merge. GitHub actual state remains canonical, and a real merge still requires clear user authorization plus the server-enforced exact-state gates.
+- Use the **GitHub Connector by default** for ordinary repository work and GitHub-native control-plane work when the target can be read/edited safely through that interface.
+- Use Mini MCP + Codex CLI primarily when connector truncation or the need for complete local context makes a large-file edit unsafe or inefficient through the connector.
+- For a large/truncated file whose design is already clear, Chat specifies the exact owner/scope/behavior/forbidden changes and Luna L0 performs the complete-file mechanical implementation locally.
+- If complete local context is required before design is safe, use strong Codex L1 for **analysis only**, return the findings to Chat, then let Chat choose the design before Luna L0 implements.
+- After Mini MCP/Codex large-file work is committed and made visible on the remote branch, return immediately to GitHub Connector for exact remote diff/parent/scope audit, PR/CI/R2/review inspection and result analysis.
+- Mini MCP's local Git path may be used only as needed to materialize the approved local large-file commit remotely; Mini MCP's GitHub/CI tools are recovery/cross-check tools, not the default project control plane.
+- GitHub Actions one-shot patching remains an exceptional fallback when local Mini MCP/Codex editing is unavailable or an exact locked remote mutation is uniquely safer.
+- Always inspect the complete local diff before any local commit. Never stage unrelated working-tree changes.
 
 ## 2. Execution-path priority
 
-Choose the simplest safe path that preserves repository-state, architecture, testing, diff-review, and merge-governance invariants.
+Choose the simplest safe path that preserves architecture, exact remote state, testing, diff review and merge governance.
 
-### Path A — Chat + Mini MCP repository workspace
+### Path A — GitHub Connector default
 
-Use this by default when the configured `clocktower` repository alias is available.
+Use for ordinary repository reads/searches, small/medium safe edits, branch/PR state, CI/R2/review inspection and result analysis.
 
-Workflow:
+GitHub remains canonical remote truth.
+
+### Path B — Chat design -> Mini MCP/Codex large-file execution
+
+Use when connector truncation or complete-file context makes direct editing unsafe.
+
+Default:
 
 ```text
-Chat live-state / architecture / scope audit
--> Mini MCP repo_info / read / search
--> identify the true owner and required evidence
--> Mini MCP create_file / revision-guarded targeted patch
--> Mini MCP git_diff / git_status
--> configured focused validation when the execution target supports it
--> broader checkpoint validation according to TESTING_STRATEGY
--> Mini MCP guarded stage / staged-diff review / commit / remote audit / push
--> Mini MCP github_pr_audit / github_ci_detail after M8G5 acceptance has completed for the live runtime
--> GitHub Connector fallback before that acceptance gate, or when the required remote capability is unavailable through Mini MCP
+Chat audits owner/fanout/invariants and fixes the design
+-> Mini MCP controls local execution
+-> Luna L0 reads the complete file and mechanically applies the approved change
+-> inspect local diff
+-> commit only approved paths
+-> make the exact commit visible remotely through the controlled local Git path when needed
+-> return to GitHub Connector
+-> audit exact remote head / parent / scope / semantic diff
+-> inspect CI / R2 / reviews
 ```
 
-Use exact repository-relative paths and stable semantic anchors. Do not patch by absolute line number. Do not silently relax stale-revision, zero-match, or multiple-match failures into fuzzy edits.
+Do not use this path to transfer architecture authority to Luna.
 
-Mini MCP task execution is evidence only when the configured execution target actually supports the required toolchain and the requested task completes successfully. The current Oracle ARM64 workspace must not be reported as having locally validated Android work when the required Android SDK/toolchain is unavailable. GitHub CI remains the independent Android acceptance path until a reviewed supported build host is configured.
+### Path C — strong Codex read-only analysis
 
-When a genuine behavior gap requires test-first development, preserve real RED provenance when the current development plan requires a distinct RED. Do not manufacture a RED for a refactor or intermediate implementation step merely to satisfy process ceremony.
+Use only when Chat cannot design safely from bounded connector context.
 
-### Path B — GitHub Connector fallback / GitHub-native operations
+```text
+Chat defines the question/boundaries
+-> strong Codex L1 reads complete local context
+-> return owner map / code paths / constraints / patch proposal / risks
+-> Chat chooses the design
+-> Luna L0 implements
+-> GitHub Connector resumes normal remote/CI work
+```
 
-Use GitHub Connector when:
+### Path D — GitHub Actions one-shot exceptional patch
 
-- Mini MCP is unavailable in the current conversation/runtime;
-- the configured repository alias is unavailable;
-- the required GitHub-native remote-state or control-plane capability is not exposed by the accepted live Mini MCP M8G surface;
-- a direct remote edit is simpler while still preserving complete safe read/write, exact diff review, and stale-state protection;
-- bootstrap or recovery specifically requires the remote repository rather than the local workspace.
+Use `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` only when the local Mini MCP/Codex path is unavailable or an exact locked remote mutation is uniquely safer.
 
-GitHub remains the canonical source for remote branch/PR state, CI/checks, mergeability, reviews, and final merge state. After the live runtime completes M8G5 acceptance, Mini MCP is the preferred interface to the M8G capabilities it exposes; GitHub Connector remains the fallback for unsupported capabilities, unavailable or stale Mini MCP state, credential failures, and pre-acceptance operation.
+### Validation environment rule
 
-### Path C — GitHub Actions one-shot exceptional patch
+The N3150 Android execution-host route is retired from the normal project workflow because measured test time is too slow to justify its operational complexity.
 
-Use `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` only as an exceptional remote fallback when:
+Do not block development on syncing or running N3150 unless the user explicitly reopens that experiment.
 
-- Mini MCP cannot safely or practically express the required edit;
-- the Mini MCP runtime is unavailable;
-- execution must occur in a GitHub-hosted environment;
-- an exact-head/blob-locked remote mutation is specifically useful.
+Oracle task execution is not Android acceptance when the required Android toolchain is unavailable. GitHub CI/R2 is the normal Android execution and independent acceptance surface.
 
-The one-shot path must retain its existing fail-closed safety invariants: exact branch HEAD, target-file blob SHA, stable unique anchors, changed-file allowlist, semantic assertions, required test/diff evidence, remote-head recheck, and cleanup of temporary workflow/script files.
+When a genuine behavior gap requires test-first development, preserve real RED provenance when the current plan requires it. The RED/GREEN execution may occur through GitHub CI/workflow rather than a local Android host. Do not manufacture RED for documentation-only, behavior-preserving or purely structural work.
 
-Large-file handling is therefore **capability-based, not file-size-based**.
+The current detailed workflow is `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`. Older Mini MCP-first / connector-Luna / large-file workflow documents are historical where they conflict with this root agreement.
 
-### Path D — Codex/Luna exceptional fallback
+## 2.5 Developer-memory workflow
 
-Use Codex/Luna only when the controlled Chat + Mini MCP / GitHub paths are insufficient, including genuinely broad mechanical work, a required different local environment, or tooling that cannot be exposed safely through the configured workspace.
+Mini MCP developer memory is an **optional advisory aid**, not a mandatory startup step.
 
-In this path Chat must provide a deterministic implementation task containing, normally:
+Use it only when durable prior context can materially reduce repeated work or recover a non-obvious accepted decision. If used:
 
-- target branch and exact expected live HEAD;
-- file allowlist;
-- exact replacements/insertions/deletions;
-- the evidence required for the change: focused RED/GREEN when applicable, or baseline/characterization/compile/diff validation for non-behavioral changes;
-- checkpoint-level broader test only when the slice is the logical checkpoint;
-- `git diff --check`;
-- exact commit message and push target when commit/push is authorized through that path;
-- explicit stop/report conditions.
+1. run one bounded `memory_search` with `repo: "clocktower"` and task-specific operational terms;
+2. inspect summaries/triggers only;
+3. call `memory_get` only for promising results;
+4. verify all mutable facts against live repository/runtime/GitHub state and current authoritative docs.
 
-Every Luna instruction **MUST be one continuous fenced code block** suitable for one paste. Use exact language (`replace`, `insert`, `delete`, `run`, `commit`). Do not use implementation-choice language such as `推荐结构`, `建议`, `例如可以`, or `大致如下`.
+Do not invoke Mini MCP memory merely because a task is substantive; the default repository/control-plane workflow remains GitHub Connector-first.
 
-If the specified patch cannot apply because the live API/signature differs materially, Luna must stop and report the conflict rather than invent an equivalent implementation.
+At meaningful checkpoints choose `ADD / UPDATE / SUPERSEDE / NONE` for each candidate durable fact. `NONE` should remain common; a normal substantive session should usually create zero to three memories.
 
-The current Mini MCP capability boundary is defined by this root agreement and the live configured tool surface. Older connector/Luna workflow documents remain useful only where they do not conflict with this root agreement.
+Good memory candidates are:
+
+- stable repository/ownership maps;
+- accepted architecture decisions that constrain future work;
+- recurring engineering lessons with causal value;
+- intentional technical debt with a concrete revisit trigger;
+- durable workflow rules;
+- explicit project-owner corrections that future work could otherwise repeat.
+
+Do **not** store branch HEADs, ordinary PR/CI status, every commit/test result, full logs, copied documentation, secrets, personal data, or facts cheaper/safer to verify live.
+
+Memory is advisory only. Authority remains:
+
+~~~text
+explicit current user instruction
+-> AGENTS.md
+-> current authoritative repository docs
+-> live code / Git / runtime / GitHub state
+-> developer memory
+-> historical/archive material
+~~~
+
+If active memory conflicts with newer authority, follow the newer authority and update/supersede the memory at the checkpoint.
+
+Detailed capture/retrieval rules are authoritative in:
+
+`docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`.
 
 ## 3. Behavior-first, risk-based development and validation cadence
 
@@ -542,7 +561,7 @@ A structural refactor must not become a hidden product change.
 
 Before implementation, re-check live `main`, PR head, and target branch when the slice depends on live state.
 
-After every push through any authorized path, ChatGPT must independently verify GitHub actual state:
+After every push through any authorized path, ChatGPT must independently verify GitHub actual state through the **GitHub Connector by default**. Mini MCP's GitHub audit surface is recovery/cross-check only:
 
 ```text
 expected parent
@@ -554,7 +573,7 @@ relevant test evidence
 CI only when current cadence says CI is a gate
 ```
 
-Mini MCP local `git_status` / `git_diff`, Codex/Luna reports, workflow logs, and user-reported local results are implementation evidence; none is the canonical remote source of truth. GitHub actual branch/PR state and required CI/R2 remain the independent remote acceptance surface.
+Mini MCP local `git_status` / `git_diff`, Codex/Luna reports, workflow logs, and user-reported local results are implementation evidence; none is the canonical remote source of truth. GitHub Connector reads of the actual remote branch/PR/check state are the default independent acceptance interface. Required GitHub CI/R2 remains mandatory where the test strategy requires it.
 
 A pushed commit is not merge authorization.
 
@@ -567,13 +586,13 @@ Read these when relevant:
 1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — current execution authority;
 2. newest `docs/NEXT_DEVELOPMENT_HANDOFF_*.md` for the active campaign;
 3. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping;
-4. `docs/MINI_MCP_REMOTE_PR_CONTROL_PLANE_ADOPTION_2026-09-24.md` — current Mini MCP repository + GitHub remote-control capability boundary and M8G5 adoption gate;
-5. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — older Chat/connector/Luna workflow guidance, subordinate where it conflicts with this root agreement;
-6. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` — exceptional remote one-shot patch SOP;
-7. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
-8. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
-9. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers;
-10. `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` and `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` — historical/specialized guidance only where non-conflicting.
+4. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — **current GitHub Connector-first / Mini MCP+Codex large-file workflow**;
+5. `docs/MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md` — superseded historical Mini MCP-first adoption record;
+6. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — superseded historical connector/Luna workflow;
+7. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` — exceptional remote one-shot fallback only;
+8. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
+9. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
+10. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers.
 
 If documents disagree, apply this precedence:
 
@@ -581,7 +600,7 @@ If documents disagree, apply this precedence:
 2. this root `AGENTS.md`;
 3. `docs/TESTING_STRATEGY.md` for test-tier and evidence definitions;
 4. current roadmap/handoff for active-state specifics;
-5. `docs/MINI_MCP_REMOTE_PR_CONTROL_PLANE_ADOPTION_2026-09-24.md` for the current Mini MCP capability boundary where not already incorporated here;
+5. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` for the current execution-path split where not already incorporated here;
 6. older workflow and campaign documents only where non-conflicting.
 
-For repository work, query the configured Mini MCP workspace for current local state when available and re-query GitHub whenever canonical remote branch/PR/CI state matters. Correct stale or conflicting documentation instead of silently carrying the conflict forward.
+For repository work, use the GitHub Connector by default. Use Mini MCP + Codex CLI when complete local context is required for large/truncated-file analysis or implementation, then return to the GitHub Connector for remote-state, PR, CI/R2 and acceptance work. Use Mini MCP developer memory only when it materially helps; correct stale docs/memories instead of silently carrying conflicts forward.

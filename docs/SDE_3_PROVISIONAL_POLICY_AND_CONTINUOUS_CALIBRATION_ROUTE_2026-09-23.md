@@ -1,27 +1,33 @@
 # SDE-3 — Provisional Policy and Continuous Calibration Route
 
-> Date: 2026-09-23 Australia/Sydney  
+> Updated: 2026-09-25 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT SDE-3 EXECUTION AUTHORITY**  
 > Parent architecture: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`  
 > Current evidence authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
-> Current SDE-3A audit: `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`  
+> Historical SDE-3A completion audit: `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`  
+> Historical SDE-3C completion reference: `docs/SDE_3C5_MULTI_POLICY_REPLAY_COMPLETION_AUDIT_2026-09-24.md`  
+> Current SDE-3D gate audit: `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`  
+> Frozen V1 baseline: `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`  
 > Targeted evidence contract: `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
 
 ## 1. Decision
 
+Execution amendment (2026-09-25): the [integration closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) reached an accepted C0–C3 checkpoint at `8855d461` with full CI #3451 success. A later audit found three bounded correctness defects; [post-audit correctness repair](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) CR-A/B/C is now the hard production prerequisite before C4/3D2 feature edits. R2/base integration remains pending. Roadmap remains the single status authority.
+
 The Storyteller project must continue even though final expert-policy calibration is incomplete.
 
-Evidence shortage blocks **final policy freeze and automatic production cutover**, not the engineering architecture that makes future calibration possible.
+Evidence shortage blocks **unsupported policy preferences and per-surface automatic production cutover**, not freezing the accepted V1 baseline or continuing the engineering architecture that makes future calibration possible.
 
 The route is therefore split:
 
 ~~~text
 SDE-3A engine / feature / policy contract                  COMPLETE / PR #151/#152
-SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       CURRENT / PR #153
-SDE-3C shadow recommendation / DecisionTrace / replay       NEXT
-SDE-3D calibrated policy freeze                             BLOCKED ON EVIDENCE
-SDE-3E automatic production cutover                         BLOCKED ON 3D
+SDE-3B BEGINNER_CONSERVATIVE_V1 interpretable policy       COMPLETE / PR #153 MERGED
+SDE-3C shadow recommendation / DecisionTrace / replay       COMPLETE / historical checkpoint preserved
+Post-audit correctness repair                               CR-A / CR-B / CR-C BEFORE 3D2 PRODUCTION EDITS
+SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0-3D1 COMPLETE / PARTIALLY EVIDENCE-BLOCKED
+SDE-3E automatic production cutover                         BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
 External evidence collection continues in parallel rather than sitting on the critical engineering path.
@@ -40,7 +46,7 @@ Name the first provisional profile:
 
 It is deliberately conservative and versioned.
 
-It may improve later as EvidenceLab supplies stronger expert evidence.
+Later improvements require a new qualified policy version; the frozen V1 definition itself must not change.
 
 ## 3. Stable architecture versus continuously calibrated policy
 
@@ -183,7 +189,7 @@ A later evidence-driven policy may introduce calibrated bands or pairwise orderi
 
 ## 5. SDE-3B — BEGINNER_CONSERVATIVE_V1
 
-V1 may use evidence-backed qualitative constraints even when final numeric thresholds are unknown.
+Future versions may use qualified qualitative constraints without numeric thresholds; frozen V1 remains limited to its accepted zero-topology gate and seeded survivor equivalence.
 
 ### 5.1 Hard boundaries
 
@@ -196,9 +202,9 @@ Always preserve:
 - setup persistence of shown identity / Red Herring / revealed Demon bluffs;
 - interaction-local Spy/Recluse registration semantics.
 
-### 5.2 Conservative reject / avoid conditions
+### 5.2 Future policy hypotheses — not frozen V1 predicates
 
-V1 may reject or strongly avoid candidates that are clearly bad for reasons already established by rules, architecture, or repeated evidence, for example:
+Frozen V1 rejects only exact zero Evil topology and otherwise preserves survivor equivalence. The following are future policy hypotheses requiring independently qualified evidence and a new version, not permissions to expand V1:
 
 - catastrophic Evil-topology / confirmation collapse when healthy alternatives exist;
 - a whole bundle that leaves Good with effectively no usable healthy information;
@@ -210,7 +216,7 @@ These conditions must be expressed through generic features, not named fixture b
 
 ### 5.3 Contextual soft priorities
 
-Among survivors, V1 may prefer:
+V1 does not rank survivors by the following dimensions. Future evidence-backed versions may investigate:
 
 - more credible Evil cover without making Good information inert;
 - fewer destructive confirmation chains;
@@ -328,37 +334,57 @@ Current target gaps are defined in:
 
 Targeted evidence acquisition continues in parallel with SDE-3A/B/C.
 
-## 9. SDE-3D — calibrated policy freeze — BLOCKED
+## 9. SDE-3D — calibrated policy freeze — IN PROGRESS
 
-The following remain insufficient for final calibrated gates / orderings:
+SDE-3D0 established that calibration/freeze is **surface-scoped**, not one monolithic gate. The full decision is recorded in:
 
-- healthy-information floor / middle-band numeric thresholds;
+`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`
+
+The accepted `BEGINNER_CONSERVATIVE_V1` semantics are now frozen as an immutable provisional baseline. Its release definition binds `BEGINNER_CONSERVATIVE_V1`, evidence checkpoint `sde-3b-merged-2026-09-24`, and selection method `SEEDED_HASH_V1`. V1 must not silently absorb later evidence-driven ordering or selector changes.
+
+Current evidence gaps still block specific policy semantics:
+
+- healthy-information floor / middle-band preference strength;
 - role-function exposure severity;
-- independent-expert impaired-information believability;
+- independent-expert impaired-information believability / cross-night continuity strength;
 - Demon-bluff triplet preference ordering;
-- quantitative multi-axis tradeoffs.
+- quantitative multi-axis tradeoffs **only if** a future policy chooses to require numeric weighting.
 
-Therefore SDE-3D must not:
+SDE-3D must still not:
 
 - freeze arbitrary scalar weights;
 - publish unsupported player-count thresholds;
 - convert one expert observation into a deterministic rule;
-- claim calibrated expert parity.
+- claim calibrated expert parity;
+- create a placeholder V2 without a real semantic policy delta.
 
-Evidence collection can progressively unblock individual policy dimensions.
+Current execution slices are:
 
-## 10. SDE-3E — automatic production cutover — BLOCKED
+1. 3D0 calibrated freeze / cutover-gate architecture — COMPLETE;
+2. 3D1 V1 immutable baseline freeze — COMPLETE at `f562887cf4e90d02d364eef5534a1f709922a0f8`, CI #3446 / R2 #3201;
+3. 3D2 calibration-ready missing feature completion — AFTER integration C1–C3; begin with truth danger / credibility disruption plus contextual Red-Herring descriptive projection while keeping V1 policy-neutral;
+4. 3D3 first evidence-authorized policy delta / first real V2 — waiting for a qualifying E3 predicate;
+5. 3D4 V1/V2 canonical real-corpus replay;
+6. 3D5 surface-scoped calibrated freeze.
 
-Automatic cutover requires:
+Evidence collection can progressively unblock individual policy dimensions without blocking unrelated surfaces.
 
-1. SDE-3A typed contracts stable;
-2. SDE-3B conservative policy regression-safe;
-3. SDE-3C shadow / trace / replay demonstrated on real scenarios;
-4. SDE-3D evidence gate satisfied for the policy surface being cut over;
-5. product UX preserves manual Experienced-mode override;
-6. old authoritative heuristic path has a completed fanout retirement plan.
+## 10. SDE-3E — automatic production cutover — BLOCKED PER SURFACE
 
-Until then, recommendations may run in shadow / advisory form.
+Automatic cutover is evaluated for each decision surface. A surface requires:
+
+1. stable SDE-3A typed contracts;
+2. regression-safe SDE-3B/3D policy semantics;
+3. SDE-3C DecisionTrace / replay support;
+4. an explicit frozen policy version for that surface;
+5. stable projectors for every feature the policy actually consumes;
+6. evidence authority appropriate to every active rejection/preference;
+7. accepted canonical real-game replay for the policy version/surface;
+8. product UX preserving manual Experienced-mode override;
+9. explicit legacy/manual/deferred fallback for unsupported or unavailable dimensions;
+10. a completed fanout-retirement plan before removing the old authority.
+
+A technically available seeded V1 selection does not authorize cutover when material dimensions remain unresolved and the policy is choosing among a large equivalence class. Those surfaces remain shadow/advisory, manual, legacy-authoritative or explicitly deferred.
 
 ## 11. Legacy retirement boundary
 
@@ -402,48 +428,45 @@ Do not turn expert source examples into fixture-specific production tests.
 
 ## 13. Immediate implementation order
 
-Start with an architecture/fanout audit before production edits.
+Start every new shared-contract or production-feature slice with the AGENTS architecture/fanout pre-flight.
 
-PR #150 is merged as the SDE-2D5 evidence/calibration checkpoint. PR #151/#152 are merged SDE-3A checkpoints. SDE-3B now proceeds on branch `sde-3b-beginner-conservative-v1` in draft PR #153. The first V1 slice implements only an exact zero Evil-topology contradiction gate, explicit survivor equivalence, policy limitations, and weight-free seeded survivor selection; it does not invent calibrated bands. Source `AbilityState` and actual-state semantic truth are projected from existing legal-candidate semantics. Keep #153 draft until explicit user authorization to merge.
+Execution-status boundary:
 
-Recommended sequence:
+- this document remains the architectural / policy-evidence route for SDE-3;
+- it is **not** the live PR/branch/checkpoint authority;
+- SDE-3C, CR-A/B/C, C4/SDE-3D2 and IF-D are complete on the formal continuation;
+- RH-E is the next executable integration-hardening slice;
+- `BEGINNER_CONSERVATIVE_V1` remains immutable;
+- C5 / the first real V2 remains blocked until a genuinely qualifying E3/E4 predicate exists;
+- current branch, PR, acceptance and execution order belong only to `CURRENT_DEVELOPMENT_ROADMAP.md` and `NEXT_DEVELOPMENT_HANDOFF.md`.
 
-1. audit current `StorytellerDecisionEngine`, decision context, candidate/result contracts and production shadow integration;
-2. inventory existing exact/topology diagnostics that can populate the stable feature contract;
-3. define the minimal generic `DecisionCandidate` / `DecisionFeatures` / `PolicyEvaluation` contract without migrating behavior prematurely;
-4. follow the explicit staging in `SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`;
-5. **3B1 COMPLETE:** lifecycle-safe historical shadow/input binding is implemented with canonical committed-prefix refs, typed external-owner bindings and no-hindsight enforcement;
-6. **3B2 COMPLETE:** confirmation-chain impact is projected from canonical recipient-visible committed history with strict no-hindsight, exact leave-one-out contribution semantics and bounded R02/R04 E2 regression; V1 policy remains unchanged;
-7. **3B3 COMPLETE:** impaired-narrative coherence/detectability is derived from canonical history plus authoritative `AbilityState`/impairment episodes, with persistent setup-bound versus temporary action-bound lifetimes, bounded R04/R06 E2 regression and no second mutable history store; V1 policy remains unchanged;
-8. **3B4 COMPLETE / 3B5 CURRENT:** healthy-information utility is complete; now add contextual role-function exposure;
-9. **3B6:** introduce expert-informed qualitative V1 soft priorities only after the matching feature projector and semantic replay are stable;
-10. leave versioned `DecisionTrace` / replay persistence to SDE-3C;
-11. reserve numeric thresholds, player-count bands and multi-axis tradeoff calibration for SDE-3D;
-12. keep automatic cutover off.
+Recommended architectural sequence from the current checkpoint:
 
-Every shared-contract change requires the AGENTS fanout audit before implementation.
+1. complete RH-E serialized diagnostic persistence/timing/retention hardening without changing V1 policy;
+2. continue targeted expert evidence acquisition independently;
+3. wait for qualifying E3/E4 evidence before creating a real `BEGINNER_CONSERVATIVE_V2`;
+4. compare policy versions on the same canonical histories through the existing replay machinery;
+5. freeze and cut over only decision surfaces whose feature, evidence, replay and fallback gates are satisfied.
 
 ### Expert-evidence authority rule
 
 Evidence may enter at four different stages and must not be promoted early:
 
-- **E1 architecture evidence:** whole games justify feature existence/lifecycle dependencies now;
+- **E1 architecture evidence:** whole games justify feature existence/lifecycle dependencies;
 - **E2 semantic regression evidence:** reconstructed prefixes validate generic projectors after structural seams exist;
 - **E3 qualitative policy evidence:** explicit qualified rationale or strong cross-expert support may become typed soft reasons only after feature stability;
-- **E4 calibration evidence:** numeric thresholds/weights/tradeoff strength remain SDE-3D.
+- **E4 calibration evidence:** numeric thresholds/weights/tradeoff strength are required only for policy semantics that actually depend on numeric calibration.
 
-An observed expert choice without rationale is never, by itself, a preference label.
+An observed expert choice without rationale is never, by itself, a preference label. Synthetic/extreme fixtures remain diagnostic rather than primary calibration truth, and modifier-rich real Trouble Brewing bundles must not be excluded merely to obtain cleaner metrics.
 
-## 14. Success criteria for the next development conversation
+## 14. Live execution handoff
 
-The next conversation should **not** resume evidence collection or reopen completed 3B2–3B4 feature semantics.
+This route no longer carries a rolling “next conversation” checklist. That duplication made completed checkpoints appear current after the implementation had moved on.
 
-It should continue SDE-3B5 by auditing contextual role-function exposure and produce:
+For live work, use:
 
-- one authoritative owner/reuse map for lifecycle, confirmation, registration and rules semantics;
-- a role-agnostic typed exposure feature contract;
-- explicit forced-versus-avoidable and already-exposed-versus-newly-exposed semantics;
-- generic tests first, followed only by bounded E1/E2 evidence-backed regression;
-- confirmation that V1 policy still does not consume the new dimension until feature semantics are accepted.
+- `CURRENT_DEVELOPMENT_ROADMAP.md` — single status / priority authority;
+- `NEXT_DEVELOPMENT_HANDOFF.md` — compact executable continuation;
+- `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md` — preserved pre-RH-E completion/cleanup evidence.
 
-No numeric policy calibration is required; thresholds and tradeoff strength remain SDE-3D.
+The architectural constraints above remain authoritative unless superseded explicitly. No V2, numeric threshold, global weight, automatic cutover or Traveller expansion is implied by feature completion alone.

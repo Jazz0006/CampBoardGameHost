@@ -79,6 +79,7 @@ internal object RecoverySnapshotJsonCodec {
                 TroubleBrewingSetupCompletionPersistence.encode(record),
             )
         }
+        putNullableString("clocktowerSdeHistoricalReplayInput", game.sdeHistoricalReplayInputJson)
         put("clocktowerGameStateRevision", game.history.gameStateRevision.coerceAtLeast(0L))
         put("clocktowerPlayerInputRevision", game.history.playerInputRevision.coerceAtLeast(0L))
         put(

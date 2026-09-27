@@ -22,6 +22,7 @@ class BeginnerConservativeV1SelectorTest {
         )
 
         assertEquals(selectedA, selectedB)
+        assertEquals("c", selectedA?.candidateId)
     }
 
     @Test
