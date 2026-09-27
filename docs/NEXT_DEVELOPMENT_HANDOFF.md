@@ -147,12 +147,14 @@ Next executable order:
 preserve dirty Oracle working tree
 -> keep validation PRs Draft / unmerged
 -> combined exact-tree acceptance COMPLETE: formal tree `a4701e0f4873ddd629dfa11163a94d2aa0cb9b8b` mirrored by #160 head `20eeb85790e591fe66363cd1b509bf5dda225342`; CI #3473 + R2 #3226 GREEN
--> proceed to IF-D durable App replay capture/rebuild
--> then RH-E persistence/timing hardening
+-> IF-D durable App replay capture/rebuild COMPLETE: formal `4d1b6d7f` / tree `181a1d80`, exact-tree validation #161 `58dca50c`, CI #3476 + R2 #3229 GREEN
+-> proceed to RH-E persistence/timing hardening
 -> keep C5 evidence-backed policy/cutover blocked until a genuinely qualifying E3/E4 predicate exists
 ```
 
 Combined acceptance note: formal executable checkpoint `21206a8ca95896ffad83eaba5695a3a571c6cd74` and validation head `20eeb85790e591fe66363cd1b509bf5dda225342` share exact tree `a4701e0f4873ddd629dfa11163a94d2aa0cb9b8b`. CI #3473 and R2 #3226 validate that tree. Historical CI/R2 evidence remains exact-head/tree scoped; do not attribute it to later documentation-only commits without checking tree identity.
+
+IF-D acceptance: formal executable checkpoint `4d1b6d7f39529402eb9ec1e6032eb80ef9a14e86` and validation #161 head `58dca50c26afd2ad6898dda5ce15702c13becaa9` share tree `181a1d80d449c2d443a678e10033acda13c777d1`. CI #3476 and R2 #3229 are GREEN. Recovery v2 now optionally carries the strict read-only SDE replay export; validated restore rehydrates exact committed setup provenance and rejects identity/history/ruleset mismatches before App mutation. Old v2 payloads without the field remain valid.
 
 ## 4. Why SDE-3 may proceed now
 
