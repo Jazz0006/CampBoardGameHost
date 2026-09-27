@@ -153,9 +153,6 @@ internal object RecoveryRestorePlanner {
                 null
             }
             is ClocktowerRecovery -> validateClocktower(game, clocktowerRulesetResolver)
-            is WerewolfRecovery -> throw IllegalArgumentException(
-                "Werewolf is outside the PS3 typed recovery support surface.",
-            )
         }
 
         return ValidatedRecoveryPlan(
@@ -265,9 +262,6 @@ internal object RecoveryRestorePlanner {
             require(seatId.number in 1..game.cards.size) { "Ghost-vote authority references an unknown seat." }
         }
 
-        require(mechanics.klutzChoiceName == null) {
-            "Unconfirmed Klutz choice is draft UI state and is not durable recovery state."
-        }
         if (mechanics.pendingKlutzName == null) {
             require(!mechanics.klutzReturnToDawn) { "Klutz return-to-Dawn flag requires a pending Klutz." }
         } else {
@@ -429,9 +423,6 @@ internal object RecoveryRestorePlanner {
                     continuation = if (pendingKlutz) ClocktowerRecoveryContinuation.Klutz else null,
                 )
             }
-            is WerewolfRecovery -> throw IllegalArgumentException(
-                "Werewolf is outside the PS3 typed recovery support surface.",
-            )
         }
     }
 

@@ -65,45 +65,6 @@ class RecoverySnapshotJsonCodecTest {
     }
 
     @Test
-    fun werewolfRecoveryRetainsAlreadyPerformedNightInteractions() {
-        val snapshot = RecoverySnapshot(
-            compatibilityToken = "test-current-build",
-            savedAtMillis = 1234L,
-            game = WerewolfRecovery(
-                entryPoint = RecoveryEntryPoint.Stable,
-                currentDealIndex = 0,
-                round = 2,
-                cards = listOf(PlayerCard("Wolf", Role.Werewolf, "")),
-                records = emptyList(),
-                outcome = null,
-                werewolfCount = 1,
-                includeSeer = true,
-                includeWitch = true,
-                includeHunter = false,
-                lastWordsMode = LastWordsMode.FirstDay,
-                judgeStepIndex = 3,
-                pendingNightDeath = "Alice",
-                seerCheckTarget = "Bob",
-                witchSaveUsed = true,
-                witchPoisonUsed = true,
-                witchSavedTonight = false,
-                witchPoisonTarget = "Carol",
-                hunterShotTarget = null,
-            ),
-        )
-
-        val json = RecoverySnapshotJsonCodec.encode(snapshot)
-
-        assertEquals(3, json.getInt("werewolfJudgeStepIndex"))
-        assertEquals("Alice", json.getString("pendingNightDeath"))
-        assertEquals("Bob", json.getString("seerCheckTarget"))
-        assertTrue(json.getBoolean("witchSaveUsed"))
-        assertTrue(json.getBoolean("witchPoisonUsed"))
-        assertEquals("Carol", json.getString("witchPoisonTarget"))
-        assertFalse(json.has("selectedDayExile"))
-    }
-
-    @Test
     fun clocktowerRecoveryKeepsConfirmedFactsButDiscardsDraftTargetsAndDayUi() {
         val snapshot = RecoverySnapshot(
             compatibilityToken = "test-current-build",
@@ -144,7 +105,6 @@ class RecoverySnapshotJsonCodecTest {
                     artistClaimedNames = listOf("Bob"),
                     lastExecutedName = "Carol",
                     pendingKlutzName = "Dave",
-                    klutzChoiceName = null,
                     klutzReturnToDawn = true,
                     ghostVoteAuthority = ClocktowerGhostVoteAuthority(),
                     highestVoteName = "Alice",

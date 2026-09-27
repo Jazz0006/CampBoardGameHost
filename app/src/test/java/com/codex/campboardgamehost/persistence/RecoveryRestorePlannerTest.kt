@@ -72,6 +72,15 @@ class RecoveryRestorePlannerTest {
     }
 
     @Test
+    fun removedWerewolfRuntimeRecoveryFailsClosed() {
+        val json = RecoverySnapshotJsonCodec.encode(undercoverSnapshot()).apply {
+            put("currentGameKind", GameKind.Werewolf.name)
+        }
+
+        assertRejected(prepare(json), RecoveryRejectionReason.MalformedPayload)
+    }
+
+    @Test
     fun malformedCardDoesNotSilentlyProducePartialRecovery() {
         val json = RecoverySnapshotJsonCodec.encode(undercoverSnapshot()).apply {
             getJSONArray("cards").put(JSONObject().put("name", "Broken"))
@@ -266,26 +275,6 @@ class RecoveryRestorePlannerTest {
     }
 
     @Test
-    fun unconfirmedKlutzChoiceIsDiscardedByTypedRecovery() {
-        val snapshot = clocktowerSnapshot(
-            phase = ClocktowerPhase.Day,
-            pendingKlutzName = "Dave",
-            klutzChoiceName = "Alice",
-            confirmedDemonSuccessorTarget = null,
-            pendingNewDemonName = null,
-            pendingNightNewDemonIdentityName = null,
-        )
-
-        val json = RecoverySnapshotJsonCodec.encode(snapshot)
-        assertTrue(json.isNull("clocktowerKlutzChoiceName"))
-
-        val result = prepare(json)
-        assertTrue(result is RecoveryPlanPreparation.Ready)
-        val game = (result as RecoveryPlanPreparation.Ready).plan.snapshot.game as ClocktowerRecovery
-        assertEquals(null, game.mechanics.klutzChoiceName)
-    }
-
-    @Test
     fun gameOutcomeDerivesResultsPresentation() {
         val outcome = GameOutcome("Good wins", "summary", "reason")
         val result = prepare(
@@ -343,7 +332,6 @@ class RecoveryRestorePlannerTest {
     private fun clocktowerSnapshot(
         phase: ClocktowerPhase = ClocktowerPhase.Night,
         pendingKlutzName: String? = null,
-        klutzChoiceName: String? = null,
         confirmedDemonSuccessorTarget: String? = "Demon 2",
         pendingNewDemonName: String? = "Demon 2",
         pendingNightNewDemonIdentityName: String? = "Demon 2",
@@ -392,7 +380,6 @@ class RecoveryRestorePlannerTest {
                     artistClaimedNames = listOf("Bob"),
                     lastExecutedName = "Carol",
                     pendingKlutzName = pendingKlutzName,
-                    klutzChoiceName = klutzChoiceName,
                     klutzReturnToDawn = pendingKlutzName != null,
                     ghostVoteAuthority = ClocktowerGhostVoteAuthority(),
                     highestVoteName = "Alice",

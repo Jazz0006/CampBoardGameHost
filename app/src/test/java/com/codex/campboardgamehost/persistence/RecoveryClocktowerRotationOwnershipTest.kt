@@ -87,7 +87,6 @@ class RecoveryClocktowerRotationOwnershipTest {
                     artistClaimedNames = emptyList(),
                     lastExecutedName = null,
                     pendingKlutzName = null,
-                    klutzChoiceName = null,
                     klutzReturnToDawn = false,
                     ghostVoteAuthority = ClocktowerGhostVoteAuthority(),
                     highestVoteName = null,

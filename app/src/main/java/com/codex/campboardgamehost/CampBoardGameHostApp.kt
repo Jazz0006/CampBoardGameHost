@@ -1277,7 +1277,6 @@ internal fun CampBoardGameHostApp() {
                     artistClaimedNames = clocktowerArtistClaimedNames.toList(),
                     lastExecutedName = clocktowerLastExecutedName,
                     pendingKlutzName = clocktowerPendingKlutzName,
-                    klutzChoiceName = clocktowerKlutzChoiceName,
                     klutzReturnToDawn = clocktowerKlutzReturnToDawn,
                     ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
                     highestVoteName = clocktowerHighestVoteNameState.value,
@@ -1474,7 +1473,6 @@ internal fun CampBoardGameHostApp() {
                         ClocktowerDayMode.Overview
                     }
             }
-            is WerewolfRecovery -> Unit
         }
 
         screen = when (plan.safeReentry) {

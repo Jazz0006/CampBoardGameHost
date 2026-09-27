@@ -138,7 +138,6 @@ internal object RecoverySnapshotStrictDecoder {
                 artistClaimedNames = json.requiredArray("clocktowerArtistClaimedNames").strictStringList(),
                 lastExecutedName = json.requiredNullableString("clocktowerLastExecutedName"),
                 pendingKlutzName = json.requiredNullableString("clocktowerPendingKlutzName"),
-                klutzChoiceName = json.requiredNullableString("clocktowerKlutzChoiceName"),
                 klutzReturnToDawn = json.requiredBoolean("clocktowerKlutzReturnToDawn"),
                 ghostVoteAuthority = json.decodeGhostVoteAuthorityStrict(),
                 highestVoteName = json.requiredNullableString("clocktowerHighestVoteName"),
