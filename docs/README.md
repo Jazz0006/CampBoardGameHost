@@ -11,7 +11,7 @@
 4. [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) — C0–C3 历史集成闭环契约与已验收边界
 5. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 6. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
-7. [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md) — **当前 SDE-3 执行路线**
+7. [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md) — SDE-3 architecture / evidence route；**不承担 live PR/执行状态**
 8. [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md) — **3D/3E surface-scoped gate authority**
 9. [`SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md) — **V1 immutable baseline**
 10. [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md) — first-night policy / evidence synthesis
@@ -41,7 +41,7 @@ SDE-3D calibrated policy freeze        3D0–3D1 + C4/SDE-3D2 COMPLETE / IF-D CO
 SDE-3E automatic production cutover    C5 BLOCKED ON QUALIFYING E3/E4 / PER-SURFACE GATES
 ~~~
 
-当前远端边界：正式 continuation 是 `codex/sde-history-prefix-route-closure`，由 Draft PR #157 承载；live `main` 为 `cc5adee5...`，包含 continuation 尚未吸收的 M8G5 文档/control-plane 合并，因此 #157 当前仍是 dirty merge state。C4 exact-tree validation #160（CI #3473 / R2 #3226）与 IF-D validation #161（CI #3476 / R2 #3229）均已 GREEN，但它们是 validation-only，不是 merge target。任何 main integration / ready / merge 仍需单独授权。
+当前远端边界：正式 continuation 是 `codex/sde-history-prefix-route-closure`，由 Draft PR #157 承载；live `main` 仍包含 continuation 尚未吸收的 M8G5 workflow/control-plane 合并，因此 #157 的 main integration 仍是独立 gate。#160/#161 等 validation-only PR 已在证据进入正式 continuation 后关闭而未合并；#109 也已按 current-format Recovery 边界关闭。任何 main integration / ready / merge 仍需单独授权。历史清理证据见 [`archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`](archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md)。
 
 ## 当前政策核心
 

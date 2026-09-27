@@ -430,31 +430,23 @@ Do not turn expert source examples into fixture-specific production tests.
 
 Start every new shared-contract or production-feature slice with the AGENTS architecture/fanout pre-flight.
 
-Current control-plane state:
+Execution-status boundary:
 
-- PR #150 is merged as the SDE-2D5 evidence/calibration checkpoint;
-- PR #151/#152 are merged SDE-3A checkpoints;
-- PR #153 is merged SDE-3B / accepted V1 checkpoint;
-- Draft PR #154 contains SDE-3C plus the current SDE-3D0/3D1 continuation and must remain draft until explicit user authorization;
-- SDE-3C0–3C5 are COMPLETE;
-- SDE-3D0 and SDE-3D1 are COMPLETE;
-- the accepted V1 code checkpoint is `f562887cf4e90d02d364eef5534a1f709922a0f8`;
-- documentation-only synchronization commits may advance the branch after the accepted code checkpoint; query the live branch/PR head and checks rather than relying on a hard-coded documentation SHA.
+- this document remains the architectural / policy-evidence route for SDE-3;
+- it is **not** the live PR/branch/checkpoint authority;
+- SDE-3C, CR-A/B/C, C4/SDE-3D2 and IF-D are complete on the formal continuation;
+- RH-E is the next executable integration-hardening slice;
+- `BEGINNER_CONSERVATIVE_V1` remains immutable;
+- C5 / the first real V2 remains blocked until a genuinely qualifying E3/E4 predicate exists;
+- current branch, PR, acceptance and execution order belong only to `CURRENT_DEVELOPMENT_ROADMAP.md` and `NEXT_DEVELOPMENT_HANDOFF.md`.
 
-Recommended sequence:
+Recommended architectural sequence from the current checkpoint:
 
-0. **Integration C0–C3 historical checkpoint:** exact history correlation, durable replay transport, offline vertical slice, measured diagnostic runtime shadow, as specified in the integration closure contract;
-1. **Post-audit correctness repair:** complete CR-A impaired-narrative semantic correctness, CR-B typed game/request identity binding, and CR-C strict nested replay decoding. These are hard prerequisites for SDE-3D2 production feature edits;
-2. **SDE-3D2 — calibration-ready missing feature completion:** after CR-A/B/C, perform an architecture/evidence/fanout audit for truth danger / credibility disruption and contextual Red-Herring downstream policy input before production edits;
-3. identify and reuse the existing owners for Red Herring setup commitment, legal candidate semantics, canonical history/confirmation context, healthy truthful-channel consequences, and exact/topology consequence projection;
-4. define the smallest generic descriptive feature seam that represents downstream truth danger / credibility disruption without encoding named-seat, named-role or fixture-specific preference rules;
-5. use existing Evin GOLD + SILVER and Ben contextual evidence as E1/E2 justification and semantic regression evidence; feature completion alone must not alter V1 ordering;
-6. keep `BEGINNER_CONSERVATIVE_V1` immutable, including its frozen evidence checkpoint and `SEEDED_HASH_V1` selection contract;
-7. complete IF-D durable App replay capture/rebuild before runtime traces are treated as a durable real-game calibration corpus, and RH-E persistence/timing hardening before runtime scope is broadened;
-8. wait for a genuinely qualifying E3 predicate before creating the first real `BEGINNER_CONSERVATIVE_V2`; do not create a placeholder V2;
-9. once a real V2 exists, use SDE-3C5 to replay V1 and V2 over the same canonical real-game histories without mutating historical truth;
-10. freeze only cutover-eligible decision surfaces whose active predicates, projectors, evidence authority and replay gates are satisfied;
-11. enter SDE-3E per surface, retaining legacy/manual/deferred fallback wherever material dimensions remain unsupported.
+1. complete RH-E serialized diagnostic persistence/timing/retention hardening without changing V1 policy;
+2. continue targeted expert evidence acquisition independently;
+3. wait for qualifying E3/E4 evidence before creating a real `BEGINNER_CONSERVATIVE_V2`;
+4. compare policy versions on the same canonical histories through the existing replay machinery;
+5. freeze and cut over only decision surfaces whose feature, evidence, replay and fallback gates are satisfied.
 
 ### Expert-evidence authority rule
 
@@ -467,17 +459,14 @@ Evidence may enter at four different stages and must not be promoted early:
 
 An observed expert choice without rationale is never, by itself, a preference label. Synthetic/extreme fixtures remain diagnostic rather than primary calibration truth, and modifier-rich real Trouble Brewing bundles must not be excluded merely to obtain cleaner metrics.
 
-## 14. Success criteria for the next development conversation
+## 14. Live execution handoff
 
-Integration C0–C3 remains an accepted historical checkpoint at exact production code HEAD `8855d461`; full CI #3451 succeeded and R2/base integration remains pending. The next implementation conversation begins **CR-A / CR-B / CR-C correctness repair**. The C4 / SDE-3D2 architecture/evidence/fanout audit may be prepared in parallel, but production feature edits wait for the repair gate.
+This route no longer carries a rolling “next conversation” checklist. That duplication made completed checkpoints appear current after the implementation had moved on.
 
-After CR-A/B/C are accepted, the SDE-3D2 conversation should produce, before production edits:
+For live work, use:
 
-- one authoritative owner/reuse map for Red Herring commitment, legal candidate semantics, canonical history/confirmation context and downstream consequence projection;
-- an explicit account of what current Evin/Ben/SILVER evidence supports at E1/E2 versus what remains below E3;
-- one role-agnostic typed descriptive contract for truth danger / credibility disruption and contextual Red-Herring consequence;
-- explicit proof that the proposed feature does not duplicate legality, mutate Red Herring ownership, or import legacy scalar scoring;
-- a tests-first acceptance plan at the true feature owner plus bounded real-game semantic regression;
-- confirmation that V1 remains policy-neutral with respect to the new feature.
+- `CURRENT_DEVELOPMENT_ROADMAP.md` — single status / priority authority;
+- `NEXT_DEVELOPMENT_HANDOFF.md` — compact executable continuation;
+- `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md` — preserved pre-RH-E completion/cleanup evidence.
 
-No V2, numeric threshold, global weight, automatic cutover or Traveller expansion is authorized by SDE-3D2 itself.
+The architectural constraints above remain authoritative unless superseded explicitly. No V2, numeric threshold, global weight, automatic cutover or Traveller expansion is implied by feature completion alone.

@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT ARCHITECTURE / PRODUCT ROUTE**  
 > Current D5F policy authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
-> Current implementation entry: **C0–C3 accepted historical checkpoint at `8855d461` / full CI #3451 successful; CR-A/B/C correctness repair next before SDE-3D2 production edits**, per [post-audit repair route](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md). R2/base integration remains pending.
+> Execution status is intentionally not maintained in this architecture document. See [CURRENT_DEVELOPMENT_ROADMAP.md](CURRENT_DEVELOPMENT_ROADMAP.md) and [NEXT_DEVELOPMENT_HANDOFF.md](NEXT_DEVELOPMENT_HANDOFF.md) for the live continuation.
 > Supersedes as execution authority: first-night-only EPI-MQ routes, earlier productive-uncertainty scoring plans, and the older revision-driven dynamic-decision implementation plan.
 
 ## 1. Product target
