@@ -1,9 +1,9 @@
 # CampBoardGameHost — Next Development Handoff
 
 > Updated: 2026-09-27 Australia/Sydney  
-> Current continuation: `codex/sde-history-prefix-route-closure`  
-> Active Draft PR: **#157**  
-> Next gate: **explicit PR lifecycle authorization or qualifying E3/E4 evidence**
+> Current baseline: `main@02845a470761a988f0041d8c1027b0e2c58a7e05`  
+> Active SDE implementation PR: **none**  
+> Next gate: **ClocktowerEvidenceLab evidence sync + E3/E4 qualification audit**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -24,18 +24,19 @@ Only read older SDE slice audits when a concrete ownership/history question requ
 
 Do not assume recorded branch/HEAD/PR state is still live.
 
-Start by checking live remote state through the **GitHub Connector**: `main`, PR #157 exact head/state/draft/mergeability and current checks.
+Start by checking live remote state through the **GitHub Connector**: current `main`, any newly active branch/PR, and the relevant evidence inputs for the requested slice.
 
-If the task is continuing an existing Mini MCP/Codex large-file worktree or otherwise depends on local unpushed state, also inspect the configured local workspace before editing so that current work is never overwritten or lost.
+If the task depends on local unpushed state, also inspect the configured local workspace before editing so that current work is never overwritten or lost.
 
 Requirements:
 
 - preserve the current working tree;
 - do not reset/discard unrelated work;
-- #157 stays Draft;
+- treat merged PR #157 and its historical continuation branch as completed evidence, not as the current branch;
+- create a fresh branch for any new C5 implementation slice;
 - no PR merge, ready transition, rebase or force-push without explicit authorization.
 
-The 2026-09-27 live-main ancestry integration is complete. Do not redo or rewrite that merge; refresh remote facts and exact-head checks before further work.
+The 2026-09-27 #157 integration and squash merge are complete. Do not redo or rewrite that history.
 
 ## 3. Current state
 
@@ -109,33 +110,44 @@ Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as authority:
 - N3150 remains retired from the default validation path;
 - GitHub CI/R2 remains the Android validation and independent acceptance surface.
 
-## 7. Main integration gate COMPLETE
+## 7. #157 merge closure COMPLETE
 
 Accepted integration head:
 
 `371ebf624898c08747203aceaed1254647867214`
 
-Parents:
+Final pre-merge docs-only head:
 
-- previous continuation: `058bef86810e3ac8d1d58b3186ee4efde503ad69`;
-- live main: `cc5adee5baf107e04d8b0d5a7657e9c27d5ed1e2`.
+`ee3f3e32cd48be4bf634a9f8f70268d022dc84d2`
 
-The integration changed workflow/documentation only relative to the previous continuation head. It preserved the 2026-09-27 GitHub Connector-first `AGENTS.md` contract and archived the superseded M8G5 control-plane document.
+Squash-merged main commit:
 
-Remote acceptance:
+`02845a470761a988f0041d8c1027b0e2c58a7e05`
 
-- CI #3479 GREEN;
-- Android FULL + `assembleDebug` GREEN;
-- ASP contracts GREEN;
-- Real Clingo GREEN;
-- CI gate GREEN;
-- R2 #3232 GREEN;
-- #157 open / Draft / mergeable / current with main.
+Remote acceptance before merge:
 
-Detailed completion evidence is archived in `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`.
+- integration CI #3479 GREEN, including Android FULL + `assembleDebug`, ASP contracts, Real Clingo and CI gate;
+- integration R2 #3232 GREEN;
+- final docs-only CI #3480 GREEN;
+- final docs-only R2 #3233 GREEN;
+- unresolved review threads: 0.
 
-There is no automatic next SDE production slice: C5/V2 and SDE-3E remain blocked on qualifying E3/E4 evidence. Do **not** mark ready, merge the PR, rebase or force-push unless the user explicitly authorizes it.
+PR #157 is closed/merged. The previous continuation branch is historical. Detailed integration evidence remains archived in `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`.
 
-## 8. Scope still blocked
+## 8. Next gate — evidence qualification
+
+There is no automatic next SDE production slice.
+
+Next work should:
+
+1. sync or inspect the latest relevant Trouble Brewing evidence from ClocktowerEvidenceLab;
+2. extract candidate policy predicates with explicit provenance and rationale;
+3. grade each candidate against E3/E4 requirements;
+4. start C5 only if at least one concrete predicate qualifies;
+5. keep `BEGINNER_CONSERVATIVE_V1` immutable.
+
+If no predicate qualifies, continue targeted evidence acquisition rather than creating placeholder V2 behavior.
+
+## 9. Scope still blocked
 
 Do not start `BEGINNER_CONSERVATIVE_V2`, add new policy weights/thresholds, broaden player-count/Traveller scope, or perform production cutover without the required E3/E4 evidence. C5 and SDE-3E remain blocked as recorded in the roadmap.
