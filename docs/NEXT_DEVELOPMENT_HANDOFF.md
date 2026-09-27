@@ -1,9 +1,10 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-09-27 Australia/Sydney  
-> Current baseline: `main@02845a470761a988f0041d8c1027b0e2c58a7e05`  
+> Updated: 2026-09-28 Australia/Sydney  
+> Current reviewed main baseline before cleanup branch creation: `main@5d2982a7492a5092a898436a0386b822ee7343f5`  
 > Active SDE implementation PR: **none**  
-> Next gate: **ClocktowerEvidenceLab evidence sync + E3/E4 qualification audit**
+> Active maintenance branch: `codex/current-only-recovery-cleanup`  
+> SDE next gate: **ClocktowerEvidenceLab evidence sync + E3/E4 qualification audit**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -14,9 +15,10 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 3. `docs/TESTING_STRATEGY.md`
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
-6. `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
-7. `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
-8. `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
+6. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` when working on the active Recovery cleanup lane
+7. `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
+8. `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
+9. `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
 
 Only read older SDE slice audits when a concrete ownership/history question requires them.
 
@@ -34,6 +36,7 @@ Requirements:
 - do not reset/discard unrelated work;
 - treat merged PR #157 and its historical continuation branch as completed evidence, not as the current branch;
 - create a fresh branch for any new C5 implementation slice;
+- keep the Recovery cleanup isolated on `codex/current-only-recovery-cleanup` or a deliberate successor branch;
 - no PR merge, ready transition, rebase or force-push without explicit authorization.
 
 The 2026-09-27 #157 integration and squash merge are complete. Do not redo or rewrite that history.
@@ -73,6 +76,8 @@ current format
 ~~~
 
 Do **not** introduce old-format compatibility, migration, tolerant reconstruction or long-term save semantics.
+
+The 2026-09-28 broad audit found current-only/minimal-state drift that now has an explicit cleanup owner: `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md`. The active branch is `codex/current-only-recovery-cleanup`. R1 is a focused field/wire disposition audit before production deletion.
 
 #109 must not be resurrected as a compatibility project. A future bug requires a fresh reproduction from a current-format/current-version write.
 
@@ -134,7 +139,29 @@ Remote acceptance before merge:
 
 PR #157 is closed/merged. The previous continuation branch is historical. Detailed integration evidence remains archived in `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`.
 
-## 8. Next gate — evidence qualification
+## 8. Parallel active lanes
+
+There is no automatic next SDE production slice.
+
+### SDE/product mainline
+
+Evidence collection / qualification remains the main product-development lane. Do not start C5/V2 without qualifying E3/E4 evidence.
+
+### Current-only Recovery maintenance lane
+
+`codex/current-only-recovery-cleanup` is intentionally active while product-policy code is paused. The branch may clean persistence architecture but must not change Storyteller recommendation policy.
+
+Execution order:
+
+1. R1 field-by-field Recovery/wire disposition matrix;
+2. R2 high-confidence dead persistence surface (`WerewolfRecovery`, permanently-null draft wire keys, dead Klutz draft Recovery field);
+3. R3 retire old NightCheckpoint Map persistence/fallback while preserving the typed live transaction model;
+4. R4 explicit current-only compatibility cleanup (TB completion v1, TB rotation v1, DecisionTrace v1 migration);
+5. R5 implicit old-shape fallback tightening where current writers prove strict ownership;
+6. R6 proven derivation cleanup only after authority tests;
+7. leave bookkeeping/diagnostic transport/SideEffect ownership as separate follow-up if they would broaden the slice.
+
+## 9. Next gate — evidence qualification
 
 There is no automatic next SDE production slice.
 
@@ -148,6 +175,6 @@ Next work should:
 
 If no predicate qualifies, continue targeted evidence acquisition rather than creating placeholder V2 behavior.
 
-## 9. Scope still blocked
+## 10. Scope still blocked
 
 Do not start `BEGINNER_CONSERVATIVE_V2`, add new policy weights/thresholds, broaden player-count/Traveller scope, or perform production cutover without the required E3/E4 evidence. C5 and SDE-3E remain blocked as recorded in the roadmap.
