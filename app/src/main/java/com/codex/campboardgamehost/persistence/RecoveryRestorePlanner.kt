@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
-import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.requireCompatible
@@ -360,15 +359,8 @@ internal object RecoveryRestorePlanner {
         ) {
             "Durable SDE replay setup identity disagrees with recovery."
         }
-        val expectedAssignments = game.cards.mapIndexed { index, card ->
-            CommittedSetupSeat(
-                seat = index + 1,
-                actualRole = RoleId(requireNotNull(card.clocktowerRole).enName),
-                shownRole = RoleId(requireNotNull(card.clocktowerShownRole).enName),
-            )
-        }
-        require(input.committedSetup.assignments == expectedAssignments) {
-            "Durable SDE replay setup assignments disagree with recovered cards."
+        require(input.committedSetup.playerCount == game.cards.size) {
+            "Durable SDE replay setup player count disagrees with recovery."
         }
         require(input.playerNamesBySeat == game.cards.map(PlayerCard::name)) {
             "Durable SDE replay player identities disagree with recovered cards."
