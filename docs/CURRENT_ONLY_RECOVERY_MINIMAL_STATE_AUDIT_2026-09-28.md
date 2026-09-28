@@ -3,7 +3,7 @@
 > Date: 2026-09-28 Australia/Sydney  
 > Branch: `codex/current-only-recovery-cleanup`  
 > Base reviewed before branch creation: `main@5d2982a7492a5092a898436a0386b822ee7343f5`  
-> Status: **R0 BROAD AUDIT COMPLETE / R1 FIELD DISPOSITION COMPLETE / R2 HIGH-CONFIDENCE CLEANUP NEXT**
+> Status: **R0–R6 COMPLETE / R7 SEPARATE OWNERSHIP FOLLOW-UP**
 
 ## 1. Product decision
 
@@ -357,32 +357,51 @@ Implementation must stay small and independently reviewable.
 ~~~text
 R0  document product contract + broad audit                         COMPLETE
 R1  focused current Recovery field/wire disposition matrix          COMPLETE
-R2  delete high-confidence dead Recovery surface                    NEXT
+R2  delete high-confidence dead Recovery surface                    COMPLETE
     - WerewolfRecovery persistence-only surface
     - permanently-null obsolete draft wire keys
     - dead Klutz draft Recovery field
-R3  retire old NightCheckpoint persistence shell/fallback
+R3  retire old NightCheckpoint persistence shell/fallback           COMPLETE
     - keep typed live NightCheckpoint domain behavior
     - direct current Recovery mapping
-R4  remove explicit current-only compatibility drift
+R4  remove explicit current-only compatibility drift                COMPLETE
     - TB setup completion v1 read path
     - TB rotation history v1 read path
     - DecisionTrace schema-v1 migration
-R5  tighten current-Recovery-reachable old-shape fallback where current writers prove strict fields
+R5  tighten current-Recovery-reachable old-shape fallback           COMPLETE
     - missing current action timeline must fail closed
     - do not delete generic epistemic `Legacy*` semantics without separate reachability proof
-R6  derive redundant Recovery state only where R1 proves authority
+R6  derive redundant Recovery state only where R1 proves authority  COMPLETE
     - Undercover duplicates
     - semantic-history mode
     - timeline cursor
     - stable-only irrelevant continuation values
-R7  ownership follow-up
+R7  ownership follow-up                                               SEPARATE FOLLOW-UP
     - setup-rotation bookkeeping
     - SDE replay transport
     - SideEffect / lifecycle persistence trigger architecture
 ~~~
 
-R2–R6 may be split further if fan-out or validation risk is larger than expected. R7 is explicitly not required to complete the initial cleanup.
+R2–R6 are complete. R7 remains explicitly outside the initial cleanup completion boundary.
+
+### 10.1 R5/R6 acceptance checkpoints
+
+R5 tightened the last current-Recovery-reachable old-shape fallback:
+
+- missing `clocktowerActionTimeline` now fails closed instead of reconstructing an empty timeline;
+- generic epistemic `Legacy*` semantics were intentionally left untouched because they remain broader domain concepts rather than active-Recovery compatibility by name alone;
+- accepted checkpoint: `3db2644374fcf6977185b59bc603f004aa8b92ff`;
+- GitHub acceptance: CI #3488 **SUCCESS**, R2 #3239 **SUCCESS**.
+
+R6 completed the derived-state cleanup with authority preserved:
+
+- Undercover Recovery no longer persists `undercoverCount`, `includeBlank`, or `lastWordsMode`; count and Blank presence are derived from recovered cards, while `lastWordsMode` remains setup/next-game configuration rather than current-game Recovery state;
+- Stable Recovery normalizes `currentDealIndex` to `0`; `PassPhone` / `RevealCard` continue to persist the exact identity-handoff index;
+- Clocktower Recovery no longer persists `semanticHistoryMode`; current-only restore uses the production contract `GLOBAL_V1` without deleting the broader live/session semantic-mode domain;
+- Clocktower Recovery no longer persists `nextTimelineGlobalSequence`; it is reconstructed as `max(committed global action/observation sequence) + 1`, or `0` for empty history, with cursor exhaustion failing closed;
+- live Clocktower session/SDE cursor and semantic-mode ownership remain unchanged;
+- accepted checkpoint: `30f8a01fe8f2fb53648a838f1018b1d9148375d0`;
+- GitHub acceptance: CI #3489 **SUCCESS**, R2 #3240 **SUCCESS**.
 
 ## 11. Validation strategy
 
