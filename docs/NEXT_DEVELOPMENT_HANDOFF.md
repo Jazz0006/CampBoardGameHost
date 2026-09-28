@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Active product implementation PR: **none yet — DLB route is implementation-ready after this documentation convergence**  
+> Active product implementation PR: **#169 — DLB-0 typed intermediate setup (Draft; executable checkpoint accepted, awaiting explicit merge authorization)**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
 > Product next gate: **DLB-1 visible-roster deal cutover; DLB-0 typed intermediate setup is accepted; targeted EvidenceLab acquisition continues in parallel**
 
@@ -38,7 +38,7 @@ Requirements:
 - preserve the current working tree;
 - do not reset/discard unrelated work;
 - treat merged PR #157 and its historical continuation branch as completed evidence, not as the current branch;
-- create a fresh branch from current `main` for DLB-0 after this documentation convergence is accepted/merged; create a separate fresh branch for any later C5 implementation slice;
+- after PR #169 is explicitly authorized and merged, create a fresh branch from the then-live `main` for DLB-1; create a separate fresh branch for any later C5 implementation slice;
 - treat merged PR #165 and `codex/current-only-recovery-cleanup` as completed historical maintenance, not the active development branch;
 - no PR merge, ready transition, rebase or force-push without explicit authorization.
 
@@ -117,8 +117,8 @@ Authority:
 Immediate sequence:
 
 ```text
-DLB-0 typed intermediate setup
--> DLB-1 visible-roster deal cutover
+DLB-0 typed intermediate setup COMPLETE
+-> DLB-1 visible-roster deal cutover NEXT
 -> DLB-2 legal Drunk candidate + hypothetical projector
 -> DLB-3 shadow SDE decision / DecisionTrace
 -> DLB-4 canonical commit before reveal
