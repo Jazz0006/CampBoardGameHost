@@ -1,6 +1,6 @@
 # SDE-3 — Provisional Policy and Continuous Calibration Route
 
-> Updated: 2026-09-28 Australia/Sydney  
+> Updated: 2026-09-29 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **LONG-LIVED SDE-3 ARCHITECTURE / CALIBRATION ROUTE; LIVE EXECUTION STATUS IS ROADMAP/HANDOFF**  
 > Parent architecture: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`  
@@ -10,11 +10,16 @@
 > Historical SDE-3C completion reference: `docs/SDE_3C5_MULTI_POLICY_REPLAY_COMPLETION_AUDIT_2026-09-24.md`  
 > Current SDE-3D gate audit: `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`  
 > Frozen V1 baseline: `docs/SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`  
-> Targeted evidence contract: `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`
+> Targeted evidence contract: `docs/SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`  
+> Current lifecycle amendment: `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
 ## 1. Decision
 
-Execution amendment (updated 2026-09-28): the historical C0–C3 integration closure, CR-A/B/C correctness repair, C4/3D2, IF-D and RH-E are complete; the finished integration/correctness routes are archived under `archive/checkpoints/sde/`. Engineering prerequisite completion does not itself authorize a new policy version. The current gate is the E3/E4 qualification audit, and the roadmap remains the single live status authority.
+Execution amendment (updated 2026-09-29): the historical C0–C3 integration closure, CR-A/B/C correctness repair, C4/3D2, IF-D and RH-E are complete; the finished integration/correctness routes are archived under `archive/checkpoints/sde/`. Engineering prerequisite completion does not itself authorize a new policy version.
+
+The 2026-09-29 DLB route is a newer **product lifecycle amendment**: Drunk seat assignment is late-bound after shown identities are seated, then canonically committed before identity reveal; first-night Storyteller-controlled decisions are staged at latest-safe dependency barriers. Older SDE documents that treated exact Drunk identity as an already committed setup input are historical for that ownership assumption.
+
+This does **not** mutate `BEGINNER_CONSERVATIVE_V1`. DLB-3 begins shadow-only. Any Drunk-assignment preference/rejection consumed by production requires an explicitly versioned decision-surface contract and its own cutover gate. The roadmap remains the single live status authority.
 
 The Storyteller project must continue even though final expert-policy calibration is incomplete.
 
@@ -31,7 +36,7 @@ SDE-3D calibrated policy freeze                             IN PROGRESS / 3D0-3D
 SDE-3E automatic production cutover                         BLOCKED PER SURFACE ON 3D GATES
 ~~~
 
-External evidence collection continues in parallel rather than sitting on the critical engineering path.
+External evidence collection continues in parallel. For the DLB surface, reconstructable expert Drunk-assignment evidence feeds the shadow-to-production cutover gate; for C5/V2, the existing E3/E4 qualification rules remain unchanged. These are distinct authorization gates.
 
 ## 2. Product strategy
 
