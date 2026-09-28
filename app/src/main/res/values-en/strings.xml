@@ -91,12 +91,7 @@
     <string name="outcome_clocktower_evil_title">Evil Wins</string>
     <string name="outcome_clocktower_evil_summary">Only two players remain and the Demon is still alive</string>
     <string name="outcome_clocktower_evil_reason">%1$d players are alive, including %2$d Demon.</string>
-    <string name="last_words_none">None</string>
-    <string name="last_words_first_day">Day 1</string>
-    <string name="last_words_first_two_days">First 2 days</string>
-    <string name="last_words_always">Always</string>
     <string name="name_separator">,\u0020</string>
-    <string name="elimination_record_with_note_format">%1$s (%2$s)</string>
     <string name="clocktower_phase_first_night">First Night</string>
     <string name="clocktower_phase_day">Day %1$d</string>
     <string name="clocktower_phase_night">Night %1$d</string>
