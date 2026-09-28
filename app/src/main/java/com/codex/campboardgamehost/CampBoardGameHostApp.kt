@@ -35,7 +35,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -67,7 +66,6 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
-import com.codex.campboardgamehost.clocktower.session.commitShownRoleBoundary
 import com.codex.campboardgamehost.clocktower.session.commitPoisonTargetBoundary
 import com.codex.campboardgamehost.clocktower.session.synchronizePlayerDeathWithinCurrentRevision
 import com.codex.campboardgamehost.clocktower.session.synchronizePoisonTargetWithinCurrentRevision
@@ -446,7 +444,6 @@ internal fun CampBoardGameHostApp() {
     var showNewGameConfirmation by remember { mutableStateOf(false) }
     var undercoverCount by remember { mutableStateOf(1) }
     var includeBlank by remember { mutableStateOf(false) }
-    var lastWordsMode by remember { mutableStateOf(LastWordsMode.FirstDay) }
     var currentDealIndex by remember { mutableStateOf(0) }
     var round by remember { mutableStateOf(1) }
     var selectedElimination by remember { mutableStateOf<String?>(null) }
@@ -467,8 +464,6 @@ internal fun CampBoardGameHostApp() {
     var clocktowerRavenkeeperTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerRedHerring by remember { mutableStateOf<String?>(null) }
     var clocktowerRecommendedDemonBluffRoleNames by remember { mutableStateOf<List<String>>(emptyList()) }
-    var clocktowerRecommendedDrunkInvestigatorRoleName by remember { mutableStateOf<String?>(null) }
-    var clocktowerRecommendedDrunkInvestigatorSeats by remember { mutableStateOf<List<Int>>(emptyList()) }
     var clocktowerButlerMaster by remember { mutableStateOf<String?>(null) }
     var clocktowerMonkProtectedTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerConfirmedMonkProtectedTarget by remember { mutableStateOf<String?>(null) }
@@ -514,7 +509,6 @@ internal fun CampBoardGameHostApp() {
         mutableStateOf<TroubleBrewingSetupRotationRecord?>(null)
     }
     var clocktowerRulesetRef by remember { mutableStateOf<RulesetRef?>(null) }
-    var clocktowerRulesetRoleIds by remember { mutableStateOf<Set<RoleId>>(emptySet()) }
     var showResults by remember { mutableStateOf(false) }
     var gameOutcome by remember { mutableStateOf<GameOutcome?>(null) }
     var newCommonPlayerName by remember { mutableStateOf("") }
@@ -997,60 +991,6 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun nextNightPublicAliveObservationPreflightOrNull(): Pair<String, Int>? {
-        val originalDeathName = clocktowerPendingNightDeath
-        val dawnDeathFacts = resolveTroubleBrewingDawnDeathFacts(
-            cards = cards,
-            targetName = originalDeathName,
-            poisonedPlayerName = clocktowerConfirmedPoisonTarget,
-            monkProtectedTargetName = clocktowerConfirmedMonkProtectedTarget,
-        )
-        val baseGameState = cards.toClocktowerGameState(
-            currentClocktowerScript,
-            clocktowerGameSeed,
-            poisonedPlayerName = clocktowerConfirmedPoisonTarget,
-        )
-        val effectiveNightState = ClocktowerEffectiveNightState(
-            effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
-                (index + 1).takeIf { card.eliminatedRound == null }
-            }.toSet(),
-            effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-                card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-            }.toMap(),
-        )
-        val demonRoleIds = cards.mapNotNull { card ->
-            card.clocktowerRole
-                ?.takeIf { card.clocktowerTeam == ClocktowerTeam.Demon }
-                ?.let { role -> RoleId(role.enName) }
-        }.toSet()
-        val deathTransition = NightDawnResolutionPlanner.planValidatedNightDeath(
-            baseGameState = baseGameState,
-            checkpoint = currentClocktowerNightCheckpoint(),
-            input = NightDawnDeathResolutionInput(
-                originalDeathSeat = dawnDeathFacts.originalDeathSeat,
-                mayorSeat = dawnDeathFacts.mayorSeat,
-                mayorRedirectMayApply = dawnDeathFacts.mayorSeat != null,
-                attackOutcome = dawnDeathFacts.attackOutcome,
-                demonSafeSeats = dawnDeathFacts.demonSafeSeats,
-                effectiveNightState = effectiveNightState,
-                demonRoleIds = demonRoleIds,
-            ),
-        )
-        val resolvedDeathSeat = deathTransition.dawnCommitIntent?.death?.targetSeat ?: return null
-        val resolvedDeathName = cards.getOrNull(resolvedDeathSeat - 1)?.name ?: return null
-        val eventOffset =
-            if (
-                dawnDeathFacts.mayorSeat != null &&
-                dawnDeathFacts.originalDeathSeat != null &&
-                resolvedDeathSeat != dawnDeathFacts.originalDeathSeat
-            ) {
-                2
-            } else {
-                1
-            }
-        return resolvedDeathName to (clocktowerEventCounter + eventOffset)
-    }
-
     fun addClocktowerEvent(
         type: ClocktowerEventType,
         title: String,
@@ -1331,7 +1271,6 @@ internal fun CampBoardGameHostApp() {
 
         undercoverCount = 1
         includeBlank = false
-        lastWordsMode = LastWordsMode.FirstDay
         selectedElimination = null
 
         selectedClocktowerScript = null
@@ -1339,7 +1278,6 @@ internal fun CampBoardGameHostApp() {
         publishClocktowerSessionView()
         committedClocktowerSetup = null
         committedTroubleBrewingSetupRotationRecord = null
-        clocktowerRulesetRoleIds = emptySet()
         clocktowerRulesetRef = null
         clocktowerPhase = ClocktowerPhase.FirstNight
         clocktowerNightStartedState.value = false
@@ -1360,8 +1298,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerRavenkeeperTarget = null
         clocktowerRedHerring = null
         clocktowerRecommendedDemonBluffRoleNames = emptyList()
-        clocktowerRecommendedDrunkInvestigatorRoleName = null
-        clocktowerRecommendedDrunkInvestigatorSeats = emptyList()
         clocktowerButlerMaster = null
         clocktowerMonkProtectedTarget = null
         clocktowerConfirmedMonkProtectedTarget = null
@@ -1418,11 +1354,6 @@ internal fun CampBoardGameHostApp() {
                     ),
                 )
                 publishClocktowerSessionView()
-                clocktowerRulesetRoleIds = if (game.identity.script == ClocktowerScript.TroubleBrewing) {
-                    runtime?.rulesetBasis?.roleIds.orEmpty()
-                } else {
-                    emptySet()
-                }
                 clocktowerRulesetRef = runtime?.rulesetRef
                 committedClocktowerSetup =
                     runtime?.sdeReplayMaterialization?.input?.toCommittedSetup()
@@ -1592,15 +1523,12 @@ internal fun CampBoardGameHostApp() {
                         }.enName)
                     }.toSet(),
                 )
-                clocktowerRulesetRoleIds = rulesetBasis.roleIds
                 clocktowerRulesetRef = troubleBrewingRulesetRefFor(rulesetBasis)
                     ?: error("Unable to resolve Trouble Brewing ruleset reference at setup.")
             } else {
-                clocktowerRulesetRoleIds = emptySet()
                 clocktowerRulesetRef = null
             }
         } else {
-            clocktowerRulesetRoleIds = emptySet()
             clocktowerRulesetRef = null
         }
         clocktowerPendingNightDeath = null
@@ -1615,10 +1543,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerRavenkeeperTarget = null
         clocktowerRedHerring = null
         clocktowerRecommendedDemonBluffRoleNames = emptyList()
-        // Identity is committed before reveal; a Drunk's concrete first-night
-        // clue is not, because the Poisoner may still change its legality.
-        clocktowerRecommendedDrunkInvestigatorRoleName = null
-        clocktowerRecommendedDrunkInvestigatorSeats = emptyList()
         clocktowerButlerMaster = null
         clocktowerMonkProtectedTarget = null
         clocktowerConfirmedMonkProtectedTarget = null
@@ -1959,28 +1883,6 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun setClocktowerShownRole(playerName: String, nextRole: ClocktowerRole) {
-        val index = cards.indexOfFirst { it.name == playerName }
-        if (index >= 0) {
-            val targetSeat = index + 1
-            requireClocktowerGameSession().commitShownRoleBoundary(
-                seat = targetSeat,
-                shownRole = RoleId(nextRole.enName),
-            )
-            publishClocktowerSessionView()
-            invalidateA4RevisionScope()
-            cards[index] = cards[index].copy(
-                roleLabel = nextRole.nameFor(language),
-                clocktowerShownRole = nextRole,
-                word = context.getString(
-                    R.string.clocktower_card_desc_format,
-                    nextRole.team.label(context),
-                    nextRole.descriptionFor(language),
-                ),
-            )
-        }
-    }
-
     fun promoteScarletWomanIfNeeded(): String? {
         val alivePlayers = cards.filter { it.eliminatedRound == null }
         // The Demon is already marked dead when this runs: four alive now means
@@ -2240,8 +2142,6 @@ internal fun CampBoardGameHostApp() {
                         ravenkeeperTarget = clocktowerRavenkeeperTarget,
                         redHerring = clocktowerRedHerring,
                         recommendedDemonBluffRoleNames = clocktowerRecommendedDemonBluffRoleNames,
-                        recommendedDrunkInvestigatorRoleName = clocktowerRecommendedDrunkInvestigatorRoleName,
-                        recommendedDrunkInvestigatorSeats = clocktowerRecommendedDrunkInvestigatorSeats,
                         butlerMaster = clocktowerButlerMaster,
                         monkProtectedTarget = clocktowerConfirmedMonkProtectedTarget,
                         monkProtectedDraftTarget = clocktowerMonkProtectedTarget,
@@ -2362,10 +2262,6 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerConfirmedPoisonTarget = transaction.checkpoint.confirmedPoisonTarget
                                 clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
                                 clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
-                                // A Drunk's shown role is committed, but any concrete
-                                // first-night clue remains provisional until displayed.
-                                clocktowerRecommendedDrunkInvestigatorRoleName = null
-                                clocktowerRecommendedDrunkInvestigatorSeats = emptyList()
                             }
                         },
                         onSelectFortuneTellerFirst = {
@@ -2404,15 +2300,6 @@ internal fun CampBoardGameHostApp() {
                                 ?.let { decision -> cards.getOrNull(decision.seat - 1)?.name }
                             if (recommendedRedHerring != null && recommendedRedHerring != clocktowerRedHerring) {
                                 clocktowerRedHerring = recommendedRedHerring
-                                setupChanged = true
-                            }
-                            // Concrete Drunk information is provisional: never carry a
-                            // setup recommendation across a later Poisoner decision.
-                            if (clocktowerRecommendedDrunkInvestigatorRoleName != null ||
-                                clocktowerRecommendedDrunkInvestigatorSeats.isNotEmpty()
-                            ) {
-                                clocktowerRecommendedDrunkInvestigatorRoleName = null
-                                clocktowerRecommendedDrunkInvestigatorSeats = emptyList()
                                 setupChanged = true
                             }
                             val recommendedDemonBluffs = plan.decisions
@@ -3712,12 +3599,6 @@ internal fun EmptyStateCard(text: String) {
             color = Color(0xFF6F7B74),
         )
     }
-}
-
-@Composable
-internal fun EliminationRecord.displayText(): String {
-    val base = stringResource(R.string.elimination_record_format, round, playerName)
-    return note?.let { stringResource(R.string.elimination_record_with_note_format, base, it) } ?: base
 }
 
 internal fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): String = when (gameKind) {

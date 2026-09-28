@@ -77,12 +77,7 @@
     <string name="outcome_clocktower_evil_title">邪恶胜利</string>
     <string name="outcome_clocktower_evil_summary">场上只剩两名玩家且恶魔仍然存活</string>
     <string name="outcome_clocktower_evil_reason">当前存活 %1$d 名玩家，其中 %2$d 名恶魔仍在场。</string>
-    <string name="last_words_none">无遗言</string>
-    <string name="last_words_first_day">第一天</string>
-    <string name="last_words_first_two_days">前两天</string>
-    <string name="last_words_always">全程</string>
     <string name="name_separator">、</string>
-    <string name="elimination_record_with_note_format">%1$s（%2$s）</string>
     <string name="clocktower_phase_first_night">首夜</string>
     <string name="clocktower_phase_day">第 %1$d 天</string>
     <string name="clocktower_phase_night">第 %1$d 夜</string>
