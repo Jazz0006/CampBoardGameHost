@@ -163,8 +163,8 @@ C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
 ~~~text
 query live main / workspace
 -> DLB document authority convergence (2026-09-29 route)
--> DLB-0 typed intermediate setup
--> DLB-1 visible-roster deal cutover
+-> DLB-0 typed intermediate setup COMPLETE
+-> DLB-1 visible-roster deal cutover NEXT
 -> DLB-2 legal Drunk candidate domain + hypothetical projector
 -> DLB-3 shadow SDE decision + DecisionTrace/replay
 -> DLB-4 canonical Drunk commit before reveal
