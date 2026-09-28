@@ -35,11 +35,13 @@ PR #157 merged executable integration baseline:
 
 `02845a470761a988f0041d8c1027b0e2c58a7e05`
 
-Current reviewed `main` before the 2026-09-28 Recovery cleanup branch was created:
+Current canonical `main` after the 2026-09-28 current-only Recovery cleanup:
 
-`5d2982a7492a5092a898436a0386b822ee7343f5`
+`b297484cd055b6aa5cfaf1c9b1c4093832af77da`
 
-The delta from `02845a47...` to `5d2982a7...` is documentation-only and does not change the accepted executable SDE/Recovery code boundary.
+PR #165 — `Recovery: enforce current-only minimal persistence` — was explicitly authorized and squash-merged on 2026-09-28. Recovery R0–R6 are complete; R7 remains a separate ownership follow-up and is not part of the completed cleanup boundary.
+
+The previous `5d2982a7...` baseline is historical. The executable SDE policy boundary remains unchanged by #165.
 
 The merged scope contains the accepted continuation through CR-A/B/C, C4/SDE-3D2, IF-D, RH-E, and the audited workflow/document integration. The previous continuation branch `codex/sde-history-prefix-route-closure` is now historical rather than the active development baseline.
 
@@ -74,35 +76,34 @@ Completion/cleanup detail:
 - `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
 - `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
 - `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
+- `docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`
 
-## 4. Current priority — evidence qualification before C5
+## 4. Current priority — targeted evidence acquisition after E3/E4 audit
 
-RH-E and the #157 integration/merge closure are COMPLETE. The accepted runtime diagnostic contract remains unchanged: one process-scoped serialized background persistence lane, ordered append/correlation semantics, stale/cancellation protection, bounded retention, and separate evaluation / queue / persistence / total timing. Canonical session state remains authoritative and independent of diagnostic durability.
+RH-E, #157 merge closure, #163 documentation closure, and #165 current-only Recovery cleanup are COMPLETE.
 
-Pre-merge acceptance remained GREEN through the final #157 exact head:
+The 2026-09-27 E3/E4 qualification audit found:
 
-- integration head `371ebf624898c08747203aceaed1254647867214`: CI #3479 GREEN, including Android FULL + `assembleDebug`, ASP contracts, Real Clingo and CI gate; R2 #3232 GREEN;
-- final docs-only PR head `ee3f3e32cd48be4bf634a9f8f70268d022dc84d2`: CI #3480 GREEN and R2 #3233 GREEN;
-- squash merge to `main`: `02845a470761a988f0041d8c1027b0e2c58a7e05`.
+- **no current predicate passes E3** for a new typed policy preference/reason;
+- **no current predicate passes E4** for numeric strength;
+- current evidence does support descriptive feature surfaces and semantic regression targets;
+- therefore **do not create `BEGINNER_CONSERVATIVE_V2` yet**.
 
-The next SDE gate is **evidence qualification**, not production implementation.
+Explicitly non-qualifying current candidates:
 
-Before C5 may start:
+- healthy-information floor / middle band;
+- impaired-information believability / continuity;
+- confirmation-chain impact as a candidate-ordering rule;
+- role-function exposure severity;
+- truth-danger / Red-Herring candidate ordering;
+- Demon-bluff triplet ordering;
+- multi-axis scalar/weights.
 
-- sync or inspect the latest relevant Trouble Brewing evidence from ClocktowerEvidenceLab;
-- identify concrete policy predicates supported by complete-game/expert evidence;
-- grade them against E3/E4 provenance and rationale requirements;
-- only if at least one predicate qualifies, define a minimal evidence-backed C5 slice;
-- keep `BEGINNER_CONSERVATIVE_V1` immutable and implement any new preference in a new policy/version boundary.
+Red Herring remains the strongest descriptive evidence family, but the accepted C4 audit still classifies Evin as E1 yes / E2 candidate / E3 no. Beardy's independent guidance strengthens context dependence for confirmation / role-function exposure but does not provide a replayable choice-over-legal-alternatives policy case.
 
-C5/V2 and SDE-3E remain blocked until that evidence gate is satisfied.
+The next action is **targeted evidence acquisition**, not implementation. Search only for cases that can close a named E3 gap or concrete replay blocker. C5/V2 and SDE-3E remain blocked until that evidence gate is satisfied.
 
-A separate maintenance lane is active while policy implementation is paused for evidence collection:
-
-- branch: `codex/current-only-recovery-cleanup`;
-- authority: `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md`;
-- purpose: remove obsolete current-game persistence compatibility, exact-progress save residue, dead Recovery surfaces, and proven duplicate/derivable Recovery state;
-- this lane must not change SDE ranking/policy and does not unblock C5/V2.
+Recovery maintenance no longer blocks the SDE lane: #165 is merged, R0–R6 are complete, and R7 is a separate follow-up only if its ownership work becomes worth doing.
 
 ## 5. Recovery product boundary
 
@@ -119,7 +120,7 @@ current RecoverySnapshot format
 
 Do not add cross-version migration, old-format reconstruction, tolerant legacy repair or long-term save compatibility unless the product requirement changes explicitly.
 
-The 2026-09-28 re-audit found that later development reintroduced or retained several persistence-only compatibility/minimal-state residues: explicit v1 readers/migration, implicit missing-field legacy fallbacks, dead Werewolf Recovery DTO/codec surface, permanently-null draft wire keys, old NightCheckpoint Map persistence fallback, and duplicate/derivable current Recovery fields. The cleanup route is documented in `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md`.
+The 2026-09-28 current-only Recovery cleanup removed those persistence-only compatibility/minimal-state residues through R0–R6 and was squash-merged as #165 at `b297484cd055b6aa5cfaf1c9b1c4093832af77da`. The completed contract and acceptance record live in `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md`. R7 bookkeeping/transport/lifecycle ownership is a separate follow-up, not unfinished cleanup.
 
 PR #109 reproduced an old/abnormal event/observation half-state. Current production does not expose a physical persistence window for that intermediate state: the game event and semantic projection execute synchronously before later SideEffect/lifecycle Recovery persistence. #109 was therefore closed rather than converted into legacy compatibility code.
 
@@ -157,24 +158,17 @@ C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
 
 ## 8. Immediate execution order
 
-Two non-conflicting lanes are active:
-
 ~~~text
-SDE/product mainline:
-main -> sync / inspect latest ClocktowerEvidenceLab TB evidence
-     -> run E3/E4 qualification audit on concrete policy predicates
-     -> if none qualify: continue evidence acquisition, no V2 code
-     -> if one qualifies: define the smallest C5 slice on a fresh branch
-     -> preserve BEGINNER_CONSERVATIVE_V1 unchanged
-
-maintenance lane:
-codex/current-only-recovery-cleanup
-     -> R1 focused Recovery field/wire disposition audit
-     -> R2+ small independently reviewable cleanup slices
-     -> no SDE ranking/policy change
+main@b297484c... is the clean merged baseline
+-> E3/E4 qualification audit COMPLETE: no qualifying predicate
+-> targeted acquisition for Gap A / B / C / D only
+-> reconstruct committed state + legal alternatives + explicit rationale
+-> rerun E3 qualification
+-> only after PASS create the smallest C5 / V2 slice on a fresh branch
+-> preserve BEGINNER_CONSERVATIVE_V1 unchanged
 ~~~
 
-RH-E and #157 merge closure are complete; do not reopen them unless new current-version evidence exposes a regression.
+Recovery R0–R6 and #157/RH-E closure are complete; do not reopen them unless new current-version evidence exposes a regression. R7 remains separate follow-up work rather than an active lane.
 
 ## 9. Current authorities
 
@@ -185,7 +179,7 @@ Read first:
 3. `docs/TESTING_STRATEGY.md`
 4. this roadmap
 5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
-6. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` — active Recovery cleanup contract / implementation route
+6. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` — completed R0–R6 current-only Recovery cleanup contract / acceptance record
 7. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` — RH-E contract and completed repair record
 8. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md` — completed C4 architecture/evidence boundary
 9. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md` — freeze/cutover gates
