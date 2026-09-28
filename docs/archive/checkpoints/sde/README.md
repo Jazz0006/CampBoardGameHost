@@ -49,3 +49,13 @@ Current execution state:
 - `../../../NEXT_DEVELOPMENT_HANDOFF.md`
 
 Do not infer current status from archived `NEXT`, `READY`, `PASS`, or `COMPLETE` statements.
+
+## 2026-09-29 DLB supersession additions
+
+These SDE-3B documents were moved here because their lifecycle ownership descriptions are historical after the DLB product decision:
+
+- `SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`
+- `SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`
+
+They remain useful completion/evidence records. Do not use their pre-seat Drunk ownership statements as current architecture; see `../../../DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`.
+
