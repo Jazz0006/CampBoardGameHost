@@ -154,7 +154,6 @@ jobs:
           grep -q "internal fun unifiedRegistrationPool" "$selection"
 
           for symbol in \
-            "internal fun recommendationReasonLabel" \
             "internal enum class ClocktowerRegistrationDetail" \
             "internal enum class ClocktowerPairInformationAbility" \
             "internal data class ClocktowerNightStepUi"

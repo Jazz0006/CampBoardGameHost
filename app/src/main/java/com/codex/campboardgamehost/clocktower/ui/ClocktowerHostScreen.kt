@@ -134,8 +134,6 @@ internal fun ClocktowerJudgeScreen(
     ravenkeeperTarget: String?,
     redHerring: String?,
     recommendedDemonBluffRoleNames: List<String>,
-    recommendedDrunkInvestigatorRoleName: String?,
-    recommendedDrunkInvestigatorSeats: List<Int>,
     butlerMaster: String?,
     monkProtectedTarget: String?,
     monkProtectedDraftTarget: String?,
@@ -876,24 +874,6 @@ internal fun ClocktowerJudgeScreen(
         reasonCodes = reasonCodes,
         warningCodes = warningCodes,
     )
-    fun recommendedDrunkInvestigatorOption(actor: PlayerCard): ClocktowerDisplayOption? {
-        if (actor.clocktowerRole?.enName != "Drunk" || actor.clocktowerShownRole?.enName != "Investigator") return null
-        val minionRole = recommendedDrunkInvestigatorRoleName
-            ?.let { roleName -> clocktowerRolesForScript(script).firstOrNull { it.enName == roleName } }
-            ?: return null
-        val candidateCards = recommendedDrunkInvestigatorSeats
-            .mapNotNull { seat -> cards.getOrNull(seat - 1) }
-        if (candidateCards.size != 2) return null
-        return displayOption(
-            label = text("采用的推荐信息", "Applied recommendation"),
-            kind = ClocktowerDisplayKind.EitherOne,
-            title = text("调查员信息", "Investigator information"),
-            primary = minionRole.nameFor(language),
-            secondary = recommendedDrunkInvestigatorSeats.joinToString("   "),
-            footer = text("在下面两位玩家之中", "One of these two players"),
-            isDefaultRecommendation = true,
-        )
-    }
     fun recommendationStyleLabel(style: RecommendationStyle): String = when (style) {
         RecommendationStyle.GENTLE -> text("推荐·稳健", "Recommended · gentle")
         RecommendationStyle.BALANCED -> text("推荐·平衡", "Recommended · balanced")
@@ -1921,8 +1901,6 @@ internal fun ClocktowerJudgeScreen(
     }
     val minionCards = cards.filter { it.clocktowerRole?.team == ClocktowerTeam.Minion }
     fun seatNumberText(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
-    fun twoSeatNumbers(first: PlayerCard?, second: PlayerCard?): String? =
-        if (first != null && second != null) "${seatNumberText(first)}   ${seatNumberText(second)}" else null
     val shouldGiveFirstNightEvilInfo = cards.size >= 7
     val legalDemonBluffs = legalDemonBluffRoles(
         scriptRoles = clocktowerRolesForScript(script),
@@ -2425,8 +2403,7 @@ internal fun ClocktowerJudgeScreen(
                                 displayFooter = if (investigatorTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
                                 hostInstruction = text("轻拍调查员，示意睁眼。把结果只给他看；不要让其他玩家看到被点名的两人。", "Tap the Investigator to wake them. Show the result only to that player; do not let anyone else see the two named players."),
                                 displayOptions = { actor ->
-                                    listOfNotNull(recommendedDrunkInvestigatorOption(actor)) +
-                                        recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
                                 },
                                 legalSelectionOptions = { actor ->
                                     legalPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
