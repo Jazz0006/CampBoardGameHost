@@ -189,3 +189,21 @@ The PR diff at this checkpoint contains exactly the DLB-0 production contract, i
 ### Acceptance escalation
 
 The next commit carries `[full-ci]` only to escalate this exact DLB-0 logical checkpoint to T4. It introduces no additional production behavior.
+
+
+## 9. T4 acceptance result
+
+Accepted executable checkpoint:
+
+`f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`
+
+Exact-head remote acceptance:
+
+- CI #3506 / run `36499904998`: GREEN;
+- Android: `./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks` — GREEN, `BUILD SUCCESSFUL`;
+- ASP contract tests — GREEN;
+- Real Clingo cross-validation — GREEN;
+- aggregate CI gate — GREEN;
+- R2 #3251 / run `36499905042` — GREEN.
+
+This establishes DLB-0 as COMPLETE at the executable checkpoint above. Any later commit in this PR that changes only documentation must not be relabelled as a different executable acceptance tree.
