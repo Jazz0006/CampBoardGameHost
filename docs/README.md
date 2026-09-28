@@ -1,6 +1,6 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-09-28 Australia/Sydney  
+> 最后整理：2026-09-29 Australia/Sydney  
 > 目标：新开发会话只读取当前权威。历史过程、已撤销路线和中间校准实验不再留在 active docs 中制造歧义。
 
 ## 默认阅读顺序
@@ -10,15 +10,18 @@
 3. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
-6. [`SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`](SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md) — **当前 evidence gate 结果与 Gap A/B/C/D targeted acquisition 入口**
-7. [`CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md`](CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md) — **已完成 R0–R6 的 current-only Recovery 产品边界 / 验收记录；R7 为独立 follow-up**
-8. [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md) — SDE-3 architecture / evidence route；**不承担 live PR/执行状态**
-9. [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md) — **3D/3E surface-scoped gate authority**
-10. [`SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md) — **V1 immutable baseline**
-11. [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md) — first-night policy / evidence synthesis
-12. [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md) — targeted evidence acquisition contract
-13. [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv) — external evidence catalog
-14. 需要全局 SDE 架构背景时，再读 [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
+6. [`DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`](DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md) — **当前 Drunk late-binding / staged first-night / decomposition 实施权威**
+7. [`DRUNK_LATE_BINDING_AND_FIRST_NIGHT_DECISION_SEQUENCE_AUDIT_2026-09-28.md`](DRUNK_LATE_BINDING_AND_FIRST_NIGHT_DECISION_SEQUENCE_AUDIT_2026-09-28.md) — DLB source audit
+8. [`APP_HOST_DECOMPOSITION_PLAN_AUDIT_2026-09-28.md`](APP_HOST_DECOMPOSITION_PLAN_AUDIT_2026-09-28.md) — bounded decomposition guardrail audit
+9. [`SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`](SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md) — **C5/V2 evidence gate 与 Gap A/B/C/D targeted acquisition 入口**
+10. [`CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md`](CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md) — **已完成 R0–R6 的 current-only Recovery 产品边界 / 验收记录；R7 为独立 follow-up**
+11. [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md) — SDE-3 architecture / evidence route；**不承担 live PR/执行状态**
+12. [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md) — **3D/3E surface-scoped gate authority**
+13. [`SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md) — **V1 immutable baseline**
+14. [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md) — first-night policy / evidence synthesis
+15. [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md) — targeted evidence acquisition contract
+16. [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv) — external evidence catalog
+17. 需要全局 SDE 架构背景时，再读 [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 
 随后检查 live 分支、工作区和差异；远端验收时独立查询 exact-head PR / checks。不要从 memory、Git history、archive、已完成 slice audit 或旧 PR 的 `NEXT / READY / COMPLETE` 推断当前状态。执行环境以 root `AGENTS.md` 和当前 workflow 为准：**GitHub Connector 默认负责日常 repository / PR / CI 工作；Mini MCP + Codex CLI 只作为需要完整本地上下文的大文件分析/执行补充。**
 
@@ -40,13 +43,17 @@ SDE integration closure               C0–C3 HISTORICAL CHECKPOINT ACCEPTED
 Post-audit correctness repair         CR-A / CR-B / CR-C COMPLETE / ACCEPTED
 SDE-3D calibrated policy freeze        3D0–3D1 + C4/SDE-3D2 COMPLETE / IF-D COMPLETE / RH-E COMPLETE
 SDE-3E automatic production cutover    C5 BLOCKED ON QUALIFYING E3/E4 / PER-SURFACE GATES
+DLB Drunk late-binding / first-night     CURRENT IMPLEMENTATION ROUTE
+bounded App/Host decomposition           GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 ~~~
 
-当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。已确认的长期边界是：#157 / RH-E 已完成；#165 current-only Recovery cleanup 已合并，R0–R6 完成，R7 仅是独立后续；没有自动授权的 C5/V2 production slice。2026-09-27 E3/E4 qualification 结果是当前证据门：现有候选均不足以授权新的 policy preference/weight，主线转为针对 Gap A/B/C/D 的真实对局 / 专家 rationale 采集。旧 `codex/sde-history-prefix-route-closure` 与 `codex/current-only-recovery-cleanup` 都只作为历史分支，不是当前开发入口。
+当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。已确认的长期边界是：#157 / RH-E 已完成；#165 current-only Recovery cleanup 已合并，R0–R6 完成，R7 仅是独立后续；C5/V2 仍没有自动授权的 production slice。2026-09-29 产品路线已切换到 DLB：Drunk seat 在 shown identities 落座后由规则合法域 + SDE/Storyteller 决策，再在身份展示前 canonical commit；首夜 Storyteller 决策按 latest-safe dependency barrier 分阶段提交。EvidenceLab 采集继续并行，同时服务 DLB Drunk-assignment cutover evidence 与原 C5/V2 E3/E4 gate，但两者不得混为一个授权门。
 
 ## 当前政策核心
 
 - legality、consequence、selection policy 必须分层。
+- Drunk assignment 的新权威链为：shown-seat assignment -> rules-owned legal candidate domain -> hypothetical consequence projection -> typed SDE/Storyteller decision -> canonical commit。旧“Drunk shown identity 在 seating 前已是 setup-persistent input”的结论已被 2026-09-29 DLB route supersede。
+- Red Herring 使用 generic observation/dependency barrier；Spy 是当前 TB 的一个 observer，而不是需要写死的 policy 特判。
 - `BEGINNER_CONSERVATIVE_V1` 已冻结为 immutable provisional baseline：只有 exact zero Evil-topology hard rejection，其余 viable survivors 保持 equivalence band，并使用 `SEEDED_HASH_V1`。
 - Spy / Recluse registration 永远是 interaction-scoped，不修改 canonical identity。
 - Chef / Empath 只有在所有合法 Spy/Recluse registration 分支都得到同一个健康值时才是 rule-determined。
@@ -95,6 +102,9 @@ DIAGNOSTIC_ONLY
 
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
 - [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md)
+- [`DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`](DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md)
+- [`DRUNK_LATE_BINDING_AND_FIRST_NIGHT_DECISION_SEQUENCE_AUDIT_2026-09-28.md`](DRUNK_LATE_BINDING_AND_FIRST_NIGHT_DECISION_SEQUENCE_AUDIT_2026-09-28.md)
+- [`APP_HOST_DECOMPOSITION_PLAN_AUDIT_2026-09-28.md`](APP_HOST_DECOMPOSITION_PLAN_AUDIT_2026-09-28.md)
 - [`AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`](AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md)
 - [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
 - [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md)
@@ -118,9 +128,10 @@ If documents conflict, use this order:
 3. `CURRENT_DEVELOPMENT_ROADMAP.md` — current state / priority;
 4. `NEXT_DEVELOPMENT_HANDOFF.md` — current continuation point;
 5. `AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — current GitHub Connector-first / Mini MCP+Codex large-file execution workflow;
-6. `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md` plus current 3D audit — active SDE execution/calibration contract;
-7. `SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md` and targeted evidence contract — policy/evidence background;
-8. external evidence catalog — source inventory/provenance, not standalone normative truth;
-9. long-lived architecture/reference docs;
-10. Mini MCP developer memory — optional advisory navigation/experience only;
-11. completed/superseded workflow docs, slice audits, archive and Git history — historical/completion evidence only.
+6. `DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB lifecycle/implementation authority;
+7. `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md` plus current 3D audit — long-lived SDE/calibration contract where not superseded by DLB lifecycle changes;
+8. `SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md` and targeted evidence contract — policy/evidence background; its pre-DLB setup/sequence model is historical;
+9. external evidence catalog — source inventory/provenance, not standalone normative truth;
+10. long-lived architecture/reference docs;
+11. Mini MCP developer memory — optional advisory navigation/experience only;
+12. completed/superseded workflow docs, slice audits, archive and Git history — historical/completion evidence only.
