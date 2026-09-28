@@ -56,7 +56,8 @@ IF-D durable replay                    COMPLETE
 RH-E                                    COMPLETE
 C5 / V2                                BLOCKED ON E3/E4
 SDE-3E cutover                         BLOCKED PER SURFACE
-DLB-0 typed intermediate setup              COMPLETE / ACCEPTED\nDLB-1 visible-roster deal cutover              NEXT
+DLB-0 typed intermediate setup              COMPLETE / ACCEPTED
+DLB-1 visible-roster deal cutover              NEXT
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -106,7 +107,9 @@ Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as authority:
 - N3150 remains retired from the default validation path;
 - GitHub CI/R2 remains the Android validation and independent acceptance surface.
 
-## 7. Active development lane\n\nDLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`; CI #3506 and R2 #3251 GREEN. The latest DLB-0 PR commits after that checkpoint, if any, are documentation-only closure and do not change the accepted executable tree.
+## 7. Active development lane
+
+DLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`; CI #3506 and R2 #3251 GREEN. The latest DLB-0 PR commits after that checkpoint, if any, are documentation-only closure and do not change the accepted executable tree.
 
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
