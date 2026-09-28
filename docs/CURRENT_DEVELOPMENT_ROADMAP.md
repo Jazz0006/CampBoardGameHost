@@ -21,7 +21,7 @@ CR-A / CR-B / CR-C                                    COMPLETE
 C4 / SDE-3D2                                          COMPLETE
 IF-D durable App replay capture/rebuild               COMPLETE
 RH-E runtime persistence/timing hardening             COMPLETE
-DLB Drunk late-binding / staged first-night route      ARCHITECTURE APPROVED / IMPLEMENTATION NEXT
+DLB-0 typed intermediate setup                         COMPLETE / ACCEPTED\nDLB-1 visible-roster deal cutover                       NEXT
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
@@ -58,7 +58,7 @@ Repository cleanup before RH-E:
 
 Always query live Git/PR state before executable work. Do not rely on a hard-coded live branch HEAD in this document.
 
-## 3. Accepted executable checkpoints
+## 3. Accepted executable checkpoints\n\nDLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`; CI #3506 and R2 #3251 GREEN. DLB-0 added only the typed intermediate setup contract and owning test; current runtime deal semantics remain unchanged until DLB-1.
 
 These are historical acceptance identities, not current branch heads:
 
@@ -82,11 +82,11 @@ Completion/cleanup detail:
 
 The product route changed on 2026-09-29 after the Drunk late-binding and App/Host decomposition audits were reconciled.
 
-The current implementation authority is:
+DLB-0 is implemented and accepted. The current implementation authority remains:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. The main engineering sequence is DLB-0 -> DLB-7, with a shadow-to-production cutover gate before Beginner automatic Drunk authority.
+The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed post-roster/post-seat intermediate state without changing runtime behavior; DLB-1 is now the next implementation slice. The full engineering sequence remains DLB-0 -> DLB-7, with a shadow-to-production cutover gate before Beginner automatic Drunk authority.
 
 The 2026-09-28 App/Host decomposition audit is a guardrail for this work, not a prerequisite campaign:
 
