@@ -61,8 +61,8 @@ Especially valuable:
 
 ### Minimum useful extraction
 
-- complete seat/role map;
-- Drunk shown identity if any;
+- complete final seat/role map;
+- if Drunk is present: final actual Drunk seat + shown identity; for DLB assignment evidence also capture the pre-assignment shown-seat map and recoverable legal Drunk-seat alternatives;
 - Poisoner target if already committed;
 - Demon bluffs;
 - Red Herring;
