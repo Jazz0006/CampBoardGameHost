@@ -3,7 +3,7 @@
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
 > Active product implementation PR: **none yet — DLB route is implementation-ready after this documentation convergence**  
-> Active documentation branch: **`docs/dlb-decomposition-route-20260929`**  
+> Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
 > Product next gate: **DLB-0 typed intermediate setup contract; targeted EvidenceLab acquisition continues in parallel**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
@@ -38,7 +38,7 @@ Requirements:
 - preserve the current working tree;
 - do not reset/discard unrelated work;
 - treat merged PR #157 and its historical continuation branch as completed evidence, not as the current branch;
-- create a fresh branch for any new C5 implementation slice;
+- create a fresh branch from current `main` for DLB-0 after this documentation convergence is accepted/merged; create a separate fresh branch for any later C5 implementation slice;
 - treat merged PR #165 and `codex/current-only-recovery-cleanup` as completed historical maintenance, not the active development branch;
 - no PR merge, ready transition, rebase or force-push without explicit authorization.
 
