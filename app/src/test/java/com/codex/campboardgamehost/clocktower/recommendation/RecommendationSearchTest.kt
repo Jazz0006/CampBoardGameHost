@@ -28,6 +28,7 @@ class SetupRecommendationServiceTest {
             recommendations.map { it.style }.toSet(),
         )
         assertTrue(recommendations.all { it.qualityTier == QualityTier.RECOMMENDED })
+        assertTrue(recommendations.all { it.decisions.isNotEmpty() })
         assertEquals(3, recommendations.map { it.effectSignature }.distinct().size)
     }
 

@@ -43,7 +43,6 @@ internal object RecoveryPreviewLoader {
 internal fun RecoveryPreviewMetadata.toSavedGamePreview(context: Context): SavedGamePreview {
     val gameName = when (gameKind) {
         GameKind.Undercover -> context.getString(R.string.game_who_is_undercover)
-        GameKind.Werewolf -> context.getString(R.string.game_werewolf)
         GameKind.Clocktower -> context.getString(R.string.game_clocktower)
     }
     val stage = when {

@@ -54,10 +54,6 @@ internal object RecoverySnapshotStrictDecoder {
                 outcome = outcome,
                 setupRotationRecord = setupRotationRecord,
             )
-
-            GameKind.Werewolf -> throw IllegalArgumentException(
-                "Werewolf is outside the PS3 typed recovery support surface.",
-            )
         }
 
         return RecoverySnapshot(

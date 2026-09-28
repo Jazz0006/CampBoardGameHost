@@ -61,7 +61,6 @@ internal fun GameScreen(
                 Column {
                     Text(stringResource(R.string.host_panel), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     val gameName = when (gameKind) {
-                        GameKind.Werewolf -> stringResource(R.string.game_werewolf)
                         GameKind.Clocktower -> stringResource(R.string.game_clocktower)
                         GameKind.Undercover -> stringResource(R.string.game_who_is_undercover)
                     }

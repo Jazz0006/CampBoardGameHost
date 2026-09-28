@@ -82,7 +82,7 @@ class RecoveryRestorePlannerTest {
     @Test
     fun removedWerewolfRuntimeRecoveryFailsClosed() {
         val json = RecoverySnapshotJsonCodec.encode(undercoverSnapshot()).apply {
-            put("currentGameKind", GameKind.Werewolf.name)
+            put("currentGameKind", "Werewolf")
         }
 
         assertRejected(prepare(json), RecoveryRejectionReason.MalformedPayload)

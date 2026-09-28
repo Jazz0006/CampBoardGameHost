@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 internal enum class GameKind {
     Undercover,
-    Werewolf,
     Clocktower,
 }
 
@@ -10,11 +9,6 @@ internal enum class Role {
     Civilian,
     Undercover,
     Blank,
-    Villager,
-    Werewolf,
-    Seer,
-    Witch,
-    Hunter,
 }
 
 internal data class PlayerCard(
