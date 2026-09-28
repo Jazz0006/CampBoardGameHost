@@ -154,3 +154,38 @@ No App/Host, SDE, persistence, Recovery, asset, policy V1, or existing setup/dea
 - no Recovery compatibility work;
 - no App/Host decomposition;
 - no generic setup-effect or transaction owner.
+
+
+## 8. RED / GREEN implementation evidence
+
+### RED
+
+Test-only head:
+
+`46b6a6dd391408f8da99f30a58c520cef462e288`
+
+GitHub CI #3504 / run `36499359330` failed in Android compilation exactly because the new DLB-0 contract did not yet exist:
+
+- unresolved `TroubleBrewingVisibleRosterRealizer`;
+- unresolved `TroubleBrewingIntermediateSetup`;
+- unresolved `TroubleBrewingShownSeatAssignment`.
+
+R2 #3249 / run `36499359292` was GREEN. No production file existed on the RED head.
+
+### GREEN / T1
+
+Production head:
+
+`e37c19221c075990473ceed712fafb1cd3dd9d40`
+
+GitHub CI #3505 / run `36499609448` executed:
+
+`./gradlew :app:testFast --no-daemon --build-cache`
+
+and completed `BUILD SUCCESSFUL`. The Android job completed GREEN; CI gate completed GREEN. R2 #3250 / run `36499609438` also completed GREEN.
+
+The PR diff at this checkpoint contains exactly the DLB-0 production contract, its owning typed test, and this audit document. Existing Trouble Brewing runtime wiring remains unchanged.
+
+### Acceptance escalation
+
+The next commit carries `[full-ci]` only to escalate this exact DLB-0 logical checkpoint to T4. It introduces no additional production behavior.
