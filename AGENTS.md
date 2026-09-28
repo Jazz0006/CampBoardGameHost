@@ -534,9 +534,18 @@ For new Clocktower work:
 
 This is a **growth freeze on new responsibility**, not a byte freeze and not a mandate to mechanically shrink the current file.
 
-### App-root decomposition status
+### App-root / Host decomposition status
 
-App-root decomposition S7.1/S7.2 is merged and the campaign is paused before later decomposition work while current rules-correctness work is active. Resume only after a fresh live-state audit and the current roadmap/handoff says to do so.
+The broad D6 decomposition campaign is historical and closed. Its R3 transaction-application NO-GO and setup-effect-owner NO-GO remain active architectural constraints.
+
+The 2026-09-28 live-state audit re-opened only a **bounded maintenance opportunity**, not D6 wholesale. The current product route is `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`: Drunk late-binding / staged first-night sequencing is the mainline behavior change, while decomposition is a guardrail.
+
+- A1 preferences storage and A2 archive storage may run only as independent maintenance slices.
+- H1 first-night evil-information presentation is deferred until the DLB-5 dependency lifecycle is established.
+- H2 runtime recommendation-state projection and A3 presentation catalog require re-audit after the relevant DLB boundaries stabilize.
+- Do not use DLB as a reason to revive a generic App transaction controller, generic setup-effect owner, God context/state object, or second session authority.
+
+Substantial DLB edits to App/Host must follow the recorded architecture pre-flight in the current DLB route before production editing begins.
 
 ## 6. Protected architectural invariants
 
@@ -585,21 +594,22 @@ Read these when relevant:
 
 1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — current execution authority;
 2. newest `docs/NEXT_DEVELOPMENT_HANDOFF_*.md` for the active campaign;
-3. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping;
-4. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — **current GitHub Connector-first / Mini MCP+Codex large-file workflow**;
-5. `docs/MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md` — superseded historical Mini MCP-first adoption record;
-6. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — superseded historical connector/Luna workflow;
-7. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` — exceptional remote one-shot fallback only;
-8. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
-9. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
-10. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers.
+3. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current Drunk late-binding / staged first-night implementation and decomposition authority;
+4. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping;
+5. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — **current GitHub Connector-first / Mini MCP+Codex large-file workflow**;
+6. `docs/MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md` — superseded historical Mini MCP-first adoption record;
+7. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — superseded historical connector/Luna workflow;
+8. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` — exceptional remote one-shot fallback only;
+9. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
+10. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
+11. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers.
 
 If documents disagree, apply this precedence:
 
 1. newest explicit user instruction;
 2. this root `AGENTS.md`;
 3. `docs/TESTING_STRATEGY.md` for test-tier and evidence definitions;
-4. current roadmap/handoff for active-state specifics;
+4. current roadmap/handoff and the current DLB implementation route for active-state/product-lifecycle specifics;
 5. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` for the current execution-path split where not already incorporated here;
 6. older workflow and campaign documents only where non-conflicting.
 

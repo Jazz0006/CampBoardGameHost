@@ -1,3 +1,5 @@
+> **Archived 2026-09-29:** historical SDE-3B staging/ownership document. Current lifecycle authority is `../../../DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`.
+
 # SDE-3B Structure / Feature / Expert-Evidence Staging — 2026-09-23
 
 > Repository: `Jazz0006/CampBoardGameHost`  

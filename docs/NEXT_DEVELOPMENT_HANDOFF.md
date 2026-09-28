@@ -1,10 +1,10 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-09-28 Australia/Sydney  
+> Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Active SDE implementation PR: **none**  
-> Active maintenance branch: **none**  
-> SDE next gate: **targeted EvidenceLab acquisition for a qualifying E3 case**
+> Active product implementation PR: **none yet — DLB route is implementation-ready after this documentation convergence**  
+> Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
+> Product next gate: **DLB-0 typed intermediate setup contract; targeted EvidenceLab acquisition continues in parallel**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -15,10 +15,13 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 3. `docs/TESTING_STRATEGY.md`
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
-6. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` for the completed R0–R6 Recovery cleanup contract / acceptance record
-7. `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
-8. `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
-9. `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
+6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
+7. `docs/DRUNK_LATE_BINDING_AND_FIRST_NIGHT_DECISION_SEQUENCE_AUDIT_2026-09-28.md` — source architecture audit
+8. `docs/APP_HOST_DECOMPOSITION_PLAN_AUDIT_2026-09-28.md` — decomposition guardrail audit
+9. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` for the completed R0–R6 Recovery cleanup contract / acceptance record
+10. `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
+11. `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
+12. `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
 
 Only read older SDE slice audits when a concrete ownership/history question requires them.
 
@@ -35,7 +38,7 @@ Requirements:
 - preserve the current working tree;
 - do not reset/discard unrelated work;
 - treat merged PR #157 and its historical continuation branch as completed evidence, not as the current branch;
-- create a fresh branch for any new C5 implementation slice;
+- create a fresh branch from current `main` for DLB-0 after this documentation convergence is accepted/merged; create a separate fresh branch for any later C5 implementation slice;
 - treat merged PR #165 and `codex/current-only-recovery-cleanup` as completed historical maintenance, not the active development branch;
 - no PR merge, ready transition, rebase or force-push without explicit authorization.
 
@@ -53,6 +56,8 @@ IF-D durable replay                    COMPLETE
 RH-E                                    COMPLETE
 C5 / V2                                BLOCKED ON E3/E4
 SDE-3E cutover                         BLOCKED PER SURFACE
+DLB late-bound Drunk / staged first night ARCHITECTURE APPROVED / IMPLEMENTATION NEXT
+App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
 Repository cleanup state:
@@ -103,11 +108,39 @@ Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as authority:
 
 ## 7. Active development lane
 
-There is no automatic next SDE production slice.
+The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
-The current product-development lane is targeted evidence acquisition / qualification. Recovery R0–R6 is complete and no longer runs as a parallel maintenance lane.
+Authority:
 
-Do not start C5/V2 without qualifying E3/E4 evidence. If a future Recovery ownership problem justifies R7, open it as a fresh independent maintenance slice from current `main`.
+`docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
+
+Immediate sequence:
+
+```text
+DLB-0 typed intermediate setup
+-> DLB-1 visible-roster deal cutover
+-> DLB-2 legal Drunk candidate + hypothetical projector
+-> DLB-3 shadow SDE decision / DecisionTrace
+-> DLB-4 canonical commit before reveal
+-> DLB-4A Experienced assisted UI
+-> DLB-5 latest-safe dependency barriers
+-> cutover gate before Beginner automatic authority
+-> DLB-6 old-contract retirement
+-> DLB-7 acceptance
+```
+
+The App/Host decomposition audit is a constraint on this work, not a prerequisite campaign:
+
+- A1 preferences and A2 archive storage are independent maintenance slices only;
+- H1 waits for DLB-5 and may then extract presentation if the seam is genuinely narrow;
+- H2 and A3 remain deferred for post-DLB re-audit;
+- R3 generic transaction extraction and the generic setup-effect owner remain NO-GO.
+
+Recovery R0–R6 stays complete. R7 remains separate.
+
+Evidence acquisition continues in parallel. Drunk-assignment evidence may qualify the new DLB decision surface; the existing C5/V2 evidence gate remains separate and still blocks `BEGINNER_CONSERVATIVE_V2`.
+
+The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate preference/rejection semantics. DLB-3 is shadow-first; Beginner automatic Drunk authority requires the explicit cutover gate in the DLB route.
 
 ## 8. E3/E4 qualification result — no policy delta authorized
 

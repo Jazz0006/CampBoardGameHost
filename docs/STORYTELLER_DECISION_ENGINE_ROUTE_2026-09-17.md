@@ -2,8 +2,9 @@
 
 > Date: 2026-09-17 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
-> Status: **CURRENT ARCHITECTURE / PRODUCT ROUTE**  
-> Current D5F policy authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
+> Status: **LONG-LIVED ARCHITECTURE / PRODUCT ROUTE; DLB LIFECYCLE AMENDMENT APPLIES**  
+> Current DLB lifecycle authority: `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`  
+> D5F policy/evidence background: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
 > Execution status is intentionally not maintained in this architecture document. See [CURRENT_DEVELOPMENT_ROADMAP.md](CURRENT_DEVELOPMENT_ROADMAP.md) and [NEXT_DEVELOPMENT_HANDOFF.md](NEXT_DEVELOPMENT_HANDOFF.md) for the live continuation.
 > Supersedes as execution authority: first-night-only EPI-MQ routes, earlier productive-uncertainty scoring plans, and the older revision-driven dynamic-decision implementation plan.
 
@@ -27,6 +28,25 @@ The engine must generate decisions that are:
 - strategically robust enough that an ordinary evil team still has several understandable worlds in which it can continue to play.
 
 Night 1 is the first calibration surface, not the architectural endpoint.
+
+### 1.1 2026-09-29 lifecycle amendment
+
+The long-lived engine layering below remains valid, but the Trouble Brewing setup/first-night lifecycle has changed:
+
+```text
+visible roster intent
+-> shown identities seated
+-> rules-owned legal Drunk candidates
+-> hypothetical consequence projection
+-> shadow/versioned SDE decision
+-> canonical Drunk commit
+-> identity reveal
+-> staged first-night decisions at latest-safe dependency barriers
+```
+
+Therefore older statements that exact Drunk identity is already a persistent setup/SDE input before seating are superseded. Red Herring and Demon bluff commitment are no longer assumed to be one immutable setup-time bundle; each must be committed before its first observer/dependency. Player-controlled targets remain player-owned.
+
+This lifecycle amendment does not authorize a silent change to the frozen `BEGINNER_CONSERVATIVE_V1`; production automatic Drunk selection has a separate cutover gate.
 
 ## 2. Core architecture
 
@@ -621,9 +641,10 @@ Read:
 4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
 5. `docs/SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`;
 6. this route as architecture background;
-7. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`;
-8. query live branch / PR / checks;
-9. continue from the live handoff using the current workflow authority: GitHub Connector by default; Mini MCP + Codex only when complete local context is required for large/truncated-file analysis or mechanical implementation.
+7. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`;
+8. `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md` as policy/evidence background only where not superseded by the DLB lifecycle;
+9. query live branch / PR / checks;
+10. continue from the live handoff using the current workflow authority: GitHub Connector by default; Mini MCP + Codex only when complete local context is required for large/truncated-file analysis or mechanical implementation.
 
 Do not resume broad evidence collection in the app repo. Targeted source acquisition belongs to the external evidence pipeline.
 

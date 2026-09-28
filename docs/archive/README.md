@@ -89,6 +89,24 @@ Two completed execution routes were removed from the active `docs/` root after t
 
 Their embedded pending/next-step language is historical only. Current execution and evidence gates live in `../CURRENT_DEVELOPMENT_ROADMAP.md`, `../NEXT_DEVELOPMENT_HANDOFF.md`, and `../SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`.
 
+### 2026-09-29 DLB authority consolidation
+
+The active product lifecycle changed from pre-seat Drunk ownership to late-bound Drunk assignment and staged first-night dependency barriers.
+
+Current authority:
+
+- `../DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
+- `../DRUNK_LATE_BINDING_AND_FIRST_NIGHT_DECISION_SEQUENCE_AUDIT_2026-09-28.md`
+- `../APP_HOST_DECOMPOSITION_PLAN_AUDIT_2026-09-28.md`
+
+Fully superseded active documents moved into archive:
+
+- `TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md` — historical pre-seat `selectedDrunkShownRole` normative contract;
+- `checkpoints/sde/SDE_3B1_HISTORICAL_LIFECYCLE_INPUT_BINDING_COMPLETION_AUDIT_2026-09-23.md`;
+- `checkpoints/sde/SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`.
+
+The first-night policy synthesis remains in active docs only as policy/evidence background because many of its evidence principles remain useful; its old setup/sequence model is explicitly marked superseded rather than duplicated into a second current authority.
+
 ## 2. Handoffs
 
 A handoff moves to `handoffs/` when its execution contract is completed, cancelled, or superseded by a new active handoff.

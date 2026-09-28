@@ -2,15 +2,19 @@
 
 ## 1. Decision
 
+> 2026-09-29 scope clarification: this audit remains the **C5 / existing first-night policy-evolution evidence gate**. It is no longer the sole product-development priority because the newer DLB route authorizes lifecycle/ownership engineering that does not itself add a new policy predicate. See `DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`.
+
 **No currently available Trouble Brewing evidence authorizes a new SDE policy predicate.**
 
-Therefore:
+Therefore, for the C5/V2 lane:
 
 - do not create `BEGINNER_CONSERVATIVE_V2`;
 - do not add candidate ordering/rejection beyond frozen V1;
 - do not add numeric weights or player-count thresholds;
 - keep SDE-3E cutover blocked per surface;
-- continue only targeted external evidence acquisition.
+- continue targeted external evidence acquisition for C5/V2 rather than implementing unsupported policy deltas.
+
+DLB legality, hypothetical projection, canonical Drunk commit, Experienced assisted UX, dependency barriers and shadow trace may proceed under the separate DLB architecture. Production automatic Drunk candidate preference still requires its own explicit shadow/evidence cutover gate.
 
 This is an evidence-gate result, not a statement that the existing feature dimensions are unimportant.
 

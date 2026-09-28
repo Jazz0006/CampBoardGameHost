@@ -7,7 +7,9 @@
 
 ## 1. Audit decision
 
-Execution follow-up (updated 2026-09-28): 3D1, the historical C0–C3 integration closure, CR-A/B/C correctness repair, C4/3D2, IF-D and RH-E have all completed and passed their later integration/acceptance gates. Their historical route documents now live under `archive/checkpoints/sde/`. This audit still governs the evidence/cutover semantics below: completion of those engineering prerequisites does **not** authorize V2 or automatic production cutover. Current status belongs to the roadmap/handoff, and the live policy gate is the E3/E4 qualification audit.
+Execution follow-up (updated 2026-09-29): 3D1, the historical C0–C3 integration closure, CR-A/B/C correctness repair, C4/3D2, IF-D and RH-E have all completed and passed their later integration/acceptance gates. Their historical route documents now live under `archive/checkpoints/sde/`.
+
+The 2026-09-29 DLB route supersedes this audit only where the examples below assumed exact Drunk identity was already setup-owned before seating. The evidence/cutover discipline remains active: completion of engineering prerequisites does **not** authorize V2 or automatic production cutover. DLB Drunk-assignment automatic authority likewise requires a versioned surface and explicit shadow/evidence cutover gate. Current status belongs to the roadmap/handoff.
 
 SDE-3C is structurally complete. The next phase must not be modeled as one monolithic
 "collect every missing expert datum, derive final weights, then freeze everything" gate.
@@ -93,7 +95,7 @@ Examples:
 - committed history is immutable;
 - player-controlled targets remain player-owned;
 - Spy/Recluse registration is interaction-scoped;
-- Drunk shown identity / Red Herring / revealed Demon bluffs preserve their lifecycle ownership;
+- committed facts preserve their lifecycle ownership, but the newer DLB route moves Drunk assignment to post-seat pre-reveal commit and stages Red Herring / Demon bluff commitment at latest-safe observation dependencies;
 - replay uses canonical history rather than persisted old feature snapshots;
 - unsupported evidence must remain explicit rather than silently treated as neutral.
 

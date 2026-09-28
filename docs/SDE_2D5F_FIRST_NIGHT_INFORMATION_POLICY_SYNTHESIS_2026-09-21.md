@@ -3,7 +3,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `sde-2d5-calibration-policy-evidence`  
 > Historical PR: #150 (merged evidence checkpoint; not the active PR)
-> Status: **evidence/design synthesis, not frozen V1 executable policy**. Current status/priority belongs to the roadmap; V1 behavior belongs to its immutable release definition. Production cutover is not authorized.
+> Status: **HISTORICAL POLICY/EVIDENCE SYNTHESIS WITH PARTIAL LIFECYCLE SUPERSESSION**. Current status/priority belongs to the roadmap; the 2026-09-29 DLB route supersedes this document's pre-seat Drunk ownership and one-bundle setup sequencing assumptions. Unaffected evidence/policy principles remain useful background. V1 behavior belongs to its immutable release definition.
 
 ## 1. Purpose
 
@@ -11,7 +11,7 @@
 
 Integration/correctness update: the historical C0–C3 closure, CR-A/B/C repair, C4/3D2, IF-D and RH-E have since completed; their implementation routes are archived under `archive/checkpoints/sde/`. Those completions do not promote the hypotheses below into policy. The current authorization gate for any new preference or numeric strength is `SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`, which currently authorizes targeted evidence acquisition rather than V2 implementation.
 
-This document records the current best model for how the app should construct and present Trouble Brewing first-night information after roles, the Drunk's shown identity, and seating are committed.
+This document records the 2026-09-21 evidence/policy model for first-night information ecology. **Lifecycle correction (2026-09-29):** do not read its old `roles + seats + Drunk shown identity` setup input or setup-time Red-Herring/bluff precommit ordering as current architecture. Current lifecycle authority is `DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`.
 
 The target is not to maximize uncertainty, maximize Evil survival, maximize misinformation, or minimize mechanical world reduction.
 
@@ -420,7 +420,7 @@ The following existing architecture remains desirable:
 - `NormalizedStrategicDiagnosticsProjector` remains descriptive, not a policy scorer;
 - persistent impaired narrative coherence belongs to a shared semantic/history policy owner, not named-role branches;
 - Demon-bluff joint-output evaluation remains separate from legality;
-- Drunk shown identity remains setup-persistent;
+- historical at this checkpoint: Drunk shown identity was treated as setup-persistent; **superseded by DLB late-binding after shown-seat assignment**;
 - Poisoner target remains Evil-player-controlled;
 - no opaque global scalar;
 - no second rules/world solver.

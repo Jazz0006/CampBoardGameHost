@@ -1,3 +1,5 @@
+> **Archived 2026-09-29:** this contract is historical. Its pre-seat `selectedDrunkShownRole` ownership is superseded by `../DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`. Do not use it as current setup authority.
+
 # TBSP Production Cutover Contract V1
 
 > Created: 2026-08-30 Australia/Sydney  
