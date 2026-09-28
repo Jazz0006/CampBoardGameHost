@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-28 Australia/Sydney  
+> Updated: 2026-09-29 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**  
 > Historical checkpoint detail belongs in completion/audit documents under `docs/archive/` or the linked slice audits, not in this live roadmap.
@@ -21,6 +21,8 @@ CR-A / CR-B / CR-C                                    COMPLETE
 C4 / SDE-3D2                                          COMPLETE
 IF-D durable App replay capture/rebuild               COMPLETE
 RH-E runtime persistence/timing hardening             COMPLETE
+DLB Drunk late-binding / staged first-night route      ARCHITECTURE APPROVED / IMPLEMENTATION NEXT
+Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
 ~~~
@@ -76,32 +78,31 @@ Completion/cleanup detail:
 - `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
 - `docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`
 
-## 4. Current priority — targeted evidence acquisition after E3/E4 audit
+## 4. Current priority — DLB implementation with targeted evidence in parallel
 
-RH-E, #157 merge closure, #163 documentation closure, and #165 current-only Recovery cleanup are COMPLETE.
+The product route changed on 2026-09-29 after the Drunk late-binding and App/Host decomposition audits were reconciled.
 
-The 2026-09-27 E3/E4 qualification audit found:
+The current implementation authority is:
 
-- **no current predicate passes E3** for a new typed policy preference/reason;
-- **no current predicate passes E4** for numeric strength;
-- current evidence does support descriptive feature surfaces and semantic regression targets;
-- therefore **do not create `BEGINNER_CONSERVATIVE_V2` yet**.
+`docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-Explicitly non-qualifying current candidates:
+The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. The main engineering sequence is DLB-0 -> DLB-7, with a shadow-to-production cutover gate before Beginner automatic Drunk authority.
 
-- healthy-information floor / middle band;
-- impaired-information believability / continuity;
-- confirmation-chain impact as a candidate-ordering rule;
-- role-function exposure severity;
-- truth-danger / Red-Herring candidate ordering;
-- Demon-bluff triplet ordering;
-- multi-axis scalar/weights.
+The 2026-09-28 App/Host decomposition audit is a guardrail for this work, not a prerequisite campaign:
 
-Red Herring remains the strongest descriptive evidence family, but the accepted C4 audit still classifies Evin as E1 yes / E2 candidate / E3 no. Beardy's independent guidance strengthens context dependence for confirmation / role-function exposure but does not provide a replayable choice-over-legal-alternatives policy case.
+- A1 preferences storage and A2 archive storage remain independent maintenance slices;
+- H1 first-night evil-information presentation waits for DLB-5's dependency lifecycle;
+- H2 and A3 are re-audited after DLB boundaries stabilize;
+- R3 generic transaction extraction and generic setup-effect ownership remain NO-GO.
 
-The next action is **targeted evidence acquisition**, not implementation. Search only for cases that can close a named E3 gap or concrete replay blocker. C5/V2 and SDE-3E remain blocked until that evidence gate is satisfied.
+Targeted EvidenceLab acquisition continues in parallel. It now serves two distinct gates:
 
-Recovery maintenance no longer blocks the SDE lane: #165 is merged, R0–R6 are complete, and R7 is a separate follow-up only if its ownership work becomes worth doing.
+1. DLB Drunk-assignment evidence/trace qualification for the new decision surface;
+2. the existing C5/V2 E3/E4 policy gate.
+
+Do not conflate those gates. C5 / BEGINNER_CONSERVATIVE_V2 remains blocked. DLB may implement legality, projection, canonical commit, Experienced assisted UX, staged dependencies and shadow trace before any new evidence-backed production preference is authorized.
+
+The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate ordering/rejection semantics. Any production Drunk-selection policy delta requires an explicitly versioned decision-surface contract.
 
 ## 5. Recovery product boundary
 
@@ -135,7 +136,10 @@ If a future **current-version** crash produces a fresh inconsistent current-form
 - Red Herring legality/commit ownership is not moved into SDE policy.
 - Drunk/Poisoned information may be true or false; impaired narrative uses the accepted shared perceived-functioning projection.
 - Spy/Recluse registration remains interaction-scoped.
-- Demon bluffs remain a joint SDE output until committed.
+- Demon bluffs remain a joint SDE output until committed, but DLB stages their commitment at the latest safe presentation dependency rather than assuming one immutable setup-time bundle.
+- Drunk seat assignment is now late-bound after shown identities are seated; rules/setup own its legal candidate domain, SDE may evaluate legal alternatives, and canonical setup/session owns the finalized commit.
+- Red Herring commitment follows a generic observation/dependency barrier; do not encode a named `if (Spy)` policy shortcut.
+- Player-controlled choices such as Poisoner target remain player-owned and may invalidate only still-uncommitted downstream plans.
 - No fixture-specific or named-player policy branches.
 - Traveller evidence remains outside the current mainline algorithm unless explicitly brought into scope.
 
@@ -157,16 +161,24 @@ C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
 ## 8. Immediate execution order
 
 ~~~text
-live main (query exact HEAD before work) is the canonical baseline
--> E3/E4 qualification audit COMPLETE: no qualifying predicate
--> targeted acquisition for Gap A / B / C / D only
--> reconstruct committed state + legal alternatives + explicit rationale
--> rerun E3 qualification
--> only after PASS create the smallest C5 / V2 slice on a fresh branch
--> preserve BEGINNER_CONSERVATIVE_V1 unchanged
+query live main / workspace
+-> DLB document authority convergence (2026-09-29 route)
+-> DLB-0 typed intermediate setup
+-> DLB-1 visible-roster deal cutover
+-> DLB-2 legal Drunk candidate domain + hypothetical projector
+-> DLB-3 shadow SDE decision + DecisionTrace/replay
+-> DLB-4 canonical Drunk commit before reveal
+-> DLB-4A Experienced assisted selection UX
+-> DLB-5 dependency-barrier first-night planner
+-> DLB-5H1 presentation extraction only if the boundary remains cohesive
+-> shadow/evidence cutover gate
+-> Beginner automatic Drunk authority
+-> DLB-6 old-contract retirement
+-> DLB-7 acceptance
+-> re-audit H2 / A3
 ~~~
 
-Recovery R0–R6 and #157/RH-E closure are complete; do not reopen them unless new current-version evidence exposes a regression. R7 remains separate follow-up work rather than an active lane.
+A1/A2 may proceed as separate maintenance PRs without blocking DLB. C5/V2 remains a separate evidence-gated lane.
 
 ## 9. Current authorities
 
@@ -177,10 +189,13 @@ Read first:
 3. `docs/TESTING_STRATEGY.md`
 4. this roadmap
 5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
-6. `docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md` — current evidence qualification result / targeted acquisition gaps
-7. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` — completed R0–R6 current-only Recovery cleanup contract / acceptance record
-8. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md` — completed C4 architecture/evidence boundary
-9. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md` — freeze/cutover gates
+6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB/decomposition implementation authority
+7. `docs/DRUNK_LATE_BINDING_AND_FIRST_NIGHT_DECISION_SEQUENCE_AUDIT_2026-09-28.md` — DLB architecture evidence
+8. `docs/APP_HOST_DECOMPOSITION_PLAN_AUDIT_2026-09-28.md` — bounded decomposition evidence/guardrails
+9. `docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md` — C5/V2 evidence qualification result / targeted acquisition gaps
+10. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` — completed R0–R6 current-only Recovery cleanup contract / acceptance record
+11. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md` — completed C4 architecture/evidence boundary
+12. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md` — freeze/cutover gates
 
 Use older SDE-3A/B/C/C0–C3 completion documents only when a specific historical or ownership question requires them.
 
