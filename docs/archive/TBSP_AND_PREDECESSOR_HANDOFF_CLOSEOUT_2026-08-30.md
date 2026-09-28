@@ -54,7 +54,7 @@ Long-lived policy extracted from the old campaign planning remains active in:
 
 ```text
 docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md
-docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
+docs/archive/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
 ```
 
 ## 4. Historical GCR checkpoint documents removed from active root
@@ -100,7 +100,7 @@ AGENTS.md
 docs/CURRENT_DEVELOPMENT_ROADMAP.md
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_6_PRODUCTION_CUTOVER.md
 docs/TESTING_STRATEGY.md
-docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
+docs/archive/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
 ```
 
 Current code checkpoints to distinguish:
