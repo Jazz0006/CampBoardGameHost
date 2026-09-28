@@ -80,6 +80,15 @@ Their Git history remains available if historical reconstruction is needed. Curr
 
 The previous external-human catalog was renamed/reclassified as an external evidence source catalog. Existing entries are SILVER/QUALITATIVE seeds until expert provenance is independently verified.
 
+### 2026-09-28 SDE route consolidation
+
+Two completed execution routes were removed from the active `docs/` root after their work and later integration gates had closed:
+
+- [`checkpoints/sde/SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](checkpoints/sde/SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) — historical C0–C3 integration/acceptance route;
+- [`checkpoints/sde/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`](checkpoints/sde/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) — historical CR-A/B/C / IF-D / RH-E repair route.
+
+Their embedded pending/next-step language is historical only. Current execution and evidence gates live in `../CURRENT_DEVELOPMENT_ROADMAP.md`, `../NEXT_DEVELOPMENT_HANDOFF.md`, and `../SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`.
+
 ## 2. Handoffs
 
 A handoff moves to `handoffs/` when its execution contract is completed, cancelled, or superseded by a new active handoff.
@@ -107,6 +116,8 @@ In particular, pre-PR #100 plans that require a distinct WAKE acknowledgement st
 `workflows/` contains older process documents replaced by root `AGENTS.md` and current workflow/testing documents.
 
 The 2026-09-24 M8G5 Mini MCP remote-control adoption record is archived as `workflows/MINI_MCP_REMOTE_PR_CONTROL_PLANE_ADOPTION_2026-09-24.md`. It records the then-valid Mini MCP-first control-plane experiment and is superseded by root `AGENTS.md` plus `../AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`, which restore GitHub Connector-first operation and retain Mini MCP/Codex primarily for complete-local-context work.
+
+The superseded `AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` and `MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md` were also moved into `workflows/` on 2026-09-28 so only the current workflow remains in the active docs root.
 
 Do not resurrect an archived workflow merely because a historical handoff references it.
 

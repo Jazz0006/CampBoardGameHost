@@ -6,7 +6,7 @@
 > Accepted GREEN code HEAD: `f562887cf4e90d02d364eef5534a1f709922a0f8`  
 > Status: **COMPLETE**
 >
-> **Post-audit amendment — 2026-09-25:** the immutable V1 freeze remains accepted and unchanged. A later audit found bounded replay/feature correctness defects outside the V1 ordering definition; CR-A/B/C in `SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` must close before SDE-3D2 production feature edits. Current execution status belongs to the roadmap/handoff.
+> **Post-audit amendment — updated 2026-09-28:** the immutable V1 freeze remains accepted and unchanged. The later CR-A/B/C correctness repair and SDE-3D2 engineering prerequisites have since completed; their historical route is archived under `archive/checkpoints/sde/`. None of those repairs changed the frozen V1 ordering definition. Current execution status and evidence gates belong to the roadmap/handoff.
 
 ## 1. Completion conclusion
 

@@ -286,8 +286,8 @@ Need merge?
 
 This document supersedes conflicting execution-path defaults in:
 
-- `MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md`;
-- `AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
+- `archive/workflows/MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md`;
+- `archive/workflows/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
 - `LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`;
 - archived connector/Luna workflow documents.
 

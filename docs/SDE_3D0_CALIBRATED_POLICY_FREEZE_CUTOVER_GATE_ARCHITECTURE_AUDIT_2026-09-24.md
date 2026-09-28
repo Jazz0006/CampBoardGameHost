@@ -7,7 +7,7 @@
 
 ## 1. Audit decision
 
-Execution follow-up (2026-09-25): 3D1 is complete. [Integration closure C0–C3](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) reached an accepted checkpoint at `8855d461` with full CI #3451 success. A later audit found bounded replay/feature correctness defects; [CR-A/B/C correctness repair](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) now precedes C4/3D2 production feature edits. This preserves the evidence/cutover gates below and does not authorize V2 or automatic production cutover. R2/base integration remains pending. Current status belongs to the roadmap, not this historical audit.
+Execution follow-up (updated 2026-09-28): 3D1, the historical C0–C3 integration closure, CR-A/B/C correctness repair, C4/3D2, IF-D and RH-E have all completed and passed their later integration/acceptance gates. Their historical route documents now live under `archive/checkpoints/sde/`. This audit still governs the evidence/cutover semantics below: completion of those engineering prerequisites does **not** authorize V2 or automatic production cutover. Current status belongs to the roadmap/handoff, and the live policy gate is the E3/E4 qualification audit.
 
 SDE-3C is structurally complete. The next phase must not be modeled as one monolithic
 "collect every missing expert datum, derive final weights, then freeze everything" gate.

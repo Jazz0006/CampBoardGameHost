@@ -7,9 +7,9 @@
 
 ## 1. Purpose
 
-2026-09-25 clarification: thematic defaults, healthy middle bands and contextual costs below express design hypotheses, not additional accepted V1 ranking/rejection rules. The accepted V1 contract is exact zero Evil-topology rejection with seeded survivor equivalence. Follow [integration closure](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) before extending descriptive features or proposing a new policy version.
+2026-09-28 clarification: thematic defaults, healthy middle bands and contextual costs below remain design hypotheses, not additional accepted V1 ranking/rejection rules. The accepted V1 contract is exact zero Evil-topology rejection with seeded survivor equivalence.
 
-Integration update: C0–C3 reached an accepted historical checkpoint at `8855d461` and full CI #3451 succeeded. A later audit found replay/feature correctness defects; CR-A/B/C in `SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` must close before C4/3D2 production feature edits. The later 3D2 work remains policy-neutral and does not promote the hypotheses below to V1 policy authority. R2/base integration remains pending.
+Integration/correctness update: the historical C0–C3 closure, CR-A/B/C repair, C4/3D2, IF-D and RH-E have since completed; their implementation routes are archived under `archive/checkpoints/sde/`. Those completions do not promote the hypotheses below into policy. The current authorization gate for any new preference or numeric strength is `SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`, which currently authorizes targeted evidence acquisition rather than V2 implementation.
 
 This document records the current best model for how the app should construct and present Trouble Brewing first-night information after roles, the Drunk's shown identity, and seating are committed.
 

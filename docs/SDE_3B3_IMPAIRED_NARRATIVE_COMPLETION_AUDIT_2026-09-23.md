@@ -6,7 +6,7 @@
 > Status: **COMPLETE**  
 > Accepted code checkpoint: `f3331c5fc914f960eb1a91cbc6a53135cb953242`
 >
-> **Post-audit amendment — 2026-09-25:** this remains valid historical evidence that the shared role-agnostic owner and policy-neutral feature seam were established. A later typed audit reproduced a semantic defect: mechanically credible impaired worlds can be misclassified as player-believable narrative continuity. Current repair authority is `SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` CR-A. Do not read this historical `COMPLETE` label as proof that the current projector is semantically defect-free.
+> **Post-audit amendment — updated 2026-09-28:** this remains valid historical evidence that the shared role-agnostic owner and policy-neutral feature seam were established. A later typed audit reproduced a semantic defect, and CR-A subsequently repaired it in the shared owner and passed acceptance. The completed repair route is archived at `archive/checkpoints/sde/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`. Do not treat this older checkpoint as the final semantic acceptance record.
 
 ## 1. Completion conclusion
 

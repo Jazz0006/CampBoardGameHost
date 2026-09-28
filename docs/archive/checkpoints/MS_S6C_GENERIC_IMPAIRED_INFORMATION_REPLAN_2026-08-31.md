@@ -398,7 +398,7 @@ Do not in S6C:
 
 ## 15. Validation / acceptance
 
-Use root `AGENTS.md`, `docs/TESTING_STRATEGY.md` and `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`.
+Historical validation used root `AGENTS.md`, `docs/TESTING_STRATEGY.md` and the now-archived `docs/archive/workflows/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`. Current work must use the live workflow instead.
 
 Evidence should follow risk, not commit count.
 
