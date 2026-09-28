@@ -134,7 +134,7 @@ class GameArchiveJsonCodecTest {
             put("archivedAtMillis", 2L)
             put(GameArchiveJsonCodec.PAYLOAD_KEY, JSONObject().apply {
                 put("archiveFormatVersion", GameArchiveJsonCodec.CURRENT_FORMAT_VERSION)
-                put("gameKind", GameKind.Werewolf.name)
+                put("gameKind", GameKind.Undercover.name)
                 put("round", 1)
                 put("cards", JSONArray())
             })
@@ -144,4 +144,40 @@ class GameArchiveJsonCodecTest {
         assertNull(GameArchiveJsonCodec.decodeEntry(emptyCards, rolesByName::get))
         assertTrue(emptyCards.has(GameArchiveJsonCodec.PAYLOAD_KEY))
     }
+
+    @Test
+    fun `retired game kinds are rejected without remapping current archives`() {
+        val entry = undercoverEntry()
+        val current = requireNotNull(GameArchiveJsonCodec.decodeEntry(entry, rolesByName::get))
+        assertEquals(GameKind.Undercover, current.gameKind)
+        assertEquals(Role.Civilian, current.cards.single().role)
+
+        entry.getJSONObject(GameArchiveJsonCodec.PAYLOAD_KEY).put("gameKind", "Werewolf")
+
+        assertNull(GameArchiveJsonCodec.decodeEntry(entry, rolesByName::get))
+    }
+
+    @Test
+    fun `retired role tags cannot produce an archive card`() {
+        listOf("Villager", "Werewolf", "Seer", "Witch", "Hunter").forEach { retiredRole ->
+            val entry = undercoverEntry()
+            entry.getJSONObject(GameArchiveJsonCodec.PAYLOAD_KEY)
+                .getJSONArray("cards").getJSONObject(0).put("role", retiredRole)
+
+            assertNull(retiredRole, GameArchiveJsonCodec.decodeEntry(entry, rolesByName::get))
+        }
+    }
+
+    private fun undercoverEntry(): JSONObject = GameArchiveJsonCodec.encodeEntry(
+        record = GameArchiveRecord(
+            gameKind = GameKind.Undercover,
+            round = 1,
+            cards = listOf(PlayerCard(name = "Alice", role = Role.Civilian, word = "apple")),
+            records = emptyList(),
+            events = emptyList(),
+            outcome = null,
+        ),
+        id = 10L,
+        archivedAtMillis = 20L,
+    )
 }
