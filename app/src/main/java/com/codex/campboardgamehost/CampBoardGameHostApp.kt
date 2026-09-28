@@ -332,11 +332,6 @@ internal fun Role.labelResId(): Int = when (this) {
     Role.Civilian -> R.string.role_civilian
     Role.Undercover -> R.string.role_undercover
     Role.Blank -> R.string.role_blank
-    Role.Villager -> R.string.role_villager
-    Role.Werewolf -> R.string.role_werewolf
-    Role.Seer -> R.string.role_seer
-    Role.Witch -> R.string.role_witch
-    Role.Hunter -> R.string.role_hunter
 }
 
 internal fun LanguageMode.labelResId(): Int = when (this) {
@@ -1192,7 +1187,6 @@ internal fun CampBoardGameHostApp() {
                     },
                 )
             }
-            GameKind.Werewolf -> error("Werewolf runtime has been removed.")
         }
         val entryPoint = when (screen) {
             Screen.PassPhone -> RecoveryEntryPoint.PassPhone
@@ -1237,7 +1231,6 @@ internal fun CampBoardGameHostApp() {
                 records = commonRecords,
                 outcome = gameOutcome,
             )
-            GameKind.Werewolf -> error("Werewolf runtime has been removed.")
             GameKind.Clocktower -> ClocktowerRecovery(
                 entryPoint = entryPoint,
                 currentDealIndex = recoveryDealIndex,
@@ -1668,7 +1661,6 @@ internal fun CampBoardGameHostApp() {
                 Role.Civilian -> pair.civilianWord
                 Role.Undercover -> pair.undercoverWord
                 Role.Blank -> context.getString(R.string.blank_word)
-                else -> ""
             }
             PlayerCard(name = name.ifBlank { context.playerName(index + 1) }, role = role, word = word)
         })
@@ -1894,7 +1886,6 @@ internal fun CampBoardGameHostApp() {
         if (!archiveCurrentGameForRestart()) return
         when (currentGameKind) {
             GameKind.Undercover -> startUndercoverGame()
-            GameKind.Werewolf -> error("Werewolf runtime has been removed.")
             GameKind.Clocktower -> startClocktowerGame()
         }
     }
@@ -2189,7 +2180,6 @@ internal fun CampBoardGameHostApp() {
                         total = cards.size,
                         onHide = {
                             when (currentGameKind) {
-                                GameKind.Werewolf -> error("Werewolf runtime has been removed.")
                                 GameKind.Clocktower -> screen = Screen.PassPhone
                                 GameKind.Undercover -> {
                                     if (currentDealIndex == cards.lastIndex) {
@@ -3679,26 +3669,6 @@ private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>, gameK
         }
     }
 
-    if (gameKind == GameKind.Werewolf) {
-        val activeWerewolves = activeCards.count { it.role == Role.Werewolf }
-        val activeGoodPlayers = activeCards.size - activeWerewolves
-        return when {
-            activeWerewolves == 0 -> GameOutcome(
-                title = context.getString(R.string.outcome_good_title),
-                summary = context.getString(R.string.outcome_good_summary),
-                reason = context.getString(R.string.outcome_good_reason, activeGoodPlayers),
-            )
-
-            activeWerewolves >= activeGoodPlayers -> GameOutcome(
-                title = context.getString(R.string.outcome_werewolf_title),
-                summary = context.getString(R.string.outcome_werewolf_summary),
-                reason = context.getString(R.string.outcome_werewolf_reason, activeWerewolves, activeGoodPlayers),
-            )
-
-            else -> null
-        }
-    }
-
     val activeCivilians = activeCards.count { it.role == Role.Civilian }
     val activeUndercovers = activeCards.count { it.role == Role.Undercover }
     val activeBlanks = activeCards.count { it.role == Role.Blank }
@@ -3752,7 +3722,6 @@ internal fun EliminationRecord.displayText(): String {
 
 internal fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): String = when (gameKind) {
     GameKind.Clocktower -> actualRoleLabel ?: roleLabel ?: context.getString(role.labelResId())
-    GameKind.Werewolf -> roleLabel ?: context.getString(role.labelResId())
     GameKind.Undercover -> context.getString(role.labelResId())
 }
 

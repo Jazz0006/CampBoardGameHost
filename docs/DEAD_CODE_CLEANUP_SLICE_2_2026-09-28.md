@@ -19,10 +19,16 @@ Test fixtures using Werewolf or Villager incidentally will use supported equival
 
 Intentionally exempt: historical documentation and raw retired strings in rejection tests. Clocktower roles (including Scarlet Woman), algorithm policies, evidence/replay tools, and active history/recovery remain in scope only as preserved consumers, not redesign targets.
 
-RecommendationService has no production callers. Move its usable-plan-per-style test to SetupRecommendationService; retain all assertions. Keep RecommendationUiState and its consumers unchanged.
+RecommendationService has no production callers. Its usable-plan-per-style test duplicates the existing SetupRecommendationServiceTest style assertion. Move its nonempty-decisions assertion into that existing test and retire the duplicate facade test. Keep RecommendationUiState and its consumers unchanged.
 
 ## Validation
 
 First execute the archive tests against unchanged production through GitHub CI. The two assertion failures rejecting previously accepted retired values are expected RED evidence. Continue to production deletion after confirming those failures rather than treating this expected RED as a blocker.
 
 After implementation: producer/consumer re-search, resource reference/XML checks, complete diff/allowlist audit, and git diff --check. Require full Android tests/build, R2, and full-checkpoint ASP/Real-Clingo validation. Local Android SDK is unavailable. No merge is authorized by this cleanup request.
+
+## RED evidence
+
+Test-only commit `b46dd45652e5481a414afdb9b4d4e58a3965525b`, CI run [36380387242](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/36380387242): 1,563 FAST tests executed; exactly two failed with assertion errors in GameArchiveJsonCodecTest (retired game kinds / retired role tags). Compilation succeeded and no other tests failed. R2 run 36380387257 passed. This is the expected RED, not an infrastructure failure.
+
+The implementation removes 14 exclusive resource keys in each locale. Clocktower reveal still uses its existing early-return screen; the remaining generic reveal displays Undercover words. No retired role ordinals are persisted: codecs use enum names.

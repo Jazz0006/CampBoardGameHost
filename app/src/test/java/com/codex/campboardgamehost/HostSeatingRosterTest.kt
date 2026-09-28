@@ -155,14 +155,14 @@ class HostSeatingRosterTest {
         val arrangement = mutableListOf("Alice", "Bob", "Casey", "Dana")
         val selected = HostSeatingSetupFlow()
             .confirmSeats(arrangement)
-            .chooseGame(GameKind.Werewolf)
+            .chooseGame(GameKind.Undercover)
 
         arrangement.reverse()
         arrangement[0] = "Changed"
 
         assertEquals(
             listOf("Alice", "Bob", "Casey", "Dana"),
-            selected.playerNamesFor(GameKind.Werewolf),
+            selected.playerNamesFor(GameKind.Undercover),
         )
     }
 

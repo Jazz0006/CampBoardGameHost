@@ -104,14 +104,8 @@ internal fun RevealCardScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(card.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                if (gameKind == GameKind.Werewolf || gameKind == GameKind.Clocktower) {
-                    Text(card.roleLabel ?: stringResource(card.role.labelResId()), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
-                    Text(card.word, color = Color(0xFF5C6A63), textAlign = TextAlign.Center)
-                    Text(stringResource(R.string.remember_role_hint), color = Color(0xFF5C6A63))
-                } else {
-                    Text(card.word, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
-                    Text(stringResource(R.string.remember_word_hint), color = Color(0xFF5C6A63))
-                }
+                Text(card.word, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
+                Text(stringResource(R.string.remember_word_hint), color = Color(0xFF5C6A63))
             }
         }
         Button(

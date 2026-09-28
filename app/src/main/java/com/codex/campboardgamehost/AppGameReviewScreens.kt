@@ -53,9 +53,7 @@ internal fun ResultsDialog(
     onReview: () -> Unit,
     onNewGame: () -> Unit,
 ) {
-    val defaultTitle = if (gameKind == GameKind.Werewolf) {
-        stringResource(R.string.werewolf_role_results)
-    } else if (gameKind == GameKind.Clocktower) {
+    val defaultTitle = if (gameKind == GameKind.Clocktower) {
         stringResource(R.string.clocktower_role_results)
     } else {
         stringResource(R.string.identity_results)
@@ -71,7 +69,7 @@ internal fun ResultsDialog(
                     HorizontalDivider()
                 }
                 cards.forEach { card ->
-                    if (gameKind == GameKind.Werewolf || gameKind == GameKind.Clocktower) {
+                    if (gameKind == GameKind.Clocktower) {
                         val roleText = if (gameKind == GameKind.Clocktower && card.clocktowerShownAsDifferentRole() && card.clocktowerShownRole != null) {
                             stringResource(
                                 R.string.clocktower_result_role_format,
@@ -118,7 +116,6 @@ internal fun NewGameConfirmationDialog(
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val gameName = when (gameKind) {
         GameKind.Undercover -> stringResource(R.string.game_who_is_undercover)
-        GameKind.Werewolf -> stringResource(R.string.game_werewolf)
         GameKind.Clocktower -> stringResource(R.string.game_clocktower)
     }
     ClocktowerDarkTheme {
@@ -498,7 +495,6 @@ private fun ArchivedGameCard(review: ArchivedGameReview, onClick: () -> Unit) {
     val language = context.resources.configuration.locales[0].language
     val gameName = when (review.gameKind) {
         GameKind.Undercover -> stringResource(R.string.game_who_is_undercover)
-        GameKind.Werewolf -> stringResource(R.string.game_werewolf)
         GameKind.Clocktower -> stringResource(R.string.game_clocktower)
     }
     val pattern = if (language == "en") "MMM d, HH:mm" else "M月d日 HH:mm"
