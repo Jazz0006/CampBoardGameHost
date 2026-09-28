@@ -246,7 +246,7 @@ The continuation order is revised by the ClocktowerEvidenceLab C0 handoff:
 8. keep SDE-3C DecisionTrace persistence separate;
 9. keep numeric thresholds and multi-axis calibration in SDE-3D.
 
-See `SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md` for the evidence authority model.
+See `archive/checkpoints/sde/SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md` for the historical evidence authority model. Its pre-DLB lifecycle ownership assumptions are superseded by the current DLB route.
 
 
 ## 13. Cross-night impaired narrative ownership audit
