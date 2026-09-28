@@ -79,14 +79,11 @@ internal object DecisionTraceArchiveJsonCodec {
             "actualChoice",
         )
         val persistedSchemaVersion = json.requiredInt("schemaVersion")
-        require(
-            persistedSchemaVersion == DecisionTrace.LEGACY_SCHEMA_VERSION ||
-                persistedSchemaVersion == DecisionTrace.CURRENT_SCHEMA_VERSION,
-        ) {
+        require(persistedSchemaVersion == DecisionTrace.CURRENT_SCHEMA_VERSION) {
             "Unsupported DecisionTrace schema version " + persistedSchemaVersion + "."
         }
         return DecisionTrace(
-            schemaVersion = DecisionTrace.CURRENT_SCHEMA_VERSION,
+            schemaVersion = persistedSchemaVersion,
             evidenceCheckpoint = EvidenceCheckpointId(json.requiredNonBlankString("evidenceCheckpoint")),
             decisionId = json.requiredNonBlankString("decisionId"),
             lifecycleStage = decodeLifecycle(json.requiredObject("lifecycleStage")),
@@ -95,7 +92,6 @@ internal object DecisionTraceArchiveJsonCodec {
             legalCandidateIds = json.requiredStringList("legalCandidateIds"),
             featureEvaluation = decodeFeatureEvaluation(
                 json.requiredObject("featureEvaluation"),
-                persistedSchemaVersion,
             ),
             policySnapshot = decodePolicySnapshot(json.requiredObject("policySnapshot")),
             policySelection = json.requiredNullableObject("policySelection")?.let(::decodePolicySelection),
@@ -223,7 +219,6 @@ internal object DecisionTraceArchiveJsonCodec {
 
     private fun decodeFeatureEvaluation(
         json: JSONObject,
-        traceSchemaVersion: Int,
     ): DecisionFeatureEvaluation =
         when (json.requiredNonBlankString("kind")) {
             "ready" -> {
@@ -235,7 +230,6 @@ internal object DecisionTraceArchiveJsonCodec {
                             candidateId = candidate.requiredNonBlankString("candidateId"),
                             features = decodeFeatures(
                                 candidate.requiredObject("features"),
-                                traceSchemaVersion,
                             ),
                         )
                     },
@@ -282,7 +276,6 @@ internal object DecisionTraceArchiveJsonCodec {
 
     private fun decodeFeatures(
         json: JSONObject,
-        traceSchemaVersion: Int,
     ): DecisionFeatures {
         json.requireExactKeys(
             "strategic",
@@ -312,9 +305,8 @@ internal object DecisionTraceArchiveJsonCodec {
             truthCredibility =
                 decodeObjectProjection(
                     json.requiredObject("truthCredibility"),
-                ) { value ->
-                    decodeTruthCredibility(value, traceSchemaVersion)
-                },
+                    ::decodeTruthCredibility,
+                ),
             roleFunctionExposure =
                 decodeObjectProjection(
                     json.requiredObject("roleFunctionExposure"),
@@ -745,66 +737,34 @@ internal object DecisionTraceArchiveJsonCodec {
                         .forEach { put(encodeConfirmationChannel(it)) }
                 },
             )
-            put("truthDangerReasonCodes", strings(value.truthDangerReasonCodes.sorted()))
-            put(
-                "credibilityDisruptionReasonCodes",
-                strings(value.credibilityDisruptionReasonCodes.sorted()),
-            )
         }
 
     private fun decodeTruthCredibility(
         json: JSONObject,
-        traceSchemaVersion: Int,
-    ): TruthCredibilityFeatures =
-        when (traceSchemaVersion) {
-            DecisionTrace.LEGACY_SCHEMA_VERSION -> {
-                json.requireExactKeys(
-                    "truthDangerReasonCodes",
-                    "credibilityDisruptionReasonCodes",
-                )
-                TruthCredibilityFeatures(
-                    truthDangerReasonCodes =
-                        json.requiredStringSet("truthDangerReasonCodes"),
-                    credibilityDisruptionReasonCodes =
-                        json.requiredStringSet("credibilityDisruptionReasonCodes"),
-                )
-            }
-
-            DecisionTrace.CURRENT_SCHEMA_VERSION -> {
-                json.requireExactKeys(
-                    "truthDangerSources",
-                    "credibilityDisruptions",
-                    "unresolvedSourceRefs",
-                    "truthDangerReasonCodes",
-                    "credibilityDisruptionReasonCodes",
-                )
-                TruthCredibilityFeatures(
-                    truthDangerSources =
-                        json.requiredArray("truthDangerSources")
-                            .mapObjects("truthDangerSources", ::decodeTruthDangerSourceImpact)
-                            .toSetStrict("truthDangerSources"),
-                    credibilityDisruptions =
-                        json.requiredArray("credibilityDisruptions")
-                            .mapObjects(
-                                "credibilityDisruptions",
-                                ::decodeCredibilityDisruptionImpact,
-                            )
-                            .toSetStrict("credibilityDisruptions"),
-                    unresolvedSourceRefs =
-                        json.requiredArray("unresolvedSourceRefs")
-                            .mapObjects("unresolvedSourceRefs", ::decodeConfirmationSource)
-                            .toSetStrict("unresolvedSourceRefs"),
-                    truthDangerReasonCodes =
-                        json.requiredStringSet("truthDangerReasonCodes"),
-                    credibilityDisruptionReasonCodes =
-                        json.requiredStringSet("credibilityDisruptionReasonCodes"),
-                )
-            }
-
-            else -> throw IllegalArgumentException(
-                "Unsupported DecisionTrace truth/credibility schema version $traceSchemaVersion.",
-            )
-        }
+    ): TruthCredibilityFeatures {
+        json.requireExactKeys(
+            "truthDangerSources",
+            "credibilityDisruptions",
+            "unresolvedSourceRefs",
+        )
+        return TruthCredibilityFeatures(
+            truthDangerSources =
+                json.requiredArray("truthDangerSources")
+                    .mapObjects("truthDangerSources", ::decodeTruthDangerSourceImpact)
+                    .toSetStrict("truthDangerSources"),
+            credibilityDisruptions =
+                json.requiredArray("credibilityDisruptions")
+                    .mapObjects(
+                        "credibilityDisruptions",
+                        ::decodeCredibilityDisruptionImpact,
+                    )
+                    .toSetStrict("credibilityDisruptions"),
+            unresolvedSourceRefs =
+                json.requiredArray("unresolvedSourceRefs")
+                    .mapObjects("unresolvedSourceRefs", ::decodeConfirmationSource)
+                    .toSetStrict("unresolvedSourceRefs"),
+        )
+    }
 
     private fun encodeTruthDangerSourceImpact(
         value: TruthDangerSourceImpact,

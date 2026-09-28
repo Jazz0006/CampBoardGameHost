@@ -11,16 +11,12 @@ import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 
 /**
- * Pure restore composition for an unfinished Clocktower night.
+ * Pure reconstruction composition for an unfinished Clocktower night.
  *
- * Durable authority remains [ClocktowerNightCheckpoint] plus [GameState]. Persisted values are
- * decoded to that typed checkpoint, then both restored and live production paths derive same-night
- * mechanical state through this seam without mutating their inputs.
+ * Authority remains [ClocktowerNightCheckpoint] plus [GameState]. Recovery is decoded by the
+ * current typed Recovery boundary before this layer; this seam only derives same-night mechanical
+ * state without mutating its inputs.
  */
-internal data class NightTransactionRestoreResult(
-    val checkpoint: ClocktowerNightCheckpoint,
-    val reconstruction: NightTransactionReconstruction,
-)
 
 internal data class NightTransactionReconstruction(
     val currentInteractionId: ClocktowerInteractionId?,
@@ -29,27 +25,7 @@ internal data class NightTransactionReconstruction(
 )
 
 internal object NightTransactionRestoreComposition {
-    fun restore(
-        persistedCheckpointValues: Map<String, Any?>,
-        baseGameState: GameState,
-        canonicalInteractionIds: List<ClocktowerInteractionId>,
-        demonSuccessorInteractionId: ClocktowerInteractionId,
-        demonRoleId: RoleId,
-    ): NightTransactionRestoreResult {
-        val checkpoint = ClocktowerNightCheckpoint.fromPersistedValues(persistedCheckpointValues)
-        return NightTransactionRestoreResult(
-            checkpoint = checkpoint,
-            reconstruction = compose(
-                baseGameState = baseGameState,
-                checkpoint = checkpoint,
-                canonicalInteractionIds = canonicalInteractionIds,
-                demonSuccessorInteractionId = demonSuccessorInteractionId,
-                demonRoleId = demonRoleId,
-            ),
-        )
-    }
-
-    /** Shared production and restore-test entry for typed checkpoint reconstruction. */
+    /** Shared production and recovery-test entry for typed checkpoint reconstruction. */
     fun compose(
         baseGameState: GameState,
         checkpoint: ClocktowerNightCheckpoint,

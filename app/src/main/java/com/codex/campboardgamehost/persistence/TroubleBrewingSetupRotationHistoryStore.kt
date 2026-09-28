@@ -140,7 +140,7 @@ internal class TroubleBrewingSetupRotationHistoryStore(
     private fun decode(raw: String): List<PersistedRotationEntry> {
         val root = JSONObject(raw)
         val version = root.requiredInt("version")
-        require(version in LEGACY_VERSION..CURRENT_VERSION) {
+        require(version == CURRENT_VERSION) {
             "Unsupported Trouble Brewing rotation-history version."
         }
         val entriesJson = root.optJSONArray("entries")
@@ -158,11 +158,8 @@ internal class TroubleBrewingSetupRotationHistoryStore(
                     minionRoleIds = entry.requiredStringSet("minionRoleIds"),
                     primaryStyleTag = entry.nullableString("primaryStyleTag"),
                     selectedDrunkShownRole = entry.nullableString("selectedDrunkShownRole"),
-                    playerStartingIdentities = if (version == LEGACY_VERSION) {
-                        emptyList()
-                    } else {
-                        entry.requiredStartingIdentities("playerStartingIdentities")
-                    },
+                    playerStartingIdentities =
+                        entry.requiredStartingIdentities("playerStartingIdentities"),
                 ).also(TroubleBrewingSetupRotationRecordFactory::validate)
                 add(
                     PersistedRotationEntry(
@@ -188,7 +185,6 @@ internal class TroubleBrewingSetupRotationHistoryStore(
     companion object {
         const val CURRENT_VERSION = 2
         const val MAX_GAMES_PER_PLAYER_COUNT = 5
-        private const val LEGACY_VERSION = 1
         private const val PREFS_NAME = "camp_board_game_host"
         private const val STORAGE_KEY = "tb_setup_rotation_history_v1"
 

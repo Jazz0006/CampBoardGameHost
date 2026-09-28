@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -62,7 +61,6 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                     artistClaimedNames = emptyList(),
                     lastExecutedName = null,
                     pendingKlutzName = null,
-                    klutzChoiceName = null,
                     klutzReturnToDawn = false,
                     ghostVoteAuthority = ClocktowerGhostVoteAuthority(),
                     highestVoteName = null,
@@ -71,9 +69,8 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                 history = ClocktowerRecoveryHistory(
                     gameStateRevision = 0L,
                     playerInputRevision = 0L,
-                    semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
                     actionTimeline = ActionFactTimeline(),
-                    nextTimelineGlobalSequence = 1L,
+                    nextTimelineGlobalSequence = 0L,
                     events = emptyList(),
                     epistemicObservations = emptyList(),
                 ),

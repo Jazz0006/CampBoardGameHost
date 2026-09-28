@@ -102,38 +102,6 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
     }
 
     @Test
-    fun `version one history remains readable with empty starting identities`() {
-        val raw = JSONObject().apply {
-            put("version", 1)
-            put(
-                "entries",
-                JSONArray().put(
-                    JSONObject().apply {
-                        put("gameId", "legacy-game")
-                        put("datasetId", "test-dataset")
-                        put("schemaVersion", 2)
-                        put("presetId", "legacy-five")
-                        put("playerCount", 5)
-                        put("realNonDemonRoleIds", JSONArray(listOf("chef", "empath", "butler", "poisoner")))
-                        put("minionRoleIds", JSONArray(listOf("poisoner")))
-                        put("primaryStyleTag", "legacy")
-                        put("selectedDrunkShownRole", JSONObject.NULL)
-                    },
-                ),
-            )
-        }.toString()
-        val store = TroubleBrewingSetupRotationHistoryStore(
-            readRaw = { raw },
-            writeRaw = { true },
-        )
-
-        val restored = store.historyFor("test-dataset", 2, 5).recentGames.single()
-
-        assertEquals("legacy-five", restored.presetId)
-        assertTrue(restored.playerStartingIdentities.isEmpty())
-    }
-
-    @Test
     fun `latest starting identities follow the immediately previous game across player counts`() {
         var raw: String? = null
         val store = TroubleBrewingSetupRotationHistoryStore(

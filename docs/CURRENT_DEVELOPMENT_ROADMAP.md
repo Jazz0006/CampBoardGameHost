@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-27 Australia/Sydney  
+> Updated: 2026-09-28 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**  
 > Historical checkpoint detail belongs in completion/audit documents under `docs/archive/` or the linked slice audits, not in this live roadmap.
@@ -31,9 +31,15 @@ Current canonical baseline: `main`.
 
 PR #157 — `SDE correctness repair: close CR-A CR-B CR-C` — was explicitly authorized and squash-merged on 2026-09-27.
 
-Merged main commit:
+PR #157 merged executable integration baseline:
 
 `02845a470761a988f0041d8c1027b0e2c58a7e05`
+
+Current reviewed `main` before the 2026-09-28 Recovery cleanup branch was created:
+
+`5d2982a7492a5092a898436a0386b822ee7343f5`
+
+The delta from `02845a47...` to `5d2982a7...` is documentation-only and does not change the accepted executable SDE/Recovery code boundary.
 
 The merged scope contains the accepted continuation through CR-A/B/C, C4/SDE-3D2, IF-D, RH-E, and the audited workflow/document integration. The previous continuation branch `codex/sde-history-prefix-route-closure` is now historical rather than the active development baseline.
 
@@ -91,6 +97,13 @@ Before C5 may start:
 
 C5/V2 and SDE-3E remain blocked until that evidence gate is satisfied.
 
+A separate maintenance lane is active while policy implementation is paused for evidence collection:
+
+- branch: `codex/current-only-recovery-cleanup`;
+- authority: `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md`;
+- purpose: remove obsolete current-game persistence compatibility, exact-progress save residue, dead Recovery surfaces, and proven duplicate/derivable Recovery state;
+- this lane must not change SDE ranking/policy and does not unblock C5/V2.
+
 ## 5. Recovery product boundary
 
 Recent Emergency Recovery is intentionally **short-horizon emergency continuation**, not a normal save-game product.
@@ -105,6 +118,8 @@ current RecoverySnapshot format
 ~~~
 
 Do not add cross-version migration, old-format reconstruction, tolerant legacy repair or long-term save compatibility unless the product requirement changes explicitly.
+
+The 2026-09-28 re-audit found that later development reintroduced or retained several persistence-only compatibility/minimal-state residues: explicit v1 readers/migration, implicit missing-field legacy fallbacks, dead Werewolf Recovery DTO/codec surface, permanently-null draft wire keys, old NightCheckpoint Map persistence fallback, and duplicate/derivable current Recovery fields. The cleanup route is documented in `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md`.
 
 PR #109 reproduced an old/abnormal event/observation half-state. Current production does not expose a physical persistence window for that intermediate state: the game event and semantic projection execute synchronously before later SideEffect/lifecycle Recovery persistence. #109 was therefore closed rather than converted into legacy compatibility code.
 
@@ -142,13 +157,21 @@ C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
 
 ## 8. Immediate execution order
 
+Two non-conflicting lanes are active:
+
 ~~~text
-main@02845a47... is the clean merged baseline
--> sync / inspect latest ClocktowerEvidenceLab TB evidence
--> run E3/E4 qualification audit on concrete policy predicates
--> if none qualify: continue evidence acquisition, no V2 code
--> if one qualifies: define the smallest C5 slice on a fresh branch
--> preserve BEGINNER_CONSERVATIVE_V1 unchanged
+SDE/product mainline:
+main -> sync / inspect latest ClocktowerEvidenceLab TB evidence
+     -> run E3/E4 qualification audit on concrete policy predicates
+     -> if none qualify: continue evidence acquisition, no V2 code
+     -> if one qualifies: define the smallest C5 slice on a fresh branch
+     -> preserve BEGINNER_CONSERVATIVE_V1 unchanged
+
+maintenance lane:
+codex/current-only-recovery-cleanup
+     -> R1 focused Recovery field/wire disposition audit
+     -> R2+ small independently reviewable cleanup slices
+     -> no SDE ranking/policy change
 ~~~
 
 RH-E and #157 merge closure are complete; do not reopen them unless new current-version evidence exposes a regression.
@@ -162,9 +185,10 @@ Read first:
 3. `docs/TESTING_STRATEGY.md`
 4. this roadmap
 5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
-6. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` — RH-E contract and completed repair record
-7. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md` — completed C4 architecture/evidence boundary
-8. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md` — freeze/cutover gates
+6. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` — active Recovery cleanup contract / implementation route
+7. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` — RH-E contract and completed repair record
+8. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md` — completed C4 architecture/evidence boundary
+9. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md` — freeze/cutover gates
 
 Use older SDE-3A/B/C/C0–C3 completion documents only when a specific historical or ownership question requires them.
 

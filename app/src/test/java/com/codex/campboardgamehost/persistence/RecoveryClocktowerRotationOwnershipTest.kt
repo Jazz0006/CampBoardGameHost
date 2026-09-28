@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import org.junit.Assert.assertEquals
@@ -87,7 +86,6 @@ class RecoveryClocktowerRotationOwnershipTest {
                     artistClaimedNames = emptyList(),
                     lastExecutedName = null,
                     pendingKlutzName = null,
-                    klutzChoiceName = null,
                     klutzReturnToDawn = false,
                     ghostVoteAuthority = ClocktowerGhostVoteAuthority(),
                     highestVoteName = null,
@@ -96,7 +94,6 @@ class RecoveryClocktowerRotationOwnershipTest {
                 history = ClocktowerRecoveryHistory(
                     gameStateRevision = 0L,
                     playerInputRevision = 0L,
-                    semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
                     actionTimeline = ActionFactTimeline(),
                     nextTimelineGlobalSequence = 0L,
                     events = emptyList(),

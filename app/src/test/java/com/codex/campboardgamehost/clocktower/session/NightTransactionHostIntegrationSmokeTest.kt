@@ -17,8 +17,8 @@ import org.junit.Test
  * SNE-7.6 high-value JVM integration smokes across the real typed Host/session seams.
  *
  * These tests deliberately stop before App-owned durable side effects. They prove that the
- * production Host transaction adapter, checkpoint persistence, reconstruction, and Dawn planner
- * agree on the same confirmed mechanics without introducing a second coordinator/state owner.
+ * production Host transaction adapter, typed checkpoint reconstruction, and Dawn planner agree on
+ * the same confirmed mechanics without introducing a second coordinator/state owner.
  */
 class NightTransactionHostIntegrationSmokeTest {
     private val impInteraction = ClocktowerInteractionId("other_night:role:Imp")
@@ -27,7 +27,7 @@ class NightTransactionHostIntegrationSmokeTest {
     private val canonicalPlan = listOf(impInteraction, successorInteraction, empathInteraction)
 
     @Test
-    fun `confirmed successor survives Previous persistence and reconstruction`() {
+    fun `confirmed successor survives Previous and typed reconstruction`() {
         val baseGameState = gameState()
         val initial = checkpoint(nightStepIndex = 2)
 
@@ -43,10 +43,9 @@ class NightTransactionHostIntegrationSmokeTest {
         assertEquals(1, previous.checkpoint.nightStepIndex)
         assertEquals("Poisoner", previous.checkpoint.confirmedDemonSuccessorTarget)
 
-        val restored = ClocktowerNightCheckpoint.fromPersistedValues(previous.checkpoint.persistedValues())
         val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = baseGameState,
-            checkpoint = restored,
+            checkpoint = previous.checkpoint,
             canonicalInteractionIds = canonicalPlan,
             demonSuccessorInteractionId = successorInteraction,
             demonRoleId = RoleId("Imp"),
@@ -60,7 +59,7 @@ class NightTransactionHostIntegrationSmokeTest {
     }
 
     @Test
-    fun `restored host transaction reaches Dawn planner with explicit obsolete Poisoner clear`() {
+    fun `confirmed host transaction reaches Dawn planner with explicit obsolete Poisoner clear`() {
         val baseGameState = gameState()
         val initial = checkpoint(
             nightStepIndex = 2,
@@ -69,10 +68,9 @@ class NightTransactionHostIntegrationSmokeTest {
         val confirmed = NightCheckpointHostTransaction.confirmDemonSuccessor(
             NightCheckpointHostTransaction.editDemonSuccessor(initial, "Poisoner").checkpoint,
         )
-        val restored = ClocktowerNightCheckpoint.fromPersistedValues(confirmed.checkpoint.persistedValues())
         val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = baseGameState,
-            checkpoint = restored,
+            checkpoint = confirmed.checkpoint,
             canonicalInteractionIds = canonicalPlan,
             demonSuccessorInteractionId = successorInteraction,
             demonRoleId = RoleId("Imp"),
@@ -80,7 +78,7 @@ class NightTransactionHostIntegrationSmokeTest {
 
         val succession = NightDawnResolutionPlanner.planDemonSuccession(
             baseGameState = baseGameState,
-            checkpoint = restored,
+            checkpoint = confirmed.checkpoint,
             successionResolution = DemonSuccessionResolution.Choice(setOf(2)),
             demonRoleId = RoleId("Imp"),
         )

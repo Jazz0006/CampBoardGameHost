@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
@@ -54,36 +53,8 @@ internal data class UndercoverRecovery(
     override val cards: List<PlayerCard>,
     override val records: List<EliminationRecord>,
     override val outcome: GameOutcome?,
-    val undercoverCount: Int,
-    val includeBlank: Boolean,
-    val lastWordsMode: LastWordsMode,
 ) : RecoveryGame {
     override val gameKind: GameKind = GameKind.Undercover
-}
-
-internal data class WerewolfRecovery(
-    override val entryPoint: RecoveryEntryPoint,
-    override val currentDealIndex: Int,
-    override val round: Int,
-    override val cards: List<PlayerCard>,
-    override val records: List<EliminationRecord>,
-    override val outcome: GameOutcome?,
-    val werewolfCount: Int,
-    val includeSeer: Boolean,
-    val includeWitch: Boolean,
-    val includeHunter: Boolean,
-    val lastWordsMode: LastWordsMode,
-    /** Night-flow cursor; already performed role interactions must not be replayed after process death. */
-    val judgeStepIndex: Int,
-    val pendingNightDeath: String?,
-    val seerCheckTarget: String?,
-    val witchSaveUsed: Boolean,
-    val witchPoisonUsed: Boolean,
-    val witchSavedTonight: Boolean,
-    val witchPoisonTarget: String?,
-    val hunterShotTarget: String?,
-) : RecoveryGame {
-    override val gameKind: GameKind = GameKind.Werewolf
 }
 
 internal data class ClocktowerRecovery(
@@ -150,7 +121,6 @@ internal data class ClocktowerRecoveryMechanics(
     val artistClaimedNames: List<String>,
     val lastExecutedName: String?,
     val pendingKlutzName: String?,
-    val klutzChoiceName: String?,
     val klutzReturnToDawn: Boolean,
     val ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     val highestVoteName: String?,
@@ -161,7 +131,6 @@ internal data class ClocktowerRecoveryMechanics(
 internal data class ClocktowerRecoveryHistory(
     val gameStateRevision: Long,
     val playerInputRevision: Long,
-    val semanticHistoryMode: ClocktowerSemanticHistoryMode,
     val actionTimeline: ActionFactTimeline,
     val nextTimelineGlobalSequence: Long,
     val events: List<ClocktowerEvent>,

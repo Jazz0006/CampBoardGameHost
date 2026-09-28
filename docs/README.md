@@ -1,6 +1,6 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-09-27 Australia/Sydney  
+> 最后整理：2026-09-28 Australia/Sydney  
 > 目标：新开发会话只读取当前权威。历史过程、已撤销路线和中间校准实验不再留在 active docs 中制造歧义。
 
 ## 默认阅读顺序
@@ -10,15 +10,16 @@
 3. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
-6. [`SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) — **已完成 CR-A/B/C + IF-D，并定义当前 RH-E integration-hardening contract**
-7. [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) — C0–C3 历史集成闭环契约与已验收边界
-8. [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md) — SDE-3 architecture / evidence route；**不承担 live PR/执行状态**
-9. [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md) — **3D/3E surface-scoped gate authority**
-10. [`SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md) — **V1 immutable baseline**
-11. [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md) — first-night policy / evidence synthesis
-12. [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md) — targeted evidence acquisition contract
-13. [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv) — external evidence catalog
-14. 需要全局 SDE 架构背景时，再读 [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
+6. [`CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md`](CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md) — **当前 current-only / minimal-state Recovery cleanup authority；与真实对局证据主线并行，不改变 SDE policy**
+7. [`SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) — **已完成 CR-A/B/C + IF-D，并定义当前 RH-E integration-hardening contract**
+8. [`SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) — C0–C3 历史集成闭环契约与已验收边界
+9. [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md) — SDE-3 architecture / evidence route；**不承担 live PR/执行状态**
+10. [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md) — **3D/3E surface-scoped gate authority**
+11. [`SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md`](SDE_3D1_V1_IMMUTABLE_BASELINE_FREEZE_COMPLETION_AUDIT_2026-09-24.md) — **V1 immutable baseline**
+12. [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md) — first-night policy / evidence synthesis
+13. [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md) — targeted evidence acquisition contract
+14. [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv) — external evidence catalog
+15. 需要全局 SDE 架构背景时，再读 [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 
 随后检查 live 分支、工作区和差异；远端验收时独立查询 exact-head PR / checks。不要从 memory、Git history、archive、已完成 slice audit 或旧 PR 的 `NEXT / READY / COMPLETE` 推断当前状态。执行环境以 root `AGENTS.md` 和当前 workflow 为准：**GitHub Connector 默认负责日常 repository / PR / CI 工作；Mini MCP + Codex CLI 只作为需要完整本地上下文的大文件分析/执行补充。**
 
@@ -42,7 +43,7 @@ SDE-3D calibrated policy freeze        3D0–3D1 + C4/SDE-3D2 COMPLETE / IF-D CO
 SDE-3E automatic production cutover    C5 BLOCKED ON QUALIFYING E3/E4 / PER-SURFACE GATES
 ~~~
 
-当前远端边界：#157 已于 2026-09-27 经明确授权 squash merge；当前 canonical baseline 为 `main@02845a470761a988f0041d8c1027b0e2c58a7e05`，目前没有 active SDE implementation PR。合并前 integration head `371ebf624898c08747203aceaed1254647867214` 的 CI #3479 / R2 #3232 全绿，最终 docs-only head `ee3f3e32cd48be4bf634a9f8f70268d022dc84d2` 的 CI #3480 / R2 #3233 也全绿。旧 `codex/sde-history-prefix-route-closure` continuation 现在只作历史证据。下一主线不是直接实现 V2，而是从 ClocktowerEvidenceLab 同步/检查最新 Trouble Brewing 证据并做 E3/E4 qualification；只有出现 qualifying predicate 后才创建新的 C5 implementation branch。RH-E 验收见 [`archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`](archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md)，main integration 验收见 [`archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`](archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md)。
+当前远端边界：#157 已于 2026-09-27 经明确授权 squash merge；其 executable integration baseline 为 `02845a470761a988f0041d8c1027b0e2c58a7e05`。2026-09-28 Recovery cleanup 分支创建前复核的 `main` 为 `5d2982a7492a5092a898436a0386b822ee7343f5`，相对前者仅有文档变化。目前没有 active SDE implementation PR；另有独立维护分支 `codex/current-only-recovery-cleanup`。合并前 integration head `371ebf624898c08747203aceaed1254647867214` 的 CI #3479 / R2 #3232 全绿，最终 docs-only head `ee3f3e32cd48be4bf634a9f8f70268d022dc84d2` 的 CI #3480 / R2 #3233 也全绿。旧 `codex/sde-history-prefix-route-closure` continuation 现在只作历史证据。下一主线不是直接实现 V2，而是从 ClocktowerEvidenceLab 同步/检查最新 Trouble Brewing 证据并做 E3/E4 qualification；只有出现 qualifying predicate 后才创建新的 C5 implementation branch。RH-E 验收见 [`archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`](archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md)，main integration 验收见 [`archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`](archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md)。
 
 ## 当前政策核心
 

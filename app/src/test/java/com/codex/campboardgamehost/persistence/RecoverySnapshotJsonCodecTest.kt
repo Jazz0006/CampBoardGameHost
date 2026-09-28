@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -17,12 +16,12 @@ class RecoverySnapshotJsonCodecTest {
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 2,
                 round = 3,
-                cards = listOf(PlayerCard("Alice", Role.Civilian, "cat")),
+                cards = listOf(
+                    PlayerCard("Alice", Role.Civilian, "cat"),
+                    PlayerCard("Bob", Role.Undercover, "dog"),
+                ),
                 records = listOf(EliminationRecord(2, "Bob", "vote")),
                 outcome = null,
-                undercoverCount = 1,
-                includeBlank = false,
-                lastWordsMode = LastWordsMode.FirstDay,
             ),
         )
 
@@ -32,8 +31,12 @@ class RecoverySnapshotJsonCodecTest {
         assertEquals("test-current-build", json.getString("recoveryCompatibilityToken"))
         assertEquals(GameKind.Undercover.name, json.getString("currentGameKind"))
         assertEquals(3, json.getInt("round"))
+        assertEquals(0, json.getInt("currentDealIndex"))
         assertEquals("Alice", json.getJSONArray("cards").getJSONObject(0).getString("name"))
         assertFalse(json.has("screen"))
+        assertFalse(json.has("undercoverCount"))
+        assertFalse(json.has("includeBlank"))
+        assertFalse(json.has("lastWordsMode"))
         assertFalse(json.has("selectedElimination"))
         assertFalse(json.has("lastWordsPromptNames"))
         assertFalse(json.has("showResults"))
@@ -52,9 +55,6 @@ class RecoverySnapshotJsonCodecTest {
                 cards = listOf(PlayerCard("Alice", Role.Civilian, "cat")),
                 records = emptyList(),
                 outcome = null,
-                undercoverCount = 1,
-                includeBlank = false,
-                lastWordsMode = LastWordsMode.FirstDay,
             ),
         )
 
@@ -62,45 +62,6 @@ class RecoverySnapshotJsonCodecTest {
 
         assertEquals("RevealCard", json.getString("screen"))
         assertEquals(4, json.getInt("currentDealIndex"))
-    }
-
-    @Test
-    fun werewolfRecoveryRetainsAlreadyPerformedNightInteractions() {
-        val snapshot = RecoverySnapshot(
-            compatibilityToken = "test-current-build",
-            savedAtMillis = 1234L,
-            game = WerewolfRecovery(
-                entryPoint = RecoveryEntryPoint.Stable,
-                currentDealIndex = 0,
-                round = 2,
-                cards = listOf(PlayerCard("Wolf", Role.Werewolf, "")),
-                records = emptyList(),
-                outcome = null,
-                werewolfCount = 1,
-                includeSeer = true,
-                includeWitch = true,
-                includeHunter = false,
-                lastWordsMode = LastWordsMode.FirstDay,
-                judgeStepIndex = 3,
-                pendingNightDeath = "Alice",
-                seerCheckTarget = "Bob",
-                witchSaveUsed = true,
-                witchPoisonUsed = true,
-                witchSavedTonight = false,
-                witchPoisonTarget = "Carol",
-                hunterShotTarget = null,
-            ),
-        )
-
-        val json = RecoverySnapshotJsonCodec.encode(snapshot)
-
-        assertEquals(3, json.getInt("werewolfJudgeStepIndex"))
-        assertEquals("Alice", json.getString("pendingNightDeath"))
-        assertEquals("Bob", json.getString("seerCheckTarget"))
-        assertTrue(json.getBoolean("witchSaveUsed"))
-        assertTrue(json.getBoolean("witchPoisonUsed"))
-        assertEquals("Carol", json.getString("witchPoisonTarget"))
-        assertFalse(json.has("selectedDayExile"))
     }
 
     @Test
@@ -132,7 +93,7 @@ class RecoverySnapshotJsonCodecTest {
                     confirmedMonkProtectedTarget = "Carol",
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = "Demon 2",
-                    pendingNightNewDemonIdentityName = "Imp",
+                    pendingNightNewDemonIdentityName = "Demon 2",
                     confirmedDemonSuccessorTarget = "Demon 2",
                     redHerring = "Bob",
                     demonBluffRoleNames = listOf("Chef", "Monk", "Mayor"),
@@ -144,7 +105,6 @@ class RecoverySnapshotJsonCodecTest {
                     artistClaimedNames = listOf("Bob"),
                     lastExecutedName = "Carol",
                     pendingKlutzName = "Dave",
-                    klutzChoiceName = null,
                     klutzReturnToDawn = true,
                     ghostVoteAuthority = ClocktowerGhostVoteAuthority(),
                     highestVoteName = "Alice",
@@ -153,9 +113,8 @@ class RecoverySnapshotJsonCodecTest {
                 history = ClocktowerRecoveryHistory(
                     gameStateRevision = 10L,
                     playerInputRevision = 11L,
-                    semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
                     actionTimeline = ActionFactTimeline(),
-                    nextTimelineGlobalSequence = 12L,
+                    nextTimelineGlobalSequence = 0L,
                     events = emptyList(),
                     epistemicObservations = emptyList(),
                 ),
@@ -171,12 +130,15 @@ class RecoverySnapshotJsonCodecTest {
         )
         assertEquals("Bob", json.getString("clocktowerConfirmedPoisonTarget"))
         assertEquals("Carol", json.getString("clocktowerConfirmedMonkProtectedTarget"))
+        assertEquals("Demon 2", json.getString("clocktowerPendingNightNewDemonIdentityName"))
         assertEquals("Demon 2", json.getString("clocktowerConfirmedDemonSuccessorTarget"))
-        assertTrue(json.isNull("clocktowerDemonAttackDraftTarget"))
-        assertTrue(json.isNull("clocktowerPoisonTarget"))
-        assertTrue(json.isNull("clocktowerMonkProtectedTarget"))
-        assertTrue(json.isNull("clocktowerMayorRedirectTarget"))
-        assertTrue(json.isNull("clocktowerDemonSuccessorTarget"))
+        assertFalse(json.has("clocktowerSemanticHistoryMode"))
+        assertFalse(json.has("clocktowerNextTimelineGlobalSequence"))
+        assertFalse(json.has("clocktowerDemonAttackDraftTarget"))
+        assertFalse(json.has("clocktowerPoisonTarget"))
+        assertFalse(json.has("clocktowerMonkProtectedTarget"))
+        assertFalse(json.has("clocktowerMayorRedirectTarget"))
+        assertFalse(json.has("clocktowerDemonSuccessorTarget"))
         assertFalse(json.has("clocktowerDayMode"))
         assertFalse(json.has("clocktowerNominatorName"))
         assertFalse(json.has("clocktowerNomineeName"))

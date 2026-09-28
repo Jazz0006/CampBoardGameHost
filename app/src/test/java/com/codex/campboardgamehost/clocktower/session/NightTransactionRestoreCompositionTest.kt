@@ -15,7 +15,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** SNE-7.9E: persisted unfinished-night state must activate derived mechanics on restore. */
+/** SNE-7.9E: typed unfinished-night checkpoints must reconstruct derived mechanics safely. */
 class NightTransactionRestoreCompositionTest {
     private val impInteraction = ClocktowerInteractionId("other_night:role:Imp")
     private val successorInteraction = ClocktowerInteractionId("other_night:event:imp:demon_successor")
@@ -24,17 +24,21 @@ class NightTransactionRestoreCompositionTest {
     @Test
     fun `restored confirmed Imp self kill reconstructs derived successor state without mutating base game`() {
         val baseGameState = choiceGameState()
-        val persistedValues = checkpoint(
+        val checkpoint = checkpoint(
             demonSuccessorDraftTarget = "Poisoner",
             confirmedDemonSuccessorTarget = "Poisoner",
-        ).persistedValues()
+        )
+        val reconstruction = NightTransactionRestoreComposition.compose(
+            baseGameState = baseGameState,
+            checkpoint = checkpoint,
+            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+            demonSuccessorInteractionId = successorInteraction,
+            demonRoleId = RoleId("Imp"),
+        )
 
-        val restored = restore(persistedValues, baseGameState)
-
-        assertEquals(ClocktowerNightCheckpoint.fromPersistedValues(persistedValues), restored.checkpoint)
-        assertEquals(empathInteraction, restored.reconstruction.currentInteractionId)
-        assertFalse(restored.reconstruction.effectiveState.isMechanicallyAlive(1))
-        assertEquals(RoleId("Imp"), restored.reconstruction.effectiveState.currentRoleId(2))
+        assertEquals(empathInteraction, reconstruction.currentInteractionId)
+        assertFalse(reconstruction.effectiveState.isMechanicallyAlive(1))
+        assertEquals(RoleId("Imp"), reconstruction.effectiveState.currentRoleId(2))
 
         assertTrue(baseGameState.playerAt(1)?.alive == true)
         assertEquals(RoleId("Imp"), baseGameState.playerAt(1)?.actualRole)
@@ -44,13 +48,18 @@ class NightTransactionRestoreCompositionTest {
     @Test
     fun `restored forced Scarlet Woman succession exposes canonical events without base mutation`() {
         val baseGameState = forcedGameState()
-        val persistedValues = checkpoint(
+        val checkpoint = checkpoint(
             pendingNewDemonName = "Scarlet Woman",
             demonSuccessorDraftTarget = null,
             confirmedDemonSuccessorTarget = null,
-        ).persistedValues()
-
-        val restored = restore(persistedValues, baseGameState)
+        )
+        val reconstruction = NightTransactionRestoreComposition.compose(
+            baseGameState = baseGameState,
+            checkpoint = checkpoint,
+            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+            demonSuccessorInteractionId = successorInteraction,
+            demonRoleId = RoleId("Imp"),
+        )
 
         assertEquals(
             listOf(
@@ -70,28 +79,17 @@ class NightTransactionRestoreCompositionTest {
                     ),
                 ),
             ),
-            restored.reconstruction.confirmedEvents,
+            reconstruction.confirmedEvents,
         )
-        assertEquals(empathInteraction, restored.reconstruction.currentInteractionId)
-        assertFalse(restored.reconstruction.effectiveState.isMechanicallyAlive(1))
-        assertEquals(RoleId("Imp"), restored.reconstruction.effectiveState.currentRoleId(2))
-        assertEquals(RoleId("Poisoner"), restored.reconstruction.effectiveState.currentRoleId(3))
+        assertEquals(empathInteraction, reconstruction.currentInteractionId)
+        assertFalse(reconstruction.effectiveState.isMechanicallyAlive(1))
+        assertEquals(RoleId("Imp"), reconstruction.effectiveState.currentRoleId(2))
+        assertEquals(RoleId("Poisoner"), reconstruction.effectiveState.currentRoleId(3))
 
         assertTrue(baseGameState.playerAt(1)?.alive == true)
         assertEquals(RoleId("Scarlet Woman"), baseGameState.playerAt(2)?.actualRole)
         assertEquals(RoleId("Poisoner"), baseGameState.playerAt(3)?.actualRole)
     }
-
-    private fun restore(
-        persistedValues: Map<String, Any?>,
-        baseGameState: GameState,
-    ) = NightTransactionRestoreComposition.restore(
-        persistedCheckpointValues = persistedValues,
-        baseGameState = baseGameState,
-        canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
-        demonSuccessorInteractionId = successorInteraction,
-        demonRoleId = RoleId("Imp"),
-    )
 
     private fun choiceGameState() = GameState(
         script = ScriptId("Trouble Brewing"),

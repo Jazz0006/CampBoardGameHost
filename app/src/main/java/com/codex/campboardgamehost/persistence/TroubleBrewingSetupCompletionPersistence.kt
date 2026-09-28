@@ -42,7 +42,7 @@ internal object TroubleBrewingSetupCompletionPersistence {
         val json = root.optJSONObject(ROOT_KEY)
             ?: throw IllegalArgumentException("$ROOT_KEY must be an object.")
         val schemaVersion = json.requiredCompletionInt("schemaVersion")
-        require(schemaVersion in LEGACY_SCHEMA_VERSION..SCHEMA_VERSION) {
+        require(schemaVersion == SCHEMA_VERSION) {
             "Unsupported Trouble Brewing setup completion schema '$schemaVersion'."
         }
 
@@ -55,15 +55,10 @@ internal object TroubleBrewingSetupCompletionPersistence {
             minionRoleIds = json.requiredCompletionStringSet("minionRoleIds"),
             primaryStyleTag = json.requiredCompletionNullableString("primaryStyleTag"),
             selectedDrunkShownRole = json.requiredCompletionNullableString("selectedDrunkShownRole"),
-            playerStartingIdentities = if (schemaVersion == LEGACY_SCHEMA_VERSION) {
-                emptyList()
-            } else {
-                json.requiredCompletionStartingIdentities("playerStartingIdentities")
-            },
+            playerStartingIdentities =
+                json.requiredCompletionStartingIdentities("playerStartingIdentities"),
         ).also(TroubleBrewingSetupRotationRecordFactory::validate)
     }
-
-    private const val LEGACY_SCHEMA_VERSION = 1
 }
 
 private fun List<String>.toCompletionJsonArray(): JSONArray = JSONArray().apply { forEach(::put) }

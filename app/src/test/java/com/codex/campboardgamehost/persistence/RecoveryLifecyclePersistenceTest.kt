@@ -78,9 +78,6 @@ class RecoveryLifecyclePersistenceTest {
             cards = listOf(PlayerCard("Alice", Role.Civilian, "cat")),
             records = emptyList(),
             outcome = null,
-            undercoverCount = 1,
-            includeBlank = false,
-            lastWordsMode = LastWordsMode.FirstDay,
         ),
     )
 }

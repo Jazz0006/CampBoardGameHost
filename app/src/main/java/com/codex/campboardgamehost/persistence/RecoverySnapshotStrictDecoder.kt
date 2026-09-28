@@ -41,9 +41,6 @@ internal object RecoverySnapshotStrictDecoder {
                     cards = cards,
                     records = records,
                     outcome = outcome,
-                    undercoverCount = json.requiredInt("undercoverCount"),
-                    includeBlank = json.requiredBoolean("includeBlank"),
-                    lastWordsMode = json.requiredEnum("lastWordsMode"),
                 )
             }
 
@@ -84,15 +81,13 @@ internal object RecoverySnapshotStrictDecoder {
         val phase = json.requiredEnum<ClocktowerPhase>("clocktowerPhase")
         val gameStateRevision = json.requiredLong("clocktowerGameStateRevision")
         val playerInputRevision = json.requiredLong("clocktowerPlayerInputRevision")
-        val semanticHistoryMode = ClocktowerSemanticHistoryPersistence.decodeMode(json)
         val actionTimeline = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(json)
-        val nextTimelineGlobalSequence = json.requiredLong(ClocktowerSemanticHistoryPersistence.CURSOR_KEY)
-
-        json.requireNull("clocktowerDemonAttackDraftTarget")
-        json.requireNull("clocktowerPoisonTarget")
-        json.requireNull("clocktowerMonkProtectedTarget")
-        json.requireNull("clocktowerMayorRedirectTarget")
-        json.requireNull("clocktowerDemonSuccessorTarget")
+        val epistemicObservations = json.requiredArray("clocktowerEpistemicObservations")
+            .decodeEpistemicObservationsStrict()
+        val nextTimelineGlobalSequence = ClocktowerSemanticHistoryPersistence.deriveNextTimelineGlobalSequence(
+            actionTimeline = actionTimeline,
+            observations = epistemicObservations,
+        )
 
         return ClocktowerRecovery(
             entryPoint = entryPoint,
@@ -138,7 +133,6 @@ internal object RecoverySnapshotStrictDecoder {
                 artistClaimedNames = json.requiredArray("clocktowerArtistClaimedNames").strictStringList(),
                 lastExecutedName = json.requiredNullableString("clocktowerLastExecutedName"),
                 pendingKlutzName = json.requiredNullableString("clocktowerPendingKlutzName"),
-                klutzChoiceName = json.requiredNullableString("clocktowerKlutzChoiceName"),
                 klutzReturnToDawn = json.requiredBoolean("clocktowerKlutzReturnToDawn"),
                 ghostVoteAuthority = json.decodeGhostVoteAuthorityStrict(),
                 highestVoteName = json.requiredNullableString("clocktowerHighestVoteName"),
@@ -147,12 +141,10 @@ internal object RecoverySnapshotStrictDecoder {
             history = ClocktowerRecoveryHistory(
                 gameStateRevision = gameStateRevision,
                 playerInputRevision = playerInputRevision,
-                semanticHistoryMode = semanticHistoryMode,
                 actionTimeline = actionTimeline,
                 nextTimelineGlobalSequence = nextTimelineGlobalSequence,
                 events = json.requiredArray("clocktowerEvents").decodeEventsStrict(),
-                epistemicObservations = json.requiredArray("clocktowerEpistemicObservations")
-                    .decodeEpistemicObservationsStrict(),
+                epistemicObservations = epistemicObservations,
             ),
         )
     }
@@ -271,11 +263,6 @@ internal object RecoverySnapshotStrictDecoder {
             require(value.isNotBlank()) { "String array entries cannot be blank." }
             add(value)
         }
-    }
-
-    private fun JSONObject.requireNull(key: String) {
-        require(has(key)) { "$key is required." }
-        require(isNull(key)) { "$key must be null in typed recovery; draft interaction state is not durable." }
     }
 
     private fun JSONObject.requiredArray(key: String): JSONArray {

@@ -86,27 +86,13 @@ internal data class TruthCredibilityCandidateEvidence(
     }
 }
 
-/**
- * Typed, role-agnostic truth-danger / credibility-disruption feature surface.
- *
- * The legacy reason-code sets remain only for DecisionTrace schema-v1 read compatibility. New C4
- * projection and schema-v2 persistence use the typed fields; legacy reads migrate into the current
- * in-memory trace schema without inventing typed provenance.
- */
+/** Typed, role-agnostic truth-danger / credibility-disruption feature surface. */
 internal data class TruthCredibilityFeatures(
     val truthDangerSources: Set<TruthDangerSourceImpact> = emptySet(),
     val credibilityDisruptions: Set<CredibilityDisruptionImpact> = emptySet(),
     val unresolvedSourceRefs: Set<ConfirmationChannelRef.Source> = emptySet(),
-    val truthDangerReasonCodes: Set<String> = emptySet(),
-    val credibilityDisruptionReasonCodes: Set<String> = emptySet(),
 ) {
     init {
-        require(truthDangerReasonCodes.none(String::isBlank)) {
-            "Truth-danger reason codes cannot be blank."
-        }
-        require(credibilityDisruptionReasonCodes.none(String::isBlank)) {
-            "Credibility-disruption reason codes cannot be blank."
-        }
         require(truthDangerSources.none { it.source in unresolvedSourceRefs }) {
             "An unresolved source cannot simultaneously carry resolved truth-danger features."
         }

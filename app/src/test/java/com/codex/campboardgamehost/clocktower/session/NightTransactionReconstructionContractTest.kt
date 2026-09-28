@@ -176,24 +176,22 @@ class NightTransactionReconstructionContractTest {
     @Test
     fun `restored stale Mayor redirect to reconstructed new Demon fails closed`() {
         val baseGameState = gameState(includeMayor = true)
-        val restored = ClocktowerNightCheckpoint.fromPersistedValues(
-            checkpoint(
-                nightStepIndex = 2,
-                confirmedMayorRedirectTarget = "Poisoner",
-                demonSuccessorDraftTarget = "Poisoner",
-                confirmedDemonSuccessorTarget = "Poisoner",
-            ).persistedValues(),
+        val recoveredCheckpoint = checkpoint(
+            nightStepIndex = 2,
+            confirmedMayorRedirectTarget = "Poisoner",
+            demonSuccessorDraftTarget = "Poisoner",
+            confirmedDemonSuccessorTarget = "Poisoner",
         )
         val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = baseGameState,
-            checkpoint = restored,
+            checkpoint = recoveredCheckpoint,
             canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
             demonSuccessorInteractionId = successorInteraction,
             demonRoleId = RoleId("Imp"),
         )
         val transition = NightDawnResolutionPlanner.planValidatedNightDeath(
             baseGameState = baseGameState,
-            checkpoint = restored,
+            checkpoint = recoveredCheckpoint,
             input = NightDawnDeathResolutionInput(
                 originalDeathSeat = 4,
                 mayorSeat = 4,
@@ -215,21 +213,18 @@ class NightTransactionReconstructionContractTest {
             demonSuccessorDraftTarget = "Poisoner",
             confirmedDemonSuccessorTarget = "Poisoner",
         )
-        val persisted = input.persistedValues()
-        val restoredFirst = ClocktowerNightCheckpoint.fromPersistedValues(persisted)
-        val restoredSecond = ClocktowerNightCheckpoint.fromPersistedValues(persisted)
         val canonicalPlan = listOf(impInteraction, successorInteraction, empathInteraction)
 
         val first = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
-            checkpoint = restoredFirst,
+            checkpoint = input,
             canonicalInteractionIds = canonicalPlan,
             demonSuccessorInteractionId = successorInteraction,
             demonRoleId = RoleId("Imp"),
         )
         val second = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
-            checkpoint = restoredSecond,
+            checkpoint = input,
             canonicalInteractionIds = canonicalPlan,
             demonSuccessorInteractionId = successorInteraction,
             demonRoleId = RoleId("Imp"),

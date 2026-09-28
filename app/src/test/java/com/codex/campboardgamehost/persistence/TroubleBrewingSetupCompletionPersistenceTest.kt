@@ -34,38 +34,7 @@ class TroubleBrewingSetupCompletionPersistenceTest {
     }
 
     @Test
-    fun `schema v1 completion remains readable without player starting identities`() {
-        val legacy = JSONObject().apply {
-            put("schemaVersion", 1)
-            put("datasetId", "trouble_brewing_setup_presets_v2_final")
-            put("datasetSchemaVersion", 2)
-            put("presetId", "tb-8-042")
-            put("playerCount", 8)
-            put(
-                "realNonDemonRoleIds",
-                JSONArray(
-                    listOf(
-                        "chef",
-                        "empath",
-                        "fortune_teller",
-                        "monk",
-                        "drunk",
-                        "butler",
-                        "poisoner",
-                    ),
-                ),
-            )
-            put("minionRoleIds", JSONArray(listOf("poisoner")))
-            put("primaryStyleTag", "balanced")
-            put("selectedDrunkShownRole", "investigator")
-        }
-        val root = JSONObject().put(TroubleBrewingSetupCompletionPersistence.ROOT_KEY, legacy)
-
-        assertEquals(record(), TroubleBrewingSetupCompletionPersistence.decodeOrNull(root))
-    }
-
-    @Test
-    fun `missing completion record is optional for non TB or unsupported legacy active save`() {
+    fun `missing completion record is optional for non TB recovery`() {
         assertNull(TroubleBrewingSetupCompletionPersistence.decodeOrNull(JSONObject()))
     }
 

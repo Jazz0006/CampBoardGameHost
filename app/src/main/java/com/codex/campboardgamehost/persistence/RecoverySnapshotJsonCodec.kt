@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
-import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -16,7 +15,11 @@ internal object RecoverySnapshotJsonCodec {
         put("savedAtMillis", snapshot.savedAtMillis)
         put("currentGameKind", snapshot.game.gameKind.name)
         encodeEntryPoint(snapshot.game.entryPoint)
-        put("currentDealIndex", snapshot.game.currentDealIndex.coerceAtLeast(0))
+        put(
+            "currentDealIndex",
+            if (snapshot.game.entryPoint == RecoveryEntryPoint.Stable) 0
+            else snapshot.game.currentDealIndex.coerceAtLeast(0),
+        )
         put("round", snapshot.game.round.coerceAtLeast(1))
         put("cards", AppGameStateJsonCodec.encodeCards(snapshot.game.cards))
         put("records", AppGameStateJsonCodec.encodeRecords(snapshot.game.records))
@@ -26,8 +29,7 @@ internal object RecoverySnapshotJsonCodec {
         )
 
         when (val game = snapshot.game) {
-            is UndercoverRecovery -> encodeUndercover(game)
-            is WerewolfRecovery -> encodeWerewolf(game)
+            is UndercoverRecovery -> Unit
             is ClocktowerRecovery -> encodeClocktower(game)
         }
     }
@@ -46,28 +48,6 @@ internal object RecoverySnapshotJsonCodec {
         }
     }
 
-    private fun JSONObject.encodeUndercover(game: UndercoverRecovery) {
-        put("undercoverCount", game.undercoverCount.coerceAtLeast(1))
-        put("includeBlank", game.includeBlank)
-        put("lastWordsMode", game.lastWordsMode.name)
-    }
-
-    private fun JSONObject.encodeWerewolf(game: WerewolfRecovery) {
-        put("werewolfCount", game.werewolfCount.coerceAtLeast(1))
-        put("includeSeer", game.includeSeer)
-        put("includeWitch", game.includeWitch)
-        put("includeHunter", game.includeHunter)
-        put("lastWordsMode", game.lastWordsMode.name)
-        put("werewolfJudgeStepIndex", game.judgeStepIndex.coerceAtLeast(0))
-        putNullableString("pendingNightDeath", game.pendingNightDeath)
-        putNullableString("seerCheckTarget", game.seerCheckTarget)
-        put("witchSaveUsed", game.witchSaveUsed)
-        put("witchPoisonUsed", game.witchPoisonUsed)
-        put("witchSavedTonight", game.witchSavedTonight)
-        putNullableString("witchPoisonTarget", game.witchPoisonTarget)
-        putNullableString("hunterShotTarget", game.hunterShotTarget)
-    }
-
     private fun JSONObject.encodeClocktower(game: ClocktowerRecovery) {
         put("clocktowerPhase", game.position.phase.name)
         put("currentClocktowerScript", game.identity.script.name)
@@ -83,36 +63,25 @@ internal object RecoverySnapshotJsonCodec {
         put("clocktowerGameStateRevision", game.history.gameStateRevision.coerceAtLeast(0L))
         put("clocktowerPlayerInputRevision", game.history.playerInputRevision.coerceAtLeast(0L))
         put(
-            ClocktowerSemanticHistoryPersistence.MODE_KEY,
-            ClocktowerSemanticHistoryPersistence.encode(game.history.semanticHistoryMode),
-        )
-        put(
             ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
             ClocktowerSemanticHistoryPersistence.encodeActionTimeline(game.history.actionTimeline),
         )
 
-        ClocktowerNightCheckpoint(
-            phaseName = game.position.phase.name,
-            round = game.round,
-            gameStateRevision = game.history.gameStateRevision,
-            playerInputRevision = game.history.playerInputRevision,
-            nightStarted = game.position.nightStarted,
-            nightStepIndex = game.position.nightStepIndex,
-            confirmedAttackTarget = game.mechanics.confirmedAttackTarget,
-            attackDraftTarget = null,
-            confirmedPoisonTarget = game.mechanics.confirmedPoisonTarget,
-            poisonDraftTarget = null,
-            confirmedMonkTarget = game.mechanics.confirmedMonkProtectedTarget,
-            monkDraftTarget = null,
-            confirmedMayorRedirectTarget = game.mechanics.confirmedMayorRedirectTarget,
-            mayorRedirectDraftTarget = null,
-            pendingNewDemonName = game.mechanics.pendingNewDemonName,
-            pendingNightNewDemonIdentityName = game.mechanics.pendingNightNewDemonIdentityName,
-            demonSuccessorDraftTarget = null,
-            confirmedDemonSuccessorTarget = game.mechanics.confirmedDemonSuccessorTarget,
-            nextTimelineGlobalSequence = game.history.nextTimelineGlobalSequence,
-        ).persistedValues().forEach { (key, value) -> put(key, value ?: JSONObject.NULL) }
-
+        put("clocktowerNightStarted", game.position.nightStarted)
+        put("clocktowerNightStepIndex", game.position.nightStepIndex.coerceAtLeast(0))
+        putNullableString("clocktowerPendingNightDeath", game.mechanics.confirmedAttackTarget)
+        putNullableString("clocktowerConfirmedPoisonTarget", game.mechanics.confirmedPoisonTarget)
+        putNullableString("clocktowerConfirmedMonkProtectedTarget", game.mechanics.confirmedMonkProtectedTarget)
+        putNullableString("clocktowerConfirmedMayorRedirectTarget", game.mechanics.confirmedMayorRedirectTarget)
+        putNullableString("clocktowerPendingNewDemonName", game.mechanics.pendingNewDemonName)
+        putNullableString(
+            "clocktowerPendingNightNewDemonIdentityName",
+            game.mechanics.pendingNightNewDemonIdentityName,
+        )
+        putNullableString(
+            "clocktowerConfirmedDemonSuccessorTarget",
+            game.mechanics.confirmedDemonSuccessorTarget,
+        )
         putNullableString("clocktowerRedHerring", game.mechanics.redHerring)
         put("clocktowerRecommendedDemonBluffRoleNames", stringsToJsonArray(game.mechanics.demonBluffRoleNames))
         putNullableString("clocktowerButlerMaster", game.mechanics.butlerMaster)
@@ -123,9 +92,6 @@ internal object RecoverySnapshotJsonCodec {
         put("clocktowerArtistClaimedNames", stringsToJsonArray(game.mechanics.artistClaimedNames))
         putNullableString("clocktowerLastExecutedName", game.mechanics.lastExecutedName)
         putNullableString("clocktowerPendingKlutzName", game.mechanics.pendingKlutzName)
-        // A selected Klutz target is ordinary unconfirmed UI input. Recovery preserves the pending
-        // Klutz obligation and safely re-enters the choice, but never promotes this draft to fact.
-        putNullableString("clocktowerKlutzChoiceName", null)
         put("clocktowerKlutzReturnToDawn", game.mechanics.klutzReturnToDawn)
         put(
             ClocktowerGhostVoteAuthorityPersistence.ROOT_KEY,

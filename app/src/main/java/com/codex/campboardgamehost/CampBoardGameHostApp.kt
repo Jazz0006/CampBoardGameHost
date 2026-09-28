@@ -1199,6 +1199,7 @@ internal fun CampBoardGameHostApp() {
             Screen.RevealCard -> RecoveryEntryPoint.RevealCard
             else -> RecoveryEntryPoint.Stable
         }
+        val recoveryDealIndex = if (entryPoint == RecoveryEntryPoint.Stable) 0 else currentDealIndex
         val commonCards = cards.toList()
         val commonRecords = records.toList()
         val sdeHistoricalReplayInputJson = if (currentGameKind == GameKind.Clocktower) {
@@ -1230,19 +1231,16 @@ internal fun CampBoardGameHostApp() {
         val recoveryGame: RecoveryGame = when (currentGameKind) {
             GameKind.Undercover -> UndercoverRecovery(
                 entryPoint = entryPoint,
-                currentDealIndex = currentDealIndex,
+                currentDealIndex = recoveryDealIndex,
                 round = round,
                 cards = commonCards,
                 records = commonRecords,
                 outcome = gameOutcome,
-                undercoverCount = undercoverCount,
-                includeBlank = includeBlank,
-                lastWordsMode = lastWordsMode,
             )
             GameKind.Werewolf -> error("Werewolf runtime has been removed.")
             GameKind.Clocktower -> ClocktowerRecovery(
                 entryPoint = entryPoint,
-                currentDealIndex = currentDealIndex,
+                currentDealIndex = recoveryDealIndex,
                 round = round,
                 cards = commonCards,
                 records = commonRecords,
@@ -1277,7 +1275,6 @@ internal fun CampBoardGameHostApp() {
                     artistClaimedNames = clocktowerArtistClaimedNames.toList(),
                     lastExecutedName = clocktowerLastExecutedName,
                     pendingKlutzName = clocktowerPendingKlutzName,
-                    klutzChoiceName = clocktowerKlutzChoiceName,
                     klutzReturnToDawn = clocktowerKlutzReturnToDawn,
                     ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
                     highestVoteName = clocktowerHighestVoteNameState.value,
@@ -1286,7 +1283,6 @@ internal fun CampBoardGameHostApp() {
                 history = ClocktowerRecoveryHistory(
                     gameStateRevision = clocktowerGameStateRevision,
                     playerInputRevision = clocktowerPlayerInputRevision,
-                    semanticHistoryMode = clocktowerSemanticHistoryMode,
                     actionTimeline = clocktowerActionTimeline,
                     nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
                     events = clocktowerEvents.toList(),
@@ -1399,9 +1395,8 @@ internal fun CampBoardGameHostApp() {
 
         when (game) {
             is UndercoverRecovery -> {
-                undercoverCount = game.undercoverCount
-                includeBlank = game.includeBlank
-                lastWordsMode = game.lastWordsMode
+                undercoverCount = game.cards.count { it.role == Role.Undercover }
+                includeBlank = game.cards.any { it.role == Role.Blank }
             }
             is ClocktowerRecovery -> {
                 val runtime = plan.clocktowerRuntime
@@ -1425,7 +1420,7 @@ internal fun CampBoardGameHostApp() {
                         gameState = recoveredGameState,
                         actionTimeline = history.actionTimeline,
                         epistemicObservationLog = EpistemicObservationLog(history.epistemicObservations),
-                        semanticHistoryMode = history.semanticHistoryMode,
+                        semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
                         nextTimelineGlobalSequence = history.nextTimelineGlobalSequence,
                     ),
                 )
@@ -1474,7 +1469,6 @@ internal fun CampBoardGameHostApp() {
                         ClocktowerDayMode.Overview
                     }
             }
-            is WerewolfRecovery -> Unit
         }
 
         screen = when (plan.safeReentry) {

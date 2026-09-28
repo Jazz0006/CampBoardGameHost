@@ -1,11 +1,11 @@
 package com.codex.campboardgamehost.clocktower.session
 
 /**
- * Persisted continuation point for an unfinished Clocktower night.
+ * Typed same-night transaction checkpoint.
  *
- * The values deliberately distinguish player drafts from confirmed mechanical
- * facts. Keeping this boundary pure Kotlin lets restore behavior be verified
- * without Compose or Android storage.
+ * The values deliberately distinguish player drafts from confirmed mechanical facts. Active
+ * Recovery persists only the current durable subset through its own typed codec; this model itself
+ * is not a persistence wire contract.
  */
 internal data class ClocktowerNightCheckpoint(
     val phaseName: String,
@@ -35,71 +35,4 @@ internal data class ClocktowerNightCheckpoint(
         require(nextTimelineGlobalSequence >= 0) { "nextTimelineGlobalSequence cannot be negative." }
     }
 
-    fun persistedValues(): Map<String, Any?> = mapOf(
-        "clocktowerPhase" to phaseName,
-        "round" to round,
-        "clocktowerGameStateRevision" to gameStateRevision,
-        "clocktowerPlayerInputRevision" to playerInputRevision,
-        "clocktowerNightStarted" to nightStarted,
-        "clocktowerNightStepIndex" to nightStepIndex,
-        "clocktowerPendingNightDeath" to confirmedAttackTarget,
-        "clocktowerDemonAttackDraftTarget" to attackDraftTarget,
-        "clocktowerConfirmedPoisonTarget" to confirmedPoisonTarget,
-        "clocktowerPoisonTarget" to poisonDraftTarget,
-        "clocktowerConfirmedMonkProtectedTarget" to confirmedMonkTarget,
-        "clocktowerMonkProtectedTarget" to monkDraftTarget,
-        "clocktowerConfirmedMayorRedirectTarget" to confirmedMayorRedirectTarget,
-        "clocktowerMayorRedirectTarget" to mayorRedirectDraftTarget,
-        "clocktowerPendingNewDemonName" to pendingNewDemonName,
-        "clocktowerPendingNightNewDemonIdentityName" to pendingNightNewDemonIdentityName,
-        "clocktowerDemonSuccessorTarget" to demonSuccessorDraftTarget,
-        "clocktowerConfirmedDemonSuccessorTarget" to confirmedDemonSuccessorTarget,
-        "clocktowerNextTimelineGlobalSequence" to nextTimelineGlobalSequence,
-    )
-
-    companion object {
-        private const val TIMELINE_CURSOR_KEY = "clocktowerNextTimelineGlobalSequence"
-
-        fun fromPersistedValues(values: Map<String, Any?>): ClocktowerNightCheckpoint = ClocktowerNightCheckpoint(
-            phaseName = values.string("clocktowerPhase") ?: "FirstNight",
-            round = values.int("round")?.coerceAtLeast(1) ?: 1,
-            gameStateRevision = values.long("clocktowerGameStateRevision")?.coerceAtLeast(0) ?: 0,
-            playerInputRevision = values.long("clocktowerPlayerInputRevision")?.coerceAtLeast(0) ?: 0,
-            nightStarted = values.boolean("clocktowerNightStarted") ?: false,
-            nightStepIndex = values.int("clocktowerNightStepIndex")?.coerceAtLeast(0) ?: 0,
-            confirmedAttackTarget = values.string("clocktowerPendingNightDeath"),
-            attackDraftTarget = values.string("clocktowerDemonAttackDraftTarget")
-                ?: values.string("clocktowerPendingNightDeath"),
-            confirmedPoisonTarget = values.string("clocktowerConfirmedPoisonTarget")
-                ?: values.string("clocktowerPoisonTarget"),
-            poisonDraftTarget = values.string("clocktowerPoisonTarget"),
-            confirmedMonkTarget = values.string("clocktowerConfirmedMonkProtectedTarget")
-                ?: values.string("clocktowerMonkProtectedTarget"),
-            monkDraftTarget = values.string("clocktowerMonkProtectedTarget"),
-            confirmedMayorRedirectTarget = values.string("clocktowerConfirmedMayorRedirectTarget")
-                ?: values.string("clocktowerMayorRedirectTarget"),
-            mayorRedirectDraftTarget = values.string("clocktowerMayorRedirectTarget"),
-            pendingNewDemonName = values.string("clocktowerPendingNewDemonName"),
-            pendingNightNewDemonIdentityName = values.string("clocktowerPendingNightNewDemonIdentityName"),
-            demonSuccessorDraftTarget = values.string("clocktowerDemonSuccessorTarget"),
-            confirmedDemonSuccessorTarget = values.string("clocktowerConfirmedDemonSuccessorTarget"),
-            nextTimelineGlobalSequence = values.timelineCursor(),
-        )
-
-        private fun Map<String, Any?>.timelineCursor(): Long {
-            if (!containsKey(TIMELINE_CURSOR_KEY)) return 0L
-            val raw = this[TIMELINE_CURSOR_KEY]
-            require(raw is Number) {
-                "$TIMELINE_CURSOR_KEY must be an integer number when present."
-            }
-            return requireNotNull(raw.toString().toLongOrNull()) {
-                "$TIMELINE_CURSOR_KEY must be an integer Long value when present."
-            }
-        }
-
-        private fun Map<String, Any?>.string(key: String): String? = this[key] as? String
-        private fun Map<String, Any?>.int(key: String): Int? = (this[key] as? Number)?.toInt()
-        private fun Map<String, Any?>.long(key: String): Long? = (this[key] as? Number)?.toLong()
-        private fun Map<String, Any?>.boolean(key: String): Boolean? = this[key] as? Boolean
-    }
 }
