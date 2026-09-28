@@ -21,7 +21,8 @@ CR-A / CR-B / CR-C                                    COMPLETE
 C4 / SDE-3D2                                          COMPLETE
 IF-D durable App replay capture/rebuild               COMPLETE
 RH-E runtime persistence/timing hardening             COMPLETE
-DLB-0 typed intermediate setup                         COMPLETE / ACCEPTED\nDLB-1 visible-roster deal cutover                       NEXT
+DLB-0 typed intermediate setup                         COMPLETE / ACCEPTED
+DLB-1 visible-roster deal cutover                       NEXT
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
@@ -58,7 +59,9 @@ Repository cleanup before RH-E:
 
 Always query live Git/PR state before executable work. Do not rely on a hard-coded live branch HEAD in this document.
 
-## 3. Accepted executable checkpoints\n\nDLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`; CI #3506 and R2 #3251 GREEN. DLB-0 added only the typed intermediate setup contract and owning test; current runtime deal semantics remain unchanged until DLB-1.
+## 3. Accepted executable checkpoints
+
+DLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`; CI #3506 and R2 #3251 GREEN. DLB-0 added only the typed intermediate setup contract and owning test; current runtime deal semantics remain unchanged until DLB-1.
 
 These are historical acceptance identities, not current branch heads:
 
