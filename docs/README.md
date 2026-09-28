@@ -124,14 +124,13 @@ Older completed/superseded implementation routes live under [`archive/`](archive
 If documents conflict, use this order:
 
 1. official BoTC rules/rulings — gameplay correctness;
-2. root `AGENTS.md` — execution / architecture / testing;
-3. `CURRENT_DEVELOPMENT_ROADMAP.md` — current state / priority;
-4. `NEXT_DEVELOPMENT_HANDOFF.md` — current continuation point;
+2. root `AGENTS.md` — execution / architecture / governance;
+3. `TESTING_STRATEGY.md` — test-tier and validation evidence definitions;
+4. `CURRENT_DEVELOPMENT_ROADMAP.md` + `NEXT_DEVELOPMENT_HANDOFF.md` + `DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current state, continuation point and DLB product lifecycle;
 5. `AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — current GitHub Connector-first / Mini MCP+Codex large-file execution workflow;
-6. `DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB lifecycle/implementation authority;
-7. `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md` plus current 3D audit — long-lived SDE/calibration contract where not superseded by DLB lifecycle changes;
-8. `SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md` and targeted evidence contract — policy/evidence background; its pre-DLB setup/sequence model is historical;
-9. external evidence catalog — source inventory/provenance, not standalone normative truth;
-10. long-lived architecture/reference docs;
-11. Mini MCP developer memory — optional advisory navigation/experience only;
-12. completed/superseded workflow docs, slice audits, archive and Git history — historical/completion evidence only.
+6. `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md` plus current 3D audit — long-lived SDE/calibration contract where not superseded by DLB lifecycle changes;
+7. `SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md` and targeted evidence contract — policy/evidence background; its pre-DLB setup/sequence model is historical;
+8. external evidence catalog — source inventory/provenance, not standalone normative truth;
+9. long-lived architecture/reference docs;
+10. Mini MCP developer memory — optional advisory navigation/experience only;
+11. completed/superseded workflow docs, slice audits, archive and Git history — historical/completion evidence only.
