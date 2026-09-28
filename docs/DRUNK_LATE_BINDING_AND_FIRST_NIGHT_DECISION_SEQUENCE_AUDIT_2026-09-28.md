@@ -254,6 +254,36 @@ Only after this commit create the final `CommittedClocktowerSetup` and canonical
 
 Move rotation/completion persistence to consume the final committed setup rather than a pre-Drunk deal plan.
 
+### DLB-4A — Storyteller Drunk-selection interaction / UX
+
+The late-bound Drunk decision must be a first-class setup interaction, not a hidden recommendation side effect.
+
+Placement:
+
+```text
+visible identities assigned to seats
+-> compute legal Drunk candidate seats + SDE recommendation
+-> EXPERIENCED mode: show "Choose the Drunk" setup step
+     - eligible dealt Townsfolk only
+     - SDE recommendation preselected/highlighted
+     - Storyteller may choose any legal candidate
+     - confirm commits the Drunk seat
+-> BEGINNER mode: automatically commit the SDE-selected legal candidate
+     - no manual step is shown
+     - flow advances directly to player identity reveal
+-> final CommittedClocktowerSetup / GameState
+-> player identity reveal
+```
+
+Manual authority is deliberately restricted to experienced Storyteller mode. The manual UI chooses only among the rules-owned legal candidate domain; it cannot create an illegal Drunk assignment. Once confirmed, manual and automatic selections enter the same canonical commit boundary, history, DecisionTrace/replay and Recovery semantics.
+
+The UX should therefore consume one shared typed decision object rather than maintaining separate "automatic Drunk" and "manual Drunk" state paths. The mode changes selection authority/presentation only:
+
+- BEGINNER: AUTO selects and commits the recommended candidate, then skips the screen;
+- EXPERIENCED: ASSISTED presents the same candidate pool and recommendation but leaves final choice to the Storyteller.
+
+This interaction belongs after seat assignment and before player role reveal. It is not a normal first-night wake step because the chosen actual/shown identity map must already be committed before any player sees their character.
+
 ### DLB-5 — staged first-night planner
 
 Decompose the current monolithic setup recommendation surface:
