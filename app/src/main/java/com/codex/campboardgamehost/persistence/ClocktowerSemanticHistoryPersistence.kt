@@ -1,10 +1,11 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
-import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import org.json.JSONArray
@@ -12,32 +13,23 @@ import org.json.JSONObject
 
 /** Active-game JSON contract for explicit Clocktower semantic-history metadata. */
 internal object ClocktowerSemanticHistoryPersistence {
-    const val MODE_KEY = "clocktowerSemanticHistoryMode"
-    const val CURSOR_KEY = "clocktowerNextTimelineGlobalSequence"
     const val ACTION_TIMELINE_KEY = "clocktowerActionTimeline"
 
-    fun encode(mode: ClocktowerSemanticHistoryMode): String = mode.name
-
-    fun decodeMode(json: JSONObject): ClocktowerSemanticHistoryMode {
-        require(json.has(MODE_KEY)) { "$MODE_KEY is required in active-game schema v3." }
-        require(!json.isNull(MODE_KEY)) { "$MODE_KEY cannot be null." }
-        val rawMode = json.opt(MODE_KEY)
-        require(rawMode is String && rawMode.isNotBlank()) {
-            "$MODE_KEY must be a non-blank string."
+    fun deriveNextTimelineGlobalSequence(
+        actionTimeline: ActionFactTimeline,
+        observations: List<RecordedEpistemicObservation>,
+    ): Long {
+        val actionMax = actionTimeline.entries.maxOfOrNull { it.point.globalSequence }
+        val observationMax = observations
+            .mapNotNull { observation ->
+                (observation.timelineBinding as? ObservationTimelineBinding.Global)?.point?.globalSequence
+            }
+            .maxOrNull()
+        val maxCommitted = listOfNotNull(actionMax, observationMax).maxOrNull() ?: return 0L
+        require(maxCommitted != Long.MAX_VALUE) {
+            "Committed global timeline cannot exhaust the recovery cursor."
         }
-
-        require(json.has(CURSOR_KEY)) { "$CURSOR_KEY is required in active-game schema v3." }
-        require(!json.isNull(CURSOR_KEY)) { "$CURSOR_KEY cannot be null." }
-        val rawCursor = json.opt(CURSOR_KEY)
-        require(rawCursor is Byte || rawCursor is Short || rawCursor is Int || rawCursor is Long) {
-            "$CURSOR_KEY must be an integer."
-        }
-        require((rawCursor as Number).toLong() >= 0L) {
-            "$CURSOR_KEY cannot be negative."
-        }
-
-        return ClocktowerSemanticHistoryMode.values().firstOrNull { it.name == rawMode }
-            ?: throw IllegalArgumentException("Unknown $MODE_KEY '$rawMode'.")
+        return maxCommitted + 1L
     }
 
     /** Current-format durable semantic-action history. */

@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -72,6 +71,15 @@ class RecoveryRestorePlannerTest {
     }
 
     @Test
+    fun stableRecoveryRejectsNonzeroDealContinuationIndex() {
+        val json = RecoverySnapshotJsonCodec.encode(undercoverSnapshot()).apply {
+            put("currentDealIndex", 1)
+        }
+
+        assertRejected(prepare(json), RecoveryRejectionReason.InvalidGameState)
+    }
+
+    @Test
     fun removedWerewolfRuntimeRecoveryFailsClosed() {
         val json = RecoverySnapshotJsonCodec.encode(undercoverSnapshot()).apply {
             put("currentGameKind", GameKind.Werewolf.name)
@@ -126,36 +134,6 @@ class RecoveryRestorePlannerTest {
                 ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
                 JSONArray().put(JSONObject().put("fact", fact).put("point", point)),
             )
-            put(ClocktowerSemanticHistoryPersistence.CURSOR_KEY, 2L)
-        }
-
-        assertRejected(prepare(json), RecoveryRejectionReason.InvalidGameState)
-    }
-
-    @Test
-    fun incompatibleSemanticHistoryModeFailsBeforeApplication() {
-        val fact = JSONObject().apply {
-            put("actionId", "attack-1")
-            put("sequence", 1L)
-            put("kind", "attack")
-            put("targetSeat", 1)
-        }
-        val point = JSONObject().apply {
-            put("phase", "NIGHT")
-            put("round", 1)
-            put("sequence", 1)
-            put("globalSequence", 1L)
-        }
-        val json = RecoverySnapshotJsonCodec.encode(clocktowerSnapshot()).apply {
-            put(
-                ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
-                JSONArray().put(JSONObject().put("fact", fact).put("point", point)),
-            )
-            put(
-                ClocktowerSemanticHistoryPersistence.MODE_KEY,
-                ClocktowerSemanticHistoryMode.LEGACY_LOCAL.name,
-            )
-            put(ClocktowerSemanticHistoryPersistence.CURSOR_KEY, 2L)
         }
 
         assertRejected(prepare(json), RecoveryRejectionReason.InvalidGameState)
@@ -324,9 +302,6 @@ class RecoveryRestorePlannerTest {
             ),
             records = emptyList(),
             outcome = outcome,
-            undercoverCount = 1,
-            includeBlank = false,
-            lastWordsMode = LastWordsMode.FirstDay,
         ),
     )
 
@@ -389,9 +364,8 @@ class RecoveryRestorePlannerTest {
                 history = ClocktowerRecoveryHistory(
                     gameStateRevision = 10L,
                     playerInputRevision = 11L,
-                    semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
                     actionTimeline = ActionFactTimeline(),
-                    nextTimelineGlobalSequence = 12L,
+                    nextTimelineGlobalSequence = 0L,
                     events = emptyList(),
                     epistemicObservations = emptyList(),
                 ),

@@ -39,6 +39,9 @@ class RecoveryV2SchemaContractTest {
         assertFalse(raw.has("committedClocktowerSetup"))
         assertFalse(raw.has("clocktowerRulesetRoleIds"))
         assertFalse(raw.has("clocktowerRulesetRef"))
+        assertFalse(raw.has("undercoverCount"))
+        assertFalse(raw.has("includeBlank"))
+        assertFalse(raw.has("lastWordsMode"))
     }
 
     private fun currentUndercoverRaw(): JSONObject = RecoverySnapshotJsonCodec.encode(
@@ -55,9 +58,6 @@ class RecoveryV2SchemaContractTest {
                 ),
                 records = emptyList(),
                 outcome = null,
-                undercoverCount = 1,
-                includeBlank = false,
-                lastWordsMode = LastWordsMode.FirstDay,
             ),
         ),
     )

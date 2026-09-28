@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
@@ -54,9 +53,6 @@ internal data class UndercoverRecovery(
     override val cards: List<PlayerCard>,
     override val records: List<EliminationRecord>,
     override val outcome: GameOutcome?,
-    val undercoverCount: Int,
-    val includeBlank: Boolean,
-    val lastWordsMode: LastWordsMode,
 ) : RecoveryGame {
     override val gameKind: GameKind = GameKind.Undercover
 }
@@ -135,7 +131,6 @@ internal data class ClocktowerRecoveryMechanics(
 internal data class ClocktowerRecoveryHistory(
     val gameStateRevision: Long,
     val playerInputRevision: Long,
-    val semanticHistoryMode: ClocktowerSemanticHistoryMode,
     val actionTimeline: ActionFactTimeline,
     val nextTimelineGlobalSequence: Long,
     val events: List<ClocktowerEvent>,

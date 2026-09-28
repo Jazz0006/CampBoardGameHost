@@ -80,9 +80,6 @@ class RecoveryPreviewLoaderTest {
             ),
             records = emptyList(),
             outcome = null,
-            undercoverCount = 1,
-            includeBlank = false,
-            lastWordsMode = LastWordsMode.FirstDay,
         ),
     )
 

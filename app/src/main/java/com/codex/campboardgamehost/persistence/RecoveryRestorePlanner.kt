@@ -167,6 +167,9 @@ internal object RecoveryRestorePlanner {
         require(game.cards.isNotEmpty()) { "Recovery requires at least one player card." }
         require(game.round > 0) { "Recovery round must be positive." }
         require(game.currentDealIndex >= 0) { "Recovery deal index cannot be negative." }
+        if (game.entryPoint == RecoveryEntryPoint.Stable) {
+            require(game.currentDealIndex == 0) { "Stable recovery cannot carry a deal continuation index." }
+        }
 
         val names = game.cards.map(PlayerCard::name)
         require(names.all(String::isNotBlank)) { "Recovery player names cannot be blank." }
@@ -193,13 +196,9 @@ internal object RecoveryRestorePlanner {
     }
 
     private fun validateUndercover(game: UndercoverRecovery) {
-        require(game.undercoverCount in 1..game.cards.size) { "Undercover count is outside player count." }
         require(game.cards.all { it.role in UNDERCOVER_ROLES }) { "Undercover recovery contains a foreign role." }
-        require(game.cards.count { it.role == Role.Undercover } == game.undercoverCount) {
-            "Undercover count disagrees with recovered cards."
-        }
-        require(game.cards.any { it.role == Role.Blank } == game.includeBlank) {
-            "Blank-role setting disagrees with recovered cards."
+        require(game.cards.any { it.role == Role.Undercover }) {
+            "Undercover recovery requires at least one Undercover card."
         }
         require(game.cards.all { it.clocktowerRole == null && it.clocktowerShownRole == null }) {
             "Undercover recovery cannot carry Clocktower role identity."
@@ -334,9 +333,6 @@ internal object RecoveryRestorePlanner {
         input: SdeHistoricalReplayInput,
         resolvedRuleset: RulesetRef,
     ) {
-        require(game.history.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1) {
-            "Durable SDE replay requires GLOBAL_V1 recovery history."
-        }
         require(input.gameId == game.identity.gameId) {
             "Durable SDE replay belongs to a different game."
         }
@@ -389,7 +385,7 @@ internal object RecoveryRestorePlanner {
         }
 
         val observationLog = EpistemicObservationLog(history.epistemicObservations)
-        history.semanticHistoryMode.requireCompatible(
+        ClocktowerSemanticHistoryMode.GLOBAL_V1.requireCompatible(
             actionTimeline = history.actionTimeline,
             observationLog = observationLog,
             nextTimelineGlobalSequence = history.nextTimelineGlobalSequence,

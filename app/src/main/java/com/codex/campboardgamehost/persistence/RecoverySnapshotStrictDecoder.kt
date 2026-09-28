@@ -41,9 +41,6 @@ internal object RecoverySnapshotStrictDecoder {
                     cards = cards,
                     records = records,
                     outcome = outcome,
-                    undercoverCount = json.requiredInt("undercoverCount"),
-                    includeBlank = json.requiredBoolean("includeBlank"),
-                    lastWordsMode = json.requiredEnum("lastWordsMode"),
                 )
             }
 
@@ -84,9 +81,13 @@ internal object RecoverySnapshotStrictDecoder {
         val phase = json.requiredEnum<ClocktowerPhase>("clocktowerPhase")
         val gameStateRevision = json.requiredLong("clocktowerGameStateRevision")
         val playerInputRevision = json.requiredLong("clocktowerPlayerInputRevision")
-        val semanticHistoryMode = ClocktowerSemanticHistoryPersistence.decodeMode(json)
         val actionTimeline = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(json)
-        val nextTimelineGlobalSequence = json.requiredLong(ClocktowerSemanticHistoryPersistence.CURSOR_KEY)
+        val epistemicObservations = json.requiredArray("clocktowerEpistemicObservations")
+            .decodeEpistemicObservationsStrict()
+        val nextTimelineGlobalSequence = ClocktowerSemanticHistoryPersistence.deriveNextTimelineGlobalSequence(
+            actionTimeline = actionTimeline,
+            observations = epistemicObservations,
+        )
 
         return ClocktowerRecovery(
             entryPoint = entryPoint,
@@ -140,12 +141,10 @@ internal object RecoverySnapshotStrictDecoder {
             history = ClocktowerRecoveryHistory(
                 gameStateRevision = gameStateRevision,
                 playerInputRevision = playerInputRevision,
-                semanticHistoryMode = semanticHistoryMode,
                 actionTimeline = actionTimeline,
                 nextTimelineGlobalSequence = nextTimelineGlobalSequence,
                 events = json.requiredArray("clocktowerEvents").decodeEventsStrict(),
-                epistemicObservations = json.requiredArray("clocktowerEpistemicObservations")
-                    .decodeEpistemicObservationsStrict(),
+                epistemicObservations = epistemicObservations,
             ),
         )
     }

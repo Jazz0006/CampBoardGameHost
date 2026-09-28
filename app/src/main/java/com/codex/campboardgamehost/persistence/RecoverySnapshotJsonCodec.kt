@@ -15,7 +15,11 @@ internal object RecoverySnapshotJsonCodec {
         put("savedAtMillis", snapshot.savedAtMillis)
         put("currentGameKind", snapshot.game.gameKind.name)
         encodeEntryPoint(snapshot.game.entryPoint)
-        put("currentDealIndex", snapshot.game.currentDealIndex.coerceAtLeast(0))
+        put(
+            "currentDealIndex",
+            if (snapshot.game.entryPoint == RecoveryEntryPoint.Stable) 0
+            else snapshot.game.currentDealIndex.coerceAtLeast(0),
+        )
         put("round", snapshot.game.round.coerceAtLeast(1))
         put("cards", AppGameStateJsonCodec.encodeCards(snapshot.game.cards))
         put("records", AppGameStateJsonCodec.encodeRecords(snapshot.game.records))
@@ -25,7 +29,7 @@ internal object RecoverySnapshotJsonCodec {
         )
 
         when (val game = snapshot.game) {
-            is UndercoverRecovery -> encodeUndercover(game)
+            is UndercoverRecovery -> Unit
             is ClocktowerRecovery -> encodeClocktower(game)
         }
     }
@@ -44,12 +48,6 @@ internal object RecoverySnapshotJsonCodec {
         }
     }
 
-    private fun JSONObject.encodeUndercover(game: UndercoverRecovery) {
-        put("undercoverCount", game.undercoverCount.coerceAtLeast(1))
-        put("includeBlank", game.includeBlank)
-        put("lastWordsMode", game.lastWordsMode.name)
-    }
-
     private fun JSONObject.encodeClocktower(game: ClocktowerRecovery) {
         put("clocktowerPhase", game.position.phase.name)
         put("currentClocktowerScript", game.identity.script.name)
@@ -64,10 +62,6 @@ internal object RecoverySnapshotJsonCodec {
         putNullableString("clocktowerSdeHistoricalReplayInput", game.sdeHistoricalReplayInputJson)
         put("clocktowerGameStateRevision", game.history.gameStateRevision.coerceAtLeast(0L))
         put("clocktowerPlayerInputRevision", game.history.playerInputRevision.coerceAtLeast(0L))
-        put(
-            ClocktowerSemanticHistoryPersistence.MODE_KEY,
-            ClocktowerSemanticHistoryPersistence.encode(game.history.semanticHistoryMode),
-        )
         put(
             ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
             ClocktowerSemanticHistoryPersistence.encodeActionTimeline(game.history.actionTimeline),
@@ -88,11 +82,6 @@ internal object RecoverySnapshotJsonCodec {
             "clocktowerConfirmedDemonSuccessorTarget",
             game.mechanics.confirmedDemonSuccessorTarget,
         )
-        put(
-            ClocktowerSemanticHistoryPersistence.CURSOR_KEY,
-            game.history.nextTimelineGlobalSequence.coerceAtLeast(0L),
-        )
-
         putNullableString("clocktowerRedHerring", game.mechanics.redHerring)
         put("clocktowerRecommendedDemonBluffRoleNames", stringsToJsonArray(game.mechanics.demonBluffRoleNames))
         putNullableString("clocktowerButlerMaster", game.mechanics.butlerMaster)

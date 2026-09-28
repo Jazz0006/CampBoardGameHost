@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -17,12 +16,12 @@ class RecoverySnapshotJsonCodecTest {
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 2,
                 round = 3,
-                cards = listOf(PlayerCard("Alice", Role.Civilian, "cat")),
+                cards = listOf(
+                    PlayerCard("Alice", Role.Civilian, "cat"),
+                    PlayerCard("Bob", Role.Undercover, "dog"),
+                ),
                 records = listOf(EliminationRecord(2, "Bob", "vote")),
                 outcome = null,
-                undercoverCount = 1,
-                includeBlank = false,
-                lastWordsMode = LastWordsMode.FirstDay,
             ),
         )
 
@@ -32,8 +31,12 @@ class RecoverySnapshotJsonCodecTest {
         assertEquals("test-current-build", json.getString("recoveryCompatibilityToken"))
         assertEquals(GameKind.Undercover.name, json.getString("currentGameKind"))
         assertEquals(3, json.getInt("round"))
+        assertEquals(0, json.getInt("currentDealIndex"))
         assertEquals("Alice", json.getJSONArray("cards").getJSONObject(0).getString("name"))
         assertFalse(json.has("screen"))
+        assertFalse(json.has("undercoverCount"))
+        assertFalse(json.has("includeBlank"))
+        assertFalse(json.has("lastWordsMode"))
         assertFalse(json.has("selectedElimination"))
         assertFalse(json.has("lastWordsPromptNames"))
         assertFalse(json.has("showResults"))
@@ -52,9 +55,6 @@ class RecoverySnapshotJsonCodecTest {
                 cards = listOf(PlayerCard("Alice", Role.Civilian, "cat")),
                 records = emptyList(),
                 outcome = null,
-                undercoverCount = 1,
-                includeBlank = false,
-                lastWordsMode = LastWordsMode.FirstDay,
             ),
         )
 
@@ -113,9 +113,8 @@ class RecoverySnapshotJsonCodecTest {
                 history = ClocktowerRecoveryHistory(
                     gameStateRevision = 10L,
                     playerInputRevision = 11L,
-                    semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
                     actionTimeline = ActionFactTimeline(),
-                    nextTimelineGlobalSequence = 12L,
+                    nextTimelineGlobalSequence = 0L,
                     events = emptyList(),
                     epistemicObservations = emptyList(),
                 ),
@@ -133,6 +132,8 @@ class RecoverySnapshotJsonCodecTest {
         assertEquals("Carol", json.getString("clocktowerConfirmedMonkProtectedTarget"))
         assertEquals("Demon 2", json.getString("clocktowerPendingNightNewDemonIdentityName"))
         assertEquals("Demon 2", json.getString("clocktowerConfirmedDemonSuccessorTarget"))
+        assertFalse(json.has("clocktowerSemanticHistoryMode"))
+        assertFalse(json.has("clocktowerNextTimelineGlobalSequence"))
         assertFalse(json.has("clocktowerDemonAttackDraftTarget"))
         assertFalse(json.has("clocktowerPoisonTarget"))
         assertFalse(json.has("clocktowerMonkProtectedTarget"))
