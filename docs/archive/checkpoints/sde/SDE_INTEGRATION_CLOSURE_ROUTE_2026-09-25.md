@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-25 Australia/Sydney
 > Scope: historical C0–C3 canonical-history / replay / runtime-shadow integration contract and acceptance record.
-> Post-audit amendment: the accepted checkpoint remains historical evidence, but CR-A/B/C in [SDE post-audit correctness repair route](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) must close before SDE-3D2 production feature edits. Current status belongs only to [roadmap](CURRENT_DEVELOPMENT_ROADMAP.md); the continuation point belongs to [handoff](NEXT_DEVELOPMENT_HANDOFF.md).
+> Post-audit amendment: the accepted checkpoint remains historical evidence, but CR-A/B/C in [SDE post-audit correctness repair route](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) must close before SDE-3D2 production feature edits. Current status belongs only to [roadmap](../../../CURRENT_DEVELOPMENT_ROADMAP.md); the continuation point belongs to [handoff](../../../NEXT_DEVELOPMENT_HANDOFF.md).
 
 ## Why this precedes 3D2
 

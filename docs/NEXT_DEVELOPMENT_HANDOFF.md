@@ -1,7 +1,7 @@
 # CampBoardGameHost — Next Development Handoff
 
 > Updated: 2026-09-28 Australia/Sydney  
-> Current baseline: `main@b297484cd055b6aa5cfaf1c9b1c4093832af77da`  
+> Current baseline: live `main` — query exact HEAD at session start  
 > Active SDE implementation PR: **none**  
 > Active maintenance branch: **none**  
 > SDE next gate: **targeted EvidenceLab acquisition for a qualifying E3 case**
@@ -82,29 +82,14 @@ The 2026-09-28 current-only Recovery audit/cleanup is complete through R6 and me
 
 #109 must not be resurrected as a compatibility project. A future bug requires a fresh reproduction from a current-format/current-version write.
 
-## 5. RH-E accepted checkpoint
+## 5. Historical acceptance references
 
-RH-E is COMPLETE without changing visible recommendation policy.
+Completed RH-E / #157 / correctness-repair detail is historical evidence, not startup context:
 
-Formal executable checkpoint:
-
-- commit `f51a295983e8e203119dd50693af343c1ec23906`;
-- tree `2babb1fba00b46dfc676efb6f090386b7a73826f`.
-
-Exact-tree remote acceptance used validation-only Draft PR #162 because #157 was still conflicted with live `main` at that time. The later workflow/document-only integration does not change or relabel that RH-E executable-tree evidence:
-
-- validation head `bf66363385420f507f92a729b496ff002791dee5`;
-- CI #3478 GREEN;
-- R2 #3231 GREEN;
-- Android `:app:testFull :app:assembleDebug` GREEN;
-- ASP contract tests GREEN;
-- Real Clingo cross-validation GREEN.
-
-The accepted runtime contract now has one process-scoped serialized diagnostic persistence lane; ordered append/correlation; stale/cancellation protection; deterministic bounded retention; and separate evaluation / queue / persistence / total latency reporting. Canonical session commit remains authoritative and independent of diagnostic durability.
-
-Detailed audit, concurrency reasoning and the first validation-only test repair are archived in:
-
-`docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
+- `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
+- `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
+- `docs/archive/checkpoints/sde/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md`
+- `docs/archive/checkpoints/sde/SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md`
 
 ## 6. Current execution workflow
 
@@ -116,31 +101,7 @@ Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as authority:
 - N3150 remains retired from the default validation path;
 - GitHub CI/R2 remains the Android validation and independent acceptance surface.
 
-## 7. #157 merge closure COMPLETE
-
-Accepted integration head:
-
-`371ebf624898c08747203aceaed1254647867214`
-
-Final pre-merge docs-only head:
-
-`ee3f3e32cd48be4bf634a9f8f70268d022dc84d2`
-
-Squash-merged main commit:
-
-`02845a470761a988f0041d8c1027b0e2c58a7e05`
-
-Remote acceptance before merge:
-
-- integration CI #3479 GREEN, including Android FULL + `assembleDebug`, ASP contracts, Real Clingo and CI gate;
-- integration R2 #3232 GREEN;
-- final docs-only CI #3480 GREEN;
-- final docs-only R2 #3233 GREEN;
-- unresolved review threads: 0.
-
-PR #157 is closed/merged. The previous continuation branch is historical. Detailed integration evidence remains archived in `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`.
-
-## 8. Active development lane
+## 7. Active development lane
 
 There is no automatic next SDE production slice.
 
@@ -148,7 +109,7 @@ The current product-development lane is targeted evidence acquisition / qualific
 
 Do not start C5/V2 without qualifying E3/E4 evidence. If a future Recovery ownership problem justifies R7, open it as a fresh independent maintenance slice from current `main`.
 
-## 9. E3/E4 qualification result — no policy delta authorized
+## 8. E3/E4 qualification result — no policy delta authorized
 
 The 2026-09-27 audit checked the current EvidenceLab TB corpus, targeted expert rationale, Red-Herring C4 evidence classification, and the SDE evidence-gap contract.
 
@@ -175,6 +136,6 @@ Stop treating a source as an E3 candidate once qualified Storyteller identity, c
 
 Detailed audit: `docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`.
 
-## 10. Scope still blocked
+## 9. Scope still blocked
 
 Do not start `BEGINNER_CONSERVATIVE_V2`, add new policy weights/thresholds, broaden player-count/Traveller scope, or perform production cutover without the required E3/E4 evidence. C5 and SDE-3E remain blocked as recorded in the roadmap.

@@ -35,11 +35,9 @@ PR #157 merged executable integration baseline:
 
 `02845a470761a988f0041d8c1027b0e2c58a7e05`
 
-Current canonical `main` after the 2026-09-28 current-only Recovery cleanup:
+Current canonical baseline is the live `main`; query its actual HEAD before executable work instead of copying a branch SHA into this live document.
 
-`b297484cd055b6aa5cfaf1c9b1c4093832af77da`
-
-PR #165 — `Recovery: enforce current-only minimal persistence` — was explicitly authorized and squash-merged on 2026-09-28. Recovery R0–R6 are complete; R7 remains a separate ownership follow-up and is not part of the completed cleanup boundary.
+PR #165 — `Recovery: enforce current-only minimal persistence` — was explicitly authorized and squash-merged on 2026-09-28 at historical merge checkpoint `b297484cd055b6aa5cfaf1c9b1c4093832af77da`. Recovery R0–R6 are complete; R7 remains a separate ownership follow-up and is not part of the completed cleanup boundary.
 
 The previous `5d2982a7...` baseline is historical. The executable SDE policy boundary remains unchanged by #165.
 
@@ -143,7 +141,7 @@ If a future **current-version** crash produces a fresh inconsistent current-form
 
 ## 7. Evidence track
 
-ClocktowerEvidenceLab continues independently and does not block RH-E.
+ClocktowerEvidenceLab is the current policy-evidence lane. RH-E is already complete and no longer a gate.
 
 Evidence stages remain:
 
@@ -159,7 +157,7 @@ C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
 ## 8. Immediate execution order
 
 ~~~text
-main@b297484c... is the clean merged baseline
+live main (query exact HEAD before work) is the canonical baseline
 -> E3/E4 qualification audit COMPLETE: no qualifying predicate
 -> targeted acquisition for Gap A / B / C / D only
 -> reconstruct committed state + legal alternatives + explicit rationale
@@ -179,8 +177,8 @@ Read first:
 3. `docs/TESTING_STRATEGY.md`
 4. this roadmap
 5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
-6. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` — completed R0–R6 current-only Recovery cleanup contract / acceptance record
-7. `docs/SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md` — RH-E contract and completed repair record
+6. `docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md` — current evidence qualification result / targeted acquisition gaps
+7. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` — completed R0–R6 current-only Recovery cleanup contract / acceptance record
 8. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md` — completed C4 architecture/evidence boundary
 9. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md` — freeze/cutover gates
 

@@ -1,10 +1,11 @@
 # SDE-3 — Provisional Policy and Continuous Calibration Route
 
-> Updated: 2026-09-25 Australia/Sydney  
+> Updated: 2026-09-28 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
-> Status: **CURRENT SDE-3 EXECUTION AUTHORITY**  
+> Status: **LONG-LIVED SDE-3 ARCHITECTURE / CALIBRATION ROUTE; LIVE EXECUTION STATUS IS ROADMAP/HANDOFF**  
 > Parent architecture: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`  
-> Current evidence authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
+> Current evidence gate: `docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`  
+> Evidence background: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
 > Historical SDE-3A completion audit: `docs/SDE_3A_ENGINE_FEATURE_POLICY_CONTRACT_AUDIT_2026-09-23.md`  
 > Historical SDE-3C completion reference: `docs/SDE_3C5_MULTI_POLICY_REPLAY_COMPLETION_AUDIT_2026-09-24.md`  
 > Current SDE-3D gate audit: `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`  
@@ -13,7 +14,7 @@
 
 ## 1. Decision
 
-Execution amendment (2026-09-25): the [integration closure contract](SDE_INTEGRATION_CLOSURE_ROUTE_2026-09-25.md) reached an accepted C0–C3 checkpoint at `8855d461` with full CI #3451 success. A later audit found three bounded correctness defects; [post-audit correctness repair](SDE_POST_AUDIT_CORRECTNESS_REPAIR_ROUTE_2026-09-25.md) CR-A/B/C is now the hard production prerequisite before C4/3D2 feature edits. R2/base integration remains pending. Roadmap remains the single status authority.
+Execution amendment (updated 2026-09-28): the historical C0–C3 integration closure, CR-A/B/C correctness repair, C4/3D2, IF-D and RH-E are complete; the finished integration/correctness routes are archived under `archive/checkpoints/sde/`. Engineering prerequisite completion does not itself authorize a new policy version. The current gate is the E3/E4 qualification audit, and the roadmap remains the single live status authority.
 
 The Storyteller project must continue even though final expert-policy calibration is incomplete.
 
