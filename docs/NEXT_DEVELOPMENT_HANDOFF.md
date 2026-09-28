@@ -4,7 +4,7 @@
 > Current baseline: live `main` — query exact HEAD at session start  
 > Active product implementation PR: **none yet — DLB route is implementation-ready after this documentation convergence**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
-> Product next gate: **DLB-0 typed intermediate setup contract; targeted EvidenceLab acquisition continues in parallel**
+> Product next gate: **DLB-1 visible-roster deal cutover; DLB-0 typed intermediate setup is accepted; targeted EvidenceLab acquisition continues in parallel**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -56,7 +56,7 @@ IF-D durable replay                    COMPLETE
 RH-E                                    COMPLETE
 C5 / V2                                BLOCKED ON E3/E4
 SDE-3E cutover                         BLOCKED PER SURFACE
-DLB late-bound Drunk / staged first night ARCHITECTURE APPROVED / IMPLEMENTATION NEXT
+DLB-0 typed intermediate setup              COMPLETE / ACCEPTED\nDLB-1 visible-roster deal cutover              NEXT
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -106,7 +106,7 @@ Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as authority:
 - N3150 remains retired from the default validation path;
 - GitHub CI/R2 remains the Android validation and independent acceptance surface.
 
-## 7. Active development lane
+## 7. Active development lane\n\nDLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`; CI #3506 and R2 #3251 GREEN. The latest DLB-0 PR commits after that checkpoint, if any, are documentation-only closure and do not change the accepted executable tree.
 
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
