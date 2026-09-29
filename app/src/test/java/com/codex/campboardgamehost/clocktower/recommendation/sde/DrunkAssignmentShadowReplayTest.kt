@@ -213,22 +213,32 @@ class DrunkAssignmentShadowReplayTest {
             )
         }
 
-        val mismatches = listOf(
-            input.copy(decisionId = "other-decision"),
-            input.copy(sourceRevision = InformationDecisionRevision(99L, 7L)),
+        assertThrows(IllegalArgumentException::class.java) {
             input.copy(
                 lifecycleStage = SdeDecisionLifecycleStage.Interaction(
                     phase = StorytellerPhase.FIRST_NIGHT,
                     round = 1,
                     sequence = 7,
                 ),
-            ),
+            )
+        }
+
+        val reducedFeatures = DrunkAssignmentFeatureEvaluation(
+            candidates = input.featureEvaluation.candidates.dropLast(1),
+        )
+        val mismatches = listOf(
+            input.copy(decisionId = "other-decision"),
+            input.copy(sourceRevision = InformationDecisionRevision(99L, 7L)),
             input.copy(
                 historyPrefixRef = SdeHistoricalPrefixRef.Global(
                     gameId = "other-game",
                     actionRefs = emptyList(),
                     observationRefs = emptyList(),
                 ),
+            ),
+            input.copy(
+                legalCandidateIds = input.legalCandidateIds.dropLast(1),
+                featureEvaluation = reducedFeatures,
             ),
         )
 
