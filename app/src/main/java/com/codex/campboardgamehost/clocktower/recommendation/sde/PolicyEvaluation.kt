@@ -10,6 +10,14 @@ internal data class PolicyVersion(
 
 internal object PolicyVersions {
     val BEGINNER_CONSERVATIVE_V1 = PolicyVersion("BEGINNER_CONSERVATIVE_V1")
+
+    /**
+     * Shadow-only Drunk-assignment experiment identity.
+     *
+     * This is intentionally not registered in DecisionPolicyReplayRegistry.production() and has no
+     * canonical setup authority.
+     */
+    val DRUNK_ASSIGNMENT_SHADOW_V1 = PolicyVersion("DRUNK_ASSIGNMENT_SHADOW_V1")
 }
 
 internal data class PolicyReasonCode(
