@@ -52,7 +52,7 @@ internal class ClocktowerNightStepMaterializerRegistry(
         return actionableInteractions.mapNotNull { interaction ->
             val step = requireNotNull(byInteractionId[interaction.id]) {
                 "Missing Clocktower night-step materializer for '${interaction.id.value}'."
-            }.invoke()
+            }.invoke().copy(interactionId = interaction.id)
 
             // The planner projects the night's ordering skeleton before same-night deaths resolve.
             // By materialization time, normal later-night role lookup is cursor-relative and returns

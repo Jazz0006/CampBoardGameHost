@@ -101,6 +101,19 @@ internal fun shouldAutoAdvanceRedHerring(
     isRedHerringStep &&
     (!isRealAction || hasSelectedRedHerring)
 
+internal fun automaticRedHerringSelectionAtBarrier(
+    automaticStorytellerInfo: Boolean,
+    isRedHerringStep: Boolean,
+    isRealAction: Boolean,
+    currentSelection: String?,
+    recommendedSelection: String?,
+    legalSelections: Set<String>,
+): String? {
+    if (!automaticStorytellerInfo || !isRedHerringStep || !isRealAction) return null
+    if (currentSelection != null) return null
+    return recommendedSelection?.takeIf { it in legalSelections }
+}
+
 internal data class ClocktowerDisplayOption(
     val label: String,
     val displayKind: ClocktowerDisplayKind,

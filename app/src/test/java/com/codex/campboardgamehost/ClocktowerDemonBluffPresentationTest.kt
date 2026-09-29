@@ -7,12 +7,13 @@ import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerDemonBluffPresentationTest {
     @Test
-    fun `manual mode consumes the current storyteller style instead of hidden balanced fallback`() {
+    fun `uncommitted bluff recommendation is not player presentation state`() {
         val plans = listOf(
             plan(RecommendationStyle.GENTLE, "Chef", "Empath", "Saint"),
             plan(RecommendationStyle.BALANCED, "Mayor", "Monk", "Undertaker"),
@@ -26,7 +27,79 @@ class ClocktowerDemonBluffPresentationTest {
             storytellerStyle = RecommendationStyle.AGGRESSIVE,
         )
 
-        assertEquals(listOf("Virgin", "Slayer", "Soldier"), result)
+        assertNull(result)
+    }
+
+    @Test
+    fun `demon info barrier commits only one current legal recommended triple`() {
+        val plans = listOf(
+            plan(RecommendationStyle.BALANCED, "Mayor", "Monk", "Undertaker"),
+        )
+        val legal = listOf(role("Mayor"), role("Monk"), role("Undertaker"), role("Chef"))
+
+        assertEquals(
+            listOf("Mayor", "Monk", "Undertaker"),
+            demonBluffRoleNamesToCommitAtBarrier(
+                isDemonInfoStep = true,
+                isRealAction = true,
+                committedRoleNames = emptyList(),
+                setupPlans = plans,
+                storytellerStyle = RecommendationStyle.BALANCED,
+                legalRoles = legal,
+            ),
+        )
+        assertNull(
+            demonBluffRoleNamesToCommitAtBarrier(
+                isDemonInfoStep = false,
+                isRealAction = true,
+                committedRoleNames = emptyList(),
+                setupPlans = plans,
+                storytellerStyle = RecommendationStyle.BALANCED,
+                legalRoles = legal,
+            ),
+        )
+        assertNull(
+            demonBluffRoleNamesToCommitAtBarrier(
+                isDemonInfoStep = true,
+                isRealAction = false,
+                committedRoleNames = emptyList(),
+                setupPlans = plans,
+                storytellerStyle = RecommendationStyle.BALANCED,
+                legalRoles = legal,
+            ),
+        )
+        assertNull(
+            demonBluffRoleNamesToCommitAtBarrier(
+                isDemonInfoStep = true,
+                isRealAction = true,
+                committedRoleNames = listOf("Chef", "Empath", "Saint"),
+                setupPlans = plans,
+                storytellerStyle = RecommendationStyle.BALANCED,
+                legalRoles = legal,
+            ),
+        )
+        assertNull(
+            demonBluffRoleNamesToCommitAtBarrier(
+                isDemonInfoStep = true,
+                isRealAction = true,
+                committedRoleNames = emptyList(),
+                setupPlans = emptyList(),
+                storytellerStyle = RecommendationStyle.BALANCED,
+                legalRoles = legal,
+            ),
+        )
+        assertNull(
+            demonBluffRoleNamesToCommitAtBarrier(
+                isDemonInfoStep = true,
+                isRealAction = true,
+                committedRoleNames = emptyList(),
+                setupPlans = listOf(
+                    plan(RecommendationStyle.BALANCED, "Mayor", "Monk", "Soldier"),
+                ),
+                storytellerStyle = RecommendationStyle.BALANCED,
+                legalRoles = legal,
+            ),
+        )
     }
 
     @Test

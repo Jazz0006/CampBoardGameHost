@@ -1,6 +1,7 @@
 # DLB + App/Host Decomposition Implementation Route — 2026-09-29
 
 > Date: 2026-09-29 Australia/Sydney  
+> Last synchronized: 2026-09-30 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **CURRENT IMPLEMENTATION ROUTE / ARCHITECTURE AUTHORITY FOR DLB**  
 > Baseline at route creation: live `main`; always query the actual HEAD before executable work.  
@@ -142,22 +143,32 @@ Until the later production cutover gate is satisfied, Beginner preserves the alr
 
 Do not persist the unconfirmed setup UI draft into Emergency Recovery. If the process dies before Drunk confirmation, restart/re-enter setup rather than restoring a half-committed game. Emergency Recovery begins from finalized current-version setup/game truth.
 
-### DLB-5 — staged first-night dependency planner — NEXT
+### DLB-5 — staged first-night dependency planner — IN CLOSEOUT
 
-Replace setup-time assumptions with latest-safe commitment barriers:
+Current Draft PR: **#183 — `DLB-5: stage first-night dependency barriers`**.
 
-- Demon bluff commitment occurs before its first presentation dependency;
-- Poisoner target remains player-controlled and invalidates affected uncommitted downstream decisions;
-- information decisions resolve/re-evaluate against current effective state and committed history;
-- Red Herring is committed before the first interaction that can observe or depend on it.
+Latest validated executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 / R2 #3331 GREEN.
 
-The Red Herring rule is a generic **observation/dependency barrier**, not a named `if (Spy)` heuristic. Current Trouble Brewing Spy is one concrete observer; future Grimoire viewers must inherit the same semantic barrier.
+Implemented:
+
+- **DLB-5.1 COMPLETE:** pure typed dependency planner for latest-safe first-night setup commitment;
+- **DLB-5.2 COMPLETE:** Red Herring no longer commits at setup recommendation readiness; the current legal recommendation commits only at the earliest semantic/observation barrier, with committed value fed back as a recommendation lock;
+- **DLB-5.3 COMPLETE:** Demon bluffs no longer commit at setup-plan application; the exact current legal recommended triple commits at the Demon-info presentation barrier and Pending/Invalid states fail closed;
+- **DLB-5.5 COMPLETE:** obsolete setup auto-apply wiring for Red Herring / Demon bluffs is removed while setup recommendation/shadow evaluation remains available.
+
+Still open:
+
+- **DLB-5.4 NEXT:** first-night information / Poisoner convergence audit. Characterize that poison confirmation changes canonical revision, invalidates only unshown information drafts, preserves displayed observations, and causes later information to rebuild from current effective poison state plus committed history. Production changes are allowed only if this audit finds a real gap.
+
+The Red Herring rule remains a generic **observation/dependency barrier**, not a named `if (Spy)` heuristic. Current Trouble Brewing Spy is one concrete observer; future Grimoire viewers inherit the same semantic barrier.
+
+DLB-5 must not be marked COMPLETE or merged merely because 5.1/5.2/5.3/5.5 are GREEN; 5.4 is the final acceptance gate.
 
 ### DLB-5H1 — first-night evil-information presentation extraction
 
-The decomposition audit's H1 is deferred until the DLB-5 lifecycle is explicit.
+The decomposition audit's H1 remains deferred until DLB-5.4 closes and DLB-5 receives final acceptance.
 
-Then extract presentation only if the boundary remains narrow:
+After that, extract presentation only if the boundary remains narrow:
 
 ```text
 committed presentation facts
@@ -281,9 +292,11 @@ document authority convergence (this route)
 -> DLB-1
 -> DLB-2
 -> DLB-3 shadow + trace/replay
--> DLB-4 canonical commit
--> DLB-4A experienced assisted UX
--> DLB-5 dependency barriers
+-> DLB-4 canonical commit COMPLETE
+-> DLB-4A experienced assisted UX COMPLETE
+-> DLB-5.1 / 5.2 / 5.3 / 5.5 COMPLETE / GREEN
+-> DLB-5.4 information / poison convergence audit NEXT
+-> DLB-5 final acceptance / merge
 -> DLB-5H1 presentation extraction only if boundary remains cohesive
 -> shadow/evidence cutover gate
 -> Beginner automatic Drunk authority

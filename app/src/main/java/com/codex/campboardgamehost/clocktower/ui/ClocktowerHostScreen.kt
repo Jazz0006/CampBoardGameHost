@@ -176,7 +176,7 @@ internal fun ClocktowerJudgeScreen(
     onSelectChambermaidSecond: (String?) -> Unit,
     onSelectRavenkeeperTarget: (String?) -> Unit,
     onSelectRedHerring: (String?) -> Unit,
-    onApplyRecommendation: (RecommendationPlan) -> Unit,
+    onCommitDemonBluffs: (List<String>) -> Unit,
     onSelectButlerMaster: (String?) -> Unit,
     onSelectMonkProtectedTarget: (String?) -> Unit,
     onConfirmMonkProtectedTarget: () -> Unit,
@@ -707,6 +707,21 @@ internal fun ClocktowerJudgeScreen(
     var lockedRecommendationDecisions by remember(recommendationKey) {
         mutableStateOf<List<StorytellerDecision>>(emptyList())
     }
+    val committedSetupRecommendationDecisions = buildList {
+        redHerring?.let { committedName ->
+            val committedSeat = cards.indexOfFirst { it.name == committedName } + 1
+            if (committedSeat > 0) {
+                add(StorytellerDecision.RedHerring(committedSeat))
+            }
+        }
+        if (recommendedDemonBluffRoleNames.isNotEmpty()) {
+            add(
+                StorytellerDecision.DemonBluffs(
+                    recommendedDemonBluffRoleNames.map(::RoleId),
+                ),
+            )
+        }
+    }
     val recommendationRequest = SetupCoordinationRequest(
         game = recommendationCards.toClocktowerGameState(
             script = script,
@@ -714,7 +729,10 @@ internal fun ClocktowerJudgeScreen(
             poisonedPlayerName = poisonTarget,
         ),
         roles = clocktowerRoleDefinitionsForScript(script),
-        lockedDecisions = lockedRecommendationDecisions,
+        lockedDecisions = recommendationLocksWithCommittedSetupDecisions(
+            mutableLocks = lockedRecommendationDecisions,
+            committedDecisions = committedSetupRecommendationDecisions,
+        ),
         history = setupHistory,
     )
     LaunchedEffect(recommendationKey, lockedRecommendationDecisions) {
@@ -766,7 +784,6 @@ internal fun ClocktowerJudgeScreen(
                         },
                     ),
                 )
-                onApplyRecommendation(automaticPlan)
                 selectionDistributionTelemetry.recordCommittedSelection(
                     SelectionAuditCommit(
                         selectionId = setupAuditId,
@@ -3803,7 +3820,6 @@ internal fun ClocktowerJudgeScreen(
                 lockedDecisions = lockedRecommendationDecisions,
                 onSelectStyle = { selectedRecommendationStyle = it },
                 onApply = { plan ->
-                    onApplyRecommendation(plan)
                     appliedRecommendationStyle = plan.style
                 },
                 onReevaluate = { nextLockedDecisions ->
@@ -4005,6 +4021,61 @@ internal fun ClocktowerJudgeScreen(
                     onConfirmNight()
                 }
             }
+        }
+
+        val demonBluffCommitStyle = appliedRecommendationStyle ?: selectedRecommendationStyle
+        LaunchedEffect(
+            phase,
+            currentStepIndex,
+            currentStep.interactionId,
+            currentStep.isRealAction,
+            recommendedDemonBluffRoleNames,
+            setupPlansForDemonBluffs,
+            demonBluffCommitStyle,
+            legalDemonBluffs,
+        ) {
+            demonBluffRoleNamesToCommitAtBarrier(
+                isDemonInfoStep = phase == ClocktowerPhase.FirstNight &&
+                    currentStep.interactionId ==
+                    ClocktowerProductionNightStepIdentity.demonInfo()
+                        .interactionId(ClocktowerNightFlowPhase.FIRST_NIGHT),
+                isRealAction = currentStep.isRealAction,
+                committedRoleNames = recommendedDemonBluffRoleNames,
+                setupPlans = setupPlansForDemonBluffs,
+                storytellerStyle = demonBluffCommitStyle,
+                legalRoles = legalDemonBluffs,
+            )?.let(onCommitDemonBluffs)
+        }
+
+        val recommendedRedHerringSelection = recommendationCoordinator
+            .selectSetupPlan(
+                (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty(),
+                automaticStorytellerStyle,
+            )
+            ?.decisions
+            ?.filterIsInstance<StorytellerDecision.RedHerring>()
+            ?.singleOrNull()
+            ?.let { decision -> cards.getOrNull(decision.seat - 1)?.name }
+        val legalRedHerringSelections = clocktowerRedHerringCandidates(publicAliveCards)
+            .mapTo(linkedSetOf()) { it.name }
+
+        LaunchedEffect(
+            automaticStorytellerInfo,
+            currentStepIndex,
+            currentStep.action,
+            currentStep.isRealAction,
+            redHerring,
+            recommendedRedHerringSelection,
+            legalRedHerringSelections,
+        ) {
+            automaticRedHerringSelectionAtBarrier(
+                automaticStorytellerInfo = automaticStorytellerInfo,
+                isRedHerringStep = currentStep.action == ClocktowerNightAction.RedHerring,
+                isRealAction = currentStep.isRealAction,
+                currentSelection = redHerring,
+                recommendedSelection = recommendedRedHerringSelection,
+                legalSelections = legalRedHerringSelections,
+            )?.let(onSelectRedHerring)
         }
 
         LaunchedEffect(

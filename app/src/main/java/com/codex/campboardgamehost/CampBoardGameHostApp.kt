@@ -2384,31 +2384,11 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerRedHerring = it
                         },
-                        onApplyRecommendation = { plan ->
-                            // Applying the same automatic plan is a no-op.  In particular, do
-                            // not advance playerInputRevision here: that revision is part of the
-                            // recommendation key, so an unconditional increment creates an
-                            // endless Loading -> Ready -> apply -> Loading cycle.
-                            var setupChanged = false
-                            val recommendedRedHerring = plan.decisions
-                                .filterIsInstance<StorytellerDecision.RedHerring>()
-                                .singleOrNull()
-                                ?.let { decision -> cards.getOrNull(decision.seat - 1)?.name }
-                            if (recommendedRedHerring != null && recommendedRedHerring != clocktowerRedHerring) {
-                                clocktowerRedHerring = recommendedRedHerring
-                                setupChanged = true
+                        onCommitDemonBluffs = { roleNames ->
+                            if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {
+                                advanceClocktowerPlayerInputRevision()
+                                clocktowerRecommendedDemonBluffRoleNames = roleNames
                             }
-                            val recommendedDemonBluffs = plan.decisions
-                                .filterIsInstance<StorytellerDecision.DemonBluffs>()
-                                .singleOrNull()
-                                ?.roles
-                                ?.map(RoleId::value)
-                                .orEmpty()
-                            if (recommendedDemonBluffs != clocktowerRecommendedDemonBluffRoleNames) {
-                                clocktowerRecommendedDemonBluffRoleNames = recommendedDemonBluffs
-                                setupChanged = true
-                            }
-                            if (setupChanged) advanceClocktowerPlayerInputRevision()
                         },
                         onSelectButlerMaster = {
                             advanceClocktowerPlayerInputRevision()

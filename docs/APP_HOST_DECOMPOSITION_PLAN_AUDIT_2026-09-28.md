@@ -2,7 +2,7 @@
 
 > Date: 2026-09-28 Australia/Sydney
 > Audited baseline: `main@325a47f3597b61788091ef91d9d41674f7e25d91`, after PRs #166 and #167.
-> Status: advisory architecture audit and proposed maintenance sequence; no production implementation authorized by this document.
+> Status: **HISTORICAL SOURCE / GUARDRAIL AUDIT**. Its still-valid decomposition constraints are carried forward by `DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`; this document is not current execution authority.
 > Scope: `CampBoardGameHostApp.kt` and `clocktower/ui/ClocktowerHostScreen.kt`, their immediate owners, existing plans and relevant test boundaries.
 
 ## 1. Recommendation
