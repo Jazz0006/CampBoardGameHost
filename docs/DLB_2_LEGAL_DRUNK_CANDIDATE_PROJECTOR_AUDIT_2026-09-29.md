@@ -153,3 +153,44 @@ No existing production file should need modification in DLB-2.
 - no persistence/Recovery changes;
 - no policy V1 change;
 - no broad decomposition.
+
+
+## 9. RED / GREEN implementation evidence
+
+### RED
+
+Test-only head:
+
+`717f8808fa19c9b8441c509a1e167b3e812fd9c0`
+
+GitHub CI #3519 / run `36512809240` failed Android compilation exactly because the new DLB-2 symbols did not yet exist:
+
+- unresolved `TroubleBrewingDrunkCandidateDomain`;
+- unresolved `TroubleBrewingDrunkCandidate`;
+- unresolved `TroubleBrewingDrunkHypotheticalProjector`.
+
+R2 #3262 / run `36512809241` was GREEN.
+
+### GREEN / T1
+
+Production head:
+
+`515a47531b2ee3e6809d7ef4abb8d674379f81aa`
+
+GitHub CI #3520 / run `36513123256` executed:
+
+`./gradlew :app:testFast --no-daemon --build-cache`
+
+and completed `BUILD SUCCESSFUL`. R2 #3263 / run `36513123226` also completed GREEN.
+
+The exact PR changed-file allowlist at this checkpoint is:
+
+- `TroubleBrewingDrunkCandidateProjection.kt`;
+- `TroubleBrewingDrunkCandidateProjectionTest.kt`;
+- this audit document.
+
+No existing App/Host/SDE/session/persistence/runtime production file changed.
+
+### Acceptance escalation
+
+The next documentation-only commit carries `[full-ci]` to escalate the accepted DLB-2 executable tree above to full T4 validation. It introduces no additional production behavior.
