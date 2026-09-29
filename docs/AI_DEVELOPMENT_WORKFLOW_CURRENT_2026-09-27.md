@@ -210,21 +210,27 @@ A local Codex/Mini MCP report is implementation evidence, not canonical remote t
 
 ## 8. Merge governance
 
-No workflow path changes merge authority.
+No workflow path changes the acceptance requirements before merge.
 
-Never:
+Standing authorization effective 2026-09-29:
 
-- merge;
-- mark ready;
-- rebase the active integration branch;
+- once a task/PR is complete;
+- its exact head has passed all required validation for that slice;
+- GitHub reports the PR mergeable;
+- the changed-file allowlist and semantic diff match the approved scope;
+- required documentation is converged;
+- and there are no unresolved review or correctness issues;
+
+ChatGPT may mark the PR ready and merge it directly without asking for a separate per-PR authorization message.
+
+This standing authorization does not waive acceptance gates and does not authorize merging incomplete, failing, conflicted, scope-drifted, or intentionally paused work.
+
+Still require explicit user authorization for:
+
+- rebase of an active integration branch when it rewrites history or changes the reviewed base materially;
 - force-push;
-- broaden the PR integration strategy
-
-without explicit user authorization.
-
-For this project the exact merge authorization phrase remains:
-
-`授权合并`
+- destructive history changes;
+- broadening the approved PR integration strategy or scope.
 
 ## 9. Mini MCP capability boundary
 
@@ -279,7 +285,9 @@ Need Android validation?
   -> do not wait on N3150
 
 Need merge?
-  -> explicit user authorization
+  -> verify exact-head acceptance / scope / mergeability / docs
+  -> merge directly when complete under standing authorization
+  -> ask only if acceptance is incomplete, scope changed, or history-rewriting action is required
 ~~~
 
 ## 12. Supersession
