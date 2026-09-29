@@ -2,9 +2,9 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Active product implementation: **DLB-1 branch `dlb-1-visible-roster-deal-cutover`; PR #169 is merged**  
+> Active product implementation PR: **#170 — DLB-1 visible-roster deal cutover (Draft; executable checkpoint accepted; standing merge authorization applies)**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
-> Product next gate: **DLB-1 visible-roster deal cutover; DLB-0 typed intermediate setup is accepted; targeted EvidenceLab acquisition continues in parallel**
+> Product next gate: **DLB-2 legal Drunk candidate domain + hypothetical projector; DLB-1 is accepted; targeted EvidenceLab acquisition continues in parallel**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -57,7 +57,8 @@ RH-E                                    COMPLETE
 C5 / V2                                BLOCKED ON E3/E4
 SDE-3E cutover                         BLOCKED PER SURFACE
 DLB-0 typed intermediate setup              COMPLETE / ACCEPTED
-DLB-1 visible-roster deal cutover              NEXT
+DLB-1 visible-roster deal cutover              COMPLETE / ACCEPTED
+DLB-2 legal candidate + hypothetical projector   NEXT
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -109,7 +110,9 @@ Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as authority:
 
 ## 7. Active development lane
 
-DLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`; CI #3506 and R2 #3251 GREEN. The latest DLB-0 PR commits after that checkpoint, if any, are documentation-only closure and do not change the accepted executable tree.
+DLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`; CI #3506 and R2 #3251 GREEN.
+
+DLB-1 accepted executable checkpoint: `d065e21bcf1780fe3375a7fd380815259cc59e5c`; CI #3515 and R2 #3259 GREEN. DLB-1 establishes visible-roster seating as the production pre-Drunk path; the compatibility deal plan is temporary downstream wiring until DLB-4.
 
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
@@ -121,8 +124,8 @@ Immediate sequence:
 
 ```text
 DLB-0 typed intermediate setup COMPLETE
--> DLB-1 visible-roster deal cutover NEXT
--> DLB-2 legal Drunk candidate + hypothetical projector
+-> DLB-1 visible-roster deal cutover COMPLETE
+-> DLB-2 legal Drunk candidate + hypothetical projector NEXT
 -> DLB-3 shadow SDE decision / DecisionTrace
 -> DLB-4 canonical commit before reveal
 -> DLB-4A Experienced assisted UI
