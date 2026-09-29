@@ -1,6 +1,6 @@
 # DLB-3B3 Drunk-Assignment Shadow Replay / Policy Experiment — Architecture Audit — 2026-09-29
 
-> Status: **IMPLEMENTATION CONTRACT / TEST-FIRST**
+> Status: **DLB-3B3 COMPLETE / ACCEPTED — DLB-3 SHADOW DECISION SURFACE COMPLETE**
 >
 > Baseline: `main@329e28ace3e3dad736e4732ddd634be9217c5ce2`
 >
@@ -317,3 +317,70 @@ The default experimental registry contains exactly one version.
 The ordinary production replay registry still contains exactly `BEGINNER_CONSERVATIVE_V1`.
 
 T4 full-CI acceptance is requested for this stable replay/experiment boundary.
+
+
+## 16. T4 acceptance
+
+Accepted DLB-3B3 checkpoint:
+
+`1a5403def6e4075b4d45b31e58db8bf3c356a9d4`
+
+The executable T1 tree is `a36bd089b446d3b02f31af1b63c6512593864359`; the accepted head adds only the audit/fan-out record and full-CI trigger.
+
+Exact-head acceptance:
+
+- CI #3566 / run `36531524695`: GREEN;
+- Android full unit tests + debug APK assemble: GREEN;
+- ASP contract tests: GREEN;
+- Real Clingo cross-validation: GREEN;
+- aggregate CI gate: GREEN;
+- R2 #3301 / run `36531524759`: GREEN.
+
+DLB-3B3 is COMPLETE / ACCEPTED.
+
+Accepted semantics:
+
+- Drunk assignment has a dedicated replay input and replay record carrying freshly recomputed dedicated features;
+- source DecisionTrace contributes identity/domain/actual-choice metadata only;
+- explicit experiment versions run through a separate registry;
+- the ordinary production replay registry remains frozen to `BEGINNER_CONSERVATIVE_V1`;
+- `DRUNK_ASSIGNMENT_SHADOW_V1` always defers under current evidence/capability;
+- historical G10 choice can be retained for calibration without becoming a policy winner label;
+- no selection or canonical Drunk commit is produced.
+
+## 17. DLB-3 exit decision
+
+No DLB-3B4 slice is required by the authoritative DLB route.
+
+DLB-3 required:
+
+- a typed Drunk SDE decision surface;
+- rules-owned legal candidates;
+- candidate-specific hypothetical consequence evidence;
+- DecisionTrace/replay correlation;
+- shadow-first behavior without mutating frozen V1.
+
+DLB-3A + DLB-3B1 + DLB-3B2 + DLB-3B3 now satisfy that contract.
+
+The remaining known gaps:
+
+- longitudinal narrative capability;
+- evidence sufficient for Drunk candidate ordering;
+- an authoritative automatic-selection contract;
+
+belong to the later **shadow -> production cutover gate for Beginner automatic authority**.
+
+They do not block DLB-4's canonical commit seam because the authoritative route explicitly allows production integration of legal/commit/UI seams before automatic Beginner selection is authorized.
+
+Therefore:
+
+```text
+DLB-3 shadow decision + trace/replay     COMPLETE / ACCEPTED
+-> DLB-4 canonical Drunk commit          NEXT
+-> DLB-4A Experienced assisted UX
+-> DLB-5 dependency barriers
+-> shadow/evidence cutover gate
+-> Beginner automatic Drunk authority
+```
+
+DLB-4 must not interpret `DRUNK_ASSIGNMENT_SHADOW_V1` Deferred output as a selection. Its commit input must be an explicitly confirmed rules-legal candidate.
