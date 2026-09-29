@@ -9,7 +9,7 @@ internal data class TroubleBrewingPreparedSetup(
     val preset: TroubleBrewingSetupPreset,
     val intermediateSetup: TroubleBrewingIntermediateSetup,
     val compatibilityDealPlan: TroubleBrewingSetupDealPlan,
-    val compatibilityConfirmedDrunkCandidate: TroubleBrewingDrunkCandidate?,
+    val compatibilityConfirmedDrunkCandidate: TroubleBrewingDrunkCandidate? = null,
 )
 
 /**
