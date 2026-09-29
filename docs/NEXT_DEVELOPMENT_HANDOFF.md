@@ -3,8 +3,8 @@
 > Updated: 2026-09-30 Australia/Sydney  
 > Current baseline: live `main` plus active DLB branch — query exact HEAD/PR state at session start  
 > Last completed validation checkpoint: **DLB-5.1/5.2/5.3/5.5 implementation checkpoint — `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 / R2 #3331 GREEN**  
-> Active PR: **#183 — `DLB-5: stage first-night dependency barriers` — Draft / mergeable at the last check; do not treat as complete until DLB-5.4 closes**  
-> Product next gate: **DLB-5.4 first-night information / poison convergence audit; Beginner automatic Drunk-selection authority remains blocked behind the later cutover gate**
+> Active PR: **#183 — `DLB-5: stage first-night dependency barriers` — DLB-5 implementation and 5.4 audit COMPLETE; final scope/review/exact-head acceptance pending**  
+> Product next gate: **final PR #183 acceptance + merge; then query live `main` and choose the next phase from the current DLB route. Beginner automatic Drunk-selection authority remains blocked behind the later cutover gate**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -62,9 +62,9 @@ DLB-4A Experienced assisted Drunk selection        COMPLETE / ACCEPTED
 DLB-5.1 typed dependency planner                    COMPLETE / GREEN
 DLB-5.2 Red Herring production cutover             COMPLETE / GREEN
 DLB-5.3 Demon bluff production cutover             COMPLETE / GREEN
+DLB-5.4 information / poison convergence audit     COMPLETE / NO PRODUCTION GAP
 DLB-5.5 obsolete setup auto-apply cleanup          COMPLETE / GREEN
-DLB-5.4 information / poison convergence audit     NEXT
-DLB-5 overall                                      IN PROGRESS / NOT YET MERGED
+DLB-5 overall                                      COMPLETE / FINAL PR ACCEPTANCE PENDING
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -134,7 +134,7 @@ DLB-4 accepted executable checkpoint: `5606371c68b97beb01418ede2bb2c19db7e69053`
 
 DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c`; CI #3586 and R2 #3318 GREEN. Experienced Trouble Brewing Drunk setups now pause after shown-seat preparation and before canonical commit, expose the exact rules-legal Townsfolk candidate domain, and resume through the shared DLB-4 commit only after explicit confirmation. Pending selection is memory-only and backing out returns to setup without Recovery persistence. No Drunk recommendation is presented because no production ordering policy is authorized. Beginner retains only the DLB-4 compatibility-confirmed candidate as a transitional playable baseline; automatic authority remains behind the explicit cutover gate.
 
-DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on Draft PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, and DLB-5.5 removal of obsolete setup auto-apply wiring. DLB-5.4 remains the sole closeout gate: audit the existing Poisoner / first-night information lifecycle and only change production if the characterization exposes a real gap.
+DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, DLB-5.5 removal of obsolete setup auto-apply wiring, and DLB-5.4 Poisoner / first-night information convergence audit. DLB-5.4 found no production gap: poison confirmation owns one canonical revision, unshown drafts are invalidated, displayed observations/history remain committed, and subsequent information replans against current poison state plus committed history. DLB-5 is COMPLETE; only final PR scope/review/exact-head acceptance and merge remain.
 
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
@@ -154,9 +154,8 @@ DLB-0 typed intermediate setup COMPLETE
 -> DLB-3B3 shadow replay / versioned policy experiment COMPLETE
 -> DLB-4 canonical Drunk commit before reveal COMPLETE
 -> DLB-4A Experienced assisted UI COMPLETE
--> DLB-5.1 / 5.2 / 5.3 / 5.5 COMPLETE / GREEN
--> DLB-5.4 first-night information / poison convergence audit NEXT
--> DLB-5 final acceptance + PR #183 merge after 5.4
+-> DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 COMPLETE
+-> DLB-5 final PR #183 scope/review/exact-head acceptance + merge NEXT
 -> cutover gate before Beginner automatic authority
 -> DLB-6 old-contract retirement
 -> DLB-7 acceptance

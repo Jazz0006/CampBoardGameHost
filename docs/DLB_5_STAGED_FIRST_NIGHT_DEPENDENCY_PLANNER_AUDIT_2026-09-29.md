@@ -5,7 +5,7 @@
 > Last synchronized: 2026-09-30 Australia/Sydney
 > Current Draft PR: **#183 — `DLB-5: stage first-night dependency barriers`**
 > Latest validated executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 / R2 #3331 GREEN
-> Current status: **DLB-5.1 COMPLETE; DLB-5.2 COMPLETE; DLB-5.3 COMPLETE; DLB-5.5 COMPLETE; DLB-5.4 NEXT / final closeout gate**
+> Current status: **DLB-5.1 COMPLETE; DLB-5.2 COMPLETE; DLB-5.3 COMPLETE; DLB-5.4 COMPLETE; DLB-5.5 COMPLETE; DLB-5 overall COMPLETE / final PR acceptance pending**
 > Scope: latest-safe commitment barriers for Trouble Brewing first-night setup facts. No Beginner Drunk-policy cutover, no DLB-6 retirement, no broad App/Host decomposition.
 
 ## 1. Canonical rule
@@ -187,16 +187,16 @@ Acceptance includes Spy-before-Fortune-Teller and poisoned-Spy cases.
 - presentation consumes the committed triple;
 - fail closed if recommendation is pending/invalid rather than inventing a triple.
 
-### DLB-5.4 — first-night information / poison convergence audit — NEXT
+### DLB-5.4 — first-night information / poison convergence audit — COMPLETE
 
-No rewrite by default.
+No production rewrite was required. Existing typed lifecycle and replanning evidence closes all four acceptance statements:
 
-- characterize that poison confirmation changes canonical revision;
-- unshown first-night information drafts are invalidated;
-- already displayed observations remain committed;
-- later information rebuilds from the current effective poison state and committed history.
+- `ClocktowerGameSession.commitPoisonTargetBoundary` owns exactly one canonical game-state revision for a confirmed poison target; `ClocktowerGameSessionPoisonBoundaryTest` characterizes the one-revision contract.
+- `ClocktowerHostScreen` observes confirmed first-night `poisonTarget` changes and calls `FirstNightInformationMigration.invalidateUnshown()`; `FirstNightInformationLifecycleTest` and `FirstNightInformationMigrationTest` prove that ready/unshown drafts are discarded while displayed decision IDs and displayed observations remain unchanged.
+- `performClocktowerPlayerRevealHandoff` records private observation/history only for a newly created first-night publication; reopening an already published decision opens the reveal without duplicating observation/history.
+- `clocktowerFirstNightInformationRequest` and the Host pair-information projectors rebuild from the current `poisonTarget`; recommendation inputs also consume the already committed `events` history. `Sde2PoisonReplanningTest` proves that poison confirmation advances the canonical revision, preserves the committed epistemic observation log, stales prior uncommitted plans, and regenerates subsequent exact consequences against the poisoned snapshot/current revision.
 
-Only add production changes if the characterization exposes a real gap.
+Producer/consumer search found one production poison-confirmation boundary in `CampBoardGameHostApp`, one first-night draft invalidation owner in `ClocktowerHostScreen`, and the existing shared `FirstNightInformationMigration` lifecycle. No second cache/controller/planner is needed and no production behavior gap was found.
 
 ### DLB-5.5 — cleanup within DLB-5 scope — COMPLETE
 
@@ -245,8 +245,8 @@ Current PR #183 implementation sequence:
 - `bde21c264fa8430be2f24f7a54c4bc83fdf6524e` — DLB-5.3 Demon-bluff barrier commit GREEN;
 - `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5` — DLB-5.5 obsolete setup auto-apply cleanup; CI #3600 / R2 #3331 GREEN.
 
-**Immediate next step: DLB-5.4 only.**
+**DLB-5.4 result: COMPLETE with no production gap.**
 
-Audit the existing Poisoner / first-night information convergence path against the four acceptance statements in §7. Prefer existing typed lifecycle tests and producer/consumer evidence. Do not create a parallel cache/planner and do not modify production unless a concrete behavioral gap is demonstrated.
+The existing Poisoner / first-night information lifecycle satisfies the four closeout statements in §7 through the typed session, migration, reveal-handoff and replanning contracts above. No production file changed for 5.4.
 
-If DLB-5.4 confirms the current lifecycle with no production gap, record that conclusion here, synchronize roadmap/handoff, perform final PR #183 scope/review/CI/R2 audit, then mark ready and merge under the standing authorization.
+**Immediate next step:** synchronize roadmap/handoff, perform final PR #183 changed-files/scope/review-thread/exact-head CI/R2 audit, then mark ready and merge under the standing authorization. After merge, query live `main` and choose the next phase from the current authoritative route rather than from historical audit NEXT markers.
