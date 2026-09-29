@@ -127,14 +127,14 @@ class DrunkAssignmentFeatureSurfaceTest {
             it.candidateId == "setup:drunk-seat:seat-1"
         }
         val empathTopology =
-            (empath.features.topology as FeatureProjection.Projected<DrunkAssignmentTopologyFeatures><DrunkAssignmentTopologyFeatures>).value
+            (empath.features.topology as FeatureProjection.Projected<DrunkAssignmentTopologyFeatures>).value
         assertEquals(setOf(2), empathTopology.adjacentDemonSeats)
 
         val monk = dedicated.candidates.single {
             it.candidateId == "setup:drunk-seat:seat-6"
         }
         val monkFirstNight =
-            (monk.features.firstNightInformationOpportunity as FeatureProjection.Projected<DrunkAssignmentFirstNightInformationOpportunityFeatures><DrunkAssignmentFirstNightInformationOpportunityFeatures>).value
+            (monk.features.firstNightInformationOpportunity as FeatureProjection.Projected<DrunkAssignmentFirstNightInformationOpportunityFeatures>).value
         assertTrue(monkFirstNight.factors.isEmpty())
 
         val ordinary = shadow.featureEvaluation as DecisionFeatureEvaluation.Ready
