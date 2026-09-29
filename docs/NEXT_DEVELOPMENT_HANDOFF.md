@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Active product implementation PR: **#169 — DLB-0 typed intermediate setup (Draft; executable checkpoint accepted, awaiting explicit merge authorization)**  
+> Active product implementation: **DLB-1 branch `dlb-1-visible-roster-deal-cutover`; PR #169 is merged**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
 > Product next gate: **DLB-1 visible-roster deal cutover; DLB-0 typed intermediate setup is accepted; targeted EvidenceLab acquisition continues in parallel**
 
@@ -38,9 +38,9 @@ Requirements:
 - preserve the current working tree;
 - do not reset/discard unrelated work;
 - treat merged PR #157 and its historical continuation branch as completed evidence, not as the current branch;
-- after PR #169 is explicitly authorized and merged, create a fresh branch from the then-live `main` for DLB-1; create a separate fresh branch for any later C5 implementation slice;
+- PR #169 is merged; DLB-1 runs on a fresh branch from the post-merge live `main`; create a separate fresh branch for any later C5 implementation slice;
 - treat merged PR #165 and `codex/current-only-recovery-cleanup` as completed historical maintenance, not the active development branch;
-- no PR merge, ready transition, rebase or force-push without explicit authorization.
+- completed, fully accepted, mergeable PRs may be marked ready and merged directly under the standing 2026-09-29 authorization; rebase, force-push, destructive history changes, scope broadening, or merging incomplete/failing work still require explicit user authorization.
 
 The 2026-09-27 #157 integration and the 2026-09-28 #165 Recovery cleanup squash merges are complete. Do not redo or rewrite that history.
 
