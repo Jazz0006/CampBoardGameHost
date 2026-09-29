@@ -203,3 +203,72 @@ Docs:
 After DLB-3B2 is accepted, DLB-3B3 must decide how the dedicated feature surface participates in shadow replay / policy-version experimentation without mutating frozen V1.
 
 That later slice must keep descriptive projection separate from policy semantics.
+
+
+## 11. Test-first evidence
+
+### RED
+
+The first RED attempt exposed a test-only Kotlin generic-cast defect and was corrected before accepting RED provenance.
+
+Clean RED checkpoint:
+
+`9e238043b2c3efe688913e872e5efe2fceaecd64`
+
+CI #3551 failed at Android unit-test compilation only because the new DLB-3B2 contract was not yet implemented:
+
+- unresolved `DrunkAssignmentFeaturesProjector`;
+- unresolved `DrunkAssignmentTopologyFeatures`;
+- unresolved `DrunkAssignmentFirstNightInformationOpportunityFeatures`;
+- unresolved `DrunkSetupShadowEvaluation.drunkAssignmentFeatureEvaluation`.
+
+No unrelated production failure or syntax failure remained.
+
+### GREEN / T1
+
+Production GREEN head:
+
+`b9487beccf97f24467d733542357ca44736d16eb`
+
+CI #3553:
+
+- Android FAST unit tests: GREEN;
+- aggregate CI gate: GREEN.
+
+R2 #3290: GREEN.
+
+## 12. Exact diff / fan-out audit
+
+Executable production scope is exactly:
+
+- new `DrunkAssignmentFeatures.kt`;
+- narrow feature projection/attachment in `DrunkSetupShadowAdapter.kt`.
+
+No change occurred in:
+
+- `DecisionFeatures.kt`;
+- `BeginnerConservativeV1Policy.kt`;
+- selector code;
+- `DecisionTrace`;
+- replay engine/input;
+- canonical setup/session;
+- UI;
+- persistence.
+
+Production flow is:
+
+```text
+DLB-3B1 DrunkSetupConsequenceEnvelope
+        ↓
+DrunkAssignmentFeaturesProjector
+        ↓
+CandidateDrunkAssignmentFeatures
+        ↓
+DrunkAssignmentFeatureEvaluation
+        ↓
+DrunkSetupShadowEvaluation.drunkAssignmentFeatureEvaluation
+```
+
+The ordinary DLB-3A `DecisionFeatureEvaluation` remains a separate parallel surface and still carries NOT_PROJECTED_YET strategic features, so frozen V1 still defers with no selection.
+
+T4 full-CI acceptance is requested for this new stable setup/recommendation feature contract.
