@@ -29,7 +29,7 @@ DLB-3B setup-level consequence feature bridge              COMPLETE / ACCEPTED
 DLB-4 canonical Drunk commit before reveal                 COMPLETE / ACCEPTED
 DLB-4A Experienced assisted Drunk selection                COMPLETE / ACCEPTED
 DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 staged dependency work    COMPLETE
-DLB-5 overall                                               COMPLETE / FINAL PR ACCEPTANCE PENDING
+DLB-5 overall                                               COMPLETE / ACCEPTED
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
@@ -102,7 +102,7 @@ DLB-0 is implemented and accepted. The current implementation authority remains:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating; DLB-2 provides the rules-owned legal Drunk-seat domain and pure hypothetical GameState projection; DLB-3 carries that domain through SetupPrecommit / DecisionTrace / replay and the dedicated shadow policy-experiment lane while frozen V1 remains unchanged. DLB-4 canonical Drunk commit is COMPLETE / ACCEPTED at `5606371c68b97beb01418ede2bb2c19db7e69053` with CI #3580 / R2 #3313 GREEN; DLB-4A Experienced assisted Drunk selection is COMPLETE / ACCEPTED at `c85448831e73c82868e118c7f47a0ed889267c0c` with CI #3586 / R2 #3318 GREEN. DLB-5 is COMPLETE through 5.1 typed dependency planning, 5.2 Red Herring latest-safe commitment, 5.3 Demon-bluff presentation-barrier commitment, 5.4 Poisoner / first-night information convergence audit, and 5.5 obsolete setup auto-apply cleanup. The latest production executable checkpoint remains `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5` with CI #3600 / R2 #3331 GREEN; 5.4 found no production gap and required documentation only. PR #183 is now at final scope/review/exact-head acceptance before merge. Automatic Beginner Drunk-selection authority remains blocked behind the later shadow/evidence cutover gate; the current Beginner compatibility-confirmed candidate is transitional only.
+The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating; DLB-2 provides the rules-owned legal Drunk-seat domain and pure hypothetical GameState projection; DLB-3 carries that domain through SetupPrecommit / DecisionTrace / replay and the dedicated shadow policy-experiment lane while frozen V1 remains unchanged. DLB-4 canonical Drunk commit is COMPLETE / ACCEPTED at `5606371c68b97beb01418ede2bb2c19db7e69053` with CI #3580 / R2 #3313 GREEN; DLB-4A Experienced assisted Drunk selection is COMPLETE / ACCEPTED at `c85448831e73c82868e118c7f47a0ed889267c0c` with CI #3586 / R2 #3318 GREEN. DLB-5 is COMPLETE through 5.1 typed dependency planning, 5.2 Red Herring latest-safe commitment, 5.3 Demon-bluff presentation-barrier commitment, 5.4 Poisoner / first-night information convergence audit, and 5.5 obsolete setup auto-apply cleanup. The latest production executable checkpoint remains `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5` with CI #3600 / R2 #3331 GREEN; 5.4 found no production gap and required documentation only. Final exact-head T4 acceptance ran on `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN, including Android `testFull + assembleDebug`, ASP contracts and Real Clingo cross-validation. PR #183 was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`. Automatic Beginner Drunk-selection authority remains blocked behind the later shadow/evidence cutover gate; the current Beginner compatibility-confirmed candidate is transitional only.
 
 The 2026-09-28 App/Host decomposition audit is a guardrail for this work, not a prerequisite campaign:
 
@@ -191,8 +191,8 @@ query live main / workspace
 -> DLB-5.3 Demon bluff production cutover COMPLETE / GREEN
 -> DLB-5.4 first-night information / poison convergence audit COMPLETE / NO PRODUCTION GAP
 -> DLB-5.5 obsolete setup auto-apply cleanup COMPLETE / GREEN
--> DLB-5 final PR #183 scope/review/exact-head acceptance + merge NEXT
--> DLB-5H1 presentation extraction only if the boundary remains cohesive
+-> DLB-5 final acceptance + PR #183 merge COMPLETE / ACCEPTED
+-> DLB-5H1 narrow presentation-extraction boundary audit NEXT; extract only if the seam remains cohesive
 -> shadow/evidence cutover gate
 -> Beginner automatic Drunk authority
 -> DLB-6 old-contract retirement
