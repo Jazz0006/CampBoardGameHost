@@ -1,7 +1,8 @@
 # DLB-4A Experienced Drunk Selection UX Audit — 2026-09-29
 
-> Status: **IMPLEMENTATION AUDIT / DLB-4A AUTHORITY**
+> Status: **COMPLETE / ACCEPTED IMPLEMENTATION AUTHORITY**
 > Baseline: `main@c80a1db119aa058bcab050a142a43a6a41d1e680`
+> Accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c`; CI #3586 and R2 #3318 GREEN.
 > Scope: Experienced assisted Drunk selection before canonical commit. No Beginner policy cutover, no DLB-5 dependency barriers, no Recovery draft persistence, no broad App/Host decomposition.
 
 ## 1. Current ownership
@@ -130,3 +131,18 @@ DLB-4A is complete when:
 - Beginner behavior remains explicitly transitional and does not claim the later cutover gate;
 - exact-head CI/R2 are green;
 - route/roadmap/handoff docs move next to DLB-5.
+
+## 9. Implementation outcome
+
+DLB-4A is complete at executable checkpoint `c85448831e73c82868e118c7f47a0ed889267c0c`:
+
+- `TroubleBrewingDrunkSelectionRouter` now owns the pure experience-mode routing seam without taking rules or policy authority;
+- Experienced Drunk setups produce a `ManualSelection` request containing exactly the current legal candidate domain and do not depend on the compatibility-confirmed candidate;
+- the new host-only selection screen shows seat, player and shown Townsfolk identity, supports optional future recommendation highlighting, and currently shows no recommendation because no production Drunk-ordering policy is authorized;
+- confirmation enters the single existing DLB-4 canonical commit/start continuation; reveal, cards, session creation, Recovery persistence and prewarm remain downstream of that confirmation;
+- backing out clears only the in-memory pending request and returns to Clocktower settings;
+- Beginner keeps the pre-existing compatibility-confirmed candidate as a transitional baseline only. This does not satisfy or bypass the later automatic-authority cutover gate;
+- `DRUNK_ASSIGNMENT_SHADOW_V1` and `BEGINNER_CONSERVATIVE_V1` remain unchanged;
+- CI #3586 and R2 #3318 are GREEN for the executable UI checkpoint.
+
+Next product slice: **DLB-5 — staged first-night dependency planner / latest-safe commitment barriers**.

@@ -10,7 +10,9 @@ import org.junit.Test
 class TroubleBrewingDrunkSelectionRouterTest {
     @Test
     fun `experienced drunk setup requires manual selection across exact legal domain`() {
-        val prepared = drunkPreparedSetup()
+        val prepared = drunkPreparedSetup().copy(
+            compatibilityConfirmedDrunkCandidate = null,
+        )
         val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
 
         val route = TroubleBrewingDrunkSelectionRouter.route(

@@ -123,22 +123,26 @@ Only after this boundary may player identity reveal and first-night prewarm begi
 
 Rotation/completion persistence must consume this final committed setup, not the pre-Drunk intermediate plan.
 
-### DLB-4A — Storyteller Drunk selection UX — NEXT
+### DLB-4A — Storyteller Drunk selection UX — COMPLETE / ACCEPTED
+
+Accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c`; CI #3586 / R2 #3318 GREEN.
 
 ```text
 shown identities assigned to seats
--> legal candidates + SDE recommendation
+-> legal candidates + optional authorized recommendation
 -> EXPERIENCED: assisted "Choose the Drunk" interaction
--> BEGINNER: automatic selection only after cutover gate
+-> BEGINNER: production automatic-selection authority only after cutover gate
 -> one shared canonical commit
 -> player identity reveal
 ```
 
-Manual UI may select only rules-legal candidates.
+Manual UI may select only rules-legal candidates. No Drunk-ordering policy is currently authorized, so the Experienced request carries no recommendation and exposes the full legal domain.
+
+Until the later production cutover gate is satisfied, Beginner preserves the already-existing DLB-4 compatibility-confirmed candidate only as a transitional playable baseline. That compatibility path is not a policy recommendation, does not read `DRUNK_ASSIGNMENT_SHADOW_V1`, and must not be described as the authorized automatic-selection cutover.
 
 Do not persist the unconfirmed setup UI draft into Emergency Recovery. If the process dies before Drunk confirmation, restart/re-enter setup rather than restoring a half-committed game. Emergency Recovery begins from finalized current-version setup/game truth.
 
-### DLB-5 — staged first-night dependency planner
+### DLB-5 — staged first-night dependency planner — NEXT
 
 Replace setup-time assumptions with latest-safe commitment barriers:
 
