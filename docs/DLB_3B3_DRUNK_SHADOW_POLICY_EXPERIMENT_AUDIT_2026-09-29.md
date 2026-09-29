@@ -233,3 +233,87 @@ After DLB-3B3 is accepted, the Drunk decision surface will have:
 The next decision is then whether DLB-3B requires another evidence/capability slice before DLB-4 canonical commit work begins.
 
 Importantly, DLB-4 canonical commit and Beginner automatic authority remain separate gates.
+
+
+## 14. Test-first evidence
+
+### RED
+
+Clean RED checkpoint:
+
+`5eb1d1db1a393aeea797ed00d71fe00d1f984201`
+
+CI #3561 reached Android unit-test compilation and failed on the intentionally absent 3B3 contracts:
+
+- `DRUNK_ASSIGNMENT_SHADOW_V1`;
+- `DrunkAssignmentPolicyExperimentRegistry`;
+- `DrunkAssignmentShadowReplayInput`;
+- `DrunkAssignmentShadowReplayEngine`;
+- `DrunkAssignmentShadowReplayRecord`;
+- `DrunkAssignmentShadowV1ReplayRunner`.
+
+No generic replay API change was required.
+
+### GREEN / T1
+
+The first production implementation reached executable tests at `23d192beb209c11a940d30f7c96d8ff9c4db606d`. One test fixture constructed an invalid non-SetupPrecommit input before entering `assertThrows`; the production input correctly failed fast.
+
+The fixture was corrected without changing production semantics.
+
+Accepted T1 head:
+
+`a36bd089b446d3b02f31af1b63c6512593864359`
+
+CI #3565:
+
+- Android FAST unit tests: GREEN;
+- 1,589 tests completed successfully;
+- aggregate CI gate: GREEN.
+
+R2 #3300: GREEN.
+
+## 15. Exact diff / fan-out audit
+
+Production scope is limited to:
+
+- one explicit shadow-only version ID in `PolicyEvaluation.kt`;
+- new `DrunkAssignmentPolicyExperiment.kt`;
+- new `DrunkAssignmentShadowReplay.kt`.
+
+The ordinary production surfaces remain unchanged:
+
+- `BeginnerConservativeV1Policy.kt`;
+- `DecisionPolicyReplayRegistry.production()`;
+- `MultiPolicyReplayEngine`;
+- ordinary `DecisionFeatureEvaluation`;
+- `DecisionTrace` schema;
+- canonical setup/session;
+- UI;
+- persistence.
+
+The dedicated flow is:
+
+```text
+source DecisionTrace
+    identity/domain/actual-choice metadata only
+             +
+fresh DrunkAssignmentFeatureEvaluation
+             ↓
+DrunkAssignmentShadowReplayInput
+             ↓
+explicit DrunkAssignmentPolicyExperimentRegistry
+             ↓
+DRUNK_ASSIGNMENT_SHADOW_V1
+    Deferred:
+      longitudinal capability missing
+      ordering evidence not authorized
+             ↓
+DrunkAssignmentShadowReplayRecord
+    diagnostic only / no commit
+```
+
+The default experimental registry contains exactly one version.
+
+The ordinary production replay registry still contains exactly `BEGINNER_CONSERVATIVE_V1`.
+
+T4 full-CI acceptance is requested for this stable replay/experiment boundary.
