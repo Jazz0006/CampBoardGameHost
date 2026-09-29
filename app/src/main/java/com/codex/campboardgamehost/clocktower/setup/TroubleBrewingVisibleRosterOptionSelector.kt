@@ -27,11 +27,13 @@ internal object TroubleBrewingVisibleRosterOptionSelector {
             "Trouble Brewing Drunk candidate must contain the canonical Drunk role."
         }
 
-        val legalVisibleRoles = preset.drunkAsOptions.map { externalId ->
-            requireNotNull(characterRegistry.findByExternalId(externalId)) {
-                "Validated Trouble Brewing visible-roster option '$externalId' is missing from the registry."
-            }.id
-        }
+        val legalVisibleRoles = preset.drunkAsOptions
+            .map { externalId ->
+                requireNotNull(characterRegistry.findByExternalId(externalId)) {
+                    "Validated Trouble Brewing visible-roster option '$externalId' is missing from the registry."
+                }.id
+            }
+            .sortedBy { it.value }
         require(legalVisibleRoles.isNotEmpty()) {
             "Trouble Brewing Drunk preset '${preset.id}' has no visible-roster Townsfolk options."
         }
