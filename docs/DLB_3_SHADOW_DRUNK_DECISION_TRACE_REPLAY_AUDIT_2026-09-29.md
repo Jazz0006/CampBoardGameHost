@@ -1,0 +1,215 @@
+# DLB-3 Shadow Drunk Decision / DecisionTrace / Replay — Architecture Audit
+
+> Date: 2026-09-29 Australia/Sydney
+> Baseline: `main@c2b293ff02cb8849673be9df9d973ea23eb8f0c1`
+> Branch: `dlb-3-shadow-drunk-decision-trace`
+> Scope: DLB-3 only — shadow SDE surface for late-bound Drunk assignment.
+> Authority: `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`.
+
+## 1. Key audit conclusion
+
+DLB-2 already owns the complete legal candidate domain and immutable hypothetical `GameState` per dealt Townsfolk seat.
+
+Existing SDE infrastructure already owns:
+
+- `SdeDecisionCandidate` and `SetupPrecommit` lifecycle;
+- `DecisionFeatureEvaluation`;
+- frozen `BEGINNER_CONSERVATIVE_V1`;
+- frozen `BeginnerConservativeV1Selector`;
+- `DecisionTrace`;
+- `MultiPolicyReplayInput` and `MultiPolicyReplayEngine`.
+
+No second trace/replay framework is needed.
+
+However, the existing Drunk whole-bundle evaluators solve a different problem: **after the actual Drunk seat is known**, they compare legal misinformation outputs for that Drunk shown ability. They are not themselves a Drunk-seat selector.
+
+The existing first-night candidate-space auditor can inspect every DLB-2 hypothetical setup and expose its first-night ecology, including which information producer became Drunk and which producer domains remain. But there is currently no evidence-approved mapping from that setup-level ecology to a new V1 rejection/preference semantic.
+
+Therefore DLB-3 must not manufacture a winner by changing V1 or by treating a deterministic tie-break as evidence.
+
+## 2. Internal DLB-3 route
+
+### DLB-3A — typed shadow envelope + ecology census + trace/replay
+
+Build the setup-precommit SDE surface now:
+
+```text
+IntermediateSetup
+-> rules-owned legal Drunk candidates
+-> DLB-2 hypothetical GameState per candidate
+-> existing FirstNightBundleCandidateSpaceAuditor per hypothetical
+-> SdeDecisionCandidate envelope per legal candidate
+-> current DecisionFeatureEvaluation contract
+-> frozen BEGINNER_CONSERVATIVE_V1
+-> DecisionTrace + MultiPolicyReplayInput
+```
+
+At DLB-3A, the ecology census is diagnostic evidence beside the SDE candidate. It is **not** silently converted into a policy weight/gate.
+
+Until DLB-3B authorizes a setup-level strategic feature projection, the `strategic` feature is explicitly `NOT_PROJECTED_YET`. The frozen V1 must therefore return:
+
+`Deferred(STRATEGIC_FEATURE_UNAVAILABLE)`
+
+and `policySelection == null`.
+
+This is a successful shadow result, not an error. It proves the candidate/trace/replay lifecycle while correctly refusing to invent policy semantics.
+
+### DLB-3B — exact / whole-ecology feature bridge
+
+After 3A, add only evidence-supported setup-level consequence projection.
+
+Candidate projected state changes which Townsfolk function is actually impaired. A valid 3B must compare the **resulting first-night ecology**, not merely role names or asset provenance.
+
+Existing reusable authorities include:
+
+- DLB-2 projected `GameState`;
+- `TroubleBrewingFirstNightBundleCandidateSpaceAuditor`;
+- exact/topology evaluators;
+- pair/numeric/Fortune-Teller Drunk whole-bundle evaluators after the candidate is materialized;
+- current score-free SDE feature contract.
+
+Important current limitation:
+
+- the 7-player healthy-bundle harness explicitly stages Drunk out and cannot directly serve as a generic Drunk-seat comparator;
+- player-controlled Fortune Teller targets and future Poisoner targets cannot be consumed as hindsight;
+- not every Townsfolk shown ability has the same Night-1 information shape.
+
+DLB-3B therefore needs a bounded setup-level consequence contract; it must not fake this by calling legacy scalar `SetupEvaluator` scores or by introducing role-name heuristics.
+
+DLB-3 remains incomplete until 3B is accepted.
+
+## 3. DLB-3A typed decision surface
+
+Add a Trouble-Brewing-specific pure shadow owner under `clocktower/recommendation/sde`.
+
+Request input:
+
+- stable `gameId`;
+- `TroubleBrewingIntermediateSetup`;
+- validated Trouble Brewing character registry / role definitions;
+- explicit `InformationDecisionRevision`.
+
+The revision is supplied by the caller rather than invented by the shadow owner. Tests may use `0/0` for pristine setup-precommit.
+
+For each DLB-2 legal candidate:
+
+- stable candidate ID: `setup:drunk-seat:<seat>`;
+- lifecycle: `SetupPrecommit`;
+- source interaction ID = decision ID;
+- input bindings = captured empty set;
+- history prefix = canonical empty `Global(gameId)` prefix;
+- legality provenance owner = `TroubleBrewingDrunkCandidateDomain`;
+- hypothetical ref contains a stable projected-setup effect ref;
+- proposed commit ref is emitted but **not committed/bound**.
+
+Add `SdeCommittedDecisionInputKind.DRUNK_SEAT`. This is typed identity for the eventual DLB-4 commit, not a commit action.
+
+## 4. Ecology evidence
+
+For each candidate projected `GameState`, run:
+
+`TroubleBrewingFirstNightBundleCandidateSpaceAuditor.inspect(projectedGame, roleDefinitions)`.
+
+Retain the full typed `FirstNightBundleCandidateSpaceAudit` beside the candidate.
+
+This captures, without scoring:
+
+- first-night factor identities and legal option domains;
+- rule-determined vs Storyteller-controlled factors;
+- public-good-info exposure;
+- player-controlled elements excluded from setup-time choice;
+- staged complexities such as Poisoner target / Spy-Recluse registration.
+
+It must not be copied into `DecisionFeatures` until a dedicated evidence-backed projector exists.
+
+## 5. Frozen policy behavior at 3A
+
+Create candidate-aligned `DecisionFeatureEvaluation.Ready` where every candidate uses:
+
+`DecisionFeatures.unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET)`.
+
+Run unchanged:
+
+- `BeginnerConservativeV1Policy.evaluate`;
+- `BeginnerConservativeV1Selector.select`.
+
+Expected invariant:
+
+- policy evaluation is Deferred with `STRATEGIC_FEATURE_UNAVAILABLE`;
+- policy selection is null;
+- no candidate is recommended/committed.
+
+This is intentionally stronger than using seeded tie selection across evidence-equivalent candidates: 3A refuses to imply that a random deterministic tie is calibrated Drunk-assignment intelligence.
+
+## 6. DecisionTrace / replay correlation
+
+DLB-3A should construct a normal `DecisionTrace` using the frozen V1 definition:
+
+- complete ordered legal candidate IDs;
+- `SetupPrecommit`;
+- explicit source revision;
+- canonical empty Global setup prefix;
+- 3A feature evaluation;
+- deferred V1 policy snapshot;
+- null selection;
+- `actualChoice = Pending`.
+
+It should also expose a normal `MultiPolicyReplayInput` so the existing `MultiPolicyReplayEngine` can replay the same candidate/features against registered policy versions.
+
+No DecisionTrace schema change is needed for 3A.
+
+## 7. Test boundary for 3A
+
+A new typed owning test must prove:
+
+1. DLB-2 candidate order is preserved exactly;
+2. every legal candidate has one DLB-2 hypothetical state and one ecology audit;
+3. every SDE candidate is `SetupPrecommit`, has the same revision/prefix, and points back to DLB-2 legality;
+4. every proposed commit ref has new kind `DRUNK_SEAT`;
+5. proposed commit refs are **not** present in committed input bindings;
+6. ecology audits differ when candidate choice changes first-night role/function shape where the fixture makes that observable;
+7. 3A feature evaluation explicitly reports unavailable strategic projection;
+8. unchanged V1 returns `STRATEGIC_FEATURE_UNAVAILABLE`, with no policy selection;
+9. DecisionTrace preserves the complete ordered domain and remains `Pending`;
+10. MultiPolicy replay of V1 reproduces the deferred policy snapshot and still has no selection;
+11. evaluation is pure and does not mutate the intermediate setup.
+
+Because this adds a stable SDE decision surface and a new commit-reference enum kind, use test-first RED.
+
+## 8. DLB-3A intended allowlist
+
+Production:
+
+- new `DrunkSetupShadowAdapter.kt`;
+- `SdeDecisionCandidate.kt` only to add `DRUNK_SEAT` enum kind.
+
+Tests:
+
+- new `DrunkSetupShadowAdapterTest.kt`.
+
+Docs:
+
+- this audit and later roadmap/handoff closure.
+
+Do not modify:
+
+- `BEGINNER_CONSERVATIVE_V1`;
+- selector;
+- App/Host/UI;
+- DLB-1 compatibility deal;
+- DLB-2 legality/projector;
+- session mutation;
+- persistence/Recovery;
+- first-night flow.
+
+## 9. Explicit NO-GO
+
+- no canonical Drunk commit;
+- no automatic Beginner Drunk authority;
+- no experienced-mode manual UI;
+- no role-name ranking heuristic;
+- no legacy SetupEvaluator scalar score as SDE Drunk policy;
+- no future Poisoner-target hindsight;
+- no assumed Fortune Teller target;
+- no DecisionTrace schema expansion just to carry ecology census;
+- no broad generic transaction/setup-effect owner.
