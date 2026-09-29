@@ -1,6 +1,6 @@
 # DLB-3B Drunk Setup Consequence Envelope — Architecture Audit — 2026-09-29
 
-> Status: **IMPLEMENTATION CONTRACT / TEST-FIRST**
+> Status: **DLB-3B1 COMPLETE / ACCEPTED — SCORE-FREE CONSEQUENCE ENVELOPE**
 >
 > Baseline: `main@ed6674e20ba482ba0809f4501557d02956c4a1e3`
 >
@@ -284,3 +284,49 @@ The projector:
 
 T4 full-CI acceptance is requested for this stable setup/recommendation contract.
 
+
+
+## 13. T4 acceptance
+
+Accepted DLB-3B1 checkpoint:
+
+`84dcf50d7538fad477be692e027c232b9884618a`
+
+The executable production tree is the preceding GREEN implementation `641e1077bf1bfb31a7d4a9e3aed66cda8ed2c4ec`; the accepted head adds only this audit's validation record and full-CI trigger.
+
+Exact-head acceptance:
+
+- CI #3542 / run `36526798307`: GREEN;
+- Android full unit tests + debug APK assemble: GREEN;
+- ASP contract tests: GREEN;
+- Real Clingo cross-validation: GREEN;
+- aggregate CI gate: GREEN;
+- R2 #3281 / run `36526798331`: GREEN.
+
+DLB-3B1 is COMPLETE / ACCEPTED.
+
+Accepted semantics:
+
+- every DLB-3 shadow candidate now carries a score-free setup consequence envelope;
+- circular adjacent Evil / Demon / Minion topology is factual only;
+- candidate-seat first-night public-good-info factor shape is projected from the existing ecology owner;
+- option count and Storyteller control remain descriptive and do not select an output;
+- player-controlled exclusions and deferred complexities remain explicit;
+- `DecisionFeatures`, frozen V1, selector, canonical setup/session, UI and persistence are unchanged;
+- policy evaluation therefore still defers with no Drunk selection.
+
+## 14. DLB-3B2 next gate
+
+DLB-3B2 must define a **dedicated Drunk-assignment feature surface** over the accepted consequence envelope.
+
+It may project only evidence-qualified descriptive semantics.
+
+It must not:
+
+- reuse ordinary first-night `DecisionFeatures` as if Drunk assignment were an information-output choice;
+- mutate `BEGINNER_CONSERVATIVE_V1`;
+- introduce weights, scalar scores or candidate ordering;
+- hard-code Empath/Chef/G10;
+- imply later-night narrative consequences that the current envelope cannot represent.
+
+The first design question for 3B2 is whether topology consequence and first-night impaired-information opportunity should be represented as independent typed projections with explicit availability, leaving later-night narrative opportunity unavailable until a broader consequence owner exists.
