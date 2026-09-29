@@ -21,6 +21,35 @@ class ClocktowerProductionFirstNightFlowTest {
             step("minion-info", ClocktowerProductionNightStepIdentity.minionInfo()),
             step("demon-info", ClocktowerProductionNightStepIdentity.demonInfo()),
             step("Poisoner", role("Poisoner")),
+            step("red-herring", ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()),
+            step("Spy", role("Spy")),
+            step("Chef", role("Chef")),
+            step("Empath", role("Empath")),
+            step("Fortune Teller", role("Fortune Teller")),
+            step("Butler", role("Butler")),
+        )
+
+        val ordered = ClocktowerProductionFirstNightFlow.order(
+            ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
+            playerCount = 7,
+            inPlayRoleIds = inPlay,
+            functioningActualRoleIds = inPlay,
+            productionSteps = expected.reversed(),
+            identityOf = Step::identity,
+        )
+
+        assertEquals(expected.map(Step::label), ordered.map(Step::label))
+    }
+
+    @Test
+    fun `malfunctioning Spy does not pull Red Herring commitment ahead of the Grimoire step`() {
+        val inPlay = setOf(
+            "Poisoner", "Spy", "Chef", "Empath", "Fortune Teller", "Butler", "Imp",
+        ).map(::RoleId).toSet()
+        val productionSteps = listOf(
+            step("minion-info", ClocktowerProductionNightStepIdentity.minionInfo()),
+            step("demon-info", ClocktowerProductionNightStepIdentity.demonInfo()),
+            step("Poisoner", role("Poisoner")),
             step("Spy", role("Spy")),
             step("Chef", role("Chef")),
             step("Empath", role("Empath")),
@@ -33,11 +62,12 @@ class ClocktowerProductionFirstNightFlowTest {
             ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
             playerCount = 7,
             inPlayRoleIds = inPlay,
-            productionSteps = expected.reversed(),
+            functioningActualRoleIds = inPlay - RoleId("Spy"),
+            productionSteps = productionSteps.reversed(),
             identityOf = Step::identity,
         )
 
-        assertEquals(expected.map(Step::label), ordered.map(Step::label))
+        assertEquals(productionSteps.map(Step::label), ordered.map(Step::label))
     }
 
     @Test
