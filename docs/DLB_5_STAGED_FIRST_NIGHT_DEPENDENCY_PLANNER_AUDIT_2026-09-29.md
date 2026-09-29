@@ -1,11 +1,12 @@
 # DLB-5 Staged First-Night Dependency Planner Audit — 2026-09-29
 
-> Status: **CURRENT DLB-5 IMPLEMENTATION / CLOSEOUT AUTHORITY**
+> Status: **DLB-5 COMPLETE / ACCEPTED — MERGED CLOSEOUT RECORD**
 > Baseline at audit creation: `main@e83b413a1583c8d2a9cdef8126f2401cd610e093`
 > Last synchronized: 2026-09-30 Australia/Sydney
-> Current Draft PR: **#183 — `DLB-5: stage first-night dependency barriers`**
-> Latest validated executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 / R2 #3331 GREEN
-> Current status: **DLB-5.1 COMPLETE; DLB-5.2 COMPLETE; DLB-5.3 COMPLETE; DLB-5.4 COMPLETE; DLB-5.5 COMPLETE; DLB-5 overall COMPLETE / final PR acceptance pending**
+> Merged PR: **#183 — `DLB-5: stage first-night dependency barriers` — squash merge `6293a3bb94778338db61f5a1708a1d283d6e8b6f`**
+> Latest production executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 / R2 #3331 GREEN
+> Final exact-head acceptance: `3fd1714ce2e18b969e5039bcf6a58f8775745b9d`; CI #3603 / R2 #3334 GREEN, including Android `testFull + assembleDebug`, ASP contracts and Real Clingo cross-validation
+> Current status: **DLB-5.1 COMPLETE; DLB-5.2 COMPLETE; DLB-5.3 COMPLETE; DLB-5.4 COMPLETE; DLB-5.5 COMPLETE; DLB-5 overall COMPLETE / ACCEPTED**
 > Scope: latest-safe commitment barriers for Trouble Brewing first-night setup facts. No Beginner Drunk-policy cutover, no DLB-6 retirement, no broad App/Host decomposition.
 
 ## 1. Canonical rule
@@ -249,4 +250,6 @@ Current PR #183 implementation sequence:
 
 The existing Poisoner / first-night information lifecycle satisfies the four closeout statements in §7 through the typed session, migration, reveal-handoff and replanning contracts above. No production file changed for 5.4.
 
-**Immediate next step:** run one final exact-head `[full-ci]` T4 acceptance because PR #183 contains production first-night flow changes; the last production checkpoint CI #3600 was GREEN but ran Android FAST rather than `testFull + assembleDebug`. After T4, perform final changed-files/scope/review-thread/CI/R2 audit, mark ready and merge under the standing authorization. After merge, query live `main` and choose the next phase from the current authoritative route rather than from historical audit NEXT markers.
+**Final acceptance:** exact head `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` passed CI #3603 and R2 #3334 GREEN. Android `testFull + assembleDebug`, ASP contracts, Real Clingo cross-validation, CI gate and R2 all passed; final scope audit found only DLB-5 production/tests/docs, with zero unresolved review threads. PR #183 was then marked ready and squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
+
+**Next gate:** DLB-5H1 narrow first-night evil-information presentation boundary audit. Extract presentation only if the seam is cohesive and remains presentation-only; do not move candidate choice, commitment timing, legality or session mutation into the presentation module.
