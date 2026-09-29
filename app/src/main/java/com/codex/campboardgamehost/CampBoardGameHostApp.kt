@@ -91,6 +91,11 @@ import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecomme
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingFirstNightPrecomputeCoordinator
 import com.codex.campboardgamehost.clocktower.setup.NoGreaterJoyProductionSetupPreparer
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDealRoleResolver
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkCandidate
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkSelectionRequest
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkSelectionRoute
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkSelectionRouter
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPreparedSetup
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupCommitter
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingProductionSetupPreparer
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetJson
@@ -142,12 +147,18 @@ private enum class Screen {
     GameSelection,
     UndercoverSettings,
     ClocktowerSettings,
+    ClocktowerDrunkSelection,
     Settings,
     PassPhone,
     RevealCard,
     ClocktowerJudge,
     Game,
 }
+
+private data class PendingTroubleBrewingDrunkSelection(
+    val preparedSetup: TroubleBrewingPreparedSetup,
+    val request: TroubleBrewingDrunkSelectionRequest,
+)
 
 internal enum class LanguageMode(val prefsValue: String) {
     System("system"),
@@ -253,6 +264,7 @@ private fun Screen.isActiveGameScreen(): Boolean = when (this) {
     Screen.GameSelection,
     Screen.UndercoverSettings,
     Screen.ClocktowerSettings,
+    Screen.ClocktowerDrunkSelection,
     Screen.Settings -> false
 }
 
@@ -436,6 +448,9 @@ internal fun CampBoardGameHostApp() {
     val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
     var screen by remember { mutableStateOf(Screen.Landing) }
+    var pendingTroubleBrewingDrunkSelection by remember {
+        mutableStateOf<PendingTroubleBrewingDrunkSelection?>(null)
+    }
     var currentGameKind by remember { mutableStateOf(GameKind.Undercover) }
     var savedGamePreview by remember(context) { mutableStateOf(baseContext.loadSavedGamePreview(context)) }
     var gameHistory by remember { mutableStateOf(baseContext.loadGameHistory()) }
@@ -1489,6 +1504,7 @@ internal fun CampBoardGameHostApp() {
     ) {
         invalidateA4SessionBoundary()
         clearSavedGameState()
+        pendingTroubleBrewingDrunkSelection = null
         committedClocktowerSetup = null
         committedTroubleBrewingSetupRotationRecord = null
         currentGameKind = nextGameKind
@@ -1605,45 +1621,18 @@ internal fun CampBoardGameHostApp() {
         resetDealState(GameKind.Undercover)
     }
 
-    fun startTroubleBrewingGame() {
-        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
-        val preparedSeed = newClocktowerSeed()
-
-        val datasetJson = baseContext.assets
-            .open("setup/trouble_brewing_setup_presets_v2_final.json")
-            .bufferedReader(Charsets.UTF_8)
-            .use { it.readText() }
-
-        val dataset = TroubleBrewingSetupPresetJson.parse(datasetJson)
-
-        val rotationHistoryStore = TroubleBrewingSetupRotationHistoryStore.fromContext(baseContext)
-        val rotationHistory = rotationHistoryStore.historyFor(
-            datasetId = dataset.datasetId,
-            schemaVersion = dataset.schemaVersion,
-            playerCount = playerNames.size,
-        )
-        val playerRotationHistory = rotationHistoryStore.recentPlayerStartingIdentityHistoryFor(
-            datasetId = dataset.datasetId,
-            schemaVersion = dataset.schemaVersion,
-        )
-
-        val characterRegistry = BuiltInClocktowerRulesetCatalog
-            .fromContext(baseContext)
+    fun commitAndStartTroubleBrewingGame(
+        preparedSetup: TroubleBrewingPreparedSetup,
+        confirmedDrunkCandidate: TroubleBrewingDrunkCandidate?,
+    ) {
+        pendingTroubleBrewingDrunkSelection = null
+        val preparedSeed = preparedSetup.intermediateSetup.gameSeed
+        val characterRegistry = activeGameClocktowerRulesetCatalog
             .ruleset(ClocktowerScript.TroubleBrewing)
             .characterRegistry
-
-        val preparedSetup = TroubleBrewingProductionSetupPreparer.prepare(
-            dataset = dataset,
-            characterRegistry = characterRegistry,
-            orderedPlayerNames = playerNames.toList(),
-            gameSeed = preparedSeed,
-            recentSetupRotationHistory = rotationHistory,
-            recentPlayerStartingIdentityHistory = playerRotationHistory,
-        )
-
         val committedSetup = TroubleBrewingSetupCommitter.commit(
             intermediateSetup = preparedSetup.intermediateSetup,
-            confirmedDrunkCandidate = preparedSetup.compatibilityConfirmedDrunkCandidate,
+            confirmedDrunkCandidate = confirmedDrunkCandidate,
             characterRegistry = characterRegistry,
         )
         val resolvedAssignments = TroubleBrewingDealRoleResolver.resolveCommitted(
@@ -1720,6 +1709,61 @@ internal fun CampBoardGameHostApp() {
                 }
             },
         )
+    }
+
+    fun startTroubleBrewingGame() {
+        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
+        val preparedSeed = newClocktowerSeed()
+
+        val datasetJson = baseContext.assets
+            .open("setup/trouble_brewing_setup_presets_v2_final.json")
+            .bufferedReader(Charsets.UTF_8)
+            .use { it.readText() }
+
+        val dataset = TroubleBrewingSetupPresetJson.parse(datasetJson)
+        val rotationHistoryStore = TroubleBrewingSetupRotationHistoryStore.fromContext(baseContext)
+        val rotationHistory = rotationHistoryStore.historyFor(
+            datasetId = dataset.datasetId,
+            schemaVersion = dataset.schemaVersion,
+            playerCount = playerNames.size,
+        )
+        val playerRotationHistory = rotationHistoryStore.recentPlayerStartingIdentityHistoryFor(
+            datasetId = dataset.datasetId,
+            schemaVersion = dataset.schemaVersion,
+        )
+        val characterRegistry = activeGameClocktowerRulesetCatalog
+            .ruleset(ClocktowerScript.TroubleBrewing)
+            .characterRegistry
+        val preparedSetup = TroubleBrewingProductionSetupPreparer.prepare(
+            dataset = dataset,
+            characterRegistry = characterRegistry,
+            orderedPlayerNames = playerNames.toList(),
+            gameSeed = preparedSeed,
+            recentSetupRotationHistory = rotationHistory,
+            recentPlayerStartingIdentityHistory = playerRotationHistory,
+        )
+
+        when (
+            val route = TroubleBrewingDrunkSelectionRouter.route(
+                preparedSetup = preparedSetup,
+                experienceMode = storytellerExperienceMode,
+                recommendedCandidate = null,
+            )
+        ) {
+            TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded ->
+                commitAndStartTroubleBrewingGame(preparedSetup, confirmedDrunkCandidate = null)
+
+            is TroubleBrewingDrunkSelectionRoute.CompatibilityImmediate ->
+                commitAndStartTroubleBrewingGame(preparedSetup, route.candidate)
+
+            is TroubleBrewingDrunkSelectionRoute.ManualSelection -> {
+                pendingTroubleBrewingDrunkSelection = PendingTroubleBrewingDrunkSelection(
+                    preparedSetup = preparedSetup,
+                    request = route.request,
+                )
+                screen = Screen.ClocktowerDrunkSelection
+            }
+        }
     }
 
     fun startClocktowerGame() {
@@ -2041,6 +2085,43 @@ internal fun CampBoardGameHostApp() {
                         },
                         onStart = ::startClocktowerGame,
                     )
+
+                    Screen.ClocktowerDrunkSelection -> {
+                        val pending = requireNotNull(pendingTroubleBrewingDrunkSelection) {
+                            "Trouble Brewing Drunk selection screen requires a pending manual request."
+                        }
+                        val characterRegistry = activeGameClocktowerRulesetCatalog
+                            .ruleset(ClocktowerScript.TroubleBrewing)
+                            .characterRegistry
+                        ClocktowerDrunkSelectionScreen(
+                            request = pending.request,
+                            language = language,
+                            roleNameForExternalId = { externalId ->
+                                val definition = requireNotNull(
+                                    characterRegistry.findByExternalId(externalId),
+                                ) {
+                                    "Trouble Brewing Drunk selection references unknown role '$externalId'."
+                                }
+                                completeTroubleBrewingRoles
+                                    .singleOrNull { role -> role.enName == definition.id.value }
+                                    ?.nameFor(language)
+                                    ?: definition.name
+                            },
+                            onBack = {
+                                pendingTroubleBrewingDrunkSelection = null
+                                screen = Screen.ClocktowerSettings
+                            },
+                            onConfirm = { candidate ->
+                                require(candidate in pending.request.candidates) {
+                                    "Trouble Brewing Drunk selection confirmation must use a displayed legal candidate."
+                                }
+                                commitAndStartTroubleBrewingGame(
+                                    preparedSetup = pending.preparedSetup,
+                                    confirmedDrunkCandidate = candidate,
+                                )
+                            },
+                        )
+                    }
 
                     Screen.Settings -> SettingsScreen(
                         languageMode = languageMode,
