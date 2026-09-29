@@ -47,6 +47,7 @@ internal data class DrunkSetupShadowCandidate(
  */
 internal data class DrunkSetupShadowEvaluation(
     val candidates: List<DrunkSetupShadowCandidate>,
+    val drunkAssignmentFeatureEvaluation: DrunkAssignmentFeatureEvaluation,
     val featureEvaluation: DecisionFeatureEvaluation,
     val policyEvaluation: BeginnerConservativePolicyEvaluation,
     val policySelection: PolicySelection?,
@@ -61,6 +62,9 @@ internal data class DrunkSetupShadowEvaluation(
         val candidateIds = sdeCandidates.map(SdeDecisionCandidate::candidateId)
         require(candidateIds.distinct().size == candidateIds.size) {
             "Drunk setup shadow candidate IDs must be unique."
+        }
+        require(drunkAssignmentFeatureEvaluation.candidateIds == candidateIds) {
+            "Drunk-assignment feature surface must preserve legal-candidate order."
         }
         require(featureEvaluation.candidateIds == candidateIds) {
             "Drunk setup shadow features must preserve legal-candidate order."
@@ -184,6 +188,16 @@ internal object DrunkSetupShadowAdapter {
         }
 
         val legalCandidateIds = projectedCandidates.map { it.sdeCandidate.candidateId }
+        val drunkAssignmentFeatureEvaluation = DrunkAssignmentFeatureEvaluation(
+            candidates = projectedCandidates.map { projected ->
+                CandidateDrunkAssignmentFeatures(
+                    candidateId = projected.sdeCandidate.candidateId,
+                    features = DrunkAssignmentFeaturesProjector.project(
+                        projected.consequenceEnvelope,
+                    ),
+                )
+            },
+        )
         val featureEvaluation = DecisionFeatureEvaluation.Ready(
             candidates = legalCandidateIds.map { candidateId ->
                 CandidateDecisionFeatures(
@@ -239,6 +253,7 @@ internal object DrunkSetupShadowAdapter {
 
         return DrunkSetupShadowEvaluation(
             candidates = projectedCandidates,
+            drunkAssignmentFeatureEvaluation = drunkAssignmentFeatureEvaluation,
             featureEvaluation = featureEvaluation,
             policyEvaluation = policyEvaluation,
             policySelection = null,
