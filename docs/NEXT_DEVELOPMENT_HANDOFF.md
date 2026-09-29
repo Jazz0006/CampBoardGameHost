@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Last completed validation PR: **#177 — DLB-3B2 dedicated Drunk-assignment feature surface — MERGED at `265d77611e9d453a608262275bd16305c0ff6752`**  
+> Last completed validation PR: **#179 — DLB-3B3 Drunk shadow replay / policy experiment — MERGED at `718113c50edbbe3fc836c3ba2e03780c7c54764d`**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
 > Product next gate: **DLB-4 canonical Drunk commit before reveal — DLB-3 shadow decision/trace/replay COMPLETE; Beginner automatic authority remains blocked behind the later cutover gate**
 
@@ -123,6 +123,8 @@ DLB-3A accepted checkpoint: `0a59c29af047b91b5d10b62ce4019f60df632e83`; CI #3526
 DLB-3B1 accepted checkpoint: `84dcf50d7538fad477be692e027c232b9884618a`; CI #3542 and R2 #3281 GREEN. Every Drunk shadow candidate now also carries a score-free setup consequence envelope covering factual adjacent topology, candidate-seat first-night information-route shape, and explicit unresolved/player-controlled limitations. No DecisionFeatures/V1/selector semantics changed.
 
 DLB-3B2 accepted checkpoint: `cc6f3972ebc6128cd88941f60242eef0d147c813`; CI #3554 and R2 #3291 GREEN. Drunk assignment now has a dedicated candidate-aligned feature surface separate from ordinary DecisionFeatures: topology and first-night information opportunity are projected descriptively, longitudinal narrative remains MISSING_CAPABILITY, and frozen V1 still defers with no selection.
+
+DLB-3B3 accepted checkpoint: `1a5403def6e4075b4d45b31e58db8bf3c356a9d4`; CI #3566 and R2 #3301 GREEN. The dedicated feature surface now has a separate versioned shadow replay/experiment lane. `DRUNK_ASSIGNMENT_SHADOW_V1` explicitly defers for missing longitudinal capability and unauthorized ordering evidence, while source actual-choice metadata remains calibration evidence only. DLB-3 is complete; no 3B4 is required by the authoritative route.
 
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
