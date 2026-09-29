@@ -42,7 +42,7 @@ class DrunkAssignmentFeatureSurfaceTest {
 
         val features = DrunkAssignmentFeaturesProjector.project(envelope)
 
-        val topology = (features.topology as FeatureProjection.Projected).value
+        val topology = (features.topology as FeatureProjection.Projected<DrunkAssignmentTopologyFeatures>).value
         assertEquals(9, topology.previousSeat)
         assertEquals(2, topology.nextSeat)
         assertEquals(setOf(2), topology.adjacentEvilSeats)
@@ -50,7 +50,7 @@ class DrunkAssignmentFeatureSurfaceTest {
         assertTrue(topology.adjacentMinionSeats.isEmpty())
 
         val firstNight =
-            (features.firstNightInformationOpportunity as FeatureProjection.Projected).value
+            (features.firstNightInformationOpportunity as FeatureProjection.Projected<DrunkAssignmentFirstNightInformationOpportunityFeatures>).value
         val factor = firstNight.factors.single()
         assertEquals("numeric.empath.seat-1", factor.factorId)
         assertEquals(
@@ -96,7 +96,7 @@ class DrunkAssignmentFeatureSurfaceTest {
         val features = DrunkAssignmentFeaturesProjector.project(envelope)
 
         val firstNight =
-            (features.firstNightInformationOpportunity as FeatureProjection.Projected).value
+            (features.firstNightInformationOpportunity as FeatureProjection.Projected<DrunkAssignmentFirstNightInformationOpportunityFeatures>).value
         assertTrue(firstNight.factors.isEmpty())
         assertTrue(!firstNight.hasStorytellerControlledRoute)
         assertTrue(!firstNight.hasMultiOutputStorytellerControlledRoute)
@@ -127,14 +127,14 @@ class DrunkAssignmentFeatureSurfaceTest {
             it.candidateId == "setup:drunk-seat:seat-1"
         }
         val empathTopology =
-            (empath.features.topology as FeatureProjection.Projected).value
+            (empath.features.topology as FeatureProjection.Projected<DrunkAssignmentTopologyFeatures><DrunkAssignmentTopologyFeatures>).value
         assertEquals(setOf(2), empathTopology.adjacentDemonSeats)
 
         val monk = dedicated.candidates.single {
             it.candidateId == "setup:drunk-seat:seat-6"
         }
         val monkFirstNight =
-            (monk.features.firstNightInformationOpportunity as FeatureProjection.Projected).value
+            (monk.features.firstNightInformationOpportunity as FeatureProjection.Projected<DrunkAssignmentFirstNightInformationOpportunityFeatures><DrunkAssignmentFirstNightInformationOpportunityFeatures>).value
         assertTrue(monkFirstNight.factors.isEmpty())
 
         val ordinary = shadow.featureEvaluation as DecisionFeatureEvaluation.Ready
