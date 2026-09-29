@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Last completed validation PR: **#173 — C1D G10 Drunk-assignment replay — MERGED at `971d333d1b4bcc2cf38b579819f0d6156f24b47f`**  
+> Last completed validation PR: **#175 — DLB-3B1 score-free Drunk consequence envelope — MERGED at `516dc31b709fc5cad1ae85eb470a118019ef464d`**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
 > Product next gate: **DLB-3B2 dedicated Drunk-assignment feature surface — 3B1 score-free consequence envelope ACCEPTED; frozen V1 remains unchanged**
 
@@ -119,6 +119,8 @@ DLB-1 accepted executable checkpoint: `d065e21bcf1780fe3375a7fd380815259cc59e5c`
 DLB-2 accepted executable checkpoint: `73de263327d7530e2d6ac128753aca2fd8766766`; CI #3521 and R2 #3264 GREEN. DLB-2 owns legal Drunk-seat enumeration and immutable hypothetical GameState projection.
 
 DLB-3A accepted checkpoint: `0a59c29af047b91b5d10b62ce4019f60df632e83`; CI #3526 and R2 #3268 GREEN. The shadow setup-precommit surface now emits normal SDE candidates, ecology census, DecisionTrace and replay input; frozen V1 remains deferred and no Drunk candidate is selected.
+
+DLB-3B1 accepted checkpoint: `84dcf50d7538fad477be692e027c232b9884618a`; CI #3542 and R2 #3281 GREEN. Every Drunk shadow candidate now also carries a score-free setup consequence envelope covering factual adjacent topology, candidate-seat first-night information-route shape, and explicit unresolved/player-controlled limitations. No DecisionFeatures/V1/selector semantics changed.
 
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
