@@ -249,4 +249,4 @@ Current PR #183 implementation sequence:
 
 The existing Poisoner / first-night information lifecycle satisfies the four closeout statements in §7 through the typed session, migration, reveal-handoff and replanning contracts above. No production file changed for 5.4.
 
-**Immediate next step:** synchronize roadmap/handoff, perform final PR #183 changed-files/scope/review-thread/exact-head CI/R2 audit, then mark ready and merge under the standing authorization. After merge, query live `main` and choose the next phase from the current authoritative route rather than from historical audit NEXT markers.
+**Immediate next step:** run one final exact-head `[full-ci]` T4 acceptance because PR #183 contains production first-night flow changes; the last production checkpoint CI #3600 was GREEN but ran Android FAST rather than `testFull + assembleDebug`. After T4, perform final changed-files/scope/review-thread/CI/R2 audit, mark ready and merge under the standing authorization. After merge, query live `main` and choose the next phase from the current authoritative route rather than from historical audit NEXT markers.
