@@ -1,6 +1,6 @@
 # DLB-3B Drunk Assignment Evidence Handoff Audit — 2026-09-29
 
-> Status: **C1D DOWNSTREAM REPLAY IN VALIDATION / DLB-3B CONTRACT DESIGN UNBLOCKED BY CASE QUOTA**
+> Status: **C1D ACCEPTED / DLB-3B CONTRACT DESIGN READY**
 >
 > Host baseline: `main@e3c051a7ff7ea6538d9e7135315dc074c60324f5`
 >
@@ -171,7 +171,7 @@ shadow replay / compare against historical choices
 separate versioned policy-semantics decision later
 ```
 
-DLB-3B may begin contract design once the C1D regression is accepted.
+The C1D regression is accepted. DLB-3B may now begin score-free consequence-contract design.
 
 ## 7. Recommended DLB-3B contract boundary
 
@@ -206,8 +206,23 @@ That distinction remains mandatory for DLB-3B.
 
 ## 9. Validation checkpoint
 
-The first exact-head CI classification pass skipped Android tests because the change set was test/docs-only.
+The first exact-head CI classification pass skipped Android tests because the change set was test/docs-only. That pass was correctly rejected as insufficient acceptance evidence.
 
-That pass is not sufficient acceptance evidence for C1D.
+Accepted executable checkpoint:
 
-This checkpoint therefore requests full CI so the evidence-derived replay regression actually executes before C1D is marked COMPLETE.
+`87240bb1e3ba6cfe61461905741659d3ba5426ae`
+
+Exact-head acceptance:
+
+- CI #3532 / run `36525125415`: GREEN;
+- Android full unit tests + debug APK assemble: GREEN;
+- ASP contract tests: GREEN;
+- Real Clingo cross-validation: GREEN;
+- aggregate CI gate: GREEN;
+- R2 #3273 / run `36525125412`: GREEN.
+
+The evidence-derived G10 replay regression therefore executed successfully on the accepted Host tree.
+
+C1D is ACCEPTED from the downstream Host side.
+
+This acceptance proves cross-project replay compatibility only. It does not convert the observed Empath choice into a recommendation label or authorize a frozen-V1 policy delta.
