@@ -1485,6 +1485,7 @@ internal fun CampBoardGameHostApp() {
         clocktowerScript: ClocktowerScript = ClocktowerScript.TroubleBrewing,
         preparedClocktowerSeed: Long? = null,
         preparedClocktowerInitialState: GameState? = null,
+        persistInitialState: Boolean = true,
     ) {
         invalidateA4SessionBoundary()
         clearSavedGameState()
@@ -1575,7 +1576,9 @@ internal fun CampBoardGameHostApp() {
         clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
         resetClocktowerFlow()
         screen = Screen.PassPhone
-        persistActiveGameStateIfNeeded()
+        if (persistInitialState) {
+            persistActiveGameStateIfNeeded()
+        }
     }
 
     fun startUndercoverGame() {
@@ -1692,6 +1695,7 @@ internal fun CampBoardGameHostApp() {
                     clocktowerScript = ClocktowerScript.TroubleBrewing,
                     preparedClocktowerSeed = preparedSeed,
                     preparedClocktowerInitialState = committedSetup.gameState,
+                    persistInitialState = false,
                 )
                 committedTroubleBrewingSetupRotationRecord =
                     TroubleBrewingSetupRotationRecordFactory.fromCommittedSetup(
