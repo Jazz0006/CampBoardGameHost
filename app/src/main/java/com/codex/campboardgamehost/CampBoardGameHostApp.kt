@@ -2390,14 +2390,6 @@ internal fun CampBoardGameHostApp() {
                             // recommendation key, so an unconditional increment creates an
                             // endless Loading -> Ready -> apply -> Loading cycle.
                             var setupChanged = false
-                            val recommendedRedHerring = plan.decisions
-                                .filterIsInstance<StorytellerDecision.RedHerring>()
-                                .singleOrNull()
-                                ?.let { decision -> cards.getOrNull(decision.seat - 1)?.name }
-                            if (recommendedRedHerring != null && recommendedRedHerring != clocktowerRedHerring) {
-                                clocktowerRedHerring = recommendedRedHerring
-                                setupChanged = true
-                            }
                             val recommendedDemonBluffs = plan.decisions
                                 .filterIsInstance<StorytellerDecision.DemonBluffs>()
                                 .singleOrNull()

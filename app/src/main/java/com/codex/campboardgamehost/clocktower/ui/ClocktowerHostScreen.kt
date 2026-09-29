@@ -707,6 +707,14 @@ internal fun ClocktowerJudgeScreen(
     var lockedRecommendationDecisions by remember(recommendationKey) {
         mutableStateOf<List<StorytellerDecision>>(emptyList())
     }
+    val committedSetupRecommendationDecisions = buildList {
+        redHerring?.let { committedName ->
+            val committedSeat = cards.indexOfFirst { it.name == committedName } + 1
+            if (committedSeat > 0) {
+                add(StorytellerDecision.RedHerring(committedSeat))
+            }
+        }
+    }
     val recommendationRequest = SetupCoordinationRequest(
         game = recommendationCards.toClocktowerGameState(
             script = script,
@@ -714,7 +722,10 @@ internal fun ClocktowerJudgeScreen(
             poisonedPlayerName = poisonTarget,
         ),
         roles = clocktowerRoleDefinitionsForScript(script),
-        lockedDecisions = lockedRecommendationDecisions,
+        lockedDecisions = recommendationLocksWithCommittedSetupDecisions(
+            mutableLocks = lockedRecommendationDecisions,
+            committedDecisions = committedSetupRecommendationDecisions,
+        ),
         history = setupHistory,
     )
     LaunchedEffect(recommendationKey, lockedRecommendationDecisions) {
@@ -4005,6 +4016,37 @@ internal fun ClocktowerJudgeScreen(
                     onConfirmNight()
                 }
             }
+        }
+
+        val recommendedRedHerringSelection = recommendationCoordinator
+            .selectSetupPlan(
+                (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty(),
+                automaticStorytellerStyle,
+            )
+            ?.decisions
+            ?.filterIsInstance<StorytellerDecision.RedHerring>()
+            ?.singleOrNull()
+            ?.let { decision -> cards.getOrNull(decision.seat - 1)?.name }
+        val legalRedHerringSelections = clocktowerRedHerringCandidates(publicAliveCards)
+            .mapTo(linkedSetOf()) { it.name }
+
+        LaunchedEffect(
+            automaticStorytellerInfo,
+            currentStepIndex,
+            currentStep.action,
+            currentStep.isRealAction,
+            redHerring,
+            recommendedRedHerringSelection,
+            legalRedHerringSelections,
+        ) {
+            automaticRedHerringSelectionAtBarrier(
+                automaticStorytellerInfo = automaticStorytellerInfo,
+                isRedHerringStep = currentStep.action == ClocktowerNightAction.RedHerring,
+                isRealAction = currentStep.isRealAction,
+                currentSelection = redHerring,
+                recommendedSelection = recommendedRedHerringSelection,
+                legalSelections = legalRedHerringSelections,
+            )?.let(onSelectRedHerring)
         }
 
         LaunchedEffect(
