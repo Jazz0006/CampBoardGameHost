@@ -54,6 +54,13 @@ class ClocktowerNightStepMaterializerRegistryTest {
         )
 
         assertEquals(listOf("Empath", "Fortune Teller"), materialized.map { it.title })
+        assertEquals(
+            listOf(
+                empathIdentity.interactionId(phase),
+                fortuneTellerIdentity.interactionId(phase),
+            ),
+            materialized.map { it.interactionId },
+        )
         assertEquals(0, unprojectedBuildCount)
     }
 
