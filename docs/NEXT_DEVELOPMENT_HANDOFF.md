@@ -2,9 +2,9 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Active product implementation PR: **none yet — DLB route is implementation-ready after this documentation convergence**  
+> Active product implementation PR: **#169 — DLB-0 typed intermediate setup (Draft; executable checkpoint accepted, awaiting explicit merge authorization)**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
-> Product next gate: **DLB-0 typed intermediate setup contract; targeted EvidenceLab acquisition continues in parallel**
+> Product next gate: **DLB-1 visible-roster deal cutover; DLB-0 typed intermediate setup is accepted; targeted EvidenceLab acquisition continues in parallel**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -38,7 +38,7 @@ Requirements:
 - preserve the current working tree;
 - do not reset/discard unrelated work;
 - treat merged PR #157 and its historical continuation branch as completed evidence, not as the current branch;
-- create a fresh branch from current `main` for DLB-0 after this documentation convergence is accepted/merged; create a separate fresh branch for any later C5 implementation slice;
+- after PR #169 is explicitly authorized and merged, create a fresh branch from the then-live `main` for DLB-1; create a separate fresh branch for any later C5 implementation slice;
 - treat merged PR #165 and `codex/current-only-recovery-cleanup` as completed historical maintenance, not the active development branch;
 - no PR merge, ready transition, rebase or force-push without explicit authorization.
 
@@ -56,7 +56,8 @@ IF-D durable replay                    COMPLETE
 RH-E                                    COMPLETE
 C5 / V2                                BLOCKED ON E3/E4
 SDE-3E cutover                         BLOCKED PER SURFACE
-DLB late-bound Drunk / staged first night ARCHITECTURE APPROVED / IMPLEMENTATION NEXT
+DLB-0 typed intermediate setup              COMPLETE / ACCEPTED
+DLB-1 visible-roster deal cutover              NEXT
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -108,6 +109,8 @@ Use `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` as authority:
 
 ## 7. Active development lane
 
+DLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`; CI #3506 and R2 #3251 GREEN. The latest DLB-0 PR commits after that checkpoint, if any, are documentation-only closure and do not change the accepted executable tree.
+
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
 Authority:
@@ -117,8 +120,8 @@ Authority:
 Immediate sequence:
 
 ```text
-DLB-0 typed intermediate setup
--> DLB-1 visible-roster deal cutover
+DLB-0 typed intermediate setup COMPLETE
+-> DLB-1 visible-roster deal cutover NEXT
 -> DLB-2 legal Drunk candidate + hypothetical projector
 -> DLB-3 shadow SDE decision / DecisionTrace
 -> DLB-4 canonical commit before reveal
