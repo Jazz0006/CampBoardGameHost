@@ -19,6 +19,8 @@ internal object ClocktowerProductionFirstNightFlow {
         playerCount: Int,
         inPlayRoleIds: Set<RoleId>,
         actualRoleIds: Set<RoleId> = inPlayRoleIds,
+        functioningActualRoleIds: Set<RoleId> = actualRoleIds,
+        committedSetupFacts: Set<DeferredFirstNightSetupFact> = emptySet(),
     ): List<ClocktowerHostInteraction> {
         val phase = ClocktowerNightFlowPhase.FIRST_NIGHT
         val basePlan = planner.planNight(
@@ -29,10 +31,15 @@ internal object ClocktowerProductionFirstNightFlow {
                 inPlayRoleIds = inPlayRoleIds,
             ),
         )
-        return projector.projectNight(
+        val projected = projector.projectNight(
             phase = phase,
             basePlan = basePlan,
             actualRoleIds = actualRoleIds,
+        )
+        return FirstNightSetupCommitInteractionOrderer.order(
+            interactions = projected,
+            functioningRoleIds = functioningActualRoleIds,
+            committedFacts = committedSetupFacts,
         )
     }
 
@@ -41,6 +48,8 @@ internal object ClocktowerProductionFirstNightFlow {
         playerCount: Int,
         inPlayRoleIds: Set<RoleId>,
         actualRoleIds: Set<RoleId> = inPlayRoleIds,
+        functioningActualRoleIds: Set<RoleId> = actualRoleIds,
+        committedSetupFacts: Set<DeferredFirstNightSetupFact> = emptySet(),
         productionSteps: List<T>,
         identityOf: (T) -> ClocktowerProductionNightStepIdentity,
     ): List<T> {
@@ -50,6 +59,8 @@ internal object ClocktowerProductionFirstNightFlow {
             playerCount = playerCount,
             inPlayRoleIds = inPlayRoleIds,
             actualRoleIds = actualRoleIds,
+            functioningActualRoleIds = functioningActualRoleIds,
+            committedSetupFacts = committedSetupFacts,
         )
         return ClocktowerProductionInteractionOrderer.order(
             phase = phase,
