@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Last completed validation PR: **#175 — DLB-3B1 score-free Drunk consequence envelope — MERGED at `516dc31b709fc5cad1ae85eb470a118019ef464d`**  
+> Last completed validation PR: **#177 — DLB-3B2 dedicated Drunk-assignment feature surface — MERGED at `265d77611e9d453a608262275bd16305c0ff6752`**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
 > Product next gate: **DLB-3B3 shadow replay / versioned Drunk-assignment policy experiment contract — 3B1 + 3B2 ACCEPTED; frozen V1 remains unchanged**
 
@@ -121,6 +121,8 @@ DLB-2 accepted executable checkpoint: `73de263327d7530e2d6ac128753aca2fd8766766`
 DLB-3A accepted checkpoint: `0a59c29af047b91b5d10b62ce4019f60df632e83`; CI #3526 and R2 #3268 GREEN. The shadow setup-precommit surface now emits normal SDE candidates, ecology census, DecisionTrace and replay input; frozen V1 remains deferred and no Drunk candidate is selected.
 
 DLB-3B1 accepted checkpoint: `84dcf50d7538fad477be692e027c232b9884618a`; CI #3542 and R2 #3281 GREEN. Every Drunk shadow candidate now also carries a score-free setup consequence envelope covering factual adjacent topology, candidate-seat first-night information-route shape, and explicit unresolved/player-controlled limitations. No DecisionFeatures/V1/selector semantics changed.
+
+DLB-3B2 accepted checkpoint: `cc6f3972ebc6128cd88941f60242eef0d147c813`; CI #3554 and R2 #3291 GREEN. Drunk assignment now has a dedicated candidate-aligned feature surface separate from ordinary DecisionFeatures: topology and first-night information opportunity are projected descriptively, longitudinal narrative remains MISSING_CAPABILITY, and frozen V1 still defers with no selection.
 
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
