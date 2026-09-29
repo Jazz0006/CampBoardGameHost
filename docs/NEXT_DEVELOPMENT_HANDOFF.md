@@ -2,9 +2,9 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Active product implementation: **DLB-1 accepted in PR #170; merge closure uses the standing authorization; DLB-2 starts from the post-merge live `main`**  
+> Active product implementation PR: **#171 — DLB-2 legal Drunk candidate projector (Draft; executable checkpoint accepted; standing merge authorization applies)**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
-> Product next gate: **DLB-2 legal Drunk candidate domain + hypothetical projector; DLB-1 is accepted; targeted EvidenceLab acquisition continues in parallel**
+> Product next gate: **DLB-3 shadow SDE Drunk decision + DecisionTrace/replay; DLB-2 is accepted; targeted EvidenceLab acquisition continues in parallel**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -38,7 +38,7 @@ Requirements:
 - preserve the current working tree;
 - do not reset/discard unrelated work;
 - treat merged PR #157 and its historical continuation branch as completed evidence, not as the current branch;
-- DLB-1 is accepted in PR #170; after merge, create a fresh DLB-2 branch from the then-live `main`; create a separate fresh branch for any later C5 implementation slice;
+- DLB-2 is accepted in PR #171; after merge, create a fresh DLB-3 branch from the then-live `main`; create a separate fresh branch for any later C5 implementation slice;
 - treat merged PR #165 and `codex/current-only-recovery-cleanup` as completed historical maintenance, not the active development branch;
 - completed, fully accepted, mergeable PRs may be marked ready and merged directly under the standing 2026-09-29 authorization; rebase, force-push, destructive history changes, scope broadening, or merging incomplete/failing work still require explicit user authorization.
 
@@ -58,7 +58,8 @@ C5 / V2                                BLOCKED ON E3/E4
 SDE-3E cutover                         BLOCKED PER SURFACE
 DLB-0 typed intermediate setup              COMPLETE / ACCEPTED
 DLB-1 visible-roster deal cutover              COMPLETE / ACCEPTED
-DLB-2 legal candidate + hypothetical projector   NEXT
+DLB-2 legal candidate + hypothetical projector   COMPLETE / ACCEPTED
+DLB-3 shadow SDE decision + DecisionTrace           NEXT
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -114,6 +115,8 @@ DLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`
 
 DLB-1 accepted executable checkpoint: `d065e21bcf1780fe3375a7fd380815259cc59e5c`; CI #3515 and R2 #3259 GREEN. DLB-1 establishes visible-roster seating as the production pre-Drunk path; the compatibility deal plan is temporary downstream wiring until DLB-4.
 
+DLB-2 accepted executable checkpoint: `73de263327d7530e2d6ac128753aca2fd8766766`; CI #3521 and R2 #3264 GREEN. DLB-2 owns legal Drunk-seat enumeration and immutable hypothetical GameState projection; it does not yet rank, trace, select or commit a candidate.
+
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
 Authority:
@@ -125,8 +128,8 @@ Immediate sequence:
 ```text
 DLB-0 typed intermediate setup COMPLETE
 -> DLB-1 visible-roster deal cutover COMPLETE
--> DLB-2 legal Drunk candidate + hypothetical projector NEXT
--> DLB-3 shadow SDE decision / DecisionTrace
+-> DLB-2 legal Drunk candidate + hypothetical projector COMPLETE
+-> DLB-3 shadow SDE decision / DecisionTrace NEXT
 -> DLB-4 canonical commit before reveal
 -> DLB-4A Experienced assisted UI
 -> DLB-5 latest-safe dependency barriers
