@@ -16,7 +16,8 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
 6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
-7. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — current DLB-5 closeout authority
+7. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+8. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — current DLB-5 closeout authority
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -141,6 +142,8 @@ The current product-development lane is **Drunk late-binding and staged first-ni
 Authority:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
+
+Architecture convergence guardrail: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` now records the intended separation of Setup Generation, canonical Game Session/Game Engine, and read-only Storyteller Recommendation. The immediate DLB-5H1 task remains narrow and unchanged. Do not turn H1 into a canonical-state rewrite; apply the target architecture when DLB-6 retires stale contracts and when H2 is re-audited.
 
 Immediate sequence:
 
