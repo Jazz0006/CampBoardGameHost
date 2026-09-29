@@ -48,6 +48,7 @@ internal data class SdeDecisionSourceInteraction(
 
 internal enum class SdeCommittedDecisionInputKind {
     SETUP_SHOWN_IDENTITY,
+    DRUNK_SEAT,
     RED_HERRING,
     DEMON_BLUFFS,
     OTHER,

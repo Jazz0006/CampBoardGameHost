@@ -2,9 +2,9 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Active product implementation PR: **#171 — DLB-2 legal Drunk candidate projector (Draft; executable checkpoint accepted; standing merge authorization applies)**  
+> Active product implementation PR: **#172 — DLB-3A shadow Drunk decision trace surface (Draft; accepted; standing merge authorization applies)**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
-> Product next gate: **DLB-3 shadow SDE Drunk decision + DecisionTrace/replay; DLB-2 is accepted; targeted EvidenceLab acquisition continues in parallel**
+> Product next gate: **DLB-3B setup-level Drunk consequence feature bridge — evidence-gated; DLB-3A is accepted; targeted EvidenceLab assignment acquisition continues in parallel**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -38,7 +38,7 @@ Requirements:
 - preserve the current working tree;
 - do not reset/discard unrelated work;
 - treat merged PR #157 and its historical continuation branch as completed evidence, not as the current branch;
-- DLB-2 is accepted in PR #171; after merge, create a fresh DLB-3 branch from the then-live `main`; create a separate fresh branch for any later C5 implementation slice;
+- DLB-3A is accepted in PR #172 and may merge under standing authorization; DLB-3B must start from the then-live `main` and must not convert fixed-Drunk misinformation evaluators into a seat-selection score without an explicit evidence-backed consequence contract;
 - treat merged PR #165 and `codex/current-only-recovery-cleanup` as completed historical maintenance, not the active development branch;
 - completed, fully accepted, mergeable PRs may be marked ready and merged directly under the standing 2026-09-29 authorization; rebase, force-push, destructive history changes, scope broadening, or merging incomplete/failing work still require explicit user authorization.
 
@@ -59,7 +59,8 @@ SDE-3E cutover                         BLOCKED PER SURFACE
 DLB-0 typed intermediate setup              COMPLETE / ACCEPTED
 DLB-1 visible-roster deal cutover              COMPLETE / ACCEPTED
 DLB-2 legal candidate + hypothetical projector   COMPLETE / ACCEPTED
-DLB-3 shadow SDE decision + DecisionTrace           NEXT
+DLB-3A shadow envelope + DecisionTrace            COMPLETE / ACCEPTED
+DLB-3B setup-level consequence bridge              NEXT / EVIDENCE-GATED
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -115,7 +116,9 @@ DLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`
 
 DLB-1 accepted executable checkpoint: `d065e21bcf1780fe3375a7fd380815259cc59e5c`; CI #3515 and R2 #3259 GREEN. DLB-1 establishes visible-roster seating as the production pre-Drunk path; the compatibility deal plan is temporary downstream wiring until DLB-4.
 
-DLB-2 accepted executable checkpoint: `73de263327d7530e2d6ac128753aca2fd8766766`; CI #3521 and R2 #3264 GREEN. DLB-2 owns legal Drunk-seat enumeration and immutable hypothetical GameState projection; it does not yet rank, trace, select or commit a candidate.
+DLB-2 accepted executable checkpoint: `73de263327d7530e2d6ac128753aca2fd8766766`; CI #3521 and R2 #3264 GREEN. DLB-2 owns legal Drunk-seat enumeration and immutable hypothetical GameState projection.
+
+DLB-3A accepted checkpoint: `0a59c29af047b91b5d10b62ce4019f60df632e83`; CI #3526 and R2 #3268 GREEN. The shadow setup-precommit surface now emits normal SDE candidates, ecology census, DecisionTrace and replay input; frozen V1 remains deferred and no Drunk candidate is selected.
 
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
@@ -129,7 +132,8 @@ Immediate sequence:
 DLB-0 typed intermediate setup COMPLETE
 -> DLB-1 visible-roster deal cutover COMPLETE
 -> DLB-2 legal Drunk candidate + hypothetical projector COMPLETE
--> DLB-3 shadow SDE decision / DecisionTrace NEXT
+-> DLB-3A shadow SDE decision / DecisionTrace COMPLETE
+-> DLB-3B setup-level consequence bridge NEXT / EVIDENCE-GATED
 -> DLB-4 canonical commit before reveal
 -> DLB-4A Experienced assisted UI
 -> DLB-5 latest-safe dependency barriers
