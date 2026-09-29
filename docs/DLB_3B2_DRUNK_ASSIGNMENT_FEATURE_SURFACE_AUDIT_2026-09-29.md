@@ -1,6 +1,6 @@
 # DLB-3B2 Dedicated Drunk-Assignment Feature Surface — Architecture Audit — 2026-09-29
 
-> Status: **IMPLEMENTATION CONTRACT / TEST-FIRST**
+> Status: **DLB-3B2 COMPLETE / ACCEPTED — DEDICATED DRUNK-ASSIGNMENT FEATURE SURFACE**
 >
 > Baseline: `main@81b5dd2bd1c4c554bec631efe0254b5feec3fadc`
 >
@@ -272,3 +272,49 @@ DrunkSetupShadowEvaluation.drunkAssignmentFeatureEvaluation
 The ordinary DLB-3A `DecisionFeatureEvaluation` remains a separate parallel surface and still carries NOT_PROJECTED_YET strategic features, so frozen V1 still defers with no selection.
 
 T4 full-CI acceptance is requested for this new stable setup/recommendation feature contract.
+
+
+## 13. T4 acceptance
+
+Accepted DLB-3B2 checkpoint:
+
+`cc6f3972ebc6128cd88941f60242eef0d147c813`
+
+The executable production tree is the preceding GREEN implementation `b9487beccf97f24467d733542357ca44736d16eb`; the accepted head adds only this audit's RED/GREEN record and full-CI trigger.
+
+Exact-head acceptance:
+
+- CI #3554 / run `36528911563`: GREEN;
+- Android full unit tests + debug APK assemble: GREEN;
+- ASP contract tests: GREEN;
+- Real Clingo cross-validation: GREEN;
+- aggregate CI gate: GREEN;
+- R2 #3291 / run `36528911552`: GREEN.
+
+DLB-3B2 is COMPLETE / ACCEPTED.
+
+Accepted semantics:
+
+- Drunk assignment now has a dedicated candidate-aligned feature evaluation separate from ordinary `DecisionFeatures`;
+- topology consequence is Projected from exact 3B1 setup facts;
+- candidate-seat first-night information opportunity is Projected, including known-empty;
+- longitudinal narrative opportunity remains explicitly `MISSING_CAPABILITY`;
+- 3B1 player-controlled/deferred limitations remain visible;
+- legal candidate order is preserved;
+- ordinary DLB-3A feature evaluation, DecisionTrace, replay input, frozen V1 and selector are unchanged;
+- no Drunk candidate is selected.
+
+## 14. DLB-3B3 next gate
+
+DLB-3B3 must define how this dedicated feature surface participates in **shadow replay and explicitly versioned policy experimentation**.
+
+The next slice must answer two separate questions without conflating them:
+
+1. how the dedicated Drunk-assignment features are carried/replayed as diagnostic evidence;
+2. what new policy contract, if any, is allowed to interpret those features.
+
+DLB-3B3 must not mutate `BEGINNER_CONSERVATIVE_V1`.
+
+A new Drunk-assignment policy version may be introduced only as a shadow/experimental contract with explicit deferral/fallback behavior and no canonical commit authority.
+
+No evidence-backed ordering should be invented merely because the features now exist.
