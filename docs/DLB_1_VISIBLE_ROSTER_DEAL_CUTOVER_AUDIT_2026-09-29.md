@@ -238,3 +238,23 @@ Producer/consumer re-search at this checkpoint confirms:
 ### T4 escalation
 
 The next commit carries `[full-ci]` only to escalate this exact DLB-1 logical checkpoint to full acceptance. It adds no production behavior beyond the already-reviewed `ee6006d...` executable tree.
+
+
+## 13. T4 acceptance result
+
+Accepted DLB-1 checkpoint:
+
+`d065e21bcf1780fe3375a7fd380815259cc59e5c`
+
+Exact-head remote acceptance:
+
+- CI #3515 / run `36503702742`: GREEN;
+- Android: `./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks` — GREEN, `BUILD SUCCESSFUL`;
+- ASP contract tests — GREEN;
+- Real Clingo cross-validation — GREEN;
+- aggregate CI gate — GREEN;
+- R2 #3259 / run `36503702831` — GREEN.
+
+DLB-1 is COMPLETE at this acceptance checkpoint. Trouble Brewing production now seats the realized visible roster before any Drunk seat is canonical in the new DLB contract. The explicitly named `compatibilityDealPlan` remains a temporary downstream bridge for current App/history consumers until DLB-4; it is not a legal-candidate or SDE authority.
+
+Later documentation-only closure commits must not be relabelled as validating a different executable tree.
