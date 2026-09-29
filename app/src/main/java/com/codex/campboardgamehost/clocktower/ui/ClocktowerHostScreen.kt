@@ -1925,100 +1925,20 @@ internal fun ClocktowerJudgeScreen(
     )
     val setupPlansForDemonBluffs =
         (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty()
-    val demonBluffRoleNames = demonBluffRoleNamesForPresentation(
-        automaticStorytellerInfo = automaticStorytellerInfo,
-        appliedRoleNames = recommendedDemonBluffRoleNames,
-        setupPlans = setupPlansForDemonBluffs,
-        storytellerStyle = automaticStorytellerStyle,
-    )
+    val demonBluffRoleNames = recommendedDemonBluffRoleNames.takeIf { it.isNotEmpty() }
     val demonBluffPresentation = resolveDemonBluffPresentation(
         recommendedRoleNames = demonBluffRoleNames,
         legalRoles = legalDemonBluffs,
     )
-    val demonBluffs =
-        (demonBluffPresentation as? DemonBluffPresentationResolution.Ready)?.roles.orEmpty()
-    val minionInfoText = demonCard?.let { stringResource(R.string.clocktower_first_night_minion_info_format, it.seatLabel(cards)) }
-    val demonInfoText =
-        (demonBluffPresentation as? DemonBluffPresentationResolution.Ready)?.let { ready ->
-            buildList {
-                add(
-                    if (minionCards.isEmpty()) {
-                        stringResource(R.string.clocktower_first_night_demon_no_minions)
-                    } else {
-                        stringResource(
-                            R.string.clocktower_first_night_demon_minions_format,
-                            minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
-                        )
-                    },
-                )
-                add(
-                    stringResource(
-                        R.string.clocktower_first_night_demon_bluffs_format,
-                        ready.roles.joinToString(stringResource(R.string.name_separator)) { it.nameFor(language) },
-                    ),
-                )
-            }.joinToString("\n")
-        }
-    val minionInfoTitle = stringResource(R.string.clocktower_first_night_minion_title)
-    val demonInfoTitle = stringResource(R.string.clocktower_first_night_demon_title)
-    val firstNightNameSeparator = stringResource(R.string.name_separator)
-    val firstNightSmallGameNoEvilInfoReason =
-        stringResource(R.string.clocktower_first_night_small_game_no_evil_info_reason)
-    val firstNightNoMinionsReason =
-        stringResource(R.string.clocktower_first_night_no_minions_reason)
-    val firstNightPlaceholderAction =
-        stringResource(R.string.clocktower_first_night_placeholder_action)
-    val firstNightMinionActionText = stringResource(
-        R.string.clocktower_first_night_minion_action_format,
-        minionCards.joinToString(firstNightNameSeparator) { it.seatLabel(cards) },
+    val firstNightEvilInformationSteps = clocktowerFirstNightEvilInformationSteps(
+        minionActor = minionCards.firstOrNull(),
+        demonActor = demonCard,
+        minionSeatLabels = minionCards.map { it.seatLabel(cards) },
+        demonSeatLabel = demonCard?.seatLabel(cards),
+        shouldGiveInformation = shouldGiveFirstNightEvilInfo,
+        demonBluffPresentation = demonBluffPresentation,
+        language = language,
     )
-    val firstNightMinionExplain =
-        stringResource(R.string.clocktower_first_night_minion_explain)
-    val firstNightSmallGameNoEvilInfoExplain =
-        stringResource(R.string.clocktower_first_night_small_game_no_evil_info_explain)
-    val firstNightMinionDisplayPrimary =
-        if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
-            "${stringResource(R.string.clocktower_evil_display_demon)}\n${demonCard?.seatLabel(cards).orEmpty()}"
-        } else {
-            null
-        }
-    val firstNightMinionWakeText = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
-        stringResource(
-            R.string.clocktower_first_night_minion_wake_format,
-            minionCards.joinToString(firstNightNameSeparator) { it.seatLabel(cards) },
-        )
-    } else {
-        null
-    }
-    val firstNightNoDemonReason =
-        stringResource(R.string.clocktower_first_night_no_demon_reason)
-    val firstNightDemonActionText = demonCard?.let {
-        stringResource(R.string.clocktower_first_night_demon_action_format, it.seatLabel(cards))
-    }.orEmpty()
-    val firstNightDemonExplain = when (demonBluffPresentation) {
-        is DemonBluffPresentationResolution.Ready ->
-            stringResource(R.string.clocktower_first_night_demon_explain)
-        DemonBluffPresentationResolution.Pending ->
-            text("正在准备恶魔伪装身份，推荐完成后即可展示。", "Preparing Demon bluffs. Reveal is enabled when the recommendation is ready.")
-        is DemonBluffPresentationResolution.Invalid ->
-            text("恶魔伪装身份推荐无效，已阻止错误信息展示。", "Demon bluff recommendation is invalid; incorrect reveal has been blocked.")
-    }
-    val firstNightDemonDisplayPrimary =
-        if (demonCard != null && shouldGiveFirstNightEvilInfo) {
-            "${stringResource(R.string.clocktower_evil_display_minions)}\n${if (minionCards.isEmpty()) stringResource(R.string.clocktower_first_night_demon_no_minions) else minionCards.joinToString(firstNightNameSeparator) { it.seatLabel(cards) }}"
-        } else {
-            null
-        }
-    val firstNightDemonDisplaySecondary =
-        if (
-            demonCard != null &&
-            shouldGiveFirstNightEvilInfo &&
-            demonBluffPresentation is DemonBluffPresentationResolution.Ready
-        ) {
-            "${stringResource(R.string.clocktower_evil_display_bluffs)}\n${demonBluffs.joinToString(firstNightNameSeparator) { it.nameFor(language) }}"
-        } else {
-            null
-        }
     val firstNightActualRoleIds = buildSet {
         cards.forEach { card ->
             card.clocktowerRole?.enName?.let { add(RoleId(it)) }
@@ -2229,73 +2149,11 @@ internal fun ClocktowerJudgeScreen(
             entries = listOf(
         ClocktowerNightStepMaterializerRegistry.Entry(
             identity = ClocktowerProductionNightStepIdentity.minionInfo(),
-            build = {
-                ClocktowerNightStepUi(
-                                title = minionInfoTitle,
-                                actor = minionCards.firstOrNull().takeIf { shouldGiveFirstNightEvilInfo },
-                                isRealAction = minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo,
-                                reason = when {
-                                    !shouldGiveFirstNightEvilInfo -> firstNightSmallGameNoEvilInfoReason
-                                    minionCards.isEmpty() -> firstNightNoMinionsReason
-                                    else -> ""
-                                },
-                                storytellerAction = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
-                                    firstNightMinionActionText
-                                } else {
-                                    firstNightPlaceholderAction
-                                },
-                                tellPlayer = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) minionInfoText else null,
-                                explanation = if (shouldGiveFirstNightEvilInfo) {
-                                    firstNightMinionExplain
-                                } else {
-                                    firstNightSmallGameNoEvilInfoExplain
-                                },
-                                displayKind = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo && minionInfoText != null) ClocktowerDisplayKind.EvilInfo else ClocktowerDisplayKind.None,
-                                displayTitle = minionInfoTitle,
-                                displayPrimary = firstNightMinionDisplayPrimary,
-                                displayFooter = null,
-                                wakeText = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
-                                    firstNightMinionWakeText
-                                } else {
-                                    null
-                                },
-                            )
-            },
+            build = { firstNightEvilInformationSteps.minion },
         ),
         ClocktowerNightStepMaterializerRegistry.Entry(
             identity = ClocktowerProductionNightStepIdentity.demonInfo(),
-            build = {
-                ClocktowerNightStepUi(
-                                title = demonInfoTitle,
-                                actor = demonCard.takeIf { shouldGiveFirstNightEvilInfo },
-                                isRealAction = demonCard != null && shouldGiveFirstNightEvilInfo,
-                                reason = when {
-                                    !shouldGiveFirstNightEvilInfo -> firstNightSmallGameNoEvilInfoReason
-                                    demonCard == null -> firstNightNoDemonReason
-                                    else -> ""
-                                },
-                                storytellerAction = if (demonCard != null && shouldGiveFirstNightEvilInfo) {
-                                    firstNightDemonActionText
-                                } else {
-                                    firstNightPlaceholderAction
-                                },
-                                tellPlayer = if (
-                                    demonCard != null &&
-                                    shouldGiveFirstNightEvilInfo &&
-                                    demonBluffPresentation is DemonBluffPresentationResolution.Ready
-                                ) demonInfoText else null,
-                                explanation = if (shouldGiveFirstNightEvilInfo) {
-                                    firstNightDemonExplain
-                                } else {
-                                    firstNightSmallGameNoEvilInfoExplain
-                                },
-                                displayKind = if (demonCard != null && shouldGiveFirstNightEvilInfo) ClocktowerDisplayKind.EvilInfo else ClocktowerDisplayKind.None,
-                                displayTitle = demonInfoTitle,
-                                displayPrimary = firstNightDemonDisplayPrimary,
-                                displaySecondary = firstNightDemonDisplaySecondary,
-                                displayFooter = null,
-                            )
-            },
+            build = { firstNightEvilInformationSteps.demon },
         ),
         ClocktowerNightStepMaterializerRegistry.Entry(
             identity = ClocktowerProductionNightStepIdentity.role(RoleId("Poisoner")),
