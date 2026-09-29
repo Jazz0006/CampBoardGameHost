@@ -177,6 +177,7 @@ internal fun ClocktowerJudgeScreen(
     onSelectRavenkeeperTarget: (String?) -> Unit,
     onSelectRedHerring: (String?) -> Unit,
     onApplyRecommendation: (RecommendationPlan) -> Unit,
+    onCommitDemonBluffs: (List<String>) -> Unit,
     onSelectButlerMaster: (String?) -> Unit,
     onSelectMonkProtectedTarget: (String?) -> Unit,
     onConfirmMonkProtectedTarget: () -> Unit,
@@ -713,6 +714,13 @@ internal fun ClocktowerJudgeScreen(
             if (committedSeat > 0) {
                 add(StorytellerDecision.RedHerring(committedSeat))
             }
+        }
+        if (recommendedDemonBluffRoleNames.isNotEmpty()) {
+            add(
+                StorytellerDecision.DemonBluffs(
+                    recommendedDemonBluffRoleNames.map(::RoleId),
+                ),
+            )
         }
     }
     val recommendationRequest = SetupCoordinationRequest(
@@ -4016,6 +4024,30 @@ internal fun ClocktowerJudgeScreen(
                     onConfirmNight()
                 }
             }
+        }
+
+        val demonBluffCommitStyle = appliedRecommendationStyle ?: selectedRecommendationStyle
+        LaunchedEffect(
+            phase,
+            currentStepIndex,
+            currentStep.interactionId,
+            currentStep.isRealAction,
+            recommendedDemonBluffRoleNames,
+            setupPlansForDemonBluffs,
+            demonBluffCommitStyle,
+            legalDemonBluffs,
+        ) {
+            demonBluffRoleNamesToCommitAtBarrier(
+                isDemonInfoStep = phase == ClocktowerPhase.FirstNight &&
+                    currentStep.interactionId ==
+                    ClocktowerProductionNightStepIdentity.demonInfo()
+                        .interactionId(ClocktowerNightFlowPhase.FIRST_NIGHT),
+                isRealAction = currentStep.isRealAction,
+                committedRoleNames = recommendedDemonBluffRoleNames,
+                setupPlans = setupPlansForDemonBluffs,
+                storytellerStyle = demonBluffCommitStyle,
+                legalRoles = legalDemonBluffs,
+            )?.let(onCommitDemonBluffs)
         }
 
         val recommendedRedHerringSelection = recommendationCoordinator

@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
 
@@ -71,4 +72,5 @@ internal data class ClocktowerNightStepUi(
     val spyRegistrationHint: String? = null,
     val recluseRegistrationKey: String? = null,
     val recluseRegistrationTeams: List<ClocktowerTeam> = emptyList(),
+    val interactionId: ClocktowerInteractionId? = null,
 )

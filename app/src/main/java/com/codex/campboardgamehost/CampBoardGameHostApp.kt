@@ -2384,23 +2384,16 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerRedHerring = it
                         },
-                        onApplyRecommendation = { plan ->
-                            // Applying the same automatic plan is a no-op.  In particular, do
-                            // not advance playerInputRevision here: that revision is part of the
-                            // recommendation key, so an unconditional increment creates an
-                            // endless Loading -> Ready -> apply -> Loading cycle.
-                            var setupChanged = false
-                            val recommendedDemonBluffs = plan.decisions
-                                .filterIsInstance<StorytellerDecision.DemonBluffs>()
-                                .singleOrNull()
-                                ?.roles
-                                ?.map(RoleId::value)
-                                .orEmpty()
-                            if (recommendedDemonBluffs != clocktowerRecommendedDemonBluffRoleNames) {
-                                clocktowerRecommendedDemonBluffRoleNames = recommendedDemonBluffs
-                                setupChanged = true
+                        onApplyRecommendation = { _ ->
+                            // Setup recommendation application no longer commits deferred
+                            // first-night facts. Red Herring and Demon bluffs commit only at
+                            // their typed first-night dependency barriers.
+                        },
+                        onCommitDemonBluffs = { roleNames ->
+                            if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {
+                                advanceClocktowerPlayerInputRevision()
+                                clocktowerRecommendedDemonBluffRoleNames = roleNames
                             }
-                            if (setupChanged) advanceClocktowerPlayerInputRevision()
                         },
                         onSelectButlerMaster = {
                             advanceClocktowerPlayerInputRevision()

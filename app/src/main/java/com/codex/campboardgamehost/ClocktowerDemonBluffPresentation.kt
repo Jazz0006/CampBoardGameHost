@@ -17,33 +17,53 @@ internal sealed interface DemonBluffPresentationResolution {
 }
 
 /**
- * Returns the exact Demon bluff recommendation that presentation is allowed to consume.
+ * Returns the exact committed Demon bluff state that player presentation is allowed to consume.
  *
- * AUTO uses the already-applied setup decision so presentation never outruns the state commit.
- * MANUAL has no setup-plan apply step, so it consumes the setup recommendation for the same
- * current Storyteller style supplied by the host. Other setup decisions remain manual Storyteller
- * authority and are not applied by this projection.
+ * Setup recommendations may be evaluated before the Demon-info barrier, but they are not
+ * player-visible presentation state until the selected legal triple has been committed.
+ *
+ * The unused recommendation arguments are retained only as a narrow transitional call contract
+ * until the DLB-5 cleanup slice removes the old presentation shape.
  */
+@Suppress("UNUSED_PARAMETER")
 internal fun demonBluffRoleNamesForPresentation(
     automaticStorytellerInfo: Boolean,
     appliedRoleNames: List<String>,
     setupPlans: List<RecommendationPlan>,
     storytellerStyle: RecommendationStyle,
+): List<String>? = appliedRoleNames.takeIf { it.isNotEmpty() }
+
+internal fun demonBluffRoleNamesToCommitAtBarrier(
+    isDemonInfoStep: Boolean,
+    isRealAction: Boolean,
+    committedRoleNames: List<String>,
+    setupPlans: List<RecommendationPlan>,
+    storytellerStyle: RecommendationStyle,
+    legalRoles: List<ClocktowerRole>,
 ): List<String>? {
-    appliedRoleNames.takeIf { it.isNotEmpty() }?.let { return it }
-    if (automaticStorytellerInfo) return null
+    if (!isDemonInfoStep || !isRealAction || committedRoleNames.isNotEmpty()) return null
 
     val selectedPlan = WeightedStableSelector.selectStyle(
         options = setupPlans,
         style = storytellerStyle,
         styleOf = RecommendationPlan::style,
     ) ?: return null
-
-    return selectedPlan.decisions
+    val recommendedRoleNames = selectedPlan.decisions
         .filterIsInstance<StorytellerDecision.DemonBluffs>()
         .singleOrNull()
         ?.roles
         ?.map { it.value }
+
+    return when (
+        val resolution = resolveDemonBluffPresentation(
+            recommendedRoleNames = recommendedRoleNames,
+            legalRoles = legalRoles,
+        )
+    ) {
+        is DemonBluffPresentationResolution.Ready -> resolution.roles.map { it.enName }
+        DemonBluffPresentationResolution.Pending -> null
+        is DemonBluffPresentationResolution.Invalid -> null
+    }
 }
 
 /**
