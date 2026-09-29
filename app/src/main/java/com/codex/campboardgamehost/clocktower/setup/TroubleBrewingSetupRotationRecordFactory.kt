@@ -58,8 +58,17 @@ internal object TroubleBrewingSetupRotationRecordFactory {
     }
 
     fun fromPreparedSetup(preparedSetup: TroubleBrewingPreparedSetup): TroubleBrewingSetupRotationRecord {
-        val selection = preparedSetup.selection
-        val dealPlan = preparedSetup.dealPlan
+        val intermediateSetup = preparedSetup.intermediateSetup
+        val dealPlan = preparedSetup.compatibilityDealPlan
+        val selection = TroubleBrewingSetupPresetSelection(
+            datasetId = intermediateSetup.datasetId,
+            schemaVersion = intermediateSetup.schemaVersion,
+            presetId = intermediateSetup.presetId,
+            playerCount = intermediateSetup.playerCount,
+            gameSeed = intermediateSetup.gameSeed,
+            preset = preparedSetup.preset,
+            selectedDrunkShownRole = dealPlan.selectedDrunkShownRole,
+        )
         require(dealPlan.datasetId == selection.datasetId) {
             "Trouble Brewing prepared setup dataset provenance is inconsistent."
         }
@@ -75,9 +84,6 @@ internal object TroubleBrewingSetupRotationRecordFactory {
         require(dealPlan.gameSeed == selection.gameSeed) {
             "Trouble Brewing prepared setup seed provenance is inconsistent."
         }
-        require(dealPlan.selectedDrunkShownRole == selection.selectedDrunkShownRole) {
-            "Trouble Brewing prepared setup shown-identity provenance is inconsistent."
-        }
         require(dealPlan.assignments.size == selection.playerCount) {
             "Trouble Brewing prepared setup assignment count is inconsistent."
         }
@@ -89,6 +95,12 @@ internal object TroubleBrewingSetupRotationRecordFactory {
         }
         require(dealPlan.assignments.none { it.playerName.isBlank() }) {
             "Trouble Brewing prepared setup player identities cannot be blank."
+        }
+        require(
+            intermediateSetup.shownSeatAssignments.map { Triple(it.seat, it.playerName, it.shownRoleId) } ==
+                dealPlan.assignments.map { Triple(it.seat, it.playerName, it.shownRoleId) },
+        ) {
+            "Trouble Brewing compatibility deal must preserve the intermediate shown-seat assignments."
         }
 
         val expectedActualRoleIds = (

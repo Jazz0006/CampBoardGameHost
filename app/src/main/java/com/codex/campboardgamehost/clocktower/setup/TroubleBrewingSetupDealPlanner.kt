@@ -60,6 +60,61 @@ internal object TroubleBrewingSetupDealPlanner {
         recentPlayerStartingIdentityHistory = recentPlayerStartingIdentityHistory,
     )
 
+    /**
+     * DLB visible-roster seating path.
+     *
+     * The existing optimizer is reused against a normalized preset view that contains only the
+     * identities players can actually be shown. In particular, a Drunk preset has no Drunk token in
+     * this view and the transitional added Townsfolk is categorized as Townsfolk.
+     */
+    fun planVisibleRoster(
+        datasetId: String,
+        schemaVersion: Int,
+        preset: TroubleBrewingSetupPreset,
+        gameSeed: Long,
+        visibleRoster: TroubleBrewingVisibleRoster,
+        orderedPlayerNames: List<String>,
+        recentPlayerStartingIdentityHistory: TroubleBrewingPlayerStartingIdentityHistory =
+            TroubleBrewingPlayerStartingIdentityHistory.EMPTY,
+    ): List<TroubleBrewingShownSeatAssignment> {
+        require(visibleRoster.visibleRoleIds.size == preset.playerCount) {
+            "Trouble Brewing visible roster must match the selected preset player count."
+        }
+        require(orderedPlayerNames.size == preset.playerCount) {
+            "Ordered Trouble Brewing player identities must match the visible roster player count."
+        }
+        val visiblePreset = preset.copy(
+            townsfolk = visibleRoster.townsfolkRoleIds,
+            outsiders = visibleRoster.outsiderRoleIds,
+            minions = visibleRoster.minionRoleIds,
+            demons = visibleRoster.demonRoleIds,
+            drunkAsOptions = emptyList(),
+        )
+        val visiblePlan = plan(
+            selection = TroubleBrewingSetupPresetSelection(
+                datasetId = datasetId,
+                schemaVersion = schemaVersion,
+                presetId = preset.id,
+                playerCount = preset.playerCount,
+                gameSeed = gameSeed,
+                preset = visiblePreset,
+                selectedDrunkShownRole = null,
+            ),
+            orderedPlayerNames = orderedPlayerNames,
+            recentPlayerStartingIdentityHistory = recentPlayerStartingIdentityHistory,
+        )
+        require(visiblePlan.assignments.all { it.actualRoleId == it.shownRoleId }) {
+            "Trouble Brewing visible-roster seating must not commit hidden actual-role substitutions."
+        }
+        return visiblePlan.assignments.map { assignment ->
+            TroubleBrewingShownSeatAssignment(
+                seat = assignment.seat,
+                playerName = assignment.playerName,
+                shownRoleId = assignment.shownRoleId,
+            )
+        }
+    }
+
     private fun planWithRecentHistory(
         selection: TroubleBrewingSetupPresetSelection,
         orderedPlayerNames: List<String>,

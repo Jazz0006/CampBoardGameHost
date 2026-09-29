@@ -91,6 +91,49 @@ class TroubleBrewingProductionVisibleRosterCutoverTest {
         )
     }
 
+    @Test
+    fun `added visible townsfolk does not inherit outsider rotation category before drunk commit`() {
+        val preset = drunkPreset()
+        val dataset = dataset(preset)
+        val registry = canonicalRegistry()
+        val players = (1..preset.playerCount).map { "Player $it" }
+        val seed = 7_103L
+
+        fun prepareWithPreviousCategory(category: TroubleBrewingStartingRoleCategory) =
+            TroubleBrewingProductionSetupPreparer.prepare(
+                dataset = dataset,
+                characterRegistry = registry,
+                orderedPlayerNames = players,
+                gameSeed = seed,
+                recentSetupRotationHistory = TroubleBrewingSetupRotationHistory.EMPTY,
+                recentPlayerStartingIdentityHistory = TroubleBrewingPlayerStartingIdentityHistory(
+                    recentGames = listOf(
+                        listOf(
+                            TroubleBrewingPlayerStartingIdentity(
+                                playerKey = players.first(),
+                                actualRoleId = "old_role",
+                                shownRoleId = "old_identity",
+                                actualRoleCategory = category,
+                            ),
+                        ),
+                    ),
+                ),
+            )
+
+        val townsfolkHistory = prepareWithPreviousCategory(TroubleBrewingStartingRoleCategory.TOWNSFOLK)
+        val outsiderHistory = prepareWithPreviousCategory(TroubleBrewingStartingRoleCategory.OUTSIDER)
+
+        assertEquals(
+            townsfolkHistory.intermediateSetup.shownSeatAssignments,
+            outsiderHistory.intermediateSetup.shownSeatAssignments,
+        )
+        assertTrue(townsfolkHistory.intermediateSetup.visibleRoster.outsiderRoleIds.isEmpty())
+        assertEquals(
+            preset.townsfolk.size + 1,
+            townsfolkHistory.intermediateSetup.visibleRoster.townsfolkRoleIds.size,
+        )
+    }
+
     private fun legacyShownIdentityChoice(
         dataset: TroubleBrewingSetupPresetDataset,
         preset: TroubleBrewingSetupPreset,

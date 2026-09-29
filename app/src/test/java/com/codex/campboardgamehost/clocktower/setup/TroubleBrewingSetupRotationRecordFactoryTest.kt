@@ -78,8 +78,30 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
             ),
         )
 
+        val visibleRoster = TroubleBrewingVisibleRosterRealizer.realize(
+            preset = selection.preset,
+            addedVisibleTownsfolkRoleId = selection.selectedDrunkShownRole,
+        )
         val record = TroubleBrewingSetupRotationRecordFactory.fromPreparedSetup(
-            TroubleBrewingPreparedSetup(selection = selection, dealPlan = dealPlan),
+            TroubleBrewingPreparedSetup(
+                preset = selection.preset,
+                intermediateSetup = TroubleBrewingIntermediateSetup(
+                    datasetId = selection.datasetId,
+                    schemaVersion = selection.schemaVersion,
+                    presetId = selection.presetId,
+                    playerCount = selection.playerCount,
+                    gameSeed = selection.gameSeed,
+                    visibleRoster = visibleRoster,
+                    shownSeatAssignments = dealPlan.assignments.map { assignment ->
+                        TroubleBrewingShownSeatAssignment(
+                            seat = assignment.seat,
+                            playerName = assignment.playerName,
+                            shownRoleId = assignment.shownRoleId,
+                        )
+                    },
+                ),
+                compatibilityDealPlan = dealPlan,
+            ),
         )
 
         assertEquals(

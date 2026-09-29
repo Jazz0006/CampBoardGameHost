@@ -1628,7 +1628,7 @@ internal fun CampBoardGameHostApp() {
         )
 
         val resolvedAssignments = TroubleBrewingDealRoleResolver.resolve(
-            dealPlan = preparedSetup.dealPlan,
+            dealPlan = preparedSetup.compatibilityDealPlan,
             availableRoles = completeTroubleBrewingRoles,
         )
 
@@ -1686,7 +1686,7 @@ internal fun CampBoardGameHostApp() {
                 committedTroubleBrewingSetupRotationRecord =
                     TroubleBrewingSetupRotationRecordFactory.fromPreparedSetup(preparedSetup)
                 committedClocktowerSetup = TroubleBrewingCommittedSetupAdapter.fromDealPlan(
-                    dealPlan = preparedSetup.dealPlan,
+                    dealPlan = preparedSetup.compatibilityDealPlan,
                     resolvedAssignments = resolvedAssignments,
                 )
                 persistActiveGameStateIfNeeded()

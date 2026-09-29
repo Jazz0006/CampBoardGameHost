@@ -24,31 +24,31 @@ class TroubleBrewingProductionSetupPreparerTest {
             recentSetupRotationHistory = TroubleBrewingSetupRotationHistory.EMPTY,
         )
 
-        assertEquals(dataset.datasetId, prepared.selection.datasetId)
-        assertEquals(dataset.schemaVersion, prepared.selection.schemaVersion)
-        assertEquals("tb-8-production-a", prepared.selection.presetId)
-        assertEquals(8, prepared.selection.playerCount)
-        assertEquals(6_002L, prepared.selection.gameSeed)
-        assertEquals(prepared.selection.datasetId, prepared.dealPlan.datasetId)
-        assertEquals(prepared.selection.schemaVersion, prepared.dealPlan.schemaVersion)
-        assertEquals(prepared.selection.presetId, prepared.dealPlan.presetId)
-        assertEquals(prepared.selection.playerCount, prepared.dealPlan.playerCount)
-        assertEquals(prepared.selection.gameSeed, prepared.dealPlan.gameSeed)
-        assertEquals(prepared.selection.selectedDrunkShownRole, prepared.dealPlan.selectedDrunkShownRole)
-        assertEquals(players, prepared.dealPlan.assignments.map { it.playerName })
-        assertEquals((1..8).toList(), prepared.dealPlan.assignments.map { it.seat })
+        val intermediate = prepared.intermediateSetup
+        val compatibility = prepared.compatibilityDealPlan
 
-        val actualRoleIds = prepared.dealPlan.assignments.map { it.actualRoleId }.toSet()
+        assertEquals("tb-8-production-a", prepared.preset.id)
+        assertEquals(dataset.datasetId, intermediate.datasetId)
+        assertEquals(dataset.schemaVersion, intermediate.schemaVersion)
+        assertEquals(prepared.preset.id, intermediate.presetId)
+        assertEquals(8, intermediate.playerCount)
+        assertEquals(6_002L, intermediate.gameSeed)
+        assertEquals(players, intermediate.shownSeatAssignments.map { it.playerName })
+        assertEquals((1..8).toList(), intermediate.shownSeatAssignments.map { it.seat })
+        assertTrue(intermediate.visibleRoster.hasDrunk)
+        assertEquals(0, intermediate.visibleRoster.visibleRoleIds.count { it == "drunk" })
+
+        val actualRoleIds = compatibility.assignments.map { it.actualRoleId }.toSet()
         assertEquals(
-            (prepared.selection.preset.townsfolk +
-                prepared.selection.preset.outsiders +
-                prepared.selection.preset.minions +
-                prepared.selection.preset.demons).toSet(),
+            (prepared.preset.townsfolk +
+                prepared.preset.outsiders +
+                prepared.preset.minions +
+                prepared.preset.demons).toSet(),
             actualRoleIds,
         )
-        val drunk = prepared.dealPlan.assignments.single { it.actualRoleId == "drunk" }
-        assertEquals(prepared.selection.selectedDrunkShownRole, drunk.shownRoleId)
-        assertTrue(drunk.shownRoleId in prepared.selection.preset.drunkAsOptions)
+        val drunk = compatibility.assignments.single { it.actualRoleId == "drunk" }
+        assertEquals(compatibility.selectedDrunkShownRole, drunk.shownRoleId)
+        assertTrue(drunk.shownRoleId in prepared.preset.drunkAsOptions)
     }
 
     @Test
@@ -64,7 +64,8 @@ class TroubleBrewingProductionSetupPreparerTest {
             gameSeed = seed,
             recentSetupRotationHistory = TroubleBrewingSetupRotationHistory.EMPTY,
         )
-        val baselineDemonHolder = baseline.dealPlan.assignments.single { it.actualRoleId == "imp" }.playerName
+        val baselineDemonHolder =
+            baseline.compatibilityDealPlan.assignments.single { it.actualRoleId == "imp" }.playerName
         val twoGamesAgoDemon = TroubleBrewingPlayerStartingIdentity(
             playerKey = baselineDemonHolder,
             actualRoleId = "pukka",
@@ -88,13 +89,14 @@ class TroubleBrewingProductionSetupPreparerTest {
 
         assertNotEquals(
             baselineDemonHolder,
-            rotated.dealPlan.assignments.single { it.actualRoleId == "imp" }.playerName,
+            rotated.compatibilityDealPlan.assignments.single { it.actualRoleId == "imp" }.playerName,
         )
         assertEquals(
-            baseline.dealPlan.assignments.map { it.actualRoleId }.sorted(),
-            rotated.dealPlan.assignments.map { it.actualRoleId }.sorted(),
+            baseline.compatibilityDealPlan.assignments.map { it.actualRoleId }.sorted(),
+            rotated.compatibilityDealPlan.assignments.map { it.actualRoleId }.sorted(),
         )
-        assertEquals(baseline.selection, rotated.selection)
+        assertEquals(baseline.preset, rotated.preset)
+        assertEquals(baseline.intermediateSetup.visibleRoster, rotated.intermediateSetup.visibleRoster)
     }
 
     @Test
