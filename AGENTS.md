@@ -584,9 +584,11 @@ CI only when current cadence says CI is a gate
 
 Mini MCP local `git_status` / `git_diff`, Codex/Luna reports, workflow logs, and user-reported local results are implementation evidence; none is the canonical remote source of truth. GitHub Connector reads of the actual remote branch/PR/check state are the default independent acceptance interface. Required GitHub CI/R2 remains mandatory where the test strategy requires it.
 
-A pushed commit is not merge authorization.
+A pushed commit is not by itself sufficient for merge. The PR must first satisfy the slice's required acceptance gates.
 
-**Never merge, mark ready, force-push, rebase, or broaden the active PR without explicit user authorization.**
+**Standing merge authorization (2026-09-29):** once the current task/PR is complete, its exact head has passed the required validation, the PR is mergeable, the changed-file/semantic diff is within the approved scope, documentation is converged, and there are no unresolved review/correctness issues, ChatGPT may mark the PR ready and merge it without requesting a separate per-PR authorization message.
+
+This standing authorization does **not** permit merging incomplete, failing, conflicted, scope-drifted, or intentionally paused work. Rebase, force-push, destructive history changes, or broadening the active PR still require explicit user authorization unless separately granted.
 
 ## 8. Current project documents and precedence
 

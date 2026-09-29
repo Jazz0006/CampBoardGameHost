@@ -6,8 +6,9 @@ import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 
 internal data class TroubleBrewingPreparedSetup(
-    val selection: TroubleBrewingSetupPresetSelection,
-    val dealPlan: TroubleBrewingSetupDealPlan,
+    val preset: TroubleBrewingSetupPreset,
+    val intermediateSetup: TroubleBrewingIntermediateSetup,
+    val compatibilityDealPlan: TroubleBrewingSetupDealPlan,
 )
 
 /**
@@ -72,52 +73,45 @@ internal object TroubleBrewingProductionSetupPreparer {
             "Generic Trouble Brewing selection '$selectedPresetId' does not resolve to the validated preset pool."
         }
 
-        val shownIdentityPolicy = requireNotNull(
-            TroubleBrewingShownIdentityPolicySource(dataset, characterRegistry).find(
-                TemplateShownIdentityPolicyKey(
-                    providerId = dataset.datasetId,
-                    candidateId = selectedPresetId,
-                ),
-            ),
-        ) {
-            "Validated Trouble Brewing preset '$selectedPresetId' has no shown-identity policy."
-        }
-        val shownIdentityCommitment = SetupShownIdentityCommitter().commit(
-            candidate = selectedCandidate,
-            policy = shownIdentityPolicy,
-            setupSeed = gameSeed,
+        val addedVisibleTownsfolkRoleId =
+            TroubleBrewingVisibleRosterOptionSelector.selectAddedTownsfolk(
+                candidate = selectedCandidate,
+                preset = selectedPreset,
+                characterRegistry = characterRegistry,
+                setupSeed = gameSeed,
+            )
+        val visibleRoster = TroubleBrewingVisibleRosterRealizer.realize(
+            preset = selectedPreset,
+            addedVisibleTownsfolkRoleId = addedVisibleTownsfolkRoleId,
         )
-        val selectedDrunkShownRole = selectedPreset
-            .takeIf { DRUNK_EXTERNAL_ID in it.outsiders }
-            ?.let {
-                val drunkRole = requireNotNull(characterRegistry.findByExternalId(DRUNK_EXTERNAL_ID)).id
-                val shownRole = shownIdentityCommitment.shownRoleFor(drunkRole)
-                require(shownRole != drunkRole) {
-                    "Trouble Brewing Drunk setup must commit a distinct shown role."
-                }
-                requireNotNull(characterRegistry.findByRoleId(shownRole)) {
-                    "Committed Trouble Brewing Drunk shown role '${shownRole.value}' is missing from the registry."
-                }.externalId
-            }
-
-        val selection = TroubleBrewingSetupPresetSelection(
+        val shownSeatAssignments = TroubleBrewingSetupDealPlanner.planVisibleRoster(
+            datasetId = dataset.datasetId,
+            schemaVersion = dataset.schemaVersion,
+            preset = selectedPreset,
+            gameSeed = gameSeed,
+            visibleRoster = visibleRoster,
+            orderedPlayerNames = orderedPlayerNames,
+            recentPlayerStartingIdentityHistory = recentPlayerStartingIdentityHistory,
+        )
+        val intermediateSetup = TroubleBrewingIntermediateSetup(
             datasetId = dataset.datasetId,
             schemaVersion = dataset.schemaVersion,
             presetId = selectedPreset.id,
             playerCount = playerCount,
             gameSeed = gameSeed,
-            preset = selectedPreset,
-            selectedDrunkShownRole = selectedDrunkShownRole,
+            visibleRoster = visibleRoster,
+            shownSeatAssignments = shownSeatAssignments,
         )
-        val dealPlan = TroubleBrewingSetupDealPlanner.plan(
-            selection = selection,
-            orderedPlayerNames = orderedPlayerNames,
-            recentPlayerStartingIdentityHistory = recentPlayerStartingIdentityHistory,
+        val compatibilityDealPlan = TroubleBrewingCompatibilityDealPlanAdapter.fromIntermediate(
+            preset = selectedPreset,
+            intermediateSetup = intermediateSetup,
+            addedVisibleTownsfolkRoleId = addedVisibleTownsfolkRoleId,
         )
 
         return TroubleBrewingPreparedSetup(
-            selection = selection,
-            dealPlan = dealPlan,
+            preset = selectedPreset,
+            intermediateSetup = intermediateSetup,
+            compatibilityDealPlan = compatibilityDealPlan,
         )
     }
 
@@ -146,6 +140,5 @@ internal object TroubleBrewingProductionSetupPreparer {
     }
 
     private val TROUBLE_BREWING_SCRIPT = ScriptId("trouble_brewing")
-    private const val DRUNK_EXTERNAL_ID = "drunk"
     private const val IMP_EXTERNAL_ID = "imp"
 }

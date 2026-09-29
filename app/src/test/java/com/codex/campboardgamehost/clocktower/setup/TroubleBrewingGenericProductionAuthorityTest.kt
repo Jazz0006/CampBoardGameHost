@@ -40,8 +40,8 @@ class TroubleBrewingGenericProductionAuthorityTest {
             recentSetupRotationHistory = TroubleBrewingSetupRotationHistory.EMPTY,
         )
 
-        assertEquals(expectedPresetId, prepared.selection.presetId)
-        assertEquals(expectedPresetId, prepared.dealPlan.presetId)
+        assertEquals(expectedPresetId, prepared.preset.id)
+        assertEquals(expectedPresetId, prepared.intermediateSetup.presetId)
     }
 
     private fun genericSelectionPresetId(
