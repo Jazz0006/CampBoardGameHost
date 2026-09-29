@@ -213,3 +213,56 @@ Do not modify:
 - no assumed Fortune Teller target;
 - no DecisionTrace schema expansion just to carry ecology census;
 - no broad generic transaction/setup-effect owner.
+
+
+## 10. DLB-3A RED / GREEN evidence
+
+### RED
+
+Test-only head:
+
+`70c02992ba02046a514d8f3818755aa9a05f6c63`
+
+GitHub CI #3524 / run `36515063391` failed Android compilation exactly because the new DLB-3A symbols did not yet exist:
+
+- unresolved `DrunkSetupShadowAdapter`;
+- unresolved `SdeCommittedDecisionInputKind.DRUNK_SEAT`;
+- dependent candidate-shadow fields could not be resolved.
+
+R2 #3266 was GREEN.
+
+This is the expected test-first RED for the new typed shadow decision surface.
+
+### GREEN / T1
+
+Production head:
+
+`3e940e61221ae56636032f198a4d6da20f052b30`
+
+GitHub CI #3525 / run `36516847324` executed:
+
+`./gradlew :app:testFast --no-daemon --build-cache`
+
+and completed `BUILD SUCCESSFUL`. R2 #3267 was GREEN.
+
+Exact executable scope:
+
+- new `DrunkSetupShadowAdapter.kt`;
+- `SdeDecisionCandidate.kt`: add only `DRUNK_SEAT` to the committed-input kind enum;
+- owning `DrunkSetupShadowAdapterTest.kt`.
+
+The adapter remains pure and shadow-only. It:
+
+- preserves DLB-2 legal-candidate order;
+- projects every legal candidate through the DLB-2 hypothetical projector;
+- records one existing first-night ecology audit per candidate;
+- emits typed SetupPrecommit SDE envelopes and unbound proposed `DRUNK_SEAT` refs;
+- builds normal `DecisionTrace` and `MultiPolicyReplayInput`;
+- leaves strategic features explicitly `NOT_PROJECTED_YET`;
+- therefore receives frozen V1 `STRATEGIC_FEATURE_UNAVAILABLE` deferral and no policy selection.
+
+No App/Host/session/persistence/V1/selector file changed.
+
+### T4 escalation
+
+The following documentation-only commit carries `[full-ci]` to escalate the exact DLB-3A executable tree above to full acceptance. It adds no production behavior.
