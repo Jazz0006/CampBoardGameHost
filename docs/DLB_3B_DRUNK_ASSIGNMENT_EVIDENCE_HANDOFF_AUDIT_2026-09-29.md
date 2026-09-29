@@ -202,3 +202,12 @@ A successful C1D G10 regression proves:
 It does **not** prove that the Host would or should choose Empath.
 
 That distinction remains mandatory for DLB-3B.
+
+
+## 9. Validation checkpoint
+
+The first exact-head CI classification pass skipped Android tests because the change set was test/docs-only.
+
+That pass is not sufficient acceptance evidence for C1D.
+
+This checkpoint therefore requests full CI so the evidence-derived replay regression actually executes before C1D is marked COMPLETE.
