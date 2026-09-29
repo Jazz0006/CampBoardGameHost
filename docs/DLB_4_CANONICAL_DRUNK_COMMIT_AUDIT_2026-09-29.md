@@ -1,7 +1,8 @@
 # DLB-4 Canonical Drunk Commit Producer / Consumer / Ownership Audit — 2026-09-29
 
-> Status: **IMPLEMENTATION AUDIT / DLB-4 AUTHORITY**
+> Status: **COMPLETE / ACCEPTED IMPLEMENTATION AUTHORITY**
 > Baseline audited: `main@6adf0276103580118f6f3d7a8cf0fb9e6af836be`
+> Accepted executable checkpoint: `5606371c68b97beb01418ede2bb2c19db7e69053`; CI #3580 and R2 #3313 GREEN.
 > Live remote at audit start: no open PR; main CI #3572 GREEN.
 > Scope: canonical Drunk commit before reveal only. DLB-4A UX, DLB-5 dependency barriers, DLB-6 compatibility retirement, Red Herring/Poisoner expansion, broad App/Host decomposition and Recovery compatibility are out of scope.
 
@@ -251,3 +252,16 @@ DLB-4 is complete only when:
 - Recovery remains finalized-truth-only;
 - frozen `BEGINNER_CONSERVATIVE_V1` and `DRUNK_ASSIGNMENT_SHADOW_V1` behavior are unchanged;
 - exact-head CI/R2 are green and changed-file scope is clean.
+
+## 9. Implementation outcome
+
+DLB-4 is complete at executable checkpoint `5606371c68b97beb01418ede2bb2c19db7e69053`:
+
+- DLB-4.1 added `TroubleBrewingSetupCommitter`, which accepts only the current rules-legal confirmed candidate and materializes one final `CommittedClocktowerSetup` plus canonical initial `GameState`;
+- DLB-4.2 added final-truth rotation/completion projection, including the regression where an original preset Townsfolk becomes Drunk and the transitional added Townsfolk remains an actual Townsfolk;
+- DLB-4.3 moved production startup to the canonical committed result for cards, setup recommendation input, first-night precompute input and `ClocktowerGameSession` initialization;
+- the compatibility fallback is now resolved back into the current legal candidate domain only as a temporary upstream confirmation source; it has no ranking or policy authority and remains scheduled for DLB-4A/DLB-6 replacement;
+- initial Recovery persistence is deferred for this startup path until the committed setup and final rotation fact are published, so no half-committed DLB setup is written;
+- CI #3580 and R2 #3313 are GREEN for the accepted executable checkpoint.
+
+Next product slice: **DLB-4A — Experienced assisted "Choose the Drunk" UX**. Beginner automatic Drunk authority remains blocked behind the later shadow/evidence cutover gate.

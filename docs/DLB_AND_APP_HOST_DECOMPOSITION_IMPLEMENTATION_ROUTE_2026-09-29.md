@@ -107,7 +107,9 @@ Initially this is **shadow-only**. Do not alter `BEGINNER_CONSERVATIVE_V1` weigh
 
 Evidence collection in ClocktowerEvidenceLab for reconstructable expert Drunk-assignment choices is the calibration input for this surface.
 
-### DLB-4 — canonical Drunk commit before reveal
+### DLB-4 — canonical Drunk commit before reveal — COMPLETE / ACCEPTED
+
+Accepted executable checkpoint: `5606371c68b97beb01418ede2bb2c19db7e69053`; CI #3580 / R2 #3313 GREEN.
 
 Create one canonical commit boundary:
 
@@ -121,7 +123,7 @@ Only after this boundary may player identity reveal and first-night prewarm begi
 
 Rotation/completion persistence must consume this final committed setup, not the pre-Drunk intermediate plan.
 
-### DLB-4A — Storyteller Drunk selection UX
+### DLB-4A — Storyteller Drunk selection UX — NEXT
 
 ```text
 shown identities assigned to seats
