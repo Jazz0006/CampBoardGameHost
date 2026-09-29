@@ -185,3 +185,56 @@ Global workflow docs changed on this branch solely to record the user's 2026-09-
 - no broad App/Host decomposition;
 - no removal of legacy history fields outside what DLB-1 requires;
 - no change to `BEGINNER_CONSERVATIVE_V1`.
+
+
+## 12. RED / GREEN implementation evidence
+
+### RED
+
+Test-only head:
+
+`8be03d83324f9b07f361a0e4e65f3cd49aa79f00`
+
+GitHub CI #3512 / run `36501918452` failed Android compilation exactly on the new DLB-1 prepared-setup contract:
+
+- unresolved `prepared.intermediateSetup`;
+- unresolved `prepared.preset`;
+- unresolved `prepared.compatibilityDealPlan`.
+
+R2 #3256 / run `36501918461` was GREEN. This was the expected test-first RED.
+
+### First GREEN implementation and audit correction
+
+Initial implementation head:
+
+`d0289da91960da37cc626a5bfd7563da08722781`
+
+CI #3513 and R2 #3257 were GREEN. A subsequent semantic audit found that the transitional visible-roster selector had copied the preset option order directly, while the superseded shown-identity contract canonicalized legal options by `RoleId.value` before the seeded draw.
+
+That discrepancy did not fail the sampled test seed, but it could change deterministic output for other presets/seeds. It was corrected before acceptance rather than treating the first GREEN as sufficient.
+
+### Corrected T1 GREEN
+
+Corrected head:
+
+`ee6006d3e435d7d5181eff777aabbb6140dde53a`
+
+The visible-roster option selector now canonicalizes legal options with the same `RoleId.value` ordering used by the previous production commitment path before applying the preserved `setup-shown-identity-v1` seed material.
+
+GitHub CI #3514 / run `36503428506` executed:
+
+`./gradlew :app:testFast --no-daemon --build-cache`
+
+and completed `BUILD SUCCESSFUL`. R2 #3258 / run `36503428987` also completed GREEN.
+
+Producer/consumer re-search at this checkpoint confirms:
+
+- Trouble Brewing production no longer calls `TroubleBrewingShownIdentityPolicySource`;
+- production `SetupShownIdentityCommitter().commit` remains only in No Greater Joy;
+- Trouble Brewing production now creates `intermediateSetup` through visible-roster seating;
+- current App/history consumers use the explicitly named `compatibilityDealPlan` bridge;
+- no SDE, Recovery or first-night dependency surface changed.
+
+### T4 escalation
+
+The next commit carries `[full-ci]` only to escalate this exact DLB-1 logical checkpoint to full acceptance. It adds no production behavior beyond the already-reviewed `ee6006d...` executable tree.
