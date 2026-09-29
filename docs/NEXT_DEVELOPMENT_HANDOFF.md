@@ -4,7 +4,7 @@
 > Current baseline: live `main` — query exact HEAD at session start  
 > Last completed validation PR: **#173 — C1D G10 Drunk-assignment replay — MERGED at `971d333d1b4bcc2cf38b579819f0d6156f24b47f`**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
-> Product next gate: **DLB-3B score-free setup-level Drunk consequence contract — CONTRACT-DESIGN READY after accepted C1D replay; frozen V1 remains unchanged**
+> Product next gate: **DLB-3B2 dedicated Drunk-assignment feature surface — 3B1 score-free consequence envelope ACCEPTED; frozen V1 remains unchanged**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -60,7 +60,7 @@ DLB-0 typed intermediate setup              COMPLETE / ACCEPTED
 DLB-1 visible-roster deal cutover              COMPLETE / ACCEPTED
 DLB-2 legal candidate + hypothetical projector   COMPLETE / ACCEPTED
 DLB-3A shadow envelope + DecisionTrace            COMPLETE / ACCEPTED
-DLB-3B setup-level consequence bridge              NEXT / CONTRACT-DESIGN READY
+DLB-3B setup-level consequence bridge              IN PROGRESS — 3B1 COMPLETE / 3B2 NEXT
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -133,7 +133,8 @@ DLB-0 typed intermediate setup COMPLETE
 -> DLB-1 visible-roster deal cutover COMPLETE
 -> DLB-2 legal Drunk candidate + hypothetical projector COMPLETE
 -> DLB-3A shadow SDE decision / DecisionTrace COMPLETE
--> DLB-3B setup-level consequence bridge NEXT / CONTRACT-DESIGN READY
+-> DLB-3B1 score-free consequence envelope COMPLETE
+-> DLB-3B2 dedicated Drunk-assignment feature surface NEXT
 -> DLB-4 canonical commit before reveal
 -> DLB-4A Experienced assisted UI
 -> DLB-5 latest-safe dependency barriers
@@ -151,7 +152,7 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 Recovery R0–R6 stays complete. R7 remains separate.
 
-EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cases and C1D G10 downstream replay is accepted. DLB-3B may now design a score-free consequence envelope; the existing C5/V2 E3/E4 gate remains separate and still blocks `BEGINNER_CONSERVATIVE_V2`.
+EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cases and C1D G10 downstream replay is accepted. DLB-3B1 score-free consequence envelope is now accepted at `84dcf50d7538fad477be692e027c232b9884618a` with CI #3542 / R2 #3281 GREEN. DLB-3B2 must define a dedicated Drunk-assignment feature surface without changing frozen V1; the existing C5/V2 E3/E4 gate remains separate and still blocks `BEGINNER_CONSERVATIVE_V2`.
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate preference/rejection semantics. DLB-3 is shadow-first; Beginner automatic Drunk authority requires the explicit cutover gate in the DLB route.
 
