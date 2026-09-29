@@ -25,7 +25,7 @@ DLB-0 typed intermediate setup                         COMPLETE / ACCEPTED
 DLB-1 visible-roster deal cutover                      COMPLETE / ACCEPTED
 DLB-2 legal Drunk candidate + hypothetical projector   COMPLETE / ACCEPTED
 DLB-3A shadow envelope + DecisionTrace/replay            COMPLETE / ACCEPTED
-DLB-3B setup-level consequence feature bridge              NEXT / EVIDENCE-GATED
+DLB-3B setup-level consequence feature bridge              NEXT / CONTRACT-DESIGN READY
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
@@ -98,7 +98,7 @@ DLB-0 is implemented and accepted. The current implementation authority remains:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating; DLB-2 provides the rules-owned legal Drunk-seat domain and pure hypothetical GameState projection; DLB-3A now carries that domain through the normal SDE SetupPrecommit / DecisionTrace / replay lifecycle while deliberately deferring frozen V1. DLB-3B setup-level consequence projection is next and evidence-gated: existing fixed-Drunk whole-bundle output evaluators must not be repurposed as a seat selector. The full engineering sequence remains DLB-0 -> DLB-7, with a shadow-to-production cutover gate before Beginner automatic Drunk authority.
+The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating; DLB-2 provides the rules-owned legal Drunk-seat domain and pure hypothetical GameState projection; DLB-3A now carries that domain through the normal SDE SetupPrecommit / DecisionTrace / replay lifecycle while deliberately deferring frozen V1. DLB-3B setup-level consequence projection is next and contract-design ready after the accepted C1D G10 historical replay; existing fixed-Drunk whole-bundle output evaluators must still not be repurposed as a seat selector. The full engineering sequence remains DLB-0 -> DLB-7, with a shadow-to-production cutover gate before Beginner automatic Drunk authority.
 
 The 2026-09-28 App/Host decomposition audit is a guardrail for this work, not a prerequisite campaign:
 
@@ -107,9 +107,9 @@ The 2026-09-28 App/Host decomposition audit is a guardrail for this work, not a 
 - H2 and A3 are re-audited after DLB boundaries stabilize;
 - R3 generic transaction extraction and generic setup-effect ownership remain NO-GO.
 
-Targeted EvidenceLab acquisition continues in parallel. It now serves two distinct gates:
+Targeted EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cases, and C1D downstream replay is accepted. EvidenceLab now serves two distinct lanes:
 
-1. DLB Drunk-assignment evidence/trace qualification for the new decision surface;
+1. DLB Drunk-assignment evidence/trace replay and consequence-contract calibration for the new decision surface;
 2. the existing C5/V2 E3/E4 policy gate.
 
 Do not conflate those gates. C5 / BEGINNER_CONSERVATIVE_V2 remains blocked. DLB may implement legality, projection, canonical commit, Experienced assisted UX, staged dependencies and shadow trace before any new evidence-backed production preference is authorized.
@@ -179,7 +179,7 @@ query live main / workspace
 -> DLB-1 visible-roster deal cutover COMPLETE
 -> DLB-2 legal Drunk candidate domain + hypothetical projector COMPLETE
 -> DLB-3A shadow envelope + DecisionTrace/replay COMPLETE
--> DLB-3B setup-level consequence feature bridge NEXT / EVIDENCE-GATED
+-> DLB-3B setup-level consequence feature bridge NEXT / CONTRACT-DESIGN READY
 -> DLB-4 canonical Drunk commit before reveal
 -> DLB-4A Experienced assisted selection UX
 -> DLB-5 dependency-barrier first-night planner
