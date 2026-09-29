@@ -90,8 +90,8 @@ import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecomme
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationRevealCoordinator
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingFirstNightPrecomputeCoordinator
 import com.codex.campboardgamehost.clocktower.setup.NoGreaterJoyProductionSetupPreparer
-import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingCommittedSetupAdapter
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDealRoleResolver
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupCommitter
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingProductionSetupPreparer
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetJson
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
@@ -1484,6 +1484,8 @@ internal fun CampBoardGameHostApp() {
         nextGameKind: GameKind,
         clocktowerScript: ClocktowerScript = ClocktowerScript.TroubleBrewing,
         preparedClocktowerSeed: Long? = null,
+        preparedClocktowerInitialState: GameState? = null,
+        persistInitialState: Boolean = true,
     ) {
         invalidateA4SessionBoundary()
         clearSavedGameState()
@@ -1504,14 +1506,24 @@ internal fun CampBoardGameHostApp() {
         if (nextGameKind == GameKind.Clocktower) {
             val gameId = UUID.randomUUID().toString()
             val gameSeed = preparedClocktowerSeed ?: newClocktowerSeed()
-            clocktowerGameSession = ClocktowerGameSession.createProduction(
-                gameId = gameId,
-                gameSeed = gameSeed,
-                initialState = cards.toClocktowerGameState(
+            val initialGameState = preparedClocktowerInitialState
+                ?.also { preparedState ->
+                    require(preparedState.seed == gameSeed) {
+                        "Prepared Clocktower state seed must match the prepared game seed."
+                    }
+                    require(preparedState.script == clocktowerScript.toRecommendationScriptId()) {
+                        "Prepared Clocktower state script must match the selected script."
+                    }
+                }
+                ?: cards.toClocktowerGameState(
                     script = clocktowerScript,
                     seed = gameSeed,
                     poisonedPlayerName = null,
-                ),
+                )
+            clocktowerGameSession = ClocktowerGameSession.createProduction(
+                gameId = gameId,
+                gameSeed = gameSeed,
+                initialState = initialGameState,
                 semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
             )
             publishClocktowerSessionView()
@@ -1564,7 +1576,9 @@ internal fun CampBoardGameHostApp() {
         clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
         resetClocktowerFlow()
         screen = Screen.PassPhone
-        persistActiveGameStateIfNeeded()
+        if (persistInitialState) {
+            persistActiveGameStateIfNeeded()
+        }
     }
 
     fun startUndercoverGame() {
@@ -1627,8 +1641,14 @@ internal fun CampBoardGameHostApp() {
             recentPlayerStartingIdentityHistory = playerRotationHistory,
         )
 
-        val resolvedAssignments = TroubleBrewingDealRoleResolver.resolve(
-            dealPlan = preparedSetup.compatibilityDealPlan,
+        val committedSetup = TroubleBrewingSetupCommitter.commit(
+            intermediateSetup = preparedSetup.intermediateSetup,
+            confirmedDrunkCandidate = preparedSetup.compatibilityConfirmedDrunkCandidate,
+            characterRegistry = characterRegistry,
+        )
+        val resolvedAssignments = TroubleBrewingDealRoleResolver.resolveCommitted(
+            committedSetup = committedSetup,
+            characterRegistry = characterRegistry,
             availableRoles = completeTroubleBrewingRoles,
         )
 
@@ -1657,20 +1677,12 @@ internal fun CampBoardGameHostApp() {
         val setupRecommendationRoleDefinitions =
             clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing)
         val initialSetupRecommendationRequest = SetupCoordinationRequest(
-            game = committedCards.toClocktowerGameState(
-                script = ClocktowerScript.TroubleBrewing,
-                seed = preparedSeed,
-                poisonedPlayerName = null,
-            ),
+            game = committedSetup.gameState,
             roles = setupRecommendationRoleDefinitions,
             lockedDecisions = emptyList(),
             history = CrossGameHistory(),
         )
-        val initialFirstNightPrecomputeRequest = committedCards.toClocktowerGameState(
-            script = ClocktowerScript.TroubleBrewing,
-            seed = preparedSeed,
-            poisonedPlayerName = null,
-        )
+        val initialFirstNightPrecomputeRequest = committedSetup.gameState
 
         cards.clear()
         cards.addAll(committedCards)
@@ -1682,13 +1694,16 @@ internal fun CampBoardGameHostApp() {
                     nextGameKind = GameKind.Clocktower,
                     clocktowerScript = ClocktowerScript.TroubleBrewing,
                     preparedClocktowerSeed = preparedSeed,
+                    preparedClocktowerInitialState = committedSetup.gameState,
+                    persistInitialState = false,
                 )
                 committedTroubleBrewingSetupRotationRecord =
-                    TroubleBrewingSetupRotationRecordFactory.fromPreparedSetup(preparedSetup)
-                committedClocktowerSetup = TroubleBrewingCommittedSetupAdapter.fromDealPlan(
-                    dealPlan = preparedSetup.compatibilityDealPlan,
-                    resolvedAssignments = resolvedAssignments,
-                )
+                    TroubleBrewingSetupRotationRecordFactory.fromCommittedSetup(
+                        preparedSetup = preparedSetup,
+                        committedSetup = committedSetup,
+                        characterRegistry = characterRegistry,
+                    )
+                committedClocktowerSetup = committedSetup.committedSetup
                 persistActiveGameStateIfNeeded()
                 troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
                     request = initialFirstNightPrecomputeRequest,

@@ -48,6 +48,14 @@ class TroubleBrewingProductionVisibleRosterCutoverTest {
         val compatibilityDrunk = compatibility.assignments.single { it.actualRoleId == "drunk" }
         assertEquals(addedVisibleTownsfolk, compatibilityDrunk.shownRoleId)
         assertEquals(addedVisibleTownsfolk, compatibility.selectedDrunkShownRole)
+
+        val confirmedFallback = requireNotNull(prepared.compatibilityConfirmedDrunkCandidate)
+        assertTrue(
+            confirmedFallback in TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate),
+        )
+        assertEquals(compatibilityDrunk.seat, confirmedFallback.seat)
+        assertEquals(compatibilityDrunk.playerName, confirmedFallback.playerName)
+        assertEquals(compatibilityDrunk.shownRoleId, confirmedFallback.shownRoleId)
         assertEquals(
             intermediate.shownSeatAssignments.map { it.seat to it.shownRoleId },
             compatibility.assignments.map { it.seat to it.shownRoleId },
@@ -80,6 +88,7 @@ class TroubleBrewingProductionVisibleRosterCutoverTest {
         )
 
         assertFalse(prepared.intermediateSetup.visibleRoster.hasDrunk)
+        assertEquals(null, prepared.compatibilityConfirmedDrunkCandidate)
         assertEquals(
             prepared.intermediateSetup.shownSeatAssignments.map { it.seat to it.shownRoleId },
             prepared.compatibilityDealPlan.assignments.map { it.seat to it.actualRoleId },

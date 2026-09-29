@@ -2,9 +2,9 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Last completed validation PR: **#179 — DLB-3B3 Drunk shadow replay / policy experiment — MERGED at `718113c50edbbe3fc836c3ba2e03780c7c54764d`**  
+> Last completed validation checkpoint: **DLB-4 canonical Drunk commit — `5606371c68b97beb01418ede2bb2c19db7e69053`; CI #3580 / R2 #3313 GREEN**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
-> Product next gate: **DLB-4 canonical Drunk commit before reveal — DLB-3 shadow decision/trace/replay COMPLETE; Beginner automatic authority remains blocked behind the later cutover gate**
+> Product next gate: **DLB-4A Experienced assisted "Choose the Drunk" UX; Beginner automatic authority remains blocked behind the later cutover gate**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -61,6 +61,8 @@ DLB-1 visible-roster deal cutover              COMPLETE / ACCEPTED
 DLB-2 legal candidate + hypothetical projector   COMPLETE / ACCEPTED
 DLB-3A shadow envelope + DecisionTrace            COMPLETE / ACCEPTED
 DLB-3B setup-level consequence bridge              COMPLETE / ACCEPTED
+DLB-4 canonical Drunk commit before reveal         COMPLETE / ACCEPTED
+DLB-4A Experienced assisted Drunk selection        NEXT
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -126,6 +128,8 @@ DLB-3B2 accepted checkpoint: `cc6f3972ebc6128cd88941f60242eef0d147c813`; CI #355
 
 DLB-3B3 accepted checkpoint: `1a5403def6e4075b4d45b31e58db8bf3c356a9d4`; CI #3566 and R2 #3301 GREEN. The dedicated feature surface now has a separate versioned shadow replay/experiment lane. `DRUNK_ASSIGNMENT_SHADOW_V1` explicitly defers for missing longitudinal capability and unauthorized ordering evidence, while source actual-choice metadata remains calibration evidence only. DLB-3 is complete; no 3B4 is required by the authoritative route.
 
+DLB-4 accepted executable checkpoint: `5606371c68b97beb01418ede2bb2c19db7e69053`; CI #3580 and R2 #3313 GREEN. The canonical commit seam now owns intermediate + confirmed legal candidate -> final `CommittedClocktowerSetup` / initial `GameState`; production startup, session initialization, rotation/completion and first-night/setup prewarm consume that final truth. Initial Recovery persistence is deferred until finalized setup publication. The compatibility fallback remains only a temporary legal-domain confirmation source until DLB-4A/DLB-6.
+
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
 Authority:
@@ -142,9 +146,8 @@ DLB-0 typed intermediate setup COMPLETE
 -> DLB-3B1 score-free consequence envelope COMPLETE
 -> DLB-3B2 dedicated Drunk-assignment feature surface COMPLETE
 -> DLB-3B3 shadow replay / versioned policy experiment COMPLETE
--> DLB-4 canonical Drunk commit NEXT
--> DLB-4 canonical commit before reveal
--> DLB-4A Experienced assisted UI
+-> DLB-4 canonical Drunk commit before reveal COMPLETE
+-> DLB-4A Experienced assisted UI NEXT
 -> DLB-5 latest-safe dependency barriers
 -> cutover gate before Beginner automatic authority
 -> DLB-6 old-contract retirement
@@ -160,7 +163,7 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 Recovery R0–R6 stays complete. R7 remains separate.
 
-EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cases and C1D G10 downstream replay is accepted. DLB-3B1 is accepted at `84dcf50d7538fad477be692e027c232b9884618a`; DLB-3B2 at `cc6f3972ebc6128cd88941f60242eef0d147c813`; DLB-3B3 at `1a5403def6e4075b4d45b31e58db8bf3c356a9d4` with CI #3566 / R2 #3301 GREEN. DLB-3 is complete. DLB-4 canonical Drunk commit is next. Missing longitudinal capability and ordering evidence remain explicit cutover-gate blockers for Beginner automatic authority, not blockers for the canonical commit seam. The existing C5/V2 E3/E4 gate remains separate and still blocks `BEGINNER_CONSERVATIVE_V2`.
+EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cases and C1D G10 downstream replay is accepted. DLB-3B1 is accepted at `84dcf50d7538fad477be692e027c232b9884618a`; DLB-3B2 at `cc6f3972ebc6128cd88941f60242eef0d147c813`; DLB-3B3 at `1a5403def6e4075b4d45b31e58db8bf3c356a9d4` with CI #3566 / R2 #3301 GREEN. DLB-3 is complete. DLB-4 canonical Drunk commit is accepted at `5606371c68b97beb01418ede2bb2c19db7e69053` with CI #3580 / R2 #3313 GREEN; DLB-4A is next. Missing longitudinal capability and ordering evidence remain explicit cutover-gate blockers for Beginner automatic authority. The existing C5/V2 E3/E4 gate remains separate and still blocks `BEGINNER_CONSERVATIVE_V2`.
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate preference/rejection semantics. DLB-3 is shadow-first; Beginner automatic Drunk authority requires the explicit cutover gate in the DLB route.
 

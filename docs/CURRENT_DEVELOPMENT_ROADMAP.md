@@ -98,7 +98,7 @@ DLB-0 is implemented and accepted. The current implementation authority remains:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating; DLB-2 provides the rules-owned legal Drunk-seat domain and pure hypothetical GameState projection; DLB-3A now carries that domain through the normal SDE SetupPrecommit / DecisionTrace / replay lifecycle while deliberately deferring frozen V1. DLB-3 is now complete through DLB-3B3. The accepted shadow surface carries rules-legal candidates through hypothetical setup/consequence evidence, dedicated Drunk-assignment features, DecisionTrace correlation, and a separate versioned policy-experiment replay lane. `DRUNK_ASSIGNMENT_SHADOW_V1` explicitly defers for missing longitudinal capability and unauthorized ordering evidence; ordinary DecisionFeatures and frozen V1 remain unchanged. No 3B4 is required by the authoritative route. DLB-4 canonical Drunk commit is next; automatic Beginner authority remains blocked behind the later shadow/evidence cutover gate. The full engineering sequence remains DLB-0 -> DLB-7, with a shadow-to-production cutover gate before Beginner automatic Drunk authority.
+The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating; DLB-2 provides the rules-owned legal Drunk-seat domain and pure hypothetical GameState projection; DLB-3A now carries that domain through the normal SDE SetupPrecommit / DecisionTrace / replay lifecycle while deliberately deferring frozen V1. DLB-3 is now complete through DLB-3B3. The accepted shadow surface carries rules-legal candidates through hypothetical setup/consequence evidence, dedicated Drunk-assignment features, DecisionTrace correlation, and a separate versioned policy-experiment replay lane. `DRUNK_ASSIGNMENT_SHADOW_V1` explicitly defers for missing longitudinal capability and unauthorized ordering evidence; ordinary DecisionFeatures and frozen V1 remain unchanged. No 3B4 is required by the authoritative route. DLB-4 canonical Drunk commit is COMPLETE / ACCEPTED at `5606371c68b97beb01418ede2bb2c19db7e69053` with CI #3580 / R2 #3313 GREEN; DLB-4A Experienced assisted Drunk selection is next; automatic Beginner authority remains blocked behind the later shadow/evidence cutover gate. The full engineering sequence remains DLB-0 -> DLB-7, with a shadow-to-production cutover gate before Beginner automatic Drunk authority.
 
 The 2026-09-28 App/Host decomposition audit is a guardrail for this work, not a prerequisite campaign:
 
@@ -180,8 +180,8 @@ query live main / workspace
 -> DLB-2 legal Drunk candidate domain + hypothetical projector COMPLETE
 -> DLB-3A shadow envelope + DecisionTrace/replay COMPLETE
 -> DLB-3B setup-level consequence feature bridge COMPLETE / ACCEPTED
--> DLB-4 canonical Drunk commit before reveal
--> DLB-4A Experienced assisted selection UX
+-> DLB-4 canonical Drunk commit before reveal COMPLETE / ACCEPTED
+-> DLB-4A Experienced assisted selection UX NEXT
 -> DLB-5 dependency-barrier first-night planner
 -> DLB-5H1 presentation extraction only if the boundary remains cohesive
 -> shadow/evidence cutover gate
