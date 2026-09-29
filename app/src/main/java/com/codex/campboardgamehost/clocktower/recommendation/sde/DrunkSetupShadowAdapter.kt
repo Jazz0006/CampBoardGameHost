@@ -15,12 +15,19 @@ internal data class DrunkSetupShadowCandidate(
     val candidate: TroubleBrewingDrunkCandidate,
     val hypotheticalSetup: TroubleBrewingDrunkHypotheticalSetup,
     val ecologyAudit: FirstNightBundleCandidateSpaceAudit,
+    val consequenceEnvelope: DrunkSetupConsequenceEnvelope,
     val sdeCandidate: SdeDecisionCandidate,
     val proposedCommitRef: CommittedDecisionInputRef,
 ) {
     init {
         require(candidate == hypotheticalSetup.candidate) {
             "Drunk shadow candidate must preserve the DLB-2 hypothetical candidate identity."
+        }
+        require(consequenceEnvelope.candidateSeat == candidate.seat) {
+            "Drunk shadow consequence must preserve the candidate seat."
+        }
+        require(consequenceEnvelope.shownRoleId == candidate.shownRoleId) {
+            "Drunk shadow consequence must preserve the candidate shown role."
         }
         require(sdeCandidate.lifecycleStage == SdeDecisionLifecycleStage.SetupPrecommit) {
             "Drunk shadow candidate must remain at SetupPrecommit lifecycle."
@@ -136,6 +143,11 @@ internal object DrunkSetupShadowAdapter {
                 game = hypothetical.gameState,
                 roleDefinitions = roleDefinitions,
             )
+            val consequenceEnvelope = DrunkSetupConsequenceProjector.project(
+                candidate = candidate,
+                hypotheticalSetup = hypothetical,
+                ecologyAudit = ecology,
+            )
             val proposedCommitRef = CommittedDecisionInputRef(
                 inputId = candidateId,
                 ownerId = DRUNK_COMMIT_OWNER_ID,
@@ -165,6 +177,7 @@ internal object DrunkSetupShadowAdapter {
                 candidate = candidate,
                 hypotheticalSetup = hypothetical,
                 ecologyAudit = ecology,
+                consequenceEnvelope = consequenceEnvelope,
                 sdeCandidate = sdeCandidate,
                 proposedCommitRef = proposedCommitRef,
             )
