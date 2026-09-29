@@ -2384,11 +2384,6 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerRedHerring = it
                         },
-                        onApplyRecommendation = { _ ->
-                            // Setup recommendation application no longer commits deferred
-                            // first-night facts. Red Herring and Demon bluffs commit only at
-                            // their typed first-night dependency barriers.
-                        },
                         onCommitDemonBluffs = { roleNames ->
                             if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {
                                 advanceClocktowerPlayerInputRevision()

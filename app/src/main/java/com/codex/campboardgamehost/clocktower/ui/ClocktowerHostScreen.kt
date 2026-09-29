@@ -176,7 +176,6 @@ internal fun ClocktowerJudgeScreen(
     onSelectChambermaidSecond: (String?) -> Unit,
     onSelectRavenkeeperTarget: (String?) -> Unit,
     onSelectRedHerring: (String?) -> Unit,
-    onApplyRecommendation: (RecommendationPlan) -> Unit,
     onCommitDemonBluffs: (List<String>) -> Unit,
     onSelectButlerMaster: (String?) -> Unit,
     onSelectMonkProtectedTarget: (String?) -> Unit,
@@ -785,7 +784,6 @@ internal fun ClocktowerJudgeScreen(
                         },
                     ),
                 )
-                onApplyRecommendation(automaticPlan)
                 selectionDistributionTelemetry.recordCommittedSelection(
                     SelectionAuditCommit(
                         selectionId = setupAuditId,
@@ -3822,7 +3820,6 @@ internal fun ClocktowerJudgeScreen(
                 lockedDecisions = lockedRecommendationDecisions,
                 onSelectStyle = { selectedRecommendationStyle = it },
                 onApply = { plan ->
-                    onApplyRecommendation(plan)
                     appliedRecommendationStyle = plan.style
                 },
                 onReevaluate = { nextLockedDecisions ->
