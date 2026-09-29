@@ -148,6 +148,10 @@ If a future **current-version** crash produces a fresh inconsistent current-form
 - No numeric weights/thresholds without the evidence level required by the affected policy semantics.
 - Legal candidate ownership remains in rules/domain owners; SDE ranks only legal alternatives.
 - Canonical session/history owners remain the only mutable game truth.
+- Long-horizon convergence target: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`. Setup Generation, Game Engine and Storyteller Recommendation Engine remain separately evolvable behind typed contracts; this is a guardrail, not a new broad refactor campaign.
+- Setup generation should ultimately expose setup composition plus explicit Drunk presence without choosing the seated Drunk; seating/final actual-vs-shown commit remains downstream.
+- Storyteller recommendation remains read-only over already-legal candidates and typed decision-point context. Required mechanical/history context must be distinguished from optional enrichment such as player experience, recent role history or public/evil claims.
+- `ClocktowerGameSession` / its owned aggregate remains canonical truth; `PlayerCard`, UI state, replay and recommendation contexts must converge toward derived projections rather than parallel authorities.
 - DecisionTrace/replay/export are read-only diagnostic/calibration projections.
 - Red Herring legality/commit ownership is not moved into SDE policy.
 - Drunk/Poisoned information may be true or false; impaired narrative uses the accepted shared perceived-functioning projection.
@@ -212,7 +216,8 @@ Read first:
 4. this roadmap
 5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
 6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB/decomposition implementation authority
-7. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — current DLB-5 slice authority / closeout checklist
+7. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon core-engine/state boundary target; consult when a slice changes setup, recommendation context, canonical-state ownership or H2-style projections
+8. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — current DLB-5 slice authority / closeout checklist
 
 The 2026-09-28 source audits, completed Recovery/C4 audits, SDE freeze/cutover audits, and older SDE checkpoints are historical or specialized evidence. Read them only when the current slice raises a concrete ownership/evidence question.
 
