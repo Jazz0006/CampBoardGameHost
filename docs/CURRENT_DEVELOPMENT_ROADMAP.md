@@ -23,7 +23,8 @@ IF-D durable App replay capture/rebuild               COMPLETE
 RH-E runtime persistence/timing hardening             COMPLETE
 DLB-0 typed intermediate setup                         COMPLETE / ACCEPTED
 DLB-1 visible-roster deal cutover                      COMPLETE / ACCEPTED
-DLB-2 legal Drunk candidate + hypothetical projector    NEXT
+DLB-2 legal Drunk candidate + hypothetical projector   COMPLETE / ACCEPTED
+DLB-3 shadow SDE decision + DecisionTrace/replay         NEXT
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
@@ -66,6 +67,8 @@ DLB-0 accepted executable checkpoint: `f81350ec1341cb83f2b4c2f31d80b9c61c7cec52`
 
 DLB-1 accepted executable checkpoint: `d065e21bcf1780fe3375a7fd380815259cc59e5c`; CI #3515 and R2 #3259 GREEN. Trouble Brewing production now seats visible identities into the DLB intermediate contract before any canonical Drunk-seat decision; current App/history remain behind an explicitly temporary compatibility bridge until DLB-4.
 
+DLB-2 accepted executable checkpoint: `73de263327d7530e2d6ac128753aca2fd8766766`; CI #3521 and R2 #3264 GREEN. Every dealt Townsfolk seat is now a rules-legal peer Drunk candidate, and each legal choice can be projected into an immutable hypothetical GameState without session mutation or compatibility-bridge authority.
+
 These are historical acceptance identities, not current branch heads:
 
 | Checkpoint | Accepted evidence |
@@ -92,7 +95,7 @@ DLB-0 is implemented and accepted. The current implementation authority remains:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating while retaining an explicitly temporary compatibility finalization bridge for current runtime/history consumers. DLB-2 legal Drunk candidate generation and pure hypothetical projection is now the next implementation slice. The full engineering sequence remains DLB-0 -> DLB-7, with a shadow-to-production cutover gate before Beginner automatic Drunk authority.
+The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating while retaining an explicitly temporary compatibility finalization bridge for current runtime/history consumers; DLB-2 now provides the rules-owned legal Drunk-seat domain and pure hypothetical GameState projection. DLB-3 shadow SDE decision + DecisionTrace/replay is the next implementation slice. The full engineering sequence remains DLB-0 -> DLB-7, with a shadow-to-production cutover gate before Beginner automatic Drunk authority.
 
 The 2026-09-28 App/Host decomposition audit is a guardrail for this work, not a prerequisite campaign:
 
@@ -171,8 +174,8 @@ query live main / workspace
 -> DLB document authority convergence (2026-09-29 route)
 -> DLB-0 typed intermediate setup COMPLETE
 -> DLB-1 visible-roster deal cutover COMPLETE
--> DLB-2 legal Drunk candidate domain + hypothetical projector NEXT
--> DLB-3 shadow SDE decision + DecisionTrace/replay
+-> DLB-2 legal Drunk candidate domain + hypothetical projector COMPLETE
+-> DLB-3 shadow SDE decision + DecisionTrace/replay NEXT
 -> DLB-4 canonical Drunk commit before reveal
 -> DLB-4A Experienced assisted selection UX
 -> DLB-5 dependency-barrier first-night planner
