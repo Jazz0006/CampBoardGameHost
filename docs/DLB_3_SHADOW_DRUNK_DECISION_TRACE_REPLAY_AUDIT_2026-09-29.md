@@ -266,3 +266,64 @@ No App/Host/session/persistence/V1/selector file changed.
 ### T4 escalation
 
 The following documentation-only commit carries `[full-ci]` to escalate the exact DLB-3A executable tree above to full acceptance. It adds no production behavior.
+
+
+## 11. DLB-3A T4 acceptance
+
+Accepted DLB-3A executable checkpoint:
+
+`0a59c29af047b91b5d10b62ce4019f60df632e83`
+
+The executable production tree is the preceding `3e940e61221ae56636032f198a4d6da20f052b30`; the acceptance head adds only this audit evidence and full-CI trigger.
+
+Exact-head remote acceptance:
+
+- CI #3526 / run `36517120680`: GREEN;
+- Android: `./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks` — GREEN, `BUILD SUCCESSFUL`;
+- ASP contract tests — GREEN;
+- Real Clingo cross-validation — GREEN;
+- aggregate CI gate — GREEN;
+- R2 #3268 / run `36517120713` — GREEN.
+
+DLB-3A is COMPLETE / ACCEPTED.
+
+The accepted semantics remain deliberately shadow-only:
+
+- every DLB-2 legal Townsfolk seat is represented in the SDE domain;
+- every candidate carries its immutable hypothetical setup and first-night ecology census;
+- DecisionTrace and multi-policy replay use the normal existing SDE infrastructure;
+- the proposed `DRUNK_SEAT` reference is unbound and non-authoritative;
+- strategic projection remains explicitly unavailable;
+- frozen `BEGINNER_CONSERVATIVE_V1` therefore defers with `STRATEGIC_FEATURE_UNAVAILABLE`;
+- no candidate is selected or committed.
+
+## 12. DLB-3B readiness conclusion
+
+A follow-up live-code/evidence audit after 3A produced a NO-GO on directly converting the existing Drunk whole-bundle evaluators into a Drunk-seat selector.
+
+Why:
+
+1. `TroubleBrewingFirstNightDrunkPairWholeBundleEvaluator`,
+   `TroubleBrewingFirstNightDrunkNumericWholeBundleEvaluator`, and
+   `TroubleBrewingFirstNightDrunkFortuneTellerWholeBundleEvaluator`
+   all require a **fixed actual Drunk seat** and then compare legal misinformation outputs for that already-fixed Drunk.
+2. `TroubleBrewingFirstNightDrunkWholeBundleExactEvaluator` compares one fixed HealthyCore against those output candidates. It does not compare which Townsfolk should become Drunk.
+3. `FirstNightBundleHealthyHarnessAcceptanceTest` explicitly excludes Drunk (along with Spy/Recluse/Poisoner) from its healthy exact harness, so it is not a generic setup-level Drunk-seat baseline.
+4. Fortune Teller target choice is player-controlled and cannot be invented at setup time.
+5. The current targeted EvidenceLab corpus supports multiple distinct assignment motives rather than one scalar seat heuristic:
+   - suppressing dangerous healthy information (for example Empath / Evil-neighbour topology);
+   - creating a useful or believable misinformation route (for example a Drunk Chef extreme-number plan);
+   - broader player/role/setup-first Storyteller considerations.
+6. The current EvidenceLab targeted assignment package remains short of its intended replay quota, so converting any one of those motives into frozen V1 strategic rejection/preference semantics now would overfit incomplete evidence.
+
+Therefore DLB-3B must define an explicit setup-level consequence contract before any strategic projection is authorized. It must compare candidate-level **consequence envelopes**, not role names and not one arbitrarily chosen later misinformation output.
+
+Until that contract is evidence-qualified:
+
+- keep DLB-3A feature evaluation deferred;
+- do not change `BEGINNER_CONSERVATIVE_V1`;
+- do not invoke seeded survivor selection to create a pseudo-recommendation;
+- do not use legacy scalar `SetupEvaluator` scores;
+- do not treat output-level whole-bundle evaluation as assignment evidence.
+
+DLB-3A can merge independently. DLB-3B remains the next DLB implementation/evidence gate, and DLB-4 must not treat the 3A shadow as automatic Drunk authority.
