@@ -2,7 +2,7 @@
 
 > Updated: 2026-09-29 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD at session start  
-> Active validation PR: **#173 — C1D G10 Drunk-assignment replay (accepted; standing merge authorization applies)**  
+> Last completed validation PR: **#173 — C1D G10 Drunk-assignment replay — MERGED at `971d333d1b4bcc2cf38b579819f0d6156f24b47f`**  
 > Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
 > Product next gate: **DLB-3B score-free setup-level Drunk consequence contract — CONTRACT-DESIGN READY after accepted C1D replay; frozen V1 remains unchanged**
 
