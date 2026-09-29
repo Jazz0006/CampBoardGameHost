@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-29 Australia/Sydney  
+> Updated: 2026-09-30 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**  
 > Historical checkpoint detail belongs in completion/audit documents under `docs/archive/` or the linked slice audits, not in this live roadmap.
@@ -26,6 +26,10 @@ DLB-1 visible-roster deal cutover                      COMPLETE / ACCEPTED
 DLB-2 legal Drunk candidate + hypothetical projector   COMPLETE / ACCEPTED
 DLB-3A shadow envelope + DecisionTrace/replay            COMPLETE / ACCEPTED
 DLB-3B setup-level consequence feature bridge              COMPLETE / ACCEPTED
+DLB-4 canonical Drunk commit before reveal                 COMPLETE / ACCEPTED
+DLB-4A Experienced assisted Drunk selection                COMPLETE / ACCEPTED
+DLB-5.1 / 5.2 / 5.3 / 5.5 staged dependency work          IMPLEMENTED / CI+R2 GREEN
+DLB-5.4 first-night information / poison convergence       NEXT / FINAL DLB-5 CLOSEOUT GATE
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
@@ -98,7 +102,7 @@ DLB-0 is implemented and accepted. The current implementation authority remains:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating; DLB-2 provides the rules-owned legal Drunk-seat domain and pure hypothetical GameState projection; DLB-3A now carries that domain through the normal SDE SetupPrecommit / DecisionTrace / replay lifecycle while deliberately deferring frozen V1. DLB-3 is now complete through DLB-3B3. The accepted shadow surface carries rules-legal candidates through hypothetical setup/consequence evidence, dedicated Drunk-assignment features, DecisionTrace correlation, and a separate versioned policy-experiment replay lane. `DRUNK_ASSIGNMENT_SHADOW_V1` explicitly defers for missing longitudinal capability and unauthorized ordering evidence; ordinary DecisionFeatures and frozen V1 remain unchanged. No 3B4 is required by the authoritative route. DLB-4 canonical Drunk commit is COMPLETE / ACCEPTED at `5606371c68b97beb01418ede2bb2c19db7e69053` with CI #3580 / R2 #3313 GREEN; DLB-4A Experienced assisted Drunk selection is COMPLETE / ACCEPTED at `c85448831e73c82868e118c7f47a0ed889267c0c` with CI #3586 / R2 #3318 GREEN; DLB-5 staged first-night dependency planning is next. Automatic Beginner Drunk-selection authority remains blocked behind the later shadow/evidence cutover gate; the current Beginner compatibility-confirmed candidate is transitional only. The full engineering sequence remains DLB-0 -> DLB-7, with a shadow-to-production cutover gate before Beginner automatic Drunk authority.
+The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating; DLB-2 provides the rules-owned legal Drunk-seat domain and pure hypothetical GameState projection; DLB-3 carries that domain through SetupPrecommit / DecisionTrace / replay and the dedicated shadow policy-experiment lane while frozen V1 remains unchanged. DLB-4 canonical Drunk commit is COMPLETE / ACCEPTED at `5606371c68b97beb01418ede2bb2c19db7e69053` with CI #3580 / R2 #3313 GREEN; DLB-4A Experienced assisted Drunk selection is COMPLETE / ACCEPTED at `c85448831e73c82868e118c7f47a0ed889267c0c` with CI #3586 / R2 #3318 GREEN. DLB-5 is now in closeout: DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff presentation-barrier commitment, and DLB-5.5 obsolete setup auto-apply cleanup are implemented on Draft PR #183. Current executable checkpoint `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5` is CI #3600 / R2 #3331 GREEN. DLB-5.4 first-night information / poison convergence audit is the only remaining DLB-5 acceptance item and must be closed before the PR is treated as complete. Automatic Beginner Drunk-selection authority remains blocked behind the later shadow/evidence cutover gate; the current Beginner compatibility-confirmed candidate is transitional only.
 
 The 2026-09-28 App/Host decomposition audit is a guardrail for this work, not a prerequisite campaign:
 
@@ -182,7 +186,12 @@ query live main / workspace
 -> DLB-3B setup-level consequence feature bridge COMPLETE / ACCEPTED
 -> DLB-4 canonical Drunk commit before reveal COMPLETE / ACCEPTED
 -> DLB-4A Experienced assisted selection UX COMPLETE / ACCEPTED
--> DLB-5 dependency-barrier first-night planner NEXT
+-> DLB-5.1 typed dependency planner COMPLETE / GREEN
+-> DLB-5.2 Red Herring production cutover COMPLETE / GREEN
+-> DLB-5.3 Demon bluff production cutover COMPLETE / GREEN
+-> DLB-5.5 obsolete setup auto-apply cleanup COMPLETE / GREEN
+-> DLB-5.4 first-night information / poison convergence audit NEXT
+-> DLB-5 final acceptance / PR #183 merge only after 5.4 closes
 -> DLB-5H1 presentation extraction only if the boundary remains cohesive
 -> shadow/evidence cutover gate
 -> Beginner automatic Drunk authority
@@ -203,14 +212,9 @@ Read first:
 4. this roadmap
 5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
 6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB/decomposition implementation authority
-7. `docs/DRUNK_LATE_BINDING_AND_FIRST_NIGHT_DECISION_SEQUENCE_AUDIT_2026-09-28.md` — DLB architecture evidence
-8. `docs/APP_HOST_DECOMPOSITION_PLAN_AUDIT_2026-09-28.md` — bounded decomposition evidence/guardrails
-9. `docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md` — C5/V2 evidence qualification result / targeted acquisition gaps
-10. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` — completed R0–R6 current-only Recovery cleanup contract / acceptance record
-11. `docs/SDE_3D2_TRUTH_CREDIBILITY_RED_HERRING_ARCHITECTURE_AUDIT_2026-09-26.md` — completed C4 architecture/evidence boundary
-12. `docs/SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md` — freeze/cutover gates
+7. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — current DLB-5 slice authority / closeout checklist
 
-Use older SDE-3A/B/C/C0–C3 completion documents only when a specific historical or ownership question requires them.
+The 2026-09-28 source audits, completed Recovery/C4 audits, SDE freeze/cutover audits, and older SDE checkpoints are historical or specialized evidence. Read them only when the current slice raises a concrete ownership/evidence question.
 
 ## 10. Testing cadence
 

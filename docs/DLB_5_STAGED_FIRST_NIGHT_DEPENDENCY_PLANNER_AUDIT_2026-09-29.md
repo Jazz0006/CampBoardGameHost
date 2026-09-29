@@ -1,7 +1,11 @@
 # DLB-5 Staged First-Night Dependency Planner Audit — 2026-09-29
 
-> Status: **IMPLEMENTATION AUDIT / DLB-5 AUTHORITY**
-> Baseline: `main@e83b413a1583c8d2a9cdef8126f2401cd610e093`
+> Status: **CURRENT DLB-5 IMPLEMENTATION / CLOSEOUT AUTHORITY**
+> Baseline at audit creation: `main@e83b413a1583c8d2a9cdef8126f2401cd610e093`
+> Last synchronized: 2026-09-30 Australia/Sydney
+> Current Draft PR: **#183 — `DLB-5: stage first-night dependency barriers`**
+> Latest validated executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 / R2 #3331 GREEN
+> Current status: **DLB-5.1 COMPLETE; DLB-5.2 COMPLETE; DLB-5.3 COMPLETE; DLB-5.5 COMPLETE; DLB-5.4 NEXT / final closeout gate**
 > Scope: latest-safe commitment barriers for Trouble Brewing first-night setup facts. No Beginner Drunk-policy cutover, no DLB-6 retirement, no broad App/Host decomposition.
 
 ## 1. Canonical rule
@@ -12,11 +16,11 @@ DLB-5 follows one rule:
 
 This is a commitment-lifecycle rule, not a recommendation-policy rewrite.
 
-## 2. Current production ownership and defects
+## 2. Baseline production ownership and defects addressed by DLB-5
 
 ### 2.1 Early setup auto-apply is the primary defect
 
-Current `CampBoardGameHostApp.onApplyRecommendation` immediately copies two setup-plan decisions into runtime state as soon as the setup recommendation becomes Ready:
+At the audit baseline, `CampBoardGameHostApp.onApplyRecommendation` immediately copied two setup-plan decisions into runtime state as soon as the setup recommendation became Ready:
 
 - `StorytellerDecision.RedHerring` -> `clocktowerRedHerring`;
 - `StorytellerDecision.DemonBluffs` -> `clocktowerRecommendedDemonBluffRoleNames`.
@@ -40,7 +44,7 @@ Current presentation has already separated legality and rendering reasonably wel
 - `demonBluffRoleNamesForPresentation` / `resolveDemonBluffPresentation` own presentation resolution;
 - the first actual observer is the first-night Demon-info interaction.
 
-The defect is that AUTO currently requires an already-applied `clocktowerRecommendedDemonBluffRoleNames`, so setup recommendation readiness commits the value too early.
+At the audit baseline, AUTO required an already-applied `clocktowerRecommendedDemonBluffRoleNames`, so setup recommendation readiness committed the value too early. DLB-5.3 removes that early commitment.
 
 Target:
 
@@ -57,7 +61,7 @@ Experienced/manual presentation may continue to expose the current recommendatio
 
 ### 2.3 Red Herring
 
-Current `FortuneTellerInteractionHandler` inserts a Storyteller setup interaction directly before the Fortune Teller role interaction.
+At the audit baseline, `FortuneTellerInteractionHandler` inserted a Storyteller setup interaction directly before the Fortune Teller role interaction; DLB-5.2 now reorders the commit interaction to the typed earliest-safe barrier.
 
 That is correct only when no earlier interaction can observe the Red Herring fact.
 
@@ -150,7 +154,7 @@ DLB-5 should add regression coverage where necessary, not create a parallel stag
 
 ## 7. Implementation slices
 
-### DLB-5.1 — typed dependency planner
+### DLB-5.1 — typed dependency planner — COMPLETE
 
 Add the pure semantic contract and planner only.
 
@@ -164,7 +168,7 @@ Acceptance:
 
 This is a durable new contract and should use RED/GREEN.
 
-### DLB-5.2 — Red Herring production cutover
+### DLB-5.2 — Red Herring production cutover — COMPLETE
 
 - stop AUTO setup-plan application from committing Red Herring;
 - project current effective Grimoire observation capability into the dependency planner;
@@ -175,7 +179,7 @@ This is a durable new contract and should use RED/GREEN.
 
 Acceptance includes Spy-before-Fortune-Teller and poisoned-Spy cases.
 
-### DLB-5.3 — Demon bluff production cutover
+### DLB-5.3 — Demon bluff production cutover — COMPLETE
 
 - stop AUTO setup-plan application from committing Demon bluffs;
 - at Demon-info barrier, resolve/select the current recommended legal triple;
@@ -183,7 +187,7 @@ Acceptance includes Spy-before-Fortune-Teller and poisoned-Spy cases.
 - presentation consumes the committed triple;
 - fail closed if recommendation is pending/invalid rather than inventing a triple.
 
-### DLB-5.4 — first-night information / poison convergence audit
+### DLB-5.4 — first-night information / poison convergence audit — NEXT
 
 No rewrite by default.
 
@@ -194,7 +198,7 @@ No rewrite by default.
 
 Only add production changes if the characterization exposes a real gap.
 
-### DLB-5.5 — cleanup within DLB-5 scope
+### DLB-5.5 — cleanup within DLB-5 scope — COMPLETE
 
 After 5.2/5.3 production cutover:
 
@@ -231,8 +235,18 @@ DLB-5 must not:
 - add old Recovery compatibility;
 - perform DLB-6 retirement early.
 
-## 10. Immediate next step
+## 10. Current implementation record and immediate next step
 
-Start DLB-5.1 tests-first on the pure dependency planner.
+Current PR #183 implementation sequence:
 
-The first production cutover after that should be Red Herring, because it has the strongest correctness requirement: its current Fortune-Teller-adjacent commitment is too late when an effective Grimoire observer acts earlier.
+- `1893b44688596540ac3084e3c4109d904019979a` — DLB-5.1 dependency planner GREEN;
+- `c0f79e2bbf809f99d514a1f002b05e303f543781` / `4eb15fab46f208dfbe756cb4f805b1e1bcfb292a` — DLB-5.2 capability projection and production ordering;
+- `ae0eadd66398bc5e6210616720219f0cd7a0a80b` — DLB-5.2C Red Herring barrier commit GREEN;
+- `bde21c264fa8430be2f24f7a54c4bc83fdf6524e` — DLB-5.3 Demon-bluff barrier commit GREEN;
+- `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5` — DLB-5.5 obsolete setup auto-apply cleanup; CI #3600 / R2 #3331 GREEN.
+
+**Immediate next step: DLB-5.4 only.**
+
+Audit the existing Poisoner / first-night information convergence path against the four acceptance statements in §7. Prefer existing typed lifecycle tests and producer/consumer evidence. Do not create a parallel cache/planner and do not modify production unless a concrete behavioral gap is demonstrated.
+
+If DLB-5.4 confirms the current lifecycle with no production gap, record that conclusion here, synchronize roadmap/handoff, perform final PR #183 scope/review/CI/R2 audit, then mark ready and merge under the standing authorization.

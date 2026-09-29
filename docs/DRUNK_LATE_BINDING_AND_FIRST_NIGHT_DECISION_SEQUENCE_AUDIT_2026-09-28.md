@@ -1,6 +1,6 @@
 # Drunk Late-Binding and First-Night Decision Sequencing Audit — 2026-09-28
 
-> Status: **ARCHITECTURE AUDIT / IMPLEMENTATION PLAN**
+> Status: **HISTORICAL SOURCE ARCHITECTURE AUDIT** — implementation authority moved to `DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` and the current DLB slice audit.
 > Baseline: `main@325a47f3597b61788091ef91d9d41674f7e25d91`
 > Audit branch: `codex/drunk-late-binding-sequencing-audit`
 > Production code changed: **none**

@@ -1,10 +1,10 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-09-29 Australia/Sydney  
-> Current baseline: live `main` — query exact HEAD at session start  
-> Last completed validation checkpoint: **DLB-4A Experienced Drunk selection UX — `c85448831e73c82868e118c7f47a0ed889267c0c`; CI #3586 / R2 #3318 GREEN**  
-> Documentation convergence: **query live branch/PR state; do not hard-code the temporary docs branch after merge**  
-> Product next gate: **DLB-5 staged first-night dependency planner / latest-safe commitment barriers; Beginner automatic Drunk-selection authority remains blocked behind the later cutover gate**
+> Updated: 2026-09-30 Australia/Sydney  
+> Current baseline: live `main` plus active DLB branch — query exact HEAD/PR state at session start  
+> Last completed validation checkpoint: **DLB-5.1/5.2/5.3/5.5 implementation checkpoint — `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 / R2 #3331 GREEN**  
+> Active PR: **#183 — `DLB-5: stage first-night dependency barriers` — Draft / mergeable at the last check; do not treat as complete until DLB-5.4 closes**  
+> Product next gate: **DLB-5.4 first-night information / poison convergence audit; Beginner automatic Drunk-selection authority remains blocked behind the later cutover gate**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -16,14 +16,9 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
 6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
-7. `docs/DRUNK_LATE_BINDING_AND_FIRST_NIGHT_DECISION_SEQUENCE_AUDIT_2026-09-28.md` — source architecture audit
-8. `docs/APP_HOST_DECOMPOSITION_PLAN_AUDIT_2026-09-28.md` — decomposition guardrail audit
-9. `docs/CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md` for the completed R0–R6 Recovery cleanup contract / acceptance record
-10. `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
-11. `docs/archive/checkpoints/sde/SDE_PRE_RHE_REPOSITORY_CLEANUP_CHECKPOINT_2026-09-27.md`
-12. `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
+7. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — current DLB-5 closeout authority
 
-Only read older SDE slice audits when a concrete ownership/history question requires them.
+Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
 ## 2. Startup rule
 
@@ -38,7 +33,8 @@ Requirements:
 - preserve the current working tree;
 - do not reset/discard unrelated work;
 - treat merged PR #157 and its historical continuation branch as completed evidence, not as the current branch;
-- DLB-3A is accepted in PR #172 and may merge under standing authorization; DLB-3B must start from the then-live `main`; C1D historical replay is accepted, but fixed-Drunk misinformation evaluators must still not be converted into a seat-selection score without the new explicit evidence-backed consequence contract;
+- treat DLB-0 through DLB-4A as completed/accepted history; do not reopen their implementation contracts while closing DLB-5;
+- fixed-Drunk misinformation evaluators must still not be converted into a Drunk seat-selection score without the explicit evidence-backed consequence/selection contract;
 - treat merged PR #165 and `codex/current-only-recovery-cleanup` as completed historical maintenance, not the active development branch;
 - completed, fully accepted, mergeable PRs may be marked ready and merged directly under the standing 2026-09-29 authorization; rebase, force-push, destructive history changes, scope broadening, or merging incomplete/failing work still require explicit user authorization.
 
@@ -63,7 +59,12 @@ DLB-3A shadow envelope + DecisionTrace            COMPLETE / ACCEPTED
 DLB-3B setup-level consequence bridge              COMPLETE / ACCEPTED
 DLB-4 canonical Drunk commit before reveal         COMPLETE / ACCEPTED
 DLB-4A Experienced assisted Drunk selection        COMPLETE / ACCEPTED
-DLB-5 staged first-night dependency planner        NEXT
+DLB-5.1 typed dependency planner                    COMPLETE / GREEN
+DLB-5.2 Red Herring production cutover             COMPLETE / GREEN
+DLB-5.3 Demon bluff production cutover             COMPLETE / GREEN
+DLB-5.5 obsolete setup auto-apply cleanup          COMPLETE / GREEN
+DLB-5.4 information / poison convergence audit     NEXT
+DLB-5 overall                                      IN PROGRESS / NOT YET MERGED
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -133,6 +134,8 @@ DLB-4 accepted executable checkpoint: `5606371c68b97beb01418ede2bb2c19db7e69053`
 
 DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c`; CI #3586 and R2 #3318 GREEN. Experienced Trouble Brewing Drunk setups now pause after shown-seat preparation and before canonical commit, expose the exact rules-legal Townsfolk candidate domain, and resume through the shared DLB-4 commit only after explicit confirmation. Pending selection is memory-only and backing out returns to setup without Recovery persistence. No Drunk recommendation is presented because no production ordering policy is authorized. Beginner retains only the DLB-4 compatibility-confirmed candidate as a transitional playable baseline; automatic authority remains behind the explicit cutover gate.
 
+DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on Draft PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, and DLB-5.5 removal of obsolete setup auto-apply wiring. DLB-5.4 remains the sole closeout gate: audit the existing Poisoner / first-night information lifecycle and only change production if the characterization exposes a real gap.
+
 The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
 
 Authority:
@@ -151,7 +154,9 @@ DLB-0 typed intermediate setup COMPLETE
 -> DLB-3B3 shadow replay / versioned policy experiment COMPLETE
 -> DLB-4 canonical Drunk commit before reveal COMPLETE
 -> DLB-4A Experienced assisted UI COMPLETE
--> DLB-5 latest-safe dependency barriers NEXT
+-> DLB-5.1 / 5.2 / 5.3 / 5.5 COMPLETE / GREEN
+-> DLB-5.4 first-night information / poison convergence audit NEXT
+-> DLB-5 final acceptance + PR #183 merge after 5.4
 -> cutover gate before Beginner automatic authority
 -> DLB-6 old-contract retirement
 -> DLB-7 acceptance
@@ -166,7 +171,7 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 Recovery R0–R6 stays complete. R7 remains separate.
 
-EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cases and C1D G10 downstream replay is accepted. DLB-3B1 is accepted at `84dcf50d7538fad477be692e027c232b9884618a`; DLB-3B2 at `cc6f3972ebc6128cd88941f60242eef0d147c813`; DLB-3B3 at `1a5403def6e4075b4d45b31e58db8bf3c356a9d4` with CI #3566 / R2 #3301 GREEN. DLB-3 is complete. DLB-4 canonical Drunk commit is accepted at `5606371c68b97beb01418ede2bb2c19db7e69053` with CI #3580 / R2 #3313 GREEN. DLB-4A Experienced assisted Drunk selection is accepted at `c85448831e73c82868e118c7f47a0ed889267c0c` with CI #3586 / R2 #3318 GREEN; DLB-5 is next. Missing longitudinal capability and ordering evidence remain explicit cutover-gate blockers for Beginner automatic authority. The existing C5/V2 E3/E4 gate remains separate and still blocks `BEGINNER_CONSERVATIVE_V2`.
+EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cases and C1D G10 downstream replay is accepted. DLB-3 is complete through DLB-3B3; DLB-4 and DLB-4A are accepted. DLB-5 has reached the GREEN implementation checkpoint `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5` for 5.1/5.2/5.3/5.5; 5.4 convergence audit remains next before final DLB-5 acceptance. Missing longitudinal capability and ordering evidence remain explicit cutover-gate blockers for Beginner automatic authority. The existing C5/V2 E3/E4 gate remains separate and still blocks `BEGINNER_CONSERVATIVE_V2`.
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate preference/rejection semantics. DLB-3 is shadow-first; Beginner automatic Drunk authority requires the explicit cutover gate in the DLB route.
 
