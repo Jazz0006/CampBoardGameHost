@@ -215,3 +215,72 @@ Docs:
 After this envelope is accepted, the next DLB-3B slice may decide which envelope facts are sufficiently evidence-qualified to project into a dedicated Drunk-assignment feature surface.
 
 That later step must remain separately versioned from frozen `BEGINNER_CONSERVATIVE_V1`.
+
+
+## 11. Test-first evidence
+
+### RED
+
+Test-first contract head:
+
+`2d0f305ee8f33fdb9fb6bafb1181c5bee035af95`
+
+CI #3539 reached Android unit-test compilation and failed exactly on the not-yet-implemented DLB-3B contract:
+
+- unresolved `DrunkSetupConsequenceProjector`;
+- unresolved consequence-factor fields;
+- unresolved `DrunkSetupShadowCandidate.consequenceEnvelope`.
+
+R2 #3278 was GREEN.
+
+No unrelated production or test failure was observed.
+
+### GREEN / T1
+
+Production GREEN head:
+
+`641e1077bf1bfb31a7d4a9e3aed66cda8ed2c4ec`
+
+CI #3541:
+
+- Android FAST unit tests: GREEN;
+- aggregate CI gate: GREEN.
+
+R2 #3280: GREEN.
+
+Exact executable scope is limited to:
+
+- new `DrunkSetupConsequenceEnvelope.kt`;
+- narrow attachment in `DrunkSetupShadowAdapter.kt`;
+- owning `DrunkSetupConsequenceEnvelopeTest.kt`.
+
+The existing DLB-3A `DecisionFeatures`, frozen V1 policy and selector remain unchanged.
+
+## 12. Exact diff / fan-out audit
+
+The PR executable diff has one new descriptive projector and one existing production consumer.
+
+Production producer/consumer map:
+
+```text
+DLB-2 hypothetical projector
++ existing first-night ecology auditor
+        ↓
+DrunkSetupConsequenceProjector
+        ↓
+DrunkSetupShadowCandidate.consequenceEnvelope
+```
+
+No other production constructor or consumer owns this new envelope.
+
+The projector:
+
+- reuses existing candidate/hypothetical/ecology authorities;
+- does not regenerate legal Drunk candidates;
+- does not regenerate legal information-output domains;
+- does not read future setup/history;
+- does not write canonical state;
+- does not map into `DecisionFeatures`.
+
+T4 full-CI acceptance is requested for this stable setup/recommendation contract.
+
