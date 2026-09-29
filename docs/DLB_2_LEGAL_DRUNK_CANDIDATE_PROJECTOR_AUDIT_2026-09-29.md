@@ -194,3 +194,23 @@ No existing App/Host/SDE/session/persistence/runtime production file changed.
 ### Acceptance escalation
 
 The next documentation-only commit carries `[full-ci]` to escalate the accepted DLB-2 executable tree above to full T4 validation. It introduces no additional production behavior.
+
+
+## 10. T4 acceptance result
+
+Accepted DLB-2 checkpoint:
+
+`73de263327d7530e2d6ac128753aca2fd8766766`
+
+Exact-head remote acceptance:
+
+- CI #3521 / run `36513397318`: GREEN;
+- Android: `./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks` — GREEN, `BUILD SUCCESSFUL`;
+- ASP contract tests — GREEN;
+- Real Clingo cross-validation — GREEN;
+- aggregate CI gate — GREEN;
+- R2 #3264 / run `36513397312` — GREEN.
+
+DLB-2 is COMPLETE at this checkpoint. The rules/setup layer now exposes every and only dealt Townsfolk seat as a legal Drunk candidate and can project each candidate into a pristine immutable hypothetical `GameState` without consulting the DLB-1 compatibility bridge or mutating canonical session/setup state.
+
+The accepted executable tree remains additive: one DLB-2 production file plus its owning typed test. Later documentation-only closure commits must not be relabelled as a different executable acceptance tree.
