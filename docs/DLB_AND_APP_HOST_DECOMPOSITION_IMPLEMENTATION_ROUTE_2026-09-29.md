@@ -49,6 +49,8 @@ Therefore:
 
 The target is smaller **change context radius**, not a line-count campaign.
 
+The long-horizon ownership target is now recorded in `CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`: Setup Generation, the canonical Game Session/Game Engine, and the read-only Storyteller Recommendation Engine are separate responsibilities connected by typed contracts. This does **not** expand DLB scope. DLB-5H1 remains presentation-only; DLB-6 and the later H2 re-audit should retire or narrow stale contracts in the direction of that target without creating a second session authority or a God recommendation context.
+
 ## 3. Architecture pre-flight
 
 Architecture pre-flight:
