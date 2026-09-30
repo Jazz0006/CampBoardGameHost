@@ -209,19 +209,20 @@ After 5.2/5.3 production cutover:
 
 Do not perform DLB-6 old-contract retirement here.
 
-## 8. H1 presentation extraction gate
+## 8. H1 presentation extraction gate — COMPLETE / ACCEPTED
 
-DLB-5H1 remains deferred until the above lifecycle exists in production.
+DLB-5H1 completed at executable checkpoint `47136b7d03d72452b70bf3defa847578b30fb011`; CI #3609 / R2 #3337 GREEN with Android FAST executed successfully.
 
-Only then may first-night minion/demon presentation be extracted if it has a narrow seam:
+The narrow seam was confirmed and extracted as `ClocktowerFirstNightEvilInformationPresentation`:
 
 ```text
-committed presentation facts
-+ existing DemonBluffPresentationResolution
--> localized content
+already-projected evil-team presentation facts
++ existing committed DemonBluffPresentationResolution
++ localization/language
+-> prepared Minion/Demon ClocktowerNightStepUi presentation steps
 ```
 
-That module must not choose candidates, own commitment timing, mutate session state, or own setup legality.
+The extracted owner does not choose candidates, own commitment timing, mutate session state, own setup legality, or reconstruct canonical truth. The detailed ownership/result record is `docs/DLB_5H1_FIRST_NIGHT_EVIL_INFORMATION_PRESENTATION_BOUNDARY_AUDIT_2026-09-30.md`.
 
 ## 9. Explicit non-goals
 
@@ -252,4 +253,6 @@ The existing Poisoner / first-night information lifecycle satisfies the four clo
 
 **Final acceptance:** exact head `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` passed CI #3603 and R2 #3334 GREEN. Android `testFull + assembleDebug`, ASP contracts, Real Clingo cross-validation, CI gate and R2 all passed; final scope audit found only DLB-5 production/tests/docs, with zero unresolved review threads. PR #183 was then marked ready and squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
 
-**Next gate:** DLB-5H1 narrow first-night evil-information presentation boundary audit. Extract presentation only if the seam is cohesive and remains presentation-only; do not move candidate choice, commitment timing, legality or session mutation into the presentation module.
+**DLB-5H1 result:** COMPLETE / ACCEPTED at `47136b7d03d72452b70bf3defa847578b30fb011`; CI #3609 / R2 #3337 GREEN. The presentation seam remained narrow and presentation-only.
+
+**Next gate:** Drunk-assignment shadow/evidence production-cutover gate audit. Beginner automatic Drunk authority remains prohibited unless the explicit cutover conditions in the current DLB route are all satisfied.

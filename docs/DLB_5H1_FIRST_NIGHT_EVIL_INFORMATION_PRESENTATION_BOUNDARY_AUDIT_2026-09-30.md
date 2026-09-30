@@ -1,7 +1,8 @@
 # DLB-5H1 First-Night Evil-Information Presentation Boundary Audit — 2026-09-30
 
-> Status: **IMPLEMENTATION AUDIT / H1 GO**
+> Status: **COMPLETE / ACCEPTED**
 > Baseline: `main@f56677ce4e92898504ba8039ea2766c9bdec336e`
+> Accepted executable checkpoint: `47136b7d03d72452b70bf3defa847578b30fb011`; CI #3609 / R2 #3337 GREEN; Android FAST executed successfully
 > Scope: first-night Minion/Demon presentation extraction only. No recommendation-policy change, no setup legality change, no dependency-timing change, no session-state ownership change.
 
 ## 1. Decision
@@ -108,11 +109,19 @@ DLB-5H1 must not:
 - broaden into H2 or canonical-session projection cleanup;
 - perform DLB-6 retirement.
 
-## 7. Implementation plan
+## 7. Implementation result
 
-1. add the narrow first-night evil-information presentation owner and owning typed test;
-2. replace the duplicated Minion/Demon localized-content block in `ClocktowerHostScreen` with the extracted result;
-3. keep materializer identities/order and all upstream commit/legality code untouched;
-4. re-run producer/consumer search to verify no second presentation builder remains;
-5. validate focused tests, diff/scope, CI/R2;
-6. if behavior remains identical, mark DLB-5H1 COMPLETE and advance to the shadow/evidence cutover gate recorded by the current DLB route.
+- Added `ClocktowerFirstNightEvilInformationPresentation` as the single presentation-only owner for localized Minion/Demon first-night step assembly.
+- `ClocktowerHostScreen` now supplies only already-projected actors/seat labels, small-game eligibility and the existing `DemonBluffPresentationResolution`; its materializer identities and flow ordering are unchanged.
+- Retired `demonBluffRoleNamesForPresentation(...)`; presentation consumes committed `recommendedDemonBluffRoleNames` directly while `setupPlans/style` remain only on `demonBluffRoleNamesToCommitAtBarrier`.
+- Added `ClocktowerFirstNightEvilInformationPresentationTest` for normal, unavailable-bluff, small-game and no-Minion presentation paths.
+- Retired two old tests that protected only the obsolete transitional adapter signature. Commit-at-barrier legality and Ready/Pending/Invalid resolution coverage remain.
+- Producer/consumer search after cutover found one production first-night evil-information builder and no residual Host inline copy assembly.
+- Final changed-file audit stayed inside H1 presentation/Host/tests/docs scope. No rules, session, dependency planner, Recovery, SDE policy or resource file changed.
+- Exact executable checkpoint `47136b7d03d72452b70bf3defa847578b30fb011` passed CI #3609 and R2 #3337; Android FAST executed successfully, CI gate passed, ASP/Real Clingo were correctly skipped by routing.
+
+## 8. Next gate
+
+DLB-5H1 is COMPLETE / ACCEPTED.
+
+Next is the **Drunk-assignment shadow/evidence production-cutover gate audit**. Beginner automatic Drunk authority remains prohibited unless the explicit cutover conditions in the current DLB route are all satisfied.

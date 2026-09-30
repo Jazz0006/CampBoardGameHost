@@ -219,10 +219,10 @@ Remaining convergence work is primarily boundary cleanup rather than a replaceme
 
 This target should be reached incrementally at natural feature/cleanup boundaries.
 
-Current DLB execution order is unchanged:
+Current DLB convergence order is:
 
-- DLB-5H1 remains the immediate narrow presentation-boundary audit;
-- Beginner automatic Drunk authority remains behind its evidence/cutover gate;
+- DLB-5H1 is COMPLETE / ACCEPTED and preserved this ownership model by extracting presentation only;
+- the Drunk-assignment shadow/evidence cutover gate audit is now immediate, and Beginner automatic Drunk authority remains prohibited until that gate passes;
 - DLB-6 may retire old setup/recommendation contracts in a direction consistent with this document;
 - H2 should be re-audited against this target after the relevant DLB boundaries stabilize.
 
