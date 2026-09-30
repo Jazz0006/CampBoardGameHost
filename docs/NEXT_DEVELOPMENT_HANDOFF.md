@@ -2,11 +2,11 @@
 
 > Updated: 2026-09-30 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed validation checkpoint: **DLB-5H1 first-night evil-information presentation extraction — `47136b7d03d72452b70bf3defa847578b30fb011`; CI #3609 / R2 #3337 GREEN; Android FAST executed successfully**  
-> Latest merged checkpoint: **PR #186 — `DLB-5H1: extract first-night evil information presentation` — squash merge `19fc0c03e9ebf8444d918d9fa2289985e04007f3`**  
+> Last completed validation checkpoint: **TBGS-0 canonical TB snapshot contract — `f367c0d3ec23ebf452c924ff7c0921cd978a800f`; CI #3618 / R2 #3343 GREEN; Android FAST + Real Clingo GREEN**  
+> Latest merged checkpoint: **PR #188 — `Docs: adopt TB canonical snapshot integration route` — squash merge `9ff708140ba16dce3a7b28ea6a256beeffc5adba`**  
 > Current cutover verdict: **Drunk-assignment production cutover gate COMPLETE / NOT PASSED — ordering evidence + production-capable versioned policy missing**  
 > Capability contract: **policy-neutral Drunk recommendation context boundary COMPLETE — no production DTO or ranking semantics added**  
-> Product next work: **TBGS-0 canonical TB snapshot contract, then TBGS-1 Drunk snapshot vertical slice; EvidenceLab candidate-comparison/rejection evidence continues in parallel. Keep Beginner compatibility fallback and do not start DLB-6 retirement yet.**
+> Product next work: **TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability. EvidenceLab candidate-comparison/rejection evidence continues in parallel. Keep Beginner compatibility fallback and do not start DLB-6 retirement yet.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -73,8 +73,8 @@ DLB-5.5 obsolete setup auto-apply cleanup          COMPLETE / GREEN
 DLB-5 overall                                      COMPLETE / ACCEPTED
 DLB-5H1 presentation extraction                    COMPLETE / ACCEPTED
 Drunk-assignment cutover gate audit                COMPLETE / NOT PASSED
-TBGS-0 canonical TB snapshot contract              NEXT
-TBGS-1 Drunk snapshot vertical slice / interop     NEXT AFTER TBGS-0
+TBGS-0 canonical TB snapshot contract              COMPLETE / ACCEPTED
+TBGS-1 Drunk snapshot vertical slice / interop     NEXT
 Beginner automatic Drunk authority                 BLOCKED ON ORDERING EVIDENCE + VERSIONED POLICY
 DLB-6 old-contract retirement                      BLOCKED WHILE COMPATIBILITY FALLBACK IS LIVE
 TBGS-2 runtime recommendation projection migration DEFERRED / POST DLB-6/7
@@ -174,8 +174,8 @@ DLB-0 typed intermediate setup COMPLETE
 -> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED
 -> Drunk-assignment production cutover gate audit COMPLETE / NOT PASSED
 -> Drunk recommendation-context capability contract COMPLETE / POLICY-NEUTRAL
--> TBGS-0 canonical TB snapshot contract NEXT
--> TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability
+-> TBGS-0 canonical TB snapshot contract COMPLETE / ACCEPTED; `f367c0d3ec23ebf452c924ff7c0921cd978a800f`, CI #3618 / R2 #3343 GREEN
+-> TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability NEXT
 || EvidenceLab targeted candidate-comparison / rejection evidence continues in parallel
 -> production-capable versioned Drunk policy only after qualifying evidence, consuming snapshot + typed request
 -> re-run cutover gate
