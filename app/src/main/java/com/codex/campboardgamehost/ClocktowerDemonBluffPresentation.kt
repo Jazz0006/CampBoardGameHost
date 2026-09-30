@@ -16,23 +16,6 @@ internal sealed interface DemonBluffPresentationResolution {
     ) : DemonBluffPresentationResolution
 }
 
-/**
- * Returns the exact committed Demon bluff state that player presentation is allowed to consume.
- *
- * Setup recommendations may be evaluated before the Demon-info barrier, but they are not
- * player-visible presentation state until the selected legal triple has been committed.
- *
- * The unused recommendation arguments are retained only as a narrow transitional call contract
- * until the DLB-5 cleanup slice removes the old presentation shape.
- */
-@Suppress("UNUSED_PARAMETER")
-internal fun demonBluffRoleNamesForPresentation(
-    automaticStorytellerInfo: Boolean,
-    appliedRoleNames: List<String>,
-    setupPlans: List<RecommendationPlan>,
-    storytellerStyle: RecommendationStyle,
-): List<String>? = appliedRoleNames.takeIf { it.isNotEmpty() }
-
 internal fun demonBluffRoleNamesToCommitAtBarrier(
     isDemonInfoStep: Boolean,
     isRealAction: Boolean,

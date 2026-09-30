@@ -30,6 +30,7 @@ DLB-4 canonical Drunk commit before reveal                 COMPLETE / ACCEPTED
 DLB-4A Experienced assisted Drunk selection                COMPLETE / ACCEPTED
 DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 staged dependency work    COMPLETE
 DLB-5 overall                                               COMPLETE / ACCEPTED
+DLB-5H1 first-night evil-information presentation extraction COMPLETE / ACCEPTED
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
@@ -196,9 +197,9 @@ query live main / workspace
 -> DLB-5.4 first-night information / poison convergence audit COMPLETE / NO PRODUCTION GAP
 -> DLB-5.5 obsolete setup auto-apply cleanup COMPLETE / GREEN
 -> DLB-5 final acceptance + PR #183 merge COMPLETE / ACCEPTED
--> DLB-5H1 narrow presentation-extraction boundary audit NEXT; extract only if the seam remains cohesive
--> shadow/evidence cutover gate
--> Beginner automatic Drunk authority
+-> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED; executable checkpoint `47136b7d03d72452b70bf3defa847578b30fb011`, CI #3609 / R2 #3337 GREEN
+-> Drunk-assignment shadow/evidence cutover gate audit NEXT
+-> Beginner automatic Drunk authority only if the cutover gate passes
 -> DLB-6 old-contract retirement
 -> DLB-7 acceptance
 -> re-audit H2 / A3

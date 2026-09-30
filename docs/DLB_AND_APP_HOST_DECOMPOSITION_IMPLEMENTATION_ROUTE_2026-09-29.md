@@ -163,17 +163,24 @@ The Red Herring rule remains a generic **observation/dependency barrier**, not a
 
 DLB-5 is COMPLETE / ACCEPTED after 5.4 closed with no production gap and final exact-head T4/R2 acceptance passed.
 
-### DLB-5H1 — first-night evil-information presentation extraction
+### DLB-5H1 — first-night evil-information presentation extraction — COMPLETE / ACCEPTED
 
-DLB-5H1 is now the next DLB architecture gate. First perform a narrow boundary audit; extract presentation only if the boundary remains cohesive and narrow:
+Accepted executable checkpoint: `47136b7d03d72452b70bf3defa847578b30fb011`; CI #3609 / R2 #3337 GREEN with Android FAST executed successfully.
+
+The boundary audit confirmed a narrow cohesive seam and production was cut over without behavior changes:
 
 ```text
-committed presentation facts
-+ existing bluff presentation resolution
--> prepared localized minion/demon content
+already-projected evil-team presentation facts
++ existing committed bluff presentation resolution
++ localization/language
+-> prepared Minion/Demon ClocktowerNightStepUi presentation steps
 ```
 
-Presentation must not choose bluff candidates, mutate session state, own setup legality, or own dependency timing.
+`ClocktowerFirstNightEvilInformationPresentation` now owns localized Minion/Demon presentation assembly. `ClocktowerHostScreen` still owns upstream actor/fact projection and the materializer registry; dependency ordering, setup legality, recommendation selection, Demon-bluff commit timing and canonical session mutation remain in their prior owners.
+
+H1 also retires the transitional presentation adapter that accepted ignored setup-plan/style arguments. Player presentation now consumes the committed Demon-bluff role-name state directly, while setup plans/style remain only on the separate commit-at-barrier path.
+
+Presentation still must not choose bluff candidates, mutate session state, own setup legality, or own dependency timing.
 
 ### DLB-6 — retire old contract
 
@@ -209,7 +216,7 @@ Independent decomposition items remain separate from the DLB behavior campaign:
 
 - **A1 App preferences storage:** safe independent maintenance; may run before or after DLB, but is not a prerequisite.
 - **A2 archive storage:** separate maintenance PR; preserve archive-specific durability/order/capacity semantics.
-- **H1:** deferred into DLB-5H1 because its lifecycle boundary changes under DLB.
+- **H1:** COMPLETE / ACCEPTED through DLB-5H1; localized first-night evil-information presentation is extracted without moving dependency, legality, recommendation or session ownership.
 - **H2 dynamic recommendation-state projection:** re-audit after DLB-2/DLB-5. Do not conflate it with the Drunk hypothetical projector.
 - **A3 presentation catalog:** defer until DLB setup/presentation fan-out stabilizes.
 - **R3 transaction extraction:** remains NO-GO.
@@ -293,9 +300,9 @@ document authority convergence (this route)
 -> DLB-4A experienced assisted UX COMPLETE
 -> DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 COMPLETE
 -> DLB-5 final acceptance + PR #183 merge COMPLETE / ACCEPTED
--> DLB-5H1 narrow presentation-extraction boundary audit NEXT; extract only if cohesive
--> shadow/evidence cutover gate
--> Beginner automatic Drunk authority
+-> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED
+-> Drunk-assignment shadow/evidence cutover gate audit NEXT
+-> Beginner automatic Drunk authority only if that gate passes
 -> DLB-6 old-contract retirement
 -> DLB-7 acceptance
 -> re-audit H2 / A3

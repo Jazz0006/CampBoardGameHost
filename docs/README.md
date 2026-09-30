@@ -11,9 +11,9 @@
 4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
 6. [`DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`](DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md) — **当前 Drunk late-binding / staged first-night / decomposition 实施权威**
-7. [`DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md`](DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md) — **当前 DLB-5 closeout 权威；目前 5.4 NEXT**
+7. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / canonical Game Engine / read-only Recommendation 的长期 ownership guardrail；当前 cutover gate、DLB-6、H2 re-audit 均不得偏离此边界**
 
-其余 DLB source audit、decomposition audit、Recovery audit、SDE policy/evidence 文档和完成 checkpoint 均改为 **按问题读取**，不再属于每个新开发会话的默认启动集合。
+DLB-5 与 DLB-5H1 已完成；其 completion audit、DLB source audit、decomposition audit、Recovery audit、SDE policy/evidence 文档和完成 checkpoint 均改为 **按问题读取**，不再属于每个新开发会话的默认启动集合。
 
 随后检查 live 分支、工作区和差异；远端验收时独立查询 exact-head PR / checks。不要从 memory、Git history、archive、已完成 slice audit 或旧 PR 的 `NEXT / READY / COMPLETE` 推断当前状态。执行环境以 root `AGENTS.md` 和当前 workflow 为准：**GitHub Connector 默认负责日常 repository / PR / CI 工作；Mini MCP + Codex CLI 只作为需要完整本地上下文的大文件分析/执行补充。**
 

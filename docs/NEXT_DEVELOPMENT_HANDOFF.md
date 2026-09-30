@@ -2,9 +2,9 @@
 
 > Updated: 2026-09-30 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed validation checkpoint: **DLB-5 final exact-head T4 — `3fd1714ce2e18b969e5039bcf6a58f8775745b9d`; CI #3603 / R2 #3334 GREEN; Android `testFull + assembleDebug`, ASP and Real Clingo all GREEN**  
-> Merged checkpoint: **PR #183 — `DLB-5: stage first-night dependency barriers` — squash merge `6293a3bb94778338db61f5a1708a1d283d6e8b6f`**  
-> Product next gate: **DLB-5H1 narrow first-night evil-information presentation boundary audit; extract presentation only if the seam remains cohesive. Beginner automatic Drunk-selection authority remains blocked behind the later cutover gate**
+> Last completed validation checkpoint: **DLB-5H1 first-night evil-information presentation extraction — `47136b7d03d72452b70bf3defa847578b30fb011`; CI #3609 / R2 #3337 GREEN; Android FAST executed successfully**  
+> Previous merged checkpoint: **PR #183 — `DLB-5: stage first-night dependency barriers` — squash merge `6293a3bb94778338db61f5a1708a1d283d6e8b6f`**  
+> Product next gate: **Drunk-assignment shadow/evidence production-cutover gate audit. Do not grant Beginner automatic Drunk authority unless the explicit gate is satisfied.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -143,7 +143,7 @@ Authority:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-Architecture convergence guardrail: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` now records the intended separation of Setup Generation, canonical Game Session/Game Engine, and read-only Storyteller Recommendation. The immediate DLB-5H1 task remains narrow and unchanged. Do not turn H1 into a canonical-state rewrite; apply the target architecture when DLB-6 retires stale contracts and when H2 is re-audited.
+Architecture convergence guardrail: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` records the intended separation of Setup Generation, canonical Game Session/Game Engine, and read-only Storyteller Recommendation. DLB-5H1 followed that guardrail and is complete without canonical-state changes. Continue applying the target architecture at the shadow/evidence cutover gate, DLB-6 stale-contract retirement, and later H2 re-audit; do not broaden those slices into a rewrite.
 
 Immediate sequence:
 
@@ -159,8 +159,9 @@ DLB-0 typed intermediate setup COMPLETE
 -> DLB-4A Experienced assisted UI COMPLETE
 -> DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 COMPLETE
 -> DLB-5 final acceptance + PR #183 merge COMPLETE / ACCEPTED
--> DLB-5H1 narrow presentation-extraction boundary audit NEXT
--> cutover gate before Beginner automatic authority
+-> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED
+-> Drunk-assignment shadow/evidence cutover gate audit NEXT
+-> Beginner automatic authority only if that gate passes
 -> DLB-6 old-contract retirement
 -> DLB-7 acceptance
 ```
