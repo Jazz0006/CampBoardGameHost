@@ -1,6 +1,11 @@
 package com.codex.campboardgamehost.clocktower.setup
 
+import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
+import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
+import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import org.junit.Assert.assertEquals
@@ -60,6 +65,55 @@ class TroubleBrewingGameSnapshotProjectorTest {
             assertEquals(SnapshotField.Known(false), seat.poisoned)
         }
     }
+
+    @Test
+    fun `G10 committed projection resolves the selected Empath seat as known Drunk`() {
+        val snapshot = TroubleBrewingGameSnapshotProjector.fromCommitted(
+            gameId = "evidence:c1d:g10-game2",
+            committedSetup = g10Game2CommittedSetup(),
+        )
+
+        assertEquals(TroubleBrewingSnapshotStage.SETUP_COMMITTED, snapshot.position.stage)
+        assertEquals(SnapshotField.Known(true), snapshot.setupState.hasDrunk)
+        assertEquals(SnapshotField.Known(1), snapshot.setupState.drunkAssignmentSeat)
+
+        val seatOne = snapshot.grimoireSeats.single { it.seat == 1 }
+        assertEquals(SnapshotField.Known("empath"), seatOne.shownRoleId)
+        assertEquals(SnapshotField.Known("drunk"), seatOne.actualRoleId)
+
+        snapshot.grimoireSeats.drop(1).forEach { seat ->
+            assertEquals(seat.shownRoleId, seat.actualRoleId)
+        }
+    }
+
+    private fun g10Game2CommittedSetup(): CommittedClocktowerSetup =
+        CommittedClocktowerSetup(
+            script = ScriptId("trouble_brewing"),
+            setupSeed = 20_260_929L,
+            assignments = listOf(
+                committedSeat(1, actual = "drunk", shown = "empath"),
+                committedSeat(2, actual = "imp", shown = "imp"),
+                committedSeat(3, actual = "undertaker", shown = "undertaker"),
+                committedSeat(4, actual = "librarian", shown = "librarian"),
+                committedSeat(5, actual = "spy", shown = "spy"),
+                committedSeat(6, actual = "monk", shown = "monk"),
+                committedSeat(7, actual = "mayor", shown = "mayor"),
+                committedSeat(8, actual = "virgin", shown = "virgin"),
+                committedSeat(9, actual = "butler", shown = "butler"),
+            ),
+            provenance = SetupProvenance(
+                sourceKind = SetupSourceKind.GENERATED,
+                providerId = "evidence-replay",
+                candidateId = "g10-game2",
+            ),
+        )
+
+    private fun committedSeat(seat: Int, actual: String, shown: String): CommittedSetupSeat =
+        CommittedSetupSeat(
+            seat = seat,
+            actualRole = RoleId(actual),
+            shownRole = RoleId(shown),
+        )
 
     private fun g10Game2IntermediateSetup(): TroubleBrewingIntermediateSetup =
         TroubleBrewingIntermediateSetup(
