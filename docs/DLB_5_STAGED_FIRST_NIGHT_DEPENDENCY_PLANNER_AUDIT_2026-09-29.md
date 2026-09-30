@@ -255,4 +255,6 @@ The existing Poisoner / first-night information lifecycle satisfies the four clo
 
 **DLB-5H1 result:** COMPLETE / ACCEPTED at `47136b7d03d72452b70bf3defa847578b30fb011`; CI #3609 / R2 #3337 GREEN. The presentation seam remained narrow and presentation-only.
 
-**Next gate:** Drunk-assignment shadow/evidence production-cutover gate audit. Beginner automatic Drunk authority remains prohibited unless the explicit cutover conditions in the current DLB route are all satisfied.
+**Cutover gate result:** the first Drunk-assignment production-cutover audit is COMPLETE / NOT PASSED. Conditions 1–4 are satisfied; candidate-ordering evidence and a production-capable versioned selection contract are missing, so Beginner automatic authority remains prohibited. See `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md`.
+
+**Next work:** targeted recommendation-context capability + candidate-ordering evidence. Keep the Beginner compatibility fallback and do not begin DLB-6 retirement until replacement authority exists.

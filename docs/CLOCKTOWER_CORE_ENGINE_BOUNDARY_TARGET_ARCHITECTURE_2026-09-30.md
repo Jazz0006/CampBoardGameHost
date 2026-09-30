@@ -222,8 +222,10 @@ This target should be reached incrementally at natural feature/cleanup boundarie
 Current DLB convergence order is:
 
 - DLB-5H1 is COMPLETE / ACCEPTED and preserved this ownership model by extracting presentation only;
-- the Drunk-assignment shadow/evidence cutover gate audit is now immediate, and Beginner automatic Drunk authority remains prohibited until that gate passes;
-- DLB-6 may retire old setup/recommendation contracts in a direction consistent with this document;
+- the first Drunk-assignment production cutover audit is COMPLETE / NOT PASSED: legal/projection/replay/fallback structure is ready, but ordering evidence and a production-capable versioned policy are missing;
+- targeted recommendation-context capability and candidate-ordering evidence work is next; missing enrichment must remain explicit rather than becoming a neutral score;
+- Beginner automatic Drunk authority remains prohibited until a later cutover audit passes;
+- DLB-6 may retire old setup/recommendation contracts only after replacement selection/fallback authority exists;
 - H2 should be re-audited against this target after the relevant DLB boundaries stabilize.
 
 Do not start a new broad “rewrite GameState / rewrite Host / rewrite SDE” campaign solely because this document exists.
