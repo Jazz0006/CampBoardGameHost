@@ -11,10 +11,11 @@
 4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
 6. [`DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`](DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md) — **当前 Drunk late-binding / staged first-night / decomposition 实施权威**
-7. [`DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md`](DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md) — **当前 Drunk 自动选择 cutover verdict：NOT PASSED；ordering evidence / versioned production policy blocker authority**
-8. [`DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md`](DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md) — **policy-neutral required/enrichment/unavailable context boundary；evidence handoff 权威**
-9. [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md) — **TB-only 标准 Game Snapshot、Drunk vertical slice 与 EvidenceLab interoperability 当前实施路线**
-10. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / canonical Game Engine / read-only Recommendation 的长期 ownership guardrail；TBGS / DLB-6 / 后续 projection migration 均不得偏离此边界**
+7. [`DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md`](DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md) — **当前 Drunk 自动选择 cutover verdict：TBGS-1 已完成，架构/互操作 PASS；仍因 C3 VERIFIED ordering evidence + versioned production policy 而 NOT PASSED**
+8. [`DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md`](DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md) — **pre-TBGS-1 原始 gate audit / 历史 blocker 细节**
+9. [`DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md`](DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md) — **policy-neutral required/enrichment/unavailable context boundary；evidence handoff 权威**
+10. [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md) — **TB-only 标准 Game Snapshot / Drunk vertical slice；TBGS-0/1 已完成，TBGS-2 deferred**
+11. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / canonical Game Engine / read-only Recommendation 的长期 ownership guardrail；TBGS / DLB-6 / 后续 projection migration 均不得偏离此边界**
 
 DLB-5 与 DLB-5H1 已完成；其 completion audit、DLB source audit、decomposition audit、Recovery audit、SDE policy/evidence 文档和完成 checkpoint 均改为 **按问题读取**，不再属于每个新开发会话的默认启动集合。
 
@@ -40,7 +41,7 @@ SDE-3D calibrated policy freeze        3D0–3D1 + C4/SDE-3D2 COMPLETE / IF-D CO
 SDE-3E automatic production cutover    C5 BLOCKED ON QUALIFYING E3/E4 / PER-SURFACE GATES
 DLB Drunk late-binding / first-night     CURRENT IMPLEMENTATION ROUTE
 TBGS-0 canonical TB snapshot              COMPLETE / ACCEPTED
-TBGS-1 Drunk snapshot vertical slice      HOST SLICE ACCEPTED / EVIDENCELAB INTEROP NEXT
+TBGS-1 Drunk snapshot vertical slice      COMPLETE / ACCEPTED
 TBGS-2 runtime projection migration       DEFERRED / POST DLB-6/7
 bounded App/Host decomposition           GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 ~~~
@@ -52,7 +53,7 @@ bounded App/Host decomposition           GUARDRAIL / INDEPENDENT MAINTENANCE ONL
 - legality、consequence、selection policy 必须分层。
 - TB 当前统一读边界采用 `TroubleBrewingGameSnapshotV1`：它从 canonical setup/session/history 纯投影出来，供 Game/rules consumers、Recommendation Context Builder 与 EvidenceLab replay 共享语义；它不是第二个 mutable state owner。
 - Snapshot 必须区分 `KNOWN(value)` / `UNCOMMITTED` / `UNKNOWN` / `NOT_APPLICABLE`。尤其 Drunk assignment 前“尚未选择 Drunk”是 `UNCOMMITTED`，不能与 EvidenceLab “历史事实无法恢复”的 `UNKNOWN` 混为一谈。TBGS-0 已在 `f367c0d3ec23ebf452c924ff7c0921cd978a800f` 通过 CI #3618 / R2 #3343，含稳定 external role IDs、precommit/committed/runtime projectors、deterministic V1 JSON 与 G10 golden fixture。
-- Drunk assignment 的新权威链为：shown-seat assignment -> TB snapshot -> rules-owned legal candidate domain -> typed decision context -> hypothetical consequence / shadow evaluation -> canonical commit。TBGS-1A 已在 `ae4dc2400325d233da033d3c86d2863bde1bd485` 通过 CI #3621 / R2 #3345；Host 侧 shadow 已消费 snapshot-backed context，但没有新增排序语义。旧“Drunk shown identity 在 seating 前已是 setup-persistent input”的结论已被 2026-09-29 DLB route supersede。
+- Drunk assignment 的新权威链为：shown-seat assignment -> TB snapshot -> rules-owned legal candidate domain -> typed decision context -> hypothetical consequence / shadow evaluation -> canonical commit。TBGS-1A 已在 `ae4dc2400325d233da033d3c86d2863bde1bd485` 通过 CI #3621 / R2 #3345；EvidenceLab `970e7e6430f7088ac004cd1e5696759da4d52003` 已完成同一 G10 historical-prefix materializer，Host 独立复核两个 V1 golden fixture 2115 bytes 完全一致，因此 TBGS-1 整体 COMPLETE / ACCEPTED。该结果仍没有新增排序语义。
 - Red Herring 使用 generic observation/dependency barrier；Spy 是当前 TB 的一个 observer，而不是需要写死的 policy 特判。
 - `BEGINNER_CONSERVATIVE_V1` 已冻结为 immutable provisional baseline：只有 exact zero Evil-topology hard rejection，其余 viable survivors 保持 equivalence band，并使用 `SEEDED_HASH_V1`。
 - Spy / Recluse registration 永远是 interaction-scoped，不修改 canonical identity。

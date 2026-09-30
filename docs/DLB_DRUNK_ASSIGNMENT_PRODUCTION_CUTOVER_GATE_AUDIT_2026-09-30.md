@@ -1,6 +1,7 @@
 # DLB Drunk-Assignment Production Cutover Gate Audit — 2026-09-30
 
-> Status: **COMPLETE / GATE NOT PASSED**
+> Status: **COMPLETE / GATE NOT PASSED — ORIGINAL PRE-TBGS-1 AUDIT**
+> Current-status successor: `DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md`
 > Baseline: `main@19fc0c03e9ebf8444d918d9fa2289985e04007f3`
 > Scope: Trouble Brewing Drunk-assignment shadow -> Beginner automatic production authority only.
 > Production code changed by this audit: **none**.

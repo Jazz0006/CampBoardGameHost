@@ -188,7 +188,7 @@ Original scope:
 - no canonical owner change;
 - no broad consumer migration.
 
-### TBGS-1 — Drunk decision vertical slice — IN PROGRESS
+### TBGS-1 — Drunk decision vertical slice — COMPLETE / ACCEPTED
 
 #### TBGS-1A — Host snapshot-backed decision vertical slice — COMPLETE / ACCEPTED
 
@@ -202,9 +202,13 @@ Host now:
 - consumes the G10 V1 interchange JSON directly to reproduce the legal candidate domain without Host setup objects;
 - preserves existing candidate IDs/order, DecisionTrace/replay, frozen `BEGINNER_CONSERVATIVE_V1`, and deferral-only `DRUNK_ASSIGNMENT_SHADOW_V1` behavior.
 
-#### TBGS-1B — EvidenceLab historical materializer / equivalence — NEXT
+#### TBGS-1B — EvidenceLab historical materializer / equivalence — COMPLETE
 
-EvidenceLab must materialize the same G10 pre-Drunk V1 semantic payload from its reconstruction revision + historical prefix, then compare it against the shared golden contract. This is EvidenceLab-owned projection/provenance work; Host remains legality/policy owner. No Host policy work is unblocked merely by completing this interoperability check.
+Observed EvidenceLab checkpoint: `970e7e6430f7088ac004cd1e5696759da4d52003`.
+
+EvidenceLab now materializes the same G10 pre-Drunk V1 semantic payload from its reconstruction revision + historical prefix using a pure deterministic codec, with no persistence migration and no copied Host legality/policy. A fresh Host-side comparison of `g10-game2-precommit-tbgs-v1.json` from both repositories confirmed byte-for-byte equality: 2115 bytes on each side. This closes the first cross-project semantic-equivalence checkpoint.
+
+The completion validates the snapshot boundary only. It does not authorize a Drunk candidate preference or production policy.
 
 Use Drunk assignment as the first end-to-end consumer.
 
@@ -254,10 +258,12 @@ DLB-0..5H1 COMPLETE
 -> recommendation-context capability audit COMPLETE
 -> TBGS-0 canonical snapshot contract
 -> TBGS-1A Host snapshot-backed Drunk decision context/shadow COMPLETE / ACCEPTED
--> TBGS-1B EvidenceLab G10 materializer + cross-project semantic equivalence
+-> TBGS-1B EvidenceLab G10 materializer + cross-project semantic equivalence COMPLETE
+-> TBGS-1 overall COMPLETE / ACCEPTED
+-> post-TBGS-1 cutover recheck COMPLETE / NOT PASSED
 || EvidenceLab C2 batch acquisition continues
 || EvidenceLab C3 comparison/rejection acquisition continues
--> qualifying C3 ordering evidence
+-> first C3 Stage-1 VERIFIED ordering/rejection evidence
 -> production-capable versioned Drunk policy over snapshot + typed request
 -> re-run cutover gate
 -> Beginner automatic Drunk authority only if PASS
