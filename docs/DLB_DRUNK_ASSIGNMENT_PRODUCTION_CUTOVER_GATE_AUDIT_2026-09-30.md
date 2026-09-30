@@ -198,13 +198,19 @@ This audit closes the current gate check, but it does **not** unblock automatic 
 ```text
 DLB-5H1 COMPLETE / ACCEPTED
 -> Drunk-assignment production cutover gate audit COMPLETE / NOT PASSED
--> targeted capability + ordering-evidence work
--> new versioned Drunk selection contract only when evidence permits
+-> Drunk recommendation-context capability contract COMPLETE / POLICY-NEUTRAL
+-> TBGS-0 canonical TB snapshot contract
+-> TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability
+|| EvidenceLab targeted candidate-comparison / rejection evidence continues
+-> new versioned Drunk selection contract only when evidence permits, consuming snapshot + typed request
 -> shadow replay of that contract
 -> re-run production cutover gate
 -> Beginner automatic authority only if PASS
 -> DLB-6 old-contract retirement only after replacement selection/fallback authority exists
 -> DLB-7 acceptance
+-> TBGS-2 incremental runtime recommendation-state migration
 ```
+
+TBGS-0/1 are architecture/read-boundary work only and do not satisfy the missing ordering-evidence gate by themselves. Authority: `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`.
 
 C5 / `BEGINNER_CONSERVATIVE_V2` remains a separate evidence gate and must not be conflated with this Drunk-assignment-specific route.

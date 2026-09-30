@@ -32,8 +32,11 @@ DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 staged dependency work    COMPLETE
 DLB-5 overall                                               COMPLETE / ACCEPTED
 DLB-5H1 first-night evil-information presentation extraction COMPLETE / ACCEPTED
 DLB Drunk-assignment production cutover gate audit          COMPLETE / NOT PASSED
+TBGS-0 canonical TB snapshot contract                       NEXT ARCHITECTURE SLICE
+TBGS-1 Drunk snapshot vertical slice / EvidenceLab interop   NEXT AFTER TBGS-0
 Beginner automatic Drunk authority                          BLOCKED ON ORDERING EVIDENCE + VERSIONED POLICY
 DLB-6 old-contract retirement                               BLOCKED WHILE BEGINNER COMPATIBILITY FALLBACK IS LIVE
+TBGS-2 runtime recommendation projection migration           DEFERRED / POST DLB-6/7
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
@@ -108,12 +111,15 @@ DLB-0 is implemented and accepted. The current implementation authority remains:
 
 The new Trouble Brewing setup contract makes Drunk assignment a post-seat Storyteller/SDE decision rather than a template-owned pre-seat input. DLB-0 established the typed intermediate state; DLB-1 cut production preparation over to visible-roster seating; DLB-2 provides the rules-owned legal Drunk-seat domain and pure hypothetical GameState projection; DLB-3 carries that domain through SetupPrecommit / DecisionTrace / replay and the dedicated shadow policy-experiment lane while frozen V1 remains unchanged. DLB-4 canonical Drunk commit is COMPLETE / ACCEPTED at `5606371c68b97beb01418ede2bb2c19db7e69053` with CI #3580 / R2 #3313 GREEN; DLB-4A Experienced assisted Drunk selection is COMPLETE / ACCEPTED at `c85448831e73c82868e118c7f47a0ed889267c0c` with CI #3586 / R2 #3318 GREEN. DLB-5 is COMPLETE through 5.1 typed dependency planning, 5.2 Red Herring latest-safe commitment, 5.3 Demon-bluff presentation-barrier commitment, 5.4 Poisoner / first-night information convergence audit, and 5.5 obsolete setup auto-apply cleanup. The latest production executable checkpoint remains `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5` with CI #3600 / R2 #3331 GREEN; 5.4 found no production gap and required documentation only. Final exact-head T4 acceptance ran on `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN, including Android `testFull + assembleDebug`, ASP contracts and Real Clingo cross-validation. PR #183 was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`. Automatic Beginner Drunk-selection authority remains blocked behind the later shadow/evidence cutover gate; the current Beginner compatibility-confirmed candidate is transitional only.
 
-The 2026-09-28 App/Host decomposition audit is a guardrail for this work, not a prerequisite campaign:
+The 2026-09-28 App/Host decomposition audit remains a guardrail rather than a prerequisite campaign, but the former H2 projection item has now been refined by the TB snapshot audit:
 
 - A1 preferences storage and A2 archive storage remain independent maintenance slices;
-- H1 first-night evil-information presentation waits for DLB-5's dependency lifecycle;
-- H2 and A3 are re-audited after DLB boundaries stabilize;
+- H1 is COMPLETE / ACCEPTED through DLB-5H1;
+- former H2 is split into **TBGS-0/1 now** (standard TB snapshot + Drunk vertical slice) and **TBGS-2 later** (incremental runtime consumer migration);
+- A3 remains deferred until DLB setup/presentation fan-out stabilizes;
 - R3 generic transaction extraction and generic setup-effect ownership remain NO-GO.
+
+TBGS-0/1 is not a broad Host decomposition campaign. It establishes the read-only semantic boundary required before the first new production-capable Drunk recommendation request is introduced.
 
 Targeted EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cases, and C1D downstream replay is accepted. EvidenceLab now serves two distinct lanes:
 
@@ -155,6 +161,8 @@ If a future **current-version** crash produces a fresh inconsistent current-form
 - Legal candidate ownership remains in rules/domain owners; SDE ranks only legal alternatives.
 - Canonical session/history owners remain the only mutable game truth.
 - Long-horizon convergence target: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`. Setup Generation, Game Engine and Storyteller Recommendation Engine remain separately evolvable behind typed contracts; this is a guardrail, not a new broad refactor campaign.
+- Trouble Brewing first converges through `TroubleBrewingGameSnapshotV1`, an immutable projection over canonical setup/session/history owners. It is the standard read boundary for Game/rules consumers, recommendation context builders and EvidenceLab interoperability; it is not a second mutable authority.
+- The TB snapshot must distinguish `KNOWN(value)`, `UNCOMMITTED`, `UNKNOWN`, and `NOT_APPLICABLE`; EvidenceLab provenance/verification does not belong inside Host game state.
 - Setup generation should ultimately expose setup composition plus explicit Drunk presence without choosing the seated Drunk; seating/final actual-vs-shown commit remains downstream.
 - Storyteller recommendation remains read-only over already-legal candidates and typed decision-point context. Required mechanical/history context must be distinguished from optional enrichment such as player experience, recent role history or public/evil claims.
 - `ClocktowerGameSession` / its owned aggregate remains canonical truth; `PlayerCard`, UI state, replay and recommendation contexts must converge toward derived projections rather than parallel authorities.
@@ -204,12 +212,16 @@ query live main / workspace
 -> DLB-5 final acceptance + PR #183 merge COMPLETE / ACCEPTED
 -> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED; executable checkpoint `47136b7d03d72452b70bf3defa847578b30fb011`, CI #3609 / R2 #3337 GREEN
 -> Drunk-assignment production cutover gate audit COMPLETE / NOT PASSED
--> targeted capability + candidate-ordering evidence work NEXT
--> re-run cutover gate only after a production-capable versioned Drunk policy is evidence-justified
+-> Drunk recommendation-context capability contract COMPLETE / POLICY-NEUTRAL
+-> TBGS-0 canonical TB snapshot contract NEXT
+-> TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability
+|| EvidenceLab targeted candidate-comparison / rejection evidence continues in parallel
+-> introduce a production-capable versioned Drunk policy only after qualifying evidence exists, using snapshot + typed request rather than a new recommendation-specific GameState
+-> re-run cutover gate
 -> Beginner automatic Drunk authority only if that gate passes
 -> DLB-6 old-contract retirement only after replacement selection/fallback authority exists
 -> DLB-7 acceptance
--> re-audit H2 / A3
+-> TBGS-2 incremental runtime recommendation-state migration / A3 re-audit
 ~~~
 
 A1/A2 may proceed as separate maintenance PRs without blocking DLB. C5/V2 remains a separate evidence-gated lane.
@@ -225,8 +237,10 @@ Read first:
 5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
 6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB/decomposition implementation authority
 7. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — current Drunk-assignment cutover verdict / blocker authority
-8. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon core-engine/state boundary target; consult when a slice changes setup, recommendation context, canonical-state ownership or H2-style projections
-9. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record; read only when that history is needed
+8. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
+9. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — current TB-only canonical snapshot / Drunk vertical slice / EvidenceLab interoperability route
+10. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon core-engine/state boundary target; consult when a slice changes setup, recommendation context, canonical-state ownership or projection boundaries
+11. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record; read only when that history is needed
 
 The 2026-09-28 source audits, completed Recovery/C4 audits, SDE freeze/cutover audits, and older SDE checkpoints are historical or specialized evidence. Read them only when the current slice raises a concrete ownership/evidence question.
 
