@@ -41,6 +41,12 @@ class DrunkSetupShadowAdapterTest {
             shadow.sdeCandidates.map(SdeDecisionCandidate::candidateId),
         )
         assertEquals(
+            shadow.sdeCandidates.map(SdeDecisionCandidate::candidateId),
+            shadow.decisionContext.legalCandidateIds,
+        )
+        assertEquals("botc.tb.game-snapshot", shadow.decisionContext.snapshot.schemaId)
+        assertEquals("game-dlb3-a", shadow.decisionContext.snapshot.gameId)
+        assertEquals(
             listOf(1, 3, 5),
             shadow.candidates.map { it.candidate.seat },
         )

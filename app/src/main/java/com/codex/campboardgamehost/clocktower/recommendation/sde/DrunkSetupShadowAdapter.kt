@@ -6,9 +6,9 @@ import com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleCan
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightBundleCandidateSpaceAuditor
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkCandidate
-import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkCandidateDomain
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkHypotheticalProjector
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkHypotheticalSetup
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingGameSnapshotProjector
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingIntermediateSetup
 
 internal data class DrunkSetupShadowCandidate(
@@ -46,6 +46,7 @@ internal data class DrunkSetupShadowCandidate(
  * an evidence-free Drunk-seat preference.
  */
 internal data class DrunkSetupShadowEvaluation(
+    val decisionContext: DrunkAssignmentDecisionContext,
     val candidates: List<DrunkSetupShadowCandidate>,
     val drunkAssignmentFeatureEvaluation: DrunkAssignmentFeatureEvaluation,
     val featureEvaluation: DecisionFeatureEvaluation,
@@ -59,7 +60,16 @@ internal data class DrunkSetupShadowEvaluation(
 
     init {
         require(candidates.isNotEmpty()) { "Drunk setup shadow requires legal candidates." }
+        require(
+            candidates.map { candidate -> candidate.candidate.seat to candidate.candidate.shownRoleId } ==
+                decisionContext.legalCandidates.map { candidate -> candidate.seat to candidate.shownRoleId },
+        ) {
+            "Drunk setup shadow candidates must preserve the snapshot-backed legal domain."
+        }
         val candidateIds = sdeCandidates.map(SdeDecisionCandidate::candidateId)
+        require(candidateIds == decisionContext.legalCandidateIds) {
+            "Drunk setup shadow candidate IDs must preserve the typed decision context."
+        }
         require(candidateIds.distinct().size == candidateIds.size) {
             "Drunk setup shadow candidate IDs must be unique."
         }
@@ -125,12 +135,31 @@ internal object DrunkSetupShadowAdapter {
             "Drunk setup shadow requires an intermediate setup that contains Drunk."
         }
 
-        val legalCandidates = TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediateSetup)
-        require(legalCandidates.isNotEmpty()) {
-            "Drunk setup shadow requires at least one rules-legal dealt Townsfolk candidate."
+        val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
+            gameId = gameId,
+            intermediateSetup = intermediateSetup,
+        )
+        val decisionContext = DrunkAssignmentDecisionContextBuilder.build(
+            snapshot = snapshot,
+            characterRegistry = characterRegistry,
+            sourceRevision = sourceRevision,
+        )
+        val assignmentsBySeat = intermediateSetup.shownSeatAssignments.associateBy { it.seat }
+        val legalCandidates = decisionContext.legalCandidates.map { candidateRef ->
+            val assignment = requireNotNull(assignmentsBySeat[candidateRef.seat]) {
+                "Snapshot-backed Drunk candidate must map to the intermediate setup seat."
+            }
+            require(assignment.shownRoleId == candidateRef.shownRoleId) {
+                "Snapshot-backed Drunk candidate shown role must match the intermediate setup."
+            }
+            TroubleBrewingDrunkCandidate(
+                seat = candidateRef.seat,
+                playerName = assignment.playerName,
+                shownRoleId = candidateRef.shownRoleId,
+            )
         }
 
-        val decisionId = "setup:drunk-seat:$gameId"
+        val decisionId = decisionContext.decisionId
         val historyPrefix = SdeHistoricalPrefixRef.Global(
             gameId = gameId,
             actionRefs = emptyList(),
@@ -164,7 +193,7 @@ internal object DrunkSetupShadowAdapter {
                 sourceInteraction = SdeDecisionSourceInteraction(
                     interactionId = decisionId,
                 ),
-                sourceRevision = sourceRevision,
+                sourceRevision = decisionContext.sourceRevision,
                 inputBindings = SdeDecisionInputBindings.Captured(),
                 historyPrefixRef = historyPrefix,
                 legalOutcomeIdentity = candidateId,
@@ -222,7 +251,7 @@ internal object DrunkSetupShadowAdapter {
         val policySelection = BeginnerConservativeV1Selector.select(
             evaluation = policyEvaluation,
             decisionId = decisionId,
-            selectionSeed = intermediateSetup.gameSeed,
+            selectionSeed = decisionContext.selectionSeed,
         )
         require(policySelection == null) {
             "DLB-3A deferred policy must not manufacture a deterministic Drunk-seat selection."
@@ -233,7 +262,7 @@ internal object DrunkSetupShadowAdapter {
             evidenceCheckpoint = definition.evidenceCheckpoint,
             decisionId = decisionId,
             lifecycleStage = SdeDecisionLifecycleStage.SetupPrecommit,
-            sourceRevision = sourceRevision,
+            sourceRevision = decisionContext.sourceRevision,
             historyPrefixRef = historyPrefix,
             legalCandidateIds = legalCandidateIds,
             featureEvaluation = featureEvaluation,
@@ -244,14 +273,15 @@ internal object DrunkSetupShadowAdapter {
         val replayInput = MultiPolicyReplayInput(
             decisionId = decisionId,
             lifecycleStage = SdeDecisionLifecycleStage.SetupPrecommit,
-            sourceRevision = sourceRevision,
+            sourceRevision = decisionContext.sourceRevision,
             historyPrefixRef = historyPrefix,
             legalCandidateIds = legalCandidateIds,
             featureEvaluation = featureEvaluation,
-            selectionSeed = intermediateSetup.gameSeed,
+            selectionSeed = decisionContext.selectionSeed,
         )
 
         return DrunkSetupShadowEvaluation(
+            decisionContext = decisionContext,
             candidates = projectedCandidates,
             drunkAssignmentFeatureEvaluation = drunkAssignmentFeatureEvaluation,
             featureEvaluation = featureEvaluation,
