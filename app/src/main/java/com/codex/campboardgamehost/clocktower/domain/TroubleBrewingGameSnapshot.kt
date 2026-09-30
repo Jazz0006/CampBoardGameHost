@@ -31,11 +31,21 @@ internal data class TroubleBrewingSnapshotPosition(
     val stage: TroubleBrewingSnapshotStage,
     val phase: SnapshotField<StorytellerPhase>,
     val round: SnapshotField<Int>,
+    val gameStateRevision: SnapshotField<Long> = SnapshotField.NotApplicable,
+    val playerInputRevision: SnapshotField<Long> = SnapshotField.NotApplicable,
 ) {
     init {
         val knownRound = (round as? SnapshotField.Known<Int>)?.value
         require(knownRound == null || knownRound > 0) {
             "Known Trouble Brewing snapshot round must be positive."
+        }
+        val knownGameStateRevision = (gameStateRevision as? SnapshotField.Known<Long>)?.value
+        require(knownGameStateRevision == null || knownGameStateRevision >= 0L) {
+            "Known game-state revision cannot be negative."
+        }
+        val knownPlayerInputRevision = (playerInputRevision as? SnapshotField.Known<Long>)?.value
+        require(knownPlayerInputRevision == null || knownPlayerInputRevision >= 0L) {
+            "Known player-input revision cannot be negative."
         }
     }
 }
