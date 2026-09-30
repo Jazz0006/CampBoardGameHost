@@ -124,4 +124,6 @@ DLB-5H1 must not:
 
 DLB-5H1 is COMPLETE / ACCEPTED.
 
-Next is the **Drunk-assignment shadow/evidence production-cutover gate audit**. Beginner automatic Drunk authority remains prohibited unless the explicit cutover conditions in the current DLB route are all satisfied.
+The first **Drunk-assignment production-cutover gate audit** is now COMPLETE / NOT PASSED. Legal/projection/replay/fallback structure is sufficient, but candidate-ordering evidence and a production-capable versioned Drunk selection contract are missing. Authority: `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md`.
+
+Next is targeted recommendation-context capability + candidate-ordering evidence work. Beginner automatic Drunk authority remains prohibited, and DLB-6 retirement must not remove the compatibility fallback before replacement authority exists.

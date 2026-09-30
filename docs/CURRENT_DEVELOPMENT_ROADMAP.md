@@ -31,6 +31,9 @@ DLB-4A Experienced assisted Drunk selection                COMPLETE / ACCEPTED
 DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 staged dependency work    COMPLETE
 DLB-5 overall                                               COMPLETE / ACCEPTED
 DLB-5H1 first-night evil-information presentation extraction COMPLETE / ACCEPTED
+DLB Drunk-assignment production cutover gate audit          COMPLETE / NOT PASSED
+Beginner automatic Drunk authority                          BLOCKED ON ORDERING EVIDENCE + VERSIONED POLICY
+DLB-6 old-contract retirement                               BLOCKED WHILE BEGINNER COMPATIBILITY FALLBACK IS LIVE
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
@@ -121,6 +124,8 @@ Do not conflate those gates. C5 / BEGINNER_CONSERVATIVE_V2 remains blocked. DLB 
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate ordering/rejection semantics. Any production Drunk-selection policy delta requires an explicitly versioned decision-surface contract.
 
+The 2026-09-30 Drunk-assignment production cutover audit is COMPLETE / NOT PASSED. Legal-domain ownership, hypothetical projection, replay infrastructure and the current compatibility fallback are sufficient, but production ordering evidence and a production-capable versioned Drunk selection contract are not. `DRUNK_ASSIGNMENT_SHADOW_V1` must remain deferral-only. DLB-6 is also blocked because Beginner still depends on the transitional compatibility candidate that DLB-6 is intended to retire.
+
 ## 5. Recovery product boundary
 
 Recent Emergency Recovery is intentionally **short-horizon emergency continuation**, not a normal save-game product.
@@ -198,9 +203,11 @@ query live main / workspace
 -> DLB-5.5 obsolete setup auto-apply cleanup COMPLETE / GREEN
 -> DLB-5 final acceptance + PR #183 merge COMPLETE / ACCEPTED
 -> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED; executable checkpoint `47136b7d03d72452b70bf3defa847578b30fb011`, CI #3609 / R2 #3337 GREEN
--> Drunk-assignment shadow/evidence cutover gate audit NEXT
--> Beginner automatic Drunk authority only if the cutover gate passes
--> DLB-6 old-contract retirement
+-> Drunk-assignment production cutover gate audit COMPLETE / NOT PASSED
+-> targeted capability + candidate-ordering evidence work NEXT
+-> re-run cutover gate only after a production-capable versioned Drunk policy is evidence-justified
+-> Beginner automatic Drunk authority only if that gate passes
+-> DLB-6 old-contract retirement only after replacement selection/fallback authority exists
 -> DLB-7 acceptance
 -> re-audit H2 / A3
 ~~~
@@ -217,8 +224,9 @@ Read first:
 4. this roadmap
 5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
 6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB/decomposition implementation authority
-7. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon core-engine/state boundary target; consult when a slice changes setup, recommendation context, canonical-state ownership or H2-style projections
-8. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — current DLB-5 slice authority / closeout checklist
+7. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — current Drunk-assignment cutover verdict / blocker authority
+8. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon core-engine/state boundary target; consult when a slice changes setup, recommendation context, canonical-state ownership or H2-style projections
+9. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record; read only when that history is needed
 
 The 2026-09-28 source audits, completed Recovery/C4 audits, SDE freeze/cutover audits, and older SDE checkpoints are historical or specialized evidence. Read them only when the current slice raises a concrete ownership/evidence question.
 

@@ -3,8 +3,9 @@
 > Updated: 2026-09-30 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
 > Last completed validation checkpoint: **DLB-5H1 first-night evil-information presentation extraction — `47136b7d03d72452b70bf3defa847578b30fb011`; CI #3609 / R2 #3337 GREEN; Android FAST executed successfully**  
-> Previous merged checkpoint: **PR #183 — `DLB-5: stage first-night dependency barriers` — squash merge `6293a3bb94778338db61f5a1708a1d283d6e8b6f`**  
-> Product next gate: **Drunk-assignment shadow/evidence production-cutover gate audit. Do not grant Beginner automatic Drunk authority unless the explicit gate is satisfied.**
+> Latest merged checkpoint: **PR #186 — `DLB-5H1: extract first-night evil information presentation` — squash merge `19fc0c03e9ebf8444d918d9fa2289985e04007f3`**  
+> Current cutover verdict: **Drunk-assignment production cutover gate COMPLETE / NOT PASSED — ordering evidence + production-capable versioned policy missing**  
+> Product next work: **targeted recommendation-context capability + candidate-ordering evidence. Keep Beginner compatibility fallback and do not start DLB-6 retirement yet.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -16,8 +17,9 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
 6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
-7. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-8. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — current DLB-5 closeout authority
+7. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — current Drunk-assignment cutover verdict / blocker authority
+8. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+9. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -66,6 +68,10 @@ DLB-5.3 Demon bluff production cutover             COMPLETE / GREEN
 DLB-5.4 information / poison convergence audit     COMPLETE / NO PRODUCTION GAP
 DLB-5.5 obsolete setup auto-apply cleanup          COMPLETE / GREEN
 DLB-5 overall                                      COMPLETE / ACCEPTED
+DLB-5H1 presentation extraction                    COMPLETE / ACCEPTED
+Drunk-assignment cutover gate audit                COMPLETE / NOT PASSED
+Beginner automatic Drunk authority                 BLOCKED ON ORDERING EVIDENCE + VERSIONED POLICY
+DLB-6 old-contract retirement                      BLOCKED WHILE COMPATIBILITY FALLBACK IS LIVE
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -143,7 +149,7 @@ Authority:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-Architecture convergence guardrail: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` records the intended separation of Setup Generation, canonical Game Session/Game Engine, and read-only Storyteller Recommendation. DLB-5H1 followed that guardrail and is complete without canonical-state changes. Continue applying the target architecture at the shadow/evidence cutover gate, DLB-6 stale-contract retirement, and later H2 re-audit; do not broaden those slices into a rewrite.
+Architecture convergence guardrail: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` records the intended separation of Setup Generation, canonical Game Session/Game Engine, and read-only Storyteller Recommendation. The Drunk cutover audit confirms that this boundary is structurally ready but policy authority is not: required vs optional recommendation context must be explicit, unavailable enrichment must remain typed, and no second state owner may be introduced while closing the missing capability/evidence gaps.
 
 Immediate sequence:
 
@@ -160,22 +166,24 @@ DLB-0 typed intermediate setup COMPLETE
 -> DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 COMPLETE
 -> DLB-5 final acceptance + PR #183 merge COMPLETE / ACCEPTED
 -> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED
--> Drunk-assignment shadow/evidence cutover gate audit NEXT
+-> Drunk-assignment production cutover gate audit COMPLETE / NOT PASSED
+-> targeted capability + candidate-ordering evidence work NEXT
+-> re-run cutover gate after a production-capable versioned Drunk policy is evidence-justified
 -> Beginner automatic authority only if that gate passes
--> DLB-6 old-contract retirement
+-> DLB-6 retirement only after replacement selection/fallback authority exists
 -> DLB-7 acceptance
 ```
 
 The App/Host decomposition audit is a constraint on this work, not a prerequisite campaign:
 
 - A1 preferences and A2 archive storage are independent maintenance slices only;
-- H1 waits for DLB-5 and may then extract presentation if the seam is genuinely narrow;
-- H2 and A3 remain deferred for post-DLB re-audit;
+- H1 is COMPLETE / ACCEPTED through DLB-5H1;
+- H2 and A3 remain deferred for later re-audit after the Drunk cutover/fallback boundary stabilizes;
 - R3 generic transaction extraction and the generic setup-effect owner remain NO-GO.
 
 Recovery R0–R6 stays complete. R7 remains separate.
 
-EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cases and C1D G10 downstream replay is accepted. DLB-3 is complete through DLB-3B3; DLB-4 and DLB-4A are accepted. DLB-5 has reached the GREEN implementation checkpoint `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5` for 5.1/5.2/5.3/5.5; 5.4 convergence audit remains next before final DLB-5 acceptance. Missing longitudinal capability and ordering evidence remain explicit cutover-gate blockers for Beginner automatic authority. The existing C5/V2 E3/E4 gate remains separate and still blocks `BEGINNER_CONSERVATIVE_V2`.
+EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cases and C1D G10 downstream replay is accepted. Those records validate the decision/replay surface but do not authorize a general candidate ordering: G05/G10 have explicit historical reasons without observed alternative-candidate comparison, and G01 assignment rationale remains unknown. The current cutover audit therefore leaves `DRUNK_ASSIGNMENT_SHADOW_V1` deferral-only, records longitudinal narrative capability plus ordering evidence/versioned production policy as blockers, and keeps Beginner on the compatibility fallback. The existing C5/V2 E3/E4 gate remains separate and still blocks `BEGINNER_CONSERVATIVE_V2`.
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate preference/rejection semantics. DLB-3 is shadow-first; Beginner automatic Drunk authority requires the explicit cutover gate in the DLB route.
 

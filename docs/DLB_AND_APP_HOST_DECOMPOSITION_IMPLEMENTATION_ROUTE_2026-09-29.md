@@ -241,7 +241,9 @@ Before Beginner mode may automatically commit the SDE-selected Drunk candidate, 
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb a new Drunk candidate preference, rejection or survivor-refinement semantic. If production Drunk selection requires new policy semantics, version that decision surface explicitly rather than mutating V1.
 
-Until the cutover gate passes, production integration may establish the legal/commit/UI seams while using a clearly documented compatibility/fallback selection behavior.
+The first formal cutover audit is COMPLETE / NOT PASSED. Conditions 1–4 are satisfied for the current legal/projection/replay/fallback contracts; condition 5 fails because the current evidence does not authorize a general candidate ordering; condition 6 fails because `DRUNK_ASSIGNMENT_SHADOW_V1` is deliberately deferral-only rather than a production selection contract; condition 7 is therefore not reached. Authority: `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md`.
+
+Until a later cutover audit passes, production must keep the documented `CompatibilityImmediate` Beginner fallback. DLB-6 retirement is also blocked because that transitional fallback still depends on compatibility state that DLB-6 is intended to remove.
 
 ## 7. Persistence boundaries
 
@@ -301,9 +303,12 @@ document authority convergence (this route)
 -> DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 COMPLETE
 -> DLB-5 final acceptance + PR #183 merge COMPLETE / ACCEPTED
 -> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED
--> Drunk-assignment shadow/evidence cutover gate audit NEXT
--> Beginner automatic Drunk authority only if that gate passes
--> DLB-6 old-contract retirement
+-> Drunk-assignment production cutover gate audit COMPLETE / NOT PASSED
+-> targeted recommendation-context capability + candidate-ordering evidence work NEXT
+-> new production-capable versioned Drunk policy only when evidence permits
+-> re-run cutover gate
+-> Beginner automatic Drunk authority only if PASS
+-> DLB-6 old-contract retirement only after replacement selection/fallback authority exists
 -> DLB-7 acceptance
 -> re-audit H2 / A3
 ```
