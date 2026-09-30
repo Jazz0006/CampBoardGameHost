@@ -7,7 +7,20 @@ import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.SnapshotField
+import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
+import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
+
+internal data class TroubleBrewingDrunkCandidateRef(
+    val seat: Int,
+    val shownRoleId: String,
+) {
+    init {
+        require(seat > 0) { "Trouble Brewing Drunk candidate seat must be positive." }
+        require(shownRoleId.isNotBlank()) { "Trouble Brewing Drunk candidate shown role cannot be blank." }
+    }
+}
 
 internal data class TroubleBrewingDrunkCandidate(
     val seat: Int,
@@ -28,6 +41,41 @@ internal data class TroubleBrewingDrunkCandidate(
  * session state. Every dealt Townsfolk is a peer candidate once the visible roster has been seated.
  */
 internal object TroubleBrewingDrunkCandidateDomain {
+    fun legalCandidateRefs(
+        snapshot: TroubleBrewingGameSnapshotV1,
+        characterRegistry: ClocktowerCharacterRegistry,
+    ): List<TroubleBrewingDrunkCandidateRef> {
+        require(snapshot.position.stage == TroubleBrewingSnapshotStage.SETUP_PRECOMMIT) {
+            "Trouble Brewing Drunk candidate domain requires a setup-precommit snapshot."
+        }
+        val hasDrunk = (snapshot.setupState.hasDrunk as? SnapshotField.Known<Boolean>)?.value
+            ?: throw IllegalArgumentException(
+                "Trouble Brewing Drunk candidate domain requires known hasDrunk state.",
+            )
+        if (!hasDrunk) return emptyList()
+        require(snapshot.setupState.drunkAssignmentSeat === SnapshotField.Uncommitted) {
+            "Trouble Brewing Drunk candidate domain requires an uncommitted Drunk assignment."
+        }
+
+        return snapshot.grimoireSeats.mapNotNull { seat ->
+            val shownRoleId = (seat.shownRoleId as? SnapshotField.Known<String>)?.value
+                ?: throw IllegalArgumentException(
+                    "Trouble Brewing Drunk candidate domain requires known shown roles.",
+                )
+            val shownDefinition = requireNotNull(characterRegistry.findByExternalId(shownRoleId)) {
+                "Trouble Brewing shown role '$shownRoleId' is missing from the character registry."
+            }
+            if (shownDefinition.team != ClocktowerCatalogTeam.TOWNSFOLK) return@mapNotNull null
+            require(seat.actualRoleId === SnapshotField.Uncommitted) {
+                "Every setup-precommit Townsfolk candidate must have UNCOMMITTED actual role."
+            }
+            TroubleBrewingDrunkCandidateRef(
+                seat = seat.seat,
+                shownRoleId = shownRoleId,
+            )
+        }
+    }
+
     fun legalCandidates(
         intermediateSetup: TroubleBrewingIntermediateSetup,
     ): List<TroubleBrewingDrunkCandidate> {

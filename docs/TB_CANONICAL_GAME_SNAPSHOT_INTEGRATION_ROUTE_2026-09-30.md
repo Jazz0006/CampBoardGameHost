@@ -188,7 +188,23 @@ Original scope:
 - no canonical owner change;
 - no broad consumer migration.
 
-### TBGS-1 — Drunk decision vertical slice
+### TBGS-1 — Drunk decision vertical slice — IN PROGRESS
+
+#### TBGS-1A — Host snapshot-backed decision vertical slice — COMPLETE / ACCEPTED
+
+Accepted executable checkpoint: `ae4dc2400325d233da033d3c86d2863bde1bd485`; CI #3621 / R2 #3345 GREEN, including Android FAST.
+
+Host now:
+
+- derives policy-neutral Drunk candidate refs `(seat, shownRoleId)` from the canonical V1 snapshot through the rules-owned `TroubleBrewingDrunkCandidateDomain`;
+- builds a typed `DrunkAssignmentDecisionContext` containing the snapshot, freshness revision, legal domain, decision identity and selection seed;
+- routes the existing Drunk shadow adapter through that context while preserving the existing named candidate only as downstream presentation/hypothetical enrichment;
+- consumes the G10 V1 interchange JSON directly to reproduce the legal candidate domain without Host setup objects;
+- preserves existing candidate IDs/order, DecisionTrace/replay, frozen `BEGINNER_CONSERVATIVE_V1`, and deferral-only `DRUNK_ASSIGNMENT_SHADOW_V1` behavior.
+
+#### TBGS-1B — EvidenceLab historical materializer / equivalence — NEXT
+
+EvidenceLab must materialize the same G10 pre-Drunk V1 semantic payload from its reconstruction revision + historical prefix, then compare it against the shared golden contract. This is EvidenceLab-owned projection/provenance work; Host remains legality/policy owner. No Host policy work is unblocked merely by completing this interoperability check.
 
 Use Drunk assignment as the first end-to-end consumer.
 
@@ -237,7 +253,8 @@ DLB-0..5H1 COMPLETE
 -> Drunk cutover audit COMPLETE / NOT PASSED
 -> recommendation-context capability audit COMPLETE
 -> TBGS-0 canonical snapshot contract
--> TBGS-1 Drunk vertical slice / EvidenceLab interoperability
+-> TBGS-1A Host snapshot-backed Drunk decision context/shadow COMPLETE / ACCEPTED
+-> TBGS-1B EvidenceLab G10 materializer + cross-project semantic equivalence
 || EvidenceLab C2 batch acquisition continues
 || EvidenceLab C3 comparison/rejection acquisition continues
 -> qualifying C3 ordering evidence
