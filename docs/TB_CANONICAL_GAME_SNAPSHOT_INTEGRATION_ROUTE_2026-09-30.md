@@ -162,11 +162,20 @@ This route does **not** invalidate DLB-0 through DLB-5H1.
 
 Instead, split the former H2 dynamic recommendation-state projection into two stages.
 
-### TBGS-0 — canonical TB snapshot contract
+### TBGS-0 — canonical TB snapshot contract — COMPLETE / ACCEPTED
 
-Do before introducing the first production-capable Drunk selection policy.
+Accepted executable checkpoint: `f367c0d3ec23ebf452c924ff7c0921cd978a800f`; CI #3618 / R2 #3343 GREEN, including Android FAST and Real Clingo.
 
-Scope:
+Implemented boundary:
+
+- V1 four-state field semantics preserve `UNCOMMITTED` separately from historical `UNKNOWN`;
+- stable cross-project role semantics use canonical external role IDs rather than Host-internal `RoleId.value`;
+- pure projectors cover setup precommit, committed setup, and a runtime decision boundary without moving canonical ownership;
+- runtime position carries explicit phase/round plus canonical game-state/player-input revisions;
+- deterministic V1 JSON encode/decode and the G10 precommit golden JSON establish the first interchange fixture;
+- no recommendation ranking, policy authority, Host/UI migration, Recovery change, or non-TB generalization was introduced.
+
+Original scope:
 
 - define `TroubleBrewingGameSnapshotV1`;
 - define the state-value semantics above;

@@ -32,8 +32,8 @@ DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 staged dependency work    COMPLETE
 DLB-5 overall                                               COMPLETE / ACCEPTED
 DLB-5H1 first-night evil-information presentation extraction COMPLETE / ACCEPTED
 DLB Drunk-assignment production cutover gate audit          COMPLETE / NOT PASSED
-TBGS-0 canonical TB snapshot contract                       NEXT ARCHITECTURE SLICE
-TBGS-1 Drunk snapshot vertical slice / EvidenceLab interop   NEXT AFTER TBGS-0
+TBGS-0 canonical TB snapshot contract                       COMPLETE / ACCEPTED
+TBGS-1 Drunk snapshot vertical slice / EvidenceLab interop   NEXT
 Beginner automatic Drunk authority                          BLOCKED ON ORDERING EVIDENCE + VERSIONED POLICY
 DLB-6 old-contract retirement                               BLOCKED WHILE BEGINNER COMPATIBILITY FALLBACK IS LIVE
 TBGS-2 runtime recommendation projection migration           DEFERRED / POST DLB-6/7
@@ -82,6 +82,8 @@ DLB-1 accepted executable checkpoint: `d065e21bcf1780fe3375a7fd380815259cc59e5c`
 DLB-2 accepted executable checkpoint: `73de263327d7530e2d6ac128753aca2fd8766766`; CI #3521 and R2 #3264 GREEN. Every dealt Townsfolk seat is now a rules-legal peer Drunk candidate, and each legal choice can be projected into an immutable hypothetical GameState without session mutation or compatibility-bridge authority.
 
 DLB-3A accepted checkpoint: `0a59c29af047b91b5d10b62ce4019f60df632e83`; CI #3526 and R2 #3268 GREEN. The shadow surface preserves the complete legal domain, candidate-specific hypothetical/ecology evidence, DecisionTrace and replay, while frozen V1 correctly defers with no Drunk recommendation.
+
+TBGS-0 accepted executable checkpoint: `f367c0d3ec23ebf452c924ff7c0921cd978a800f`; CI #3618 and R2 #3343 GREEN. `TroubleBrewingGameSnapshotV1` now provides the TB-only immutable read/interchange contract with explicit `KNOWN / UNCOMMITTED / UNKNOWN / NOT_APPLICABLE` semantics, stable external role IDs, precommit/committed/runtime projectors, deterministic V1 JSON, and the G10 precommit golden fixture. No recommendation policy, mutable owner, Host/UI migration, Recovery behavior, or non-TB generalization changed.
 
 These are historical acceptance identities, not current branch heads:
 
@@ -213,8 +215,8 @@ query live main / workspace
 -> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED; executable checkpoint `47136b7d03d72452b70bf3defa847578b30fb011`, CI #3609 / R2 #3337 GREEN
 -> Drunk-assignment production cutover gate audit COMPLETE / NOT PASSED
 -> Drunk recommendation-context capability contract COMPLETE / POLICY-NEUTRAL
--> TBGS-0 canonical TB snapshot contract NEXT
--> TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability
+-> TBGS-0 canonical TB snapshot contract COMPLETE / ACCEPTED; executable checkpoint `f367c0d3ec23ebf452c924ff7c0921cd978a800f`, CI #3618 / R2 #3343 GREEN
+-> TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability NEXT
 || EvidenceLab targeted candidate-comparison / rejection evidence continues in parallel
 -> introduce a production-capable versioned Drunk policy only after qualifying evidence exists, using snapshot + typed request rather than a new recommendation-specific GameState
 -> re-run cutover gate
