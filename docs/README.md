@@ -40,7 +40,7 @@ SDE-3D calibrated policy freeze        3D0–3D1 + C4/SDE-3D2 COMPLETE / IF-D CO
 SDE-3E automatic production cutover    C5 BLOCKED ON QUALIFYING E3/E4 / PER-SURFACE GATES
 DLB Drunk late-binding / first-night     CURRENT IMPLEMENTATION ROUTE
 TBGS-0 canonical TB snapshot              COMPLETE / ACCEPTED
-TBGS-1 Drunk snapshot vertical slice      NEXT
+TBGS-1 Drunk snapshot vertical slice      HOST SLICE ACCEPTED / EVIDENCELAB INTEROP NEXT
 TBGS-2 runtime projection migration       DEFERRED / POST DLB-6/7
 bounded App/Host decomposition           GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 ~~~
@@ -52,7 +52,7 @@ bounded App/Host decomposition           GUARDRAIL / INDEPENDENT MAINTENANCE ONL
 - legality、consequence、selection policy 必须分层。
 - TB 当前统一读边界采用 `TroubleBrewingGameSnapshotV1`：它从 canonical setup/session/history 纯投影出来，供 Game/rules consumers、Recommendation Context Builder 与 EvidenceLab replay 共享语义；它不是第二个 mutable state owner。
 - Snapshot 必须区分 `KNOWN(value)` / `UNCOMMITTED` / `UNKNOWN` / `NOT_APPLICABLE`。尤其 Drunk assignment 前“尚未选择 Drunk”是 `UNCOMMITTED`，不能与 EvidenceLab “历史事实无法恢复”的 `UNKNOWN` 混为一谈。TBGS-0 已在 `f367c0d3ec23ebf452c924ff7c0921cd978a800f` 通过 CI #3618 / R2 #3343，含稳定 external role IDs、precommit/committed/runtime projectors、deterministic V1 JSON 与 G10 golden fixture。
-- Drunk assignment 的新权威链为：shown-seat assignment -> rules-owned legal candidate domain -> hypothetical consequence projection -> typed SDE/Storyteller decision -> canonical commit。旧“Drunk shown identity 在 seating 前已是 setup-persistent input”的结论已被 2026-09-29 DLB route supersede。
+- Drunk assignment 的新权威链为：shown-seat assignment -> TB snapshot -> rules-owned legal candidate domain -> typed decision context -> hypothetical consequence / shadow evaluation -> canonical commit。TBGS-1A 已在 `ae4dc2400325d233da033d3c86d2863bde1bd485` 通过 CI #3621 / R2 #3345；Host 侧 shadow 已消费 snapshot-backed context，但没有新增排序语义。旧“Drunk shown identity 在 seating 前已是 setup-persistent input”的结论已被 2026-09-29 DLB route supersede。
 - Red Herring 使用 generic observation/dependency barrier；Spy 是当前 TB 的一个 observer，而不是需要写死的 policy 特判。
 - `BEGINNER_CONSERVATIVE_V1` 已冻结为 immutable provisional baseline：只有 exact zero Evil-topology hard rejection，其余 viable survivors 保持 equivalence band，并使用 `SEEDED_HASH_V1`。
 - Spy / Recluse registration 永远是 interaction-scoped，不修改 canonical identity。

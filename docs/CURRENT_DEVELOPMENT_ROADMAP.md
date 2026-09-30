@@ -33,7 +33,7 @@ DLB-5 overall                                               COMPLETE / ACCEPTED
 DLB-5H1 first-night evil-information presentation extraction COMPLETE / ACCEPTED
 DLB Drunk-assignment production cutover gate audit          COMPLETE / NOT PASSED
 TBGS-0 canonical TB snapshot contract                       COMPLETE / ACCEPTED
-TBGS-1 Drunk snapshot vertical slice / EvidenceLab interop   NEXT
+TBGS-1 Drunk snapshot vertical slice / EvidenceLab interop   IN PROGRESS — HOST SLICE ACCEPTED / EVIDENCELAB INTEROP NEXT
 Beginner automatic Drunk authority                          BLOCKED ON ORDERING EVIDENCE + VERSIONED POLICY
 DLB-6 old-contract retirement                               BLOCKED WHILE BEGINNER COMPATIBILITY FALLBACK IS LIVE
 TBGS-2 runtime recommendation projection migration           DEFERRED / POST DLB-6/7
@@ -84,6 +84,8 @@ DLB-2 accepted executable checkpoint: `73de263327d7530e2d6ac128753aca2fd8766766`
 DLB-3A accepted checkpoint: `0a59c29af047b91b5d10b62ce4019f60df632e83`; CI #3526 and R2 #3268 GREEN. The shadow surface preserves the complete legal domain, candidate-specific hypothetical/ecology evidence, DecisionTrace and replay, while frozen V1 correctly defers with no Drunk recommendation.
 
 TBGS-0 accepted executable checkpoint: `f367c0d3ec23ebf452c924ff7c0921cd978a800f`; CI #3618 and R2 #3343 GREEN. `TroubleBrewingGameSnapshotV1` now provides the TB-only immutable read/interchange contract with explicit `KNOWN / UNCOMMITTED / UNKNOWN / NOT_APPLICABLE` semantics, stable external role IDs, precommit/committed/runtime projectors, deterministic V1 JSON, and the G10 precommit golden fixture. No recommendation policy, mutable owner, Host/UI migration, Recovery behavior, or non-TB generalization changed.
+
+TBGS-1A Host vertical slice accepted executable checkpoint: `ae4dc2400325d233da033d3c86d2863bde1bd485`; CI #3621 and R2 #3345 GREEN. The rules-owned Drunk legal domain can now derive stable `(seat, shownRoleId)` candidate refs directly from `TroubleBrewingGameSnapshotV1`; a typed policy-neutral `DrunkAssignmentDecisionContext` carries snapshot, freshness revision, legal candidates, decision identity and selection seed; the existing shadow path consumes that context without changing candidate order, DecisionTrace/replay behavior, `BEGINNER_CONSERVATIVE_V1`, or `DRUNK_ASSIGNMENT_SHADOW_V1` deferral semantics. The G10 V1 JSON fixture is consumed without Host setup objects. TBGS-1 overall remains in progress only for the EvidenceLab-side historical materializer + semantic-equivalence check.
 
 These are historical acceptance identities, not current branch heads:
 
@@ -216,7 +218,8 @@ query live main / workspace
 -> Drunk-assignment production cutover gate audit COMPLETE / NOT PASSED
 -> Drunk recommendation-context capability contract COMPLETE / POLICY-NEUTRAL
 -> TBGS-0 canonical TB snapshot contract COMPLETE / ACCEPTED; executable checkpoint `f367c0d3ec23ebf452c924ff7c0921cd978a800f`, CI #3618 / R2 #3343 GREEN
--> TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability NEXT
+-> TBGS-1A Host snapshot-backed Drunk decision context/shadow COMPLETE / ACCEPTED; `ae4dc2400325d233da033d3c86d2863bde1bd485`, CI #3621 / R2 #3345 GREEN
+-> TBGS-1B EvidenceLab G10 historical materializer + cross-project semantic equivalence NEXT
 || EvidenceLab targeted candidate-comparison / rejection evidence continues in parallel
 -> introduce a production-capable versioned Drunk policy only after qualifying evidence exists, using snapshot + typed request rather than a new recommendation-specific GameState
 -> re-run cutover gate
