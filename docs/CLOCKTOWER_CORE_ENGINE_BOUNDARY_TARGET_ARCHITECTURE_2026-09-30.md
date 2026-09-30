@@ -35,6 +35,8 @@ Game Engine          Recommendation Context Builder
 
 The central rule is that there is **one mutable source of game truth**. Setup generation and Storyteller recommendation must not become competing game-state owners.
 
+For Trouble Brewing, the read boundary should now converge through a versioned immutable projection, provisionally `TroubleBrewingGameSnapshotV1`. This is a standard grimoire/history-prefix snapshot shared semantically by the Game Engine, recommendation context builders and EvidenceLab replay; it is **not** a second mutable authority and it does not replace `ClocktowerGameSession`.
+
 ## 2. Canonical game truth
 
 The canonical owner is the game session aggregate, currently closest to `ClocktowerGameSession` / `ClocktowerSessionState`.
@@ -181,20 +183,29 @@ The canonical session may aggregate/co-ordinate these without merging their sema
 
 Consumers should receive the narrowest immutable view required for their responsibility.
 
-Target conceptual projections include:
+For the current Trouble Brewing route, introduce one shared semantic snapshot boundary before decision-specific projection:
 
 ```text
-Canonical Session
-├── GameEngine command/state view
-├── StorytellerRecommendationContext(decisionPoint)
-├── Moderator/Host view
-├── PlayerView(playerId)
-└── PublicView
+Canonical setup/session/history owners
+        |
+        | pure projection
+        v
+TroubleBrewingGameSnapshotV1
+        |
+        +----------------------+------------------+
+        |                      |                  |
+        v                      v                  v
+Game/rules consumers   Decision Context Builder  replay/export
+                              |
+                              v
+                 Storyteller Recommendation Engine
 ```
 
-A recommendation context builder/projector should derive typed snapshots from canonical state/history plus explicitly supplied enrichment data.
+The TB snapshot must be able to represent setup-precommit state as well as finalized runtime state. In particular, Drunk assignment requires an explicit distinction between a fact that is `UNCOMMITTED` and a historical fact that is `UNKNOWN`. The initial semantic state-value set is `KNOWN(value) / UNCOMMITTED / UNKNOWN / NOT_APPLICABLE`; EvidenceLab-specific verification/provenance remains outside the Host snapshot.
 
-This is preferable to allowing each recommendation family or UI screen to reconstruct game truth independently.
+The existing `GameState` remains a bounded mechanical component and should not be made partial/unknown-friendly throughout the runtime merely to serve this interchange boundary.
+
+Decision-specific context builders then derive required context, legal-domain inputs and optional enrichment from the shared snapshot plus the appropriate canonical/rules owners. This is preferable to allowing each recommendation family or UI screen to reconstruct game truth independently.
 
 ## 9. Current repository mapping and known convergence gaps
 
@@ -209,11 +220,12 @@ The current repository is already materially aligned with this model:
 
 Remaining convergence work is primarily boundary cleanup rather than a replacement architecture:
 
-1. production UI / `PlayerCard` remains a presentation-side source for some projections and should not become a competing game-truth owner;
-2. legacy `DynamicGameState`-carrying recommendation request shapes should be retired or narrowed when their owning surfaces are touched;
-3. setup generation should eventually expose the Drunk-presence concept explicitly at its stable external contract;
-4. recommendation surfaces should converge on explicit decision-point + required-context + enrichment-context semantics;
-5. H2 or later projection work should derive recommendation input from canonical session facts rather than inventing another mutable state model.
+1. establish `TroubleBrewingGameSnapshotV1` as the TB-only immutable semantic projection over setup/session/history owners;
+2. production UI / `PlayerCard` remains a presentation-side source for some projections and should not become a competing game-truth owner;
+3. legacy `DynamicGameState`-carrying recommendation request shapes should be retired or narrowed when their owning surfaces are touched;
+4. setup generation should eventually expose the Drunk-presence concept explicitly at its stable external contract;
+5. recommendation surfaces should converge on explicit snapshot + decision-point + required-context + enrichment-context semantics;
+6. the former H2 work is split: TBGS-0/1 establish the snapshot and Drunk vertical slice before the first production-capable Drunk policy; TBGS-2 later migrates remaining runtime recommendation consumers incrementally.
 
 ## 10. Convergence policy
 
@@ -223,10 +235,16 @@ Current DLB convergence order is:
 
 - DLB-5H1 is COMPLETE / ACCEPTED and preserved this ownership model by extracting presentation only;
 - the first Drunk-assignment production cutover audit is COMPLETE / NOT PASSED: legal/projection/replay/fallback structure is ready, but ordering evidence and a production-capable versioned policy are missing;
-- targeted recommendation-context capability and candidate-ordering evidence work is next; missing enrichment must remain explicit rather than becoming a neutral score;
+- the Drunk recommendation-context capability contract is COMPLETE / POLICY-NEUTRAL: required correctness inputs, currently available enrichment and unavailable/proposed enrichment are now explicitly separated without adding a production request DTO;
+- **TBGS-0** establishes the TB-only immutable snapshot contract and golden fixtures with no policy change;
+- **TBGS-1** uses Drunk assignment as the first vertical slice and defines the EvidenceLab interoperability fixture before a new production-capable Drunk request is introduced;
+- EvidenceLab C2/C3 acquisition continues in parallel; missing enrichment must remain explicit rather than becoming a neutral score;
+- only after qualifying comparison/rejection evidence exists should a versioned production Drunk policy consume the standard snapshot + typed request boundary;
 - Beginner automatic Drunk authority remains prohibited until a later cutover audit passes;
 - DLB-6 may retire old setup/recommendation contracts only after replacement selection/fallback authority exists;
-- H2 should be re-audited against this target after the relevant DLB boundaries stabilize.
+- **TBGS-2** is the later incremental runtime migration of legacy `PlayerCard` / `DynamicGameState` recommendation projections; it replaces the old broad H2 framing and must not become a one-PR rewrite.
+
+Detailed authority: `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`.
 
 Do not start a new broad “rewrite GameState / rewrite Host / rewrite SDE” campaign solely because this document exists.
 

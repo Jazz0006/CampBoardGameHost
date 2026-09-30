@@ -1,0 +1,312 @@
+# Trouble Brewing Canonical Game Snapshot Integration Route — 2026-09-30
+
+> Date: 2026-09-30 Australia/Sydney  
+> Repository: `Jazz0006/CampBoardGameHost`  
+> Status: **CURRENT ARCHITECTURE INTEGRATION ROUTE / TB ONLY / NO POLICY CHANGE AUTHORIZED**  
+> Scope: integrate a standard immutable Trouble Brewing game-state snapshot between the canonical Game Engine/session boundary, Storyteller Recommendation Engine, and ClocktowerEvidenceLab historical replay. This route does not authorize a broad GameState rewrite or non-TB generalization.
+
+## 1. Decision
+
+Introduce a versioned, immutable, read-only Trouble Brewing snapshot contract, provisionally named:
+
+```text
+TroubleBrewingGameSnapshotV1
+```
+
+This snapshot is a **projection**, not a new mutable game-state authority.
+
+Canonical ownership remains:
+
+```text
+setup lifecycle / committed setup
++ ClocktowerGameSession / ClocktowerSessionState
++ canonical action / epistemic / decision histories
+                |
+                | pure projection
+                v
+TroubleBrewingGameSnapshotV1
+                |
+        +-------+--------+
+        |                |
+        v                v
+Game/rules consumers   Decision Context Builder
+                              |
+                              v
+                   Storyteller Recommendation Engine
+```
+
+The snapshot contract is also the intended semantic interoperability boundary for EvidenceLab historical reconstruction.
+
+## 2. Why the existing GameState is not the cross-project contract
+
+The current `GameState` remains useful as a bounded mechanical runtime component:
+
+- script;
+- seated players;
+- actual/shown identity after those facts are materialized;
+- alive/dead;
+- poison state;
+- seed.
+
+It should **not** be expanded into one universal God object merely to serve every decision surface.
+
+In particular, the current DLB Drunk lifecycle proves that a valid decision-time game state can exist **before every seat has a committed actualRole**. The post-seating / pre-Drunk state has:
+
+- complete shown-seat identities;
+- `hasDrunk = true`;
+- no committed Drunk seat yet.
+
+Therefore the cross-boundary snapshot must represent committed and not-yet-committed facts explicitly rather than require a fully materialized final `GameState`.
+
+## 3. Required state-value semantics
+
+The TB snapshot contract must distinguish at least:
+
+```text
+KNOWN(value)
+UNCOMMITTED
+UNKNOWN
+NOT_APPLICABLE
+```
+
+Meanings:
+
+- `KNOWN(value)`: the fact is committed/known at this snapshot boundary;
+- `UNCOMMITTED`: the decision that will create this fact has not happened yet;
+- `UNKNOWN`: the historical fact may already exist, but the source/reconstruction cannot establish it;
+- `NOT_APPLICABLE`: the field does not apply in this game/state.
+
+This distinction is essential for EvidenceLab replay. `UNCOMMITTED` must never be collapsed into `UNKNOWN`.
+
+Evidence-specific derivation/verification such as OBSERVED / RECONSTRUCTED / INFERRED / VERIFIED / DISPUTED remains outside this Host snapshot contract.
+
+## 4. V1 content boundary
+
+V1 is Trouble Brewing only and should remain intentionally small.
+
+Conceptual shape:
+
+```text
+TroubleBrewingGameSnapshotV1
+├── position
+│   ├── stage
+│   ├── phase
+│   └── round
+├── grimoire
+│   └── seats[]
+│       ├── seat
+│       ├── participant reference / stable game-scoped identity where needed
+│       ├── shownRole
+│       ├── actualRole
+│       ├── alive
+│       └── poisoned
+├── setupState
+│   ├── hasDrunk
+│   ├── drunkAssignment
+│   ├── redHerring
+│   └── demonBluffs
+├── runtimeState
+│   ├── protectedSeats
+│   ├── pendingAttack
+│   └── spentAbilities
+└── historyPrefix
+    ├── mechanical facts
+    ├── delivered information
+    └── Storyteller decisions
+```
+
+Not every conceptual field must be implemented in TBGS-0. Fields should be added only when the first bounded consumer needs them.
+
+## 5. Explicit exclusions
+
+Do not put recommendation-policy or external enrichment into the canonical TB snapshot merely because a recommendation may consume it.
+
+Keep outside the snapshot:
+
+- legal candidate lists;
+- recommendation scores / quality tiers;
+- `evilAdvantage` / `publicBalanceHint`;
+- policy / selector / algorithm config versions;
+- player experience;
+- cross-game recent-role history;
+- public-claim interpretation unless/until a stable game-scoped canonical claim history owner exists;
+- EvidenceLab assertion IDs, timestamps, derivation or verification state;
+- source provenance;
+- UI-local state;
+- recovery bookkeeping.
+
+Rules derive legal candidates from the snapshot/current canonical state. Optional player/history context belongs in decision-specific enrichment.
+
+## 6. Current repository audit
+
+The current code already contains most required owners, but the read boundary is fragmented:
+
+- `ClocktowerGameSession` / `ClocktowerSessionState` are the closest canonical mutable runtime aggregate;
+- `GameSnapshot` is already an immutable ruleset-backed snapshot after final setup materialization;
+- `TroubleBrewingIntermediateSetup` correctly represents post-seating / pre-Drunk truth;
+- `CommittedClocktowerSetup` represents final actual/shown setup truth;
+- `ActionFactTimeline`, `EpistemicObservationLog`, and decision history keep distinct semantic histories;
+- the newer `StorytellerDecisionEngine` exact-consequence seam deliberately avoids the legacy `DynamicGameState`.
+
+The main convergence debt is projection ownership:
+
+- production has many `PlayerCard -> toClocktowerGameState()` reconstruction paths;
+- `ClocktowerHostScreen.dynamicStorytellerState()` derives recommendation inputs from presentation/events and mixes mechanical state with policy-oriented summaries;
+- legacy `DynamicGameState` contains derived pressure/balance/registration summaries and is not suitable as the canonical shared state contract.
+
+No broad cleanup is authorized by this finding.
+
+## 7. Integration with the current DLB route
+
+This route does **not** invalidate DLB-0 through DLB-5H1.
+
+Instead, split the former H2 dynamic recommendation-state projection into two stages.
+
+### TBGS-0 — canonical TB snapshot contract
+
+Do before introducing the first production-capable Drunk selection policy.
+
+Scope:
+
+- define `TroubleBrewingGameSnapshotV1`;
+- define the state-value semantics above;
+- define stable TB semantic IDs and deterministic serialization/versioning as needed by tests/export;
+- add bounded golden fixtures for at least:
+  - Drunk assignment precommit;
+  - finalized setup;
+  - one runtime decision boundary;
+- no recommendation ranking change;
+- no canonical owner change;
+- no broad consumer migration.
+
+### TBGS-1 — Drunk decision vertical slice
+
+Use Drunk assignment as the first end-to-end consumer.
+
+Target boundary:
+
+```text
+canonical setup lifecycle
+    -> TB snapshot
+    -> rules-owned Drunk legal candidate domain
+    -> typed Drunk decision context
+    -> shadow / later versioned production policy
+```
+
+The first production-capable Drunk request introduced after qualifying evidence should consume this standard snapshot boundary rather than create another recommendation-specific GameState variant.
+
+TBGS-1 also defines the cross-project semantic fixture used by EvidenceLab. EvidenceLab remains responsible for event-sourced reconstruction/provenance and produces an equivalent V1 snapshot projection; it does not become a Host state owner.
+
+### TBGS-2 — former H2 runtime migration
+
+Do only after the Drunk cutover/fallback boundary and DLB-6/7 are stable enough.
+
+Incrementally migrate recommendation consumers away from:
+
+```text
+PlayerCard / UI state
+    -> ad-hoc toClocktowerGameState()
+    -> DynamicGameState
+```
+
+toward:
+
+```text
+canonical owners
+    -> TB snapshot projector
+    -> typed decision context builder
+```
+
+Do not migrate all callers in one PR.
+
+## 8. Updated execution relationship
+
+The current product/evidence sequence becomes:
+
+```text
+DLB-0..5H1 COMPLETE
+-> Drunk cutover audit COMPLETE / NOT PASSED
+-> recommendation-context capability audit COMPLETE
+-> TBGS-0 canonical snapshot contract
+-> TBGS-1 Drunk vertical slice / EvidenceLab interoperability
+|| EvidenceLab C2 batch acquisition continues
+|| EvidenceLab C3 comparison/rejection acquisition continues
+-> qualifying C3 ordering evidence
+-> production-capable versioned Drunk policy over snapshot + typed request
+-> re-run cutover gate
+-> Beginner automatic Drunk authority only if PASS
+-> DLB-6 old-contract retirement
+-> DLB-7 acceptance
+-> TBGS-2 incremental runtime recommendation-state migration
+```
+
+TBGS-0/1 and EvidenceLab C3 may proceed in parallel. TBGS-0/1 must not invent ranking semantics while evidence is still missing.
+
+## 9. Cross-project contract
+
+EvidenceLab remains event-source authoritative for historical evidence:
+
+```text
+SetupCommitment + SemanticEvent prefix
+        |
+        | pure reconstruction projection
+        v
+TroubleBrewingGameSnapshotV1
+        +
+DecisionSlice
+        +
+observed expert choice / rationale / provenance
+```
+
+Host remains rules/policy authoritative:
+
+```text
+TroubleBrewingGameSnapshotV1
+        +
+DecisionPoint / typed request
+        |
+        +-> rules-owned legal candidate domain
+        +-> required context
+        +-> optional enrichment
+        v
+Storyteller Recommendation Engine
+```
+
+The two projects share **domain semantics and a versioned interchange contract**, not a mutable Kotlin/Python implementation type and not a database.
+
+## 10. First acceptance fixture
+
+Use the already accepted G10 Drunk-assignment replay as the first cross-project golden contract.
+
+At the historical boundary immediately before Drunk assignment:
+
+- all shown seats are known;
+- setup requires one Drunk;
+- Drunk seat/actual identity is UNCOMMITTED;
+- later Red Herring, Demon bluffs and first-night information are not visible to the snapshot.
+
+Acceptance:
+
+1. EvidenceLab can materialize the V1 historical snapshot from the evidenced prefix;
+2. Host can consume the same semantic snapshot;
+3. Host rules independently derive the legal Drunk candidate domain;
+4. the historical Empath choice maps into that domain;
+5. no expert-choice label is turned into production policy;
+6. no later history leaks backward.
+
+## 11. Non-goals
+
+This route does not authorize:
+
+- non-TB generalized `CanonicalGameSnapshot`;
+- replacing `ClocktowerGameSession`;
+- making `GameState` partial/unknown-friendly throughout the runtime;
+- storing EvidenceLab confidence/provenance inside Host game state;
+- moving legality into recommendation code;
+- moving enrichment into canonical game truth;
+- migrating every `toClocktowerGameState()` caller now;
+- rewriting Recovery;
+- changing `BEGINNER_CONSERVATIVE_V1`;
+- adding Drunk ranking before qualifying evidence exists.
+
+Generalize beyond Trouble Brewing only after V1 has survived multiple real TB decision surfaces and an actual second-script requirement exists.

@@ -217,7 +217,7 @@ Independent decomposition items remain separate from the DLB behavior campaign:
 - **A1 App preferences storage:** safe independent maintenance; may run before or after DLB, but is not a prerequisite.
 - **A2 archive storage:** separate maintenance PR; preserve archive-specific durability/order/capacity semantics.
 - **H1:** COMPLETE / ACCEPTED through DLB-5H1; localized first-night evil-information presentation is extracted without moving dependency, legality, recommendation or session ownership.
-- **H2 dynamic recommendation-state projection:** re-audit after DLB-2/DLB-5. Do not conflate it with the Drunk hypothetical projector.
+- **former H2 dynamic recommendation-state projection:** superseded by a staged TB snapshot route. **TBGS-0/1** now establish the TB-only immutable snapshot contract and Drunk vertical slice before the first production-capable Drunk recommendation request; **TBGS-2** later migrates remaining runtime recommendation consumers incrementally. Do not conflate the standard snapshot with the Drunk hypothetical projector or turn it into a second state owner.
 - **A3 presentation catalog:** defer until DLB setup/presentation fan-out stabilizes.
 - **R3 transaction extraction:** remains NO-GO.
 - **generic setup-effect owner:** remains NO-GO.
@@ -244,6 +244,8 @@ The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb a new Drunk candi
 The first formal cutover audit is COMPLETE / NOT PASSED. Conditions 1–4 are satisfied for the current legal/projection/replay/fallback contracts; condition 5 fails because the current evidence does not authorize a general candidate ordering; condition 6 fails because `DRUNK_ASSIGNMENT_SHADOW_V1` is deliberately deferral-only rather than a production selection contract; condition 7 is therefore not reached. Authority: `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md`.
 
 Until a later cutover audit passes, production must keep the documented `CompatibilityImmediate` Beginner fallback. DLB-6 retirement is also blocked because that transitional fallback still depends on compatibility state that DLB-6 is intended to remove.
+
+Before introducing the first production-capable Drunk selection request, implement TBGS-0/1 from `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`. The new production request must consume the standard TB snapshot + typed decision context rather than create another recommendation-specific `GameState`/`DynamicGameState` variant. TBGS-0/1 must remain policy-neutral while C3 ordering evidence is still missing.
 
 ## 7. Persistence boundaries
 
@@ -304,13 +306,16 @@ document authority convergence (this route)
 -> DLB-5 final acceptance + PR #183 merge COMPLETE / ACCEPTED
 -> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED
 -> Drunk-assignment production cutover gate audit COMPLETE / NOT PASSED
--> targeted recommendation-context capability + candidate-ordering evidence work NEXT
--> new production-capable versioned Drunk policy only when evidence permits
+-> Drunk recommendation-context capability contract COMPLETE / POLICY-NEUTRAL
+-> TBGS-0 canonical TB snapshot contract
+-> TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability
+|| EvidenceLab targeted candidate-comparison / rejection evidence continues
+-> new production-capable versioned Drunk policy only when evidence permits, using snapshot + typed request
 -> re-run cutover gate
 -> Beginner automatic Drunk authority only if PASS
 -> DLB-6 old-contract retirement only after replacement selection/fallback authority exists
 -> DLB-7 acceptance
--> re-audit H2 / A3
+-> TBGS-2 incremental runtime recommendation-state migration / A3 re-audit
 ```
 
 A1/A2 may proceed as separate maintenance work without blocking this sequence.
