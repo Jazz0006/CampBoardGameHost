@@ -201,6 +201,8 @@ EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 replayable cas
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate preference/rejection semantics. DLB-3 is shadow-first; Beginner automatic Drunk authority requires the explicit cutover gate in the DLB route.
 
+A separate product-owner calibration now exists at `docs/IMP_PODCAST_PRODUCT_POLICY_CALIBRATION_2026-10-02.md`. It captures the current app-specific interpretation of the Imp podcast semantic review: strong plausible/coherent misinformation defaults, cross-night coherence, Empath-as-Drunk as a contextual positive with repeat penalty, bluff-set synergy/complexity, star-pass ability preservation, mechanical-over-inferred lead assessment, player-experience balancing, and Evil intended-plan enrichment. This calibration is explicitly non-evidence and does not unblock the production gate by itself.
+
 ## 8. E3/E4 qualification result — no policy delta authorized
 
 The 2026-09-27 audit checked the current EvidenceLab TB corpus, targeted expert rationale, Red-Herring C4 evidence classification, and the SDE evidence-gap contract.

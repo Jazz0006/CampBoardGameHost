@@ -172,6 +172,7 @@ If a future **current-version** crash produces a fresh inconsistent current-form
 - The TB snapshot must distinguish `KNOWN(value)`, `UNCOMMITTED`, `UNKNOWN`, and `NOT_APPLICABLE`; EvidenceLab provenance/verification does not belong inside Host game state.
 - Setup generation should ultimately expose setup composition plus explicit Drunk presence without choosing the seated Drunk; seating/final actual-vs-shown commit remains downstream.
 - Storyteller recommendation remains read-only over already-legal candidates and typed decision-point context. Required mechanical/history context must be distinguished from optional enrichment such as player experience, recent role history or public/evil claims.
+- Product-owner calibration from the Imp podcast semantic review is recorded in `docs/IMP_PODCAST_PRODUCT_POLICY_CALIBRATION_2026-10-02.md`. It is a revisable policy target only: it does not convert machine findings into VERIFIED evidence, does not satisfy the C3 cutover evidence gate, and does not mutate `BEGINNER_CONSERVATIVE_V1`.
 - `ClocktowerGameSession` / its owned aggregate remains canonical truth; `PlayerCard`, UI state, replay and recommendation contexts must converge toward derived projections rather than parallel authorities.
 - DecisionTrace/replay/export are read-only diagnostic/calibration projections.
 - Red Herring legality/commit ownership is not moved into SDE policy.
