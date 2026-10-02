@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-30 Australia/Sydney  
+> Updated: 2026-10-02 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**  
 > Historical checkpoint detail belongs in completion/audit documents under `docs/archive/` or the linked slice audits, not in this live roadmap.
@@ -31,13 +31,15 @@ DLB-4A Experienced assisted Drunk selection                COMPLETE / ACCEPTED
 DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 staged dependency work    COMPLETE
 DLB-5 overall                                               COMPLETE / ACCEPTED
 DLB-5H1 first-night evil-information presentation extraction COMPLETE / ACCEPTED
-DLB Drunk-assignment production cutover gate audit          COMPLETE / NOT PASSED
+DLB Drunk-assignment initial production cutover audit        COMPLETE / HISTORICAL NOT-PASSED VERDICT
 TBGS-0 canonical TB snapshot contract                       COMPLETE / ACCEPTED
 TBGS-1 Drunk snapshot vertical slice / EvidenceLab interop   COMPLETE / ACCEPTED
 Post-TBGS-1 cutover recheck                                 COMPLETE / HISTORICAL NOT-PASSED VERDICT
 C3-Q04 production-policy re-entry audit                     COMPLETE / EVIDENCE GATE PASSED
-Beginner automatic Drunk authority                          BLOCKED ON VERSIONED Q04 POLICY + REPLAY/CUTOVER ACCEPTANCE
-DLB-6 old-contract retirement                               BLOCKED WHILE BEGINNER COMPATIBILITY FALLBACK IS LIVE
+DRUNK_ASSIGNMENT_Q04_V1 implementation / replay              COMPLETE / ACCEPTED
+Q04 V1 production cutover                                   COMPLETE / ACCEPTED
+Beginner automatic Drunk authority                          COMPLETE / ACCEPTED — Q04 V1
+DLB-6 old-contract retirement                               NEXT / UNBLOCKED
 TBGS-2 runtime recommendation projection migration           DEFERRED / POST DLB-6/7
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
@@ -138,7 +140,7 @@ Do not conflate those gates. C5 / BEGINNER_CONSERVATIVE_V2 remains blocked. DLB 
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate ordering/rejection semantics. Any production Drunk-selection policy delta requires an explicitly versioned decision-surface contract.
 
-The 2026-09-30 Drunk-assignment production cutover audit remains the historical NOT-PASSED verdict. On 2026-10-02, EvidenceLab Q04 became the first primary-audio VERIFIED C3 Stage-1 conditional preference at checkpoint `08d95a0c258f687187c0476a0f430fa5ff8229cb`. The bounded ordering-evidence gate is therefore now PASS. `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md` maps Q04 onto the existing topology/context surface and specifies the smallest successor contract: a Q04-only Empath -> Monk override with explicit compatibility fallback. `DRUNK_ASSIGNMENT_SHADOW_V1` remains deferral-only and `BEGINNER_CONSERVATIVE_V1` remains immutable. Production cutover is still blocked until that new versioned contract is implemented, replayed and accepted.
+The 2026-09-30 Drunk-assignment production cutover audit remains the historical NOT-PASSED verdict. On 2026-10-02, EvidenceLab Q04 became the first primary-audio VERIFIED C3 Stage-1 conditional preference at checkpoint `08d95a0c258f687187c0476a0f430fa5ff8229cb`. The bounded ordering-evidence gate passed, `DRUNK_ASSIGNMENT_Q04_V1` was implemented as the smallest evidence-authorized Q04-only Empath -> Monk override with explicit compatibility fallback, and its dedicated replay was accepted at `5cf72a54a62c87763279c02014485a847724b72e` with CI #3631 / R2 #3351 GREEN. Beginner production wiring was then completed at `0ef3760ee233b0e20fa0dd272b12380abe8ee4a4`. Final exact-head T4 acceptance `9762d5a759bf0eaa81a1f6cb5af1aa28281d3ac2` passed CI #3633 and R2 #3353, including Android `testFull + assembleDebug`, ASP contracts and Real Clingo. The Q04 production cutover gate is therefore PASS and Beginner automatic Drunk authority is accepted. `DRUNK_ASSIGNMENT_SHADOW_V1` remains deferral-only and `BEGINNER_CONSERVATIVE_V1` remains immutable. DLB-6 old-contract retirement is now unblocked and is the next product slice.
 
 ## 5. Recovery product boundary
 
@@ -229,11 +231,12 @@ query live main / workspace
 -> post-TBGS-1 cutover recheck COMPLETE / historical NOT-PASSED verdict
 -> EvidenceLab C3-Q04 VERIFIED / Stage-1 accepted at `08d95a0c258f687187c0476a0f430fa5ff8229cb`
 -> Q04 re-entry audit COMPLETE / evidence gate PASS
--> implement `DRUNK_ASSIGNMENT_Q04_V1` as one bounded Empath -> Monk override with explicit compatibility fallback
--> replay the new version against reconstructable cases
--> re-run cutover gate
--> Beginner automatic Drunk authority only if that gate passes
--> DLB-6 old-contract retirement only after replacement selection/fallback authority exists
+-> `DRUNK_ASSIGNMENT_Q04_V1` bounded Empath -> Monk override COMPLETE / ACCEPTED
+-> dedicated replay COMPLETE / ACCEPTED; `5cf72a54a62c87763279c02014485a847724b72e`, CI #3631 / R2 #3351 GREEN
+-> Beginner production wiring COMPLETE; `0ef3760ee233b0e20fa0dd272b12380abe8ee4a4`
+-> Q04 production cutover T4 COMPLETE / ACCEPTED; `9762d5a759bf0eaa81a1f6cb5af1aa28281d3ac2`, CI #3633 / R2 #3353 GREEN
+-> Beginner automatic Drunk authority COMPLETE / ACCEPTED
+-> DLB-6 old-contract retirement NEXT / UNBLOCKED
 -> DLB-7 acceptance
 -> TBGS-2 incremental runtime recommendation-state migration / A3 re-audit
 ~~~

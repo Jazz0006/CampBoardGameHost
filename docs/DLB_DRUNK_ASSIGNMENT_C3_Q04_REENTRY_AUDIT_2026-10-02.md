@@ -1,6 +1,6 @@
 # DLB Drunk Assignment C3-Q04 Re-entry Audit — 2026-10-02
 
-> Status: **IMPLEMENTATION + REPLAY COMPLETE / BEGINNER WIRED / T4 CUTOVER ACCEPTANCE PENDING**
+> Status: **COMPLETE / PRODUCTION CUTOVER PASS / BEGINNER AUTOMATIC AUTHORITY ACCEPTED**
 >
 > Repository: `Jazz0006/CampBoardGameHost`
 >
@@ -154,8 +154,8 @@ Required checks:
 | Cross-project snapshot semantics | **PASS** | Already accepted by TBGS-1. |
 | Evidence supports a bounded production preference predicate | **PASS** | VERIFIED C3-Q04. |
 | Production-capable versioned Drunk selection contract | **PASS / IMPLEMENTED** | `DRUNK_ASSIGNMENT_Q04_V1` is implemented as the bounded Empath -> Monk override plus explicit compatibility fallback. RED provenance is `d1e1b8fb972595a507637d18817eabb2981ab1fa`; evaluator/replay GREEN checkpoint is `5cf72a54a62c87763279c02014485a847724b72e` with CI #3631 / R2 #3351 GREEN. |
-| Beginner production wiring | **PASS / CANDIDATE** | `0ef3760ee233b0e20fa0dd272b12380abe8ee4a4` routes Beginner Drunk setup through the Q04 production adapter while retaining the compatibility route as an explicit pre-DLB-6 fallback. |
-| Production cutover acceptance | **T4 PENDING** | Final authority still requires an explicit `[full-ci]` exact-head checkpoint plus independent R2 before the gate may be marked PASS. |
+| Beginner production wiring | **PASS / ACCEPTED** | `0ef3760ee233b0e20fa0dd272b12380abe8ee4a4` routes Beginner Drunk setup through the Q04 production adapter while retaining the compatibility route as an explicit pre-DLB-6 fallback. |
+| Production cutover acceptance | **PASS / ACCEPTED** | Exact-head T4 checkpoint `9762d5a759bf0eaa81a1f6cb5af1aa28281d3ac2` passed CI #3633 and independent R2 #3353. T4 selected and passed Android `testFull + assembleDebug`, ASP contract tests, and Real Clingo cross-validation. |
 
 Overall:
 
@@ -165,8 +165,8 @@ legality / topology / replay              PASS
 current playable fallback                 PASS
 bounded ordering evidence                 PASS
 versioned production policy               PASS / IMPLEMENTED + REPLAYED
-Beginner production wiring                 PASS / CUTOVER CANDIDATE
-production cutover                         T4 PENDING
+Beginner production wiring                 PASS / ACCEPTED
+production cutover                         PASS / ACCEPTED
 ```
 
 ## 7. Immediate route
@@ -175,11 +175,11 @@ production cutover                         T4 PENDING
 C3-Q04 VERIFIED / ACCEPTED
 -> DRUNK_ASSIGNMENT_Q04_V1 typed request + bounded evaluator COMPLETE
 -> replay coverage + replay acceptance COMPLETE
--> Beginner route wiring COMPLETE / CUTOVER CANDIDATE
--> explicit [full-ci] T4 exact-head + independent R2 NEXT
--> rerun/close production cutover gate after T4 evidence
--> Beginner automatic authority only if PASS
--> DLB-6 retirement later
+-> Beginner route wiring COMPLETE / ACCEPTED
+-> explicit [full-ci] T4 exact-head + independent R2 COMPLETE / GREEN
+-> production cutover gate PASS / ACCEPTED
+-> Beginner automatic Drunk authority ACCEPTED
+-> DLB-6 old-contract retirement NEXT
 ```
 
 C5 / `BEGINNER_CONSERVATIVE_V2` remains a separate evidence gate and is unchanged by this re-entry.
