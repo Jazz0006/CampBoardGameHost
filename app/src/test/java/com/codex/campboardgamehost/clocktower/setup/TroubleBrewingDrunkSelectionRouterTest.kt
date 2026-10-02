@@ -155,21 +155,6 @@ class TroubleBrewingDrunkSelectionRouterTest {
                 TroubleBrewingShownSeatAssignment(5, "Eve", "imp"),
             ),
         )
-        val compatibility = TroubleBrewingSetupDealPlan(
-            datasetId = "test-dataset",
-            schemaVersion = 2,
-            presetId = preset.id,
-            playerCount = 5,
-            gameSeed = 4_101L,
-            selectedDrunkShownRole = "washerwoman",
-            assignments = listOf(
-                TroubleBrewingSetupDealAssignment(1, "Alice", "chef", "chef"),
-                TroubleBrewingSetupDealAssignment(2, "Bob", "empath", "empath"),
-                TroubleBrewingSetupDealAssignment(3, "Cara", "drunk", "washerwoman"),
-                TroubleBrewingSetupDealAssignment(4, "Dan", "poisoner", "poisoner"),
-                TroubleBrewingSetupDealAssignment(5, "Eve", "imp", "imp"),
-            ),
-        )
         val compatibilityCandidate = TroubleBrewingDrunkCandidate(
             seat = 3,
             playerName = "Cara",
@@ -178,7 +163,6 @@ class TroubleBrewingDrunkSelectionRouterTest {
         return TroubleBrewingPreparedSetup(
             preset = preset,
             intermediateSetup = intermediate,
-            compatibilityDealPlan = compatibility,
             compatibilityConfirmedDrunkCandidate = compatibilityCandidate,
         )
     }
@@ -217,26 +201,9 @@ class TroubleBrewingDrunkSelectionRouterTest {
                 TroubleBrewingShownSeatAssignment(5, "Eve", "imp"),
             ),
         )
-        val compatibility = TroubleBrewingSetupDealPlan(
-            datasetId = "test-dataset",
-            schemaVersion = 2,
-            presetId = preset.id,
-            playerCount = 5,
-            gameSeed = 4_102L,
-            selectedDrunkShownRole = null,
-            assignments = intermediate.shownSeatAssignments.map { assignment ->
-                TroubleBrewingSetupDealAssignment(
-                    seat = assignment.seat,
-                    playerName = assignment.playerName,
-                    actualRoleId = assignment.shownRoleId,
-                    shownRoleId = assignment.shownRoleId,
-                )
-            },
-        )
         return TroubleBrewingPreparedSetup(
             preset = preset,
             intermediateSetup = intermediate,
-            compatibilityDealPlan = compatibility,
             compatibilityConfirmedDrunkCandidate = null,
         )
     }

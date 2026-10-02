@@ -14,7 +14,7 @@ import java.io.File
 
 class TroubleBrewingProductionVisibleRosterCutoverTest {
     @Test
-    fun `drunk production preparation seats only visible identities before compatibility finalization`() {
+    fun `drunk production preparation seats only visible identities before fallback resolution`() {
         val preset = drunkPreset()
         val dataset = dataset(preset)
         val registry = canonicalRegistry()
@@ -44,26 +44,16 @@ class TroubleBrewingProductionVisibleRosterCutoverTest {
             .single { it !in preset.townsfolk }
         assertTrue(addedVisibleTownsfolk in preset.drunkAsOptions)
 
-        val compatibility = prepared.compatibilityDealPlan
-        val compatibilityDrunk = compatibility.assignments.single { it.actualRoleId == "drunk" }
-        assertEquals(addedVisibleTownsfolk, compatibilityDrunk.shownRoleId)
-        assertEquals(addedVisibleTownsfolk, compatibility.selectedDrunkShownRole)
-
+        val fallbackSeat = intermediate.shownSeatAssignments.single {
+            it.shownRoleId == addedVisibleTownsfolk
+        }
         val confirmedFallback = requireNotNull(prepared.compatibilityConfirmedDrunkCandidate)
         assertTrue(
             confirmedFallback in TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate),
         )
-        assertEquals(compatibilityDrunk.seat, confirmedFallback.seat)
-        assertEquals(compatibilityDrunk.playerName, confirmedFallback.playerName)
-        assertEquals(compatibilityDrunk.shownRoleId, confirmedFallback.shownRoleId)
-        assertEquals(
-            intermediate.shownSeatAssignments.map { it.seat to it.shownRoleId },
-            compatibility.assignments.map { it.seat to it.shownRoleId },
-        )
-        assertEquals(
-            (preset.townsfolk + preset.outsiders + preset.minions + preset.demons).sorted(),
-            compatibility.assignments.map { it.actualRoleId }.sorted(),
-        )
+        assertEquals(fallbackSeat.seat, confirmedFallback.seat)
+        assertEquals(fallbackSeat.playerName, confirmedFallback.playerName)
+        assertEquals(fallbackSeat.shownRoleId, confirmedFallback.shownRoleId)
 
         assertEquals(
             legacyShownIdentityChoice(
@@ -77,7 +67,7 @@ class TroubleBrewingProductionVisibleRosterCutoverTest {
     }
 
     @Test
-    fun `non drunk production preparation keeps visible and compatibility identities identical`() {
+    fun `non drunk production preparation needs no fallback candidate`() {
         val preset = nonDrunkPreset()
         val prepared = TroubleBrewingProductionSetupPreparer.prepare(
             dataset = dataset(preset),
@@ -90,13 +80,8 @@ class TroubleBrewingProductionVisibleRosterCutoverTest {
         assertFalse(prepared.intermediateSetup.visibleRoster.hasDrunk)
         assertEquals(null, prepared.compatibilityConfirmedDrunkCandidate)
         assertEquals(
-            prepared.intermediateSetup.shownSeatAssignments.map { it.seat to it.shownRoleId },
-            prepared.compatibilityDealPlan.assignments.map { it.seat to it.actualRoleId },
-        )
-        assertTrue(
-            prepared.compatibilityDealPlan.assignments.all {
-                it.actualRoleId == it.shownRoleId
-            },
+            prepared.intermediateSetup.visibleRoster.visibleRoleIds.sorted(),
+            prepared.intermediateSetup.shownSeatAssignments.map { it.shownRoleId }.sorted(),
         )
     }
 

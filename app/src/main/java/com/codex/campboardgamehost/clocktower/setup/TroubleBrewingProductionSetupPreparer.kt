@@ -8,7 +8,6 @@ import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 internal data class TroubleBrewingPreparedSetup(
     val preset: TroubleBrewingSetupPreset,
     val intermediateSetup: TroubleBrewingIntermediateSetup,
-    val compatibilityDealPlan: TroubleBrewingSetupDealPlan,
     val compatibilityConfirmedDrunkCandidate: TroubleBrewingDrunkCandidate? = null,
 )
 
@@ -103,53 +102,50 @@ internal object TroubleBrewingProductionSetupPreparer {
             visibleRoster = visibleRoster,
             shownSeatAssignments = shownSeatAssignments,
         )
-        val compatibilityDealPlan = TroubleBrewingCompatibilityDealPlanAdapter.fromIntermediate(
-            preset = selectedPreset,
-            intermediateSetup = intermediateSetup,
-            addedVisibleTownsfolkRoleId = addedVisibleTownsfolkRoleId,
-        )
         val compatibilityConfirmedDrunkCandidate =
             resolveCompatibilityConfirmedDrunkCandidate(
+                preset = selectedPreset,
                 intermediateSetup = intermediateSetup,
-                compatibilityDealPlan = compatibilityDealPlan,
+                addedVisibleTownsfolkRoleId = addedVisibleTownsfolkRoleId,
             )
 
         return TroubleBrewingPreparedSetup(
             preset = selectedPreset,
             intermediateSetup = intermediateSetup,
-            compatibilityDealPlan = compatibilityDealPlan,
             compatibilityConfirmedDrunkCandidate = compatibilityConfirmedDrunkCandidate,
         )
     }
 
     private fun resolveCompatibilityConfirmedDrunkCandidate(
+        preset: TroubleBrewingSetupPreset,
         intermediateSetup: TroubleBrewingIntermediateSetup,
-        compatibilityDealPlan: TroubleBrewingSetupDealPlan,
+        addedVisibleTownsfolkRoleId: String?,
     ): TroubleBrewingDrunkCandidate? {
         if (!intermediateSetup.visibleRoster.hasDrunk) {
-            require(compatibilityDealPlan.assignments.none { it.actualRoleId == DRUNK_EXTERNAL_ID }) {
-                "Trouble Brewing compatibility setup without Drunk cannot contain an actual Drunk."
+            require(addedVisibleTownsfolkRoleId == null) {
+                "Trouble Brewing setup without Drunk cannot carry a transitional fallback Townsfolk."
             }
             return null
         }
 
-        val compatibilityDrunk = compatibilityDealPlan.assignments.singleOrNull {
-            it.actualRoleId == DRUNK_EXTERNAL_ID
+        require(DRUNK_EXTERNAL_ID in preset.outsiders) {
+            "Trouble Brewing Drunk visible roster must come from a Drunk preset."
         }
-        requireNotNull(compatibilityDrunk) {
-            "Trouble Brewing compatibility Drunk setup must contain exactly one actual Drunk."
+        val fallbackShownRoleId = requireNotNull(addedVisibleTownsfolkRoleId) {
+            "Trouble Brewing Drunk setup requires the transitional fallback Townsfolk."
+        }
+        require(fallbackShownRoleId in preset.drunkAsOptions) {
+            "Trouble Brewing transitional fallback Townsfolk must come from drunk_as_options."
         }
 
         return requireNotNull(
             TroubleBrewingDrunkCandidateDomain
                 .legalCandidates(intermediateSetup)
                 .singleOrNull { candidate ->
-                    candidate.seat == compatibilityDrunk.seat &&
-                        candidate.playerName == compatibilityDrunk.playerName &&
-                        candidate.shownRoleId == compatibilityDrunk.shownRoleId
+                    candidate.shownRoleId == fallbackShownRoleId
                 },
         ) {
-            "Trouble Brewing compatibility Drunk must resolve to the current legal candidate domain."
+            "Trouble Brewing transitional fallback must resolve to one current legal Drunk candidate."
         }
     }
 

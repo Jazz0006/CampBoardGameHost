@@ -45,107 +45,6 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
     }
 
     @Test
-    fun `prepared setup freezes player starting shown identities including Drunk disguise`() {
-        val selection = TroubleBrewingSetupPresetSelection(
-            datasetId = "tb-dataset",
-            schemaVersion = 2,
-            presetId = "tb-5-001",
-            playerCount = 5,
-            gameSeed = 77L,
-            preset = TroubleBrewingSetupPreset(
-                id = "tb-5-001",
-                playerCount = 5,
-                townsfolk = listOf("chef", "empath"),
-                outsiders = listOf("drunk"),
-                minions = listOf("poisoner"),
-                demons = listOf("imp"),
-                source = "test",
-                complexity = "test",
-                drunkAsOptions = listOf("investigator"),
-                styleTags = listOf("balanced", "information"),
-            ),
-            selectedDrunkShownRole = "investigator",
-        )
-        val dealPlan = TroubleBrewingSetupDealPlan(
-            datasetId = selection.datasetId,
-            schemaVersion = selection.schemaVersion,
-            presetId = selection.presetId,
-            playerCount = selection.playerCount,
-            gameSeed = selection.gameSeed,
-            selectedDrunkShownRole = selection.selectedDrunkShownRole,
-            assignments = listOf(
-                TroubleBrewingSetupDealAssignment(1, "Alice", "chef", "chef"),
-                TroubleBrewingSetupDealAssignment(2, "Bob", "empath", "empath"),
-                TroubleBrewingSetupDealAssignment(3, "Carol", "drunk", "investigator"),
-                TroubleBrewingSetupDealAssignment(4, "David", "poisoner", "poisoner"),
-                TroubleBrewingSetupDealAssignment(5, "Emma", "imp", "imp"),
-            ),
-        )
-
-        val visibleRoster = TroubleBrewingVisibleRosterRealizer.realize(
-            preset = selection.preset,
-            addedVisibleTownsfolkRoleId = selection.selectedDrunkShownRole,
-        )
-        val record = TroubleBrewingSetupRotationRecordFactory.fromPreparedSetup(
-            TroubleBrewingPreparedSetup(
-                preset = selection.preset,
-                intermediateSetup = TroubleBrewingIntermediateSetup(
-                    datasetId = selection.datasetId,
-                    schemaVersion = selection.schemaVersion,
-                    presetId = selection.presetId,
-                    playerCount = selection.playerCount,
-                    gameSeed = selection.gameSeed,
-                    visibleRoster = visibleRoster,
-                    shownSeatAssignments = dealPlan.assignments.map { assignment ->
-                        TroubleBrewingShownSeatAssignment(
-                            seat = assignment.seat,
-                            playerName = assignment.playerName,
-                            shownRoleId = assignment.shownRoleId,
-                        )
-                    },
-                ),
-                compatibilityDealPlan = dealPlan,
-            ),
-        )
-
-        assertEquals(
-            listOf(
-                TroubleBrewingPlayerStartingIdentity(
-                    playerKey = "Alice",
-                    actualRoleId = "chef",
-                    shownRoleId = "chef",
-                    actualRoleCategory = TroubleBrewingStartingRoleCategory.TOWNSFOLK,
-                ),
-                TroubleBrewingPlayerStartingIdentity(
-                    playerKey = "Bob",
-                    actualRoleId = "empath",
-                    shownRoleId = "empath",
-                    actualRoleCategory = TroubleBrewingStartingRoleCategory.TOWNSFOLK,
-                ),
-                TroubleBrewingPlayerStartingIdentity(
-                    playerKey = "Carol",
-                    actualRoleId = "drunk",
-                    shownRoleId = "investigator",
-                    actualRoleCategory = TroubleBrewingStartingRoleCategory.OUTSIDER,
-                ),
-                TroubleBrewingPlayerStartingIdentity(
-                    playerKey = "David",
-                    actualRoleId = "poisoner",
-                    shownRoleId = "poisoner",
-                    actualRoleCategory = TroubleBrewingStartingRoleCategory.MINION,
-                ),
-                TroubleBrewingPlayerStartingIdentity(
-                    playerKey = "Emma",
-                    actualRoleId = "imp",
-                    shownRoleId = "imp",
-                    actualRoleCategory = TroubleBrewingStartingRoleCategory.DEMON,
-                ),
-            ),
-            record.playerStartingIdentities,
-        )
-    }
-
-    @Test
     fun `committed final truth drives rotation record when original townsfolk becomes Drunk`() {
         val preset = TroubleBrewingSetupPreset(
             id = "tb-6-dlb4",
@@ -178,15 +77,9 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
                 TroubleBrewingShownSeatAssignment(6, "Frank", "imp"),
             ),
         )
-        val compatibilityDealPlan = TroubleBrewingCompatibilityDealPlanAdapter.fromIntermediate(
-            preset = preset,
-            intermediateSetup = intermediate,
-            addedVisibleTownsfolkRoleId = "washerwoman",
-        )
         val prepared = TroubleBrewingPreparedSetup(
             preset = preset,
             intermediateSetup = intermediate,
-            compatibilityDealPlan = compatibilityDealPlan,
         )
         val registry = canonicalRegistry()
         val chefCandidate = TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate)
