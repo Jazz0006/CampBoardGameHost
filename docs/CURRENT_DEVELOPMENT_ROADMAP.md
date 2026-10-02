@@ -34,8 +34,9 @@ DLB-5H1 first-night evil-information presentation extraction COMPLETE / ACCEPTED
 DLB Drunk-assignment production cutover gate audit          COMPLETE / NOT PASSED
 TBGS-0 canonical TB snapshot contract                       COMPLETE / ACCEPTED
 TBGS-1 Drunk snapshot vertical slice / EvidenceLab interop   COMPLETE / ACCEPTED
-Post-TBGS-1 cutover recheck                                 COMPLETE / NOT PASSED
-Beginner automatic Drunk authority                          BLOCKED ON C3 VERIFIED ORDERING EVIDENCE + VERSIONED POLICY
+Post-TBGS-1 cutover recheck                                 COMPLETE / HISTORICAL NOT-PASSED VERDICT
+C3-Q04 production-policy re-entry audit                     COMPLETE / EVIDENCE GATE PASSED
+Beginner automatic Drunk authority                          BLOCKED ON VERSIONED Q04 POLICY + REPLAY/CUTOVER ACCEPTANCE
 DLB-6 old-contract retirement                               BLOCKED WHILE BEGINNER COMPATIBILITY FALLBACK IS LIVE
 TBGS-2 runtime recommendation projection migration           DEFERRED / POST DLB-6/7
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
@@ -137,7 +138,7 @@ Do not conflate those gates. C5 / BEGINNER_CONSERVATIVE_V2 remains blocked. DLB 
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate ordering/rejection semantics. Any production Drunk-selection policy delta requires an explicitly versioned decision-surface contract.
 
-The 2026-09-30 Drunk-assignment production cutover audit is COMPLETE / NOT PASSED. Legal-domain ownership, hypothetical projection, replay infrastructure and the current compatibility fallback are sufficient, but production ordering evidence and a production-capable versioned Drunk selection contract are not. `DRUNK_ASSIGNMENT_SHADOW_V1` must remain deferral-only. DLB-6 is also blocked because Beginner still depends on the transitional compatibility candidate that DLB-6 is intended to retire.
+The 2026-09-30 Drunk-assignment production cutover audit remains the historical NOT-PASSED verdict. On 2026-10-02, EvidenceLab Q04 became the first primary-audio VERIFIED C3 Stage-1 conditional preference at checkpoint `08d95a0c258f687187c0476a0f430fa5ff8229cb`. The bounded ordering-evidence gate is therefore now PASS. `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md` maps Q04 onto the existing topology/context surface and specifies the smallest successor contract: a Q04-only Empath -> Monk override with explicit compatibility fallback. `DRUNK_ASSIGNMENT_SHADOW_V1` remains deferral-only and `BEGINNER_CONSERVATIVE_V1` remains immutable. Production cutover is still blocked until that new versioned contract is implemented, replayed and accepted.
 
 ## 5. Recovery product boundary
 
@@ -225,10 +226,11 @@ query live main / workspace
 -> TBGS-1A Host snapshot-backed Drunk decision context/shadow COMPLETE / ACCEPTED; `ae4dc2400325d233da033d3c86d2863bde1bd485`, CI #3621 / R2 #3345 GREEN
 -> TBGS-1B EvidenceLab G10 historical materializer + cross-project semantic equivalence COMPLETE; observed EvidenceLab checkpoint `970e7e6430f7088ac004cd1e5696759da4d52003`, byte-for-byte Host fixture match
 -> TBGS-1 overall COMPLETE / ACCEPTED
--> post-TBGS-1 cutover recheck COMPLETE / NOT PASSED
-|| EvidenceLab C3 targeted candidate-comparison / rejection evidence continues
--> wait for first C3 Stage-1 VERIFIED handoff
--> introduce a production-capable versioned Drunk policy only after qualifying evidence exists, using snapshot + typed request rather than a new recommendation-specific GameState
+-> post-TBGS-1 cutover recheck COMPLETE / historical NOT-PASSED verdict
+-> EvidenceLab C3-Q04 VERIFIED / Stage-1 accepted at `08d95a0c258f687187c0476a0f430fa5ff8229cb`
+-> Q04 re-entry audit COMPLETE / evidence gate PASS
+-> implement `DRUNK_ASSIGNMENT_Q04_V1` as one bounded Empath -> Monk override with explicit compatibility fallback
+-> replay the new version against reconstructable cases
 -> re-run cutover gate
 -> Beginner automatic Drunk authority only if that gate passes
 -> DLB-6 old-contract retirement only after replacement selection/fallback authority exists

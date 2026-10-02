@@ -5,8 +5,9 @@
 > Last completed executable validation checkpoint: **TBGS-1A Host snapshot-backed Drunk decision context/shadow — `ae4dc2400325d233da033d3c86d2863bde1bd485`; CI #3621 / R2 #3345 GREEN; Android FAST GREEN**  
 > Latest merged checkpoint: **PR #190 — `TBGS-1: route Drunk decision through canonical snapshot` — squash merge `d862cf9efe5348506aba63feee6154d4e3e871ad`**  
 > Cross-project checkpoint: **TBGS-1B COMPLETE — EvidenceLab `970e7e6430f7088ac004cd1e5696759da4d52003`; G10 V1 fixture independently confirmed byte-for-byte identical to Host (2115 bytes)**  
-> Current cutover verdict: **post-TBGS-1 recheck COMPLETE / NOT PASSED — snapshot/interoperability blocker cleared; C3 VERIFIED ordering evidence + production-capable versioned policy still missing**  
-> Product next work: **No Host production-policy implementation is authorized yet. Wait for the first EvidenceLab C3 Stage-1 VERIFIED comparison/rejection handoff; then define one bounded versioned Drunk production policy/request over the accepted snapshot + typed context and rerun the gate. Keep Beginner compatibility fallback and do not start DLB-6 or TBGS-2.**
+> Current cutover verdict: **C3-Q04 re-entry COMPLETE — evidence gate PASS; production cutover still NOT PASSED until the bounded Q04 policy is implemented/replayed/accepted**  
+> Evidence checkpoint: **ClocktowerEvidenceLab `08d95a0c258f687187c0476a0f430fa5ff8229cb` — Q04 human-verified from primary audio**  
+> Product next work: **Implement `DRUNK_ASSIGNMENT_Q04_V1` as a narrow Empath -> Monk override only when the Q04 topology condition holds, otherwise preserve the existing compatibility candidate. Then replay and rerun the cutover gate. Keep `BEGINNER_CONSERVATIVE_V1` immutable, keep `DRUNK_ASSIGNMENT_SHADOW_V1` deferral-only, and do not start DLB-6 or TBGS-2 yet.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -18,12 +19,13 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
 6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
-7. `docs/DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md` — current Drunk-assignment cutover verdict after TBGS-1; architecture/interoperability PASS, C3 evidence/policy blockers remain
-8. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — original pre-TBGS-1 gate audit / historical blocker detail
-9. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
-10. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 deferred
-11. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-12. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+7. `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md` — current Drunk-assignment re-entry authority; C3-Q04 evidence gate PASS and bounded Q04 policy contract specified
+8. `docs/DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md` — historical post-TBGS-1 NOT-PASSED verdict before Q04 verification
+9. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — original pre-TBGS-1 gate audit / historical blocker detail
+10. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
+11. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 deferred
+12. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+13. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -73,11 +75,12 @@ DLB-5.4 information / poison convergence audit     COMPLETE / NO PRODUCTION GAP
 DLB-5.5 obsolete setup auto-apply cleanup          COMPLETE / GREEN
 DLB-5 overall                                      COMPLETE / ACCEPTED
 DLB-5H1 presentation extraction                    COMPLETE / ACCEPTED
-Drunk-assignment cutover gate audit                COMPLETE / NOT PASSED
+Drunk-assignment cutover gate audit                COMPLETE / HISTORICAL NOT-PASSED VERDICT
 TBGS-0 canonical TB snapshot contract              COMPLETE / ACCEPTED
 TBGS-1 Drunk snapshot vertical slice / interop     COMPLETE / ACCEPTED
-Post-TBGS-1 cutover recheck                        COMPLETE / NOT PASSED
-Beginner automatic Drunk authority                 BLOCKED ON C3 VERIFIED ORDERING EVIDENCE + VERSIONED POLICY
+Post-TBGS-1 cutover recheck                        COMPLETE / HISTORICAL NOT-PASSED VERDICT
+C3-Q04 production-policy re-entry                  COMPLETE / EVIDENCE GATE PASSED
+Beginner automatic Drunk authority                 BLOCKED ON VERSIONED Q04 POLICY + REPLAY/CUTOVER ACCEPTANCE
 DLB-6 old-contract retirement                      BLOCKED WHILE COMPATIBILITY FALLBACK IS LIVE
 TBGS-2 runtime recommendation projection migration DEFERRED / POST DLB-6/7
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN

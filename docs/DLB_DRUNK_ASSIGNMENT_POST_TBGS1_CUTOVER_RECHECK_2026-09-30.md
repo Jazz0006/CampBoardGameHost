@@ -9,6 +9,8 @@
 > EvidenceLab interoperability checkpoint observed: `970e7e6430f7088ac004cd1e5696759da4d52003`
 >
 > Scope: re-run only the Drunk-assignment production-cutover preconditions affected by TBGS-0/1. This does not introduce a new policy.
+>
+> **2026-10-02 supersession note:** this document preserves the historical pre-Q04 verdict. EvidenceLab C3-Q04 is now human-verified at checkpoint `08d95a0c258f687187c0476a0f430fa5ff8229cb`, so the bounded ordering-evidence gate is no longer failed. Current re-entry authority is `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md`; production cutover remains not passed only because the new versioned Q04 policy has not yet been implemented/replayed/accepted.
 
 ## 1. Result
 
