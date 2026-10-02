@@ -110,7 +110,7 @@ internal object TroubleBrewingSetupRotationRecordFactory {
         val drunkIdentities = identities.filter { identity ->
             identity.actualRoleId == DRUNK_EXTERNAL_ID
         }
-        val selectedDrunkShownRole = if (intermediate.visibleRoster.hasDrunk) {
+        if (intermediate.visibleRoster.hasDrunk) {
             require(drunkIdentities.size == 1) {
                 "Trouble Brewing Drunk completion requires exactly one committed Drunk."
             }
@@ -127,12 +127,10 @@ internal object TroubleBrewingSetupRotationRecordFactory {
             require(drunkIdentities.single().shownRoleId == confirmed.shownRoleId) {
                 "Trouble Brewing completion Drunk shown role must match the confirmed candidate."
             }
-            confirmed.shownRoleId
         } else {
             require(committedSetup.confirmedDrunkCandidate == null && drunkIdentities.isEmpty()) {
                 "Trouble Brewing completion without Drunk cannot carry a Drunk candidate or role."
             }
-            null
         }
 
         val realNonDemonRoleIds = identities
@@ -152,7 +150,6 @@ internal object TroubleBrewingSetupRotationRecordFactory {
             realNonDemonRoleIds = realNonDemonRoleIds,
             minionRoleIds = minionRoleIds,
             primaryStyleTag = preparedSetup.preset.styleTags.firstOrNull(),
-            selectedDrunkShownRole = selectedDrunkShownRole,
             playerStartingIdentities = identities,
         ).also(::validate)
     }
@@ -179,21 +176,6 @@ internal object TroubleBrewingSetupRotationRecordFactory {
         }
 
         val hasDrunk = DRUNK_EXTERNAL_ID in record.realNonDemonRoleIds
-        if (hasDrunk) {
-            val shownRole = requireNotNull(record.selectedDrunkShownRole) {
-                "Trouble Brewing completion Drunk setup requires its committed shown role."
-            }
-            require(shownRole.isNotBlank()) {
-                "Trouble Brewing completion Drunk shown role cannot be blank."
-            }
-            require(shownRole !in record.realNonDemonRoleIds) {
-                "Trouble Brewing completion Drunk shown role must not be a real non-Demon role."
-            }
-        } else {
-            require(record.selectedDrunkShownRole == null) {
-                "Trouble Brewing completion without Drunk cannot carry a Drunk shown role."
-            }
-        }
 
         if (record.playerStartingIdentities.isNotEmpty()) {
             require(record.playerStartingIdentities.size == record.playerCount) {
@@ -204,6 +186,12 @@ internal object TroubleBrewingSetupRotationRecordFactory {
             ) {
                 "Trouble Brewing completion starting identities must contain unique player keys."
             }
+            val drunkStartingIdentities = record.playerStartingIdentities.filter { identity ->
+                identity.actualRoleId == DRUNK_EXTERNAL_ID
+            }
+            require(drunkStartingIdentities.size == if (hasDrunk) 1 else 0) {
+                "Trouble Brewing completion starting identities must match Drunk presence."
+            }
             record.playerStartingIdentities.forEach { identity ->
                 require(identity.playerKey.isNotBlank()) {
                     "Trouble Brewing completion player key cannot be blank."
@@ -212,8 +200,11 @@ internal object TroubleBrewingSetupRotationRecordFactory {
                     "Trouble Brewing completion starting identity roles cannot be blank."
                 }
                 if (identity.actualRoleId == DRUNK_EXTERNAL_ID) {
-                    require(identity.shownRoleId == record.selectedDrunkShownRole) {
-                        "Trouble Brewing completion Drunk starting identity must use the committed shown role."
+                    require(identity.shownRoleId != identity.actualRoleId) {
+                        "Trouble Brewing completion Drunk starting identity must preserve a distinct shown role."
+                    }
+                    require(identity.shownRoleId !in record.realNonDemonRoleIds) {
+                        "Trouble Brewing completion Drunk shown role must not be a real non-Demon role."
                     }
                 } else {
                     require(identity.shownRoleId == identity.actualRoleId) {

@@ -136,7 +136,6 @@ class TroubleBrewingRecentPlayerRotationHistoryStoreTest {
             realNonDemonRoleIds = nonDemonRoles,
             minionRoleIds = emptySet(),
             primaryStyleTag = "test",
-            selectedDrunkShownRole = null,
             playerStartingIdentities = normalizedIdentities,
         )
     }

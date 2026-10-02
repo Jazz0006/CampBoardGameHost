@@ -66,7 +66,6 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
             record.realNonDemonRoleIds,
         )
         assertEquals(setOf("poisoner"), record.minionRoleIds)
-        assertEquals("chef", record.selectedDrunkShownRole)
         assertEquals(
             listOf(
                 TroubleBrewingPlayerStartingIdentity(
@@ -111,24 +110,6 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
     }
 
     @Test
-    fun `persisted completion record rejects missing Drunk shown identity`() {
-        assertThrows(IllegalArgumentException::class.java) {
-            TroubleBrewingSetupRotationRecordFactory.validate(
-                TroubleBrewingSetupRotationRecord(
-                    datasetId = "tb-dataset",
-                    schemaVersion = 2,
-                    presetId = "tb-5-001",
-                    playerCount = 5,
-                    realNonDemonRoleIds = setOf("chef", "empath", "drunk", "poisoner"),
-                    minionRoleIds = setOf("poisoner"),
-                    primaryStyleTag = "balanced",
-                    selectedDrunkShownRole = null,
-                ),
-            )
-        }
-    }
-
-    @Test
     fun `persisted completion record rejects minion outside real role set`() {
         assertThrows(IllegalArgumentException::class.java) {
             TroubleBrewingSetupRotationRecordFactory.validate(
@@ -140,7 +121,6 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
                     realNonDemonRoleIds = setOf("chef", "empath", "butler", "poisoner"),
                     minionRoleIds = setOf("spy"),
                     primaryStyleTag = null,
-                    selectedDrunkShownRole = null,
                 ),
             )
         }

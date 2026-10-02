@@ -55,6 +55,5 @@ class TroubleBrewingSetupRotationRecordStoreTest {
             ),
             minionRoleIds = setOf("poisoner"),
             primaryStyleTag = "balanced",
-            selectedDrunkShownRole = null,
         )
 }

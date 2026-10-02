@@ -15,7 +15,8 @@ import org.json.JSONObject
  */
 internal object TroubleBrewingSetupCompletionPersistence {
     const val ROOT_KEY = "troubleBrewingSetupCompletion"
-    const val SCHEMA_VERSION = 2
+    const val SCHEMA_VERSION = 3
+    private const val LEGACY_SCHEMA_VERSION = 2
 
     fun encode(record: TroubleBrewingSetupRotationRecord): JSONObject {
         TroubleBrewingSetupRotationRecordFactory.validate(record)
@@ -28,7 +29,6 @@ internal object TroubleBrewingSetupCompletionPersistence {
             put("realNonDemonRoleIds", record.realNonDemonRoleIds.sorted().toCompletionJsonArray())
             put("minionRoleIds", record.minionRoleIds.sorted().toCompletionJsonArray())
             put("primaryStyleTag", record.primaryStyleTag ?: JSONObject.NULL)
-            put("selectedDrunkShownRole", record.selectedDrunkShownRole ?: JSONObject.NULL)
             put(
                 "playerStartingIdentities",
                 record.playerStartingIdentities.toCompletionStartingIdentitiesJsonArray(),
@@ -42,11 +42,16 @@ internal object TroubleBrewingSetupCompletionPersistence {
         val json = root.optJSONObject(ROOT_KEY)
             ?: throw IllegalArgumentException("$ROOT_KEY must be an object.")
         val schemaVersion = json.requiredCompletionInt("schemaVersion")
-        require(schemaVersion == SCHEMA_VERSION) {
+        require(schemaVersion == SCHEMA_VERSION || schemaVersion == LEGACY_SCHEMA_VERSION) {
             "Unsupported Trouble Brewing setup completion schema '$schemaVersion'."
         }
+        val legacySelectedDrunkShownRole = if (schemaVersion == LEGACY_SCHEMA_VERSION) {
+            json.requiredCompletionNullableString("selectedDrunkShownRole")
+        } else {
+            null
+        }
 
-        return TroubleBrewingSetupRotationRecord(
+        val record = TroubleBrewingSetupRotationRecord(
             datasetId = json.requiredCompletionString("datasetId"),
             schemaVersion = json.requiredCompletionInt("datasetSchemaVersion"),
             presetId = json.requiredCompletionString("presetId"),
@@ -54,10 +59,19 @@ internal object TroubleBrewingSetupCompletionPersistence {
             realNonDemonRoleIds = json.requiredCompletionStringSet("realNonDemonRoleIds"),
             minionRoleIds = json.requiredCompletionStringSet("minionRoleIds"),
             primaryStyleTag = json.requiredCompletionNullableString("primaryStyleTag"),
-            selectedDrunkShownRole = json.requiredCompletionNullableString("selectedDrunkShownRole"),
             playerStartingIdentities =
                 json.requiredCompletionStartingIdentities("playerStartingIdentities"),
         ).also(TroubleBrewingSetupRotationRecordFactory::validate)
+
+        if (schemaVersion == LEGACY_SCHEMA_VERSION && record.playerStartingIdentities.isNotEmpty()) {
+            val migratedDrunkShownRole = record.playerStartingIdentities
+                .singleOrNull { identity -> identity.actualRoleId == "drunk" }
+                ?.shownRoleId
+            require(legacySelectedDrunkShownRole == migratedDrunkShownRole) {
+                "Legacy Trouble Brewing completion Drunk shown role disagrees with canonical starting identities."
+            }
+        }
+        return record
     }
 }
 

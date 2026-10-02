@@ -3,9 +3,9 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentity
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingStartingRoleCategory
-import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -14,11 +14,14 @@ class TroubleBrewingSetupCompletionPersistenceTest {
     @Test
     fun `completion record round trip preserves exact diversity metadata without dataset`() {
         val record = record()
+        val encoded = TroubleBrewingSetupCompletionPersistence.encode(record)
         val root = JSONObject().put(
             TroubleBrewingSetupCompletionPersistence.ROOT_KEY,
-            TroubleBrewingSetupCompletionPersistence.encode(record),
+            encoded,
         )
 
+        assertEquals(3, encoded.getInt("schemaVersion"))
+        assertFalse(encoded.has("selectedDrunkShownRole"))
         assertEquals(record, TroubleBrewingSetupCompletionPersistence.decodeOrNull(root))
     }
 
@@ -52,9 +55,23 @@ class TroubleBrewingSetupCompletionPersistenceTest {
     }
 
     @Test
-    fun `corrupt Drunk completion cannot be repaired by restore`() {
-        val json = TroubleBrewingSetupCompletionPersistence.encode(record())
-            .put("selectedDrunkShownRole", JSONObject.NULL)
+    fun `legacy v2 completion migrates when old Drunk field agrees with canonical identity`() {
+        val expected = record(playerStartingIdentities = startingIdentities())
+        val json = TroubleBrewingSetupCompletionPersistence.encode(expected)
+            .put("schemaVersion", 2)
+            .put("selectedDrunkShownRole", "investigator")
+        val root = JSONObject().put(TroubleBrewingSetupCompletionPersistence.ROOT_KEY, json)
+
+        assertEquals(expected, TroubleBrewingSetupCompletionPersistence.decodeOrNull(root))
+    }
+
+    @Test
+    fun `legacy v2 completion rejects old Drunk field that conflicts with canonical identity`() {
+        val json = TroubleBrewingSetupCompletionPersistence.encode(
+            record(playerStartingIdentities = startingIdentities()),
+        )
+            .put("schemaVersion", 2)
+            .put("selectedDrunkShownRole", "monk")
         val root = JSONObject().put(TroubleBrewingSetupCompletionPersistence.ROOT_KEY, json)
 
         assertThrows(IllegalArgumentException::class.java) {
@@ -74,7 +91,6 @@ class TroubleBrewingSetupCompletionPersistenceTest {
         ),
         minionRoleIds = setOf("poisoner"),
         primaryStyleTag = "balanced",
-        selectedDrunkShownRole = "investigator",
         playerStartingIdentities = playerStartingIdentities,
     )
 
