@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkCandidateDomain
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingIntermediateSetup
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingShownSeatAssignment
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingVisibleRoster
@@ -113,6 +114,34 @@ class DrunkAssignmentQ04V1PolicyTest {
         assertEquals(
             DrunkAssignmentQ04V1Reason.EMPATH_TOPOLOGY_UNAVAILABLE,
             evaluation.reason,
+        )
+    }
+
+    @Test
+    fun `production adapter maps Q04 selection back to the exact current legal candidate`() {
+        val intermediate = intermediateSetup(empathAdjacentToEvil = false, includeMonk = true)
+        val ruleset = canonicalRuleset()
+        val compatibility = TroubleBrewingDrunkCandidateDomain
+            .legalCandidates(intermediate)
+            .single { it.shownRoleId == "empath" }
+
+        val selection = DrunkAssignmentQ04V1ProductionAdapter.select(
+            gameId = "q04-production-adapter-test",
+            intermediateSetup = intermediate,
+            compatibilityCandidate = compatibility,
+            characterRegistry = ruleset.characterRegistry,
+            roleDefinitions = clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
+            sourceRevision = InformationDecisionRevision(0L, 0L),
+        )
+
+        assertEquals("monk", selection.candidate.shownRoleId)
+        assertEquals(
+            DrunkAssignmentQ04V1Disposition.Q04_MONK_OVERRIDE,
+            selection.evaluation.disposition,
+        )
+        assertEquals(
+            selection.evaluation.selectedCandidate.seat,
+            selection.candidate.seat,
         )
     }
 

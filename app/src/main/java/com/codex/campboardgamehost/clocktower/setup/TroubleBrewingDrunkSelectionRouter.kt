@@ -26,6 +26,10 @@ internal sealed interface TroubleBrewingDrunkSelectionRoute {
         val request: TroubleBrewingDrunkSelectionRequest,
     ) : TroubleBrewingDrunkSelectionRoute
 
+    data class BeginnerAutomatic(
+        val candidate: TroubleBrewingDrunkCandidate,
+    ) : TroubleBrewingDrunkSelectionRoute
+
     data class CompatibilityImmediate(
         val candidate: TroubleBrewingDrunkCandidate,
     ) : TroubleBrewingDrunkSelectionRoute
@@ -35,13 +39,15 @@ internal sealed interface TroubleBrewingDrunkSelectionRoute {
  * DLB-4A UX router.
  *
  * Rules/setup owns legality, the App owns only the transient interaction lifetime, and the canonical
- * commit owner still revalidates the final candidate. No SDE policy is invoked here.
+ * commit owner still revalidates the final candidate. The router may consume an already-evaluated
+ * Beginner automatic candidate but does not invoke or reinterpret SDE policy.
  */
 internal object TroubleBrewingDrunkSelectionRouter {
     fun route(
         preparedSetup: TroubleBrewingPreparedSetup,
         experienceMode: StorytellerExperienceMode,
         recommendedCandidate: TroubleBrewingDrunkCandidate?,
+        beginnerAutomaticCandidate: TroubleBrewingDrunkCandidate? = null,
     ): TroubleBrewingDrunkSelectionRoute {
         val intermediate = preparedSetup.intermediateSetup
         val legalCandidates = TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate)
@@ -52,6 +58,9 @@ internal object TroubleBrewingDrunkSelectionRouter {
             }
             require(recommendedCandidate == null) {
                 "Trouble Brewing setup without Drunk cannot carry a Drunk recommendation."
+            }
+            require(beginnerAutomaticCandidate == null) {
+                "Trouble Brewing setup without Drunk cannot carry a Beginner automatic Drunk candidate."
             }
             require(preparedSetup.compatibilityConfirmedDrunkCandidate == null) {
                 "Trouble Brewing setup without Drunk cannot carry a compatibility Drunk confirmation."
@@ -65,6 +74,9 @@ internal object TroubleBrewingDrunkSelectionRouter {
 
         return when (experienceMode) {
             StorytellerExperienceMode.EXPERIENCED -> {
+                require(beginnerAutomaticCandidate == null) {
+                    "Experienced Drunk selection cannot consume a Beginner automatic candidate."
+                }
                 TroubleBrewingDrunkSelectionRoute.ManualSelection(
                     TroubleBrewingDrunkSelectionRequest(
                         candidates = legalCandidates,
@@ -75,8 +87,21 @@ internal object TroubleBrewingDrunkSelectionRouter {
 
             StorytellerExperienceMode.BEGINNER -> {
                 require(recommendedCandidate == null) {
-                    "Beginner Drunk selection cannot consume a recommendation before the production cutover gate."
+                    "Beginner Drunk selection cannot consume the Experienced recommendation channel."
                 }
+                if (beginnerAutomaticCandidate != null) {
+                    val currentAutomaticCandidate =
+                        legalCandidates.singleOrNull { candidate ->
+                            candidate == beginnerAutomaticCandidate
+                        }
+                    requireNotNull(currentAutomaticCandidate) {
+                        "Beginner automatic Drunk selection must resolve to the current legal candidate domain."
+                    }
+                    return TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic(
+                        currentAutomaticCandidate,
+                    )
+                }
+
                 val compatibilityCandidate =
                     requireNotNull(preparedSetup.compatibilityConfirmedDrunkCandidate) {
                         "Beginner compatibility Drunk selection requires the transitional confirmed candidate."
