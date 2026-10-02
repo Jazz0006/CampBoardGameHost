@@ -1,12 +1,8 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentity
-import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPreset
-import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetSelection
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingStartingRoleCategory
-import org.json.JSONArray
-import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -14,15 +10,15 @@ import org.junit.Test
 
 class TroubleBrewingSetupRotationHistoryStoreTest {
     @Test
-    fun `completed setup survives store recreation as selector rotation history`() {
+    fun `completed setup survives store recreation as rotation history`() {
         var raw: String? = null
         val writeRaw: (String) -> Boolean = { encoded ->
             raw = encoded
             true
         }
-        val selection = selection(
-            gameSeed = 7_001L,
+        val record = record(
             presetId = "tb-8-history-a",
+            playerCount = 8,
             townsfolk = listOf("washerwoman", "librarian", "chef", "empath", "fortune_teller"),
             outsiders = listOf("drunk"),
             minions = listOf("scarlet_woman"),
@@ -35,41 +31,19 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
             writeRaw = writeRaw,
         ).recordCompletedGame(
             gameId = "game-1",
-            selection = selection,
+            record = record,
         )
 
         val restored = TroubleBrewingSetupRotationHistoryStore(
             readRaw = { raw },
             writeRaw = writeRaw,
         ).historyFor(
-            datasetId = selection.datasetId,
-            schemaVersion = selection.schemaVersion,
-            playerCount = selection.playerCount,
+            datasetId = record.datasetId,
+            schemaVersion = record.schemaVersion,
+            playerCount = record.playerCount,
         )
 
-        assertEquals(
-            listOf(
-                TroubleBrewingSetupRotationRecord(
-                    datasetId = "test-dataset",
-                    schemaVersion = 2,
-                    presetId = "tb-8-history-a",
-                    playerCount = 8,
-                    realNonDemonRoleIds = setOf(
-                        "washerwoman",
-                        "librarian",
-                        "chef",
-                        "empath",
-                        "fortune_teller",
-                        "drunk",
-                        "scarlet_woman",
-                    ),
-                    minionRoleIds = setOf("scarlet_woman"),
-                    primaryStyleTag = "balanced",
-                    selectedDrunkShownRole = "investigator",
-                ),
-            ),
-            restored.recentGames,
-        )
+        assertEquals(listOf(record), restored.recentGames)
     }
 
     @Test
@@ -132,9 +106,8 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
         )
         store.recordCompletedGame("older-identity-game", recordWithStartingIdentities())
         store.recordCompletedGame(
-            "newer-legacy-style-game",
-            simpleSelection(
-                gameSeed = 7_777L,
+            "newer-no-identities-game",
+            simpleRecord(
                 presetId = "newer-no-identities",
                 playerCount = 6,
             ),
@@ -160,10 +133,10 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
                 true
             },
         )
-        val first = simpleSelection(gameSeed = 8_001L, presetId = "tb-8-idempotent-a", playerCount = 8)
+        val first = simpleRecord(presetId = "tb-8-idempotent-a", playerCount = 8)
 
-        assertTrue(store.recordCompletedGame(gameId = "stable-game-id", selection = first))
-        assertTrue(store.recordCompletedGame(gameId = "stable-game-id", selection = first))
+        assertTrue(store.recordCompletedGame(gameId = "stable-game-id", record = first))
+        assertTrue(store.recordCompletedGame(gameId = "stable-game-id", record = first))
         assertEquals(1, writeCount)
         assertEquals(
             listOf("tb-8-idempotent-a"),
@@ -175,8 +148,7 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
         assertThrows(IllegalArgumentException::class.java) {
             store.recordCompletedGame(
                 gameId = "stable-game-id",
-                selection = simpleSelection(
-                    gameSeed = 8_002L,
+                record = simpleRecord(
                     presetId = "tb-8-idempotent-conflict",
                     playerCount = 8,
                 ),
@@ -196,19 +168,17 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
         (1..6).forEach { index ->
             store.recordCompletedGame(
                 gameId = "eight-$index",
-                selection = simpleSelection(
-                    gameSeed = 9_000L + index,
+                record = simpleRecord(
                     presetId = "tb-8-$index",
                     playerCount = 8,
                 ),
             )
         }
-        val ninePlayer = simpleSelection(
-            gameSeed = 9_100L,
+        val ninePlayer = simpleRecord(
             presetId = "tb-9-only",
             playerCount = 9,
         )
-        store.recordCompletedGame(gameId = "nine-1", selection = ninePlayer)
+        store.recordCompletedGame(gameId = "nine-1", record = ninePlayer)
 
         assertEquals(
             listOf("tb-8-6", "tb-8-5", "tb-8-4", "tb-8-3", "tb-8-2"),
@@ -227,22 +197,19 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
             readRaw = { raw },
             writeRaw = { encoded -> raw = encoded; true },
         )
-        val current = simpleSelection(
-            gameSeed = 10_001L,
+        val current = simpleRecord(
             presetId = "current",
             playerCount = 8,
             datasetId = "dataset-current",
             schemaVersion = 2,
         )
-        val otherDataset = simpleSelection(
-            gameSeed = 10_002L,
+        val otherDataset = simpleRecord(
             presetId = "other-dataset",
             playerCount = 8,
             datasetId = "dataset-other",
             schemaVersion = 2,
         )
-        val otherSchema = simpleSelection(
-            gameSeed = 10_003L,
+        val otherSchema = simpleRecord(
             presetId = "other-schema",
             playerCount = 8,
             datasetId = "dataset-current",
@@ -272,8 +239,7 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
         raw = "{\"version\":999,\"entries\":[]}"
         assertTrue(store.historyFor("test-dataset", 2, 8).recentGames.isEmpty())
 
-        val recovered = simpleSelection(
-            gameSeed = 11_001L,
+        val recovered = simpleRecord(
             presetId = "tb-8-recovered",
             playerCount = 8,
         )
@@ -334,17 +300,17 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
         actualRoleCategory = category,
     )
 
-    private fun simpleSelection(
-        gameSeed: Long,
+    private fun simpleRecord(
         presetId: String,
         playerCount: Int,
         datasetId: String = "test-dataset",
         schemaVersion: Int = 2,
-    ): TroubleBrewingSetupPresetSelection {
+    ): TroubleBrewingSetupRotationRecord {
         val minion = "minion_$presetId".replace('-', '_')
-        val townsfolk = (1..playerCount - 2).map { index -> "townsfolk_${presetId}_$index".replace('-', '_') }
-        return selection(
-            gameSeed = gameSeed,
+        val townsfolk = (1..playerCount - 2).map { index ->
+            "townsfolk_${presetId}_$index".replace('-', '_')
+        }
+        return record(
             presetId = presetId,
             playerCount = playerCount,
             datasetId = datasetId,
@@ -357,39 +323,25 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
         )
     }
 
-    private fun selection(
-        gameSeed: Long,
+    private fun record(
         presetId: String,
+        playerCount: Int,
         townsfolk: List<String>,
         outsiders: List<String>,
         minions: List<String>,
         styleTags: List<String>,
         selectedDrunkShownRole: String?,
-        playerCount: Int = 8,
         datasetId: String = "test-dataset",
         schemaVersion: Int = 2,
-    ) = TroubleBrewingSetupPresetSelection(
-        datasetId = datasetId,
-        schemaVersion = schemaVersion,
-        presetId = presetId,
-        playerCount = playerCount,
-        gameSeed = gameSeed,
-        preset = TroubleBrewingSetupPreset(
-            id = presetId,
+    ): TroubleBrewingSetupRotationRecord =
+        TroubleBrewingSetupRotationRecord(
+            datasetId = datasetId,
+            schemaVersion = schemaVersion,
+            presetId = presetId,
             playerCount = playerCount,
-            townsfolk = townsfolk,
-            outsiders = outsiders,
-            minions = minions,
-            demons = listOf("imp"),
-            source = "test",
-            complexity = "test",
-            styleTags = styleTags,
-            drunkAsOptions = if (selectedDrunkShownRole == null) emptyList() else listOf(
-                selectedDrunkShownRole,
-                "monk",
-                "soldier",
-            ),
-        ),
-        selectedDrunkShownRole = selectedDrunkShownRole,
-    )
+            realNonDemonRoleIds = (townsfolk + outsiders + minions).toSet(),
+            minionRoleIds = minions.toSet(),
+            primaryStyleTag = styleTags.firstOrNull(),
+            selectedDrunkShownRole = selectedDrunkShownRole,
+        )
 }

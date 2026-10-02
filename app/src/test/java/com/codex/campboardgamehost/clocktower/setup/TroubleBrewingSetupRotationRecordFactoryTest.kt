@@ -10,41 +10,6 @@ import java.io.File
 
 class TroubleBrewingSetupRotationRecordFactoryTest {
     @Test
-    fun `selection becomes compact completion record without template lookup`() {
-        val selection = TroubleBrewingSetupPresetSelection(
-            datasetId = "tb-dataset",
-            schemaVersion = 2,
-            presetId = "tb-5-001",
-            playerCount = 5,
-            gameSeed = 77L,
-            preset = TroubleBrewingSetupPreset(
-                id = "tb-5-001",
-                playerCount = 5,
-                townsfolk = listOf("chef", "empath"),
-                outsiders = listOf("drunk"),
-                minions = listOf("poisoner"),
-                demons = listOf("imp"),
-                source = "test",
-                complexity = "test",
-                drunkAsOptions = listOf("investigator"),
-                styleTags = listOf("balanced", "information"),
-            ),
-            selectedDrunkShownRole = "investigator",
-        )
-
-        val record = TroubleBrewingSetupRotationRecordFactory.fromSelection(selection)
-
-        assertEquals("tb-dataset", record.datasetId)
-        assertEquals(2, record.schemaVersion)
-        assertEquals("tb-5-001", record.presetId)
-        assertEquals(5, record.playerCount)
-        assertEquals(setOf("chef", "empath", "drunk", "poisoner"), record.realNonDemonRoleIds)
-        assertEquals(setOf("poisoner"), record.minionRoleIds)
-        assertEquals("balanced", record.primaryStyleTag)
-        assertEquals("investigator", record.selectedDrunkShownRole)
-    }
-
-    @Test
     fun `committed final truth drives rotation record when original townsfolk becomes Drunk`() {
         val preset = TroubleBrewingSetupPreset(
             id = "tb-6-dlb4",

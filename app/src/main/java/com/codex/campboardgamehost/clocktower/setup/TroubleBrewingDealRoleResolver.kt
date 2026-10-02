@@ -45,27 +45,6 @@ internal object TroubleBrewingDealRoleResolver {
         }
     }
 
-    fun resolve(
-        dealPlan: TroubleBrewingSetupDealPlan,
-        availableRoles: List<ClocktowerRole>,
-    ): List<TroubleBrewingResolvedDealAssignment> {
-        require(dealPlan.assignments.size == dealPlan.playerCount) {
-            "Trouble Brewing deal assignment count must match player count."
-        }
-        require(dealPlan.assignments.map { it.seat }.distinct().size == dealPlan.assignments.size) {
-            "Trouble Brewing deal seats must be unique."
-        }
-
-        return dealPlan.assignments.map { assignment ->
-            TroubleBrewingResolvedDealAssignment(
-                seat = assignment.seat,
-                playerName = assignment.playerName,
-                actualRole = resolveRole(assignment.actualRoleId, availableRoles),
-                shownRole = resolveRole(assignment.shownRoleId, availableRoles),
-            )
-        }
-    }
-
     private fun resolveRole(
         externalRoleId: String,
         availableRoles: List<ClocktowerRole>,

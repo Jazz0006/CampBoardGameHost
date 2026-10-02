@@ -3,7 +3,6 @@ package com.codex.campboardgamehost
 import android.content.Context
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentity
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentityHistory
-import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetSelection
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationHistory
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecordFactory
@@ -15,14 +14,6 @@ internal class TroubleBrewingSetupRotationHistoryStore(
     private val readRaw: () -> String?,
     private val writeRaw: (String) -> Boolean,
 ) {
-    fun recordCompletedGame(
-        gameId: String,
-        selection: TroubleBrewingSetupPresetSelection,
-    ): Boolean = recordCompletedGame(
-        gameId = gameId,
-        record = TroubleBrewingSetupRotationRecordFactory.fromSelection(selection),
-    )
-
     fun recordCompletedGame(
         gameId: String,
         record: TroubleBrewingSetupRotationRecord,

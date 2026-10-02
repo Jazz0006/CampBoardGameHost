@@ -13,55 +13,6 @@ import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
  * CommittedClocktowerSetup.
  */
 internal object TroubleBrewingSetupRotationRecordFactory {
-    fun fromSelection(selection: TroubleBrewingSetupPresetSelection): TroubleBrewingSetupRotationRecord {
-        require(selection.datasetId.isNotBlank()) { "Trouble Brewing setup selection dataset ID cannot be blank." }
-        require(selection.schemaVersion > 0) { "Trouble Brewing setup selection schema version must be positive." }
-        require(selection.presetId == selection.preset.id) {
-            "Trouble Brewing setup selection preset provenance is inconsistent."
-        }
-        require(selection.playerCount == selection.preset.playerCount) {
-            "Trouble Brewing setup selection player count is inconsistent."
-        }
-
-        val realNonDemonRoleIds = (
-            selection.preset.townsfolk + selection.preset.outsiders + selection.preset.minions
-            ).toSet()
-        require(realNonDemonRoleIds.size == selection.playerCount - 1) {
-            "Trouble Brewing completed setup must contain exactly playerCount - 1 unique non-Demon roles."
-        }
-
-        val hasDrunk = DRUNK_EXTERNAL_ID in selection.preset.outsiders
-        if (hasDrunk) {
-            require(!selection.selectedDrunkShownRole.isNullOrBlank()) {
-                "Completed Trouble Brewing Drunk setup requires its selector-owned shown role."
-            }
-            require(selection.selectedDrunkShownRole in selection.preset.drunkAsOptions) {
-                "Completed Trouble Brewing Drunk shown role must belong to the selected preset options."
-            }
-            require(
-                selection.selectedDrunkShownRole !in realNonDemonRoleIds &&
-                    selection.selectedDrunkShownRole !in selection.preset.demons,
-            ) {
-                "Completed Trouble Brewing Drunk shown role must not be an actual in-play role."
-            }
-        } else {
-            require(selection.selectedDrunkShownRole == null) {
-                "Completed non-Drunk Trouble Brewing setup must not carry a Drunk shown role."
-            }
-        }
-
-        return TroubleBrewingSetupRotationRecord(
-            datasetId = selection.datasetId,
-            schemaVersion = selection.schemaVersion,
-            presetId = selection.presetId,
-            playerCount = selection.playerCount,
-            realNonDemonRoleIds = realNonDemonRoleIds,
-            minionRoleIds = selection.preset.minions.toSet(),
-            primaryStyleTag = selection.preset.styleTags.firstOrNull(),
-            selectedDrunkShownRole = selection.selectedDrunkShownRole,
-        ).also(::validate)
-    }
-
     /**
      * Builds the completion/rotation fact from the already-canonical DLB setup truth.
      *

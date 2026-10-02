@@ -1,58 +1,57 @@
 package com.codex.campboardgamehost.clocktower.setup
 
 import com.codex.campboardgamehost.ClocktowerScript
+import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktowerRolesForScript
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
 import org.junit.Test
+import java.io.File
 
 class TroubleBrewingDealRoleResolverTest {
     @Test
-    fun `external preset role ids resolve exactly to existing app roles without changing shown identity`() {
-        val dealPlan = TroubleBrewingSetupDealPlan(
-            datasetId = "test-dataset",
+    fun `canonical committed Drunk identity resolves exactly to App roles`() {
+        val registry = BuiltInClocktowerRulesetCatalog { assetPath ->
+            File("src/main/assets", assetPath).readText(Charsets.UTF_8)
+        }.ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+        val intermediate = TroubleBrewingIntermediateSetup(
+            datasetId = "resolver-test",
             schemaVersion = 2,
-            presetId = "tb-8-role-resolution",
-            playerCount = 3,
+            presetId = "resolver-test-preset",
+            playerCount = 5,
             gameSeed = 6_003L,
-            selectedDrunkShownRole = "investigator",
-            assignments = listOf(
-                TroubleBrewingSetupDealAssignment(1, "A", "drunk", "investigator"),
-                TroubleBrewingSetupDealAssignment(2, "B", "fortune_teller", "fortune_teller"),
-                TroubleBrewingSetupDealAssignment(3, "C", "scarlet_woman", "scarlet_woman"),
+            visibleRoster = TroubleBrewingVisibleRoster(
+                hasDrunk = true,
+                townsfolkRoleIds = listOf("chef", "empath", "washerwoman"),
+                outsiderRoleIds = emptyList(),
+                minionRoleIds = listOf("poisoner"),
+                demonRoleIds = listOf("imp"),
+            ),
+            shownSeatAssignments = listOf(
+                TroubleBrewingShownSeatAssignment(1, "A", "chef"),
+                TroubleBrewingShownSeatAssignment(2, "B", "empath"),
+                TroubleBrewingShownSeatAssignment(3, "C", "washerwoman"),
+                TroubleBrewingShownSeatAssignment(4, "D", "poisoner"),
+                TroubleBrewingShownSeatAssignment(5, "E", "imp"),
             ),
         )
+        val candidate = TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate)
+            .single { it.shownRoleId == "washerwoman" }
+        val committed = TroubleBrewingSetupCommitter.commit(
+            intermediateSetup = intermediate,
+            confirmedDrunkCandidate = candidate,
+            characterRegistry = registry,
+        )
 
-        val resolved = TroubleBrewingDealRoleResolver.resolve(
-            dealPlan = dealPlan,
+        val resolved = TroubleBrewingDealRoleResolver.resolveCommitted(
+            committedSetup = committed,
+            characterRegistry = registry,
             availableRoles = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing),
         )
 
-        assertEquals(listOf(1, 2, 3), resolved.map { it.seat })
-        assertEquals(listOf("A", "B", "C"), resolved.map { it.playerName })
-        assertEquals(listOf("Drunk", "Fortune Teller", "Scarlet Woman"), resolved.map { it.actualRole.enName })
-        assertEquals(listOf("Investigator", "Fortune Teller", "Scarlet Woman"), resolved.map { it.shownRole.enName })
-    }
-
-    @Test
-    fun `unknown or ambiguous app role identity is rejected rather than substituted`() {
-        val dealPlan = TroubleBrewingSetupDealPlan(
-            datasetId = "test-dataset",
-            schemaVersion = 2,
-            presetId = "tb-role-resolution-invalid",
-            playerCount = 1,
-            gameSeed = 6_004L,
-            selectedDrunkShownRole = null,
-            assignments = listOf(
-                TroubleBrewingSetupDealAssignment(1, "A", "not_a_role", "not_a_role"),
-            ),
-        )
-
-        assertThrows(IllegalArgumentException::class.java) {
-            TroubleBrewingDealRoleResolver.resolve(
-                dealPlan = dealPlan,
-                availableRoles = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing),
-            )
-        }
+        assertEquals(listOf(1, 2, 3, 4, 5), resolved.map { it.seat })
+        assertEquals(listOf("A", "B", "C", "D", "E"), resolved.map { it.playerName })
+        val drunk = resolved.single { it.seat == candidate.seat }
+        assertEquals("Drunk", drunk.actualRole.enName)
+        assertEquals("Washerwoman", drunk.shownRole.enName)
     }
 }
