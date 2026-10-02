@@ -64,6 +64,7 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
 import com.codex.campboardgamehost.clocktower.session.commitPoisonTargetBoundary
@@ -121,6 +122,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
+import com.codex.campboardgamehost.clocktower.recommendation.sde.DrunkAssignmentQ04V1ProductionAdapter
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputFactory
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputJsonCodec
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdePostCommitCorrelationCoordinator
@@ -156,6 +158,7 @@ private enum class Screen {
 }
 
 private data class PendingTroubleBrewingDrunkSelection(
+    val preparedGameId: String,
     val preparedSetup: TroubleBrewingPreparedSetup,
     val request: TroubleBrewingDrunkSelectionRequest,
 )
@@ -1500,6 +1503,7 @@ internal fun CampBoardGameHostApp() {
         clocktowerScript: ClocktowerScript = ClocktowerScript.TroubleBrewing,
         preparedClocktowerSeed: Long? = null,
         preparedClocktowerInitialState: GameState? = null,
+        preparedClocktowerGameId: String? = null,
         persistInitialState: Boolean = true,
     ) {
         invalidateA4SessionBoundary()
@@ -1520,7 +1524,8 @@ internal fun CampBoardGameHostApp() {
         selectedElimination = null
         clocktowerPhase = ClocktowerPhase.FirstNight
         if (nextGameKind == GameKind.Clocktower) {
-            val gameId = UUID.randomUUID().toString()
+            val gameId = preparedClocktowerGameId ?: UUID.randomUUID().toString()
+            require(gameId.isNotBlank()) { "Prepared Clocktower game ID cannot be blank." }
             val gameSeed = preparedClocktowerSeed ?: newClocktowerSeed()
             val initialGameState = preparedClocktowerInitialState
                 ?.also { preparedState ->
@@ -1622,9 +1627,11 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun commitAndStartTroubleBrewingGame(
+        preparedGameId: String,
         preparedSetup: TroubleBrewingPreparedSetup,
         confirmedDrunkCandidate: TroubleBrewingDrunkCandidate?,
     ) {
+        require(preparedGameId.isNotBlank()) { "Trouble Brewing prepared game ID cannot be blank." }
         pendingTroubleBrewingDrunkSelection = null
         val preparedSeed = preparedSetup.intermediateSetup.gameSeed
         val characterRegistry = activeGameClocktowerRulesetCatalog
@@ -1684,6 +1691,7 @@ internal fun CampBoardGameHostApp() {
                     clocktowerScript = ClocktowerScript.TroubleBrewing,
                     preparedClocktowerSeed = preparedSeed,
                     preparedClocktowerInitialState = committedSetup.gameState,
+                    preparedClocktowerGameId = preparedGameId,
                     persistInitialState = false,
                 )
                 committedTroubleBrewingSetupRotationRecord =
@@ -1714,6 +1722,7 @@ internal fun CampBoardGameHostApp() {
     fun startTroubleBrewingGame() {
         val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
         val preparedSeed = newClocktowerSeed()
+        val preparedGameId = UUID.randomUUID().toString()
 
         val datasetJson = baseContext.assets
             .open("setup/trouble_brewing_setup_presets_v2_final.json")
@@ -1742,22 +1751,60 @@ internal fun CampBoardGameHostApp() {
             recentSetupRotationHistory = rotationHistory,
             recentPlayerStartingIdentityHistory = playerRotationHistory,
         )
+        val beginnerAutomaticDrunkCandidate =
+            if (
+                storytellerExperienceMode == StorytellerExperienceMode.BEGINNER &&
+                preparedSetup.intermediateSetup.visibleRoster.hasDrunk
+            ) {
+                val compatibilityCandidate =
+                    requireNotNull(preparedSetup.compatibilityConfirmedDrunkCandidate) {
+                        "Beginner Q04 Drunk selection requires the transitional compatibility candidate."
+                    }
+                DrunkAssignmentQ04V1ProductionAdapter.select(
+                    gameId = preparedGameId,
+                    intermediateSetup = preparedSetup.intermediateSetup,
+                    compatibilityCandidate = compatibilityCandidate,
+                    characterRegistry = characterRegistry,
+                    roleDefinitions =
+                        clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
+                    sourceRevision = InformationDecisionRevision(0L, 0L),
+                ).candidate
+            } else {
+                null
+            }
 
         when (
             val route = TroubleBrewingDrunkSelectionRouter.route(
                 preparedSetup = preparedSetup,
                 experienceMode = storytellerExperienceMode,
                 recommendedCandidate = null,
+                beginnerAutomaticCandidate = beginnerAutomaticDrunkCandidate,
             )
         ) {
             TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded ->
-                commitAndStartTroubleBrewingGame(preparedSetup, confirmedDrunkCandidate = null)
+                commitAndStartTroubleBrewingGame(
+                    preparedGameId = preparedGameId,
+                    preparedSetup = preparedSetup,
+                    confirmedDrunkCandidate = null,
+                )
+
+            is TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic ->
+                commitAndStartTroubleBrewingGame(
+                    preparedGameId = preparedGameId,
+                    preparedSetup = preparedSetup,
+                    confirmedDrunkCandidate = route.candidate,
+                )
 
             is TroubleBrewingDrunkSelectionRoute.CompatibilityImmediate ->
-                commitAndStartTroubleBrewingGame(preparedSetup, route.candidate)
+                commitAndStartTroubleBrewingGame(
+                    preparedGameId = preparedGameId,
+                    preparedSetup = preparedSetup,
+                    confirmedDrunkCandidate = route.candidate,
+                )
 
             is TroubleBrewingDrunkSelectionRoute.ManualSelection -> {
                 pendingTroubleBrewingDrunkSelection = PendingTroubleBrewingDrunkSelection(
+                    preparedGameId = preparedGameId,
                     preparedSetup = preparedSetup,
                     request = route.request,
                 )
@@ -2116,6 +2163,7 @@ internal fun CampBoardGameHostApp() {
                                     "Trouble Brewing Drunk selection confirmation must use a displayed legal candidate."
                                 }
                                 commitAndStartTroubleBrewingGame(
+                                    preparedGameId = pending.preparedGameId,
                                     preparedSetup = pending.preparedSetup,
                                     confirmedDrunkCandidate = candidate,
                                 )

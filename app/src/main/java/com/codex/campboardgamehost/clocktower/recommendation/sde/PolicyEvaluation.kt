@@ -18,6 +18,14 @@ internal object PolicyVersions {
      * canonical setup authority.
      */
     val DRUNK_ASSIGNMENT_SHADOW_V1 = PolicyVersion("DRUNK_ASSIGNMENT_SHADOW_V1")
+
+    /**
+     * First production-capable late-bound Drunk assignment policy.
+     *
+     * Q04 authorizes only one conditional Empath -> Monk override. All other candidate ordering
+     * remains unknown and falls back to the existing compatibility-confirmed candidate.
+     */
+    val DRUNK_ASSIGNMENT_Q04_V1 = PolicyVersion("DRUNK_ASSIGNMENT_Q04_V1")
 }
 
 internal data class PolicyReasonCode(

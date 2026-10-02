@@ -79,6 +79,35 @@ class TroubleBrewingDrunkSelectionRouterTest {
     }
 
     @Test
+    fun `beginner may consume an already evaluated automatic candidate while compatibility remains fallback`() {
+        val prepared = drunkPreparedSetup()
+        val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
+        val automatic = legal.first { candidate ->
+            candidate != prepared.compatibilityConfirmedDrunkCandidate
+        }
+
+        val route = TroubleBrewingDrunkSelectionRouter.route(
+            preparedSetup = prepared,
+            experienceMode = StorytellerExperienceMode.BEGINNER,
+            recommendedCandidate = null,
+            beginnerAutomaticCandidate = automatic,
+        )
+
+        val immediate = route as TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic
+        assertEquals(automatic, immediate.candidate)
+
+        val stale = automatic.copy(playerName = "Stale Player")
+        assertThrows(IllegalArgumentException::class.java) {
+            TroubleBrewingDrunkSelectionRouter.route(
+                preparedSetup = prepared,
+                experienceMode = StorytellerExperienceMode.BEGINNER,
+                recommendedCandidate = null,
+                beginnerAutomaticCandidate = stale,
+            )
+        }
+    }
+
+    @Test
     fun `setup without drunk needs no selection in either experience mode`() {
         val prepared = nonDrunkPreparedSetup()
 

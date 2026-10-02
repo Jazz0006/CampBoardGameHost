@@ -123,6 +123,43 @@ class DrunkAssignmentShadowReplayTest {
     }
 
     @Test
+    fun `Q04 replay over reconstructable G10 preserves Empath when its topology fails the Q04 condition`() {
+        val shadow = g10Shadow()
+        val empath = shadow.decisionContext.legalCandidates.single { it.shownRoleId == "empath" }
+        val sourceTrace = shadow.decisionTrace.copy(
+            actualChoice = DecisionTraceActualChoice.Committed(
+                candidateId = DrunkAssignmentQ04V1Policy.candidateId(empath),
+                source = InformationDecisionSource.MANUAL,
+                manualOverride = false,
+            ),
+        )
+
+        val record = DrunkAssignmentQ04V1ReplayEngine.replay(
+            sourceTrace = sourceTrace,
+            input = DrunkAssignmentQ04V1ReplayInput.fromShadow(
+                shadow = shadow,
+                compatibilityCandidate = empath,
+            ),
+        )
+
+        assertEquals(PolicyVersions.DRUNK_ASSIGNMENT_Q04_V1, record.policyVersion)
+        assertEquals(
+            DrunkAssignmentQ04V1PolicyDefinition.evidenceCheckpoint,
+            record.evidenceCheckpoint,
+        )
+        assertEquals(empath, record.evaluation.selectedCandidate)
+        assertEquals(
+            DrunkAssignmentQ04V1Disposition.COMPATIBILITY_FALLBACK,
+            record.evaluation.disposition,
+        )
+        assertEquals(
+            DrunkAssignmentQ04V1Reason.EMPATH_TOPOLOGY_CONDITION_NOT_MET,
+            record.evaluation.reason,
+        )
+        assertEquals(sourceTrace.actualChoice, record.actualChoice)
+    }
+
+    @Test
     fun `multiple explicit experimental versions replay same dedicated input in requested order`() {
         val shadow = g10Shadow()
         val sourceTrace = shadow.decisionTrace
