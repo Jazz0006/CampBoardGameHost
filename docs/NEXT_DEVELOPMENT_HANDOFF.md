@@ -2,12 +2,12 @@
 
 > Updated: 2026-10-03 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed executable validation checkpoint: **TBGS-2A final T4 — `9021ef26b65033b69911fa4a79124fdd2137284d`; CI #3647 / R2 #3364 GREEN, including Android FULL/assemble, ASP and Real Clingo**  
+> Last completed executable validation checkpoint: **TBGS-2B final T4 — `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`; CI #3654 / R2 #3370 GREEN, including Android FULL/assemble, ASP and Real Clingo**  
 > DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `08d95a0c258f687187c0476a0f430fa5ff8229cb` — Q04 human-verified from primary audio**  
-> Product next work: **TBGS-2B implementation — route TB pair manual legal-domain projection and selected-observation publication through the existing snapshot-backed `TroubleBrewingFirstNightPairDecisionContext`. Focused re-audit is COMPLETE / IMPLEMENTATION READY. Do not broaden into setup coordination or DynamicGameState consumers. A3 remains READY only as a separate maintenance slice.**
+> Product next work: **TBGS-2C focused re-audit — setup-coordination recommendation consumer. TBGS-2B is COMPLETE / ACCEPTED at `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67` with CI #3654 / R2 #3370 GREEN. Do not assume implementation before the re-audit; DynamicGameState remains later. A3 remains READY only as a separate maintenance slice.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -89,7 +89,7 @@ Beginner automatic Drunk authority                 COMPLETE / ACCEPTED
 DLB-6 old-contract retirement                      COMPLETE / ACCEPTED
 DLB-7 final acceptance                             COMPLETE / ACCEPTED
 DLB campaign                                       COMPLETE / ACCEPTED
-TBGS-2 runtime recommendation projection migration IN PROGRESS — 2A ACCEPTED / 2B RE-AUDIT NEXT
+TBGS-2 runtime recommendation projection migration IN PROGRESS — 2A/2B ACCEPTED / 2C RE-AUDIT NEXT
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
