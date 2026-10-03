@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@22d18fdcb51998716e29569e5263e6ca45511884`  
-> Status: **AUDIT COMPLETE / IMPLEMENTATION READY**
+> Status: **IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING**
 
 ## 1. Decision
 
@@ -130,6 +130,25 @@ Retain/run:
 
 Run Android FAST at the logical checkpoint plus normal static/diff gates. Because this changes the production setup recommendation input authority, final T4 must execute Android `:app:testFull + :app:assembleDebug`, ASP contracts, Real Clingo and R2 before merge.
 
-## 10. Next after TBGS-2C
+## 10. Implementation checkpoint
+
+Production implementation is complete at exact head `ac69be12f429b462ab2a8f800a3661699e522312`.
+
+Ordinary acceptance at that exact head:
+
+- CI #3662 — GREEN, including Android FAST;
+- R2 #3377 — GREEN;
+- PR #199 — mergeable, zero unresolved review threads.
+
+Implementation preserves the historical setup-recommendation role order while deriving each role definition from the validated rules registry. This keeps Demon-bluff list presentation parity with the pre-TBGS production path without restoring presentation catalog ownership.
+
+Final acceptance still requires a docs-only `[full-ci]` checkpoint and T4:
+
+- Android `:app:testFull + :app:assembleDebug`;
+- ASP contract tests;
+- Real Clingo cross-validation;
+- R2 main-thread boundary.
+
+## 11. Next after TBGS-2C
 
 If TBGS-2C is accepted, re-audit the remaining `DynamicGameState` production consumers **one typed decision family at a time**. Do not automatically broaden into Mayor, succession and special registration together.
