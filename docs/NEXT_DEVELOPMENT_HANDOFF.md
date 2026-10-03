@@ -7,7 +7,7 @@
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> Product next work: **C5-C — implement the first immutable `BEGINNER_CONSERVATIVE_V2` weak-preference policy over the accepted C5-A future-flexibility feature and C5-B pair replay seam. Preserve V1 exactly; outside the admitted predicate, on unavailable feature, or when no qualifying subset exists, fall back exactly to V1. V2 remains shadow/replay-only. HOST-ML1 remains deferred until C5-D; TBGS-2D remains an independent implementation-ready lane.**
+> Product next work: **C5-C final T4 acceptance. The immutable `BEGINNER_CONSERVATIVE_V2` weak-preference implementation is GREEN at `d4c071fac09f446fb7b7f02f99808db61275112c` (CI #3689 / R2 #3398). Run exact-head FULL/assemble + ASP + Real Clingo, then close C5-C and enter C5-D canonical V1/V2 replay. V2 remains shadow/replay-only; no production cutover. HOST-ML1 remains deferred until C5-D acceptance; TBGS-2D remains independent.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -66,7 +66,7 @@ CR-A / CR-B / CR-C                     COMPLETE
 C4 / SDE-3D2                           COMPLETE
 IF-D durable replay                    COMPLETE
 RH-E                                    COMPLETE
-C5 / V2                                C5-A COMPLETE / ACCEPTED — C5-B NEXT
+C5 / V2                                C5-A/C5-B COMPLETE / ACCEPTED — C5-C IMPLEMENTATION GREEN / T4 PENDING
 SDE-3E cutover                         BLOCKED PER SURFACE
 DLB-0 typed intermediate setup              COMPLETE / ACCEPTED
 DLB-1 visible-roster deal cutover              COMPLETE / ACCEPTED
@@ -211,6 +211,7 @@ DLB-0 typed intermediate setup COMPLETE
 -> C5 re-entry audit COMPLETE / PASS; SDE-3D3 implementation AUTHORIZED
 -> C5-A pair future-flexibility projector COMPLETE / ACCEPTED; `5b516e10e0f01848a1dad7a06dd214e73faa5a97`, CI #3673 / R2 #3385 GREEN
 -> C5-B pair shadow/replay bridge COMPLETE / ACCEPTED; final T4 `fdb24f67c010759a123a6e648bef8d4015832cb1`, CI #3683 / R2 #3393 GREEN
+-> C5-C BEGINNER_CONSERVATIVE_V2 implementation GREEN; `d4c071fac09f446fb7b7f02f99808db61275112c`, CI #3689 / R2 #3398 GREEN — final T4 pending
 || TBGS-2D remains IMPLEMENTATION READY as an independent lane
 -> A3 presentation catalog READY / independent maintenance only
 ```
@@ -247,8 +248,8 @@ Implementation route:
 C5 re-entry audit                         COMPLETE / PASS
 -> C5-A future-flexibility projector     COMPLETE / ACCEPTED
 -> C5-B pair shadow/replay bridge        COMPLETE / ACCEPTED
--> C5-C BEGINNER_CONSERVATIVE_V2 weak preference NEXT
--> C5-D canonical V1/V2 replay
+-> C5-C BEGINNER_CONSERVATIVE_V2 weak preference IMPLEMENTATION GREEN / T4 PENDING
+-> C5-D canonical V1/V2 replay AFTER C5-C ACCEPTANCE
 -> C5-E surface-scoped production cutover gate
 ```
 
