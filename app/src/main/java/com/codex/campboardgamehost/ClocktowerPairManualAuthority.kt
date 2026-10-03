@@ -49,14 +49,17 @@ internal object ClocktowerPairManualAuthority {
         recommendedOption: ClocktowerDisplayOption?,
     ): ClocktowerDisplayOption? {
         val key = recommendedOption?.pairInformationKeyOrNull() ?: return null
-        return if (key.shownRole == null) {
-            presentation.zeroCaseOption
-        } else {
-            presentation.candidates.firstOrNull { candidate ->
-                candidate.roleId == key.shownRole.value && candidate.seats == key.candidateSeats
-            }?.option
-        }
+        return presentation.canonicalOptionFor(key)
     }
+
+    /** Map one rules-owned legal candidate back into the current canonical Manual presentation. */
+    fun canonicalManualOption(
+        presentation: ClocktowerPairManualPresentation,
+        candidate: PairInformationLegalCandidate?,
+    ): ClocktowerDisplayOption? = candidate
+        ?.outcome
+        ?.pairInformationKey()
+        ?.let(presentation::canonicalOptionFor)
 
     fun projectLegalOptions(
         context: TroubleBrewingFirstNightPairDecisionContext,
@@ -232,6 +235,16 @@ internal data class ClocktowerPairManualPresentation(
     val candidates: List<ClocktowerPairManualCandidate>,
     val zeroCaseOption: ClocktowerDisplayOption?,
 )
+
+private fun ClocktowerPairManualPresentation.canonicalOptionFor(
+    key: PairInformationPresentationKey,
+): ClocktowerDisplayOption? = if (key.shownRole == null) {
+    zeroCaseOption
+} else {
+    candidates.firstOrNull { candidate ->
+        candidate.roleId == key.shownRole.value && candidate.seats == key.candidateSeats
+    }?.option
+}
 
 internal data class ClocktowerPairManualCandidate(
     val option: ClocktowerDisplayOption,

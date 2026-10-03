@@ -34,6 +34,7 @@ internal class ClocktowerInformationStepBuilder(
         automaticSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         legalSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         reliableDisplayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
+        automaticPolicyRecommendation: (PlayerCard) -> ClocktowerDisplayOption? = { null },
         previousShownNumber: Int? = null,
         numericMinimumValue: Int? = null,
         numericMaximumValue: Int? = null,
@@ -85,6 +86,9 @@ internal class ClocktowerInformationStepBuilder(
             actorAbilityUnreliable -> unreliableOptions
             else -> reliableRecommendations
         }
+        val policyRecommendation = actor
+            ?.takeIf { automaticStorytellerInfo && !actorAbilityUnreliable }
+            ?.let(automaticPolicyRecommendation)
         val resolvedDisplayKind = when (enName) {
             "Chef", "Empath", "Clockmaker", "Chambermaid" -> ClocktowerDisplayKind.Number
             "Fortune Teller" -> ClocktowerDisplayKind.YesNo
@@ -161,6 +165,7 @@ internal class ClocktowerInformationStepBuilder(
             legacyInformationCandidates = completeLegacyCandidates,
             manualInformationCandidates = legalSelectionDomain,
             automaticInformationCandidates = automaticInformationCandidates,
+            automaticPolicyRecommendation = policyRecommendation,
             roleEnName = enName,
             informationReliability = informationReliability,
             recentMisinformationStreak = recentMisinformationStreak(actor),

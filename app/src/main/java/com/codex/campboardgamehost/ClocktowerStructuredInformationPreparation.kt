@@ -32,6 +32,27 @@ internal fun clocktowerStructuredRecommendedOption(
         ?: automaticOption
 }
 
+/**
+ * Rebind one policy recommendation to the current automatic candidate domain.
+ *
+ * The policy object is never trusted as a publication authority: only the semantically-identical
+ * option from [currentOptions] may flow forward. A stale/missing policy recommendation falls back
+ * lazily to the pre-C5-E selector.
+ */
+internal fun clocktowerAutomaticInformationOption(
+    policyOption: ClocktowerDisplayOption?,
+    currentOptions: List<ClocktowerDisplayOption>,
+    fallback: () -> ClocktowerDisplayOption?,
+): ClocktowerDisplayOption? {
+    val policyId = policyOption?.let(::clocktowerInformationCandidateId)
+    if (policyId != null) {
+        currentOptions.firstOrNull { option ->
+            clocktowerInformationCandidateId(option) == policyId
+        }?.let { return it }
+    }
+    return fallback()
+}
+
 /** A numeric adapter request. It owns no UI state, callbacks, roster or mutable session. */
 internal data class ClocktowerNumericInformationPreparation(
     val actorSeat: Int,
