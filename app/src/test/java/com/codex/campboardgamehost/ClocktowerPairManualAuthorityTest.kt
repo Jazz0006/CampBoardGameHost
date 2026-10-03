@@ -175,6 +175,27 @@ class ClocktowerPairManualAuthorityTest {
     }
 
     @Test
+    fun `rules candidate canonicalizes to the matching manual legal option`() {
+        val game = game()
+        val legalCandidate = PairInformationLegalDomain.generate(
+            game = game,
+            roleDefinitions = roles,
+            sourceSeat = 1,
+            abilityRole = investigator,
+            reliability = ReliabilityState.RELIABLE,
+        ).first()
+        val canonical = template(legalCandidate.outcome).copy(label = "canonical")
+        val presentation = ClocktowerPairManualAuthority.selectionPresentation(
+            listOf(canonical, template(PairInformationOutcome(RoleId("Baron"), 2, 4))),
+        )
+
+        assertEquals(
+            canonical,
+            ClocktowerPairManualAuthority.canonicalManualOption(presentation, legalCandidate),
+        )
+    }
+
+    @Test
     fun `selected manual clue commits the exact legal registration fact`() {
         val game = game()
         val legalCandidates = PairInformationLegalDomain.generate(

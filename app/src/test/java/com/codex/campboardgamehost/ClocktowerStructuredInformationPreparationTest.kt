@@ -29,6 +29,35 @@ class ClocktowerStructuredInformationPreparationTest {
     }
 
     @Test
+    fun `automatic policy option must belong to the current domain or fall back lazily`() {
+        val current = option(1)
+        val relabeledPolicy = current.copy(label = "policy")
+        var fallbackCalls = 0
+
+        val selected = clocktowerAutomaticInformationOption(
+            policyOption = relabeledPolicy,
+            currentOptions = listOf(current),
+        ) {
+            fallbackCalls += 1
+            option(2)
+        }
+        assertSame(current, selected)
+        assertEquals(0, fallbackCalls)
+
+        val stale = option(2)
+        val fallback = option(0)
+        val fallbackSelected = clocktowerAutomaticInformationOption(
+            policyOption = stale,
+            currentOptions = listOf(current),
+        ) {
+            fallbackCalls += 1
+            fallback
+        }
+        assertSame(fallback, fallbackSelected)
+        assertEquals(1, fallbackCalls)
+    }
+
+    @Test
     fun `Empath uses legacy subjects and truthful candidate before display fallbacks`() {
         val legacy = option(1).copy(isTruthful = true, displayPrimary = "99")
         val input = requireNotNull(clocktowerNumericInformationPreparation(

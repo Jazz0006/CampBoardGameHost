@@ -290,19 +290,24 @@ internal fun ClocktowerNightStepCardLocalized(
             onRoleChange = onRecluseRegistrationRoleChange,
         )
     }
-    val automaticDisplayOption = recommendationCoordinator.selectInformation(
-        options = automaticInformationOptions,
-        reliability = step.informationReliability,
-        style = automaticStorytellerStyle,
-        evilAdvantage = evilAdvantage,
-        stableKey = informationDecisionKey,
-        recentMisinformationStreak = step.recentMisinformationStreak,
-        stableIdOf = ::optionId,
-        isTruthful = ClocktowerDisplayOption::isTruthful,
-        misinformationPressure = ClocktowerDisplayOption::misinformationPressure,
-        styleOf = ClocktowerDisplayOption::recommendationStyle,
-        selectionAudit = selectionAudit,
-    )
+    val automaticDisplayOption = clocktowerAutomaticInformationOption(
+        policyOption = step.automaticPolicyRecommendation,
+        currentOptions = automaticInformationOptions,
+    ) {
+        recommendationCoordinator.selectInformation(
+            options = automaticInformationOptions,
+            reliability = step.informationReliability,
+            style = automaticStorytellerStyle,
+            evilAdvantage = evilAdvantage,
+            stableKey = informationDecisionKey,
+            recentMisinformationStreak = step.recentMisinformationStreak,
+            stableIdOf = ::optionId,
+            isTruthful = ClocktowerDisplayOption::isTruthful,
+            misinformationPressure = ClocktowerDisplayOption::misinformationPressure,
+            styleOf = ClocktowerDisplayOption::recommendationStyle,
+            selectionAudit = selectionAudit,
+        )
+    }
     val informationIdentity = ClocktowerInformationDecisionIdentity(
         gameId, phase, round, sequence, InformationDecisionRevision(gameStateRevision, playerInputRevision),
     )

@@ -2,12 +2,12 @@
 
 > Updated: 2026-10-03 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed executable validation checkpoint: **C5-D canonical V1/V2 replay — `5241518e002e65993eed594632604e13e2979bfd`; CI #3693 / R2 #3401 GREEN, including Android FULL/assemble, ASP and Real Clingo**  
+> Last completed executable validation checkpoint: **C5-E functioning-Librarian production cutover — `6afc3b08416eaf6f3fb74a53bb48b8e144044341`; CI #3717 / R2 #3421 GREEN, including Android FULL/assemble, ASP and Real Clingo**  
 > DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> Product next work remains **C5-E — surface-scoped production cutover for the functioning Librarian automatic recommendation surface**, independent from ML readiness. In the parallel ML lane, **HOST-ML1 typed neutral `RecommendationDecisionExportV1` is COMPLETE / ACCEPTED after PR #208 + #209; final executable checkpoint `b91fcd298621e9064f11c26c1a0398c5c14fc13c` (CI #3710 / R2 #3416), with PR #209 squash merge `2d4681115b9c373bfbfa85a7b385aba4e59e1062`**. Machine-readable materialization remains a separate future follow-up when a concrete offline consumer requires an interchange format.
+> C5-E functioning-Librarian automatic production cutover is **COMPLETE / ACCEPTED** at `6afc3b08416eaf6f3fb74a53bb48b8e144044341` (CI #3717 / R2 #3421). The accepted product behavior is V2-first on the exact functioning Librarian automatic surface with canonical-domain rebind and legacy fallback; Experienced/manual/publication semantics remain unchanged. In the parallel ML lane, **HOST-ML1 typed neutral `RecommendationDecisionExportV1` is COMPLETE / ACCEPTED after PR #208 + #209; final executable checkpoint `b91fcd298621e9064f11c26c1a0398c5c14fc13c` (CI #3710 / R2 #3416), with PR #209 squash merge `2d4681115b9c373bfbfa85a7b385aba4e59e1062`**. Machine-readable materialization remains deferred until a concrete offline consumer requires an interchange format. Re-evaluate the next product lane after C5-E merge; TBGS-2D Demon succession remains implementation-ready.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -18,22 +18,23 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 3. `docs/TESTING_STRATEGY.md`
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
-6. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` — current C5 re-entry / SDE-3D3 implementation authority; C5-A accepted, C5-B next, production cutover still blocked
-7. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
+6. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` — C5 re-entry / SDE-3D3 evidence and replay authority; C5-A–D complete / accepted
+7. `docs/SDE_C5E_LIBRARIAN_PRODUCTION_CUTOVER_GATE_AUDIT_2026-10-03.md` — C5-E functioning-Librarian production cutover acceptance authority
+9. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
 8. `docs/DLB_7_FINAL_ACCEPTANCE_2026-10-03.md` — final DLB acceptance matrix and exact T4 authority
-9. `docs/DLB_6_OLD_CONTRACT_RETIREMENT_COMPLETION_2026-10-03.md` — DLB-6 accepted retirement boundary
-10. `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md` — Q04 evidence/policy/cutover acceptance authority
-11. `docs/DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md` — historical post-TBGS-1 NOT-PASSED verdict before Q04 verification
-12. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — original pre-TBGS-1 gate audit / historical blocker detail
-13. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
-14. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 active
-15. `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md` — TBGS-2 consumer inventory and accepted 2A/2B/2C lineage
-16. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
-17. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and exact TBGS-2D Demon-succession implementation boundary
-18. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-19. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
-20. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
-21. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+10. `docs/DLB_6_OLD_CONTRACT_RETIREMENT_COMPLETION_2026-10-03.md` — DLB-6 accepted retirement boundary
+11. `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md` — Q04 evidence/policy/cutover acceptance authority
+12. `docs/DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md` — historical post-TBGS-1 NOT-PASSED verdict before Q04 verification
+13. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — original pre-TBGS-1 gate audit / historical blocker detail
+14. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
+15. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 active
+16. `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md` — TBGS-2 consumer inventory and accepted 2A/2B/2C lineage
+17. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
+18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and exact TBGS-2D Demon-succession implementation boundary
+19. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+20. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
+21. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
+22. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -67,8 +68,8 @@ CR-A / CR-B / CR-C                     COMPLETE
 C4 / SDE-3D2                           COMPLETE
 IF-D durable replay                    COMPLETE
 RH-E                                    COMPLETE
-C5 / V2                                C5-A/C5-B/C5-C/C5-D COMPLETE / ACCEPTED — C5-E NEXT
-SDE-3E cutover                         BLOCKED PER SURFACE
+C5 / V2                                C5-A/C5-B/C5-C/C5-D/C5-E COMPLETE / ACCEPTED
+SDE-3E cutover                         FUNCTIONING LIBRARIAN SURFACE ACCEPTED; OTHER SURFACES GATED
 DLB-0 typed intermediate setup              COMPLETE / ACCEPTED
 DLB-1 visible-roster deal cutover              COMPLETE / ACCEPTED
 DLB-2 legal candidate + hypothetical projector   COMPLETE / ACCEPTED
@@ -214,7 +215,7 @@ DLB-0 typed intermediate setup COMPLETE
 -> C5-B pair shadow/replay bridge COMPLETE / ACCEPTED; final T4 `fdb24f67c010759a123a6e648bef8d4015832cb1`, CI #3683 / R2 #3393 GREEN
 -> C5-C BEGINNER_CONSERVATIVE_V2 COMPLETE / ACCEPTED; final T4 `001330f32e151b67ead1760a67702450faaab685`, CI #3690 / R2 #3399 GREEN
 -> C5-D canonical V1/V2 replay COMPLETE / ACCEPTED; `5241518e002e65993eed594632604e13e2979bfd`, CI #3693 / R2 #3401 GREEN
--> C5-E functioning-Librarian production cutover gate NEXT
+-> C5-E functioning-Librarian production cutover COMPLETE / ACCEPTED; `6afc3b08416eaf6f3fb74a53bb48b8e144044341`, CI #3717 / R2 #3421 GREEN
 || HOST-ML1 typed neutral decision export COMPLETE / ACCEPTED; final `b91fcd298621e9064f11c26c1a0398c5c14fc13c`, CI #3710 / R2 #3416 GREEN; pair semantic payload included
 || machine-readable corpus materialization DEFERRED until concrete offline consumer; do not block C5-E
 || TBGS-2D remains IMPLEMENTATION READY as an independent lane
@@ -255,7 +256,7 @@ C5 re-entry audit                         COMPLETE / PASS
 -> C5-B pair shadow/replay bridge        COMPLETE / ACCEPTED
 -> C5-C BEGINNER_CONSERVATIVE_V2 weak preference COMPLETE / ACCEPTED
 -> C5-D canonical V1/V2 replay COMPLETE / ACCEPTED
--> C5-E surface-scoped production cutover gate NEXT
+-> C5-E surface-scoped functioning-Librarian production cutover COMPLETE / ACCEPTED
 ```
 
 `BEGINNER_CONSERVATIVE_V1` remains immutable. V2 must not be created as a placeholder: its first implementation is permitted only in C5-C after the C5-A projector and C5-B pair replay seam are accepted.
