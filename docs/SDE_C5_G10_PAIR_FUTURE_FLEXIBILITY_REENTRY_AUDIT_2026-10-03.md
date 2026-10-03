@@ -1,6 +1,6 @@
 # SDE C5 G10 Pair Future-Flexibility Re-entry Audit — 2026-10-03
 
-> Status: **C5 RE-ENTRY PASS / C5-A IMPLEMENTED — T4 ACCEPTANCE PENDING / C5-B BLOCKED UNTIL C5-A ACCEPTANCE / PRODUCTION CUTOVER NOT YET AUTHORIZED**
+> Status: **C5 RE-ENTRY PASS / C5-A COMPLETE / ACCEPTED / C5-B NEXT / PRODUCTION CUTOVER NOT YET AUTHORIZED**
 >
 > Repository: `Jazz0006/CampBoardGameHost`
 >
@@ -315,11 +315,13 @@ Exit:
 
 `FutureFlexibilityFeatures` is stable and replay-persistable for the admitted pair surface; **no V2 selection yet**.
 
-Implementation checkpoint before final T4 acceptance:
+Accepted implementation evidence:
 
 - RED head `a5638bd8592a9c4f8efa535d1dde2da315868922`: CI #3670 failed at `compileDebugUnitTestKotlin` because the new projector/reason-code symbols did not yet exist;
 - GREEN implementation head `b521d34f8471d99cd26bbb26510f42cd15a9732c`: CI #3672 FAST GREEN and R2 #3384 GREEN;
-- exact-head T4 `testFull + assembleDebug` remains required before C5-A is marked ACCEPTED.
+- exact-head T4 checkpoint `5b516e10e0f01848a1dad7a06dd214e73faa5a97`: CI #3673 and R2 #3385 GREEN, including Android `testFull + assembleDebug`, ASP contracts and Real Clingo cross-validation.
+
+C5-A is therefore COMPLETE / ACCEPTED.
 
 ### C5-B — pair SDE shadow + replay bridge
 
@@ -417,7 +419,7 @@ Do not bundle TBGS-2D Demon succession with C5 pair policy work in one implement
 | Pair legal domain | **PASS** | `PairInformationLegalDomain` owns the full functioning domain. |
 | Snapshot/runtime state | **PASS** | TBGS-2A/B provide sufficient first-night state; no snapshot extension required. |
 | Typed future-flexibility contract | **PASS / SURFACE EXISTS** | `FutureFlexibilityFeatures` already exists. |
-| Future-flexibility production projector | **IMPLEMENTED / T4 PENDING — C5-A** | Rules-owned recurring-information capability + score-free pair projector are implemented; final full validation remains. |
+| Future-flexibility production projector | **PASS / ACCEPTED — C5-A** | Rules-owned recurring-information capability + score-free pair projector passed exact-head T4 and R2. |
 | Pair exact-consequence primitives | **PASS** | Existing pair exact adapter and projector precedents. |
 | Pair production shadow/replay composition | **GAP / C5-B** | Existing structured shadow supports Number/Category, not pair outcome. |
 | Real V2 policy definition | **GAP / C5-C** | No `BEGINNER_CONSERVATIVE_V2` exists. |
@@ -429,8 +431,8 @@ Overall:
 ```text
 C5 evidence re-entry                         PASS
 SDE-3D3 implementation                      AUTHORIZED
-C5-A projector                              IMPLEMENTED / T4 PENDING
-C5-B pair shadow/replay                     BLOCKED UNTIL C5-A ACCEPTED
+C5-A projector                              COMPLETE / ACCEPTED
+C5-B pair shadow/replay                     NEXT
 C5-C BEGINNER_CONSERVATIVE_V2              PLANNED AFTER C5-B
 C5-D V1/V2 canonical replay                PLANNED AFTER C5-C
 C5-E production cutover                    BLOCKED UNTIL C5-D ACCEPTANCE
@@ -439,7 +441,7 @@ E4 numeric calibration                     STILL UNPROVEN / NOT NEEDED FOR FIRST
 
 ## 12. Immediate next task
 
-Complete **C5-A exact-head T4 acceptance**. If T4 and independent R2 remain GREEN, mark C5-A ACCEPTED and proceed to **C5-B — pair SDE shadow + replay bridge**.
+Begin **C5-B — pair SDE shadow + replay bridge**. Preserve the accepted C5-A projector as a descriptive input only; do not create V2 or change visible recommendation/manual authority in C5-B.
 
 Do not wait for more EvidenceLab evidence for this predicate.
 
