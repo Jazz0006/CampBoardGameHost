@@ -64,6 +64,7 @@ import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingSetupRecommendationDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
@@ -116,6 +117,7 @@ internal fun ClocktowerJudgeScreen(
     gameStateRevision: Long,
     playerInputRevision: Long,
     setupHistory: CrossGameHistory,
+    setupRecommendationDecisionContext: TroubleBrewingSetupRecommendationDecisionContext? = null,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
     setupRecommendationResultProvider: ((SetupCoordinationRequest) -> SetupRecommendationService.ConstrainedResult)? = null,
     firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
@@ -729,13 +731,26 @@ internal fun ClocktowerJudgeScreen(
             )
         }
     }
+    val snapshotBackedSetupContext = if (
+        script == ClocktowerScript.TroubleBrewing &&
+        phase == ClocktowerPhase.FirstNight &&
+        round == 1
+    ) {
+        requireNotNull(setupRecommendationDecisionContext) {
+            "Trouble Brewing first-night setup recommendation requires snapshot-backed context."
+        }
+    } else {
+        null
+    }
     val recommendationRequest = SetupCoordinationRequest(
-        game = recommendationCards.toClocktowerGameState(
-            script = script,
-            seed = gameSeed,
-            poisonedPlayerName = poisonTarget,
-        ),
-        roles = clocktowerRoleDefinitionsForScript(script),
+        game = snapshotBackedSetupContext?.recommendationGameState
+            ?: recommendationCards.toClocktowerGameState(
+                script = script,
+                seed = gameSeed,
+                poisonedPlayerName = poisonTarget,
+            ),
+        roles = snapshotBackedSetupContext?.roleDefinitions
+            ?: clocktowerRoleDefinitionsForScript(script),
         lockedDecisions = recommendationLocksWithCommittedSetupDecisions(
             mutableLocks = lockedRecommendationDecisions,
             committedDecisions = committedSetupRecommendationDecisions,

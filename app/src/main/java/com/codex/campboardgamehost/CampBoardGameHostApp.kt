@@ -59,6 +59,8 @@ import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCa
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContextBuilder
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingSetupRecommendationDecisionContext
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingSetupRecommendationDecisionContextBuilder
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
@@ -600,6 +602,32 @@ internal fun CampBoardGameHostApp() {
         requireNotNull(clocktowerGameSession) {
             "Clocktower session authority is unavailable."
         }
+
+    fun currentTroubleBrewingSetupRecommendationDecisionContext(): TroubleBrewingSetupRecommendationDecisionContext? {
+        if (
+            currentGameKind != GameKind.Clocktower ||
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            clocktowerPhase != ClocktowerPhase.FirstNight ||
+            round != 1
+        ) {
+            return null
+        }
+        val session = clocktowerGameSession ?: return null
+        val rulesetRef = clocktowerRulesetRef ?: return null
+        val registry = activeGameClocktowerRulesetCatalog
+            .ruleset(ClocktowerScript.TroubleBrewing)
+            .characterRegistry
+        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+            gameSnapshot = session.toGameSnapshot(rulesetRef),
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = round,
+            characterRegistry = registry,
+        )
+        return TroubleBrewingSetupRecommendationDecisionContextBuilder.build(
+            snapshot = snapshot,
+            characterRegistry = registry,
+        )
+    }
 
     fun currentTroubleBrewingFirstNightPairDecisionContext(): TroubleBrewingFirstNightPairDecisionContext? {
         if (
@@ -1699,11 +1727,17 @@ internal fun CampBoardGameHostApp() {
             )
         }
 
-        val setupRecommendationRoleDefinitions =
-            clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing)
+        val setupRecommendationContext = TroubleBrewingSetupRecommendationDecisionContextBuilder.build(
+            snapshot = TroubleBrewingGameSnapshotProjector.fromCommitted(
+                gameId = preparedGameId,
+                committedSetup = committedSetup.committedSetup,
+                characterRegistry = characterRegistry,
+            ),
+            characterRegistry = characterRegistry,
+        )
         val initialSetupRecommendationRequest = SetupCoordinationRequest(
-            game = committedSetup.gameState,
-            roles = setupRecommendationRoleDefinitions,
+            game = setupRecommendationContext.recommendationGameState,
+            roles = setupRecommendationContext.roleDefinitions,
             lockedDecisions = emptyList(),
             history = CrossGameHistory(),
         )
@@ -2268,6 +2302,7 @@ internal fun CampBoardGameHostApp() {
                         gameStateRevision = clocktowerGameStateRevision,
                         playerInputRevision = clocktowerPlayerInputRevision,
                         setupHistory = CrossGameHistory(),
+                        setupRecommendationDecisionContext = currentTroubleBrewingSetupRecommendationDecisionContext(),
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         setupRecommendationResultProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
