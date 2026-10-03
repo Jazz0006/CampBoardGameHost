@@ -2,6 +2,9 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
+import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
+import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
+import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
@@ -165,7 +168,18 @@ class RecommendationDecisionExportV1Test {
         assertEquals("Saint", pairContext.legalCandidates[0].shownRoleId)
         assertEquals(listOf(2, 3), pairContext.legalCandidates[0].candidateSeats)
         assertEquals(SemanticTruth.TRUE, pairContext.legalCandidates[0].semanticTruth)
-        assertTrue(pairContext.legalCandidates[0].registrations.isEmpty())
+        assertEquals(
+            listOf(
+                RegistrationFact(
+                    interactionId = "pair:test-game:librarian",
+                    subjectSeat = 2,
+                    registeredRole = RoleId("Saint"),
+                    registrationQuestion = RegistrationQuestion.ROLE,
+                    reason = RegistrationReason.SPY_ABILITY,
+                ),
+            ),
+            pairContext.legalCandidates[0].registrations,
+        )
         assertEquals(null, pairContext.legalCandidates[1].shownRoleId)
         assertTrue(pairContext.legalCandidates[1].candidateSeats.isEmpty())
         assertTrue(export.inputEligible.featureProjection is RecommendationFeatureProjectionV1.StandardDecision)
@@ -358,7 +372,15 @@ class RecommendationDecisionExportV1Test {
                     decoySeat = 3,
                 ),
                 semanticTruth = SemanticTruth.TRUE,
-                registrations = emptyList(),
+                registrations = listOf(
+                    RegistrationFact(
+                        interactionId = "pair:test-game:librarian",
+                        subjectSeat = 2,
+                        registeredRole = RoleId("Saint"),
+                        registrationQuestion = RegistrationQuestion.ROLE,
+                        reason = RegistrationReason.SPY_ABILITY,
+                    ),
+                ),
             ),
             PairInformationLegalCandidate(
                 candidateId = "pair:b",
