@@ -255,7 +255,7 @@ TBGS-2B may:
 2. add typed-context overloads in `ClocktowerPairManualAuthority` for legal-option projection and selected-observation validation;
 3. route TB first-night `legalPairInformationOptions` through the existing snapshot-backed pair context and fail closed rather than rebuilding game truth from `PlayerCard`;
 4. pass the same context into `clocktowerFirstNightInformationRequest` so TB pair publication validates the selected proposition from snapshot-backed context;
-5. retain the historical GameState overloads for non-TB/compatibility tests and callers not in this slice.
+5. retain the historical GameState overloads for non-TB/compatibility callers not in this slice. In particular, No Greater Joy includes Investigator but has no TB snapshot contract, so its pair publication remains on the legacy adapter.
 
 TBGS-2B must not:
 
@@ -275,7 +275,7 @@ Before production wiring is accepted, prove:
 - TB manual legal option keys/order/truth/Spy-Recluse registration metadata are unchanged;
 - TB publication resolves the same structured `AbilityObservation`, including registration facts, from the typed context;
 - TB pair production paths no longer call `PlayerCard.toClocktowerGameState()`;
-- non-pair and non-TB request behavior remains unchanged.
+- non-pair and non-TB request behavior remains unchanged, with an explicit No Greater Joy Investigator compatibility test.
 
 Focused tests:
 

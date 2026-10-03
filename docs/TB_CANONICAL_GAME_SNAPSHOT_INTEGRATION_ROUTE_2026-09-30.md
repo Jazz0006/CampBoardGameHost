@@ -294,7 +294,7 @@ TroubleBrewingFirstNightPairDecisionContext
 
 Reuse the existing 2A snapshot-backed compatibility GameState because pair truth/display semantics do not read its poison flag; Drunk/Poisoned permission is carried by explicit `ReliabilityState`. Extend the typed context with role definitions derived from the validated TB character registry so this slice also stops sourcing rules input from the presentation catalog adapter.
 
-Do not expand the TB snapshot schema or include setup coordination, DynamicGameState, numeric/categorical information families, A3, Recovery or broad Host decomposition.
+Do not expand the TB snapshot schema or include setup coordination, DynamicGameState, numeric/categorical information families, A3, Recovery or broad Host decomposition. No Greater Joy Investigator remains on its existing non-TB compatibility adapter; TBGS-2B does not invent a cross-script snapshot abstraction.
 
 Authority: `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md`.
 
