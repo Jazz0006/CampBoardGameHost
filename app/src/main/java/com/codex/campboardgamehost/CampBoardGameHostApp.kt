@@ -1756,14 +1756,10 @@ internal fun CampBoardGameHostApp() {
                 storytellerExperienceMode == StorytellerExperienceMode.BEGINNER &&
                 preparedSetup.intermediateSetup.visibleRoster.hasDrunk
             ) {
-                val compatibilityCandidate =
-                    requireNotNull(preparedSetup.compatibilityConfirmedDrunkCandidate) {
-                        "Beginner Q04 Drunk selection requires the transitional compatibility candidate."
-                    }
                 DrunkAssignmentQ04V1ProductionAdapter.select(
                     gameId = preparedGameId,
+                    preset = preparedSetup.preset,
                     intermediateSetup = preparedSetup.intermediateSetup,
-                    compatibilityCandidate = compatibilityCandidate,
                     characterRegistry = characterRegistry,
                     roleDefinitions =
                         clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
@@ -1789,13 +1785,6 @@ internal fun CampBoardGameHostApp() {
                 )
 
             is TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic ->
-                commitAndStartTroubleBrewingGame(
-                    preparedGameId = preparedGameId,
-                    preparedSetup = preparedSetup,
-                    confirmedDrunkCandidate = route.candidate,
-                )
-
-            is TroubleBrewingDrunkSelectionRoute.CompatibilityImmediate ->
                 commitAndStartTroubleBrewingGame(
                     preparedGameId = preparedGameId,
                     preparedSetup = preparedSetup,

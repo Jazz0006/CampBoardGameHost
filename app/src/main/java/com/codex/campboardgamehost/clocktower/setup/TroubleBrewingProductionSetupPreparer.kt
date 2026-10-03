@@ -8,8 +8,6 @@ import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 internal data class TroubleBrewingPreparedSetup(
     val preset: TroubleBrewingSetupPreset,
     val intermediateSetup: TroubleBrewingIntermediateSetup,
-    val compatibilityDealPlan: TroubleBrewingSetupDealPlan,
-    val compatibilityConfirmedDrunkCandidate: TroubleBrewingDrunkCandidate? = null,
 )
 
 /**
@@ -103,54 +101,10 @@ internal object TroubleBrewingProductionSetupPreparer {
             visibleRoster = visibleRoster,
             shownSeatAssignments = shownSeatAssignments,
         )
-        val compatibilityDealPlan = TroubleBrewingCompatibilityDealPlanAdapter.fromIntermediate(
-            preset = selectedPreset,
-            intermediateSetup = intermediateSetup,
-            addedVisibleTownsfolkRoleId = addedVisibleTownsfolkRoleId,
-        )
-        val compatibilityConfirmedDrunkCandidate =
-            resolveCompatibilityConfirmedDrunkCandidate(
-                intermediateSetup = intermediateSetup,
-                compatibilityDealPlan = compatibilityDealPlan,
-            )
-
         return TroubleBrewingPreparedSetup(
             preset = selectedPreset,
             intermediateSetup = intermediateSetup,
-            compatibilityDealPlan = compatibilityDealPlan,
-            compatibilityConfirmedDrunkCandidate = compatibilityConfirmedDrunkCandidate,
         )
-    }
-
-    private fun resolveCompatibilityConfirmedDrunkCandidate(
-        intermediateSetup: TroubleBrewingIntermediateSetup,
-        compatibilityDealPlan: TroubleBrewingSetupDealPlan,
-    ): TroubleBrewingDrunkCandidate? {
-        if (!intermediateSetup.visibleRoster.hasDrunk) {
-            require(compatibilityDealPlan.assignments.none { it.actualRoleId == DRUNK_EXTERNAL_ID }) {
-                "Trouble Brewing compatibility setup without Drunk cannot contain an actual Drunk."
-            }
-            return null
-        }
-
-        val compatibilityDrunk = compatibilityDealPlan.assignments.singleOrNull {
-            it.actualRoleId == DRUNK_EXTERNAL_ID
-        }
-        requireNotNull(compatibilityDrunk) {
-            "Trouble Brewing compatibility Drunk setup must contain exactly one actual Drunk."
-        }
-
-        return requireNotNull(
-            TroubleBrewingDrunkCandidateDomain
-                .legalCandidates(intermediateSetup)
-                .singleOrNull { candidate ->
-                    candidate.seat == compatibilityDrunk.seat &&
-                        candidate.playerName == compatibilityDrunk.playerName &&
-                        candidate.shownRoleId == compatibilityDrunk.shownRoleId
-                },
-        ) {
-            "Trouble Brewing compatibility Drunk must resolve to the current legal candidate domain."
-        }
     }
 
     private fun TroubleBrewingSetupPreset.actualExternalRoleIds(): List<String> =
@@ -178,6 +132,5 @@ internal object TroubleBrewingProductionSetupPreparer {
     }
 
     private val TROUBLE_BREWING_SCRIPT = ScriptId("trouble_brewing")
-    private const val DRUNK_EXTERNAL_ID = "drunk"
     private const val IMP_EXTERNAL_ID = "imp"
 }

@@ -117,6 +117,5 @@ class RecoveryClocktowerRotationOwnershipTest {
             realNonDemonRoleIds = (1 until playerCount).map { "role-$it" }.toSet(),
             minionRoleIds = emptySet(),
             primaryStyleTag = null,
-            selectedDrunkShownRole = null,
         )
 }

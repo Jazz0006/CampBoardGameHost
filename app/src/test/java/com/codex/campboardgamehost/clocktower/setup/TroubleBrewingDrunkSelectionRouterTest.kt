@@ -4,15 +4,12 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TroubleBrewingDrunkSelectionRouterTest {
     @Test
     fun `experienced drunk setup requires manual selection across exact legal domain`() {
-        val prepared = drunkPreparedSetup().copy(
-            compatibilityConfirmedDrunkCandidate = null,
-        )
+        val prepared = drunkPreparedSetup()
         val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
 
         val route = TroubleBrewingDrunkSelectionRouter.route(
@@ -27,10 +24,11 @@ class TroubleBrewingDrunkSelectionRouterTest {
     }
 
     @Test
-    fun `experienced manual request may carry only an exact current legal recommendation`() {
+    fun `experienced manual request may carry only exact current legal recommendation`() {
         val prepared = drunkPreparedSetup()
-        val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
-        val recommended = legal.first()
+        val recommended = TroubleBrewingDrunkCandidateDomain
+            .legalCandidates(prepared.intermediateSetup)
+            .first()
 
         val route = TroubleBrewingDrunkSelectionRouter.route(
             preparedSetup = prepared,
@@ -52,39 +50,11 @@ class TroubleBrewingDrunkSelectionRouterTest {
     }
 
     @Test
-    fun `beginner drunk setup preserves exact compatibility confirmation without recommendation authority`() {
+    fun `beginner drunk setup requires accepted production policy candidate`() {
         val prepared = drunkPreparedSetup()
-        val expected = requireNotNull(prepared.compatibilityConfirmedDrunkCandidate)
-
-        val route = TroubleBrewingDrunkSelectionRouter.route(
-            preparedSetup = prepared,
-            experienceMode = StorytellerExperienceMode.BEGINNER,
-            recommendedCandidate = null,
-        )
-
-        val immediate = route as TroubleBrewingDrunkSelectionRoute.CompatibilityImmediate
-        assertEquals(expected, immediate.candidate)
-        assertTrue(
-            immediate.candidate in
-                TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup),
-        )
-
-        assertThrows(IllegalArgumentException::class.java) {
-            TroubleBrewingDrunkSelectionRouter.route(
-                preparedSetup = prepared,
-                experienceMode = StorytellerExperienceMode.BEGINNER,
-                recommendedCandidate = expected,
-            )
-        }
-    }
-
-    @Test
-    fun `beginner may consume an already evaluated automatic candidate while compatibility remains fallback`() {
-        val prepared = drunkPreparedSetup()
-        val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
-        val automatic = legal.first { candidate ->
-            candidate != prepared.compatibilityConfirmedDrunkCandidate
-        }
+        val automatic = TroubleBrewingDrunkCandidateDomain
+            .legalCandidates(prepared.intermediateSetup)
+            .first()
 
         val route = TroubleBrewingDrunkSelectionRouter.route(
             preparedSetup = prepared,
@@ -96,13 +66,46 @@ class TroubleBrewingDrunkSelectionRouterTest {
         val immediate = route as TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic
         assertEquals(automatic, immediate.candidate)
 
+        assertThrows(IllegalArgumentException::class.java) {
+            TroubleBrewingDrunkSelectionRouter.route(
+                preparedSetup = prepared,
+                experienceMode = StorytellerExperienceMode.BEGINNER,
+                recommendedCandidate = null,
+                beginnerAutomaticCandidate = null,
+            )
+        }
+    }
+
+    @Test
+    fun `beginner automatic candidate must belong to current legal domain`() {
+        val prepared = drunkPreparedSetup()
+        val automatic = TroubleBrewingDrunkCandidateDomain
+            .legalCandidates(prepared.intermediateSetup)
+            .first()
         val stale = automatic.copy(playerName = "Stale Player")
+
         assertThrows(IllegalArgumentException::class.java) {
             TroubleBrewingDrunkSelectionRouter.route(
                 preparedSetup = prepared,
                 experienceMode = StorytellerExperienceMode.BEGINNER,
                 recommendedCandidate = null,
                 beginnerAutomaticCandidate = stale,
+            )
+        }
+    }
+
+    @Test
+    fun `beginner rejects experienced recommendation channel`() {
+        val prepared = drunkPreparedSetup()
+        val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
+        val automatic = legal.first()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            TroubleBrewingDrunkSelectionRouter.route(
+                preparedSetup = prepared,
+                experienceMode = StorytellerExperienceMode.BEGINNER,
+                recommendedCandidate = legal.last(),
+                beginnerAutomaticCandidate = automatic,
             )
         }
     }
@@ -155,31 +158,9 @@ class TroubleBrewingDrunkSelectionRouterTest {
                 TroubleBrewingShownSeatAssignment(5, "Eve", "imp"),
             ),
         )
-        val compatibility = TroubleBrewingSetupDealPlan(
-            datasetId = "test-dataset",
-            schemaVersion = 2,
-            presetId = preset.id,
-            playerCount = 5,
-            gameSeed = 4_101L,
-            selectedDrunkShownRole = "washerwoman",
-            assignments = listOf(
-                TroubleBrewingSetupDealAssignment(1, "Alice", "chef", "chef"),
-                TroubleBrewingSetupDealAssignment(2, "Bob", "empath", "empath"),
-                TroubleBrewingSetupDealAssignment(3, "Cara", "drunk", "washerwoman"),
-                TroubleBrewingSetupDealAssignment(4, "Dan", "poisoner", "poisoner"),
-                TroubleBrewingSetupDealAssignment(5, "Eve", "imp", "imp"),
-            ),
-        )
-        val compatibilityCandidate = TroubleBrewingDrunkCandidate(
-            seat = 3,
-            playerName = "Cara",
-            shownRoleId = "washerwoman",
-        )
         return TroubleBrewingPreparedSetup(
             preset = preset,
             intermediateSetup = intermediate,
-            compatibilityDealPlan = compatibility,
-            compatibilityConfirmedDrunkCandidate = compatibilityCandidate,
         )
     }
 
@@ -217,27 +198,9 @@ class TroubleBrewingDrunkSelectionRouterTest {
                 TroubleBrewingShownSeatAssignment(5, "Eve", "imp"),
             ),
         )
-        val compatibility = TroubleBrewingSetupDealPlan(
-            datasetId = "test-dataset",
-            schemaVersion = 2,
-            presetId = preset.id,
-            playerCount = 5,
-            gameSeed = 4_102L,
-            selectedDrunkShownRole = null,
-            assignments = intermediate.shownSeatAssignments.map { assignment ->
-                TroubleBrewingSetupDealAssignment(
-                    seat = assignment.seat,
-                    playerName = assignment.playerName,
-                    actualRoleId = assignment.shownRoleId,
-                    shownRoleId = assignment.shownRoleId,
-                )
-            },
-        )
         return TroubleBrewingPreparedSetup(
             preset = preset,
             intermediateSetup = intermediate,
-            compatibilityDealPlan = compatibility,
-            compatibilityConfirmedDrunkCandidate = null,
         )
     }
 }

@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsFo
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkCandidateDomain
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingIntermediateSetup
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPreset
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingShownSeatAssignment
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingVisibleRoster
 import org.junit.Assert.assertEquals
@@ -121,14 +122,11 @@ class DrunkAssignmentQ04V1PolicyTest {
     fun `production adapter maps Q04 selection back to the exact current legal candidate`() {
         val intermediate = intermediateSetup(empathAdjacentToEvil = false, includeMonk = true)
         val ruleset = canonicalRuleset()
-        val compatibility = TroubleBrewingDrunkCandidateDomain
-            .legalCandidates(intermediate)
-            .single { it.shownRoleId == "empath" }
 
         val selection = DrunkAssignmentQ04V1ProductionAdapter.select(
             gameId = "q04-production-adapter-test",
+            preset = presetFor(intermediate, addedVisibleTownsfolk = "empath"),
             intermediateSetup = intermediate,
-            compatibilityCandidate = compatibility,
             characterRegistry = ruleset.characterRegistry,
             roleDefinitions = clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
             sourceRevision = InformationDecisionRevision(0L, 0L),
@@ -226,6 +224,22 @@ class DrunkAssignmentQ04V1PolicyTest {
             shownSeatAssignments = assignments,
         )
     }
+
+    private fun presetFor(
+        intermediate: TroubleBrewingIntermediateSetup,
+        addedVisibleTownsfolk: String,
+    ): TroubleBrewingSetupPreset = TroubleBrewingSetupPreset(
+        id = intermediate.presetId,
+        playerCount = intermediate.playerCount,
+        townsfolk = intermediate.visibleRoster.townsfolkRoleIds.filterNot { it == addedVisibleTownsfolk },
+        outsiders = listOf("drunk"),
+        minions = intermediate.visibleRoster.minionRoleIds,
+        demons = intermediate.visibleRoster.demonRoleIds,
+        source = "test",
+        complexity = "test",
+        styleTags = emptyList(),
+        drunkAsOptions = listOf(addedVisibleTownsfolk),
+    )
 
     private fun canonicalRuleset() =
         BuiltInClocktowerRulesetCatalog { assetPath ->

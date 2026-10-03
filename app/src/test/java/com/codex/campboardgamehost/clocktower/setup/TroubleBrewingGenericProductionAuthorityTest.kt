@@ -20,23 +20,14 @@ class TroubleBrewingGenericProductionAuthorityTest {
         )
         val players = (1..8).map { "Player $it" }
 
-        val divergentSeed = (0L until 4_096L).first { seed ->
-            val genericPresetId = genericSelectionPresetId(dataset, registry, seed)
-            val legacyPresetId = TroubleBrewingSetupPresetSelector.select(
-                dataset = dataset,
-                playerCount = players.size,
-                gameSeed = seed,
-                recentSetupRotationHistory = TroubleBrewingSetupRotationHistory.EMPTY,
-            ).presetId
-            genericPresetId != legacyPresetId
-        }
-        val expectedPresetId = genericSelectionPresetId(dataset, registry, divergentSeed)
+        val setupSeed = 2_026_100_3L
+        val expectedPresetId = genericSelectionPresetId(dataset, registry, setupSeed)
 
         val prepared = TroubleBrewingProductionSetupPreparer.prepare(
             dataset = dataset,
             characterRegistry = registry,
             orderedPlayerNames = players,
-            gameSeed = divergentSeed,
+            gameSeed = setupSeed,
             recentSetupRotationHistory = TroubleBrewingSetupRotationHistory.EMPTY,
         )
 

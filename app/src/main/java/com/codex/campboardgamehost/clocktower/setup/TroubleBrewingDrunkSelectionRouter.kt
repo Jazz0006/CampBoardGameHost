@@ -29,10 +29,6 @@ internal sealed interface TroubleBrewingDrunkSelectionRoute {
     data class BeginnerAutomatic(
         val candidate: TroubleBrewingDrunkCandidate,
     ) : TroubleBrewingDrunkSelectionRoute
-
-    data class CompatibilityImmediate(
-        val candidate: TroubleBrewingDrunkCandidate,
-    ) : TroubleBrewingDrunkSelectionRoute
 }
 
 /**
@@ -62,9 +58,6 @@ internal object TroubleBrewingDrunkSelectionRouter {
             require(beginnerAutomaticCandidate == null) {
                 "Trouble Brewing setup without Drunk cannot carry a Beginner automatic Drunk candidate."
             }
-            require(preparedSetup.compatibilityConfirmedDrunkCandidate == null) {
-                "Trouble Brewing setup without Drunk cannot carry a compatibility Drunk confirmation."
-            }
             return TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded
         }
 
@@ -89,29 +82,19 @@ internal object TroubleBrewingDrunkSelectionRouter {
                 require(recommendedCandidate == null) {
                     "Beginner Drunk selection cannot consume the Experienced recommendation channel."
                 }
-                if (beginnerAutomaticCandidate != null) {
-                    val currentAutomaticCandidate =
-                        legalCandidates.singleOrNull { candidate ->
-                            candidate == beginnerAutomaticCandidate
-                        }
-                    requireNotNull(currentAutomaticCandidate) {
-                        "Beginner automatic Drunk selection must resolve to the current legal candidate domain."
-                    }
-                    return TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic(
-                        currentAutomaticCandidate,
-                    )
+                val automaticCandidate = requireNotNull(beginnerAutomaticCandidate) {
+                    "Beginner Drunk selection requires the accepted production policy candidate."
                 }
-
-                val compatibilityCandidate =
-                    requireNotNull(preparedSetup.compatibilityConfirmedDrunkCandidate) {
-                        "Beginner compatibility Drunk selection requires the transitional confirmed candidate."
+                val currentAutomaticCandidate =
+                    legalCandidates.singleOrNull { candidate ->
+                        candidate == automaticCandidate
                     }
-                val currentLegalCandidate =
-                    legalCandidates.singleOrNull { candidate -> candidate == compatibilityCandidate }
-                requireNotNull(currentLegalCandidate) {
-                    "Beginner compatibility Drunk selection must resolve to the current legal candidate domain."
+                requireNotNull(currentAutomaticCandidate) {
+                    "Beginner automatic Drunk selection must resolve to the current legal candidate domain."
                 }
-                TroubleBrewingDrunkSelectionRoute.CompatibilityImmediate(currentLegalCandidate)
+                TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic(
+                    currentAutomaticCandidate,
+                )
             }
         }
     }

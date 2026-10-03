@@ -25,7 +25,6 @@ class TroubleBrewingProductionSetupPreparerTest {
         )
 
         val intermediate = prepared.intermediateSetup
-        val compatibility = prepared.compatibilityDealPlan
 
         assertEquals("tb-8-production-a", prepared.preset.id)
         assertEquals(dataset.datasetId, intermediate.datasetId)
@@ -37,18 +36,9 @@ class TroubleBrewingProductionSetupPreparerTest {
         assertEquals((1..8).toList(), intermediate.shownSeatAssignments.map { it.seat })
         assertTrue(intermediate.visibleRoster.hasDrunk)
         assertEquals(0, intermediate.visibleRoster.visibleRoleIds.count { it == "drunk" })
-
-        val actualRoleIds = compatibility.assignments.map { it.actualRoleId }.toSet()
-        assertEquals(
-            (prepared.preset.townsfolk +
-                prepared.preset.outsiders +
-                prepared.preset.minions +
-                prepared.preset.demons).toSet(),
-            actualRoleIds,
-        )
-        val drunk = compatibility.assignments.single { it.actualRoleId == "drunk" }
-        assertEquals(compatibility.selectedDrunkShownRole, drunk.shownRoleId)
-        assertTrue(drunk.shownRoleId in prepared.preset.drunkAsOptions)
+        val addedVisibleTownsfolk = intermediate.visibleRoster.townsfolkRoleIds
+            .single { roleId -> roleId !in prepared.preset.townsfolk }
+        assertTrue(addedVisibleTownsfolk in prepared.preset.drunkAsOptions)
     }
 
     @Test
@@ -65,7 +55,9 @@ class TroubleBrewingProductionSetupPreparerTest {
             recentSetupRotationHistory = TroubleBrewingSetupRotationHistory.EMPTY,
         )
         val baselineDemonHolder =
-            baseline.compatibilityDealPlan.assignments.single { it.actualRoleId == "imp" }.playerName
+            baseline.intermediateSetup.shownSeatAssignments
+                .single { it.shownRoleId == "imp" }
+                .playerName
         val twoGamesAgoDemon = TroubleBrewingPlayerStartingIdentity(
             playerKey = baselineDemonHolder,
             actualRoleId = "pukka",
@@ -89,11 +81,13 @@ class TroubleBrewingProductionSetupPreparerTest {
 
         assertNotEquals(
             baselineDemonHolder,
-            rotated.compatibilityDealPlan.assignments.single { it.actualRoleId == "imp" }.playerName,
+            rotated.intermediateSetup.shownSeatAssignments
+                .single { it.shownRoleId == "imp" }
+                .playerName,
         )
         assertEquals(
-            baseline.compatibilityDealPlan.assignments.map { it.actualRoleId }.sorted(),
-            rotated.compatibilityDealPlan.assignments.map { it.actualRoleId }.sorted(),
+            baseline.intermediateSetup.shownSeatAssignments.map { it.shownRoleId }.sorted(),
+            rotated.intermediateSetup.shownSeatAssignments.map { it.shownRoleId }.sorted(),
         )
         assertEquals(baseline.preset, rotated.preset)
         assertEquals(baseline.intermediateSetup.visibleRoster, rotated.intermediateSetup.visibleRoster)

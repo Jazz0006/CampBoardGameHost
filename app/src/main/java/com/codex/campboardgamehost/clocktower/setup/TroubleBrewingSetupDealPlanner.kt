@@ -16,56 +16,13 @@ internal data class TroubleBrewingPlayerStartingIdentity(
     val actualRoleCategory: TroubleBrewingStartingRoleCategory,
 )
 
-internal data class TroubleBrewingSetupDealAssignment(
-    val seat: Int,
-    val playerName: String,
-    val actualRoleId: String,
-    val shownRoleId: String,
-)
-
-internal data class TroubleBrewingSetupDealPlan(
-    val datasetId: String,
-    val schemaVersion: Int,
-    val presetId: String,
-    val playerCount: Int,
-    val gameSeed: Long,
-    val selectedDrunkShownRole: String?,
-    val assignments: List<TroubleBrewingSetupDealAssignment>,
-)
-
 internal object TroubleBrewingSetupDealPlanner {
-    fun plan(
-        selection: TroubleBrewingSetupPresetSelection,
-        orderedPlayerNames: List<String>,
-        previousPlayerStartingIdentities: List<TroubleBrewingPlayerStartingIdentity> = emptyList(),
-    ): TroubleBrewingSetupDealPlan = planWithRecentHistory(
-        selection = selection,
-        orderedPlayerNames = orderedPlayerNames,
-        recentPlayerStartingIdentityHistory = if (previousPlayerStartingIdentities.isEmpty()) {
-            TroubleBrewingPlayerStartingIdentityHistory.EMPTY
-        } else {
-            TroubleBrewingPlayerStartingIdentityHistory(
-                recentGames = listOf(previousPlayerStartingIdentities),
-            )
-        },
-    )
-
-    fun plan(
-        selection: TroubleBrewingSetupPresetSelection,
-        orderedPlayerNames: List<String>,
-        recentPlayerStartingIdentityHistory: TroubleBrewingPlayerStartingIdentityHistory,
-    ): TroubleBrewingSetupDealPlan = planWithRecentHistory(
-        selection = selection,
-        orderedPlayerNames = orderedPlayerNames,
-        recentPlayerStartingIdentityHistory = recentPlayerStartingIdentityHistory,
-    )
-
     /**
      * DLB visible-roster seating path.
      *
-     * The existing optimizer is reused against a normalized preset view that contains only the
-     * identities players can actually be shown. In particular, a Drunk preset has no Drunk token in
-     * this view and the transitional added Townsfolk is categorized as Townsfolk.
+     * Only identities players can actually be shown participate here. A Drunk-bearing setup has no
+     * Drunk token in this seating surface; the extra visible Townsfolk is therefore treated exactly
+     * like any other Townsfolk until the later canonical Drunk commitment.
      */
     fun planVisibleRoster(
         datasetId: String,
@@ -83,49 +40,6 @@ internal object TroubleBrewingSetupDealPlanner {
         require(orderedPlayerNames.size == preset.playerCount) {
             "Ordered Trouble Brewing player identities must match the visible roster player count."
         }
-        val visiblePreset = preset.copy(
-            townsfolk = visibleRoster.townsfolkRoleIds,
-            outsiders = visibleRoster.outsiderRoleIds,
-            minions = visibleRoster.minionRoleIds,
-            demons = visibleRoster.demonRoleIds,
-            drunkAsOptions = emptyList(),
-        )
-        val visiblePlan = plan(
-            selection = TroubleBrewingSetupPresetSelection(
-                datasetId = datasetId,
-                schemaVersion = schemaVersion,
-                presetId = preset.id,
-                playerCount = preset.playerCount,
-                gameSeed = gameSeed,
-                preset = visiblePreset,
-                selectedDrunkShownRole = null,
-            ),
-            orderedPlayerNames = orderedPlayerNames,
-            recentPlayerStartingIdentityHistory = recentPlayerStartingIdentityHistory,
-        )
-        require(visiblePlan.assignments.all { it.actualRoleId == it.shownRoleId }) {
-            "Trouble Brewing visible-roster seating must not commit hidden actual-role substitutions."
-        }
-        return visiblePlan.assignments.map { assignment ->
-            TroubleBrewingShownSeatAssignment(
-                seat = assignment.seat,
-                playerName = assignment.playerName,
-                shownRoleId = assignment.shownRoleId,
-            )
-        }
-    }
-
-    private fun planWithRecentHistory(
-        selection: TroubleBrewingSetupPresetSelection,
-        orderedPlayerNames: List<String>,
-        recentPlayerStartingIdentityHistory: TroubleBrewingPlayerStartingIdentityHistory,
-    ): TroubleBrewingSetupDealPlan {
-        require(selection.playerCount == selection.preset.playerCount) {
-            "Selected Trouble Brewing preset player count does not match selection provenance."
-        }
-        require(orderedPlayerNames.size == selection.playerCount) {
-            "Ordered Trouble Brewing player identities must match selected preset player count."
-        }
         recentPlayerStartingIdentityHistory.recentGames.forEachIndexed { gameIndex, identities ->
             require(identities.map { it.playerKey }.distinct().size == identities.size) {
                 "Trouble Brewing player starting identities for recent game $gameIndex must contain unique player keys."
@@ -140,30 +54,26 @@ internal object TroubleBrewingSetupDealPlanner {
             }
         }
 
-        val actualRoleIds = (
-            selection.preset.townsfolk +
-                selection.preset.outsiders +
-                selection.preset.minions +
-                selection.preset.demons
-            ).sorted()
-        require(actualRoleIds.size == selection.playerCount) {
-            "Selected Trouble Brewing preset role count does not match player count."
-        }
-        val selectedDrunkShownRole = validatedDrunkShownRole(
-            selection = selection,
-            actualRoleIds = actualRoleIds,
+        val context = SeatingContext(
+            datasetId = datasetId,
+            schemaVersion = schemaVersion,
+            presetId = preset.id,
+            playerCount = preset.playerCount,
+            gameSeed = gameSeed,
         )
-        val roleTokens = actualRoleIds.map { actualRoleId ->
-            RoleToken(
-                actualRoleId = actualRoleId,
-                shownRoleId = if (actualRoleId == DRUNK_ROLE_ID) {
-                    requireNotNull(selectedDrunkShownRole)
-                } else {
-                    actualRoleId
-                },
-                actualRoleCategory = categoryOf(selection.preset, actualRoleId),
-            )
+        val roleTokens = visibleRoster.visibleRoleIds
+            .sorted()
+            .map { roleId ->
+                RoleToken(
+                    actualRoleId = roleId,
+                    shownRoleId = roleId,
+                    actualRoleCategory = categoryOf(visibleRoster, roleId),
+                )
+            }
+        require(roleTokens.size == context.playerCount) {
+            "Trouble Brewing visible role count does not match player count."
         }
+
         val recentByPlayer = recentPlayerStartingIdentityHistory.recentGames.map { identities ->
             identities.associateBy { it.playerKey }
         }
@@ -173,44 +83,34 @@ internal object TroubleBrewingSetupDealPlanner {
         }
         val seatOrderedRoleTokens = if (hasUsableRotationHistory) {
             minimumRotationCostAssignment(
-                selection = selection,
+                context = context,
                 orderedPlayerNames = orderedPlayerNames,
                 roleTokens = roleTokens,
                 recentByPlayer = recentByPlayer,
             )
         } else {
             legacySeatOrderedRoleTokens(
-                selection = selection,
+                context = context,
                 roleTokens = roleTokens,
             )
         }
 
-        return TroubleBrewingSetupDealPlan(
-            datasetId = selection.datasetId,
-            schemaVersion = selection.schemaVersion,
-            presetId = selection.presetId,
-            playerCount = selection.playerCount,
-            gameSeed = selection.gameSeed,
-            selectedDrunkShownRole = selectedDrunkShownRole,
-            assignments = orderedPlayerNames.mapIndexed { index, playerName ->
-                val roleToken = seatOrderedRoleTokens[index]
-                TroubleBrewingSetupDealAssignment(
-                    seat = index + 1,
-                    playerName = playerName,
-                    actualRoleId = roleToken.actualRoleId,
-                    shownRoleId = roleToken.shownRoleId,
-                )
-            },
-        )
+        return orderedPlayerNames.mapIndexed { index, playerName ->
+            TroubleBrewingShownSeatAssignment(
+                seat = index + 1,
+                playerName = playerName,
+                shownRoleId = seatOrderedRoleTokens[index].shownRoleId,
+            )
+        }
     }
 
     private fun legacySeatOrderedRoleTokens(
-        selection: TroubleBrewingSetupPresetSelection,
+        context: SeatingContext,
         roleTokens: List<RoleToken>,
     ): List<RoleToken> = roleTokens.sortedWith(
         Comparator { left, right ->
-            val leftKey = seatOrderKey(selection, left.actualRoleId)
-            val rightKey = seatOrderKey(selection, right.actualRoleId)
+            val leftKey = seatOrderKey(context, left.actualRoleId)
+            val rightKey = seatOrderKey(context, right.actualRoleId)
             val keyComparison = java.lang.Long.compareUnsigned(leftKey, rightKey)
             if (keyComparison != 0) {
                 keyComparison
@@ -221,7 +121,7 @@ internal object TroubleBrewingSetupDealPlanner {
     )
 
     private fun minimumRotationCostAssignment(
-        selection: TroubleBrewingSetupPresetSelection,
+        context: SeatingContext,
         orderedPlayerNames: List<String>,
         roleTokens: List<RoleToken>,
         recentByPlayer: List<Map<String, TroubleBrewingPlayerStartingIdentity>>,
@@ -270,13 +170,15 @@ internal object TroubleBrewingSetupDealPlanner {
                     Comparator { leftIndex, rightIndex ->
                         val left = roleTokens[leftIndex]
                         val right = roleTokens[rightIndex]
-                        val leftKey = rotationTieKey(selection, playerIndex, playerName, left)
-                        val rightKey = rotationTieKey(selection, playerIndex, playerName, right)
+                        val leftKey = rotationTieKey(context, playerIndex, playerName, left)
+                        val rightKey = rotationTieKey(context, playerIndex, playerName, right)
                         val keyComparison = java.lang.Long.compareUnsigned(leftKey, rightKey)
                         when {
                             keyComparison != 0 -> keyComparison
-                            left.actualRoleId != right.actualRoleId -> left.actualRoleId.compareTo(right.actualRoleId)
-                            left.shownRoleId != right.shownRoleId -> left.shownRoleId.compareTo(right.shownRoleId)
+                            left.actualRoleId != right.actualRoleId ->
+                                left.actualRoleId.compareTo(right.actualRoleId)
+                            left.shownRoleId != right.shownRoleId ->
+                                left.shownRoleId.compareTo(right.shownRoleId)
                             else -> leftIndex.compareTo(rightIndex)
                         }
                     },
@@ -327,55 +229,40 @@ internal object TroubleBrewingSetupDealPlanner {
     }
 
     private fun categoryOf(
-        preset: TroubleBrewingSetupPreset,
+        visibleRoster: TroubleBrewingVisibleRoster,
         roleId: String,
     ): TroubleBrewingStartingRoleCategory = when (roleId) {
-        in preset.townsfolk -> TroubleBrewingStartingRoleCategory.TOWNSFOLK
-        in preset.outsiders -> TroubleBrewingStartingRoleCategory.OUTSIDER
-        in preset.minions -> TroubleBrewingStartingRoleCategory.MINION
-        in preset.demons -> TroubleBrewingStartingRoleCategory.DEMON
-        else -> error("Trouble Brewing role $roleId is not part of the selected preset.")
-    }
-
-    private fun validatedDrunkShownRole(
-        selection: TroubleBrewingSetupPresetSelection,
-        actualRoleIds: List<String>,
-    ): String? {
-        if (DRUNK_ROLE_ID !in actualRoleIds) {
-            require(selection.selectedDrunkShownRole == null) {
-                "Non-Drunk Trouble Brewing preset must not carry a Drunk shown role."
-            }
-            return null
-        }
-
-        val shownRoleId = requireNotNull(selection.selectedDrunkShownRole) {
-            "Drunk Trouble Brewing preset requires the selector-owned shown role."
-        }
-        require(shownRoleId in selection.preset.drunkAsOptions) {
-            "Selected Drunk shown role must come from the selected preset options."
-        }
-        require(shownRoleId !in actualRoleIds) {
-            "Selected Drunk shown role must not already be an actual in-play role."
-        }
-        return shownRoleId
+        in visibleRoster.townsfolkRoleIds -> TroubleBrewingStartingRoleCategory.TOWNSFOLK
+        in visibleRoster.outsiderRoleIds -> TroubleBrewingStartingRoleCategory.OUTSIDER
+        in visibleRoster.minionRoleIds -> TroubleBrewingStartingRoleCategory.MINION
+        in visibleRoster.demonRoleIds -> TroubleBrewingStartingRoleCategory.DEMON
+        else -> error("Trouble Brewing visible role $roleId is not part of the visible roster.")
     }
 
     private fun seatOrderKey(
-        selection: TroubleBrewingSetupPresetSelection,
+        context: SeatingContext,
         roleId: String,
     ): Long = MurmurHash3.low64Utf8(
-        "tb-seat-v1|${selection.datasetId}|${selection.playerCount}|${selection.presetId}|" +
-            "${selection.gameSeed}|$roleId",
+        "tb-seat-v1|${context.datasetId}|${context.playerCount}|${context.presetId}|" +
+            "${context.gameSeed}|$roleId",
     )
 
     private fun rotationTieKey(
-        selection: TroubleBrewingSetupPresetSelection,
+        context: SeatingContext,
         playerIndex: Int,
         playerName: String,
         roleToken: RoleToken,
     ): Long = MurmurHash3.low64Utf8(
-        "$ROTATION_NAMESPACE|${selection.datasetId}|${selection.playerCount}|${selection.presetId}|" +
-            "${selection.gameSeed}|$playerIndex|$playerName|${roleToken.actualRoleId}|${roleToken.shownRoleId}",
+        "$ROTATION_NAMESPACE|${context.datasetId}|${context.playerCount}|${context.presetId}|" +
+            "${context.gameSeed}|$playerIndex|$playerName|${roleToken.actualRoleId}|${roleToken.shownRoleId}",
+    )
+
+    private data class SeatingContext(
+        val datasetId: String,
+        val schemaVersion: Int,
+        val presetId: String,
+        val playerCount: Int,
+        val gameSeed: Long,
     )
 
     private data class RoleToken(
@@ -418,7 +305,6 @@ internal object TroubleBrewingSetupDealPlanner {
         }
     }
 
-    private const val DRUNK_ROLE_ID = "drunk"
     private const val ROTATION_NAMESPACE = "tb-role-rotation-v1"
     private const val MAX_OPTIMIZED_PLAYER_COUNT = 15
     private const val TWO_GAMES_AGO_WEIGHT = 2

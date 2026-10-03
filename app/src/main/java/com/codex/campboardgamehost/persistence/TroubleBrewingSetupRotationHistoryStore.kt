@@ -3,7 +3,6 @@ package com.codex.campboardgamehost
 import android.content.Context
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentity
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentityHistory
-import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetSelection
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationHistory
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecordFactory
@@ -15,14 +14,6 @@ internal class TroubleBrewingSetupRotationHistoryStore(
     private val readRaw: () -> String?,
     private val writeRaw: (String) -> Boolean,
 ) {
-    fun recordCompletedGame(
-        gameId: String,
-        selection: TroubleBrewingSetupPresetSelection,
-    ): Boolean = recordCompletedGame(
-        gameId = gameId,
-        record = TroubleBrewingSetupRotationRecordFactory.fromSelection(selection),
-    )
-
     fun recordCompletedGame(
         gameId: String,
         record: TroubleBrewingSetupRotationRecord,
@@ -122,7 +113,6 @@ internal class TroubleBrewingSetupRotationHistoryStore(
                     put("realNonDemonRoleIds", entry.record.realNonDemonRoleIds.sorted().toJsonArray())
                     put("minionRoleIds", entry.record.minionRoleIds.sorted().toJsonArray())
                     put("primaryStyleTag", entry.record.primaryStyleTag ?: JSONObject.NULL)
-                    put("selectedDrunkShownRole", entry.record.selectedDrunkShownRole ?: JSONObject.NULL)
                     put(
                         "playerStartingIdentities",
                         entry.record.playerStartingIdentities.toStartingIdentitiesJsonArray(),
@@ -140,7 +130,7 @@ internal class TroubleBrewingSetupRotationHistoryStore(
     private fun decode(raw: String): List<PersistedRotationEntry> {
         val root = JSONObject(raw)
         val version = root.requiredInt("version")
-        require(version == CURRENT_VERSION) {
+        require(version == CURRENT_VERSION || version == LEGACY_VERSION) {
             "Unsupported Trouble Brewing rotation-history version."
         }
         val entriesJson = root.optJSONArray("entries")
@@ -149,6 +139,11 @@ internal class TroubleBrewingSetupRotationHistoryStore(
             for (index in 0 until entriesJson.length()) {
                 val entry = entriesJson.optJSONObject(index)
                     ?: throw IllegalArgumentException("Trouble Brewing rotation-history entry $index must be an object.")
+                val legacySelectedDrunkShownRole = if (version == LEGACY_VERSION) {
+                    entry.nullableString("selectedDrunkShownRole")
+                } else {
+                    null
+                }
                 val record = TroubleBrewingSetupRotationRecord(
                     datasetId = entry.requiredString("datasetId"),
                     schemaVersion = entry.requiredInt("schemaVersion"),
@@ -157,10 +152,17 @@ internal class TroubleBrewingSetupRotationHistoryStore(
                     realNonDemonRoleIds = entry.requiredStringSet("realNonDemonRoleIds"),
                     minionRoleIds = entry.requiredStringSet("minionRoleIds"),
                     primaryStyleTag = entry.nullableString("primaryStyleTag"),
-                    selectedDrunkShownRole = entry.nullableString("selectedDrunkShownRole"),
                     playerStartingIdentities =
                         entry.requiredStartingIdentities("playerStartingIdentities"),
                 ).also(TroubleBrewingSetupRotationRecordFactory::validate)
+                if (version == LEGACY_VERSION && record.playerStartingIdentities.isNotEmpty()) {
+                    val migratedDrunkShownRole = record.playerStartingIdentities
+                        .singleOrNull { identity -> identity.actualRoleId == "drunk" }
+                        ?.shownRoleId
+                    require(legacySelectedDrunkShownRole == migratedDrunkShownRole) {
+                        "Legacy Trouble Brewing rotation-history Drunk shown role disagrees with starting identities."
+                    }
+                }
                 add(
                     PersistedRotationEntry(
                         gameId = entry.requiredString("gameId").also {
@@ -183,7 +185,8 @@ internal class TroubleBrewingSetupRotationHistoryStore(
     )
 
     companion object {
-        const val CURRENT_VERSION = 2
+        const val CURRENT_VERSION = 3
+        private const val LEGACY_VERSION = 2
         const val MAX_GAMES_PER_PLAYER_COUNT = 5
         private const val PREFS_NAME = "camp_board_game_host"
         private const val STORAGE_KEY = "tb_setup_rotation_history_v1"
