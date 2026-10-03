@@ -401,7 +401,9 @@ Minimum acceptance:
 9. same input/version/seed produces the same output;
 10. feature/provenance survives trace archive round-trip.
 
-Only after C5-D passes may a separate C5-E / SDE-3D5 production cutover gate decide whether the functioning Librarian automatic recommendation surface should consume V2.
+C5-D acceptance evidence: exact-head `5241518e002e65993eed594632604e13e2979bfd`, CI #3693 / R2 #3401 GREEN. The G10 40-candidate source trace replays through V1 and V2 with identical canonical identity/domain/features/actual-choice metadata; V1 hard rejections remain unchanged, V2 survivor-band deltas are exactly the generic future-flexibility predicate, repeated replay is deterministic, and the two-trace archive round-trips losslessly.
+
+C5-D is therefore **COMPLETE / ACCEPTED**. A separate C5-E / SDE-3D5 production cutover gate may now decide whether the functioning Librarian automatic recommendation surface should consume V2.
 
 ### C5-E — surface-scoped production cutover
 
@@ -440,8 +442,8 @@ Do not bundle TBGS-2D Demon succession with C5 pair policy work in one implement
 | Pair exact-consequence primitives | **PASS** | Existing pair exact adapter and projector precedents. |
 | Pair production shadow/replay composition | **PASS / ACCEPTED — C5-B** | Full pair legal domain composes into exact consequences/features, V1 shadow, DecisionTrace and replay; exact-head T4 passed without production authority change. |
 | Real V2 policy definition | **PASS / ACCEPTED — C5-C** | Evidence-bound V2 with V1-exact fallback and bounded future-flexibility weak preference passed final exact-head T4. |
-| Same-history V1/V2 replay | **GAP / C5-D** | Must run after V2 exists. |
-| Production automatic cutover | **BLOCKED / C5-E** | Requires completed projector/replay/V2 acceptance and explicit surface gate. |
+| Same-history V1/V2 replay | **PASS / ACCEPTED — C5-D** | G10 full-domain V1/V2 replay is deterministic, bounded to the admitted predicate, preserves actual-choice metadata and round-trips through the trace archive. |
+| Production automatic cutover | **AUTHORIZED FOR GATE / C5-E NEXT** | C5-A–D are accepted; the exact functioning-Librarian surface still requires the explicit cutover audit and acceptance. |
 
 Overall:
 
@@ -451,14 +453,14 @@ SDE-3D3 implementation                      AUTHORIZED
 C5-A projector                              COMPLETE / ACCEPTED
 C5-B pair shadow/replay                     COMPLETE / ACCEPTED
 C5-C BEGINNER_CONSERVATIVE_V2              COMPLETE / ACCEPTED
-C5-D V1/V2 canonical replay                NEXT
-C5-E production cutover                    BLOCKED UNTIL C5-D ACCEPTANCE
+C5-D V1/V2 canonical replay                COMPLETE / ACCEPTED
+C5-E production cutover                    NEXT — SURFACE-SCOPED GATE
 E4 numeric calibration                     STILL UNPROVEN / NOT NEEDED FOR FIRST DELTA
 ```
 
 ## 12. Immediate next task
 
-Begin **C5-D — canonical V1/V2 replay and cutover recheck**. Replay the same committed pair-information histories through frozen V1 and accepted V2, prove that differences occur only on the admitted future-flexibility predicate, preserve actual expert choice as historical metadata rather than a direct policy label, and verify deterministic trace/provenance round-trip. V2 remains shadow/replay-only; no production cutover is authorized before the separate C5-E gate.
+Begin **C5-E — surface-scoped production cutover gate** for the functioning Librarian automatic recommendation surface. Name the exact automatic call site, V1 fallback behavior, manual override/authority, recommendation-to-publication seam, stale/failure behavior, legacy ranking retirement/coexistence, and exact acceptance tests before changing production authority. C5-D itself changes no production behavior.
 
 Do not wait for more EvidenceLab evidence for this predicate.
 
