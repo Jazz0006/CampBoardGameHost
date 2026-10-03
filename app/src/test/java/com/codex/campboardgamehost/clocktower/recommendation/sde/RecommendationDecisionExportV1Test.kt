@@ -249,6 +249,7 @@ class RecommendationDecisionExportV1Test {
         assertThrows(IllegalArgumentException::class.java) {
             RecommendationDecisionExportV1.fromFirstNightPairInformation(
                 request = request,
+                legalCandidates = pairLegalCandidates(),
                 replayTraces = listOf(trace),
             )
         }
