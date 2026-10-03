@@ -22,6 +22,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraf
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.ImpairedTruthfulException
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
@@ -238,6 +239,9 @@ internal class ClocktowerRecommendationCoordinator(
      * Pair-information truth ownership is canonical in [NaturalPairInformationCandidateGenerator];
      * this method only wraps those candidates in the historical SetupClueOutcome transport type.
      */
+    fun naturalPairCandidates(context: TroubleBrewingFirstNightPairDecisionContext): List<DecisionCandidate<SetupClueOutcome>> =
+        naturalPairCandidates(context.naturalPairGameState)
+
     fun naturalPairCandidates(game: GameState): List<DecisionCandidate<SetupClueOutcome>> =
         NaturalPairInformationCandidateGenerator.generatePerceivedFirstNightInformationSpace(game).map { candidate ->
             val sourceAbility = candidate.effects

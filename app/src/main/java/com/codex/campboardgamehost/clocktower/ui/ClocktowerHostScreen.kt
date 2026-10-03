@@ -63,6 +63,7 @@ import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendatio
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
@@ -115,9 +116,10 @@ internal fun ClocktowerJudgeScreen(
     gameStateRevision: Long,
     playerInputRevision: Long,
     setupHistory: CrossGameHistory,
+    firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
     setupRecommendationResultProvider: ((SetupCoordinationRequest) -> SetupRecommendationService.ConstrainedResult)? = null,
-    firstNightNaturalPairReadyProvider: ((GameState) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
-    firstNightNaturalPairResultProvider: (suspend (GameState) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
+    firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
+    firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
     onInitialRecommendationDemand: () -> Unit,
     phase: ClocktowerPhase,
     round: Int,
@@ -621,11 +623,7 @@ internal fun ClocktowerJudgeScreen(
         phase == ClocktowerPhase.FirstNight &&
         firstNightNaturalPairResultProvider != null
     ) {
-        cards.toClocktowerGameState(
-            script = script,
-            seed = gameSeed,
-            poisonedPlayerName = null,
-        )
+        firstNightPairDecisionContext
     } else {
         null
     }
@@ -1283,9 +1281,13 @@ internal fun ClocktowerJudgeScreen(
                 val naturalCandidates = if (
                     script == ClocktowerScript.TroubleBrewing &&
                     phase == ClocktowerPhase.FirstNight &&
-                    firstNightNaturalPairResultProvider != null
+                    firstNightPairDecisionContext != null
                 ) {
-                    firstNightNaturalPairCandidates.orEmpty()
+                    if (firstNightNaturalPairResultProvider != null) {
+                        firstNightNaturalPairCandidates.orEmpty()
+                    } else {
+                        recommendationCoordinator.naturalPairCandidates(firstNightPairDecisionContext)
+                    }
                 } else {
                     val gameState = cards.toClocktowerGameState(
                         script = script,
