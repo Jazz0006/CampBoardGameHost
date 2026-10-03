@@ -225,7 +225,16 @@ internal fun ClocktowerJudgeScreen(
 
     fun publishFirstNightInformation(displayStep: ClocktowerNightStepUi): Boolean {
         val request = clocktowerFirstNightInformationRequest(
-            displayStep, phase, round, cards, script, gameSeed, poisonTarget, language, automaticStorytellerStyle,
+            displayStep,
+            phase,
+            round,
+            cards,
+            script,
+            gameSeed,
+            poisonTarget,
+            language,
+            automaticStorytellerStyle,
+            firstNightPairDecisionContext,
         ) ?: return true
         val shadow = firstNightInformationMigration.shadow(request)
         firstNightPoolParity.recordResult(
@@ -1668,18 +1677,30 @@ internal fun ClocktowerJudgeScreen(
             AbilityFunctioningState.POISONED -> ReliabilityState.POISONED
             else -> ReliabilityState.RELIABLE
         }
-        return ClocktowerPairManualAuthority.projectLegalOptions(
-            game = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
-            roleDefinitions = clocktowerRoleDefinitionsForScript(script),
-            sourceSeat = sourceSeat,
-            abilityRole = RoleId(ability.name),
-            reliability = reliability,
-            presentationOptions = recommendedUnreliablePairInformationOptions(
-                ability = ability,
-                actor = actor,
-                completeSelectionDomain = true,
-            ),
+        val presentationOptions = recommendedUnreliablePairInformationOptions(
+            ability = ability,
+            actor = actor,
+            completeSelectionDomain = true,
         )
+        return if (script == ClocktowerScript.TroubleBrewing && phase == ClocktowerPhase.FirstNight) {
+            val context = firstNightPairDecisionContext ?: return emptyList()
+            ClocktowerPairManualAuthority.projectLegalOptions(
+                context = context,
+                sourceSeat = sourceSeat,
+                abilityRole = RoleId(ability.name),
+                reliability = reliability,
+                presentationOptions = presentationOptions,
+            )
+        } else {
+            ClocktowerPairManualAuthority.projectLegalOptions(
+                game = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
+                roleDefinitions = clocktowerRoleDefinitionsForScript(script),
+                sourceSeat = sourceSeat,
+                abilityRole = RoleId(ability.name),
+                reliability = reliability,
+                presentationOptions = presentationOptions,
+            )
+        }
     }
 
     val informationStepBuilder = ClocktowerInformationStepBuilder(

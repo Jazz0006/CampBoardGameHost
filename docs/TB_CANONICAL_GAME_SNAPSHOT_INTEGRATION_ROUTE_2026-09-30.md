@@ -278,7 +278,23 @@ The typed context may temporarily carry a compatibility `GameState` derived pure
 
 Do not bundle pair manual/publication authority, setup coordination, DynamicGameState consumers, A3 presentation-catalog extraction, Recovery or A4 cleanup into TBGS-2A.
 
-Acceptance: exact T4 head `9021ef26b65033b69911fa4a79124fdd2137284d`; CI #3647 / R2 #3364 GREEN, including Android full + assemble, ASP contracts and Real Clingo. Next TBGS-2 work is a focused TBGS-2B re-audit of the pair manual/publication consumer; do not assume implementation until that boundary is rechecked.
+Acceptance: exact T4 head `9021ef26b65033b69911fa4a79124fdd2137284d`; CI #3647 / R2 #3364 GREEN, including Android full + assemble, ASP contracts and Real Clingo.
+
+#### TBGS-2B — pair manual/publication snapshot context — AUDIT COMPLETE / IMPLEMENTATION READY
+
+The focused post-2A re-audit confirmed that TB manual selectable-domain projection and pair publication still rebuild `GameState` from `PlayerCard`.
+
+Target:
+
+```text
+TroubleBrewingFirstNightPairDecisionContext
+    -> PairInformationLegalDomain
+    -> manual legal options / selected AbilityObservation
+```
+
+Reuse the existing 2A snapshot-backed compatibility GameState because pair truth/display semantics do not read its poison flag; Drunk/Poisoned permission is carried by explicit `ReliabilityState`. Extend the typed context with role definitions derived from the validated TB character registry so this slice also stops sourcing rules input from the presentation catalog adapter.
+
+Do not expand the TB snapshot schema or include setup coordination, DynamicGameState, numeric/categorical information families, A3, Recovery or broad Host decomposition.
 
 Authority: `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md`.
 

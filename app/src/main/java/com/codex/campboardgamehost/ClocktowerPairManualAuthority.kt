@@ -12,6 +12,7 @@ import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalDomain
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 
 /**
  * Manual presentation adapter for Washerwoman/Librarian/Investigator information.
@@ -58,6 +59,21 @@ internal object ClocktowerPairManualAuthority {
     }
 
     fun projectLegalOptions(
+        context: TroubleBrewingFirstNightPairDecisionContext,
+        sourceSeat: Int,
+        abilityRole: RoleId,
+        reliability: ReliabilityState,
+        presentationOptions: List<ClocktowerDisplayOption>,
+    ): List<ClocktowerDisplayOption> = projectLegalOptions(
+        game = context.naturalPairGameState,
+        roleDefinitions = context.roleDefinitions,
+        sourceSeat = sourceSeat,
+        abilityRole = abilityRole,
+        reliability = reliability,
+        presentationOptions = presentationOptions,
+    )
+
+    fun projectLegalOptions(
         game: GameState,
         roleDefinitions: List<RoleDefinition>,
         sourceSeat: Int,
@@ -99,6 +115,21 @@ internal object ClocktowerPairManualAuthority {
             )
         }
     }
+
+    fun selectedObservation(
+        context: TroubleBrewingFirstNightPairDecisionContext,
+        sourceSeat: Int,
+        abilityRole: RoleId,
+        reliability: ReliabilityState,
+        selectedOption: ClocktowerDisplayOption,
+    ): AbilityObservation = selectedObservation(
+        game = context.naturalPairGameState,
+        roleDefinitions = context.roleDefinitions,
+        sourceSeat = sourceSeat,
+        abilityRole = abilityRole,
+        reliability = reliability,
+        selectedOption = selectedOption,
+    )
 
     fun selectedObservation(
         game: GameState,

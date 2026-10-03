@@ -1,27 +1,38 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
+import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalDomain
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContextBuilder
 import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingGameSnapshotProjector
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import java.io.File
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerPairManualAuthorityTest {
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
     private val investigator = RoleId("Investigator")
+    private val ruleset = BuiltInClocktowerRulesetCatalog { assetPath ->
+        File("src/main/assets", assetPath).readText(Charsets.UTF_8)
+    }.ruleset(ClocktowerScript.TroubleBrewing)
 
     @Test
     fun `manual projection is exactly the legal domain and ignores an illegal presentation template`() {
@@ -76,6 +87,65 @@ class ClocktowerPairManualAuthorityTest {
             }
             assertEquals(option, resolved)
         }
+    }
+
+    @Test
+    fun `snapshot context preserves manual legal domain and selected observation`() {
+        val game = game()
+        val context = context(game)
+        val presentationOptions = PairInformationDisplaySemantics.legalOutcomes(
+            game = game,
+            roleDefinitions = roles,
+            sourceSeat = 1,
+            abilityRole = investigator,
+        ).map(::template)
+
+        val legacyOptions = ClocktowerPairManualAuthority.projectLegalOptions(
+            game = game,
+            roleDefinitions = roles,
+            sourceSeat = 1,
+            abilityRole = investigator,
+            reliability = ReliabilityState.DRUNK,
+            presentationOptions = presentationOptions,
+        )
+        val migratedOptions = ClocktowerPairManualAuthority.projectLegalOptions(
+            context = context,
+            sourceSeat = 1,
+            abilityRole = investigator,
+            reliability = ReliabilityState.DRUNK,
+            presentationOptions = presentationOptions,
+        )
+
+        assertEquals(legacyOptions, migratedOptions)
+
+        val selected = ClocktowerPairManualAuthority.projectLegalOptions(
+            game = game,
+            roleDefinitions = roles,
+            sourceSeat = 1,
+            abilityRole = investigator,
+            reliability = ReliabilityState.RELIABLE,
+            presentationOptions = presentationOptions,
+        ).first { option ->
+            val key = keyOf(option)
+            key?.first != null && key.second.contains(3)
+        }
+        assertEquals(
+            ClocktowerPairManualAuthority.selectedObservation(
+                game = game,
+                roleDefinitions = roles,
+                sourceSeat = 1,
+                abilityRole = investigator,
+                reliability = ReliabilityState.RELIABLE,
+                selectedOption = selected,
+            ),
+            ClocktowerPairManualAuthority.selectedObservation(
+                context = context,
+                sourceSeat = 1,
+                abilityRole = investigator,
+                reliability = ReliabilityState.RELIABLE,
+                selectedOption = selected,
+            ),
+        )
     }
 
     @Test
@@ -142,6 +212,29 @@ class ClocktowerPairManualAuthorityTest {
         }
         assertTrue(observation.registrations.any { it.reason == RegistrationReason.RECLUSE_ABILITY })
     }
+
+    private fun context(game: GameState) = TroubleBrewingFirstNightPairDecisionContextBuilder.build(
+        snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+            gameSnapshot = GameSnapshot(
+                gameId = "tbgs-2b",
+                gameStateRevision = 4L,
+                playerInputRevision = 2L,
+                gameSeed = game.seed,
+                rulesetRef = RulesetRef(
+                    scriptId = ScriptId("trouble_brewing"),
+                    scriptContentHash = "0123456789abcdef0123456789abcdef",
+                    rulesetVersion = "tbgs-2b-test",
+                    sourceRevision = "tbgs-2b-test",
+                    coverage = RuleCoverage.PARTIAL,
+                ),
+                gameState = game,
+            ),
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            characterRegistry = ruleset.characterRegistry,
+        ),
+        characterRegistry = ruleset.characterRegistry,
+    )
 
     private fun game() = GameState(
         script = ScriptId("trouble_brewing"),

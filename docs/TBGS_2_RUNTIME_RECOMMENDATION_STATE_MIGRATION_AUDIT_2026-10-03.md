@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@da5e9947e7a2799d94720454b67fdb6de2ef54a3`  
-> Status: **TBGS-2A COMPLETE / ACCEPTED**
+> Status: **TBGS-2A COMPLETE / ACCEPTED; TBGS-2B FOCUSED AUDIT COMPLETE / IMPLEMENTATION READY**
 
 ## 1. Decision
 
@@ -210,3 +210,80 @@ TBGS-2A first-night natural-pair precompute COMPLETE / ACCEPTED
 ```
 
 Re-audit after each accepted slice. Do not assume this ordering remains optimal if ownership or evidence changes.
+
+## 10. TBGS-2B focused re-audit — pair manual/publication confirmation
+
+The post-2A re-audit confirms that the next bounded production consumer is still the pair manual/publication path for Washerwoman / Librarian / Investigator.
+
+Two TB production call sites still rebuild recommendation-state input from presentation cards:
+
+```text
+ClocktowerHostScreen.legalPairInformationOptions()
+    -> cards.toClocktowerGameState(...)
+    -> ClocktowerPairManualAuthority.projectLegalOptions(...)
+
+publishFirstNightInformation()
+    -> clocktowerFirstNightInformationRequest(...)
+    -> cards.toClocktowerGameState(...)
+    -> ClocktowerPairManualAuthority.selectedObservation(...)
+```
+
+Both are **production confirmation/output consumers**, not shadow-only consumers:
+
+- `projectLegalOptions` defines the complete selectable Manual domain shown to the Storyteller;
+- `selectedObservation` validates the chosen structured proposition against the authoritative legal domain and preserves Spy/Recluse registration facts in the published observation.
+
+### 10.1 Why the existing 2A typed context is sufficient
+
+`PairInformationLegalDomain` separates three concerns:
+
+1. natural truthful pair semantics from `NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace`;
+2. player-visible legal outcome shape from `PairInformationDisplaySemantics.legalOutcomes`;
+3. impaired false-option permission from explicit `ReliabilityState`.
+
+Neither the healthy semantic generator nor display-domain generator reads `PlayerState.poisoned` for this path. Poison/Drunk behavior is carried explicitly by `ReliabilityState`. Therefore the 2A compatibility GameState, which intentionally normalizes `poisoned=false` while retaining the real poison fact on the immutable snapshot, is also semantically valid for pair manual/publication legality.
+
+No TB snapshot schema expansion is required.
+
+The remaining rules input is the role-definition catalog. TBGS-2B should derive that list from the already validated `ClocktowerCharacterRegistry` inside the typed context builder, rather than continuing to source it from the presentation-side `clocktowerRolesForScript()` adapter.
+
+### 10.2 TBGS-2B exact scope
+
+TBGS-2B may:
+
+1. extend `TroubleBrewingFirstNightPairDecisionContext` with rules-owned TB `RoleDefinition` values derived from the validated character registry;
+2. add typed-context overloads in `ClocktowerPairManualAuthority` for legal-option projection and selected-observation validation;
+3. route TB first-night `legalPairInformationOptions` through the existing snapshot-backed pair context and fail closed rather than rebuilding game truth from `PlayerCard`;
+4. pass the same context into `clocktowerFirstNightInformationRequest` so TB pair publication validates the selected proposition from snapshot-backed context;
+5. retain the historical GameState overloads for non-TB/compatibility tests and callers not in this slice.
+
+TBGS-2B must not:
+
+- migrate setup coordination;
+- alter recommendation ranking, candidate ordering, option labels or automatic-selection policy;
+- change PairInformationLegalDomain semantics;
+- broaden into Chef / Empath / Fortune Teller selectors;
+- migrate DynamicGameState / Mayor / succession / special registration recommendation families;
+- modify Recovery, A3 presentation extraction, R3 transaction ownership or generic Host decomposition;
+- expand `TroubleBrewingGameSnapshotV1`.
+
+### 10.3 TBGS-2B test gate
+
+Before production wiring is accepted, prove:
+
+- registry-derived role definitions are semantically equivalent to the existing TB presentation adapter for pair roles;
+- TB manual legal option keys/order/truth/Spy-Recluse registration metadata are unchanged;
+- TB publication resolves the same structured `AbilityObservation`, including registration facts, from the typed context;
+- TB pair production paths no longer call `PlayerCard.toClocktowerGameState()`;
+- non-pair and non-TB request behavior remains unchanged.
+
+Focused tests:
+
+- `TroubleBrewingFirstNightPairDecisionContextTest`;
+- `ClocktowerPairManualAuthorityTest`;
+- `ClocktowerFirstNightInformationRequestTest`;
+- existing pair manual-selection/presentation tests.
+
+Then run `:app:testFast` plus the standard static/diff gates. Full T4 acceptance remains required before merge because this slice changes production confirmation/publication authority.
+
+TBGS-2B is now **IMPLEMENTATION READY**.
