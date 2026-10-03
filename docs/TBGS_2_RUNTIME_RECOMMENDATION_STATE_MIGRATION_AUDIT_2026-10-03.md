@@ -204,8 +204,8 @@ Tentative next re-audit order, not pre-authorized implementation:
 
 ```text
 TBGS-2A first-night natural-pair precompute COMPLETE / ACCEPTED
--> TBGS-2B pair manual/publication consumer focused re-audit NEXT
--> setup coordination consumer
+-> TBGS-2B pair manual/publication consumer COMPLETE / ACCEPTED
+-> setup coordination consumer focused re-audit NEXT
 -> DynamicGameState consumers one typed decision family at a time
 ```
 
@@ -294,7 +294,7 @@ The implementation checkpoint `d69b750e56593c459f7fcdb8b6d10a83bb5f28fd` passed 
 
 The first full checkpoint `bc044ce7663b71413e0671c10a5b5d8843afdebb` exposed a test-only compile defect: `ClocktowerFirstNightInformationRequestTest` used `toClocktowerGameState` without importing the extension. Production sources, R2 #3368, ASP contracts and Real Clingo were otherwise green. The missing test import was corrected at `893d067f545ec3de738be346fee60d4a6a76c3c7`; ordinary CI #3653 and R2 #3369 are GREEN, including Android FAST.
 
-A second docs-only `[full-ci]` checkpoint is requested from the corrected head. Its exact head must pass Android `:app:testFull + :app:assembleDebug`, ASP contracts, Real Clingo and R2 before TBGS-2B may be marked COMPLETE / ACCEPTED.
+Final exact-head T4 acceptance is `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`: CI #3654 GREEN, R2 #3370 GREEN, Android `:app:testFull + :app:assembleDebug` GREEN, ASP contracts GREEN, and Real Clingo cross-validation GREEN. PR #198 was mergeable / clean with zero unresolved review threads at acceptance. TBGS-2B is therefore COMPLETE / ACCEPTED. The next TBGS-2 action is a focused re-audit of the setup-coordination consumer; this does not pre-authorize its implementation or any broad Host decomposition.
 
 
 ### 10.5 Final T4 acceptance
