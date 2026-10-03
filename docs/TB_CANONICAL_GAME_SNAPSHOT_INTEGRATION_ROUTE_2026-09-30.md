@@ -296,9 +296,47 @@ Reuse the existing 2A snapshot-backed compatibility GameState because pair truth
 
 Do not expand the TB snapshot schema or include setup coordination, DynamicGameState, numeric/categorical information families, A3, Recovery or broad Host decomposition. No Greater Joy Investigator remains on its existing non-TB compatibility adapter; TBGS-2B does not invent a cross-script snapshot abstraction.
 
-Final TBGS-2B T4 acceptance: `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`; CI #3654 / R2 #3370 GREEN, including Android full + assemble, ASP contracts and Real Clingo. The next TBGS-2 step is a focused re-audit of setup coordination only; implementation remains uncommitted until that boundary is rechecked.\n\nAcceptance: exact T4 head `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`; CI #3654 / R2 #3370 GREEN, including Android `testFull + assembleDebug`, ASP contracts and Real Clingo. Next TBGS-2 work is a focused re-audit of the setup-coordination consumer.
+Acceptance: exact T4 head `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`; CI #3654 / R2 #3370 GREEN, including Android `testFull + assembleDebug`, ASP contracts and Real Clingo. TBGS-2B is COMPLETE / ACCEPTED.
 
 Authority: `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md`.
+
+
+#### TBGS-2C — setup recommendation mechanical/rules base context — COMPLETE / ACCEPTED
+
+The focused post-2B audit found one remaining production reconstruction in the pre-first-night setup recommendation screen:
+
+```text
+ClocktowerJudgeScreen PlayerCard list
+    -> recommendationCards.toClocktowerGameState(...)
+    -> SetupCoordinationRequest(game, roles, lockedDecisions, history)
+    -> SetupRecommendationService
+```
+
+The migration must separate the request into two categories rather than placing the whole coordination request in the TB snapshot:
+
+```text
+canonical committed/runtime state
+    -> TroubleBrewingGameSnapshotV1
+    -> TroubleBrewingSetupRecommendationDecisionContext
+       - recommendation GameState compatibility projection
+       - rules-owned RoleDefinition catalog
+
+explicit coordination inputs kept outside snapshot
+    - locked/committed StorytellerDecision values
+    - CrossGameHistory enrichment
+```
+
+The existing setup recommender depends on actual role/alignment/type, shown identity, alive/poison state, seed and role definitions. TB snapshot V1 already carries the required mechanical facts. Unlike the first-night natural-pair context, the setup context must preserve the snapshot's real poisoned state because setup evaluation explicitly scores functioning Empath and impaired pair sources.
+
+Player names are not recommendation semantics. Existing review coverage already proves setup recommendations are invariant under player renaming, so the compatibility projection may use deterministic seat labels without expanding the interchange snapshot.
+
+The initial prewarm may project from the existing canonical committed setup via `TroubleBrewingGameSnapshotProjector.fromCommitted()`; the live pre-first-night UI may project from `ClocktowerGameSession.toGameSnapshot(...)` via `fromRuntime()`. The typed context must accept only finalized `SETUP_COMMITTED` or `RUNTIME/FIRST_NIGHT/round 1` snapshots and reject precommit/other runtime positions.
+
+TBGS-2C may migrate only the Trouble Brewing mechanical/rules base. No Greater Joy remains on the legacy adapter. Do not change `SetupCoordinationRequest` lock/history semantics, setup recommendation policy/ranking, Red Herring or Demon-bluff commitment ownership, SDE shadow APIs, `DynamicGameState`, Recovery, A3, R3 or generic setup-effect ownership.
+
+Acceptance passed at exact T4 head `a8116d8b333cc40e0a599ab208cf7a9a3ea80207`: CI #3663 and R2 #3378 GREEN, including Android `:app:testFull + :app:assembleDebug`, ASP contracts and Real Clingo. The compatibility context preserves the historical setup-recommendation role order while sourcing role definitions from the validated rules registry, preventing Demon-bluff presentation-order drift. TBGS-2C is COMPLETE / ACCEPTED.
+
+Authority: `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md`.
 
 ## 8. Updated execution relationship
 
