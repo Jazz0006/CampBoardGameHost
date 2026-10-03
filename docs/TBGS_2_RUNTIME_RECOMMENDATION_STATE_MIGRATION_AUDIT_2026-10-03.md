@@ -290,6 +290,8 @@ TBGS-2B is now **IMPLEMENTATION READY**.
 
 ### 10.4 T4 acceptance staging
 
-The implementation checkpoint `d69b750e56593c459f7fcdb8b6d10a83bb5f28fd` passed ordinary CI #3651 and R2 #3367. Android/ASP/Real Clingo jobs were not selected at that ordinary checkpoint, so this is not final acceptance.
+The implementation checkpoint `d69b750e56593c459f7fcdb8b6d10a83bb5f28fd` passed ordinary CI #3651 and R2 #3367.
 
-A docs-only `[full-ci]` checkpoint is requested next. The resulting exact head must pass Android `:app:testFull + :app:assembleDebug`, ASP contracts, Real Clingo and R2 before TBGS-2B may be marked COMPLETE / ACCEPTED.
+The first full checkpoint `bc044ce7663b71413e0671c10a5b5d8843afdebb` exposed a test-only compile defect: `ClocktowerFirstNightInformationRequestTest` used `toClocktowerGameState` without importing the extension. Production sources, R2 #3368, ASP contracts and Real Clingo were otherwise green. The missing test import was corrected at `893d067f545ec3de738be346fee60d4a6a76c3c7`; ordinary CI #3653 and R2 #3369 are GREEN, including Android FAST.
+
+A second docs-only `[full-ci]` checkpoint is requested from the corrected head. Its exact head must pass Android `:app:testFull + :app:assembleDebug`, ASP contracts, Real Clingo and R2 before TBGS-2B may be marked COMPLETE / ACCEPTED.
