@@ -7,7 +7,7 @@
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> Product next work: **C5-A — implement the pair-information future-flexibility feature projector tests-first. Keep `BEGINNER_CONSERVATIVE_V1` immutable and do not change visible pair recommendation or manual legality. TBGS-2D Demon succession remains independently IMPLEMENTATION READY but is not a C5 prerequisite and must not be bundled into this slice.**
+> Product next work: **Complete C5-A exact-head T4 acceptance for the implemented pair-information future-flexibility projector. If full Android validation and R2 remain GREEN, mark C5-A ACCEPTED and enter C5-B — pair SDE shadow + replay bridge. Keep `BEGINNER_CONSERVATIVE_V1` immutable and do not change visible pair recommendation or manual legality. TBGS-2D remains an independent implementation-ready lane.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -65,7 +65,7 @@ CR-A / CR-B / CR-C                     COMPLETE
 C4 / SDE-3D2                           COMPLETE
 IF-D durable replay                    COMPLETE
 RH-E                                    COMPLETE
-C5 / V2                                RE-ENTRY PASS / SDE-3D3 AUTHORIZED — C5-A NEXT
+C5 / V2                                RE-ENTRY PASS / C5-A IMPLEMENTED — T4 PENDING
 SDE-3E cutover                         BLOCKED PER SURFACE
 DLB-0 typed intermediate setup              COMPLETE / ACCEPTED
 DLB-1 visible-roster deal cutover              COMPLETE / ACCEPTED
@@ -208,7 +208,8 @@ DLB-0 typed intermediate setup COMPLETE
 -> TBGS-2D Demon succession family audit COMPLETE / IMPLEMENTATION READY
 -> EvidenceLab G10 `16:52` Librarian future-flexibility predicate E3 PASS at `78f672868ea6603317aeefa20ad91686c5886db9`
 -> C5 re-entry audit COMPLETE / PASS; SDE-3D3 implementation AUTHORIZED
--> C5-A pair future-flexibility projector NEXT / IMPLEMENTATION READY
+-> C5-A pair future-flexibility projector IMPLEMENTED / T4 PENDING
+-> C5-B pair shadow/replay bridge NEXT AFTER C5-A ACCEPTANCE
 || TBGS-2D remains IMPLEMENTATION READY as an independent lane
 -> A3 presentation catalog READY / independent maintenance only
 ```
@@ -243,8 +244,8 @@ Implementation route:
 
 ```text
 C5 re-entry audit                         COMPLETE / PASS
--> C5-A future-flexibility projector     NEXT
--> C5-B pair shadow/replay bridge
+-> C5-A future-flexibility projector     IMPLEMENTED / T4 PENDING
+-> C5-B pair shadow/replay bridge        NEXT AFTER C5-A ACCEPTANCE
 -> C5-C BEGINNER_CONSERVATIVE_V2 weak preference
 -> C5-D canonical V1/V2 replay
 -> C5-E surface-scoped production cutover gate

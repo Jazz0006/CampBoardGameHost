@@ -44,7 +44,7 @@ DLB-7 final DLB acceptance                                  COMPLETE / ACCEPTED
 DLB campaign                                                COMPLETE / ACCEPTED
 TBGS-2 runtime recommendation projection migration           IN PROGRESS — 2A/2B/2C COMPLETE / ACCEPTED; 2D AUDIT COMPLETE / IMPLEMENTATION READY — Demon succession
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
-C5 evidence-backed policy evolution                   RE-ENTRY PASS / SDE-3D3 AUTHORIZED — C5-A READY
+C5 evidence-backed policy evolution                   RE-ENTRY PASS / C5-A IMPLEMENTED — T4 PENDING
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
 ~~~
 
@@ -116,7 +116,7 @@ Completion/cleanup detail:
 
 ## 4. Current priority — C5 re-entry / SDE-3D3; TBGS-2D remains implementation-ready
 
-EvidenceLab `main@78f672868ea6603317aeefa20ad91686c5886db9` now supplies the first C5-qualified E3 predicate through the G10 `16:52` functioning-Librarian pair decision. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` is the current C5 authority: re-entry is PASS, SDE-3D3 implementation is authorized, C5-A pair future-flexibility projection is NEXT, and production cutover remains blocked until C5-D replay acceptance and a separate C5-E surface gate. E4 remains unproven and is not required for the first qualitative, weight-free predicate.
+EvidenceLab `main@78f672868ea6603317aeefa20ad91686c5886db9` supplies the first C5-qualified E3 predicate through the G10 `16:52` functioning-Librarian pair decision. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` is the current C5 authority: re-entry is PASS, SDE-3D3 implementation is authorized, and C5-A pair future-flexibility projection is implemented with RED provenance plus FAST/R2 GREEN; exact-head T4 remains pending before acceptance. C5-B becomes next only after that gate passes. Production cutover remains blocked until C5-D replay acceptance and a separate C5-E surface gate. E4 remains unproven and is not required for the first qualitative, weight-free predicate.
 
 TBGS-2D Demon succession remains independently IMPLEMENTATION READY but is not a C5 prerequisite and must not be bundled into C5 implementation work.
 
@@ -252,7 +252,8 @@ query live main / workspace
 -> TBGS-2D Demon succession family audit COMPLETE / IMPLEMENTATION READY
 -> EvidenceLab G10 `16:52` Librarian future-flexibility predicate E3 PASS at `78f672868ea6603317aeefa20ad91686c5886db9`
 -> C5 re-entry audit COMPLETE / PASS; SDE-3D3 implementation AUTHORIZED
--> C5-A pair future-flexibility projector NEXT / IMPLEMENTATION READY
+-> C5-A pair future-flexibility projector IMPLEMENTED / T4 PENDING
+-> C5-B pair shadow/replay bridge NEXT AFTER C5-A ACCEPTANCE
 || TBGS-2D Demon succession remains IMPLEMENTATION READY as an independent lane
 -> A3 presentation catalog READY / independent maintenance only
 ~~~
