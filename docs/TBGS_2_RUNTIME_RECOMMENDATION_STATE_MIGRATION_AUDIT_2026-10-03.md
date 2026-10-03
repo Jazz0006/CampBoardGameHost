@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@da5e9947e7a2799d94720454b67fdb6de2ef54a3`  
-> Status: **TBGS-2A COMPLETE / ACCEPTED; TBGS-2B FOCUSED AUDIT COMPLETE / IMPLEMENTATION READY**
+> Status: **TBGS-2A COMPLETE / ACCEPTED; TBGS-2B COMPLETE / ACCEPTED**
 
 ## 1. Decision
 
@@ -286,7 +286,7 @@ Focused tests:
 
 Then run `:app:testFast` plus the standard static/diff gates. Full T4 acceptance remains required before merge because this slice changes production confirmation/publication authority.
 
-TBGS-2B is now **IMPLEMENTATION READY**.
+TBGS-2B is now **COMPLETE / ACCEPTED**.
 
 ### 10.4 T4 acceptance staging
 
@@ -295,3 +295,10 @@ The implementation checkpoint `d69b750e56593c459f7fcdb8b6d10a83bb5f28fd` passed 
 The first full checkpoint `bc044ce7663b71413e0671c10a5b5d8843afdebb` exposed a test-only compile defect: `ClocktowerFirstNightInformationRequestTest` used `toClocktowerGameState` without importing the extension. Production sources, R2 #3368, ASP contracts and Real Clingo were otherwise green. The missing test import was corrected at `893d067f545ec3de738be346fee60d4a6a76c3c7`; ordinary CI #3653 and R2 #3369 are GREEN, including Android FAST.
 
 A second docs-only `[full-ci]` checkpoint is requested from the corrected head. Its exact head must pass Android `:app:testFull + :app:assembleDebug`, ASP contracts, Real Clingo and R2 before TBGS-2B may be marked COMPLETE / ACCEPTED.
+
+
+### 10.5 Final T4 acceptance
+
+Exact acceptance head `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67` passed CI #3654 and R2 #3370. Android `:app:testFull + :app:assembleDebug`, ASP contract tests and Real Clingo all executed and passed on the corrected tree.
+
+Therefore TBGS-2B is **COMPLETE / ACCEPTED**. The next TBGS-2 step is a fresh focused re-audit of the setup-coordination consumer; this closure does not pre-authorize that implementation and does not change the separate A3 READY status.
