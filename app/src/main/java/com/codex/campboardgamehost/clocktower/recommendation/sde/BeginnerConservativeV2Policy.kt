@@ -4,8 +4,6 @@ import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
 
 internal enum class BeginnerConservativeV2SelectionMode {
     V1_FALLBACK,
@@ -212,25 +210,16 @@ internal object BeginnerConservativeV2Selector {
             BeginnerConservativeV2SelectionMode.PREFERRED_BAND ->
                 PolicyVersions.BEGINNER_CONSERVATIVE_V2
         }
-        val selected = survivorIds.minBy { candidateId ->
-            digest(
-                listOf(
-                    selectionSeed.toString(),
-                    decisionId,
-                    hashVersion.value,
-                    candidateId,
-                ).joinToString("|"),
-            )
-        }
+        val selected = PolicySeededHashSelector.select(
+            candidateIds = survivorIds,
+            decisionId = decisionId,
+            selectionSeed = selectionSeed,
+            hashPolicyVersion = hashVersion,
+        )
         return PolicySelection(
             policyVersion = PolicyVersions.BEGINNER_CONSERVATIVE_V2,
             candidateId = selected,
             method = PolicySelectionMethod.SEEDED_HASH_V1,
         )
     }
-
-    private fun digest(payload: String): String =
-        MessageDigest.getInstance("SHA-256")
-            .digest(payload.toByteArray(StandardCharsets.UTF_8))
-            .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
 }

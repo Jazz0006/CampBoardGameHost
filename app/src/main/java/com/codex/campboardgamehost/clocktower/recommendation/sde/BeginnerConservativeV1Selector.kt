@@ -24,6 +24,36 @@ internal data class PolicySelection(
  * decision identity, game/decision seed, policy version and candidate ID, then chooses the lowest
  * canonical digest among SURVIVOR candidates.
  */
+internal object PolicySeededHashSelector {
+    fun select(
+        candidateIds: List<String>,
+        decisionId: String,
+        selectionSeed: Long,
+        hashPolicyVersion: PolicyVersion,
+    ): String {
+        require(candidateIds.isNotEmpty()) { "Seeded policy selection requires candidates." }
+        require(candidateIds.all(String::isNotBlank)) { "Seeded policy candidate IDs cannot be blank." }
+        require(candidateIds.distinct().size == candidateIds.size) { "Seeded policy candidate IDs must be unique." }
+        require(decisionId.isNotBlank()) { "Seeded policy selection decision ID cannot be blank." }
+
+        return candidateIds.minBy { candidateId ->
+            digest(
+                listOf(
+                    selectionSeed.toString(),
+                    decisionId,
+                    hashPolicyVersion.value,
+                    candidateId,
+                ).joinToString("|"),
+            )
+        }
+    }
+
+    private fun digest(payload: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(payload.toByteArray(StandardCharsets.UTF_8))
+            .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
+}
+
 internal object BeginnerConservativeV1Selector {
     fun select(
         evaluation: BeginnerConservativePolicyEvaluation,
@@ -40,25 +70,16 @@ internal object BeginnerConservativeV1Selector {
             .map(PolicyEvaluation::candidateId)
         require(survivorIds.isNotEmpty()) { "Ready policy evaluation must expose at least one survivor." }
 
-        val selected = survivorIds.minBy { candidateId ->
-            digest(
-                listOf(
-                    selectionSeed.toString(),
-                    decisionId,
-                    evaluation.policyVersion.value,
-                    candidateId,
-                ).joinToString("|"),
-            )
-        }
+        val selected = PolicySeededHashSelector.select(
+            candidateIds = survivorIds,
+            decisionId = decisionId,
+            selectionSeed = selectionSeed,
+            hashPolicyVersion = evaluation.policyVersion,
+        )
         return PolicySelection(
             policyVersion = evaluation.policyVersion,
             candidateId = selected,
             method = PolicySelectionMethod.SEEDED_HASH_V1,
         )
     }
-
-    private fun digest(payload: String): String =
-        MessageDigest.getInstance("SHA-256")
-            .digest(payload.toByteArray(StandardCharsets.UTF_8))
-            .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
 }
