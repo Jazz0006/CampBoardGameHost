@@ -17,6 +17,8 @@ import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
+import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
@@ -105,8 +107,8 @@ class TroubleBrewingSetupRecommendationDecisionContextTest {
             characterRegistry = ruleset.characterRegistry,
         )
 
-        val precommit = runtime.copy(
-            position = runtime.position.copy(
+        val precommit = runtime.withPosition(
+            runtime.position.copy(
                 stage = TroubleBrewingSnapshotStage.SETUP_PRECOMMIT,
                 phase = SnapshotField.NotApplicable,
                 round = SnapshotField.NotApplicable,
@@ -119,8 +121,8 @@ class TroubleBrewingSetupRecommendationDecisionContextTest {
             )
         }
 
-        val laterRound = runtime.copy(
-            position = runtime.position.copy(round = SnapshotField.Known(2)),
+        val laterRound = runtime.withPosition(
+            runtime.position.copy(round = SnapshotField.Known(2)),
         )
         assertThrows(IllegalArgumentException::class.java) {
             TroubleBrewingSetupRecommendationDecisionContextBuilder.build(
@@ -129,8 +131,8 @@ class TroubleBrewingSetupRecommendationDecisionContextTest {
             )
         }
 
-        val day = runtime.copy(
-            position = runtime.position.copy(phase = SnapshotField.Known(StorytellerPhase.DAY)),
+        val day = runtime.withPosition(
+            runtime.position.copy(phase = SnapshotField.Known(StorytellerPhase.DAY)),
         )
         assertThrows(IllegalArgumentException::class.java) {
             TroubleBrewingSetupRecommendationDecisionContextBuilder.build(
@@ -168,6 +170,16 @@ class TroubleBrewingSetupRecommendationDecisionContextTest {
         assertEquals(legacy.failureCodes, migrated.failureCodes)
         assertEquals(legacy.plans, migrated.plans)
     }
+
+    private fun TroubleBrewingGameSnapshotV1.withPosition(
+        nextPosition: TroubleBrewingSnapshotPosition,
+    ) = TroubleBrewingGameSnapshotV1(
+        gameId = gameId,
+        gameSeed = gameSeed,
+        position = nextPosition,
+        grimoireSeats = grimoireSeats,
+        setupState = setupState,
+    )
 
     private fun snapshot(game: GameState) = GameSnapshot(
         gameId = "tbgs-2c-runtime",
