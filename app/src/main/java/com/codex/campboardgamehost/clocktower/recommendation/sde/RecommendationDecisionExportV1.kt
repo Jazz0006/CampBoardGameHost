@@ -70,7 +70,7 @@ internal data class RecommendationDecisionExportV1(
         }
         require(
             provenanceOnly.policyEvidenceCheckpoints ==
-                evaluationMetadata.policyTraces.map(RecommendationPolicyTraceV1::evidenceCheckpoint),
+                evaluationMetadata.policyTraces.map { trace -> trace.evidenceCheckpoint },
         ) {
             "Recommendation export provenance must preserve policy-trace checkpoint order."
         }
@@ -139,7 +139,7 @@ internal data class RecommendationDecisionExportV1(
                 "Drunk recommendation export replay records must share one canonical decision input and actual choice."
             }
 
-            val policyTraces = replayRecords.map(RecommendationPolicyTraceV1::fromDrunkReplay)
+            val policyTraces = replayRecords.map { record -> RecommendationPolicyTraceV1.fromDrunkReplay(record) }
             return RecommendationDecisionExportV1(
                 decisionType = RecommendationDecisionExportTypeV1.DRUNK_ASSIGNMENT,
                 inputEligible = RecommendationDecisionInputV1(
@@ -213,7 +213,7 @@ internal data class RecommendationDecisionExportV1(
                 "Pair recommendation export replay traces must share one canonical decision input and actual choice."
             }
 
-            val policyTraces = replayTraces.map(RecommendationPolicyTraceV1::fromDecisionTrace)
+            val policyTraces = replayTraces.map { trace -> RecommendationPolicyTraceV1.fromDecisionTrace(trace) }
             return RecommendationDecisionExportV1(
                 decisionType = RecommendationDecisionExportTypeV1.FIRST_NIGHT_PAIR_INFORMATION,
                 inputEligible = RecommendationDecisionInputV1(
