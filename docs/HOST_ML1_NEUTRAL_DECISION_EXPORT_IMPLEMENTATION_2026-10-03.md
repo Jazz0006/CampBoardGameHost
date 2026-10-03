@@ -1,14 +1,14 @@
 # HOST-ML1 Neutral Recommendation Decision Export — 2026-10-03
 
-> Status: **HOST-ML1A COMPLETE / ACCEPTED**
+> Status: **HOST-ML1 COMPLETE / ACCEPTED**
 >
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Implementation branch: `host-ml1-neutral-decision-export`
+> Implementation PRs: `#208` (`host-ml1-neutral-decision-export`) + `#209` (`host-ml1-pair-domain-payload`)
 >
-> Accepted executable checkpoint: `d7880bf6dbf71b86288ca9ce58370cc321f38f84`
+> Final accepted executable checkpoint: `b91fcd298621e9064f11c26c1a0398c5c14fc13c`
 >
-> Acceptance: CI #3700 GREEN / R2 #3407 GREEN
+> Final acceptance: CI #3710 GREEN / R2 #3416 GREEN; merged via PR #209 squash `2d4681115b9c373bfbfa85a7b385aba4e59e1062`
 >
 > Parent architecture: `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`
 >
@@ -37,7 +37,7 @@ This boundary is deliberate. A future corpus/dataset builder must not flatten ta
 
 ## 2. Bounded decision surfaces
 
-HOST-ML1A supports only the two surfaces whose canonical context/replay boundaries are already mature:
+HOST-ML1 supports only the two surfaces whose canonical context/replay boundaries are already mature:
 
 1. Trouble Brewing Drunk assignment;
 2. Trouble Brewing first-night functioning pair information.
@@ -63,10 +63,13 @@ The export consumes:
 
 - `PairInformationShadowReplayRequest`;
 - the canonical runtime Trouble Brewing snapshot;
-- the complete legal domain already preserved by replay traces;
+- the complete ordered `PairInformationLegalCandidate` domain;
+- per-candidate semantic payload: shown role, candidate seats, semantic truth and registration witnesses;
 - canonical source revision / global history prefix;
 - deterministic `DecisionFeatureEvaluation`;
 - one or more canonical `DecisionTrace` replay traces.
+
+The candidate semantic payload is copied into the export rather than reconstructed by parsing opaque candidate IDs. The export fails closed if semantic-payload order/IDs diverge from replay legal-domain order, if candidate/source/registration seats fall outside the canonical snapshot, or if a functioning reliable pair export contains a false semantic candidate.
 
 It does not regenerate pair legality, publish information, or alter production recommendation authority.
 
@@ -106,7 +109,7 @@ Cross-invariants fail closed if feature or replay candidate order diverges from 
 
 ## 4. Historical-choice semantics
 
-HOST-ML1A deliberately exposes only relations the Host itself can prove from a committed historical choice plus the complete legal domain:
+HOST-ML1 deliberately exposes only relations the Host itself can prove from a committed historical choice plus the complete legal domain:
 
 ```text
 OBSERVED_CHOICE
@@ -119,7 +122,7 @@ LEGAL_UNCHOSEN
 
 It is not rejection, inferiority, negative preference, or a DPO loser.
 
-HOST-ML1A intentionally does **not** define `EXPLICIT_REJECTED` or `EXPLICIT_COMPARISON_LOSER` fields. Those relations require source-backed EvidenceLab evidence and must not be represented by a Host-only placeholder that could later be mistaken for evidence.
+HOST-ML1 intentionally does **not** define `EXPLICIT_REJECTED` or `EXPLICIT_COMPARISON_LOSER` fields. Those relations require source-backed EvidenceLab evidence and must not be represented by a Host-only placeholder that could later be mistaken for evidence.
 
 This means EL-ML1 is **not triggered by the current typed Host export alone**. It becomes relevant when the next downstream consumer actually needs machine-readable source-backed preference/rejection seeds.
 
@@ -142,20 +145,27 @@ Focused tests cover:
 1. Drunk observed choice vs `LEGAL_UNCHOSEN` classification without manufacturing rejection;
 2. pair canonical prefix/revision preservation and policy replay separation from input;
 3. pending actual choice produces no fabricated historical target relations;
-4. pair export fails closed when replay revision does not match the canonical snapshot.
+4. pair export fails closed when replay revision does not match the canonical snapshot;
+5. pair semantic candidate payload preserves shown role, seats, truth and registration witnesses;
+6. pair export fails closed when semantic candidate order diverges from replay legal-domain order.
 
-Accepted executable checkpoint:
+Initial accepted checkpoint:
 
-`d7880bf6dbf71b86288ca9ce58370cc321f38f84`
+`d7880bf6dbf71b86288ca9ce58370cc321f38f84` — CI #3700 / R2 #3407 GREEN.
+
+Final HOST-ML1 acceptance checkpoint:
+
+`b91fcd298621e9064f11c26c1a0398c5c14fc13c`
 
 Acceptance:
 
-- CI #3700 — GREEN;
+- CI #3710 — GREEN;
 - Android FAST unit tests — GREEN;
-- R2 #3407 — GREEN;
-- PR boundary check — GREEN.
+- R2 #3416 — GREEN;
+- PR boundary check — GREEN;
+- PR #209 squash merge — `2d4681115b9c373bfbfa85a7b385aba4e59e1062`.
 
-## 7. What remains outside HOST-ML1A
+## 7. What remains outside HOST-ML1
 
 The current slice does not freeze an external JSON/JSONL or model-training format.
 
@@ -176,7 +186,7 @@ This is intentional: the typed Host ownership/leakage boundary is now stable, wh
 
 ## 8. Next ML task
 
-The next ML-readiness step is **HOST-ML1B only when there is a concrete offline consumer**:
+HOST-ML1 is complete at the typed neutral-export boundary. The next ML-readiness step is a separate follow-up only when there is a concrete offline consumer:
 
 ```text
 RecommendationDecisionExportV1 typed contract
@@ -185,6 +195,6 @@ RecommendationDecisionExportV1 typed contract
 -> MODELLAB-0 consumes stable Host export + optional EvidenceLab seeds
 ```
 
-HOST-ML1B must remain read-only/offline and must not become a production recommendation-policy cutover.
+Any future machine-readable materializer must remain read-only/offline and must not become a production recommendation-policy cutover.
 
 C5-E remains an independent product lane and is not blocked by HOST-ML1.
