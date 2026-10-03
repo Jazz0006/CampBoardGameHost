@@ -128,15 +128,81 @@ class PairInformationShadowReplayBridgeG10FullDomainTest {
         val replayed = MultiPolicyReplayEngine.replay(
             sourceTrace = sourceTrace,
             recomputedInput = result.replayInput,
-            policyVersions = listOf(PolicyVersions.BEGINNER_CONSERVATIVE_V1),
-        ).single()
+            policyVersions = listOf(
+                PolicyVersions.BEGINNER_CONSERVATIVE_V1,
+                PolicyVersions.BEGINNER_CONSERVATIVE_V2,
+            ),
+        )
+        val v1 = replayed.single { trace ->
+            trace.policySnapshot.policyVersion == PolicyVersions.BEGINNER_CONSERVATIVE_V1
+        }
+        val v2 = replayed.single { trace ->
+            trace.policySnapshot.policyVersion == PolicyVersions.BEGINNER_CONSERVATIVE_V2
+        }
 
-        assertEquals(legalIds, replayed.legalCandidateIds)
-        assertEquals(result.featureEvaluation, replayed.featureEvaluation)
-        assertEquals(sourceTrace.actualChoice, replayed.actualChoice)
-        assertEquals(sourceTrace.historyPrefixRef, replayed.historyPrefixRef)
+        replayed.forEach { trace ->
+            assertEquals(legalIds, trace.legalCandidateIds)
+            assertEquals(result.featureEvaluation, trace.featureEvaluation)
+            assertEquals(sourceTrace.actualChoice, trace.actualChoice)
+            assertEquals(sourceTrace.historyPrefixRef, trace.historyPrefixRef)
+            assertEquals(sourceTrace.sourceRevision, trace.sourceRevision)
+        }
 
-        val archive = DecisionTraceArchive(listOf(replayed))
+        val v1Ready = v1.policySnapshot as DecisionTracePolicySnapshot.Ready
+        val v2Ready = v2.policySnapshot as DecisionTracePolicySnapshot.Ready
+        val futureById = (result.featureEvaluation as DecisionFeatureEvaluation.Ready)
+            .candidates
+            .associate { candidate -> candidate.candidateId to candidate.features.futureFlexibility }
+        val v1ById = v1Ready.evaluations.associateBy(PolicyEvaluation::candidateId)
+        val v2ById = v2Ready.evaluations.associateBy(PolicyEvaluation::candidateId)
+
+        legalIds.forEach { candidateId ->
+            val v1Evaluation = v1ById.getValue(candidateId)
+            val v2Evaluation = v2ById.getValue(candidateId)
+            if (v1Evaluation.disposition == PolicyDisposition.REJECTED) {
+                assertEquals(PolicyDisposition.REJECTED, v2Evaluation.disposition)
+                assertEquals(v1Evaluation.rejectionReasons, v2Evaluation.rejectionReasons)
+            } else {
+                val future = futureById.getValue(candidateId) as FeatureProjection.Projected
+                val preferred =
+                    PairInformationFutureFlexibilityReasonCodes
+                        .PRESERVES_COMPETING_RECURRING_INFORMATION_ROUTES in future.value.reasonCodes
+                assertEquals(
+                    if (preferred) PolicyDisposition.SURVIVOR else PolicyDisposition.ACCEPTED,
+                    v2Evaluation.disposition,
+                )
+                if (preferred) {
+                    assertEquals(
+                        setOf(
+                            BeginnerConservativeV2PolicyReasons
+                                .PRESERVES_COMPETING_RECURRING_INFORMATION_ROUTES,
+                        ),
+                        v2Evaluation.softPreferenceReasons,
+                    )
+                    assertFalse(
+                        v2Evaluation.softPreferenceReasons.any { reason ->
+                            reason.value.contains("undertaker", ignoreCase = true)
+                        },
+                    )
+                }
+            }
+        }
+
+        val v2Selection = requireNotNull(v2.policySelection)
+        assertEquals(PolicyDisposition.SURVIVOR, v2ById.getValue(v2Selection.candidateId).disposition)
+        assertEquals(
+            replayed,
+            MultiPolicyReplayEngine.replay(
+                sourceTrace = sourceTrace,
+                recomputedInput = result.replayInput,
+                policyVersions = listOf(
+                    PolicyVersions.BEGINNER_CONSERVATIVE_V1,
+                    PolicyVersions.BEGINNER_CONSERVATIVE_V2,
+                ),
+            ),
+        )
+
+        val archive = DecisionTraceArchive(replayed)
         assertEquals(
             archive,
             DecisionTraceArchiveJsonCodec.decode(DecisionTraceArchiveJsonCodec.encode(archive)),

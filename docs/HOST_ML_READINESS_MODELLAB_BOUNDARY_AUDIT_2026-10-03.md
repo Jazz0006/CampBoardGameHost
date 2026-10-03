@@ -233,10 +233,10 @@ Current route remains:
 
 ```text
 C5-A pair future-flexibility projector     COMPLETE / ACCEPTED
--> C5-B pair SDE shadow + replay bridge    NEXT
--> C5-C BEGINNER_CONSERVATIVE_V2
--> C5-D canonical V1/V2 replay
--> C5-E surface-scoped production cutover
+-> C5-B pair SDE shadow + replay bridge    COMPLETE / ACCEPTED
+-> C5-C BEGINNER_CONSERVATIVE_V2           COMPLETE / ACCEPTED
+-> C5-D canonical V1/V2 replay             COMPLETE / ACCEPTED
+-> C5-E surface-scoped production cutover  NEXT
 ```
 
 C5-B should make **no ML-specific production changes**. It should simply preserve the existing architecture invariants that future ML needs:
@@ -252,7 +252,7 @@ C5-B should make **no ML-specific production changes**. It should simply preserv
 
 C5-C remains a normal evidence-backed deterministic V2 policy slice.
 
-C5-D is the implementation trigger point for the first Host ML-ready code because it will prove same-history multi-policy replay on the real pair surface.
+C5-D has now passed the implementation trigger for the first Host ML-ready code: exact-head `5241518e002e65993eed594632604e13e2979bfd`, CI #3693 / R2 #3401 GREEN, proves deterministic same-history V1/V2 replay and trace round-trip on the real pair surface. HOST-ML1 is therefore technically eligible, but must remain a separate lane and must not delay the immediate C5-E product cutover gate.
 
 ## 10. Ordered ML route
 
@@ -261,10 +261,10 @@ Accepted long-horizon order:
 ```text
 EL-ML0 EvidenceLab readiness contract                 COMPLETE / ACCEPTED
 HOST-ML0 Host/ModelLab boundary audit                 COMPLETE / ACCEPTED
--> C5-B pair shadow/replay                            NORMAL MAINLINE
--> C5-C deterministic V2                              NORMAL MAINLINE
--> C5-D canonical V1/V2 replay                        NORMAL MAINLINE
--> HOST-ML1 neutral RecommendationDecisionExportV1    DEFERRED UNTIL C5-D ACCEPTED
+-> C5-B pair shadow/replay                            COMPLETE / ACCEPTED
+-> C5-C deterministic V2                              COMPLETE / ACCEPTED
+-> C5-D canonical V1/V2 replay                        COMPLETE / ACCEPTED
+-> HOST-ML1 neutral RecommendationDecisionExportV1    ELIGIBLE / SEPARATE LANE; DO NOT BLOCK C5-E
 -> EL-ML1 RecommendationEvidenceSeedV1                TRIGGER ONLY IF HOST-ML1 NEEDS MACHINE-READABLE SEEDS
 -> MODELLAB-0 offline dataset/evaluation builder      AFTER STABLE EXPORT/SEED CONTRACTS
 -> first zero-shot / SFT / preference experiment      OFFLINE ONLY
@@ -312,10 +312,6 @@ Explicitly deferred:
 
 ## 13. Immediate next task
 
-Return directly to **C5-B — pair SDE shadow + replay bridge**.
+Continue the product mainline with **C5-E — surface-scoped production cutover gate**. HOST-ML1 is now technically eligible because C5-B/C/D replay prerequisites are accepted, but it remains a separate ML-readiness lane and must not delay the bounded functioning-Librarian production cutover.
 
-HOST-ML0 changes no C5-B acceptance criteria and adds no model dependency.
-
-The next executable slice remains the C5-B contract already frozen in:
-
-`docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md`.
+When HOST-ML1 is started, keep its first export scope bounded to mature Drunk-assignment and first-night pair-information surfaces, and trigger EvidenceLab EL-ML1 only if machine-readable evidence seeds are actually required.
