@@ -298,7 +298,14 @@ internal class ClocktowerRecommendationCoordinator(
 
     fun resolveDynamicDecision(request: DynamicResolutionRequest): List<DynamicDecisionRecommendation> = when (request) {
         is DynamicResolutionRequest.MayorDeath -> dayModule.resolveMayorDeath(request.request, request.mayorSeat)
-        is DynamicResolutionRequest.DemonSuccessor -> nightModule.resolveDemonSuccessor(request.request)
+        is DynamicResolutionRequest.DemonSuccessor -> nightModule.resolveDemonSuccessor(
+            requestId = request.requestId,
+            context = request.context,
+        )
+        is DynamicResolutionRequest.LegacyDemonSuccessor -> nightModule.resolveLegacyDemonSuccessor(
+            request = request.request,
+            successionResolution = request.successionResolution,
+        )
     }
 
     fun appendDecision(event: StorytellerDecisionEvent, revision: DecisionRevision): DecisionAppendResult =
