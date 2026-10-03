@@ -18,7 +18,7 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 3. `docs/TESTING_STRATEGY.md`
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
-6. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` — current C5 re-entry / SDE-3D3 implementation authority; C5-A accepted, C5-B next, production cutover still blocked
+6. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` — C5 re-entry / SDE-3D3 authority; C5-A–D complete / accepted, C5-E next
 7. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
 8. `docs/DLB_7_FINAL_ACCEPTANCE_2026-10-03.md` — final DLB acceptance matrix and exact T4 authority
 9. `docs/DLB_6_OLD_CONTRACT_RETIREMENT_COMPLETION_2026-10-03.md` — DLB-6 accepted retirement boundary
@@ -31,8 +31,9 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 16. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
 17. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and exact TBGS-2D Demon-succession implementation boundary
 18. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-19. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary; HOST-ML1 deferred until C5-D
-20. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+19. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary; HOST-ML1 now eligible but separate from C5-E
+20. `docs/SDE_C5E_LIBRARIAN_PRODUCTION_CUTOVER_GATE_AUDIT_2026-10-03.md` — C5-E bounded functioning-Librarian production cutover gate and implementation contract
+21. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -253,7 +254,7 @@ C5 re-entry audit                         COMPLETE / PASS
 -> C5-B pair shadow/replay bridge        COMPLETE / ACCEPTED
 -> C5-C BEGINNER_CONSERVATIVE_V2 weak preference COMPLETE / ACCEPTED
 -> C5-D canonical V1/V2 replay COMPLETE / ACCEPTED
--> C5-E surface-scoped production cutover gate NEXT
+-> C5-E surface-scoped production cutover gate AUDIT COMPLETE / C5-E1 IMPLEMENTATION NEXT
 ```
 
 `BEGINNER_CONSERVATIVE_V1` remains immutable. V2 must not be created as a placeholder: its first implementation is permitted only in C5-C after the C5-A projector and C5-B pair replay seam are accepted.
