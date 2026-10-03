@@ -7,7 +7,7 @@
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `08d95a0c258f687187c0476a0f430fa5ff8229cb` — Q04 human-verified from primary audio**  
-> Product next work: **Post-TBGS-2C focused `DynamicGameState` consumer re-audit — inspect remaining production consumers one typed decision family at a time and select the next bounded migration. Do not pre-authorize or bundle Mayor, Demon succession, and Spy/Recluse special-registration families; keep A3, Recovery, R3 and generic setup-effect ownership outside this slice.**
+> Product next work: **TBGS-2D implementation — migrate Trouble Brewing Demon succession recommendation to a snapshot-backed typed context that consumes the rules-owned `DemonSuccessionResolution` legal domain. Preserve current pressure/spent-ability/balance enrichment semantics explicitly. Do not migrate Mayor, Spy/Recluse registration, production decision-history ownership, global balance/style consumers, Recovery, A3 or R3 in this slice.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -26,10 +26,11 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 11. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — original pre-TBGS-1 gate audit / historical blocker detail
 12. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
 13. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 active
-14. `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md` — TBGS-2 consumer inventory and TBGS-2A/2B acceptance authority
-15. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination focused audit, exact scope and test gate
-16. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-17. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+14. `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md` — TBGS-2 consumer inventory and accepted 2A/2B/2C lineage
+15. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
+16. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and exact TBGS-2D Demon-succession implementation boundary
+17. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+18. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -90,7 +91,7 @@ Beginner automatic Drunk authority                 COMPLETE / ACCEPTED
 DLB-6 old-contract retirement                      COMPLETE / ACCEPTED
 DLB-7 final acceptance                             COMPLETE / ACCEPTED
 DLB campaign                                       COMPLETE / ACCEPTED
-TBGS-2 runtime recommendation projection migration IN PROGRESS — 2A/2B/2C COMPLETE / ACCEPTED; NEXT = focused DynamicGameState family re-audit
+TBGS-2 runtime recommendation projection migration IN PROGRESS — 2A/2B/2C COMPLETE / ACCEPTED; 2D AUDIT COMPLETE / IMPLEMENTATION READY — Demon succession
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -199,6 +200,7 @@ DLB-0 typed intermediate setup COMPLETE
 -> TBGS-2A first-night natural-pair snapshot context COMPLETE / ACCEPTED; `9021ef26b65033b69911fa4a79124fdd2137284d`, CI #3647 / R2 #3364 GREEN
 -> TBGS-2B pair manual/publication COMPLETE / ACCEPTED; `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`, CI #3654 / R2 #3370 GREEN
 -> TBGS-2C setup-recommendation mechanical/rules base-context migration COMPLETE / ACCEPTED; `a8116d8b333cc40e0a599ab208cf7a9a3ea80207`, CI #3663 / R2 #3378 GREEN
+-> TBGS-2D Demon succession family audit COMPLETE / IMPLEMENTATION READY
 -> A3 presentation catalog READY / independent maintenance only
 ```
 
@@ -206,7 +208,7 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 - A1 preferences and A2 archive storage are independent maintenance slices only;
 - H1 is COMPLETE / ACCEPTED through DLB-5H1;
-- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2 is the active incremental runtime migration. TBGS-2A first-night natural-pair precompute, TBGS-2B pair manual/publication, and TBGS-2C setup-recommendation mechanical/rules base-context migration are COMPLETE / ACCEPTED. The next TBGS-2 step is a focused re-audit of remaining `DynamicGameState` production consumers one typed decision family at a time. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
+- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2 is the active incremental runtime migration. TBGS-2A first-night natural-pair precompute, TBGS-2B pair manual/publication, and TBGS-2C setup-recommendation mechanical/rules base-context migration are COMPLETE / ACCEPTED. The post-2C focused family audit selects TBGS-2D Demon succession as IMPLEMENTATION READY; Mayor, special registration, cross-cutting balance/style migration, history-producer cutover and spent-ability ownership remain later slices. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
 - R3 generic transaction extraction and the generic setup-effect owner remain NO-GO.
 
 Recovery R0–R6 stays complete. R7 remains separate.

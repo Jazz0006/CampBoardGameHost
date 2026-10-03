@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@da5e9947e7a2799d94720454b67fdb6de2ef54a3`  
-> Status: **TBGS-2A COMPLETE / ACCEPTED; TBGS-2B COMPLETE / ACCEPTED**
+> Status: **TBGS-2A / 2B / 2C COMPLETE / ACCEPTED; TBGS-2D AUDIT COMPLETE / IMPLEMENTATION READY**
 
 ## 1. Decision
 
@@ -301,4 +301,30 @@ Final exact-head T4 acceptance is `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`: CI
 
 Exact acceptance head `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67` passed CI #3654 and R2 #3370. Android `:app:testFull + :app:assembleDebug`, ASP contract tests and Real Clingo all executed and passed on the corrected tree.
 
-Therefore TBGS-2B is **COMPLETE / ACCEPTED**. The next TBGS-2 step is a fresh focused re-audit of the setup-coordination consumer; this closure does not pre-authorize that implementation and does not change the separate A3 READY status.
+Therefore TBGS-2B is **COMPLETE / ACCEPTED**. TBGS-2C subsequently migrated the setup-recommendation mechanical/rules base and is COMPLETE / ACCEPTED at exact T4 head `a8116d8b333cc40e0a599ab208cf7a9a3ea80207`, CI #3663 / R2 #3378 GREEN.
+
+## 11. Post-TBGS-2C DynamicGameState family re-audit
+
+The fresh post-2C audit is recorded in:
+
+`docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md`
+
+It found four remaining production concerns behind `dynamicStorytellerState()`:
+
+- cross-cutting balance/style enrichment;
+- Spy/Recluse special registration;
+- Mayor death redirection;
+- Demon succession.
+
+The next bounded family is **TBGS-2D — Demon succession**.
+
+Key reasons:
+
+1. the required mechanical state is already snapshot-complete;
+2. the family needs only pressure + balance enrichment, not protection or registration/misinformation ledgers;
+3. the Game Engine already owns an exact `DemonSuccessionResolution` legal domain;
+4. the current recommender duplicates that legality and the UI post-filters selected recommendations, so the slice can converge directly toward “rules own legality; recommendation ranks already-legal candidates.”
+
+TBGS-2D must preserve current enrichment semantics. Session `decisionHistory` is not yet a complete production replacement for the current UI-derived pressure/history because the coordinator decision-event append/transition APIs have no production call sites.
+
+Mayor, special registration, global balance consumer migration, history-producer cutover, spent-ability ownership, Recovery, A3 and R3 remain outside TBGS-2D.
