@@ -1,9 +1,14 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
+import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
+import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
+import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
@@ -12,6 +17,7 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSeat
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSetupState
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicEvaluationCapability
+import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
@@ -145,6 +151,7 @@ class RecommendationDecisionExportV1Test {
 
         val export = RecommendationDecisionExportV1.fromFirstNightPairInformation(
             request = request,
+            legalCandidates = pairLegalCandidates(),
             replayTraces = listOf(trace),
         )
 
@@ -153,6 +160,28 @@ class RecommendationDecisionExportV1Test {
         assertEquals(trace.historyPrefixRef, export.inputEligible.historyPrefixRef)
         assertEquals(candidateIds, export.inputEligible.legalCandidateIds)
         assertTrue(export.inputEligible.context is RecommendationDecisionContextV1.FirstNightPairInformation)
+        val pairContext = export.inputEligible.context as RecommendationDecisionContextV1.FirstNightPairInformation
+        assertEquals(
+            listOf("pair:a", "pair:b"),
+            pairContext.legalCandidates.map { it.candidateId },
+        )
+        assertEquals("Saint", pairContext.legalCandidates[0].shownRoleId)
+        assertEquals(listOf(2, 3), pairContext.legalCandidates[0].candidateSeats)
+        assertEquals(SemanticTruth.TRUE, pairContext.legalCandidates[0].semanticTruth)
+        assertEquals(
+            listOf(
+                RegistrationFact(
+                    interactionId = "pair:test-game:librarian",
+                    subjectSeat = 2,
+                    registeredRole = RoleId("Saint"),
+                    registrationQuestion = RegistrationQuestion.ROLE,
+                    reason = RegistrationReason.SPY_ABILITY,
+                ),
+            ),
+            pairContext.legalCandidates[0].registrations,
+        )
+        assertEquals(null, pairContext.legalCandidates[1].shownRoleId)
+        assertTrue(pairContext.legalCandidates[1].candidateSeats.isEmpty())
         assertTrue(export.inputEligible.featureProjection is RecommendationFeatureProjectionV1.StandardDecision)
         assertEquals(trace.actualChoice, export.targetOrLabel.actualChoice)
         assertEquals(
@@ -192,10 +221,47 @@ class RecommendationDecisionExportV1Test {
 
         val export = RecommendationDecisionExportV1.fromFirstNightPairInformation(
             request = request,
+            legalCandidates = pairLegalCandidates(),
             replayTraces = listOf(trace),
         )
 
         assertTrue(export.targetOrLabel.candidateRelations.isEmpty())
+    }
+
+    @Test
+    fun pairExportFailsClosedWhenSemanticPayloadOrderDoesNotMatchReplayLegalDomain() {
+        val snapshot = runtimeSnapshot()
+        val context = TroubleBrewingFirstNightPairDecisionContext(
+            snapshot = snapshot,
+            naturalPairGameState = GameState(
+                script = ScriptId("trouble_brewing"),
+                players = emptyList(),
+                seed = snapshot.gameSeed,
+            ),
+            roleDefinitions = emptyList(),
+        )
+        val request = PairInformationShadowReplayRequest(
+            decisionId = "pair:test-game:librarian",
+            context = context,
+            sourceSeat = 1,
+            abilityRole = RoleId("Librarian"),
+            reliability = ReliabilityState.RELIABLE,
+            lifecycleStage = SdeDecisionLifecycleStage.Interaction(
+                phase = StorytellerPhase.FIRST_NIGHT,
+                round = 1,
+                sequence = 3,
+            ),
+        )
+        val candidateIds = listOf("pair:a", "pair:b")
+        val trace = deferredPairTrace(request, candidateIds, DecisionTraceActualChoice.Pending)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            RecommendationDecisionExportV1.fromFirstNightPairInformation(
+                request = request,
+                legalCandidates = pairLegalCandidates().reversed(),
+                replayTraces = listOf(trace),
+            )
+        }
     }
 
     @Test
@@ -233,6 +299,7 @@ class RecommendationDecisionExportV1Test {
         assertThrows(IllegalArgumentException::class.java) {
             RecommendationDecisionExportV1.fromFirstNightPairInformation(
                 request = request,
+                legalCandidates = pairLegalCandidates(),
                 replayTraces = listOf(trace),
             )
         }
@@ -331,6 +398,38 @@ class RecommendationDecisionExportV1Test {
             ),
         )
 
+    private fun pairLegalCandidates(): List<PairInformationLegalCandidate> =
+        listOf(
+            PairInformationLegalCandidate(
+                candidateId = "pair:a",
+                outcome = PairInformationOutcome(
+                    shownRole = RoleId("Saint"),
+                    targetSeat = 2,
+                    decoySeat = 3,
+                ),
+                semanticTruth = SemanticTruth.TRUE,
+                registrations = listOf(
+                    RegistrationFact(
+                        interactionId = "pair:test-game:librarian",
+                        subjectSeat = 2,
+                        registeredRole = RoleId("Saint"),
+                        registrationQuestion = RegistrationQuestion.ROLE,
+                        reason = RegistrationReason.SPY_ABILITY,
+                    ),
+                ),
+            ),
+            PairInformationLegalCandidate(
+                candidateId = "pair:b",
+                outcome = PairInformationOutcome(
+                    shownRole = null,
+                    targetSeat = null,
+                    decoySeat = null,
+                ),
+                semanticTruth = SemanticTruth.TRUE,
+                registrations = emptyList(),
+            ),
+        )
+
     private fun runtimeSnapshot(): TroubleBrewingGameSnapshotV1 =
         TroubleBrewingGameSnapshotV1(
             gameId = "test-game",
@@ -347,6 +446,20 @@ class RecommendationDecisionExportV1Test {
                     seat = 1,
                     shownRoleId = SnapshotField.Known("Librarian"),
                     actualRoleId = SnapshotField.Known("Librarian"),
+                    alive = SnapshotField.Known(true),
+                    poisoned = SnapshotField.Known(false),
+                ),
+                TroubleBrewingSnapshotSeat(
+                    seat = 2,
+                    shownRoleId = SnapshotField.Known("Saint"),
+                    actualRoleId = SnapshotField.Known("Saint"),
+                    alive = SnapshotField.Known(true),
+                    poisoned = SnapshotField.Known(false),
+                ),
+                TroubleBrewingSnapshotSeat(
+                    seat = 3,
+                    shownRoleId = SnapshotField.Known("Empath"),
+                    actualRoleId = SnapshotField.Known("Empath"),
                     alive = SnapshotField.Known(true),
                     poisoned = SnapshotField.Known(false),
                 ),
