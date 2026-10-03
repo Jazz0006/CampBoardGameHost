@@ -20,8 +20,8 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 5. this handoff
 6. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` — C5 re-entry / SDE-3D3 evidence and replay authority; C5-A–D complete / accepted
 7. `docs/SDE_C5E_LIBRARIAN_PRODUCTION_CUTOVER_GATE_AUDIT_2026-10-03.md` — C5-E functioning-Librarian production cutover acceptance authority
-9. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
-8. `docs/DLB_7_FINAL_ACCEPTANCE_2026-10-03.md` — final DLB acceptance matrix and exact T4 authority
+8. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
+9. `docs/DLB_7_FINAL_ACCEPTANCE_2026-10-03.md` — final DLB acceptance matrix and exact T4 authority
 10. `docs/DLB_6_OLD_CONTRACT_RETIREMENT_COMPLETION_2026-10-03.md` — DLB-6 accepted retirement boundary
 11. `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md` — Q04 evidence/policy/cutover acceptance authority
 12. `docs/DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md` — historical post-TBGS-1 NOT-PASSED verdict before Q04 verification
