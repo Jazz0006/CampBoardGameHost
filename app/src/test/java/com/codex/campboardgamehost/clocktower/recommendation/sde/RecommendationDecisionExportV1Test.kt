@@ -72,22 +72,16 @@ class RecommendationDecisionExportV1Test {
         assertTrue(export.inputEligible.featureProjection is RecommendationFeatureProjectionV1.DrunkAssignment)
         assertEquals(
             listOf(
-                RecommendationCandidateRelationV1(
+                RecommendationHistoricalDomainRelationV1(
                     candidateId = candidateIds[0],
-                    kind = RecommendationCandidateRelationKindV1.LEGAL_UNCHOSEN,
+                    kind = RecommendationHistoricalDomainRelationKindV1.LEGAL_UNCHOSEN,
                 ),
-                RecommendationCandidateRelationV1(
+                RecommendationHistoricalDomainRelationV1(
                     candidateId = candidateIds[1],
-                    kind = RecommendationCandidateRelationKindV1.OBSERVED_CHOICE,
+                    kind = RecommendationHistoricalDomainRelationKindV1.OBSERVED_CHOICE,
                 ),
             ),
             export.targetOrLabel.candidateRelations,
-        )
-        assertTrue(
-            export.targetOrLabel.candidateRelations.none {
-                it.kind == RecommendationCandidateRelationKindV1.EXPLICIT_REJECTED ||
-                    it.kind == RecommendationCandidateRelationKindV1.EXPLICIT_COMPARISON_LOSER
-            },
         )
         assertEquals(
             listOf(PolicyVersions.DRUNK_ASSIGNMENT_Q04_V1),
