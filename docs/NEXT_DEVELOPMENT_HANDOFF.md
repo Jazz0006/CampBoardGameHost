@@ -6,8 +6,8 @@
 > DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
-> Evidence checkpoint: **ClocktowerEvidenceLab `08d95a0c258f687187c0476a0f430fa5ff8229cb` — Q04 human-verified from primary audio**  
-> Product next work: **TBGS-2D implementation — migrate Trouble Brewing Demon succession recommendation to a snapshot-backed typed context that consumes the rules-owned `DemonSuccessionResolution` legal domain. Preserve current pressure/spent-ability/balance enrichment semantics explicitly. Do not migrate Mayor, Spy/Recluse registration, production decision-history ownership, global balance/style consumers, Recovery, A3 or R3 in this slice.**
+> Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
+> Product next work: **C5-A — implement the pair-information future-flexibility feature projector tests-first. Keep `BEGINNER_CONSERVATIVE_V1` immutable and do not change visible pair recommendation or manual legality. TBGS-2D Demon succession remains independently IMPLEMENTATION READY but is not a C5 prerequisite and must not be bundled into this slice.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -18,19 +18,20 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 3. `docs/TESTING_STRATEGY.md`
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
-6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
-7. `docs/DLB_7_FINAL_ACCEPTANCE_2026-10-03.md` — final DLB acceptance matrix and exact T4 authority
-8. `docs/DLB_6_OLD_CONTRACT_RETIREMENT_COMPLETION_2026-10-03.md` — DLB-6 accepted retirement boundary
-9. `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md` — Q04 evidence/policy/cutover acceptance authority
-10. `docs/DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md` — historical post-TBGS-1 NOT-PASSED verdict before Q04 verification
-11. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — original pre-TBGS-1 gate audit / historical blocker detail
-12. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
-13. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 active
-14. `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md` — TBGS-2 consumer inventory and accepted 2A/2B/2C lineage
-15. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
-16. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and exact TBGS-2D Demon-succession implementation boundary
-17. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-18. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+6. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` — current C5 re-entry / SDE-3D3 implementation authority; C5-A next, production cutover still blocked
+7. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
+8. `docs/DLB_7_FINAL_ACCEPTANCE_2026-10-03.md` — final DLB acceptance matrix and exact T4 authority
+9. `docs/DLB_6_OLD_CONTRACT_RETIREMENT_COMPLETION_2026-10-03.md` — DLB-6 accepted retirement boundary
+10. `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md` — Q04 evidence/policy/cutover acceptance authority
+11. `docs/DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md` — historical post-TBGS-1 NOT-PASSED verdict before Q04 verification
+12. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — original pre-TBGS-1 gate audit / historical blocker detail
+13. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
+14. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 active
+15. `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md` — TBGS-2 consumer inventory and accepted 2A/2B/2C lineage
+16. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
+17. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and exact TBGS-2D Demon-succession implementation boundary
+18. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+19. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -64,7 +65,7 @@ CR-A / CR-B / CR-C                     COMPLETE
 C4 / SDE-3D2                           COMPLETE
 IF-D durable replay                    COMPLETE
 RH-E                                    COMPLETE
-C5 / V2                                BLOCKED ON E3/E4
+C5 / V2                                RE-ENTRY PASS / SDE-3D3 AUTHORIZED — C5-A NEXT
 SDE-3E cutover                         BLOCKED PER SURFACE
 DLB-0 typed intermediate setup              COMPLETE / ACCEPTED
 DLB-1 visible-roster deal cutover              COMPLETE / ACCEPTED
@@ -163,9 +164,13 @@ DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c
 
 DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, DLB-5.5 removal of obsolete setup auto-apply wiring, and DLB-5.4 Poisoner / first-night information convergence audit. DLB-5.4 found no production gap: poison confirmation owns one canonical revision, unshown drafts are invalidated, displayed observations/history remain committed, and subsequent information replans against current poison state plus committed history. DLB-5 is COMPLETE / ACCEPTED. PR #183 passed final exact-head T4 at `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN and was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
 
-The current product-development lane is **Drunk late-binding and staged first-night sequencing**.
+The current explicitly requested product-development lane is **C5 evidence-backed pair-information policy evolution**. The DLB campaign is complete; TBGS-2D remains an independent implementation-ready migration lane.
 
-Authority:
+Current C5 authority:
+
+`docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md`
+
+DLB historical implementation authority remains:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
@@ -201,6 +206,10 @@ DLB-0 typed intermediate setup COMPLETE
 -> TBGS-2B pair manual/publication COMPLETE / ACCEPTED; `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`, CI #3654 / R2 #3370 GREEN
 -> TBGS-2C setup-recommendation mechanical/rules base-context migration COMPLETE / ACCEPTED; `a8116d8b333cc40e0a599ab208cf7a9a3ea80207`, CI #3663 / R2 #3378 GREEN
 -> TBGS-2D Demon succession family audit COMPLETE / IMPLEMENTATION READY
+-> EvidenceLab G10 `16:52` Librarian future-flexibility predicate E3 PASS at `78f672868ea6603317aeefa20ad91686c5886db9`
+-> C5 re-entry audit COMPLETE / PASS; SDE-3D3 implementation AUTHORIZED
+-> C5-A pair future-flexibility projector NEXT / IMPLEMENTATION READY
+|| TBGS-2D remains IMPLEMENTATION READY as an independent lane
 -> A3 presentation catalog READY / independent maintenance only
 ```
 
@@ -213,39 +222,37 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 Recovery R0–R6 stays complete. R7 remains separate.
 
-EvidenceLab C1C/C1D established the replayable Drunk-assignment surface; later VERIFIED C3-Q04 supplied the first bounded alternative-candidate preference sufficient for Q04 V1. This authorizes only the accepted conditional Empath -> Monk override, not a general Drunk-candidate ordering. `DRUNK_ASSIGNMENT_SHADOW_V1` remains deferral-only. The existing C5/V2 E3/E4 gate remains separate and still blocks `BEGINNER_CONSERVATIVE_V2`.
+EvidenceLab C1C/C1D established the replayable Drunk-assignment surface; later VERIFIED C3-Q04 supplied the bounded Q04 Drunk predicate. Separately, EvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` now supplies a C5-qualified G10 Librarian future-flexibility predicate. That new evidence reopens C5/SDE-3D3 but authorizes only the bounded, generic pair-information weak-preference route recorded in the C5 audit; it does not broaden Q04 or authorize numeric calibration.
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate preference/rejection semantics. DLB-3 is shadow-first; Beginner automatic Drunk authority requires the explicit cutover gate in the DLB route.
 
 A separate product-owner calibration now exists at `docs/IMP_PODCAST_PRODUCT_POLICY_CALIBRATION_2026-10-02.md`. It captures the current app-specific interpretation of the Imp podcast semantic review: strong plausible/coherent misinformation defaults, cross-night coherence, Empath-as-Drunk as a contextual positive with repeat penalty, bluff-set synergy/complexity, star-pass ability preservation, mechanical-over-inferred lead assessment, player-experience balancing, and Evil intended-plan enrichment. This calibration is explicitly non-evidence and does not unblock the production gate by itself.
 
-## 8. E3/E4 qualification result — no policy delta authorized
+## 8. C5 E3/E4 qualification result — re-entry passed
 
-The 2026-09-27 audit checked the current EvidenceLab TB corpus, targeted expert rationale, Red-Herring C4 evidence classification, and the SDE evidence-gap contract.
+The 2026-09-27 audit remains the historical definition of the gate, but its “no policy delta authorized” verdict is superseded for one bounded predicate by the 2026-10-03 G10 Librarian evidence.
 
-Result:
+Current result:
 
-- healthy-information floor: E3 FAIL / E4 FAIL;
-- impaired-information believability: E3 FAIL for a new preference / E4 FAIL;
-- confirmation-chain importance: E1/E2 support only for current purpose;
-- role-function exposure severity: E3 FAIL;
-- truth danger / contextual Red Herring: E1/E2 strong, E3 FAIL for candidate ordering;
-- Demon-bluff triplet ordering: E3 FAIL;
-- multi-axis weights: E4 FAIL.
+- **pair-information future flexibility:** E3 PASS for one qualitative weak-preference predicate;
+- source/state/choice/legal-alternative/rationale/generic-feature requirements are all closed;
+- E4 remains unproven and is **not required** for the first weight-free qualitative delta;
+- healthy-information balance, impaired-information believability, role-function exposure severity, Demon-bluff triplet ordering and multi-axis calibrated weights remain separately unproven unless later evidence closes their own gates.
 
-Therefore there is **no automatic C5 production slice** and no placeholder V2.
+Implementation route:
 
-Next acquisition must be narrowly targeted to one of:
+```text
+C5 re-entry audit                         COMPLETE / PASS
+-> C5-A future-flexibility projector     NEXT
+-> C5-B pair shadow/replay bridge
+-> C5-C BEGINNER_CONSERVATIVE_V2 weak preference
+-> C5-D canonical V1/V2 replay
+-> C5-E surface-scoped production cutover gate
+```
 
-1. a reconstructable expert beginner/mixed TB game with explicit healthy-information balance rationale and recoverable legal alternatives;
-2. a non-Ben expert Drunk/poison case with explicit believable/coherent choice-over-alternatives rationale;
-3. a functioning Librarian/Investigator + Spy/Recluse case with healthy alternatives and explicit exposure rationale;
-4. an expert Demon-bluff triplet choice explicitly compared with another legal set.
+`BEGINNER_CONSERVATIVE_V1` remains immutable. V2 must not be created as a placeholder: its first implementation is permitted only in C5-C after the C5-A projector and C5-B pair replay seam are accepted.
 
-Stop treating a source as an E3 candidate once qualified Storyteller identity, committed state, observed choice, recoverable alternatives, or explicit rationale is missing.
-
-Detailed audit: `docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`.
-
+Current authority: `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md`.
 ## 9. Scope still blocked
 
-Do not start `BEGINNER_CONSERVATIVE_V2`, add new policy weights/thresholds, broaden player-count/Traveller scope, or perform production cutover without the required E3/E4 evidence. C5 and SDE-3E remain blocked as recorded in the roadmap.
+Do not add policy weights/thresholds, broaden player-count/Traveller scope, or perform production cutover from the G10 evidence. `BEGINNER_CONSERVATIVE_V2` may begin only at C5-C after C5-A/C5-B acceptance, and only with the bounded future-flexibility weak preference. SDE-3E remains blocked per surface until C5-D replay and the separate C5-E cutover gate pass.
