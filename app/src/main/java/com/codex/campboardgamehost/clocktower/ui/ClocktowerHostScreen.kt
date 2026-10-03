@@ -56,6 +56,7 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNigh
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDomain
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
@@ -65,6 +66,7 @@ import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalDomain
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningLibrarianV2ProductionSelector
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingSetupRecommendationDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
@@ -121,6 +123,11 @@ internal fun ClocktowerJudgeScreen(
     setupHistory: CrossGameHistory,
     setupRecommendationDecisionContext: TroubleBrewingSetupRecommendationDecisionContext? = null,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
+    demonSuccessorDecisionContextProvider: ((
+        DemonSuccessionResolution,
+        Map<Int, PlayerInformationPressure>,
+        Set<Int>,
+    ) -> TroubleBrewingDemonSuccessorDecisionContext?)? = null,
     setupRecommendationResultProvider: ((SetupCoordinationRequest) -> SetupRecommendationService.ConstrainedResult)? = null,
     firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
     firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
@@ -1057,21 +1064,19 @@ internal fun ClocktowerJudgeScreen(
             .count()
     }
 
-    fun dynamicStorytellerState(): DynamicGameState {
+    fun recommendationSpentAbilitySeats(): Set<Int> {
         val spentRoleNames = buildSet {
             if (virginUsed) add("Virgin")
             if (slayerUsed) add("Slayer")
             if (artistUsed) add("Artist")
         }
-        val gameState = cards.toClocktowerGameState(
-            script = script,
-            seed = gameSeed,
-            poisonedPlayerName = poisonTarget,
-        )
-        val spentAbilitySeats = cards.mapIndexedNotNull { index, card ->
+        return cards.mapIndexedNotNull { index, card ->
             (index + 1).takeIf { card.clocktowerRole?.enName in spentRoleNames }
         }.toSet()
-        val playerInformationPressureBySeat = cards.mapIndexed { index, card ->
+    }
+
+    fun recommendationPlayerInformationPressureBySeat(): Map<Int, PlayerInformationPressure> =
+        cards.mapIndexed { index, card ->
             val seat = index + 1
             val pressure = informationHistoryPressure(card)
             seat to PlayerInformationPressure(
@@ -1080,6 +1085,15 @@ internal fun ClocktowerJudgeScreen(
                 recentTargetCount = pressure,
             )
         }.toMap()
+
+    fun dynamicStorytellerState(): DynamicGameState {
+        val gameState = cards.toClocktowerGameState(
+            script = script,
+            seed = gameSeed,
+            poisonedPlayerName = poisonTarget,
+        )
+        val spentAbilitySeats = recommendationSpentAbilitySeats()
+        val playerInformationPressureBySeat = recommendationPlayerInformationPressureBySeat()
         val registrationLedgerBySeat = cards.mapIndexedNotNull { index, card ->
             val count = events.count { event ->
                 card.name in event.playerNames &&
@@ -1235,20 +1249,40 @@ internal fun ClocktowerJudgeScreen(
         }
     }
 
-    fun demonSuccessorDecisionOptions(legalTargetSeats: Set<Int>): List<ClocktowerDecisionOption> {
+    fun demonSuccessorDecisionOptions(
+        successionResolution: DemonSuccessionResolution,
+    ): List<ClocktowerDecisionOption> {
+        val legalTargetSeats = when (successionResolution) {
+            DemonSuccessionResolution.None -> emptySet()
+            is DemonSuccessionResolution.Forced -> setOf(successionResolution.targetSeat)
+            is DemonSuccessionResolution.Choice -> successionResolution.targetSeats
+        }
         if (legalTargetSeats.isEmpty()) return emptyList()
-        val request = DynamicDecisionRequest(
-            id = registrationKey("DemonSuccessor"),
-            type = StorytellerDecisionType.DEMON_SUCCESSION,
-            sourceAbility = RoleId("Imp"),
-            state = dynamicStorytellerState(),
-        )
-        return recommendationCoordinator.resolveDynamicDecision(
-            DynamicResolutionRequest.DemonSuccessor(request),
-        ).mapNotNull { recommendation ->
+        val requestId = registrationKey("DemonSuccessor")
+        val resolutionRequest = if (script == ClocktowerScript.TroubleBrewing) {
+            val context = demonSuccessorDecisionContextProvider?.invoke(
+                successionResolution,
+                recommendationPlayerInformationPressureBySeat(),
+                recommendationSpentAbilitySeats(),
+            ) ?: return emptyList()
+            DynamicResolutionRequest.DemonSuccessor(
+                requestId = requestId,
+                context = context,
+            )
+        } else {
+            DynamicResolutionRequest.LegacyDemonSuccessor(
+                request = DynamicDecisionRequest(
+                    id = requestId,
+                    type = StorytellerDecisionType.DEMON_SUCCESSION,
+                    sourceAbility = RoleId("Imp"),
+                    state = dynamicStorytellerState(),
+                ),
+                successionResolution = successionResolution,
+            )
+        }
+        return recommendationCoordinator.resolveDynamicDecision(resolutionRequest).mapNotNull { recommendation ->
             val explanation = recommendationCoordinator.explainDecision(recommendation)
             val choice = recommendation.candidate.choice as DynamicStorytellerChoice.DemonSuccessor
-            if (choice.targetSeat !in legalTargetSeats) return@mapNotNull null
             val target = cards.getOrNull(choice.targetSeat - 1) ?: return@mapNotNull null
             val warning = when {
                 recommendation.warnings.any { it.ruleId == "scarlet-woman-mandatory" } ->
@@ -2864,7 +2898,9 @@ internal fun ClocktowerJudgeScreen(
                         ),
                         action = ClocktowerNightAction.DemonSuccessor,
                         roleEnName = "Imp",
-                        decisionOptions = demonSuccessorDecisionOptions(demonSuccessorTargetSeats),
+                        decisionOptions = demonSuccessorDecisionOptions(
+                            nightHostProjection.demonSuccessionResolution,
+                        ),
                     )
             },
         ),

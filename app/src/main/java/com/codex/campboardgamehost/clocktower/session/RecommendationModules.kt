@@ -12,6 +12,8 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.recommendation.DemonSuccessorRecommender
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContext
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.recommendation.MayorRedirectRecommender
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGenerationContext
@@ -74,8 +76,22 @@ internal class NightRecommendationModule {
     fun recommendPair(candidates: List<PairInformationCandidate>): List<PairInformationRecommendation> =
         RegistrationPolicy.recommendPair(candidates)
 
-    fun resolveDemonSuccessor(request: DynamicDecisionRequest): List<DynamicDecisionRecommendation> =
-        DemonSuccessorRecommender.recommend(request)
+    fun resolveDemonSuccessor(
+        requestId: String,
+        context: TroubleBrewingDemonSuccessorDecisionContext,
+    ): List<DynamicDecisionRecommendation> =
+        DemonSuccessorRecommender.recommend(requestId, context)
+
+    fun resolveLegacyDemonSuccessor(
+        request: DynamicDecisionRequest,
+        successionResolution: DemonSuccessionResolution,
+    ): List<DynamicDecisionRecommendation> = DemonSuccessorRecommender.recommend(
+        requestId = request.id,
+        game = request.state.game,
+        successionResolution = successionResolution,
+        playerInformationPressureBySeat = request.state.playerInformationPressureBySeat,
+        evilAdvantage = request.state.evilAdvantage,
+    )
 
     fun <T> selectInformation(
         options: List<T>,
@@ -136,5 +152,13 @@ internal sealed interface InformationResolutionRequest {
 
 internal sealed interface DynamicResolutionRequest {
     data class MayorDeath(val request: DynamicDecisionRequest, val mayorSeat: Int) : DynamicResolutionRequest
-    data class DemonSuccessor(val request: DynamicDecisionRequest) : DynamicResolutionRequest
+    data class DemonSuccessor(
+        val requestId: String,
+        val context: TroubleBrewingDemonSuccessorDecisionContext,
+    ) : DynamicResolutionRequest
+
+    data class LegacyDemonSuccessor(
+        val request: DynamicDecisionRequest,
+        val successionResolution: DemonSuccessionResolution,
+    ) : DynamicResolutionRequest
 }
