@@ -44,8 +44,16 @@ internal data class RecommendationDecisionExportV1(
 
         when (decisionType) {
             RecommendationDecisionExportTypeV1.DRUNK_ASSIGNMENT -> {
-                require(inputEligible.context is RecommendationDecisionContextV1.DrunkAssignment) {
-                    "Drunk export requires a Drunk-assignment typed context."
+                val context = inputEligible.context as? RecommendationDecisionContextV1.DrunkAssignment
+                    ?: throw IllegalArgumentException(
+                        "Drunk export requires a Drunk-assignment typed context.",
+                    )
+                require(context.legalCandidates.map { it.candidateId } == legalCandidateIds) {
+                    "Drunk export typed candidate payload must preserve the complete legal-candidate order."
+                }
+                val snapshotSeats = inputEligible.snapshot.grimoireSeats.map { it.seat }.toSet()
+                require(context.legalCandidates.all { it.seat in snapshotSeats }) {
+                    "Drunk export candidate seats must belong to the canonical snapshot."
                 }
                 require(inputEligible.featureProjection is RecommendationFeatureProjectionV1.DrunkAssignment) {
                     "Drunk export requires the dedicated Drunk-assignment feature surface."
@@ -59,6 +67,13 @@ internal data class RecommendationDecisionExportV1(
                     )
                 require(context.legalCandidates.map { it.candidateId } == legalCandidateIds) {
                     "Pair export typed candidate payload must preserve the complete legal-candidate order."
+                }
+                val snapshotSeats = inputEligible.snapshot.grimoireSeats.map { it.seat }.toSet()
+                require(context.sourceSeat in snapshotSeats) {
+                    "Pair export source seat must belong to the canonical snapshot."
+                }
+                require(context.legalCandidates.flatMap { it.candidateSeats }.all { it in snapshotSeats }) {
+                    "Pair export candidate seats must belong to the canonical snapshot."
                 }
                 require(inputEligible.featureProjection is RecommendationFeatureProjectionV1.StandardDecision) {
                     "Pair export requires the standard DecisionFeatureEvaluation surface."
