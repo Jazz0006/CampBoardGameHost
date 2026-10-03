@@ -65,6 +65,105 @@ class RecoverySnapshotJsonCodecTest {
     }
 
     @Test
+    fun clocktowerRecoveryRoundTripsFinalDrunkActualAndShownIdentity() {
+        val drunk = ClocktowerRole(
+            team = ClocktowerTeam.Outsider,
+            zhName = "酒鬼",
+            enName = "Drunk",
+            zhDescription = "",
+            enDescription = "",
+        )
+        val chef = ClocktowerRole(
+            team = ClocktowerTeam.Townsfolk,
+            zhName = "厨师",
+            enName = "Chef",
+            zhDescription = "",
+            enDescription = "",
+        )
+        val card = PlayerCard(
+            name = "Alice",
+            role = Role.Civilian,
+            word = "",
+            roleLabel = chef.enName,
+            actualRoleLabel = drunk.enName,
+            clocktowerTeam = drunk.team,
+            clocktowerRole = drunk,
+            clocktowerShownRole = chef,
+        )
+        val snapshot = RecoverySnapshot(
+            compatibilityToken = "test-current-build",
+            savedAtMillis = 1234L,
+            game = ClocktowerRecovery(
+                entryPoint = RecoveryEntryPoint.Stable,
+                currentDealIndex = 0,
+                round = 1,
+                cards = listOf(card),
+                records = emptyList(),
+                outcome = null,
+                identity = ClocktowerRecoveryIdentity(
+                    script = ClocktowerScript.TroubleBrewing,
+                    gameId = "final-drunk-recovery",
+                    gameSeed = 99L,
+                ),
+                position = ClocktowerRecoveryPosition(
+                    phase = ClocktowerPhase.FirstNight,
+                    nightStarted = true,
+                    nightStepIndex = 0,
+                ),
+                mechanics = ClocktowerRecoveryMechanics(
+                    confirmedAttackTarget = null,
+                    confirmedPoisonTarget = null,
+                    confirmedMonkProtectedTarget = null,
+                    confirmedMayorRedirectTarget = null,
+                    pendingNewDemonName = null,
+                    pendingNightNewDemonIdentityName = null,
+                    confirmedDemonSuccessorTarget = null,
+                    redHerring = null,
+                    demonBluffRoleNames = emptyList(),
+                    butlerMaster = null,
+                    virginUsed = false,
+                    slayerUsed = false,
+                    slayerClaimedNames = emptyList(),
+                    artistUsed = false,
+                    artistClaimedNames = emptyList(),
+                    lastExecutedName = null,
+                    pendingKlutzName = null,
+                    klutzReturnToDawn = false,
+                    ghostVoteAuthority = ClocktowerGhostVoteAuthority(),
+                    highestVoteName = null,
+                    highestVoteCount = 0,
+                ),
+                history = ClocktowerRecoveryHistory(
+                    gameStateRevision = 1L,
+                    playerInputRevision = 0L,
+                    actionTimeline = ActionFactTimeline(),
+                    nextTimelineGlobalSequence = 0L,
+                    events = emptyList(),
+                    epistemicObservations = emptyList(),
+                ),
+            ),
+        )
+
+        val encoded = RecoverySnapshotJsonCodec.encode(snapshot)
+        val decoded = RecoverySnapshotJsonCodec.decodeStrict(
+            encoded,
+            roleByName = { roleName ->
+                when (roleName) {
+                    drunk.enName -> drunk
+                    chef.enName -> chef
+                    else -> null
+                }
+            },
+        )
+        val restored = (decoded.game as ClocktowerRecovery).cards.single()
+
+        assertEquals("Drunk", restored.clocktowerRole?.enName)
+        assertEquals("Chef", restored.clocktowerShownRole?.enName)
+        assertEquals("Drunk", restored.actualRoleLabel)
+        assertEquals("Chef", restored.roleLabel)
+    }
+
+    @Test
     fun clocktowerRecoveryKeepsConfirmedFactsButDiscardsDraftTargetsAndDayUi() {
         val snapshot = RecoverySnapshot(
             compatibilityToken = "test-current-build",
