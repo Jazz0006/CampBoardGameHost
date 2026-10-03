@@ -8,7 +8,6 @@ import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 internal data class TroubleBrewingPreparedSetup(
     val preset: TroubleBrewingSetupPreset,
     val intermediateSetup: TroubleBrewingIntermediateSetup,
-    val compatibilityConfirmedDrunkCandidate: TroubleBrewingDrunkCandidate? = null,
 )
 
 /**
@@ -102,51 +101,10 @@ internal object TroubleBrewingProductionSetupPreparer {
             visibleRoster = visibleRoster,
             shownSeatAssignments = shownSeatAssignments,
         )
-        val compatibilityConfirmedDrunkCandidate =
-            resolveCompatibilityConfirmedDrunkCandidate(
-                preset = selectedPreset,
-                intermediateSetup = intermediateSetup,
-                addedVisibleTownsfolkRoleId = addedVisibleTownsfolkRoleId,
-            )
-
         return TroubleBrewingPreparedSetup(
             preset = selectedPreset,
             intermediateSetup = intermediateSetup,
-            compatibilityConfirmedDrunkCandidate = compatibilityConfirmedDrunkCandidate,
         )
-    }
-
-    private fun resolveCompatibilityConfirmedDrunkCandidate(
-        preset: TroubleBrewingSetupPreset,
-        intermediateSetup: TroubleBrewingIntermediateSetup,
-        addedVisibleTownsfolkRoleId: String?,
-    ): TroubleBrewingDrunkCandidate? {
-        if (!intermediateSetup.visibleRoster.hasDrunk) {
-            require(addedVisibleTownsfolkRoleId == null) {
-                "Trouble Brewing setup without Drunk cannot carry a transitional fallback Townsfolk."
-            }
-            return null
-        }
-
-        require(DRUNK_EXTERNAL_ID in preset.outsiders) {
-            "Trouble Brewing Drunk visible roster must come from a Drunk preset."
-        }
-        val fallbackShownRoleId = requireNotNull(addedVisibleTownsfolkRoleId) {
-            "Trouble Brewing Drunk setup requires the transitional fallback Townsfolk."
-        }
-        require(fallbackShownRoleId in preset.drunkAsOptions) {
-            "Trouble Brewing transitional fallback Townsfolk must come from drunk_as_options."
-        }
-
-        return requireNotNull(
-            TroubleBrewingDrunkCandidateDomain
-                .legalCandidates(intermediateSetup)
-                .singleOrNull { candidate ->
-                    candidate.shownRoleId == fallbackShownRoleId
-                },
-        ) {
-            "Trouble Brewing transitional fallback must resolve to one current legal Drunk candidate."
-        }
     }
 
     private fun TroubleBrewingSetupPreset.actualExternalRoleIds(): List<String> =
@@ -174,6 +132,5 @@ internal object TroubleBrewingProductionSetupPreparer {
     }
 
     private val TROUBLE_BREWING_SCRIPT = ScriptId("trouble_brewing")
-    private const val DRUNK_EXTERNAL_ID = "drunk"
     private const val IMP_EXTERNAL_ID = "imp"
 }

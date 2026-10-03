@@ -25,7 +25,6 @@ class TroubleBrewingProductionSetupPreparerTest {
         )
 
         val intermediate = prepared.intermediateSetup
-        val fallbackCandidate = requireNotNull(prepared.compatibilityConfirmedDrunkCandidate)
 
         assertEquals("tb-8-production-a", prepared.preset.id)
         assertEquals(dataset.datasetId, intermediate.datasetId)
@@ -37,11 +36,9 @@ class TroubleBrewingProductionSetupPreparerTest {
         assertEquals((1..8).toList(), intermediate.shownSeatAssignments.map { it.seat })
         assertTrue(intermediate.visibleRoster.hasDrunk)
         assertEquals(0, intermediate.visibleRoster.visibleRoleIds.count { it == "drunk" })
-
-        assertTrue(
-            fallbackCandidate in TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate),
-        )
-        assertTrue(fallbackCandidate.shownRoleId in prepared.preset.drunkAsOptions)
+        val addedVisibleTownsfolk = intermediate.visibleRoster.townsfolkRoleIds
+            .single { roleId -> roleId !in prepared.preset.townsfolk }
+        assertTrue(addedVisibleTownsfolk in prepared.preset.drunkAsOptions)
     }
 
     @Test

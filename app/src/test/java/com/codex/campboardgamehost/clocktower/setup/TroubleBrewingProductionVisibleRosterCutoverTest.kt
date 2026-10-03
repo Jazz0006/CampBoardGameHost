@@ -14,7 +14,7 @@ import java.io.File
 
 class TroubleBrewingProductionVisibleRosterCutoverTest {
     @Test
-    fun `drunk production preparation seats only visible identities before fallback resolution`() {
+    fun `drunk production preparation seats only visible identities before policy resolution`() {
         val preset = drunkPreset()
         val dataset = dataset(preset)
         val registry = canonicalRegistry()
@@ -44,17 +44,6 @@ class TroubleBrewingProductionVisibleRosterCutoverTest {
             .single { it !in preset.townsfolk }
         assertTrue(addedVisibleTownsfolk in preset.drunkAsOptions)
 
-        val fallbackSeat = intermediate.shownSeatAssignments.single {
-            it.shownRoleId == addedVisibleTownsfolk
-        }
-        val confirmedFallback = requireNotNull(prepared.compatibilityConfirmedDrunkCandidate)
-        assertTrue(
-            confirmedFallback in TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate),
-        )
-        assertEquals(fallbackSeat.seat, confirmedFallback.seat)
-        assertEquals(fallbackSeat.playerName, confirmedFallback.playerName)
-        assertEquals(fallbackSeat.shownRoleId, confirmedFallback.shownRoleId)
-
         assertEquals(
             legacyShownIdentityChoice(
                 dataset = dataset,
@@ -78,7 +67,6 @@ class TroubleBrewingProductionVisibleRosterCutoverTest {
         )
 
         assertFalse(prepared.intermediateSetup.visibleRoster.hasDrunk)
-        assertEquals(null, prepared.compatibilityConfirmedDrunkCandidate)
         assertEquals(
             prepared.intermediateSetup.visibleRoster.visibleRoleIds.sorted(),
             prepared.intermediateSetup.shownSeatAssignments.map { it.shownRoleId }.sorted(),
