@@ -344,6 +344,15 @@ Exit:
 
 G10 and synthetic semantic-regression cases can run through V1-compatible pair shadow/replay.
 
+Implementation evidence:
+
+- tests-first RED head `022e7818f45733f693028caf9e976c2e7069ebdb`: CI #3678 failed at `compileDebugUnitTestKotlin` because the C5-B pair bridge did not yet exist;
+- bounded regression checkpoint `3d71330ca7daa6053fac5d163257d45d77732a6d`: CI #3681 / R2 #3391 GREEN after separating the initially over-heavy G10 world-enumeration workload from ordinary feedback;
+- executable full-domain checkpoint `067310a79b74ac4a7eb558b179676e56b3e3f65d`: CI #3682 / R2 #3392 GREEN. The G10 acceptance case again runs inside Android `testFull`, preserves all 40 rules-owned legal candidates, registration witnesses, candidate order, future-flexibility features, V1 replay identity and trace archive round-trip. The exact evaluator uses a bounded test role universe containing every actual/shown G10 role plus every Outsider role the Librarian may truthfully show; the legal domain itself still comes from the full Trouble Brewing registry;
+- final exact-head T4 checkpoint `fdb24f67c010759a123a6e648bef8d4015832cb1`: CI #3683 / R2 #3393 GREEN across Android `testFull + assembleDebug`, ASP contracts and Real Clingo cross-validation.
+
+C5-B is therefore **COMPLETE / ACCEPTED**. No production call site, visible recommendation, manual authority or V2 policy changed.
+
 ### C5-C — `BEGINNER_CONSERVATIVE_V2` weak preference
 
 Goal:
@@ -421,7 +430,7 @@ Do not bundle TBGS-2D Demon succession with C5 pair policy work in one implement
 | Typed future-flexibility contract | **PASS / SURFACE EXISTS** | `FutureFlexibilityFeatures` already exists. |
 | Future-flexibility production projector | **PASS / ACCEPTED — C5-A** | Rules-owned recurring-information capability + score-free pair projector passed exact-head T4 and R2. |
 | Pair exact-consequence primitives | **PASS** | Existing pair exact adapter and projector precedents. |
-| Pair production shadow/replay composition | **GAP / C5-B** | Existing structured shadow supports Number/Category, not pair outcome. |
+| Pair production shadow/replay composition | **PASS / ACCEPTED — C5-B** | Full pair legal domain composes into exact consequences/features, V1 shadow, DecisionTrace and replay; exact-head T4 passed without production authority change. |
 | Real V2 policy definition | **GAP / C5-C** | No `BEGINNER_CONSERVATIVE_V2` exists. |
 | Same-history V1/V2 replay | **GAP / C5-D** | Must run after V2 exists. |
 | Production automatic cutover | **BLOCKED / C5-E** | Requires completed projector/replay/V2 acceptance and explicit surface gate. |
@@ -432,8 +441,8 @@ Overall:
 C5 evidence re-entry                         PASS
 SDE-3D3 implementation                      AUTHORIZED
 C5-A projector                              COMPLETE / ACCEPTED
-C5-B pair shadow/replay                     NEXT
-C5-C BEGINNER_CONSERVATIVE_V2              PLANNED AFTER C5-B
+C5-B pair shadow/replay                     COMPLETE / ACCEPTED
+C5-C BEGINNER_CONSERVATIVE_V2              NEXT
 C5-D V1/V2 canonical replay                PLANNED AFTER C5-C
 C5-E production cutover                    BLOCKED UNTIL C5-D ACCEPTANCE
 E4 numeric calibration                     STILL UNPROVEN / NOT NEEDED FOR FIRST DELTA
@@ -441,7 +450,7 @@ E4 numeric calibration                     STILL UNPROVEN / NOT NEEDED FOR FIRST
 
 ## 12. Immediate next task
 
-Begin **C5-B — pair SDE shadow + replay bridge**. Preserve the accepted C5-A projector as a descriptive input only; do not create V2 or change visible recommendation/manual authority in C5-B.
+Begin **C5-C — `BEGINNER_CONSERVATIVE_V2` weak preference**. Create a real immutable V2 only over the accepted C5-A future-flexibility feature and C5-B replay seam. Preserve V1 unchanged; outside the admitted predicate, when the feature is unavailable, or when no qualifying preferred subset exists, fall back exactly to V1. V2 remains shadow/replay-only.
 
 Do not wait for more EvidenceLab evidence for this predicate.
 

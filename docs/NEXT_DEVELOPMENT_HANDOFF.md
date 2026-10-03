@@ -2,12 +2,12 @@
 
 > Updated: 2026-10-03 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed executable validation checkpoint: **C5-A final T4 — `5b516e10e0f01848a1dad7a06dd214e73faa5a97`; CI #3673 / R2 #3385 GREEN, including Android FULL/assemble, ASP and Real Clingo**  
+> Last completed executable validation checkpoint: **C5-B final T4 — `fdb24f67c010759a123a6e648bef8d4015832cb1`; CI #3683 / R2 #3393 GREEN, including Android FULL/assemble, ASP and Real Clingo**  
 > DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> Product next work: **C5-B — implement the pair SDE shadow + replay bridge over the complete current pair legal domain and accepted C5-A future-flexibility projector. Preserve legal candidate order, registration witnesses, canonical history identity, current visible recommendation and manual authority. Do not create `BEGINNER_CONSERVATIVE_V2` or any ML-specific production adapter in C5-B. HOST-ML0 is complete; HOST-ML1 remains deferred until C5-D. TBGS-2D remains an independent implementation-ready lane.**
+> Product next work: **C5-C — implement the first immutable `BEGINNER_CONSERVATIVE_V2` weak-preference policy over the accepted C5-A future-flexibility feature and C5-B pair replay seam. Preserve V1 exactly; outside the admitted predicate, on unavailable feature, or when no qualifying subset exists, fall back exactly to V1. V2 remains shadow/replay-only. HOST-ML1 remains deferred until C5-D; TBGS-2D remains an independent implementation-ready lane.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -210,7 +210,7 @@ DLB-0 typed intermediate setup COMPLETE
 -> EvidenceLab G10 `16:52` Librarian future-flexibility predicate E3 PASS at `78f672868ea6603317aeefa20ad91686c5886db9`
 -> C5 re-entry audit COMPLETE / PASS; SDE-3D3 implementation AUTHORIZED
 -> C5-A pair future-flexibility projector COMPLETE / ACCEPTED; `5b516e10e0f01848a1dad7a06dd214e73faa5a97`, CI #3673 / R2 #3385 GREEN
--> C5-B pair shadow/replay bridge NEXT
+-> C5-B pair shadow/replay bridge COMPLETE / ACCEPTED; final T4 `fdb24f67c010759a123a6e648bef8d4015832cb1`, CI #3683 / R2 #3393 GREEN
 || TBGS-2D remains IMPLEMENTATION READY as an independent lane
 -> A3 presentation catalog READY / independent maintenance only
 ```
@@ -246,8 +246,8 @@ Implementation route:
 ```text
 C5 re-entry audit                         COMPLETE / PASS
 -> C5-A future-flexibility projector     COMPLETE / ACCEPTED
--> C5-B pair shadow/replay bridge        NEXT
--> C5-C BEGINNER_CONSERVATIVE_V2 weak preference
+-> C5-B pair shadow/replay bridge        COMPLETE / ACCEPTED
+-> C5-C BEGINNER_CONSERVATIVE_V2 weak preference NEXT
 -> C5-D canonical V1/V2 replay
 -> C5-E surface-scoped production cutover gate
 ```
