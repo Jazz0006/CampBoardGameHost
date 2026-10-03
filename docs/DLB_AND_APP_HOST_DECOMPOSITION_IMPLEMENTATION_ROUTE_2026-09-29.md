@@ -223,8 +223,8 @@ Independent decomposition items remain separate from the DLB behavior campaign:
 - **A1 App preferences storage:** safe independent maintenance; may run before or after DLB, but is not a prerequisite.
 - **A2 archive storage:** separate maintenance PR; preserve archive-specific durability/order/capacity semantics.
 - **H1:** COMPLETE / ACCEPTED through DLB-5H1; localized first-night evil-information presentation is extracted without moving dependency, legality, recommendation or session ownership.
-- **former H2 dynamic recommendation-state projection:** superseded by a staged TB snapshot route. **TBGS-0/1** now establish the TB-only immutable snapshot contract and Drunk vertical slice before the first production-capable Drunk recommendation request; **TBGS-2** later migrates remaining runtime recommendation consumers incrementally. Do not conflate the standard snapshot with the Drunk hypothetical projector or turn it into a second state owner.
-- **A3 presentation catalog:** defer until DLB setup/presentation fan-out stabilizes.
+- **former H2 dynamic recommendation-state projection:** superseded by a staged TB snapshot route. **TBGS-0/1** established the TB-only immutable snapshot contract and Drunk vertical slice; **TBGS-2** is now active and migrates remaining runtime recommendation consumers incrementally, beginning with TBGS-2A first-night natural-pair precompute. Do not conflate the standard snapshot with the Drunk hypothetical projector or turn it into a second state owner.
+- **A3 presentation catalog:** DLB setup/presentation fan-out is now stable enough for A3 to be **READY as an independent maintenance slice**. It is not a TBGS-2 prerequisite and must not be bundled into TBGS-2A. Preserve presentation membership/order/localization and keep `BuiltInClocktowerRulesetCatalog` as rules authority.
 - **R3 transaction extraction:** remains NO-GO.
 - **generic setup-effect owner:** remains NO-GO.
 - **Recovery R7:** remains a separate optional ownership follow-up and is not part of DLB unless new evidence proves a direct need.
