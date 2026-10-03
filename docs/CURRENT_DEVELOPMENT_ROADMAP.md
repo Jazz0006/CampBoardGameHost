@@ -40,8 +40,9 @@ DRUNK_ASSIGNMENT_Q04_V1 implementation / replay              COMPLETE / ACCEPTED
 Q04 V1 production cutover                                   COMPLETE / ACCEPTED
 Beginner automatic Drunk authority                          COMPLETE / ACCEPTED — Q04 V1
 DLB-6 old-contract retirement                               COMPLETE / ACCEPTED
-DLB-7 final DLB acceptance                                  NEXT
-TBGS-2 runtime recommendation projection migration           DEFERRED / POST DLB-7
+DLB-7 final DLB acceptance                                  COMPLETE / ACCEPTED
+DLB campaign                                                COMPLETE / ACCEPTED
+TBGS-2 runtime recommendation projection migration           NEXT / UNBLOCKED
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
@@ -141,7 +142,7 @@ Do not conflate those gates. C5 / BEGINNER_CONSERVATIVE_V2 remains blocked. DLB 
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate ordering/rejection semantics. Any production Drunk-selection policy delta requires an explicitly versioned decision-surface contract.
 
-The 2026-09-30 Drunk-assignment production cutover audit remains the historical NOT-PASSED verdict. On 2026-10-02, EvidenceLab Q04 became the first primary-audio VERIFIED C3 Stage-1 conditional preference at checkpoint `08d95a0c258f687187c0476a0f430fa5ff8229cb`. The bounded ordering-evidence gate passed, `DRUNK_ASSIGNMENT_Q04_V1` was implemented as the smallest evidence-authorized Q04-only Empath -> Monk override with explicit baseline fallback, and its dedicated replay was accepted at `5cf72a54a62c87763279c02014485a847724b72e` with CI #3631 / R2 #3351 GREEN. Beginner production wiring was then completed at `0ef3760ee233b0e20fa0dd272b12380abe8ee4a4`. Final exact-head T4 acceptance `9762d5a759bf0eaa81a1f6cb5af1aa28281d3ac2` passed CI #3633 and R2 #3353, including Android `testFull + assembleDebug`, ASP contracts and Real Clingo. The Q04 production cutover gate is therefore PASS and Beginner automatic Drunk authority is accepted. `DRUNK_ASSIGNMENT_SHADOW_V1` remains deferral-only and `BEGINNER_CONSERVATIVE_V1` remains immutable. DLB-6 then retired the old DealPlan/pre-seat selector/scorer, `CompatibilityImmediate`, prepared-setup compatibility-candidate ownership and current-model `selectedDrunkShownRole`; final executable checkpoint `52c2e73ca455a62c31065ce0e6fca4edda8713ec` passed CI #3639 / R2 #3358 GREEN. DLB-6 is COMPLETE / ACCEPTED; DLB-7 final acceptance is NEXT.
+The 2026-09-30 Drunk-assignment production cutover audit remains the historical NOT-PASSED verdict. On 2026-10-02, EvidenceLab Q04 became the first primary-audio VERIFIED C3 Stage-1 conditional preference at checkpoint `08d95a0c258f687187c0476a0f430fa5ff8229cb`. The bounded ordering-evidence gate passed, `DRUNK_ASSIGNMENT_Q04_V1` was implemented as the smallest evidence-authorized Q04-only Empath -> Monk override with explicit baseline fallback, and its dedicated replay was accepted at `5cf72a54a62c87763279c02014485a847724b72e` with CI #3631 / R2 #3351 GREEN. Beginner production wiring was then completed at `0ef3760ee233b0e20fa0dd272b12380abe8ee4a4`. Final exact-head T4 acceptance `9762d5a759bf0eaa81a1f6cb5af1aa28281d3ac2` passed CI #3633 and R2 #3353, including Android `testFull + assembleDebug`, ASP contracts and Real Clingo. The Q04 production cutover gate is therefore PASS and Beginner automatic Drunk authority is accepted. `DRUNK_ASSIGNMENT_SHADOW_V1` remains deferral-only and `BEGINNER_CONSERVATIVE_V1` remains immutable. DLB-6 then retired the old DealPlan/pre-seat selector/scorer, `CompatibilityImmediate`, prepared-setup compatibility-candidate ownership and current-model `selectedDrunkShownRole`; final executable checkpoint `52c2e73ca455a62c31065ce0e6fca4edda8713ec` passed CI #3639 / R2 #3358 GREEN. DLB-6 is COMPLETE / ACCEPTED. DLB-7 then closed the full route-wide behavior matrix with dataset-wide 5–15 preset coverage plus explicit finalized-Drunk Recovery identity roundtrip. Exact T4 checkpoint `b760117351e57cfe78cc0bc9483b42306757c22f` passed CI #3643 / R2 #3361 GREEN, including Android `testFull + assembleDebug`, ASP contracts and Real Clingo. DLB-7 and the overall DLB campaign are COMPLETE / ACCEPTED; TBGS-2 incremental runtime recommendation-state migration / A3 re-audit is now NEXT / UNBLOCKED.
 
 ## 5. Recovery product boundary
 
@@ -238,8 +239,9 @@ query live main / workspace
 -> Q04 production cutover T4 COMPLETE / ACCEPTED; `9762d5a759bf0eaa81a1f6cb5af1aa28281d3ac2`, CI #3633 / R2 #3353 GREEN
 -> Beginner automatic Drunk authority COMPLETE / ACCEPTED
 -> DLB-6 old-contract retirement COMPLETE / ACCEPTED; `52c2e73ca455a62c31065ce0e6fca4edda8713ec`, CI #3639 / R2 #3358 GREEN
--> DLB-7 acceptance NEXT
--> TBGS-2 incremental runtime recommendation-state migration / A3 re-audit after DLB-7
+-> DLB-7 final acceptance COMPLETE / ACCEPTED; `b760117351e57cfe78cc0bc9483b42306757c22f`, CI #3643 / R2 #3361 GREEN
+-> DLB campaign COMPLETE / ACCEPTED
+-> TBGS-2 incremental runtime recommendation-state migration / A3 re-audit NEXT / UNBLOCKED
 ~~~
 
 A1/A2 may proceed as separate maintenance PRs without blocking DLB. C5/V2 remains a separate evidence-gated lane.

@@ -3,8 +3,8 @@
 > Date: 2026-10-03  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `dlb-7-final-acceptance`  
-> Draft PR: #196 — `DLB-7: finalize Drunk late-binding acceptance`  
-> Status: **READY FOR FINAL T4 — acceptance matrix complete; final [full-ci] checkpoint pending**
+> Delivery PR: #196 — `DLB-7: finalize Drunk late-binding acceptance`  
+> Status: **COMPLETE / ACCEPTED — exact executable T4 checkpoint `b760117351e57cfe78cc0bc9483b42306757c22f`; CI #3643 / R2 #3361 GREEN**
 
 ## 1. Scope
 
@@ -32,7 +32,7 @@ The accepted Q04 policy boundary remains unchanged:
 | Actual Fortune Teller gets a Red Herring before the earliest observer/result dependency | `ClocktowerDrunkFortuneTellerFlowTest.actual Fortune Teller still creates red herring before the role interaction` plus `FirstNightSetupDependencyPlannerTest` earliest-semantic-dependency / earlier-observer cases. | PASS |
 | Poison confirmation advances canonical revision and invalidates stale downstream plans | `Sde2PoisonReplanningTest.Poisoner change stales all uncommitted plans and broadly recomputes exact consequences` verifies draft input revision, one committed state revision, stale-plan invalidation and fresh replanning while committed history remains stable. | PASS |
 | DecisionTrace/replay correlates selected Drunk candidate | `DrunkAssignmentShadowReplayTest.Q04 replay over reconstructable G10 preserves Empath when its topology fails the Q04 condition` verifies legal candidate identity, Q04 evaluation and historical actual-choice correlation. Existing shadow replay tests preserve legal-domain order/features. | PASS |
-| Current-version Recovery restores finalized setup only | `RecoverySnapshotJsonCodecTest.clocktowerRecoveryRoundTripsFinalDrunkActualAndShownIdentity` explicitly round-trips finalized `actual=Drunk / shown=Townsfolk` identity. Existing `clocktowerRecoveryKeepsConfirmedFactsButDiscardsDraftTargetsAndDayUi`, `RecoveryRestorePlannerTest.clocktowerConfirmedFactsRoundTripWhileDraftTargetsRemainAbsent`, and current-only Recovery validation protect confirmed-only/current-format behavior. | PASS pending final T4 execution of the new explicit identity test. |
+| Current-version Recovery restores finalized setup only | `RecoverySnapshotJsonCodecTest.clocktowerRecoveryRoundTripsFinalDrunkActualAndShownIdentity` explicitly round-trips finalized `actual=Drunk / shown=Townsfolk` identity. Existing `clocktowerRecoveryKeepsConfirmedFactsButDiscardsDraftTargetsAndDayUi`, `RecoveryRestorePlannerTest.clocktowerConfirmedFactsRoundTripWhileDraftTargetsRemainAbsent`, and current-only Recovery validation protect confirmed-only/current-format behavior. | PASS at final T4 checkpoint `b760117351e57cfe78cc0bc9483b42306757c22f`. |
 | Non-Drunk templates remain behaviorally unchanged | `Dlb7TroubleBrewingAcceptanceTest.every built in non Drunk template remains candidate free and commits shown identities unchanged` iterates every built-in non-Drunk preset and verifies exact visible role set, empty Drunk candidate domain, no committed Drunk, and `actual == shown`. | PASS at dataset-wide checkpoint `c773e643df7b214f336578b16b042b834c85cc0e`; CI #3642 / R2 #3360 GREEN. |
 
 ## 3. Dataset-wide coverage
@@ -87,19 +87,23 @@ DLB-7 does not reopen those contracts.
 
 ## 6. Final T4 gate
 
-Before DLB-7 is marked COMPLETE / ACCEPTED, create an exact logical checkpoint whose commit message contains `[full-ci]`.
+Exact logical acceptance checkpoint:
 
-Required final acceptance:
+`b760117351e57cfe78cc0bc9483b42306757c22f`
 
-- Android `:app:testFull`;
-- Android debug assemble/compile;
-- ASP contract validation;
-- Real Clingo cross-validation;
-- independent R2;
-- exact PR head clean/mergeable;
-- zero unresolved review threads.
+The commit message contained `[full-ci]`, and the full checkpoint ran at full strength:
 
-After that exact head is GREEN, update this document and the current roadmap/handoff, then merge PR #196 under the standing merge authorization.
+- Android `:app:testFull` + debug assemble/compile: **GREEN**;
+- ASP contract validation: **GREEN**;
+- Real Clingo cross-validation: **GREEN**;
+- independent R2 #3361: **GREEN**;
+- CI #3643 aggregate gate: **GREEN**;
+- PR #196 exact head: clean / mergeable;
+- unresolved review threads: 0.
+
+The earlier dataset-wide checkpoint `c773e643df7b214f336578b16b042b834c85cc0e` independently passed CI #3642 / R2 #3360.
+
+**DLB-7 is COMPLETE / ACCEPTED. The DLB campaign is complete.**
 
 ## 7. Next route after acceptance
 

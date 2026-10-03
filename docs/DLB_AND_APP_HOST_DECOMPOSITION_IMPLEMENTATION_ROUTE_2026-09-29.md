@@ -212,6 +212,10 @@ Required coverage includes:
 - current-version Recovery restores finalized setup only;
 - non-Drunk templates remain behaviorally unchanged.
 
+DLB-7 is COMPLETE / ACCEPTED at exact T4 checkpoint `b760117351e57cfe78cc0bc9483b42306757c22f` with CI #3643 and R2 #3361 GREEN. The final gate included Android `:app:testFull` + debug assemble, ASP contracts and Real Clingo. Dataset-wide acceptance now iterates every built-in 5–15 player Trouble Brewing Drunk preset / `drunk_as_options` value and every non-Drunk preset; finalized Drunk Recovery actual/shown identity also has an explicit current-format roundtrip. Authority: `docs/DLB_7_FINAL_ACCEPTANCE_2026-10-03.md`.
+
+The DLB campaign is COMPLETE / ACCEPTED. No DLB behavior slice remains open.
+
 ## 5. Decomposition maintenance lane
 
 Independent decomposition items remain separate from the DLB behavior campaign:
@@ -316,8 +320,9 @@ document authority convergence (this route)
 -> Q04 production cutover PASS / ACCEPTED
 -> Beginner automatic Drunk authority COMPLETE / ACCEPTED
 -> DLB-6 old-contract retirement COMPLETE / ACCEPTED
--> DLB-7 acceptance NEXT
--> TBGS-2 incremental runtime recommendation-state migration / A3 re-audit
+-> DLB-7 final acceptance COMPLETE / ACCEPTED
+-> DLB campaign COMPLETE / ACCEPTED
+-> TBGS-2 incremental runtime recommendation-state migration / A3 re-audit NEXT
 ```
 
 A1/A2 may proceed as separate maintenance work without blocking this sequence.

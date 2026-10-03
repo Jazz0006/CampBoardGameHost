@@ -2,12 +2,12 @@
 
 > Updated: 2026-10-03 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed executable validation checkpoint: **DLB-6D compatibility-candidate ownership retirement — `52c2e73ca455a62c31065ce0e6fca4edda8713ec`; CI #3639 / R2 #3358 GREEN**  
-> Latest merged checkpoint: **PR #194 — `DLB: add Q04 Drunk assignment policy` — squash merge `f7c6b643158d894c0fb342351330114fa9fad24a`**  
-> Current open development PR: **#195 — `DLB-6: retire old Drunk setup contracts` — executable scope accepted; closure docs pending merge**  
-> Current cutover verdict: **Q04 production cutover PASS / ACCEPTED; Beginner automatic Drunk authority ACCEPTED**  
+> Last completed executable validation checkpoint: **DLB-7 final T4 — `b760117351e57cfe78cc0bc9483b42306757c22f`; CI #3643 / R2 #3361 GREEN, including Android FULL/assemble, ASP and Real Clingo**  
+> DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
+> DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
+> Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `08d95a0c258f687187c0476a0f430fa5ff8229cb` — Q04 human-verified from primary audio**  
-> Product next work: **DLB-7 final acceptance over the complete DLB behavior matrix. Do not start TBGS-2 until DLB-7 closes. Keep `BEGINNER_CONSERVATIVE_V1` immutable and `DRUNK_ASSIGNMENT_SHADOW_V1` deferral-only.**
+> Product next work: **TBGS-2 incremental runtime recommendation-state migration / A3 re-audit. Keep the standard snapshot read-only, migrate consumers incrementally, and do not broaden into R3/generic setup-effect ownership. `BEGINNER_CONSERVATIVE_V1` remains immutable and `DRUNK_ASSIGNMENT_SHADOW_V1` remains deferral-only.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -19,14 +19,15 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
 6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
-7. `docs/DLB_6_OLD_CONTRACT_RETIREMENT_COMPLETION_2026-10-03.md` — DLB-6 accepted retirement boundary and DLB-7 handoff
-8. `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md` — Q04 evidence/policy/cutover acceptance authority
-9. `docs/DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md` — historical post-TBGS-1 NOT-PASSED verdict before Q04 verification
-9. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — original pre-TBGS-1 gate audit / historical blocker detail
-10. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
-11. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 deferred
-12. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-13. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+7. `docs/DLB_7_FINAL_ACCEPTANCE_2026-10-03.md` — final DLB acceptance matrix and exact T4 authority
+8. `docs/DLB_6_OLD_CONTRACT_RETIREMENT_COMPLETION_2026-10-03.md` — DLB-6 accepted retirement boundary
+9. `docs/DLB_DRUNK_ASSIGNMENT_C3_Q04_REENTRY_AUDIT_2026-10-02.md` — Q04 evidence/policy/cutover acceptance authority
+10. `docs/DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md` — historical post-TBGS-1 NOT-PASSED verdict before Q04 verification
+11. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — original pre-TBGS-1 gate audit / historical blocker detail
+12. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
+13. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 now next
+14. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+15. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -85,8 +86,9 @@ DRUNK_ASSIGNMENT_Q04_V1 + replay                   COMPLETE / ACCEPTED
 Q04 production cutover                             COMPLETE / ACCEPTED
 Beginner automatic Drunk authority                 COMPLETE / ACCEPTED
 DLB-6 old-contract retirement                      COMPLETE / ACCEPTED
-DLB-7 final acceptance                             NEXT
-TBGS-2 runtime recommendation projection migration DEFERRED / POST DLB-7
+DLB-7 final acceptance                             COMPLETE / ACCEPTED
+DLB campaign                                       COMPLETE / ACCEPTED
+TBGS-2 runtime recommendation projection migration NEXT / UNBLOCKED
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -190,8 +192,9 @@ DLB-0 typed intermediate setup COMPLETE
 -> Q04 production cutover PASS / ACCEPTED
 -> Beginner automatic Drunk authority COMPLETE / ACCEPTED
 -> DLB-6 old-contract retirement COMPLETE / ACCEPTED; `52c2e73ca455a62c31065ce0e6fca4edda8713ec`, CI #3639 / R2 #3358 GREEN
--> DLB-7 final acceptance NEXT
--> TBGS-2 incremental runtime recommendation-state migration only after DLB-7
+-> DLB-7 final acceptance COMPLETE / ACCEPTED; `b760117351e57cfe78cc0bc9483b42306757c22f`, CI #3643 / R2 #3361 GREEN
+-> DLB campaign COMPLETE / ACCEPTED
+-> TBGS-2 incremental runtime recommendation-state migration / A3 re-audit NEXT / UNBLOCKED
 ```
 
 The App/Host decomposition audit is a constraint on this work, not a prerequisite campaign:
