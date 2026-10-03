@@ -1,9 +1,12 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
+import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalCandidate
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 
 /**
@@ -50,8 +53,12 @@ internal data class RecommendationDecisionExportV1(
             }
 
             RecommendationDecisionExportTypeV1.FIRST_NIGHT_PAIR_INFORMATION -> {
-                require(inputEligible.context is RecommendationDecisionContextV1.FirstNightPairInformation) {
-                    "Pair export requires a first-night pair typed context."
+                val context = inputEligible.context as? RecommendationDecisionContextV1.FirstNightPairInformation
+                    ?: throw IllegalArgumentException(
+                        "Pair export requires a first-night pair typed context.",
+                    )
+                require(context.legalCandidates.map { it.candidateId } == legalCandidateIds) {
+                    "Pair export typed candidate payload must preserve the complete legal-candidate order."
                 }
                 require(inputEligible.featureProjection is RecommendationFeatureProjectionV1.StandardDecision) {
                     "Pair export requires the standard DecisionFeatureEvaluation surface."
@@ -174,12 +181,26 @@ internal data class RecommendationDecisionExportV1(
 
         fun fromFirstNightPairInformation(
             request: PairInformationShadowReplayRequest,
+            legalCandidates: List<PairInformationLegalCandidate>,
             replayTraces: List<DecisionTrace>,
         ): RecommendationDecisionExportV1 {
             require(replayTraces.isNotEmpty()) {
                 "Pair recommendation export requires at least one replay trace."
             }
             val first = replayTraces.first()
+            val legalCandidateIds = legalCandidates.map(PairInformationLegalCandidate::candidateId)
+            require(legalCandidateIds.isNotEmpty()) {
+                "Pair recommendation export requires the complete non-empty legal candidate domain."
+            }
+            require(legalCandidateIds == first.legalCandidateIds) {
+                "Pair recommendation export semantic candidate payload must preserve the replayed legal domain."
+            }
+            require(
+                request.reliability != ReliabilityState.RELIABLE ||
+                    legalCandidates.all { candidate -> candidate.semanticTruth == SemanticTruth.TRUE },
+            ) {
+                "Reliable pair export cannot contain a false semantic candidate."
+            }
             val prefix = first.historyPrefixRef as? SdeHistoricalPrefixRef.Global
                 ?: throw IllegalArgumentException(
                     "Pair recommendation export requires a canonical Global history prefix.",
@@ -222,17 +243,26 @@ internal data class RecommendationDecisionExportV1(
                     lifecycleStage = request.lifecycleStage,
                     sourceRevision = first.sourceRevision,
                     historyPrefixRef = prefix,
-                    legalCandidateIds = first.legalCandidateIds,
+                    legalCandidateIds = legalCandidateIds,
                     context = RecommendationDecisionContextV1.FirstNightPairInformation(
                         sourceSeat = request.sourceSeat,
                         abilityRole = request.abilityRole,
                         reliability = request.reliability,
+                        legalCandidates = legalCandidates.map { candidate ->
+                            RecommendationPairCandidateContextV1(
+                                candidateId = candidate.candidateId,
+                                shownRoleId = candidate.outcome.shownRole?.value,
+                                candidateSeats = candidate.outcome.candidateSeats,
+                                semanticTruth = candidate.semanticTruth,
+                                registrations = candidate.registrations,
+                            )
+                        },
                     ),
                     featureProjection = RecommendationFeatureProjectionV1.StandardDecision(
                         evaluation = first.featureEvaluation,
                     ),
                 ),
-                targetOrLabel = targetFrom(first.actualChoice, first.legalCandidateIds),
+                targetOrLabel = targetFrom(first.actualChoice, legalCandidateIds),
                 evaluationMetadata = RecommendationDecisionEvaluationV1(policyTraces),
                 provenanceOnly = RecommendationDecisionProvenanceV1(
                     gameId = request.context.snapshot.gameId,
@@ -307,11 +337,42 @@ internal sealed interface RecommendationDecisionContextV1 {
         val sourceSeat: Int,
         val abilityRole: RoleId,
         val reliability: ReliabilityState,
+        val legalCandidates: List<RecommendationPairCandidateContextV1>,
     ) : RecommendationDecisionContextV1 {
         init {
             require(sourceSeat > 0) {
                 "Pair recommendation export source seat must be positive."
             }
+            require(legalCandidates.isNotEmpty()) {
+                "Pair recommendation export context requires legal candidate payloads."
+            }
+            require(legalCandidates.map { it.candidateId }.distinct().size == legalCandidates.size) {
+                "Pair recommendation export context candidate IDs must be unique."
+            }
+        }
+    }
+}
+
+internal data class RecommendationPairCandidateContextV1(
+    val candidateId: String,
+    val shownRoleId: String?,
+    val candidateSeats: List<Int>,
+    val semanticTruth: SemanticTruth,
+    val registrations: List<RegistrationFact>,
+) {
+    init {
+        require(candidateId.isNotBlank()) { "Pair export candidate ID cannot be blank." }
+        require(candidateSeats.all { it > 0 } && candidateSeats.distinct().size == candidateSeats.size) {
+            "Pair export candidate seats must be positive and unique."
+        }
+        require(
+            (shownRoleId == null && candidateSeats.isEmpty()) ||
+                (shownRoleId != null && shownRoleId.isNotBlank() && candidateSeats.size == 2),
+        ) {
+            "Pair export candidate payload must represent either an empty result or one shown role with two seats."
+        }
+        require(semanticTruth == SemanticTruth.TRUE || registrations.isEmpty()) {
+            "False pair export candidates cannot claim truth-registration witnesses."
         }
     }
 }
