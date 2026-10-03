@@ -287,3 +287,9 @@ Focused tests:
 Then run `:app:testFast` plus the standard static/diff gates. Full T4 acceptance remains required before merge because this slice changes production confirmation/publication authority.
 
 TBGS-2B is now **IMPLEMENTATION READY**.
+
+### 10.4 T4 acceptance staging
+
+The implementation checkpoint `d69b750e56593c459f7fcdb8b6d10a83bb5f28fd` passed ordinary CI #3651 and R2 #3367. Android/ASP/Real Clingo jobs were not selected at that ordinary checkpoint, so this is not final acceptance.
+
+A docs-only `[full-ci]` checkpoint is requested next. The resulting exact head must pass Android `:app:testFull + :app:assembleDebug`, ASP contracts, Real Clingo and R2 before TBGS-2B may be marked COMPLETE / ACCEPTED.
