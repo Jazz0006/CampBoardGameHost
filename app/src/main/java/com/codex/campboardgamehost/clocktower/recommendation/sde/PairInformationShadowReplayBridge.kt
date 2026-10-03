@@ -209,6 +209,16 @@ internal object PairInformationShadowReplayBridge {
             legalCandidateIds = legalCandidateIds,
             featureEvaluation = featureEvaluation,
             selectionSeed = request.context.snapshot.gameSeed,
+            policyScope = DecisionPolicyReplayScope.PairInformation(
+                script = game.script,
+                phase = request.lifecycleStage.phase,
+                round = request.lifecycleStage.round,
+                targetType = targetTypeFor(request.abilityRole),
+                reliability = request.reliability,
+                truthfulLegalOutcomes = legalCandidates.all { candidate ->
+                    candidate.semanticTruth == SemanticTruth.TRUE
+                },
+            ),
         )
 
         return PairInformationShadowReplayEvaluation(
@@ -376,6 +386,16 @@ internal object PairInformationShadowReplayBridge {
             },
         )
     }
+
+    private fun targetTypeFor(abilityRole: RoleId): CharacterType =
+        when (abilityRole) {
+            RoleId("Washerwoman") -> CharacterType.TOWNSFOLK
+            RoleId("Librarian") -> CharacterType.OUTSIDER
+            RoleId("Investigator") -> CharacterType.MINION
+            else -> throw IllegalArgumentException(
+                "Unsupported pair-information ability '${abilityRole.value}'.",
+            )
+        }
 
     private fun <T> SnapshotField<T>.requireKnown(label: String): T =
         (this as? SnapshotField.Known<T>)?.value

@@ -16,6 +16,7 @@ internal data class MultiPolicyReplayInput(
     val legalCandidateIds: List<String>,
     val featureEvaluation: DecisionFeatureEvaluation,
     val selectionSeed: Long,
+    val policyScope: DecisionPolicyReplayScope = DecisionPolicyReplayScope.Unspecified,
 ) {
     init {
         require(decisionId.isNotBlank()) { "Multi-policy replay decision ID cannot be blank." }
@@ -64,6 +65,7 @@ internal data class MultiPolicyReplayInput(
                 legalCandidateIds = legalCandidateIds,
                 featureEvaluation = shadow.featureEvaluation,
                 selectionSeed = shadow.selectionSeed,
+                policyScope = DecisionPolicyReplayScope.Unspecified,
             )
         }
     }
@@ -110,10 +112,11 @@ internal object MultiPolicyReplayEngine {
             require(runner.policyVersion == policyVersion) {
                 "Policy replay registry returned a mismatched runner."
             }
-            val run = runner.run(
+            val run = runner.runScoped(
                 featureEvaluation = recomputedInput.featureEvaluation,
                 decisionId = recomputedInput.decisionId,
                 selectionSeed = recomputedInput.selectionSeed,
+                policyScope = recomputedInput.policyScope,
             )
             require(run.policySnapshot.policyVersion == policyVersion) {
                 "Policy replay output version does not match the requested policy version."

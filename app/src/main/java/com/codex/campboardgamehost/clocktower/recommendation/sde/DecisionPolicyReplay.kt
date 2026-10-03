@@ -62,6 +62,17 @@ internal interface DecisionPolicyReplayRunner {
         decisionId: String,
         selectionSeed: Long,
     ): DecisionPolicyReplayRun
+
+    fun runScoped(
+        featureEvaluation: DecisionFeatureEvaluation,
+        decisionId: String,
+        selectionSeed: Long,
+        policyScope: DecisionPolicyReplayScope,
+    ): DecisionPolicyReplayRun = run(
+        featureEvaluation = featureEvaluation,
+        decisionId = decisionId,
+        selectionSeed = selectionSeed,
+    )
 }
 
 internal object BeginnerConservativeV1ReplayRunner : DecisionPolicyReplayRunner {
@@ -94,22 +105,22 @@ internal object BeginnerConservativeV2ReplayRunner : DecisionPolicyReplayRunner 
         featureEvaluation: DecisionFeatureEvaluation,
         decisionId: String,
         selectionSeed: Long,
-    ): DecisionPolicyReplayRun = run(
+    ): DecisionPolicyReplayRun = runScoped(
         featureEvaluation = featureEvaluation,
         decisionId = decisionId,
         selectionSeed = selectionSeed,
-        scope = DecisionPolicyReplayScope.Unspecified,
+        policyScope = DecisionPolicyReplayScope.Unspecified,
     )
 
-    fun run(
+    override fun runScoped(
         featureEvaluation: DecisionFeatureEvaluation,
         decisionId: String,
         selectionSeed: Long,
-        scope: DecisionPolicyReplayScope,
+        policyScope: DecisionPolicyReplayScope,
     ): DecisionPolicyReplayRun {
         val evaluation = BeginnerConservativeV2Policy.evaluate(
             featureEvaluation = featureEvaluation,
-            scope = scope,
+            scope = policyScope,
         )
         val selection = BeginnerConservativeV2Selector.select(
             evaluation = evaluation,
