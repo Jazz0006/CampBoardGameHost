@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@da5e9947e7a2799d94720454b67fdb6de2ef54a3`  
-> Status: **TBGS-2A COMPLETE / ACCEPTED**
+> Status: **TBGS-2A COMPLETE / ACCEPTED; TBGS-2B COMPLETE / ACCEPTED**
 
 ## 1. Decision
 
@@ -204,9 +204,101 @@ Tentative next re-audit order, not pre-authorized implementation:
 
 ```text
 TBGS-2A first-night natural-pair precompute COMPLETE / ACCEPTED
--> TBGS-2B pair manual/publication consumer focused re-audit NEXT
--> setup coordination consumer
+-> TBGS-2B pair manual/publication consumer COMPLETE / ACCEPTED
+-> setup coordination consumer focused re-audit NEXT
 -> DynamicGameState consumers one typed decision family at a time
 ```
 
 Re-audit after each accepted slice. Do not assume this ordering remains optimal if ownership or evidence changes.
+
+## 10. TBGS-2B focused re-audit — pair manual/publication confirmation
+
+The post-2A re-audit confirms that the next bounded production consumer is still the pair manual/publication path for Washerwoman / Librarian / Investigator.
+
+Two TB production call sites still rebuild recommendation-state input from presentation cards:
+
+```text
+ClocktowerHostScreen.legalPairInformationOptions()
+    -> cards.toClocktowerGameState(...)
+    -> ClocktowerPairManualAuthority.projectLegalOptions(...)
+
+publishFirstNightInformation()
+    -> clocktowerFirstNightInformationRequest(...)
+    -> cards.toClocktowerGameState(...)
+    -> ClocktowerPairManualAuthority.selectedObservation(...)
+```
+
+Both are **production confirmation/output consumers**, not shadow-only consumers:
+
+- `projectLegalOptions` defines the complete selectable Manual domain shown to the Storyteller;
+- `selectedObservation` validates the chosen structured proposition against the authoritative legal domain and preserves Spy/Recluse registration facts in the published observation.
+
+### 10.1 Why the existing 2A typed context is sufficient
+
+`PairInformationLegalDomain` separates three concerns:
+
+1. natural truthful pair semantics from `NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace`;
+2. player-visible legal outcome shape from `PairInformationDisplaySemantics.legalOutcomes`;
+3. impaired false-option permission from explicit `ReliabilityState`.
+
+Neither the healthy semantic generator nor display-domain generator reads `PlayerState.poisoned` for this path. Poison/Drunk behavior is carried explicitly by `ReliabilityState`. Therefore the 2A compatibility GameState, which intentionally normalizes `poisoned=false` while retaining the real poison fact on the immutable snapshot, is also semantically valid for pair manual/publication legality.
+
+No TB snapshot schema expansion is required.
+
+The remaining rules input is the role-definition catalog. TBGS-2B should derive that list from the already validated `ClocktowerCharacterRegistry` inside the typed context builder, rather than continuing to source it from the presentation-side `clocktowerRolesForScript()` adapter.
+
+### 10.2 TBGS-2B exact scope
+
+TBGS-2B may:
+
+1. extend `TroubleBrewingFirstNightPairDecisionContext` with rules-owned TB `RoleDefinition` values derived from the validated character registry;
+2. add typed-context overloads in `ClocktowerPairManualAuthority` for legal-option projection and selected-observation validation;
+3. route TB first-night `legalPairInformationOptions` through the existing snapshot-backed pair context and fail closed rather than rebuilding game truth from `PlayerCard`;
+4. pass the same context into `clocktowerFirstNightInformationRequest` so TB pair publication validates the selected proposition from snapshot-backed context;
+5. retain the historical GameState overloads for non-TB/compatibility callers not in this slice. In particular, No Greater Joy includes Investigator but has no TB snapshot contract, so its pair publication remains on the legacy adapter.
+
+TBGS-2B must not:
+
+- migrate setup coordination;
+- alter recommendation ranking, candidate ordering, option labels or automatic-selection policy;
+- change PairInformationLegalDomain semantics;
+- broaden into Chef / Empath / Fortune Teller selectors;
+- migrate DynamicGameState / Mayor / succession / special registration recommendation families;
+- modify Recovery, A3 presentation extraction, R3 transaction ownership or generic Host decomposition;
+- expand `TroubleBrewingGameSnapshotV1`.
+
+### 10.3 TBGS-2B test gate
+
+Before production wiring is accepted, prove:
+
+- registry-derived role definitions are semantically equivalent to the existing TB presentation adapter for pair roles;
+- TB manual legal option keys/order/truth/Spy-Recluse registration metadata are unchanged;
+- TB publication resolves the same structured `AbilityObservation`, including registration facts, from the typed context;
+- TB pair production paths no longer call `PlayerCard.toClocktowerGameState()`;
+- non-pair and non-TB request behavior remains unchanged, with an explicit No Greater Joy Investigator compatibility test.
+
+Focused tests:
+
+- `TroubleBrewingFirstNightPairDecisionContextTest`;
+- `ClocktowerPairManualAuthorityTest`;
+- `ClocktowerFirstNightInformationRequestTest`;
+- existing pair manual-selection/presentation tests.
+
+Then run `:app:testFast` plus the standard static/diff gates. Full T4 acceptance remains required before merge because this slice changes production confirmation/publication authority.
+
+TBGS-2B is now **COMPLETE / ACCEPTED**.
+
+### 10.4 T4 acceptance staging
+
+The implementation checkpoint `d69b750e56593c459f7fcdb8b6d10a83bb5f28fd` passed ordinary CI #3651 and R2 #3367.
+
+The first full checkpoint `bc044ce7663b71413e0671c10a5b5d8843afdebb` exposed a test-only compile defect: `ClocktowerFirstNightInformationRequestTest` used `toClocktowerGameState` without importing the extension. Production sources, R2 #3368, ASP contracts and Real Clingo were otherwise green. The missing test import was corrected at `893d067f545ec3de738be346fee60d4a6a76c3c7`; ordinary CI #3653 and R2 #3369 are GREEN, including Android FAST.
+
+Final exact-head T4 acceptance is `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`: CI #3654 GREEN, R2 #3370 GREEN, Android `:app:testFull + :app:assembleDebug` GREEN, ASP contracts GREEN, and Real Clingo cross-validation GREEN. PR #198 was mergeable / clean with zero unresolved review threads at acceptance. TBGS-2B is therefore COMPLETE / ACCEPTED. The next TBGS-2 action is a focused re-audit of the setup-coordination consumer; this does not pre-authorize its implementation or any broad Host decomposition.
+
+
+### 10.5 Final T4 acceptance
+
+Exact acceptance head `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67` passed CI #3654 and R2 #3370. Android `:app:testFull + :app:assembleDebug`, ASP contract tests and Real Clingo all executed and passed on the corrected tree.
+
+Therefore TBGS-2B is **COMPLETE / ACCEPTED**. The next TBGS-2 step is a fresh focused re-audit of the setup-coordination consumer; this closure does not pre-authorize that implementation and does not change the separate A3 READY status.

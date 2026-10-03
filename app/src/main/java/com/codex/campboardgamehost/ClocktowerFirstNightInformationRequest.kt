@@ -10,6 +10,7 @@ import com.codex.campboardgamehost.clocktower.domain.YesNoAnswer
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationCandidate
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationFamily
@@ -27,6 +28,7 @@ internal fun clocktowerFirstNightInformationRequest(
     poisonTarget: String?,
     language: String,
     automaticStorytellerStyle: RecommendationStyle,
+    firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
 ): FirstNightInformationRequest? {
     if (phase != ClocktowerPhase.FirstNight) return null
     val actor = displayStep.actor ?: return null
@@ -89,21 +91,46 @@ internal fun clocktowerFirstNightInformationRequest(
         .distinctBy(::clocktowerInformationCandidateId)
     val legacyCandidates = legacyOptions.map(::legacyCandidate)
     val migratedCandidates = if (family.usesAuthoritativePairDomain()) {
-        val game = cards.toClocktowerGameState(script, gameSeed, poisonTarget)
-        val roleDefinitions = clocktowerRoleDefinitionsForScript(script)
+        val pairContext = if (script == ClocktowerScript.TroubleBrewing) {
+            requireNotNull(firstNightPairDecisionContext) {
+                "Trouble Brewing pair publication requires snapshot-backed first-night context."
+            }
+        } else {
+            null
+        }
+        val legacyGame = if (pairContext == null) {
+            cards.toClocktowerGameState(script, gameSeed, poisonTarget)
+        } else {
+            null
+        }
+        val legacyRoleDefinitions = if (pairContext == null) {
+            clocktowerRoleDefinitionsForScript(script)
+        } else {
+            null
+        }
         (displayStep.manualInformationCandidates + selectedOption)
             .distinctBy(::clocktowerInformationCandidateId)
             .map { option ->
                 FirstNightInformationCandidate(
                     id = clocktowerInformationCandidateId(option),
-                    observation = ClocktowerPairManualAuthority.selectedObservation(
-                        game = game,
-                        roleDefinitions = roleDefinitions,
-                        sourceSeat = sourceSeat,
-                        abilityRole = family.role,
-                        reliability = reliability,
-                        selectedOption = option,
-                    ),
+                    observation = if (pairContext != null) {
+                        ClocktowerPairManualAuthority.selectedObservation(
+                            context = pairContext,
+                            sourceSeat = sourceSeat,
+                            abilityRole = family.role,
+                            reliability = reliability,
+                            selectedOption = option,
+                        )
+                    } else {
+                        ClocktowerPairManualAuthority.selectedObservation(
+                            game = requireNotNull(legacyGame),
+                            roleDefinitions = requireNotNull(legacyRoleDefinitions),
+                            sourceSeat = sourceSeat,
+                            abilityRole = family.role,
+                            reliability = reliability,
+                            selectedOption = option,
+                        )
+                    },
                     qualityTier = if (option.isDefaultRecommendation) {
                         QualityTier.RECOMMENDED
                     } else {

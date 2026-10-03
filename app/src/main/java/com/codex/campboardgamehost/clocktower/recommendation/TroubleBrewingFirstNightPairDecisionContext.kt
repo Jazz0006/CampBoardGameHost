@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
@@ -27,6 +28,7 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 internal class TroubleBrewingFirstNightPairDecisionContext(
     val snapshot: TroubleBrewingGameSnapshotV1,
     internal val naturalPairGameState: GameState,
+    internal val roleDefinitions: List<RoleDefinition>,
 ) {
     init {
         require(snapshot.position.stage == TroubleBrewingSnapshotStage.RUNTIME) {
@@ -86,6 +88,23 @@ internal object TroubleBrewingFirstNightPairDecisionContextBuilder {
             )
         }
 
+        val roleDefinitions = characterRegistry.definitions.mapNotNull { definition ->
+            when (definition.team) {
+                ClocktowerCatalogTeam.TOWNSFOLK,
+                ClocktowerCatalogTeam.OUTSIDER,
+                ClocktowerCatalogTeam.MINION,
+                ClocktowerCatalogTeam.DEMON,
+                -> RoleDefinition(
+                    id = definition.id,
+                    alignment = definition.team.toAlignment(),
+                    type = definition.team.toCharacterType(),
+                    scriptIds = setOf(snapshot.script),
+                )
+
+                else -> null
+            }
+        }
+
         return TroubleBrewingFirstNightPairDecisionContext(
             snapshot = snapshot,
             naturalPairGameState = GameState(
@@ -93,6 +112,7 @@ internal object TroubleBrewingFirstNightPairDecisionContextBuilder {
                 players = players,
                 seed = snapshot.gameSeed,
             ),
+            roleDefinitions = roleDefinitions,
         )
     }
 

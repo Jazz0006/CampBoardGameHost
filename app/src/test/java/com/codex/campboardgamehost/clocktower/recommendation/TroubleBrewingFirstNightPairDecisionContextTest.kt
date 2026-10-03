@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
@@ -48,6 +49,10 @@ class TroubleBrewingFirstNightPairDecisionContextTest {
         assertEquals(
             canonicalGame.players.map { it.copy(name = "Seat ${it.seat}", poisoned = false) },
             context.naturalPairGameState.players,
+        )
+        assertEquals(
+            clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing).sortedBy { it.id.value },
+            context.roleDefinitions.sortedBy { it.id.value },
         )
     }
 
