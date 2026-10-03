@@ -38,6 +38,22 @@ class PairInformationShadowReplayBridgeG10FullDomainTest {
     }
     private val validatedRuleset = catalog.ruleset(ClocktowerScript.TroubleBrewing)
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
+    private val exactRoles = roles.filter { role ->
+        role.id in setOf(
+            RoleId("Drunk"),
+            RoleId("Butler"),
+            RoleId("Recluse"),
+            RoleId("Saint"),
+            RoleId("Empath"),
+            RoleId("Imp"),
+            RoleId("Undertaker"),
+            RoleId("Librarian"),
+            RoleId("Spy"),
+            RoleId("Monk"),
+            RoleId("Mayor"),
+            RoleId("Virgin"),
+        )
+    }
 
     @Test
     fun `G10 Librarian full legal domain reaches V1 replay without candidate or witness loss`() {
@@ -139,7 +155,12 @@ class PairInformationShadowReplayBridgeG10FullDomainTest {
             },
             observationLog = EpistemicObservationLog(),
             hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-            roleDefinitions = roles,
+            // The pair legal domain above still comes from the full Trouble Brewing registry.
+            // Exact replay only needs a bounded role universe that contains every actual/shown
+            // G10 role plus every Outsider role a functioning Librarian may truthfully show.
+            // This preserves the C5-B bridge contract without turning the acceptance harness into
+            // a full-script world-enumeration benchmark.
+            roleDefinitions = exactRoles,
         ),
         sourceRevision = REVISION,
     )

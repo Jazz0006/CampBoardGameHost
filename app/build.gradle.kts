@@ -88,7 +88,6 @@ afterEvaluate {
             excludeTestsMatching(sde2D5CalibrationExperiment)
             excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
             excludeTestsMatching(sde2D5FB4FSilverGeneralizationExperiment)
-            excludeTestsMatching(c5bG10FullDomainTest)
         }
     }
 
@@ -116,16 +115,6 @@ afterEvaluate {
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest")
             excludeTestsMatching(sde2D4ScaleBenchmark)
         }
-    }
-
-    tasks.register<Test>("c5bG10FullDomainAcceptance") {
-        group = "verification"
-        description = "Runs the explicit C5-B G10 40-candidate full-domain shadow/replay acceptance harness."
-        val sourceTask = debugUnitTest.get()
-        testClassesDirs = sourceTask.testClassesDirs
-        classpath = sourceTask.classpath
-        filter { includeTestsMatching(c5bG10FullDomainTest) }
-        outputs.upToDateWhen { false }
     }
 
     tasks.register<Test>("testCostExperiments") {
