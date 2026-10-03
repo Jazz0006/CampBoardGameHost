@@ -301,7 +301,7 @@ Acceptance: exact T4 head `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`; CI #3654 /
 Authority: `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md`.
 
 
-#### TBGS-2C — setup recommendation mechanical/rules base context — AUDIT COMPLETE / IMPLEMENTATION READY
+#### TBGS-2C — setup recommendation mechanical/rules base context — COMPLETE / ACCEPTED
 
 The focused post-2B audit found one remaining production reconstruction in the pre-first-night setup recommendation screen:
 
@@ -334,7 +334,7 @@ The initial prewarm may project from the existing canonical committed setup via 
 
 TBGS-2C may migrate only the Trouble Brewing mechanical/rules base. No Greater Joy remains on the legacy adapter. Do not change `SetupCoordinationRequest` lock/history semantics, setup recommendation policy/ranking, Red Herring or Demon-bluff commitment ownership, SDE shadow APIs, `DynamicGameState`, Recovery, A3, R3 or generic setup-effect ownership.
 
-Acceptance requires context projection/parity tests, existing setup recommendation/prewarm/reveal coverage, Android FAST at the logical checkpoint, and full T4 before merge because the production setup-recommendation input authority changes.
+Acceptance passed at exact T4 head `a8116d8b333cc40e0a599ab208cf7a9a3ea80207`: CI #3663 and R2 #3378 GREEN, including Android `:app:testFull + :app:assembleDebug`, ASP contracts and Real Clingo. The compatibility context preserves the historical setup-recommendation role order while sourcing role definitions from the validated rules registry, preventing Demon-bluff presentation-order drift. TBGS-2C is COMPLETE / ACCEPTED.
 
 Authority: `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md`.
 

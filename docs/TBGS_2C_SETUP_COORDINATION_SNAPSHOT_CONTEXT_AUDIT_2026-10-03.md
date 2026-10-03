@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@22d18fdcb51998716e29569e5263e6ca45511884`  
-> Status: **IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING**
+> Status: **COMPLETE / ACCEPTED**
 
 ## 1. Decision
 
@@ -142,13 +142,17 @@ Ordinary acceptance at that exact head:
 
 Implementation preserves the historical setup-recommendation role order while deriving each role definition from the validated rules registry. This keeps Demon-bluff list presentation parity with the pre-TBGS production path without restoring presentation catalog ownership.
 
-Final acceptance still requires a docs-only `[full-ci]` checkpoint and T4:
+Final T4 acceptance passed at exact head `a8116d8b333cc40e0a599ab208cf7a9a3ea80207`:
 
-- Android `:app:testFull + :app:assembleDebug`;
-- ASP contract tests;
-- Real Clingo cross-validation;
-- R2 main-thread boundary.
+- CI #3663 — GREEN;
+- R2 #3378 — GREEN;
+- Android `:app:testFull + :app:assembleDebug` — GREEN;
+- ASP contract tests — GREEN;
+- Real Clingo cross-validation — GREEN;
+- PR #199 — mergeable/clean with zero unresolved review threads.
+
+TBGS-2C is therefore **COMPLETE / ACCEPTED**.
 
 ## 11. Next after TBGS-2C
 
-If TBGS-2C is accepted, re-audit the remaining `DynamicGameState` production consumers **one typed decision family at a time**. Do not automatically broaden into Mayor, succession and special registration together.
+With TBGS-2C accepted, re-audit the remaining `DynamicGameState` production consumers **one typed decision family at a time**. The next slice is an audit/selection step only: do not pre-authorize Mayor, succession or special registration, and do not broaden them into one migration.
