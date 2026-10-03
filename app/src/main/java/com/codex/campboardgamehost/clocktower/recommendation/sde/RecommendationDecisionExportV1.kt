@@ -75,6 +75,13 @@ internal data class RecommendationDecisionExportV1(
                 require(context.legalCandidates.flatMap { it.candidateSeats }.all { it in snapshotSeats }) {
                     "Pair export candidate seats must belong to the canonical snapshot."
                 }
+                require(
+                    context.legalCandidates
+                        .flatMap { it.registrations }
+                        .all { registration -> registration.subjectSeat in snapshotSeats },
+                ) {
+                    "Pair export registration-witness seats must belong to the canonical snapshot."
+                }
                 require(inputEligible.featureProjection is RecommendationFeatureProjectionV1.StandardDecision) {
                     "Pair export requires the standard DecisionFeatureEvaluation surface."
                 }
