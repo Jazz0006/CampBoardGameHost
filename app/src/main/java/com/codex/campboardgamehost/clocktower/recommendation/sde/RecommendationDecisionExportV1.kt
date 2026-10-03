@@ -87,9 +87,9 @@ internal data class RecommendationDecisionExportV1(
                 }
                 targetOrLabel.candidateRelations.forEach { relation ->
                     val expected = if (relation.candidateId == actual.candidateId) {
-                        RecommendationCandidateRelationKindV1.OBSERVED_CHOICE
+                        RecommendationHistoricalDomainRelationKindV1.OBSERVED_CHOICE
                     } else {
-                        RecommendationCandidateRelationKindV1.LEGAL_UNCHOSEN
+                        RecommendationHistoricalDomainRelationKindV1.LEGAL_UNCHOSEN
                     }
                     require(relation.kind == expected) {
                         "Host-derived historical relations may only distinguish observed choice from legal unchosen."
@@ -251,12 +251,12 @@ internal data class RecommendationDecisionExportV1(
                 candidateRelations = when (actualChoice) {
                     DecisionTraceActualChoice.Pending -> emptyList()
                     is DecisionTraceActualChoice.Committed -> legalCandidateIds.map { candidateId ->
-                        RecommendationCandidateRelationV1(
+                        RecommendationHistoricalDomainRelationV1(
                             candidateId = candidateId,
                             kind = if (candidateId == actualChoice.candidateId) {
-                                RecommendationCandidateRelationKindV1.OBSERVED_CHOICE
+                                RecommendationHistoricalDomainRelationKindV1.OBSERVED_CHOICE
                             } else {
-                                RecommendationCandidateRelationKindV1.LEGAL_UNCHOSEN
+                                RecommendationHistoricalDomainRelationKindV1.LEGAL_UNCHOSEN
                             },
                         )
                     }
@@ -348,19 +348,23 @@ internal sealed interface RecommendationFeatureProjectionV1 {
 
 internal data class RecommendationDecisionTargetV1(
     val actualChoice: DecisionTraceActualChoice,
-    val candidateRelations: List<RecommendationCandidateRelationV1>,
+    val candidateRelations: List<RecommendationHistoricalDomainRelationV1>,
 )
 
-internal enum class RecommendationCandidateRelationKindV1 {
+/**
+ * Relations the Host can derive from one committed historical choice plus the complete legal domain.
+ *
+ * Explicit source-backed rejection/comparison semantics are deliberately absent from HOST-ML1 V1;
+ * adding them requires a future machine-readable EvidenceLab seed rather than inference here.
+ */
+internal enum class RecommendationHistoricalDomainRelationKindV1 {
     OBSERVED_CHOICE,
-    EXPLICIT_REJECTED,
-    EXPLICIT_COMPARISON_LOSER,
     LEGAL_UNCHOSEN,
 }
 
-internal data class RecommendationCandidateRelationV1(
+internal data class RecommendationHistoricalDomainRelationV1(
     val candidateId: String,
-    val kind: RecommendationCandidateRelationKindV1,
+    val kind: RecommendationHistoricalDomainRelationKindV1,
 ) {
     init {
         require(candidateId.isNotBlank()) { "Recommendation candidate relation ID cannot be blank." }
