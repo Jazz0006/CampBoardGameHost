@@ -207,6 +207,36 @@ The existing `GameState` remains a bounded mechanical component and should not b
 
 Decision-specific context builders then derive required context, legal-domain inputs and optional enrichment from the shared snapshot plus the appropriate canonical/rules owners. This is preferable to allowing each recommendation family or UI screen to reconstruct game truth independently.
 
+### 8.1 Future offline ML / ModelLab projection boundary
+
+A future trained recommendation model does not change the ownership model above. It is a replaceable recommendation-policy consumer, not a rules engine or game-state owner.
+
+The accepted long-horizon projection is:
+
+```text
+EvidenceLab source-backed evidence
+        +
+Host canonical pre-decision state
++ rules-owned complete legal domain
++ typed decision context / deterministic features / replay identity
+        |
+        v
+policy-neutral Host decision export
+        |
+        v
+future ModelLab / dataset builder
+        |
+        +-- dataset recipe / independent split
+        +-- SFT / preference / ranking formatting
+        +-- model training and offline evaluation
+```
+
+The Android Host must not absorb LoRA/DPO/training infrastructure. Host export must preserve the complete legal domain and distinguish historical actual choice from source-backed preference/rejection. A legal candidate that was not historically chosen is `LEGAL_UNCHOSEN`, not automatically negative training evidence.
+
+Historical recommendation inputs must remain prefix-bounded: resulting choices and later history are target/evaluation metadata, not pre-decision model input. Future external-model adapters should enter only through the recommendation-policy/replay boundary after legality and context projection, and should be shadow/replay-only before any separate production cutover gate.
+
+Detailed authority: `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`.
+
 ## 9. Current repository mapping and known convergence gaps
 
 The current repository is already materially aligned with this model:

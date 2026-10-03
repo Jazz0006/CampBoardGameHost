@@ -564,6 +564,7 @@ Unless a task explicitly changes product behavior, preserve:
 - `ClocktowerGameSession` / its owned session aggregate as the single mutable Clocktower game-truth authority; UI/`PlayerCard`, replay and recommendation state are projections or transient inputs, not competing canonical state;
 - Setup generation as a replaceable pre-runtime boundary: it may decide setup composition / Drunk presence but must not own seating, final Drunk-seat choice or runtime progression;
 - Storyteller recommendation as read-only decision support over already-legal candidates and typed current-context projections; accepted choices return through the authoritative game/session transition path;
+- any future trained/model-based recommender remains a replaceable policy/replay consumer after legality and canonical-context projection; Host must not turn unchosen legal candidates into evidence-backed negatives or absorb model-training infrastructure into the runtime authority;
 - Compose state lifetime and effect lifetime;
 - callback / audit / commit ordering in stateful transactions.
 
@@ -601,14 +602,15 @@ Read these when relevant:
 2. newest `docs/NEXT_DEVELOPMENT_HANDOFF_*.md` for the active campaign;
 3. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current Drunk late-binding / staged first-night implementation and decomposition authority;
 4. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-state convergence guardrail; not a broad-refactor authorization;
-5. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping;
-6. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — **current GitHub Connector-first / Mini MCP+Codex large-file workflow**;
-7. `docs/MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md` — superseded historical Mini MCP-first adoption record;
-8. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — superseded historical connector/Luna workflow;
-9. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` — exceptional remote one-shot fallback only;
-10. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
-11. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
-12. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers.
+5. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — long-horizon EvidenceLab / Host / ModelLab ownership and ML-readiness guardrail; HOST-ML1 deferred until C5-D;
+6. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping;
+7. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — **current GitHub Connector-first / Mini MCP+Codex large-file workflow**;
+8. `docs/MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md` — superseded historical Mini MCP-first adoption record;
+9. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — superseded historical connector/Luna workflow;
+10. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` — exceptional remote one-shot fallback only;
+11. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
+12. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
+13. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers.
 
 If documents disagree, apply this precedence:
 

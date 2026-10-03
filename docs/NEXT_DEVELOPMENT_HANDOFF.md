@@ -7,7 +7,7 @@
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> Product next work: **C5-B — implement the pair SDE shadow + replay bridge over the complete current pair legal domain and accepted C5-A future-flexibility projector. Preserve legal candidate order, registration witnesses, canonical history identity, current visible recommendation and manual authority. Do not create `BEGINNER_CONSERVATIVE_V2` in C5-B. TBGS-2D remains an independent implementation-ready lane.**
+> Product next work: **C5-B — implement the pair SDE shadow + replay bridge over the complete current pair legal domain and accepted C5-A future-flexibility projector. Preserve legal candidate order, registration witnesses, canonical history identity, current visible recommendation and manual authority. Do not create `BEGINNER_CONSERVATIVE_V2` or any ML-specific production adapter in C5-B. HOST-ML0 is complete; HOST-ML1 remains deferred until C5-D. TBGS-2D remains an independent implementation-ready lane.**
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -18,7 +18,7 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 3. `docs/TESTING_STRATEGY.md`
 4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 5. this handoff
-6. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` — current C5 re-entry / SDE-3D3 implementation authority; C5-A next, production cutover still blocked
+6. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` — current C5 re-entry / SDE-3D3 implementation authority; C5-A accepted, C5-B next, production cutover still blocked
 7. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB implementation authority
 8. `docs/DLB_7_FINAL_ACCEPTANCE_2026-10-03.md` — final DLB acceptance matrix and exact T4 authority
 9. `docs/DLB_6_OLD_CONTRACT_RETIREMENT_COMPLETION_2026-10-03.md` — DLB-6 accepted retirement boundary
@@ -31,7 +31,8 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 16. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
 17. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and exact TBGS-2D Demon-succession implementation boundary
 18. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-19. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+19. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary; HOST-ML1 deferred until C5-D
+20. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -254,6 +255,20 @@ C5 re-entry audit                         COMPLETE / PASS
 `BEGINNER_CONSERVATIVE_V1` remains immutable. V2 must not be created as a placeholder: its first implementation is permitted only in C5-C after the C5-A projector and C5-B pair replay seam are accepted.
 
 Current authority: `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md`.
+
+## 8.1 HOST-ML0 accepted / future ML implementation deferred
+
+EvidenceLab EL-ML0 and Host HOST-ML0 have now frozen the long-horizon ML boundary without changing the current product route:
+
+```text
+EvidenceLab source-backed evidence
+-> Host canonical state + complete legal domain + typed context/features/replay
+-> future policy-neutral RecommendationDecisionExportV1
+-> future ModelLab dataset recipe / train-eval split / SFT-DPO-training
+```
+
+Do not add training labels, prompts, embeddings, model dependencies or an external-model policy runner to C5-B/C5-C. `LEGAL_UNCHOSEN` remains a legal-domain relation, not evidence-backed rejection. The first Host ML-ready code slice, HOST-ML1, is deferred until C5-D has accepted deterministic same-history V1/V2 replay. Authority: `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`.
+
 ## 9. Scope still blocked
 
 Do not add policy weights/thresholds, broaden player-count/Traveller scope, or perform production cutover from the G10 evidence. `BEGINNER_CONSERVATIVE_V2` may begin only at C5-C after C5-A/C5-B acceptance, and only with the bounded future-flexibility weak preference. SDE-3E remains blocked per surface until C5-D replay and the separate C5-E cutover gate pass.

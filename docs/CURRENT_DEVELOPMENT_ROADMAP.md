@@ -45,6 +45,7 @@ DLB campaign                                                COMPLETE / ACCEPTED
 TBGS-2 runtime recommendation projection migration           IN PROGRESS — 2A/2B/2C COMPLETE / ACCEPTED; 2D AUDIT COMPLETE / IMPLEMENTATION READY — Demon succession
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   C5-A COMPLETE / ACCEPTED — C5-B NEXT
+HOST-ML0 ML readiness / ModelLab boundary              COMPLETE / ACCEPTED — HOST-ML1 DEFERRED UNTIL C5-D
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
 ~~~
 
@@ -117,6 +118,8 @@ Completion/cleanup detail:
 ## 4. Current priority — C5 re-entry / SDE-3D3; TBGS-2D remains implementation-ready
 
 EvidenceLab `main@78f672868ea6603317aeefa20ad91686c5886db9` supplies the first C5-qualified E3 predicate through the G10 `16:52` functioning-Librarian pair decision. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` is the current C5 authority: re-entry is PASS and C5-A pair future-flexibility projection is COMPLETE / ACCEPTED at exact T4 checkpoint `5b516e10e0f01848a1dad7a06dd214e73faa5a97`, CI #3673 / R2 #3385 GREEN. C5-B pair SDE shadow + replay bridge is NEXT. Production cutover remains blocked until C5-D replay acceptance and a separate C5-E surface gate. E4 remains unproven and is not required for the first qualitative, weight-free predicate.
+
+EvidenceLab EL-ML0 is now COMPLETE / ARCHITECTURE ACCEPTED at observed `main@a575ecc05ccb77cf4aaddcad7f772b0fe920d3d6`. Host HOST-ML0 is also COMPLETE / ACCEPTED. The frozen long-horizon ownership is: EvidenceLab owns source-backed evidence; Host owns canonical pre-decision state, rules-owned legal domains, typed contexts, deterministic features and replay; a future ModelLab owns dataset recipes and model training. HOST-ML1 is explicitly deferred until C5-D proves canonical V1/V2 same-history replay. Authority: `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`. This route must not broaden C5-B or delay TBGS-2.
 
 TBGS-2D Demon succession remains independently IMPLEMENTATION READY but is not a C5 prerequisite and must not be bundled into C5 implementation work.
 
