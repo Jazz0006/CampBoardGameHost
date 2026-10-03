@@ -229,6 +229,42 @@ class RecommendationDecisionExportV1Test {
     }
 
     @Test
+    fun pairExportFailsClosedWhenSemanticPayloadOrderDoesNotMatchReplayLegalDomain() {
+        val snapshot = runtimeSnapshot()
+        val context = TroubleBrewingFirstNightPairDecisionContext(
+            snapshot = snapshot,
+            naturalPairGameState = GameState(
+                script = ScriptId("trouble_brewing"),
+                players = emptyList(),
+                seed = snapshot.gameSeed,
+            ),
+            roleDefinitions = emptyList(),
+        )
+        val request = PairInformationShadowReplayRequest(
+            decisionId = "pair:test-game:librarian",
+            context = context,
+            sourceSeat = 1,
+            abilityRole = RoleId("Librarian"),
+            reliability = ReliabilityState.RELIABLE,
+            lifecycleStage = SdeDecisionLifecycleStage.Interaction(
+                phase = StorytellerPhase.FIRST_NIGHT,
+                round = 1,
+                sequence = 3,
+            ),
+        )
+        val candidateIds = listOf("pair:a", "pair:b")
+        val trace = deferredPairTrace(request, candidateIds, DecisionTraceActualChoice.Pending)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            RecommendationDecisionExportV1.fromFirstNightPairInformation(
+                request = request,
+                legalCandidates = pairLegalCandidates().reversed(),
+                replayTraces = listOf(trace),
+            )
+        }
+    }
+
+    @Test
     fun pairExportFailsClosedWhenReplayRevisionDoesNotMatchSnapshot() {
         val snapshot = runtimeSnapshot()
         val context = TroubleBrewingFirstNightPairDecisionContext(
