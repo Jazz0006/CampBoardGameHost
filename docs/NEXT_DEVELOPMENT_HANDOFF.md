@@ -7,7 +7,7 @@
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> Product next work remains **C5-E — surface-scoped production cutover for the functioning Librarian automatic recommendation surface**, independent from ML readiness. In the parallel ML lane, **HOST-ML1A typed neutral `RecommendationDecisionExportV1` is COMPLETE / ACCEPTED at `d7880bf6dbf71b86288ca9ce58370cc321f38f84` (CI #3700 / R2 #3407)**. HOST-ML1B machine-readable materialization is deferred until a concrete offline consumer requires an interchange format.
+> Product next work remains **C5-E — surface-scoped production cutover for the functioning Librarian automatic recommendation surface**, independent from ML readiness. In the parallel ML lane, **HOST-ML1 typed neutral `RecommendationDecisionExportV1` is COMPLETE / ACCEPTED after PR #208 + #209; final executable checkpoint `b91fcd298621e9064f11c26c1a0398c5c14fc13c` (CI #3710 / R2 #3416), with PR #209 squash merge `2d4681115b9c373bfbfa85a7b385aba4e59e1062`**. Machine-readable materialization remains a separate future follow-up when a concrete offline consumer requires an interchange format.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -32,7 +32,7 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 17. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and exact TBGS-2D Demon-succession implementation boundary
 18. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
 19. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
-20. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1A typed neutral export acceptance, leakage boundary and deferred machine-readable materialization
+20. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
 21. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
@@ -215,8 +215,8 @@ DLB-0 typed intermediate setup COMPLETE
 -> C5-C BEGINNER_CONSERVATIVE_V2 COMPLETE / ACCEPTED; final T4 `001330f32e151b67ead1760a67702450faaab685`, CI #3690 / R2 #3399 GREEN
 -> C5-D canonical V1/V2 replay COMPLETE / ACCEPTED; `5241518e002e65993eed594632604e13e2979bfd`, CI #3693 / R2 #3401 GREEN
 -> C5-E functioning-Librarian production cutover gate NEXT
-|| HOST-ML1A typed neutral decision export COMPLETE / ACCEPTED; `d7880bf6dbf71b86288ca9ce58370cc321f38f84`, CI #3700 / R2 #3407 GREEN
-|| HOST-ML1B machine-readable materialization DEFERRED until concrete offline consumer; do not block C5-E
+|| HOST-ML1 typed neutral decision export COMPLETE / ACCEPTED; final `b91fcd298621e9064f11c26c1a0398c5c14fc13c`, CI #3710 / R2 #3416 GREEN; pair semantic payload included
+|| machine-readable corpus materialization DEFERRED until concrete offline consumer; do not block C5-E
 || TBGS-2D remains IMPLEMENTATION READY as an independent lane
 -> A3 presentation catalog READY / independent maintenance only
 ```
@@ -262,9 +262,9 @@ C5 re-entry audit                         COMPLETE / PASS
 
 Current authority: `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md`.
 
-## 8.1 HOST-ML0 accepted / HOST-ML1A typed neutral export accepted
+## 8.1 HOST-ML0 accepted / HOST-ML1 typed neutral export accepted
 
-EvidenceLab EL-ML0 and Host HOST-ML0 froze the long-horizon ML ownership boundary. HOST-ML1A now implements the first bounded Host-side neutral export without changing the current product route:
+EvidenceLab EL-ML0 and Host HOST-ML0 froze the long-horizon ML ownership boundary. HOST-ML1 now implements the bounded Host-side neutral export without changing the current product route:
 
 ```text
 EvidenceLab source-backed evidence
@@ -274,7 +274,7 @@ EvidenceLab source-backed evidence
 -> future ModelLab dataset recipe / train-eval split / SFT-DPO-training
 ```
 
-HOST-ML1A is accepted at `d7880bf6dbf71b86288ca9ce58370cc321f38f84` with CI #3700 / R2 #3407 GREEN. It physically separates input-eligible state/context/features from historical target, replay/evaluation metadata and provenance, preserves the complete ordered legal domain, and derives only `OBSERVED_CHOICE` versus `LEGAL_UNCHOSEN`. It deliberately does not define source-backed rejection/comparison semantics, training examples, prompts, embeddings, model dependencies or an external-model policy runner. HOST-ML1B machine-readable materialization is deferred until a concrete offline consumer fixes the interchange need; trigger EL-ML1 only if source-backed machine-readable evidence seeds are required. Authorities: `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` and `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md`.
+HOST-ML1 is accepted after PR #208 + #209; final executable checkpoint `b91fcd298621e9064f11c26c1a0398c5c14fc13c` with CI #3710 / R2 #3416 GREEN and PR #209 squash merge `2d4681115b9c373bfbfa85a7b385aba4e59e1062`. It physically separates input-eligible state/context/features from historical target, replay/evaluation metadata and provenance, preserves the complete ordered legal domain, and derives only `OBSERVED_CHOICE` versus `LEGAL_UNCHOSEN`. It deliberately does not define source-backed rejection/comparison semantics, training examples, prompts, embeddings, model dependencies or an external-model policy runner. Machine-readable materialization is deferred as a separate future follow-up until a concrete offline consumer fixes the interchange need; trigger EL-ML1 only if source-backed machine-readable evidence seeds are required. Authorities: `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` and `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md`.
 
 ## 9. Scope still blocked
 
