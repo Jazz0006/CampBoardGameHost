@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-10-02 Australia/Sydney  
+> Updated: 2026-10-03 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**  
 > Historical checkpoint detail belongs in completion/audit documents under `docs/archive/` or the linked slice audits, not in this live roadmap.
@@ -44,7 +44,7 @@ DLB-7 final DLB acceptance                                  COMPLETE / ACCEPTED
 DLB campaign                                                COMPLETE / ACCEPTED
 TBGS-2 runtime recommendation projection migration           IN PROGRESS — 2A/2B/2C COMPLETE / ACCEPTED; 2D AUDIT COMPLETE / IMPLEMENTATION READY — Demon succession
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
-C5 evidence-backed policy evolution                   BLOCKED ON QUALIFYING E3/E4
+C5 evidence-backed policy evolution                   RE-ENTRY PASS / SDE-3D3 AUTHORIZED — C5-A READY
 SDE-3E automatic production cutover                   BLOCKED PER SURFACE
 ~~~
 
@@ -112,8 +112,13 @@ Completion/cleanup detail:
 - `docs/archive/checkpoints/sde/SDE_RH_E_RUNTIME_PERSISTENCE_TIMING_COMPLETION_2026-09-27.md`
 - `docs/archive/checkpoints/sde/SDE_PR157_MAIN_INTEGRATION_COMPLETION_2026-09-27.md`
 - `docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`
+- `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` — current C5 re-entry / SDE-3D3 authority
 
-## 4. Current priority — TBGS-2 incremental runtime recommendation-state migration
+## 4. Current priority — C5 re-entry / SDE-3D3; TBGS-2D remains implementation-ready
+
+EvidenceLab `main@78f672868ea6603317aeefa20ad91686c5886db9` now supplies the first C5-qualified E3 predicate through the G10 `16:52` functioning-Librarian pair decision. `docs/SDE_C5_G10_PAIR_FUTURE_FLEXIBILITY_REENTRY_AUDIT_2026-10-03.md` is the current C5 authority: re-entry is PASS, SDE-3D3 implementation is authorized, C5-A pair future-flexibility projection is NEXT, and production cutover remains blocked until C5-D replay acceptance and a separate C5-E surface gate. E4 remains unproven and is not required for the first qualitative, weight-free predicate.
+
+TBGS-2D Demon succession remains independently IMPLEMENTATION READY but is not a C5 prerequisite and must not be bundled into C5 implementation work.
 
 The product route changed on 2026-09-29 after the Drunk late-binding and App/Host decomposition audits were reconciled.
 
@@ -138,7 +143,7 @@ Targeted EvidenceLab C1C Drunk-assignment acquisition is complete at 3 / 3 repla
 1. DLB Drunk-assignment evidence/trace replay and consequence-contract calibration for the new decision surface;
 2. the existing C5/V2 E3/E4 policy gate.
 
-Do not conflate those gates. C5 / BEGINNER_CONSERVATIVE_V2 remains blocked. DLB may implement legality, projection, canonical commit, Experienced assisted UX, staged dependencies and shadow trace before any new evidence-backed production preference is authorized.
+Do not conflate those gates. The historical C5 blocker is now superseded by the 2026-10-03 G10 Librarian E3 PASS: C5 re-entry and SDE-3D3 implementation are authorized, while production cutover remains separately blocked until the new projector, pair shadow/replay, V2 replay acceptance and surface-scoped cutover gate pass.
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate ordering/rejection semantics. Any production Drunk-selection policy delta requires an explicitly versioned decision-surface contract.
 
@@ -168,7 +173,7 @@ If a future **current-version** crash produces a fresh inconsistent current-form
 ## 6. Frozen architecture / policy decisions
 
 - `BEGINNER_CONSERVATIVE_V1` remains immutable.
-- No placeholder V2.
+- No placeholder V2. The first real `BEGINNER_CONSERVATIVE_V2` is now evidence-authorized only as the bounded C5-C future-flexibility weak-preference slice after C5-A projector and C5-B pair shadow/replay prerequisites; V1 remains immutable.
 - No numeric weights/thresholds without the evidence level required by the affected policy semantics.
 - Legal candidate ownership remains in rules/domain owners; SDE ranks only legal alternatives.
 - Canonical session/history owners remain the only mutable game truth.
@@ -203,7 +208,7 @@ Evidence stages remain:
 
 Observed expert choices without adequate rationale are not automatically policy labels. Complete real games and expert Storyteller rationale remain preferred over synthetic clean-corpus calibration.
 
-C5 remains blocked until a genuinely qualifying E3/E4 predicate exists.
+C5 re-entry is now PASS because the G10 Librarian future-flexibility predicate satisfies E3. E4 remains required only for later semantics that introduce numeric thresholds, weights or calibrated tradeoff strength.
 
 ## 8. Immediate execution order
 
@@ -245,6 +250,10 @@ query live main / workspace
 -> TBGS-2B pair manual/publication COMPLETE / ACCEPTED; `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`, CI #3654 / R2 #3370 GREEN
 -> TBGS-2C setup-recommendation mechanical/rules base-context migration COMPLETE / ACCEPTED; `a8116d8b333cc40e0a599ab208cf7a9a3ea80207`, CI #3663 / R2 #3378 GREEN
 -> TBGS-2D Demon succession family audit COMPLETE / IMPLEMENTATION READY
+-> EvidenceLab G10 `16:52` Librarian future-flexibility predicate E3 PASS at `78f672868ea6603317aeefa20ad91686c5886db9`
+-> C5 re-entry audit COMPLETE / PASS; SDE-3D3 implementation AUTHORIZED
+-> C5-A pair future-flexibility projector NEXT / IMPLEMENTATION READY
+|| TBGS-2D Demon succession remains IMPLEMENTATION READY as an independent lane
 -> A3 presentation catalog READY / independent maintenance only
 ~~~
 
