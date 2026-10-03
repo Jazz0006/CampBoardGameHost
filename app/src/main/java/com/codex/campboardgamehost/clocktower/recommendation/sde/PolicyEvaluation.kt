@@ -10,6 +10,7 @@ internal data class PolicyVersion(
 
 internal object PolicyVersions {
     val BEGINNER_CONSERVATIVE_V1 = PolicyVersion("BEGINNER_CONSERVATIVE_V1")
+    val BEGINNER_CONSERVATIVE_V2 = PolicyVersion("BEGINNER_CONSERVATIVE_V2")
 
     /**
      * Shadow-only Drunk-assignment experiment identity.
