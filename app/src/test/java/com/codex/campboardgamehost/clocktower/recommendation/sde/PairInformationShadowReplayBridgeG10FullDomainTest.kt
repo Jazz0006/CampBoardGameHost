@@ -190,6 +190,18 @@ class PairInformationShadowReplayBridgeG10FullDomainTest {
 
         val v2Selection = requireNotNull(v2.policySelection)
         assertEquals(PolicyDisposition.SURVIVOR, v2ById.getValue(v2Selection.candidateId).disposition)
+        val productionSelection = requireNotNull(
+            FunctioningLibrarianV2ProductionSelector.select(
+                context = fixture.context,
+                sourceSeat = 4,
+                abilityRole = RoleId("Librarian"),
+                reliability = ReliabilityState.RELIABLE,
+                decisionId = DECISION_ID,
+                selectionSeed = fixture.game.seed,
+            ),
+        )
+        assertEquals(v2Selection.candidateId, productionSelection.candidateId)
+        assertEquals(BeginnerConservativeV2SelectionMode.PREFERRED_BAND, productionSelection.selectionMode)
         assertEquals(
             replayed,
             MultiPolicyReplayEngine.replay(
