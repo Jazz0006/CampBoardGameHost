@@ -58,8 +58,8 @@ class TroubleBrewingSetupRecommendationDecisionContextTest {
         )
         assertTrue(context.recommendationGameState.playerAt(3)!!.poisoned)
         assertEquals(
-            clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing).sortedBy { it.id.value },
-            context.roleDefinitions.sortedBy { it.id.value },
+            clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
+            context.roleDefinitions,
         )
     }
 

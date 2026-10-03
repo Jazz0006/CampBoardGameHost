@@ -25,6 +25,34 @@ internal class TroubleBrewingSetupRecommendationDecisionContext(
 )
 
 internal object TroubleBrewingSetupRecommendationDecisionContextBuilder {
+    // SetupCandidateGenerator preserves role-definition input order inside DemonBluffs. Keep the
+    // pre-TBGS production ordering so snapshot migration cannot change the visible bluff-role order.
+    // Definitions themselves still come exclusively from the validated rules registry.
+    private val historicalSetupRecommendationRoleOrder = listOf(
+        "Washerwoman",
+        "Librarian",
+        "Investigator",
+        "Chef",
+        "Empath",
+        "Fortune Teller",
+        "Ravenkeeper",
+        "Soldier",
+        "Mayor",
+        "Butler",
+        "Drunk",
+        "Recluse",
+        "Saint",
+        "Poisoner",
+        "Spy",
+        "Baron",
+        "Scarlet Woman",
+        "Imp",
+        "Undertaker",
+        "Monk",
+        "Virgin",
+        "Slayer",
+    ).map(::RoleId)
+
     fun build(
         snapshot: TroubleBrewingGameSnapshotV1,
         characterRegistry: ClocktowerCharacterRegistry,
@@ -52,21 +80,25 @@ internal object TroubleBrewingSetupRecommendationDecisionContextBuilder {
             )
         }
 
-        val roleDefinitions = characterRegistry.definitions.mapNotNull { definition ->
-            when (definition.team) {
-                ClocktowerCatalogTeam.TOWNSFOLK,
-                ClocktowerCatalogTeam.OUTSIDER,
-                ClocktowerCatalogTeam.MINION,
-                ClocktowerCatalogTeam.DEMON,
-                -> RoleDefinition(
-                    id = definition.id,
-                    alignment = definition.team.toAlignment(),
-                    type = definition.team.toCharacterType(),
-                    scriptIds = setOf(snapshot.script),
-                )
-
-                else -> null
+        val definitionsByRoleId = characterRegistry.definitions
+            .filter { definition ->
+                definition.team == ClocktowerCatalogTeam.TOWNSFOLK ||
+                    definition.team == ClocktowerCatalogTeam.OUTSIDER ||
+                    definition.team == ClocktowerCatalogTeam.MINION ||
+                    definition.team == ClocktowerCatalogTeam.DEMON
             }
+            .associateBy { definition -> definition.id }
+        require(definitionsByRoleId.keys == historicalSetupRecommendationRoleOrder.toSet()) {
+            "Trouble Brewing setup recommendation context requires the complete historical TB role domain."
+        }
+        val roleDefinitions = historicalSetupRecommendationRoleOrder.map { roleId ->
+            val definition = definitionsByRoleId.getValue(roleId)
+            RoleDefinition(
+                id = definition.id,
+                alignment = definition.team.toAlignment(),
+                type = definition.team.toCharacterType(),
+                scriptIds = setOf(snapshot.script),
+            )
         }
 
         return TroubleBrewingSetupRecommendationDecisionContext(
