@@ -14,7 +14,7 @@
 >
 > Final exact-head T4: `6afc3b08416eaf6f3fb74a53bb48b8e144044341`, CI #3717 / R2 #3421 GREEN across Android FULL/assemble, ASP and Real Clingo
 >
-> Latest-main integration rebase: **FULL validation pending** after parallel HOST-ML1 mainline convergence
+> Latest-main integration rebase: `fdf3a2be07ed0c70753ba724f15b5572e0dea584`, CI #3720 / R2 #3424 GREEN across Android FULL/assemble, ASP and Real Clingo
 >
 > Scope: only Trouble Brewing, First Night, functioning/reliable **Librarian**, automatic Storyteller mode.
 >
