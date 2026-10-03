@@ -338,6 +338,46 @@ Acceptance passed at exact T4 head `a8116d8b333cc40e0a599ab208cf7a9a3ea80207`: C
 
 Authority: `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md`.
 
+#### TBGS-2D — Demon succession typed recommendation context — AUDIT COMPLETE / IMPLEMENTATION READY
+
+The post-2C `DynamicGameState` family audit selected Demon succession as the next bounded production migration.
+
+Current recommendation flow duplicates the rules-owned legal domain:
+
+```text
+DemonSuccessionSemantics / resolveTroubleBrewingImpSelfKillSuccession(...)
+    -> DemonSuccessionResolution.None / Choice / Forced
+    -> Night Host legal target seats
+
+DemonSuccessorRecommender
+    -> independently rebuilds alive-Minions / Scarlet-Woman legality
+
+Host UI
+    -> filters selected recommendations back through legal target seats
+```
+
+TBGS-2D should converge this boundary to:
+
+```text
+ClocktowerGameSession
+    -> GameSnapshot
+    -> TroubleBrewingGameSnapshotV1
+    -> TroubleBrewingDemonSuccessorDecisionContext
+       + rules-owned DemonSuccessionResolution
+       + explicit legacy-equivalent pressure / spent-ability / balance enrichment
+    -> DemonSuccessorRecommender ranks only the already-legal domain
+```
+
+The TB snapshot already contains the required mechanical facts: actual role/alignment/type, alive/dead, poison, seat, phase/round, seed and revisions. No snapshot schema expansion is required.
+
+`DecisionHistoryRepository.project()` is the correct typed owner for future pressure/misinformation/registration projections, but production decision-event append/transition is not yet wired. TBGS-2D must therefore preserve current enrichment semantics rather than silently replacing UI-derived pressure/history with an incomplete session history.
+
+Virgin / Slayer / Artist spent flags also remain outside the canonical action timeline. They may stay as explicit enrichment inputs for the existing balance calculation; TBGS-2D does not authorize a session/Recovery ownership rewrite.
+
+Mayor redirection, Spy/Recluse registration, cross-cutting Artist/night-information balance consumers, decision-history producer cutover, A3, Recovery and R3 remain outside this slice.
+
+Authority: `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md`.
+
 ## 8. Updated execution relationship
 
 The current product/evidence sequence becomes:
@@ -359,7 +399,8 @@ DLB-0..5H1 COMPLETE
 -> Beginner automatic Drunk authority only if PASS
 -> DLB-6 old-contract retirement
 -> DLB-7 acceptance
--> TBGS-2 incremental runtime recommendation-state migration
+-> TBGS-2A / 2B / 2C incremental runtime migrations COMPLETE / ACCEPTED
+-> TBGS-2D Demon succession typed recommendation context AUDIT COMPLETE / IMPLEMENTATION READY
 ```
 
 TBGS-0/1 and EvidenceLab C3 may proceed in parallel. TBGS-0/1 must not invent ranking semantics while evidence is still missing.
