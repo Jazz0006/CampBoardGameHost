@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@da5e9947e7a2799d94720454b67fdb6de2ef54a3`  
-> Status: **FOCUSED READ-ONLY AUDIT COMPLETE / TBGS-2A APPROVED**
+> Status: **TBGS-2A IMPLEMENTED / T1 GREEN / T4 ACCEPTANCE PENDING**
 
 ## 1. Decision
 
@@ -170,7 +170,22 @@ A3 may later move the static presentation role catalog plus narrow access functi
 
 A3 must not invent catalog fallbacks, regenerate rules from presentation data, or widen private APIs merely to reduce App file size.
 
-## 8. Planned order after TBGS-2A
+## 8. Implementation checkpoint
+
+First executable checkpoint:
+
+`3335a1c6cb67f04a771182632bc9e8c94475fb6a`
+
+Validation:
+
+- CI #3646 — GREEN;
+- R2 #3363 — GREEN;
+- PR #197 — Draft, mergeable / clean, zero unresolved review threads;
+- Android FAST / compile path and aggregate CI gate — GREEN.
+
+Because TBGS-2A crosses the canonical-session -> snapshot -> production recommendation boundary, this T1 result is not treated as final acceptance. A separate `[full-ci]` T4 checkpoint is required before closeout.
+
+## 9. Planned order after TBGS-2A
 
 Tentative next re-audit order, not pre-authorized implementation:
 
