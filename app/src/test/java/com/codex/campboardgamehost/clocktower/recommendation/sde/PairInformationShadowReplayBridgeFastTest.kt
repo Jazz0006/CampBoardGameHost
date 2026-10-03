@@ -48,6 +48,17 @@ class PairInformationShadowReplayBridgeFastTest {
         assertEquals(legalIds, result.featureEvaluation.candidateIds)
         assertEquals(legalIds, result.decisionTrace.legalCandidateIds)
         assertEquals(legalIds, result.replayInput.legalCandidateIds)
+        assertEquals(
+            DecisionPolicyReplayScope.PairInformation(
+                script = TroubleBrewingFixtures.scriptId,
+                phase = StorytellerPhase.FIRST_NIGHT,
+                round = 1,
+                targetType = CharacterType.TOWNSFOLK,
+                reliability = ReliabilityState.RELIABLE,
+                truthfulLegalOutcomes = true,
+            ),
+            result.replayInput.policyScope,
+        )
 
         val observed = result.legalCandidates.single { candidate ->
             candidate.outcome.shownRole == RoleId("Empath") &&
