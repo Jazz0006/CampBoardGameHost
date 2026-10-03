@@ -194,6 +194,8 @@ After production callers are cut over:
 
 No legacy Recovery-format migration is required; current-only Recovery remains the product contract. Archive/history/rotation persistence are separate surfaces and must be deliberately migrated/retired rather than assumed equivalent to Recovery.
 
+DLB-6 is COMPLETE / ACCEPTED at executable checkpoint `52c2e73ca455a62c31065ce0e6fca4edda8713ec` with CI #3639 and R2 #3358 GREEN. The retirement removed the old compatibility DealPlan, pre-seat Drunk selector/scorer/deal APIs, `CompatibilityImmediate`, prepared-setup compatibility-candidate ownership, and current-model `selectedDrunkShownRole`. Rotation/completion persistence now writes v3 without that field and retains only a bounded v2 reader for migration validation. Authority: `docs/DLB_6_OLD_CONTRACT_RETIREMENT_COMPLETION_2026-10-03.md`.
+
 ### DLB-7 — acceptance
 
 Required coverage includes:
@@ -241,11 +243,11 @@ Before Beginner mode may automatically commit the SDE-selected Drunk candidate, 
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb a new Drunk candidate preference, rejection or survivor-refinement semantic. If production Drunk selection requires new policy semantics, version that decision surface explicitly rather than mutating V1.
 
-The first formal cutover audit is COMPLETE / NOT PASSED. Conditions 1–4 are satisfied for the current legal/projection/replay/fallback contracts; condition 5 fails because the current evidence does not authorize a general candidate ordering; condition 6 fails because `DRUNK_ASSIGNMENT_SHADOW_V1` is deliberately deferral-only rather than a production selection contract; condition 7 is therefore not reached. Authority: `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md`.
+The first formal cutover audit is COMPLETE / HISTORICAL NOT PASSED. It records the pre-Q04 evidence state only. After TBGS-0/1 and VERIFIED EvidenceLab C3-Q04, `DRUNK_ASSIGNMENT_Q04_V1` was implemented/replayed and the production cutover passed at exact-head checkpoint `9762d5a759bf0eaa81a1f6cb5af1aa28281d3ac2` with CI #3633 / R2 #3353 GREEN. Beginner automatic Drunk authority is accepted; `BEGINNER_CONSERVATIVE_V1` remains immutable and `DRUNK_ASSIGNMENT_SHADOW_V1` remains deferral-only.
 
-Until a later cutover audit passes, production must keep the documented `CompatibilityImmediate` Beginner fallback. DLB-6 retirement is also blocked because that transitional fallback still depends on compatibility state that DLB-6 is intended to remove.
+The transitional `CompatibilityImmediate` router fallback was retired by DLB-6. Q04 production now derives the same deterministic baseline from the seated visible roster plus preset metadata inside the policy adapter, so no setup-owned compatibility Drunk candidate remains.
 
-Before introducing the first production-capable Drunk selection request, implement TBGS-0/1 from `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`. The new production request must consume the standard TB snapshot + typed decision context rather than create another recommendation-specific `GameState`/`DynamicGameState` variant. TBGS-0/1 must remain policy-neutral while C3 ordering evidence is still missing.
+TBGS-0/1 are COMPLETE / ACCEPTED and remain the standard snapshot/typed-context foundation for the production-capable Drunk request.
 
 ## 7. Persistence boundaries
 
@@ -305,16 +307,16 @@ document authority convergence (this route)
 -> DLB-5.1 / 5.2 / 5.3 / 5.4 / 5.5 COMPLETE
 -> DLB-5 final acceptance + PR #183 merge COMPLETE / ACCEPTED
 -> DLB-5H1 narrow presentation extraction COMPLETE / ACCEPTED
--> Drunk-assignment production cutover gate audit COMPLETE / NOT PASSED
+-> Drunk-assignment production cutover gate audit COMPLETE / HISTORICAL NOT PASSED
 -> Drunk recommendation-context capability contract COMPLETE / POLICY-NEUTRAL
--> TBGS-0 canonical TB snapshot contract
--> TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability
-|| EvidenceLab targeted candidate-comparison / rejection evidence continues
--> new production-capable versioned Drunk policy only when evidence permits, using snapshot + typed request
--> re-run cutover gate
--> Beginner automatic Drunk authority only if PASS
--> DLB-6 old-contract retirement only after replacement selection/fallback authority exists
--> DLB-7 acceptance
+-> TBGS-0 canonical TB snapshot contract COMPLETE / ACCEPTED
+-> TBGS-1 Drunk snapshot vertical slice / EvidenceLab interoperability COMPLETE / ACCEPTED
+-> C3-Q04 VERIFIED / ACCEPTED
+-> DRUNK_ASSIGNMENT_Q04_V1 implementation + replay COMPLETE / ACCEPTED
+-> Q04 production cutover PASS / ACCEPTED
+-> Beginner automatic Drunk authority COMPLETE / ACCEPTED
+-> DLB-6 old-contract retirement COMPLETE / ACCEPTED
+-> DLB-7 acceptance NEXT
 -> TBGS-2 incremental runtime recommendation-state migration / A3 re-audit
 ```
 

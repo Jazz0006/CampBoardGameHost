@@ -150,11 +150,11 @@ Required checks:
 | Legal Drunk candidate domain | **PASS** | Existing TBGS-1 rules-owned domain. |
 | Candidate consequence / topology projection | **PASS** | Existing candidate-aligned topology expresses Q04. |
 | DecisionTrace / replay support | **PASS** | Existing Drunk replay lane is available. |
-| Current Beginner compatibility fallback | **PASS** | Remains legal and is the explicit non-Q04 fallback. |
+| Historical Beginner compatibility fallback | **PASS / RETIRED BY DLB-6** | It was the explicit pre-cutover non-Q04 fallback. DLB-6 removed its setup/router ownership after Q04 production authority was accepted. |
 | Cross-project snapshot semantics | **PASS** | Already accepted by TBGS-1. |
 | Evidence supports a bounded production preference predicate | **PASS** | VERIFIED C3-Q04. |
 | Production-capable versioned Drunk selection contract | **PASS / IMPLEMENTED** | `DRUNK_ASSIGNMENT_Q04_V1` is implemented as the bounded Empath -> Monk override plus explicit compatibility fallback. RED provenance is `d1e1b8fb972595a507637d18817eabb2981ab1fa`; evaluator/replay GREEN checkpoint is `5cf72a54a62c87763279c02014485a847724b72e` with CI #3631 / R2 #3351 GREEN. |
-| Beginner production wiring | **PASS / ACCEPTED** | `0ef3760ee233b0e20fa0dd272b12380abe8ee4a4` routes Beginner Drunk setup through the Q04 production adapter while retaining the compatibility route as an explicit pre-DLB-6 fallback. |
+| Beginner production wiring | **PASS / ACCEPTED** | `0ef3760ee233b0e20fa0dd272b12380abe8ee4a4` routes Beginner Drunk setup through the Q04 production adapter. The transitional compatibility route was subsequently retired by DLB-6 without changing Q04 V1 selection behavior. |
 | Production cutover acceptance | **PASS / ACCEPTED** | Exact-head T4 checkpoint `9762d5a759bf0eaa81a1f6cb5af1aa28281d3ac2` passed CI #3633 and independent R2 #3353. T4 selected and passed Android `testFull + assembleDebug`, ASP contract tests, and Real Clingo cross-validation. |
 
 Overall:
@@ -179,7 +179,8 @@ C3-Q04 VERIFIED / ACCEPTED
 -> explicit [full-ci] T4 exact-head + independent R2 COMPLETE / GREEN
 -> production cutover gate PASS / ACCEPTED
 -> Beginner automatic Drunk authority ACCEPTED
--> DLB-6 old-contract retirement NEXT
+-> DLB-6 old-contract retirement COMPLETE / ACCEPTED
+-> DLB-7 final acceptance NEXT
 ```
 
 C5 / `BEGINNER_CONSERVATIVE_V2` remains a separate evidence gate and is unchanged by this re-entry.
