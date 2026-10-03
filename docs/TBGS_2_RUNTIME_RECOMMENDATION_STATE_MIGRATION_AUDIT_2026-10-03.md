@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@da5e9947e7a2799d94720454b67fdb6de2ef54a3`  
-> Status: **TBGS-2A IMPLEMENTED / T1 GREEN / T4 ACCEPTANCE PENDING**
+> Status: **TBGS-2A COMPLETE / ACCEPTED**
 
 ## 1. Decision
 
@@ -183,15 +183,28 @@ Validation:
 - PR #197 — Draft, mergeable / clean, zero unresolved review threads;
 - Android FAST / compile path and aggregate CI gate — GREEN.
 
-Because TBGS-2A crosses the canonical-session -> snapshot -> production recommendation boundary, this T1 result is not treated as final acceptance. A separate `[full-ci]` T4 checkpoint is required before closeout.
+Because TBGS-2A crosses the canonical-session -> snapshot -> production recommendation boundary, this T1 result was not treated as final acceptance.
+
+Final exact-head T4 acceptance:
+
+`9021ef26b65033b69911fa4a79124fdd2137284d`
+
+- CI #3647 — GREEN;
+- R2 #3364 — GREEN;
+- Android `:app:testFull + :app:assembleDebug` — GREEN;
+- ASP contract tests — GREEN;
+- Real Clingo cross-validation — GREEN;
+- PR #197 — mergeable / clean, zero unresolved review threads at acceptance.
+
+TBGS-2A is therefore **COMPLETE / ACCEPTED**.
 
 ## 9. Planned order after TBGS-2A
 
 Tentative next re-audit order, not pre-authorized implementation:
 
 ```text
-TBGS-2A first-night natural-pair precompute
--> pair manual/publication consumer
+TBGS-2A first-night natural-pair precompute COMPLETE / ACCEPTED
+-> TBGS-2B pair manual/publication consumer focused re-audit NEXT
 -> setup coordination consumer
 -> DynamicGameState consumers one typed decision family at a time
 ```

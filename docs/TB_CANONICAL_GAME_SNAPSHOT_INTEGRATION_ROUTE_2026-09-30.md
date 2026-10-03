@@ -248,7 +248,7 @@ canonical owners
 
 Do not migrate all callers in one PR.
 
-#### TBGS-2A — first-night natural pair recommendation context — ACTIVE
+#### TBGS-2A — first-night natural pair recommendation context — COMPLETE / ACCEPTED
 
 The 2026-10-03 focused audit selected the Trouble Brewing Washerwoman / Librarian / Investigator first-night natural-pair precompute as the first migration slice.
 
@@ -277,6 +277,8 @@ V1 already contains the required mechanical facts for this consumer, so TBGS-2A 
 The typed context may temporarily carry a compatibility `GameState` derived purely from the immutable snapshot while the existing pair generator remains on its historical internal input type. That derived value is not authority and must never be reconstructed from `PlayerCard` inside the TB production path. Preserve the old natural-truth precompute boundary by retaining real poison on the snapshot but normalizing `poisoned=false` only in this compatibility candidate-space projection; reliability remains downstream.
 
 Do not bundle pair manual/publication authority, setup coordination, DynamicGameState consumers, A3 presentation-catalog extraction, Recovery or A4 cleanup into TBGS-2A.
+
+Acceptance: exact T4 head `9021ef26b65033b69911fa4a79124fdd2137284d`; CI #3647 / R2 #3364 GREEN, including Android full + assemble, ASP contracts and Real Clingo. Next TBGS-2 work is a focused TBGS-2B re-audit of the pair manual/publication consumer; do not assume implementation until that boundary is rechecked.
 
 Authority: `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md`.
 
