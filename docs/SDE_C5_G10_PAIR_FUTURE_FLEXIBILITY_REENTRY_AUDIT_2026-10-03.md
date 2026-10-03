@@ -380,7 +380,9 @@ Implementation evidence so far:
 
 - tests-first RED head `2193efa60b543bde0c46192e17c66fcb1c19b985`: CI #3686 failed at `compileDebugUnitTestKotlin` because the V2 policy/version/selector/scope symbols did not yet exist;
 - implementation checkpoint `d4c071fac09f446fb7b7f02f99808db61275112c`: CI #3689 / R2 #3398 GREEN. V2 is evidence-bound to G10, inherits V1 hard rejections, applies only the admitted future-flexibility preferred subset, uses exact V1 candidate selection on fallback, keeps the Drunk experiment registry separate, and carries typed pair policy scope into the replay input;
-- final exact-head T4 is pending before C5-C acceptance.
+- final exact-head T4 checkpoint `001330f32e151b67ead1760a67702450faaab685`: CI #3690 / R2 #3399 GREEN across Android `testFull + assembleDebug`, ASP contracts and Real Clingo cross-validation.
+
+C5-C is therefore **COMPLETE / ACCEPTED**. V2 remains shadow/replay-only and no production cutover authority changed.
 
 ### C5-D — canonical V1/V2 replay and cutover recheck
 
@@ -437,7 +439,7 @@ Do not bundle TBGS-2D Demon succession with C5 pair policy work in one implement
 | Future-flexibility production projector | **PASS / ACCEPTED — C5-A** | Rules-owned recurring-information capability + score-free pair projector passed exact-head T4 and R2. |
 | Pair exact-consequence primitives | **PASS** | Existing pair exact adapter and projector precedents. |
 | Pair production shadow/replay composition | **PASS / ACCEPTED — C5-B** | Full pair legal domain composes into exact consequences/features, V1 shadow, DecisionTrace and replay; exact-head T4 passed without production authority change. |
-| Real V2 policy definition | **IMPLEMENTED / T4 PENDING — C5-C** | Evidence-bound V2 exists with V1-exact fallback and bounded future-flexibility weak preference; final acceptance awaits exact-head T4. |
+| Real V2 policy definition | **PASS / ACCEPTED — C5-C** | Evidence-bound V2 with V1-exact fallback and bounded future-flexibility weak preference passed final exact-head T4. |
 | Same-history V1/V2 replay | **GAP / C5-D** | Must run after V2 exists. |
 | Production automatic cutover | **BLOCKED / C5-E** | Requires completed projector/replay/V2 acceptance and explicit surface gate. |
 
@@ -448,15 +450,15 @@ C5 evidence re-entry                         PASS
 SDE-3D3 implementation                      AUTHORIZED
 C5-A projector                              COMPLETE / ACCEPTED
 C5-B pair shadow/replay                     COMPLETE / ACCEPTED
-C5-C BEGINNER_CONSERVATIVE_V2              IMPLEMENTATION GREEN / T4 PENDING
-C5-D V1/V2 canonical replay                PLANNED AFTER C5-C ACCEPTANCE
+C5-C BEGINNER_CONSERVATIVE_V2              COMPLETE / ACCEPTED
+C5-D V1/V2 canonical replay                NEXT
 C5-E production cutover                    BLOCKED UNTIL C5-D ACCEPTANCE
 E4 numeric calibration                     STILL UNPROVEN / NOT NEEDED FOR FIRST DELTA
 ```
 
 ## 12. Immediate next task
 
-Complete **C5-C final T4 acceptance** on the current implementation tree. If FULL/assemble, ASP, Real Clingo and R2 remain GREEN, mark C5-C COMPLETE / ACCEPTED and enter **C5-D — canonical V1/V2 replay and cutover recheck**. V2 remains shadow/replay-only; no production cutover is authorized.
+Begin **C5-D — canonical V1/V2 replay and cutover recheck**. Replay the same committed pair-information histories through frozen V1 and accepted V2, prove that differences occur only on the admitted future-flexibility predicate, preserve actual expert choice as historical metadata rather than a direct policy label, and verify deterministic trace/provenance round-trip. V2 remains shadow/replay-only; no production cutover is authorized before the separate C5-E gate.
 
 Do not wait for more EvidenceLab evidence for this predicate.
 
