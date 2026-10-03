@@ -274,9 +274,9 @@ internal data class RecommendationDecisionExportV1(
                             RecommendationPairCandidateContextV1(
                                 candidateId = candidate.candidateId,
                                 shownRoleId = candidate.outcome.shownRole?.value,
-                                candidateSeats = candidate.outcome.candidateSeats,
+                                candidateSeats = candidate.outcome.candidateSeats.toList(),
                                 semanticTruth = candidate.semanticTruth,
-                                registrations = candidate.registrations,
+                                registrations = candidate.registrations.toList(),
                             )
                         },
                     ),
