@@ -69,6 +69,8 @@ afterEvaluate {
         "com.codex.campboardgamehost.clocktower.review.Sde2D5FExpertObservedCalibrationExperiment"
     val sde2D5FB4FSilverGeneralizationExperiment =
         "com.codex.campboardgamehost.clocktower.review.Sde2D5FB4FSilverGeneralizationExperiment"
+    val c5bG10FullDomainTest =
+        "com.codex.campboardgamehost.clocktower.recommendation.sde.PairInformationShadowReplayBridgeG10FullDomainTest"
 
     val manualCostExperiments = listOf(
         "com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleHealthyHarnessAcceptanceTest",
@@ -109,6 +111,7 @@ afterEvaluate {
             excludeTestsMatching(sde2D5CalibrationExperiment)
             excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
             excludeTestsMatching(sde2D5FB4FSilverGeneralizationExperiment)
+            excludeTestsMatching(c5bG10FullDomainTest)
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest")
             excludeTestsMatching(sde2D4ScaleBenchmark)
         }

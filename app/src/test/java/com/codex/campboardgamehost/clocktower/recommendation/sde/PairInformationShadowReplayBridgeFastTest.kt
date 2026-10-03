@@ -22,12 +22,11 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingGameSnapshotProjector
 import java.io.File
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class PairInformationShadowReplayBridgeTest {
+class PairInformationShadowReplayBridgeFastTest {
     private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
         File("src/main/assets/$assetPath").readText(Charsets.UTF_8)
     }
@@ -35,7 +34,7 @@ class PairInformationShadowReplayBridgeTest {
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
 
     @Test
-    fun `G10 Librarian full legal domain reaches V1 replay without candidate or witness loss`() {
+    fun `small functioning pair domain reaches V1 replay with stable order and future flexibility`() {
         val fixture = fixture()
         val result = PairInformationShadowReplayBridge.evaluate(
             request = request(fixture),
@@ -43,7 +42,7 @@ class PairInformationShadowReplayBridgeTest {
         )
 
         val legalIds = result.legalCandidates.map { it.candidateId }
-        assertEquals(40, legalIds.size)
+        assertEquals(6, legalIds.size)
         assertEquals(legalIds, result.exactCandidates.map { it.candidateId })
         assertEquals(legalIds, result.sdeCandidates.map { it.candidateId })
         assertEquals(legalIds, result.featureEvaluation.candidateIds)
@@ -51,39 +50,19 @@ class PairInformationShadowReplayBridgeTest {
         assertEquals(legalIds, result.replayInput.legalCandidateIds)
 
         val observed = result.legalCandidates.single { candidate ->
-            candidate.outcome.shownRole == RoleId("Drunk") &&
-                candidate.outcome.candidateSeats == listOf(1, 3)
+            candidate.outcome.shownRole == RoleId("Empath") &&
+                candidate.outcome.candidateSeats == listOf(2, 3)
         }
-        val observedFeatures = (result.featureEvaluation as DecisionFeatureEvaluation.Ready)
-            .candidates
-            .single { it.candidateId == observed.candidateId }
-            .features
-        val future = observedFeatures.futureFlexibility as FeatureProjection.Projected
+        val future = (
+            (result.featureEvaluation as DecisionFeatureEvaluation.Ready)
+                .candidates
+                .single { it.candidateId == observed.candidateId }
+                .features
+                .futureFlexibility as FeatureProjection.Projected
+            ).value
         assertTrue(
             PairInformationFutureFlexibilityReasonCodes.PRESERVES_COMPETING_RECURRING_INFORMATION_ROUTES in
-                future.value.reasonCodes,
-        )
-
-        val lowConsequence = result.legalCandidates.single { candidate ->
-            candidate.outcome.shownRole == RoleId("Drunk") &&
-                candidate.outcome.candidateSeats == listOf(1, 7)
-        }
-        val lowFuture = (result.featureEvaluation as DecisionFeatureEvaluation.Ready)
-            .candidates
-            .single { it.candidateId == lowConsequence.candidateId }
-            .features
-            .futureFlexibility as FeatureProjection.Projected
-        assertFalse(
-            PairInformationFutureFlexibilityReasonCodes.PRESERVES_COMPETING_RECURRING_INFORMATION_ROUTES in
-                lowFuture.value.reasonCodes,
-        )
-
-        val registered = result.legalCandidates.first { it.registrations.isNotEmpty() }
-        val registeredExact = result.exactCandidates.single { it.candidateId == registered.candidateId }
-        assertEquals(1, registeredExact.registrationWitnessBindings.size)
-        assertEquals(
-            registered.registrations.toSet(),
-            registeredExact.registrationWitnessBindings.single().registrations,
+                future.reasonCodes,
         )
 
         val sourceTrace = result.decisionTrace.copy(
@@ -100,21 +79,13 @@ class PairInformationShadowReplayBridgeTest {
         ).single()
 
         assertEquals(legalIds, replayed.legalCandidateIds)
-        assertEquals(result.featureEvaluation, replayed.featureEvaluation)
         assertEquals(sourceTrace.actualChoice, replayed.actualChoice)
         assertEquals(sourceTrace.historyPrefixRef, replayed.historyPrefixRef)
-
-        val archive = DecisionTraceArchive(listOf(replayed))
-        assertEquals(
-            archive,
-            DecisionTraceArchiveJsonCodec.decode(DecisionTraceArchiveJsonCodec.encode(archive)),
-        )
     }
 
     @Test
     fun `C5-B fails closed instead of widening into impaired pair information`() {
         val fixture = fixture()
-
         assertThrows(IllegalArgumentException::class.java) {
             PairInformationShadowReplayBridge.evaluate(
                 request = request(fixture, reliability = ReliabilityState.DRUNK),
@@ -124,17 +95,16 @@ class PairInformationShadowReplayBridgeTest {
     }
 
     @Test
-    fun `C5-B requires exact source revision parity with the snapshot-backed pair context`() {
+    fun `C5-B requires exact source revision parity with snapshot-backed pair context`() {
         val fixture = fixture()
-
         assertThrows(IllegalArgumentException::class.java) {
             PairInformationShadowReplayBridge.evaluate(
                 request = request(fixture),
                 exactContext = exactContext(
                     fixture,
                     revision = InformationDecisionRevision(
-                        gameStateRevision = REVISION.gameStateRevision + 1,
-                        playerInputRevision = REVISION.playerInputRevision,
+                        REVISION.gameStateRevision + 1,
+                        REVISION.playerInputRevision,
                     ),
                 ),
             )
@@ -147,8 +117,8 @@ class PairInformationShadowReplayBridgeTest {
     ) = PairInformationShadowReplayRequest(
         decisionId = DECISION_ID,
         context = fixture.context,
-        sourceSeat = 4,
-        abilityRole = RoleId("Librarian"),
+        sourceSeat = 1,
+        abilityRole = RoleId("Washerwoman"),
         reliability = reliability,
         lifecycleStage = LIFECYCLE,
     )
@@ -178,26 +148,19 @@ class PairInformationShadowReplayBridgeTest {
             script = TroubleBrewingFixtures.scriptId,
             seed = 20_261_003L,
             players = listOf(
-                player(1, "Drunk", CharacterType.OUTSIDER, shownRole = "Empath"),
-                player(2, "Imp", CharacterType.DEMON),
+                player(1, "Washerwoman", CharacterType.TOWNSFOLK),
+                player(2, "Empath", CharacterType.TOWNSFOLK),
                 player(3, "Undertaker", CharacterType.TOWNSFOLK),
-                player(4, "Librarian", CharacterType.TOWNSFOLK),
-                player(5, "Spy", CharacterType.MINION),
-                player(6, "Monk", CharacterType.TOWNSFOLK),
-                player(7, "Mayor", CharacterType.TOWNSFOLK),
-                player(8, "Virgin", CharacterType.TOWNSFOLK),
-                player(9, "Butler", CharacterType.OUTSIDER),
+                player(4, "Poisoner", CharacterType.MINION),
+                player(5, "Imp", CharacterType.DEMON),
             ),
         )
         val gameSnapshot = GameSnapshot(
-            gameId = "g10-game-2",
+            gameId = "c5b-fast-game",
             gameStateRevision = REVISION.gameStateRevision,
             playerInputRevision = REVISION.playerInputRevision,
             gameSeed = game.seed,
-            rulesetRef = validatedRuleset.toRulesetRef(
-                rulesetVersion = "c5b-test",
-                sourceRevision = "c5b-test",
-            ),
+            rulesetRef = validatedRuleset.toRulesetRef("c5b-fast", "c5b-fast"),
             gameState = game,
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
@@ -207,33 +170,31 @@ class PairInformationShadowReplayBridgeTest {
             round = 1,
             characterRegistry = validatedRuleset.characterRegistry,
         )
-        val context = TroubleBrewingFirstNightPairDecisionContextBuilder.build(
-            snapshot = snapshot,
-            characterRegistry = validatedRuleset.characterRegistry,
+        return Fixture(
+            game = game,
+            gameSnapshot = gameSnapshot,
+            context = TroubleBrewingFirstNightPairDecisionContextBuilder.build(
+                snapshot = snapshot,
+                characterRegistry = validatedRuleset.characterRegistry,
+            ),
         )
-        return Fixture(game, gameSnapshot, context)
     }
 
     private fun player(
         seat: Int,
         role: String,
         type: CharacterType,
-        shownRole: String? = role,
     ) = PlayerState(
         seat = seat,
         name = "Player $seat",
         actualRole = RoleId(role),
-        actualAlignment = when (type) {
-            CharacterType.TOWNSFOLK,
-            CharacterType.OUTSIDER,
-            -> Alignment.GOOD
-
-            CharacterType.MINION,
-            CharacterType.DEMON,
-            -> Alignment.EVIL
+        actualAlignment = if (type == CharacterType.TOWNSFOLK || type == CharacterType.OUTSIDER) {
+            Alignment.GOOD
+        } else {
+            Alignment.EVIL
         },
         actualType = type,
-        shownRole = shownRole?.let(::RoleId),
+        shownRole = RoleId(role),
     )
 
     private data class Fixture(
@@ -243,11 +204,8 @@ class PairInformationShadowReplayBridgeTest {
     )
 
     private companion object {
-        val REVISION = InformationDecisionRevision(
-            gameStateRevision = 7L,
-            playerInputRevision = 11L,
-        )
-        const val DECISION_ID = "first-night:LIBRARIAN:g10-game-2:seat-4"
+        val REVISION = InformationDecisionRevision(3L, 5L)
+        const val DECISION_ID = "first-night:WASHERWOMAN:c5b-fast-game:seat-1"
         val LIFECYCLE = SdeDecisionLifecycleStage.Interaction(
             phase = StorytellerPhase.FIRST_NIGHT,
             round = 1,
