@@ -1,6 +1,6 @@
 # C5-E — Functioning Librarian Production Cutover Gate Audit — 2026-10-03
 
-> Status: **IMPLEMENTATION GREEN / FINAL T4 PENDING**
+> Status: **COMPLETE / ACCEPTED**
 >
 > Repository: `Jazz0006/CampBoardGameHost`
 >
@@ -11,6 +11,8 @@
 > C5-E1 selector checkpoint: `f35b4dffae679947589d39fa8ec1c51b40cf1590`, CI #3711 / R2 #3417 GREEN
 >
 > C5-E2 automatic cutover checkpoint: `29c06f7e3900002cdac968207464e008cdcb1056`, CI #3713 / R2 #3419 GREEN
+>
+> Final exact-head T4: `6afc3b08416eaf6f3fb74a53bb48b8e144044341`, CI #3717 / R2 #3421 GREEN across Android FULL/assemble, ASP and Real Clingo
 >
 > Scope: only Trouble Brewing, First Night, functioning/reliable **Librarian**, automatic Storyteller mode.
 >
@@ -201,7 +203,7 @@ C5-E2:
 
 ## 11. Final acceptance requirements
 
-Before C5-E is COMPLETE / ACCEPTED:
+Final acceptance evidence:
 
 1. G10 40-candidate exact V2 and production fast path select the same candidate;
 2. the V2 reason remains generic and does not encode Undertaker-specific policy;
@@ -225,15 +227,12 @@ C5-D canonical V1/V2 replay    COMPLETE / ACCEPTED
 C5-E gate audit                COMPLETE
 C5-E1 production selector      COMPLETE / GREEN
 C5-E2 automatic cutover        COMPLETE / GREEN
-C5-E3 final T4                 NEXT
-production authority           PENDING FINAL T4 ONLY
+C5-E3 final T4                 COMPLETE / GREEN
+production authority           ACCEPTED — FUNCTIONING LIBRARIAN AUTOMATIC SURFACE
 ```
 
-## 13. Immediate next task
+## 13. Closure
 
-Commit the G10 production-vs-exact oracle plus this documentation, trigger an exact-head `[full-ci]` T4, and if every gate remains GREEN:
+C5-E is **COMPLETE / ACCEPTED**. The functioning Librarian automatic surface now consumes the bounded V2 production selector, with canonical legal-domain rebind and legacy fallback. Experienced/manual editing, publication authority, impaired-information behavior and all other pair surfaces remain unchanged.
 
-- mark C5-E COMPLETE / ACCEPTED;
-- merge PR #210 under the standing merge authorization;
-- sync live `main`;
-- then re-evaluate the next product lane independently of HOST-ML1B.
+After PR #210 merges and live `main` is synchronized, re-evaluate the next product lane independently of HOST-ML1B. TBGS-2D Demon succession remains implementation-ready; HOST-ML1B remains deferred until a concrete offline consumer requires machine-readable materialization.
