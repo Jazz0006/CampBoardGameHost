@@ -18,9 +18,12 @@ import java.io.File
 
 class DrunkAssignmentShadowReplayTest {
     @Test
-    fun `ordinary production replay registry remains frozen while Drunk experiment registry is separate`() {
+    fun `ordinary production replay registry evolves independently while Drunk experiment registry stays separate`() {
         assertEquals(
-            setOf(PolicyVersions.BEGINNER_CONSERVATIVE_V1),
+            setOf(
+                PolicyVersions.BEGINNER_CONSERVATIVE_V1,
+                PolicyVersions.BEGINNER_CONSERVATIVE_V2,
+            ),
             DecisionPolicyReplayRegistry.production().supportedVersions,
         )
 

@@ -1,5 +1,27 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+
+internal sealed interface DecisionPolicyReplayScope {
+    object Unspecified : DecisionPolicyReplayScope
+
+    data class PairInformation(
+        val script: ScriptId,
+        val phase: StorytellerPhase,
+        val round: Int,
+        val targetType: CharacterType,
+        val reliability: ReliabilityState,
+        val truthfulLegalOutcomes: Boolean,
+    ) : DecisionPolicyReplayScope {
+        init {
+            require(round > 0) { "Pair replay scope round must be positive." }
+        }
+    }
+}
+
 internal data class DecisionPolicyReplayRun(
     val policySnapshot: DecisionTracePolicySnapshot,
     val policySelection: PolicySelection?,
@@ -40,6 +62,17 @@ internal interface DecisionPolicyReplayRunner {
         decisionId: String,
         selectionSeed: Long,
     ): DecisionPolicyReplayRun
+
+    fun runScoped(
+        featureEvaluation: DecisionFeatureEvaluation,
+        decisionId: String,
+        selectionSeed: Long,
+        policyScope: DecisionPolicyReplayScope,
+    ): DecisionPolicyReplayRun = run(
+        featureEvaluation = featureEvaluation,
+        decisionId = decisionId,
+        selectionSeed = selectionSeed,
+    )
 }
 
 internal object BeginnerConservativeV1ReplayRunner : DecisionPolicyReplayRunner {
@@ -53,6 +86,43 @@ internal object BeginnerConservativeV1ReplayRunner : DecisionPolicyReplayRunner 
     ): DecisionPolicyReplayRun {
         val evaluation = BeginnerConservativeV1Policy.evaluate(featureEvaluation)
         val selection = BeginnerConservativeV1Selector.select(
+            evaluation = evaluation,
+            decisionId = decisionId,
+            selectionSeed = selectionSeed,
+        )
+        return DecisionPolicyReplayRun(
+            policySnapshot = evaluation.toDecisionTracePolicySnapshot(),
+            policySelection = selection,
+        )
+    }
+}
+
+internal object BeginnerConservativeV2ReplayRunner : DecisionPolicyReplayRunner {
+    override val definition: StorytellerPolicyDefinition =
+        StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V2
+
+    override fun run(
+        featureEvaluation: DecisionFeatureEvaluation,
+        decisionId: String,
+        selectionSeed: Long,
+    ): DecisionPolicyReplayRun = runScoped(
+        featureEvaluation = featureEvaluation,
+        decisionId = decisionId,
+        selectionSeed = selectionSeed,
+        policyScope = DecisionPolicyReplayScope.Unspecified,
+    )
+
+    override fun runScoped(
+        featureEvaluation: DecisionFeatureEvaluation,
+        decisionId: String,
+        selectionSeed: Long,
+        policyScope: DecisionPolicyReplayScope,
+    ): DecisionPolicyReplayRun {
+        val evaluation = BeginnerConservativeV2Policy.evaluate(
+            featureEvaluation = featureEvaluation,
+            scope = policyScope,
+        )
+        val selection = BeginnerConservativeV2Selector.select(
             evaluation = evaluation,
             decisionId = decisionId,
             selectionSeed = selectionSeed,
@@ -94,7 +164,10 @@ internal class DecisionPolicyReplayRegistry(
     companion object {
         fun production(): DecisionPolicyReplayRegistry =
             DecisionPolicyReplayRegistry(
-                listOf(BeginnerConservativeV1ReplayRunner),
+                listOf(
+                    BeginnerConservativeV1ReplayRunner,
+                    BeginnerConservativeV2ReplayRunner,
+                ),
             )
     }
 }

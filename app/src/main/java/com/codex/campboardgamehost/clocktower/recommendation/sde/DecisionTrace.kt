@@ -232,6 +232,25 @@ internal fun BeginnerConservativePolicyEvaluation.toDecisionTracePolicySnapshot(
             )
     }
 
+internal fun BeginnerConservativeV2PolicyEvaluation.toDecisionTracePolicySnapshot(): DecisionTracePolicySnapshot =
+    when (this) {
+        is BeginnerConservativeV2PolicyEvaluation.Ready ->
+            DecisionTracePolicySnapshot.Ready(
+                policyVersion = policyVersion,
+                evaluations = evaluations,
+                limitations = limitations,
+            )
+
+        is BeginnerConservativeV2PolicyEvaluation.Deferred ->
+            DecisionTracePolicySnapshot.Deferred(
+                policyVersion = policyVersion,
+                candidateIds = candidateIds,
+                reasons = reasons.mapTo(linkedSetOf()) { reason ->
+                    reason.toDecisionTraceV2DeferralCode()
+                },
+            )
+    }
+
 private fun BeginnerConservativePolicyDeferralReason.toDecisionTraceDeferralCode(): PolicyDeferralCode =
     PolicyDeferralCode(
         when (this) {
@@ -243,5 +262,19 @@ private fun BeginnerConservativePolicyDeferralReason.toDecisionTraceDeferralCode
                 "beginner-conservative-v1.strategic-baseline-undefined"
             BeginnerConservativePolicyDeferralReason.NO_NON_CONTRADICTORY_SURVIVOR ->
                 "beginner-conservative-v1.no-non-contradictory-survivor"
+        },
+    )
+
+private fun BeginnerConservativePolicyDeferralReason.toDecisionTraceV2DeferralCode(): PolicyDeferralCode =
+    PolicyDeferralCode(
+        when (this) {
+            BeginnerConservativePolicyDeferralReason.UPSTREAM_FEATURE_EVALUATION_DEFERRED ->
+                "beginner-conservative-v2.upstream-feature-evaluation-deferred"
+            BeginnerConservativePolicyDeferralReason.STRATEGIC_FEATURE_UNAVAILABLE ->
+                "beginner-conservative-v2.strategic-feature-unavailable"
+            BeginnerConservativePolicyDeferralReason.STRATEGIC_BASELINE_UNDEFINED ->
+                "beginner-conservative-v2.strategic-baseline-undefined"
+            BeginnerConservativePolicyDeferralReason.NO_NON_CONTRADICTORY_SURVIVOR ->
+                "beginner-conservative-v2.no-non-contradictory-survivor"
         },
     )

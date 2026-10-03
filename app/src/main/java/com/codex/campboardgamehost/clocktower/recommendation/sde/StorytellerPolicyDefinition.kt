@@ -27,4 +27,13 @@ internal object StorytellerPolicyDefinitions {
         evidenceCheckpoint = EvidenceCheckpointId("sde-3b-merged-2026-09-24"),
         selectionMethod = PolicySelectionMethod.SEEDED_HASH_V1,
     )
+
+    val BEGINNER_CONSERVATIVE_V2 = StorytellerPolicyDefinition(
+        policyVersion = PolicyVersions.BEGINNER_CONSERVATIVE_V2,
+        evidenceCheckpoint = EvidenceCheckpointId(
+            "clocktower-evidence-lab-g10-librarian-future-flexibility-" +
+                "78f672868ea6603317aeefa20ad91686c5886db9",
+        ),
+        selectionMethod = PolicySelectionMethod.SEEDED_HASH_V1,
+    )
 }

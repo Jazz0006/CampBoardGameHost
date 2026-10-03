@@ -14,16 +14,23 @@ import org.junit.Test
 
 class MultiPolicyReplayTest {
     @Test
-    fun productionReplayRegistryExposesOnlyTheRealV1Policy() {
+    fun productionReplayRegistryExposesImmutableV1AlongsideRealV2() {
         val registry = DecisionPolicyReplayRegistry.production()
 
         assertEquals(
-            setOf(PolicyVersions.BEGINNER_CONSERVATIVE_V1),
+            setOf(
+                PolicyVersions.BEGINNER_CONSERVATIVE_V1,
+                PolicyVersions.BEGINNER_CONSERVATIVE_V2,
+            ),
             registry.supportedVersions,
         )
         assertEquals(
             StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1,
             registry.requireRunner(PolicyVersions.BEGINNER_CONSERVATIVE_V1).definition,
+        )
+        assertEquals(
+            StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V2,
+            registry.requireRunner(PolicyVersions.BEGINNER_CONSERVATIVE_V2).definition,
         )
     }
 
