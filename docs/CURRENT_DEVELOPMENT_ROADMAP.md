@@ -257,7 +257,7 @@ query live main / workspace
 -> A3 presentation catalog READY / independent maintenance only
 ~~~
 
-A1/A2 may proceed as separate maintenance PRs without blocking DLB. C5/V2 remains a separate evidence-gated lane.
+A1/A2 may proceed as separate maintenance PRs without blocking the active lanes. C5/V2 is now a separately re-entered evidence-backed lane; its production cutover remains surface-gated.
 
 ## 9. Current authorities
 
