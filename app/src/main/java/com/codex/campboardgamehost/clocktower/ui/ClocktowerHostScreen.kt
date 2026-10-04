@@ -67,6 +67,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLega
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContext
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingMayorRedirectDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningLibrarianV2ProductionSelector
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingSetupRecommendationDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
@@ -128,6 +129,12 @@ internal fun ClocktowerJudgeScreen(
         Map<Int, PlayerInformationPressure>,
         Set<Int>,
     ) -> TroubleBrewingDemonSuccessorDecisionContext?)? = null,
+    mayorRedirectDecisionContextProvider: ((
+        Int,
+        Set<Int>,
+        Map<Int, PlayerInformationPressure>,
+        Set<Int>,
+    ) -> TroubleBrewingMayorRedirectDecisionContext?)? = null,
     setupRecommendationResultProvider: ((SetupCoordinationRequest) -> SetupRecommendationService.ConstrainedResult)? = null,
     firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
     firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
@@ -1064,6 +1071,12 @@ internal fun ClocktowerJudgeScreen(
             .count()
     }
 
+    fun recommendationProtectedSeats(): Set<Int> = setOfNotNull(
+        monkProtectedTarget
+            ?.let { name -> cards.indexOfFirst { it.name == name } + 1 }
+            ?.takeIf { it > 0 },
+    )
+
     fun recommendationSpentAbilitySeats(): Set<Int> {
         val spentRoleNames = buildSet {
             if (virginUsed) add("Virgin")
@@ -1111,11 +1124,7 @@ internal fun ClocktowerJudgeScreen(
             game = gameState,
             phase = phase.toStorytellerPhase(),
             round = round,
-            protectedSeats = setOfNotNull(
-                monkProtectedTarget
-                    ?.let { name -> cards.indexOfFirst { it.name == name } + 1 }
-                    ?.takeIf { it > 0 },
-            ),
+            protectedSeats = recommendationProtectedSeats(),
             spentAbilitySeats = spentAbilitySeats,
             playerInformationPressureBySeat = playerInformationPressureBySeat,
             registrationLedgerBySeat = registrationLedgerBySeat,
@@ -1218,15 +1227,30 @@ internal fun ClocktowerJudgeScreen(
     fun mayorDecisionOptions(mayor: PlayerCard): List<ClocktowerDecisionOption> {
         val mayorSeat = cards.indexOfFirst { it.name == mayor.name } + 1
         if (mayorSeat <= 0) return emptyList()
-        val request = DynamicDecisionRequest(
-            id = registrationKey("MayorRedirect", mayor.name),
-            type = StorytellerDecisionType.MAYOR_DEATH_RESOLUTION,
-            sourceAbility = RoleId("Mayor"),
-            state = dynamicStorytellerState(),
-        )
-        return recommendationCoordinator.resolveDynamicDecision(
-            DynamicResolutionRequest.MayorDeath(request, mayorSeat),
-        ).mapNotNull { recommendation ->
+        val requestId = registrationKey("MayorRedirect", mayor.name)
+        val resolutionRequest = if (script == ClocktowerScript.TroubleBrewing) {
+            val context = mayorRedirectDecisionContextProvider?.invoke(
+                mayorSeat,
+                recommendationProtectedSeats(),
+                recommendationPlayerInformationPressureBySeat(),
+                recommendationSpentAbilitySeats(),
+            ) ?: return emptyList()
+            DynamicResolutionRequest.MayorDeath(
+                requestId = requestId,
+                context = context,
+            )
+        } else {
+            DynamicResolutionRequest.LegacyMayorDeath(
+                request = DynamicDecisionRequest(
+                    id = requestId,
+                    type = StorytellerDecisionType.MAYOR_DEATH_RESOLUTION,
+                    sourceAbility = RoleId("Mayor"),
+                    state = dynamicStorytellerState(),
+                ),
+                mayorSeat = mayorSeat,
+            )
+        }
+        return recommendationCoordinator.resolveDynamicDecision(resolutionRequest).mapNotNull { recommendation ->
             val explanation = recommendationCoordinator.explainDecision(recommendation)
             val choice = recommendation.candidate.choice as DynamicStorytellerChoice.MayorDeathResolution
             val target = cards.getOrNull(choice.targetSeat - 1) ?: return@mapNotNull null

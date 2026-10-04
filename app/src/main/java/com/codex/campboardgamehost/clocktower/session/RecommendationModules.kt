@@ -15,6 +15,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.DemonSuccessorRecom
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContext
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.recommendation.MayorRedirectRecommender
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingMayorRedirectDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGenerationContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.ImpairedTruthfulException
@@ -127,8 +128,15 @@ internal class NightRecommendationModule {
 }
 
 internal class DayRecommendationModule {
-    fun resolveMayorDeath(request: DynamicDecisionRequest, mayorSeat: Int): List<DynamicDecisionRecommendation> =
-        MayorRedirectRecommender.recommend(request, mayorSeat)
+    fun resolveMayorDeath(
+        requestId: String,
+        context: TroubleBrewingMayorRedirectDecisionContext,
+    ): List<DynamicDecisionRecommendation> = MayorRedirectRecommender.recommend(requestId, context)
+
+    fun resolveLegacyMayorDeath(
+        request: DynamicDecisionRequest,
+        mayorSeat: Int,
+    ): List<DynamicDecisionRecommendation> = MayorRedirectRecommender.recommend(request, mayorSeat)
 }
 
 internal sealed interface InformationResolutionRequest {
@@ -151,7 +159,15 @@ internal sealed interface InformationResolutionRequest {
 }
 
 internal sealed interface DynamicResolutionRequest {
-    data class MayorDeath(val request: DynamicDecisionRequest, val mayorSeat: Int) : DynamicResolutionRequest
+    data class MayorDeath(
+        val requestId: String,
+        val context: TroubleBrewingMayorRedirectDecisionContext,
+    ) : DynamicResolutionRequest
+
+    data class LegacyMayorDeath(
+        val request: DynamicDecisionRequest,
+        val mayorSeat: Int,
+    ) : DynamicResolutionRequest
     data class DemonSuccessor(
         val requestId: String,
         val context: TroubleBrewingDemonSuccessorDecisionContext,
