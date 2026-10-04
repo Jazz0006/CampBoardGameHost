@@ -48,6 +48,24 @@ Therefore older statements that exact Drunk identity is already a persistent set
 
 This lifecycle amendment does not authorize a silent change to the frozen `BEGINNER_CONSERVATIVE_V1`; production automatic Drunk selection has a separate cutover gate.
 
+### 1.2 2026-10-04 legacy heuristic retirement amendment
+
+The product owner has withdrawn product-policy trust from the whole pre-SDE heuristic recommendation stack, not only from `RecommendationStyle.GENTLE / BALANCED / AGGRESSIVE`.
+
+The old setup/dynamic/registration/Mayor/successor score tables, fixed probability budgets, `GameBalanceEvaluator` / `ConsequenceEvaluator` authority and temporary automatic weighted policy are now **retirement-only compatibility code**. Do not preserve their output merely for behavior parity.
+
+The production fallback rule is now stricter:
+
+```text
+one legal outcome -> rules-deterministic auto resolution is allowed
+multiple legal outcomes + accepted versioned policy -> policy may recommend/auto-select
+multiple legal outcomes + no accepted policy -> MANUAL_REQUIRED / DEFERRED
+```
+
+Do not fall back from an unavailable new policy to the old heuristic recommender. Preserve complete legal/manual domains so policy unavailability never makes the game itself unplayable.
+
+Authority and staged retirement route: `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`.
+
 ## 2. Core architecture
 
 Do not treat clue recommendation as independent per-role scoring.
@@ -180,8 +198,9 @@ Initial production semantics remain conceptually:
 ```text
 hard legality
 → exact structural diagnostics
-→ profile Badness gates
-→ random selection among acceptable survivors
+→ versioned policy gates / preferences
+→ explicit equivalence band
+→ deterministic evidence-neutral tie selection among policy-equivalent survivors
 ```
 
 Do not use one opaque global scalar whose maximum becomes the authority.
