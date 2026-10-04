@@ -144,7 +144,7 @@ Required:
 - rules-owned eligible Townsfolk candidate domain.
 
 Optional/enrichment:
-- player experience;
+- per-player experience (`BEGINNER / NORMAL / EXPERT`; current/default value is `NORMAL` until the future player-profile producer exists);
 - recent cross-game role history;
 - future evidence-backed player-specific context.
 
@@ -157,7 +157,7 @@ Required:
 - current phase/round and revision/freshness identity.
 
 Optional/enrichment:
-- player experience;
+- per-player experience (`BEGINNER / NORMAL / EXPERT`; decision-time values are enrichment, never legality);
 - current public claims;
 - evil-side claimed identities / narrative being constructed;
 - other strategic interpretation that can be absent without making the base recommendation invalid.

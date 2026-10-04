@@ -27,7 +27,7 @@ The correct post-2E result is:
 - **special registration: still not cleanly implementation-ready because typed history production is incomplete**;
 - therefore **TBGS-2 pauses after TBGS-2E rather than inventing TBGS-2F**.
 
-A separate focused retirement audit should remove the legacy three-style dimension safely before later recommendation-family cleanup chooses any new single-policy semantics.
+A separate focused retirement audit should remove the legacy three-style dimension safely before later recommendation-family cleanup chooses any new single-policy semantics. That follow-up is now complete as **RSR-0** at `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`.
 
 Important boundary: this decision retires the old three recommendation-style routes. It does not automatically delete every unrelated enum/string containing the word “balanced”; for example, a public game-state balance label must be judged by its actual consumers during retirement cleanup.
 
@@ -163,7 +163,7 @@ Notably, current Beginner and Experienced UX policies both pass `RecommendationS
 
 But **AGGRESSIVE must not automatically become the new canonical policy** merely because it is currently the UX-supplied value. Retiring three old variants and defining one durable recommendation policy are separate decisions.
 
-The safe next action is a dedicated style-retirement audit, not a snapshot migration preserving old outputs.
+The dedicated style-retirement audit is now complete. Its continuation authority is `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`: future recommendation differentiation is per-player BEGINNER/NORMAL/EXPERT enrichment with current NORMAL defaults, while RSR-1 must define style-neutral family policies before production code retirement.
 
 ## 5. Recommended next family
 
@@ -185,7 +185,7 @@ and then pause.
 
 ### Recommended next independent work
 
-Run a focused **Recommendation Style Retirement audit** before any further recommendation migration.
+The focused **Recommendation Style Retirement audit** is COMPLETE / ACCEPTED as RSR-0. Continue with RSR-1 family-by-family style-neutral policy-contract work before any production retirement.
 
 That audit should answer:
 
@@ -217,7 +217,7 @@ Stopping TBGS-2 at 2E preserves the architectural wins already achieved without 
 
 There is **no production implementation contract for TBGS-2F**.
 
-The next implementation contract must come from the separate style-retirement audit.
+The next implementation contract must come from RSR-1 style-neutral family policy semantics defined under `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`.
 
 Until then:
 
@@ -274,6 +274,7 @@ post-2E fresh re-audit
   -> no TBGS-2F implementation
 
 NEXT:
-  Recommendation Style Retirement audit
+  RSR-0 RecommendationStyle retirement / player-level audit COMPLETE / ACCEPTED
+  -> RSR-1 style-neutral family policy contract
   -> then re-audit special registration / typed-history dependency
 ```
