@@ -1098,10 +1098,6 @@ internal fun ClocktowerJudgeScreen(
         )
     }
     val currentDynamicStorytellerState = dynamicStorytellerState()
-    val automaticInformationStyle = GameBalanceEvaluator.adjustInformationStyle(
-        configured = automaticStorytellerStyle,
-        evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
-    )
 
     fun registrationRecommendationOptions(
         key: String?,
@@ -3448,61 +3444,14 @@ internal fun ClocktowerJudgeScreen(
         val artistReliable = artistClaimant?.let {
             it.clocktowerRole?.enName == "Artist" && it.name != poisonTarget
         } == true
-        val answerRecommendations = if (artistClaimant != null && currentArtistTruthfulAnswer != null) {
-            if (artistReliable) {
-                listOf(Triple(RecommendationStyle.BALANCED, currentArtistTruthfulAnswer, false))
-            } else {
-                recommendationCoordinator.recommendCategory(
-                    listOf(
-                        UnreliableCategoricalCandidate(
-                            id = "yes",
-                            isTruthful = currentArtistTruthfulAnswer,
-                            misinformationPressure = if (currentArtistTruthfulAnswer) 0 else 3,
-                        ),
-                        UnreliableCategoricalCandidate(
-                            id = "no",
-                            isTruthful = !currentArtistTruthfulAnswer,
-                            misinformationPressure = if (currentArtistTruthfulAnswer) 3 else 0,
-                        ),
-                    ),
-                ).map { recommendation ->
-                    Triple(
-                        recommendation.style,
-                        recommendation.candidateId == "yes",
-                        recommendation.warningIds.isNotEmpty(),
-                    )
-                }
-            }
+        val artistAnswerOptions = if (artistClaimant != null && currentArtistTruthfulAnswer != null) {
+            if (artistReliable) listOf(currentArtistTruthfulAnswer) else listOf(true, false)
         } else {
             emptyList()
         }
-        val artistInformationReliability = when {
-            artistClaimant?.name == poisonTarget -> InformationReliability.POISONED
-            artistClaimant?.clocktowerRole?.enName == "Drunk" &&
-                artistClaimant.clocktowerShownRole?.enName == "Artist" ->
-                InformationReliability.DRUNK
-            else -> InformationReliability.RELIABLE
-        }
-        val automaticArtistRecommendation = if (artistInformationReliability != InformationReliability.RELIABLE) {
-            recommendationCoordinator.selectInformation(
-                options = answerRecommendations,
-                reliability = artistInformationReliability,
-                style = automaticStorytellerStyle,
-                evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
-                stableKey = "$recommendationKey:artist:$round:${artistClaimant?.name}",
-                recentMisinformationStreak = recentMisinformationStreak(artistClaimant),
-                stableIdOf = { "${it.first.name}:${it.second}" },
-                isTruthful = { it.second == currentArtistTruthfulAnswer },
-                misinformationPressure = { if (it.second == currentArtistTruthfulAnswer) 0 else 3 },
-                styleOf = { it.first },
-            )
-        } else {
-            WeightedStableSelector.selectStyle(
-                answerRecommendations,
-                automaticInformationStyle,
-            ) { it.first }
-        }
-        val automaticArtistAnswer = automaticArtistRecommendation?.second
+        val artistManualRequired = !artistReliable && artistAnswerOptions.size > 1
+        val automaticArtistAnswer = currentArtistTruthfulAnswer
+            ?.takeIf { automaticStorytellerInfo && artistReliable }
         LaunchedEffect(automaticStorytellerInfo, artistClaimantName, currentArtistTruthfulAnswer, automaticArtistAnswer) {
             if (automaticStorytellerInfo && automaticArtistAnswer != null && artistShownAnswer != automaticArtistAnswer) {
                 selectArtistShownAnswer(automaticArtistAnswer)
@@ -3564,29 +3513,22 @@ internal fun ClocktowerJudgeScreen(
             if (artistClaimant != null && currentArtistTruthfulAnswer != null) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
                 HostActionSection(title = text("告诉玩家的答案", "Answer to show")) {
-                    answerRecommendations
-                        .filter { !automaticStorytellerInfo || it == automaticArtistRecommendation }
-                        .forEach { (style, answer, warning) ->
-                            val answerLabel = if (answer) text("是", "Yes") else text("否", "No")
-                            val label = if (artistReliable) {
-                                answerLabel
-                            } else {
-                                "${recommendationStyleLabel(style)} · $answerLabel${if (warning) text(" · 高影响", " · high impact") else ""}"
-                            }
-                            if (automaticStorytellerInfo) {
-                                Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                            } else if (artistShownAnswer == answer) {
-                                Button(
-                                    onClick = { selectArtistShownAnswer(answer) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                ) { Text(label) }
-                            } else {
-                                OutlinedButton(
-                                    onClick = { selectArtistShownAnswer(answer) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                ) { Text(label) }
-                            }
+                    artistAnswerOptions.forEach { answer ->
+                        val label = if (answer) text("是", "Yes") else text("否", "No")
+                        if (automaticStorytellerInfo && !artistManualRequired) {
+                            Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        } else if (artistShownAnswer == answer) {
+                            Button(
+                                onClick = { selectArtistShownAnswer(answer) },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) { Text(label) }
+                        } else {
+                            OutlinedButton(
+                                onClick = { selectArtistShownAnswer(answer) },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) { Text(label) }
                         }
+                    }
                 }
             }
         }

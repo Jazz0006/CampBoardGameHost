@@ -29,32 +29,40 @@ class ClocktowerStructuredInformationPreparationTest {
     }
 
     @Test
-    fun `automatic policy option must belong to the current domain or fall back lazily`() {
-        val current = option(1)
-        val relabeledPolicy = current.copy(label = "policy")
-        var fallbackCalls = 0
+    fun `automatic policy must bind to current domain and unsupported multi-choice fails closed`() {
+        val first = option(1)
+        val second = option(2)
+        val relabeledPolicy = first.copy(label = "policy")
 
-        val selected = clocktowerAutomaticInformationOption(
-            policyOption = relabeledPolicy,
-            currentOptions = listOf(current),
-        ) {
-            fallbackCalls += 1
-            option(2)
-        }
-        assertSame(current, selected)
-        assertEquals(0, fallbackCalls)
+        assertSame(
+            first,
+            clocktowerAutomaticInformationOption(
+                policyOption = relabeledPolicy,
+                currentOptions = listOf(first, second),
+            ),
+        )
 
-        val stale = option(2)
-        val fallback = option(0)
-        val fallbackSelected = clocktowerAutomaticInformationOption(
-            policyOption = stale,
-            currentOptions = listOf(current),
-        ) {
-            fallbackCalls += 1
-            fallback
-        }
-        assertSame(fallback, fallbackSelected)
-        assertEquals(1, fallbackCalls)
+        assertSame(
+            first,
+            clocktowerAutomaticInformationOption(
+                policyOption = null,
+                currentOptions = listOf(first),
+            ),
+        )
+
+        assertNull(
+            clocktowerAutomaticInformationOption(
+                policyOption = null,
+                currentOptions = listOf(first, second),
+            ),
+        )
+
+        assertNull(
+            clocktowerAutomaticInformationOption(
+                policyOption = option(0),
+                currentOptions = listOf(first, second),
+            ),
+        )
     }
 
     @Test
@@ -214,6 +222,36 @@ class ClocktowerStructuredInformationPreparationTest {
 
         assertEquals(listOf(manualCandidate), built.manualInformationCandidates)
         assertEquals(listOf(manualCandidate), built.automaticInformationCandidates)
+    }
+
+    @Test
+    fun `manual information domain removes legacy ranking presentation and uses stable semantic order`() {
+        val first = option(2).copy(
+            label = "Expert · aggressive",
+            recommendationStyle = RecommendationStyle.AGGRESSIVE,
+            misinformationPressure = 5,
+            isDefaultRecommendation = true,
+            reasonCodes = listOf("legacy.score"),
+            warningCodes = listOf("legacy.warning"),
+        )
+        val second = option(1).copy(
+            label = "Balanced",
+            recommendationStyle = RecommendationStyle.BALANCED,
+            misinformationPressure = 3,
+            isDefaultRecommendation = true,
+        )
+
+        val domain = clocktowerManualInformationDomain(listOf(first, second, first))
+
+        assertEquals(2, domain.size)
+        assertEquals(
+            domain.map(::clocktowerInformationCandidateId).sorted(),
+            domain.map(::clocktowerInformationCandidateId),
+        )
+        assertEquals(setOf("1", "2"), domain.mapTo(linkedSetOf()) { it.label })
+        assertTrue(domain.all { !it.isDefaultRecommendation })
+        assertTrue(domain.all { it.reasonCodes.isEmpty() && it.warningCodes.isEmpty() })
+        assertTrue(domain.all { it.misinformationPressure == 0 })
     }
 
     private fun step() = ClocktowerNightStepUi(

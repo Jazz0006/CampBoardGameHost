@@ -150,6 +150,11 @@ internal fun ClocktowerNightStepCardLocalized(
         ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
         ?.map { it.payload }
         ?: step.recommendedDisplayOptions
+    val automaticAuthorityDomain = projectFirstNightCandidateSource(
+        step.manualInformationCandidates.ifEmpty {
+            step.automaticInformationCandidates.ifEmpty { step.legacyInformationCandidates }
+        },
+    ).distinctBy(::clocktowerInformationCandidateId)
     val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
     val recommendationPresentation = clocktowerRecommendationPresentation(displayedInformationOptions)
     val recommendedOptionIds = recommendationPresentation.recommendations
@@ -269,35 +274,44 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val automaticDisplayOption = clocktowerAutomaticInformationOption(
         policyOption = step.automaticPolicyRecommendation,
-        currentOptions = automaticInformationOptions,
-    ) {
-        recommendationCoordinator.selectInformation(
-            options = automaticInformationOptions,
-            reliability = step.informationReliability,
-            style = automaticStorytellerStyle,
-            evilAdvantage = evilAdvantage,
-            stableKey = informationDecisionKey,
-            recentMisinformationStreak = step.recentMisinformationStreak,
-            stableIdOf = ::optionId,
-            isTruthful = ClocktowerDisplayOption::isTruthful,
-            misinformationPressure = ClocktowerDisplayOption::misinformationPressure,
-            styleOf = ClocktowerDisplayOption::recommendationStyle,
-            selectionAudit = selectionAudit,
+        currentOptions = automaticAuthorityDomain,
+    )
+    val manualInformationFallback = automaticStorytellerInfo &&
+        step.isRealAction &&
+        automaticDisplayOption == null &&
+        automaticAuthorityDomain.size > 1
+    val effectiveAutomaticInformation = automaticStorytellerInfo && !manualInformationFallback
+    val manualFallbackStep = if (manualInformationFallback && automaticAuthorityDomain.isNotEmpty()) {
+        step.copy(
+            displayOptions = clocktowerManualInformationDomain(automaticAuthorityDomain),
+            recommendedDisplayOptions = emptyList(),
         )
+    } else {
+        step
+    }
+    val effectiveRecommendedOptionIds = if (manualInformationFallback) {
+        setOf("__manual_required__")
+    } else {
+        recommendedOptionIds
+    }
+    val effectiveRecommendedNumericValues = if (manualInformationFallback) {
+        setOf(Int.MIN_VALUE)
+    } else {
+        recommendedNumericValues
     }
     val informationIdentity = ClocktowerInformationDecisionIdentity(
         gameId, phase, round, sequence, InformationDecisionRevision(gameStateRevision, playerInputRevision),
     )
-    val structuredStyle = if (automaticStorytellerInfo) automaticStorytellerStyle else RecommendationStyle.BALANCED
+    val structuredStyle = if (effectiveAutomaticInformation) automaticStorytellerStyle else RecommendationStyle.BALANCED
     val structuredActorSeat = step.actor
         ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
     val structuredRecommendedOption = clocktowerStructuredRecommendedOption(
-        automatic = automaticStorytellerInfo,
+        automatic = effectiveAutomaticInformation,
         automaticOption = automaticDisplayOption,
-        displayedOptions = displayedInformationOptions,
-        unreliableOptions = step.displayOptions,
+        displayedOptions = if (manualInformationFallback) emptyList() else displayedInformationOptions,
+        unreliableOptions = if (manualInformationFallback) emptyList() else step.displayOptions,
     )
-    val numericPreparation = clocktowerNumericInformationPreparation(step, structuredActorSeat, structuredRecommendedOption)
+    val numericPreparation = clocktowerNumericInformationPreparation(manualFallbackStep, structuredActorSeat, structuredRecommendedOption)
     val structuredNumberUiModel = numericPreparation?.prepareUiModel(recommendationCoordinator, informationIdentity, structuredStyle)
     LaunchedEffect(structuredNumberUiModel?.semanticStateKey) {
         structuredNumberUiModel?.let { onStructuredNumberDecisionPrepared(it) }
@@ -307,14 +321,14 @@ internal fun ClocktowerNightStepCardLocalized(
     val chefPlayers = cards.toClocktowerPlayerStates(poisonedPlayerName = null)
     val chefResultChoices = if (presentationRoleEnName == "Chef" && step.actor != null) {
         clocktowerChefResultChoices(
-            step = step,
+            step = manualFallbackStep,
             players = chefPlayers,
-            automaticStorytellerInfo = automaticStorytellerInfo,
+            automaticStorytellerInfo = effectiveAutomaticInformation,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
             structuredNumberUiModel = structuredNumberUiModel,
-            recommendedOptionIds = recommendedOptionIds,
-            recommendedValues = recommendedNumericValues,
+            recommendedOptionIds = effectiveRecommendedOptionIds,
+            recommendedValues = effectiveRecommendedNumericValues,
         )
     } else {
         emptyList()
@@ -324,14 +338,14 @@ internal fun ClocktowerNightStepCardLocalized(
     val empathPlayers = chefPlayers
     val empathResultChoices = if (presentationRoleEnName == "Empath" && step.actor != null) {
         clocktowerEmpathResultChoices(
-            step = step,
+            step = manualFallbackStep,
             players = empathPlayers,
-            automaticStorytellerInfo = automaticStorytellerInfo,
+            automaticStorytellerInfo = effectiveAutomaticInformation,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
             structuredNumberUiModel = structuredNumberUiModel,
-            recommendedOptionIds = recommendedOptionIds,
-            recommendedValues = recommendedNumericValues,
+            recommendedOptionIds = effectiveRecommendedOptionIds,
+            recommendedValues = effectiveRecommendedNumericValues,
         )
     } else {
         emptyList()
@@ -340,12 +354,12 @@ internal fun ClocktowerNightStepCardLocalized(
         plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Empath && empathResultChoices.isNotEmpty()
     val undertakerResultChoices = if (presentationRoleEnName == "Undertaker" && step.actor != null) {
         clocktowerUndertakerResultChoices(
-            step = step,
+            step = manualFallbackStep,
             seatCount = cards.size,
-            automaticStorytellerInfo = automaticStorytellerInfo,
+            automaticStorytellerInfo = effectiveAutomaticInformation,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
-            recommendedOptionIds = recommendedOptionIds,
+            recommendedOptionIds = effectiveRecommendedOptionIds,
         )
     } else {
         emptyList()
@@ -358,19 +372,19 @@ internal fun ClocktowerNightStepCardLocalized(
         null
     }
     val clockmakerResultChoices = clocktowerClockmakerResultChoices(
-        step = step,
-        automaticStorytellerInfo = automaticStorytellerInfo,
+        step = manualFallbackStep,
+        automaticStorytellerInfo = effectiveAutomaticInformation,
         automaticDisplayOption = automaticDisplayOption,
-        recommendedOptionIds = recommendedOptionIds,
+        recommendedOptionIds = effectiveRecommendedOptionIds,
     )
     val usesClockmakerSquareTable =
         plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Clockmaker && clockmakerResultChoices.isNotEmpty()
     val sageResultChoices = clocktowerSageResultChoices(
-        step = step,
+        step = manualFallbackStep,
         seatCount = cards.size,
-        automaticStorytellerInfo = automaticStorytellerInfo,
+        automaticStorytellerInfo = effectiveAutomaticInformation,
         automaticDisplayOption = automaticDisplayOption,
-        recommendedOptionIds = recommendedOptionIds,
+        recommendedOptionIds = effectiveRecommendedOptionIds,
     )
     val usesSageSquareTable =
         plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Sage && sageResultChoices.isNotEmpty()
@@ -385,13 +399,13 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val ravenkeeperResultChoices = if (usesRavenkeeperSquareTable) {
         clocktowerRavenkeeperResultChoices(
-            step = step,
+            step = manualFallbackStep,
             selectedSeat = ravenkeeperSelectedSeat,
             seatCount = cards.size,
-            automaticStorytellerInfo = automaticStorytellerInfo,
+            automaticStorytellerInfo = effectiveAutomaticInformation,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
-            recommendedOptionIds = recommendedOptionIds,
+            recommendedOptionIds = effectiveRecommendedOptionIds,
         )
     } else {
         emptyList()
@@ -431,10 +445,14 @@ internal fun ClocktowerNightStepCardLocalized(
             ?.mapTo(linkedSetOf()) { choice -> choice.value }
             .orEmpty()
     }
-    val fortuneTellerRecommendedResult = structuredFortuneTellerUiModel
-        ?.choices
-        ?.firstOrNull { choice -> choice.recommended && choice.value in fortuneTellerLegalResults }
-        ?.value
+    val fortuneTellerRecommendedResult = if (manualInformationFallback) {
+        null
+    } else {
+        structuredFortuneTellerUiModel
+            ?.choices
+            ?.firstOrNull { choice -> choice.recommended && choice.value in fortuneTellerLegalResults }
+            ?.value
+    }
 
     fun showRecommendedDisplayOption(
         option: ClocktowerDisplayOption,
@@ -941,7 +959,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     redHerringSeat = redHerringSeat,
                     legalResults = fortuneTellerLegalResults,
                     recommendedResult = fortuneTellerRecommendedResult,
-                    automaticStorytellerInfo = automaticStorytellerInfo,
+                    automaticStorytellerInfo = effectiveAutomaticInformation,
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onSeatSelected = { seatNumber ->
@@ -972,14 +990,14 @@ internal fun ClocktowerNightStepCardLocalized(
                     else -> emptySet()
                 }
                 val resultOptions = when {
-                    step.displayOptions.isEmpty() -> emptyList()
-                    automaticStorytellerInfo -> listOfNotNull(automaticDisplayOption)
-                    else -> step.displayOptions
+                    manualFallbackStep.displayOptions.isEmpty() -> emptyList()
+                    effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
+                    else -> manualFallbackStep.displayOptions
                 }
-                val recommendedResultOptions = if (automaticStorytellerInfo) {
-                    listOfNotNull(automaticDisplayOption)
-                } else {
-                    recommendationPresentation.recommendations
+                val recommendedResultOptions = when {
+                    manualInformationFallback -> emptyList()
+                    effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
+                    else -> recommendationPresentation.recommendations
                 }
                 ClocktowerChambermaidSquareTableDialog(
                     seats = nightActionSeats,
@@ -1056,10 +1074,10 @@ internal fun ClocktowerNightStepCardLocalized(
                     ClocktowerPairInformationSquareTableDialog(
                         interactionKey = informationDecisionKey,
                         presentation = presentation,
-                        recommendedOptions = if (automaticStorytellerInfo) {
-                            listOfNotNull(automaticDisplayOption)
-                        } else {
-                            recommendationPresentation.recommendations
+                        recommendedOptions = when {
+                            manualInformationFallback -> emptyList()
+                            effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
+                            else -> recommendationPresentation.recommendations
                         },
                         seats = nightActionSeats,
                         actorSeat = actionActorSeat,
@@ -1070,7 +1088,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         roleLabel = { roleId ->
                             clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                         },
-                        allowManualEditing = !automaticStorytellerInfo,
+                        allowManualEditing = !effectiveAutomaticInformation,
                         language = language,
                         canGoPrevious = canGoPrevious,
                         onPrevious = onPrevious,
