@@ -798,42 +798,6 @@ internal fun ClocktowerJudgeScreen(
             },
         )
     }
-    LaunchedEffect(automaticStorytellerInfo, automaticStorytellerStyle, recommendationUiState) {
-        if (automaticStorytellerInfo && appliedRecommendationStyle != automaticStorytellerStyle) {
-            val setupPlans = (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty()
-            val automaticPlan = recommendationCoordinator.selectSetupPlan(setupPlans, automaticStorytellerStyle)
-            if (automaticPlan != null) {
-                val setupFamilyId = "setup-plan"
-                val setupAuditId = "$recommendationKey|setup"
-                val setupDimensions = SelectionAuditDimensions(
-                    playerCount = cards.size,
-                    phase = StorytellerPhase.FIRST_NIGHT,
-                    style = automaticStorytellerStyle,
-                )
-                selectionDistributionTelemetry.recordPreview(
-                    SelectionAuditRecord(
-                        selectionId = setupAuditId,
-                        dimensions = setupDimensions,
-                        candidates = setupPlans.map { plan ->
-                            SelectionAuditCandidate(
-                                familyId = setupFamilyId,
-                                qualityTier = plan.qualityTier,
-                            )
-                        },
-                    ),
-                )
-                selectionDistributionTelemetry.recordCommittedSelection(
-                    SelectionAuditCommit(
-                        selectionId = setupAuditId,
-                        dimensions = setupDimensions,
-                    selectedFamilyId = setupFamilyId,
-                    ),
-                )
-                selectedRecommendationStyle = automaticPlan.style
-                appliedRecommendationStyle = automaticPlan.style
-            }
-        }
-    }
     val executionThreshold = (publicAliveCards.size + 1) / 2
     val scriptRoleNames = clocktowerRolesForScript(script).map { it.enName }.toSet()
     val scriptHasSlayer = "Slayer" in scriptRoleNames
@@ -2053,8 +2017,25 @@ internal fun ClocktowerJudgeScreen(
         scriptRoles = clocktowerRolesForScript(script),
         inPlayRoleNames = cards.mapNotNull { it.clocktowerRole?.enName }.toSet(),
     )
-    val setupPlansForDemonBluffs =
-        (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty()
+    val legalDemonBluffRoleNames = legalDemonBluffs.mapTo(linkedSetOf()) { it.enName }
+    var manualDemonBluffDraft by remember(
+        gameId,
+        recommendedDemonBluffRoleNames,
+        legalDemonBluffRoleNames,
+    ) {
+        mutableStateOf(
+            recommendedDemonBluffRoleNames
+                .filter { it in legalDemonBluffRoleNames }
+                .distinct()
+                .take(3),
+        )
+    }
+    val manualDemonBluffsRequired = shouldGiveFirstNightEvilInfo && demonCard != null
+    val manualDemonBluffsReady = !manualDemonBluffsRequired ||
+        manualDemonBluffSelectionReady(
+            selectedRoleNames = manualDemonBluffDraft,
+            legalRoles = legalDemonBluffs,
+        )
     val demonBluffRoleNames = recommendedDemonBluffRoleNames.takeIf { it.isNotEmpty() }
     val demonBluffPresentation = resolveDemonBluffPresentation(
         recommendedRoleNames = demonBluffRoleNames,
@@ -3687,6 +3668,7 @@ internal fun ClocktowerJudgeScreen(
             buttonLabel = text("确认裁定，开始首夜", "Confirm plan and begin first night"),
             onHostTools = onHostTools,
             onPrevious = onPreviousFromFirstNightReady,
+            startEnabled = manualDemonBluffsReady,
             onStartNight = {
                 if (firstNightNaturalPairPrecomputeReady) {
                     nightStarted = true
@@ -3698,29 +3680,27 @@ internal fun ClocktowerJudgeScreen(
                 }
             },
         ) {
-            StorytellerRecommendationCard(
-                automaticStorytellerInfo = automaticStorytellerInfo,
-                state = recommendationUiState,
-                selectedStyle = selectedRecommendationStyle,
-                appliedStyle = appliedRecommendationStyle,
-                cards = cards,
-                script = script,
-                language = language,
-                lockedDecisions = lockedRecommendationDecisions,
-                onSelectStyle = { selectedRecommendationStyle = it },
-                onApply = { plan ->
-                    appliedRecommendationStyle = plan.style
-                },
-                onReevaluate = { nextLockedDecisions ->
-                    lockedRecommendationDecisions = nextLockedDecisions
-                    selectedRecommendationStyle = automaticStorytellerStyle
-                    appliedRecommendationStyle = null
-                },
-                onClearLocks = {
-                    lockedRecommendationDecisions = emptyList()
-                    selectedRecommendationStyle = automaticStorytellerStyle
-                },
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ClocktowerNightReadyCard()
+                if (manualDemonBluffsRequired) {
+                    ClocktowerDemonBluffManualPicker(
+                        legalRoles = legalDemonBluffs,
+                        selectedRoleNames = manualDemonBluffDraft,
+                        language = language,
+                        onSelectionChange = { nextSelection ->
+                            manualDemonBluffDraft = nextSelection
+                            if (
+                                manualDemonBluffSelectionReady(
+                                    selectedRoleNames = nextSelection,
+                                    legalRoles = legalDemonBluffs,
+                                )
+                            ) {
+                                onCommitDemonBluffs(nextSelection)
+                            }
+                        },
+                    )
+                }
+            }
         }
         return
     }
@@ -3910,61 +3890,6 @@ internal fun ClocktowerJudgeScreen(
                     onConfirmNight()
                 }
             }
-        }
-
-        val demonBluffCommitStyle = appliedRecommendationStyle ?: selectedRecommendationStyle
-        LaunchedEffect(
-            phase,
-            currentStepIndex,
-            currentStep.interactionId,
-            currentStep.isRealAction,
-            recommendedDemonBluffRoleNames,
-            setupPlansForDemonBluffs,
-            demonBluffCommitStyle,
-            legalDemonBluffs,
-        ) {
-            demonBluffRoleNamesToCommitAtBarrier(
-                isDemonInfoStep = phase == ClocktowerPhase.FirstNight &&
-                    currentStep.interactionId ==
-                    ClocktowerProductionNightStepIdentity.demonInfo()
-                        .interactionId(ClocktowerNightFlowPhase.FIRST_NIGHT),
-                isRealAction = currentStep.isRealAction,
-                committedRoleNames = recommendedDemonBluffRoleNames,
-                setupPlans = setupPlansForDemonBluffs,
-                storytellerStyle = demonBluffCommitStyle,
-                legalRoles = legalDemonBluffs,
-            )?.let(onCommitDemonBluffs)
-        }
-
-        val recommendedRedHerringSelection = recommendationCoordinator
-            .selectSetupPlan(
-                (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty(),
-                automaticStorytellerStyle,
-            )
-            ?.decisions
-            ?.filterIsInstance<StorytellerDecision.RedHerring>()
-            ?.singleOrNull()
-            ?.let { decision -> cards.getOrNull(decision.seat - 1)?.name }
-        val legalRedHerringSelections = clocktowerRedHerringCandidates(publicAliveCards)
-            .mapTo(linkedSetOf()) { it.name }
-
-        LaunchedEffect(
-            automaticStorytellerInfo,
-            currentStepIndex,
-            currentStep.action,
-            currentStep.isRealAction,
-            redHerring,
-            recommendedRedHerringSelection,
-            legalRedHerringSelections,
-        ) {
-            automaticRedHerringSelectionAtBarrier(
-                automaticStorytellerInfo = automaticStorytellerInfo,
-                isRedHerringStep = currentStep.action == ClocktowerNightAction.RedHerring,
-                isRealAction = currentStep.isRealAction,
-                currentSelection = redHerring,
-                recommendedSelection = recommendedRedHerringSelection,
-                legalSelections = legalRedHerringSelections,
-            )?.let(onSelectRedHerring)
         }
 
         LaunchedEffect(

@@ -50,6 +50,7 @@ internal fun ClocktowerStorytellerRecommendationScreen(
     buttonLabel: String,
     onHostTools: () -> Unit,
     onPrevious: (() -> Unit)? = null,
+    startEnabled: Boolean = true,
     onStartNight: () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -122,11 +123,75 @@ internal fun ClocktowerStorytellerRecommendationScreen(
                     onNext = onStartNight,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     previousEnabled = onPrevious != null,
+                    nextEnabled = startEnabled,
                 )
             }
         }
     }
 }
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun ClocktowerDemonBluffManualPicker(
+    legalRoles: List<ClocktowerRole>,
+    selectedRoleNames: List<String>,
+    language: String,
+    onSelectionChange: (List<String>) -> Unit,
+) {
+    val legalRoleNames = legalRoles.mapTo(linkedSetOf()) { it.enName }
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                if (language == "en") "Demon bluffs · Manual required" else "恶魔伪装身份 · 需要人工选择",
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                if (language == "en") {
+                    "No accepted automatic policy exists for this decision. Choose exactly 3 legal out-of-play good roles."
+                } else {
+                    "此裁定尚无已验收的自动策略。请从合法、未在场的善良角色中手动选择恰好 3 个。"
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(
+                if (language == "en") "Selected ${selectedRoleNames.size}/3"
+                else "已选择 ${selectedRoleNames.size}/3",
+                fontWeight = FontWeight.Bold,
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                legalRoles.forEach { role ->
+                    val selected = role.enName in selectedRoleNames
+                    val onClick = {
+                        onSelectionChange(
+                            toggleManualDemonBluffSelection(
+                                selectedRoleNames = selectedRoleNames,
+                                roleName = role.enName,
+                                legalRoleNames = legalRoleNames,
+                            ),
+                        )
+                    }
+                    if (selected) {
+                        Button(onClick = onClick) { Text(role.nameFor(language)) }
+                    } else {
+                        OutlinedButton(onClick = onClick) { Text(role.nameFor(language)) }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun StorytellerRecommendationCard(
