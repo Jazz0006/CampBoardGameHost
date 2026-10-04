@@ -2,7 +2,8 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@da5e9947e7a2799d94720454b67fdb6de2ef54a3`  
-> Status: **TBGS-2A / 2B / 2C COMPLETE / ACCEPTED; TBGS-2D AUDIT COMPLETE / IMPLEMENTATION READY**
+> Historical status at this audit checkpoint: **TBGS-2A / 2B / 2C COMPLETE / ACCEPTED; TBGS-2D AUDIT COMPLETE / IMPLEMENTATION READY**  
+> Current continuation authority: `docs/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — TBGS-2D/2E are now COMPLETE / ACCEPTED, no TBGS-2F is selected, and the legacy GENTLE/BALANCED/AGGRESSIVE style routes are marked for retirement rather than migration.
 
 ## 1. Decision
 

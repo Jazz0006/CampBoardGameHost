@@ -1,13 +1,13 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-10-03 Australia/Sydney  
+> Updated: 2026-10-04 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed executable validation checkpoint: **C5-E latest-main integrated production cutover — `fdf3a2be07ed0c70753ba724f15b5572e0dea584`; CI #3720 / R2 #3424 GREEN, including Android FULL/assemble, ASP and Real Clingo**  
+> Last completed executable validation checkpoint: **TBGS-2E Mayor redirect final T4 — `ce5b9943bf4c0d1a27b73c5de5d45a841349949f`; CI #3731 / R2 #3433 GREEN, including Android FULL/assemble, ASP and Real Clingo**  
 > DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> C5-E functioning-Librarian automatic production cutover is **COMPLETE / ACCEPTED** at `6afc3b08416eaf6f3fb74a53bb48b8e144044341` (CI #3717 / R2 #3421). Latest-main integration revalidation is also GREEN at `fdf3a2be07ed0c70753ba724f15b5572e0dea584` (CI #3720 / R2 #3424). The accepted product behavior is V2-first on the exact functioning Librarian automatic surface with canonical-domain rebind and legacy fallback; Experienced/manual/publication semantics remain unchanged. In the parallel ML lane, **HOST-ML1 typed neutral `RecommendationDecisionExportV1` is COMPLETE / ACCEPTED after PR #208 + #209; final executable checkpoint `b91fcd298621e9064f11c26c1a0398c5c14fc13c` (CI #3710 / R2 #3416), with PR #209 squash merge `2d4681115b9c373bfbfa85a7b385aba4e59e1062`**. Machine-readable materialization remains deferred until a concrete offline consumer requires an interchange format. Re-evaluate the next product lane after C5-E merge; TBGS-2D Demon succession remains implementation-ready.
+> C5-E functioning-Librarian automatic production cutover and HOST-ML1 typed neutral export remain COMPLETE / ACCEPTED; machine-readable materialization remains deferred. TBGS-2D Demon succession and TBGS-2E Mayor redirect are COMPLETE / ACCEPTED. The post-2E fresh audit is COMPLETE and selects **no TBGS-2F implementation**: the legacy GENTLE/BALANCED/AGGRESSIVE recommendation-style routes are no longer a product requirement and should be retired rather than migrated, while special registration remains blocked on typed registration/misinformation-history production. The next independent lane is a focused RecommendationStyle retirement audit.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -27,14 +27,16 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 12. `docs/DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md` — historical post-TBGS-1 NOT-PASSED verdict before Q04 verification
 13. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — original pre-TBGS-1 gate audit / historical blocker detail
 14. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
-15. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 active
+15. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — TB-only standard snapshot / Drunk vertical slice / EvidenceLab interoperability route; TBGS-0/1 complete, TBGS-2 paused after accepted 2A–2E
 16. `docs/TBGS_2_RUNTIME_RECOMMENDATION_STATE_MIGRATION_AUDIT_2026-10-03.md` — TBGS-2 consumer inventory and accepted 2A/2B/2C lineage
 17. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
-18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and exact TBGS-2D Demon-succession implementation boundary
-19. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-20. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
-21. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
-22. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and accepted TBGS-2D Demon-succession boundary
+19. `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md` — accepted TBGS-2E Mayor-redirect boundary
+20. `docs/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — post-2E fresh audit; no 2F selected; legacy three-style route marked for retirement
+21. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+22. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
+23. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
+24. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -95,7 +97,7 @@ Beginner automatic Drunk authority                 COMPLETE / ACCEPTED
 DLB-6 old-contract retirement                      COMPLETE / ACCEPTED
 DLB-7 final acceptance                             COMPLETE / ACCEPTED
 DLB campaign                                       COMPLETE / ACCEPTED
-TBGS-2 runtime recommendation projection migration IN PROGRESS — 2A/2B/2C COMPLETE / ACCEPTED; 2D AUDIT COMPLETE / IMPLEMENTATION READY — Demon succession
+TBGS-2 runtime recommendation projection migration PAUSED AFTER 2E — 2A/2B/2C/2D/2E COMPLETE / ACCEPTED; NO 2F SELECTED
 App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
 ~~~
 
@@ -167,7 +169,7 @@ DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c
 
 DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, DLB-5.5 removal of obsolete setup auto-apply wiring, and DLB-5.4 Poisoner / first-night information convergence audit. DLB-5.4 found no production gap: poison confirmation owns one canonical revision, unshown drafts are invalidated, displayed observations/history remain committed, and subsequent information replans against current poison state plus committed history. DLB-5 is COMPLETE / ACCEPTED. PR #183 passed final exact-head T4 at `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN and was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
 
-The current product-development lane is **TBGS-2 post-2E fresh re-audit**. TBGS-2E Mayor redirect is COMPLETE / ACCEPTED: implementation `f512fa2339677de4e9e8c12ea3694938867ed584` passed CI #3730 / R2 #3432, and final exact-head T4 `ce5b9943bf4c0d1a27b73c5de5d45a841349949f` passed CI #3731 / R2 #3433 GREEN across Android FULL/assemble, ASP and Real Clingo.
+The current product-development lane is **RecommendationStyle retirement audit**. TBGS-2E Mayor redirect is COMPLETE / ACCEPTED: implementation `f512fa2339677de4e9e8c12ea3694938867ed584` passed CI #3730 / R2 #3432, and final exact-head T4 `ce5b9943bf4c0d1a27b73c5de5d45a841349949f` passed CI #3731 / R2 #3433 GREEN across Android FULL/assemble, ASP and Real Clingo. The post-2E fresh audit found no clean TBGS-2F: legacy GENTLE/BALANCED/AGGRESSIVE routes are to be retired, not migrated; special registration still waits on typed-history production.
 
 Current C5 authority:
 
@@ -219,6 +221,8 @@ DLB-0 typed intermediate setup COMPLETE
 || HOST-ML1 typed neutral decision export COMPLETE / ACCEPTED; final `b91fcd298621e9064f11c26c1a0398c5c14fc13c`, CI #3710 / R2 #3416 GREEN; pair semantic payload included
 || machine-readable corpus materialization DEFERRED until concrete offline consumer; do not block C5-E
 || TBGS-2E Mayor redirect COMPLETE / ACCEPTED
+-> post-2E fresh re-audit COMPLETE — no TBGS-2F selected
+-> RecommendationStyle retirement audit NEXT
 -> A3 presentation catalog READY / independent maintenance only
 ```
 
@@ -226,7 +230,7 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 - A1 preferences and A2 archive storage are independent maintenance slices only;
 - H1 is COMPLETE / ACCEPTED through DLB-5H1;
-- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2 is the active incremental runtime migration. TBGS-2A first-night natural-pair precompute, TBGS-2B pair manual/publication, and TBGS-2C setup-recommendation mechanical/rules base-context migration are COMPLETE / ACCEPTED. The post-2C focused family audit selected TBGS-2D Demon succession, which is now COMPLETE / ACCEPTED. The post-2D bounded-family re-audit selected TBGS-2E Mayor redirect, now COMPLETE / ACCEPTED. The next step is a fresh post-2E bounded-family re-audit; special registration and cross-cutting balance/style remain candidates, while history-producer cutover, protection ownership and spent-ability ownership stay explicit dependencies rather than hidden assumptions. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
+- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2A through 2E are COMPLETE / ACCEPTED. The post-2E fresh audit selects no TBGS-2F. Cross-cutting GENTLE/BALANCED/AGGRESSIVE behavior is now retirement debt, not a migration target; special registration remains blocked on typed-history production. TBGS-2 pauses after 2E. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
 - R3 generic transaction extraction and the generic setup-effect owner remain NO-GO.
 
 Recovery R0–R6 stays complete. R7 remains separate.
