@@ -4,7 +4,7 @@
 >
 > Baseline: `main@f5e61b999c70b8a9060d5e172968b6b764934d28`
 >
-> Status: **RSR-1 AUDIT COMPLETE / RSR-1A IMPLEMENTATION READY**
+> Status: **RSR-1 AUDIT COMPLETE / RSR-1A IMPLEMENTED — EXACT-HEAD T4 PENDING**
 >
 > Selected first bounded implementation: **RSR-1A — Storyteller-mode / legacy-ranking-style ownership decoupling**
 
@@ -212,14 +212,22 @@ RSR-1A does not:
 - map NORMAL to AGGRESSIVE;
 - claim AGGRESSIVE is the future default policy.
 
-## 8. Sequence after RSR-1A
+## 8. RSR-1A tests-first implementation evidence
+
+RED checkpoint: `5645c6fbf2585ca23a6648e1c7e44e68cd03506d` on PR #217. CI #3738 failed Android FAST exactly on `StorytellerExperienceModeTest.storyteller UX policy does not expose legacy recommendation style`; 1 of 1,657 FAST tests failed. R2 #3437 and Real Clingo were GREEN, confirming the intended architecture assertion was the only observed blocker.
+
+Implementation checkpoint: `e3e94136e3e6658f1d69ab5cd1e97114ada4238a`. CI #3739 / R2 #3438 are GREEN; Android FAST and Real Clingo passed. The implementation removes `recommendationStyle` from `StorytellerRecommendationUxPolicy`, routes unchanged legacy automatic behavior through `LegacyRecommendationStyleCompatibility.automatic = AGGRESSIVE`, and changes no recommendation ranking/scoring code.
+
+A separate exact-head T4 checkpoint is still required before merge because ordinary PR synchronization selected Android FAST rather than FULL. The T4 checkpoint must explicitly run Android FULL + assemble, ASP and Real Clingo plus R2.
+
+## 9. Sequence after RSR-1A
 
 ```text
 RSR-0 architecture/fan-out/player-level contract   COMPLETE / ACCEPTED
 RSR-1 readiness audit                              COMPLETE
 
 -> RSR-1A Storyteller-mode/style ownership decoupling
-                                                   IMPLEMENTATION READY
+                                                   IMPLEMENTED / T4 PENDING
 -> RSR-1B family policy selection audit
    - leverage already style-neutral accepted surfaces first
    - require evidence/versioned policy before collapsing styleful families
