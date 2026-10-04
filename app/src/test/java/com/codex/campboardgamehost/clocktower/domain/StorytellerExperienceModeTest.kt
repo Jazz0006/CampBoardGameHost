@@ -7,27 +7,34 @@ import org.junit.Test
 
 class StorytellerExperienceModeTest {
     @Test
-    fun `beginner is zero-decision automatic aggressive presentation`() {
+    fun `beginner is zero-decision automatic presentation`() {
         val policy = StorytellerRecommendationUxPolicy.fromExperienceMode(
             StorytellerExperienceMode.BEGINNER,
         )
 
         assertTrue(policy.automaticExecution)
-        assertEquals(RecommendationStyle.AGGRESSIVE, policy.recommendationStyle)
         assertFalse(policy.showManualAlternatives)
         assertEquals(1, policy.recommendedOptionLimit)
     }
 
     @Test
-    fun `experienced keeps same aggressive recommendation but exposes manual control`() {
+    fun `experienced exposes manual control without owning recommendation ranking style`() {
         val policy = StorytellerRecommendationUxPolicy.fromExperienceMode(
             StorytellerExperienceMode.EXPERIENCED,
         )
 
         assertFalse(policy.automaticExecution)
-        assertEquals(RecommendationStyle.AGGRESSIVE, policy.recommendationStyle)
         assertTrue(policy.showManualAlternatives)
         assertEquals(3, policy.recommendedOptionLimit)
+    }
+
+    @Test
+    fun `storyteller UX policy does not expose legacy recommendation style`() {
+        assertFalse(
+            StorytellerRecommendationUxPolicy::class.java.declaredFields.any {
+                it.name == "recommendationStyle"
+            },
+        )
     }
 
     @Test
