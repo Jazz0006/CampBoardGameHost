@@ -2,7 +2,6 @@ package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRecommendation
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
@@ -16,7 +15,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScoreCategory
 import com.codex.campboardgamehost.clocktower.domain.ScoreItem
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
-import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
+import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegalDomain
 
 internal object MayorRedirectRecommender {
     private val mayorRole = RoleId("Mayor")
@@ -31,15 +30,27 @@ internal object MayorRedirectRecommender {
         val mayor = requireNotNull(request.state.game.playerAt(mayorSeat))
         require(mayor.actualRole == mayorRole && mayor.alive)
         if (!abilityReliable) return emptyList()
+        val domain = MayorRedirectLegalDomain.resolve(request.state.game, mayorSeat)
+        return recommend(request, domain.legalTargetSeats)
+    }
 
-        val candidates = request.state.game.players
-            .filter { target ->
-                target.seat == mayorSeat ||
-                    MayorRedirectLegality.canReceiveRedirect(
-                        targetIsDemon = target.actualType == CharacterType.DEMON,
-                    )
-            }
-            .map { target ->
+    fun recommend(
+        requestId: String,
+        context: TroubleBrewingMayorRedirectDecisionContext,
+    ): List<DynamicDecisionRecommendation> = recommend(
+        request = context.toDynamicRequest(requestId),
+        legalTargetSeats = context.decisionDomain.legalTargetSeats,
+    )
+
+    private fun recommend(
+        request: DynamicDecisionRequest,
+        legalTargetSeats: Set<Int>,
+    ): List<DynamicDecisionRecommendation> {
+        val mayorSeat = (request.state.game.players.singleOrNull { player ->
+            player.actualRole == mayorRole && player.seat in legalTargetSeats
+        } ?: error("Mayor redirect domain requires the Mayor seat.")).seat
+        val candidates = legalTargetSeats.sorted().map { targetSeat ->
+                val target = requireNotNull(request.state.game.playerAt(targetSeat))
                 val outcome = resolveOutcome(request, mayorSeat, target.seat)
                 DynamicDecisionCandidate(
                     choice = DynamicStorytellerChoice.MayorDeathResolution(target.seat),
@@ -69,17 +80,27 @@ internal object MayorRedirectRecommender {
     }
 
     internal fun resolveOutcome(
+        context: TroubleBrewingMayorRedirectDecisionContext,
+        targetSeat: Int,
+    ): PredictedDecisionOutcome.NightDeath {
+        require(targetSeat in context.decisionDomain.legalTargetSeats) {
+            "Mayor redirect target is outside the context legal domain."
+        }
+        return resolveOutcome(
+            request = context.toDynamicRequest("mayor-redirect-outcome"),
+            mayorSeat = context.decisionDomain.mayorSeat,
+            targetSeat = targetSeat,
+        )
+    }
+
+    internal fun resolveOutcome(
         request: DynamicDecisionRequest,
         mayorSeat: Int,
         targetSeat: Int,
     ): PredictedDecisionOutcome.NightDeath {
         val target = requireNotNull(request.state.game.playerAt(targetSeat))
-        require(
-            targetSeat == mayorSeat ||
-                MayorRedirectLegality.canReceiveRedirect(
-                    targetIsDemon = target.actualType == CharacterType.DEMON,
-                ),
-        ) { "Mayor redirect cannot target a Demon." }
+        val legalDomain = MayorRedirectLegalDomain.resolve(request.state.game, mayorSeat)
+        require(targetSeat in legalDomain.legalTargetSeats) { "Mayor redirect target is outside the rules-owned domain." }
         val actualDeathSeat = when {
             targetSeat == mayorSeat -> mayorSeat
             !target.alive -> null

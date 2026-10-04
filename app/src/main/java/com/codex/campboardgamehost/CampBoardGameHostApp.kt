@@ -62,6 +62,8 @@ import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirst
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContextBuilder
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContextBuilder
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingMayorRedirectDecisionContext
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingMayorRedirectDecisionContextBuilder
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingSetupRecommendationDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingSetupRecommendationDecisionContextBuilder
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
@@ -686,6 +688,40 @@ internal fun CampBoardGameHostApp() {
             snapshot = snapshot,
             characterRegistry = registry,
             successionResolution = successionResolution,
+            playerInformationPressureBySeat = playerInformationPressureBySeat,
+            spentAbilitySeats = spentAbilitySeats,
+        )
+    }
+
+    fun currentTroubleBrewingMayorRedirectDecisionContext(
+        mayorSeat: Int,
+        protectedSeats: Set<Int>,
+        playerInformationPressureBySeat: Map<Int, PlayerInformationPressure>,
+        spentAbilitySeats: Set<Int>,
+    ): TroubleBrewingMayorRedirectDecisionContext? {
+        if (
+            currentGameKind != GameKind.Clocktower ||
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            clocktowerPhase != ClocktowerPhase.Night
+        ) {
+            return null
+        }
+        val session = clocktowerGameSession ?: return null
+        val rulesetRef = clocktowerRulesetRef ?: return null
+        val registry = activeGameClocktowerRulesetCatalog
+            .ruleset(ClocktowerScript.TroubleBrewing)
+            .characterRegistry
+        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+            gameSnapshot = session.toGameSnapshot(rulesetRef),
+            phase = StorytellerPhase.NIGHT,
+            round = round,
+            characterRegistry = registry,
+        )
+        return TroubleBrewingMayorRedirectDecisionContextBuilder.build(
+            snapshot = snapshot,
+            characterRegistry = registry,
+            mayorSeat = mayorSeat,
+            protectedSeats = protectedSeats,
             playerInformationPressureBySeat = playerInformationPressureBySeat,
             spentAbilitySeats = spentAbilitySeats,
         )
@@ -2342,6 +2378,8 @@ internal fun CampBoardGameHostApp() {
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         demonSuccessorDecisionContextProvider =
                             ::currentTroubleBrewingDemonSuccessorDecisionContext,
+                        mayorRedirectDecisionContextProvider =
+                            ::currentTroubleBrewingMayorRedirectDecisionContext,
                         setupRecommendationResultProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
                                 troubleBrewingSetupRecommendationRevealCoordinator::resultFor
