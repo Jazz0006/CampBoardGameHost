@@ -47,7 +47,6 @@ import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
@@ -63,17 +62,13 @@ import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationRe
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
-import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalDomain
-import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingMayorRedirectDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningLibrarianV2ProductionSelector
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingSetupRecommendationDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
@@ -93,7 +88,6 @@ import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecisi
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
-import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
 import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
@@ -120,8 +114,6 @@ internal fun ClocktowerJudgeScreen(
     gameSeed: Long,
     gameStateRevision: Long,
     playerInputRevision: Long,
-    setupHistory: CrossGameHistory,
-    setupRecommendationDecisionContext: TroubleBrewingSetupRecommendationDecisionContext? = null,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
     demonSuccessorDecisionContextProvider: ((
         DemonSuccessionResolution,
@@ -134,10 +126,8 @@ internal fun ClocktowerJudgeScreen(
         Map<Int, PlayerInformationPressure>,
         Set<Int>,
     ) -> TroubleBrewingMayorRedirectDecisionContext?)? = null,
-    setupRecommendationResultProvider: ((SetupCoordinationRequest) -> SetupRecommendationService.ConstrainedResult)? = null,
     firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
     firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
-    onInitialRecommendationDemand: () -> Unit,
     phase: ClocktowerPhase,
     round: Int,
     nightCheckpoint: ClocktowerNightCheckpoint,
@@ -717,85 +707,6 @@ internal fun ClocktowerJudgeScreen(
             append(':')
             append(card.clocktowerRole?.enName.orEmpty())
         }
-    }
-    val recommendationCards = cards.toList()
-    var recommendationUiState by remember(recommendationKey) {
-        mutableStateOf<RecommendationUiState>(RecommendationUiState.Loading)
-    }
-    var selectedRecommendationStyle by remember(recommendationKey) {
-        mutableStateOf(automaticStorytellerStyle)
-    }
-    var appliedRecommendationStyle by remember(recommendationKey) {
-        mutableStateOf<RecommendationStyle?>(null)
-    }
-    var lockedRecommendationDecisions by remember(recommendationKey) {
-        mutableStateOf<List<StorytellerDecision>>(emptyList())
-    }
-    val committedSetupRecommendationDecisions = buildList {
-        redHerring?.let { committedName ->
-            val committedSeat = cards.indexOfFirst { it.name == committedName } + 1
-            if (committedSeat > 0) {
-                add(StorytellerDecision.RedHerring(committedSeat))
-            }
-        }
-        if (recommendedDemonBluffRoleNames.isNotEmpty()) {
-            add(
-                StorytellerDecision.DemonBluffs(
-                    recommendedDemonBluffRoleNames.map(::RoleId),
-                ),
-            )
-        }
-    }
-    val snapshotBackedSetupContext = if (
-        script == ClocktowerScript.TroubleBrewing &&
-        phase == ClocktowerPhase.FirstNight &&
-        round == 1
-    ) {
-        requireNotNull(setupRecommendationDecisionContext) {
-            "Trouble Brewing first-night setup recommendation requires snapshot-backed context."
-        }
-    } else {
-        null
-    }
-    val recommendationRequest = SetupCoordinationRequest(
-        game = snapshotBackedSetupContext?.recommendationGameState
-            ?: recommendationCards.toClocktowerGameState(
-                script = script,
-                seed = gameSeed,
-                poisonedPlayerName = poisonTarget,
-            ),
-        roles = snapshotBackedSetupContext?.roleDefinitions
-            ?: clocktowerRoleDefinitionsForScript(script),
-        lockedDecisions = recommendationLocksWithCommittedSetupDecisions(
-            mutableLocks = lockedRecommendationDecisions,
-            committedDecisions = committedSetupRecommendationDecisions,
-        ),
-        history = setupHistory,
-    )
-    LaunchedEffect(recommendationKey, lockedRecommendationDecisions) {
-        onInitialRecommendationDemand()
-        recommendationUiState = RecommendationUiState.Loading
-        val result = withContext(Dispatchers.Default) {
-            runCatching {
-                setupRecommendationResultProvider?.invoke(recommendationRequest)
-                    ?: recommendationCoordinator.recommendSetup(recommendationRequest)
-            }
-        }
-        // A changed revision/key cancels this effect. Never publish a completed
-        // old generation into the state created for the new first-night input.
-        if (!isActive) return@LaunchedEffect
-        recommendationUiState = result.fold(
-            onSuccess = { constrained ->
-                when {
-                    constrained.failureCodes.isNotEmpty() -> RecommendationUiState.InvalidLocks(constrained.failureCodes)
-                    constrained.plans.isEmpty() -> RecommendationUiState.Empty
-                    else -> RecommendationUiState.Ready(constrained.plans)
-                }
-            },
-            onFailure = { error ->
-                RecommendationUiState.Error(error.message ?: text("推荐计算失败", "Recommendation failed"))
-            },
-        )
     }
     val executionThreshold = (publicAliveCards.size + 1) / 2
     val scriptRoleNames = clocktowerRolesForScript(script).map { it.enName }.toSet()
