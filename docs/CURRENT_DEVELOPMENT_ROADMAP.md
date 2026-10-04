@@ -42,7 +42,7 @@ Beginner automatic Drunk authority                          COMPLETE / ACCEPTED 
 DLB-6 old-contract retirement                               COMPLETE / ACCEPTED
 DLB-7 final DLB acceptance                                  COMPLETE / ACCEPTED
 DLB campaign                                                COMPLETE / ACCEPTED
-TBGS-2 runtime recommendation projection migration           IN PROGRESS — 2A/2B/2C COMPLETE / ACCEPTED; 2D AUDIT COMPLETE / IMPLEMENTATION READY — Demon succession
+TBGS-2 runtime recommendation projection migration           IN PROGRESS — 2A/2B/2C COMPLETE / ACCEPTED; 2D IMPLEMENTATION GREEN / T4 PENDING — Demon succession
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   C5-A/C5-B/C5-C/C5-D/C5-E COMPLETE / ACCEPTED
 HOST-ML0 ML readiness / ModelLab boundary              COMPLETE / ACCEPTED
@@ -123,7 +123,7 @@ EvidenceLab `main@78f672868ea6603317aeefa20ad91686c5886db9` supplies the first C
 
 EvidenceLab EL-ML0 is COMPLETE / ARCHITECTURE ACCEPTED at observed `main@a575ecc05ccb77cf4aaddcad7f772b0fe920d3d6`. Host HOST-ML0 is COMPLETE / ACCEPTED, and HOST-ML1 now implements the typed policy-neutral `RecommendationDecisionExportV1` boundary for Drunk assignment and first-night pair information, including pair candidate shown-role/seat/truth/registration semantics. The frozen long-horizon ownership remains: EvidenceLab owns source-backed evidence; Host owns canonical pre-decision state, rules-owned legal domains, typed contexts, deterministic features, replay and neutral export; a future ModelLab owns dataset recipes and model training. Machine-readable corpus materialization is a separate future follow-up, deferred until a concrete offline consumer fixes the interchange requirement; EL-ML1 is triggered only if source-backed machine-readable evidence seeds are required. Authorities: `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` and `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md`. This route must not broaden C5 or delay TBGS-2.
 
-TBGS-2D Demon succession remains independently IMPLEMENTATION READY but is not a C5 prerequisite and must not be bundled into C5 implementation work.
+TBGS-2D Demon succession is now IMPLEMENTATION GREEN at `b62980929c143439e5b65836e251c746eda14afc`; Android FAST and R2 #3428 are GREEN. Final FULL/assemble + ASP + Real Clingo acceptance is pending before TBGS-2D can be marked COMPLETE / ACCEPTED.
 
 The product route changed on 2026-09-29 after the Drunk late-binding and App/Host decomposition audits were reconciled.
 
