@@ -127,7 +127,7 @@ Keep outside the snapshot:
 - recommendation scores / quality tiers;
 - `evilAdvantage` / `publicBalanceHint`;
 - policy / selector / algorithm config versions;
-- player experience;
+- per-player experience (`BEGINNER / NORMAL / EXPERT`; current/default `NORMAL`);
 - cross-game recent-role history;
 - public-claim interpretation unless/until a stable game-scoped canonical claim history owner exists;
 - EvidenceLab assertion IDs, timestamps, derivation or verification state;
@@ -390,7 +390,7 @@ The remaining candidates were special registration and cross-cutting balance/sty
 
 Special registration is mechanically snapshot-ready and already has a rules-owned legal domain, but a clean migration remains blocked on incomplete typed registration/misinformation-history production. The current localized UI-event-title history reconstruction must not be promoted into a new durable typed context merely to continue TBGS-2.
 
-TBGS-2 therefore pauses after 2E. The next independent work is a focused RecommendationStyle retirement audit, followed by a fresh special-registration/history re-audit.
+TBGS-2 therefore pauses after 2E. The focused RecommendationStyle retirement/player-level audit is now COMPLETE / ACCEPTED as RSR-0 at `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`. RSR-1 style-neutral family policy semantics is the next independent work; special-registration/history re-audit follows after the relevant policy/history dependencies are resolved.
 
 Authority: `docs/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md`.
 
@@ -419,7 +419,8 @@ DLB-0..5H1 COMPLETE
 -> TBGS-2D Demon succession COMPLETE / ACCEPTED
 -> TBGS-2E Mayor redirect COMPLETE / ACCEPTED
 -> post-2E fresh re-audit COMPLETE / NO TBGS-2F SELECTED
--> RecommendationStyle retirement audit NEXT
+-> RSR-0 RecommendationStyle retirement / player-level audit COMPLETE / ACCEPTED
+-> RSR-1 style-neutral family policy contract NEXT
 ```
 
 TBGS-0/1 and EvidenceLab C3 may proceed in parallel. TBGS-0/1 must not invent ranking semantics while evidence is still missing.

@@ -450,22 +450,23 @@ UI
   -> display / confirmation / manual Experienced-mode override
 ```
 
-## 17. Skill profiles
+## 17. Player experience profiles
 
-The first target remains BEGINNER / ordinary-player oriented.
-
-Do not prematurely create many skill levels.
-
-Long-term product thinking currently favors a small number of meaningful profiles, roughly:
+The 2026-10-04 product direction is to keep a small per-player vocabulary:
 
 ```text
-NORMAL / ordinary
+BEGINNER
+NORMAL
 EXPERT
 ```
 
-Player/table skill profile is distinct from Storyteller UI mode. Experienced Storyteller mode may allow manual selection while using the same underlying table-skill policy.
+Current product default: every player resolves `NORMAL` because no player-level setting exists yet. A later player-profile/player-management slice may allow explicit per-player selection.
 
-No final NORMAL / EXPERT thresholds are frozen.
+Player experience is recommendation enrichment, not rules/mechanical truth. Preserve it per player / per seat at a decision boundary rather than collapsing it into the legacy global GENTLE/BALANCED/AGGRESSIVE recommendation style.
+
+Player experience is distinct from `StorytellerExperienceMode`. Experienced Storyteller mode may expose manual authority while consuming the same underlying player-level recommendation context.
+
+Do not map `BEGINNER/NORMAL/EXPERT` mechanically to legacy `GENTLE/BALANCED/AGGRESSIVE`. No games-played thresholds or family-specific ranking effects are frozen here. See `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`.
 
 ## 18. Corpus / evidence requirements
 

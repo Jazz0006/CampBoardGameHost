@@ -112,15 +112,11 @@ EvidenceLab creator/experienced-Storyteller guidance supports player-first assig
 
 Current Host Drunk-assignment implementation has no player-experience / games-played producer in this decision surface.
 
-Status: **OPTIONAL ENRICHMENT FAMILY WITH NO CURRENT AUTHORITATIVE PRODUCER**.
+Status: **OPTIONAL ENRICHMENT FAMILY; FUTURE PER-PLAYER PRODUCER PLANNED**.
 
-Do not create a player-profile subsystem solely to satisfy this audit. A later policy must explicitly choose one of these contracts:
+Do not create a player-profile subsystem solely to satisfy this audit. The 2026-10-04 product-owner decision now defines the future player-level vocabulary as per-player `BEGINNER / NORMAL / EXPERT` and authorizes **NORMAL as the current/default value for players without an explicit profile setting**. This supersedes the earlier provisional prohibition on treating missing player context as an average/default player.
 
-- player context is not consumed by that policy version;
-- player context is optional enrichment, with explicit unavailable semantics and a valid fallback when absent;
-- player context is required for that policy version, in which case the policy must defer when absent.
-
-“Missing player context = average player” is not authorized.
+A policy must still explicitly declare whether it consumes player experience. Policies that do not consume it remain invariant to the enrichment. Policies that do consume it must freeze the decision-time per-player values for replay/export and must not use player experience for rules legality.
 
 ### 4.3 Cross-game recent-role history
 
