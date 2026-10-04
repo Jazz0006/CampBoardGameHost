@@ -2,12 +2,12 @@
 
 > Updated: 2026-10-04 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed executable validation checkpoint: **TBGS-2E Mayor redirect final T4 — `ce5b9943bf4c0d1a27b73c5de5d45a841349949f`; CI #3731 / R2 #3433 GREEN, including Android FULL/assemble, ASP and Real Clingo**  
+> Last completed executable validation checkpoint: **RSR-1A Storyteller-mode/style ownership decoupling final T4 — `d8ac254b8f40d2a5106c871dcd9eaa567ab93fde`; CI #3740 / R2 #3439 GREEN, including Android FULL/assemble, ASP and Real Clingo; PR #217 squash merge `881d4252c1a242c5ea523718fb8f780f693e9ab5`**  
 > DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> C5-E functioning-Librarian automatic production cutover and HOST-ML1 typed neutral export remain COMPLETE / ACCEPTED; machine-readable materialization remains deferred. TBGS-2D Demon succession and TBGS-2E Mayor redirect are COMPLETE / ACCEPTED. The post-2E fresh audit selected no TBGS-2F. **RSR-0 RecommendationStyle retirement / player-level context audit is now COMPLETE / ACCEPTED**: global GENTLE/BALANCED/AGGRESSIVE is retirement debt, future recommendation differentiation is per-player BEGINNER/NORMAL/EXPERT enrichment, and every current player resolves NORMAL until a separate player-profile/player-management slice exists. RSR-1 style-neutral family policy semantics is NEXT. Special registration remains blocked on typed registration/misinformation-history production.
+> C5-E functioning-Librarian automatic production cutover and HOST-ML1 typed neutral export remain COMPLETE / ACCEPTED; machine-readable materialization remains deferred. TBGS-2D Demon succession and TBGS-2E Mayor redirect remain COMPLETE / ACCEPTED. RSR-0 player-level/style audit and RSR-1A ownership decoupling are complete. **LRE-0 whole legacy heuristic recommendation-engine retirement audit is now COMPLETE / RETIREMENT AUTHORIZED**: the old setup/dynamic/registration/Mayor/successor scoring stack, fixed probability budgets, global balance/pressure heuristics and temporary automatic policy are not a trusted product baseline. Legacy behavior parity is no longer required. LRE-1 manual fallback + fail-closed recommendation-authority cutoff is NEXT. Multiple legal outcomes without an accepted policy must become MANUAL_REQUIRED rather than silently falling back to legacy heuristics.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -33,11 +33,13 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and accepted TBGS-2D Demon-succession boundary
 19. `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md` — accepted TBGS-2E Mayor-redirect boundary
 20. `docs/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — post-2E fresh audit; no 2F selected; legacy three-style route marked for retirement
-21. `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md` — RSR-0 authority; full RecommendationStyle fan-out, player-level enrichment contract, and staged retirement route
-22. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-23. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
-24. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
-25. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+21. `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md` — RSR-0 historical style/player-level authority
+22. `docs/RSR_1_STYLE_NEUTRAL_POLICY_READINESS_AUDIT_2026-10-04.md` — RSR-1A accepted ownership decoupling; later family-by-family preservation sequence superseded by LRE
+23. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — current whole-engine retirement authority; preserve legal/manual/SDE infrastructure, revoke legacy heuristic production authority
+24. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+25. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
+26. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
+27. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -170,7 +172,7 @@ DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c
 
 DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, DLB-5.5 removal of obsolete setup auto-apply wiring, and DLB-5.4 Poisoner / first-night information convergence audit. DLB-5.4 found no production gap: poison confirmation owns one canonical revision, unshown drafts are invalidated, displayed observations/history remain committed, and subsequent information replans against current poison state plus committed history. DLB-5 is COMPLETE / ACCEPTED. PR #183 passed final exact-head T4 at `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN and was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
 
-The current product-development lane is **RSR-1 — family-by-family style-neutral policy contract**. RSR-0 is COMPLETE / ACCEPTED at `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`. It confirms that global GENTLE/BALANCED/AGGRESSIVE is algorithmically active across setup, malfunction information, registration, Mayor, Demon succession, identity and telemetry, so it cannot be mechanically deleted. Future player experience is a distinct per-player BEGINNER/NORMAL/EXPERT enrichment family; current default is NORMAL for every player. `StorytellerExperienceMode` remains an independent host UI/authority mode. No production retirement code is authorized until a style-neutral single-policy semantic contract exists for the affected family.
+The current product-development lane is **LRE-1 — manual fallback / fail-closed legacy recommendation-authority cutoff**. LRE-0 at `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` supersedes the planned RSR-1B family-by-family behavior-preservation sequence. The whole hand-tuned heuristic stack is retirement-only. Preserve legal domains, canonical snapshot/context, exact epistemic/strategic evaluation, replay/export and accepted evidence-backed policies. Before broadly disabling legacy automatic choice, close remaining Manual gaps—especially a legal-only Demon-bluff picker and Beginner-mode fallback presentation. Then enforce: unique legal outcome may auto-resolve; accepted versioned policy may recommend/auto-select; otherwise multiple legal outcomes are MANUAL_REQUIRED / POLICY_DEFERRED and must never fall through to legacy heuristics.
 
 Current C5 authority:
 
@@ -223,8 +225,10 @@ DLB-0 typed intermediate setup COMPLETE
 || machine-readable corpus materialization DEFERRED until concrete offline consumer; do not block C5-E
 || TBGS-2E Mayor redirect COMPLETE / ACCEPTED
 -> post-2E fresh re-audit COMPLETE — no TBGS-2F selected
--> RSR-0 RecommendationStyle retirement / player-level audit COMPLETE / ACCEPTED
--> RSR-1 style-neutral family policy contract NEXT
+-> RSR-0 RecommendationStyle / player-level audit COMPLETE / ACCEPTED
+-> RSR-1A Storyteller-mode/style ownership decoupling COMPLETE / ACCEPTED; final T4 `d8ac254b8f40d2a5106c871dcd9eaa567ab93fde`, CI #3740 / R2 #3439; PR #217 merged `881d4252c1a242c5ea523718fb8f780f693e9ab5`
+-> LRE-0 whole legacy heuristic recommendation-engine audit COMPLETE / RETIREMENT AUTHORIZED
+-> LRE-1 manual fallback + fail-closed recommendation authority NEXT
 || future player profile/management: per-player BEGINNER / NORMAL / EXPERT; default NORMAL
 -> A3 presentation catalog READY / independent maintenance only
 ```
@@ -233,7 +237,7 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 - A1 preferences and A2 archive storage are independent maintenance slices only;
 - H1 is COMPLETE / ACCEPTED through DLB-5H1;
-- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2A through 2E are COMPLETE / ACCEPTED and TBGS-2 pauses after 2E. RSR-0 is complete: global GENTLE/BALANCED/AGGRESSIVE is to be retired, while future player experience is per-player enrichment with current NORMAL defaults. RSR-1 must define style-neutral family policies before code retirement; special registration remains blocked on typed-history production. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
+- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2A through 2E are COMPLETE / ACCEPTED and TBGS-2 pauses after 2E. RSR-0/1A completed the style/player-level ownership cleanup. LRE-0 now supersedes the old family-by-family behavior-preserving continuation: the full legacy heuristic recommender is retirement-only, and LRE-1 manual fallback / fail-closed authority cutoff is next. Special-registration typed history matters only to future replacement policy; it is not a reason to preserve legacy ranking. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
 - R3 generic transaction extraction and the generic setup-effect owner remain NO-GO.
 
 Recovery R0–R6 stays complete. R7 remains separate.

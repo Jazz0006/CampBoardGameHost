@@ -390,7 +390,7 @@ The remaining candidates were special registration and cross-cutting balance/sty
 
 Special registration is mechanically snapshot-ready and already has a rules-owned legal domain, but a clean migration remains blocked on incomplete typed registration/misinformation-history production. The current localized UI-event-title history reconstruction must not be promoted into a new durable typed context merely to continue TBGS-2.
 
-TBGS-2 therefore pauses after 2E. The focused RecommendationStyle retirement/player-level audit is now COMPLETE / ACCEPTED as RSR-0 at `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`. RSR-1 style-neutral family policy semantics is the next independent work; special-registration/history re-audit follows after the relevant policy/history dependencies are resolved.
+TBGS-2 therefore pauses after 2E. RSR-0 and RSR-1A are COMPLETE / ACCEPTED. The product direction then broadened from global-style retirement to whole legacy heuristic recommendation-engine retirement; `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` is now the continuation authority. LRE-1 manual fallback / fail-closed recommendation authority is the next independent work. Special-registration typed-history remains a dependency only for a future replacement policy, not a reason to retain the old heuristic ranking.
 
 Authority: `docs/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md`.
 
@@ -420,7 +420,9 @@ DLB-0..5H1 COMPLETE
 -> TBGS-2E Mayor redirect COMPLETE / ACCEPTED
 -> post-2E fresh re-audit COMPLETE / NO TBGS-2F SELECTED
 -> RSR-0 RecommendationStyle retirement / player-level audit COMPLETE / ACCEPTED
--> RSR-1 style-neutral family policy contract NEXT
+-> RSR-1A Storyteller-mode/style ownership decoupling COMPLETE / ACCEPTED
+-> LRE-0 whole legacy heuristic recommender retirement audit COMPLETE / AUTHORIZED
+-> LRE-1 manual fallback + fail-closed recommendation authority NEXT
 ```
 
 TBGS-0/1 and EvidenceLab C3 may proceed in parallel. TBGS-0/1 must not invent ranking semantics while evidence is still missing.

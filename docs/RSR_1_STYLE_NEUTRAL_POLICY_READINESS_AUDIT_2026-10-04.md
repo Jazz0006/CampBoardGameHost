@@ -4,7 +4,7 @@
 >
 > Baseline: `main@f5e61b999c70b8a9060d5e172968b6b764934d28`
 >
-> Status: **RSR-1 AUDIT COMPLETE / RSR-1A IMPLEMENTED — EXACT-HEAD T4 PENDING**
+> Status: **RSR-1 AUDIT COMPLETE / RSR-1A COMPLETE / ACCEPTED; RSR-1B+ SUPERSEDED BY LRE**
 >
 > Selected first bounded implementation: **RSR-1A — Storyteller-mode / legacy-ranking-style ownership decoupling**
 
@@ -218,7 +218,7 @@ RED checkpoint: `5645c6fbf2585ca23a6648e1c7e44e68cd03506d` on PR #217. CI #3738 
 
 Implementation checkpoint: `e3e94136e3e6658f1d69ab5cd1e97114ada4238a`. CI #3739 / R2 #3438 are GREEN; Android FAST and Real Clingo passed. The implementation removes `recommendationStyle` from `StorytellerRecommendationUxPolicy`, routes unchanged legacy automatic behavior through `LegacyRecommendationStyleCompatibility.automatic = AGGRESSIVE`, and changes no recommendation ranking/scoring code.
 
-A separate exact-head T4 checkpoint is still required before merge because ordinary PR synchronization selected Android FAST rather than FULL. The T4 checkpoint must explicitly run Android FULL + assemble, ASP and Real Clingo plus R2.
+Final exact-head T4 checkpoint: `d8ac254b8f40d2a5106c871dcd9eaa567ab93fde`, CI #3740 / R2 #3439 GREEN across Android FULL + assemble, ASP and Real Clingo. PR #217 then squash-merged at `881d4252c1a242c5ea523718fb8f780f693e9ab5`.
 
 ## 9. Sequence after RSR-1A
 
@@ -227,13 +227,15 @@ RSR-0 architecture/fan-out/player-level contract   COMPLETE / ACCEPTED
 RSR-1 readiness audit                              COMPLETE
 
 -> RSR-1A Storyteller-mode/style ownership decoupling
-                                                   IMPLEMENTED / T4 PENDING
--> RSR-1B family policy selection audit
-   - leverage already style-neutral accepted surfaces first
-   - require evidence/versioned policy before collapsing styleful families
--> RSR-2 family production style collapse
--> RSR-3 identity / telemetry / UI cleanup
--> RSR-4 final RecommendationStyle retirement
+                                                   COMPLETE / ACCEPTED
+-> RSR-1B / RSR-2 / RSR-3 / RSR-4 original continuation
+                                                   SUPERSEDED BY LRE-0
+-> LRE-0 whole legacy heuristic recommendation-engine retirement
+                                                   COMPLETE / RETIREMENT AUTHORIZED
+-> LRE-1 manual fallback + fail-closed recommendation authority
+                                                   NEXT
+
+The product owner subsequently broadened the requirement: the problem is not merely the three legacy styles; the entire hand-tuned heuristic recommender is not trusted and should retire. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` is the continuation authority. RSR remains historical evidence for style/player-level ownership and the accepted RSR-1A decoupling.
 
 parallel later:
 player profile / management

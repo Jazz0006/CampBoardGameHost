@@ -163,7 +163,7 @@ Notably, current Beginner and Experienced UX policies both pass `RecommendationS
 
 But **AGGRESSIVE must not automatically become the new canonical policy** merely because it is currently the UX-supplied value. Retiring three old variants and defining one durable recommendation policy are separate decisions.
 
-The dedicated style-retirement audit is now complete. Its continuation authority is `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`: future recommendation differentiation is per-player BEGINNER/NORMAL/EXPERT enrichment with current NORMAL defaults, while RSR-1 must define style-neutral family policies before production code retirement.
+The dedicated style-retirement audit is complete and RSR-1A ownership decoupling is accepted. Future recommendation differentiation remains per-player BEGINNER/NORMAL/EXPERT enrichment with current NORMAL defaults, but the continuation authority is now `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`: the whole legacy heuristic recommender is retirement-only, and LRE-1 must establish Manual fallback plus fail-closed policy authority before production cutoff.
 
 ## 5. Recommended next family
 
@@ -185,7 +185,7 @@ and then pause.
 
 ### Recommended next independent work
 
-The focused **Recommendation Style Retirement audit** is COMPLETE / ACCEPTED as RSR-0. Continue with RSR-1 family-by-family style-neutral policy-contract work before any production retirement.
+The focused Recommendation Style Retirement audit is COMPLETE / ACCEPTED as RSR-0, and RSR-1A ownership decoupling is also COMPLETE / ACCEPTED. The later family-by-family behavior-preserving continuation has been superseded by `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`: the whole legacy heuristic recommender is retirement-only, and LRE-1 manual fallback / fail-closed authority cutoff is the next production lane.
 
 That audit should answer:
 
@@ -217,7 +217,7 @@ Stopping TBGS-2 at 2E preserves the architectural wins already achieved without 
 
 There is **no production implementation contract for TBGS-2F**.
 
-The next implementation contract must come from RSR-1 style-neutral family policy semantics defined under `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`.
+The next implementation contract comes from LRE-1 under `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`: preserve complete legal/manual authority, then prevent unsupported multi-choice decisions from falling through to legacy heuristic selection.
 
 Until then:
 
@@ -275,6 +275,8 @@ post-2E fresh re-audit
 
 NEXT:
   RSR-0 RecommendationStyle retirement / player-level audit COMPLETE / ACCEPTED
-  -> RSR-1 style-neutral family policy contract
-  -> then re-audit special registration / typed-history dependency
+  -> RSR-1A ownership decoupling COMPLETE / ACCEPTED
+  -> LRE-0 whole legacy heuristic recommender retirement audit COMPLETE / AUTHORIZED
+  -> LRE-1 manual fallback + fail-closed recommendation authority
+  -> future replacement policies re-enter only with evidence/versioned authority
 ```
