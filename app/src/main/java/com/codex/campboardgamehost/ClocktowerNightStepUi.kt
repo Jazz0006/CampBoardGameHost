@@ -26,6 +26,9 @@ import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommi
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
+import com.codex.campboardgamehost.clocktower.recommendation.StorytellerDecisionAuthority
+import com.codex.campboardgamehost.clocktower.recommendation.storytellerDecisionAuthority
+import com.codex.campboardgamehost.clocktower.recommendation.storytellerDecisionPresentationIsAutomatic
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
@@ -176,61 +179,44 @@ internal fun ClocktowerNightStepCardLocalized(
         .indexOfFirst { candidate -> candidate.name == card.name }
         .takeIf { index -> index >= 0 }
         ?.plus(1)
+    val mayor = aliveCards.firstOrNull { card -> card.clocktowerRole?.enName == "Mayor" }
+    val mayorSeat = mayor?.let(::seatNumberForAutomaticCandidate)
+    val legalMayorRedirectSeats = mayorSeat?.let { resolvedMayorSeat ->
+        buildSet {
+            add(resolvedMayorSeat)
+            mayorRedirectTargetCards
+                .mapNotNull(::seatNumberForAutomaticCandidate)
+                .forEach(::add)
+        }
+    }.orEmpty()
+    val mayorRedirectAuthority = legalMayorRedirectSeats
+        .takeIf { it.isNotEmpty() }
+        ?.let { storytellerDecisionAuthority(legalCandidateCount = it.size) }
     val automaticMayorTargetName = if (
         automaticStorytellerInfo &&
         step.isRealAction &&
-        step.action == ClocktowerNightAction.MayorRedirect
+        step.action == ClocktowerNightAction.MayorRedirect &&
+        mayorRedirectAuthority is StorytellerDecisionAuthority.RuleDeterministic
     ) {
-        val mayor = aliveCards.firstOrNull { card -> card.clocktowerRole?.enName == "Mayor" }
-        val mayorSeat = mayor?.let(::seatNumberForAutomaticCandidate)
-        mayorSeat?.let { resolvedMayorSeat ->
-            val livingTownsfolkSeats = clocktowerTemporaryMayorEligibleTownsfolkSeats(
-                candidates = mayorRedirectTargetCards.mapNotNull { candidate ->
-                    val candidateSeat = seatNumberForAutomaticCandidate(candidate) ?: return@mapNotNull null
-                    val candidateTeam = candidate.clocktowerTeam ?: return@mapNotNull null
-                    ClocktowerTemporaryMayorCandidate(
-                        seat = candidateSeat,
-                        team = candidateTeam,
-                        alive = candidate.eliminatedRound == null,
-                    )
-                },
-                mayorSeat = resolvedMayorSeat,
-            )
-            val selectedSeat = clocktowerTemporaryMayorSelection(
-                mayorSeat = resolvedMayorSeat,
-                livingTownsfolkSeats = livingTownsfolkSeats,
-                decisionKey = clocktowerTemporaryNightDecisionKey(
-                    gameId = gameId,
-                    phase = phase,
-                    round = round,
-                    sequence = sequence,
-                    family = "mayor-redirect",
-                ),
-            ).selected.payload
-            cards.getOrNull(selectedSeat - 1)?.name
-        }
+        mayor?.name
     } else {
         null
     }
+
+    val legalDemonSuccessorSeats = demonSuccessorTargetCards
+        .mapNotNull(::seatNumberForAutomaticCandidate)
+        .distinct()
+        .sorted()
+    val demonSuccessorAuthority = legalDemonSuccessorSeats
+        .takeIf { it.isNotEmpty() }
+        ?.let { storytellerDecisionAuthority(legalCandidateCount = it.size) }
     val automaticDemonSuccessorTargetName = if (
         automaticStorytellerInfo &&
         step.isRealAction &&
-        step.action == ClocktowerNightAction.DemonSuccessor
+        step.action == ClocktowerNightAction.DemonSuccessor &&
+        demonSuccessorAuthority is StorytellerDecisionAuthority.RuleDeterministic
     ) {
-        clocktowerTemporaryDemonSuccessorSelection(
-            eligible = demonSuccessorTargetCards.mapNotNull { candidate ->
-                val candidateSeat = seatNumberForAutomaticCandidate(candidate) ?: return@mapNotNull null
-                val roleEnName = candidate.clocktowerRole?.enName ?: return@mapNotNull null
-                temporaryDemonSuccessorChoice(candidateSeat, roleEnName)
-            },
-            decisionKey = clocktowerTemporaryNightDecisionKey(
-                gameId = gameId,
-                phase = phase,
-                round = round,
-                sequence = sequence,
-                family = "demon-succession",
-            ),
-        )?.selected?.payload?.seat?.let { seat -> cards.getOrNull(seat - 1)?.name }
+        legalDemonSuccessorSeats.singleOrNull()?.let { seat -> cards.getOrNull(seat - 1)?.name }
     } else {
         null
     }
@@ -238,6 +224,15 @@ internal fun ClocktowerNightStepCardLocalized(
         ClocktowerNightAction.MayorRedirect -> automaticMayorTargetName
         ClocktowerNightAction.DemonSuccessor -> automaticDemonSuccessorTargetName
         else -> null
+    }
+    val rulingPresentationAutomatic = when (step.action) {
+        ClocktowerNightAction.MayorRedirect -> mayorRedirectAuthority?.let { authority ->
+            storytellerDecisionPresentationIsAutomatic(automaticStorytellerInfo, authority)
+        } ?: false
+        ClocktowerNightAction.DemonSuccessor -> demonSuccessorAuthority?.let { authority ->
+            storytellerDecisionPresentationIsAutomatic(automaticStorytellerInfo, authority)
+        } ?: false
+        else -> false
     }
     val selectionAudit = if (automaticStorytellerInfo) {
         SelectionAuditContext(
@@ -1043,7 +1038,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         selection = ClocktowerSingleTargetSelection(
                             seatNumberForName(selectedName), selectableSeatNumbers(candidates), step.isRealAction,
                         ),
-                        automatic = automaticStorytellerInfo,
+                        automatic = rulingPresentationAutomatic,
                         mayorSeat = seatNumberForName(mayor?.name),
                         explanation = step.explanation,
                     ),
