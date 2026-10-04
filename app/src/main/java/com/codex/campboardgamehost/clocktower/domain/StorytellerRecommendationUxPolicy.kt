@@ -9,7 +9,6 @@ package com.codex.campboardgamehost.clocktower.domain
  */
 data class StorytellerRecommendationUxPolicy(
     val automaticExecution: Boolean,
-    val recommendationStyle: RecommendationStyle,
     val showManualAlternatives: Boolean,
     val recommendedOptionLimit: Int,
 ) {
@@ -21,14 +20,12 @@ data class StorytellerRecommendationUxPolicy(
         fun fromExperienceMode(mode: StorytellerExperienceMode): StorytellerRecommendationUxPolicy = when (mode) {
             StorytellerExperienceMode.BEGINNER -> StorytellerRecommendationUxPolicy(
                 automaticExecution = true,
-                recommendationStyle = RecommendationStyle.AGGRESSIVE,
                 showManualAlternatives = false,
                 recommendedOptionLimit = 1,
             )
 
             StorytellerExperienceMode.EXPERIENCED -> StorytellerRecommendationUxPolicy(
                 automaticExecution = false,
-                recommendationStyle = RecommendationStyle.AGGRESSIVE,
                 showManualAlternatives = true,
                 recommendedOptionLimit = 3,
             )

@@ -57,6 +57,7 @@ import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.config.LegacyRecommendationStyleCompatibility
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContextBuilder
@@ -2365,7 +2366,7 @@ internal fun CampBoardGameHostApp() {
 
                     Screen.ClocktowerJudge -> ClocktowerJudgeScreen(
                         automaticStorytellerInfo = automaticStorytellerInfo,
-                        automaticStorytellerStyle = storytellerRecommendationUxPolicy.recommendationStyle,
+                        automaticStorytellerStyle = LegacyRecommendationStyleCompatibility.automatic,
                         cards = cards,
                         events = clocktowerEvents,
                         script = currentClocktowerScript,
