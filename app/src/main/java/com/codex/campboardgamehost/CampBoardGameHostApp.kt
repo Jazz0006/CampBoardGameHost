@@ -3769,8 +3769,12 @@ internal fun EmptyStateCard(text: String) {
     }
 }
 
+internal fun PlayerCard.clocktowerHostRoleLabel(language: String): String? =
+    clocktowerRole?.nameFor(language) ?: actualRoleLabel ?: roleLabel
+
 internal fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): String = when (gameKind) {
-    GameKind.Clocktower -> actualRoleLabel ?: roleLabel ?: context.getString(role.labelResId())
+    GameKind.Clocktower -> clocktowerHostRoleLabel(context.resources.configuration.locales[0].language)
+        ?: context.getString(role.labelResId())
     GameKind.Undercover -> context.getString(role.labelResId())
 }
 
