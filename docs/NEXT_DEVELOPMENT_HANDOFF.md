@@ -167,7 +167,7 @@ DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c
 
 DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, DLB-5.5 removal of obsolete setup auto-apply wiring, and DLB-5.4 Poisoner / first-night information convergence audit. DLB-5.4 found no production gap: poison confirmation owns one canonical revision, unshown drafts are invalidated, displayed observations/history remain committed, and subsequent information replans against current poison state plus committed history. DLB-5 is COMPLETE / ACCEPTED. PR #183 passed final exact-head T4 at `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN and was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
 
-The current product-development lane is **TBGS-2E Mayor redirect final acceptance**. Implementation checkpoint `f512fa2339677de4e9e8c12ea3694938867ed584` passed CI #3730 / R2 #3432 GREEN. Run exact-head FULL/assemble + ASP + Real Clingo, then close TBGS-2E and perform a fresh post-2E family re-audit.
+The current product-development lane is **TBGS-2 post-2E fresh re-audit**. TBGS-2E Mayor redirect is COMPLETE / ACCEPTED: implementation `f512fa2339677de4e9e8c12ea3694938867ed584` passed CI #3730 / R2 #3432, and final exact-head T4 `ce5b9943bf4c0d1a27b73c5de5d45a841349949f` passed CI #3731 / R2 #3433 GREEN across Android FULL/assemble, ASP and Real Clingo.
 
 Current C5 authority:
 
@@ -218,7 +218,7 @@ DLB-0 typed intermediate setup COMPLETE
 -> C5-E functioning-Librarian production cutover COMPLETE / ACCEPTED; `6afc3b08416eaf6f3fb74a53bb48b8e144044341`, CI #3717 / R2 #3421 GREEN
 || HOST-ML1 typed neutral decision export COMPLETE / ACCEPTED; final `b91fcd298621e9064f11c26c1a0398c5c14fc13c`, CI #3710 / R2 #3416 GREEN; pair semantic payload included
 || machine-readable corpus materialization DEFERRED until concrete offline consumer; do not block C5-E
-|| TBGS-2E Mayor redirect IMPLEMENTATION GREEN / T4 PENDING
+|| TBGS-2E Mayor redirect COMPLETE / ACCEPTED
 -> A3 presentation catalog READY / independent maintenance only
 ```
 
@@ -226,7 +226,7 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 - A1 preferences and A2 archive storage are independent maintenance slices only;
 - H1 is COMPLETE / ACCEPTED through DLB-5H1;
-- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2 is the active incremental runtime migration. TBGS-2A first-night natural-pair precompute, TBGS-2B pair manual/publication, and TBGS-2C setup-recommendation mechanical/rules base-context migration are COMPLETE / ACCEPTED. The post-2C focused family audit selected TBGS-2D Demon succession, which is now COMPLETE / ACCEPTED. The post-2D bounded-family re-audit selected TBGS-2E Mayor redirect; implementation is GREEN pending final T4. Special registration and cross-cutting balance/style remain later candidates; history-producer cutover, protection ownership and spent-ability ownership remain explicit dependencies rather than hidden assumptions. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
+- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2 is the active incremental runtime migration. TBGS-2A first-night natural-pair precompute, TBGS-2B pair manual/publication, and TBGS-2C setup-recommendation mechanical/rules base-context migration are COMPLETE / ACCEPTED. The post-2C focused family audit selected TBGS-2D Demon succession, which is now COMPLETE / ACCEPTED. The post-2D bounded-family re-audit selected TBGS-2E Mayor redirect, now COMPLETE / ACCEPTED. The next step is a fresh post-2E bounded-family re-audit; special registration and cross-cutting balance/style remain candidates, while history-producer cutover, protection ownership and spent-ability ownership stay explicit dependencies rather than hidden assumptions. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
 - R3 generic transaction extraction and the generic setup-effect owner remain NO-GO.
 
 Recovery R0–R6 stays complete. R7 remains separate.

@@ -4,7 +4,7 @@
 >
 > Baseline: `main@e249781966287c03c33d9c155f6ddcfbca84ae9b`
 >
-> Status: **IMPLEMENTATION GREEN / FINAL T4 PENDING**
+> Status: **COMPLETE / ACCEPTED**
 >
 > Selected family: **Mayor night-death redirection recommendation**
 
@@ -157,8 +157,8 @@ TBGS-2A pair precompute                 COMPLETE / ACCEPTED
 TBGS-2B pair manual/publication        COMPLETE / ACCEPTED
 TBGS-2C setup coordination             COMPLETE / ACCEPTED
 TBGS-2D Demon succession               COMPLETE / ACCEPTED
-TBGS-2E Mayor redirect                 IMPLEMENTATION GREEN / T4 PENDING
--> fresh re-audit after 2E acceptance
+TBGS-2E Mayor redirect                 COMPLETE / ACCEPTED
+-> fresh re-audit after 2E             NEXT
    -> special registration OR cross-cutting balance
 ```
 
@@ -167,6 +167,8 @@ Do not preselect the post-2E family before another fresh audit.
 ## 10. Implementation result before final T4
 
 Implementation checkpoint `f512fa2339677de4e9e8c12ea3694938867ed584` passed CI #3730 / R2 #3432 GREEN.
+
+Final exact-head T4 `ce5b9943bf4c0d1a27b73c5de5d45a841349949f` passed CI #3731 / R2 #3433 GREEN across Android FULL/assemble, ASP and Real Clingo.
 
 The implementation now:
 
