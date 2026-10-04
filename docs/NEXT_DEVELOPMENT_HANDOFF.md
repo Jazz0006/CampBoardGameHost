@@ -167,7 +167,7 @@ DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c
 
 DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, DLB-5.5 removal of obsolete setup auto-apply wiring, and DLB-5.4 Poisoner / first-night information convergence audit. DLB-5.4 found no production gap: poison confirmation owns one canonical revision, unshown drafts are invalidated, displayed observations/history remain committed, and subsequent information replans against current poison state plus committed history. DLB-5 is COMPLETE / ACCEPTED. PR #183 passed final exact-head T4 at `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN and was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
 
-The current explicitly requested product-development lane is **C5 evidence-backed pair-information policy evolution**. The DLB campaign is complete; TBGS-2D remains an independent implementation-ready migration lane.
+The current product-development lane is **TBGS-2 post-2D fresh re-audit**. C5 functioning-Librarian cutover, HOST-ML1 typed neutral export, and TBGS-2D Demon succession are COMPLETE / ACCEPTED. TBGS-2D final exact-head T4 is `1f610a25a16c14a7ca7bd38562ff39425508c243`, CI #3726 / R2 #3429 GREEN.
 
 Current C5 authority:
 
@@ -208,7 +208,7 @@ DLB-0 typed intermediate setup COMPLETE
 -> TBGS-2A first-night natural-pair snapshot context COMPLETE / ACCEPTED; `9021ef26b65033b69911fa4a79124fdd2137284d`, CI #3647 / R2 #3364 GREEN
 -> TBGS-2B pair manual/publication COMPLETE / ACCEPTED; `fa07e382fdad1b03aeadc27ce0d0d939f66f8b67`, CI #3654 / R2 #3370 GREEN
 -> TBGS-2C setup-recommendation mechanical/rules base-context migration COMPLETE / ACCEPTED; `a8116d8b333cc40e0a599ab208cf7a9a3ea80207`, CI #3663 / R2 #3378 GREEN
--> TBGS-2D Demon succession family audit COMPLETE / IMPLEMENTATION READY
+-> TBGS-2D Demon succession COMPLETE / ACCEPTED; final T4 `1f610a25a16c14a7ca7bd38562ff39425508c243`, CI #3726 / R2 #3429 GREEN
 -> EvidenceLab G10 `16:52` Librarian future-flexibility predicate E3 PASS at `78f672868ea6603317aeefa20ad91686c5886db9`
 -> C5 re-entry audit COMPLETE / PASS; SDE-3D3 implementation AUTHORIZED
 -> C5-A pair future-flexibility projector COMPLETE / ACCEPTED; `5b516e10e0f01848a1dad7a06dd214e73faa5a97`, CI #3673 / R2 #3385 GREEN
@@ -218,7 +218,7 @@ DLB-0 typed intermediate setup COMPLETE
 -> C5-E functioning-Librarian production cutover COMPLETE / ACCEPTED; `6afc3b08416eaf6f3fb74a53bb48b8e144044341`, CI #3717 / R2 #3421 GREEN
 || HOST-ML1 typed neutral decision export COMPLETE / ACCEPTED; final `b91fcd298621e9064f11c26c1a0398c5c14fc13c`, CI #3710 / R2 #3416 GREEN; pair semantic payload included
 || machine-readable corpus materialization DEFERRED until concrete offline consumer; do not block C5-E
-|| TBGS-2D remains IMPLEMENTATION READY as an independent lane
+|| TBGS-2 post-2D fresh bounded-family re-audit NEXT
 -> A3 presentation catalog READY / independent maintenance only
 ```
 
@@ -226,7 +226,7 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 - A1 preferences and A2 archive storage are independent maintenance slices only;
 - H1 is COMPLETE / ACCEPTED through DLB-5H1;
-- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2 is the active incremental runtime migration. TBGS-2A first-night natural-pair precompute, TBGS-2B pair manual/publication, and TBGS-2C setup-recommendation mechanical/rules base-context migration are COMPLETE / ACCEPTED. The post-2C focused family audit selects TBGS-2D Demon succession as IMPLEMENTATION READY; Mayor, special registration, cross-cutting balance/style migration, history-producer cutover and spent-ability ownership remain later slices. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
+- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2 is the active incremental runtime migration. TBGS-2A first-night natural-pair precompute, TBGS-2B pair manual/publication, and TBGS-2C setup-recommendation mechanical/rules base-context migration are COMPLETE / ACCEPTED. The post-2C focused family audit selected TBGS-2D Demon succession, which is now COMPLETE / ACCEPTED. The next step is a fresh post-2D bounded-family re-audit across Mayor, special registration and cross-cutting balance/style migration; history-producer cutover and spent-ability ownership remain explicit dependencies rather than assumed next work. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
 - R3 generic transaction extraction and the generic setup-effect owner remain NO-GO.
 
 Recovery R0–R6 stays complete. R7 remains separate.

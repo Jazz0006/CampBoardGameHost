@@ -1,10 +1,10 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRecommendation
-import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
 import com.codex.campboardgamehost.clocktower.domain.DynamicStorytellerChoice
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PlayerInformationPressure
 import com.codex.campboardgamehost.clocktower.domain.PlanWarning
 import com.codex.campboardgamehost.clocktower.domain.PredictedDecisionOutcome
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
@@ -12,34 +12,61 @@ import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScoreCategory
 import com.codex.campboardgamehost.clocktower.domain.ScoreItem
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 
 internal object DemonSuccessorRecommender {
     private val impRole = RoleId("Imp")
-    private val scarletWomanRole = RoleId("Scarlet Woman")
 
-    fun recommend(request: DynamicDecisionRequest): List<DynamicDecisionRecommendation> {
-        require(request.type == StorytellerDecisionType.DEMON_SUCCESSION)
-        val alivePlayers = request.state.game.players.filter { it.alive }
-        val minions = alivePlayers.filter { it.actualType == CharacterType.MINION }
-        if (minions.isEmpty()) return emptyList()
-        val eligible = if (alivePlayers.size >= 5) {
-            minions.filter { it.actualRole == scarletWomanRole && !it.poisoned }.ifEmpty { minions }
-        } else {
-            minions
-        }
-        val candidates = eligible.map { minion ->
+    fun recommend(
+        requestId: String,
+        context: TroubleBrewingDemonSuccessorDecisionContext,
+    ): List<DynamicDecisionRecommendation> = recommend(
+        requestId = requestId,
+        game = context.recommendationGameState,
+        successionResolution = context.successionResolution,
+        playerInformationPressureBySeat = context.playerInformationPressureBySeat,
+        evilAdvantage = context.evilAdvantage,
+    )
+
+    fun recommend(
+        requestId: String,
+        game: GameState,
+        successionResolution: DemonSuccessionResolution,
+        playerInformationPressureBySeat: Map<Int, PlayerInformationPressure>,
+        evilAdvantage: Int,
+    ): List<DynamicDecisionRecommendation> {
+        require(requestId.isNotBlank()) { "Demon successor recommendation request ID cannot be blank." }
+        val legalSeats = when (successionResolution) {
+            DemonSuccessionResolution.None -> emptySet()
+            is DemonSuccessionResolution.Forced -> setOf(successionResolution.targetSeat)
+            is DemonSuccessionResolution.Choice -> successionResolution.targetSeats
+        }.sorted()
+        if (legalSeats.isEmpty()) return emptyList()
+        val candidates = legalSeats.map { seat ->
+            val target = requireNotNull(game.playerAt(seat)) {
+                "Rules-owned Demon succession target seat is absent from recommendation state: " + seat
+            }
             DynamicDecisionCandidate(
-                choice = DynamicStorytellerChoice.DemonSuccessor(minion.seat),
+                choice = DynamicStorytellerChoice.DemonSuccessor(seat),
                 outcome = PredictedDecisionOutcome.CharacterChange(
-                    subjectSeat = minion.seat,
-                    fromRole = minion.actualRole,
+                    subjectSeat = seat,
+                    fromRole = target.actualRole,
                     toRole = impRole,
                 ),
             )
         }
         if (candidates.size == 1) {
-            return listOf(evaluate(request, candidates.single(), RecommendationStyle.BALANCED, alivePlayers.size))
+            return listOf(
+                evaluate(
+                    requestId = requestId,
+                    game = game,
+                    successionResolution = successionResolution,
+                    playerInformationPressureBySeat = playerInformationPressureBySeat,
+                    evilAdvantage = evilAdvantage,
+                    candidate = candidates.single(),
+                    style = RecommendationStyle.BALANCED,
+                ),
+            )
         }
         return listOf(
             RecommendationStyle.BALANCED,
@@ -47,7 +74,17 @@ internal object DemonSuccessorRecommender {
             RecommendationStyle.AGGRESSIVE,
         ).map { style ->
             candidates
-                .map { evaluate(request, it, style, alivePlayers.size) }
+                .map { candidate ->
+                    evaluate(
+                        requestId = requestId,
+                        game = game,
+                        successionResolution = successionResolution,
+                        playerInformationPressureBySeat = playerInformationPressureBySeat,
+                        evilAdvantage = evilAdvantage,
+                        candidate = candidate,
+                        style = style,
+                    )
+                }
                 .sortedWith(
                     compareByDescending<DynamicDecisionRecommendation> { it.totalScore }
                         .thenBy { (it.candidate.choice as DynamicStorytellerChoice.DemonSuccessor).targetSeat },
@@ -57,13 +94,16 @@ internal object DemonSuccessorRecommender {
     }
 
     private fun evaluate(
-        request: DynamicDecisionRequest,
+        requestId: String,
+        game: GameState,
+        successionResolution: DemonSuccessionResolution,
+        playerInformationPressureBySeat: Map<Int, PlayerInformationPressure>,
+        evilAdvantage: Int,
         candidate: DynamicDecisionCandidate,
         style: RecommendationStyle,
-        aliveCount: Int,
     ): DynamicDecisionRecommendation {
         val choice = candidate.choice as DynamicStorytellerChoice.DemonSuccessor
-        val target = requireNotNull(request.state.game.playerAt(choice.targetSeat))
+        val target = requireNotNull(game.playerAt(choice.targetSeat))
         val base = when (style) {
             RecommendationStyle.GENTLE -> when (target.actualRole.value) {
                 "Baron" -> 10
@@ -87,7 +127,7 @@ internal object DemonSuccessorRecommender {
                 else -> 5
             }
         }
-        val pressure = request.state.playerInformationPressureBySeat[target.seat]
+        val pressure = playerInformationPressureBySeat[target.seat]
             ?.let { it.directSuspicion + it.indirectSuspicion - it.confirmation }
             ?.coerceAtLeast(0)
             ?: 0
@@ -123,13 +163,14 @@ internal object DemonSuccessorRecommender {
                 ScoreItem(
                     ruleId = "global-balance",
                     category = ScoreCategory.EVIL_PRESSURE,
-                    delta = (-request.state.evilAdvantage * continuingPower / 15).coerceIn(-24, 24),
+                    delta = (-evilAdvantage * continuingPower / 15).coerceIn(-24, 24),
                     messageKey = "recommendation.global-balance",
                     affectedSeats = listOf(target.seat),
                 ),
             )
         }
-        val mandatoryScarletWoman = aliveCount >= 5 && target.actualRole == scarletWomanRole && !target.poisoned
+        val mandatoryScarletWoman =
+            (successionResolution as? DemonSuccessionResolution.Forced)?.targetSeat == target.seat
         val warnings = buildList {
             if (target.actualRole.value == "Poisoner") {
                 add(
@@ -151,7 +192,7 @@ internal object DemonSuccessorRecommender {
             }
         }
         return DynamicDecisionRecommendation(
-            requestId = request.id,
+            requestId = requestId,
             candidate = candidate,
             style = style,
             qualityTier = if (warnings.any { it.ruleId == "active-minion-ability-lost" }) {

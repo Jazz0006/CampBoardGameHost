@@ -2,8 +2,10 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@5b32640d26f39dcf137bcff672686f0a6ee801c4`  
-> Status: **AUDIT COMPLETE / NEXT SLICE SELECTED**  
-> Selected next family: **TBGS-2D — Demon succession typed recommendation context**
+> Status: **COMPLETE / ACCEPTED**  
+> Selected family: **TBGS-2D — Demon succession typed recommendation context**  
+> Implementation checkpoint: `b62980929c143439e5b65836e251c746eda14afc`; Android FAST / R2 #3428 GREEN  
+> Final exact-head T4: `1f610a25a16c14a7ca7bd38562ff39425508c243`; CI #3726 / R2 #3429 GREEN across Android FULL/assemble, ASP and Real Clingo
 
 ## 1. Decision
 
@@ -245,10 +247,24 @@ Run Android FAST at the logical checkpoint. Final T4 should include Android `:ap
 TBGS-2A pair precompute                 COMPLETE / ACCEPTED
 -> TBGS-2B pair manual/publication      COMPLETE / ACCEPTED
 -> TBGS-2C setup recommendation base    COMPLETE / ACCEPTED
--> TBGS-2D Demon succession context     NEXT / IMPLEMENTATION READY
--> fresh re-audit
+-> TBGS-2D Demon succession context     COMPLETE / ACCEPTED
+-> fresh re-audit                       NEXT
    -> Mayor OR special registration OR balance enrichment
    -> choose one bounded family/surface only
 ```
 
 Do not assume the post-2D ordering in advance.
+
+## 10. Accepted implementation result
+
+The implementation now follows the audited ownership boundary:
+
+- `TroubleBrewingDemonSuccessorDecisionContext` is built from the canonical runtime TB snapshot plus rules-owned `DemonSuccessionResolution`;
+- pressure and spent-ability inputs remain explicit legacy-equivalent enrichment and feed the existing `GameBalanceEvaluator`;
+- `DemonSuccessorRecommender` no longer enumerates Minions or reimplements Scarlet Woman legality; it ranks only rules-supplied legal seats;
+- the TB Host path no longer reconstructs succession mechanical truth from `PlayerCard.toClocktowerGameState()`;
+- the UI no longer post-filters an already-ranked recommendation against `legalTargetSeats`;
+- non-TB compatibility retains legacy enrichment but also consumes a rules-owned succession resolution;
+- Mayor, special registration, cross-cutting balance/style ownership, history-producer cutover, Recovery and snapshot schema remain unchanged.
+
+The tests-first correction also clarifies that `Choice(setOf(...))` defines the legal domain; a ranking result is not required to surface every legal seat in its final style winners. The required invariant is that every returned candidate is inside the rules-owned domain and no recommender-side mandatory Scarlet Woman rule is invented.

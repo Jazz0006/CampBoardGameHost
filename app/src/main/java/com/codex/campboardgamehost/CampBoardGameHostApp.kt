@@ -43,6 +43,7 @@ import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PlayerInformationPressure
 import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
@@ -59,6 +60,8 @@ import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCa
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContextBuilder
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContext
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContextBuilder
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingSetupRecommendationDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingSetupRecommendationDecisionContextBuilder
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
@@ -90,6 +93,7 @@ import com.codex.campboardgamehost.clocktower.session.NightDawnDeathResolutionIn
 import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
 import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuation
 import com.codex.campboardgamehost.clocktower.session.resolveTroubleBrewingImpSelfKillSuccession
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationPrewarmCoordinator
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationRevealCoordinator
@@ -652,6 +656,38 @@ internal fun CampBoardGameHostApp() {
         return TroubleBrewingFirstNightPairDecisionContextBuilder.build(
             snapshot = snapshot,
             characterRegistry = registry,
+        )
+    }
+
+    fun currentTroubleBrewingDemonSuccessorDecisionContext(
+        successionResolution: DemonSuccessionResolution,
+        playerInformationPressureBySeat: Map<Int, PlayerInformationPressure>,
+        spentAbilitySeats: Set<Int>,
+    ): TroubleBrewingDemonSuccessorDecisionContext? {
+        if (
+            currentGameKind != GameKind.Clocktower ||
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            clocktowerPhase != ClocktowerPhase.Night
+        ) {
+            return null
+        }
+        val session = clocktowerGameSession ?: return null
+        val rulesetRef = clocktowerRulesetRef ?: return null
+        val registry = activeGameClocktowerRulesetCatalog
+            .ruleset(ClocktowerScript.TroubleBrewing)
+            .characterRegistry
+        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+            gameSnapshot = session.toGameSnapshot(rulesetRef),
+            phase = StorytellerPhase.NIGHT,
+            round = round,
+            characterRegistry = registry,
+        )
+        return TroubleBrewingDemonSuccessorDecisionContextBuilder.build(
+            snapshot = snapshot,
+            characterRegistry = registry,
+            successionResolution = successionResolution,
+            playerInformationPressureBySeat = playerInformationPressureBySeat,
+            spentAbilitySeats = spentAbilitySeats,
         )
     }
 
@@ -2304,6 +2340,8 @@ internal fun CampBoardGameHostApp() {
                         setupHistory = CrossGameHistory(),
                         setupRecommendationDecisionContext = currentTroubleBrewingSetupRecommendationDecisionContext(),
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
+                        demonSuccessorDecisionContextProvider =
+                            ::currentTroubleBrewingDemonSuccessorDecisionContext,
                         setupRecommendationResultProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
                                 troubleBrewingSetupRecommendationRevealCoordinator::resultFor
