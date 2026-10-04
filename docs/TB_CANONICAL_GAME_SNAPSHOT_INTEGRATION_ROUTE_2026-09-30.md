@@ -338,7 +338,7 @@ Acceptance passed at exact T4 head `a8116d8b333cc40e0a599ab208cf7a9a3ea80207`: C
 
 Authority: `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md`.
 
-#### TBGS-2D — Demon succession typed recommendation context — AUDIT COMPLETE / IMPLEMENTATION READY
+#### TBGS-2D — Demon succession typed recommendation context — COMPLETE / ACCEPTED
 
 The post-2C `DynamicGameState` family audit selected Demon succession as the next bounded production migration.
 
@@ -378,6 +378,22 @@ Mayor redirection, Spy/Recluse registration, cross-cutting Artist/night-informat
 
 Authority: `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md`.
 
+#### TBGS-2E — Mayor redirect typed recommendation context — COMPLETE / ACCEPTED
+
+The post-2D fresh audit selected Mayor redirect as the next bounded migration. The accepted implementation now consumes the canonical TB runtime snapshot plus a rules-owned `MayorRedirectDecisionDomain`, with Monk protection / spent abilities / player-pressure retained as explicit enrichment. Final exact-head T4 `ce5b9943bf4c0d1a27b73c5de5d45a841349949f` passed CI #3731 / R2 #3433 GREEN across Android FULL/assemble, ASP and Real Clingo.
+
+Authority: `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md`.
+
+#### Post-2E fresh re-audit — COMPLETE / NO TBGS-2F SELECTED
+
+The remaining candidates were special registration and cross-cutting balance/style. The product-owner correction is authoritative: the legacy `RecommendationStyle.GENTLE / BALANCED / AGGRESSIVE` routes do not need to be preserved. Therefore cross-cutting balance/style must be retired rather than migrated into another canonical snapshot context.
+
+Special registration is mechanically snapshot-ready and already has a rules-owned legal domain, but a clean migration remains blocked on incomplete typed registration/misinformation-history production. The current localized UI-event-title history reconstruction must not be promoted into a new durable typed context merely to continue TBGS-2.
+
+TBGS-2 therefore pauses after 2E. The next independent work is a focused RecommendationStyle retirement audit, followed by a fresh special-registration/history re-audit.
+
+Authority: `docs/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md`.
+
 ## 8. Updated execution relationship
 
 The current product/evidence sequence becomes:
@@ -400,7 +416,10 @@ DLB-0..5H1 COMPLETE
 -> DLB-6 old-contract retirement
 -> DLB-7 acceptance
 -> TBGS-2A / 2B / 2C incremental runtime migrations COMPLETE / ACCEPTED
--> TBGS-2D Demon succession typed recommendation context AUDIT COMPLETE / IMPLEMENTATION READY
+-> TBGS-2D Demon succession COMPLETE / ACCEPTED
+-> TBGS-2E Mayor redirect COMPLETE / ACCEPTED
+-> post-2E fresh re-audit COMPLETE / NO TBGS-2F SELECTED
+-> RecommendationStyle retirement audit NEXT
 ```
 
 TBGS-0/1 and EvidenceLab C3 may proceed in parallel. TBGS-0/1 must not invent ranking semantics while evidence is still missing.
