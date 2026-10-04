@@ -4,7 +4,7 @@
 >
 > Baseline: `main@e249781966287c03c33d9c155f6ddcfbca84ae9b`
 >
-> Status: **AUDIT COMPLETE / TBGS-2E SELECTED / IMPLEMENTATION READY**
+> Status: **IMPLEMENTATION GREEN / FINAL T4 PENDING**
 >
 > Selected family: **Mayor night-death redirection recommendation**
 
@@ -157,9 +157,25 @@ TBGS-2A pair precompute                 COMPLETE / ACCEPTED
 TBGS-2B pair manual/publication        COMPLETE / ACCEPTED
 TBGS-2C setup coordination             COMPLETE / ACCEPTED
 TBGS-2D Demon succession               COMPLETE / ACCEPTED
-TBGS-2E Mayor redirect                 NEXT / IMPLEMENTATION READY
--> fresh re-audit after 2E
+TBGS-2E Mayor redirect                 IMPLEMENTATION GREEN / T4 PENDING
+-> fresh re-audit after 2E acceptance
    -> special registration OR cross-cutting balance
 ```
 
 Do not preselect the post-2E family before another fresh audit.
+
+## 10. Implementation result before final T4
+
+Implementation checkpoint `f512fa2339677de4e9e8c12ea3694938867ed584` passed CI #3730 / R2 #3432 GREEN.
+
+The implementation now:
+
+- introduces rules-owned `MayorRedirectDecisionDomain` / `MayorRedirectLegalDomain`;
+- builds `TroubleBrewingMayorRedirectDecisionContext` from the canonical runtime TB snapshot;
+- carries Monk protection, spent seats and pressure explicitly as enrichment and derives the existing `PublicBalanceHint` with `GameBalanceEvaluator`;
+- makes `MayorRedirectRecommender` rank only legal seats supplied by the rules domain rather than re-enumerating Demon legality;
+- keeps direct-Mayor-death inside the decision domain;
+- preserves dead/protected/Soldier no-death outcome semantics;
+- routes the TB Host through the App/root snapshot provider instead of `dynamicStorytellerState()`;
+- preserves a non-TB compatibility adapter;
+- leaves special registration, cross-cutting balance/style, typed-history production, snapshot schema and transaction ownership unchanged.
