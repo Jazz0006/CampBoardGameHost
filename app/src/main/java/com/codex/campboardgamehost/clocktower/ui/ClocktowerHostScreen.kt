@@ -87,8 +87,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInforma
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationRegistration
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.RegistrationDetail
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SpecialRegistrationContext
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
@@ -911,26 +909,21 @@ internal fun ClocktowerJudgeScreen(
         propositionForValue: ((Int) -> InformationProposition)? = null,
     ): List<ClocktowerDisplayOption> {
         val maximumValue = maxOf(trueValue, maxValue)
-        val recommendations = recommendationCoordinator.recommendNumber(
-            UnreliableNumberContext(
-                trueValue = trueValue,
-                minimumValue = 0,
-                maximumValue = maximumValue,
-                previousShownValue = previousClocktowerUnreliableNumber(events, title, actor.name)
-                    ?.takeIf { it in 0..maximumValue },
-                pressureCostPerPoint = pressureCostPerPoint,
-            ),
-        )
-        return clocktowerUnreliableNumberDisplayOptions(
-            recommendations = recommendations,
-            title = title,
-            trueValue = trueValue,
-            secondary = secondary,
-            footer = footer,
-            styleLabel = ::recommendationStyleLabel,
-            highPressureSuffix = text(" ⚠ 高压", " ⚠ high pressure"),
-            propositionForValue = propositionForValue,
-        )
+        return (0..maximumValue).map { value ->
+            displayOption(
+                label = value.toString(),
+                kind = ClocktowerDisplayKind.Number,
+                title = title,
+                primary = value.toString(),
+                secondary = secondary,
+                footer = footer,
+                proposition = propositionForValue?.invoke(value),
+                recommendationStyle = RecommendationStyle.BALANCED,
+                isTruthful = value == trueValue,
+                misinformationPressure = 0,
+                isDefaultRecommendation = false,
+            )
+        }
     }
 
     fun recommendedYesNoOptions(
@@ -939,33 +932,21 @@ internal fun ClocktowerJudgeScreen(
         secondary: String?,
         footer: String,
         propositionForValue: ((Boolean) -> InformationProposition)? = null,
-    ): List<ClocktowerDisplayOption> {
-        val yesText = text("有", "Yes")
-        val noText = text("没有", "No")
-        val candidates = listOf(
-            UnreliableCategoricalCandidate("yes", isTruthful = truthfulYes, misinformationPressure = if (truthfulYes) 0 else 3),
-            UnreliableCategoricalCandidate("no", isTruthful = !truthfulYes, misinformationPressure = if (truthfulYes) 3 else 0),
+    ): List<ClocktowerDisplayOption> = listOf(true, false).map { answer ->
+        val value = if (answer) text("有", "Yes") else text("没有", "No")
+        displayOption(
+            label = value,
+            kind = ClocktowerDisplayKind.YesNo,
+            title = title,
+            primary = value,
+            secondary = secondary,
+            footer = footer,
+            proposition = propositionForValue?.invoke(answer),
+            recommendationStyle = RecommendationStyle.BALANCED,
+            isTruthful = answer == truthfulYes,
+            misinformationPressure = 0,
+            isDefaultRecommendation = false,
         )
-        return recommendationCoordinator.recommendCategory(candidates).map { recommendation ->
-            val candidate = candidates.first { it.id == recommendation.candidateId }
-            val value = if (recommendation.candidateId == "yes") yesText else noText
-            val warning = if (recommendation.warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
-            displayOption(
-                label = "${recommendationStyleLabel(recommendation.style)}：$value$warning",
-                kind = ClocktowerDisplayKind.YesNo,
-                title = title,
-                primary = value,
-                secondary = secondary,
-                footer = footer,
-                proposition = propositionForValue?.invoke(recommendation.candidateId == "yes"),
-                recommendationStyle = recommendation.style,
-                isTruthful = candidate.isTruthful,
-                misinformationPressure = candidate.misinformationPressure,
-                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-                reasonCodes = listOf("dynamic.categorical-score"),
-                warningCodes = recommendation.warningIds,
-            )
-        }
     }
 
     fun recommendedRoleRevealOptions(
@@ -974,37 +955,22 @@ internal fun ClocktowerJudgeScreen(
         footer: String,
     ): List<ClocktowerDisplayOption> {
         if (truthfulRole == null) return emptyList()
-        val roles = (listOf(truthfulRole) + clocktowerRolesForScript(script)).distinctBy(ClocktowerRole::enName)
-        val candidates = roles.map { role ->
-            val metadata = TroubleBrewingRecommendationMetadata.forRole(RoleId(role.enName))
-            UnreliableCategoricalCandidate(
-                id = role.enName,
-                isTruthful = role.enName == truthfulRole.enName,
-                misinformationPressure = if (role.enName == truthfulRole.enName) {
-                    0
-                } else {
-                    ((metadata.exposureSensitivity + metadata.discussionValue) / 2).coerceIn(1, 5)
-                },
-            )
-        }
-        return recommendationCoordinator.recommendCategory(candidates).mapNotNull { recommendation ->
-            val candidate = candidates.first { it.id == recommendation.candidateId }
-            val role = roles.firstOrNull { it.enName == recommendation.candidateId } ?: return@mapNotNull null
-            val warning = if (recommendation.warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
-            displayOption(
-                label = "${recommendationStyleLabel(recommendation.style)}：${role.nameFor(language)}$warning",
-                kind = ClocktowerDisplayKind.RoleReveal,
-                title = title,
-                primary = role.nameFor(language),
-                footer = footer,
-                recommendationStyle = recommendation.style,
-                isTruthful = candidate.isTruthful,
-                misinformationPressure = candidate.misinformationPressure,
-                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-                reasonCodes = listOf("dynamic.categorical-score"),
-                warningCodes = recommendation.warningIds,
-            )
-        }
+        return (clocktowerRolesForScript(script) + truthfulRole)
+            .distinctBy(ClocktowerRole::enName)
+            .sortedBy(ClocktowerRole::enName)
+            .map { role ->
+                displayOption(
+                    label = role.nameFor(language),
+                    kind = ClocktowerDisplayKind.RoleReveal,
+                    title = title,
+                    primary = role.nameFor(language),
+                    footer = footer,
+                    recommendationStyle = RecommendationStyle.BALANCED,
+                    isTruthful = role.enName == truthfulRole.enName,
+                    misinformationPressure = 0,
+                    isDefaultRecommendation = false,
+                )
+            }
     }
 
     data class PairInformationEffect(
@@ -1634,7 +1600,11 @@ internal fun ClocktowerJudgeScreen(
             )
         }
         val effectsById = projectedEffects.associateBy(PairInformationEffect::id)
-        val recommendations = recommendationCoordinator.recommendPair(candidates)
+        val recommendations = if (completeSelectionDomain) {
+            emptyList()
+        } else {
+            recommendationCoordinator.recommendPair(candidates)
+        }
         val recommendationsByCandidateId = recommendations.associateBy { it.candidateId }
         val candidatesById = candidates.associateBy(PairInformationCandidate::id)
         val candidateIds = if (completeSelectionDomain) {
@@ -1659,7 +1629,7 @@ internal fun ClocktowerJudgeScreen(
             }
             val warningIds = recommendation?.warningIds.orEmpty()
             val warning = if (warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
-            val style = recommendation?.style ?: automaticStorytellerStyle
+            val style = recommendation?.style ?: RecommendationStyle.BALANCED
             val recommendationPrefix = recommendation
                 ?.let { "${recommendationStyleLabel(it.style)}：" }
                 .orEmpty()
@@ -2946,9 +2916,6 @@ internal fun ClocktowerJudgeScreen(
                 hostInstruction = text("如果恶魔今晚杀死贤者，轻拍贤者，示意睁眼。把两名玩家只给他看；这两人之中有一名是恶魔。", "If the Demon killed the Sage tonight, wake the Sage and show only them two players, one of whom is the Demon."),
                 highPressureSuffix = text(" ⚠ 高压", " ⚠ high pressure"),
             ),
-            recommendCategory = recommendationCoordinator::recommendCategory,
-            isEvil = ::isClocktowerEvil,
-            recommendationStyleLabel = ::recommendationStyleLabel,
         ),
         ClocktowerNightStepMaterializerRegistry.Entry(
             identity = ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper")),

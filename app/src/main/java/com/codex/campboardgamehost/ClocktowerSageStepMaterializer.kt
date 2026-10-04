@@ -3,8 +3,6 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalRecommendation
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 
 internal data class ClocktowerSageStepContent(
@@ -22,9 +20,6 @@ internal fun clocktowerSageDisplayOptions(
     demon: PlayerCard,
     truthfulOnly: Boolean,
     content: ClocktowerSageStepContent,
-    recommendCategory: (List<UnreliableCategoricalCandidate>) -> List<UnreliableCategoricalRecommendation>,
-    isEvil: (PlayerCard) -> Boolean,
-    recommendationStyleLabel: (RecommendationStyle) -> String,
 ): List<ClocktowerDisplayOption> {
     val pool = cards.filter { it.name != actor.name }
     val pairs = buildList {
@@ -41,50 +36,31 @@ internal fun clocktowerSageDisplayOptions(
             .sorted()
             .joinToString(":")
 
-    val byId = pairs.associateBy(::pairId)
-    val candidates = pairs.map { pair ->
-        val isTruthful = pair.first.name == demon.name || pair.second.name == demon.name
-        val evilCount = listOf(pair.first, pair.second).count(isEvil)
-        UnreliableCategoricalCandidate(
-            id = pairId(pair),
-            isTruthful = isTruthful,
-            misinformationPressure = if (isTruthful) {
-                0
-            } else {
-                when (evilCount) {
-                    1 -> 2
-                    2 -> 3
-                    else -> 4
-                }
-            },
-        )
-    }.filter { !truthfulOnly || it.isTruthful }
-
-    return recommendCategory(candidates).mapNotNull { recommendation ->
-        val candidate = candidates.firstOrNull { it.id == recommendation.candidateId }
-            ?: return@mapNotNull null
-        val pair = byId[recommendation.candidateId] ?: return@mapNotNull null
-        val subjectSeats = clocktowerSageSubjectSeats(cards, pair.first, pair.second)
-        if (subjectSeats.size != 2) return@mapNotNull null
-        val seats = subjectSeats.joinToString("   ")
-        val warning = if (recommendation.warningIds.isNotEmpty()) content.highPressureSuffix else ""
-        ClocktowerDisplayOption(
-            label = "${recommendationStyleLabel(recommendation.style)}：$seats$warning",
-            displayKind = ClocktowerDisplayKind.EitherOne,
-            displayTitle = content.displayTitle,
-            displayPrimary = content.displayPrimary,
-            displaySecondary = seats,
-            displayFooter = content.displayFooter,
-            proposition = null,
-            presentationSubjectSeats = subjectSeats,
-            recommendationStyle = recommendation.style,
-            isTruthful = candidate.isTruthful,
-            misinformationPressure = candidate.misinformationPressure,
-            isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-            reasonCodes = listOf("dynamic.pair-score"),
-            warningCodes = recommendation.warningIds,
-        )
-    }
+    return pairs
+        .map { pair ->
+            pair to (pair.first.name == demon.name || pair.second.name == demon.name)
+        }
+        .filter { (_, isTruthful) -> !truthfulOnly || isTruthful }
+        .sortedBy { (pair, _) -> pairId(pair) }
+        .mapNotNull { (pair, isTruthful) ->
+            val subjectSeats = clocktowerSageSubjectSeats(cards, pair.first, pair.second)
+            if (subjectSeats.size != 2) return@mapNotNull null
+            val seats = subjectSeats.joinToString("   ")
+            ClocktowerDisplayOption(
+                label = seats,
+                displayKind = ClocktowerDisplayKind.EitherOne,
+                displayTitle = content.displayTitle,
+                displayPrimary = content.displayPrimary,
+                displaySecondary = seats,
+                displayFooter = content.displayFooter,
+                proposition = null,
+                presentationSubjectSeats = subjectSeats,
+                recommendationStyle = RecommendationStyle.BALANCED,
+                isTruthful = isTruthful,
+                misinformationPressure = 0,
+                isDefaultRecommendation = false,
+            )
+        }
 }
 
 internal fun clocktowerSageStepMaterializer(
@@ -95,9 +71,6 @@ internal fun clocktowerSageStepMaterializer(
     directPair: Pair<PlayerCard, PlayerCard>?,
     abilityState: AbilityFunctioningState?,
     content: ClocktowerSageStepContent,
-    recommendCategory: (List<UnreliableCategoricalCandidate>) -> List<UnreliableCategoricalRecommendation>,
-    isEvil: (PlayerCard) -> Boolean,
-    recommendationStyleLabel: (RecommendationStyle) -> String,
 ): ClocktowerNightStepMaterializerRegistry.Entry = ClocktowerNightStepMaterializerRegistry.Entry(
     identity = ClocktowerProductionNightStepIdentity.role(RoleId("Sage")),
     build = {
@@ -130,9 +103,6 @@ internal fun clocktowerSageStepMaterializer(
                     demon = resolvedDemon,
                     truthfulOnly = false,
                     content = content,
-                    recommendCategory = recommendCategory,
-                    isEvil = isEvil,
-                    recommendationStyleLabel = recommendationStyleLabel,
                 )
             },
             reliableDisplayOptions = { actor ->
@@ -142,9 +112,6 @@ internal fun clocktowerSageStepMaterializer(
                     demon = resolvedDemon,
                     truthfulOnly = true,
                     content = content,
-                    recommendCategory = recommendCategory,
-                    isEvil = isEvil,
-                    recommendationStyleLabel = recommendationStyleLabel,
                 )
             },
         )

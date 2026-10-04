@@ -1,7 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalRecommendation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -17,32 +15,19 @@ class ClocktowerSageStepMaterializerTest {
             demon = cards[1],
             truthfulOnly = false,
             content = sageContent(),
-            recommendCategory = { candidates ->
-                val candidate = candidates.first { it.id == "0:1" }
-                listOf(
-                    UnreliableCategoricalRecommendation(
-                        candidateId = candidate.id,
-                        style = RecommendationStyle.BALANCED,
-                        totalScore = 0,
-                        warningIds = emptyList(),
-                    ),
-                )
-            },
-            isEvil = { it.name == cards[1].name },
-            recommendationStyleLabel = { it.name },
         )
 
-        val option = options.single()
-        assertEquals(listOf(1, 2), option.presentationSubjectSeats)
+        assertEquals(6, options.size)
+        val option = options.single { it.presentationSubjectSeats == listOf(1, 2) }
         assertEquals("1   2", option.displaySecondary)
         assertNull(option.proposition)
         assertTrue(option.isTruthful)
+        assertTrue(options.any { !it.isTruthful })
     }
 
     @Test
-    fun `truthful-only Sage projection filters false pairs before recommendation`() {
+    fun `truthful-only Sage projection exposes every legal truthful pair without ranking`() {
         val cards = (1..5).map { seat -> sageMaterializerCard("P$seat") }
-        var sawOnlyTruthfulCandidates = false
 
         val options = clocktowerSageDisplayOptions(
             cards = cards,
@@ -50,25 +35,12 @@ class ClocktowerSageStepMaterializerTest {
             demon = cards[1],
             truthfulOnly = true,
             content = sageContent(),
-            recommendCategory = { candidates ->
-                sawOnlyTruthfulCandidates = candidates.isNotEmpty() && candidates.all { it.isTruthful }
-                candidates.take(1).map { candidate ->
-                    UnreliableCategoricalRecommendation(
-                        candidateId = candidate.id,
-                        style = RecommendationStyle.GENTLE,
-                        totalScore = 0,
-                        warningIds = emptyList(),
-                    )
-                }
-            },
-            isEvil = { it.name == cards[1].name },
-            recommendationStyleLabel = { it.name },
         )
 
-        assertTrue(sawOnlyTruthfulCandidates)
-        assertEquals(1, options.size)
-        assertTrue(cards[1].let { demon -> options.single().presentationSubjectSeats.contains(cards.indexOf(demon) + 1) })
-        assertNull(options.single().proposition)
+        assertEquals(3, options.size)
+        assertTrue(options.all { option -> 2 in option.presentationSubjectSeats })
+        assertTrue(options.all { it.isTruthful })
+        assertTrue(options.all { it.proposition == null })
     }
 
     @Test
@@ -96,9 +68,6 @@ class ClocktowerSageStepMaterializerTest {
             directPair = demon to cards[4],
             abilityState = null,
             content = sageContent(),
-            recommendCategory = { emptyList() },
-            isEvil = { it.name == demon.name },
-            recommendationStyleLabel = { it.name },
         )
 
         val step = entry.build()
