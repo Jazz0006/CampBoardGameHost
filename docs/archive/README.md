@@ -91,9 +91,9 @@ Their embedded pending/next-step language is historical only. Current execution 
 
 ### 2026-09-29 DLB authority consolidation
 
-The active product lifecycle changed from pre-seat Drunk ownership to late-bound Drunk assignment and staged first-night dependency barriers.
+The product lifecycle changed from pre-seat Drunk ownership to late-bound Drunk assignment and staged first-night dependency barriers. The DLB campaign is now COMPLETE / ACCEPTED; those documents remain historical/architectural references rather than the current execution lane.
 
-Current authority:
+Historical DLB authorities:
 
 - `../DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 - `../DRUNK_LATE_BINDING_AND_FIRST_NIGHT_DECISION_SEQUENCE_AUDIT_2026-09-28.md`
@@ -106,6 +106,22 @@ Fully superseded active documents moved into archive:
 - `checkpoints/sde/SDE_3B_STRUCTURE_AND_EXPERT_EVIDENCE_STAGING_2026-09-23.md`.
 
 The first-night policy synthesis remains in active docs only as policy/evidence background because many of its evidence principles remain useful; its old setup/sequence model is explicitly marked superseded rather than duplicated into a second current authority.
+
+### 2026-10-04 LRE route consolidation
+
+The product owner broadened RecommendationStyle retirement into retirement of the whole hand-tuned legacy heuristic recommendation engine. The current execution authority is now:
+
+- `../LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`;
+- `../LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` for retirement evidence/inventory;
+- `../CURRENT_DEVELOPMENT_ROADMAP.md` and `../NEXT_DEVELOPMENT_HANDOFF.md` for live priority/status.
+
+The following completed/superseded intermediate audits were removed from active `docs/` and retained directly under `archive/` for traceability:
+
+- `TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md`;
+- `RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`;
+- `RSR_1_STYLE_NEUTRAL_POLICY_READINESS_AUDIT_2026-10-04.md`.
+
+Their embedded NEXT/continuation language is historical. Current sequence is Manual safety gate -> evidence-backed family-by-family replacement/cutover -> physical legacy deletion only after production dependency reaches zero.
 
 ## 2. Handoffs
 

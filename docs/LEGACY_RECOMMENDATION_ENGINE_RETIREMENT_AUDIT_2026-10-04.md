@@ -9,6 +9,8 @@
 > Product-owner decision: the existing heuristic recommendation algorithm is not a trustworthy product-policy baseline. It frequently produces poor Storyteller clues/choices and should be retired as a whole rather than preserved family by family for behavior parity.
 >
 > Next implementation lane: **LRE-1 — preserve complete legal/manual authority, then revoke legacy automatic/recommendation authority fail-closed**.
+>
+> Current execution sequence authority: `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — LRE-1 safety gate, then family-by-family evidence-backed replacement/cutover, then physical deletion only after production dependency reaches zero.
 
 ## 1. Executive decision
 
@@ -466,9 +468,26 @@ Once LRE-1A/B are green:
 
 This is the first major product-risk reduction checkpoint.
 
+### LRE-P — iterative replacement-policy / production-cutover loop
+
+After LRE-1 establishes safe Manual authority, replacement policies should mature and cut over **one family at a time** rather than waiting for an all-at-once migration.
+
+For each family:
+
+1. EvidenceLab supplies source-backed comparison / preference / rejection evidence, or an explicitly bounded accepted policy contract;
+2. Host preserves the complete rules-owned legal domain and typed pre-decision context;
+3. new semantics receive an explicit versioned policy identity;
+4. deterministic replay/evaluation proves the admitted behavior and no future-history leakage;
+5. production cuts over only that admitted scope;
+6. the old heuristic immediately loses authority for that scope, even if its code still exists for historical/shadow compatibility.
+
+Priority waves are defined in `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`: healthy first-night information first, impaired information second, then lower-frequency/additional-context decisions. A strong qualifying evidence item may reorder individual families.
+
+Do **not** keep old heuristics authoritative until all new families are ready. Do **not** physically delete shared legacy infrastructure before all remaining production dependencies have been removed.
+
 ### LRE-2 — retire legacy setup ranking
 
-After staged manual barriers are independent:
+After staged Manual barriers are independent **and active setup decision scopes no longer depend on old ranking authority**:
 
 - separate remaining legal candidate generation from `SetupEvaluator`;
 - remove setup score/profile ranking;
@@ -642,7 +661,7 @@ Retiring old heuristics improves ML readiness because future datasets will not a
 
 Do **not** start by deleting `RecommendationStyle` or `SetupRecommendationService`.
 
-Start **LRE-1 — manual fallback / authority gate audit + tests-first implementation**.
+Start **LRE-1 — manual fallback / authority gate audit + tests-first implementation** under `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`.
 
 First executable checkpoint should prove this safety invariant:
 
@@ -650,4 +669,6 @@ First executable checkpoint should prove this safety invariant:
 
 Before broad cutoff, close the legal-only Manual gaps identified above, especially Demon bluffs and Beginner-mode fallback presentation.
 
-This sequence stops bad recommendations from controlling games earlier than a bottom-up code deletion would, while preserving a playable Host during the retirement campaign.
+After LRE-1, enter the LRE-P loop: improve one replacement policy, validate/replay it, cut over that family, and immediately remove legacy authority for the admitted scope. Final LRE-2 through LRE-5 physical deletion comes only after those production dependencies are gone.
+
+This sequence stops bad recommendations from controlling games earlier than either an all-at-once replacement or a bottom-up code deletion would, while preserving a playable Host during the retirement campaign.

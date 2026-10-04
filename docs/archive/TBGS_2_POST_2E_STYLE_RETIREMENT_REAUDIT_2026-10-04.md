@@ -27,7 +27,7 @@ The correct post-2E result is:
 - **special registration: still not cleanly implementation-ready because typed history production is incomplete**;
 - therefore **TBGS-2 pauses after TBGS-2E rather than inventing TBGS-2F**.
 
-A separate focused retirement audit should remove the legacy three-style dimension safely before later recommendation-family cleanup chooses any new single-policy semantics. That follow-up is now complete as **RSR-0** at `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`.
+A separate focused retirement audit should remove the legacy three-style dimension safely before later recommendation-family cleanup chooses any new single-policy semantics. That follow-up is now complete as **RSR-0**, archived at `docs/archive/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`.
 
 Important boundary: this decision retires the old three recommendation-style routes. It does not automatically delete every unrelated enum/string containing the word “balanced”; for example, a public game-state balance label must be judged by its actual consumers during retirement cleanup.
 

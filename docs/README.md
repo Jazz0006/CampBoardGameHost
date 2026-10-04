@@ -1,52 +1,47 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-09-30 Australia/Sydney  
+> 最后整理：2026-10-04 Australia/Sydney  
 > 目标：新开发会话只读取当前权威。历史过程、已撤销路线和中间校准实验不再留在 active docs 中制造歧义。
 
 ## 默认阅读顺序
 
 1. root `AGENTS.md`
-2. [`AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`](AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md) — **当前 GitHub Connector-first / Mini MCP+Codex 大文件补充工作流**
+2. [`AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`](AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md)
 3. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
-6. [`DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`](DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md) — **当前 Drunk late-binding / staged first-night / decomposition 实施权威**
-7. [`DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md`](DLB_DRUNK_ASSIGNMENT_POST_TBGS1_CUTOVER_RECHECK_2026-09-30.md) — **当前 Drunk 自动选择 cutover verdict：TBGS-1 已完成，架构/互操作 PASS；仍因 C3 VERIFIED ordering evidence + versioned production policy 而 NOT PASSED**
-8. [`DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md`](DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md) — **pre-TBGS-1 原始 gate audit / 历史 blocker 细节**
-9. [`DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md`](DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md) — **policy-neutral required/enrichment/unavailable context boundary；evidence handoff 权威**
-10. [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md) — **TB-only 标准 Game Snapshot / Drunk vertical slice；TBGS-0/1 已完成，TBGS-2 deferred**
-11. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / canonical Game Engine / read-only Recommendation 的长期 ownership guardrail；TBGS / DLB-6 / 后续 projection migration 均不得偏离此边界**
+6. [`LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`](LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md) — **当前推荐系统执行主线：Manual safety → family cutover → final deletion**
+7. [`LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`](LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md) — **旧 heuristic 全面退休的证据/范围权威**
+8. [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md) — **长期 Recommendation Engine 架构权威**
+9. [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md) — **TB canonical snapshot / typed decision context 长期边界**
+10. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / Game Engine / Recommendation ownership guardrail**
 
-DLB-5 与 DLB-5H1 已完成；其 completion audit、DLB source audit、decomposition audit、Recovery audit、SDE policy/evidence 文档和完成 checkpoint 均改为 **按问题读取**，不再属于每个新开发会话的默认启动集合。
+DLB、C5、TBGS-2A–2E、RSR-0/1A 均已完成或进入历史状态；其 completion audit、cutover audit 和中间路线只在具体 ownership / replay / evidence 问题需要时读取，不再属于默认启动集合。
 
 随后检查 live 分支、工作区和差异；远端验收时独立查询 exact-head PR / checks。不要从 memory、Git history、archive、已完成 slice audit 或旧 PR 的 `NEXT / READY / COMPLETE` 推断当前状态。执行环境以 root `AGENTS.md` 和当前 workflow 为准：**GitHub Connector 默认负责日常 repository / PR / CI 工作；Mini MCP + Codex CLI 只作为需要完整本地上下文的大文件分析/执行补充。**
 
 ## 当前状态
 
 ~~~text
-SDE-0 / SDE-1                          COMPLETE
-SDE-2D1–SDE-2D4                        COMPLETE
-SDE-2D5 evidence/calibration           CHECKPOINT MERGED / PARALLEL TARGETED EVIDENCE
-  B4 expert/SILVER infrastructure      COMPLETE FOR CURRENT ANCHORS
-  targeted evidence acquisition       EXTERNAL / CONTINUOUS
-  old D5F-C numeric gate route         NOT CURRENT PRODUCTION CRITICAL PATH
-sealed holdout                         CLOSED
-
-SDE-3A engine/feature/policy contract  COMPLETE / PR #151/#152
-SDE-3B BEGINNER_CONSERVATIVE_V1        COMPLETE / PR #153 MERGED
-SDE-3C DecisionTrace/replay            COMPLETE / 3C0–3C5 historical checkpoint preserved
-SDE integration closure               C0–C3 HISTORICAL CHECKPOINT ACCEPTED
-Post-audit correctness repair         CR-A / CR-B / CR-C COMPLETE / ACCEPTED
-SDE-3D calibrated policy freeze        3D0–3D1 + C4/SDE-3D2 COMPLETE / IF-D COMPLETE / RH-E COMPLETE
-SDE-3E automatic production cutover    C5 BLOCKED ON QUALIFYING E3/E4 / PER-SURFACE GATES
-DLB Drunk late-binding / first-night     CURRENT IMPLEMENTATION ROUTE
-TBGS-0 canonical TB snapshot              COMPLETE / ACCEPTED
-TBGS-1 Drunk snapshot vertical slice      COMPLETE / ACCEPTED
-TBGS-2 runtime projection migration       DEFERRED / POST DLB-6/7
-bounded App/Host decomposition           GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
+SDE-0 / SDE-1 / SDE-3A / SDE-3C        COMPLETE
+SDE-3B BEGINNER_CONSERVATIVE_V1         COMPLETE / HISTORICAL IMMUTABLE ID
+C4 / IF-D / RH-E                        COMPLETE / ACCEPTED
+DLB campaign                            COMPLETE / ACCEPTED
+TBGS-0 / TBGS-1                         COMPLETE / ACCEPTED
+TBGS-2A / 2B / 2C / 2D / 2E            COMPLETE / ACCEPTED; PAUSED AFTER 2E
+DRUNK_ASSIGNMENT_Q04_V1                 PRODUCTION CUTOVER / ACCEPTED
+C5-E functioning Librarian V2           PRODUCTION CUTOVER / ACCEPTED
+HOST-ML0 / HOST-ML1                     COMPLETE / ACCEPTED
+RSR-0 / RSR-1A                          COMPLETE / HISTORICAL; docs archived
+LRE-0 whole-engine retirement audit     COMPLETE / RETIREMENT AUTHORIZED
+LRE staged replacement route            CURRENT EXECUTION AUTHORITY
+LRE-1 Manual / fail-closed safety gate  NEXT
+LRE-P family replacement + cutover      ITERATIVE AFTER LRE-1
+LRE-2..5 physical legacy deletion       AFTER production dependency reaches zero
+bounded App/Host decomposition          GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 ~~~
 
-当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。已确认的长期边界是：#157 / RH-E 已完成；#165 current-only Recovery cleanup 已合并，R0–R6 完成，R7 仅是独立后续；C5/V2 仍没有自动授权的 production slice。2026-09-29 产品路线已切换到 DLB：Drunk seat 在 shown identities 落座后由规则合法域 + SDE/Storyteller 决策，再在身份展示前 canonical commit；首夜 Storyteller 决策按 latest-safe dependency barrier 分阶段提交。EvidenceLab 采集继续并行，同时服务 DLB Drunk-assignment cutover evidence 与原 C5/V2 E3/E4 gate，但两者不得混为一个授权门。
+当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。DLB 已完成；Q04 Drunk 与 functioning Librarian V2 已完成 production cutover。当前主线不再是继续维护旧推荐行为，而是 LRE：先让所有缺少成熟 policy 的多候选决策安全地回退到 Manual，再按 decision family 逐个完成 evidence-backed policy、replay/evaluation 和 production cutover；每个 family cutover 后立即撤销旧 heuristic 在该 scope 的 authority，最后才删除无生产依赖的旧 scoring/style/telemetry 代码。EvidenceLab 持续负责 candidate-comparison / rejection / rationale 证据。
 
 ## 当前政策核心
 
@@ -65,6 +60,9 @@ bounded App/Host decomposition           GUARDRAIL / INDEPENDENT MAINTENANCE ONL
 - strategic evil topology 是重要 structural evidence，但不能代替 healthy information、confirmation、role-function exposure、bluff usability、narrative coherence 等维度。
 - 不引入 opaque global scalar；Gap E 只有在未来 policy 真正需要 numeric weighting 时才成为 blocker。
 - automatic production cutover 按 decision surface gating；一个“大 equivalence class + seeded selection”的 V1 结果本身不足以授权 cutover。
+- 当前统一 authority invariant：唯一合法结果可规则自动；多个合法结果且有 accepted versioned policy 才可自动；多个合法结果但无 accepted policy 必须 `MANUAL_REQUIRED / POLICY_DEFERRED`，不得回落旧 heuristic。
+- 新 policy 采用 family-by-family cutover，不等待所有 family 一次完成；物理删除旧引擎则等待生产依赖归零。
+- 已接受的 production policy islands：`DRUNK_ASSIGNMENT_Q04_V1` 与 functioning Librarian V2。
 
 ## 校准证据原则
 
@@ -103,9 +101,11 @@ DIAGNOSTIC_ONLY
 
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
 - [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md)
-- [`DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`](DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md)
+- [`LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`](LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md)
+- [`LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`](LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md)
+- [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md)
-- [`DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md`](DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md)
+- [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md)
 - [`AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`](AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md)
 - [`SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md`](SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md)
 - [`SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md`](SDE_3D0_CALIBRATED_POLICY_FREEZE_CUTOVER_GATE_ARCHITECTURE_AUDIT_2026-09-24.md)
@@ -127,7 +127,7 @@ If documents conflict, use this order:
 1. official BoTC rules/rulings — gameplay correctness;
 2. root `AGENTS.md` — execution / architecture / governance;
 3. `TESTING_STRATEGY.md` — test-tier and validation evidence definitions;
-4. `CURRENT_DEVELOPMENT_ROADMAP.md` + `NEXT_DEVELOPMENT_HANDOFF.md` + `DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` + the current DLB slice audit named by the handoff — current state, continuation point and DLB product lifecycle;
+4. `CURRENT_DEVELOPMENT_ROADMAP.md` + `NEXT_DEVELOPMENT_HANDOFF.md` + `LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` + `LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — current state, continuation point, replacement/cutover order and legacy-retirement authority;
 5. `AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — current GitHub Connector-first / Mini MCP+Codex large-file execution workflow;
 6. `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md` plus current 3D audit — long-lived SDE/calibration contract where not superseded by DLB lifecycle changes;
 7. `SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md` and targeted evidence contract — policy/evidence background; its pre-DLB setup/sequence model is historical;

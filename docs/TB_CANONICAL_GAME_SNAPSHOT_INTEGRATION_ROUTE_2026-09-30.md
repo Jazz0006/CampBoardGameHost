@@ -390,9 +390,9 @@ The remaining candidates were special registration and cross-cutting balance/sty
 
 Special registration is mechanically snapshot-ready and already has a rules-owned legal domain, but a clean migration remains blocked on incomplete typed registration/misinformation-history production. The current localized UI-event-title history reconstruction must not be promoted into a new durable typed context merely to continue TBGS-2.
 
-TBGS-2 therefore pauses after 2E. RSR-0 and RSR-1A are COMPLETE / ACCEPTED. The product direction then broadened from global-style retirement to whole legacy heuristic recommendation-engine retirement; `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` is now the continuation authority. LRE-1 manual fallback / fail-closed recommendation authority is the next independent work. Special-registration typed-history remains a dependency only for a future replacement policy, not a reason to retain the old heuristic ranking.
+TBGS-2 therefore pauses after 2E. Historical RSR-0 and RSR-1A are COMPLETE / ACCEPTED. The product direction then broadened from global-style retirement to whole legacy heuristic recommendation-engine retirement. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` remains the retirement evidence/inventory authority, while `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` is the current continuation authority: LRE-1 Manual/fail-closed safety first, then evidence-backed replacement policies cut over family by family, then physical legacy deletion after production dependency is removed. Special-registration typed history remains a dependency only for a future replacement policy, not a reason to retain the old heuristic ranking.
 
-Authority: `docs/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md`.
+Historical post-2E audit: `docs/archive/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md`.
 
 ## 8. Updated execution relationship
 
@@ -422,7 +422,10 @@ DLB-0..5H1 COMPLETE
 -> RSR-0 RecommendationStyle retirement / player-level audit COMPLETE / ACCEPTED
 -> RSR-1A Storyteller-mode/style ownership decoupling COMPLETE / ACCEPTED
 -> LRE-0 whole legacy heuristic recommender retirement audit COMPLETE / AUTHORIZED
--> LRE-1 manual fallback + fail-closed recommendation authority NEXT
+-> LRE staged policy replacement / cutover route ACCEPTED / CURRENT AUTHORITY
+-> LRE-1 Manual fallback + fail-closed recommendation authority NEXT
+-> LRE-P family-by-family replacement policy / replay / cutover ITERATIVE AFTER LRE-1
+-> LRE-2..5 physical legacy deletion only after production dependencies are removed
 ```
 
 TBGS-0/1 and EvidenceLab C3 may proceed in parallel. TBGS-0/1 must not invent ranking semantics while evidence is still missing.
