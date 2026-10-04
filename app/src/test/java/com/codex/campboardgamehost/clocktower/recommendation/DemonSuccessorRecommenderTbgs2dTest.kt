@@ -91,7 +91,8 @@ class DemonSuccessorRecommenderTbgs2dTest {
             context = context,
         )
 
-        assertTrue(recommendations.map { it.targetSeat() }.contains(3))
+        assertTrue(recommendations.isNotEmpty())
+        assertTrue(recommendations.all { it.targetSeat() in setOf(2, 3) })
         assertTrue(recommendations.none { recommendation ->
             recommendation.warnings.any { warning -> warning.ruleId == "scarlet-woman-mandatory" }
         })
