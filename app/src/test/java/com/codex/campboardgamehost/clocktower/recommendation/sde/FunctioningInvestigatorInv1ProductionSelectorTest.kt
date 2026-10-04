@@ -105,6 +105,22 @@ class FunctioningInvestigatorInv1ProductionSelectorTest {
     }
 
     @Test
+    fun `selector fails closed when the pressure Empath is poisoned`() {
+        val fixture = pressureFixture(empathPoisoned = true)
+
+        assertNull(
+            FunctioningInvestigatorInv1ProductionSelector.select(
+                context = fixture.context,
+                sourceSeat = 4,
+                abilityRole = RoleId("Investigator"),
+                reliability = ReliabilityState.RELIABLE,
+                decisionId = DECISION_ID,
+                selectionSeed = fixture.game.seed,
+            ),
+        )
+    }
+
+    @Test
     fun `selector fails closed outside conservative one Minion scope`() {
         val fixture = multipleMinionsFixture()
 
@@ -120,10 +136,10 @@ class FunctioningInvestigatorInv1ProductionSelectorTest {
         )
     }
 
-    private fun pressureFixture(): Fixture = fixture(
+    private fun pressureFixture(empathPoisoned: Boolean = false): Fixture = fixture(
         listOf(
             player(1, "Imp", CharacterType.DEMON),
-            player(2, "Empath", CharacterType.TOWNSFOLK),
+            player(2, "Empath", CharacterType.TOWNSFOLK, poisoned = empathPoisoned),
             player(3, "Monk", CharacterType.TOWNSFOLK),
             player(4, "Investigator", CharacterType.TOWNSFOLK),
             player(5, "Poisoner", CharacterType.MINION),
@@ -196,6 +212,7 @@ class FunctioningInvestigatorInv1ProductionSelectorTest {
         seat: Int,
         role: String,
         type: CharacterType,
+        poisoned: Boolean = false,
     ) = PlayerState(
         seat = seat,
         name = "Player $seat",
@@ -207,6 +224,7 @@ class FunctioningInvestigatorInv1ProductionSelectorTest {
         },
         actualType = type,
         shownRole = RoleId(role),
+        poisoned = poisoned,
     )
 
     private data class Fixture(

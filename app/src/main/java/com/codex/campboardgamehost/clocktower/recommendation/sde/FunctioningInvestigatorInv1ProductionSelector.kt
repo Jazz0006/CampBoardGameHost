@@ -5,6 +5,7 @@ import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
+import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalDomain
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 
@@ -65,6 +66,9 @@ internal object FunctioningInvestigatorInv1ProductionSelector {
         val game = context.naturalPairGameState
         val players = game.players.sortedBy { it.seat }
         val empathPlayer = players.singleOrNull { it.actualRole == empath } ?: return null
+        val empathSnapshot =
+            context.snapshot.grimoireSeats.singleOrNull { it.seat == empathPlayer.seat } ?: return null
+        if (empathSnapshot.poisoned != SnapshotField.Known(false)) return null
         val empathIndex = players.indexOf(empathPlayer)
         if (empathIndex < 0 || players.size < 3) return null
 
