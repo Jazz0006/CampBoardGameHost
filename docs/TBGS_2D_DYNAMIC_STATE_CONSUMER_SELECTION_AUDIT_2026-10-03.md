@@ -2,9 +2,10 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@5b32640d26f39dcf137bcff672686f0a6ee801c4`  
-> Status: **IMPLEMENTATION GREEN / FINAL T4 PENDING**  
+> Status: **COMPLETE / ACCEPTED**  
 > Selected family: **TBGS-2D — Demon succession typed recommendation context**  
-> Implementation checkpoint: `b62980929c143439e5b65836e251c746eda14afc`; Android FAST / R2 #3428 GREEN
+> Implementation checkpoint: `b62980929c143439e5b65836e251c746eda14afc`; Android FAST / R2 #3428 GREEN  
+> Final exact-head T4: `1f610a25a16c14a7ca7bd38562ff39425508c243`; CI #3726 / R2 #3429 GREEN across Android FULL/assemble, ASP and Real Clingo
 
 ## 1. Decision
 
@@ -246,15 +247,15 @@ Run Android FAST at the logical checkpoint. Final T4 should include Android `:ap
 TBGS-2A pair precompute                 COMPLETE / ACCEPTED
 -> TBGS-2B pair manual/publication      COMPLETE / ACCEPTED
 -> TBGS-2C setup recommendation base    COMPLETE / ACCEPTED
--> TBGS-2D Demon succession context     IMPLEMENTATION GREEN / T4 PENDING
--> fresh re-audit AFTER TBGS-2D ACCEPTANCE
+-> TBGS-2D Demon succession context     COMPLETE / ACCEPTED
+-> fresh re-audit                       NEXT
    -> Mayor OR special registration OR balance enrichment
    -> choose one bounded family/surface only
 ```
 
 Do not assume the post-2D ordering in advance.
 
-## 10. Implementation result before final T4
+## 10. Accepted implementation result
 
 The implementation now follows the audited ownership boundary:
 
