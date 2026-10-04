@@ -42,7 +42,7 @@ Beginner automatic Drunk authority                          COMPLETE / ACCEPTED 
 DLB-6 old-contract retirement                               COMPLETE / ACCEPTED
 DLB-7 final DLB acceptance                                  COMPLETE / ACCEPTED
 DLB campaign                                                COMPLETE / ACCEPTED
-TBGS-2 runtime recommendation projection migration           IN PROGRESS — 2A/2B/2C/2D COMPLETE / ACCEPTED; POST-2D FRESH RE-AUDIT NEXT
+TBGS-2 runtime recommendation projection migration           IN PROGRESS — 2A/2B/2C/2D COMPLETE / ACCEPTED; 2E MAYOR REDIRECT AUDIT COMPLETE / IMPLEMENTATION READY
 Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
 C5 evidence-backed policy evolution                   C5-A/C5-B/C5-C/C5-D/C5-E COMPLETE / ACCEPTED
 HOST-ML0 ML readiness / ModelLab boundary              COMPLETE / ACCEPTED
@@ -123,7 +123,7 @@ EvidenceLab `main@78f672868ea6603317aeefa20ad91686c5886db9` supplies the first C
 
 EvidenceLab EL-ML0 is COMPLETE / ARCHITECTURE ACCEPTED at observed `main@a575ecc05ccb77cf4aaddcad7f772b0fe920d3d6`. Host HOST-ML0 is COMPLETE / ACCEPTED, and HOST-ML1 now implements the typed policy-neutral `RecommendationDecisionExportV1` boundary for Drunk assignment and first-night pair information, including pair candidate shown-role/seat/truth/registration semantics. The frozen long-horizon ownership remains: EvidenceLab owns source-backed evidence; Host owns canonical pre-decision state, rules-owned legal domains, typed contexts, deterministic features, replay and neutral export; a future ModelLab owns dataset recipes and model training. Machine-readable corpus materialization is a separate future follow-up, deferred until a concrete offline consumer fixes the interchange requirement; EL-ML1 is triggered only if source-backed machine-readable evidence seeds are required. Authorities: `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` and `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md`. This route must not broaden C5 or delay TBGS-2.
 
-TBGS-2D Demon succession is COMPLETE / ACCEPTED. Implementation checkpoint `b62980929c143439e5b65836e251c746eda14afc` passed Android FAST / R2 #3428; final exact-head T4 `1f610a25a16c14a7ca7bd38562ff39425508c243` passed CI #3726 / R2 #3429 GREEN across Android FULL/assemble, ASP and Real Clingo. The next TBGS-2 action is a fresh post-2D bounded-family re-audit; do not assume Mayor vs registration vs cross-cutting balance ordering in advance.
+TBGS-2D Demon succession is COMPLETE / ACCEPTED. Implementation checkpoint `b62980929c143439e5b65836e251c746eda14afc` passed Android FAST / R2 #3428; final exact-head T4 `1f610a25a16c14a7ca7bd38562ff39425508c243` passed CI #3726 / R2 #3429 GREEN across Android FULL/assemble, ASP and Real Clingo. The post-2D fresh bounded-family re-audit is COMPLETE. TBGS-2E Mayor redirect is selected as the next migration because it remains a single decision family with an existing rules legality boundary and bounded enrichment inputs. Special registration remains blocked by typed-history production completeness; cross-cutting balance remains too broad. Authority: `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md`.
 
 The product route changed on 2026-09-29 after the Drunk late-binding and App/Host decomposition audits were reconciled.
 
