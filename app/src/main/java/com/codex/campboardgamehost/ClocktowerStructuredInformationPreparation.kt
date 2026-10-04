@@ -33,25 +33,46 @@ internal fun clocktowerStructuredRecommendedOption(
 }
 
 /**
- * Rebind one policy recommendation to the current automatic candidate domain.
+ * Rebind one accepted policy recommendation to the current legal candidate domain.
  *
- * The policy object is never trusted as a publication authority: only the semantically-identical
- * option from [currentOptions] may flow forward. A stale/missing policy recommendation falls back
- * lazily to the pre-C5-E selector.
+ * The policy object is never trusted as publication authority: only the semantically-identical
+ * current option may flow forward. If no accepted policy owns this exact state, automatic
+ * resolution is allowed only when the legal domain itself has one candidate. Multi-choice states
+ * fail closed to Manual and never fall back to the legacy dynamic selector.
  */
 internal fun clocktowerAutomaticInformationOption(
     policyOption: ClocktowerDisplayOption?,
     currentOptions: List<ClocktowerDisplayOption>,
-    fallback: () -> ClocktowerDisplayOption?,
 ): ClocktowerDisplayOption? {
+    val distinctCurrentOptions = currentOptions.distinctBy(::clocktowerInformationCandidateId)
     val policyId = policyOption?.let(::clocktowerInformationCandidateId)
     if (policyId != null) {
-        currentOptions.firstOrNull { option ->
+        distinctCurrentOptions.firstOrNull { option ->
             clocktowerInformationCandidateId(option) == policyId
         }?.let { return it }
     }
-    return fallback()
+    return distinctCurrentOptions.singleOrNull()
 }
+
+internal fun clocktowerManualInformationDomain(
+    options: List<ClocktowerDisplayOption>,
+): List<ClocktowerDisplayOption> = options
+    .distinctBy(::clocktowerInformationCandidateId)
+    .sortedBy(::clocktowerInformationCandidateId)
+    .map { option ->
+        val neutralLabel = listOfNotNull(
+            option.displayPrimary?.takeIf { it.isNotBlank() },
+            option.displaySecondary?.takeIf { it.isNotBlank() },
+        ).joinToString(" · ").ifBlank { option.label }
+        option.copy(
+            label = neutralLabel,
+            recommendationStyle = RecommendationStyle.BALANCED,
+            misinformationPressure = 0,
+            isDefaultRecommendation = false,
+            reasonCodes = emptyList(),
+            warningCodes = emptyList(),
+        )
+    }
 
 /** A numeric adapter request. It owns no UI state, callbacks, roster or mutable session. */
 internal data class ClocktowerNumericInformationPreparation(

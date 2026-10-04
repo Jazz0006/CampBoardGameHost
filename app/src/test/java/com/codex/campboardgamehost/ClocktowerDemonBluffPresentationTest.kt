@@ -134,6 +134,47 @@ class ClocktowerDemonBluffPresentationTest {
         )
     }
 
+    @Test
+    fun `manual bluff selection is legal only and capped at three`() {
+        val legal = setOf("Chef", "Empath", "Mayor", "Monk")
+
+        val one = toggleManualDemonBluffSelection(emptyList(), "Chef", legal)
+        val two = toggleManualDemonBluffSelection(one, "Empath", legal)
+        val three = toggleManualDemonBluffSelection(two, "Mayor", legal)
+
+        assertEquals(listOf("Chef", "Empath", "Mayor"), three)
+        assertEquals(three, toggleManualDemonBluffSelection(three, "Monk", legal))
+        assertEquals(three, toggleManualDemonBluffSelection(three, "Spy", legal))
+        assertEquals(
+            listOf("Chef", "Mayor"),
+            toggleManualDemonBluffSelection(three, "Empath", legal),
+        )
+    }
+
+    @Test
+    fun `manual bluff selection is ready only for an exact legal triple`() {
+        val legal = listOf(role("Chef"), role("Empath"), role("Mayor"), role("Monk"))
+
+        assertTrue(
+            manualDemonBluffSelectionReady(
+                selectedRoleNames = listOf("Chef", "Empath", "Mayor"),
+                legalRoles = legal,
+            ),
+        )
+        assertTrue(
+            !manualDemonBluffSelectionReady(
+                selectedRoleNames = listOf("Chef", "Empath"),
+                legalRoles = legal,
+            ),
+        )
+        assertTrue(
+            !manualDemonBluffSelectionReady(
+                selectedRoleNames = listOf("Chef", "Empath", "Spy"),
+                legalRoles = legal,
+            ),
+        )
+    }
+
     private fun plan(
         style: RecommendationStyle,
         first: String,

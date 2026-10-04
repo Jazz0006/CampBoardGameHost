@@ -16,6 +16,25 @@ internal sealed interface DemonBluffPresentationResolution {
     ) : DemonBluffPresentationResolution
 }
 
+internal fun toggleManualDemonBluffSelection(
+    selectedRoleNames: List<String>,
+    roleName: String,
+    legalRoleNames: Set<String>,
+): List<String> {
+    if (roleName !in legalRoleNames) return selectedRoleNames
+    if (roleName in selectedRoleNames) return selectedRoleNames - roleName
+    if (selectedRoleNames.size >= 3) return selectedRoleNames
+    return selectedRoleNames + roleName
+}
+
+internal fun manualDemonBluffSelectionReady(
+    selectedRoleNames: List<String>,
+    legalRoles: List<ClocktowerRole>,
+): Boolean = resolveDemonBluffPresentation(
+    recommendedRoleNames = selectedRoleNames,
+    legalRoles = legalRoles,
+) is DemonBluffPresentationResolution.Ready
+
 internal fun demonBluffRoleNamesToCommitAtBarrier(
     isDemonInfoStep: Boolean,
     isRealAction: Boolean,

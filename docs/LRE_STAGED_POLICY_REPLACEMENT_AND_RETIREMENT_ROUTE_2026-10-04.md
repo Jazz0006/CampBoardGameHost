@@ -2,7 +2,9 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **CURRENT EXECUTION AUTHORITY**
+> Status: **CURRENT EXECUTION AUTHORITY — LRE-1 COMPLETE / ACCEPTED; RECOMMENDATION LANE PAUSED AFTER LRE-1**
+>
+> LRE-1 completion authority: `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md`
 >
 > Evidence/audit authority: `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`
 >
@@ -165,6 +167,12 @@ Special registration additionally needs a durable typed factual history producer
 
 ### LRE-1 — Manual safety gate / legacy authority revocation
 
+Status: **COMPLETE / ACCEPTED** at executable checkpoint `045b3a6884f765149d4f1802d5e369671d38d938`; CI #3752 / R2 #3448 GREEN.
+
+Completion record: `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md`.
+
+Per product-owner instruction, recommendation-engine development is **PAUSED AFTER LRE-1**. Do not enter LRE-P or physical legacy deletion while this pause is active.
+
 Do this before waiting for all replacement policies.
 
 #### LRE-1A — typed authority result
@@ -199,6 +207,8 @@ After LRE-1A/B are green:
 - new-policy selectors must not silently fall back to old ranking.
 
 Result: old code may still exist, but it is no longer trusted automatic authority on unsupported surfaces.
+
+Accepted LRE-1 additionally stopped the dead production setup-recommendation prewarm/reveal runtime path, so legacy setup plans are no longer computed by the live Host merely to populate an unused recommendation state.
 
 ### LRE-P — iterative replacement policy loop
 
