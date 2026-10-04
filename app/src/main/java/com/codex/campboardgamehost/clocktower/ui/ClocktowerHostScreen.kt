@@ -66,6 +66,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLega
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingMayorRedirectDecisionContext
+import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningInvestigatorInv1ProductionSelector
 import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningLibrarianV2ProductionSelector
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator
@@ -1652,6 +1653,38 @@ internal fun ClocktowerJudgeScreen(
         return ClocktowerPairManualAuthority.canonicalManualOption(presentation, selectedCandidate)
     }
 
+    fun functioningInvestigatorInv1AutomaticOption(actor: PlayerCard): ClocktowerDisplayOption? {
+        if (!automaticStorytellerInfo || script != ClocktowerScript.TroubleBrewing || phase != ClocktowerPhase.FirstNight || round != 1) {
+            return null
+        }
+        val sourceSeat = cards.indexOf(actor).plus(1).takeIf { it > 0 } ?: return null
+        val subject = effectiveAbilitySubjectForRole("Investigator", actor) ?: return null
+        if (AbilityFunctioningSemantics.stateFor(subject, "Investigator") != AbilityFunctioningState.FUNCTIONING) {
+            return null
+        }
+        val context = firstNightPairDecisionContext ?: return null
+        val abilityRole = RoleId("Investigator")
+        val selection = FunctioningInvestigatorInv1ProductionSelector.select(
+            context = context,
+            sourceSeat = sourceSeat,
+            abilityRole = abilityRole,
+            reliability = ReliabilityState.RELIABLE,
+            decisionId = "first-night:INVESTIGATOR:${context.snapshot.gameId}:seat-$sourceSeat",
+            selectionSeed = context.snapshot.gameSeed,
+        ) ?: return null
+        val selectedCandidate = PairInformationLegalDomain.generate(
+            game = context.naturalPairGameState,
+            roleDefinitions = context.roleDefinitions,
+            sourceSeat = sourceSeat,
+            abilityRole = abilityRole,
+            reliability = ReliabilityState.RELIABLE,
+        ).singleOrNull { candidate -> candidate.candidateId == selection.candidateId } ?: return null
+        val presentation = ClocktowerPairManualAuthority.selectionPresentation(
+            legalPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor),
+        )
+        return ClocktowerPairManualAuthority.canonicalManualOption(presentation, selectedCandidate)
+    }
+
     val informationStepBuilder = ClocktowerInformationStepBuilder(
         cards = cards,
         language = language,
@@ -2283,6 +2316,7 @@ internal fun ClocktowerJudgeScreen(
                                 reliableDisplayOptions = { actor ->
                                     recommendedPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
                                 },
+                                automaticPolicyRecommendation = ::functioningInvestigatorInv1AutomaticOption,
                                 spyRegistrationKey = investigatorRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
                                 recluseRegistrationKey = investigatorRecluseRegistrationKey,

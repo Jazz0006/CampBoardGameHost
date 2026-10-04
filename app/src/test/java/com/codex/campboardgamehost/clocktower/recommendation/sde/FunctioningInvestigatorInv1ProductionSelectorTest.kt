@@ -157,6 +157,7 @@ class FunctioningInvestigatorInv1ProductionSelectorTest {
             player(7, "Chef", CharacterType.TOWNSFOLK),
             player(8, "Soldier", CharacterType.TOWNSFOLK),
             player(9, "Mayor", CharacterType.TOWNSFOLK),
+            player(10, "Virgin", CharacterType.TOWNSFOLK),
         ),
         gameId = "inv1-multiple-minions",
     )
