@@ -64,7 +64,9 @@ multiple legal outcomes + no accepted policy -> MANUAL_REQUIRED / DEFERRED
 
 Do not fall back from an unavailable new policy to the old heuristic recommender. Preserve complete legal/manual domains so policy unavailability never makes the game itself unplayable.
 
-Authority and staged retirement route: `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`.
+Retirement evidence/inventory authority: `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`.
+
+Current execution sequence authority: `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`. The sequencing rule is Manual safety first, then evidence-backed policy replacement/cutover family by family, then physical legacy deletion after no production dependency remains.
 
 ## 2. Core architecture
 
@@ -485,7 +487,7 @@ Player experience is recommendation enrichment, not rules/mechanical truth. Pres
 
 Player experience is distinct from `StorytellerExperienceMode`. Experienced Storyteller mode may expose manual authority while consuming the same underlying player-level recommendation context.
 
-Do not map `BEGINNER/NORMAL/EXPERT` mechanically to legacy `GENTLE/BALANCED/AGGRESSIVE`. No games-played thresholds or family-specific ranking effects are frozen here. See `docs/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`.
+Do not map `BEGINNER/NORMAL/EXPERT` mechanically to legacy `GENTLE/BALANCED/AGGRESSIVE`. No games-played thresholds or family-specific ranking effects are frozen here. Historical fan-out rationale is archived at `docs/archive/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`; current execution follows the LRE staged replacement route.
 
 ## 18. Corpus / evidence requirements
 
