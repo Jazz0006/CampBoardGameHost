@@ -2,12 +2,12 @@
 
 > Updated: 2026-10-04 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed executable validation checkpoint: **LRE-1 Manual safety gate / legacy authority revocation — `045b3a6884f765149d4f1802d5e369671d38d938`; CI #3752 / R2 #3448 GREEN**  
+> Last completed executable validation checkpoint: **LRE-P INV1-A functioning-Investigator cutover — PR #222; executable head `89fb4a518260fb838f69a6d6b389869ab5f865f6`; CI #3759 / R2 #3453 GREEN; squash merge `420eef4e21769e3adf8928f187009f2afc1e5fa2`**  
 > DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
-> Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> C5-E functioning-Librarian automatic production cutover and HOST-ML1 typed neutral export remain COMPLETE / ACCEPTED; machine-readable materialization remains deferred. TBGS-2D Demon succession and TBGS-2E Mayor redirect remain COMPLETE / ACCEPTED. RSR-0 player-level/style audit and RSR-1A ownership decoupling are historical/accepted. **LRE-0 is COMPLETE / RETIREMENT AUTHORIZED and LRE-1 is COMPLETE / ACCEPTED.** The fail-closed contract is now production: multiple legal outcomes without an accepted policy become MANUAL_REQUIRED rather than silently falling back to legacy heuristics. Per product-owner instruction, recommendation-engine development is **PAUSED AFTER LRE-1**; do not start LRE-P or physical legacy deletion until explicitly resumed.
+> Evidence checkpoint: **ClocktowerEvidenceLab `80cc0695b8d704272771c8646c7c0cd40ae89b3d` — consolidated VERIFIED Host handoff ready; Priority-1 Washerwoman / Investigator / Demon bluffs / Red Herring bounded dimensions verified; fixed TB podcast queue exhausted**  
+> C5-E functioning-Librarian automatic production cutover and HOST-ML1 typed neutral export remain COMPLETE / ACCEPTED; machine-readable materialization remains deferred. TBGS-2D Demon succession and TBGS-2E Mayor redirect remain COMPLETE / ACCEPTED. RSR-0 player-level/style audit and RSR-1A ownership decoupling are historical/accepted. **LRE-0 and LRE-1 are complete; LRE-P is now ACTIVE.** The previous pause was explicitly lifted after the new EvidenceLab verified handoff. PR #222 completed the first resumed slice: `FUNCTIONING_INVESTIGATOR_INV1_V1` auto-selects only the exact INV1-A one-Minion / healthy-Empath topology predicate and otherwise fails closed to Manual.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -32,16 +32,17 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 17. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
 18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and accepted TBGS-2D Demon-succession boundary
 19. `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md` — accepted TBGS-2E Mayor-redirect boundary
-20. `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — current execution authority; LRE-1 accepted and recommendation lane paused before LRE-P
-21. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — LRE-1 exact executable acceptance and pause boundary
-22. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure, revoke legacy heuristic production authority
-23. `docs/archive/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — historical post-2E audit; no TBGS-2F selected
-24. `docs/archive/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md` — historical RSR-0 style/player-level audit
-25. `docs/archive/RSR_1_STYLE_NEUTRAL_POLICY_READINESS_AUDIT_2026-10-04.md` — historical RSR-1A accepted ownership-decoupling record
-26. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-27. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
-28. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
-29. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+20. `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — current execution authority; LRE-P resumed and INV1-A accepted
+21. `docs/LRE_P_INV1A_INVESTIGATOR_POLICY_CUTOVER_2026-10-04.md` — first resumed LRE-P cutover record and exact fail-closed scope
+22. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — LRE-1 exact executable acceptance / historical pause boundary
+23. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure, revoke legacy heuristic production authority
+24. `docs/archive/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — historical post-2E audit; no TBGS-2F selected
+25. `docs/archive/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md` — historical RSR-0 style/player-level audit
+26. `docs/archive/RSR_1_STYLE_NEUTRAL_POLICY_READINESS_AUDIT_2026-10-04.md` — historical RSR-1A accepted ownership-decoupling record
+27. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+28. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
+29. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
+30. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -243,7 +244,7 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 - A1 preferences and A2 archive storage are independent maintenance slices only;
 - H1 is COMPLETE / ACCEPTED through DLB-5H1;
-- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2A through 2E are COMPLETE / ACCEPTED and TBGS-2 pauses after 2E. Historical RSR-0/1A completed the style/player-level ownership cleanup. LRE-1 has now removed unsafe legacy fallback authority and is COMPLETE / ACCEPTED. The recommendation-engine lane is paused before LRE-P and physical deletion; do not resume those stages until explicitly requested. Special-registration typed history matters only to a future replacement policy; it is not a reason to preserve legacy ranking. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
+- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2A through 2E are COMPLETE / ACCEPTED and TBGS-2 pauses after 2E. Historical RSR-0/1A completed the style/player-level ownership cleanup. LRE-1 has now removed unsafe legacy fallback authority and is COMPLETE / ACCEPTED. The recommendation-engine lane has resumed at LRE-P. INV1-A is the first accepted post-LRE-1 cutover; physical legacy deletion remains deferred until production dependencies are actually gone. Special-registration typed history matters only to a future replacement policy; it is not a reason to preserve legacy ranking. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
 - R3 generic transaction extraction and the generic setup-effect owner remain NO-GO.
 
 Recovery R0–R6 stays complete. R7 remains separate.

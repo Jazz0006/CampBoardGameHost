@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **CURRENT EXECUTION AUTHORITY — LRE-1 COMPLETE / ACCEPTED; RECOMMENDATION LANE PAUSED AFTER LRE-1**
+> Status: **CURRENT EXECUTION AUTHORITY — LRE-1 COMPLETE / ACCEPTED; LRE-P RESUMED; INV1-A INVESTIGATOR SLICE CUT OVER / ACCEPTED**
 >
 > LRE-1 completion authority: `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md`
 >
@@ -83,6 +83,27 @@ Production authority:
 Status: **CUT OVER / ACCEPTED** on its admitted scope.
 
 The current generic legacy fallback around this selector is transitional only. Final LRE behavior is Manual/deferred if the new policy is unavailable or out of scope, not silent old-policy fallback.
+
+### 3.3 Functioning Investigator first-night information — INV1-A
+
+Production authority:
+
+`FUNCTIONING_INVESTIGATOR_INV1_V1` via `FunctioningInvestigatorInv1ProductionSelector`
+
+Status: **CUT OVER / ACCEPTED** on its exact admitted scope through PR #222, squash merge `420eef4e21769e3adf8928f187009f2afc1e5fa2`; executable head `89fb4a518260fb838f69a6d6b389869ab5f865f6` passed CI #3759 / R2 #3453.
+
+The admitted predicate is intentionally narrow:
+
+- Trouble Brewing / first night / functioning Investigator;
+- exactly one actual Minion;
+- exactly one actual Empath;
+- the Empath is not poisoned in the canonical snapshot;
+- that Empath is seated between the Demon and an actual Townsfolk;
+- the truthful Investigator pair containing the Empath's Townsfolk neighbour and the sole real Minion is legal.
+
+Inside that predicate, the versioned policy selects the evidence-backed pair that preserves Demon deniability while retaining a genuine Minion candidate. Outside it, the selector returns unavailable and LRE-1 keeps the multi-choice decision **Manual**. There is no fallback to the retired legacy ranking.
+
+This is **not** a complete Investigator policy. INV1-B / INV1-C Recluse-based constructions remain separate conditional directions and require their own Host predicates before cutover.
 
 ## 4. Replacement waves
 
@@ -171,7 +192,7 @@ Status: **COMPLETE / ACCEPTED** at executable checkpoint `045b3a6884f765149d4f18
 
 Completion record: `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md`.
 
-Per product-owner instruction, recommendation-engine development is **PAUSED AFTER LRE-1**. Do not enter LRE-P or physical legacy deletion while this pause is active.
+The previous product-owner pause after LRE-1 was explicitly lifted on 2026-10-04 after EvidenceLab completed the consolidated verified Host handoff. LRE-P is now active family-by-family. PR #222 is the first resumed LRE-P slice and proves the intended fail-closed pattern: only the evidence-authorized predicate receives new automatic authority; all other multi-choice states remain Manual.
 
 Do this before waiting for all replacement policies.
 
