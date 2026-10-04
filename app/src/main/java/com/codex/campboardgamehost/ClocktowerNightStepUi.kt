@@ -169,7 +169,7 @@ internal fun ClocktowerNightStepCardLocalized(
         emptyList()
     }
     val usesResultFirstRegistration =
-        !automaticStorytellerInfo && step.usesResultFirstRegistrationDomain()
+        step.usesResultFirstRegistrationDomain()
     val resultFirstRegistrationCandidates = if (usesResultFirstRegistration) {
         distinctClocktowerFinalInformationResults(step.manualInformationCandidates)
     } else {
@@ -250,18 +250,9 @@ internal fun ClocktowerNightStepCardLocalized(
     if (!usesResultFirstRegistration && step.spyRegistrationKey != null && spyCard != null && spyRegistrationResolution?.canUseSpecialAbility == true) {
         ClocktowerAutomaticRegistrationEffect(
             automaticStorytellerInfo = automaticStorytellerInfo,
-            subjectName = spyCard.name,
             registration = spyRegistrationResolution,
             applyRegisteredRole = step.spyRegistrationDetail == ClocktowerRegistrationDetail.Role,
             selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|spy-registration"),
-            automaticDecisionKey = clocktowerTemporaryNightDecisionKey(
-                gameId = gameId,
-                phase = phase,
-                round = round,
-                sequence = sequence,
-                family = "spy-registration:${step.spyRegistrationKey}",
-            ),
-            fallbackFamily = "spy-registration-fallback",
             onUsesSpecialRegistrationChange = onSpyRegistrationGoodChange,
             onRoleChange = onSpyRegistrationRoleChange,
         )
@@ -269,18 +260,9 @@ internal fun ClocktowerNightStepCardLocalized(
     if (!usesResultFirstRegistration && step.recluseRegistrationKey != null && recluseCard != null && recluseRegistrationResolution?.canUseSpecialAbility == true) {
         ClocktowerAutomaticRegistrationEffect(
             automaticStorytellerInfo = automaticStorytellerInfo,
-            subjectName = recluseCard.name,
             registration = recluseRegistrationResolution,
             applyRegisteredRole = true,
             selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|recluse-registration"),
-            automaticDecisionKey = clocktowerTemporaryNightDecisionKey(
-                gameId = gameId,
-                phase = phase,
-                round = round,
-                sequence = sequence,
-                family = "recluse-registration:${step.recluseRegistrationKey}",
-            ),
-            fallbackFamily = "recluse-registration-fallback",
             onUsesSpecialRegistrationChange = onRecluseRegistrationEvilChange,
             onRoleChange = onRecluseRegistrationRoleChange,
         )

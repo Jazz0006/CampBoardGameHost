@@ -3201,38 +3201,7 @@ internal fun ClocktowerJudgeScreen(
                 completeTroubleBrewingRoles.firstOrNull { it.enName == candidate.registeredRole.value }
             }
             .orEmpty()
-        val virginSpyRecommendations = if (virginRegistrationKey != null && spyCard != null) {
-            registrationRecommendationOptions(
-                key = virginRegistrationKey,
-                roleEnName = "Virgin",
-                teams = listOf(ClocktowerTeam.Townsfolk),
-                detail = ClocktowerRegistrationDetail.Role,
-                subject = spyCard,
-                isSpy = true,
-                outcomeMisinformationPressure = 5,
-            )
-        } else {
-            emptyList()
-        }
-        val automaticVirginSpyRegistration = if (
-            automaticStorytellerInfo &&
-            virginRegistrationKey != null &&
-            virginSpyRegistrationResolution?.canUseSpecialAbility == true
-        ) {
-            clocktowerTemporaryRegistrationSelection(
-                registration = virginSpyRegistrationResolution,
-                decisionKey = clocktowerTemporaryRegistrationDecisionKey(
-                    gameId = gameId,
-                    phase = phase,
-                    round = round,
-                    registrationKey = virginRegistrationKey,
-                ),
-            ).selected.payload
-        } else {
-            null
-        }
-        val virginSpyRegistersGood = automaticVirginSpyRegistration?.usesSpecialRegistration
-            ?: spyRegistersGood(virginRegistrationKey, "Virgin")
+        val virginSpyRegistersGood = spyRegistersGood(virginRegistrationKey, "Virgin")
         val virginExecutes = virginAbilityWorks &&
             (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || virginSpyRegistersGood)
         val specialNotice = when {
@@ -3281,19 +3250,6 @@ internal fun ClocktowerJudgeScreen(
                     )
                 }
                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
-                    if (
-                        automaticStorytellerInfo &&
-                        virginRegistrationKey != null &&
-                        automaticVirginSpyRegistration != null
-                    ) {
-                        spyRegistrationGood[virginRegistrationKey] =
-                            automaticVirginSpyRegistration.usesSpecialRegistration
-                        if (automaticVirginSpyRegistration.usesSpecialRegistration) {
-                            automaticVirginSpyRegistration.registeredRoleEnName?.let { roleEnName ->
-                                spyRegistrationRole[virginRegistrationKey] = roleEnName
-                            }
-                        }
-                    }
                     recordSpyRegistration(virginRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Virgin")
                     onVirginNomination(chosenNominator, chosenNominee, virginExecutes)
                 }
@@ -3315,9 +3271,9 @@ internal fun ClocktowerJudgeScreen(
                 dayMode = ClocktowerDayMode.Overview
             },
             specialContent = {
-                if (!automaticStorytellerInfo && virginRegistrationKey != null && spyCard != null) {
+                if (virginRegistrationKey != null && spyCard != null) {
                     ClocktowerSpyRegistrationDecisionControls(
-                        recommendations = virginSpyRecommendations,
+                        recommendations = emptyList(),
                         legalRoles = virginSpyLegalRoles.map { it.enName to it.nameFor(language) },
                         registersGood = spyRegistersGood(virginRegistrationKey, "Virgin"),
                         registeredRoleEnName = spyRegistrationRole[virginRegistrationKey],
@@ -3421,25 +3377,6 @@ internal fun ClocktowerJudgeScreen(
 
     if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Slayer) {
         val slayerTargetCard = cards.firstOrNull { it.name == slayerTargetName }
-        val slayerRecluseRecommendations = slayerTargetCard
-            ?.takeIf { it.clocktowerRole?.enName == "Recluse" }
-            ?.let { recluse ->
-                registrationRecommendationOptions(
-                    key = registrationKey("SlayerRecluse", recluse.name),
-                    roleEnName = "Slayer",
-                    teams = listOf(ClocktowerTeam.Demon),
-                    detail = ClocktowerRegistrationDetail.Role,
-                    subject = recluse,
-                    isSpy = false,
-                    outcomeMisinformationPressure = 4,
-                    specialRegistrationBalanceImpact = 1,
-                )
-            }
-            .orEmpty()
-        val automaticSlayerRecluseRegistration = selectAutomaticRegistrationRecommendation(
-            slayerRecluseRecommendations,
-            automaticStorytellerStyle,
-        )
         val slayerTableState = clocktowerSlayerTableState(
             seats = clocktowerDayOverviewTableState(
                 cards.toClocktowerGameState(
@@ -3484,15 +3421,8 @@ internal fun ClocktowerJudgeScreen(
                     val targetIsHealthyRecluse =
                         slayerTargetCard?.clocktowerRole?.enName == "Recluse" &&
                             poisonTarget != targetName
-                    val recluseRegistersDemon = if (
-                        automaticStorytellerInfo &&
-                        targetIsHealthyRecluse &&
-                        automaticSlayerRecluseRegistration != null
-                    ) {
-                        automaticSlayerRecluseRegistration.usesSpecialRegistration
-                    } else {
-                        slayerRecluseRegistersDemon
-                    }
+                    val recluseRegistersDemon =
+                        targetIsHealthyRecluse && slayerRecluseRegistersDemon
                     onSlayerShot(claimantName, targetName, recluseRegistersDemon)
                     slayerClaimantName = null
                     slayerTargetName = null
@@ -3507,9 +3437,9 @@ internal fun ClocktowerJudgeScreen(
                 dayMode = ClocktowerDayMode.Overview
             },
             specialContent = {
-                if (!automaticStorytellerInfo && slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
+                if (slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
                     ClocktowerRecluseRegistrationDecisionControls(
-                        recommendations = slayerRecluseRecommendations,
+                        recommendations = emptyList(),
                         legalRoles = legalRegistrationRoles(
                             registrationKey("SlayerRecluse", requireNotNull(slayerTargetCard).name),
                             "Slayer",
@@ -3686,24 +3616,6 @@ internal fun ClocktowerJudgeScreen(
         val klutzRegistrationKey = klutzChoiceCard
             ?.takeIf { it.name == spyCard?.name }
             ?.let { registrationKey("Klutz", it.name) }
-        val klutzSpyRecommendations = if (klutzRegistrationKey != null && spyCard != null) {
-            registrationRecommendationOptions(
-                key = klutzRegistrationKey,
-                roleEnName = "Klutz",
-                teams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                detail = ClocktowerRegistrationDetail.Role,
-                subject = spyCard,
-                isSpy = true,
-                outcomeMisinformationPressure = 5,
-                specialRegistrationBalanceImpact = -1,
-            )
-        } else {
-            emptyList()
-        }
-        val automaticKlutzSpyRegistration = selectAutomaticRegistrationRecommendation(
-            klutzSpyRecommendations,
-            automaticStorytellerStyle,
-        )
         val klutzTableState = clocktowerKlutzTableState(
             seats = clocktowerDayOverviewTableState(
                 cards.toClocktowerGameState(
@@ -3728,20 +3640,6 @@ internal fun ClocktowerJudgeScreen(
                 onSelectKlutzChoice(if (klutzChoiceName == playerName) null else playerName)
             },
             onConfirm = {
-                if (
-                    automaticStorytellerInfo &&
-                    spyCanRegister("Klutz") &&
-                    klutzRegistrationKey != null &&
-                    automaticKlutzSpyRegistration != null
-                ) {
-                    spyRegistrationGood[klutzRegistrationKey] =
-                        automaticKlutzSpyRegistration.usesSpecialRegistration
-                    if (automaticKlutzSpyRegistration.usesSpecialRegistration) {
-                        automaticKlutzSpyRegistration.registeredRoleEnName?.let {
-                            spyRegistrationRole[klutzRegistrationKey] = it
-                        }
-                    }
-                }
                 recordSpyRegistration(
                     klutzRegistrationKey,
                     listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
@@ -3750,9 +3648,9 @@ internal fun ClocktowerJudgeScreen(
                 onConfirmKlutzChoice(spyRegistersGood(klutzRegistrationKey, "Klutz"))
             },
             specialContent = {
-                if (!automaticStorytellerInfo && klutzRegistrationKey != null && spyCard != null) {
+                if (klutzRegistrationKey != null && spyCard != null) {
                     ClocktowerSpyRegistrationDecisionControls(
-                        recommendations = klutzSpyRecommendations,
+                        recommendations = emptyList(),
                         legalRoles = legalRegistrationRoles(
                             klutzRegistrationKey,
                             "Klutz",

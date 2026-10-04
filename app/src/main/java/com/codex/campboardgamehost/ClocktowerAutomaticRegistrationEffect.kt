@@ -4,34 +4,42 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
+import com.codex.campboardgamehost.clocktower.recommendation.StorytellerDecisionAuthority
+import com.codex.campboardgamehost.clocktower.recommendation.storytellerDecisionAuthority
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 
+internal fun clocktowerRuleDeterministicRegistrationRuling(
+    registration: TroubleBrewingRegistrationResolution,
+): ClocktowerAutomaticRegistrationRuling? =
+    when (storytellerDecisionAuthority(registration.candidates.size)) {
+        StorytellerDecisionAuthority.RuleDeterministic ->
+            ClocktowerAutomaticRegistrationRuling(
+                usesSpecialRegistration = false,
+                registeredRoleEnName = null,
+            )
+        is StorytellerDecisionAuthority.PolicyReady,
+        is StorytellerDecisionAuthority.ManualRequired,
+        -> null
+    }
+
 /**
- * Non-visual owner for Beginner automatic Spy/Recluse registration. Registration side effects used
- * to live inside legacy text panels; keeping them here lets presentation retire without changing
- * the deterministic temporary 90/10 ruling or selection-audit semantics.
+ * Non-visual owner for rule-deterministic Spy/Recluse registration.
+ *
+ * LRE-1 fails closed when several legal registrations exist: without an accepted versioned policy
+ * this effect performs no automatic ruling and the complete legal domain remains a manual choice.
  */
 @Composable
 internal fun ClocktowerAutomaticRegistrationEffect(
     automaticStorytellerInfo: Boolean,
-    subjectName: String,
     registration: TroubleBrewingRegistrationResolution,
     applyRegisteredRole: Boolean,
     selectionAudit: SelectionAuditContext?,
-    automaticDecisionKey: String?,
-    fallbackFamily: String,
     onUsesSpecialRegistrationChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
 ) {
-    val legalSpecialRoleEnNames = registration.special.map { it.registeredRole.value }
     val automaticRuling = if (automaticStorytellerInfo) {
-        val decisionKey = automaticDecisionKey
-            ?: "$fallbackFamily:$subjectName:${legalSpecialRoleEnNames.sorted().joinToString(",")}"
-        clocktowerTemporaryRegistrationSelection(
-            registration = registration,
-            decisionKey = decisionKey,
-        ).selected.payload
+        clocktowerRuleDeterministicRegistrationRuling(registration)
     } else {
         null
     }
@@ -39,7 +47,6 @@ internal fun ClocktowerAutomaticRegistrationEffect(
     LaunchedEffect(
         automaticStorytellerInfo,
         automaticRuling,
-        automaticDecisionKey,
         selectionAudit?.selectionId,
     ) {
         if (automaticStorytellerInfo && automaticRuling != null) {
