@@ -3,7 +3,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Baseline audited: `main@da5e9947e7a2799d94720454b67fdb6de2ef54a3`  
 > Historical status at this audit checkpoint: **TBGS-2A / 2B / 2C COMPLETE / ACCEPTED; TBGS-2D AUDIT COMPLETE / IMPLEMENTATION READY**  
-> Historical post-2E continuation result: `docs/archive/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — TBGS-2D/2E are COMPLETE / ACCEPTED and no TBGS-2F is selected. Current continuation authority is `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`: Manual safety first, then family-by-family replacement/cutover, then final legacy deletion.
+> Historical post-2E continuation result: `docs/archive/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — TBGS-2D/2E are COMPLETE / ACCEPTED and no TBGS-2F is selected. Current continuation authority is `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`: preserve TBGS as canonical policy-neutral context, revoke remaining special-case automatic authority, then validate a general provider/global-context route before later cleanup.
 
 ## 1. Decision
 

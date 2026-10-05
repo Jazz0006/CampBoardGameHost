@@ -1,6 +1,6 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-10-04 Australia/Sydney  
+> 最后整理：2026-10-05 Australia/Sydney  
 > 目标：新开发会话只读取当前权威。历史过程、已撤销路线和中间校准实验不再留在 active docs 中制造歧义。
 
 ## 默认阅读顺序
@@ -10,11 +10,12 @@
 3. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
-6. [`LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`](LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md) — **当前推荐系统执行主线：Manual safety → family cutover → final deletion**
+6. [`GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md) — **当前推荐系统执行主线：全局推理 / provider boundary / benchmark-first**
 7. [`LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`](LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md) — **旧 heuristic 全面退休的证据/范围权威**
-8. [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md) — **长期 Recommendation Engine 架构权威**
-9. [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md) — **TB canonical snapshot / typed decision context 长期边界**
-10. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / Game Engine / Recommendation ownership guardrail**
+8. [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md) — **长期 Recommendation Engine 分层架构权威；GSP policy-layer amendment applies**
+9. [`HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`](HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md) + [`HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md`](HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md) — **policy-neutral model / benchmark interchange boundary**
+10. [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md) — **TB canonical snapshot / typed decision context 长期边界**
+11. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / Game Engine / Recommendation ownership guardrail**
 
 DLB、C5、TBGS-2A–2E、RSR-0/1A 均已完成或进入历史状态；其 completion audit、cutover audit 和中间路线只在具体 ownership / replay / evidence 问题需要时读取，不再属于默认启动集合。
 
@@ -29,19 +30,21 @@ C4 / IF-D / RH-E                        COMPLETE / ACCEPTED
 DLB campaign                            COMPLETE / ACCEPTED
 TBGS-0 / TBGS-1                         COMPLETE / ACCEPTED
 TBGS-2A / 2B / 2C / 2D / 2E            COMPLETE / ACCEPTED; PAUSED AFTER 2E
-DRUNK_ASSIGNMENT_Q04_V1                 PRODUCTION CUTOVER / ACCEPTED
-C5-E functioning Librarian V2           PRODUCTION CUTOVER / ACCEPTED
-HOST-ML0 / HOST-ML1                     COMPLETE / ACCEPTED
+DRUNK_ASSIGNMENT_Q04_V1                 LIVE SPECIAL-POLICY ISLAND / TARGET GSP-1 AUTHORITY REVOCATION
+C5-E functioning Librarian V2           LIVE SPECIAL-POLICY ISLAND / TARGET GSP-1 AUTHORITY REVOCATION
+INV1-A functioning Investigator         MERGED PR #222 / LIVE SPECIAL-POLICY ISLAND / TARGET GSP-1 AUTHORITY REVOCATION
+HOST-ML0 / HOST-ML1                     COMPLETE / ACCEPTED / REUSED BY GSP
 RSR-0 / RSR-1A                          COMPLETE / HISTORICAL; docs archived
 LRE-0 whole-engine retirement audit     COMPLETE / RETIREMENT AUTHORIZED
-LRE staged replacement route            CURRENT EXECUTION AUTHORITY
-LRE-1 Manual / fail-closed safety gate  NEXT
-LRE-P family replacement + cutover      ITERATIVE AFTER LRE-1
-LRE-2..5 physical legacy deletion       AFTER production dependency reaches zero
+LRE-1 Manual / fail-closed safety gate  COMPLETE / ACCEPTED
+LRE-P family replacement + cutover      SUPERSEDED / DO NOT CONTINUE
+GSP-0 route reset                       CURRENT / DOCS-ONLY
+GSP-1 special-policy authority reset    NEXT EXECUTABLE
+GSP-2+ provider / benchmark / model route AFTER GSP-1
 bounded App/Host decomposition          GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 ~~~
 
-当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。DLB 已完成；Q04 Drunk 与 functioning Librarian V2 已完成 production cutover。当前主线不再是继续维护旧推荐行为，而是 LRE：先让所有缺少成熟 policy 的多候选决策安全地回退到 Manual，再按 decision family 逐个完成 evidence-backed policy、replay/evaluation 和 production cutover；每个 family cutover 后立即撤销旧 heuristic 在该 scope 的 authority，最后才删除无生产依赖的旧 scoring/style/telemetry 代码。EvidenceLab 持续负责 candidate-comparison / rejection / rationale 证据。
+当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。DLB 已完成；Q04 Drunk、functioning Librarian V2 与已合并 PR #222 的 INV1-A Investigator 仍是当前可执行 special-policy islands，但它们不再代表长期产品方向。当前主线是 GSP：停止把个别专家案例转成 executable named policy；保留规则、合法候选、TBGS、DecisionTrace/replay、epistemic/consequence diagnostics 与 HOST-ML neutral export；下一步先撤销这些特例 policy 的自动权威并回到完整 Manual domain，然后建立通用 Policy Provider / decision-specific global context，先做无 API 的盲测 benchmark，再决定是否接入 Remote LLM、训练模型或未来 on-device model。Android 产品保持 offline-first。
 
 ## 当前政策核心
 
@@ -60,9 +63,11 @@ bounded App/Host decomposition          GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 - strategic evil topology 是重要 structural evidence，但不能代替 healthy information、confirmation、role-function exposure、bluff usability、narrative coherence 等维度。
 - 不引入 opaque global scalar；Gap E 只有在未来 policy 真正需要 numeric weighting 时才成为 blocker。
 - automatic production cutover 按 decision surface gating；一个“大 equivalence class + seeded selection”的 V1 结果本身不足以授权 cutover。
-- 当前统一 authority invariant：唯一合法结果可规则自动；多个合法结果且有 accepted versioned policy 才可自动；多个合法结果但无 accepted policy 必须 `MANUAL_REQUIRED / POLICY_DEFERRED`，不得回落旧 heuristic。
-- 新 policy 采用 family-by-family cutover，不等待所有 family 一次完成；物理删除旧引擎则等待生产依赖归零。
-- 已接受的 production policy islands：`DRUNK_ASSIGNMENT_Q04_V1` 与 functioning Librarian V2。
+- 当前统一 authority invariant 在 GSP-1 后收敛为：唯一合法结果可 `RULE_DETERMINISTIC` 自动；多个合法结果若没有可信的通用 Policy Provider 必须 `MANUAL_REQUIRED` 并暴露完整 legal domain；provider 只能在 Host 已生成的合法候选之间 rank/recommend/explain，不能拥有规则或状态写入权威。
+- 不再采用 family-by-family「专家案例 → predicate → named deterministic policy → production cutover」作为产品路线。Evidence 进入 benchmark/context/evaluation，而不是直接变成 if/else 权威。
+- 当前仍存活但待 GSP-1 撤权的 production policy islands：`DRUNK_ASSIGNMENT_Q04_V1`、functioning Librarian V2、INV1-A functioning Investigator。
+- CampBoardGameHost 保持 offline-first：没有网络或模型时，规则、合法候选、Manual 主持与游戏流程必须完整可用；Remote LLM 仅是未来可选增强。
+- GSP-3A/3B 先用冻结案例和干净独立会话做人工 blind benchmark；API integration 只有在该实验明确证明有价值后才进入 GSP-3C。
 
 ## 校准证据原则
 
@@ -101,7 +106,7 @@ DIAGNOSTIC_ONLY
 
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
 - [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md)
-- [`LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`](LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md)
+- [`GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md)
 - [`LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`](LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md)
 - [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md)
@@ -113,7 +118,6 @@ DIAGNOSTIC_ONLY
 - [`SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`](SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md)
 - [`SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md`](SDE_2D5F_B4F_TARGETED_EVIDENCE_GAP_CONTRACT_2026-09-23.md)
 - [`SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv`](SDE_2D5F_EXTERNAL_EVIDENCE_SOURCE_CATALOG_2026-09-21.tsv)
-- [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
 - [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 - [`GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`](GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md)
 - [`epistemic_reference_matrix.md`](epistemic_reference_matrix.md)
@@ -127,7 +131,7 @@ If documents conflict, use this order:
 1. official BoTC rules/rulings — gameplay correctness;
 2. root `AGENTS.md` — execution / architecture / governance;
 3. `TESTING_STRATEGY.md` — test-tier and validation evidence definitions;
-4. `CURRENT_DEVELOPMENT_ROADMAP.md` + `NEXT_DEVELOPMENT_HANDOFF.md` + `LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` + `LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — current state, continuation point, replacement/cutover order and legacy-retirement authority;
+4. `CURRENT_DEVELOPMENT_ROADMAP.md` + `NEXT_DEVELOPMENT_HANDOFF.md` + `GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` + `LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — current state, GSP continuation/provider/benchmark route and legacy-retirement authority;
 5. `AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — current GitHub Connector-first / Mini MCP+Codex large-file execution workflow;
 6. `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md` plus current 3D audit — long-lived SDE/calibration contract where not superseded by DLB lifecycle changes;
 7. `SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md` and targeted evidence contract — policy/evidence background; its pre-DLB setup/sequence model is historical;

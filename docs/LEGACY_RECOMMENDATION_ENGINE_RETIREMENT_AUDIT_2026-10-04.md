@@ -8,9 +8,9 @@
 >
 > Product-owner decision: the existing heuristic recommendation algorithm is not a trustworthy product-policy baseline. It frequently produces poor Storyteller clues/choices and should be retired as a whole rather than preserved family by family for behavior parity.
 >
-> Next implementation lane: **LRE-1 — preserve complete legal/manual authority, then revoke legacy automatic/recommendation authority fail-closed**.
+> Historical next lane at this audit checkpoint: **LRE-1 — preserve complete legal/manual authority, then revoke legacy automatic/recommendation authority fail-closed**. LRE-1 was subsequently completed and accepted.
 >
-> Current execution sequence authority: `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — LRE-1 safety gate, then family-by-family evidence-backed replacement/cutover, then physical deletion only after production dependency reaches zero.
+> Current continuation authority as of 2026-10-05: `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`. The former LRE-P family-by-family special-policy replacement loop is superseded; physical deletion remains downstream after authority separation and benchmark/provider work determine which infrastructure stays useful.
 
 ## 1. Executive decision
 
@@ -307,11 +307,13 @@ Preserve:
 
 `WeightedStableSelector` core mathematics may remain as generic infrastructure only if a future accepted policy explicitly supplies an evidence-backed probability distribution. Its legacy style helper and arbitrary legacy weights are retirement targets.
 
-## 6. Accepted new-policy islands that survive LRE
+## 6. Historically accepted new-policy islands / GSP-1 audit targets
+
+This section records what had passed acceptance under the former LRE route. The 2026-10-05 GSP decision changes their **future authority**, not their historical acceptance: Q04, functioning Librarian V2, and the later merged INV1-A Investigator selector are now targets for GSP-1 automatic-authority revocation and shadow/benchmark retention.
 
 ### 6.1 Drunk assignment — `DRUNK_ASSIGNMENT_Q04_V1`
 
-Keep the accepted bounded Q04 policy.
+Historical LRE verdict: keep the accepted bounded Q04 policy. Current GSP verdict: preserve its evidence/replay value but do not treat the matched predicate as a durable general Storyteller policy.
 
 It has:
 
@@ -326,7 +328,7 @@ That fallback is part of the accepted Q04 policy contract and is not the generic
 
 ### 6.2 Functioning reliable Librarian — V2 production selector
 
-Keep `FunctioningLibrarianV2ProductionSelector` on its exact admitted scope.
+Historical LRE verdict: keep `FunctioningLibrarianV2ProductionSelector` on its exact admitted scope. Current GSP verdict: include it in GSP-1 authority revocation while retaining the selector/replay as comparison evidence until later cleanup.
 
 It:
 
@@ -464,26 +466,25 @@ Once LRE-1A/B are green:
 - stop temporary 4/3/2/1 successor selection;
 - stop generic legacy information fallback;
 - functioning Librarian V2 failure/out-of-scope -> manual-required, not generic old selection;
-- keep accepted Q04/V2 policy islands.
+- historical LRE-1 behavior kept the then-accepted Q04/V2 policy islands; the later GSP-1 route now targets those remaining special-case automatic authorities for revocation while preserving replay/benchmark value.
 
 This is the first major product-risk reduction checkpoint.
 
-### LRE-P — iterative replacement-policy / production-cutover loop
+### LRE-P — historical iterative replacement-policy / production-cutover loop — SUPERSEDED
 
-After LRE-1 establishes safe Manual authority, replacement policies should mature and cut over **one family at a time** rather than waiting for an all-at-once migration.
+The former post-LRE-1 plan was to mature and cut over replacement policies one family at a time. That process produced useful typed contexts, replay and bounded evidence experiments, but the 2026-10-05 GSP correction rejects the idea that individual expert cases should keep becoming named deterministic production policy islands.
 
-For each family:
+The durable parts of the old loop remain:
 
-1. EvidenceLab supplies source-backed comparison / preference / rejection evidence, or an explicitly bounded accepted policy contract;
-2. Host preserves the complete rules-owned legal domain and typed pre-decision context;
-3. new semantics receive an explicit versioned policy identity;
-4. deterministic replay/evaluation proves the admitted behavior and no future-history leakage;
-5. production cuts over only that admitted scope;
-6. the old heuristic immediately loses authority for that scope, even if its code still exists for historical/shadow compatibility.
+1. EvidenceLab preserves source-backed comparison / preference / rejection evidence;
+2. Host preserves complete rules-owned legal domains and typed pre-decision context;
+3. replay/evaluation proves no future-history leakage;
+4. old heuristic authority stays revoked;
+5. historical special-policy implementations may remain temporarily for benchmark/shadow comparison.
 
-Priority waves are defined in `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`: healthy first-night information first, impaired information second, then lower-frequency/additional-context decisions. A strong qualifying evidence item may reorder individual families.
+The superseded parts are: assigning each evidence item a new production policy identity, cutting it over as the answer for every matching state, and repeating that pattern family by family.
 
-Do **not** keep old heuristics authoritative until all new families are ready. Do **not** physically delete shared legacy infrastructure before all remaining production dependencies have been removed.
+Current continuation is defined only by `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`. Do **not** restore old heuristics, and do **not** physically delete shared legal/context/replay infrastructure before GSP establishes what the general provider and benchmark lanes need.
 
 ### LRE-2 — retire legacy setup ranking
 
@@ -657,18 +658,14 @@ HOST-ML1 neutral export remains valid.
 
 Retiring old heuristics improves ML readiness because future datasets will not accidentally treat arbitrary legacy scores/styles as ground-truth quality labels.
 
-## 14. Immediate next action
+## 14. Current continuation after GSP route reset
 
-Do **not** start by deleting `RecommendationStyle` or `SetupRecommendationService`.
+Do **not** start by deleting `RecommendationStyle` or `SetupRecommendationService`; legality, candidate generation, replay and diagnostics must be separated from obsolete final-ranking authority first.
 
-Start **LRE-1 — manual fallback / authority gate audit + tests-first implementation** under `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`.
+LRE-1 has already completed the Manual/fail-closed safety foundation. The former next step — an LRE-P loop that turns additional expert cases into bounded named production policies — is superseded.
 
-First executable checkpoint should prove this safety invariant:
+Current next executable step is **GSP-1** under `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`:
 
-> **No multi-choice Storyteller decision without an accepted policy may be automatically selected by the legacy recommender.**
+> **Revoke discretionary automatic authority from the remaining special-case policy islands (Q04 Drunk, functioning Librarian V2, INV1-A Investigator), while preserving unique rules-deterministic outcomes, complete Manual legal domains, replay/trace, and benchmark/reference material.**
 
-Before broad cutoff, close the legal-only Manual gaps identified above, especially Demon bluffs and Beginner-mode fallback presentation.
-
-After LRE-1, enter the LRE-P loop: improve one replacement policy, validate/replay it, cut over that family, and immediately remove legacy authority for the admitted scope. Final LRE-2 through LRE-5 physical deletion comes only after those production dependencies are gone.
-
-This sequence stops bad recommendations from controlling games earlier than either an all-at-once replacement or a bottom-up code deletion would, while preserving a playable Host during the retirement campaign.
+After that, define the general provider/global-context boundary and validate LLM reasoning manually before deciding whether an API, trained model or on-device model belongs in production. Physical legacy/special-policy deletion remains a later cleanup phase, not the first move.
