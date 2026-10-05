@@ -2282,7 +2282,6 @@ internal fun ClocktowerJudgeScreen(
                                 reliableDisplayOptions = { actor ->
                                     recommendedPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
                                 },
-                                automaticPolicyRecommendation = ::functioningLibrarianV2AutomaticOption,
                                 spyRegistrationKey = librarianRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Outsider),
                             )
@@ -2316,7 +2315,6 @@ internal fun ClocktowerJudgeScreen(
                                 reliableDisplayOptions = { actor ->
                                     recommendedPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
                                 },
-                                automaticPolicyRecommendation = ::functioningInvestigatorInv1AutomaticOption,
                                 spyRegistrationKey = investigatorRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
                                 recluseRegistrationKey = investigatorRecluseRegistrationKey,

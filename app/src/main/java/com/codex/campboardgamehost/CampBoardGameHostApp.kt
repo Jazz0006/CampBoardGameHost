@@ -128,7 +128,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
-import com.codex.campboardgamehost.clocktower.recommendation.sde.DrunkAssignmentQ04V1ProductionAdapter
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputFactory
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputJsonCodec
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdePostCommitCorrelationCoordinator
@@ -1809,30 +1808,12 @@ internal fun CampBoardGameHostApp() {
             recentSetupRotationHistory = rotationHistory,
             recentPlayerStartingIdentityHistory = playerRotationHistory,
         )
-        val beginnerAutomaticDrunkCandidate =
-            if (
-                storytellerExperienceMode == StorytellerExperienceMode.BEGINNER &&
-                preparedSetup.intermediateSetup.visibleRoster.hasDrunk
-            ) {
-                DrunkAssignmentQ04V1ProductionAdapter.select(
-                    gameId = preparedGameId,
-                    preset = preparedSetup.preset,
-                    intermediateSetup = preparedSetup.intermediateSetup,
-                    characterRegistry = characterRegistry,
-                    roleDefinitions =
-                        clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
-                    sourceRevision = InformationDecisionRevision(0L, 0L),
-                ).candidate
-            } else {
-                null
-            }
-
         when (
             val route = TroubleBrewingDrunkSelectionRouter.route(
                 preparedSetup = preparedSetup,
                 experienceMode = storytellerExperienceMode,
                 recommendedCandidate = null,
-                beginnerAutomaticCandidate = beginnerAutomaticDrunkCandidate,
+                beginnerAutomaticCandidate = null,
             )
         ) {
             TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded ->
