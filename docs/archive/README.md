@@ -107,13 +107,17 @@ Fully superseded active documents moved into archive:
 
 The first-night policy synthesis remains in active docs only as policy/evidence background because many of its evidence principles remain useful; its old setup/sequence model is explicitly marked superseded rather than duplicated into a second current authority.
 
-### 2026-10-04 LRE route consolidation
+### 2026-10-04 LRE consolidation / 2026-10-05 GSP supersession
 
-The product owner broadened RecommendationStyle retirement into retirement of the whole hand-tuned legacy heuristic recommendation engine. The current execution authority is now:
+The product owner first broadened RecommendationStyle retirement into retirement of the whole hand-tuned legacy heuristic recommendation engine. LRE-0 retirement evidence and LRE-1 Manual/fail-closed safety remain accepted.
 
-- `../LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`;
+On 2026-10-05 the family-by-family special-case replacement continuation was superseded. Current execution authority is now:
+
+- `../GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` for recommendation/provider/benchmark continuation;
 - `../LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` for retirement evidence/inventory;
 - `../CURRENT_DEVELOPMENT_ROADMAP.md` and `../NEXT_DEVELOPMENT_HANDOFF.md` for live priority/status.
+
+`LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` is archived here as a historical route record only; its LRE-P loop is not current authority.
 
 The following completed/superseded intermediate audits were removed from active `docs/` and retained directly under `archive/` for traceability:
 
@@ -121,7 +125,7 @@ The following completed/superseded intermediate audits were removed from active 
 - `RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md`;
 - `RSR_1_STYLE_NEUTRAL_POLICY_READINESS_AUDIT_2026-10-04.md`.
 
-Their embedded NEXT/continuation language is historical. Current sequence is Manual safety gate -> evidence-backed family-by-family replacement/cutover -> physical legacy deletion only after production dependency reaches zero.
+Their embedded NEXT/continuation language is historical. Current sequence is GSP-0 route reset -> GSP-1 special-policy authority revocation -> provider/global-context contract -> manual benchmark before any API integration -> later deployment/model and physical cleanup decisions.
 
 ## 2. Handoffs
 

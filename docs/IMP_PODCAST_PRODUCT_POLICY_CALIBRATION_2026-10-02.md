@@ -1,12 +1,12 @@
 # Imp Podcast Product Policy Calibration — 2026-10-02
 
-> Status: **PRODUCT-OWNER CALIBRATION DRAFT / NON-EVIDENCE / NO PRODUCTION CUTOVER AUTHORIZED**
+> Status: **HISTORICAL PRODUCT-OWNER REASONING/CALIBRATION NOTES / NON-EVIDENCE / NOT EXECUTABLE POLICY**
 >
 > Scope: current Trouble Brewing Storyteller Recommendation Engine behavior for the user's present app/player population.
 >
 > Source context: machine-first full-transcript semantic review of **22: Imp (Trouble Brewing)**, followed by direct product-owner question/answer calibration.
 >
-> This document is intentionally separate from EvidenceLab verification. It records the product owner's current policy interpretation and may be revised later as the app, player population, or evidence base changes.
+> This document is intentionally separate from EvidenceLab verification. Under the 2026-10-05 GSP route it is retained only as reasoning/context material for benchmark or future general-policy evaluation. Its statements must not be converted directly into `predicate -> fixed answer` production selectors.
 
 ## 1. Boundary
 
@@ -18,7 +18,7 @@ This calibration does **not**:
 - authorize numeric weights/thresholds;
 - authorize Beginner automatic Drunk cutover.
 
-It **does** provide an explicit product-policy target for later versioned recommendation work once the existing cutover/evidence gates are satisfied.
+It **does** provide contextual Storyteller considerations that may be supplied to or tested against a future general reasoner. It no longer defines a target for a dedicated versioned special-case production policy.
 
 ## 2. Drunk candidate calibration
 

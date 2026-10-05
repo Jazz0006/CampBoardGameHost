@@ -74,10 +74,10 @@ Definitions, tests, benchmarks, shadow/evaluation helpers and retired recommenda
 
 In particular, old setup-ranking and dynamic-ranking classes can remain only as non-authoritative code until the staged deletion route removes them safely.
 
-## 6. Pause / resume boundary
+## 6. Historical pause / current GSP continuation
 
-Per product-owner instruction on 2026-10-04, recommendation-engine development is **PAUSED AFTER LRE-1**.
+At the time of LRE-1 acceptance on 2026-10-04, recommendation-engine development was paused after LRE-1 and the planned resume path was an LRE-P family-by-family loop.
 
-Do not start LRE-P, LRE-2, LRE-3 or another recommendation-policy family while this pause is active.
+That planned continuation is now **superseded** by `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`.
 
-When recommendation work resumes, the next product-development lane is the iterative LRE-P family-by-family loop, beginning from current evidence readiness rather than restoring legacy authority.
+The LRE-1 safety result remains authoritative: unsupported multi-choice decisions must remain playable through the complete Manual domain and must never regain legacy heuristic authority. Current continuation is GSP-1, which extends that safety principle to the remaining special-case automatic policy islands before any general provider/model integration.

@@ -13,6 +13,8 @@
 > Parent architecture: `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`
 >
 > Scope: typed, policy-neutral, read-only export contract for mature Trouble Brewing Drunk-assignment and first-night pair-information decision surfaces. No training-example schema, dataset recipe, model dependency, inference adapter, legality change, canonical-state mutation, or production recommendation-policy change.
+>
+> 2026-10-05 GSP amendment: HOST-ML1 remains accepted infrastructure. GSP may reuse/extend this neutral seam for frozen manual benchmark materialization and later provider automation, but no API/model dependency is implied and the export must remain non-authoritative.
 
 ## 1. Decision
 

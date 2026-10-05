@@ -2,13 +2,15 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **CURRENT EXECUTION AUTHORITY — LRE-1 COMPLETE / ACCEPTED; RECOMMENDATION LANE PAUSED AFTER LRE-1**
+> Status: **SUPERSEDED AS EXECUTION AUTHORITY — HISTORICAL LRE ROUTE; LRE-0/LRE-1 RESULTS PRESERVED**
 >
 > LRE-1 completion authority: `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md`
 >
 > Evidence/audit authority: `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`
 >
-> Product-owner decision: improve and cut over new recommendation policies **family by family**, revoke unsupported legacy automatic authority early through Manual fallback, and delete the old recommendation engine only after production no longer depends on it.
+> Historical product-owner decision at 2026-10-04: improve and cut over new recommendation policies **family by family**, revoke unsupported legacy automatic authority early through Manual fallback, and delete the old recommendation engine only after production no longer depends on it.
+>
+> 2026-10-05 amendment: the family-by-family special-case policy loop is superseded by `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`. Preserve this file for the LRE-0/LRE-1 history and deletion inventory, but do not use LRE-P as current continuation authority.
 
 ## 1. Core sequencing decision
 
@@ -362,22 +364,20 @@ A policy may ignore player experience until evidence demonstrates a useful famil
 
 ## 9. Documentation authority
 
-Current authority order for this program:
+Historical authority order at the time this route was active:
 
 1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — current priority/status;
-2. this document — staged replacement / cutover / deletion execution route;
+2. this document — then-current staged replacement / cutover / deletion route;
 3. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — retirement evidence and inventory;
 4. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` — long-lived SDE architecture;
 5. historical RSR / TBGS post-2E audits under `docs/archive/`.
 
-Where historical documents conflict with this route, this route governs execution.
+Current execution authority is now `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`. Where this file conflicts with GSP, GSP governs continuation; LRE-1's accepted fail-closed Manual invariant remains preserved.
 
-## 10. Immediate next action
+## 10. Historical continuation / supersession
 
-Start **LRE-1A / LRE-1B**.
+LRE-1A/LRE-1B were subsequently completed and accepted. Their safety milestone remains valid:
 
-The first safety milestone is:
+> A multi-choice Storyteller decision without trusted recommendation authority remains playable and must not silently fall back to the legacy heuristic engine.
 
-> A multi-choice Storyteller decision without an accepted replacement policy remains playable, but can no longer be automatically chosen by the legacy heuristic engine.
-
-After that milestone, run the LRE-P replacement loop continuously: mature one family, cut it over, then proceed to the next. Do not wait for all replacement policies before cutover, and do not physically delete shared legacy infrastructure until all remaining production dependencies have been removed.
+The former next step — continuously running the LRE-P family-by-family bounded-policy replacement loop — is **superseded**. Current continuation is GSP-1: revoke the remaining special-case automatic policy islands, preserve complete Manual legal domains, then establish a general Policy Provider / global-context benchmark route before any further automatic recommendation cutover.

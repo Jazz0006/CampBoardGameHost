@@ -1,13 +1,13 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-10-04 Australia/Sydney  
+> Updated: 2026-10-05 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed executable validation checkpoint: **LRE-1 Manual safety gate / legacy authority revocation — `045b3a6884f765149d4f1802d5e369671d38d938`; CI #3752 / R2 #3448 GREEN**  
+> Last completed executable recommendation checkpoint: **PR #222 — INV1-A functioning-Investigator special-policy cutover; head `89fb4a518260fb838f69a6d6b389869ab5f865f6`; CI #3759 / R2 #3453 GREEN; squash merge `420eef4e21769e3adf8928f187009f2afc1e5fa2`**  
 > DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
-> Current cutover verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 production cutover and Beginner automatic Drunk authority remain ACCEPTED**  
+> Current executable verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 Drunk, functioning Librarian V2 and INV1-A Investigator remain live special-policy islands until GSP-1 revokes their discretionary automatic authority**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> C5-E functioning-Librarian automatic production cutover and HOST-ML1 typed neutral export remain COMPLETE / ACCEPTED; machine-readable materialization remains deferred. TBGS-2D Demon succession and TBGS-2E Mayor redirect remain COMPLETE / ACCEPTED. RSR-0 player-level/style audit and RSR-1A ownership decoupling are historical/accepted. **LRE-0 is COMPLETE / RETIREMENT AUTHORIZED and LRE-1 is COMPLETE / ACCEPTED.** The fail-closed contract is now production: multiple legal outcomes without an accepted policy become MANUAL_REQUIRED rather than silently falling back to legacy heuristics. Per product-owner instruction, recommendation-engine development is **PAUSED AFTER LRE-1**; do not start LRE-P or physical legacy deletion until explicitly resumed.
+> C5-E, HOST-ML0/1, TBGS-2D/2E and LRE-1 remain COMPLETE / ACCEPTED historical foundations. On 2026-10-05 the product route changed: **LRE-P family-by-family special-case policy replacement is superseded.** Expert cases remain evidence/benchmark/context rather than executable predicate=>answer authority. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` is now the current recommendation-lane authority. GSP-0 is docs-only; **GSP-1 special-policy automatic-authority revocation is NEXT**. CampBoardGameHost remains offline-first; manual blind LLM benchmark precedes any API integration.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -32,9 +32,10 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 17. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
 18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and accepted TBGS-2D Demon-succession boundary
 19. `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md` — accepted TBGS-2E Mayor-redirect boundary
-20. `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — current execution authority; LRE-1 accepted and recommendation lane paused before LRE-P
-21. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — LRE-1 exact executable acceptance and pause boundary
-22. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure, revoke legacy heuristic production authority
+20. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — current recommendation execution authority; GSP-1 is next executable
+21. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — accepted fail-closed Manual safety foundation; its old LRE-P continuation is superseded by GSP
+22. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure
+23. `docs/archive/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — superseded historical route; do not use its family-by-family LRE-P loop as current authority
 23. `docs/archive/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — historical post-2E audit; no TBGS-2F selected
 24. `docs/archive/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md` — historical RSR-0 style/player-level audit
 25. `docs/archive/RSR_1_STYLE_NEUTRAL_POLICY_READINESS_AUDIT_2026-10-04.md` — historical RSR-1A accepted ownership-decoupling record
@@ -174,7 +175,7 @@ DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c
 
 DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, DLB-5.5 removal of obsolete setup auto-apply wiring, and DLB-5.4 Poisoner / first-night information convergence audit. DLB-5.4 found no production gap: poison confirmation owns one canonical revision, unshown drafts are invalidated, displayed observations/history remain committed, and subsequent information replans against current poison state plus committed history. DLB-5 is COMPLETE / ACCEPTED. PR #183 passed final exact-head T4 at `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN and was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
 
-LRE-1 is **COMPLETE / ACCEPTED** under `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md`. The production invariant is now fail-closed: unique legal outcome may auto-resolve; an accepted versioned policy may recommend/auto-select only in its admitted scope; otherwise multiple legal outcomes are MANUAL_REQUIRED and the complete legal domain must remain playable. Unsupported setup, generic unreliable information, special registration, Mayor redirect and Demon succession no longer fall through to legacy heuristic authority. The recommendation-engine lane is **PAUSED AFTER LRE-1** by product-owner instruction. Do not enter LRE-P, LRE-2 or LRE-3 until the pause is explicitly lifted. The immediate engineering priority is investigation of the reported real-device UI regression where the Clocktower host appears to have returned to an older non-square-table interface.
+LRE-1 is **COMPLETE / ACCEPTED** under `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` and remains the safety foundation: unique legal outcomes may auto-resolve; unsupported multi-choice decisions must expose the complete Manual legal domain and may not fall back to legacy heuristics. PR #222 later merged INV1-A under the then-current LRE-P approach. The 2026-10-05 GSP route now supersedes further special-case policy expansion. GSP-0 changes documentation only; current Q04/Librarian V2/INV1-A automatic behavior still exists. The immediate executable priority is **GSP-1: audit and revoke those special-policy automatic authorities while preserving their code/replay as benchmark/shadow material and preserving all rules/legal/manual behavior**.
 
 Current C5 authority:
 
@@ -184,7 +185,7 @@ DLB historical implementation authority remains:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-Architecture convergence guardrail: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` records the intended separation of Setup Generation, canonical Game Session/Game Engine, and read-only Storyteller Recommendation. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` refines the read boundary through immutable `TroubleBrewingGameSnapshotV1` projections. The Q04 evidence gate and production cutover have now passed; DLB-6 removed the obsolete compatibility ownership without changing the bounded Q04 policy.
+Architecture convergence guardrail: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` records the intended separation of Setup Generation, canonical Game Session/Game Engine, and read-only Storyteller Recommendation. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` refines the read boundary through immutable `TroubleBrewingGameSnapshotV1` projections. GSP preserves these foundations while changing the policy layer: a future provider reasons over Host-owned canonical context and legal candidates; it never owns legality or state mutation. Q04/Librarian/INV1-A remain historical executable evidence until GSP-1 removes their automatic authority.
 
 Immediate sequence:
 
@@ -230,11 +231,16 @@ DLB-0 typed intermediate setup COMPLETE
 -> RSR-0 RecommendationStyle / player-level audit COMPLETE / ACCEPTED
 -> RSR-1A Storyteller-mode/style ownership decoupling COMPLETE / ACCEPTED; final T4 `d8ac254b8f40d2a5106c871dcd9eaa567ab93fde`, CI #3740 / R2 #3439; PR #217 merged `881d4252c1a242c5ea523718fb8f780f693e9ab5`
 -> LRE-0 whole legacy heuristic recommendation-engine audit COMPLETE / RETIREMENT AUTHORIZED
--> LRE staged replacement / cutover execution route ACCEPTED
 -> LRE-1 Manual fallback + fail-closed recommendation authority COMPLETE / ACCEPTED; executable `045b3a6884f765149d4f1802d5e369671d38d938`, CI #3752 / R2 #3448
--> recommendation-engine lane PAUSED AFTER LRE-1 by product-owner instruction
--> LRE-P family-by-family evidence-backed policy implementation / replay / cutover DEFERRED UNTIL PAUSE LIFTED
--> LRE-2..5 physical legacy engine deletion DEFERRED UNTIL PAUSE LIFTED and production dependencies permit
+-> INV1-A functioning-Investigator special-policy cutover merged PR #222; merge `420eef4e21769e3adf8928f187009f2afc1e5fa2`
+-> LRE-P family-by-family special-policy continuation SUPERSEDED / DO NOT CONTINUE
+-> GSP-0 General Storyteller Policy route reset CURRENT / DOCS-ONLY
+-> GSP-1 revoke discretionary automatic authority of Q04 / Librarian V2 / INV1-A NEXT EXECUTABLE
+-> GSP-2 provider + decision-specific global-context contract AFTER GSP-1
+-> GSP-3A manual blind LLM benchmark BEFORE API integration
+-> GSP-3B repeated/cross-model benchmark; GSP-3C API harness only if justified
+-> GSP-4 full-game/global evidence expansion; GSP-5 deployment choice; GSP-6 physical obsolete-policy cleanup
+|| Android product remains offline-first; remote LLM optional only
 || future player profile/management: per-player BEGINNER / NORMAL / EXPERT; default NORMAL
 -> A3 presentation catalog READY / independent maintenance only
 ```
@@ -243,7 +249,7 @@ The App/Host decomposition audit is a constraint on this work, not a prerequisit
 
 - A1 preferences and A2 archive storage are independent maintenance slices only;
 - H1 is COMPLETE / ACCEPTED through DLB-5H1;
-- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2A through 2E are COMPLETE / ACCEPTED and TBGS-2 pauses after 2E. Historical RSR-0/1A completed the style/player-level ownership cleanup. LRE-1 has now removed unsafe legacy fallback authority and is COMPLETE / ACCEPTED. The recommendation-engine lane is paused before LRE-P and physical deletion; do not resume those stages until explicitly requested. Special-registration typed history matters only to a future replacement policy; it is not a reason to preserve legacy ranking. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
+- former H2 is now split: TBGS-0/1 are complete standard-snapshot foundations; TBGS-2A through 2E are COMPLETE / ACCEPTED and TBGS-2 pauses after 2E. Historical RSR-0/1A completed the style/player-level ownership cleanup. LRE-1 removed unsafe legacy fallback authority and remains COMPLETE / ACCEPTED. LRE-P is superseded by GSP: no new expert-case predicate should become a production named policy. Special-registration typed history and other context remain useful to a future general provider/benchmark, not as reasons to preserve or extend legacy ranking. A3 remains READY as a separate maintenance slice, not as a TBGS-2 prerequisite;
 - R3 generic transaction extraction and the generic setup-effect owner remain NO-GO.
 
 Recovery R0–R6 stays complete. R7 remains separate.
@@ -252,7 +258,7 @@ EvidenceLab C1C/C1D established the replayable Drunk-assignment surface; later V
 
 The frozen `BEGINNER_CONSERVATIVE_V1` must not silently absorb Drunk candidate preference/rejection semantics. DLB-3 is shadow-first; Beginner automatic Drunk authority requires the explicit cutover gate in the DLB route.
 
-A separate product-owner calibration now exists at `docs/IMP_PODCAST_PRODUCT_POLICY_CALIBRATION_2026-10-02.md`. It captures the current app-specific interpretation of the Imp podcast semantic review: strong plausible/coherent misinformation defaults, cross-night coherence, Empath-as-Drunk as a contextual positive with repeat penalty, bluff-set synergy/complexity, star-pass ability preservation, mechanical-over-inferred lead assessment, player-experience balancing, and Evil intended-plan enrichment. This calibration is explicitly non-evidence and does not unblock the production gate by itself.
+`docs/IMP_PODCAST_PRODUCT_POLICY_CALIBRATION_2026-10-02.md` is retained as historical product-owner reasoning/context, not as an executable policy target. Its useful considerations — plausible/coherent misinformation, cross-night coherence, contextual Empath-as-Drunk value with repeat penalty, bluff-set synergy/complexity, star-pass ability preservation, mechanical-over-inferred lead assessment, player-experience balancing and Evil intended-plan context — may inform GSP benchmark/provider context, but must not be translated directly into another named special-case selector.
 
 ## 8. C5 E3/E4 qualification result — re-entry passed
 

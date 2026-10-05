@@ -11,6 +11,8 @@
 > EvidenceLab accepted baseline observed for this audit: `main@a575ecc05ccb77cf4aaddcad7f772b0fe920d3d6`
 >
 > Scope: docs-only architecture audit. No model training, dataset generation, production recommendation change, legality change, persistence migration or C5-B behavior change is authorized by this document.
+>
+> 2026-10-05 GSP amendment: this architecture is **preserved and promoted as a core foundation** of `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`. Manual blind benchmark may consume the same policy-neutral context/export ideas before any API exists; a future provider/model remains replaceable and never gains legality or canonical-state authority.
 
 ## 1. Decision
 

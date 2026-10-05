@@ -4,6 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Status: **LONG-LIVED ARCHITECTURE / PRODUCT ROUTE; DLB LIFECYCLE AMENDMENT APPLIES**  
 > Current DLB lifecycle authority: `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`  
+> Current policy-layer amendment: `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`  
 > D5F policy/evidence background: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`  
 > Execution status is intentionally not maintained in this architecture document. See [CURRENT_DEVELOPMENT_ROADMAP.md](CURRENT_DEVELOPMENT_ROADMAP.md) and [NEXT_DEVELOPMENT_HANDOFF.md](NEXT_DEVELOPMENT_HANDOFF.md) for the live continuation.
 > Supersedes as execution authority: first-night-only EPI-MQ routes, earlier productive-uncertainty scoring plans, and the older revision-driven dynamic-decision implementation plan.
@@ -66,7 +67,15 @@ Do not fall back from an unavailable new policy to the old heuristic recommender
 
 Retirement evidence/inventory authority: `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`.
 
-Current execution sequence authority: `docs/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md`. The sequencing rule is Manual safety first, then evidence-backed policy replacement/cutover family by family, then physical legacy deletion after no production dependency remains.
+Current execution sequence authority: `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`. LRE-1's Manual/fail-closed safety invariant remains preserved, but the family-by-family special-case deterministic replacement loop is superseded.
+
+### 1.3 2026-10-05 General Storyteller Policy amendment
+
+The long-term recommendation target is a **general reasoner over Host-owned legal candidates and decision-specific global context**, not an expanding catalog of named deterministic policies derived from individual expert cases.
+
+Expert cases, podcast principles and historical choices remain evidence, benchmark/reference material and possible future training/evaluation data. They must not automatically become `predicate -> fixed answer` production authority.
+
+The policy layer is therefore interpreted as a replaceable provider boundary: Manual today, optional remote LLM or future trained/on-device model when justified by benchmark evidence. The Android Host remains offline-first and authoritative for rules, legal domains, canonical state and commits. Manual blind benchmark work must precede any API dependency.
 
 ## 2. Core architecture
 
@@ -83,13 +92,15 @@ InformationProposition / EpistemicObservation materialization
         ↓
 exact hypothetical epistemic consequence evaluation
         ↓
-strategic world-structure diagnostics
+strategic / narrative / player-context diagnostics
         ↓
-profile / phase Storyteller policy
+decision-specific global context + bounded coordination horizon
         ↓
-reject clearly bad candidates / bundles
+replaceable Storyteller Policy Provider (or Manual)
         ↓
-select among acceptable survivors
+rank / compare / explain already-legal candidates or bundles
+        ↓
+Host revalidates current legal domain
         ↓
 commit through canonical session / flow ownership
 ```
