@@ -50,30 +50,20 @@ class TroubleBrewingDrunkSelectionRouterTest {
     }
 
     @Test
-    fun `beginner drunk setup requires accepted production policy candidate`() {
+    fun `beginner multi choice drunk setup requires manual selection across exact legal domain`() {
         val prepared = drunkPreparedSetup()
-        val automatic = TroubleBrewingDrunkCandidateDomain
-            .legalCandidates(prepared.intermediateSetup)
-            .first()
+        val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
 
         val route = TroubleBrewingDrunkSelectionRouter.route(
             preparedSetup = prepared,
             experienceMode = StorytellerExperienceMode.BEGINNER,
             recommendedCandidate = null,
-            beginnerAutomaticCandidate = automatic,
+            beginnerAutomaticCandidate = null,
         )
 
-        val immediate = route as TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic
-        assertEquals(automatic, immediate.candidate)
-
-        assertThrows(IllegalArgumentException::class.java) {
-            TroubleBrewingDrunkSelectionRouter.route(
-                preparedSetup = prepared,
-                experienceMode = StorytellerExperienceMode.BEGINNER,
-                recommendedCandidate = null,
-                beginnerAutomaticCandidate = null,
-            )
-        }
+        val manual = route as TroubleBrewingDrunkSelectionRoute.ManualSelection
+        assertEquals(legal, manual.request.candidates)
+        assertNull(manual.request.recommendedCandidate)
     }
 
     @Test

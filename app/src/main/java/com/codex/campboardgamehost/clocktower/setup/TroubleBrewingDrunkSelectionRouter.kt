@@ -82,19 +82,23 @@ internal object TroubleBrewingDrunkSelectionRouter {
                 require(recommendedCandidate == null) {
                     "Beginner Drunk selection cannot consume the Experienced recommendation channel."
                 }
-                val automaticCandidate = requireNotNull(beginnerAutomaticCandidate) {
-                    "Beginner Drunk selection requires the accepted production policy candidate."
-                }
-                val currentAutomaticCandidate =
-                    legalCandidates.singleOrNull { candidate ->
-                        candidate == automaticCandidate
+                val soleLegalCandidate = legalCandidates.singleOrNull()
+                if (soleLegalCandidate != null) {
+                    require(beginnerAutomaticCandidate == null || beginnerAutomaticCandidate == soleLegalCandidate) {
+                        "Beginner automatic Drunk selection must resolve to the sole current legal candidate."
                     }
-                requireNotNull(currentAutomaticCandidate) {
-                    "Beginner automatic Drunk selection must resolve to the current legal candidate domain."
+                    TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic(soleLegalCandidate)
+                } else {
+                    require(beginnerAutomaticCandidate == null) {
+                        "Beginner multi-choice Drunk selection cannot consume special-policy automatic authority."
+                    }
+                    TroubleBrewingDrunkSelectionRoute.ManualSelection(
+                        TroubleBrewingDrunkSelectionRequest(
+                            candidates = legalCandidates,
+                            recommendedCandidate = null,
+                        ),
+                    )
                 }
-                TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic(
-                    currentAutomaticCandidate,
-                )
             }
         }
     }
