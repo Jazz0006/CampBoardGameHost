@@ -71,11 +71,11 @@ internal data class ClocktowerSessionState(
     val gameState: GameState,
     val decisionHistory: DecisionHistoryArchive = DecisionHistoryArchive(),
     val crossGameHistory: CrossGameHistory = CrossGameHistory(),
-    val storytellerPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1> = emptyMap(),
     val actionTimeline: ActionFactTimeline = ActionFactTimeline(),
     val epistemicObservationLog: EpistemicObservationLog = EpistemicObservationLog(),
     val semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
     val nextTimelineGlobalSequence: Long = 0L,
+    val storytellerPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1> = emptyMap(),
 ) {
     init {
         require(gameId.isNotBlank()) { "gameId cannot be blank." }
