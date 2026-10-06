@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
 import com.codex.campboardgamehost.debug.DebugFlightRecorder
 
@@ -34,24 +36,28 @@ internal fun SettingsScreen(
     languageMode: LanguageMode,
     storytellerExperienceMode: StorytellerExperienceMode,
     commonPlayers: List<String>,
+    playerExperienceByName: Map<String, PlayerExperienceLevelV1>,
     newCommonPlayerName: String,
     onLanguageModeChange: (LanguageMode) -> Unit,
     onStorytellerExperienceModeChange: (StorytellerExperienceMode) -> Unit,
     onNewCommonPlayerNameChange: (String) -> Unit,
     onAddCommonPlayer: () -> Unit,
     onRemoveCommonPlayer: (String) -> Unit,
+    onPlayerExperienceLevelChange: (String, PlayerExperienceLevelV1) -> Unit,
     onBack: () -> Unit,
 ) {
     SettingsContent(
         languageMode = languageMode,
         storytellerExperienceMode = storytellerExperienceMode,
         commonPlayers = commonPlayers,
+        playerExperienceByName = playerExperienceByName,
         newCommonPlayerName = newCommonPlayerName,
         onLanguageModeChange = onLanguageModeChange,
         onStorytellerExperienceModeChange = onStorytellerExperienceModeChange,
         onNewCommonPlayerNameChange = onNewCommonPlayerNameChange,
         onAddCommonPlayer = onAddCommonPlayer,
         onRemoveCommonPlayer = onRemoveCommonPlayer,
+        onPlayerExperienceLevelChange = onPlayerExperienceLevelChange,
         onBack = onBack,
     )
 }
@@ -62,12 +68,14 @@ internal fun SettingsContent(
     languageMode: LanguageMode,
     storytellerExperienceMode: StorytellerExperienceMode,
     commonPlayers: List<String>,
+    playerExperienceByName: Map<String, PlayerExperienceLevelV1>,
     newCommonPlayerName: String,
     onLanguageModeChange: (LanguageMode) -> Unit,
     onStorytellerExperienceModeChange: (StorytellerExperienceMode) -> Unit,
     onNewCommonPlayerNameChange: (String) -> Unit,
     onAddCommonPlayer: () -> Unit,
     onRemoveCommonPlayer: (String) -> Unit,
+    onPlayerExperienceLevelChange: (String, PlayerExperienceLevelV1) -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
 ) {
@@ -197,15 +205,25 @@ internal fun SettingsContent(
                         EmptyStateCard(text = stringResource(R.string.no_common_players_settings))
                     } else {
                         commonPlayers.forEach { name ->
-                            Row(
+                            Column(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
-                                Text(name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-                                TextButton(onClick = { onRemoveCommonPlayer(name) }) {
-                                    Text(stringResource(R.string.remove))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                ) {
+                                    Text(name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                                    TextButton(onClick = { onRemoveCommonPlayer(name) }) {
+                                        Text(stringResource(R.string.remove))
+                                    }
                                 }
+                                PlayerExperienceSelector(
+                                    selected = playerExperienceByName[name] ?: PlayerExperienceLevelV1.NORMAL,
+                                    isEnglish = isEnglish,
+                                    onSelect = { level -> onPlayerExperienceLevelChange(name, level) },
+                                )
                             }
                         }
                     }
@@ -239,6 +257,46 @@ internal fun SettingsContent(
                     ) {
                         Text(stringResource(R.string.export_debug_bundle))
                     }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+internal fun PlayerExperienceSelector(
+    selected: PlayerExperienceLevelV1,
+    isEnglish: Boolean,
+    onSelect: (PlayerExperienceLevelV1) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        PlayerExperienceLevelV1.entries.forEach { level ->
+            val label = when (level) {
+                PlayerExperienceLevelV1.BEGINNER -> if (isEnglish) "Beginner" else "新手"
+                PlayerExperienceLevelV1.NORMAL -> if (isEnglish) "Normal" else "普通"
+                PlayerExperienceLevelV1.EXPERT -> if (isEnglish) "Expert" else "高手"
+            }
+            if (level == selected) {
+                Button(
+                    onClick = { onSelect(level) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+                ) {
+                    Text(label)
+                }
+            } else {
+                OutlinedButton(
+                    onClick = { onSelect(level) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+                ) {
+                    Text(label)
                 }
             }
         }
