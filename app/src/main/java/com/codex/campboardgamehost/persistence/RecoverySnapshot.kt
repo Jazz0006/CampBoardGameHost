@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 
 /**
@@ -26,7 +27,7 @@ internal data class RecoverySnapshot(
     }
 
     companion object {
-        const val CURRENT_FORMAT_VERSION: Int = 2
+        const val CURRENT_FORMAT_VERSION: Int = 3
     }
 }
 
@@ -77,6 +78,9 @@ internal data class ClocktowerRecovery(
     init {
         require(sdeHistoricalReplayInputJson == null || sdeHistoricalReplayInputJson.isNotBlank()) {
             "SDE historical replay export cannot be blank when present."
+        }
+        require(history.storytellerPlayerContextBySeat.keys.all { it in 1..cards.size }) {
+            "Recovered Storyteller player-context overrides must reference current player seats."
         }
         troubleBrewingSetupRotationRecord?.let { record ->
             require(identity.script == ClocktowerScript.TroubleBrewing) {
@@ -135,4 +139,14 @@ internal data class ClocktowerRecoveryHistory(
     val nextTimelineGlobalSequence: Long,
     val events: List<ClocktowerEvent>,
     val epistemicObservations: List<RecordedEpistemicObservation>,
-)
+    val storytellerPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1> = emptyMap(),
+) {
+    init {
+        require(storytellerPlayerContextBySeat.keys.all { it > 0 }) {
+            "Recovered Storyteller player-context seats must be positive."
+        }
+        require(storytellerPlayerContextBySeat.values.none { it.isDefault }) {
+            "Recovery stores only non-default Storyteller player-context overrides."
+        }
+    }
+}
