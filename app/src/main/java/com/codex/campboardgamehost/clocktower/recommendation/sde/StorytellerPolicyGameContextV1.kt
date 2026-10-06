@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
 import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
 import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionEvent
