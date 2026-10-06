@@ -6,6 +6,8 @@ import com.codex.campboardgamehost.clocktower.domain.DecisionEventStatus
 import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
 import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
+import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
@@ -249,7 +251,13 @@ class StorytellerPolicyGameContextV1Test {
             idempotencyKey = "idem:$id",
             gameStateRevision = gameRevision,
             playerInputRevision = playerRevision,
-            rulesetRef = RulesetRef("trouble_brewing", "test"),
+            rulesetRef = RulesetRef(
+                scriptId = ScriptId("trouble_brewing"),
+                scriptContentHash = "00000000000000000000000000000000",
+                rulesetVersion = "test",
+                sourceRevision = "test",
+                coverage = RuleCoverage.VERIFIED,
+            ),
             algorithmConfigVersion = "legacy-test",
             selectorVersion = "legacy-test",
             decisionSeed = 1L,
