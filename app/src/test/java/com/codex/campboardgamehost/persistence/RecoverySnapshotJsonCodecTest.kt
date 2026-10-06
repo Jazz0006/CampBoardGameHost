@@ -1,6 +1,10 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -140,6 +144,13 @@ class RecoverySnapshotJsonCodecTest {
                     nextTimelineGlobalSequence = 0L,
                     events = emptyList(),
                     epistemicObservations = emptyList(),
+                    storytellerPlayerContextBySeat = mapOf(
+                        1 to StorytellerPlayerContextInputV1(
+                            experienceLevel = PlayerExperienceLevelV1.BEGINNER,
+                            claimedRoleIds = listOf(RoleId("Chef"), RoleId("Monk")),
+                            pressureLevel = StorytellerDeclaredPressureLevelV1.HIGH,
+                        ),
+                    ),
                 ),
             ),
         )
@@ -161,6 +172,17 @@ class RecoverySnapshotJsonCodecTest {
         assertEquals("Chef", restored.clocktowerShownRole?.enName)
         assertEquals("Drunk", restored.actualRoleLabel)
         assertEquals("Chef", restored.roleLabel)
+        val recoveredContext = (decoded.game as ClocktowerRecovery)
+            .history
+            .storytellerPlayerContextBySeat
+            .getValue(1)
+        assertEquals(PlayerExperienceLevelV1.BEGINNER, recoveredContext.experienceLevel)
+        assertEquals(listOf(RoleId("Chef"), RoleId("Monk")), recoveredContext.claimedRoleIds)
+        assertEquals(StorytellerDeclaredPressureLevelV1.HIGH, recoveredContext.pressureLevel)
+        assertEquals(
+            1,
+            encoded.getJSONArray("clocktowerStorytellerPlayerContext").length(),
+        )
     }
 
     @Test
