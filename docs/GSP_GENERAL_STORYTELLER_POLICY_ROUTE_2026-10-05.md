@@ -315,21 +315,27 @@ Acceptance target:
 
 ### GSP-2 — provider / global-context contract
 
-Define the smallest stable provider seam and context contract.
+**CURRENT / STARTED — split into GSP-2A through GSP-2D.**
 
-Must specify:
+GSP-2 establishes the model-neutral seam used first by manual benchmarks and later, only if justified, by a remote API, trained model or on-device model. The Host remains stateful and authoritative; providers are replaceable and may be stateless.
 
-- required vs enrichment context;
-- complete legal candidate identity;
-- decision freshness/revision;
-- coordination-horizon representation;
-- player experience/history enrichment;
-- provider response shape;
-- local validation;
-- Manual/offline fallback;
-- provenance/replay identity.
+#### GSP-2A — Structured Provider Contract
 
-Do not bind the contract to a vendor or model.
+Define typed request/response and local validation. Requests carry canonical pre-decision identity, complete legal candidate IDs, required/enrichment separation, freshness/revision and bounded coordination horizon. Responses carry a primary recommendation, genuinely distinct alternatives, rationale/tradeoffs/risks, confidence/uncertainty and provenance. Providers cannot invent candidates or mutate state. No vendor/API binding.
+
+#### GSP-2B — Stateful Game Context / Decision Episode
+
+The Host reconstructs each request from canonical state and committed history rather than relying on provider conversation memory. Formal typed enrichment includes per-player experience level (BEGINNER / NORMAL / EXPERT, default NORMAL), zero-or-more claimed roles per player/role context (default empty), and optional pressure level (default absent), together with public/private information prefix and prior Storyteller decisions. Persist a decision episode sufficient for replay and later recommendation context without making it a second game-state authority.
+
+#### GSP-2C — Cross-game History & Diversity Context
+
+Represent relevant prior/similar decision episodes and prior selected alternatives. Repetition is a **soft diversity penalty**, never a legality rule or hard prohibition: when candidate quality is comparable, prefer a strong alternative that avoids repeated information/shape; when one option is materially better, repetition must not force an inferior choice. Similarity/repetition metadata must remain explainable and bounded.
+
+#### GSP-2D — Prompt/Response Materializer + Local Validator
+
+Materialize the same structured contract into benchmark prompts and parseable responses, validate all returned candidate IDs/freshness locally, and preserve Manual/offline fallback. This is still not API integration; GSP-3C remains the first remote automated harness.
+
+Across all GSP-2 slices preserve provenance/replay identity and do not bind the contract to a vendor or model.
 
 ### GSP-3A — manual blind LLM benchmark
 
@@ -422,4 +428,4 @@ GSP-1 is now COMPLETE / ACCEPTED. Production call-path re-audit after merge conf
 - discretionary multi-choice decisions expose the complete Manual legal domain;
 - no legacy heuristic fallback was reintroduced.
 
-The next planned route phase is GSP-2, but it is **not started by this closure**. Do not implement another named special-case deterministic policy, API integration, or LLM production path as part of GSP-1 bookkeeping.
+The next active route phase is **GSP-2A Structured Provider Contract**. Continue through 2B stateful context/decision episodes, 2C cross-game diversity history and 2D prompt/response materialization + validation before GSP-3A. Do not implement another named special-case deterministic policy or any production/API LLM path during GSP-2.
