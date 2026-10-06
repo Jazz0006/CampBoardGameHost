@@ -5,47 +5,15 @@ import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
 import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
 import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionEvent
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
+import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
-
-/**
- * Qualitative player experience used as recommendation enrichment.
- *
- * This is intentionally separate from StorytellerExperienceMode. Missing profile data defaults to
- * NORMAL so every current seat has an explicit value without blocking offline gameplay.
- */
-internal enum class PlayerExperienceLevelV1 {
-    BEGINNER,
-    NORMAL,
-    EXPERT,
-}
-
-/**
- * Optional Storyteller-entered pressure calibration for the current game.
- *
- * This is not the same thing as PlayerInformationPressure, which is a derived historical diagnostic.
- * No numeric policy weight is implied by these labels.
- */
-internal enum class StorytellerDeclaredPressureLevelV1 {
-    LOW,
-    MEDIUM,
-    HIGH,
-}
-
-internal data class StorytellerPlayerContextInputV1(
-    val experienceLevel: PlayerExperienceLevelV1 = PlayerExperienceLevelV1.NORMAL,
-    val claimedRoleIds: List<RoleId> = emptyList(),
-    val pressureLevel: StorytellerDeclaredPressureLevelV1? = null,
-) {
-    init {
-        require(claimedRoleIds.distinct().size == claimedRoleIds.size) {
-            "Player claimed roles must be unique while preserving Storyteller-entered order."
-        }
-    }
-}
 
 internal data class StorytellerPlayerContextV1(
     val seat: Int,
@@ -133,7 +101,7 @@ internal object StorytellerPolicyGameContextBuilderV1 {
         }
 
         val players = snapshotSeats.map { seat ->
-            val input = playerInputsBySeat[seat] ?: StorytellerPlayerContextInputV1()
+            val input = playerInputsBySeat[seat] ?: StorytellerPlayerContextInputV1.DEFAULT
             StorytellerPlayerContextV1(
                 seat = seat,
                 experienceLevel = input.experienceLevel,
@@ -156,6 +124,28 @@ internal object StorytellerPolicyGameContextBuilderV1 {
         return StorytellerPolicyGameContextV1(
             players = players,
             priorDecisions = priorDecisions,
+        )
+    }
+
+    fun build(
+        snapshot: TroubleBrewingGameSnapshotV1,
+        sourceRevision: InformationDecisionRevision,
+        sessionState: ClocktowerSessionState,
+    ): StorytellerPolicyGameContextV1 {
+        require(sessionState.gameId == snapshot.gameId) {
+            "Storyteller provider context must use the current session game."
+        }
+        require(sessionState.gameStateRevision == sourceRevision.gameStateRevision) {
+            "Storyteller provider context game-state revision must match the request source revision."
+        }
+        require(sessionState.playerInputRevision == sourceRevision.playerInputRevision) {
+            "Storyteller provider context player-input revision must match the request source revision."
+        }
+        return build(
+            snapshot = snapshot,
+            sourceRevision = sourceRevision,
+            playerInputsBySeat = sessionState.storytellerPlayerContextBySeat,
+            decisionHistory = sessionState.decisionHistory,
         )
     }
 }

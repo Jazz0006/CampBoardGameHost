@@ -7,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.domain.requireCompatible
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
@@ -74,6 +75,7 @@ internal data class ClocktowerSessionState(
     val epistemicObservationLog: EpistemicObservationLog = EpistemicObservationLog(),
     val semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
     val nextTimelineGlobalSequence: Long = 0L,
+    val storytellerPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1> = emptyMap(),
 ) {
     init {
         require(gameId.isNotBlank()) { "gameId cannot be blank." }
@@ -82,6 +84,10 @@ internal data class ClocktowerSessionState(
         require(nextTimelineGlobalSequence >= 0L) { "nextTimelineGlobalSequence cannot be negative." }
         require(gameSeed == gameState.seed) {
             "The session gameSeed must match the GameState seed."
+        }
+        val currentSeats = gameState.players.map { it.seat }.toSet()
+        require(storytellerPlayerContextBySeat.keys.all { it in currentSeats }) {
+            "Storyteller player-context overrides must reference current GameState seats."
         }
         semanticHistoryMode.requireCompatible(
             actionTimeline = actionTimeline,
@@ -203,6 +209,38 @@ internal class ClocktowerGameSession private constructor(
     fun recordPlayerInput(): ClocktowerSessionState = updateState(
         state.copy(playerInputRevision = state.playerInputRevision + 1),
     )
+
+    fun storytellerPlayerContext(seat: Int): StorytellerPlayerContextInputV1 {
+        require(state.gameState.playerAt(seat) != null) {
+            "Storyteller player context must reference a current GameState seat."
+        }
+        return state.storytellerPlayerContextBySeat[seat] ?: StorytellerPlayerContextInputV1.DEFAULT
+    }
+
+    fun updateStorytellerPlayerContext(
+        seat: Int,
+        input: StorytellerPlayerContextInputV1,
+    ): ClocktowerSessionState {
+        require(state.gameState.playerAt(seat) != null) {
+            "Storyteller player context must reference a current GameState seat."
+        }
+        val current = storytellerPlayerContext(seat)
+        if (current == input) return state
+        check(state.playerInputRevision != Long.MAX_VALUE) {
+            "Player input revision exhausted."
+        }
+        val nextOverrides = if (input.isDefault) {
+            state.storytellerPlayerContextBySeat - seat
+        } else {
+            state.storytellerPlayerContextBySeat + (seat to input)
+        }
+        return updateState(
+            state.copy(
+                playerInputRevision = state.playerInputRevision + 1,
+                storytellerPlayerContextBySeat = nextOverrides,
+            ),
+        )
+    }
 
     /**
      * Allocates the next game-wide timeline identity without changing semantic game/input revisions.
