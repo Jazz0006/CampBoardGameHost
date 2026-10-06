@@ -321,7 +321,9 @@ GSP-2 establishes the model-neutral seam used first by manual benchmarks and lat
 
 #### GSP-2A — Structured Provider Contract
 
-Define typed request/response and local validation. Requests carry canonical pre-decision identity, complete legal candidate IDs, required/enrichment separation, freshness/revision and bounded coordination horizon. Responses carry a primary recommendation, genuinely distinct alternatives, rationale/tradeoffs/risks, confidence/uncertainty and provenance. Providers cannot invent candidates or mutate state. No vendor/API binding.
+**COMPLETE / ACCEPTED — PR #227 implementation checkpoint `aed23bad8f447a1e20ab710705b0919685de427a`; CI #3769 / R2 #3459 GREEN.**
+
+The typed model/vendor-neutral request/response seam now carries canonical pre-decision identity, complete legal candidate IDs, decision type, freshness/revision and bounded coordination horizon. The request boundary validates candidate/context/feature consistency against the canonical snapshot. Provider output may either return a primary recommendation with genuinely distinct alternatives, rationale/tradeoffs/risks and confidence/uncertainty, or explicitly defer with reasons/missing-context instead of manufacturing a choice. Local validation rejects stale responses and unknown candidate IDs. Providers cannot invent candidates, mutate state or gain commit authority. No vendor/API binding is present.
 
 #### GSP-2B — Stateful Game Context / Decision Episode
 
@@ -428,4 +430,4 @@ GSP-1 is now COMPLETE / ACCEPTED. Production call-path re-audit after merge conf
 - discretionary multi-choice decisions expose the complete Manual legal domain;
 - no legacy heuristic fallback was reintroduced.
 
-The next active route phase is **GSP-2A Structured Provider Contract**. Continue through 2B stateful context/decision episodes, 2C cross-game diversity history and 2D prompt/response materialization + validation before GSP-3A. Do not implement another named special-case deterministic policy or any production/API LLM path during GSP-2.
+The next active route phase is **GSP-2B Stateful Game Context / Decision Episode**. Continue through 2C cross-game diversity history and 2D prompt/response materialization + validation before GSP-3A. Do not implement another named special-case deterministic policy or any production/API LLM path during GSP-2.
