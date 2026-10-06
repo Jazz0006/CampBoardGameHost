@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -63,6 +64,10 @@ internal object RecoverySnapshotJsonCodec {
         put("clocktowerGameStateRevision", game.history.gameStateRevision.coerceAtLeast(0L))
         put("clocktowerPlayerInputRevision", game.history.playerInputRevision.coerceAtLeast(0L))
         put(
+            "clocktowerStorytellerPlayerContext",
+            encodeStorytellerPlayerContext(game.history.storytellerPlayerContextBySeat),
+        )
+        put(
             ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
             ClocktowerSemanticHistoryPersistence.encodeActionTimeline(game.history.actionTimeline),
         )
@@ -101,6 +106,22 @@ internal object RecoverySnapshotJsonCodec {
         put("clocktowerHighestVoteCount", game.mechanics.highestVoteCount.coerceAtLeast(0))
         put("clocktowerEvents", AppGameStateJsonCodec.encodeEvents(game.history.events))
         put("clocktowerEpistemicObservations", encodeObservations(game.history.epistemicObservations))
+    }
+
+    private fun encodeStorytellerPlayerContext(
+        values: Map<Int, StorytellerPlayerContextInputV1>,
+    ): JSONArray = JSONArray().apply {
+        values.toSortedMap().forEach { (seat, input) ->
+            put(JSONObject().apply {
+                put("seat", seat)
+                put("experienceLevel", input.experienceLevel.name)
+                put(
+                    "claimedRoleIds",
+                    stringsToJsonArray(input.claimedRoleIds.map { it.value }),
+                )
+                putNullableString("pressureLevel", input.pressureLevel?.name)
+            })
+        }
     }
 
     private fun encodeObservations(
