@@ -10,6 +10,8 @@ import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
@@ -178,6 +180,24 @@ class ClocktowerGameSessionTest {
     @Test(expected = IllegalArgumentException::class)
     fun `session rejects attempts to replace the persisted game seed`() {
         newSession().updateGameState(initialState.copy(seed = initialState.seed + 1))
+    }
+
+    @Test
+    fun `production session accepts initial player experience without advancing input revision`() {
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "profile-seed",
+            gameSeed = initialState.seed,
+            initialState = initialState,
+            initialStorytellerPlayerContextBySeat = mapOf(
+                1 to StorytellerPlayerContextInputV1(
+                    experienceLevel = PlayerExperienceLevelV1.BEGINNER,
+                ),
+            ),
+        )
+
+        assertEquals(0L, session.state.playerInputRevision)
+        assertEquals(PlayerExperienceLevelV1.BEGINNER, session.storytellerPlayerContext(1).experienceLevel)
+        assertEquals(PlayerExperienceLevelV1.NORMAL, session.storytellerPlayerContext(2).experienceLevel)
     }
 
     @Test
