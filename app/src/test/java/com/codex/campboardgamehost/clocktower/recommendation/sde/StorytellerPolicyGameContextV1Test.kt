@@ -15,6 +15,7 @@ import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionEvent
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderGameContextV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSeat
@@ -97,6 +98,38 @@ class StorytellerPolicyGameContextV1Test {
                 ),
             )
         }
+    }
+
+    @Test
+    fun legacyGameContextAdaptsIntoTheNeutralStatelessProviderEnvelope() {
+        val legacyRequest = request()
+        val legacyContext = StorytellerPolicyGameContextBuilderV1.build(
+            snapshot = snapshot(),
+            sourceRevision = REVISION,
+            playerInputsBySeat = mapOf(
+                2 to StorytellerPlayerContextInputV1(
+                    experienceLevel = PlayerExperienceLevelV1.BEGINNER,
+                    claimedRoleIds = listOf(RoleId("Saint")),
+                    pressureLevel = StorytellerDeclaredPressureLevelV1.HIGH,
+                ),
+            ),
+            decisionHistory = DecisionHistoryArchive(
+                events = listOf(event("past", 2, 1, DecisionEventStatus.APPLIED)),
+            ),
+        )
+
+        val neutral = StorytellerProviderContractAdapterV1.fromLegacy(
+            request = legacyRequest,
+            gameContext = legacyContext,
+        )
+
+        val context: StorytellerProviderGameContextV1 = neutral.gameContext
+        assertEquals(listOf(1, 2), context.players.map { it.seat })
+        assertEquals(PlayerExperienceLevelV1.BEGINNER, context.players[1].experienceLevel)
+        assertEquals(listOf(RoleId("Saint")), context.players[1].claimedRoleIds)
+        assertEquals(StorytellerDeclaredPressureLevelV1.HIGH, context.players[1].pressureLevel)
+        assertEquals(listOf("past"), context.priorDecisions.map { it.eventId })
+        assertEquals("candidate:past", context.priorDecisions.single().selectedCandidateId)
     }
 
     @Test

@@ -14,6 +14,9 @@ class PairInformationDecisionArchitectureTest {
             "src/main/java/com/codex/campboardgamehost/clocktower/session/PairInformationDecisionBoundary.kt",
             "src/main/java/com/codex/campboardgamehost/clocktower/session/MayorRedirectDecisionBoundary.kt",
             "src/main/java/com/codex/campboardgamehost/clocktower/session/TroubleBrewingRuntimeGameProjector.kt",
+            "src/main/java/com/codex/campboardgamehost/clocktower/domain/StorytellerProviderContractV1.kt",
+            "src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerProviderGameContextBuilderV1.kt",
+            "src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerProviderRequestFactoryV1.kt",
         )
 
         engineOwnedPaths.forEach { path ->
