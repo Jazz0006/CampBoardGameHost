@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -37,6 +39,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 
 internal enum class HostToolTab {
     Roles,
@@ -168,6 +174,9 @@ internal fun HostGameToolsScreen(
     events: List<ClocktowerEvent>,
     history: List<ArchivedGameReview>,
     initialTab: HostToolTab,
+    clocktowerPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1> = emptyMap(),
+    clocktowerClaimableRoles: List<ClocktowerRole> = emptyList(),
+    onClocktowerPlayerContextChange: (Int, StorytellerPlayerContextInputV1) -> Unit = { _, _ -> },
     settingsContent: @Composable () -> Unit,
     onDismiss: () -> Unit,
     onNewGame: () -> Unit,
@@ -259,6 +268,9 @@ internal fun HostGameToolsScreen(
                     HostToolTab.Roles -> HostRolesList(
                         gameKind = gameKind,
                         cards = cards,
+                        clocktowerPlayerContextBySeat = clocktowerPlayerContextBySeat,
+                        clocktowerClaimableRoles = clocktowerClaimableRoles,
+                        onClocktowerPlayerContextChange = onClocktowerPlayerContextChange,
                         modifier = Modifier.weight(1f),
                     )
                     HostToolTab.Records -> HostRecordsList(
@@ -337,11 +349,17 @@ internal fun HostGameToolsScreen(
 private fun HostRolesList(
     gameKind: GameKind,
     cards: List<PlayerCard>,
+    clocktowerPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1>,
+    clocktowerClaimableRoles: List<ClocktowerRole>,
+    onClocktowerPlayerContextChange: (Int, StorytellerPlayerContextInputV1) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    val isEnglish = language == "en"
+    fun text(zh: String, en: String): String = if (isEnglish) en else zh
+    var editingSeat by remember { mutableStateOf<Int?>(null) }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(16.dp),
@@ -354,7 +372,8 @@ private fun HostRolesList(
                 fontWeight = FontWeight.Bold,
             )
         }
-        items(cards) { card ->
+        itemsIndexed(cards) { index, card ->
+            val seat = index + 1
             val role = card.hostRoleLabel(context, gameKind)
             val shown = if (
                 gameKind == GameKind.Clocktower &&
@@ -367,6 +386,19 @@ private fun HostRolesList(
                 )
             } else {
                 ""
+            }
+            val playerContext = clocktowerPlayerContextBySeat[seat]
+                ?: StorytellerPlayerContextInputV1.DEFAULT
+            val experience = when (playerContext.experienceLevel) {
+                PlayerExperienceLevelV1.BEGINNER -> text("新手", "Beginner")
+                PlayerExperienceLevelV1.NORMAL -> text("普通", "Normal")
+                PlayerExperienceLevelV1.EXPERT -> text("高手", "Expert")
+            }
+            val pressure = when (playerContext.pressureLevel) {
+                StorytellerDeclaredPressureLevelV1.LOW -> text("低", "Low")
+                StorytellerDeclaredPressureLevelV1.MEDIUM -> text("中", "Medium")
+                StorytellerDeclaredPressureLevelV1.HIGH -> text("高", "High")
+                null -> text("未设", "Unset")
             }
             Card(
                 shape = RoundedCornerShape(14.dp),
@@ -386,7 +418,7 @@ private fun HostRolesList(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                (cards.indexOf(card) + 1).toString(),
+                                seat.toString(),
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Black,
                             )
@@ -395,13 +427,201 @@ private fun HostRolesList(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(card.name, fontWeight = FontWeight.Bold)
                         Text(role + shown, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (gameKind == GameKind.Clocktower) {
+                            Text(
+                                text(
+                                    "推荐上下文：$experience · 声称 ${playerContext.claimedRoleIds.size} · 承压 $pressure",
+                                    "Recommendation context: $experience · claims ${playerContext.claimedRoleIds.size} · pressure $pressure",
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
                     }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            card.eliminatedRound?.let { text("死亡", "Dead") } ?: text("存活", "Alive"),
+                            color = if (card.eliminatedRound == null) {
+                                Color(0xFF2F7A57)
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        if (gameKind == GameKind.Clocktower) {
+                            TextButton(onClick = { editingSeat = seat }) {
+                                Text(text("编辑上下文", "Edit context"))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    val seat = editingSeat
+    if (seat != null && gameKind == GameKind.Clocktower) {
+        val card = cards.getOrNull(seat - 1)
+        if (card != null) {
+            StorytellerPlayerContextEditDialog(
+                seat = seat,
+                playerName = card.name,
+                current = clocktowerPlayerContextBySeat[seat]
+                    ?: StorytellerPlayerContextInputV1.DEFAULT,
+                claimableRoles = clocktowerClaimableRoles,
+                language = language,
+                onDismiss = { editingSeat = null },
+                onSave = { edited ->
+                    onClocktowerPlayerContextChange(seat, edited)
+                    editingSeat = null
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun StorytellerPlayerContextEditDialog(
+    seat: Int,
+    playerName: String,
+    current: StorytellerPlayerContextInputV1,
+    claimableRoles: List<ClocktowerRole>,
+    language: String,
+    onDismiss: () -> Unit,
+    onSave: (StorytellerPlayerContextInputV1) -> Unit,
+) {
+    val isEnglish = language == "en"
+    fun text(zh: String, en: String): String = if (isEnglish) en else zh
+    var editState by remember(seat, current) {
+        mutableStateOf(ClocktowerPlayerContextEditState.from(current))
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text(
+                    "#$seat $playerName · 推荐上下文",
+                    "#$seat $playerName · Recommendation context",
+                ),
+            )
+        },
+        text = {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                item {
                     Text(
-                        card.eliminatedRound?.let { text("死亡", "Dead") } ?: text("存活", "Alive"),
-                        color = if (card.eliminatedRound == null) Color(0xFF2F7A57) else MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.labelMedium,
+                        text("玩家熟练度（跨局保存）", "Player experience (saved across games)"),
                         fontWeight = FontWeight.Bold,
                     )
+                    PlayerExperienceSelector(
+                        selected = editState.experienceLevel,
+                        isEnglish = isEnglish,
+                        onSelect = { level ->
+                            editState = editState.copy(experienceLevel = level)
+                        },
+                    )
+                }
+                item {
+                    Text(
+                        text("当前承压程度（仅本局）", "Current pressure (this game only)"),
+                        fontWeight = FontWeight.Bold,
+                    )
+                    StorytellerPressureSelector(
+                        selected = editState.pressureLevel,
+                        isEnglish = isEnglish,
+                        onSelect = { pressure ->
+                            editState = editState.copy(pressureLevel = pressure)
+                        },
+                    )
+                }
+                item {
+                    Text(
+                        text("声称角色（可多选，仅本局）", "Claimed roles (multi-select, this game only)"),
+                        fontWeight = FontWeight.Bold,
+                    )
+                    if (claimableRoles.isEmpty()) {
+                        Text(
+                            text("当前剧本没有可选角色。", "No roles are available for this script."),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                items(claimableRoles, key = { it.enName }) { role ->
+                    val roleId = RoleId(role.enName)
+                    val selected = roleId in editState.claimedRoleIds
+                    if (selected) {
+                        Button(
+                            onClick = { editState = editState.toggleClaim(roleId) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(role.nameFor(language))
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = { editState = editState.toggleClaim(roleId) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(role.nameFor(language))
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onSave(editState.toInput()) }) {
+                Text(text("保存", "Save"))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text("取消", "Cancel"))
+            }
+        },
+    )
+}
+
+@Composable
+private fun StorytellerPressureSelector(
+    selected: StorytellerDeclaredPressureLevelV1?,
+    isEnglish: Boolean,
+    onSelect: (StorytellerDeclaredPressureLevelV1?) -> Unit,
+) {
+    val options = listOf(
+        null to if (isEnglish) "Unset" else "未设",
+        StorytellerDeclaredPressureLevelV1.LOW to if (isEnglish) "Low" else "低",
+        StorytellerDeclaredPressureLevelV1.MEDIUM to if (isEnglish) "Medium" else "中",
+        StorytellerDeclaredPressureLevelV1.HIGH to if (isEnglish) "High" else "高",
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        options.forEach { (value, label) ->
+            if (value == selected) {
+                Button(
+                    onClick = { onSelect(value) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
+                ) {
+                    Text(label)
+                }
+            } else {
+                OutlinedButton(
+                    onClick = { onSelect(value) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
+                ) {
+                    Text(label)
                 }
             }
         }
