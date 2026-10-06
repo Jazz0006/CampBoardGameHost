@@ -6,11 +6,14 @@ import org.junit.Test
 
 class PairInformationDecisionArchitectureTest {
     @Test
-    fun `RES-1 engine pair owners do not import recommendation implementation`() {
+    fun `RES engine decision owners do not import recommendation implementation`() {
         val engineOwnedPaths = listOf(
             "src/main/java/com/codex/campboardgamehost/clocktower/rules/PairInformationLegalDomain.kt",
             "src/main/java/com/codex/campboardgamehost/clocktower/rules/NaturalPairInformationCandidateGenerator.kt",
+            "src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerDecisionFoundation.kt",
             "src/main/java/com/codex/campboardgamehost/clocktower/session/PairInformationDecisionBoundary.kt",
+            "src/main/java/com/codex/campboardgamehost/clocktower/session/MayorRedirectDecisionBoundary.kt",
+            "src/main/java/com/codex/campboardgamehost/clocktower/session/TroubleBrewingRuntimeGameProjector.kt",
         )
 
         engineOwnedPaths.forEach { path ->

@@ -72,6 +72,11 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
+import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionBoundary
+import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfirmation
+import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
 import com.codex.campboardgamehost.clocktower.session.commitPoisonTargetBoundary
@@ -679,6 +684,39 @@ internal fun CampBoardGameHostApp() {
             protectedSeats = protectedSeats,
             playerInformationPressureBySeat = playerInformationPressureBySeat,
             spentAbilitySeats = spentAbilitySeats,
+        )
+    }
+
+    fun currentTroubleBrewingMayorRedirectPendingDecision(): PendingMayorRedirectDecision? {
+        if (
+            currentGameKind != GameKind.Clocktower ||
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            clocktowerPhase != ClocktowerPhase.Night
+        ) {
+            return null
+        }
+        val session = clocktowerGameSession ?: return null
+        val rulesetRef = clocktowerRulesetRef ?: return null
+        val registry = activeGameClocktowerRulesetCatalog
+            .ruleset(ClocktowerScript.TroubleBrewing)
+            .characterRegistry
+        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+            gameSnapshot = session.toGameSnapshot(rulesetRef),
+            phase = StorytellerPhase.NIGHT,
+            round = round,
+            characterRegistry = registry,
+        )
+        return MayorRedirectDecisionBoundary.create(
+            requestIdentity = StorytellerDecisionRequestIdentity(
+                gameId = snapshot.gameId,
+                requestId = "night:${round}:mayor-redirect",
+            ),
+            revision = StorytellerDecisionRevision(
+                gameStateRevision = clocktowerGameStateRevision,
+                playerInputRevision = clocktowerPlayerInputRevision,
+            ),
+            snapshot = snapshot,
+            characterRegistry = registry,
         )
     }
 
@@ -2515,6 +2553,36 @@ internal fun CampBoardGameHostApp() {
                         },
                         onConfirmMayorRedirectTarget = {
                             val checkpoint = currentClocktowerNightCheckpoint()
+                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
+                                val selectedTarget = requireNotNull(checkpoint.mayorRedirectDraftTarget) {
+                                    "Trouble Brewing Mayor redirect confirmation requires a selected legal target."
+                                }
+                                val pendingDecision = requireNotNull(currentTroubleBrewingMayorRedirectPendingDecision()) {
+                                    "Trouble Brewing Mayor redirect confirmation requires a current engine decision."
+                                }
+                                val targetSeat = clocktowerSeatFor(selectedTarget)
+                                val candidateId = requireNotNull(pendingDecision.candidateIdForSeat(targetSeat)) {
+                                    "Selected Mayor redirect target is outside the current rules-owned legal domain."
+                                }
+                                when (
+                                    val confirmation = pendingDecision.confirm(
+                                        candidateId = candidateId,
+                                        currentRevision = StorytellerDecisionRevision(
+                                            gameStateRevision = clocktowerGameStateRevision,
+                                            playerInputRevision = clocktowerPlayerInputRevision,
+                                        ),
+                                    )
+                                ) {
+                                    is MayorRedirectDecisionConfirmation.Confirmed -> {
+                                        require(confirmation.targetSeat == targetSeat) {
+                                            "Mayor redirect confirmation changed the selected target."
+                                        }
+                                    }
+                                    is MayorRedirectDecisionConfirmation.Blocked -> {
+                                        error("Mayor redirect confirmation blocked: ${confirmation.reason}")
+                                    }
+                                }
+                            }
                             val reducedCheckpoint = NightCheckpointReducer.reduce(
                                 checkpoint = checkpoint,
                                 event = NightResolutionEvent.ConfirmMayorRedirect,

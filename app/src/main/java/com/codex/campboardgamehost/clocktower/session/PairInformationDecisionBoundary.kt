@@ -11,19 +11,18 @@ import com.codex.campboardgamehost.clocktower.rules.PairInformationLegalDomain
 
 /** RES-1 engine/session boundary for one pending pair-information Storyteller decision. */
 internal data class PendingPairInformationDecision(
-    val requestIdentity: InformationDecisionRequestIdentity,
-    val revision: InformationDecisionRevision,
+    val pending: PendingStorytellerDecision<PairInformationLegalCandidate>,
     val sourceSeat: Int,
     val abilityRole: RoleId,
     val reliability: ReliabilityState,
-    val legalCandidates: List<PairInformationLegalCandidate>,
 ) {
-    private val candidatesById = legalCandidates.associateBy(PairInformationLegalCandidate::candidateId)
+    val requestIdentity: StorytellerDecisionRequestIdentity get() = pending.requestIdentity
+    val revision: StorytellerDecisionRevision get() = pending.revision
+    val legalCandidates: List<PairInformationLegalCandidate>
+        get() = pending.legalCandidates.map { candidate -> candidate.payload }
 
     init {
         require(sourceSeat > 0) { "Pair-information source seat must be positive." }
-        require(legalCandidates.isNotEmpty()) { "Pair-information decision requires legal candidates." }
-        require(candidatesById.size == legalCandidates.size) { "Pair-information candidate IDs must be unique." }
     }
 
     fun candidateIdFor(
@@ -39,48 +38,61 @@ internal data class PendingPairInformationDecision(
 
     fun confirm(
         candidateId: String,
-        currentRevision: InformationDecisionRevision,
-    ): PairInformationDecisionConfirmation {
-        if (currentRevision != revision) {
-            return PairInformationDecisionConfirmation.Blocked(PairInformationDecisionBlockReason.STALE_CONTEXT)
-        }
-        val candidate = candidatesById[candidateId]
-            ?: return PairInformationDecisionConfirmation.Blocked(PairInformationDecisionBlockReason.ILLEGAL_CANDIDATE)
-
-        return PairInformationDecisionConfirmation.Confirmed(
-            candidateId = candidateId,
-            observation = candidate.toAbilityObservation(
+        currentRevision: StorytellerDecisionRevision,
+    ): PairInformationDecisionConfirmation = when (
+        val confirmation = pending.confirm(candidateId, currentRevision)
+    ) {
+        is StorytellerDecisionConfirmation.Confirmed -> PairInformationDecisionConfirmation.Confirmed(
+            candidateId = confirmation.candidate.candidateId,
+            observation = confirmation.candidate.payload.toAbilityObservation(
                 sourceSeat = sourceSeat,
                 abilityRole = abilityRole,
                 reliability = reliability,
             ),
+        )
+
+        is StorytellerDecisionConfirmation.Blocked -> PairInformationDecisionConfirmation.Blocked(
+            when (confirmation.reason) {
+                StorytellerDecisionBlockReason.STALE_CONTEXT -> PairInformationDecisionBlockReason.STALE_CONTEXT
+                StorytellerDecisionBlockReason.ILLEGAL_CANDIDATE -> PairInformationDecisionBlockReason.ILLEGAL_CANDIDATE
+            },
         )
     }
 }
 
 internal object PairInformationDecisionBoundary {
     fun create(
-        requestIdentity: InformationDecisionRequestIdentity,
-        revision: InformationDecisionRevision,
+        requestIdentity: StorytellerDecisionRequestIdentity,
+        revision: StorytellerDecisionRevision,
         game: GameState,
         roleDefinitions: List<RoleDefinition>,
         sourceSeat: Int,
         abilityRole: RoleId,
         reliability: ReliabilityState,
-    ): PendingPairInformationDecision = PendingPairInformationDecision(
-        requestIdentity = requestIdentity,
-        revision = revision,
-        sourceSeat = sourceSeat,
-        abilityRole = abilityRole,
-        reliability = reliability,
-        legalCandidates = PairInformationLegalDomain.generate(
+    ): PendingPairInformationDecision {
+        val legalCandidates = PairInformationLegalDomain.generate(
             game = game,
             roleDefinitions = roleDefinitions,
             sourceSeat = sourceSeat,
             abilityRole = abilityRole,
             reliability = reliability,
-        ),
-    )
+        )
+        return PendingPairInformationDecision(
+            pending = PendingStorytellerDecision(
+                requestIdentity = requestIdentity,
+                revision = revision,
+                legalCandidates = legalCandidates.map { candidate ->
+                    StorytellerDecisionCandidate(
+                        candidateId = candidate.candidateId,
+                        payload = candidate,
+                    )
+                },
+            ),
+            sourceSeat = sourceSeat,
+            abilityRole = abilityRole,
+            reliability = reliability,
+        )
+    }
 }
 
 internal enum class PairInformationDecisionBlockReason {
