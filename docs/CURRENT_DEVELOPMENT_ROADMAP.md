@@ -56,7 +56,7 @@ LRE-1 manual fallback / recommendation-authority cutoff        COMPLETE / ACCEPT
 LRE-P family-by-family special-policy loop                    SUPERSEDED / DO NOT CONTINUE
 GSP-0 General Storyteller Policy route reset                  COMPLETE / DOCS-ONLY
 GSP-1 special-policy automatic-authority revocation           COMPLETE / ACCEPTED — PR #225; merge 2a4884c; CI #3764 / R2 #3456 GREEN
-GSP-2 provider + decision-specific global-context contract    NEXT PLANNED / NOT STARTED
+GSP-2 provider + decision-specific global-context contract    CURRENT / STARTED — 2A NEXT
 ~~~
 
 ## 2. Current repository boundary
@@ -277,7 +277,10 @@ query live main / workspace
 -> LRE-P family-by-family special-policy continuation SUPERSEDED
 -> GSP-0 route reset + active-doc synchronization CURRENT / DOCS-ONLY
 -> GSP-1 Q04 / Librarian V2 / INV1-A discretionary automatic authority revoked COMPLETE / ACCEPTED
--> GSP-2 provider + decision-specific global-context contract NEXT PLANNED / NOT STARTED
+-> GSP-2A structured provider contract CURRENT / NEXT EXECUTABLE
+-> GSP-2B stateful game context + decision episode
+-> GSP-2C cross-game history + soft diversity/repetition context
+-> GSP-2D prompt/response materializer + local validator
 -> GSP-3A manual blind LLM benchmark BEFORE any API integration
 || Android product invariant: offline-first; network/LLM optional only
 || later player profile/management: BEGINNER / NORMAL / EXPERT; current default NORMAL
