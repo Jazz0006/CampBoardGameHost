@@ -1,6 +1,10 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import org.json.JSONArray
 import org.json.JSONObject
@@ -84,6 +88,9 @@ internal object RecoverySnapshotStrictDecoder {
             actionTimeline = actionTimeline,
             observations = epistemicObservations,
         )
+        val storytellerPlayerContextBySeat =
+            json.requiredArray("clocktowerStorytellerPlayerContext")
+                .decodeStorytellerPlayerContextStrict()
 
         return ClocktowerRecovery(
             entryPoint = entryPoint,
@@ -141,6 +148,7 @@ internal object RecoverySnapshotStrictDecoder {
                 nextTimelineGlobalSequence = nextTimelineGlobalSequence,
                 events = json.requiredArray("clocktowerEvents").decodeEventsStrict(),
                 epistemicObservations = epistemicObservations,
+                storytellerPlayerContextBySeat = storytellerPlayerContextBySeat,
             ),
         )
     }
@@ -225,6 +233,24 @@ internal object RecoverySnapshotStrictDecoder {
                 ),
             )
         }
+    }
+
+    private fun JSONArray.decodeStorytellerPlayerContextStrict(): Map<Int, StorytellerPlayerContextInputV1> {
+        val result = linkedMapOf<Int, StorytellerPlayerContextInputV1>()
+        for (index in 0 until length()) {
+            val value = opt(index) as? JSONObject
+                ?: throw IllegalArgumentException("clocktowerStorytellerPlayerContext[$index] must be an object.")
+            val seat = value.requiredInt("seat")
+            require(seat !in result) {
+                "clocktowerStorytellerPlayerContext cannot contain duplicate seat $seat."
+            }
+            result[seat] = StorytellerPlayerContextInputV1(
+                experienceLevel = value.requiredEnum<PlayerExperienceLevelV1>("experienceLevel"),
+                claimedRoleIds = value.requiredArray("claimedRoleIds").strictStringList().map(::RoleId),
+                pressureLevel = value.requiredNullableEnum<StorytellerDeclaredPressureLevelV1>("pressureLevel"),
+            )
+        }
+        return result
     }
 
     private fun JSONArray.decodeEpistemicObservationsStrict() = buildList {
