@@ -1,13 +1,16 @@
 package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
+import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -19,6 +22,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerGameSessionTest {
@@ -30,6 +34,45 @@ class ClocktowerGameSessionTest {
         sourceRevision = "official-wiki-2026-08-06",
         coverage = RuleCoverage.VERIFIED,
     )
+
+    @Test
+    fun `storyteller player context is session owned and invalidates provider freshness only`() {
+        val session = newSession()
+        val custom = StorytellerPlayerContextInputV1(
+            experienceLevel = PlayerExperienceLevelV1.BEGINNER,
+            claimedRoleIds = listOf(RoleId("Saint"), RoleId("Empath")),
+            pressureLevel = StorytellerDeclaredPressureLevelV1.HIGH,
+        )
+
+        assertEquals(StorytellerPlayerContextInputV1.DEFAULT, session.storytellerPlayerContext(1))
+
+        val changed = session.updateStorytellerPlayerContext(1, custom)
+
+        assertEquals(1L, changed.playerInputRevision)
+        assertEquals(0L, changed.gameStateRevision)
+        assertEquals(custom, session.storytellerPlayerContext(1))
+        assertEquals(custom, session.state.storytellerPlayerContextBySeat[1])
+
+        val unchanged = session.updateStorytellerPlayerContext(1, custom)
+        assertSame(changed, unchanged)
+        assertEquals(1L, session.state.playerInputRevision)
+
+        session.updateStorytellerPlayerContext(1, StorytellerPlayerContextInputV1.DEFAULT)
+        assertEquals(2L, session.state.playerInputRevision)
+        assertEquals(0L, session.state.gameStateRevision)
+        assertTrue(1 !in session.state.storytellerPlayerContextBySeat)
+        assertEquals(StorytellerPlayerContextInputV1.DEFAULT, session.storytellerPlayerContext(1))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `storyteller player context rejects seats outside the current game`() {
+        newSession().updateStorytellerPlayerContext(
+            seat = 99,
+            input = StorytellerPlayerContextInputV1(
+                experienceLevel = PlayerExperienceLevelV1.EXPERT,
+            ),
+        )
+    }
 
     @Test
     fun `game state and player input revisions advance independently`() {
