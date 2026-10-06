@@ -1,6 +1,10 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -161,6 +165,108 @@ class RecoverySnapshotJsonCodecTest {
         assertEquals("Chef", restored.clocktowerShownRole?.enName)
         assertEquals("Drunk", restored.actualRoleLabel)
         assertEquals("Chef", restored.roleLabel)
+    }
+
+    @Test
+    fun clocktowerRecoveryRoundTripsStorytellerPlayerContextOverrides() {
+        val role = ClocktowerRole(
+            team = ClocktowerTeam.Townsfolk,
+            zhName = "共情者",
+            enName = "Empath",
+            zhDescription = "",
+            enDescription = "",
+        )
+        val snapshot = RecoverySnapshot(
+            compatibilityToken = "test-current-build",
+            savedAtMillis = 1234L,
+            game = ClocktowerRecovery(
+                entryPoint = RecoveryEntryPoint.Stable,
+                currentDealIndex = 0,
+                round = 1,
+                cards = listOf(
+                    PlayerCard(
+                        name = "Alice",
+                        role = Role.Civilian,
+                        word = "",
+                        clocktowerTeam = role.team,
+                        clocktowerRole = role,
+                        clocktowerShownRole = role,
+                    ),
+                ),
+                records = emptyList(),
+                outcome = null,
+                identity = ClocktowerRecoveryIdentity(
+                    script = ClocktowerScript.TroubleBrewing,
+                    gameId = "player-context-recovery",
+                    gameSeed = 42L,
+                ),
+                position = ClocktowerRecoveryPosition(
+                    phase = ClocktowerPhase.FirstNight,
+                    nightStarted = true,
+                    nightStepIndex = 0,
+                ),
+                mechanics = ClocktowerRecoveryMechanics(
+                    confirmedAttackTarget = null,
+                    confirmedPoisonTarget = null,
+                    confirmedMonkProtectedTarget = null,
+                    confirmedMayorRedirectTarget = null,
+                    pendingNewDemonName = null,
+                    pendingNightNewDemonIdentityName = null,
+                    confirmedDemonSuccessorTarget = null,
+                    redHerring = null,
+                    demonBluffRoleNames = emptyList(),
+                    butlerMaster = null,
+                    virginUsed = false,
+                    slayerUsed = false,
+                    slayerClaimedNames = emptyList(),
+                    artistUsed = false,
+                    artistClaimedNames = emptyList(),
+                    lastExecutedName = null,
+                    pendingKlutzName = null,
+                    klutzReturnToDawn = false,
+                    ghostVoteAuthority = ClocktowerGhostVoteAuthority(),
+                    highestVoteName = null,
+                    highestVoteCount = 0,
+                ),
+                history = ClocktowerRecoveryHistory(
+                    gameStateRevision = 3L,
+                    playerInputRevision = 5L,
+                    storytellerPlayerContextBySeat = mapOf(
+                        1 to StorytellerPlayerContextInputV1(
+                            experienceLevel = PlayerExperienceLevelV1.BEGINNER,
+                            claimedRoleIds = listOf(RoleId("Saint"), RoleId("Chef")),
+                            pressureLevel = StorytellerDeclaredPressureLevelV1.HIGH,
+                        ),
+                    ),
+                    actionTimeline = ActionFactTimeline(),
+                    nextTimelineGlobalSequence = 0L,
+                    events = emptyList(),
+                    epistemicObservations = emptyList(),
+                ),
+            ),
+        )
+
+        val encoded = RecoverySnapshotJsonCodec.encode(snapshot)
+        val decoded = RecoverySnapshotJsonCodec.decodeStrict(
+            encoded,
+            roleByName = { name -> role.takeIf { it.enName == name } },
+        )
+        val history = (decoded.game as ClocktowerRecovery).history
+
+        assertEquals(
+            mapOf(
+                1 to StorytellerPlayerContextInputV1(
+                    experienceLevel = PlayerExperienceLevelV1.BEGINNER,
+                    claimedRoleIds = listOf(RoleId("Saint"), RoleId("Chef")),
+                    pressureLevel = StorytellerDeclaredPressureLevelV1.HIGH,
+                ),
+            ),
+            history.storytellerPlayerContextBySeat,
+        )
+        assertEquals(
+            1,
+            encoded.getJSONArray("clocktowerStorytellerPlayerContext").length(),
+        )
     }
 
     @Test
