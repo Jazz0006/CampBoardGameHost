@@ -13,6 +13,41 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV
 
 /** Direct RES-1 engine decision -> RES-2 neutral provider request materialization. */
 internal object StorytellerProviderRequestFactoryV1 {
+    fun fromDrunkAssignment(
+        decision: PendingDrunkAssignmentDecision,
+        snapshot: TroubleBrewingGameSnapshotV1,
+        gameContext: StorytellerProviderGameContextV1 = StorytellerProviderGameContextV1.EMPTY,
+        coordinationHorizon: StorytellerProviderCoordinationHorizonV1 =
+            StorytellerProviderCoordinationHorizonV1.CURRENT_DECISION_ONLY,
+    ): StorytellerProviderRequestV1 {
+        require(decision.requestIdentity.gameId == snapshot.gameId) {
+            "Drunk provider request must use the pending decision's canonical game."
+        }
+        val context = StorytellerProviderDecisionContextV1.DrunkAssignment
+        return StorytellerProviderRequestV1(
+            identity = StorytellerProviderDecisionIdentityV1(
+                gameId = snapshot.gameId,
+                scriptId = snapshot.script.value,
+                decisionTypeId = context.decisionTypeId,
+                decisionId = decision.requestIdentity.requestId,
+            ),
+            sourceRevision = decision.revision.toProviderRevision(),
+            state = StorytellerProviderGameStateV1.TroubleBrewing(snapshot),
+            decisionContext = context,
+            legalCandidates = decision.legalCandidates.map { candidate ->
+                StorytellerProviderCandidateV1(
+                    candidateId = candidate.candidateId,
+                    payload = StorytellerProviderCandidatePayloadV1.DrunkAssignment(
+                        seat = candidate.payload.seat,
+                        shownRoleId = candidate.payload.shownRoleId,
+                    ),
+                )
+            },
+            gameContext = gameContext,
+            coordinationHorizon = coordinationHorizon,
+        )
+    }
+
     fun fromPairInformation(
         decision: PendingPairInformationDecision,
         snapshot: TroubleBrewingGameSnapshotV1,

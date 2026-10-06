@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.ClocktowerScript
+import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CandidateAuditSummary
@@ -32,12 +34,53 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSetup
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StorytellerProviderRequestFactoryV1Test {
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
+
+    @Test
+    fun `Drunk setup engine decision materializes neutral request without SDE adapter`() {
+        val snapshot = setupSnapshot()
+        val revision = StorytellerDecisionRevision(4, 2)
+        val decision = DrunkAssignmentDecisionBoundary.create(
+            snapshot = snapshot,
+            characterRegistry = canonicalRegistry(),
+            revision = revision,
+        )
+        val request = StorytellerProviderRequestFactoryV1.fromDrunkAssignment(
+            decision = decision,
+            snapshot = snapshot,
+        )
+
+        assertEquals(
+            StorytellerProviderDecisionContextV1.DRUNK_ASSIGNMENT,
+            request.identity.decisionTypeId,
+        )
+        assertEquals("setup:drunk-seat:provider-direct", request.identity.decisionId)
+        assertEquals(
+            listOf(
+                "setup:drunk-seat:seat-1",
+                "setup:drunk-seat:seat-2",
+            ),
+            request.legalCandidateIds,
+        )
+        assertEquals(
+            listOf(1, 2),
+            request.legalCandidates.map {
+                (it.payload as StorytellerProviderCandidatePayloadV1.DrunkAssignment).seat
+            },
+        )
+        assertEquals(
+            listOf("empath", "monk"),
+            request.legalCandidates.map {
+                (it.payload as StorytellerProviderCandidatePayloadV1.DrunkAssignment).shownRoleId
+            },
+        )
+    }
 
     @Test
     fun `pair and Mayor engine decisions materialize neutral requests without recommendation implementation`() {
@@ -186,6 +229,43 @@ class StorytellerProviderRequestFactoryV1Test {
         shownRole = RoleId(role),
         alive = true,
     )
+
+    private fun setupSnapshot() = TroubleBrewingGameSnapshotV1(
+        gameId = "provider-direct",
+        gameSeed = 7L,
+        position = TroubleBrewingSnapshotPosition(
+            stage = TroubleBrewingSnapshotStage.SETUP_PRECOMMIT,
+            phase = SnapshotField.NotApplicable,
+            round = SnapshotField.NotApplicable,
+            gameStateRevision = SnapshotField.Known(4),
+            playerInputRevision = SnapshotField.Known(2),
+        ),
+        grimoireSeats = listOf(
+            TroubleBrewingSnapshotSeat(
+                seat = 1,
+                shownRoleId = SnapshotField.Known("empath"),
+                actualRoleId = SnapshotField.Uncommitted,
+                alive = SnapshotField.Known(true),
+                poisoned = SnapshotField.NotApplicable,
+            ),
+            TroubleBrewingSnapshotSeat(
+                seat = 2,
+                shownRoleId = SnapshotField.Known("monk"),
+                actualRoleId = SnapshotField.Uncommitted,
+                alive = SnapshotField.Known(true),
+                poisoned = SnapshotField.NotApplicable,
+            ),
+        ),
+        setupState = TroubleBrewingSnapshotSetupState(
+            hasDrunk = SnapshotField.Known(true),
+            drunkAssignmentSeat = SnapshotField.Uncommitted,
+        ),
+    )
+
+    private fun canonicalRegistry() =
+        BuiltInClocktowerRulesetCatalog { assetPath ->
+            File("src/main/assets", assetPath).readText(Charsets.UTF_8)
+        }.ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
 
     private fun runtimeSnapshot(
         phase: StorytellerPhase,
