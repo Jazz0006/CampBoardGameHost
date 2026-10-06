@@ -43,12 +43,14 @@ import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import com.codex.campboardgamehost.clocktower.domain.PlayerInformationPressure
 import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerRecommendationUxPolicy
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
@@ -185,6 +187,7 @@ private fun Context.playerName(number: Int): String = getString(R.string.default
 
 private const val PREFS_NAME = "camp_board_game_host"
 private const val COMMON_PLAYERS_KEY = "common_players"
+private const val PLAYER_EXPERIENCE_LEVELS_KEY = "player_experience_levels_v1"
 private const val LANGUAGE_MODE_KEY = "language_mode"
 private const val STORYTELLER_EXPERIENCE_MODE_KEY = "storyteller_experience_mode"
 private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
@@ -259,6 +262,23 @@ private fun Context.saveCommonPlayers(players: List<String>) {
     getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         .edit()
         .putString(COMMON_PLAYERS_KEY, json.toString())
+        .apply()
+}
+
+private fun Context.loadPlayerExperienceByName(): Map<String, PlayerExperienceLevelV1> =
+    runCatching {
+        PlayerExperienceProfileCodec.decode(
+            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(PLAYER_EXPERIENCE_LEVELS_KEY, null),
+        )
+    }.getOrDefault(emptyMap())
+
+private fun Context.savePlayerExperienceByName(
+    levels: Map<String, PlayerExperienceLevelV1>,
+) {
+    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .putString(PLAYER_EXPERIENCE_LEVELS_KEY, PlayerExperienceProfileCodec.encode(levels))
         .apply()
 }
 
@@ -536,6 +556,9 @@ internal fun CampBoardGameHostApp() {
     var gameOutcome by remember { mutableStateOf<GameOutcome?>(null) }
     var newCommonPlayerName by remember { mutableStateOf("") }
     val commonPlayers = remember { mutableStateListOf<String>().apply { addAll(baseContext.loadCommonPlayers()) } }
+    var playerExperienceByName by remember {
+        mutableStateOf(baseContext.loadPlayerExperienceByName())
+    }
     val playerNames = remember { mutableStateListOf<String>() }
     var hostSeatingSetupFlow by remember { mutableStateOf(HostSeatingSetupFlow()) }
     val cards = remember { mutableStateListOf<PlayerCard>() }
@@ -589,6 +612,58 @@ internal fun CampBoardGameHostApp() {
         requireNotNull(clocktowerGameSession) {
             "Clocktower session authority is unavailable."
         }
+
+    fun persistPlayerExperienceProfile(
+        playerName: String,
+        level: PlayerExperienceLevelV1,
+    ) {
+        val normalizedName = playerName.trim()
+        if (normalizedName.isEmpty()) return
+        val next = if (level == PlayerExperienceLevelV1.NORMAL) {
+            playerExperienceByName - normalizedName
+        } else {
+            playerExperienceByName + (normalizedName to level)
+        }
+        if (next == playerExperienceByName) return
+        playerExperienceByName = next
+        baseContext.savePlayerExperienceByName(next)
+    }
+
+    fun updatePlayerExperienceLevel(
+        playerName: String,
+        level: PlayerExperienceLevelV1,
+    ) {
+        persistPlayerExperienceProfile(playerName, level)
+        val session = clocktowerGameSession ?: return
+        val player = session.state.gameState.players.singleOrNull { it.name == playerName } ?: return
+        val current = session.storytellerPlayerContext(player.seat)
+        val beforeRevision = session.state.playerInputRevision
+        session.updateStorytellerPlayerContext(
+            seat = player.seat,
+            input = current.copy(experienceLevel = level),
+        )
+        if (session.state.playerInputRevision != beforeRevision) {
+            publishClocktowerSessionView()
+            invalidateA4RevisionScope()
+        }
+    }
+
+    fun updateCurrentClocktowerPlayerContext(
+        seat: Int,
+        input: StorytellerPlayerContextInputV1,
+    ) {
+        val session = requireClocktowerGameSession()
+        val playerName = requireNotNull(session.state.gameState.playerAt(seat)) {
+            "Storyteller player-context edit must reference a current player."
+        }.name
+        val beforeRevision = session.state.playerInputRevision
+        session.updateStorytellerPlayerContext(seat, input)
+        persistPlayerExperienceProfile(playerName, input.experienceLevel)
+        if (session.state.playerInputRevision != beforeRevision) {
+            publishClocktowerSessionView()
+            invalidateA4RevisionScope()
+        }
+    }
 
     fun currentTroubleBrewingFirstNightPairDecisionContext(): TroubleBrewingFirstNightPairDecisionContext? {
         if (
@@ -1619,11 +1694,22 @@ internal fun CampBoardGameHostApp() {
                     seed = gameSeed,
                     poisonedPlayerName = null,
                 )
+            val initialPlayerContextBySeat = initialGameState.players.mapNotNull { player ->
+                val level = playerExperienceByName[player.name] ?: PlayerExperienceLevelV1.NORMAL
+                if (level == PlayerExperienceLevelV1.NORMAL) {
+                    null
+                } else {
+                    player.seat to StorytellerPlayerContextInputV1(
+                        experienceLevel = level,
+                    )
+                }
+            }.toMap()
             clocktowerGameSession = ClocktowerGameSession.createProduction(
                 gameId = gameId,
                 gameSeed = gameSeed,
                 initialState = initialGameState,
                 semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+                initialStorytellerPlayerContextBySeat = initialPlayerContextBySeat,
             )
             publishClocktowerSessionView()
             if (clocktowerScript == ClocktowerScript.TroubleBrewing) {
@@ -2206,6 +2292,7 @@ internal fun CampBoardGameHostApp() {
                         languageMode = languageMode,
                         storytellerExperienceMode = storytellerExperienceMode,
                         commonPlayers = commonPlayers,
+                        playerExperienceByName = playerExperienceByName,
                         newCommonPlayerName = newCommonPlayerName,
                         onLanguageModeChange = { nextMode ->
                             languageMode = nextMode
@@ -2218,6 +2305,7 @@ internal fun CampBoardGameHostApp() {
                         onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                         onAddCommonPlayer = ::addCommonPlayer,
                         onRemoveCommonPlayer = ::removeCommonPlayer,
+                        onPlayerExperienceLevelChange = ::updatePlayerExperienceLevel,
                         onBack = { screen = Screen.Setup },
                     )
 
@@ -3647,11 +3735,21 @@ internal fun CampBoardGameHostApp() {
                         events = clocktowerEvents,
                         history = gameHistory,
                         initialTab = hostToolTab,
+                        clocktowerPlayerContextBySeat =
+                            clocktowerGameSession?.state?.storytellerPlayerContextBySeat.orEmpty(),
+                        clocktowerClaimableRoles =
+                            if (currentGameKind == GameKind.Clocktower) {
+                                clocktowerRolesForScript(currentClocktowerScript)
+                            } else {
+                                emptyList()
+                            },
+                        onClocktowerPlayerContextChange = ::updateCurrentClocktowerPlayerContext,
                         settingsContent = {
                             SettingsContent(
                                 languageMode = languageMode,
                                 storytellerExperienceMode = storytellerExperienceMode,
                                 commonPlayers = commonPlayers,
+                                playerExperienceByName = playerExperienceByName,
                                 newCommonPlayerName = newCommonPlayerName,
                                 onLanguageModeChange = { nextMode ->
                                     languageMode = nextMode
@@ -3664,6 +3762,7 @@ internal fun CampBoardGameHostApp() {
                                 onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                                 onAddCommonPlayer = ::addCommonPlayer,
                                 onRemoveCommonPlayer = ::removeCommonPlayer,
+                                onPlayerExperienceLevelChange = ::updatePlayerExperienceLevel,
                             )
                         },
                         onDismiss = { showHostTools = false },
