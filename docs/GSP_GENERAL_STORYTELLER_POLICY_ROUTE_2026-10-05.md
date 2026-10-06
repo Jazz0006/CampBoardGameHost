@@ -335,7 +335,9 @@ GSP-2B2 session ownership is now accepted at checkpoint `9d3bfdcb20bc48b2659e0fe
 
 GSP-2B3A Recovery persistence is COMPLETE / ACCEPTED via PR #231 (merge `10d1eae72ad564155dc7faa53092b0203b135fbc`; final branch CI #3784 / R2 #3471 GREEN). Recovery is strict/current-only v3: sparse session-owned experience/claims/declared-pressure overrides survive process loss and restore directly into `ClocktowerSessionState`; v2 is rejected without migration.
 
-GSP-2B remains **IN PROGRESS**. **GSP-2B3B Storyteller edit surface is NEXT** so the Host can actually edit per-seat experience, zero-or-more claims and optional declared pressure through the UI while session ownership/revision semantics remain authoritative. After that, **GSP-2B4 Decision Episode durable replay** must persist provider request/response/committed-selection episodes without becoming canonical game state. Only then may GSP-2B close and hand off to GSP-2C. Long-term player-profile ownership may later hydrate experience level at game start; until then absence means NORMAL.
+GSP-2B3B Storyteller edit surface is **COMPLETE / ACCEPTED** at implementation checkpoint `c9f7fb6e1af6d741c92c64aa95a0fccd12e4ce69`; CI #3788 / R2 #3474 GREEN. Player experience is now a sparse cross-game profile keyed by player name (NORMAL remains the implicit default) and is injected into a new Clocktower session without advancing `playerInputRevision`. The Host Tools Roles surface edits experience plus current-game zero-or-more claims and optional declared pressure; Settings can edit the cross-game experience profile. Current-game edits remain session-owned, synchronize the experience profile, and advance only `playerInputRevision` when the effective value changes.
+
+GSP-2B remains **IN PROGRESS**. **GSP-2B4 Decision Episode durable replay is NEXT**: persist provider request/response/committed-selection episodes as replay/analysis data without making them canonical game state. Only after 2B4 acceptance may GSP-2B close and hand off to GSP-2C.
 
 #### GSP-2C — Cross-game History & Diversity Context
 
