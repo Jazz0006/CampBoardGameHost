@@ -91,23 +91,15 @@ internal object DynamicCandidateGenerator {
         context: DynamicGenerationContext,
     ): List<DecisionEvaluation<DynamicInformationOutcome.Number>> =
         (numberContext.minimumValue..numberContext.maximumValue).map { value ->
-            val recommendation = MalfunctionPolicy.evaluate(numberContext, value, context.style)
-            val truthful = value in numberContext.truthfulValues
-            val candidate = candidate(
-                stableOptionId = value.toString(),
-                outcome = DynamicInformationOutcome.Number(value),
-                truthful = truthful,
-                context = context,
-                informationValue = InformationValue.Number(value),
-                decisionType = "numeric-information",
-            )
             evaluation(
-                candidate = candidate,
-                context = context,
-                totalScore = recommendation.totalScore,
-                pressure = numberContext.distanceFromTruth(value),
-                warnings = recommendation.warningIds,
-                explanations = recommendation.scoreItems.map { it.ruleId },
+                candidate(
+                    stableOptionId = value.toString(),
+                    outcome = DynamicInformationOutcome.Number(value),
+                    truthful = value in numberContext.truthfulValues,
+                    context = context,
+                    informationValue = InformationValue.Number(value),
+                    decisionType = "numeric-information",
+                ),
             )
         }.sortedBy { it.candidate.candidateId }
 
@@ -117,9 +109,8 @@ internal object DynamicCandidateGenerator {
     ): List<DecisionEvaluation<DynamicInformationOutcome.Category>> = candidates
         .distinctBy { it.id }
         .map { input ->
-            val recommendation = MalfunctionPolicy.evaluate(input, context.style)
             evaluation(
-                candidate = candidate(
+                candidate(
                     stableOptionId = input.id,
                     outcome = DynamicInformationOutcome.Category(input.id),
                     truthful = input.isTruthful,
@@ -127,11 +118,6 @@ internal object DynamicCandidateGenerator {
                     informationValue = InformationValue.Category(input.id),
                     decisionType = "categorical-information",
                 ),
-                context = context,
-                totalScore = recommendation.totalScore,
-                pressure = input.misinformationPressure,
-                warnings = recommendation.warningIds,
-                explanations = listOf("dynamic.categorical-score"),
             )
         }.sortedBy { it.candidate.candidateId }
 
@@ -141,9 +127,8 @@ internal object DynamicCandidateGenerator {
     ): List<DecisionEvaluation<DynamicInformationOutcome.Category>> = candidates
         .distinctBy { it.id }
         .map { input ->
-            val recommendation = RegistrationPolicy.evaluatePair(input, context.style)
             evaluation(
-                candidate = candidate(
+                candidate(
                     stableOptionId = input.id,
                     outcome = DynamicInformationOutcome.Category(input.id),
                     truthful = input.isTruthful,
@@ -151,11 +136,6 @@ internal object DynamicCandidateGenerator {
                     informationValue = InformationValue.Category(input.id),
                     decisionType = "pair-information",
                 ),
-                context = context,
-                totalScore = recommendation.totalScore,
-                pressure = input.misinformationPressure,
-                warnings = recommendation.warningIds,
-                explanations = listOf("dynamic.pair-score"),
             )
         }.sortedBy { it.candidate.candidateId }
 
@@ -329,41 +309,16 @@ internal object DynamicCandidateGenerator {
 
     private fun <T : DynamicInformationOutcome> evaluation(
         candidate: DecisionCandidate<T>,
-        context: DynamicGenerationContext,
-        totalScore: Int,
-        pressure: Int,
-        warnings: List<String>,
-        explanations: List<String>,
-    ): DecisionEvaluation<T> {
-        val pressureSeats = context.targetSeats.ifEmpty {
-            setOf(candidate.effects.filterIsInstance<EffectDraft.PlayerInformation>().single().recipientSeat)
-        }
-        val base = DecisionEvaluation(
-            candidate = candidate,
-            qualityTier = if (warnings.any { it.contains("high") || it.contains("maximum") }) {
-                QualityTier.ACCEPTABLE_WITH_WARNING
-            } else {
-                QualityTier.RECOMMENDED
-            },
-            totalScore = totalScore,
-            withinFamilyWeightFixedPoint = (100L + totalScore.toLong() * 5L - pressure * 5L).coerceAtLeast(1L),
-            finalProbabilityFixedPoint = 0,
-            pressureDelta = if (pressure == 0) emptyMap() else pressureSeats.associateWith { pressure },
-            warnings = warnings,
-            explanationCodes = explanations.distinct(),
-        )
-        val state = context.state ?: return base
-        return ConsequenceEvaluator.evaluate(
-            base,
-            ConsequenceContext(
-                state = state,
-                style = context.style,
-                isOneShotAbility = context.isOneShotAbility,
-                playerSelectedTarget = context.playerSelectedTarget,
-                alignmentImpact = context.alignmentImpact,
-            ),
-        )
-    }
+    ): DecisionEvaluation<T> = DecisionEvaluation(
+        candidate = candidate,
+        qualityTier = QualityTier.RECOMMENDED,
+        totalScore = 0,
+        withinFamilyWeightFixedPoint = 1L,
+        finalProbabilityFixedPoint = 0L,
+        pressureDelta = emptyMap(),
+        warnings = emptyList(),
+        explanationCodes = emptyList(),
+    )
 
     private fun ImpairedInformationPolicyReason.auditSlug(): String = name.lowercase().replace('_', '-')
 
