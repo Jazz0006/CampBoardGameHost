@@ -1,6 +1,10 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import org.json.JSONArray
 import org.json.JSONObject
@@ -77,6 +81,8 @@ internal object RecoverySnapshotStrictDecoder {
         val phase = json.requiredEnum<ClocktowerPhase>("clocktowerPhase")
         val gameStateRevision = json.requiredLong("clocktowerGameStateRevision")
         val playerInputRevision = json.requiredLong("clocktowerPlayerInputRevision")
+        val storytellerPlayerContextBySeat =
+            json.requiredArray("clocktowerStorytellerPlayerContext").decodeStorytellerPlayerContextStrict()
         val actionTimeline = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(json)
         val epistemicObservations = json.requiredArray("clocktowerEpistemicObservations")
             .decodeEpistemicObservationsStrict()
@@ -137,6 +143,7 @@ internal object RecoverySnapshotStrictDecoder {
             history = ClocktowerRecoveryHistory(
                 gameStateRevision = gameStateRevision,
                 playerInputRevision = playerInputRevision,
+                storytellerPlayerContextBySeat = storytellerPlayerContextBySeat,
                 actionTimeline = actionTimeline,
                 nextTimelineGlobalSequence = nextTimelineGlobalSequence,
                 events = json.requiredArray("clocktowerEvents").decodeEventsStrict(),
@@ -224,6 +231,36 @@ internal object RecoverySnapshotStrictDecoder {
                     round = event.requiredInt("round"),
                 ),
             )
+        }
+    }
+
+    private fun JSONArray.decodeStorytellerPlayerContextStrict():
+        Map<Int, StorytellerPlayerContextInputV1> = buildMap {
+        for (index in 0 until length()) {
+            val entry = opt(index) as? JSONObject
+                ?: throw IllegalArgumentException(
+                    "clocktowerStorytellerPlayerContext[$index] must be an object.",
+                )
+            val seat = entry.requiredInt("seat")
+            require(seat > 0) { "Storyteller player-context seat must be positive." }
+            require(seat !in this) { "Storyteller player-context seats must be unique." }
+            val claimedRoleIds = entry.requiredArray("claimedRoleIds")
+                .strictStringList()
+                .map(::RoleId)
+            require(claimedRoleIds.distinct().size == claimedRoleIds.size) {
+                "Storyteller player-context claimed roles must be unique."
+            }
+            val value = StorytellerPlayerContextInputV1(
+                experienceLevel = entry.requiredEnum<PlayerExperienceLevelV1>("experienceLevel"),
+                claimedRoleIds = claimedRoleIds,
+                pressureLevel = entry.requiredNullableEnum<StorytellerDeclaredPressureLevelV1>(
+                    "pressureLevel",
+                ),
+            )
+            require(!value.isDefault) {
+                "Recovery stores only non-default Storyteller player-context overrides."
+            }
+            put(seat, value)
         }
     }
 
