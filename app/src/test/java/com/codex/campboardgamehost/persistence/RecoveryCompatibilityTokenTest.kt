@@ -7,7 +7,7 @@ import org.junit.Test
 class RecoveryCompatibilityTokenTest {
     @Test
     fun currentTokenIsOwnedByRecoveryFormatAndAcceptedByPlanner() {
-        val expectedToken = "recovery-v2:Undercover"
+        val expectedToken = "recovery-v3:Undercover"
         assertEquals(expectedToken, RecoveryCompatibilityToken.currentFor(GameKind.Undercover))
 
         val raw = RecoverySnapshotJsonCodec.encode(
@@ -42,7 +42,7 @@ class RecoveryCompatibilityTokenTest {
     @Test
     fun clocktowerTokenUsesTheSameRecoveryOwnedFormatAuthority() {
         assertEquals(
-            "recovery-v2:Clocktower",
+            "recovery-v3:Clocktower",
             RecoveryCompatibilityToken.currentFor(GameKind.Clocktower),
         )
     }
