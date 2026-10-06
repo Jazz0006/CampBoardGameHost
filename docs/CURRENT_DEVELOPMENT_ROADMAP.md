@@ -56,7 +56,7 @@ LRE-1 manual fallback / recommendation-authority cutoff        COMPLETE / ACCEPT
 LRE-P family-by-family special-policy loop                    SUPERSEDED / DO NOT CONTINUE
 GSP-0 General Storyteller Policy route reset                  COMPLETE / DOCS-ONLY
 GSP-1 special-policy automatic-authority revocation           COMPLETE / ACCEPTED — PR #225; merge 2a4884c; CI #3764 / R2 #3456 GREEN
-GSP-2 provider + decision-specific global-context contract    CURRENT — 2A COMPLETE; 2B1 COMPLETE; 2B2 NEXT
+GSP-2 provider + decision-specific global-context contract    CURRENT — 2A/2B1/2B2 SESSION OWNER COMPLETE; 2B3 NEXT
 ~~~
 
 ## 2. Current repository boundary
@@ -279,7 +279,8 @@ query live main / workspace
 -> GSP-1 Q04 / Librarian V2 / INV1-A discretionary automatic authority revoked COMPLETE / ACCEPTED
 -> GSP-2A structured provider contract COMPLETE / ACCEPTED — checkpoint aed23bad; CI #3769 / R2 #3459 GREEN
 -> GSP-2B1 typed game context + decision episode COMPLETE / ACCEPTED — checkpoint 9ee47da; CI #3774 / R2 #3463 GREEN
--> GSP-2B2 player-context ownership/edit/persistence audit + wiring NEXT
+-> GSP-2B2 session-owned player-context overrides COMPLETE / ACCEPTED — checkpoint 9d3bfdcb; CI #3778 / R2 #3466 GREEN
+-> GSP-2B3 current Recovery persistence + Storyteller edit-surface wiring NEXT
 -> GSP-2C cross-game history + soft diversity/repetition context
 -> GSP-2D prompt/response materializer + local validator
 -> GSP-3A manual blind LLM benchmark BEFORE any API integration
