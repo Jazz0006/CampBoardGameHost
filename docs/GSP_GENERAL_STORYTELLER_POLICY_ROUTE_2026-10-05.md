@@ -327,7 +327,11 @@ The typed model/vendor-neutral request/response seam now carries canonical pre-d
 
 #### GSP-2B — Stateful Game Context / Decision Episode
 
-The Host reconstructs each request from canonical state and committed history rather than relying on provider conversation memory. Formal typed enrichment includes per-player experience level (BEGINNER / NORMAL / EXPERT, default NORMAL), zero-or-more claimed roles per player/role context (default empty), and optional pressure level (default absent), together with public/private information prefix and prior Storyteller decisions. Persist a decision episode sufficient for replay and later recommendation context without making it a second game-state authority.
+**IN PROGRESS — GSP-2B1 typed context/episode checkpoint accepted at `9ee47da1e2f7308945d0a6e754701bbaf52f781a`; CI #3774 / R2 #3463 GREEN.**
+
+The Host reconstructs each request from canonical state and committed history rather than relying on provider conversation memory. GSP-2B1 now provides a policy-neutral current-game projection with one entry per snapshot seat: player experience level (BEGINNER / NORMAL / EXPERT, default NORMAL), zero-or-more claimed roles (default empty), and optional Storyteller-declared pressure (default absent). It also projects only effective prior decisions whose revisions are within the current request prefix, deliberately excluding legacy selector scores/probabilities, and defines an immutable decision-episode record that cannot become canonical game state.
+
+GSP-2B is **not complete** until ownership/edit/persistence for player experience, current-game claims and Storyteller-declared pressure is audited and connected to the Host-owned state/profile layer. Recommendation code must consume a projection of those values, never become their mutable authority.
 
 #### GSP-2C — Cross-game History & Diversity Context
 
