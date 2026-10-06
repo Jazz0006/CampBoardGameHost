@@ -280,7 +280,10 @@ query live main / workspace
 -> GSP-2A structured provider contract COMPLETE / ACCEPTED — checkpoint aed23bad; CI #3769 / R2 #3459 GREEN
 -> GSP-2B1 typed game context + decision episode COMPLETE / ACCEPTED — checkpoint 9ee47da; CI #3774 / R2 #3463 GREEN
 -> GSP-2B2 session-owned player-context overrides COMPLETE / ACCEPTED — checkpoint 9d3bfdcb; CI #3778 / R2 #3466 GREEN
--> GSP-2B3 current Recovery persistence + Storyteller edit-surface wiring NEXT
+-> GSP-2B3A current Recovery persistence COMPLETE / ACCEPTED — PR #231; merge 10d1eae; CI #3784 / R2 #3471 GREEN
+-> GSP-2B3B Storyteller player-context edit surface NEXT
+-> GSP-2B4 Decision Episode durable replay / persistence
+
 -> GSP-2C cross-game history + soft diversity/repetition context
 -> GSP-2D prompt/response materializer + local validator
 -> GSP-3A manual blind LLM benchmark BEFORE any API integration
