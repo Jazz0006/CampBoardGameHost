@@ -6,19 +6,19 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class RecoveryV2SchemaContractTest {
+class RecoveryV3SchemaContractTest {
     @Test
-    fun currentRecoveryContractIsV2AndOwnsItsCompatibilityToken() {
-        assertEquals(2, RecoverySnapshot.CURRENT_FORMAT_VERSION)
-        assertEquals("recovery-v2:Undercover", RecoveryCompatibilityToken.currentFor(GameKind.Undercover))
-        assertEquals("recovery-v2:Clocktower", RecoveryCompatibilityToken.currentFor(GameKind.Clocktower))
+    fun currentRecoveryContractIsV3AndOwnsItsCompatibilityToken() {
+        assertEquals(3, RecoverySnapshot.CURRENT_FORMAT_VERSION)
+        assertEquals("recovery-v3:Undercover", RecoveryCompatibilityToken.currentFor(GameKind.Undercover))
+        assertEquals("recovery-v3:Clocktower", RecoveryCompatibilityToken.currentFor(GameKind.Clocktower))
     }
 
     @Test
-    fun previousV1RecoveryIsRejectedWithoutMigration() {
+    fun previousV2RecoveryIsRejectedWithoutMigration() {
         val raw = currentUndercoverRaw().apply {
-            put(RecoverySnapshotJsonCodec.FORMAT_VERSION_KEY, 1)
-            put(RecoverySnapshotJsonCodec.COMPATIBILITY_TOKEN_KEY, "recovery-v1:Undercover")
+            put(RecoverySnapshotJsonCodec.FORMAT_VERSION_KEY, 2)
+            put(RecoverySnapshotJsonCodec.COMPATIBILITY_TOKEN_KEY, "recovery-v2:Undercover")
         }
 
         val result = prepare(raw)
