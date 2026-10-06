@@ -1,13 +1,11 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-10-06 Australia/Sydney  
+> Updated: 2026-10-07 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed executable recommendation checkpoint: **GSP-1 / PR #225 — special-policy automatic-authority revocation; squash merge `2a4884c856423d0268b020bd774dcb95954954de`; CI #3764 / R2 #3456 GREEN**  
-> DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
-> DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
-> Current executable verdict: **DLB campaign COMPLETE / ACCEPTED; GSP-1 COMPLETE / ACCEPTED. Q04 Drunk, functioning Librarian V2 and INV1-A Investigator are retained as historical/shadow/reference policy material but no longer have discretionary production automatic authority.**  
-> Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> C5-E, HOST-ML0/1, TBGS-2D/2E and LRE-1 remain COMPLETE / ACCEPTED historical foundations. GSP-1 is COMPLETE / ACCEPTED and GSP-2A/2B1/2B2 are useful foundations, but on 2026-10-06 the route was reset again after a live-code architecture audit: **GSP-2B3/2C/2D are paused. `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md` is the current execution authority.** The immediate target is an engine-only pending-decision/legal-domain boundary followed by neutral provider extraction and physical removal of both obsolete recommendation generations. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
+> RES checkpoint: **RES-0/1/2 COMPLETE / ACCEPTED.** RES-2 neutral provider contract landed in PR #236, squash merge `19abd61cf79088b16577461f3b7c0f40b30a5674`; the bounded Drunk direct-provider + context-memory closure landed in PR #237, squash merge `7ae03105f05e8754851b6134d5c5c9c25dfa5e0f`, CI #3800 / R2 #3482 GREEN.  
+> Architecture invariant: **a provider may be stateless, but recommendation context is not memoryless.** The Host owns and reconstructs current canonical state, current-game longitudinal/narrative history, relevant cross-game player experience and recommendation/diversity history. LLM/chat conversation memory is never correctness authority.  
+> Current execution target: **RES-3 — remove live product/UI/session reachability of the legacy heuristic/style/weighted recommender while preserving complete Manual legal domains, deterministic rule outcomes and the optional neutral provider seam.** RES-4 then removes named deterministic special-policy executables; RES-5 converges the physical module boundary.  
+> GSP-2B3/2C/2D remain paused/superseded by RES sequencing. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -32,7 +30,7 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 17. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
 18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and accepted TBGS-2D Demon-succession boundary
 19. `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md` — accepted TBGS-2E Mayor-redirect boundary
-20. `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md` — current execution authority; RES-0 active, RES-1 next
+20. `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md` — current execution authority; RES-0/1/2 complete, RES-3 next
 21. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — downstream general-provider/benchmark authority after RES separation; GSP-2B3/2C/2D paused
 22. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — accepted fail-closed Manual safety foundation; its old LRE-P continuation is superseded by GSP
 23. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure
@@ -176,7 +174,7 @@ DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c
 
 DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, DLB-5.5 removal of obsolete setup auto-apply wiring, and DLB-5.4 Poisoner / first-night information convergence audit. DLB-5.4 found no production gap: poison confirmation owns one canonical revision, unshown drafts are invalidated, displayed observations/history remain committed, and subsequent information replans against current poison state plus committed history. DLB-5 is COMPLETE / ACCEPTED. PR #183 passed final exact-head T4 at `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN and was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
 
-LRE-1 is **COMPLETE / ACCEPTED** under `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` and remains the safety foundation: unique legal outcomes may auto-resolve; unsupported multi-choice decisions must expose the complete Manual legal domain and may not fall back to legacy heuristics. PR #222 later merged INV1-A under the then-current LRE-P approach. The 2026-10-05 GSP route now supersedes further special-case policy expansion. GSP-0 changed documentation only; GSP-1 subsequently revoked Q04/Librarian V2/INV1-A discretionary automatic production authority in PR #225 while preserving their code/replay as benchmark/shadow material and preserving all rules/legal/manual behavior. **GSP-1 is COMPLETE / ACCEPTED; GSP-2 is next planned and remains unstarted.**
+LRE-1 is **COMPLETE / ACCEPTED** under `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` and remains the safety foundation: unique legal outcomes may auto-resolve; unsupported multi-choice decisions must expose the complete Manual legal domain and may not fall back to legacy heuristics. PR #222 later merged INV1-A under the then-current LRE-P approach. GSP-0/1 and GSP-2A/2B1/2B2 remain useful historical/provider foundations, but their former immediate continuation is paused. **RES-0/1/2 are COMPLETE / ACCEPTED; RES-3 is the next executable target.**
 
 Current C5 authority:
 
@@ -235,12 +233,17 @@ DLB-0 typed intermediate setup COMPLETE
 -> LRE-1 Manual fallback + fail-closed recommendation authority COMPLETE / ACCEPTED; executable `045b3a6884f765149d4f1802d5e369671d38d938`, CI #3752 / R2 #3448
 -> INV1-A functioning-Investigator special-policy cutover merged PR #222; merge `420eef4e21769e3adf8928f187009f2afc1e5fa2`
 -> LRE-P family-by-family special-policy continuation SUPERSEDED / DO NOT CONTINUE
--> GSP-0 General Storyteller Policy route reset CURRENT / DOCS-ONLY
--> GSP-1 revoke discretionary automatic authority of Q04 / Librarian V2 / INV1-A COMPLETE / ACCEPTED
--> GSP-2 provider + decision-specific global-context contract NEXT PLANNED / NOT STARTED
--> GSP-3A manual blind LLM benchmark BEFORE API integration
--> GSP-3B repeated/cross-model benchmark; GSP-3C API harness only if justified
--> GSP-4 full-game/global evidence expansion; GSP-5 deployment choice; GSP-6 physical obsolete-policy cleanup
+-> GSP-0 route reset COMPLETE / DOCS-ONLY
+-> GSP-1 discretionary automatic authority revocation COMPLETE / ACCEPTED
+-> GSP-2A/2B1/2B2 provider/context foundations COMPLETE / ACCEPTED; old 2B3/2C/2D continuation PAUSED
+-> RES-0 separation/purge audit COMPLETE / ACCEPTED
+-> RES-1 generic engine-owned pending-decision boundary COMPLETE / ACCEPTED
+-> RES-2 neutral provider contract + direct pair/Mayor/Drunk materialization COMPLETE / ACCEPTED
+|| Host-owned context-memory invariant: current-game longitudinal/narrative + relevant cross-game player + soft diversity history; provider chat memory not authoritative
+-> RES-3 legacy heuristic/style/weighted product reachability + physical purge NEXT
+-> RES-4 named deterministic special-policy purge
+-> RES-5 physical module/dependency convergence
+-> resume GSP context retrieval/materializer -> manual blind benchmark -> repeated/cross-model benchmark -> optional API adapter
 || Android product remains offline-first; remote LLM optional only
 || future player profile/management: per-player BEGINNER / NORMAL / EXPERT; default NORMAL
 -> A3 presentation catalog READY / independent maintenance only
@@ -310,9 +313,9 @@ Do not add new hand-authored policy weights/thresholds, broaden player-count/Tra
 
 The previous immediate GSP continuation is paused. Live-code audit confirmed that authority revocation did not physically remove old recommendation behavior: `ClocktowerHostScreen` still reaches legacy registration/pair/number recommendation paths and `GameBalanceEvaluator`, `RecommendationStyle` still flows through Host/night information surfaces, and `ClocktowerRecommendationCoordinator` still combines legal-domain, scoring, selection, history and explanation responsibilities. At the same time the new `StorytellerPolicyRequestV1` remains coupled to SDE/TB-specific export types.
 
-Current sequence is now: **RES-0 separation/purge audit -> RES-1 engine-only pending-decision/legal-domain boundary -> RES-2 neutral provider contract extraction -> RES-3 legacy heuristic/style/weighted purge -> RES-4 named deterministic special-policy purge -> RES-5 physical module/dependency convergence -> resume GSP provider context/materializer/benchmark**.
+Current sequence is now: **RES-0 COMPLETE -> RES-1 COMPLETE -> RES-2 COMPLETE -> RES-3 legacy heuristic/style/weighted purge NEXT -> RES-4 named deterministic special-policy purge -> RES-5 physical module/dependency convergence -> resume GSP context retrieval/materializer/benchmark**.
 
-RES-1 should use first-night pair information as the first vertical slice because `PairInformationLegalDomain` and `ClocktowerPairManualAuthority` already provide a mature complete legal/manual path. Prove Manual play and commit without `ClocktowerRecommendationCoordinator` before expanding to other decision families.
+RES-1 proved the generic engine-owned pending-decision seam with pair information and Mayor redirect. RES-2 established the neutral provider protocol and direct pair/Mayor/Drunk request materialization. PR #237 also freezes the context-memory ownership rule: provider invocations remain stateless and independently reconstructable, while the Host owns current-game longitudinal/narrative memory plus relevant cross-game player and soft-diversity history. RES-3 should begin by re-auditing live product reachability on fresh `main`, migrate UI/session consumers off legacy ranking, then delete implementations only after they are unreachable.
 
 
 ### GSP-2B1 acceptance — 2026-10-06

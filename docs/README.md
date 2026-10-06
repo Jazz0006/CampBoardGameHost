@@ -1,6 +1,6 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-10-06 Australia/Sydney  
+> 最后整理：2026-10-07 Australia/Sydney  
 > 目标：新开发会话只读取当前权威。历史过程、已撤销路线和中间校准实验不再留在 active docs 中制造歧义。
 
 ## 默认阅读顺序
@@ -11,7 +11,7 @@
 4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
 6. [`RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md`](RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md) — **当前执行主线：Game Engine / Recommendation 严格解耦 + 两代旧推荐算法物理清理**
-7. [`GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md) — **后续 provider / benchmark 路线；RES-1/2 完成前暂停继续扩展**
+7. [`GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md) — **后续 provider / benchmark 路线；RES-0/1/2 已完成，继续等待 RES-3/4/5 清理收敛后恢复**
 8. [`LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`](LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md) — **旧 heuristic 全面退休的证据/范围权威**
 9. [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md) — **长期 Recommendation Engine 分层架构权威；GSP policy-layer amendment applies**
 10. [`HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`](HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md) + [`HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md`](HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md) — **policy-neutral model / benchmark interchange boundary**
@@ -42,13 +42,16 @@ LRE-P family replacement + cutover      SUPERSEDED / DO NOT CONTINUE
 GSP-0 / GSP-1                          COMPLETE / ACCEPTED
 GSP-2A / 2B1 / 2B2                      COMPLETE / ACCEPTED foundations
 GSP-2B3 / 2C / 2D                       PAUSED BY RES ARCHITECTURE RESET
-RES-0 separation + purge audit           CURRENT
-RES-1 engine-only decision boundary      NEXT EXECUTABLE
-RES-2+ neutral provider extraction/purge AFTER RES-1
+RES-0 separation + purge audit           COMPLETE / ACCEPTED
+RES-1 engine-only decision boundary      COMPLETE / ACCEPTED
+RES-2 neutral provider contract          COMPLETE / ACCEPTED
+RES-3 legacy heuristic/style purge       NEXT EXECUTABLE
+RES-4 named special-policy purge         AFTER RES-3
+RES-5 physical module convergence        AFTER RES-4
 bounded App/Host decomposition          GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 ~~~
 
-当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。DLB 与 GSP-1 已完成；旧 special-policy automatic authority 已撤销，但 live source 仍保留并部分调用旧 heuristic/style/weighted recommender，且新的 GSP provider contract 仍带有 SDE/TB 专用耦合。当前主线改为 RES：先建立完全不依赖 Recommendation implementation 的 Game Engine / Manual legal-domain 边界，再抽取中立 provider contract，并物理删除 legacy heuristic 与 evidence-case deterministic selector 两代旧算法。GSP 的 cross-game context、prompt materializer、benchmark 和 API 路线保留为 RES 后续消费者。Android 产品保持 offline-first。
+当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。RES-0/1/2 已完成：Game Engine / Manual legal-domain 边界已与 Recommendation implementation 解耦，中立 provider contract 已建立，pair / Mayor / Drunk 均可直接物化中立请求。当前主线进入 RES-3，先移除 live product/UI/session 对 legacy heuristic/style/weighted recommender 的可达依赖，再进入 RES-4 named-policy 清理与 RES-5 模块收敛。Provider 可以 stateless，但 recommendation context 不能 memoryless：Host 必须拥有并重建本局纵向/叙事历史、相关跨局玩家体验和 soft diversity 历史。GSP 的 context retrieval/materializer、benchmark 和 API 路线保留为 RES 后续消费者。Android 产品保持 offline-first。
 
 ## 当前政策核心
 
