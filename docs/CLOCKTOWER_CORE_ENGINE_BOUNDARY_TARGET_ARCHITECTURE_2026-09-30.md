@@ -2,8 +2,8 @@
 
 > Date: 2026-09-30 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
-> Status: **LONG-HORIZON TARGET ARCHITECTURE / CONVERGENCE GUARDRAIL**  
-> This document records the intended ownership model. It is **not** authorization for a broad rewrite and does not replace the current DLB execution route.
+> Status: **ACTIVE OWNERSHIP TARGET / RES CONVERGENCE GUARDRAIL**  
+> The 2026-10-06 RES route activates this ownership direction through bounded vertical slices. It still does not authorize an indiscriminate rewrite.
 
 ## 1. Architecture decision
 
@@ -103,7 +103,9 @@ Examples include:
 - committing an accepted Storyteller or player decision into canonical state;
 - producing authoritative game events/facts.
 
-The Game Engine may request a recommendation, but it must remain able to distinguish:
+The Game Engine exposes rules-legal pending decisions. **It must not depend on or invoke a concrete Recommendation implementation.** Host/App orchestration may optionally send the immutable pending-decision projection to a Recommendation Provider and may present the returned suggestion beside the complete Manual legal domain.
+
+The boundary must always distinguish:
 
 ```text
 what choices are legal
@@ -111,7 +113,7 @@ from
 which legal choice is strategically preferable
 ```
 
-Rules/domain owners keep legality. Recommendation code must not become a second rules engine.
+Rules/domain owners keep legality. Recommendation code must not become a second rules engine, and provider absence/failure must not block game progression.
 
 ## 5. Storyteller Recommendation Engine definition
 
@@ -129,7 +131,7 @@ qualified/ranked candidate recommendations
 + rationale/diagnostics
 ```
 
-It does not directly mutate canonical game state. A recommendation becomes game truth only after the appropriate automatic-authority or human-confirmation path sends an accepted command/decision back through the Game Engine/session owner.
+It does not directly mutate canonical game state. A recommendation becomes game truth only when Host/App orchestration submits an explicit legal candidate selection back through the Game Engine/session owner. Recommendation availability never creates or removes legal game actions.
 
 This definition is broader than the current first exact-consequence SDE seam but consistent with it.
 
@@ -276,7 +278,7 @@ Current DLB convergence order is:
 
 Detailed authority: `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`.
 
-Do not start a new broad “rewrite GameState / rewrite Host / rewrite SDE” campaign solely because this document exists.
+Do not start a broad “rewrite GameState / rewrite Host / rewrite SDE” campaign. RES activates this architecture through one durable decision boundary at a time, beginning with first-night pair information.
 
 A future slice should be justified by a concrete ownership defect, feature need, stale duplicate-state path or already-planned retirement boundary.
 

@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-10-05 Australia/Sydney  
+> Updated: 2026-10-06 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**  
 > Historical checkpoint detail belongs in completion/audit documents under `docs/archive/` or the linked slice audits, not in this live roadmap.
@@ -56,7 +56,12 @@ LRE-1 manual fallback / recommendation-authority cutoff        COMPLETE / ACCEPT
 LRE-P family-by-family special-policy loop                    SUPERSEDED / DO NOT CONTINUE
 GSP-0 General Storyteller Policy route reset                  COMPLETE / DOCS-ONLY
 GSP-1 special-policy automatic-authority revocation           COMPLETE / ACCEPTED — PR #225; merge 2a4884c; CI #3764 / R2 #3456 GREEN
-GSP-2 provider + decision-specific global-context contract    CURRENT — 2A/2B1/2B2 SESSION OWNER COMPLETE; 2B3 NEXT
+GSP-2 provider + decision-specific global-context contract    PAUSED — 2A/2B1/2B2 COMPLETE FOUNDATIONS; 2B3/2C/2D DEFERRED TO RES BOUNDARY
+RES-0 engine/recommendation separation + purge audit          CURRENT
+RES-1 engine-only pending-decision/legal-domain boundary      NEXT EXECUTABLE
+RES-2 neutral provider-contract extraction                    AFTER RES-1
+RES-3/4 obsolete heuristic + named-policy physical purge      AFTER RES-2
+RES-5 physical module/dependency boundary                     FINAL RES CONVERGENCE
 ~~~
 
 ## 2. Current repository boundary
@@ -275,15 +280,19 @@ query live main / workspace
 -> LRE-1 manual fallback + fail-closed recommendation authority COMPLETE / ACCEPTED; executable `045b3a6884f765149d4f1802d5e369671d38d938`, CI #3752 / R2 #3448 GREEN
 -> INV1-A functioning-Investigator special-policy cutover merged in PR #222 / historical executable reality
 -> LRE-P family-by-family special-policy continuation SUPERSEDED
--> GSP-0 route reset + active-doc synchronization CURRENT / DOCS-ONLY
+-> GSP-0 route reset COMPLETE / DOCS-ONLY
 -> GSP-1 Q04 / Librarian V2 / INV1-A discretionary automatic authority revoked COMPLETE / ACCEPTED
 -> GSP-2A structured provider contract COMPLETE / ACCEPTED — checkpoint aed23bad; CI #3769 / R2 #3459 GREEN
 -> GSP-2B1 typed game context + decision episode COMPLETE / ACCEPTED — checkpoint 9ee47da; CI #3774 / R2 #3463 GREEN
 -> GSP-2B2 session-owned player-context overrides COMPLETE / ACCEPTED — checkpoint 9d3bfdcb; CI #3778 / R2 #3466 GREEN
--> GSP-2B3 current Recovery persistence + Storyteller edit-surface wiring NEXT
--> GSP-2C cross-game history + soft diversity/repetition context
--> GSP-2D prompt/response materializer + local validator
--> GSP-3A manual blind LLM benchmark BEFORE any API integration
+|| 2026-10-06 architecture reset: GSP-2B3/2C/2D PAUSED; provider work must target the neutral RES boundary
+-> RES-0 separation/purge audit + active-doc authority reset CURRENT
+-> RES-1 engine-only pending-decision/legal-domain boundary NEXT
+-> RES-2 neutral script-aware provider contract extraction
+-> RES-3 legacy heuristic/style/weighted recommender physical purge
+-> RES-4 evidence-case deterministic special-policy physical purge
+-> RES-5 physical module/dependency convergence
+-> resume GSP cross-game context -> prompt materializer -> GSP-3A manual blind benchmark BEFORE any API integration
 || Android product invariant: offline-first; network/LLM optional only
 || later player profile/management: BEGINNER / NORMAL / EXPERT; current default NORMAL
 -> A3 presentation catalog READY / independent maintenance only
@@ -300,12 +309,12 @@ Read first:
 3. `docs/TESTING_STRATEGY.md`
 4. this roadmap
 5. `docs/NEXT_DEVELOPMENT_HANDOFF.md`
-6. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current DLB/decomposition implementation authority
-7. `docs/DLB_DRUNK_ASSIGNMENT_PRODUCTION_CUTOVER_GATE_AUDIT_2026-09-30.md` — current Drunk-assignment cutover verdict / blocker authority
-8. `docs/DLB_DRUNK_RECOMMENDATION_CONTEXT_CAPABILITY_CONTRACT_2026-09-30.md` — current policy-neutral required/enrichment/unavailable context boundary and EvidenceLab handoff contract
-9. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — current TB-only canonical snapshot / Drunk vertical slice / EvidenceLab interoperability route
-10. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon core-engine/state boundary target; consult when a slice changes setup, recommendation context, canonical-state ownership or projection boundaries
-11. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record; read only when that history is needed
+6. `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md` — current executable architecture/separation/purge authority
+7. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — downstream general-provider/benchmark route; paused where it conflicts with RES sequencing
+8. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — legacy heuristic retirement inventory/evidence
+9. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` — current TB-only canonical snapshot / typed-decision interoperability foundation
+10. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon ownership target, now activated by RES
+11. completed DLB/C5/SDE audits — historical evidence only; read when a concrete ownership/replay issue requires them
 
 The 2026-09-28 source audits, completed Recovery/C4 audits, SDE freeze/cutover audits, and older SDE checkpoints are historical or specialized evidence. Read them only when the current slice raises a concrete ownership/evidence question.
 
