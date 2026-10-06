@@ -99,6 +99,11 @@ class ClocktowerFirstNightInformationRequestTest {
         assertEquals(listOf(2, 4), result.migratedCandidates.single().observation.candidateSeats)
         assertEquals(RoleId("Poisoner"), result.migratedCandidates.single().observation.shownRole)
         assertEquals(SemanticTruth.TRUE, result.migratedCandidates.single().observation.semanticTruth)
+        assertEquals(
+            "pair-information-ability-v1|Investigator|Poisoner|2,4",
+            result.migratedCandidates.single().id,
+        )
+        assertEquals(result.migratedCandidates.single().id, result.selectedCandidateId)
         assertEquals(listOf(1, 3), result.legacyCandidates.single().observation.candidateSeats)
     }
 
