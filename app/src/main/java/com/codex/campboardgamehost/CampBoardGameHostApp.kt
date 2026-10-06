@@ -1313,6 +1313,8 @@ internal fun CampBoardGameHostApp() {
                     nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
                     events = clocktowerEvents.toList(),
                     epistemicObservations = clocktowerEpistemicObservations.toList(),
+                    storytellerPlayerContextBySeat =
+                        requireClocktowerGameSession().state.storytellerPlayerContextBySeat,
                 ),
             )
         }
@@ -1444,6 +1446,7 @@ internal fun CampBoardGameHostApp() {
                         epistemicObservationLog = EpistemicObservationLog(history.epistemicObservations),
                         semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
                         nextTimelineGlobalSequence = history.nextTimelineGlobalSequence,
+                        storytellerPlayerContextBySeat = history.storytellerPlayerContextBySeat,
                     ),
                 )
                 publishClocktowerSessionView()
