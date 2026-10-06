@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **CURRENT ARCHITECTURE / EXECUTION AUTHORITY — RES-0/1 ACCEPTED; RES-2 CLOSING**
+> Status: **CURRENT ARCHITECTURE / EXECUTION AUTHORITY — RES-0/1/2 COMPLETE / ACCEPTED; RES-3 NEXT**
 >
 > Supersedes the previous immediate continuation `GSP-2B3 -> GSP-2C -> GSP-2D`. GSP remains the later provider/benchmark route, but it is paused until this separation campaign establishes a clean engine-only boundary and removes obsolete recommendation implementations.
 >
@@ -274,7 +274,7 @@ Use an existing mature TB decision surface as the first vertical slice; prefer f
 
 ### RES-2 — neutral provider contract extraction
 
-Status: **CLOSING**. The neutral outer contract, Host-owned same-game context reconstruction, direct pair-information request materialization and direct Mayor-redirect request materialization are implemented/accepted. This closure checkpoint adds direct engine-owned Drunk-assignment pending-decision -> neutral-provider materialization so all three representative decisions no longer require the legacy SDE request shape.
+Status: **COMPLETE / ACCEPTED**. The neutral outer contract, Host-owned same-game context reconstruction, direct pair-information request materialization and direct Mayor-redirect request materialization were accepted in PR #236 (`19abd61cf79088b16577461f3b7c0f40b30a5674`). PR #237 closed the remaining representative gap by adding direct engine-owned Drunk-assignment pending-decision -> neutral-provider materialization and recording the Host-owned context-memory rule; squash merge `7ae03105f05e8754851b6134d5c5c9c25dfa5e0f`, CI #3800 GREEN, R2 #3482 GREEN.
 
 Extract the durable parts of GSP-2A/2B into a script-neutral outer contract.
 
@@ -374,8 +374,8 @@ The final purge campaign must prove:
 
 ## 8. Immediate next step
 
-Finish the bounded RES-2 closure checkpoint by accepting the direct Drunk-assignment engine -> neutral-provider path and recording the stateless-provider/context-memory ownership rule above. Then sync roadmap/handoff to mark RES-0/1/2 complete and begin RES-3 from fresh live `main`.
+RES-0/1/2 are complete. Start RES-3 from fresh live `main`.
 
 > **RES-3 must remove product reachability of the legacy style/score/weighted recommendation stack while preserving complete Manual legal domains, deterministic rule outcomes and the optional neutral provider seam.**
 
-Do not continue the old GSP-2B3/2C/2D sequence or add another recommendation-owned memory store. Later longitudinal/cross-game context work must target the neutral RES provider contract.
+Begin with a fresh product-reachability audit and remove live UI/session dependence before deleting now-unreachable implementations. Do not continue the old GSP-2B3/2C/2D sequence or add another recommendation-owned memory store. Later longitudinal/cross-game context work must target the neutral RES provider contract.

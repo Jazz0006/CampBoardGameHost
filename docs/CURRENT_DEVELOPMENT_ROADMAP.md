@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-10-06 Australia/Sydney  
+> Updated: 2026-10-07 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**  
 > Historical checkpoint detail belongs in completion/audit documents under `docs/archive/` or the linked slice audits, not in this live roadmap.
@@ -57,10 +57,11 @@ LRE-P family-by-family special-policy loop                    SUPERSEDED / DO NO
 GSP-0 General Storyteller Policy route reset                  COMPLETE / DOCS-ONLY
 GSP-1 special-policy automatic-authority revocation           COMPLETE / ACCEPTED — PR #225; merge 2a4884c; CI #3764 / R2 #3456 GREEN
 GSP-2 provider + decision-specific global-context contract    PAUSED — 2A/2B1/2B2 COMPLETE FOUNDATIONS; 2B3/2C/2D DEFERRED TO RES BOUNDARY
-RES-0 engine/recommendation separation + purge audit          CURRENT
-RES-1 engine-only pending-decision/legal-domain boundary      NEXT EXECUTABLE
-RES-2 neutral provider-contract extraction                    AFTER RES-1
-RES-3/4 obsolete heuristic + named-policy physical purge      AFTER RES-2
+RES-0 engine/recommendation separation + purge audit          COMPLETE / ACCEPTED — PR #233
+RES-1 engine-only pending-decision/legal-domain boundary      COMPLETE / ACCEPTED — PR #234/#235
+RES-2 neutral provider-contract extraction                    COMPLETE / ACCEPTED — PR #236/#237; CI #3800 / R2 #3482 GREEN
+RES-3 legacy heuristic/style/weighted physical purge          NEXT EXECUTABLE
+RES-4 named deterministic special-policy physical purge       AFTER RES-3
 RES-5 physical module/dependency boundary                     FINAL RES CONVERGENCE
 ~~~
 
@@ -286,13 +287,14 @@ query live main / workspace
 -> GSP-2B1 typed game context + decision episode COMPLETE / ACCEPTED — checkpoint 9ee47da; CI #3774 / R2 #3463 GREEN
 -> GSP-2B2 session-owned player-context overrides COMPLETE / ACCEPTED — checkpoint 9d3bfdcb; CI #3778 / R2 #3466 GREEN
 || 2026-10-06 architecture reset: GSP-2B3/2C/2D PAUSED; provider work must target the neutral RES boundary
--> RES-0 separation/purge audit + active-doc authority reset CURRENT
--> RES-1 engine-only pending-decision/legal-domain boundary NEXT
--> RES-2 neutral script-aware provider contract extraction
--> RES-3 legacy heuristic/style/weighted recommender physical purge
+-> RES-0 separation/purge audit + active-doc authority reset COMPLETE / ACCEPTED
+-> RES-1 engine-only pending-decision/legal-domain boundary COMPLETE / ACCEPTED — pair + Mayor prove generic seam
+-> RES-2 neutral script-aware provider contract extraction COMPLETE / ACCEPTED — PR #236 merge 19abd61; Drunk/context-memory closure PR #237 merge 7ae03105
+|| stateless provider != memoryless recommendation: Host owns/rebuilds current-game longitudinal memory, relevant cross-game player history and soft recommendation-diversity history
+-> RES-3 legacy heuristic/style/weighted recommender physical purge NEXT
 -> RES-4 evidence-case deterministic special-policy physical purge
 -> RES-5 physical module/dependency convergence
--> resume GSP cross-game context -> prompt materializer -> GSP-3A manual blind benchmark BEFORE any API integration
+-> resume GSP context materializer/retrieval -> prompt materializer -> GSP-3A manual blind benchmark BEFORE any API integration
 || Android product invariant: offline-first; network/LLM optional only
 || later player profile/management: BEGINNER / NORMAL / EXPERT; current default NORMAL
 -> A3 presentation catalog READY / independent maintenance only
