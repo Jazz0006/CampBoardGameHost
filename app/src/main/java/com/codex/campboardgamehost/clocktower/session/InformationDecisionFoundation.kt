@@ -15,37 +15,12 @@ internal enum class InformationDecisionSource {
 }
 
 /**
- * Freshness boundary for a Storyteller-visible information decision.
+ * Information-decision compatibility names for the engine-owned generic Storyteller boundary.
  *
- * A decision prepared against either an older game state or older player input must not be
- * confirmed after that input changes.
+ * New cross-decision code should use the StorytellerDecision* names directly.
  */
-internal data class InformationDecisionRevision(
-    val gameStateRevision: Long,
-    val playerInputRevision: Long,
-) {
-    init {
-        require(gameStateRevision >= 0) { "gameStateRevision cannot be negative." }
-        require(playerInputRevision >= 0) { "playerInputRevision cannot be negative." }
-    }
-}
-
-/**
- * Typed identity boundary for one information-decision request.
- *
- * [gameId] binds the request to the canonical game/session. [requestId] is the existing stable
- * semantic decision identity used for UI/trace correlation; callers must never parse it to recover
- * the game identity.
- */
-internal data class InformationDecisionRequestIdentity(
-    val gameId: String,
-    val requestId: String,
-) {
-    init {
-        require(gameId.isNotBlank()) { "Information decision game ID cannot be blank." }
-        require(requestId.isNotBlank()) { "Information decision request ID cannot be blank." }
-    }
-}
+internal typealias InformationDecisionRevision = StorytellerDecisionRevision
+internal typealias InformationDecisionRequestIdentity = StorytellerDecisionRequestIdentity
 
 internal enum class InformationDecisionHardBlockReason {
     STALE_CONTEXT,

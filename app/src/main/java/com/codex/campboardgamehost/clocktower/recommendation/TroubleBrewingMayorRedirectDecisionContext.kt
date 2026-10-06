@@ -1,14 +1,10 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
-import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCatalogTeam
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
-import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
 import com.codex.campboardgamehost.clocktower.domain.DynamicGameState
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerInformationPressure
-import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.PublicBalanceHint
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
@@ -18,6 +14,7 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import com.codex.campboardgamehost.clocktower.rules.MayorRedirectDecisionDomain
 import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegalDomain
+import com.codex.campboardgamehost.clocktower.session.TroubleBrewingRuntimeGameProjector
 
 /**
  * Snapshot-backed recommendation context for a Trouble Brewing Mayor night-death decision.
@@ -91,7 +88,7 @@ internal object TroubleBrewingMayorRedirectDecisionContextBuilder {
         playerInformationPressureBySeat: Map<Int, PlayerInformationPressure>,
         spentAbilitySeats: Set<Int>,
     ): TroubleBrewingMayorRedirectDecisionContext {
-        val game = projectRuntimeGame(snapshot, characterRegistry)
+        val game = TroubleBrewingRuntimeGameProjector.project(snapshot, characterRegistry)
         return build(
             snapshot = snapshot,
             recommendationGameState = game,
@@ -110,7 +107,7 @@ internal object TroubleBrewingMayorRedirectDecisionContextBuilder {
         playerInformationPressureBySeat: Map<Int, PlayerInformationPressure>,
         spentAbilitySeats: Set<Int>,
     ): TroubleBrewingMayorRedirectDecisionContext {
-        val game = projectRuntimeGame(snapshot, characterRegistry)
+        val game = TroubleBrewingRuntimeGameProjector.project(snapshot, characterRegistry)
         return build(
             snapshot = snapshot,
             recommendationGameState = game,
@@ -154,61 +151,4 @@ internal object TroubleBrewingMayorRedirectDecisionContextBuilder {
         )
     }
 
-    private fun projectRuntimeGame(
-        snapshot: TroubleBrewingGameSnapshotV1,
-        characterRegistry: ClocktowerCharacterRegistry,
-    ): GameState {
-        require(snapshot.position.stage == TroubleBrewingSnapshotStage.RUNTIME) {
-            "Mayor redirect context requires a runtime Trouble Brewing snapshot."
-        }
-        val players = snapshot.grimoireSeats.map { seat ->
-            val actualExternalId = seat.actualRoleId.requireKnown("actual role", seat.seat)
-            val shownExternalId = seat.shownRoleId.requireKnown("shown role", seat.seat)
-            val actual = requireNotNull(characterRegistry.findByExternalId(actualExternalId)) {
-                "Unknown Trouble Brewing actual role '" + actualExternalId + "' at seat " + seat.seat + "."
-            }
-            val shown = requireNotNull(characterRegistry.findByExternalId(shownExternalId)) {
-                "Unknown Trouble Brewing shown role '" + shownExternalId + "' at seat " + seat.seat + "."
-            }
-            PlayerState(
-                seat = seat.seat,
-                name = "Seat " + seat.seat,
-                actualRole = actual.id,
-                actualAlignment = actual.team.toAlignment(),
-                actualType = actual.team.toCharacterType(),
-                shownRole = shown.id,
-                alive = seat.alive.requireKnown("alive state", seat.seat),
-                poisoned = seat.poisoned.requireKnown("poison state", seat.seat),
-            )
-        }
-        return GameState(
-            script = snapshot.script,
-            players = players,
-            seed = snapshot.gameSeed,
-        )
-    }
-
-    private fun <T> SnapshotField<T>.requireKnown(label: String, seat: Int): T =
-        (this as? SnapshotField.Known<T>)?.value
-            ?: error("Mayor redirect context requires known " + label + " at seat " + seat + ".")
-
-    private fun ClocktowerCatalogTeam.toAlignment(): Alignment = when (this) {
-        ClocktowerCatalogTeam.TOWNSFOLK,
-        ClocktowerCatalogTeam.OUTSIDER,
-        -> Alignment.GOOD
-
-        ClocktowerCatalogTeam.MINION,
-        ClocktowerCatalogTeam.DEMON,
-        -> Alignment.EVIL
-
-        else -> error("Mayor redirect context does not support catalog team " + this + ".")
-    }
-
-    private fun ClocktowerCatalogTeam.toCharacterType(): CharacterType = when (this) {
-        ClocktowerCatalogTeam.TOWNSFOLK -> CharacterType.TOWNSFOLK
-        ClocktowerCatalogTeam.OUTSIDER -> CharacterType.OUTSIDER
-        ClocktowerCatalogTeam.MINION -> CharacterType.MINION
-        ClocktowerCatalogTeam.DEMON -> CharacterType.DEMON
-        else -> error("Mayor redirect context does not support catalog team " + this + ".")
-    }
 }
