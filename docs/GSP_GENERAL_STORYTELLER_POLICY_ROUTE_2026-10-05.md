@@ -333,7 +333,9 @@ The Host reconstructs each request from canonical state and committed history ra
 
 GSP-2B2 session ownership is now accepted at checkpoint `9d3bfdcb20bc48b2659e0fec381f48f3049a5267`, CI #3778 / R2 #3466 GREEN. The neutral player-input type lives outside recommendation code; `ClocktowerSessionState` owns sparse non-default per-seat overrides, and edits increment only `playerInputRevision`, so stale provider responses are invalidated without creating mechanical game-state revisions. Recommendation remains a read-only projection.
 
-GSP-2B is **not complete** until current-version Recovery persistence and an explicit Storyteller edit surface are wired. Long-term player-profile ownership may later hydrate experience level at game start; until then absence means NORMAL. Claims and declared pressure remain current-game inputs.
+GSP-2B3A Recovery persistence is COMPLETE / ACCEPTED via PR #231 (merge `10d1eae72ad564155dc7faa53092b0203b135fbc`; final branch CI #3784 / R2 #3471 GREEN). Recovery is strict/current-only v3: sparse session-owned experience/claims/declared-pressure overrides survive process loss and restore directly into `ClocktowerSessionState`; v2 is rejected without migration.
+
+GSP-2B remains **IN PROGRESS**. **GSP-2B3B Storyteller edit surface is NEXT** so the Host can actually edit per-seat experience, zero-or-more claims and optional declared pressure through the UI while session ownership/revision semantics remain authoritative. After that, **GSP-2B4 Decision Episode durable replay** must persist provider request/response/committed-selection episodes without becoming canonical game state. Only then may GSP-2B close and hand off to GSP-2C. Long-term player-profile ownership may later hydrate experience level at game start; until then absence means NORMAL.
 
 #### GSP-2C — Cross-game History & Diversity Context
 
