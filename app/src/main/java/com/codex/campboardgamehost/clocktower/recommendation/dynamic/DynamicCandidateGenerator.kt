@@ -92,7 +92,7 @@ internal object DynamicCandidateGenerator {
     ): List<DecisionEvaluation<DynamicInformationOutcome.Number>> =
         (numberContext.minimumValue..numberContext.maximumValue).map { value ->
             evaluation(
-                candidate(
+                candidate = candidate(
                     stableOptionId = value.toString(),
                     outcome = DynamicInformationOutcome.Number(value),
                     truthful = value in numberContext.truthfulValues,
@@ -100,6 +100,7 @@ internal object DynamicCandidateGenerator {
                     informationValue = InformationValue.Number(value),
                     decisionType = "numeric-information",
                 ),
+                warnings = numberContext.warningCodes(value),
             )
         }.sortedBy { it.candidate.candidateId }
 
@@ -309,6 +310,7 @@ internal object DynamicCandidateGenerator {
 
     private fun <T : DynamicInformationOutcome> evaluation(
         candidate: DecisionCandidate<T>,
+        warnings: List<String> = emptyList(),
     ): DecisionEvaluation<T> = DecisionEvaluation(
         candidate = candidate,
         qualityTier = QualityTier.RECOMMENDED,
@@ -316,7 +318,7 @@ internal object DynamicCandidateGenerator {
         withinFamilyWeightFixedPoint = 1L,
         finalProbabilityFixedPoint = 0L,
         pressureDelta = emptyMap(),
-        warnings = emptyList(),
+        warnings = warnings,
         explanationCodes = emptyList(),
     )
 

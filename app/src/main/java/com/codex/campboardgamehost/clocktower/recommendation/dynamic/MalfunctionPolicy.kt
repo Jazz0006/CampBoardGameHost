@@ -24,6 +24,22 @@ internal data class UnreliableNumberContext(
     fun distanceFromTruth(value: Int): Int = truthfulValues.minOf { truthfulValue ->
         abs(value - truthfulValue)
     }
+
+    /**
+     * Policy-neutral continuity/safety diagnostics for one legal displayed value.
+     *
+     * These warnings describe the relationship between the current candidate and Host-owned
+     * longitudinal context. They do not rank candidates or imply a RecommendationStyle.
+     */
+    fun warningCodes(value: Int): List<String> = buildList {
+        require(value in minimumValue..maximumValue)
+        if (value == maximumValue && truthfulValues.all { it == minimumValue }) {
+            add("maximum-false-pressure")
+        }
+        if (previousShownValue != null && abs(value - previousShownValue) >= 2) {
+            add("large-history-jump")
+        }
+    }
 }
 
 internal data class UnreliableNumberScoreItem(

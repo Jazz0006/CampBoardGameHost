@@ -112,7 +112,7 @@ class ConsequenceEvaluatorTest {
     }
 
     @Test
-    fun `dynamic generation applies consequences to explicit target seats`() {
+    fun `dynamic candidate generation stays policy neutral even when legacy consequence inputs are present`() {
         val context = DynamicGenerationContext(
             abilityRole = com.codex.campboardgamehost.clocktower.domain.RoleId("Ravenkeeper"),
             recipientSeat = 1,
@@ -129,9 +129,9 @@ class ConsequenceEvaluatorTest {
             context,
         ).single()
 
-        assertEquals(setOf(4), falseCandidate.pressureDelta.keys)
-        assertEquals(QualityTier.EXPERT_ONLY, falseCandidate.qualityTier)
-        assertTrue("consequence.final-day-impact-penalty" in falseCandidate.explanationCodes)
+        assertTrue(falseCandidate.pressureDelta.isEmpty())
+        assertEquals(QualityTier.RECOMMENDED, falseCandidate.qualityTier)
+        assertTrue(falseCandidate.explanationCodes.none { it.startsWith("consequence.") })
     }
 
     private fun state(
