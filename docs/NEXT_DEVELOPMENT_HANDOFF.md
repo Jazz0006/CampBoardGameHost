@@ -2,12 +2,12 @@
 
 > Updated: 2026-10-05 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> Last completed executable recommendation checkpoint: **PR #222 — INV1-A functioning-Investigator special-policy cutover; head `89fb4a518260fb838f69a6d6b389869ab5f865f6`; CI #3759 / R2 #3453 GREEN; squash merge `420eef4e21769e3adf8928f187009f2afc1e5fa2`**  
+> Last completed executable recommendation checkpoint: **GSP-1 / PR #225 — special-policy automatic-authority revocation; squash merge `2a4884c856423d0268b020bd774dcb95954954de`; CI #3764 / R2 #3456 GREEN**  
 > DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
-> Current executable verdict: **DLB campaign COMPLETE / ACCEPTED; Q04 Drunk, functioning Librarian V2 and INV1-A Investigator remain live special-policy islands until GSP-1 revokes their discretionary automatic authority**  
+> Current executable verdict: **DLB campaign COMPLETE / ACCEPTED; GSP-1 COMPLETE / ACCEPTED. Q04 Drunk, functioning Librarian V2 and INV1-A Investigator are retained as historical/shadow/reference policy material but no longer have discretionary production automatic authority.**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> C5-E, HOST-ML0/1, TBGS-2D/2E and LRE-1 remain COMPLETE / ACCEPTED historical foundations. On 2026-10-05 the product route changed: **LRE-P family-by-family special-case policy replacement is superseded.** Expert cases remain evidence/benchmark/context rather than executable predicate=>answer authority. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` is now the current recommendation-lane authority. GSP-0 is docs-only; **GSP-1 special-policy automatic-authority revocation is NEXT**. CampBoardGameHost remains offline-first; manual blind LLM benchmark precedes any API integration.
+> C5-E, HOST-ML0/1, TBGS-2D/2E and LRE-1 remain COMPLETE / ACCEPTED historical foundations. On 2026-10-05 the product route changed: **LRE-P family-by-family special-case policy replacement is superseded.** Expert cases remain evidence/benchmark/context rather than executable predicate=>answer authority. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` is now the current recommendation-lane authority. GSP-0 is docs-only; **GSP-1 special-policy automatic-authority revocation is COMPLETE / ACCEPTED; GSP-2 is next planned but not started by this handoff**. CampBoardGameHost remains offline-first; manual blind LLM benchmark precedes any API integration.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -32,7 +32,7 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 17. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
 18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and accepted TBGS-2D Demon-succession boundary
 19. `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md` — accepted TBGS-2E Mayor-redirect boundary
-20. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — current recommendation execution authority; GSP-1 is next executable
+20. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — current recommendation execution authority; GSP-1 complete/accepted; GSP-2 next planned, not started
 21. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — accepted fail-closed Manual safety foundation; its old LRE-P continuation is superseded by GSP
 22. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure
 23. `docs/archive/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — superseded historical route; do not use its family-by-family LRE-P loop as current authority
@@ -175,7 +175,7 @@ DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c
 
 DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, DLB-5.5 removal of obsolete setup auto-apply wiring, and DLB-5.4 Poisoner / first-night information convergence audit. DLB-5.4 found no production gap: poison confirmation owns one canonical revision, unshown drafts are invalidated, displayed observations/history remain committed, and subsequent information replans against current poison state plus committed history. DLB-5 is COMPLETE / ACCEPTED. PR #183 passed final exact-head T4 at `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN and was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
 
-LRE-1 is **COMPLETE / ACCEPTED** under `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` and remains the safety foundation: unique legal outcomes may auto-resolve; unsupported multi-choice decisions must expose the complete Manual legal domain and may not fall back to legacy heuristics. PR #222 later merged INV1-A under the then-current LRE-P approach. The 2026-10-05 GSP route now supersedes further special-case policy expansion. GSP-0 changes documentation only; current Q04/Librarian V2/INV1-A automatic behavior still exists. The immediate executable priority is **GSP-1: audit and revoke those special-policy automatic authorities while preserving their code/replay as benchmark/shadow material and preserving all rules/legal/manual behavior**.
+LRE-1 is **COMPLETE / ACCEPTED** under `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` and remains the safety foundation: unique legal outcomes may auto-resolve; unsupported multi-choice decisions must expose the complete Manual legal domain and may not fall back to legacy heuristics. PR #222 later merged INV1-A under the then-current LRE-P approach. The 2026-10-05 GSP route now supersedes further special-case policy expansion. GSP-0 changed documentation only; GSP-1 subsequently revoked Q04/Librarian V2/INV1-A discretionary automatic production authority in PR #225 while preserving their code/replay as benchmark/shadow material and preserving all rules/legal/manual behavior. **GSP-1 is COMPLETE / ACCEPTED; GSP-2 is next planned and remains unstarted.**
 
 Current C5 authority:
 
@@ -185,7 +185,7 @@ DLB historical implementation authority remains:
 
 `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`
 
-Architecture convergence guardrail: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` records the intended separation of Setup Generation, canonical Game Session/Game Engine, and read-only Storyteller Recommendation. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` refines the read boundary through immutable `TroubleBrewingGameSnapshotV1` projections. GSP preserves these foundations while changing the policy layer: a future provider reasons over Host-owned canonical context and legal candidates; it never owns legality or state mutation. Q04/Librarian/INV1-A remain historical executable evidence until GSP-1 removes their automatic authority.
+Architecture convergence guardrail: `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` records the intended separation of Setup Generation, canonical Game Session/Game Engine, and read-only Storyteller Recommendation. `docs/TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md` refines the read boundary through immutable `TroubleBrewingGameSnapshotV1` projections. GSP preserves these foundations while changing the policy layer: a future provider reasons over Host-owned canonical context and legal candidates; it never owns legality or state mutation. Q04/Librarian/INV1-A now remain historical/shadow/reference evidence after GSP-1 removed their discretionary automatic production authority.
 
 Immediate sequence:
 
@@ -235,8 +235,8 @@ DLB-0 typed intermediate setup COMPLETE
 -> INV1-A functioning-Investigator special-policy cutover merged PR #222; merge `420eef4e21769e3adf8928f187009f2afc1e5fa2`
 -> LRE-P family-by-family special-policy continuation SUPERSEDED / DO NOT CONTINUE
 -> GSP-0 General Storyteller Policy route reset CURRENT / DOCS-ONLY
--> GSP-1 revoke discretionary automatic authority of Q04 / Librarian V2 / INV1-A NEXT EXECUTABLE
--> GSP-2 provider + decision-specific global-context contract AFTER GSP-1
+-> GSP-1 revoke discretionary automatic authority of Q04 / Librarian V2 / INV1-A COMPLETE / ACCEPTED
+-> GSP-2 provider + decision-specific global-context contract NEXT PLANNED / NOT STARTED
 -> GSP-3A manual blind LLM benchmark BEFORE API integration
 -> GSP-3B repeated/cross-model benchmark; GSP-3C API harness only if justified
 -> GSP-4 full-game/global evidence expansion; GSP-5 deployment choice; GSP-6 physical obsolete-policy cleanup

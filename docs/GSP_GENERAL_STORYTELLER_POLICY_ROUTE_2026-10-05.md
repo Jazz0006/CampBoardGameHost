@@ -294,9 +294,9 @@ No executable behavior changes.
 
 ### GSP-1 — special-policy authority revocation
 
-Next executable phase.
+**COMPLETE / ACCEPTED — PR #225, squash merge `2a4884c856423d0268b020bd774dcb95954954de`; CI #3764 / R2 #3456 GREEN.**
 
-Audit every currently live special-policy island and revoke automatic authority where the choice is discretionary and based on a bounded case/predicate rather than a generally trusted reasoner.
+The production audit covered every known live special-policy island and revoked automatic authority where the choice was discretionary and based on a bounded case/predicate rather than a generally trusted reasoner.
 
 Known initial audit set:
 
@@ -414,19 +414,12 @@ The neutral export may be reused for manual benchmark materialization, later aut
 
 ## 14. Immediate continuation
 
-After GSP-0 documentation acceptance:
+GSP-1 is now COMPLETE / ACCEPTED. Production call-path re-audit after merge confirms:
 
-```text
-GSP-1
--> audit live production recommendation authority
--> identify every special-case auto-selector still reachable
--> revoke Q04 / Librarian V2 / INV1-A automatic authority where discretionary
--> preserve complete Manual legal domains
--> preserve rules-deterministic unique outcomes
--> preserve policies as shadow/benchmark only
--> validate normal Android behavior
-```
+- Q04 production adapter has no production caller; it remains definition/test/reference material;
+- Librarian V2 and INV1-A selectors remain reachable only from retained, uncalled helper/oracle code, not from the first-night `automaticPolicyRecommendation` wiring;
+- unique rules-legal outcomes remain eligible for deterministic automatic resolution;
+- discretionary multi-choice decisions expose the complete Manual legal domain;
+- no legacy heuristic fallback was reintroduced.
 
-Do **not** implement another Washerwoman / Investigator / Red Herring / Demon-bluff named deterministic policy before this authority reset.
-
-The first goal of the next executable session is not to improve recommendation quality. It is to make production authority honest about what is and is not yet generally solved.
+The next planned route phase is GSP-2, but it is **not started by this closure**. Do not implement another named special-case deterministic policy, API integration, or LLM production path as part of GSP-1 bookkeeping.
