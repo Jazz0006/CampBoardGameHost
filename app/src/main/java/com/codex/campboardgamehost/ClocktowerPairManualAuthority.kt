@@ -10,9 +10,10 @@ import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalDomain
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
+import com.codex.campboardgamehost.clocktower.rules.PairInformationLegalCandidate
+import com.codex.campboardgamehost.clocktower.rules.PairInformationLegalDomain
+import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
 
 /**
  * Manual presentation adapter for Washerwoman/Librarian/Investigator information.
@@ -60,6 +61,24 @@ internal object ClocktowerPairManualAuthority {
         ?.outcome
         ?.pairInformationKey()
         ?.let(presentation::canonicalOptionFor)
+
+    /** Resolve a presentation selection to the stable ID owned by an engine/session pending decision. */
+    fun selectedCandidateId(
+        decision: PendingPairInformationDecision,
+        selectedOption: ClocktowerDisplayOption,
+    ): String {
+        val key = requireNotNull(selectedOption.pairInformationKeyOrNull()) {
+            "Pair-information selection requires a structured pair proposition."
+        }
+        return requireNotNull(
+            decision.candidateIdFor(
+                shownRole = key.shownRole,
+                candidateSeats = key.candidateSeats,
+            ),
+        ) {
+            "Selected pair-information outcome is not in the current legal domain: $key"
+        }
+    }
 
     fun projectLegalOptions(
         context: TroubleBrewingFirstNightPairDecisionContext,

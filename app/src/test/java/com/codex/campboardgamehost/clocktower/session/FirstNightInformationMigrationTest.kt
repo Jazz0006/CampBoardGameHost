@@ -28,7 +28,7 @@ class FirstNightInformationMigrationTest {
         assertFalse(migration.isReady(request.decisionId))
     }
 
-    @Test fun `authoritative pair domain publishes despite intentional legacy mismatch and commits migrated selection`() {
+    @Test fun `authoritative pair parity ignores candidate ID migration and commits migrated selection`() {
         val request = request(
             family = FirstNightInformationFamily.INVESTIGATOR,
             seat = 2,
@@ -37,7 +37,7 @@ class FirstNightInformationMigrationTest {
             migratedId = "legal-manual-choice",
         )
         val coordinator = FirstNightInformationMigration()
-        assertTrue(coordinator.shadow(request) is FirstNightShadowResult.Mismatch)
+        assertTrue(coordinator.shadow(request) is FirstNightShadowResult.Ready)
 
         val published = coordinator.publishAuthoritativePairDomain(request)
         assertTrue(published.isReady(request.decisionId))
@@ -131,9 +131,19 @@ class FirstNightInformationMigrationTest {
         assertFalse(migration.isDisplayed(request.decisionId))
     }
 
-    @Test fun `reveal resolution commits selected authoritative pair despite parity mismatch`() {
-        val request = request(FirstNightInformationFamily.INVESTIGATOR, 2, ReliabilityState.DRUNK, "old", "new")
+    @Test fun `reveal resolution commits selected authoritative pair despite semantic parity mismatch`() {
+        val base = request(FirstNightInformationFamily.INVESTIGATOR, 2, ReliabilityState.DRUNK, "old", "new")
+        val request = base.copy(
+            migratedCandidates = listOf(
+                base.migratedCandidates.single().copy(
+                    observation = base.migratedCandidates.single().observation.copy(
+                        semanticTruth = SemanticTruth.FALSE,
+                    ),
+                ),
+            ),
+        )
         val migration = FirstNightInformationMigration()
+        assertTrue(migration.shadow(request) is FirstNightShadowResult.Mismatch)
         val result = migration.resolvePublication(request, migration.shadow(request)) as FirstNightPublicationResolution.Published
         assertEquals(request.migratedCandidates.single().observation, result.migration.displayedObservation(request.decisionId))
         assertEquals(FirstNightPublicationResolution.AlreadyDisplayed,

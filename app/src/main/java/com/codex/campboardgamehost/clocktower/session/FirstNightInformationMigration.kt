@@ -104,7 +104,12 @@ internal data class FirstNightInformationMigration(
         val migratedParity = migratedPool.paritySignature()
         val legacy = legacyParity.mapTo(sortedSetOf()) { it.candidateId }
         val migrated = migratedParity.mapTo(sortedSetOf()) { it.candidateId }
-        return if (legacyParity == migratedParity) FirstNightShadowResult.Ready(migrated)
+        val matches = if (request.family.usesAuthoritativePairDomain()) {
+            request.legacyCandidates.semanticPairParity() == request.migratedCandidates.semanticPairParity()
+        } else {
+            legacyParity == migratedParity
+        }
+        return if (matches) FirstNightShadowResult.Ready(migrated)
         else FirstNightShadowResult.Mismatch(legacy - migrated, migrated - legacy)
     }
 
@@ -184,3 +189,18 @@ internal sealed interface FirstNightPublicationResolution {
     data object AlreadyDisplayed : FirstNightPublicationResolution
     data object LegacyFallback : FirstNightPublicationResolution
 }
+
+private data class PairSemanticParity(
+    val observation: AbilityObservation,
+    val qualityTier: QualityTier,
+    val rankFixedPoint: Long,
+)
+
+private fun List<FirstNightInformationCandidate>.semanticPairParity(): Map<PairSemanticParity, Int> =
+    groupingBy { candidate ->
+        PairSemanticParity(
+            observation = candidate.observation,
+            qualityTier = candidate.qualityTier,
+            rankFixedPoint = candidate.rankFixedPoint,
+        )
+    }.eachCount()
