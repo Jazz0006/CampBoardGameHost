@@ -1,13 +1,13 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-10-05 Australia/Sydney  
+> Updated: 2026-10-06 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
 > Last completed executable recommendation checkpoint: **GSP-1 / PR #225 — special-policy automatic-authority revocation; squash merge `2a4884c856423d0268b020bd774dcb95954954de`; CI #3764 / R2 #3456 GREEN**  
 > DLB-6 merged checkpoint: **PR #195 — `DLB-6: retire old Drunk setup contracts` — squash merge `5223c2fb610ba63d2c5c9b2f6ca17cb14adb0ce7`**  
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current executable verdict: **DLB campaign COMPLETE / ACCEPTED; GSP-1 COMPLETE / ACCEPTED. Q04 Drunk, functioning Librarian V2 and INV1-A Investigator are retained as historical/shadow/reference policy material but no longer have discretionary production automatic authority.**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> C5-E, HOST-ML0/1, TBGS-2D/2E and LRE-1 remain COMPLETE / ACCEPTED historical foundations. On 2026-10-05 the product route changed: **LRE-P family-by-family special-case policy replacement is superseded.** Expert cases remain evidence/benchmark/context rather than executable predicate=>answer authority. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` is now the current recommendation-lane authority. GSP-0 is docs-only; **GSP-1 is COMPLETE / ACCEPTED; GSP-2A and GSP-2B1 are COMPLETE / ACCEPTED; GSP-2B2 session-owned player context is COMPLETE / ACCEPTED at `9d3bfdcb20bc48b2659e0fec381f48f3049a5267`, CI #3778 / R2 #3466 GREEN; GSP-2B3 current Recovery persistence + Storyteller edit-surface wiring is next**. CampBoardGameHost remains offline-first; manual blind LLM benchmark precedes any API integration.
+> C5-E, HOST-ML0/1, TBGS-2D/2E and LRE-1 remain COMPLETE / ACCEPTED historical foundations. GSP-1 is COMPLETE / ACCEPTED and GSP-2A/2B1/2B2 are useful foundations, but on 2026-10-06 the route was reset again after a live-code architecture audit: **GSP-2B3/2C/2D are paused. `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md` is the current execution authority.** The immediate target is an engine-only pending-decision/legal-domain boundary followed by neutral provider extraction and physical removal of both obsolete recommendation generations. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -32,17 +32,18 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 17. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
 18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and accepted TBGS-2D Demon-succession boundary
 19. `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md` — accepted TBGS-2E Mayor-redirect boundary
-20. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — current recommendation execution authority; GSP-1 complete/accepted; GSP-2 next planned, not started
-21. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — accepted fail-closed Manual safety foundation; its old LRE-P continuation is superseded by GSP
-22. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure
-23. `docs/archive/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — superseded historical route; do not use its family-by-family LRE-P loop as current authority
-23. `docs/archive/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — historical post-2E audit; no TBGS-2F selected
-24. `docs/archive/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md` — historical RSR-0 style/player-level audit
-25. `docs/archive/RSR_1_STYLE_NEUTRAL_POLICY_READINESS_AUDIT_2026-10-04.md` — historical RSR-1A accepted ownership-decoupling record
-26. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-27. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
-28. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
-29. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+20. `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md` — current execution authority; RES-0 active, RES-1 next
+21. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — downstream general-provider/benchmark authority after RES separation; GSP-2B3/2C/2D paused
+22. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — accepted fail-closed Manual safety foundation; its old LRE-P continuation is superseded by GSP
+23. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure
+24. `docs/archive/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — superseded historical route; do not use its family-by-family LRE-P loop as current authority
+25. `docs/archive/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — historical post-2E audit; no TBGS-2F selected
+26. `docs/archive/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md` — historical RSR-0 style/player-level audit
+27. `docs/archive/RSR_1_STYLE_NEUTRAL_POLICY_READINESS_AUDIT_2026-10-04.md` — historical RSR-1A accepted ownership-decoupling record
+28. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+29. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
+30. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
+31. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -302,19 +303,23 @@ HOST-ML1 is accepted after PR #208 + #209; final executable checkpoint `b91fcd29
 
 ## 9. Scope still blocked
 
-Do not add policy weights/thresholds, broaden player-count/Traveller scope, or perform production cutover from the G10 evidence. `BEGINNER_CONSERVATIVE_V2` may begin only at C5-C after C5-A/C5-B acceptance, and only with the bounded future-flexibility weak preference. SDE-3E remains blocked per surface until C5-D replay and the separate C5-E cutover gate pass.
+Do not add new hand-authored policy weights/thresholds, broaden player-count/Traveller scope as part of RES, or create another evidence-case deterministic selector. Historical C5/V2/SDE-3E gates remain acceptance history only; they are not prerequisites for RES. RES must preserve their useful evidence/replay facts while removing obsolete executable policy authority.
 
 
-## GSP-2 continuation update — 2026-10-06
+## RES architecture reset — 2026-10-06
 
-GSP-2 is split into: **2A Structured Provider Contract (COMPLETE / ACCEPTED) -> 2B Stateful Game Context / Decision Episode (NEXT) -> 2C Cross-game History & Diversity Context -> 2D Prompt/Response Materializer + Local Validator -> GSP-3A manual blind benchmark**. GSP-2B must type per-player experience (BEGINNER/NORMAL/EXPERT, default NORMAL), zero-or-more claimed roles (default empty), and optional pressure (default absent). GSP-2C treats repetition only as a bounded soft diversity penalty: prefer a comparably strong alternative when useful, never force a materially worse choice. Host state/history is authoritative; provider conversation memory is never required. API integration remains deferred to GSP-3C.
+The previous immediate GSP continuation is paused. Live-code audit confirmed that authority revocation did not physically remove old recommendation behavior: `ClocktowerHostScreen` still reaches legacy registration/pair/number recommendation paths and `GameBalanceEvaluator`, `RecommendationStyle` still flows through Host/night information surfaces, and `ClocktowerRecommendationCoordinator` still combines legal-domain, scoring, selection, history and explanation responsibilities. At the same time the new `StorytellerPolicyRequestV1` remains coupled to SDE/TB-specific export types.
+
+Current sequence is now: **RES-0 separation/purge audit -> RES-1 engine-only pending-decision/legal-domain boundary -> RES-2 neutral provider contract extraction -> RES-3 legacy heuristic/style/weighted purge -> RES-4 named deterministic special-policy purge -> RES-5 physical module/dependency convergence -> resume GSP provider context/materializer/benchmark**.
+
+RES-1 should use first-night pair information as the first vertical slice because `PairInformationLegalDomain` and `ClocktowerPairManualAuthority` already provide a mature complete legal/manual path. Prove Manual play and commit without `ClocktowerRecommendationCoordinator` before expanding to other decision families.
 
 
 ### GSP-2B1 acceptance — 2026-10-06
 
-GSP-2B1 adds model-neutral per-seat enrichment defaults (NORMAL experience, empty claims, absent manual pressure), prefix-bounded effective prior-decision projection, a stateless-provider invocation envelope and immutable decision-episode records. Legacy selector scores/probabilities/candidate audits are intentionally excluded from provider context. GSP-2B remains open: next audit the Host/profile/session owner for editable experience, claims and manual pressure before any persistence/UI wiring. Recommendation must remain a read-only consumer.
+GSP-2B1 adds model-neutral per-seat enrichment defaults (NORMAL experience, empty claims, absent manual pressure), prefix-bounded effective prior-decision projection, a stateless-provider invocation envelope and immutable decision-episode records. Legacy selector scores/probabilities/candidate audits are intentionally excluded from provider context. The GSP-2B1 data remains valid, but GSP-2B continuation is paused by RES. Recommendation must remain a read-only consumer.
 
 
 ### GSP-2B2 session ownership acceptance — 2026-10-06
 
-Player experience / claimed roles / Storyteller-declared pressure are no longer recommendation-owned types. The neutral input model lives in the domain layer; `ClocktowerSessionState` owns sparse overrides and editing them increments only `playerInputRevision`. Defaults remain NORMAL / empty claims / absent pressure. This gives multi-round provider freshness without introducing another mutable state owner. Recovery serialization and UI/edit wiring remain the next 2B3 checkpoint.
+Player experience / claimed roles / Storyteller-declared pressure are no longer recommendation-owned types. The neutral input model lives in the domain layer; `ClocktowerSessionState` owns sparse overrides and editing them increments only `playerInputRevision`. Defaults remain NORMAL / empty claims / absent pressure. This gives multi-round provider freshness without introducing another mutable state owner. Recovery serialization and UI/edit wiring are deferred until RES establishes the engine/provider ownership boundary; they are no longer the immediate next checkpoint.

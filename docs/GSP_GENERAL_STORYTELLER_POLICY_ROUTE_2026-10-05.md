@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **CURRENT RECOMMENDATION-LANE EXECUTION AUTHORITY — GSP-0 ROUTE RESET**
+> Status: **DOWNSTREAM PROVIDER / BENCHMARK AUTHORITY — EXECUTION SEQUENCING PAUSED BY RES (2026-10-06)**
 >
 > Product decision: preserve CampBoardGameHost as an **offline-first Android authoritative Host**. Network/LLM capability is optional enhancement, never a gameplay dependency.
 >
@@ -376,9 +376,11 @@ Use benchmark evidence to decide among:
 
 Do not train merely to avoid small API costs; train when quality/control/offline requirements justify it.
 
-### GSP-6 — physical retirement cleanup
+### GSP-6 — physical retirement cleanup — SUPERSEDED IN SEQUENCING BY RES
 
-After production no longer depends on obsolete policy implementations, delete/narrow:
+The 2026-10-06 RES audit moved physical retirement forward. The deletion scope remains valid, but execution now occurs through RES-3/RES-4 after engine/provider separation instead of waiting until after provider/benchmark expansion.
+
+Delete/narrow:
 
 - legacy heuristic scoring/ranking;
 - fixed recommendation-style/probability authority;
@@ -409,7 +411,7 @@ evidence
 
 That loop is no longer the product route.
 
-Physical legacy deletion remains necessary, but its timing is now GSP-6 after authority separation and benchmark/provider work establish which infrastructure is still useful.
+Physical legacy deletion remains necessary. Its timing is now governed by `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md`: first establish an engine-only legal/manual boundary and neutral provider contract, then delete obsolete heuristic and named-policy implementations before continuing provider/benchmark expansion.
 
 ## 13. Relationship to HOST-ML0 / HOST-ML1
 
@@ -436,4 +438,4 @@ GSP-1 is now COMPLETE / ACCEPTED. Production call-path re-audit after merge conf
 - discretionary multi-choice decisions expose the complete Manual legal domain;
 - no legacy heuristic fallback was reintroduced.
 
-The next active route phase is **GSP-2B Stateful Game Context / Decision Episode**. Continue through 2C cross-game diversity history and 2D prompt/response materialization + validation before GSP-3A. Do not implement another named special-case deterministic policy or any production/API LLM path during GSP-2.
+The previous immediate continuation through GSP-2B/2C/2D is paused by the 2026-10-06 RES architecture reset. Current execution authority is `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md`: RES-1 must first prove complete engine/manual play without Recommendation implementation, RES-2 extracts the neutral script-aware provider contract, and RES-3/4 physically retire both obsolete recommendation generations. Resume this GSP route only after that boundary is accepted. Do not implement another named special-case deterministic policy or any production/API LLM path during RES.

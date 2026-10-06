@@ -1,6 +1,6 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-10-05 Australia/Sydney  
+> 最后整理：2026-10-06 Australia/Sydney  
 > 目标：新开发会话只读取当前权威。历史过程、已撤销路线和中间校准实验不再留在 active docs 中制造歧义。
 
 ## 默认阅读顺序
@@ -10,12 +10,13 @@
 3. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
-6. [`GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md) — **当前推荐系统执行主线：全局推理 / provider boundary / benchmark-first**
-7. [`LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`](LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md) — **旧 heuristic 全面退休的证据/范围权威**
-8. [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md) — **长期 Recommendation Engine 分层架构权威；GSP policy-layer amendment applies**
-9. [`HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`](HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md) + [`HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md`](HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md) — **policy-neutral model / benchmark interchange boundary**
-10. [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md) — **TB canonical snapshot / typed decision context 长期边界**
-11. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / Game Engine / Recommendation ownership guardrail**
+6. [`RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md`](RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md) — **当前执行主线：Game Engine / Recommendation 严格解耦 + 两代旧推荐算法物理清理**
+7. [`GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md) — **后续 provider / benchmark 路线；RES-1/2 完成前暂停继续扩展**
+8. [`LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`](LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md) — **旧 heuristic 全面退休的证据/范围权威**
+9. [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md) — **长期 Recommendation Engine 分层架构权威；GSP policy-layer amendment applies**
+10. [`HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`](HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md) + [`HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md`](HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md) — **policy-neutral model / benchmark interchange boundary**
+11. [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md) — **TB canonical snapshot / typed decision context 长期边界**
+12. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / Game Engine / Recommendation ownership guardrail**
 
 DLB、C5、TBGS-2A–2E、RSR-0/1A 均已完成或进入历史状态；其 completion audit、cutover audit 和中间路线只在具体 ownership / replay / evidence 问题需要时读取，不再属于默认启动集合。
 
@@ -30,21 +31,24 @@ C4 / IF-D / RH-E                        COMPLETE / ACCEPTED
 DLB campaign                            COMPLETE / ACCEPTED
 TBGS-0 / TBGS-1                         COMPLETE / ACCEPTED
 TBGS-2A / 2B / 2C / 2D / 2E            COMPLETE / ACCEPTED; PAUSED AFTER 2E
-DRUNK_ASSIGNMENT_Q04_V1                 LIVE SPECIAL-POLICY ISLAND / TARGET GSP-1 AUTHORITY REVOCATION
-C5-E functioning Librarian V2           LIVE SPECIAL-POLICY ISLAND / TARGET GSP-1 AUTHORITY REVOCATION
-INV1-A functioning Investigator         MERGED PR #222 / LIVE SPECIAL-POLICY ISLAND / TARGET GSP-1 AUTHORITY REVOCATION
+DRUNK_ASSIGNMENT_Q04_V1                 HISTORICAL / AUTO-AUTHORITY REVOKED / RES-4 DELETE TARGET
+C5-E functioning Librarian V2           HISTORICAL / AUTO-AUTHORITY REVOKED / RES-4 DELETE TARGET
+INV1-A functioning Investigator         HISTORICAL / AUTO-AUTHORITY REVOKED / RES-4 DELETE TARGET
 HOST-ML0 / HOST-ML1                     COMPLETE / ACCEPTED / REUSED BY GSP
 RSR-0 / RSR-1A                          COMPLETE / HISTORICAL; docs archived
 LRE-0 whole-engine retirement audit     COMPLETE / RETIREMENT AUTHORIZED
 LRE-1 Manual / fail-closed safety gate  COMPLETE / ACCEPTED
 LRE-P family replacement + cutover      SUPERSEDED / DO NOT CONTINUE
-GSP-0 route reset                       CURRENT / DOCS-ONLY
-GSP-1 special-policy authority reset    NEXT EXECUTABLE
-GSP-2+ provider / benchmark / model route AFTER GSP-1
+GSP-0 / GSP-1                          COMPLETE / ACCEPTED
+GSP-2A / 2B1 / 2B2                      COMPLETE / ACCEPTED foundations
+GSP-2B3 / 2C / 2D                       PAUSED BY RES ARCHITECTURE RESET
+RES-0 separation + purge audit           CURRENT
+RES-1 engine-only decision boundary      NEXT EXECUTABLE
+RES-2+ neutral provider extraction/purge AFTER RES-1
 bounded App/Host decomposition          GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 ~~~
 
-当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。DLB 已完成；Q04 Drunk、functioning Librarian V2 与已合并 PR #222 的 INV1-A Investigator 仍是当前可执行 special-policy islands，但它们不再代表长期产品方向。当前主线是 GSP：停止把个别专家案例转成 executable named policy；保留规则、合法候选、TBGS、DecisionTrace/replay、epistemic/consequence diagnostics 与 HOST-ML neutral export；下一步先撤销这些特例 policy 的自动权威并回到完整 Manual domain，然后建立通用 Policy Provider / decision-specific global context，先做无 API 的盲测 benchmark，再决定是否接入 Remote LLM、训练模型或未来 on-device model。Android 产品保持 offline-first。
+当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。DLB 与 GSP-1 已完成；旧 special-policy automatic authority 已撤销，但 live source 仍保留并部分调用旧 heuristic/style/weighted recommender，且新的 GSP provider contract 仍带有 SDE/TB 专用耦合。当前主线改为 RES：先建立完全不依赖 Recommendation implementation 的 Game Engine / Manual legal-domain 边界，再抽取中立 provider contract，并物理删除 legacy heuristic 与 evidence-case deterministic selector 两代旧算法。GSP 的 cross-game context、prompt materializer、benchmark 和 API 路线保留为 RES 后续消费者。Android 产品保持 offline-first。
 
 ## 当前政策核心
 
@@ -53,7 +57,7 @@ bounded App/Host decomposition          GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 - Snapshot 必须区分 `KNOWN(value)` / `UNCOMMITTED` / `UNKNOWN` / `NOT_APPLICABLE`。尤其 Drunk assignment 前“尚未选择 Drunk”是 `UNCOMMITTED`，不能与 EvidenceLab “历史事实无法恢复”的 `UNKNOWN` 混为一谈。TBGS-0 已在 `f367c0d3ec23ebf452c924ff7c0921cd978a800f` 通过 CI #3618 / R2 #3343，含稳定 external role IDs、precommit/committed/runtime projectors、deterministic V1 JSON 与 G10 golden fixture。
 - Drunk assignment 的新权威链为：shown-seat assignment -> TB snapshot -> rules-owned legal candidate domain -> typed decision context -> hypothetical consequence / shadow evaluation -> canonical commit。TBGS-1A 已在 `ae4dc2400325d233da033d3c86d2863bde1bd485` 通过 CI #3621 / R2 #3345；EvidenceLab `970e7e6430f7088ac004cd1e5696759da4d52003` 已完成同一 G10 historical-prefix materializer，Host 独立复核两个 V1 golden fixture 2115 bytes 完全一致，因此 TBGS-1 整体 COMPLETE / ACCEPTED。该结果仍没有新增排序语义。
 - Red Herring 使用 generic observation/dependency barrier；Spy 是当前 TB 的一个 observer，而不是需要写死的 policy 特判。
-- `BEGINNER_CONSERVATIVE_V1` 已冻结为 immutable provisional baseline：只有 exact zero Evil-topology hard rejection，其余 viable survivors 保持 equivalence band，并使用 `SEEDED_HASH_V1`。
+- `BEGINNER_CONSERVATIVE_V1/V2` 仅保留历史身份直到 RES-4 将有价值证据物化为 benchmark/reference 数据；它们不再是未来 executable policy baseline。
 - Spy / Recluse registration 永远是 interaction-scoped，不修改 canonical identity。
 - Chef / Empath 只有在所有合法 Spy/Recluse registration 分支都得到同一个健康值时才是 rule-determined。
 - 受损信息不等于必须说假话；重复/历史依赖的信息必须通过共享、角色无关的 derived narrative projection over canonical history 维持一致性，不能按角色分别写 policy 特判。
@@ -65,7 +69,7 @@ bounded App/Host decomposition          GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 - automatic production cutover 按 decision surface gating；一个“大 equivalence class + seeded selection”的 V1 结果本身不足以授权 cutover。
 - 当前统一 authority invariant 在 GSP-1 后收敛为：唯一合法结果可 `RULE_DETERMINISTIC` 自动；多个合法结果若没有可信的通用 Policy Provider 必须 `MANUAL_REQUIRED` 并暴露完整 legal domain；provider 只能在 Host 已生成的合法候选之间 rank/recommend/explain，不能拥有规则或状态写入权威。
 - 不再采用 family-by-family「专家案例 → predicate → named deterministic policy → production cutover」作为产品路线。Evidence 进入 benchmark/context/evaluation，而不是直接变成 if/else 权威。
-- 当前仍存活但待 GSP-1 撤权的 production policy islands：`DRUNK_ASSIGNMENT_Q04_V1`、functioning Librarian V2、INV1-A functioning Investigator。
+- Q04 Drunk、functioning Librarian V2、INV1-A Investigator 的 discretionary automatic authority 已由 GSP-1 撤销；其 executable selector 是 RES-4 物理删除目标。
 - CampBoardGameHost 保持 offline-first：没有网络或模型时，规则、合法候选、Manual 主持与游戏流程必须完整可用；Remote LLM 仅是未来可选增强。
 - GSP-3A/3B 先用冻结案例和干净独立会话做人工 blind benchmark；API integration 只有在该实验明确证明有价值后才进入 GSP-3C。
 
@@ -106,6 +110,7 @@ DIAGNOSTIC_ONLY
 
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
 - [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md)
+- [`RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md`](RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md)
 - [`GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md)
 - [`LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`](LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md)
 - [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md)
@@ -131,7 +136,7 @@ If documents conflict, use this order:
 1. official BoTC rules/rulings — gameplay correctness;
 2. root `AGENTS.md` — execution / architecture / governance;
 3. `TESTING_STRATEGY.md` — test-tier and validation evidence definitions;
-4. `CURRENT_DEVELOPMENT_ROADMAP.md` + `NEXT_DEVELOPMENT_HANDOFF.md` + `GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` + `LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — current state, GSP continuation/provider/benchmark route and legacy-retirement authority;
+4. `CURRENT_DEVELOPMENT_ROADMAP.md` + `NEXT_DEVELOPMENT_HANDOFF.md` + `RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md` — current state and execution authority; `GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` is the paused downstream provider/benchmark route, and `LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` remains retirement evidence;
 5. `AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — current GitHub Connector-first / Mini MCP+Codex large-file execution workflow;
 6. `SDE_3_PROVISIONAL_POLICY_AND_CONTINUOUS_CALIBRATION_ROUTE_2026-09-23.md` plus current 3D audit — long-lived SDE/calibration contract where not superseded by DLB lifecycle changes;
 7. `SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md` and targeted evidence contract — policy/evidence background; its pre-DLB setup/sequence model is historical;
