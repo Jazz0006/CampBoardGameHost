@@ -89,6 +89,9 @@ internal data class ClocktowerSessionState(
         require(storytellerPlayerContextBySeat.keys.all { it in currentSeats }) {
             "Storyteller player-context overrides must reference current GameState seats."
         }
+        require(storytellerPlayerContextBySeat.values.none { it.isDefault }) {
+            "Clocktower session stores only non-default Storyteller player-context overrides."
+        }
         semanticHistoryMode.requireCompatible(
             actionTimeline = actionTimeline,
             observationLog = epistemicObservationLog,
@@ -488,6 +491,7 @@ internal class ClocktowerGameSession private constructor(
             gameSeed: Long,
             initialState: GameState,
             semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
+            initialStorytellerPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1> = emptyMap(),
         ): ClocktowerGameSession = ClocktowerGameSession(
             initialState = ClocktowerSessionState(
                 gameId = gameId,
@@ -496,6 +500,7 @@ internal class ClocktowerGameSession private constructor(
                 gameSeed = gameSeed,
                 gameState = initialState,
                 semanticHistoryMode = semanticHistoryMode,
+                storytellerPlayerContextBySeat = initialStorytellerPlayerContextBySeat,
             ),
             defaultRulesetRef = null,
         )
