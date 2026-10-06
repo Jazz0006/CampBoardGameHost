@@ -331,7 +331,9 @@ The typed model/vendor-neutral request/response seam now carries canonical pre-d
 
 The Host reconstructs each request from canonical state and committed history rather than relying on provider conversation memory. GSP-2B1 now provides a policy-neutral current-game projection with one entry per snapshot seat: player experience level (BEGINNER / NORMAL / EXPERT, default NORMAL), zero-or-more claimed roles (default empty), and optional Storyteller-declared pressure (default absent). It also projects only effective prior decisions whose revisions are within the current request prefix, deliberately excluding legacy selector scores/probabilities, and defines an immutable decision-episode record that cannot become canonical game state.
 
-GSP-2B is **not complete** until ownership/edit/persistence for player experience, current-game claims and Storyteller-declared pressure is audited and connected to the Host-owned state/profile layer. Recommendation code must consume a projection of those values, never become their mutable authority.
+GSP-2B2 session ownership is now accepted at checkpoint `9d3bfdcb20bc48b2659e0fec381f48f3049a5267`, CI #3778 / R2 #3466 GREEN. The neutral player-input type lives outside recommendation code; `ClocktowerSessionState` owns sparse non-default per-seat overrides, and edits increment only `playerInputRevision`, so stale provider responses are invalidated without creating mechanical game-state revisions. Recommendation remains a read-only projection.
+
+GSP-2B is **not complete** until current-version Recovery persistence and an explicit Storyteller edit surface are wired. Long-term player-profile ownership may later hydrate experience level at game start; until then absence means NORMAL. Claims and declared pressure remain current-game inputs.
 
 #### GSP-2C — Cross-game History & Diversity Context
 
