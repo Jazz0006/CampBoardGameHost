@@ -1,6 +1,11 @@
 package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderOutcomeV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseValidatorV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderValidationV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSeat
@@ -90,6 +95,40 @@ class StorytellerPolicyProviderContractV1Test {
                 input = mismatched,
             )
         }
+    }
+
+    @Test
+    fun legacySdeRequestAdaptsOneWayIntoNeutralProviderContract() {
+        val legacy = request()
+        val neutral = StorytellerProviderContractAdapterV1.fromLegacy(legacy)
+
+        assertEquals("gsp2a-test", neutral.identity.gameId)
+        assertEquals("trouble_brewing", neutral.identity.scriptId)
+        assertEquals(
+            StorytellerProviderDecisionContextV1.DRUNK_ASSIGNMENT,
+            neutral.identity.decisionTypeId,
+        )
+        assertEquals(listOf("a", "b"), neutral.legalCandidateIds)
+        assertTrue(
+            neutral.legalCandidates.all {
+                it.payload is StorytellerProviderCandidatePayloadV1.DrunkAssignment
+            },
+        )
+
+        val legacyResponse = StorytellerPolicyResponseV1(
+            decisionId = legacy.input.decisionId,
+            sourceRevision = legacy.input.sourceRevision,
+            outcome = StorytellerPolicyOutcomeV1.Recommendation(
+                primary = StorytellerPolicyRecommendationV1("a"),
+                alternatives = listOf(StorytellerPolicyRecommendationV1("b")),
+            ),
+        )
+        val neutralResponse = StorytellerProviderContractAdapterV1.fromLegacy(legacyResponse)
+        assertTrue(neutralResponse.outcome is StorytellerProviderOutcomeV1.Recommendation)
+        assertEquals(
+            StorytellerProviderValidationV1.AcceptedRecommendation("a", listOf("b")),
+            StorytellerProviderResponseValidatorV1.validate(neutral, neutralResponse),
+        )
     }
 
     private fun request(): StorytellerPolicyRequestV1 =
