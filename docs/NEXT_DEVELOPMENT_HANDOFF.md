@@ -7,7 +7,7 @@
 > DLB-7 delivery PR: **#196 — `DLB-7: finalize Drunk late-binding acceptance`; exact executable T4 accepted at `b760117351e57cfe78cc0bc9483b42306757c22f`**  
 > Current executable verdict: **DLB campaign COMPLETE / ACCEPTED; GSP-1 COMPLETE / ACCEPTED. Q04 Drunk, functioning Librarian V2 and INV1-A Investigator are retained as historical/shadow/reference policy material but no longer have discretionary production automatic authority.**  
 > Evidence checkpoint: **ClocktowerEvidenceLab `78f672868ea6603317aeefa20ad91686c5886db9` — G10 `16:52` Librarian future-flexibility E3 PASS; Q04 remains previously accepted**  
-> C5-E, HOST-ML0/1, TBGS-2D/2E and LRE-1 remain COMPLETE / ACCEPTED historical foundations. On 2026-10-05 the product route changed: **LRE-P family-by-family special-case policy replacement is superseded.** Expert cases remain evidence/benchmark/context rather than executable predicate=>answer authority. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` is now the current recommendation-lane authority. GSP-0 is docs-only; **GSP-1 special-policy automatic-authority revocation is COMPLETE / ACCEPTED; GSP-2 is next planned but not started by this handoff**. CampBoardGameHost remains offline-first; manual blind LLM benchmark precedes any API integration.
+> C5-E, HOST-ML0/1, TBGS-2D/2E and LRE-1 remain COMPLETE / ACCEPTED historical foundations. On 2026-10-05 the product route changed: **LRE-P family-by-family special-case policy replacement is superseded.** Expert cases remain evidence/benchmark/context rather than executable predicate=>answer authority. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` is now the current recommendation-lane authority. GSP-0 is docs-only; **GSP-1 special-policy automatic-authority revocation is COMPLETE / ACCEPTED; GSP-2A Structured Provider Contract is COMPLETE / ACCEPTED at `aed23bad8f447a1e20ab710705b0919685de427a`, CI #3769 / R2 #3459 GREEN; GSP-2B is next**. CampBoardGameHost remains offline-first; manual blind LLM benchmark precedes any API integration.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -303,3 +303,8 @@ HOST-ML1 is accepted after PR #208 + #209; final executable checkpoint `b91fcd29
 ## 9. Scope still blocked
 
 Do not add policy weights/thresholds, broaden player-count/Traveller scope, or perform production cutover from the G10 evidence. `BEGINNER_CONSERVATIVE_V2` may begin only at C5-C after C5-A/C5-B acceptance, and only with the bounded future-flexibility weak preference. SDE-3E remains blocked per surface until C5-D replay and the separate C5-E cutover gate pass.
+
+
+## GSP-2 continuation update — 2026-10-06
+
+GSP-2 is split into: **2A Structured Provider Contract (COMPLETE / ACCEPTED) -> 2B Stateful Game Context / Decision Episode (NEXT) -> 2C Cross-game History & Diversity Context -> 2D Prompt/Response Materializer + Local Validator -> GSP-3A manual blind benchmark**. GSP-2B must type per-player experience (BEGINNER/NORMAL/EXPERT, default NORMAL), zero-or-more claimed roles (default empty), and optional pressure (default absent). GSP-2C treats repetition only as a bounded soft diversity penalty: prefer a comparably strong alternative when useful, never force a materially worse choice. Host state/history is authoritative; provider conversation memory is never required. API integration remains deferred to GSP-3C.
