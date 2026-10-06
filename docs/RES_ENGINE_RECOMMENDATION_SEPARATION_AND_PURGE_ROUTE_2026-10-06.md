@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **CURRENT ARCHITECTURE / EXECUTION AUTHORITY — RES-0 STARTED**
+> Status: **CURRENT ARCHITECTURE / EXECUTION AUTHORITY — RES-0/1 ACCEPTED; RES-2 CLOSING**
 >
 > Supersedes the previous immediate continuation `GSP-2B3 -> GSP-2C -> GSP-2D`. GSP remains the later provider/benchmark route, but it is paused until this separation campaign establishes a clean engine-only boundary and removes obsolete recommendation implementations.
 >
@@ -208,11 +208,45 @@ For example TB may continue to use a versioned Trouble Brewing snapshot payload 
 
 Do not build one giant cross-script mutable GameState DTO.
 
+### 5.1 Stateless provider does not mean memoryless recommendation
+
+The provider MUST NOT depend on LLM/chat conversation memory as the authoritative source of game continuity. Every invocation must be reconstructable from Host-owned canonical state and explicit persisted/rebuildable context. This does **not** mean that current-state-only context is sufficient.
+
+High-quality Storyteller decisions require four distinct context layers:
+
+1. **Current canonical state** — current grimoire/session truth, legal candidate domain, current player experience/claims/declared pressure and the exact decision revision.
+2. **Current-game longitudinal memory** — prior observations and committed Storyteller decisions across rounds/nights, including information already shown, Drunk misinformation continuity, poisoning/registration timing, claim evolution and other narrative facts needed to judge consistency across the whole game.
+3. **Cross-game player experience** — relevant prior-game history such as recent roles, repeated high-pressure treatment, repeated Drunk assignment or other experience patterns. These are recommendation enrichments/soft constraints, never legality.
+4. **Recommendation/diversity history** — relevant similar prior situations and previously selected alternatives so a provider may moderately avoid repeating the same choice when comparably strong alternatives exist. Diversity is a soft preference and must never force a materially worse recommendation.
+
+Therefore the target flow is:
+
+```text
+canonical current state
++ current-game event / observation / decision history
++ current-game narrative projection
++ relevant cross-game player history
++ relevant prior recommendation/diversity history
+        |
+        v
+Host-owned Context Materializer / Retriever
+        |
+        v
+bounded typed context for this decision
+        |
+        v
+stateless optional provider
+```
+
+The Host owns and versions this memory. It must survive provider replacement, application restart/recovery and model/API changes. Provider conversation/session memory may be used only as a transport optimization; correctness must never depend on it and every request must remain independently reconstructable and auditable.
+
+RES-2 establishes the neutral request/response shell and the first same-game context reconstruction seam. Full longitudinal/narrative and cross-game retrieval are follow-on context capabilities after the engine/provider separation is accepted; they must target this neutral contract rather than reintroduce recommendation-owned mutable state.
+
 ## 6. RES execution stages
 
 ### RES-0 — separation + purge audit / authority reset
 
-Status: **IN PROGRESS**.
+Status: **COMPLETE / ACCEPTED**.
 
 Acceptance:
 
@@ -223,6 +257,8 @@ Acceptance:
 - no production behavior changes are required in this docs/audit slice.
 
 ### RES-1 — engine-only Storyteller decision boundary
+
+Status: **COMPLETE / ACCEPTED**. Pair information established the first vertical slice; Mayor redirect then proved the same generic pending-decision contract across a structurally different mechanical-result decision.
 
 Create the smallest engine-owned neutral boundary for a pending Storyteller decision and legal domain.
 
@@ -237,6 +273,8 @@ Acceptance:
 Use an existing mature TB decision surface as the first vertical slice; prefer first-night pair information because complete legal/manual authority already exists. Do not rewrite every decision family in one PR.
 
 ### RES-2 — neutral provider contract extraction
+
+Status: **CLOSING**. The neutral outer contract, Host-owned same-game context reconstruction, direct pair-information request materialization and direct Mayor-redirect request materialization are implemented/accepted. This closure checkpoint adds direct engine-owned Drunk-assignment pending-decision -> neutral-provider materialization so all three representative decisions no longer require the legacy SDE request shape.
 
 Extract the durable parts of GSP-2A/2B into a script-neutral outer contract.
 
@@ -336,8 +374,8 @@ The final purge campaign must prove:
 
 ## 8. Immediate next step
 
-After this RES-0 documentation/audit checkpoint is merged:
+Finish the bounded RES-2 closure checkpoint by accepting the direct Drunk-assignment engine -> neutral-provider path and recording the stateless-provider/context-memory ownership rule above. Then sync roadmap/handoff to mark RES-0/1/2 complete and begin RES-3 from fresh live `main`.
 
-> **Start RES-1 with a focused first-night pair-information vertical slice. Extract an engine-owned pending-decision/legal-domain contract from the already accepted `PairInformationLegalDomain + ClocktowerPairManualAuthority` path, then prove Manual commit works without `ClocktowerRecommendationCoordinator`.**
+> **RES-3 must remove product reachability of the legacy style/score/weighted recommendation stack while preserving complete Manual legal domains, deterministic rule outcomes and the optional neutral provider seam.**
 
-Do not continue GSP-2B3 before RES-1/2 establish the new boundary.
+Do not continue the old GSP-2B3/2C/2D sequence or add another recommendation-owned memory store. Later longitudinal/cross-game context work must target the neutral RES provider contract.
