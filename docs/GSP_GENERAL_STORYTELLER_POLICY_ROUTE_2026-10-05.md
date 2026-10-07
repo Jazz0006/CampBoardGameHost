@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **CURRENT DOWNSTREAM PROVIDER / BENCHMARK AUTHORITY — RES-5 COMPLETE; GSP RE-ENTRY ACTIVE (2026-10-07)**
+> Status: **CURRENT PROVIDER / BENCHMARK AUTHORITY — GSP-R0 POST-RES-5 RE-ENTRY AUDIT COMPLETE; GSP-R1 NEXT (2026-10-08)**
 >
 > Product decision: preserve CampBoardGameHost as an **offline-first Android authoritative Host**. Network/LLM capability is optional enhancement, never a gameplay dependency.
 >
@@ -78,19 +78,11 @@ Existing special-policy code can remain temporarily for replay/benchmark compari
 
 ## 4. Current executable reality vs target state
 
-This document is a route reset. **GSP-0 is documentation-only and does not itself change production behavior.**
+GSP-0/1 are historical foundations and RES-0 through RES-5 are COMPLETE / ACCEPTED. The previously accepted Q04/V1/V2/Librarian/Investigator executable selectors/policies and the legacy heuristic/style/weighted recommender were physically removed during RES-3/4/5. Their historical evidence survives only as reference/benchmark material.
 
-At the current `main` baseline, previously accepted special-policy islands still exist and may still have automatic authority, including:
+The current neutral provider shell survives in `StorytellerProviderContractV1`, `StorytellerProviderRequestFactoryV1` and `StorytellerProviderGameContextBuilderV1`. It is not yet a production recommendation path: request-factory methods and response validation currently have no production consumer outside their definitions/tests. That is intentional until context completeness and manual benchmarks justify provider integration.
 
-- `DRUNK_ASSIGNMENT_Q04_V1`;
-- functioning Librarian V2 production selection;
-- the merged INV1-A functioning-Investigator cutover from PR #222.
-
-PR #223 only attempted documentation closure for INV1-A under the now-superseded LRE-P route and was closed without merge during GSP-0 cleanup. It is not current execution authority.
-
-The next executable phase, GSP-1, is responsible for auditing and revoking these special-case automatic authorities safely.
-
-Historical acceptance remains valid as evidence that the code behaved as designed at those checkpoints. GSP does not rewrite that history; it changes which behavior should remain product authority.
+The post-RES-5 re-entry audit is `docs/GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md`. Its key finding is that the Host already owns canonical current-game history, but the neutral provider request does not yet receive the full longitudinal action/observation prefix.
 
 ## 5. Production authority invariant
 
@@ -315,7 +307,7 @@ Acceptance target:
 
 ### GSP-2 — provider / global-context contract
 
-**CURRENT / STARTED — split into GSP-2A through GSP-2D.**
+**FOUNDATIONS ACCEPTED; PRE-RES CONTINUATION SUPERSEDED.** GSP-2A/2B1/2B2 remain valid foundations, but post-RES work proceeds through GSP-R1–R4 defined by the 2026-10-08 re-entry audit.
 
 GSP-2 establishes the model-neutral seam used first by manual benchmarks and later, only if justified, by a remote API, trained model or on-device model. The Host remains stateful and authoritative; providers are replaceable and may be stateless.
 
@@ -333,17 +325,24 @@ The Host reconstructs each request from canonical state and committed history ra
 
 GSP-2B2 session ownership is now accepted at checkpoint `9d3bfdcb20bc48b2659e0fec381f48f3049a5267`, CI #3778 / R2 #3466 GREEN. The neutral player-input type lives outside recommendation code; `ClocktowerSessionState` owns sparse non-default per-seat overrides, and edits increment only `playerInputRevision`, so stale provider responses are invalidated without creating mechanical game-state revisions. Recommendation remains a read-only projection.
 
-GSP-2B is **not complete** until current-version Recovery persistence and an explicit Storyteller edit surface are wired. Long-term player-profile ownership may later hydrate experience level at game start; until then absence means NORMAL. Claims and declared pressure remain current-game inputs.
+The old GSP-2B gap statement is partially stale. Current-version Recovery persistence for `storytellerPlayerContextBySeat` is already present in main and must not be reimplemented. An explicit Storyteller edit surface and durable cross-game experience profile are still missing and move to GSP-R2. The larger missing capability is the neutral projection of canonical current-game action/observation history, which is GSP-R1.
 
-#### GSP-2C — Cross-game History & Diversity Context
+#### Pre-RES GSP-2C / 2D
 
-Represent relevant prior/similar decision episodes and prior selected alternatives. Repetition is a **soft diversity penalty**, never a legality rule or hard prohibition: when candidate quality is comparable, prefer a strong alternative that avoids repeated information/shape; when one option is materially better, repetition must not force an inferior choice. Similarity/repetition metadata must remain explainable and bounded.
+The old 2C/2D continuation is superseded by the post-RES route. Cross-game/diversity context and prompt materialization remain required capabilities, but they must target the neutral RES boundary rather than the removed `StorytellerPolicy*`/SDE-owned seams.
 
-#### GSP-2D — Prompt/Response Materializer + Local Validator
+Post-RES sequence:
 
-Materialize the same structured contract into benchmark prompts and parseable responses, validate all returned candidate IDs/freshness locally, and preserve Manual/offline fallback. This is still not API integration; GSP-3C remains the first remote automated harness.
+```text
+GSP-R0 re-entry audit COMPLETE
+-> GSP-R1 neutral current-game longitudinal context NEXT
+-> GSP-R2 Storyteller player-context edit + durable experience profile
+-> GSP-R3 generic cross-game recommendation/diversity context
+-> GSP-R4 prompt/response materializer + local validator
+-> GSP-3A manual blind benchmark
+```
 
-Across all GSP-2 slices preserve provenance/replay identity and do not bind the contract to a vendor or model.
+Across all resumed slices preserve provenance/replay identity, complete Manual fallback and vendor/model neutrality.
 
 ### GSP-3A — manual blind LLM benchmark
 
@@ -438,4 +437,4 @@ GSP-1 is now COMPLETE / ACCEPTED. Production call-path re-audit after merge conf
 - discretionary multi-choice decisions expose the complete Manual legal domain;
 - no legacy heuristic fallback was reintroduced.
 
-RES-0 through RES-5 are now COMPLETE / ACCEPTED; the separation/purge campaign is closed. The old pre-RES GSP-2B3/2C/2D implementation sequence is not resumed verbatim because its former `StorytellerPolicy*` and recommendation-owned seams were physically removed. Re-enter GSP by first re-auditing the remaining context retrieval/materializer/benchmark work against `StorytellerProviderContractV1`, `StorytellerProviderRequestFactoryV1` and Host-owned context reconstruction. The provider remains stateless while the Host explicitly owns/rebuilds current-game longitudinal/narrative memory, relevant cross-game player history and soft recommendation-diversity history. After that re-audit, continue context retrieval/materializer -> prompt materializer -> GSP-3A manual blind benchmark before any API integration. Do not restore named special-case deterministic policies or local heuristic ranking.
+RES-0 through RES-5 are COMPLETE / ACCEPTED and the separation/purge campaign is closed. The required re-entry audit is now complete at `docs/GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md`. **GSP-R1 — neutral current-game longitudinal context is the next executable target.** The provider remains stateless while the Host owns/rebuilds current-game longitudinal/narrative memory, relevant cross-game player history and soft recommendation-diversity history. Do not restore named special-case deterministic policies, local heuristic ranking, recommendation-owned mutable memory or API integration before the benchmark route reaches its gate.

@@ -4,8 +4,8 @@
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
 > RES checkpoint: **RES-0/1/2/3/4/5 COMPLETE / ACCEPTED; RES CAMPAIGN CLOSED.** RES-5 completion authority is `docs/RES_5_PHYSICAL_MODULE_DEPENDENCY_CONVERGENCE_ACCEPTANCE_2026-10-07.md`. Final T4 checkpoint `cdf5dba23eaad23f4fea3899ab54df97553a55cd` passed CI #3832 and R2 #3509, including full Android unit tests + debug assemble, ASP contracts and Real Clingo.  
 > Architecture invariant: **a provider may be stateless, but recommendation context is not memoryless.** The Host owns and reconstructs current canonical state, current-game longitudinal/narrative history, relevant cross-game player experience and recommendation/diversity history. LLM/chat conversation memory is never correctness authority.  
-> Current execution target: **resume GSP context retrieval/materializer/benchmark on the neutral RES boundary.** Start from fresh live `main` after PR #242 merges. Preserve `StorytellerProviderContractV1`, Host-owned context reconstruction and engine-owned legal domains; do not restore `StorytellerPolicy*`, named selectors or local heuristic ranking.  
-> The old GSP-2B3/2C/2D continuation remains superseded by the RES boundary. Re-enter GSP by re-auditing the current route against RES-5, then proceed context retrieval/materializer -> prompt materializer -> manual blind benchmark before API integration. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
+> Current execution target: **GSP-R1 — neutral current-game longitudinal context.** Start from fresh live `main` after the GSP-R0 audit docs merge. Preserve `StorytellerProviderContractV1`, Host-owned canonical history and engine-owned legal domains; do not restore `StorytellerPolicy*`, named selectors, SDE-owned prefix types or local heuristic ranking.  
+> GSP-R0 authority: `docs/GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md`. The audit confirmed Recovery persistence for session player-context is already complete; the actual first blocker is that the neutral provider context does not yet carry `ActionFactTimeline` / `EpistemicObservationLog` longitudinal history. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -31,17 +31,18 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and accepted TBGS-2D Demon-succession boundary
 19. `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md` — accepted TBGS-2E Mayor-redirect boundary
 20. `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md` — RES architecture authority; RES-0 through RES-5 complete / accepted
-21. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — current downstream provider/benchmark authority after RES separation; neutral-contract GSP re-entry active, old 2B3/2C/2D sequence superseded
-22. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — accepted fail-closed Manual safety foundation; its old LRE-P continuation is superseded by GSP
-23. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure
-24. `docs/archive/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — superseded historical route; do not use its family-by-family LRE-P loop as current authority
-25. `docs/archive/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — historical post-2E audit; no TBGS-2F selected
-26. `docs/archive/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md` — historical RSR-0 style/player-level audit
-27. `docs/archive/RSR_1_STYLE_NEUTRAL_POLICY_READINESS_AUDIT_2026-10-04.md` — historical RSR-1A accepted ownership-decoupling record
-28. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
-29. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
-30. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
-31. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
+21. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — current provider/benchmark authority after RES separation; GSP-R1 next
+22. `docs/GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md` — post-RES live-code audit, stale-gap correction and GSP-R1/R2/R3/R4 route authority
+23. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — accepted fail-closed Manual safety foundation; its old LRE-P continuation is superseded by GSP
+24. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure
+25. `docs/archive/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — superseded historical route; do not use its family-by-family LRE-P loop as current authority
+26. `docs/archive/TBGS_2_POST_2E_STYLE_RETIREMENT_REAUDIT_2026-10-04.md` — historical post-2E audit; no TBGS-2F selected
+27. `docs/archive/RECOMMENDATION_STYLE_RETIREMENT_PLAYER_LEVEL_AUDIT_2026-10-04.md` — historical RSR-0 style/player-level audit
+28. `docs/archive/RSR_1_STYLE_NEUTRAL_POLICY_READINESS_AUDIT_2026-10-04.md` — historical RSR-1A accepted ownership-decoupling record
+29. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-session target; use as an ownership guardrail, not as permission to broaden the current slice
+30. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — HOST-ML0 accepted ownership/export/model-training boundary
+31. `docs/HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md` — HOST-ML1 complete typed neutral export acceptance, candidate semantic payload, leakage boundary and deferred machine-readable materialization
+32. `docs/DLB_5_STAGED_FIRST_NIGHT_DEPENDENCY_PLANNER_AUDIT_2026-09-29.md` — completed DLB-5 closeout record
 
 Read the 2026-09-28 source audits, completed Recovery audit, or older SDE checkpoints only when a concrete history/ownership question requires them. They are not default startup context.
 
@@ -243,7 +244,12 @@ DLB-0 typed intermediate setup COMPLETE
 -> RES-3 legacy heuristic/style/weighted product reachability + physical purge COMPLETE / ACCEPTED — checkpoint 5b4b2a94; CI #3815 / R2 #3495 GREEN
 -> RES-4 named deterministic special-policy purge COMPLETE / ACCEPTED — T4 00aefd1b; CI #3824 / R2 #3502 GREEN
 -> RES-5 physical module/dependency convergence COMPLETE / ACCEPTED — T4 `cdf5dba23eaad23f4fea3899ab54df97553a55cd`; CI #3832 / R2 #3509 GREEN
--> resume GSP context retrieval/materializer -> prompt materializer -> manual blind benchmark -> repeated/cross-model benchmark -> optional API adapter NEXT
+-> GSP-R0 post-RES-5 re-entry audit COMPLETE
+-> GSP-R1 neutral current-game longitudinal context NEXT
+-> GSP-R2 Storyteller player-context edit + durable experience profile
+-> GSP-R3 generic cross-game recommendation/diversity context
+-> GSP-R4 prompt/response materializer + local validator
+-> GSP-3A manual blind benchmark -> repeated/cross-model benchmark -> optional API adapter
 || Android product remains offline-first; remote LLM optional only
 || future player profile/management: per-player BEGINNER / NORMAL / EXPERT; default NORMAL
 || A3 presentation catalog remains READY / independent maintenance only
@@ -313,7 +319,7 @@ Do not add new hand-authored policy weights/thresholds, broaden player-count/Tra
 
 The previous immediate GSP continuation was paused by the 2026-10-06 RES reset. That live-code audit confirmed that authority revocation did not physically remove old recommendation behavior: `ClocktowerHostScreen` still reaches legacy registration/pair/number recommendation paths and `GameBalanceEvaluator`, `RecommendationStyle` still flows through Host/night information surfaces, and `ClocktowerRecommendationCoordinator` still combines legal-domain, scoring, selection, history and explanation responsibilities. At the same time the new `StorytellerPolicyRequestV1` remains coupled to SDE/TB-specific export types.
 
-Current sequence is now: **RES-0 COMPLETE -> RES-1 COMPLETE -> RES-2 COMPLETE -> RES-3 COMPLETE / ACCEPTED -> RES-4 COMPLETE / ACCEPTED -> RES-5 COMPLETE / ACCEPTED -> resume GSP context retrieval/materializer/benchmark NEXT**.
+Current sequence is now: **RES-0..5 COMPLETE / ACCEPTED -> GSP-R0 COMPLETE -> GSP-R1 neutral current-game longitudinal context NEXT -> R2 player context/profile -> R3 cross-game/diversity -> R4 prompt materializer -> GSP-3A manual benchmark**.
 
 RES-1 proved the generic engine-owned pending-decision seam with pair information and Mayor redirect. RES-2 established the neutral provider protocol and direct pair/Mayor/Drunk request materialization. PR #237 also freezes the context-memory ownership rule: provider invocations remain stateless and independently reconstructable, while the Host owns current-game longitudinal/narrative memory plus relevant cross-game player and soft-diversity history. RES-3 removed live product/UI/session dependence on the old recommendation ranking stack and physically deleted its dynamic/setup recommenders, style/profile/weighted selectors, local rank/weight metadata and dead ranking tests/benchmarks. Historical `StorytellerDecisionEvent` score/probability/pressure/explanation fields remain only as archival/replay compatibility data; they are not current recommendation authority. RES-3 T4 acceptance is GREEN at `5b4b2a94c332bde462124b133955514a31f23183` (CI #3815 / R2 #3495).
 

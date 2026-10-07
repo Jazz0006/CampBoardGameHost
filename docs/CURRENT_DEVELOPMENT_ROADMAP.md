@@ -56,13 +56,15 @@ LRE-1 manual fallback / recommendation-authority cutoff        COMPLETE / ACCEPT
 LRE-P family-by-family special-policy loop                    SUPERSEDED / DO NOT CONTINUE
 GSP-0 General Storyteller Policy route reset                  COMPLETE / DOCS-ONLY
 GSP-1 special-policy automatic-authority revocation           COMPLETE / ACCEPTED — PR #225; merge 2a4884c; CI #3764 / R2 #3456 GREEN
-GSP-2 provider + decision-specific global-context contract    PAUSED — 2A/2B1/2B2 COMPLETE FOUNDATIONS; 2B3/2C/2D DEFERRED TO RES BOUNDARY
+GSP-2 provider + decision-specific global-context contract    FOUNDATIONS ACCEPTED — 2A/2B1/2B2 REUSED; OLD 2B3/2C/2D SUPERSEDED BY POST-RES RE-ENTRY
 RES-0 engine/recommendation separation + purge audit          COMPLETE / ACCEPTED — PR #233
 RES-1 engine-only pending-decision/legal-domain boundary      COMPLETE / ACCEPTED — PR #234/#235
 RES-2 neutral provider-contract extraction                    COMPLETE / ACCEPTED — PR #236/#237; CI #3800 / R2 #3482 GREEN
 RES-3 legacy heuristic/style/weighted physical purge          COMPLETE / ACCEPTED — checkpoint 5b4b2a94; CI #3815 / R2 #3495 GREEN
 RES-4 named deterministic special-policy physical purge       COMPLETE / ACCEPTED — T4 00aefd1b; CI #3824 / R2 #3502 GREEN
 RES-5 physical module/dependency boundary                     COMPLETE / ACCEPTED — T4 cdf5dba2; CI #3832 / R2 #3509 GREEN
+GSP-R0 post-RES-5 re-entry audit                              COMPLETE / DOCS — current authority: GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md
+GSP-R1 neutral current-game longitudinal context              NEXT EXECUTABLE
 ~~~
 
 ## 2. Current repository boundary
@@ -286,7 +288,7 @@ query live main / workspace
 -> GSP-2A structured provider contract COMPLETE / ACCEPTED — checkpoint aed23bad; CI #3769 / R2 #3459 GREEN
 -> GSP-2B1 typed game context + decision episode COMPLETE / ACCEPTED — checkpoint 9ee47da; CI #3774 / R2 #3463 GREEN
 -> GSP-2B2 session-owned player-context overrides COMPLETE / ACCEPTED — checkpoint 9d3bfdcb; CI #3778 / R2 #3466 GREEN
-|| 2026-10-06 architecture reset: GSP-2B3/2C/2D PAUSED; provider work must target the neutral RES boundary
+|| 2026-10-06 architecture reset: old GSP-2B3/2C/2D sequence SUPERSEDED; provider work targets the neutral RES boundary
 -> RES-0 separation/purge audit + active-doc authority reset COMPLETE / ACCEPTED
 -> RES-1 engine-only pending-decision/legal-domain boundary COMPLETE / ACCEPTED — pair + Mayor prove generic seam
 -> RES-2 neutral script-aware provider contract extraction COMPLETE / ACCEPTED — PR #236 merge 19abd61; Drunk/context-memory closure PR #237 merge 7ae03105
@@ -294,7 +296,12 @@ query live main / workspace
 -> RES-3 legacy heuristic/style/weighted recommender physical purge COMPLETE / ACCEPTED — checkpoint 5b4b2a94; CI #3815 / R2 #3495 GREEN
 -> RES-4 evidence-case deterministic special-policy physical purge COMPLETE / ACCEPTED — T4 00aefd1b; CI #3824 / R2 #3502 GREEN
 -> RES-5 physical module/dependency convergence COMPLETE / ACCEPTED — T4 `cdf5dba23eaad23f4fea3899ab54df97553a55cd`; CI #3832 / R2 #3509 GREEN
--> resume GSP context materializer/retrieval -> prompt materializer -> GSP-3A manual blind benchmark BEFORE any API integration NEXT
+-> GSP-R0 post-RES-5 re-entry audit COMPLETE
+-> GSP-R1 neutral current-game longitudinal context NEXT
+-> GSP-R2 Storyteller player-context edit + durable experience profile
+-> GSP-R3 generic cross-game recommendation/diversity context
+-> GSP-R4 prompt/response materializer + local validator
+-> GSP-3A manual blind benchmark BEFORE any API integration
 || Android product invariant: offline-first; network/LLM optional only
 || later player profile/management: BEGINNER / NORMAL / EXPERT; current default NORMAL
 || A3 presentation catalog remains READY / independent maintenance only

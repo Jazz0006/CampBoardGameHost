@@ -10,13 +10,14 @@
 3. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 4. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态 / 优先级权威**
 5. [`NEXT_DEVELOPMENT_HANDOFF.md`](NEXT_DEVELOPMENT_HANDOFF.md) — **唯一 active handoff**
-6. [`RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md`](RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md) — **当前执行主线：Game Engine / Recommendation 严格解耦 + 两代旧推荐算法物理清理**
-7. [`GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md) — **后续 provider / benchmark 路线；RES-0/1/2 已完成，继续等待 RES-3/4/5 清理收敛后恢复**
-8. [`LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`](LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md) — **旧 heuristic 全面退休的证据/范围权威**
-9. [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md) — **长期 Recommendation Engine 分层架构权威；GSP policy-layer amendment applies**
-10. [`HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`](HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md) + [`HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md`](HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md) — **policy-neutral model / benchmark interchange boundary**
-11. [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md) — **TB canonical snapshot / typed decision context 长期边界**
-12. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / Game Engine / Recommendation ownership guardrail**
+6. [`GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md) — **当前 provider / benchmark 主线；RES-5 后 neutral-contract re-entry 已启动**
+7. [`GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md`](GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md) — **当前 GSP re-entry 审计与 GSP-R1/R2/R3/R4 路线权威**
+8. [`RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md`](RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md) — **RES-0–5 COMPLETE / ACCEPTED 的架构边界与清理记录**
+9. [`LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`](LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md) — **旧 heuristic 全面退休的证据/范围权威**
+10. [`STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`](STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md) — **长期 Recommendation Engine 分层架构权威；GSP policy-layer amendment applies**
+11. [`HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md`](HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md) + [`HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md`](HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md) — **policy-neutral model / benchmark interchange boundary**
+12. [`TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md`](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md) — **TB canonical snapshot / typed decision context 长期边界**
+13. [`CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md`](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md) — **Setup / Game Engine / Recommendation ownership guardrail**
 
 DLB、C5、TBGS-2A–2E、RSR-0/1A 均已完成或进入历史状态；其 completion audit、cutover audit 和中间路线只在具体 ownership / replay / evidence 问题需要时读取，不再属于默认启动集合。
 
@@ -41,17 +42,17 @@ LRE-1 Manual / fail-closed safety gate  COMPLETE / ACCEPTED
 LRE-P family replacement + cutover      SUPERSEDED / DO NOT CONTINUE
 GSP-0 / GSP-1                          COMPLETE / ACCEPTED
 GSP-2A / 2B1 / 2B2                      COMPLETE / ACCEPTED foundations
-GSP-2B3 / 2C / 2D                       PAUSED BY RES ARCHITECTURE RESET
-RES-0 separation + purge audit           COMPLETE / ACCEPTED
-RES-1 engine-only decision boundary      COMPLETE / ACCEPTED
-RES-2 neutral provider contract          COMPLETE / ACCEPTED
-RES-3 legacy heuristic/style purge       NEXT EXECUTABLE
-RES-4 named special-policy purge         AFTER RES-3
-RES-5 physical module convergence        AFTER RES-4
-bounded App/Host decomposition          GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
+GSP old 2B3 / 2C / 2D                    SUPERSEDED BY POST-RES RE-ENTRY
+RES-0 / 1 / 2 / 3 / 4 / 5               COMPLETE / ACCEPTED
+GSP-R0 post-RES-5 re-entry audit         COMPLETE / DOCS
+GSP-R1 longitudinal provider context     NEXT EXECUTABLE
+GSP-R2 player context/profile            AFTER R1
+GSP-R3 cross-game/diversity context      AFTER R2
+GSP-R4 prompt/response materializer      AFTER R3
+bounded App/Host decomposition           GUARDRAIL / INDEPENDENT MAINTENANCE ONLY
 ~~~
 
-当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。RES-0/1/2 已完成：Game Engine / Manual legal-domain 边界已与 Recommendation implementation 解耦，中立 provider contract 已建立，pair / Mayor / Drunk 均可直接物化中立请求。当前主线进入 RES-3，先移除 live product/UI/session 对 legacy heuristic/style/weighted recommender 的可达依赖，再进入 RES-4 named-policy 清理与 RES-5 模块收敛。Provider 可以 stateless，但 recommendation context 不能 memoryless：Host 必须拥有并重建本局纵向/叙事历史、相关跨局玩家体验和 soft diversity 历史。GSP 的 context retrieval/materializer、benchmark 和 API 路线保留为 RES 后续消费者。Android 产品保持 offline-first。
+当前远端状态必须在会话开始时实时查询，不在索引里复制易过期的 branch HEAD。RES-0–5 已全部完成：Game Engine / Manual legal-domain 已与 Recommendation implementation 解耦，两代旧推荐权威已物理清理，中立 provider contract 已成为唯一继续方向。GSP-R0 重新审计确认 Recovery 已保存 session player context，但 neutral provider context 仍缺 `ActionFactTimeline` / `EpistemicObservationLog` 的本局纵向历史；因此 GSP-R1 先补这一 Host-owned、prefix-safe 的中立投影，再进入 player profile、cross-game diversity、prompt materializer 和 blind benchmark。Provider 可以 stateless，但 recommendation context 不能 memoryless。Android 产品保持 offline-first。
 
 ## 当前政策核心
 
