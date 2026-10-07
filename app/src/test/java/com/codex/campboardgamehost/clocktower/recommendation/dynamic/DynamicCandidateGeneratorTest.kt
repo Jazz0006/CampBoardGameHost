@@ -33,9 +33,7 @@ class DynamicCandidateGeneratorTest {
                 it.candidate.truthRelation == TruthRelation.FALSE_TO_ACTUAL_STATE
         })
         assertTrue(evaluations.all { it.candidate.abilityState == AbilityState.MALFUNCTIONING_POISONED })
-        assertTrue(evaluations.all {
-            it.totalScore == 0 && it.pressureDelta.isEmpty() && it.explanationCodes.isEmpty()
-        })
+        assertTrue(evaluations.all { it.warnings.isEmpty() })
     }
 
     @Test
@@ -70,11 +68,6 @@ class DynamicCandidateGeneratorTest {
             setOf("yes", "no"),
             evaluations.map { (it.candidate.outcome as DynamicInformationOutcome.Category).id }.toSet(),
         )
-        assertTrue(evaluations.all {
-            it.totalScore == 0 &&
-                it.withinFamilyWeightFixedPoint == 1L &&
-                it.pressureDelta.isEmpty() &&
-                it.explanationCodes.isEmpty()
-        })
+        assertTrue(evaluations.all { it.warnings.isEmpty() })
     }
 }

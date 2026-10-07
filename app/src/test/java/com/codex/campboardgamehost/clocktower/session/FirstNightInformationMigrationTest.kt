@@ -106,12 +106,12 @@ class FirstNightInformationMigrationTest {
         assertEquals(selected.observation, migration.displayedObservation(request.decisionId))
     }
 
-    @Test fun `same candidate IDs with a different tier or rank are a shadow mismatch`() {
+    @Test fun `same candidate IDs with a different tier are a shadow mismatch`() {
         val legacy = candidate(FirstNightInformationFamily.CHEF, 5, ReliabilityState.RELIABLE, "same")
-            .copy(qualityTier = QualityTier.RECOMMENDED, rankFixedPoint = 100)
-        val migrated = legacy.copy(rankFixedPoint = 99)
+            .copy(qualityTier = QualityTier.RECOMMENDED)
+        val migrated = legacy.copy(qualityTier = QualityTier.ACCEPTABLE_WITH_WARNING)
         val request = FirstNightInformationRequest(
-            decisionId = "first-night-chef-rank",
+            decisionId = "first-night-chef-tier",
             family = FirstNightInformationFamily.CHEF,
             sourceSeat = 5,
             reliability = ReliabilityState.RELIABLE,

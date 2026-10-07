@@ -64,12 +64,7 @@ class InformationDecisionCoordinatorIntegrationTest {
             metadata = CandidateMetadata("test-v1", "information-decision-test"),
         ),
         qualityTier = QualityTier.RECOMMENDED,
-        totalScore = 0,
-        withinFamilyWeightFixedPoint = 1,
-        finalProbabilityFixedPoint = 0,
-        pressureDelta = emptyMap(),
         warnings = emptyList(),
-        explanationCodes = listOf("test"),
     )
 
     private fun draft(

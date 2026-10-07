@@ -110,12 +110,7 @@ internal object DynamicCandidateGenerator {
     ): DecisionEvaluation<T> = DecisionEvaluation(
         candidate = candidate,
         qualityTier = QualityTier.RECOMMENDED,
-        totalScore = 0,
-        withinFamilyWeightFixedPoint = 1L,
-        finalProbabilityFixedPoint = 0L,
-        pressureDelta = emptyMap(),
         warnings = warnings,
-        explanationCodes = emptyList(),
     )
 
     private fun stableCandidateId(

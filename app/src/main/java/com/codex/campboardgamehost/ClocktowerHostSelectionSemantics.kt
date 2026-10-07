@@ -314,7 +314,6 @@ internal fun unifiedFirstNightInformationPool(
                 legality = UnifiedCandidateLegality.LEGAL,
                 epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
                 qualityTier = QualityTier.RECOMMENDED,
-                rankFixedPoint = 0L,
                 reasonCodes = emptyList(),
                 warningCodes = option.warningCodes,
                 payload = option,

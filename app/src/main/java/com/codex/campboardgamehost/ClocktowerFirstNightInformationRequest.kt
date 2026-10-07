@@ -66,7 +66,6 @@ internal fun clocktowerFirstNightInformationRequest(
             semanticTruth = if (option.isTruthful) SemanticTruth.TRUE else SemanticTruth.FALSE,
         ),
             qualityTier = QualityTier.RECOMMENDED,
-            rankFixedPoint = 0L,
             reasonCodes = emptyList(),
             warningCodes = option.warningCodes,
         )
@@ -155,7 +154,6 @@ internal fun clocktowerFirstNightInformationRequest(
                         )
                     },
                     qualityTier = QualityTier.RECOMMENDED,
-                    rankFixedPoint = 0L,
                     reasonCodes = emptyList(),
                     warningCodes = option.warningCodes,
                 )

@@ -183,12 +183,7 @@ class InformationDecisionFoundationTest {
             metadata = CandidateMetadata("test-v1", "information-decision-test"),
         ),
         qualityTier = QualityTier.RECOMMENDED,
-        totalScore = 0,
-        withinFamilyWeightFixedPoint = 1,
-        finalProbabilityFixedPoint = 0,
-        pressureDelta = emptyMap(),
         warnings = warnings,
-        explanationCodes = listOf("test"),
     )
 
     private fun draft(

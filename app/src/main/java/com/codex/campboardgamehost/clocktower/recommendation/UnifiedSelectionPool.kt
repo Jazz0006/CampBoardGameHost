@@ -23,7 +23,6 @@ data class UnifiedSelectionCandidate<T>(
     val legality: UnifiedCandidateLegality,
     val epistemicStatus: UnifiedEpistemicStatus,
     val qualityTier: QualityTier,
-    val rankFixedPoint: Long,
     val reasonCodes: List<String> = emptyList(),
     val warningCodes: List<String> = emptyList(),
     val payload: T,
@@ -51,27 +50,23 @@ class UnifiedSelectionPool<T>(candidates: List<UnifiedSelectionCandidate<T>>) {
         }
     }
 
-    /** Stable display order is shared; the policy only determines which entries can be acted upon. */
-    val rankedCandidates: List<UnifiedSelectionCandidate<T>> = candidates.sortedWith(
-        compareByDescending<UnifiedSelectionCandidate<T>> { it.rankFixedPoint }
-            .thenBy { it.candidateId },
-    )
+    /** Stable deterministic order is shared; execution policy only filters legal availability. */
+    val orderedCandidates: List<UnifiedSelectionCandidate<T>> = candidates.sortedBy { it.candidateId }
 
     fun candidatesFor(policy: SelectionExecutionPolicy): List<UnifiedSelectionCandidate<T>> = when (policy) {
-        SelectionExecutionPolicy.AUTO -> rankedCandidates.filter(UnifiedSelectionCandidate<T>::selectableInAuto)
-        SelectionExecutionPolicy.ASSISTED -> rankedCandidates.filter(UnifiedSelectionCandidate<T>::selectableInAssisted)
+        SelectionExecutionPolicy.AUTO -> orderedCandidates.filter(UnifiedSelectionCandidate<T>::selectableInAuto)
+        SelectionExecutionPolicy.ASSISTED -> orderedCandidates.filter(UnifiedSelectionCandidate<T>::selectableInAssisted)
     }
 
-    /** Exact parity surface: IDs, tiers and ranks, excluding payload and display-only text. */
-    fun paritySignature(): List<UnifiedCandidateParity> = rankedCandidates.map {
-        UnifiedCandidateParity(it.candidateId, it.qualityTier, it.rankFixedPoint)
+    /** Exact parity surface excludes payload and display-only text. */
+    fun paritySignature(): List<UnifiedCandidateParity> = orderedCandidates.map {
+        UnifiedCandidateParity(it.candidateId, it.qualityTier)
     }
 }
 
 data class UnifiedCandidateParity(
     val candidateId: String,
     val qualityTier: QualityTier,
-    val rankFixedPoint: Long,
 )
 
 /** Aggregate-only shadow telemetry; it deliberately retains neither decision nor candidate IDs. */

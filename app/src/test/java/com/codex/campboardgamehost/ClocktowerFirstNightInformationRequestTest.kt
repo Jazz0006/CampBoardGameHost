@@ -67,7 +67,6 @@ class ClocktowerFirstNightInformationRequestTest {
         assertEquals(2, candidate.observation.shownNumber)
         assertEquals(ReliabilityState.POISONED, candidate.observation.reliability)
         assertEquals(SemanticTruth.FALSE, candidate.observation.semanticTruth)
-        assertEquals(0L, candidate.rankFixedPoint)
     }
 
     @Test fun `legacy duplicate preserves neutral candidate identity without ranking metadata`() {
@@ -75,7 +74,6 @@ class ClocktowerFirstNightInformationRequestTest {
             "2", null, null, isDefaultRecommendation = true, reasonCodes = listOf("reason"))
         val result = requireNotNull(request(step().copy(legacyInformationCandidates = listOf(option, option))))
         assertEquals(1, result.legacyCandidates.size)
-        assertEquals(0L, result.legacyCandidates.single().rankFixedPoint)
         assertTrue(result.legacyCandidates.single().reasonCodes.isEmpty())
     }
 
