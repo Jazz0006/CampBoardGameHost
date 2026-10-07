@@ -219,8 +219,6 @@ class ClocktowerTemporaryAutomaticRulingsTest {
         decisionKey: String,
         expectedFamilies: List<String>,
     ) {
-        val legacyRecommendations = emptyList<ClocktowerRegistrationRecommendationOption>()
-        assertTrue(legacyRecommendations.isEmpty())
         val isSpy = subjectRole == "Spy"
         val registration = TroubleBrewingRegistrationDomain.resolve(
             subject = TroubleBrewingRegistrationSubject(
