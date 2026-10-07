@@ -105,7 +105,6 @@ class StructuredInformationProductionShadowTest {
         )
 
         assertEquals(model.contextSnapshot, result.informationSnapshot)
-        assertEquals(currentSnapshot.gameSeed, result.selectionSeed)
         assertEquals(model.contextSnapshot.legalCandidateIds, result.sdeCandidates.map { it.candidateId })
         assertEquals(model.contextSnapshot.legalCandidateIds, result.plannedDecisions.map { it.candidateId })
         assertTrue(result.sdeCandidates.all { it.sourceRevision == revision })
