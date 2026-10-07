@@ -2176,8 +2176,6 @@ internal fun CampBoardGameHostApp() {
                         script = currentClocktowerScript,
                         gameId = clocktowerGameId,
                         gameSeed = clocktowerGameSeed,
-                        gameStateRevision = clocktowerGameStateRevision,
-                        playerInputRevision = clocktowerPlayerInputRevision,
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         firstNightNaturalPairReadyProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
@@ -2194,13 +2192,7 @@ internal fun CampBoardGameHostApp() {
                         phase = clocktowerPhase,
                         round = round,
                         nightCheckpoint = currentClocktowerNightCheckpoint(),
-                        pendingNightDeath = clocktowerPendingNightDeath,
-                        demonAttackDraftTarget = clocktowerDemonAttackDraftTarget,
                         selectedExecution = clocktowerSelectedExecution,
-                        // The draft is visible only while the Poisoner is choosing.
-                        // All ability and outcome evaluation must use the confirmed fact.
-                        poisonTarget = clocktowerConfirmedPoisonTarget,
-                        poisonDraftTarget = clocktowerPoisonTarget,
                         fortuneTellerFirst = clocktowerFortuneTellerFirst,
                         fortuneTellerSecond = clocktowerFortuneTellerSecond,
                         chambermaidFirst = clocktowerChambermaidFirst,
@@ -2209,13 +2201,6 @@ internal fun CampBoardGameHostApp() {
                         redHerring = clocktowerRedHerring,
                         recommendedDemonBluffRoleNames = clocktowerRecommendedDemonBluffRoleNames,
                         butlerMaster = clocktowerButlerMaster,
-                        monkProtectedTarget = clocktowerConfirmedMonkProtectedTarget,
-                        monkProtectedDraftTarget = clocktowerMonkProtectedTarget,
-                        mayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
-                        mayorRedirectDraftTarget = clocktowerMayorRedirectTarget,
-                        pendingNewDemonName = clocktowerPendingNewDemonName,
-                        pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
-                        demonSuccessorTarget = clocktowerDemonSuccessorTarget,
                         virginUsed = clocktowerVirginUsed,
                         slayerUsed = clocktowerSlayerUsed,
                         slayerClaimedNames = clocktowerSlayerClaimedNames,

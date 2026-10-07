@@ -83,19 +83,13 @@ internal fun ClocktowerJudgeScreen(
     script: ClocktowerScript,
     gameId: String,
     gameSeed: Long,
-    gameStateRevision: Long,
-    playerInputRevision: Long,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
     firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
     firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
     phase: ClocktowerPhase,
     round: Int,
     nightCheckpoint: ClocktowerNightCheckpoint,
-    pendingNightDeath: String?,
-    demonAttackDraftTarget: String?,
     selectedExecution: String?,
-    poisonTarget: String?,
-    poisonDraftTarget: String?,
     fortuneTellerFirst: String?,
     fortuneTellerSecond: String?,
     chambermaidFirst: String?,
@@ -104,13 +98,6 @@ internal fun ClocktowerJudgeScreen(
     redHerring: String?,
     recommendedDemonBluffRoleNames: List<String>,
     butlerMaster: String?,
-    monkProtectedTarget: String?,
-    monkProtectedDraftTarget: String?,
-    mayorRedirectTarget: String?,
-    mayorRedirectDraftTarget: String?,
-    pendingNewDemonName: String?,
-    pendingNightNewDemonIdentityName: String?,
-    demonSuccessorTarget: String?,
     virginUsed: Boolean,
     slayerUsed: Boolean,
     slayerClaimedNames: List<String>,
@@ -165,6 +152,19 @@ internal fun ClocktowerJudgeScreen(
 ) {
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
+    val gameStateRevision = nightCheckpoint.gameStateRevision
+    val playerInputRevision = nightCheckpoint.playerInputRevision
+    val pendingNightDeath = nightCheckpoint.confirmedAttackTarget
+    val demonAttackDraftTarget = nightCheckpoint.attackDraftTarget
+    val poisonTarget = nightCheckpoint.confirmedPoisonTarget
+    val poisonDraftTarget = nightCheckpoint.poisonDraftTarget
+    val monkProtectedTarget = nightCheckpoint.confirmedMonkTarget
+    val monkProtectedDraftTarget = nightCheckpoint.monkDraftTarget
+    val mayorRedirectTarget = nightCheckpoint.confirmedMayorRedirectTarget
+    val mayorRedirectDraftTarget = nightCheckpoint.mayorRedirectDraftTarget
+    val pendingNewDemonName = nightCheckpoint.pendingNewDemonName
+    val pendingNightNewDemonIdentityName = nightCheckpoint.pendingNightNewDemonIdentityName
+    val demonSuccessorTarget = nightCheckpoint.demonSuccessorDraftTarget
     val recommendationCoordinator = remember(gameSeed) { ClocktowerRecommendationCoordinator() }
     // B7.2 shadow telemetry stores only parity totals; candidate IDs and game facts stay local.
     val firstNightPoolParity = remember(gameId) { SelectionPoolParityRecorder() }
