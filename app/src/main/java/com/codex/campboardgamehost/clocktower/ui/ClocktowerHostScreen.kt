@@ -49,12 +49,10 @@ import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDo
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
-import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalDomain
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionPoolParityRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationRegistration
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
@@ -729,120 +727,6 @@ internal fun ClocktowerJudgeScreen(
     fun seatNumberFor(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
     fun seatNumbersText(pair: Pair<PlayerCard, PlayerCard>?): String? =
         pair?.let { "${seatNumberFor(it.first)}   ${seatNumberFor(it.second)}" }
-    fun displayOption(
-        label: String,
-        kind: ClocktowerDisplayKind,
-        title: String,
-        primary: String?,
-        secondary: String? = null,
-        footer: String? = null,
-        proposition: InformationProposition? = null,
-        isTruthful: Boolean = true,
-        misinformationPressure: Int = 0,
-        isDefaultRecommendation: Boolean = false,
-        reasonCodes: List<String> = emptyList(),
-        warningCodes: List<String> = emptyList(),
-    ) = ClocktowerDisplayOption(
-        label = label,
-        displayKind = kind,
-        displayTitle = title,
-        displayPrimary = primary,
-        displaySecondary = secondary,
-        displayFooter = footer,
-        proposition = proposition,
-        isTruthful = isTruthful,
-        misinformationPressure = misinformationPressure,
-        isDefaultRecommendation = isDefaultRecommendation,
-        reasonCodes = reasonCodes,
-        warningCodes = warningCodes,
-    )
-    fun recommendedNumberOptions(
-        title: String,
-        actor: PlayerCard,
-        trueValue: Int,
-        maxValue: Int,
-        footer: String,
-        secondary: String? = null,
-        propositionForValue: ((Int) -> InformationProposition)? = null,
-    ): List<ClocktowerDisplayOption> {
-        val maximumValue = maxOf(trueValue, maxValue)
-        return (0..maximumValue).map { value ->
-            displayOption(
-                label = value.toString(),
-                kind = ClocktowerDisplayKind.Number,
-                title = title,
-                primary = value.toString(),
-                secondary = secondary,
-                footer = footer,
-                proposition = propositionForValue?.invoke(value),
-                isTruthful = value == trueValue,
-                misinformationPressure = 0,
-                isDefaultRecommendation = false,
-            )
-        }
-    }
-
-    fun recommendedYesNoOptions(
-        title: String,
-        truthfulYes: Boolean,
-        secondary: String?,
-        footer: String,
-        propositionForValue: ((Boolean) -> InformationProposition)? = null,
-    ): List<ClocktowerDisplayOption> = listOf(true, false).map { answer ->
-        val value = if (answer) text("有", "Yes") else text("没有", "No")
-        displayOption(
-            label = value,
-            kind = ClocktowerDisplayKind.YesNo,
-            title = title,
-            primary = value,
-            secondary = secondary,
-            footer = footer,
-            proposition = propositionForValue?.invoke(answer),
-            isTruthful = answer == truthfulYes,
-            misinformationPressure = 0,
-            isDefaultRecommendation = false,
-        )
-    }
-
-    fun recommendedRoleRevealOptions(
-        title: String,
-        truthfulRole: ClocktowerRole?,
-        footer: String,
-    ): List<ClocktowerDisplayOption> {
-        if (truthfulRole == null) return emptyList()
-        return (clocktowerRolesForScript(script) + truthfulRole)
-            .distinctBy(ClocktowerRole::enName)
-            .sortedBy(ClocktowerRole::enName)
-            .map { role ->
-                displayOption(
-                    label = role.nameFor(language),
-                    kind = ClocktowerDisplayKind.RoleReveal,
-                    title = title,
-                    primary = role.nameFor(language),
-                    footer = footer,
-                    isTruthful = role.enName == truthfulRole.enName,
-                    misinformationPressure = 0,
-                    isDefaultRecommendation = false,
-                )
-            }
-    }
-
-    data class PairInformationEffect(
-        val id: String,
-        val shownRole: ClocktowerRole?,
-        val target: PlayerCard?,
-        val decoy: PlayerCard?,
-        val registration: PairInformationRegistration,
-    )
-
-    fun informationHistoryPressure(card: PlayerCard?): Int {
-        if (card == null) return 0
-        return events.count { event ->
-            event.type in setOf(ClocktowerEventType.Information, ClocktowerEventType.UnreliableInformation) &&
-                card.name in event.playerNames.drop(1)
-        }
-    }
-
     fun recentMisinformationStreak(card: PlayerCard?): Int {
         if (card == null) return 0
         return events.asReversed()
@@ -856,135 +740,10 @@ internal fun ClocktowerJudgeScreen(
             .count()
     }
 
-    fun pairInformationPresentationOptions(
-        ability: ClocktowerPairInformationAbility,
-        actor: PlayerCard,
-    ): List<ClocktowerDisplayOption> {
-        val roleTeam = when (ability) {
-            ClocktowerPairInformationAbility.Washerwoman -> ClocktowerTeam.Townsfolk
-            ClocktowerPairInformationAbility.Librarian -> ClocktowerTeam.Outsider
-            ClocktowerPairInformationAbility.Investigator -> ClocktowerTeam.Minion
-        }
-        val roles = clocktowerRolesForScript(script).filter { it.team == roleTeam }
-        val pool = cards.filter { it.name != actor.name }
-        val effects = buildList<PairInformationEffect> {
-            roles.forEach { role ->
-                for (firstIndex in 0 until pool.lastIndex) {
-                    for (secondIndex in firstIndex + 1 until pool.size) {
-                        val first = pool[firstIndex]
-                        val second = pool[secondIndex]
-                        add(
-                            PairInformationEffect(
-                                id = "unreliable:${ability.name}:${role.enName}:${cards.indexOf(first) + 1}:${cards.indexOf(second) + 1}",
-                                shownRole = role,
-                                target = first,
-                                decoy = second,
-                                registration = PairInformationRegistration.NONE,
-                            ),
-                        )
-                    }
-                }
-            }
-            if (ability != ClocktowerPairInformationAbility.Washerwoman) {
-                add(
-                    PairInformationEffect(
-                        id = "unreliable:${ability.name}:none",
-                        shownRole = null,
-                        target = null,
-                        decoy = null,
-                        registration = PairInformationRegistration.NONE,
-                    ),
-                )
-            }
-        }
-        fun propositionFor(effect: PairInformationEffect): InformationProposition =
-            if (effect.shownRole != null && effect.target != null && effect.decoy != null) {
-                InformationProposition.AnyOf(listOf(
-                    InformationProposition.RoleAt(cards.indexOf(effect.target) + 1, RoleId(effect.shownRole.enName)),
-                    InformationProposition.RoleAt(cards.indexOf(effect.decoy) + 1, RoleId(effect.shownRole.enName)),
-                ))
-            } else {
-                InformationProposition.AllOf(roles.map { InformationProposition.RoleInPlay(RoleId(it.enName), false) })
-            }
-        val sourceSeat = cards.indexOf(actor) + 1
-        val projectedSemanticsById = projectFirstNightPairInformationOptions(
-            phase = phase,
-            roleEnName = ability.name,
-            sourceSeat = sourceSeat,
-            game = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
-            roleDefinitions = clocktowerRoleDefinitionsForScript(script),
-            options = effects.map { effect ->
-                ClocktowerDisplayOption(
-                    label = effect.id,
-                    displayKind = ClocktowerDisplayKind.EitherOne,
-                    displayTitle = ability.name,
-                    displayPrimary = null,
-                    displaySecondary = null,
-                    displayFooter = null,
-                    proposition = propositionFor(effect),
-                    isTruthful = false,
-                    misinformationPressure = 1,
-                )
-            },
-        ).associateBy(ClocktowerDisplayOption::label)
-        val projectedEffects = effects.map { effect ->
-            val semantics = projectedSemanticsById.getValue(effect.id)
-            effect.copy(
-                registration = if (semantics.recluseRegistersEvil == true) {
-                    PairInformationRegistration.RECLUSE_AS_EVIL_ROLE
-                } else {
-                    PairInformationRegistration.NONE
-                },
-            )
-        }
-        return projectedEffects.map { effect ->
-            val semantics = projectedSemanticsById.getValue(effect.id)
-            val noRoleText = when (ability) {
-                ClocktowerPairInformationAbility.Librarian -> text("没有外来者", "No Outsiders")
-                ClocktowerPairInformationAbility.Investigator -> text("没有爪牙", "No Minions")
-                ClocktowerPairInformationAbility.Washerwoman -> text("没有镇民", "No Townsfolk")
-            }
-            val roleText = effect.shownRole?.nameFor(language) ?: noRoleText
-            val seats = if (effect.target != null && effect.decoy != null) {
-                "${seatNumberFor(effect.target)}   ${seatNumberFor(effect.decoy)}"
-            } else {
-                null
-            }
-            val option = displayOption(
-                label = "$roleText${seats?.let { " · $it" }.orEmpty()}",
-                kind = ClocktowerDisplayKind.EitherOne,
-                title = when (ability) {
-                    ClocktowerPairInformationAbility.Washerwoman -> text("洗衣妇信息", "Washerwoman information")
-                    ClocktowerPairInformationAbility.Librarian -> text("图书管理员信息", "Librarian information")
-                    ClocktowerPairInformationAbility.Investigator -> text("调查员信息", "Investigator information")
-                },
-                primary = roleText,
-                secondary = seats,
-                footer = if (seats == null) "" else text("在下面两位玩家之中", "One of these two players"),
-                proposition = if (effect.shownRole != null && effect.target != null && effect.decoy != null) {
-                    InformationProposition.AnyOf(listOf(
-                        InformationProposition.RoleAt(cards.indexOf(effect.target) + 1, RoleId(effect.shownRole.enName)),
-                        InformationProposition.RoleAt(cards.indexOf(effect.decoy) + 1, RoleId(effect.shownRole.enName)),
-                    ))
-                } else {
-                    InformationProposition.AllOf(roles.map { InformationProposition.RoleInPlay(RoleId(it.enName), false) })
-                },
-                isTruthful = semantics.isTruthful,
-            )
-            option.copy(
-                spyRegistersGood = semantics.spyRegistersGood,
-                spyRegisteredRoleEnName = semantics.spyRegisteredRoleEnName,
-                recluseRegistersEvil = semantics.recluseRegistersEvil,
-                recluseRegisteredRoleEnName = semantics.recluseRegisteredRoleEnName,
-            )
-        }
-    }
-
     fun legalPairInformationOptions(
         ability: ClocktowerPairInformationAbility,
         actor: PlayerCard,
     ): List<ClocktowerDisplayOption> {
-        val sourceSeat = cards.indexOf(actor).plus(1).takeIf { it > 0 } ?: return emptyList()
         val reliability = when (
             effectiveAbilitySubjectForRole(ability.name, actor)?.let { subject ->
                 AbilityFunctioningSemantics.stateFor(subject, ability.name)
@@ -994,31 +753,22 @@ internal fun ClocktowerJudgeScreen(
             AbilityFunctioningState.POISONED -> ReliabilityState.POISONED
             else -> ReliabilityState.RELIABLE
         }
-        val presentationOptions = pairInformationPresentationOptions(
+        return ClocktowerNeutralInformationPreparation.legalPairInformationOptions(
             ability = ability,
             actor = actor,
+            cards = cards,
+            scriptRoles = clocktowerRolesForScript(script),
+            phase = phase,
+            game = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
+            roleDefinitions = clocktowerRoleDefinitionsForScript(script),
+            firstNightContext = firstNightPairDecisionContext,
+            requireFirstNightContext =
+                script == ClocktowerScript.TroubleBrewing && phase == ClocktowerPhase.FirstNight,
+            reliability = reliability,
+            roleLabel = { role -> role.nameFor(language) },
+            text = ::text,
         )
-        return if (script == ClocktowerScript.TroubleBrewing && phase == ClocktowerPhase.FirstNight) {
-            val context = firstNightPairDecisionContext ?: return emptyList()
-            ClocktowerPairManualAuthority.projectLegalOptions(
-                context = context,
-                sourceSeat = sourceSeat,
-                abilityRole = RoleId(ability.name),
-                reliability = reliability,
-                presentationOptions = presentationOptions,
-            )
-        } else {
-            ClocktowerPairManualAuthority.projectLegalOptions(
-                game = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
-                roleDefinitions = clocktowerRoleDefinitionsForScript(script),
-                sourceSeat = sourceSeat,
-                abilityRole = RoleId(ability.name),
-                reliability = reliability,
-                presentationOptions = presentationOptions,
-            )
-        }
     }
-
     val informationStepBuilder = ClocktowerInformationStepBuilder(
         cards = cards,
         language = language,
@@ -1476,9 +1226,8 @@ internal fun ClocktowerJudgeScreen(
         },
         displayOptions = { actor ->
             chambermaidResult?.toIntOrNull()?.let { trueValue ->
-                recommendedNumberOptions(
+                ClocktowerNeutralInformationPreparation.numericOptions(
                     title = text("侍女信息", "Chambermaid information"),
-                    actor = actor,
                     trueValue = trueValue,
                     maxValue = 2,
                     footer = chambermaidStepContent.displayFooter,
@@ -1550,7 +1299,7 @@ internal fun ClocktowerJudgeScreen(
                                 explanation = text("这个数字表示恶魔到最近爪牙相隔几步。", "This number is the distance from the Demon to the nearest Minion."),
                                 displayFooter = text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion"),
                                 hostInstruction = text("轻拍钟表匠，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。", "Tap the Clockmaker to wake them. Show the number only to that player, then take the phone back and signal them to close their eyes."),
-                                displayOptions = { actor -> recommendedNumberOptions(text("钟表匠信息", "Clockmaker information"), actor, clockmakerValue, cards.size / 2, text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion")) },
+                                displayOptions = { _ -> ClocktowerNeutralInformationPreparation.numericOptions(text("钟表匠信息", "Clockmaker information"), clockmakerValue, cards.size / 2, text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion")) },
                             )
             },
         ),
@@ -1644,7 +1393,7 @@ internal fun ClocktowerJudgeScreen(
                                 },
                                 numericMinimumValue = 0,
                                 numericMaximumValue = chefMaximumValue,
-                                displayOptions = { actor -> recommendedNumberOptions(text("厨师信息", "Chef information"), actor, chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
+                                displayOptions = { actor -> ClocktowerNeutralInformationPreparation.numericOptions(text("厨师信息", "Chef information"), chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
                                 legalSelectionOptions = { actor ->
                                     if (chefAbilityUnreliable) {
                                         emptyList()
@@ -1686,7 +1435,7 @@ internal fun ClocktowerJudgeScreen(
                                 tellPlayer = empathNumber,
                                 explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
                                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                                    displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, empathNeighbors.map { cards.indexOf(it) + 1 }, value) }) },
+                                    displayOptions = { actor -> ClocktowerNeutralInformationPreparation.numericOptions(text("共情者信息", "Empath information"), empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, empathNeighbors.map { cards.indexOf(it) + 1 }, value) }) },
                                 previousShownNumber = empathActor?.let { actor ->
                                     previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
                                         ?.takeIf { it in 0..2 }
@@ -1753,7 +1502,7 @@ internal fun ClocktowerJudgeScreen(
                                 hostInstruction = text("轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后展示“有”或“没有”。", "Tap the Fortune Teller to wake them. Have them point to two players, record both, then show Yes or No."),
                                 displayOptions = { actor ->
                                     fortuneTellerMatched?.let { matched ->
-                                        recommendedYesNoOptions(
+                                        ClocktowerNeutralInformationPreparation.yesNoOptions(
                                             title = text("占卜师信息", "Fortune Teller information"),
                                             truthfulYes = matched,
                                             secondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
@@ -1761,6 +1510,7 @@ internal fun ClocktowerJudgeScreen(
                                                 .joinToString("   ") { seatNumberText(it) }
                                                 .takeIf { it.isNotBlank() },
                                             footer = text("查询这两名玩家", "Checking these two players"),
+                                            text = ::text,
                                             propositionForValue = { value -> InformationProposition.BooleanResult(
                                                 BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
                                                 cards.indexOf(actor) + 1,
@@ -1863,7 +1613,7 @@ internal fun ClocktowerJudgeScreen(
                 tellPlayer = empathNumber,
                 explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors")) },
+                displayOptions = { _ -> ClocktowerNeutralInformationPreparation.numericOptions(text("共情者信息", "Empath information"), empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors")) },
                 previousShownNumber = empathActor?.let { actor ->
                     previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
                         ?.takeIf { it in 0..2 }
@@ -1930,7 +1680,7 @@ internal fun ClocktowerJudgeScreen(
                 hostInstruction = text("轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后展示“有”或“没有”。", "Tap the Fortune Teller to wake them. Have them point to two players, record both, then show Yes or No."),
                 displayOptions = { actor ->
                     fortuneTellerMatched?.let { matched ->
-                        recommendedYesNoOptions(
+                        ClocktowerNeutralInformationPreparation.yesNoOptions(
                             title = text("占卜师信息", "Fortune Teller information"),
                             truthfulYes = matched,
                             secondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
@@ -1938,6 +1688,7 @@ internal fun ClocktowerJudgeScreen(
                                 .joinToString("   ") { seatNumberText(it) }
                                 .takeIf { it.isNotBlank() },
                             footer = text("查询这两名玩家", "Checking these two players"),
+                            text = ::text,
                             propositionForValue = { value -> InformationProposition.BooleanResult(
                                 BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
                                 cards.indexOf(actor) + 1,
@@ -1995,9 +1746,11 @@ internal fun ClocktowerJudgeScreen(
                         displayFooter = text("今天被处决：${playerSeatLabel(cards, executedName)}", "Executed today: ${playerSeatLabel(cards, executedName)}"),
                         hostInstruction = text("轻拍送葬者，示意睁眼。把今天被处决玩家的真实身份只给他看；看完后收回手机，示意闭眼。", "Tap the Undertaker to wake them. Show the executed player's identity only to that player, then take the phone back and signal them to close their eyes."),
                         displayOptions = {
-                            recommendedRoleRevealOptions(
+                            ClocktowerNeutralInformationPreparation.roleRevealOptions(
                                 title = text("送葬者信息", "Undertaker information"),
                                 truthfulRole = undertakerTarget?.clocktowerRole,
+                                scriptRoles = clocktowerRolesForScript(script),
+                                roleLabel = { role -> role.nameFor(language) },
                                 footer = text("今天被处决：${playerSeatLabel(cards, executedName)}", "Executed today: ${playerSeatLabel(cards, executedName)}"),
                             )
                         },
@@ -2197,9 +1950,11 @@ internal fun ClocktowerJudgeScreen(
                         displayFooter = ravenkeeperTarget?.let { text("查询目标：${playerSeatLabel(cards, it)}", "Checked player: ${playerSeatLabel(cards, it)}") },
                         hostInstruction = text("轻拍 ${trigger.seatLabel(cards)}，示意睁眼。让他指一名玩家，在下面记录后把该玩家角色只给他看。", "Tap ${trigger.seatLabel(cards)} to wake them. Have them point to a player, record the target, and show that character only to the Ravenkeeper."),
                         displayOptions = {
-                            recommendedRoleRevealOptions(
+                            ClocktowerNeutralInformationPreparation.roleRevealOptions(
                                 title = text("守鸦人信息", "Ravenkeeper information"),
                                 truthfulRole = ravenkeeperTargetCard?.clocktowerRole,
+                                scriptRoles = clocktowerRolesForScript(script),
+                                roleLabel = { role -> role.nameFor(language) },
                                 footer = ravenkeeperTarget?.let { text("查询目标：${playerSeatLabel(cards, it)}", "Checked player: ${playerSeatLabel(cards, it)}") }.orEmpty(),
                             )
                         },
