@@ -9,7 +9,6 @@ import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
@@ -90,7 +89,6 @@ class StructuredInformationProductionShadowTest {
             minimumValue = 0,
             maximumValue = 2,
             reliability = InformationReliability.RELIABLE,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = 0,
         )
@@ -171,7 +169,6 @@ class StructuredInformationProductionShadowTest {
             minimumValue = 0,
             maximumValue = 2,
             reliability = InformationReliability.POISONED,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = 1,
         )
@@ -317,7 +314,6 @@ class StructuredInformationProductionShadowTest {
             minimumValue = 0,
             maximumValue = 2,
             reliability = InformationReliability.POISONED,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = 0,
         )

@@ -29,23 +29,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
-import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
-import com.codex.campboardgamehost.clocktower.domain.DynamicGameState
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.DynamicStorytellerChoice
-import com.codex.campboardgamehost.clocktower.domain.PlayerInformationPressure
-import com.codex.campboardgamehost.clocktower.domain.PredictedDecisionOutcome
-import com.codex.campboardgamehost.clocktower.domain.RegistrationLedger
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.kind
@@ -56,39 +45,23 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNigh
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
-import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDomain
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
-import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalDomain
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingDemonSuccessorDecisionContext
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingMayorRedirectDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningInvestigatorInv1ProductionSelector
 import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningLibrarianV2ProductionSelector
-import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
-import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionPoolParityRecorder
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationRegistration
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.RegistrationDetail
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SpecialRegistrationContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
-import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
 import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
@@ -107,7 +80,6 @@ import kotlinx.coroutines.withContext
 @Composable
 internal fun ClocktowerJudgeScreen(
     automaticStorytellerInfo: Boolean,
-    automaticStorytellerStyle: RecommendationStyle,
     cards: List<PlayerCard>,
     events: List<ClocktowerEvent>,
     script: ClocktowerScript,
@@ -116,17 +88,6 @@ internal fun ClocktowerJudgeScreen(
     gameStateRevision: Long,
     playerInputRevision: Long,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
-    demonSuccessorDecisionContextProvider: ((
-        DemonSuccessionResolution,
-        Map<Int, PlayerInformationPressure>,
-        Set<Int>,
-    ) -> TroubleBrewingDemonSuccessorDecisionContext?)? = null,
-    mayorRedirectDecisionContextProvider: ((
-        Int,
-        Set<Int>,
-        Map<Int, PlayerInformationPressure>,
-        Set<Int>,
-    ) -> TroubleBrewingMayorRedirectDecisionContext?)? = null,
     firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
     firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
     phase: ClocktowerPhase,
@@ -208,9 +169,6 @@ internal fun ClocktowerJudgeScreen(
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
     val recommendationCoordinator = remember(gameSeed) { ClocktowerRecommendationCoordinator() }
-    // Aggregate-only C8 telemetry lives for this game UI session. The recorder
-    // de-duplicates stable decision IDs, so Compose recomposition is not a new selection.
-    val selectionDistributionTelemetry = remember(gameId) { SelectionDistributionTelemetryRecorder() }
     // B7.2 shadow telemetry stores only parity totals; candidate IDs and game facts stay local.
     val firstNightPoolParity = remember(gameId) { SelectionPoolParityRecorder() }
     fun text(zh: String, en: String): String = if (language == "en") en else zh
@@ -241,7 +199,6 @@ internal fun ClocktowerJudgeScreen(
             gameSeed,
             poisonTarget,
             language,
-            automaticStorytellerStyle,
             firstNightPairDecisionContext,
         ) ?: return true
         val shadow = firstNightInformationMigration.shadow(request)
@@ -783,7 +740,6 @@ internal fun ClocktowerJudgeScreen(
         secondary: String? = null,
         footer: String? = null,
         proposition: InformationProposition? = null,
-        recommendationStyle: RecommendationStyle = RecommendationStyle.BALANCED,
         isTruthful: Boolean = true,
         misinformationPressure: Int = 0,
         isDefaultRecommendation: Boolean = false,
@@ -797,26 +753,18 @@ internal fun ClocktowerJudgeScreen(
         displaySecondary = secondary,
         displayFooter = footer,
         proposition = proposition,
-        recommendationStyle = recommendationStyle,
         isTruthful = isTruthful,
         misinformationPressure = misinformationPressure,
         isDefaultRecommendation = isDefaultRecommendation,
         reasonCodes = reasonCodes,
         warningCodes = warningCodes,
     )
-    fun recommendationStyleLabel(style: RecommendationStyle): String = when (style) {
-        RecommendationStyle.GENTLE -> text("推荐·稳健", "Recommended · gentle")
-        RecommendationStyle.BALANCED -> text("推荐·平衡", "Recommended · balanced")
-        RecommendationStyle.AGGRESSIVE -> text("专家·激进", "Expert · aggressive")
-    }
-
     fun recommendedNumberOptions(
         title: String,
         actor: PlayerCard,
         trueValue: Int,
         maxValue: Int,
         footer: String,
-        pressureCostPerPoint: Int = 0,
         secondary: String? = null,
         propositionForValue: ((Int) -> InformationProposition)? = null,
     ): List<ClocktowerDisplayOption> {
@@ -830,7 +778,6 @@ internal fun ClocktowerJudgeScreen(
                 secondary = secondary,
                 footer = footer,
                 proposition = propositionForValue?.invoke(value),
-                recommendationStyle = RecommendationStyle.BALANCED,
                 isTruthful = value == trueValue,
                 misinformationPressure = 0,
                 isDefaultRecommendation = false,
@@ -854,7 +801,6 @@ internal fun ClocktowerJudgeScreen(
             secondary = secondary,
             footer = footer,
             proposition = propositionForValue?.invoke(answer),
-            recommendationStyle = RecommendationStyle.BALANCED,
             isTruthful = answer == truthfulYes,
             misinformationPressure = 0,
             isDefaultRecommendation = false,
@@ -877,7 +823,6 @@ internal fun ClocktowerJudgeScreen(
                     title = title,
                     primary = role.nameFor(language),
                     footer = footer,
-                    recommendationStyle = RecommendationStyle.BALANCED,
                     isTruthful = role.enName == truthfulRole.enName,
                     misinformationPressure = 0,
                     isDefaultRecommendation = false,
@@ -914,492 +859,9 @@ internal fun ClocktowerJudgeScreen(
             .count()
     }
 
-    fun recommendationProtectedSeats(): Set<Int> = setOfNotNull(
-        monkProtectedTarget
-            ?.let { name -> cards.indexOfFirst { it.name == name } + 1 }
-            ?.takeIf { it > 0 },
-    )
-
-    fun recommendationSpentAbilitySeats(): Set<Int> {
-        val spentRoleNames = buildSet {
-            if (virginUsed) add("Virgin")
-            if (slayerUsed) add("Slayer")
-            if (artistUsed) add("Artist")
-        }
-        return cards.mapIndexedNotNull { index, card ->
-            (index + 1).takeIf { card.clocktowerRole?.enName in spentRoleNames }
-        }.toSet()
-    }
-
-    fun recommendationPlayerInformationPressureBySeat(): Map<Int, PlayerInformationPressure> =
-        cards.mapIndexed { index, card ->
-            val seat = index + 1
-            val pressure = informationHistoryPressure(card)
-            seat to PlayerInformationPressure(
-                seat = seat,
-                directSuspicion = pressure,
-                recentTargetCount = pressure,
-            )
-        }.toMap()
-
-    fun dynamicStorytellerState(): DynamicGameState {
-        val gameState = cards.toClocktowerGameState(
-            script = script,
-            seed = gameSeed,
-            poisonedPlayerName = poisonTarget,
-        )
-        val spentAbilitySeats = recommendationSpentAbilitySeats()
-        val playerInformationPressureBySeat = recommendationPlayerInformationPressureBySeat()
-        val registrationLedgerBySeat = cards.mapIndexedNotNull { index, card ->
-            val count = events.count { event ->
-                card.name in event.playerNames &&
-                    (event.title.contains("registration", ignoreCase = true) || event.title.contains("登记"))
-            }
-            (index + 1 to RegistrationLedger(evilRegistrationCount = count)).takeIf { count > 0 }
-        }.toMap()
-        val balance = GameBalanceEvaluator.evaluate(
-            game = gameState,
-            round = round,
-            spentAbilitySeats = spentAbilitySeats,
-            playerInformationPressureBySeat = playerInformationPressureBySeat,
-        )
-        return DynamicGameState(
-            game = gameState,
-            phase = phase.toStorytellerPhase(),
-            round = round,
-            protectedSeats = recommendationProtectedSeats(),
-            spentAbilitySeats = spentAbilitySeats,
-            playerInformationPressureBySeat = playerInformationPressureBySeat,
-            registrationLedgerBySeat = registrationLedgerBySeat,
-            publicBalanceHint = balance.hint,
-            evilAdvantage = balance.evilAdvantage,
-        )
-    }
-    val currentDynamicStorytellerState = dynamicStorytellerState()
-
-    fun registrationRecommendationOptions(
-        key: String?,
-        roleEnName: String?,
-        teams: List<ClocktowerTeam>,
-        detail: ClocktowerRegistrationDetail,
-        subject: PlayerCard?,
-        isSpy: Boolean,
-        suppressForJointRecommendation: Boolean = false,
-        outcomeMisinformationPressure: Int = 0,
-        specialRegistrationBalanceImpact: Int = 0,
-    ): List<ClocktowerRegistrationRecommendationOption> {
-        if (subject == null || suppressForJointRecommendation) return emptyList()
-        if (key == null || teams.isEmpty()) return emptyList()
-        val subjectSeat = cards.indexOfFirst { it.name == subject.name } + 1
-        if (subjectSeat <= 0) return emptyList()
-        val domainResolution = registrationResolution(
-            key = key,
-            queryingRoleEnName = roleEnName ?: return emptyList(),
-            card = subject,
-            teams = teams,
-            detail = detail,
-        ) ?: return emptyList()
-        val legalSpecialRoleIds = domainResolution.special.mapTo(mutableSetOf()) { it.registeredRole }
-        val allowedRoles = clocktowerRoleDefinitionsForScript(script).filter { it.id in legalSpecialRoleIds }
-        val request = DynamicDecisionRequest(
-            id = key,
-            type = StorytellerDecisionType.SPECIAL_REGISTRATION,
-            sourceAbility = RoleId(roleEnName),
-            state = dynamicStorytellerState(),
-        )
-        return recommendationCoordinator.recommendRegistration(
-            request = request,
-            context = SpecialRegistrationContext(
-                subjectSeat = subjectSeat,
-                allowedRoles = allowedRoles,
-                detail = if (isSpy && detail == ClocktowerRegistrationDetail.AlignmentOnly) {
-                    RegistrationDetail.ALIGNMENT_ONLY
-                } else {
-                    RegistrationDetail.ROLE
-                },
-                effectiveSubject = registrationSubject(roleEnName, subject),
-                outcomeMisinformationPressure = outcomeMisinformationPressure,
-                specialRegistrationBalanceImpact = specialRegistrationBalanceImpact,
-            ),
-        ).map { recommendation ->
-            val explanation = recommendationCoordinator.explainDecision(recommendation)
-            val choice = recommendation.candidate.choice as DynamicStorytellerChoice.Registration
-            val role = completeTroubleBrewingRoles.firstOrNull { it.enName == choice.registeredRole.value }
-            val decisionText = when {
-                !choice.usesSpecialAbility -> text("按真实身份登记", "Register actual identity")
-                isSpy && detail == ClocktowerRegistrationDetail.AlignmentOnly ->
-                    text("登记为善良", "Register as good")
-                !isSpy && teams.isEmpty() -> text("登记为邪恶", "Register as evil")
-                else -> text(
-                    "登记为 ${role?.nameFor(language) ?: choice.registeredRole.value}",
-                    "Register as ${role?.nameFor(language) ?: choice.registeredRole.value}",
-                )
-            }
-            val warning = if (recommendation.warnings.size > 1) text(" · 高影响", " · high impact") else ""
-            ClocktowerRegistrationRecommendationOption(
-                label = "${recommendationStyleLabel(recommendation.style)} · $decisionText$warning",
-                usesSpecialRegistration = choice.usesSpecialAbility,
-                registeredRoleEnName = choice.registeredRole.value.takeIf { choice.usesSpecialAbility },
-                style = recommendation.style,
-                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-                reasonCodes = explanation.explanationCodes,
-                warningCodes = explanation.warningCodes,
-            )
-        }
-    }
-
-    fun registrationRecommendationOptions(
-        step: ClocktowerNightStepUi,
-        subject: PlayerCard?,
-        isSpy: Boolean,
-    ): List<ClocktowerRegistrationRecommendationOption> = registrationRecommendationOptions(
-        key = if (isSpy) step.spyRegistrationKey else step.recluseRegistrationKey,
-        roleEnName = step.roleEnName,
-        teams = if (isSpy) step.spyRegistrationTeams else step.recluseRegistrationTeams,
-        detail = if (isSpy) step.spyRegistrationDetail else ClocktowerRegistrationDetail.Role,
-        subject = subject,
-        isSpy = isSpy,
-        suppressForJointRecommendation = step.recommendedDisplayOptions.isNotEmpty(),
-        specialRegistrationBalanceImpact = 1,
-    )
-
-    fun mayorDecisionOptions(mayor: PlayerCard): List<ClocktowerDecisionOption> {
-        val mayorSeat = cards.indexOfFirst { it.name == mayor.name } + 1
-        if (mayorSeat <= 0) return emptyList()
-        val requestId = registrationKey("MayorRedirect", mayor.name)
-        val resolutionRequest = if (script == ClocktowerScript.TroubleBrewing) {
-            val context = mayorRedirectDecisionContextProvider?.invoke(
-                mayorSeat,
-                recommendationProtectedSeats(),
-                recommendationPlayerInformationPressureBySeat(),
-                recommendationSpentAbilitySeats(),
-            ) ?: return emptyList()
-            DynamicResolutionRequest.MayorDeath(
-                requestId = requestId,
-                context = context,
-            )
-        } else {
-            DynamicResolutionRequest.LegacyMayorDeath(
-                request = DynamicDecisionRequest(
-                    id = requestId,
-                    type = StorytellerDecisionType.MAYOR_DEATH_RESOLUTION,
-                    sourceAbility = RoleId("Mayor"),
-                    state = dynamicStorytellerState(),
-                ),
-                mayorSeat = mayorSeat,
-            )
-        }
-        return recommendationCoordinator.resolveDynamicDecision(resolutionRequest).mapNotNull { recommendation ->
-            val explanation = recommendationCoordinator.explainDecision(recommendation)
-            val choice = recommendation.candidate.choice as DynamicStorytellerChoice.MayorDeathResolution
-            val target = cards.getOrNull(choice.targetSeat - 1) ?: return@mapNotNull null
-            val outcome = recommendation.candidate.outcome as PredictedDecisionOutcome.NightDeath
-            val result = when {
-                outcome.actualDeathSeat == null -> text("今夜无人死亡", "No death tonight")
-                outcome.actualDeathSeat == mayorSeat -> text("市长死亡", "Mayor dies")
-                else -> text("${target.seatLabel(cards)} 死亡", "${target.seatLabel(cards)} dies")
-            }
-            val warning = if (recommendation.warnings.isNotEmpty()) text(" · 注意风险", " · review risk") else ""
-            ClocktowerDecisionOption(
-                label = "${recommendationStyleLabel(recommendation.style)} · $result$warning",
-                targetName = target.name,
-                explanation = result,
-                recommendationStyle = recommendation.style,
-                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-                reasonCodes = explanation.explanationCodes,
-                warningCodes = explanation.warningCodes,
-            )
-        }
-    }
-
-    fun demonSuccessorDecisionOptions(
-        successionResolution: DemonSuccessionResolution,
-    ): List<ClocktowerDecisionOption> {
-        val legalTargetSeats = when (successionResolution) {
-            DemonSuccessionResolution.None -> emptySet()
-            is DemonSuccessionResolution.Forced -> setOf(successionResolution.targetSeat)
-            is DemonSuccessionResolution.Choice -> successionResolution.targetSeats
-        }
-        if (legalTargetSeats.isEmpty()) return emptyList()
-        val requestId = registrationKey("DemonSuccessor")
-        val resolutionRequest = if (script == ClocktowerScript.TroubleBrewing) {
-            val context = demonSuccessorDecisionContextProvider?.invoke(
-                successionResolution,
-                recommendationPlayerInformationPressureBySeat(),
-                recommendationSpentAbilitySeats(),
-            ) ?: return emptyList()
-            DynamicResolutionRequest.DemonSuccessor(
-                requestId = requestId,
-                context = context,
-            )
-        } else {
-            DynamicResolutionRequest.LegacyDemonSuccessor(
-                request = DynamicDecisionRequest(
-                    id = requestId,
-                    type = StorytellerDecisionType.DEMON_SUCCESSION,
-                    sourceAbility = RoleId("Imp"),
-                    state = dynamicStorytellerState(),
-                ),
-                successionResolution = successionResolution,
-            )
-        }
-        return recommendationCoordinator.resolveDynamicDecision(resolutionRequest).mapNotNull { recommendation ->
-            val explanation = recommendationCoordinator.explainDecision(recommendation)
-            val choice = recommendation.candidate.choice as DynamicStorytellerChoice.DemonSuccessor
-            val target = cards.getOrNull(choice.targetSeat - 1) ?: return@mapNotNull null
-            val warning = when {
-                recommendation.warnings.any { it.ruleId == "scarlet-woman-mandatory" } ->
-                    text(" · 规则要求", " · required")
-                recommendation.warnings.isNotEmpty() -> text(" · 注意风险", " · review risk")
-                else -> ""
-            }
-            ClocktowerDecisionOption(
-                label = "${recommendationStyleLabel(recommendation.style)} · ${target.seatLabel(cards)}$warning",
-                targetName = target.name,
-                explanation = text(
-                    "${target.seatLabel(cards)} 成为新的小恶魔",
-                    "${target.seatLabel(cards)} becomes the new Imp",
-                ),
-                recommendationStyle = recommendation.style,
-                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-                reasonCodes = explanation.explanationCodes,
-                warningCodes = explanation.warningCodes,
-            )
-        }
-    }
-
-    fun recommendedPairInformationOptions(
+    fun pairInformationPresentationOptions(
         ability: ClocktowerPairInformationAbility,
         actor: PlayerCard,
-    ): List<ClocktowerDisplayOption> {
-        val scriptRoles = clocktowerRolesForScript(script)
-        val targetEffects = buildList<PairInformationEffect> {
-            fun addTargets(
-                targets: List<PlayerCard>,
-                roleForTarget: (PlayerCard) -> ClocktowerRole?,
-                registration: PairInformationRegistration = PairInformationRegistration.NONE,
-            ) {
-                targets.forEach { target ->
-                    val shownRole = roleForTarget(target) ?: return@forEach
-                    cards.filter { decoy -> decoy.name != actor.name && decoy.name != target.name }
-                        .forEach { decoy ->
-                            val targetSeat = cards.indexOf(target) + 1
-                            val decoySeat = cards.indexOf(decoy) + 1
-                            add(
-                                PairInformationEffect(
-                                    id = "${ability.name}:${shownRole.enName}:$targetSeat:$decoySeat:${registration.name}",
-                                    shownRole = shownRole,
-                                    target = target,
-                                    decoy = decoy,
-                                    registration = registration,
-                                ),
-                            )
-                        }
-                }
-            }
-
-            fun addNaturalCandidates(abilityRole: RoleId) {
-                val sourceSeat = cards.indexOfFirst { it.name == actor.name } + 1
-                if (sourceSeat <= 0) return
-                val naturalCandidates = if (
-                    script == ClocktowerScript.TroubleBrewing &&
-                    phase == ClocktowerPhase.FirstNight &&
-                    firstNightPairDecisionContext != null
-                ) {
-                    if (firstNightNaturalPairResultProvider != null) {
-                        firstNightNaturalPairCandidates.orEmpty()
-                    } else {
-                        recommendationCoordinator.naturalPairCandidates(firstNightPairDecisionContext)
-                    }
-                } else {
-                    val gameState = cards.toClocktowerGameState(
-                        script = script,
-                        seed = gameSeed,
-                        poisonedPlayerName = poisonTarget,
-                    )
-                    recommendationCoordinator.naturalPairCandidates(gameState)
-                }
-                naturalCandidates
-                    .filter { candidate ->
-                        val outcome = candidate.outcome as SetupClueOutcome.PairInformation
-                        outcome.abilityRole == abilityRole && candidate.effects.any { effect ->
-                            effect is com.codex.campboardgamehost.clocktower.domain.EffectDraft.PlayerInformation &&
-                                effect.recipientSeat == sourceSeat
-                        }
-                    }
-                    .forEach { candidate ->
-                        val outcome = (candidate.outcome as SetupClueOutcome.PairInformation).information
-                        add(
-                            PairInformationEffect(
-                                id = candidate.candidateId,
-                                shownRole = outcome.shownRole?.value?.let { roleName ->
-                                    scriptRoles.firstOrNull { it.enName == roleName }
-                                },
-                                target = outcome.targetSeat?.let { cards.getOrNull(it - 1) },
-                                decoy = outcome.decoySeat?.let { cards.getOrNull(it - 1) },
-                                registration = PairInformationRegistration.NONE,
-                            ),
-                        )
-                    }
-            }
-
-            when (ability) {
-                ClocktowerPairInformationAbility.Washerwoman -> {
-                    addTargets(
-                        targets = cards.filter { it.name != actor.name && it.clocktowerTeam == ClocktowerTeam.Townsfolk },
-                        roleForTarget = { it.clocktowerRole },
-                    )
-                    if (spyCard != null) {
-                        legalRegistrationRoles(
-                            registrationKey(ability.name, spyCard.name),
-                            ability.name,
-                            spyCard,
-                            listOf(ClocktowerTeam.Townsfolk),
-                        ).forEach { role ->
-                            addTargets(
-                                targets = listOf(spyCard),
-                                roleForTarget = { role },
-                                registration = PairInformationRegistration.SPY_AS_GOOD_ROLE,
-                            )
-                        }
-                    }
-                }
-
-                ClocktowerPairInformationAbility.Librarian -> {
-                    addNaturalCandidates(RoleId("Librarian"))
-                    if (spyCard != null) {
-                        legalRegistrationRoles(
-                            registrationKey(ability.name, spyCard.name),
-                            ability.name,
-                            spyCard,
-                            listOf(ClocktowerTeam.Outsider),
-                        ).forEach { role ->
-                            addTargets(
-                                targets = listOf(spyCard),
-                                roleForTarget = { role },
-                                registration = PairInformationRegistration.SPY_AS_GOOD_ROLE,
-                            )
-                        }
-                    }
-                }
-
-                ClocktowerPairInformationAbility.Investigator -> {
-                    addNaturalCandidates(RoleId("Investigator"))
-                    if (recluseCard != null) {
-                        legalRegistrationRoles(
-                            registrationKey(ability.name, recluseCard.name),
-                            ability.name,
-                            recluseCard,
-                            listOf(ClocktowerTeam.Minion),
-                        ).forEach { role ->
-                            addTargets(
-                                targets = listOf(recluseCard),
-                                roleForTarget = { role },
-                                registration = PairInformationRegistration.RECLUSE_AS_EVIL_ROLE,
-                            )
-                        }
-                    }
-                }
-            }
-        }.distinctBy(PairInformationEffect::id)
-
-        val candidates = targetEffects.map { effect ->
-            val targetMetadata = effect.target?.clocktowerRole?.enName
-                ?.let(::RoleId)
-                ?.let(TroubleBrewingRecommendationMetadata::forRole)
-            val decoyMetadata = effect.decoy?.clocktowerRole?.enName
-                ?.let(::RoleId)
-                ?.let(TroubleBrewingRecommendationMetadata::forRole)
-            val specialRegistration = effect.registration != PairInformationRegistration.NONE
-            val evilPlayersNamed = listOfNotNull(effect.target, effect.decoy).count(::isClocktowerEvil)
-            PairInformationCandidate(
-                id = effect.id,
-                registration = effect.registration,
-                targetExposure = targetMetadata?.exposureSensitivity ?: 0,
-                decoyExposure = decoyMetadata?.exposureSensitivity ?: 0,
-                discussionValue = (targetMetadata?.discussionValue ?: 0) + (decoyMetadata?.discussionValue ?: 0),
-                misinformationPressure = (
-                    (if (specialRegistration) 3 else 0) +
-                        evilPlayersNamed +
-                        if ((targetMetadata?.exposureSensitivity ?: 0) >= 4) 1 else 0
-                    ).coerceIn(0, 5),
-                historyPressure = informationHistoryPressure(effect.target) + informationHistoryPressure(effect.decoy),
-            )
-        }
-        val effectsById = targetEffects.associateBy(PairInformationEffect::id)
-        return recommendationCoordinator.recommendPair(candidates).mapNotNull { recommendation ->
-            val candidate = candidates.first { it.id == recommendation.candidateId }
-            val effect = effectsById[recommendation.candidateId] ?: return@mapNotNull null
-            val roleText = effect.shownRole?.nameFor(language) ?: text("没有外来者", "No Outsiders")
-            val seats = if (effect.target != null && effect.decoy != null) {
-                "${seatNumberFor(effect.target)}   ${seatNumberFor(effect.decoy)}"
-            } else {
-                null
-            }
-            val registrationText = when (effect.registration) {
-                PairInformationRegistration.NONE -> ""
-                PairInformationRegistration.SPY_AS_GOOD_ROLE -> text(" · 间谍登记", " · Spy registration")
-                PairInformationRegistration.RECLUSE_AS_EVIL_ROLE -> text(" · 隐士登记", " · Recluse registration")
-            }
-            val warning = if (recommendation.warningIds.any { it != "special-registration" }) {
-                text(" ⚠ 高压", " ⚠ high pressure")
-            } else {
-                ""
-            }
-            ClocktowerDisplayOption(
-                label = "${recommendationStyleLabel(recommendation.style)}：$roleText${seats?.let { " · $it" }.orEmpty()}$registrationText$warning",
-                displayKind = ClocktowerDisplayKind.EitherOne,
-                displayTitle = when (ability) {
-                    ClocktowerPairInformationAbility.Washerwoman -> text("洗衣妇信息", "Washerwoman information")
-                    ClocktowerPairInformationAbility.Librarian -> text("图书管理员信息", "Librarian information")
-                    ClocktowerPairInformationAbility.Investigator -> text("调查员信息", "Investigator information")
-                },
-                displayPrimary = roleText,
-                displaySecondary = seats,
-                displayFooter = if (seats == null) "" else text("在下面两位玩家之中", "One of these two players"),
-                proposition = if (effect.shownRole != null && effect.target != null && effect.decoy != null) {
-                    InformationProposition.AnyOf(listOf(
-                        InformationProposition.RoleAt(cards.indexOf(effect.target) + 1, RoleId(effect.shownRole.enName)),
-                        InformationProposition.RoleAt(cards.indexOf(effect.decoy) + 1, RoleId(effect.shownRole.enName)),
-                    ))
-                } else {
-                    InformationProposition.AllOf(clocktowerRolesForScript(script)
-                        .filter { it.team == when (ability) {
-                            ClocktowerPairInformationAbility.Washerwoman -> ClocktowerTeam.Townsfolk
-                            ClocktowerPairInformationAbility.Librarian -> ClocktowerTeam.Outsider
-                            ClocktowerPairInformationAbility.Investigator -> ClocktowerTeam.Minion
-                        } }
-                        .map { InformationProposition.RoleInPlay(RoleId(it.enName), false) })
-                },
-                spyRegistersGood = when (ability) {
-                    ClocktowerPairInformationAbility.Washerwoman,
-                    ClocktowerPairInformationAbility.Librarian,
-                    ClocktowerPairInformationAbility.Investigator
-                    -> effect.registration == PairInformationRegistration.SPY_AS_GOOD_ROLE
-                },
-                spyRegisteredRoleEnName = effect.shownRole?.enName
-                    ?.takeIf { effect.registration == PairInformationRegistration.SPY_AS_GOOD_ROLE },
-                recluseRegistersEvil = if (ability == ClocktowerPairInformationAbility.Investigator) {
-                    effect.registration == PairInformationRegistration.RECLUSE_AS_EVIL_ROLE
-                } else {
-                    null
-                },
-                recluseRegisteredRoleEnName = effect.shownRole?.enName
-                    ?.takeIf { effect.registration == PairInformationRegistration.RECLUSE_AS_EVIL_ROLE },
-                recommendationStyle = recommendation.style,
-                isTruthful = candidate.isTruthful,
-                misinformationPressure = candidate.misinformationPressure,
-                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-                reasonCodes = listOf("dynamic.pair-score"),
-                warningCodes = recommendation.warningIds,
-            )
-        }
-    }
-
-    fun recommendedUnreliablePairInformationOptions(
-        ability: ClocktowerPairInformationAbility,
-        actor: PlayerCard,
-        completeSelectionDomain: Boolean = false,
     ): List<ClocktowerDisplayOption> {
         val roleTeam = when (ability) {
             ClocktowerPairInformationAbility.Washerwoman -> ClocktowerTeam.Townsfolk
@@ -1478,56 +940,8 @@ internal fun ClocktowerJudgeScreen(
                 },
             )
         }
-        val candidates = projectedEffects.map { effect ->
-            val namedPlayers = listOfNotNull(effect.target, effect.decoy)
-            val truthful = projectedSemanticsById.getValue(effect.id).isTruthful
-            val targetMetadata = effect.target?.clocktowerRole?.enName
-                ?.let(::RoleId)
-                ?.let(TroubleBrewingRecommendationMetadata::forRole)
-            val decoyMetadata = effect.decoy?.clocktowerRole?.enName
-                ?.let(::RoleId)
-                ?.let(TroubleBrewingRecommendationMetadata::forRole)
-            val goodPlayersNamed = namedPlayers.count { !isClocktowerEvil(it) }
-            val shownMetadata = effect.shownRole?.enName
-                ?.let(::RoleId)
-                ?.let(TroubleBrewingRecommendationMetadata::forRole)
-            PairInformationCandidate(
-                id = effect.id,
-                registration = effect.registration,
-                isTruthful = truthful,
-                targetExposure = targetMetadata?.exposureSensitivity ?: 0,
-                decoyExposure = decoyMetadata?.exposureSensitivity ?: 0,
-                discussionValue = (targetMetadata?.discussionValue ?: 0) +
-                    (decoyMetadata?.discussionValue ?: 0) +
-                    (shownMetadata?.discussionValue ?: 0),
-                misinformationPressure = if (truthful) {
-                    0
-                } else {
-                    (2 +
-                        (if (goodPlayersNamed == 2) 1 else 0) +
-                        (if ((shownMetadata?.exposureSensitivity ?: 0) >= 4) 1 else 0))
-                        .coerceIn(0, 5)
-                },
-                historyPressure = informationHistoryPressure(effect.target) + informationHistoryPressure(effect.decoy),
-            )
-        }
-        val effectsById = projectedEffects.associateBy(PairInformationEffect::id)
-        val recommendations = if (completeSelectionDomain) {
-            emptyList()
-        } else {
-            recommendationCoordinator.recommendPair(candidates)
-        }
-        val recommendationsByCandidateId = recommendations.associateBy { it.candidateId }
-        val candidatesById = candidates.associateBy(PairInformationCandidate::id)
-        val candidateIds = if (completeSelectionDomain) {
-            candidates.map(PairInformationCandidate::id)
-        } else {
-            recommendations.map { it.candidateId }
-        }
-        return candidateIds.mapNotNull { candidateId ->
-            val candidate = candidatesById[candidateId] ?: return@mapNotNull null
-            val effect = effectsById[candidateId] ?: return@mapNotNull null
-            val recommendation = recommendationsByCandidateId[candidateId]
+        return projectedEffects.map { effect ->
+            val semantics = projectedSemanticsById.getValue(effect.id)
             val noRoleText = when (ability) {
                 ClocktowerPairInformationAbility.Librarian -> text("没有外来者", "No Outsiders")
                 ClocktowerPairInformationAbility.Investigator -> text("没有爪牙", "No Minions")
@@ -1539,14 +953,8 @@ internal fun ClocktowerJudgeScreen(
             } else {
                 null
             }
-            val warningIds = recommendation?.warningIds.orEmpty()
-            val warning = if (warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
-            val style = recommendation?.style ?: RecommendationStyle.BALANCED
-            val recommendationPrefix = recommendation
-                ?.let { "${recommendationStyleLabel(it.style)}：" }
-                .orEmpty()
             val option = displayOption(
-                label = "$recommendationPrefix$roleText${seats?.let { " · $it" }.orEmpty()}$warning",
+                label = "$roleText${seats?.let { " · $it" }.orEmpty()}",
                 kind = ClocktowerDisplayKind.EitherOne,
                 title = when (ability) {
                     ClocktowerPairInformationAbility.Washerwoman -> text("洗衣妇信息", "Washerwoman information")
@@ -1564,14 +972,8 @@ internal fun ClocktowerJudgeScreen(
                 } else {
                     InformationProposition.AllOf(roles.map { InformationProposition.RoleInPlay(RoleId(it.enName), false) })
                 },
-                recommendationStyle = style,
-                isTruthful = candidate.isTruthful,
-                misinformationPressure = candidate.misinformationPressure,
-                isDefaultRecommendation = recommendation?.style == RecommendationStyle.BALANCED,
-                reasonCodes = if (recommendation == null) emptyList() else listOf("dynamic.pair-score"),
-                warningCodes = warningIds,
+                isTruthful = semantics.isTruthful,
             )
-            val semantics = projectedSemanticsById.getValue(effect.id)
             option.copy(
                 spyRegistersGood = semantics.spyRegistersGood,
                 spyRegisteredRoleEnName = semantics.spyRegisteredRoleEnName,
@@ -1595,10 +997,9 @@ internal fun ClocktowerJudgeScreen(
             AbilityFunctioningState.POISONED -> ReliabilityState.POISONED
             else -> ReliabilityState.RELIABLE
         }
-        val presentationOptions = recommendedUnreliablePairInformationOptions(
+        val presentationOptions = pairInformationPresentationOptions(
             ability = ability,
             actor = actor,
-            completeSelectionDomain = true,
         )
         return if (script == ClocktowerScript.TroubleBrewing && phase == ClocktowerPhase.FirstNight) {
             val context = firstNightPairDecisionContext ?: return emptyList()
@@ -2148,7 +1549,6 @@ internal fun ClocktowerJudgeScreen(
                     trueValue = trueValue,
                     maxValue = 2,
                     footer = chambermaidStepContent.displayFooter,
-                    pressureCostPerPoint = 1,
                     secondary = chambermaidPresentation.displaySecondary,
                     propositionForValue = { value ->
                         chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
@@ -2234,20 +1634,10 @@ internal fun ClocktowerJudgeScreen(
                                 displayFooter = text("在下面两位玩家之中", "One of these two players"),
                                 hostInstruction = text("轻拍洗衣妇，示意睁眼。点击“全屏展示给玩家”，只给她看；看完后收回手机，示意闭眼。", "Tap the Washerwoman to wake them. Show the full-screen information only to that player, then take the phone back and signal them to close their eyes."),
                                 displayOptions = { actor ->
-                                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
+                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
                                 },
                                 legalSelectionOptions = { actor ->
                                     legalPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
-                                },
-                                automaticSelectionOptions = { actor ->
-                                    recommendedUnreliablePairInformationOptions(
-                                        ClocktowerPairInformationAbility.Washerwoman,
-                                        actor,
-                                        completeSelectionDomain = true,
-                                    )
-                                },
-                                reliableDisplayOptions = { actor ->
-                                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
                                 },
                                 spyRegistrationKey = washerwomanRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk),
@@ -2267,20 +1657,10 @@ internal fun ClocktowerJudgeScreen(
                                 displayFooter = if (librarianTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
                                 hostInstruction = text("轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。", "Tap the Librarian to wake them. Show the result only to that player, including a No Outsiders result."),
                                 displayOptions = { actor ->
-                                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
+                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
                                 },
                                 legalSelectionOptions = { actor ->
                                     legalPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
-                                },
-                                automaticSelectionOptions = { actor ->
-                                    recommendedUnreliablePairInformationOptions(
-                                        ClocktowerPairInformationAbility.Librarian,
-                                        actor,
-                                        completeSelectionDomain = true,
-                                    )
-                                },
-                                reliableDisplayOptions = { actor ->
-                                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
                                 },
                                 spyRegistrationKey = librarianRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Outsider),
@@ -2300,20 +1680,10 @@ internal fun ClocktowerJudgeScreen(
                                 displayFooter = if (investigatorTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
                                 hostInstruction = text("轻拍调查员，示意睁眼。把结果只给他看；不要让其他玩家看到被点名的两人。", "Tap the Investigator to wake them. Show the result only to that player; do not let anyone else see the two named players."),
                                 displayOptions = { actor ->
-                                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
                                 },
                                 legalSelectionOptions = { actor ->
                                     legalPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
-                                },
-                                automaticSelectionOptions = { actor ->
-                                    recommendedUnreliablePairInformationOptions(
-                                        ClocktowerPairInformationAbility.Investigator,
-                                        actor,
-                                        completeSelectionDomain = true,
-                                    )
-                                },
-                                reliableDisplayOptions = { actor ->
-                                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
                                 },
                                 spyRegistrationKey = investigatorRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
@@ -2341,7 +1711,7 @@ internal fun ClocktowerJudgeScreen(
                                 },
                                 numericMinimumValue = 0,
                                 numericMaximumValue = chefMaximumValue,
-                                displayOptions = { actor -> recommendedNumberOptions(text("厨师信息", "Chef information"), actor, chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
+                                displayOptions = { actor -> recommendedNumberOptions(text("厨师信息", "Chef information"), actor, chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
                                 legalSelectionOptions = { actor ->
                                     if (chefAbilityUnreliable) {
                                         emptyList()
@@ -2383,7 +1753,7 @@ internal fun ClocktowerJudgeScreen(
                                 tellPlayer = empathNumber,
                                 explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
                                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                                    displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, empathNeighbors.map { cards.indexOf(it) + 1 }, value) }) },
+                                    displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, empathNeighbors.map { cards.indexOf(it) + 1 }, value) }) },
                                 previousShownNumber = empathActor?.let { actor ->
                                     previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
                                         ?.takeIf { it in 0..2 }
@@ -2560,7 +1930,7 @@ internal fun ClocktowerJudgeScreen(
                 tellPlayer = empathNumber,
                 explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1) },
+                displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors")) },
                 previousShownNumber = empathActor?.let { actor ->
                     previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
                         ?.takeIf { it in 0..2 }
@@ -2813,9 +2183,6 @@ internal fun ClocktowerJudgeScreen(
                         ),
                         action = ClocktowerNightAction.DemonSuccessor,
                         roleEnName = "Imp",
-                        decisionOptions = demonSuccessorDecisionOptions(
-                            nightHostProjection.demonSuccessionResolution,
-                        ),
                     )
             },
         ),
@@ -2840,7 +2207,6 @@ internal fun ClocktowerJudgeScreen(
                         action = ClocktowerNightAction.MayorRedirect,
                         displayKind = ClocktowerDisplayKind.None,
                         roleEnName = "Mayor",
-                        decisionOptions = mayorDecisionOptions(targetedMayor),
                     )
             },
         ),
@@ -3161,7 +2527,6 @@ internal fun ClocktowerJudgeScreen(
             specialContent = {
                 if (virginRegistrationKey != null && spyCard != null) {
                     ClocktowerSpyRegistrationDecisionControls(
-                        recommendations = emptyList(),
                         legalRoles = virginSpyLegalRoles.map { it.enName to it.nameFor(language) },
                         registersGood = spyRegistersGood(virginRegistrationKey, "Virgin"),
                         registeredRoleEnName = spyRegistrationRole[virginRegistrationKey],
@@ -3327,7 +2692,6 @@ internal fun ClocktowerJudgeScreen(
             specialContent = {
                 if (slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
                     ClocktowerRecluseRegistrationDecisionControls(
-                        recommendations = emptyList(),
                         legalRoles = legalRegistrationRoles(
                             registrationKey("SlayerRecluse", requireNotNull(slayerTargetCard).name),
                             "Slayer",
@@ -3484,7 +2848,6 @@ internal fun ClocktowerJudgeScreen(
             specialContent = {
                 if (klutzRegistrationKey != null && spyCard != null) {
                     ClocktowerSpyRegistrationDecisionControls(
-                        recommendations = emptyList(),
                         legalRoles = legalRegistrationRoles(
                             klutzRegistrationKey,
                             "Klutz",
@@ -3627,65 +2990,7 @@ internal fun ClocktowerJudgeScreen(
                 onConfirmDemonAttack()
             }
             if (currentStep.action == ClocktowerNightAction.MayorRedirect) {
-                if (automaticStorytellerInfo) {
-                    val autoOptions = unifiedDecisionPool(currentStep.decisionOptions, "mayor-redirect")
-                        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
-                        ?.map { it.payload }
-                        .orEmpty()
-                    val selected = WeightedStableSelector.selectStyle(
-                        autoOptions,
-                        automaticStorytellerStyle,
-                        ClocktowerDecisionOption::recommendationStyle,
-                    )
-                    if (selected != null && mayorRedirectDraftTarget == selected.targetName) {
-                        val auditId = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}|mayor-redirect"
-                        val dimensions = SelectionAuditDimensions(
-                            playerCount = cards.size,
-                            phase = StorytellerPhase.NIGHT,
-                            style = automaticStorytellerStyle,
-                        )
-                        selectionDistributionTelemetry.recordPreview(
-                            SelectionAuditRecord(
-                                selectionId = auditId,
-                                dimensions = dimensions,
-                                candidates = currentStep.decisionOptions.map { option ->
-                                    SelectionAuditCandidate("mayor-redirect", if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING)
-                                },
-                            ),
-                        )
-                        selectionDistributionTelemetry.recordCommittedSelection(
-                            SelectionAuditCommit(auditId, dimensions, "mayor-redirect"),
-                        )
-                    }
-                }
                 onConfirmMayorRedirectTarget()
-            }
-            if (currentStep.action == ClocktowerNightAction.DemonSuccessor && automaticStorytellerInfo) {
-                val autoOptions = unifiedDecisionPool(currentStep.decisionOptions, "demon-succession")
-                    ?.candidatesFor(SelectionExecutionPolicy.AUTO)
-                    ?.map { it.payload }
-                    .orEmpty()
-                val selected = WeightedStableSelector.selectStyle(
-                    autoOptions,
-                    automaticStorytellerStyle,
-                    ClocktowerDecisionOption::recommendationStyle,
-                )
-                if (selected != null && demonSuccessorTarget == selected.targetName) {
-                    val auditId = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}|demon-succession"
-                    val dimensions = SelectionAuditDimensions(cards.size, StorytellerPhase.NIGHT, automaticStorytellerStyle)
-                    selectionDistributionTelemetry.recordPreview(
-                        SelectionAuditRecord(
-                            selectionId = auditId,
-                            dimensions = dimensions,
-                            candidates = currentStep.decisionOptions.map { option ->
-                                SelectionAuditCandidate("demon-succession", if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING)
-                            },
-                        ),
-                    )
-                    selectionDistributionTelemetry.recordCommittedSelection(
-                        SelectionAuditCommit(auditId, dimensions, "demon-succession"),
-                    )
-                }
             }
             if (currentStep.action == ClocktowerNightAction.DemonSuccessor) {
                 val selectedTarget = requireNotNull(demonSuccessorTarget) {
@@ -3785,15 +3090,12 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerNightStepCardLocalized(
                 recommendationCoordinator = recommendationCoordinator,
                 automaticStorytellerInfo = automaticStorytellerInfo,
-                automaticStorytellerStyle = automaticStorytellerStyle,
                 phase = phase,
                 gameId = gameId,
                 round = round,
                 sequence = currentStepIndex,
                 gameStateRevision = gameStateRevision,
                 playerInputRevision = playerInputRevision,
-                selectionDistributionTelemetry = selectionDistributionTelemetry,
-                evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
                 informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                 cards = cards,
                 ghostVoteAuthority = ghostVoteAuthority,

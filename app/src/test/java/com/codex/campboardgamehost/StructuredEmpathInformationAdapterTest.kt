@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -34,8 +33,6 @@ class StructuredEmpathInformationAdapterTest {
                 abilityRole = RoleId("Empath"),
                 recipientSeat = 2,
                 reliability = InformationReliability.RELIABLE,
-                style = RecommendationStyle.BALANCED,
-                targetSeats = setOf(1, 3),
             ),
         )
 
@@ -58,7 +55,6 @@ class StructuredEmpathInformationAdapterTest {
             subjectSeats = listOf(1, 3),
             trueValue = 1,
             reliability = InformationReliability.RELIABLE,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = 1,
         )
@@ -79,7 +75,6 @@ class StructuredEmpathInformationAdapterTest {
             subjectSeats = listOf(1, 3),
             trueValue = 1,
             reliability = InformationReliability.RELIABLE,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = null,
         )
@@ -102,7 +97,6 @@ class StructuredEmpathInformationAdapterTest {
             subjectSeats = listOf(1, 3),
             trueValue = 2,
             reliability = InformationReliability.RELIABLE,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = null,
             previousShownValue = 0,
@@ -152,7 +146,6 @@ class StructuredEmpathInformationAdapterTest {
             subjectSeats = listOf(1, 3),
             trueValue = 1,
             reliability = InformationReliability.POISONED,
-            recommendationStyle = RecommendationStyle.AGGRESSIVE,
             revision = revision,
             recommendedValue = 2,
             previousShownValue = 0,
@@ -187,7 +180,6 @@ class StructuredEmpathInformationAdapterTest {
         subjectSeats = listOf(1, 3),
         trueValue = 1,
         reliability = InformationReliability.POISONED,
-        recommendationStyle = RecommendationStyle.BALANCED,
         revision = revision,
         recommendedValue = 2,
     )

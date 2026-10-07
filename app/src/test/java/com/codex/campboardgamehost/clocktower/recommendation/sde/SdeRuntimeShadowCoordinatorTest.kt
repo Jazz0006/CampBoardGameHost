@@ -7,7 +7,6 @@ import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCa
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
@@ -309,7 +308,7 @@ class SdeRuntimeShadowCoordinatorTest {
         val model = prepareNumericInformationUiModel(
             ClocktowerRecommendationCoordinator(), snapshot.gameId, ClocktowerPhase.FirstNight, 1, 1,
             empath.seat, RoleId("Empath"), com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.LIVING_EVIL_NEIGHBOURS,
-            neighbours, 0, 0, 2, InformationReliability.RELIABLE, RecommendationStyle.BALANCED,
+            neighbours, 0, 0, 2, InformationReliability.RELIABLE,
             revision, recommendedValue = 0,
         )
         return Scenario(

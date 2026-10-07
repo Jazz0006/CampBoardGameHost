@@ -1,10 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
-import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
-
 internal sealed interface DemonBluffPresentationResolution {
     data class Ready(val roles: List<ClocktowerRole>) : DemonBluffPresentationResolution
 
@@ -35,44 +30,11 @@ internal fun manualDemonBluffSelectionReady(
     legalRoles = legalRoles,
 ) is DemonBluffPresentationResolution.Ready
 
-internal fun demonBluffRoleNamesToCommitAtBarrier(
-    isDemonInfoStep: Boolean,
-    isRealAction: Boolean,
-    committedRoleNames: List<String>,
-    setupPlans: List<RecommendationPlan>,
-    storytellerStyle: RecommendationStyle,
-    legalRoles: List<ClocktowerRole>,
-): List<String>? {
-    if (!isDemonInfoStep || !isRealAction || committedRoleNames.isNotEmpty()) return null
-
-    val selectedPlan = WeightedStableSelector.selectStyle(
-        options = setupPlans,
-        style = storytellerStyle,
-        styleOf = RecommendationPlan::style,
-    ) ?: return null
-    val recommendedRoleNames = selectedPlan.decisions
-        .filterIsInstance<StorytellerDecision.DemonBluffs>()
-        .singleOrNull()
-        ?.roles
-        ?.map { it.value }
-
-    return when (
-        val resolution = resolveDemonBluffPresentation(
-            recommendedRoleNames = recommendedRoleNames,
-            legalRoles = legalRoles,
-        )
-    ) {
-        is DemonBluffPresentationResolution.Ready -> resolution.roles.map { it.enName }
-        DemonBluffPresentationResolution.Pending -> null
-        is DemonBluffPresentationResolution.Invalid -> null
-    }
-}
-
 /**
- * Resolves one exact recommended triple against current legal script roles.
+ * Resolves one exact role triple against the current legal script roles.
  *
- * Missing recommendation is pending. Partial, duplicate, illegal or unresolvable identities are
- * invalid. Neither state is silently replaced with an arbitrary legal triple.
+ * Missing input is pending. Partial, duplicate, illegal or unresolvable identities are invalid.
+ * Neither state is silently replaced with an arbitrary legal triple.
  */
 internal fun resolveDemonBluffPresentation(
     recommendedRoleNames: List<String>?,

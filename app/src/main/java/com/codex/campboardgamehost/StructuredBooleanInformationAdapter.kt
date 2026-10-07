@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
@@ -35,26 +34,20 @@ internal fun prepareBooleanInformationUiModel(
     subjectSeats: List<Int>,
     trueValue: Boolean,
     reliability: InformationReliability,
-    recommendationStyle: RecommendationStyle,
     revision: InformationDecisionRevision,
     recommendedValue: Boolean?,
-    falseMisinformationPressure: Int = 3,
 ): StructuredBooleanInformationUiModel {
     require(actorSeat > 0) { "Boolean information actor seat must be positive." }
     require(subjectSeats.all { it > 0 } && subjectSeats.distinct().size == subjectSeats.size) {
         "Boolean information subject seats must be positive and unique."
     }
-    require(falseMisinformationPressure >= 0) { "Boolean misinformation pressure cannot be negative." }
-
     val yes = UnreliableCategoricalCandidate(
         id = "yes",
         isTruthful = trueValue,
-        misinformationPressure = if (trueValue) 0 else falseMisinformationPressure,
     )
     val no = UnreliableCategoricalCandidate(
         id = "no",
         isTruthful = !trueValue,
-        misinformationPressure = if (trueValue) falseMisinformationPressure else 0,
     )
     val evaluations = coordinator.resolveInformation(
         InformationResolutionRequest.Category(
@@ -63,9 +56,6 @@ internal fun prepareBooleanInformationUiModel(
                 abilityRole = abilityRole,
                 recipientSeat = actorSeat,
                 reliability = reliability,
-                style = recommendationStyle,
-                targetSeats = subjectSeats.toSet(),
-                playerSelectedTarget = subjectSeats.isNotEmpty(),
             ),
         ),
     ).map { evaluation ->

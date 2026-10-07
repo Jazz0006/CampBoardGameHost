@@ -2,7 +2,6 @@ package com.codex.campboardgamehost.clocktower.recommendation.sde
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
-import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptSource
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
@@ -10,10 +9,8 @@ import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
@@ -35,13 +32,8 @@ import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformati
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightPublicGoodInfoProjection
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
-import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
-import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import java.io.File
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -199,84 +191,6 @@ class DemonBluffJointOutputEvaluatorTest {
         }
         assertEquals(timelineBefore, exactContext.actionTimeline.reducerFacts())
         assertEquals(logBefore, exactContext.observationLog.records)
-    }
-
-    @Test
-    fun `production setup shadow preserves visible result while exact evaluation defers`() {
-        val productionGame = TroubleBrewingFixtures.eightPlayerExample()
-        val productionRoles = TroubleBrewingFixtures.fullRoleDefinitions()
-        val productionSnapshot = GameSnapshot(
-            gameId = "sde-2d2-production-shadow",
-            gameStateRevision = 0,
-            playerInputRevision = 0,
-            gameSeed = productionGame.seed,
-            rulesetRef = rulesetRef,
-            gameState = productionGame,
-        )
-        val productionExactContext = ExactHistoricalHypotheticalContext(
-            initialSnapshot = productionSnapshot,
-            initialPhase = StorytellerPhase.FIRST_NIGHT,
-            initialRound = 1,
-            actionTimeline = ActionFactTimeline(emptyList()),
-            perceivedRolesBySeat = productionGame.players.associate { player ->
-                player.seat to (player.shownRole ?: player.actualRole)
-            },
-            observationLog = EpistemicObservationLog(),
-            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-            roleDefinitions = productionRoles,
-        )
-        val unsupportedRuleset = validatedRuleset.copy(
-            script = validatedRuleset.script.copy(source = ClocktowerScriptSource.IMPORTED_HOMEBREW),
-        )
-        val coordinator = ClocktowerRecommendationCoordinator()
-        val request = SetupCoordinationRequest(game = productionGame, roles = productionRoles)
-        val visibleResult = coordinator.recommendSetup(request)
-        val visiblePlansBefore = visibleResult.plans.toList()
-
-        val shadow = coordinator.evaluateSetupDemonBluffShadow(
-            request = request,
-            visibleResult = visibleResult,
-            exactContext = ExactConsequenceContext(
-                validatedRuleset = unsupportedRuleset,
-                exactContext = productionExactContext,
-            ),
-            evaluationRecipientSeats = setOf(1),
-            publicWholeBundleObservations = emptyList(),
-        )
-
-        assertSame(visibleResult, shadow.visibleResult)
-        assertEquals(visiblePlansBefore, shadow.visibleResult.plans)
-        assertTrue(shadow.jointOutput is DemonBluffJointOutputEvaluation.Deferred)
-        assertTrue(shadow.legacyBluffCandidateIdByStyle.isNotEmpty())
-        assertTrue(RecommendationStyle.BALANCED in shadow.legacyBluffCandidateIdByStyle)
-    }
-
-    @Test
-    fun `locked Demon bluffs are persistent inputs and cannot enter shadow replanning`() {
-        val legalCandidate = SetupCandidateGenerator.generateDemonBluffCandidates(game, roles).first()
-        val lockedBluffs = (legalCandidate.outcome as SetupClueOutcome.DemonBluffs).roles
-        val request = SetupCoordinationRequest(
-            game = game,
-            roles = roles,
-            lockedDecisions = listOf(StorytellerDecision.DemonBluffs(lockedBluffs)),
-        )
-        val coordinator = ClocktowerRecommendationCoordinator()
-        val visibleResult = SetupRecommendationService.ConstrainedResult(plans = emptyList())
-
-        val error = assertThrows(IllegalArgumentException::class.java) {
-            coordinator.evaluateSetupDemonBluffShadow(
-                request = request,
-                visibleResult = visibleResult,
-                exactContext = ExactConsequenceContext(
-                    validatedRuleset = validatedRuleset,
-                    exactContext = exactContext,
-                ),
-                evaluationRecipientSeats = setOf(1),
-                publicWholeBundleObservations = emptyList(),
-            )
-        }
-
-        assertTrue(error.message.orEmpty().contains("persistent setup inputs"))
     }
 
     private fun player(

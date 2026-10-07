@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
@@ -24,10 +23,9 @@ class FirstNightPairInformationPoolLegalityTest {
         val pool = unifiedFirstNightInformationPool(
             options = listOf(pair, zero),
             familyId = "Investigator",
-            automaticStyle = RecommendationStyle.BALANCED,
         )
 
-        assertEquals(listOf(pair), pool.rankedCandidates.map { it.payload })
+        assertEquals(listOf(pair), pool.orderedCandidates.map { it.payload })
     }
 
     @Test
@@ -47,10 +45,9 @@ class FirstNightPairInformationPoolLegalityTest {
         val pool = unifiedFirstNightInformationPool(
             options = listOf(pair, zero),
             familyId = "Librarian",
-            automaticStyle = RecommendationStyle.BALANCED,
         )
 
-        assertEquals(setOf(pair, zero), pool.rankedCandidates.map { it.payload }.toSet())
+        assertEquals(setOf(pair, zero), pool.orderedCandidates.map { it.payload }.toSet())
     }
 
     private fun pairOption(

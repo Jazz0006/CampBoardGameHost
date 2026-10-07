@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
@@ -32,7 +31,6 @@ class StructuredChefInformationAdapterTest {
             minimumValue = 0,
             maximumValue = 3,
             reliability = InformationReliability.RELIABLE,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = 1,
         )
@@ -80,7 +78,6 @@ class StructuredChefInformationAdapterTest {
         minimumValue = 0,
         maximumValue = 3,
         reliability = InformationReliability.POISONED,
-        recommendationStyle = RecommendationStyle.BALANCED,
         revision = revision,
         recommendedValue = 2,
     )

@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
@@ -32,7 +31,6 @@ internal fun clocktowerFirstNightInformationRequest(
     gameSeed: Long,
     poisonTarget: String?,
     language: String,
-    automaticStorytellerStyle: RecommendationStyle,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
 ): FirstNightInformationRequest? {
     if (phase != ClocktowerPhase.FirstNight) return null
@@ -67,17 +65,8 @@ internal fun clocktowerFirstNightInformationRequest(
             reliability = reliability,
             semanticTruth = if (option.isTruthful) SemanticTruth.TRUE else SemanticTruth.FALSE,
         ),
-            qualityTier = if (option.isDefaultRecommendation) {
-                QualityTier.RECOMMENDED
-            } else {
-                QualityTier.ACCEPTABLE_WITH_WARNING
-            },
-            rankFixedPoint = when {
-                option.isDefaultRecommendation -> 1_000_000L
-                option.recommendationStyle == automaticStorytellerStyle -> 900_000L
-                else -> 800_000L
-            },
-            reasonCodes = option.reasonCodes,
+            qualityTier = QualityTier.RECOMMENDED,
+            reasonCodes = emptyList(),
             warningCodes = option.warningCodes,
         )
     }
@@ -90,7 +79,6 @@ internal fun clocktowerFirstNightInformationRequest(
         displayFooter = displayStep.displayFooter,
         proposition = displayStep.displayProposition,
         isTruthful = displayStep.selectedInformationTruthful != false,
-        recommendationStyle = automaticStorytellerStyle,
     )
     // Keep the old presentation set solely for parity telemetry and non-pair fallback.
     val legacyOptions = (displayStep.legacyInformationCandidates + selectedOption)
@@ -165,17 +153,8 @@ internal fun clocktowerFirstNightInformationRequest(
                             selectedOption = option,
                         )
                     },
-                    qualityTier = if (option.isDefaultRecommendation) {
-                        QualityTier.RECOMMENDED
-                    } else {
-                        QualityTier.ACCEPTABLE_WITH_WARNING
-                    },
-                    rankFixedPoint = when {
-                        option.isDefaultRecommendation -> 1_000_000L
-                        option.recommendationStyle == automaticStorytellerStyle -> 900_000L
-                        else -> 800_000L
-                    },
-                    reasonCodes = option.reasonCodes,
+                    qualityTier = QualityTier.RECOMMENDED,
+                    reasonCodes = emptyList(),
                     warningCodes = option.warningCodes,
                 )
             }

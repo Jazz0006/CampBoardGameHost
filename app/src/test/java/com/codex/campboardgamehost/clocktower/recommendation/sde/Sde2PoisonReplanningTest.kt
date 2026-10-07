@@ -7,7 +7,6 @@ import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCa
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
@@ -221,7 +220,6 @@ class Sde2PoisonReplanningTest {
         minimumValue = 0,
         maximumValue = 2,
         reliability = reliability,
-        recommendationStyle = RecommendationStyle.BALANCED,
         revision = revision,
         recommendedValue = trueValue.takeIf { reliability == InformationReliability.RELIABLE },
     )

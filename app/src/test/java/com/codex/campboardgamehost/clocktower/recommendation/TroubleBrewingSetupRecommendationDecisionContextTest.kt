@@ -21,11 +21,9 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingGameSnapshotProjector
 import java.io.File
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -140,35 +138,6 @@ class TroubleBrewingSetupRecommendationDecisionContextTest {
                 ruleset.characterRegistry,
             )
         }
-    }
-
-    @Test
-    fun `snapshot backed setup recommendation matches legacy mechanical base`() {
-        val canonicalGame = game(poisonedSeat = 3)
-        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
-            gameSnapshot = snapshot(canonicalGame),
-            phase = StorytellerPhase.FIRST_NIGHT,
-            round = 1,
-            characterRegistry = ruleset.characterRegistry,
-        )
-        val context = TroubleBrewingSetupRecommendationDecisionContextBuilder.build(
-            snapshot = snapshot,
-            characterRegistry = ruleset.characterRegistry,
-        )
-        val legacyRoles = clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing)
-
-        val legacy = SetupRecommendationService.recommendConstrained(
-            game = canonicalGame,
-            roleDefinitions = legacyRoles,
-        )
-        val migrated = SetupRecommendationService.recommendConstrained(
-            game = context.recommendationGameState,
-            roleDefinitions = context.roleDefinitions,
-        )
-
-        assertFalse(legacy.plans.isEmpty())
-        assertEquals(legacy.failureCodes, migrated.failureCodes)
-        assertEquals(legacy.plans, migrated.plans)
     }
 
     private fun TroubleBrewingGameSnapshotV1.withPosition(

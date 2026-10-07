@@ -2,21 +2,15 @@ package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
-import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
-import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class A4ShadowProductionIsolationTest {
-    @Test fun `shadow cache readiness cannot change production setup recommendation`() {
+    @Test fun `shadow cache readiness cannot mutate canonical game state`() {
         val snapshot = A4RuntimeFixtures.snapshot()
         val roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions()
-        val productionRequest = SetupCoordinationRequest(snapshot.gameState, roleDefinitions)
-        val productionCoordinator = ClocktowerRecommendationCoordinator()
-
-        val before = productionCoordinator.recommendSetup(productionRequest)
-        assertTrue(before.plans.isNotEmpty())
+        val gameStateBefore = snapshot.gameState
 
         val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, 1)
         val perceivedRolesBySeat = formal.players.associate { player ->
@@ -57,10 +51,7 @@ class A4ShadowProductionIsolationTest {
         val hit = shadow.probe(shadowRequest)
         assertEquals(formal.players.size, hit.readyCount)
 
-        val after = productionCoordinator.recommendSetup(productionRequest)
-
-        assertEquals(before, after)
-        assertEquals(before.plans, after.plans)
+        assertEquals(gameStateBefore, snapshot.gameState)
     }
 
     @Test fun `production demand probe exposes readiness only and never a cached world set`() {

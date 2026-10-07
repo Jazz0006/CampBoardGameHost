@@ -2,7 +2,6 @@ package com.codex.campboardgamehost.clocktower.review
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
-import com.codex.campboardgamehost.clocktower.config.RecommendationProfiles
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
@@ -39,11 +38,9 @@ import com.codex.campboardgamehost.clocktower.recommendation.FirstNightInformati
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightNumericLegalDomain
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightPublicGoodInfoProjection
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightInformationPropositionMaterializer
-import com.codex.campboardgamehost.clocktower.recommendation.rankingPriority
 import com.codex.campboardgamehost.clocktower.recommendation.sde.NormalizedStrategicDiagnosticsProjector
 import com.codex.campboardgamehost.clocktower.recommendation.sde.StrategicRatio
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 import java.io.File
 
 internal data class Sde2D5ExternalHumanPilotResult(
@@ -217,20 +214,6 @@ internal object Sde2D5ExternalHumanPilotBuilder {
             appendLine("- Drunk shown Empath: 0")
             appendLine("- Fortune Teller: seats 7 / 6 -> NO")
             appendLine()
-            appendLine("## Current production legacy setup heuristic")
-            appendLine()
-            appendLine("| Profile | Human plan retained | Human tier | Human score | Higher quality/score plans | Same quality/score plans | Top RH | Top bluffs |")
-            appendLine("|---|---:|---|---:|---:|---:|---:|---|")
-            legacyComparisons().forEach { row ->
-                appendLine(
-                    "| ${row.profile} | ${row.humanRetained} | ${row.humanTier ?: "-"} | " +
-                        "${row.humanScore?.toString() ?: "-"} | ${row.higherCount} | ${row.equalCount} | " +
-                        "${row.topRedHerring?.toString() ?: "-"} | ${row.topBluffs.ifEmpty { "-" }} |",
-                )
-            }
-            appendLine()
-            appendLine("The comparison above uses the legacy quality-tier/score ordering, not its final seeded weighted selection.")
-            appendLine()
             appendLine("## Actual whole-bundle topology diagnostics")
             appendLine()
             appendLine("| Recipient | Before keys | After keys | Demon cover retention | Evil topology retention | Evil cover retention | Forced-good fraction |")
@@ -345,69 +328,6 @@ internal object Sde2D5ExternalHumanPilotBuilder {
             actualFullBundleFeasibleForEveryRecipient = fullBundleFeasible,
             report = report,
         )
-    }
-
-    private fun legacyComparisons(): List<LegacyComparison> {
-        val profiles = listOf(
-            "GENTLE" to RecommendationProfiles.gentle,
-            "BALANCED" to RecommendationProfiles.balanced,
-            "AGGRESSIVE" to RecommendationProfiles.aggressive,
-        )
-        return profiles.map { (label, profile) ->
-            val ranked = SetupRecommendationService.rankedPlans(
-                game = game,
-                roleDefinitions = roles,
-                profile = profile,
-                maxResults = 1000,
-            )
-            val human = ranked.singleOrNull(::matchesObservedSetupPlan)
-            val top = ranked.firstOrNull()
-            val higher = if (human == null) ranked.size else ranked.count { qualityScoreCompare(it, human) > 0 }
-            val equal = if (human == null) 0 else ranked.count { qualityScoreCompare(it, human) == 0 }
-            LegacyComparison(
-                profile = label,
-                humanRetained = human != null,
-                humanTier = human?.qualityTier?.name,
-                humanScore = human?.totalScore,
-                higherCount = higher,
-                equalCount = equal,
-                topRedHerring = top?.decisions
-                    ?.filterIsInstance<StorytellerDecision.RedHerring>()
-                    ?.singleOrNull()
-                    ?.seat,
-                topBluffs = top?.decisions
-                    ?.filterIsInstance<StorytellerDecision.DemonBluffs>()
-                    ?.singleOrNull()
-                    ?.roles
-                    ?.map(RoleId::value)
-                    ?.sorted()
-                    ?.joinToString(" / ")
-                    .orEmpty(),
-            )
-        }
-    }
-
-    private fun matchesObservedSetupPlan(
-        plan: com.codex.campboardgamehost.clocktower.domain.RecommendationPlan,
-    ): Boolean {
-        val redHerring = plan.decisions
-            .filterIsInstance<StorytellerDecision.RedHerring>()
-            .singleOrNull()
-            ?.seat
-        val bluffs = plan.decisions
-            .filterIsInstance<StorytellerDecision.DemonBluffs>()
-            .singleOrNull()
-            ?.roles
-            ?.toSet()
-        return redHerring == actualRedHerringSeat && bluffs == actualBluffs
-    }
-
-    private fun qualityScoreCompare(
-        left: com.codex.campboardgamehost.clocktower.domain.RecommendationPlan,
-        right: com.codex.campboardgamehost.clocktower.domain.RecommendationPlan,
-    ): Int {
-        val tier = left.qualityTier.rankingPriority().compareTo(right.qualityTier.rankingPriority())
-        return if (tier != 0) tier else left.totalScore.compareTo(right.totalScore)
     }
 
     private fun evaluate(
@@ -649,14 +569,4 @@ internal object Sde2D5ExternalHumanPilotBuilder {
         fun ratioText(): String = if (unionCount == 0) "undefined" else "$sharedCount/$unionCount"
     }
 
-    private data class LegacyComparison(
-        val profile: String,
-        val humanRetained: Boolean,
-        val humanTier: String?,
-        val humanScore: Int?,
-        val higherCount: Int,
-        val equalCount: Int,
-        val topRedHerring: Int?,
-        val topBluffs: String,
-    )
 }

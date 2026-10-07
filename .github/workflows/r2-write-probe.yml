@@ -147,11 +147,44 @@ jobs:
           done
           grep -q "internal data class ClocktowerDisplayOption" "$selection"
           grep -q "internal fun clocktowerInformationCandidateId" "$selection"
-          grep -q "internal data class ClocktowerDecisionOption" "$selection"
-          grep -q "internal fun unifiedDecisionPool" "$selection"
           grep -q "internal fun unifiedFirstNightInformationPool" "$selection"
-          grep -q "internal data class ClocktowerRegistrationRecommendationOption" "$selection"
-          grep -q "internal fun unifiedRegistrationPool" "$selection"
+
+          for symbol in \
+            "internal data class ClocktowerDecisionOption" \
+            "internal fun unifiedDecisionPool" \
+            "internal data class ClocktowerRegistrationRecommendationOption" \
+            "internal fun unifiedRegistrationPool"
+          do
+            if grep -q "$symbol" "$selection"; then
+              echo "Purged legacy recommendation authority returned: $symbol" >&2
+              exit 1
+            fi
+          done
+
+          for symbol in \
+            RecommendationStyle \
+            RecommendationPlan \
+            WeightedStableSelector \
+            RecommendationProfile \
+            GameBalanceEvaluator \
+            TemporaryAutomaticStorytellerPolicy \
+            ImpairedInformationPolicy \
+            SetupRecommendationService \
+            SetupEvaluator \
+            PairInformationAbilityRecommender \
+            MayorRedirectRecommender \
+            DemonSuccessorRecommender \
+            MalfunctionPolicy \
+            RegistrationPolicy \
+            ConsequenceEvaluator \
+            rankFixedPoint \
+            withinFamilyWeightFixedPoint
+          do
+            if grep -R -q "$symbol" app/src/main/java; then
+              echo "Purged RES-3 legacy recommendation symbol returned: $symbol" >&2
+              exit 1
+            fi
+          done
 
           for symbol in \
             "internal enum class ClocktowerRegistrationDetail" \
@@ -174,16 +207,12 @@ jobs:
             exit 1
           fi
           grep -q "internal fun ClocktowerStorytellerRecommendationScreen" "$recommendation_ui"
-          if grep -q "fun StorytellerRecommendationCard(" "$host"; then
-            echo "StorytellerRecommendationCard still lives in ClocktowerHostScreen.kt" >&2
-            exit 1
-          fi
-          if grep -q "fun RecommendationDecisionEditor(" "$host"; then
-            echo "RecommendationDecisionEditor still lives in ClocktowerHostScreen.kt" >&2
-            exit 1
-          fi
-          grep -q "internal fun StorytellerRecommendationCard" "$recommendation_ui"
-          grep -q "internal fun RecommendationDecisionEditor" "$recommendation_ui"
+          for symbol in StorytellerRecommendationCard RecommendationDecisionEditor; do
+            if grep -R -q "fun ${symbol}(" app/src/main/java/com/codex/campboardgamehost; then
+              echo "Purged legacy recommendation UI returned: ${symbol}" >&2
+              exit 1
+            fi
+          done
 
           for name in ClocktowerPlayerDisplayCardLocalized ClocktowerPlayerDisplayCard EvilInfoDisplay; do
             if grep -q "fun ${name}(" "$host"; then

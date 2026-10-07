@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
@@ -47,7 +46,6 @@ class ClocktowerFirstNightInformationRequestTest {
         42L,
         null,
         "en",
-        RecommendationStyle.BALANCED,
         pairContext,
     )
 
@@ -69,16 +67,14 @@ class ClocktowerFirstNightInformationRequestTest {
         assertEquals(2, candidate.observation.shownNumber)
         assertEquals(ReliabilityState.POISONED, candidate.observation.reliability)
         assertEquals(SemanticTruth.FALSE, candidate.observation.semanticTruth)
-        assertEquals(900_000L, candidate.rankFixedPoint)
     }
 
-    @Test fun `legacy duplicate preserves first option ranking and metadata`() {
+    @Test fun `legacy duplicate preserves neutral candidate identity without ranking metadata`() {
         val option = ClocktowerDisplayOption("template", ClocktowerDisplayKind.Number, "information",
             "2", null, null, isDefaultRecommendation = true, reasonCodes = listOf("reason"))
         val result = requireNotNull(request(step().copy(legacyInformationCandidates = listOf(option, option))))
         assertEquals(1, result.legacyCandidates.size)
-        assertEquals(1_000_000L, result.legacyCandidates.single().rankFixedPoint)
-        assertEquals(listOf("reason"), result.legacyCandidates.single().reasonCodes)
+        assertTrue(result.legacyCandidates.single().reasonCodes.isEmpty())
     }
 
     @Test fun `pair request resolves structured legal observation independently of display seats`() {
@@ -157,7 +153,6 @@ class ClocktowerFirstNightInformationRequestTest {
             gameSeed = 99L,
             poisonTarget = null,
             language = "en",
-            automaticStorytellerStyle = RecommendationStyle.BALANCED,
         ))
 
         assertEquals(listOf(2, 3), result.migratedCandidates.single().observation.candidateSeats)

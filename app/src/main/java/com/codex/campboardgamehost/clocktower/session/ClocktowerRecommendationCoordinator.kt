@@ -1,199 +1,26 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.DecisionCorrectionEvent
 import com.codex.campboardgamehost.clocktower.domain.DecisionEventStatus
 import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
 import com.codex.campboardgamehost.clocktower.domain.DecisionExplanation
 import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
-import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRecommendation
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
-import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionEvent
 import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
-import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
-import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.ImpairedTruthfulException
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SpecialRegistrationContext
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
-import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLegality
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
-import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffSetupShadowAdapter
-import com.codex.campboardgamehost.clocktower.recommendation.sde.DemonBluffSetupShadowEvaluation
-import com.codex.campboardgamehost.clocktower.recommendation.sde.ExactConsequenceContext
-import com.codex.campboardgamehost.clocktower.recommendation.sde.RedHerringSetupPrecommitAdapter
-import com.codex.campboardgamehost.clocktower.recommendation.sde.RedHerringSetupShadowAdapter
-import com.codex.campboardgamehost.clocktower.recommendation.sde.RedHerringSetupShadowEvaluation
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SetupDemonBluffJointOutputAdapter
-import com.codex.campboardgamehost.clocktower.recommendation.sde.TroubleBrewingDemonBluffJointOutputEvaluator
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 
 internal class ClocktowerRecommendationCoordinator(
     initialArchive: DecisionHistoryArchive = DecisionHistoryArchive(),
-    private val setupModule: SetupRecommendationModule = SetupRecommendationModule(),
     private val nightModule: NightRecommendationModule = NightRecommendationModule(),
-    private val dayModule: DayRecommendationModule = DayRecommendationModule(),
     private val historyModule: HistoryReviewModule = HistoryReviewModule(),
 ) {
     private val eventStore = InMemoryDecisionEventStore(initialArchive)
-
-    fun recommendSetup(request: SetupCoordinationRequest) = setupModule.recommend(
-        request.game,
-        request.roles,
-        request.lockedDecisions,
-        request.history,
-    )
-
-    fun selectSetupPlan(
-        request: SetupCoordinationRequest,
-        style: RecommendationStyle,
-    ): RecommendationPlan? {
-        val result = recommendSetup(request)
-        if (result.failureCodes.isNotEmpty()) return null
-        return WeightedStableSelector.selectStyle(result.plans, style, RecommendationPlan::style)
-    }
-
-    /**
-     * SDE-2D2 shadow-only orchestration beside the current setup recommendation authority.
-     *
-     * The visible setup result is supplied by the existing setup module and is returned unchanged.
-     * SetupCandidateGenerator remains the legality owner; the SDE evaluator only consumes its legal
-     * Demon-bluff candidates plus caller-supplied whole-bundle public observations. Locked Demon
-     * bluffs are persistent inputs and therefore may not enter this uncommitted shadow path.
-     */
-    fun evaluateSetupDemonBluffShadow(
-        request: SetupCoordinationRequest,
-        visibleResult: SetupRecommendationService.ConstrainedResult,
-        exactContext: ExactConsequenceContext,
-        evaluationRecipientSeats: Set<Int>,
-        publicWholeBundleObservations: List<EpistemicObservation>,
-    ): DemonBluffSetupShadowEvaluation {
-        require(request.lockedDecisions.none { it is StorytellerDecision.DemonBluffs }) {
-            "Locked Demon bluffs are persistent setup inputs and must not be replanned by SDE."
-        }
-        require(exactContext.exactContext.initialSnapshot.gameState == request.game) {
-            "Setup Demon bluff shadow evaluation must use the same canonical game state as the setup request."
-        }
-
-        val legalCandidates = SetupCandidateGenerator.generateDemonBluffCandidates(
-            game = request.game,
-            roleDefinitions = request.roles,
-        )
-        require(legalCandidates.isNotEmpty()) {
-            "Setup Demon bluff shadow evaluation requires an uncommitted legal bluff domain."
-        }
-        val projected = SetupDemonBluffJointOutputAdapter.fromLegalCandidates(legalCandidates)
-        val actualDemonSeat = request.game.players
-            .single { player -> player.actualType == CharacterType.DEMON }
-            .seat
-        val jointOutput = TroubleBrewingDemonBluffJointOutputEvaluator.evaluate(
-            validatedRuleset = exactContext.validatedRuleset,
-            context = exactContext.exactContext,
-            actualDemonSeat = actualDemonSeat,
-            evaluationRecipientSeats = evaluationRecipientSeats,
-            publicWholeBundleObservations = publicWholeBundleObservations,
-            candidates = projected,
-        )
-        return DemonBluffSetupShadowAdapter.attach(
-            visibleResult = visibleResult,
-            legalCandidates = legalCandidates,
-            jointOutput = jointOutput,
-        )
-    }
-
-    /**
-     * C4 shadow-only orchestration beside the existing setup recommendation authority.
-     *
-     * Red-Herring legality remains owned by SetupCandidateGenerator. The existing visible setup
-     * result is returned unchanged; SDE only attaches typed truth-danger / credibility-disruption
-     * diagnostics for the same uncommitted legal target domain.
-     */
-    fun evaluateSetupRedHerringShadow(
-        request: SetupCoordinationRequest,
-        visibleResult: SetupRecommendationService.ConstrainedResult,
-        exactContext: ExactConsequenceContext,
-    ): RedHerringSetupShadowEvaluation {
-        require(request.lockedDecisions.none { it is StorytellerDecision.RedHerring }) {
-            "Locked Red Herring is a persistent setup input and must not be replanned by SDE."
-        }
-        require(exactContext.exactContext.initialSnapshot.gameState == request.game) {
-            "Setup Red-Herring shadow evaluation must use the same canonical game state as the setup request."
-        }
-        require(
-            exactContext.exactContext.initialPhase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT &&
-                exactContext.exactContext.initialRound == 1,
-        ) {
-            "Setup Red-Herring shadow evaluation requires the canonical first-night setup baseline."
-        }
-
-        val projection = RedHerringSetupPrecommitAdapter.project(
-            gameId = exactContext.exactContext.initialSnapshot.gameId,
-            game = request.game,
-            roleDefinitions = request.roles,
-            sourceRevision = exactContext.sourceRevision,
-        )
-        return RedHerringSetupShadowAdapter.evaluate(
-            visibleResult = visibleResult,
-            projection = projection,
-            validatedRuleset = exactContext.validatedRuleset,
-            exactContext = exactContext.exactContext,
-        )
-    }
-
-    /** B7.3 setup projection: one pool supplies both AUTO and ASSISTED. */
-    fun unifiedSetupPool(plans: List<RecommendationPlan>): UnifiedSelectionPool<RecommendationPlan>? =
-        plans.takeIf { it.isNotEmpty() }?.let { source ->
-            UnifiedSelectionPool(source.mapIndexed { index, plan ->
-                val canonicalPlan = SetupCandidateGenerator.canonicalPlan(plan.decisions)
-                UnifiedSelectionCandidate(
-                    // A legal no-op setup plan has an empty canonical decision list, and the
-                    // same outcome can legitimately appear under several recommendation styles.
-                    // Keep each stable source variant distinct for AUTO style selection.
-                    candidateId = java.lang.Long.toUnsignedString(
-                        MurmurHash3.low64Utf8(
-                            "unified-setup-plan-v2|$canonicalPlan|${plan.style.name}|" +
-                                "${plan.qualityTier.name}|${plan.totalScore}|$index",
-                        ),
-                        16,
-                    ).padStart(16, '0'),
-                    familyId = SetupCandidateGenerator.drunkInformationFamily(plan.decisions) ?: "setup-plan",
-                    legality = UnifiedCandidateLegality.LEGAL,
-                    epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
-                    qualityTier = plan.qualityTier,
-                    rankFixedPoint = plan.totalScore.toLong() * 1_000L,
-                    reasonCodes = plan.scoreItems.map { it.ruleId },
-                    warningCodes = plan.warnings.map { it.ruleId },
-                    payload = plan,
-                )
-            })
-        }
-
-    fun selectSetupPlan(
-        plans: List<RecommendationPlan>,
-        style: RecommendationStyle,
-    ): RecommendationPlan? = unifiedSetupPool(plans)
-        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
-        ?.map { it.payload }
-        ?.let { WeightedStableSelector.selectStyle(it, style, RecommendationPlan::style) }
 
     fun resolveInformation(request: InformationResolutionRequest) = nightModule.resolveInformation(request)
 
@@ -218,21 +45,6 @@ internal class ClocktowerRecommendationCoordinator(
         requestIdentity = requestIdentity,
         draftOf = draftOf,
     )
-
-    fun resolveRegistration(request: RegistrationResolutionRequest) = nightModule.resolveRegistration(
-        request.request,
-        request.context,
-        request.style,
-    )
-
-    fun recommendRegistration(request: com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest, context: SpecialRegistrationContext) =
-        nightModule.recommendRegistration(request, context)
-
-    fun recommendNumber(context: UnreliableNumberContext) = nightModule.recommendNumber(context)
-
-    fun recommendCategory(candidates: List<UnreliableCategoricalCandidate>) = nightModule.recommendCategory(candidates)
-
-    fun recommendPair(candidates: List<PairInformationCandidate>) = nightModule.recommendPair(candidates)
 
     /**
      * Compatibility shape for the existing first-night precompute cache.
@@ -260,61 +72,6 @@ internal class ClocktowerRecommendationCoordinator(
             )
         }
 
-    /**
-     * Selects a recommendation suggestion only. Durable information must still pass through
-     * [informationDecisionContext] and explicit confirmation before a draft is available.
-     */
-    fun <T> selectInformation(
-        options: List<T>,
-        reliability: InformationReliability,
-        style: RecommendationStyle,
-        evilAdvantage: Int,
-        stableKey: String,
-        recentMisinformationStreak: Int,
-        stableIdOf: (T) -> String,
-        isTruthful: (T) -> Boolean,
-        misinformationPressure: (T) -> Int,
-        styleOf: (T) -> RecommendationStyle,
-        history: CrossGameHistory = CrossGameHistory(),
-        historicalSignatureOf: ((T) -> HistoricalClueSignature)? = null,
-        selectionAudit: SelectionAuditContext? = null,
-        truthfulException: ImpairedTruthfulException? = null,
-    ): T? = nightModule.selectInformation(
-        options,
-        reliability,
-        style,
-        evilAdvantage,
-        stableKey,
-        recentMisinformationStreak,
-        stableIdOf,
-        isTruthful,
-        misinformationPressure,
-        styleOf,
-        history,
-        historicalSignatureOf,
-        selectionAudit,
-        truthfulException,
-    )
-
-    fun resolveDynamicDecision(request: DynamicResolutionRequest): List<DynamicDecisionRecommendation> = when (request) {
-        is DynamicResolutionRequest.MayorDeath -> dayModule.resolveMayorDeath(
-            requestId = request.requestId,
-            context = request.context,
-        )
-        is DynamicResolutionRequest.LegacyMayorDeath -> dayModule.resolveLegacyMayorDeath(
-            request = request.request,
-            mayorSeat = request.mayorSeat,
-        )
-        is DynamicResolutionRequest.DemonSuccessor -> nightModule.resolveDemonSuccessor(
-            requestId = request.requestId,
-            context = request.context,
-        )
-        is DynamicResolutionRequest.LegacyDemonSuccessor -> nightModule.resolveLegacyDemonSuccessor(
-            request = request.request,
-            successionResolution = request.successionResolution,
-        )
-    }
-
     fun appendDecision(event: StorytellerDecisionEvent, revision: DecisionRevision): DecisionAppendResult =
         eventStore.appendAtomically(event, revision)
 
@@ -328,40 +85,8 @@ internal class ClocktowerRecommendationCoordinator(
 
     fun archive(): DecisionHistoryArchive = eventStore.archive()
 
-    fun explainDecision(plan: RecommendationPlan): DecisionExplanation = DecisionExplanation(
-        decisionId = planExplanationId(plan),
-        qualityTier = plan.qualityTier,
-        totalScore = plan.totalScore,
-        explanationCodes = plan.scoreItems.map { it.ruleId }.distinct(),
-        warningCodes = plan.warnings.map { it.ruleId }.distinct(),
-        affectedSeats = (plan.scoreItems.flatMap { it.affectedSeats } + plan.warnings.flatMap { it.affectedSeats }).toSet(),
-    )
-
-    fun explainDecision(recommendation: DynamicDecisionRecommendation): DecisionExplanation = DecisionExplanation(
-        decisionId = recommendation.requestId,
-        qualityTier = recommendation.qualityTier,
-        totalScore = recommendation.totalScore,
-        explanationCodes = recommendation.scoreItems.map { it.ruleId }.distinct(),
-        warningCodes = recommendation.warnings.map { it.ruleId }.distinct(),
-        affectedSeats = (recommendation.scoreItems.flatMap { it.affectedSeats } +
-            recommendation.warnings.flatMap { it.affectedSeats }).toSet(),
-    )
-
     fun explainDecision(eventId: String): DecisionExplanation? = historyModule.explainEvent(eventStore.archive(), eventId)
 
     fun postGameReview() = historyModule.postGameReview(eventStore.archive())
 
-    private fun planExplanationId(plan: RecommendationPlan): String {
-        val canonical = plan.decisions.joinToString("|") { decision ->
-            when (decision) {
-                is StorytellerDecision.RedHerring -> "red-herring:${decision.seat}"
-                is StorytellerDecision.DrunkInvestigatorInfo ->
-                    "drunk-investigator:${decision.shownMinion.value}:${decision.candidateSeats.sorted().joinToString(",")}"
-                is StorytellerDecision.DemonBluffs ->
-                    "demon-bluffs:${decision.roles.map { it.value }.sorted().joinToString(",")}"
-            }
-        }
-        return java.lang.Long.toUnsignedString(MurmurHash3.low64Utf8("decision-explanation-v1|$canonical"), 16)
-            .padStart(16, '0')
-    }
 }

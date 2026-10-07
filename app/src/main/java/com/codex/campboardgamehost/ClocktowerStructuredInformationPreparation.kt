@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -66,7 +65,6 @@ internal fun clocktowerManualInformationDomain(
         ).joinToString(" · ").ifBlank { option.label }
         option.copy(
             label = neutralLabel,
-            recommendationStyle = RecommendationStyle.BALANCED,
             misinformationPressure = 0,
             isDefaultRecommendation = false,
             reasonCodes = emptyList(),
@@ -93,7 +91,6 @@ internal data class ClocktowerNumericInformationPreparation(
     fun prepareUiModel(
         coordinator: ClocktowerRecommendationCoordinator,
         identity: ClocktowerInformationDecisionIdentity,
-        style: RecommendationStyle,
     ): StructuredNumberInformationUiModel = prepareNumericInformationUiModel(
         coordinator = coordinator,
         gameId = identity.gameId,
@@ -108,11 +105,9 @@ internal data class ClocktowerNumericInformationPreparation(
         minimumValue = minimumValue,
         maximumValue = maximumValue,
         reliability = reliability,
-        recommendationStyle = style,
         revision = identity.revision,
         recommendedValue = recommendedValue,
         previousShownValue = previousShownValue,
-        pressureCostPerPoint = 1,
     )
 }
 
@@ -173,7 +168,6 @@ internal data class ClocktowerBooleanInformationPreparation(
     fun prepareUiModel(
         coordinator: ClocktowerRecommendationCoordinator,
         identity: ClocktowerInformationDecisionIdentity,
-        style: RecommendationStyle,
     ): StructuredBooleanInformationUiModel = prepareBooleanInformationUiModel(
         coordinator = coordinator,
         gameId = identity.gameId,
@@ -186,7 +180,6 @@ internal data class ClocktowerBooleanInformationPreparation(
         subjectSeats = subjectSeats,
         trueValue = trueValue,
         reliability = reliability,
-        recommendationStyle = style,
         revision = identity.revision,
         recommendedValue = recommendedValue,
     )

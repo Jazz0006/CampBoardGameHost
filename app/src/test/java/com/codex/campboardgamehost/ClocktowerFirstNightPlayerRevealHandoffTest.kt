@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
@@ -115,7 +114,7 @@ class ClocktowerFirstNightPlayerRevealHandoffTest {
             phase = ClocktowerPhase.Night, round = 2, sequence = 4, actorSeat = 2,
             subjectSeats = listOf(1, 3), trueValue = 1,
             reliability = InformationReliability.RELIABLE,
-            recommendationStyle = RecommendationStyle.BALANCED, revision = revision, recommendedValue = 1,
+            revision = revision, recommendedValue = 1,
         )
         val confirmed = requireNotNull(model.acceptRecommendation(model.choices.single().candidateId, revision).confirmed)
         assertTrue(clocktowerInformationPublicationAllowed(confirmed, model.contextSnapshot, revision))

@@ -4,7 +4,6 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -14,8 +13,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLeg
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
-import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.rules.FirstNightNumericInformationSemantics
 import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
 import kotlin.math.abs
@@ -133,7 +130,6 @@ internal data class ClocktowerDisplayOption(
     val spyRegisteredRoleEnName: String? = null,
     val recluseRegistersEvil: Boolean? = null,
     val recluseRegisteredRoleEnName: String? = null,
-    val recommendationStyle: RecommendationStyle = RecommendationStyle.BALANCED,
     val isTruthful: Boolean = true,
     val misinformationPressure: Int = 0,
     val isDefaultRecommendation: Boolean = false,
@@ -297,37 +293,6 @@ internal fun projectFirstNightPairInformationOptions(
     }
 }
 
-internal data class ClocktowerDecisionOption(
-    val label: String,
-    val targetName: String,
-    val explanation: String,
-    val recommendationStyle: RecommendationStyle = RecommendationStyle.BALANCED,
-    val isDefaultRecommendation: Boolean = false,
-    val reasonCodes: List<String> = emptyList(),
-    val warningCodes: List<String> = emptyList(),
-)
-
-internal fun unifiedDecisionPool(
-    options: List<ClocktowerDecisionOption>,
-    familyId: String,
-): UnifiedSelectionPool<ClocktowerDecisionOption>? = options
-    .takeIf { it.isNotEmpty() }
-    ?.let { candidates ->
-        UnifiedSelectionPool(candidates.map { option ->
-            UnifiedSelectionCandidate(
-                candidateId = listOf(option.recommendationStyle.name, option.targetName).joinToString("|"),
-                familyId = familyId,
-                legality = UnifiedCandidateLegality.LEGAL,
-                epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
-                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-                rankFixedPoint = if (option.isDefaultRecommendation) 1_000_000L else 800_000L,
-                reasonCodes = option.reasonCodes,
-                warningCodes = option.warningCodes,
-                payload = option,
-            )
-        })
-    }
-
 private fun ClocktowerDisplayOption.isLegalFirstNightPairDisplay(familyId: String): Boolean {
     if (familyId !in setOf("Washerwoman", "Librarian", "Investigator")) return true
     val key = proposition?.firstNightPairInformationKey() ?: return true
@@ -339,7 +304,6 @@ private fun ClocktowerDisplayOption.isLegalFirstNightPairDisplay(familyId: Strin
 internal fun unifiedFirstNightInformationPool(
     options: List<ClocktowerDisplayOption>,
     familyId: String,
-    automaticStyle: RecommendationStyle,
 ): UnifiedSelectionPool<ClocktowerDisplayOption> = UnifiedSelectionPool(
     options
         .filter { option -> option.isLegalFirstNightPairDisplay(familyId) }
@@ -349,65 +313,11 @@ internal fun unifiedFirstNightInformationPool(
                 familyId = familyId,
                 legality = UnifiedCandidateLegality.LEGAL,
                 epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
-                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-                rankFixedPoint = when {
-                    option.isDefaultRecommendation -> 1_000_000L
-                    option.recommendationStyle == automaticStyle -> 900_000L
-                    else -> 800_000L
-                },
-                reasonCodes = option.reasonCodes,
+                qualityTier = QualityTier.RECOMMENDED,
+                reasonCodes = emptyList(),
                 warningCodes = option.warningCodes,
                 payload = option,
             )
         },
 )
 
-internal data class ClocktowerRegistrationRecommendationOption(
-    val label: String,
-    val usesSpecialRegistration: Boolean,
-    val registeredRoleEnName: String?,
-    val style: RecommendationStyle,
-    val isDefaultRecommendation: Boolean = false,
-    val reasonCodes: List<String> = emptyList(),
-    val warningCodes: List<String> = emptyList(),
-)
-
-/** Shared registration pool: style changes selection, never candidate legality or ordering data. */
-internal fun unifiedRegistrationPool(
-    options: List<ClocktowerRegistrationRecommendationOption>,
-): UnifiedSelectionPool<ClocktowerRegistrationRecommendationOption>? = options
-    .takeIf { it.isNotEmpty() }
-    ?.let { candidates ->
-        UnifiedSelectionPool(candidates.map { option ->
-            UnifiedSelectionCandidate(
-                candidateId = listOf(
-                    option.style.name,
-                    option.usesSpecialRegistration,
-                    option.registeredRoleEnName.orEmpty(),
-                ).joinToString("|"),
-                familyId = if (option.usesSpecialRegistration) "special-registration" else "actual-registration",
-                legality = UnifiedCandidateLegality.LEGAL,
-                epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
-                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-                rankFixedPoint = if (option.isDefaultRecommendation) 1_000_000L else 800_000L,
-                reasonCodes = option.reasonCodes,
-                warningCodes = option.warningCodes,
-                payload = option,
-            )
-        })
-    }
-
-/** Automatic registration recommendation selection is owned beside the shared registration pool. */
-internal fun selectAutomaticRegistrationRecommendation(
-    options: List<ClocktowerRegistrationRecommendationOption>,
-    style: RecommendationStyle,
-): ClocktowerRegistrationRecommendationOption? = unifiedRegistrationPool(options)
-    ?.candidatesFor(SelectionExecutionPolicy.AUTO)
-    ?.map { it.payload }
-    ?.let { candidates ->
-        WeightedStableSelector.selectStyle(
-            candidates,
-            style,
-            ClocktowerRegistrationRecommendationOption::style,
-        )
-    }

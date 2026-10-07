@@ -39,7 +39,6 @@ internal data class FirstNightInformationCandidate(
     val id: String,
     val observation: AbilityObservation,
     val qualityTier: QualityTier = QualityTier.RECOMMENDED,
-    val rankFixedPoint: Long = 0L,
     val legality: UnifiedCandidateLegality = UnifiedCandidateLegality.LEGAL,
     val epistemicStatus: UnifiedEpistemicStatus = UnifiedEpistemicStatus.VERIFIED,
     val reasonCodes: List<String> = emptyList(),
@@ -56,7 +55,6 @@ private fun FirstNightInformationCandidate.toUnified(family: FirstNightInformati
     legality = legality,
     epistemicStatus = epistemicStatus,
     qualityTier = qualityTier,
-    rankFixedPoint = rankFixedPoint,
     reasonCodes = reasonCodes,
     warningCodes = warningCodes,
     payload = observation,
@@ -193,7 +191,6 @@ internal sealed interface FirstNightPublicationResolution {
 private data class PairSemanticParity(
     val observation: AbilityObservation,
     val qualityTier: QualityTier,
-    val rankFixedPoint: Long,
 )
 
 private fun List<FirstNightInformationCandidate>.semanticPairParity(): Map<PairSemanticParity, Int> =
@@ -201,6 +198,5 @@ private fun List<FirstNightInformationCandidate>.semanticPairParity(): Map<PairS
         PairSemanticParity(
             observation = candidate.observation,
             qualityTier = candidate.qualityTier,
-            rankFixedPoint = candidate.rankFixedPoint,
         )
     }.eachCount()

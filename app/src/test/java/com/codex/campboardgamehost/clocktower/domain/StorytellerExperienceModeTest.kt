@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.domain
 
-import com.codex.campboardgamehost.clocktower.config.LegacyRecommendationStyleCompatibility
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -35,14 +34,6 @@ class StorytellerExperienceModeTest {
             StorytellerRecommendationUxPolicy::class.java.declaredFields.any {
                 it.name == "recommendationStyle"
             },
-        )
-    }
-
-    @Test
-    fun `unmigrated families retain old automatic style only through compatibility seam`() {
-        assertEquals(
-            RecommendationStyle.AGGRESSIVE,
-            LegacyRecommendationStyleCompatibility.automatic,
         )
     }
 

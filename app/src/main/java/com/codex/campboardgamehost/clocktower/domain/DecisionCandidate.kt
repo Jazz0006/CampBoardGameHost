@@ -37,18 +37,9 @@ data class DecisionCandidate<T>(
 data class DecisionEvaluation<T>(
     val candidate: DecisionCandidate<T>,
     val qualityTier: QualityTier,
-    val totalScore: Int,
-    val withinFamilyWeightFixedPoint: Long,
-    val finalProbabilityFixedPoint: Long,
-    val pressureDelta: Map<Int, Int>,
     val warnings: List<String>,
-    val explanationCodes: List<String>,
 ) {
     init {
-        require(withinFamilyWeightFixedPoint >= 0) { "within-family weight cannot be negative." }
-        require(finalProbabilityFixedPoint >= 0) { "final probability cannot be negative." }
-        require(pressureDelta.keys.all { it > 0 }) { "Pressure seats must be positive." }
         require(warnings.all { it.isNotBlank() }) { "Warning codes cannot be blank." }
-        require(explanationCodes.all { it.isNotBlank() }) { "Explanation codes cannot be blank." }
     }
 }

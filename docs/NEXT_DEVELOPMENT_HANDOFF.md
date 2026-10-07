@@ -2,9 +2,9 @@
 
 > Updated: 2026-10-07 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> RES checkpoint: **RES-0/1/2 COMPLETE / ACCEPTED.** RES-2 neutral provider contract landed in PR #236, squash merge `19abd61cf79088b16577461f3b7c0f40b30a5674`; the bounded Drunk direct-provider + context-memory closure landed in PR #237, squash merge `7ae03105f05e8754851b6134d5c5c9c25dfa5e0f`, CI #3800 / R2 #3482 GREEN.  
+> RES checkpoint: **RES-0/1/2/3 COMPLETE / ACCEPTED.** RES-2 neutral provider contract landed in PR #236/#237. RES-3 physically removed the obsolete heuristic/style/weighted recommendation authority and its dead setup/dynamic selector infrastructure. Accepted executable checkpoint: `5b4b2a94c332bde462124b133955514a31f23183`; CI #3815 GREEN with full Android unit tests + debug assemble, ASP contract and Real Clingo gates; R2 #3495 GREEN.  
 > Architecture invariant: **a provider may be stateless, but recommendation context is not memoryless.** The Host owns and reconstructs current canonical state, current-game longitudinal/narrative history, relevant cross-game player experience and recommendation/diversity history. LLM/chat conversation memory is never correctness authority.  
-> Current execution target: **RES-3 — remove live product/UI/session reachability of the legacy heuristic/style/weighted recommender while preserving complete Manual legal domains, deterministic rule outcomes and the optional neutral provider seam.** RES-4 then removes named deterministic special-policy executables; RES-5 converges the physical module boundary.  
+> Current execution target: **RES-4 — named deterministic special-policy physical purge.** Merge the accepted RES-3 PR #239, then begin RES-4 from fresh live `main`; do not reintroduce any retired style/score/weighted authority.  
 > GSP-2B3/2C/2D remain paused/superseded by RES sequencing. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
@@ -240,8 +240,8 @@ DLB-0 typed intermediate setup COMPLETE
 -> RES-1 generic engine-owned pending-decision boundary COMPLETE / ACCEPTED
 -> RES-2 neutral provider contract + direct pair/Mayor/Drunk materialization COMPLETE / ACCEPTED
 || Host-owned context-memory invariant: current-game longitudinal/narrative + relevant cross-game player + soft diversity history; provider chat memory not authoritative
--> RES-3 legacy heuristic/style/weighted product reachability + physical purge NEXT
--> RES-4 named deterministic special-policy purge
+-> RES-3 legacy heuristic/style/weighted product reachability + physical purge COMPLETE / ACCEPTED — checkpoint 5b4b2a94; CI #3815 / R2 #3495 GREEN
+-> RES-4 named deterministic special-policy purge NEXT
 -> RES-5 physical module/dependency convergence
 -> resume GSP context retrieval/materializer -> manual blind benchmark -> repeated/cross-model benchmark -> optional API adapter
 || Android product remains offline-first; remote LLM optional only
@@ -313,9 +313,9 @@ Do not add new hand-authored policy weights/thresholds, broaden player-count/Tra
 
 The previous immediate GSP continuation is paused. Live-code audit confirmed that authority revocation did not physically remove old recommendation behavior: `ClocktowerHostScreen` still reaches legacy registration/pair/number recommendation paths and `GameBalanceEvaluator`, `RecommendationStyle` still flows through Host/night information surfaces, and `ClocktowerRecommendationCoordinator` still combines legal-domain, scoring, selection, history and explanation responsibilities. At the same time the new `StorytellerPolicyRequestV1` remains coupled to SDE/TB-specific export types.
 
-Current sequence is now: **RES-0 COMPLETE -> RES-1 COMPLETE -> RES-2 COMPLETE -> RES-3 legacy heuristic/style/weighted purge NEXT -> RES-4 named deterministic special-policy purge -> RES-5 physical module/dependency convergence -> resume GSP context retrieval/materializer/benchmark**.
+Current sequence is now: **RES-0 COMPLETE -> RES-1 COMPLETE -> RES-2 COMPLETE -> RES-3 COMPLETE / ACCEPTED -> RES-4 named deterministic special-policy purge NEXT -> RES-5 physical module/dependency convergence -> resume GSP context retrieval/materializer/benchmark**.
 
-RES-1 proved the generic engine-owned pending-decision seam with pair information and Mayor redirect. RES-2 established the neutral provider protocol and direct pair/Mayor/Drunk request materialization. PR #237 also freezes the context-memory ownership rule: provider invocations remain stateless and independently reconstructable, while the Host owns current-game longitudinal/narrative memory plus relevant cross-game player and soft-diversity history. RES-3 should begin by re-auditing live product reachability on fresh `main`, migrate UI/session consumers off legacy ranking, then delete implementations only after they are unreachable.
+RES-1 proved the generic engine-owned pending-decision seam with pair information and Mayor redirect. RES-2 established the neutral provider protocol and direct pair/Mayor/Drunk request materialization. PR #237 also freezes the context-memory ownership rule: provider invocations remain stateless and independently reconstructable, while the Host owns current-game longitudinal/narrative memory plus relevant cross-game player and soft-diversity history. RES-3 removed live product/UI/session dependence on the old recommendation ranking stack and physically deleted its dynamic/setup recommenders, style/profile/weighted selectors, local rank/weight metadata and dead ranking tests/benchmarks. Historical `StorytellerDecisionEvent` score/probability/pressure/explanation fields remain only as archival/replay compatibility data; they are not current recommendation authority. RES-3 T4 acceptance is GREEN at `5b4b2a94c332bde462124b133955514a31f23183` (CI #3815 / R2 #3495).
 
 
 ### GSP-2B1 acceptance — 2026-10-06

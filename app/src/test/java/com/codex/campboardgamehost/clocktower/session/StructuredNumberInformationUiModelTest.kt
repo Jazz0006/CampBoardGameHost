@@ -152,12 +152,7 @@ class StructuredNumberInformationUiModelTest {
             metadata = CandidateMetadata("test-v1", "empath-number-ui"),
         ),
         qualityTier = QualityTier.RECOMMENDED,
-        totalScore = 0,
-        withinFamilyWeightFixedPoint = 1,
-        finalProbabilityFixedPoint = 0,
-        pressureDelta = emptyMap(),
         warnings = emptyList(),
-        explanationCodes = listOf("test"),
     )
 
     private fun draft(

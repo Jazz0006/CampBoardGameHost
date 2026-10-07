@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -38,11 +37,9 @@ internal fun prepareNumericInformationUiModel(
     minimumValue: Int,
     maximumValue: Int,
     reliability: InformationReliability,
-    recommendationStyle: RecommendationStyle,
     revision: InformationDecisionRevision,
     recommendedValue: Int?,
     previousShownValue: Int? = null,
-    pressureCostPerPoint: Int = 0,
 ): StructuredNumberInformationUiModel {
     require(actorSeat > 0) { "Numeric information actor seat must be positive." }
     require(subjectSeats.all { it > 0 } && subjectSeats.distinct().size == subjectSeats.size) {
@@ -60,14 +57,11 @@ internal fun prepareNumericInformationUiModel(
                 previousShownValue = previousShownValue?.takeIf {
                     reliability != InformationReliability.RELIABLE && it in minimumValue..maximumValue
                 },
-                pressureCostPerPoint = pressureCostPerPoint,
             ),
             generation = DynamicGenerationContext(
                 abilityRole = abilityRole,
                 recipientSeat = actorSeat,
                 reliability = reliability,
-                style = recommendationStyle,
-                targetSeats = subjectSeats.toSet(),
             ),
         ),
     )

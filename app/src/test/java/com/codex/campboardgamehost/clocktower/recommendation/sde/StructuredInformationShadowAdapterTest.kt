@@ -5,7 +5,6 @@ import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCa
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptSource
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
@@ -479,14 +478,11 @@ class StructuredInformationShadowAdapterTest {
                         trueValue = 0,
                         minimumValue = 0,
                         maximumValue = 2,
-                        pressureCostPerPoint = 1,
                     ),
                     generation = DynamicGenerationContext(
                         abilityRole = RoleId("Empath"),
                         recipientSeat = 2,
                         reliability = reliability,
-                        style = RecommendationStyle.BALANCED,
-                        targetSeats = setOf(1, 3),
                     ),
                 ),
             )

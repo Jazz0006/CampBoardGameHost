@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
@@ -235,7 +234,7 @@ class ClocktowerPlayerDisplayResolutionTest {
         coordinator = ClocktowerRecommendationCoordinator(), gameId = "display-number",
         phase = ClocktowerPhase.Night, round = 2, sequence = 4, actorSeat = 2,
         subjectSeats = listOf(1, 3), trueValue = 0, reliability = InformationReliability.POISONED,
-        recommendationStyle = RecommendationStyle.BALANCED, revision = revision, recommendedValue = 2,
+        revision = revision, recommendedValue = 2,
     )
 
     private fun booleanModel() = prepareBooleanInformationUiModel(
@@ -243,7 +242,7 @@ class ClocktowerPlayerDisplayResolutionTest {
         phase = ClocktowerPhase.Night, round = 2, sequence = 8, actorSeat = 4,
         abilityRole = RoleId("Fortune Teller"), metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
         subjectSeats = listOf(2, 7), trueValue = true, reliability = InformationReliability.POISONED,
-        recommendationStyle = RecommendationStyle.BALANCED, revision = revision, recommendedValue = false,
+        revision = revision, recommendedValue = false,
     )
 
     private fun unresolvedStep(option: ClocktowerDisplayOption) = ClocktowerNightStepUi(

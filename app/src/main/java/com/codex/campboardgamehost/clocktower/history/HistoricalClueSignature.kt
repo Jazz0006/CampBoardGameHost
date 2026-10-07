@@ -1,7 +1,5 @@
 package com.codex.campboardgamehost.clocktower.history
 
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 
 data class HistoricalClueSignature(
@@ -26,33 +24,6 @@ data class HistoricalClueSignature(
         demonBluffs.map { it.value }.sorted().joinToString(","),
     ).joinToString("|")
 
-    companion object {
-        fun fromSetupPlan(game: GameState, plan: RecommendationPlan): HistoricalClueSignature {
-            val informationObservation = plan.observations.firstOrNull()
-            val seats = informationObservation?.candidateSeats
-                ?.sorted()
-                ?: plan.effectSignature.suspectedSeats.sorted()
-            val alignmentPattern = seats
-                .mapNotNull { game.playerAt(it)?.actualAlignment?.name }
-                .sorted()
-                .joinToString(",")
-                .ifBlank { null }
-            val distance = if (seats.size == 2 && game.players.isNotEmpty()) {
-                val direct = kotlin.math.abs(seats[0] - seats[1])
-                minOf(direct, game.players.size - direct)
-            } else {
-                null
-            }
-            return HistoricalClueSignature(
-                decisionType = "setup-plan",
-                shownCharacter = informationObservation?.shownRole ?: plan.effectSignature.drunkInvestigatorShownMinion,
-                candidateAlignmentPattern = alignmentPattern,
-                candidateSeatDistance = distance,
-                redHerringRole = plan.effectSignature.redHerringSeat?.let(game::playerAt)?.actualRole,
-                demonBluffs = plan.effectSignature.demonBluffs,
-            )
-        }
-    }
 }
 
 data class CrossGameHistory(

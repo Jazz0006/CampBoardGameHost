@@ -19,19 +19,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
-import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
 import com.codex.campboardgamehost.clocktower.recommendation.StorytellerDecisionAuthority
 import com.codex.campboardgamehost.clocktower.recommendation.storytellerDecisionAuthority
 import com.codex.campboardgamehost.clocktower.recommendation.storytellerDecisionPresentationIsAutomatic
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
@@ -43,15 +36,12 @@ import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationRe
 internal fun ClocktowerNightStepCardLocalized(
     recommendationCoordinator: ClocktowerRecommendationCoordinator,
     automaticStorytellerInfo: Boolean,
-    automaticStorytellerStyle: RecommendationStyle,
     phase: ClocktowerPhase,
     gameId: String,
     round: Int,
     sequence: Int,
     gameStateRevision: Long,
     playerInputRevision: Long,
-    selectionDistributionTelemetry: SelectionDistributionTelemetryRecorder,
-    evilAdvantage: Int,
     informationDecisionKey: String,
     cards: List<PlayerCard>,
     ghostVoteAuthority: ClocktowerGhostVoteAuthority,
@@ -131,7 +121,6 @@ internal fun ClocktowerNightStepCardLocalized(
         ?.let { options -> unifiedFirstNightInformationPool(
             options = options,
             familyId = presentationRoleEnName ?: "first-night-information",
-            automaticStyle = automaticStorytellerStyle,
         ) }
     // The legacy assisted recommendation surface keeps the curated compatibility pool.
     // Pair Manual selection below consumes step.manualInformationCandidates directly.
@@ -140,7 +129,6 @@ internal fun ClocktowerNightStepCardLocalized(
         ?.let { options -> unifiedFirstNightInformationPool(
             options = options,
             familyId = presentationRoleEnName ?: "first-night-information",
-            automaticStyle = automaticStorytellerStyle,
         ) }
     val automaticInformationOptions = firstNightAutomaticPool
         ?.candidatesFor(SelectionExecutionPolicy.AUTO)
@@ -239,25 +227,11 @@ internal fun ClocktowerNightStepCardLocalized(
         } ?: false
         else -> false
     }
-    val selectionAudit = if (automaticStorytellerInfo) {
-        SelectionAuditContext(
-            selectionId = informationDecisionKey,
-            dimensions = SelectionAuditDimensions(
-                playerCount = cards.size,
-                phase = if (phase == ClocktowerPhase.FirstNight) StorytellerPhase.FIRST_NIGHT else StorytellerPhase.NIGHT,
-                style = automaticStorytellerStyle,
-            ),
-            recorder = selectionDistributionTelemetry,
-        )
-    } else {
-        null
-    }
     if (!usesResultFirstRegistration && step.spyRegistrationKey != null && spyCard != null && spyRegistrationResolution?.canUseSpecialAbility == true) {
         ClocktowerAutomaticRegistrationEffect(
             automaticStorytellerInfo = automaticStorytellerInfo,
             registration = spyRegistrationResolution,
             applyRegisteredRole = step.spyRegistrationDetail == ClocktowerRegistrationDetail.Role,
-            selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|spy-registration"),
             onUsesSpecialRegistrationChange = onSpyRegistrationGoodChange,
             onRoleChange = onSpyRegistrationRoleChange,
         )
@@ -267,7 +241,6 @@ internal fun ClocktowerNightStepCardLocalized(
             automaticStorytellerInfo = automaticStorytellerInfo,
             registration = recluseRegistrationResolution,
             applyRegisteredRole = true,
-            selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|recluse-registration"),
             onUsesSpecialRegistrationChange = onRecluseRegistrationEvilChange,
             onRoleChange = onRecluseRegistrationRoleChange,
         )
@@ -302,7 +275,6 @@ internal fun ClocktowerNightStepCardLocalized(
     val informationIdentity = ClocktowerInformationDecisionIdentity(
         gameId, phase, round, sequence, InformationDecisionRevision(gameStateRevision, playerInputRevision),
     )
-    val structuredStyle = if (effectiveAutomaticInformation) automaticStorytellerStyle else RecommendationStyle.BALANCED
     val structuredActorSeat = step.actor
         ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
     val structuredRecommendedOption = clocktowerStructuredRecommendedOption(
@@ -312,7 +284,7 @@ internal fun ClocktowerNightStepCardLocalized(
         unreliableOptions = if (manualInformationFallback) emptyList() else step.displayOptions,
     )
     val numericPreparation = clocktowerNumericInformationPreparation(manualFallbackStep, structuredActorSeat, structuredRecommendedOption)
-    val structuredNumberUiModel = numericPreparation?.prepareUiModel(recommendationCoordinator, informationIdentity, structuredStyle)
+    val structuredNumberUiModel = numericPreparation?.prepareUiModel(recommendationCoordinator, informationIdentity)
     LaunchedEffect(structuredNumberUiModel?.semanticStateKey) {
         structuredNumberUiModel?.let { onStructuredNumberDecisionPrepared(it) }
     }
@@ -429,7 +401,7 @@ internal fun ClocktowerNightStepCardLocalized(
         step, structuredActorSeat, fortuneTellerSelectedSeats, structuredRecommendedOption,
     )
     val structuredFortuneTellerUiModel = booleanPreparation?.prepareUiModel(
-        recommendationCoordinator, informationIdentity, structuredStyle,
+        recommendationCoordinator, informationIdentity,
     )
     val resultFirstFortuneTellerOptions = resultFirstRegistrationCandidates.filter { option ->
         val proposition = option.proposition as? InformationProposition.BooleanResult
@@ -459,18 +431,6 @@ internal fun ClocktowerNightStepCardLocalized(
         transformDisplayStep: (ClocktowerNightStepUi) -> ClocktowerNightStepUi = { it },
     ) {
         onApplyRecommendedDisplayOption(option)
-        selectionAudit?.let { audit ->
-            audit.recorder.recordCommittedSelection(
-                SelectionAuditCommit(
-                    selectionId = audit.selectionId,
-                    dimensions = audit.dimensions,
-                    selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
-                        reliability = step.informationReliability,
-                        truthful = option.isTruthful,
-                    ),
-                ),
-            )
-        }
         onShowPlayerDisplay(transformDisplayStep(resolveClocktowerPlayerDisplay(step, option)))
     }
 
@@ -491,20 +451,6 @@ internal fun ClocktowerNightStepCardLocalized(
                     model.chooseManually(candidateId, currentRevision)
                 }
                 val confirmed = confirmation.confirmed ?: return
-                if (automaticDisplayOption != null) {
-                    selectionAudit?.let { audit ->
-                        audit.recorder.recordCommittedSelection(
-                            SelectionAuditCommit(
-                                selectionId = audit.selectionId,
-                                dimensions = audit.dimensions,
-                                selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
-                                    reliability = step.informationReliability,
-                                    truthful = structuredEmpathSelectionIsTruthful(choice.value),
-                                ),
-                            ),
-                        )
-                    }
-                }
                 val template = structuredRecommendedOption
                     ?: displayedInformationOptions.firstOrNull()
                     ?: step.displayOptions.firstOrNull()
@@ -541,20 +487,6 @@ internal fun ClocktowerNightStepCardLocalized(
                     model.chooseManually(candidateId, currentRevision)
                 }
                 val confirmed = confirmation.confirmed ?: return
-                if (automaticDisplayOption != null) {
-                    selectionAudit?.let { audit ->
-                        audit.recorder.recordCommittedSelection(
-                            SelectionAuditCommit(
-                                selectionId = audit.selectionId,
-                                dimensions = audit.dimensions,
-                                selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
-                                    reliability = step.informationReliability,
-                                    truthful = structuredEmpathSelectionIsTruthful(choice.value),
-                                ),
-                            ),
-                        )
-                    }
-                }
                 val template = structuredRecommendedOption
                     ?: displayedInformationOptions.firstOrNull()
                     ?: step.displayOptions.firstOrNull()

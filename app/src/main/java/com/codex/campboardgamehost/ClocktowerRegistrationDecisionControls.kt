@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ClocktowerSpyRegistrationDecisionControls(
-    recommendations: List<ClocktowerRegistrationRecommendationOption>,
     legalRoles: List<Pair<String, String>>,
     registersGood: Boolean,
     registeredRoleEnName: String?,
@@ -29,7 +28,6 @@ internal fun ClocktowerSpyRegistrationDecisionControls(
     onRoleChange: (String) -> Unit,
 ) {
     ClocktowerRegistrationDecisionControls(
-        recommendations = recommendations,
         legalRoles = legalRoles,
         usesSpecialRegistration = registersGood,
         registeredRoleEnName = registeredRoleEnName,
@@ -48,7 +46,6 @@ internal fun ClocktowerSpyRegistrationDecisionControls(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ClocktowerRecluseRegistrationDecisionControls(
-    recommendations: List<ClocktowerRegistrationRecommendationOption>,
     legalRoles: List<Pair<String, String>>,
     registersEvil: Boolean,
     registeredRoleEnName: String?,
@@ -58,7 +55,6 @@ internal fun ClocktowerRecluseRegistrationDecisionControls(
     onRoleChange: (String) -> Unit,
 ) {
     ClocktowerRegistrationDecisionControls(
-        recommendations = recommendations,
         legalRoles = legalRoles,
         usesSpecialRegistration = registersEvil,
         registeredRoleEnName = registeredRoleEnName,
@@ -76,7 +72,6 @@ internal fun ClocktowerRecluseRegistrationDecisionControls(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ClocktowerRegistrationDecisionControls(
-    recommendations: List<ClocktowerRegistrationRecommendationOption>,
     legalRoles: List<Pair<String, String>>,
     usesSpecialRegistration: Boolean,
     registeredRoleEnName: String?,
@@ -102,24 +97,6 @@ private fun ClocktowerRegistrationDecisionControls(
                 style = MaterialTheme.typography.bodySmall,
             )
             return@Column
-        }
-
-        recommendations.sortedBy { if (it.isDefaultRecommendation) 0 else 1 }.forEach { recommendation ->
-            val apply = {
-                onUsesSpecialRegistrationChange(recommendation.usesSpecialRegistration)
-                if (recommendation.usesSpecialRegistration) {
-                    recommendation.registeredRoleEnName?.let(onRoleChange)
-                }
-            }
-            if (recommendation.isDefaultRecommendation) {
-                Button(onClick = apply, modifier = Modifier.fillMaxWidth()) {
-                    Text(recommendation.label)
-                }
-            } else {
-                OutlinedButton(onClick = apply, modifier = Modifier.fillMaxWidth()) {
-                    Text(recommendation.label)
-                }
-            }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

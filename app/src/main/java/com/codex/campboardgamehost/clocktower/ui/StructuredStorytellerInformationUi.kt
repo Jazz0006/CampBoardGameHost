@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
@@ -24,11 +23,9 @@ internal fun prepareEmpathNumberInformationUiModel(
     subjectSeats: List<Int>,
     trueValue: Int,
     reliability: InformationReliability,
-    recommendationStyle: RecommendationStyle,
     revision: InformationDecisionRevision,
     recommendedValue: Int?,
     previousShownValue: Int? = null,
-    pressureCostPerPoint: Int = 1,
 ): StructuredNumberInformationUiModel = prepareNumericInformationUiModel(
     coordinator = coordinator,
     gameId = gameId,
@@ -43,9 +40,7 @@ internal fun prepareEmpathNumberInformationUiModel(
     minimumValue = 0,
     maximumValue = 2,
     reliability = reliability,
-    recommendationStyle = recommendationStyle,
     revision = revision,
     recommendedValue = recommendedValue,
     previousShownValue = previousShownValue,
-    pressureCostPerPoint = pressureCostPerPoint,
 )
