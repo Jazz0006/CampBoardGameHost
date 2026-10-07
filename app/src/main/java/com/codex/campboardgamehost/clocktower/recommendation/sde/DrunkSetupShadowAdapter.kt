@@ -136,6 +136,11 @@ internal object DrunkSetupShadowAdapter {
         }
 
         val decisionId = decisionContext.decisionId
+        val historyPrefix = SdeHistoricalPrefixRef.Global(
+            gameId = gameId,
+            actionRefs = emptyList(),
+            observationRefs = emptyList(),
+        )
         val projectedCandidates = legalCandidates.map { candidate ->
             val candidateId = candidate.candidateId()
             val hypothetical = TroubleBrewingDrunkHypotheticalProjector.project(
