@@ -100,47 +100,6 @@ class DrunkSetupShadowAdapterTest {
             )
         }
 
-        val policy = shadow.policyEvaluation as BeginnerConservativePolicyEvaluation.Deferred
-        assertEquals(
-            setOf(BeginnerConservativePolicyDeferralReason.STRATEGIC_FEATURE_UNAVAILABLE),
-            policy.reasons,
-        )
-        assertNull(shadow.policySelection)
-    }
-
-    @Test
-    fun `shadow produces ordinary pending decision trace and replay reproduces deferred V1 result`() {
-        val ruleset = canonicalRuleset()
-        val shadow = DrunkSetupShadowAdapter.evaluate(
-            gameId = "game-dlb3-replay",
-            intermediateSetup = drunkIntermediateSetup(),
-            characterRegistry = ruleset.characterRegistry,
-            roleDefinitions = clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
-            sourceRevision = InformationDecisionRevision(0L, 0L),
-        )
-
-        val trace = shadow.decisionTrace
-        assertEquals(
-            shadow.sdeCandidates.map(SdeDecisionCandidate::candidateId),
-            trace.legalCandidateIds,
-        )
-        assertEquals(SdeDecisionLifecycleStage.SetupPrecommit, trace.lifecycleStage)
-        assertEquals(DecisionTraceActualChoice.Pending, trace.actualChoice)
-        assertNull(trace.policySelection)
-        assertTrue(trace.policySnapshot is DecisionTracePolicySnapshot.Deferred)
-
-        val replayed = MultiPolicyReplayEngine.replay(
-            sourceTrace = trace,
-            recomputedInput = shadow.replayInput,
-            policyVersions = listOf(PolicyVersions.BEGINNER_CONSERVATIVE_V1),
-        ).single()
-
-        assertEquals(trace.decisionId, replayed.decisionId)
-        assertEquals(trace.legalCandidateIds, replayed.legalCandidateIds)
-        assertEquals(trace.featureEvaluation, replayed.featureEvaluation)
-        assertEquals(trace.policySnapshot, replayed.policySnapshot)
-        assertEquals(DecisionTraceActualChoice.Pending, replayed.actualChoice)
-        assertNull(replayed.policySelection)
     }
 
     @Test

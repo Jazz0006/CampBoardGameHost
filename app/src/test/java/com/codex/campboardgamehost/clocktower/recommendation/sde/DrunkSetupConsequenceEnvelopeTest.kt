@@ -14,7 +14,6 @@ import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingShownSeatAssig
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingVisibleRoster
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -118,7 +117,7 @@ class DrunkSetupConsequenceEnvelopeTest {
     }
 
     @Test
-    fun `shadow attaches envelopes in legal-candidate order while frozen V1 remains deferred`() {
+    fun `shadow attaches envelopes and neutral features in legal-candidate order`() {
         val ruleset = canonicalRuleset()
         val shadow = DrunkSetupShadowAdapter.evaluate(
             gameId = "dlb3b-envelope",
@@ -136,8 +135,6 @@ class DrunkSetupConsequenceEnvelopeTest {
         val empath = shadow.candidates.single { it.candidate.shownRoleId == "empath" }
         assertEquals(setOf(2), empath.consequenceEnvelope.topology.adjacentDemonSeats)
 
-        assertTrue(shadow.policyEvaluation is BeginnerConservativePolicyEvaluation.Deferred)
-        assertNull(shadow.policySelection)
         val featureEvaluation = shadow.featureEvaluation as DecisionFeatureEvaluation.Ready
         featureEvaluation.candidates.forEach { candidate ->
             assertEquals(

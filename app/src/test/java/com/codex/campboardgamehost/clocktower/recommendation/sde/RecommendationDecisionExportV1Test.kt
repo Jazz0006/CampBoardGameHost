@@ -29,7 +29,7 @@ import org.junit.Test
 
 class RecommendationDecisionExportV1Test {
     @Test
-    fun drunkExportSeparatesObservedChoiceFromLegalUnchosenWithoutInventingRejection() {
+    fun drunkExportSeparatesObservedChoiceFromLegalUnchosenWithoutPolicyReplay() {
         val snapshot = setupSnapshot()
         val context = DrunkAssignmentDecisionContext(
             snapshot = snapshot,
@@ -40,36 +40,20 @@ class RecommendationDecisionExportV1Test {
             ),
         )
         val candidateIds = context.legalCandidateIds
-        val features = drunkFeatures(candidateIds)
-        val prefix = SdeHistoricalPrefixRef.Global(
-            gameId = snapshot.gameId,
-            actionRefs = emptyList(),
-            observationRefs = emptyList(),
-        )
-        val record = DrunkAssignmentShadowReplayRecord(
-            evidenceCheckpoint = EvidenceCheckpointId("q04-test"),
-            decisionId = context.decisionId,
-            lifecycleStage = SdeDecisionLifecycleStage.SetupPrecommit,
-            sourceRevision = REVISION,
-            historyPrefixRef = prefix,
-            legalCandidateIds = candidateIds,
-            featureEvaluation = features,
-            policySnapshot = DecisionTracePolicySnapshot.Deferred(
-                policyVersion = PolicyVersions.DRUNK_ASSIGNMENT_Q04_V1,
-                candidateIds = candidateIds,
-                reasons = setOf(PolicyDeferralCode("test-only")),
+        val export = RecommendationDecisionExportV1.fromDrunkAssignment(
+            context = context,
+            historyPrefixRef = SdeHistoricalPrefixRef.Global(
+                gameId = snapshot.gameId,
+                actionRefs = emptyList(),
+                observationRefs = emptyList(),
             ),
-            policySelection = null,
-            actualChoice = DecisionTraceActualChoice.Committed(
+            featureEvaluation = drunkFeatures(candidateIds),
+            actualChoice = RecommendationHistoricalChoiceV1.Committed(
                 candidateId = candidateIds[1],
                 source = InformationDecisionSource.MANUAL,
                 manualOverride = true,
             ),
-        )
-
-        val export = RecommendationDecisionExportV1.fromDrunkAssignment(
-            context = context,
-            replayRecords = listOf(record),
+            evidenceReferences = listOf("res4:q04-drunk-empath-vs-monk"),
         )
 
         assertEquals(RecommendationDecisionExportTypeV1.DRUNK_ASSIGNMENT, export.decisionType)
@@ -90,81 +74,54 @@ class RecommendationDecisionExportV1Test {
             export.targetOrLabel.candidateRelations,
         )
         assertEquals(
-            listOf(PolicyVersions.DRUNK_ASSIGNMENT_Q04_V1),
-            export.evaluationMetadata.policyTraces.map { it.policyVersion },
+            listOf("res4:q04-drunk-empath-vs-monk"),
+            export.evaluationMetadata.evidenceReferences,
         )
-        assertEquals(listOf(EvidenceCheckpointId("q04-test")), export.provenanceOnly.policyEvidenceCheckpoints)
+        assertEquals(
+            export.evaluationMetadata.evidenceReferences,
+            export.provenanceOnly.evidenceReferences,
+        )
     }
 
     @Test
-    fun pairExportPreservesCanonicalPrefixRevisionAndPolicyReplayOutsideInputEligiblePayload() {
+    fun pairExportPreservesCanonicalPrefixRevisionAndEvidenceWithoutPolicyIdentity() {
         val snapshot = runtimeSnapshot()
-        val context = TroubleBrewingFirstNightPairDecisionContext(
-            snapshot = snapshot,
-            naturalPairGameState = GameState(
-                script = ScriptId("trouble_brewing"),
-                players = emptyList(),
-                seed = snapshot.gameSeed,
-            ),
-            roleDefinitions = emptyList(),
+        val context = pairContext(snapshot)
+        val request = pairRequest(context)
+        val candidates = pairLegalCandidates()
+        val candidateIds = candidates.map(PairInformationLegalCandidate::candidateId)
+        val prefix = SdeHistoricalPrefixRef.Global(
+            gameId = snapshot.gameId,
+            actionRefs = listOf(SdeHistoricalActionRef("setup", 0L)),
+            observationRefs = emptyList(),
         )
-        val request = PairInformationShadowReplayRequest(
-            decisionId = "pair:test-game:librarian",
-            context = context,
-            sourceSeat = 1,
-            abilityRole = RoleId("Librarian"),
-            reliability = ReliabilityState.RELIABLE,
-            lifecycleStage = SdeDecisionLifecycleStage.Interaction(
-                phase = StorytellerPhase.FIRST_NIGHT,
-                round = 1,
-                sequence = 3,
-            ),
+        val features = DecisionFeatureEvaluation.Deferred(
+            candidateIds = candidateIds,
+            missingCapabilities = setOf(EpistemicEvaluationCapability.EXACT_HISTORICAL_REPLAY),
         )
-        val candidateIds = listOf("pair:a", "pair:b")
-        val trace = DecisionTrace(
-            evidenceCheckpoint = EvidenceCheckpointId("c5d-test"),
-            decisionId = request.decisionId,
-            lifecycleStage = request.lifecycleStage,
-            sourceRevision = REVISION,
-            historyPrefixRef = SdeHistoricalPrefixRef.Global(
-                gameId = snapshot.gameId,
-                actionRefs = listOf(SdeHistoricalActionRef("setup", 0L)),
-                observationRefs = emptyList(),
-            ),
-            legalCandidateIds = candidateIds,
-            featureEvaluation = DecisionFeatureEvaluation.Deferred(
-                candidateIds = candidateIds,
-                missingCapabilities = setOf(EpistemicEvaluationCapability.EXACT_HISTORICAL_REPLAY),
-            ),
-            policySnapshot = DecisionTracePolicySnapshot.Deferred(
-                policyVersion = PolicyVersions.BEGINNER_CONSERVATIVE_V2,
-                candidateIds = candidateIds,
-                reasons = setOf(PolicyDeferralCode("test-only")),
-            ),
-            policySelection = null,
-            actualChoice = DecisionTraceActualChoice.Committed(
-                candidateId = candidateIds[0],
-                source = InformationDecisionSource.RECOMMENDATION_ACCEPTED,
-                manualOverride = false,
-            ),
+        val choice = RecommendationHistoricalChoiceV1.Committed(
+            candidateId = candidateIds[0],
+            source = InformationDecisionSource.RECOMMENDATION_ACCEPTED,
+            manualOverride = false,
         )
 
         val export = RecommendationDecisionExportV1.fromFirstNightPairInformation(
             request = request,
-            legalCandidates = pairLegalCandidates(),
-            replayTraces = listOf(trace),
+            legalCandidates = candidates,
+            sourceRevision = REVISION,
+            historyPrefixRef = prefix,
+            featureEvaluation = features,
+            actualChoice = choice,
+            evidenceReferences = listOf("res4:g10-librarian-future-flexibility"),
         )
 
         assertEquals(RecommendationDecisionExportTypeV1.FIRST_NIGHT_PAIR_INFORMATION, export.decisionType)
         assertEquals(REVISION, export.inputEligible.sourceRevision)
-        assertEquals(trace.historyPrefixRef, export.inputEligible.historyPrefixRef)
+        assertEquals(prefix, export.inputEligible.historyPrefixRef)
         assertEquals(candidateIds, export.inputEligible.legalCandidateIds)
         assertTrue(export.inputEligible.context is RecommendationDecisionContextV1.FirstNightPairInformation)
         val pairContext = export.inputEligible.context as RecommendationDecisionContextV1.FirstNightPairInformation
-        assertEquals(
-            listOf("pair:a", "pair:b"),
-            pairContext.legalCandidates.map { it.candidateId },
-        )
+        assertEquals(listOf("pair:a", "pair:b"), pairContext.legalCandidates.map { it.candidateId })
         assertEquals("Saint", pairContext.legalCandidates[0].shownRoleId)
         assertEquals(listOf(2, 3), pairContext.legalCandidates[0].candidateSeats)
         assertEquals(SemanticTruth.TRUE, pairContext.legalCandidates[0].semanticTruth)
@@ -180,94 +137,87 @@ class RecommendationDecisionExportV1Test {
             ),
             pairContext.legalCandidates[0].registrations,
         )
-        assertEquals(null, pairContext.legalCandidates[1].shownRoleId)
-        assertTrue(pairContext.legalCandidates[1].candidateSeats.isEmpty())
-        assertTrue(export.inputEligible.featureProjection is RecommendationFeatureProjectionV1.StandardDecision)
-        assertEquals(trace.actualChoice, export.targetOrLabel.actualChoice)
+        assertEquals(choice, export.targetOrLabel.actualChoice)
         assertEquals(
-            listOf(PolicyVersions.BEGINNER_CONSERVATIVE_V2),
-            export.evaluationMetadata.policyTraces.map { it.policyVersion },
+            listOf("res4:g10-librarian-future-flexibility"),
+            export.provenanceOnly.evidenceReferences,
         )
-        assertEquals(snapshot.gameId, export.provenanceOnly.gameId)
-        assertEquals("trouble_brewing", export.provenanceOnly.scriptId)
     }
 
     @Test
     fun pendingActualChoiceDoesNotManufactureTrainingRelations() {
         val snapshot = runtimeSnapshot()
-        val context = TroubleBrewingFirstNightPairDecisionContext(
-            snapshot = snapshot,
-            naturalPairGameState = GameState(
-                script = ScriptId("trouble_brewing"),
-                players = emptyList(),
-                seed = snapshot.gameSeed,
-            ),
-            roleDefinitions = emptyList(),
-        )
-        val request = PairInformationShadowReplayRequest(
-            decisionId = "pair:test-game:librarian",
-            context = context,
-            sourceSeat = 1,
-            abilityRole = RoleId("Librarian"),
-            reliability = ReliabilityState.RELIABLE,
-            lifecycleStage = SdeDecisionLifecycleStage.Interaction(
-                phase = StorytellerPhase.FIRST_NIGHT,
-                round = 1,
-                sequence = 3,
-            ),
-        )
-        val candidateIds = listOf("pair:a", "pair:b")
-        val trace = deferredPairTrace(request, candidateIds, DecisionTraceActualChoice.Pending)
-
+        val candidates = pairLegalCandidates()
         val export = RecommendationDecisionExportV1.fromFirstNightPairInformation(
-            request = request,
-            legalCandidates = pairLegalCandidates(),
-            replayTraces = listOf(trace),
+            request = pairRequest(pairContext(snapshot)),
+            legalCandidates = candidates,
+            sourceRevision = REVISION,
+            historyPrefixRef = SdeHistoricalPrefixRef.Global(
+                gameId = snapshot.gameId,
+                actionRefs = emptyList(),
+                observationRefs = emptyList(),
+            ),
+            featureEvaluation = DecisionFeatureEvaluation.Deferred(
+                candidateIds = candidates.map(PairInformationLegalCandidate::candidateId),
+                missingCapabilities = setOf(EpistemicEvaluationCapability.EXACT_HISTORICAL_REPLAY),
+            ),
+            actualChoice = RecommendationHistoricalChoiceV1.Pending,
         )
 
         assertTrue(export.targetOrLabel.candidateRelations.isEmpty())
     }
 
     @Test
-    fun pairExportFailsClosedWhenSemanticPayloadOrderDoesNotMatchReplayLegalDomain() {
+    fun pairExportFailsClosedWhenSemanticPayloadOrderDoesNotMatchFeatureDomain() {
         val snapshot = runtimeSnapshot()
-        val context = TroubleBrewingFirstNightPairDecisionContext(
-            snapshot = snapshot,
-            naturalPairGameState = GameState(
-                script = ScriptId("trouble_brewing"),
-                players = emptyList(),
-                seed = snapshot.gameSeed,
-            ),
-            roleDefinitions = emptyList(),
-        )
-        val request = PairInformationShadowReplayRequest(
-            decisionId = "pair:test-game:librarian",
-            context = context,
-            sourceSeat = 1,
-            abilityRole = RoleId("Librarian"),
-            reliability = ReliabilityState.RELIABLE,
-            lifecycleStage = SdeDecisionLifecycleStage.Interaction(
-                phase = StorytellerPhase.FIRST_NIGHT,
-                round = 1,
-                sequence = 3,
-            ),
-        )
-        val candidateIds = listOf("pair:a", "pair:b")
-        val trace = deferredPairTrace(request, candidateIds, DecisionTraceActualChoice.Pending)
+        val candidates = pairLegalCandidates()
+        val canonicalIds = candidates.map(PairInformationLegalCandidate::candidateId)
 
         assertThrows(IllegalArgumentException::class.java) {
             RecommendationDecisionExportV1.fromFirstNightPairInformation(
-                request = request,
-                legalCandidates = pairLegalCandidates().reversed(),
-                replayTraces = listOf(trace),
+                request = pairRequest(pairContext(snapshot)),
+                legalCandidates = candidates.reversed(),
+                sourceRevision = REVISION,
+                historyPrefixRef = SdeHistoricalPrefixRef.Global(
+                    gameId = snapshot.gameId,
+                    actionRefs = emptyList(),
+                    observationRefs = emptyList(),
+                ),
+                featureEvaluation = DecisionFeatureEvaluation.Deferred(
+                    candidateIds = canonicalIds,
+                    missingCapabilities = setOf(EpistemicEvaluationCapability.EXACT_HISTORICAL_REPLAY),
+                ),
+                actualChoice = RecommendationHistoricalChoiceV1.Pending,
             )
         }
     }
 
     @Test
-    fun pairExportFailsClosedWhenReplayRevisionDoesNotMatchSnapshot() {
+    fun pairExportFailsClosedWhenRevisionDoesNotMatchSnapshot() {
         val snapshot = runtimeSnapshot()
-        val context = TroubleBrewingFirstNightPairDecisionContext(
+        val candidates = pairLegalCandidates()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            RecommendationDecisionExportV1.fromFirstNightPairInformation(
+                request = pairRequest(pairContext(snapshot)),
+                legalCandidates = candidates,
+                sourceRevision = InformationDecisionRevision(9, 9),
+                historyPrefixRef = SdeHistoricalPrefixRef.Global(
+                    gameId = snapshot.gameId,
+                    actionRefs = emptyList(),
+                    observationRefs = emptyList(),
+                ),
+                featureEvaluation = DecisionFeatureEvaluation.Deferred(
+                    candidateIds = candidates.map(PairInformationLegalCandidate::candidateId),
+                    missingCapabilities = setOf(EpistemicEvaluationCapability.EXACT_HISTORICAL_REPLAY),
+                ),
+                actualChoice = RecommendationHistoricalChoiceV1.Pending,
+            )
+        }
+    }
+
+    private fun pairContext(snapshot: TroubleBrewingGameSnapshotV1) =
+        TroubleBrewingFirstNightPairDecisionContext(
             snapshot = snapshot,
             naturalPairGameState = GameState(
                 script = ScriptId("trouble_brewing"),
@@ -276,7 +226,9 @@ class RecommendationDecisionExportV1Test {
             ),
             roleDefinitions = emptyList(),
         )
-        val request = PairInformationShadowReplayRequest(
+
+    private fun pairRequest(context: TroubleBrewingFirstNightPairDecisionContext) =
+        RecommendationFirstNightPairExportRequestV1(
             decisionId = "pair:test-game:librarian",
             context = context,
             sourceSeat = 1,
@@ -287,52 +239,6 @@ class RecommendationDecisionExportV1Test {
                 round = 1,
                 sequence = 3,
             ),
-        )
-        val candidateIds = listOf("pair:a", "pair:b")
-        val trace = deferredPairTrace(
-            request = request,
-            candidateIds = candidateIds,
-            actualChoice = DecisionTraceActualChoice.Pending,
-            revision = InformationDecisionRevision(9, 9),
-        )
-
-        assertThrows(IllegalArgumentException::class.java) {
-            RecommendationDecisionExportV1.fromFirstNightPairInformation(
-                request = request,
-                legalCandidates = pairLegalCandidates(),
-                replayTraces = listOf(trace),
-            )
-        }
-    }
-
-    private fun deferredPairTrace(
-        request: PairInformationShadowReplayRequest,
-        candidateIds: List<String>,
-        actualChoice: DecisionTraceActualChoice,
-        revision: InformationDecisionRevision = REVISION,
-    ): DecisionTrace =
-        DecisionTrace(
-            evidenceCheckpoint = EvidenceCheckpointId("c5d-test"),
-            decisionId = request.decisionId,
-            lifecycleStage = request.lifecycleStage,
-            sourceRevision = revision,
-            historyPrefixRef = SdeHistoricalPrefixRef.Global(
-                gameId = request.context.snapshot.gameId,
-                actionRefs = emptyList(),
-                observationRefs = emptyList(),
-            ),
-            legalCandidateIds = candidateIds,
-            featureEvaluation = DecisionFeatureEvaluation.Deferred(
-                candidateIds = candidateIds,
-                missingCapabilities = setOf(EpistemicEvaluationCapability.EXACT_HISTORICAL_REPLAY),
-            ),
-            policySnapshot = DecisionTracePolicySnapshot.Deferred(
-                policyVersion = PolicyVersions.BEGINNER_CONSERVATIVE_V2,
-                candidateIds = candidateIds,
-                reasons = setOf(PolicyDeferralCode("test-only")),
-            ),
-            policySelection = null,
-            actualChoice = actualChoice,
         )
 
     private fun drunkFeatures(candidateIds: List<String>): DrunkAssignmentFeatureEvaluation =
@@ -367,37 +273,6 @@ class RecommendationDecisionExportV1Test {
             },
         )
 
-    private fun setupSnapshot(): TroubleBrewingGameSnapshotV1 =
-        TroubleBrewingGameSnapshotV1(
-            gameId = "test-game",
-            gameSeed = 17L,
-            position = TroubleBrewingSnapshotPosition(
-                stage = TroubleBrewingSnapshotStage.SETUP_PRECOMMIT,
-                phase = SnapshotField.NotApplicable,
-                round = SnapshotField.NotApplicable,
-            ),
-            grimoireSeats = listOf(
-                TroubleBrewingSnapshotSeat(
-                    seat = 1,
-                    shownRoleId = SnapshotField.Known("Empath"),
-                    actualRoleId = SnapshotField.Uncommitted,
-                    alive = SnapshotField.Known(true),
-                    poisoned = SnapshotField.NotApplicable,
-                ),
-                TroubleBrewingSnapshotSeat(
-                    seat = 2,
-                    shownRoleId = SnapshotField.Known("Monk"),
-                    actualRoleId = SnapshotField.Uncommitted,
-                    alive = SnapshotField.Known(true),
-                    poisoned = SnapshotField.NotApplicable,
-                ),
-            ),
-            setupState = TroubleBrewingSnapshotSetupState(
-                hasDrunk = SnapshotField.Known(true),
-                drunkAssignmentSeat = SnapshotField.Uncommitted,
-            ),
-        )
-
     private fun pairLegalCandidates(): List<PairInformationLegalCandidate> =
         listOf(
             PairInformationLegalCandidate(
@@ -427,6 +302,37 @@ class RecommendationDecisionExportV1Test {
                 ),
                 semanticTruth = SemanticTruth.TRUE,
                 registrations = emptyList(),
+            ),
+        )
+
+    private fun setupSnapshot(): TroubleBrewingGameSnapshotV1 =
+        TroubleBrewingGameSnapshotV1(
+            gameId = "test-game",
+            gameSeed = 17L,
+            position = TroubleBrewingSnapshotPosition(
+                stage = TroubleBrewingSnapshotStage.SETUP_PRECOMMIT,
+                phase = SnapshotField.NotApplicable,
+                round = SnapshotField.NotApplicable,
+            ),
+            grimoireSeats = listOf(
+                TroubleBrewingSnapshotSeat(
+                    seat = 1,
+                    shownRoleId = SnapshotField.Known("Empath"),
+                    actualRoleId = SnapshotField.Uncommitted,
+                    alive = SnapshotField.Known(true),
+                    poisoned = SnapshotField.NotApplicable,
+                ),
+                TroubleBrewingSnapshotSeat(
+                    seat = 2,
+                    shownRoleId = SnapshotField.Known("Monk"),
+                    actualRoleId = SnapshotField.Uncommitted,
+                    alive = SnapshotField.Known(true),
+                    poisoned = SnapshotField.NotApplicable,
+                ),
+            ),
+            setupState = TroubleBrewingSnapshotSetupState(
+                hasDrunk = SnapshotField.Known(true),
+                drunkAssignmentSeat = SnapshotField.Uncommitted,
             ),
         )
 

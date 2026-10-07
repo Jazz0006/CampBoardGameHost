@@ -106,13 +106,6 @@ class StructuredInformationProductionShadowTest {
 
         assertEquals(model.contextSnapshot, result.informationSnapshot)
         assertEquals(currentSnapshot.gameSeed, result.selectionSeed)
-        val replayInput = MultiPolicyReplayInput.fromStructuredShadow(result)
-        assertEquals(model.contextSnapshot.semanticIdentity, replayInput.decisionId)
-        assertEquals(revision, replayInput.sourceRevision)
-        assertEquals(model.contextSnapshot.legalCandidateIds, replayInput.legalCandidateIds)
-        assertEquals(result.featureEvaluation, replayInput.featureEvaluation)
-        assertEquals(currentSnapshot.gameSeed, replayInput.selectionSeed)
-        assertTrue(replayInput.historyPrefixRef is SdeHistoricalPrefixRef.Global)
         assertEquals(model.contextSnapshot.legalCandidateIds, result.sdeCandidates.map { it.candidateId })
         assertEquals(model.contextSnapshot.legalCandidateIds, result.plannedDecisions.map { it.candidateId })
         assertTrue(result.sdeCandidates.all { it.sourceRevision == revision })
@@ -132,17 +125,6 @@ class StructuredInformationProductionShadowTest {
         assertTrue(result.plannedDecisions.all { it.sourceRevision == revision })
         assertTrue(result.consequences is ExactConsequenceEvaluation.Ready)
         assertTrue(result.featureEvaluation is DecisionFeatureEvaluation.Ready)
-        assertEquals(PolicyVersions.BEGINNER_CONSERVATIVE_V1, result.policyEvaluation.policyVersion)
-        assertEquals(model.contextSnapshot.legalCandidateIds, result.policyEvaluation.candidateIds)
-        assertEquals(
-            BeginnerConservativeV1Selector.select(
-                evaluation = result.policyEvaluation,
-                decisionId = model.contextSnapshot.semanticIdentity,
-                selectionSeed = currentSnapshot.gameSeed,
-            ),
-            result.policySelection,
-        )
-        assertNotNull(result.policySelection)
         val featureEvaluation = result.featureEvaluation as DecisionFeatureEvaluation.Ready
         assertEquals(
             model.contextSnapshot.legalCandidateIds,
@@ -197,8 +179,6 @@ class StructuredInformationProductionShadowTest {
             it.sourceInteraction.abilityState == AbilityState.MALFUNCTIONING_POISONED
         })
         assertTrue(chefResult.sdeCandidates.all { it.inputBindings == chefBindings })
-        assertEquals(PolicyVersions.BEGINNER_CONSERVATIVE_V1, chefResult.policyEvaluation.policyVersion)
-        assertEquals(chefModel.contextSnapshot.legalCandidateIds, chefResult.policyEvaluation.candidateIds)
         assertEquals(
             chefModel.contextSnapshot.legalCandidateIds,
             chefFeatureEvaluation.candidates.map(CandidateDecisionFeatures::candidateId),
@@ -354,7 +334,6 @@ class StructuredInformationProductionShadowTest {
                 prefix.actionRefs.map(SdeHistoricalActionRef::actionId) ==
                 listOf("phase:night-2", "poison:night-2:seat-1")
         })
-        assertEquals(model.contextSnapshot.legalCandidateIds, result.policyEvaluation.candidateIds)
         assertEquals(choicesBefore, model.choices)
         assertEquals(sessionBeforeShadow, session.state)
 

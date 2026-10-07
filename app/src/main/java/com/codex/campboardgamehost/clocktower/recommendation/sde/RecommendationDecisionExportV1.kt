@@ -4,16 +4,17 @@ import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
-import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalCandidate
+import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 
 /**
  * Policy-neutral, derived export contract for offline recommendation analysis.
  *
- * The four payload sections intentionally mirror the HOST-ML0 leakage classes. Consumers must not
- * flatten TARGET_OR_LABEL or EVALUATION_METADATA back into model input.
+ * This contract intentionally does not require or execute any Storyteller policy. Complete legal
+ * domains, deterministic feature projections and historical choices are exported independently.
  */
 internal data class RecommendationDecisionExportV1(
     val schemaId: String = SCHEMA_ID,
@@ -41,13 +42,14 @@ internal data class RecommendationDecisionExportV1(
         require(provenanceOnly.scriptId == inputEligible.snapshot.script.value) {
             "Recommendation export grouping script must match the canonical snapshot."
         }
+        require(evaluationMetadata.evidenceReferences == provenanceOnly.evidenceReferences) {
+            "Recommendation export evidence references must be identical across evaluation and provenance sections."
+        }
 
         when (decisionType) {
             RecommendationDecisionExportTypeV1.DRUNK_ASSIGNMENT -> {
                 val context = inputEligible.context as? RecommendationDecisionContextV1.DrunkAssignment
-                    ?: throw IllegalArgumentException(
-                        "Drunk export requires a Drunk-assignment typed context.",
-                    )
+                    ?: throw IllegalArgumentException("Drunk export requires a Drunk-assignment typed context.")
                 require(context.legalCandidates.map { it.candidateId } == legalCandidateIds) {
                     "Drunk export typed candidate payload must preserve the complete legal-candidate order."
                 }
@@ -58,13 +60,14 @@ internal data class RecommendationDecisionExportV1(
                 require(inputEligible.featureProjection is RecommendationFeatureProjectionV1.DrunkAssignment) {
                     "Drunk export requires the dedicated Drunk-assignment feature surface."
                 }
+                require(inputEligible.lifecycleStage == SdeDecisionLifecycleStage.SetupPrecommit) {
+                    "Drunk export must remain at SetupPrecommit."
+                }
             }
 
             RecommendationDecisionExportTypeV1.FIRST_NIGHT_PAIR_INFORMATION -> {
                 val context = inputEligible.context as? RecommendationDecisionContextV1.FirstNightPairInformation
-                    ?: throw IllegalArgumentException(
-                        "Pair export requires a first-night pair typed context.",
-                    )
+                    ?: throw IllegalArgumentException("Pair export requires a first-night pair typed context.")
                 require(context.legalCandidates.map { it.candidateId } == legalCandidateIds) {
                     "Pair export typed candidate payload must preserve the complete legal-candidate order."
                 }
@@ -88,29 +91,16 @@ internal data class RecommendationDecisionExportV1(
             }
         }
 
-        require(
-            evaluationMetadata.policyTraces.map { it.policyVersion }.distinct().size ==
-                evaluationMetadata.policyTraces.size,
-        ) {
-            "Recommendation export policy replay versions must be unique."
-        }
-        require(evaluationMetadata.policyTraces.all { it.candidateIds == legalCandidateIds }) {
-            "Recommendation export policy traces must preserve the complete legal-candidate order."
-        }
-        require(
-            provenanceOnly.policyEvidenceCheckpoints ==
-                evaluationMetadata.policyTraces.map { trace -> trace.evidenceCheckpoint },
-        ) {
-            "Recommendation export provenance must preserve policy-trace checkpoint order."
-        }
-
         when (val actual = targetOrLabel.actualChoice) {
-            DecisionTraceActualChoice.Pending ->
+            RecommendationHistoricalChoiceV1.Pending ->
                 require(targetOrLabel.candidateRelations.isEmpty()) {
                     "Pending actual choice cannot manufacture historical candidate relations."
                 }
 
-            is DecisionTraceActualChoice.Committed -> {
+            is RecommendationHistoricalChoiceV1.Committed -> {
+                require(actual.candidateId in legalCandidateIds) {
+                    "Committed historical choice must belong to the complete legal domain."
+                }
                 require(targetOrLabel.candidateRelations.map { it.candidateId } == legalCandidateIds) {
                     "Committed historical relations must classify every legal candidate in canonical order."
                 }
@@ -134,41 +124,19 @@ internal data class RecommendationDecisionExportV1(
 
         fun fromDrunkAssignment(
             context: DrunkAssignmentDecisionContext,
-            replayRecords: List<DrunkAssignmentShadowReplayRecord>,
+            historyPrefixRef: SdeHistoricalPrefixRef.Global,
+            featureEvaluation: DrunkAssignmentFeatureEvaluation,
+            actualChoice: RecommendationHistoricalChoiceV1,
+            evidenceReferences: List<String> = emptyList(),
         ): RecommendationDecisionExportV1 {
-            require(replayRecords.isNotEmpty()) {
-                "Drunk recommendation export requires at least one replay record."
-            }
-            val first = replayRecords.first()
             val legalCandidateIds = context.legalCandidateIds
-            require(first.decisionId == context.decisionId) {
-                "Drunk recommendation export decision identity must match the typed context."
-            }
-            require(first.lifecycleStage == SdeDecisionLifecycleStage.SetupPrecommit) {
-                "Drunk recommendation export must remain at SetupPrecommit."
-            }
-            require(first.sourceRevision == context.sourceRevision) {
-                "Drunk recommendation export source revision must match the typed context."
-            }
-            require(first.legalCandidateIds == legalCandidateIds) {
-                "Drunk recommendation export must preserve the rules-owned legal domain."
-            }
-            require(first.historyPrefixRef.gameId == context.snapshot.gameId) {
+            require(historyPrefixRef.gameId == context.snapshot.gameId) {
                 "Drunk recommendation export prefix must belong to the snapshot game."
             }
-            require(replayRecords.all { record ->
-                record.decisionId == first.decisionId &&
-                    record.lifecycleStage == first.lifecycleStage &&
-                    record.sourceRevision == first.sourceRevision &&
-                    record.historyPrefixRef == first.historyPrefixRef &&
-                    record.legalCandidateIds == legalCandidateIds &&
-                    record.featureEvaluation == first.featureEvaluation &&
-                    record.actualChoice == first.actualChoice
-            }) {
-                "Drunk recommendation export replay records must share one canonical decision input and actual choice."
+            require(featureEvaluation.candidateIds == legalCandidateIds) {
+                "Drunk recommendation export features must preserve the rules-owned legal domain."
             }
 
-            val policyTraces = replayRecords.map { record -> RecommendationPolicyTraceV1.fromDrunkReplay(record) }
             return RecommendationDecisionExportV1(
                 decisionType = RecommendationDecisionExportTypeV1.DRUNK_ASSIGNMENT,
                 inputEligible = RecommendationDecisionInputV1(
@@ -176,7 +144,7 @@ internal data class RecommendationDecisionExportV1(
                     decisionId = context.decisionId,
                     lifecycleStage = SdeDecisionLifecycleStage.SetupPrecommit,
                     sourceRevision = context.sourceRevision,
-                    historyPrefixRef = first.historyPrefixRef,
+                    historyPrefixRef = historyPrefixRef,
                     legalCandidateIds = legalCandidateIds,
                     context = RecommendationDecisionContextV1.DrunkAssignment(
                         legalCandidates = context.legalCandidates.zip(legalCandidateIds).map { (candidate, candidateId) ->
@@ -188,34 +156,45 @@ internal data class RecommendationDecisionExportV1(
                         },
                     ),
                     featureProjection = RecommendationFeatureProjectionV1.DrunkAssignment(
-                        evaluation = first.featureEvaluation,
+                        evaluation = featureEvaluation,
                     ),
                 ),
-                targetOrLabel = targetFrom(first.actualChoice, legalCandidateIds),
-                evaluationMetadata = RecommendationDecisionEvaluationV1(policyTraces),
+                targetOrLabel = targetFrom(actualChoice, legalCandidateIds),
+                evaluationMetadata = RecommendationDecisionEvaluationV1(evidenceReferences),
                 provenanceOnly = RecommendationDecisionProvenanceV1(
                     gameId = context.snapshot.gameId,
                     scriptId = context.snapshot.script.value,
-                    policyEvidenceCheckpoints = policyTraces.map(RecommendationPolicyTraceV1::evidenceCheckpoint),
+                    evidenceReferences = evidenceReferences,
                 ),
             )
         }
 
         fun fromFirstNightPairInformation(
-            request: PairInformationShadowReplayRequest,
+            request: RecommendationFirstNightPairExportRequestV1,
             legalCandidates: List<PairInformationLegalCandidate>,
-            replayTraces: List<DecisionTrace>,
+            sourceRevision: InformationDecisionRevision,
+            historyPrefixRef: SdeHistoricalPrefixRef.Global,
+            featureEvaluation: DecisionFeatureEvaluation,
+            actualChoice: RecommendationHistoricalChoiceV1,
+            evidenceReferences: List<String> = emptyList(),
         ): RecommendationDecisionExportV1 {
-            require(replayTraces.isNotEmpty()) {
-                "Pair recommendation export requires at least one replay trace."
-            }
-            val first = replayTraces.first()
             val legalCandidateIds = legalCandidates.map(PairInformationLegalCandidate::candidateId)
             require(legalCandidateIds.isNotEmpty()) {
                 "Pair recommendation export requires the complete non-empty legal candidate domain."
             }
-            require(legalCandidateIds == first.legalCandidateIds) {
-                "Pair recommendation export semantic candidate payload must preserve the replayed legal domain."
+            require(request.context.snapshot.gameId == historyPrefixRef.gameId) {
+                "Pair recommendation export prefix must belong to the snapshot game."
+            }
+            require(
+                request.context.snapshot.position.gameStateRevision ==
+                    com.codex.campboardgamehost.clocktower.domain.SnapshotField.Known(sourceRevision.gameStateRevision) &&
+                    request.context.snapshot.position.playerInputRevision ==
+                    com.codex.campboardgamehost.clocktower.domain.SnapshotField.Known(sourceRevision.playerInputRevision),
+            ) {
+                "Pair recommendation export source revision must match the canonical snapshot."
+            }
+            require(featureEvaluation.candidateIds == legalCandidateIds) {
+                "Pair recommendation export features must preserve the complete legal-candidate order."
             }
             require(
                 request.reliability != ReliabilityState.RELIABLE ||
@@ -223,48 +202,15 @@ internal data class RecommendationDecisionExportV1(
             ) {
                 "Reliable pair export cannot contain a false semantic candidate."
             }
-            val prefix = first.historyPrefixRef as? SdeHistoricalPrefixRef.Global
-                ?: throw IllegalArgumentException(
-                    "Pair recommendation export requires a canonical Global history prefix.",
-                )
-            require(first.decisionId == request.decisionId) {
-                "Pair recommendation export decision identity must match the typed request."
-            }
-            require(first.lifecycleStage == request.lifecycleStage) {
-                "Pair recommendation export lifecycle must match the typed request."
-            }
-            require(prefix.gameId == request.context.snapshot.gameId) {
-                "Pair recommendation export prefix must belong to the snapshot game."
-            }
-            require(
-                request.context.snapshot.position.gameStateRevision ==
-                    SnapshotField.Known(first.sourceRevision.gameStateRevision) &&
-                    request.context.snapshot.position.playerInputRevision ==
-                    SnapshotField.Known(first.sourceRevision.playerInputRevision),
-            ) {
-                "Pair recommendation export source revision must match the canonical snapshot."
-            }
-            require(replayTraces.all { trace ->
-                trace.decisionId == first.decisionId &&
-                    trace.lifecycleStage == first.lifecycleStage &&
-                    trace.sourceRevision == first.sourceRevision &&
-                    trace.historyPrefixRef == prefix &&
-                    trace.legalCandidateIds == first.legalCandidateIds &&
-                    trace.featureEvaluation == first.featureEvaluation &&
-                    trace.actualChoice == first.actualChoice
-            }) {
-                "Pair recommendation export replay traces must share one canonical decision input and actual choice."
-            }
 
-            val policyTraces = replayTraces.map { trace -> RecommendationPolicyTraceV1.fromDecisionTrace(trace) }
             return RecommendationDecisionExportV1(
                 decisionType = RecommendationDecisionExportTypeV1.FIRST_NIGHT_PAIR_INFORMATION,
                 inputEligible = RecommendationDecisionInputV1(
                     snapshot = request.context.snapshot,
                     decisionId = request.decisionId,
                     lifecycleStage = request.lifecycleStage,
-                    sourceRevision = first.sourceRevision,
-                    historyPrefixRef = prefix,
+                    sourceRevision = sourceRevision,
+                    historyPrefixRef = historyPrefixRef,
                     legalCandidateIds = legalCandidateIds,
                     context = RecommendationDecisionContextV1.FirstNightPairInformation(
                         sourceSeat = request.sourceSeat,
@@ -281,28 +227,28 @@ internal data class RecommendationDecisionExportV1(
                         },
                     ),
                     featureProjection = RecommendationFeatureProjectionV1.StandardDecision(
-                        evaluation = first.featureEvaluation,
+                        evaluation = featureEvaluation,
                     ),
                 ),
-                targetOrLabel = targetFrom(first.actualChoice, legalCandidateIds),
-                evaluationMetadata = RecommendationDecisionEvaluationV1(policyTraces),
+                targetOrLabel = targetFrom(actualChoice, legalCandidateIds),
+                evaluationMetadata = RecommendationDecisionEvaluationV1(evidenceReferences),
                 provenanceOnly = RecommendationDecisionProvenanceV1(
                     gameId = request.context.snapshot.gameId,
                     scriptId = request.context.snapshot.script.value,
-                    policyEvidenceCheckpoints = policyTraces.map(RecommendationPolicyTraceV1::evidenceCheckpoint),
+                    evidenceReferences = evidenceReferences,
                 ),
             )
         }
 
         private fun targetFrom(
-            actualChoice: DecisionTraceActualChoice,
+            actualChoice: RecommendationHistoricalChoiceV1,
             legalCandidateIds: List<String>,
         ): RecommendationDecisionTargetV1 =
             RecommendationDecisionTargetV1(
                 actualChoice = actualChoice,
                 candidateRelations = when (actualChoice) {
-                    DecisionTraceActualChoice.Pending -> emptyList()
-                    is DecisionTraceActualChoice.Committed -> legalCandidateIds.map { candidateId ->
+                    RecommendationHistoricalChoiceV1.Pending -> emptyList()
+                    is RecommendationHistoricalChoiceV1.Committed -> legalCandidateIds.map { candidateId ->
                         RecommendationHistoricalDomainRelationV1(
                             candidateId = candidateId,
                             kind = if (candidateId == actualChoice.candidateId) {
@@ -320,6 +266,20 @@ internal data class RecommendationDecisionExportV1(
 internal enum class RecommendationDecisionExportTypeV1 {
     DRUNK_ASSIGNMENT,
     FIRST_NIGHT_PAIR_INFORMATION,
+}
+
+internal data class RecommendationFirstNightPairExportRequestV1(
+    val decisionId: String,
+    val context: TroubleBrewingFirstNightPairDecisionContext,
+    val sourceSeat: Int,
+    val abilityRole: RoleId,
+    val reliability: ReliabilityState,
+    val lifecycleStage: SdeDecisionLifecycleStage.Interaction,
+) {
+    init {
+        require(decisionId.isNotBlank()) { "Pair recommendation export decision ID cannot be blank." }
+        require(sourceSeat > 0) { "Pair recommendation export source seat must be positive." }
+    }
 }
 
 internal data class RecommendationDecisionInputV1(
@@ -362,9 +322,7 @@ internal sealed interface RecommendationDecisionContextV1 {
         val legalCandidates: List<RecommendationPairCandidateContextV1>,
     ) : RecommendationDecisionContextV1 {
         init {
-            require(sourceSeat > 0) {
-                "Pair recommendation export source seat must be positive."
-            }
+            require(sourceSeat > 0) { "Pair recommendation export source seat must be positive." }
             require(legalCandidates.isNotEmpty()) {
                 "Pair recommendation export context requires legal candidate payloads."
             }
@@ -429,16 +387,27 @@ internal sealed interface RecommendationFeatureProjectionV1 {
     }
 }
 
+internal sealed interface RecommendationHistoricalChoiceV1 {
+    data object Pending : RecommendationHistoricalChoiceV1
+
+    data class Committed(
+        val candidateId: String,
+        val source: InformationDecisionSource,
+        val manualOverride: Boolean,
+    ) : RecommendationHistoricalChoiceV1 {
+        init {
+            require(candidateId.isNotBlank()) { "Committed historical choice candidate ID cannot be blank." }
+        }
+    }
+}
+
 internal data class RecommendationDecisionTargetV1(
-    val actualChoice: DecisionTraceActualChoice,
+    val actualChoice: RecommendationHistoricalChoiceV1,
     val candidateRelations: List<RecommendationHistoricalDomainRelationV1>,
 )
 
 /**
  * Relations the Host can derive from one committed historical choice plus the complete legal domain.
- *
- * Explicit source-backed rejection/comparison semantics are deliberately absent from HOST-ML1 V1;
- * adding them requires a future machine-readable EvidenceLab seed rather than inference here.
  */
 internal enum class RecommendationHistoricalDomainRelationKindV1 {
     OBSERVED_CHOICE,
@@ -454,54 +423,33 @@ internal data class RecommendationHistoricalDomainRelationV1(
     }
 }
 
+/**
+ * Policy-neutral evidence metadata. Values identify external/static reference material only; they are
+ * never executable policy versions and never alter the legal domain or recommendation output.
+ */
 internal data class RecommendationDecisionEvaluationV1(
-    val policyTraces: List<RecommendationPolicyTraceV1>,
+    val evidenceReferences: List<String> = emptyList(),
 ) {
     init {
-        require(policyTraces.isNotEmpty()) {
-            "Recommendation export requires at least one policy/replay trace."
+        require(evidenceReferences.all(String::isNotBlank)) {
+            "Recommendation export evidence references cannot be blank."
         }
-    }
-}
-
-internal data class RecommendationPolicyTraceV1(
-    val evidenceCheckpoint: EvidenceCheckpointId,
-    val policySnapshot: DecisionTracePolicySnapshot,
-    val policySelection: PolicySelection?,
-) {
-    val policyVersion: PolicyVersion
-        get() = policySnapshot.policyVersion
-
-    val candidateIds: List<String>
-        get() = policySnapshot.candidateIds
-
-    companion object {
-        fun fromDecisionTrace(trace: DecisionTrace): RecommendationPolicyTraceV1 =
-            RecommendationPolicyTraceV1(
-                evidenceCheckpoint = trace.evidenceCheckpoint,
-                policySnapshot = trace.policySnapshot,
-                policySelection = trace.policySelection,
-            )
-
-        fun fromDrunkReplay(record: DrunkAssignmentShadowReplayRecord): RecommendationPolicyTraceV1 =
-            RecommendationPolicyTraceV1(
-                evidenceCheckpoint = record.evidenceCheckpoint,
-                policySnapshot = record.policySnapshot,
-                policySelection = record.policySelection,
-            )
+        require(evidenceReferences.distinct().size == evidenceReferences.size) {
+            "Recommendation export evidence references must be unique."
+        }
     }
 }
 
 internal data class RecommendationDecisionProvenanceV1(
     val gameId: String,
     val scriptId: String,
-    val policyEvidenceCheckpoints: List<EvidenceCheckpointId>,
+    val evidenceReferences: List<String> = emptyList(),
 ) {
     init {
         require(gameId.isNotBlank()) { "Recommendation export provenance game ID cannot be blank." }
-        require(scriptId.isNotBlank()) { "Recommendation export provenance script ID cannot be blank." }
-        require(policyEvidenceCheckpoints.isNotEmpty()) {
-            "Recommendation export provenance requires policy evidence checkpoints."
+        require(scriptId.isNotBlank()) { "Recommendation export grouping script cannot be blank." }
+        require(evidenceReferences.all(String::isNotBlank)) {
+            "Recommendation export provenance evidence references cannot be blank."
         }
     }
 }
