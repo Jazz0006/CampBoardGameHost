@@ -2,29 +2,10 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
-import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGenerationContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
-
-internal class SetupRecommendationModule {
-    fun recommend(
-        game: GameState,
-        roles: List<RoleDefinition>,
-        lockedDecisions: List<StorytellerDecision>,
-        history: CrossGameHistory,
-    ): SetupRecommendationService.ConstrainedResult = SetupRecommendationService.recommendConstrained(
-        game = game,
-        roleDefinitions = roles,
-        lockedDecisions = lockedDecisions,
-        history = history,
-    )
-}
 
 internal class NightRecommendationModule {
     fun resolveNumberInformation(

@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
@@ -55,7 +54,6 @@ internal fun clocktowerSageDisplayOptions(
                 displayFooter = content.displayFooter,
                 proposition = null,
                 presentationSubjectSeats = subjectSeats,
-                recommendationStyle = RecommendationStyle.BALANCED,
                 isTruthful = isTruthful,
                 misinformationPressure = 0,
                 isDefaultRecommendation = false,

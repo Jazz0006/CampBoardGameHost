@@ -228,7 +228,6 @@ class ClocktowerStructuredInformationPreparationTest {
     fun `manual information domain removes legacy ranking presentation and uses stable semantic order`() {
         val first = option(2).copy(
             label = "Expert · aggressive",
-            recommendationStyle = RecommendationStyle.AGGRESSIVE,
             misinformationPressure = 5,
             isDefaultRecommendation = true,
             reasonCodes = listOf("legacy.score"),
@@ -236,7 +235,6 @@ class ClocktowerStructuredInformationPreparationTest {
         )
         val second = option(1).copy(
             label = "Balanced",
-            recommendationStyle = RecommendationStyle.BALANCED,
             misinformationPressure = 3,
             isDefaultRecommendation = true,
         )

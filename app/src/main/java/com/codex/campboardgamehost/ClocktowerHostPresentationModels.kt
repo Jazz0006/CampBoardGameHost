@@ -55,7 +55,6 @@ internal data class ClocktowerNightStepUi(
     val automaticInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
     /** Optional policy recommendation; consumers must rebind it to the current automatic domain. */
     val automaticPolicyRecommendation: ClocktowerDisplayOption? = null,
-    val decisionOptions: List<ClocktowerDecisionOption> = emptyList(),
     val wakeText: String? = null,
     val roleEnName: String? = null,
     val informationReliability: InformationReliability = InformationReliability.RELIABLE,

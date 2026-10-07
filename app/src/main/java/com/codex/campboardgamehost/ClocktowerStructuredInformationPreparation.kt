@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -66,7 +65,6 @@ internal fun clocktowerManualInformationDomain(
         ).joinToString(" · ").ifBlank { option.label }
         option.copy(
             label = neutralLabel,
-            recommendationStyle = RecommendationStyle.BALANCED,
             misinformationPressure = 0,
             isDefaultRecommendation = false,
             reasonCodes = emptyList(),

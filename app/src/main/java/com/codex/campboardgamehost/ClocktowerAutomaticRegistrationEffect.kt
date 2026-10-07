@@ -2,11 +2,8 @@ package com.codex.campboardgamehost
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
 import com.codex.campboardgamehost.clocktower.recommendation.StorytellerDecisionAuthority
 import com.codex.campboardgamehost.clocktower.recommendation.storytellerDecisionAuthority
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 
 internal fun clocktowerRuleDeterministicRegistrationRuling(
@@ -34,7 +31,6 @@ internal fun ClocktowerAutomaticRegistrationEffect(
     automaticStorytellerInfo: Boolean,
     registration: TroubleBrewingRegistrationResolution,
     applyRegisteredRole: Boolean,
-    selectionAudit: SelectionAuditContext?,
     onUsesSpecialRegistrationChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
 ) {
@@ -47,27 +43,8 @@ internal fun ClocktowerAutomaticRegistrationEffect(
     LaunchedEffect(
         automaticStorytellerInfo,
         automaticRuling,
-        selectionAudit?.selectionId,
     ) {
         if (automaticStorytellerInfo && automaticRuling != null) {
-            selectionAudit?.let { audit ->
-                audit.recorder.recordPreview(
-                    SelectionAuditRecord(
-                        selectionId = audit.selectionId,
-                        dimensions = audit.dimensions,
-                        candidates = clocktowerTemporaryRegistrationAuditCandidates(
-                            registration = registration,
-                        ),
-                    ),
-                )
-                audit.recorder.recordCommittedSelection(
-                    SelectionAuditCommit(
-                        selectionId = audit.selectionId,
-                        dimensions = audit.dimensions,
-                        selectedFamilyId = clocktowerTemporaryRegistrationAuditFamilyId(automaticRuling),
-                    ),
-                )
-            }
             onUsesSpecialRegistrationChange(automaticRuling.usesSpecialRegistration)
             if (automaticRuling.usesSpecialRegistration && applyRegisteredRole) {
                 automaticRuling.registeredRoleEnName?.let(onRoleChange)

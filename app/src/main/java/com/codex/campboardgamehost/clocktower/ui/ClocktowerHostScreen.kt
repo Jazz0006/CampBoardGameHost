@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
@@ -57,7 +56,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningInve
 import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningLibrarianV2ProductionSelector
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionPoolParityRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
@@ -85,7 +83,6 @@ import kotlinx.coroutines.withContext
 @Composable
 internal fun ClocktowerJudgeScreen(
     automaticStorytellerInfo: Boolean,
-    automaticStorytellerStyle: RecommendationStyle,
     cards: List<PlayerCard>,
     events: List<ClocktowerEvent>,
     script: ClocktowerScript,
@@ -175,9 +172,6 @@ internal fun ClocktowerJudgeScreen(
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
     val recommendationCoordinator = remember(gameSeed) { ClocktowerRecommendationCoordinator() }
-    // Aggregate-only C8 telemetry lives for this game UI session. The recorder
-    // de-duplicates stable decision IDs, so Compose recomposition is not a new selection.
-    val selectionDistributionTelemetry = remember(gameId) { SelectionDistributionTelemetryRecorder() }
     // B7.2 shadow telemetry stores only parity totals; candidate IDs and game facts stay local.
     val firstNightPoolParity = remember(gameId) { SelectionPoolParityRecorder() }
     fun text(zh: String, en: String): String = if (language == "en") en else zh
@@ -208,7 +202,6 @@ internal fun ClocktowerJudgeScreen(
             gameSeed,
             poisonTarget,
             language,
-            automaticStorytellerStyle,
             firstNightPairDecisionContext,
         ) ?: return true
         val shadow = firstNightInformationMigration.shadow(request)
@@ -750,7 +743,6 @@ internal fun ClocktowerJudgeScreen(
         secondary: String? = null,
         footer: String? = null,
         proposition: InformationProposition? = null,
-        recommendationStyle: RecommendationStyle = RecommendationStyle.BALANCED,
         isTruthful: Boolean = true,
         misinformationPressure: Int = 0,
         isDefaultRecommendation: Boolean = false,
@@ -764,19 +756,12 @@ internal fun ClocktowerJudgeScreen(
         displaySecondary = secondary,
         displayFooter = footer,
         proposition = proposition,
-        recommendationStyle = recommendationStyle,
         isTruthful = isTruthful,
         misinformationPressure = misinformationPressure,
         isDefaultRecommendation = isDefaultRecommendation,
         reasonCodes = reasonCodes,
         warningCodes = warningCodes,
     )
-    fun recommendationStyleLabel(style: RecommendationStyle): String = when (style) {
-        RecommendationStyle.GENTLE -> text("推荐·稳健", "Recommended · gentle")
-        RecommendationStyle.BALANCED -> text("推荐·平衡", "Recommended · balanced")
-        RecommendationStyle.AGGRESSIVE -> text("专家·激进", "Expert · aggressive")
-    }
-
     fun recommendedNumberOptions(
         title: String,
         actor: PlayerCard,
@@ -796,7 +781,6 @@ internal fun ClocktowerJudgeScreen(
                 secondary = secondary,
                 footer = footer,
                 proposition = propositionForValue?.invoke(value),
-                recommendationStyle = RecommendationStyle.BALANCED,
                 isTruthful = value == trueValue,
                 misinformationPressure = 0,
                 isDefaultRecommendation = false,
@@ -820,7 +804,6 @@ internal fun ClocktowerJudgeScreen(
             secondary = secondary,
             footer = footer,
             proposition = propositionForValue?.invoke(answer),
-            recommendationStyle = RecommendationStyle.BALANCED,
             isTruthful = answer == truthfulYes,
             misinformationPressure = 0,
             isDefaultRecommendation = false,
@@ -843,7 +826,6 @@ internal fun ClocktowerJudgeScreen(
                     title = title,
                     primary = role.nameFor(language),
                     footer = footer,
-                    recommendationStyle = RecommendationStyle.BALANCED,
                     isTruthful = role.enName == truthfulRole.enName,
                     misinformationPressure = 0,
                     isDefaultRecommendation = false,
@@ -2548,7 +2530,6 @@ internal fun ClocktowerJudgeScreen(
             specialContent = {
                 if (virginRegistrationKey != null && spyCard != null) {
                     ClocktowerSpyRegistrationDecisionControls(
-                        recommendations = emptyList(),
                         legalRoles = virginSpyLegalRoles.map { it.enName to it.nameFor(language) },
                         registersGood = spyRegistersGood(virginRegistrationKey, "Virgin"),
                         registeredRoleEnName = spyRegistrationRole[virginRegistrationKey],
@@ -2714,7 +2695,6 @@ internal fun ClocktowerJudgeScreen(
             specialContent = {
                 if (slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
                     ClocktowerRecluseRegistrationDecisionControls(
-                        recommendations = emptyList(),
                         legalRoles = legalRegistrationRoles(
                             registrationKey("SlayerRecluse", requireNotNull(slayerTargetCard).name),
                             "Slayer",
@@ -2871,7 +2851,6 @@ internal fun ClocktowerJudgeScreen(
             specialContent = {
                 if (klutzRegistrationKey != null && spyCard != null) {
                     ClocktowerSpyRegistrationDecisionControls(
-                        recommendations = emptyList(),
                         legalRoles = legalRegistrationRoles(
                             klutzRegistrationKey,
                             "Klutz",
@@ -3114,15 +3093,12 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerNightStepCardLocalized(
                 recommendationCoordinator = recommendationCoordinator,
                 automaticStorytellerInfo = automaticStorytellerInfo,
-                automaticStorytellerStyle = automaticStorytellerStyle,
                 phase = phase,
                 gameId = gameId,
                 round = round,
                 sequence = currentStepIndex,
                 gameStateRevision = gameStateRevision,
                 playerInputRevision = playerInputRevision,
-                selectionDistributionTelemetry = selectionDistributionTelemetry,
-                evilAdvantage = 0,
                 informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                 cards = cards,
                 ghostVoteAuthority = ghostVoteAuthority,
