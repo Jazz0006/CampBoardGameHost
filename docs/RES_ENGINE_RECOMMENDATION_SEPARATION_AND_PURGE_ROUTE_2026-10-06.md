@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **CURRENT ARCHITECTURE / EXECUTION AUTHORITY — RES-0/1/2 COMPLETE / ACCEPTED; RES-3 IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING**
+> Status: **CURRENT ARCHITECTURE / EXECUTION AUTHORITY — RES-0/1/2/3 COMPLETE / ACCEPTED; RES-4 NEXT**
 >
 > Supersedes the previous immediate continuation `GSP-2B3 -> GSP-2C -> GSP-2D`. GSP remains the later provider/benchmark route, but it is paused until this separation campaign establishes a clean engine-only boundary and removes obsolete recommendation implementations.
 >
@@ -288,7 +288,7 @@ Acceptance:
 
 ### RES-3 — legacy heuristic purge
 
-Status: **IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING.** Product/UI/session reachability has been migrated away from the obsolete style/score/weighted recommender stack. The old dynamic/setup recommenders, weighted selectors, recommendation profiles, balance scorer, temporary impaired-information probability policy, local rank/weight metadata, recommendation-plan/style models and their dead tests/benchmarks have been physically removed. Complete Manual legal domains, rule-deterministic unique outcomes, Host-owned longitudinal/history context and the optional RES-2 neutral provider seam remain. Historical `StorytellerDecisionEvent` score/probability/pressure/explanation fields are retained only as archival/replay compatibility data and are not current selection authority.
+Status: **COMPLETE / ACCEPTED.** Product/UI/session reachability has been migrated away from the obsolete style/score/weighted recommender stack. The old dynamic/setup recommenders, weighted selectors, recommendation profiles, balance scorer, temporary impaired-information probability policy, local rank/weight metadata, recommendation-plan/style models and their dead tests/benchmarks have been physically removed. Complete Manual legal domains, rule-deterministic unique outcomes, Host-owned longitudinal/history context and the optional RES-2 neutral provider seam remain. Historical `StorytellerDecisionEvent` score/probability/pressure/explanation fields are retained only as archival/replay compatibility data and are not current selection authority. Accepted executable checkpoint: `5b4b2a94c332bde462124b133955514a31f23183`; CI #3815 GREEN with full Android unit tests + debug assemble, ASP contract and Real Clingo gates; R2 #3495 GREEN.
 
 Migrate live UI/session call paths from old recommendations to:
 
@@ -376,8 +376,8 @@ The final purge campaign must prove:
 
 ## 8. Immediate next step
 
-RES-0/1/2 are complete and RES-3 implementation is complete. The immediate acceptance step is the explicit T4 checkpoint (`[full-ci]`: full Android JVM suite + debug assemble + full selected gates). Do not start RES-4 until that checkpoint is GREEN.
+RES-0/1/2/3 are complete and accepted. The next executable stage is RES-4 named deterministic special-policy purge.
 
-> **RES-3 acceptance must prove that no product/UI/session path can rank Storyteller choices with the retired local style/score/weight stack, while complete Manual legal domains, deterministic rule outcomes and the optional neutral provider seam remain intact.**
+> **RES-4 must remove named evidence-case selectors from product execution while preserving reconstructable benchmark/reference evidence and the clean neutral provider boundary established by RES-1/2/3.**
 
-After T4 acceptance, mark RES-3 COMPLETE / ACCEPTED and enter RES-4 named deterministic special-policy purge. Do not resume old GSP-2B3/2C/2D or add recommendation-owned memory; later longitudinal/cross-game context work must target the neutral RES provider contract.
+Do not resume old GSP-2B3/2C/2D or add recommendation-owned memory. Later longitudinal/cross-game context work must target the neutral RES provider contract after RES-4/5 convergence.
