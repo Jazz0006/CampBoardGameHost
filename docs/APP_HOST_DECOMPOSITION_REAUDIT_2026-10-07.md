@@ -4,7 +4,7 @@
 >
 > Baseline: live `main` at `e7b1691710bef73a2969a002667e2330c2529169` after RES-3 merge.
 >
-> Status: **CURRENT DECOMPOSITION AUDIT / RES-5 INPUT**
+> Status: **CURRENT DECOMPOSITION AUTHORITY — RES-5 BOUNDED SLICES COMPLETE / ACCEPTED; FURTHER BROAD DECOMPOSITION REQUIRES FRESH AUDIT**
 >
 > This document supersedes `APP_HOST_DECOMPOSITION_PLAN_AUDIT_2026-09-28.md` as the current decomposition plan. The older audit remains historical evidence for constraints that are explicitly carried forward here.
 
@@ -29,9 +29,9 @@ Fresh post-RES-3 measurements from live `main`:
 
 | Surface | Current lines | Approx. source characters | Prior 2026-09-28 lines | Observation |
 | --- | ---: | ---: | ---: | --- |
-| `CampBoardGameHostApp.kt` | 3,760 | ~210,588 | 3,613 | Still large; growth is mainly app/session orchestration rather than recommendation logic. |
-| `clocktower/ui/ClocktowerHostScreen.kt` | 3,267 | ~187,462 | 4,226 | RES-3 already removed almost 1,000 lines, confirming that obsolete recommendation authority was a major Host coupling source. |
-| `ClocktowerJudgeScreen` parameter surface | ~86 parameters | — | 89 previously | Still a major coupling signal despite RES-3. |
+| `CampBoardGameHostApp.kt` | 3,588 | 202,319 | 3,613 | RES-5 A1/A2 reduced storage ownership; remaining size is mainly app/session orchestration and transaction application. |
+| `clocktower/ui/ClocktowerHostScreen.kt` | 2,954 | 173,295 | 4,226 | RES-3 plus RES-5 H0/H1 removed obsolete recommendation authority, duplicate checkpoint seams and neutral preparation code. |
+| `ClocktowerJudgeScreen` parameter surface | 72 parameters | — | 89 previously | H0 removed 13 exact NightCheckpoint duplicates from the post-RES-3 boundary; remaining callbacks/state require separate ownership work. |
 
 The two files now have different problems:
 
@@ -121,6 +121,8 @@ This audit does **not** reopen D6 wholesale. It approves the following bounded r
 
 ### DEC-A1 — App preferences storage
 
+**Status:** COMPLETE / ACCEPTED in RES-5C via `AppPreferencesStore`.
+
 **Risk:** low.
 
 Extract only:
@@ -143,6 +145,8 @@ Expected benefit: small App reduction, strong ownership isolation.
 
 ### DEC-A2 — Game archive preferences storage
 
+**Status:** COMPLETE / ACCEPTED in RES-5C via `GameArchivePreferencesStore`.
+
 **Risk:** low.
 
 Extract only:
@@ -160,6 +164,8 @@ Primary evidence:
 - focused newest-first / capacity / malformed-entry storage behavior if uncovered.
 
 ### DEC-H0 — NightCheckpoint seam convergence
+
+**Status:** COMPLETE / ACCEPTED in RES-5B; 13 duplicated App -> Host scalar parameters removed.
 
 **Risk:** low-to-medium.
 
@@ -183,6 +189,8 @@ Primary evidence:
 Expected result: a materially smaller and less contradictory App↔Host seam, not merely fewer lines.
 
 ### DEC-H1 — Neutral information-preparation extraction
+
+**Status:** COMPLETE / ACCEPTED in RES-5D via stateless/read-only `ClocktowerNeutralInformationPreparation`.
 
 **Timing:** after RES-4 removes named deterministic selectors.
 
@@ -274,12 +282,12 @@ Recommended sequence:
 RES-3 COMPLETE / ACCEPTED
 -> current decomposition re-audit COMPLETE
 -> RES-4 named deterministic special-policy physical purge
--> RES-5 physical module/dependency convergence
-   -> DEC-H0 NightCheckpoint seam convergence
-   -> DEC-H1 neutral information-preparation extraction
-   -> DEC-A1/A2/A3 either before or during the same bounded maintenance window
--> re-audit App transaction application + remaining Host materialization
+-> RES-5 physical module/dependency convergence COMPLETE / ACCEPTED
+   -> DEC-H0 NightCheckpoint seam convergence COMPLETE / ACCEPTED
+   -> DEC-H1 neutral information-preparation extraction COMPLETE / ACCEPTED
+   -> DEC-A1/A2 COMPLETE / ACCEPTED; DEC-A3 remains optional independent maintenance
 -> resume GSP context materializer/retrieval/benchmark
+-> re-audit App transaction application + remaining Host materialization only when a concrete ownership problem justifies it
 ```
 
 A1/A2 are independent of RES-4 and may be implemented earlier if desired, but Host extraction should wait until RES-4 removes the remaining named special-policy hooks so they are not moved into a new module and then immediately deleted.

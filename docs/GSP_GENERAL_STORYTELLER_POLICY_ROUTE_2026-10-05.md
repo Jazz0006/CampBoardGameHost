@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **DOWNSTREAM PROVIDER / BENCHMARK AUTHORITY — EXECUTION SEQUENCING PAUSED BY RES (2026-10-06)**
+> Status: **CURRENT DOWNSTREAM PROVIDER / BENCHMARK AUTHORITY — RES-5 COMPLETE; GSP RE-ENTRY ACTIVE (2026-10-07)**
 >
 > Product decision: preserve CampBoardGameHost as an **offline-first Android authoritative Host**. Network/LLM capability is optional enhancement, never a gameplay dependency.
 >
@@ -438,4 +438,4 @@ GSP-1 is now COMPLETE / ACCEPTED. Production call-path re-audit after merge conf
 - discretionary multi-choice decisions expose the complete Manual legal domain;
 - no legacy heuristic fallback was reintroduced.
 
-The previous immediate continuation through GSP-2B/2C/2D remains paused by the RES architecture reset. Current execution authority is `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md`: RES-0/1/2 are now COMPLETE / ACCEPTED, including the neutral script-aware provider contract and direct pair/Mayor/Drunk request materialization. RES-3/4/5 now physically retire both obsolete recommendation generations and converge module ownership before this GSP route resumes. The resumed context layer must treat the provider as stateless while the Host explicitly owns/rebuilds current-game longitudinal/narrative memory, relevant cross-game player history and soft recommendation-diversity history. Do not implement another named special-case deterministic policy or any production/API LLM path during RES.
+RES-0 through RES-5 are now COMPLETE / ACCEPTED; the separation/purge campaign is closed. The old pre-RES GSP-2B3/2C/2D implementation sequence is not resumed verbatim because its former `StorytellerPolicy*` and recommendation-owned seams were physically removed. Re-enter GSP by first re-auditing the remaining context retrieval/materializer/benchmark work against `StorytellerProviderContractV1`, `StorytellerProviderRequestFactoryV1` and Host-owned context reconstruction. The provider remains stateless while the Host explicitly owns/rebuilds current-game longitudinal/narrative memory, relevant cross-game player history and soft recommendation-diversity history. After that re-audit, continue context retrieval/materializer -> prompt materializer -> GSP-3A manual blind benchmark before any API integration. Do not restore named special-case deterministic policies or local heuristic ranking.

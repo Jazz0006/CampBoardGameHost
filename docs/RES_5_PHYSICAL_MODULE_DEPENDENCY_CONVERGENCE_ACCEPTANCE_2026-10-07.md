@@ -6,7 +6,7 @@
 >
 > PR: #242 — `RES-5: converge provider boundary and Host seams`
 >
-> Status: **IMPLEMENTATION COMPLETE / FINAL T4 ACCEPTANCE PENDING**
+> Status: **COMPLETE / ACCEPTED**
 
 ## 1. Accepted implementation shape
 
@@ -81,15 +81,22 @@ No further code movement is justified inside RES-5.
 
 RES-5 therefore stops at the smallest meaningful ownership convergence point instead of targeting arbitrary file-size thresholds.
 
-## 4. Final acceptance gate
+Final post-RES-5 measurements:
 
-Required final gate:
+- `CampBoardGameHostApp.kt`: 3,588 lines / 202,319 source characters (post-RES-3 audit baseline: 3,760 / ~210,588);
+- `ClocktowerHostScreen.kt`: 2,954 lines / 173,295 source characters (post-RES-3 audit baseline: 3,267 / ~187,462);
+- `ClocktowerJudgeScreen`: 72 parameters after removing 13 exact NightCheckpoint duplicates (post-RES-3 audit baseline: ~85).
 
-- checkpoint commit message contains `[full-ci]`;
-- full Android JVM suite + debug assemble;
-- ASP contract gate;
-- Real Clingo cross-validation;
-- R2 main-thread boundary;
-- exact-head PR audit with no unresolved review threads or failing checks.
+## 4. Final acceptance
 
-After that gate is GREEN, update the RES route / roadmap / handoff / decomposition re-audit to mark RES-5 **COMPLETE / ACCEPTED**, merge PR #242, sync `main`, and resume the GSP context-retrieval / materializer / benchmark route.
+Accepted T4 checkpoint:
+
+- exact executable/docs checkpoint: `cdf5dba23eaad23f4fea3899ab54df97553a55cd` with `[full-ci]`;
+- CI #3832 — GREEN;
+- Android full JVM tests + debug assemble — GREEN;
+- ASP contract tests — GREEN;
+- Real Clingo cross-validation — GREEN;
+- R2 main-thread boundary #3509 — GREEN;
+- exact-head PR audit — mergeable/clean, 0 failed/pending checks and 0 unresolved review threads.
+
+RES-5 is therefore **COMPLETE / ACCEPTED**. The next active development lane is the resumed GSP context-retrieval / materializer / benchmark route. DEC-A3 remains optional independent maintenance; App transaction-application and broader Host assembly decomposition require fresh dedicated audits rather than continuation of RES-5.
