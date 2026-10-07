@@ -122,24 +122,6 @@ internal object DynamicCandidateGenerator {
             )
         }.sortedBy { it.candidate.candidateId }
 
-    fun generatePairInformation(
-        candidates: List<PairInformationCandidate>,
-        context: DynamicGenerationContext,
-    ): List<DecisionEvaluation<DynamicInformationOutcome.Category>> = candidates
-        .distinctBy { it.id }
-        .map { input ->
-            evaluation(
-                candidate(
-                    stableOptionId = input.id,
-                    outcome = DynamicInformationOutcome.Category(input.id),
-                    truthful = input.isTruthful,
-                    context = context,
-                    informationValue = InformationValue.Category(input.id),
-                    decisionType = "pair-information",
-                ),
-            )
-        }.sortedBy { it.candidate.candidateId }
-
     /**
      * Compatibility seam for existing callers and telemetry tests.
      *

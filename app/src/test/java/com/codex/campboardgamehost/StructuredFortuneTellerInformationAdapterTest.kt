@@ -79,6 +79,5 @@ class StructuredFortuneTellerInformationAdapterTest {
         recommendationStyle = RecommendationStyle.BALANCED,
         revision = revision,
         recommendedValue = false,
-        falseMisinformationPressure = 3,
     )
 }

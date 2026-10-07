@@ -41,7 +41,7 @@ class ClocktowerRecommendationCoordinatorTest {
             InformationResolutionRequest.Category(
                 candidates = listOf(
                     UnreliableCategoricalCandidate("truth", true),
-                    UnreliableCategoricalCandidate("lie", false, 2),
+                    UnreliableCategoricalCandidate("lie", false),
                 ),
                 generation = DynamicGenerationContext(
                     abilityRole = RoleId("Empath"),

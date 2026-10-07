@@ -28,7 +28,6 @@ internal fun prepareEmpathNumberInformationUiModel(
     revision: InformationDecisionRevision,
     recommendedValue: Int?,
     previousShownValue: Int? = null,
-    pressureCostPerPoint: Int = 1,
 ): StructuredNumberInformationUiModel = prepareNumericInformationUiModel(
     coordinator = coordinator,
     gameId = gameId,
@@ -47,5 +46,4 @@ internal fun prepareEmpathNumberInformationUiModel(
     revision = revision,
     recommendedValue = recommendedValue,
     previousShownValue = previousShownValue,
-    pressureCostPerPoint = pressureCostPerPoint,
 )

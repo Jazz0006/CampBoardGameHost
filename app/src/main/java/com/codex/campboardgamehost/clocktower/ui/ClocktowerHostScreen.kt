@@ -783,7 +783,6 @@ internal fun ClocktowerJudgeScreen(
         trueValue: Int,
         maxValue: Int,
         footer: String,
-        pressureCostPerPoint: Int = 0,
         secondary: String? = null,
         propositionForValue: ((Int) -> InformationProposition)? = null,
     ): List<ClocktowerDisplayOption> {
@@ -1571,7 +1570,6 @@ internal fun ClocktowerJudgeScreen(
                     trueValue = trueValue,
                     maxValue = 2,
                     footer = chambermaidStepContent.displayFooter,
-                    pressureCostPerPoint = 1,
                     secondary = chambermaidPresentation.displaySecondary,
                     propositionForValue = { value ->
                         chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
@@ -1734,7 +1732,7 @@ internal fun ClocktowerJudgeScreen(
                                 },
                                 numericMinimumValue = 0,
                                 numericMaximumValue = chefMaximumValue,
-                                displayOptions = { actor -> recommendedNumberOptions(text("厨师信息", "Chef information"), actor, chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
+                                displayOptions = { actor -> recommendedNumberOptions(text("厨师信息", "Chef information"), actor, chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
                                 legalSelectionOptions = { actor ->
                                     if (chefAbilityUnreliable) {
                                         emptyList()
@@ -1776,7 +1774,7 @@ internal fun ClocktowerJudgeScreen(
                                 tellPlayer = empathNumber,
                                 explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
                                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                                    displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, empathNeighbors.map { cards.indexOf(it) + 1 }, value) }) },
+                                    displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, empathNeighbors.map { cards.indexOf(it) + 1 }, value) }) },
                                 previousShownNumber = empathActor?.let { actor ->
                                     previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
                                         ?.takeIf { it in 0..2 }
@@ -1953,7 +1951,7 @@ internal fun ClocktowerJudgeScreen(
                 tellPlayer = empathNumber,
                 explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1) },
+                displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors")) },
                 previousShownNumber = empathActor?.let { actor ->
                     previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
                         ?.takeIf { it in 0..2 }

@@ -479,7 +479,6 @@ class StructuredInformationShadowAdapterTest {
                         trueValue = 0,
                         minimumValue = 0,
                         maximumValue = 2,
-                        pressureCostPerPoint = 1,
                     ),
                     generation = DynamicGenerationContext(
                         abilityRole = RoleId("Empath"),

@@ -112,7 +112,6 @@ internal data class ClocktowerNumericInformationPreparation(
         revision = identity.revision,
         recommendedValue = recommendedValue,
         previousShownValue = previousShownValue,
-        pressureCostPerPoint = 1,
     )
 }
 

@@ -7,7 +7,6 @@ import com.codex.campboardgamehost.clocktower.domain.DecisionEventStatus
 import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
 import com.codex.campboardgamehost.clocktower.domain.DecisionExplanation
 import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
-import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRecommendation
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
@@ -19,17 +18,8 @@ import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
-import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.ImpairedTruthfulException
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SpecialRegistrationContext
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLegality
@@ -51,7 +41,6 @@ internal class ClocktowerRecommendationCoordinator(
     initialArchive: DecisionHistoryArchive = DecisionHistoryArchive(),
     private val setupModule: SetupRecommendationModule = SetupRecommendationModule(),
     private val nightModule: NightRecommendationModule = NightRecommendationModule(),
-    private val dayModule: DayRecommendationModule = DayRecommendationModule(),
     private val historyModule: HistoryReviewModule = HistoryReviewModule(),
 ) {
     private val eventStore = InMemoryDecisionEventStore(initialArchive)
@@ -219,21 +208,6 @@ internal class ClocktowerRecommendationCoordinator(
         draftOf = draftOf,
     )
 
-    fun resolveRegistration(request: RegistrationResolutionRequest) = nightModule.resolveRegistration(
-        request.request,
-        request.context,
-        request.style,
-    )
-
-    fun recommendRegistration(request: com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest, context: SpecialRegistrationContext) =
-        nightModule.recommendRegistration(request, context)
-
-    fun recommendNumber(context: UnreliableNumberContext) = nightModule.recommendNumber(context)
-
-    fun recommendCategory(candidates: List<UnreliableCategoricalCandidate>) = nightModule.recommendCategory(candidates)
-
-    fun recommendPair(candidates: List<PairInformationCandidate>) = nightModule.recommendPair(candidates)
-
     /**
      * Compatibility shape for the existing first-night precompute cache.
      * Pair-information truth ownership is canonical in [NaturalPairInformationCandidateGenerator];
@@ -260,61 +234,6 @@ internal class ClocktowerRecommendationCoordinator(
             )
         }
 
-    /**
-     * Selects a recommendation suggestion only. Durable information must still pass through
-     * [informationDecisionContext] and explicit confirmation before a draft is available.
-     */
-    fun <T> selectInformation(
-        options: List<T>,
-        reliability: InformationReliability,
-        style: RecommendationStyle,
-        evilAdvantage: Int,
-        stableKey: String,
-        recentMisinformationStreak: Int,
-        stableIdOf: (T) -> String,
-        isTruthful: (T) -> Boolean,
-        misinformationPressure: (T) -> Int,
-        styleOf: (T) -> RecommendationStyle,
-        history: CrossGameHistory = CrossGameHistory(),
-        historicalSignatureOf: ((T) -> HistoricalClueSignature)? = null,
-        selectionAudit: SelectionAuditContext? = null,
-        truthfulException: ImpairedTruthfulException? = null,
-    ): T? = nightModule.selectInformation(
-        options,
-        reliability,
-        style,
-        evilAdvantage,
-        stableKey,
-        recentMisinformationStreak,
-        stableIdOf,
-        isTruthful,
-        misinformationPressure,
-        styleOf,
-        history,
-        historicalSignatureOf,
-        selectionAudit,
-        truthfulException,
-    )
-
-    fun resolveDynamicDecision(request: DynamicResolutionRequest): List<DynamicDecisionRecommendation> = when (request) {
-        is DynamicResolutionRequest.MayorDeath -> dayModule.resolveMayorDeath(
-            requestId = request.requestId,
-            context = request.context,
-        )
-        is DynamicResolutionRequest.LegacyMayorDeath -> dayModule.resolveLegacyMayorDeath(
-            request = request.request,
-            mayorSeat = request.mayorSeat,
-        )
-        is DynamicResolutionRequest.DemonSuccessor -> nightModule.resolveDemonSuccessor(
-            requestId = request.requestId,
-            context = request.context,
-        )
-        is DynamicResolutionRequest.LegacyDemonSuccessor -> nightModule.resolveLegacyDemonSuccessor(
-            request = request.request,
-            successionResolution = request.successionResolution,
-        )
-    }
-
     fun appendDecision(event: StorytellerDecisionEvent, revision: DecisionRevision): DecisionAppendResult =
         eventStore.appendAtomically(event, revision)
 
@@ -335,16 +254,6 @@ internal class ClocktowerRecommendationCoordinator(
         explanationCodes = plan.scoreItems.map { it.ruleId }.distinct(),
         warningCodes = plan.warnings.map { it.ruleId }.distinct(),
         affectedSeats = (plan.scoreItems.flatMap { it.affectedSeats } + plan.warnings.flatMap { it.affectedSeats }).toSet(),
-    )
-
-    fun explainDecision(recommendation: DynamicDecisionRecommendation): DecisionExplanation = DecisionExplanation(
-        decisionId = recommendation.requestId,
-        qualityTier = recommendation.qualityTier,
-        totalScore = recommendation.totalScore,
-        explanationCodes = recommendation.scoreItems.map { it.ruleId }.distinct(),
-        warningCodes = recommendation.warnings.map { it.ruleId }.distinct(),
-        affectedSeats = (recommendation.scoreItems.flatMap { it.affectedSeats } +
-            recommendation.warnings.flatMap { it.affectedSeats }).toSet(),
     )
 
     fun explainDecision(eventId: String): DecisionExplanation? = historyModule.explainEvent(eventStore.archive(), eventId)

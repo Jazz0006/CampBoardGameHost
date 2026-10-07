@@ -125,7 +125,7 @@ class ClocktowerStructuredInformationPreparationTest {
         val expected = prepareEmpathNumberInformationUiModel(
             coordinator, identity.gameId, identity.phase, identity.round, identity.sequence,
             2, listOf(1, 3), 1, InformationReliability.POISONED, RecommendationStyle.BALANCED, revision, 2,
-            previousShownValue = 0, pressureCostPerPoint = 1,
+            previousShownValue = 0,
         )
         assertEquals(expected.choices, actual.choices)
         assertEquals(expected.contextSnapshot, actual.contextSnapshot)

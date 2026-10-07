@@ -42,7 +42,6 @@ internal fun prepareNumericInformationUiModel(
     revision: InformationDecisionRevision,
     recommendedValue: Int?,
     previousShownValue: Int? = null,
-    pressureCostPerPoint: Int = 0,
 ): StructuredNumberInformationUiModel {
     require(actorSeat > 0) { "Numeric information actor seat must be positive." }
     require(subjectSeats.all { it > 0 } && subjectSeats.distinct().size == subjectSeats.size) {
@@ -60,7 +59,6 @@ internal fun prepareNumericInformationUiModel(
                 previousShownValue = previousShownValue?.takeIf {
                     reliability != InformationReliability.RELIABLE && it in minimumValue..maximumValue
                 },
-                pressureCostPerPoint = pressureCostPerPoint,
             ),
             generation = DynamicGenerationContext(
                 abilityRole = abilityRole,
