@@ -245,7 +245,6 @@ internal fun ClocktowerNightStepCardLocalized(
         )
     }
     val automaticDisplayOption = clocktowerAutomaticInformationOption(
-        policyOption = step.automaticPolicyRecommendation,
         currentOptions = automaticAuthorityDomain,
     )
     val manualInformationFallback = automaticStorytellerInfo &&

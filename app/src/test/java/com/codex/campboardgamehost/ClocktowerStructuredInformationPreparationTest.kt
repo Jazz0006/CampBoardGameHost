@@ -28,39 +28,20 @@ class ClocktowerStructuredInformationPreparationTest {
     }
 
     @Test
-    fun `automatic policy must bind to current domain and unsupported multi-choice fails closed`() {
+    fun `automatic information resolves only deterministic single-candidate domains`() {
         val first = option(1)
         val second = option(2)
-        val relabeledPolicy = first.copy(label = "policy")
 
         assertSame(
             first,
-            clocktowerAutomaticInformationOption(
-                policyOption = relabeledPolicy,
-                currentOptions = listOf(first, second),
-            ),
+            clocktowerAutomaticInformationOption(currentOptions = listOf(first)),
         )
-
         assertSame(
             first,
-            clocktowerAutomaticInformationOption(
-                policyOption = null,
-                currentOptions = listOf(first),
-            ),
+            clocktowerAutomaticInformationOption(currentOptions = listOf(first, first.copy(label = "duplicate"))),
         )
-
         assertNull(
-            clocktowerAutomaticInformationOption(
-                policyOption = null,
-                currentOptions = listOf(first, second),
-            ),
-        )
-
-        assertNull(
-            clocktowerAutomaticInformationOption(
-                policyOption = option(0),
-                currentOptions = listOf(first, second),
-            ),
+            clocktowerAutomaticInformationOption(currentOptions = listOf(first, second)),
         )
     }
 

@@ -32,26 +32,16 @@ internal fun clocktowerStructuredRecommendedOption(
 }
 
 /**
- * Rebind one accepted policy recommendation to the current legal candidate domain.
+ * Resolve only a deterministic single-candidate automatic information decision.
  *
- * The policy object is never trusted as publication authority: only the semantically-identical
- * current option may flow forward. If no accepted policy owns this exact state, automatic
- * resolution is allowed only when the legal domain itself has one candidate. Multi-choice states
- * fail closed to Manual and never fall back to the legacy dynamic selector.
+ * Multi-choice states fail closed to Manual until a neutral provider response is explicitly
+ * materialized and rebound to the current legal domain by the future provider integration.
  */
 internal fun clocktowerAutomaticInformationOption(
-    policyOption: ClocktowerDisplayOption?,
     currentOptions: List<ClocktowerDisplayOption>,
-): ClocktowerDisplayOption? {
-    val distinctCurrentOptions = currentOptions.distinctBy(::clocktowerInformationCandidateId)
-    val policyId = policyOption?.let(::clocktowerInformationCandidateId)
-    if (policyId != null) {
-        distinctCurrentOptions.firstOrNull { option ->
-            clocktowerInformationCandidateId(option) == policyId
-        }?.let { return it }
-    }
-    return distinctCurrentOptions.singleOrNull()
-}
+): ClocktowerDisplayOption? = currentOptions
+    .distinctBy(::clocktowerInformationCandidateId)
+    .singleOrNull()
 
 internal fun clocktowerManualInformationDomain(
     options: List<ClocktowerDisplayOption>,
