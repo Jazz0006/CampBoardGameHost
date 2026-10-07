@@ -6,7 +6,7 @@ import kotlin.math.abs
  * Policy-neutral legal/continuity context for numeric Storyteller information.
  *
  * The Host may attach longitudinal warnings to legal candidates, but this model carries no
- * RecommendationStyle, score, probability or preferred-answer authority.
+ * No score, probability or preferred-answer authority is carried here.
  */
 internal data class UnreliableNumberContext(
     val trueValue: Int,
