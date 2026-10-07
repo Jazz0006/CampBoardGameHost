@@ -2,9 +2,9 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **CURRENT ARCHITECTURE / EXECUTION AUTHORITY — RES-0/1/2/3/4 COMPLETE / ACCEPTED; RES-5 NEXT**
+> Status: **CURRENT ARCHITECTURE AUTHORITY — RES-0/1/2/3/4/5 COMPLETE / ACCEPTED; RES CAMPAIGN CLOSED; GSP RESUMED**
 >
-> Supersedes the previous immediate continuation `GSP-2B3 -> GSP-2C -> GSP-2D`. GSP remains the later provider/benchmark route, but it is paused until this separation campaign establishes a clean engine-only boundary and removes obsolete recommendation implementations.
+> Supersedes the previous immediate continuation `GSP-2B3 -> GSP-2C -> GSP-2D`. RES has now established the clean engine/provider boundary and removed obsolete recommendation implementations; GSP re-entry resumes against the neutral provider contract rather than restoring that old sequence.
 >
 > Product invariant: **Clocktower gameplay, rules, legal domains, state progression, persistence/recovery and Manual Storyteller decisions must remain complete when no recommendation module/provider exists.**
 
@@ -251,7 +251,7 @@ Status: **COMPLETE / ACCEPTED**.
 Acceptance:
 
 - this route is current authority;
-- GSP-2B3/2C/2D are paused;
+- the former GSP-2B3/2C/2D sequence was paused and is now superseded by neutral-contract GSP re-entry;
 - obsolete algorithms are explicitly classified;
 - roadmap/handoff/docs index no longer direct work back to the old order;
 - no production behavior changes are required in this docs/audit slice.
@@ -314,6 +314,8 @@ Acceptance:
 
 ### RES-5 — physical module boundary
 
+Status: **COMPLETE / ACCEPTED.** PR #242 converged the physical/dependency boundary through five bounded slices: legacy `StorytellerPolicy*` compatibility purge; 13-field `ClocktowerNightCheckpoint` seam convergence; separate app-preference and archive stores; stateless neutral information-preparation extraction; and removal of dormant `automaticSelectionOptions` / `automaticPolicyRecommendation` seams. The neutral `StorytellerProviderContractV1` + Host-owned request/context materialization remains the surviving provider boundary. Final T4 checkpoint `cdf5dba23eaad23f4fea3899ab54df97553a55cd` passed CI #3832 and R2 #3509, including full Android tests + debug assemble, ASP contracts and Real Clingo. Completion authority: `docs/RES_5_PHYSICAL_MODULE_DEPENDENCY_CONVERGENCE_ACCEPTANCE_2026-10-07.md`.
+
 Converge toward explicit module/dependency ownership, potentially:
 
 ```text
@@ -340,7 +342,7 @@ engine -X-> recommendation implementation
 
 ### Resume GSP
 
-Only after RES establishes the clean boundary:
+RES now establishes the clean boundary. The next active route resumes:
 
 ```text
 cross-game history/diversity context

@@ -12,7 +12,7 @@ class FirstNightPairInformationSelectionDomainTest {
     )
 
     @Test
-    fun `impaired pair step preserves full automatic domain while assisted candidates stay curated`() {
+    fun `impaired pair step preserves full legal domain while assisted candidates stay curated`() {
         val curated = displayOption("curated", truthful = false, pressure = 2)
         val semanticAlternative = displayOption("semantic-alternative", truthful = false, pressure = 2)
 
@@ -22,7 +22,7 @@ class FirstNightPairInformationSelectionDomainTest {
             tellPlayer = null,
             explanation = "pair information",
             displayOptions = { listOf(curated) },
-            automaticSelectionOptions = { listOf(curated, semanticAlternative) },
+            legalSelectionOptions = { listOf(curated, semanticAlternative) },
         )
 
         assertEquals(
@@ -31,8 +31,9 @@ class FirstNightPairInformationSelectionDomainTest {
         )
         assertEquals(
             listOf("curated", "semantic-alternative"),
-            step.automaticInformationCandidates.map(ClocktowerDisplayOption::label),
+            step.manualInformationCandidates.map(ClocktowerDisplayOption::label),
         )
+        assertEquals(step.manualInformationCandidates, step.automaticInformationCandidates)
     }
 
     @Test

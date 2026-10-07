@@ -31,10 +31,8 @@ internal class ClocktowerInformationStepBuilder(
         presentationSubjectSeats: List<Int> = emptyList(),
         hostInstruction: String? = null,
         displayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
-        automaticSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         legalSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         reliableDisplayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
-        automaticPolicyRecommendation: (PlayerCard) -> ClocktowerDisplayOption? = { null },
         previousShownNumber: Int? = null,
         numericMinimumValue: Int? = null,
         numericMaximumValue: Int? = null,
@@ -72,10 +70,6 @@ internal class ClocktowerInformationStepBuilder(
         }
         val actorAbilityUnreliable = actor != null && actorIsUnreliable(enName, actor)
         val unreliableOptions = actor?.takeIf { actorAbilityUnreliable }?.let(displayOptions).orEmpty()
-        val automaticSelectionDomain = actor
-            ?.takeIf { actorAbilityUnreliable && automaticStorytellerInfo }
-            ?.let(automaticSelectionOptions)
-            .orEmpty()
         val legalSelectionDomain = actor
             ?.let(legalSelectionOptions)
             .orEmpty()
@@ -86,9 +80,6 @@ internal class ClocktowerInformationStepBuilder(
             actorAbilityUnreliable -> unreliableOptions
             else -> reliableRecommendations
         }
-        val policyRecommendation = actor
-            ?.takeIf { automaticStorytellerInfo && !actorAbilityUnreliable }
-            ?.let(automaticPolicyRecommendation)
         val resolvedDisplayKind = when (enName) {
             "Chef", "Empath", "Clockmaker", "Chambermaid" -> ClocktowerDisplayKind.Number
             "Fortune Teller" -> ClocktowerDisplayKind.YesNo
@@ -127,9 +118,6 @@ internal class ClocktowerInformationStepBuilder(
             }
         val automaticInformationCandidates = legalSelectionDomain
             .takeIf { it.isNotEmpty() }
-            ?: automaticSelectionDomain
-                .takeIf { it.isNotEmpty() }
-                ?.distinctBy(::clocktowerInformationCandidateId)
             ?: completeLegacyCandidates
         return ClocktowerNightStepUi(
             title = localizedRoleName,
@@ -165,7 +153,6 @@ internal class ClocktowerInformationStepBuilder(
             legacyInformationCandidates = completeLegacyCandidates,
             manualInformationCandidates = legalSelectionDomain,
             automaticInformationCandidates = automaticInformationCandidates,
-            automaticPolicyRecommendation = policyRecommendation,
             roleEnName = enName,
             informationReliability = informationReliability,
             recentMisinformationStreak = recentMisinformationStreak(actor),

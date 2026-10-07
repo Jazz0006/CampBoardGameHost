@@ -2,10 +2,10 @@
 
 > Updated: 2026-10-07 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> RES checkpoint: **RES-0/1/2/3/4 COMPLETE / ACCEPTED.** RES-4 physically removed the named Q04/V1/V2/Librarian/Investigator executable selectors/policies/replays plus DecisionTrace policy archive/runtime replay infrastructure. Historical value is retained as non-executable reference data in `docs/RES_4_SPECIAL_POLICY_REFERENCE_FIXTURES_V1.json`. Accepted T4 checkpoint: `00aefd1b05840e23302be8ffe72ccee9dd8f814f`; CI #3824 GREEN with full Android unit tests + debug assemble, ASP contract and Real Clingo gates; R2 #3502 GREEN.  
+> RES checkpoint: **RES-0/1/2/3/4/5 COMPLETE / ACCEPTED; RES CAMPAIGN CLOSED.** RES-5 completion authority is `docs/RES_5_PHYSICAL_MODULE_DEPENDENCY_CONVERGENCE_ACCEPTANCE_2026-10-07.md`. Final T4 checkpoint `cdf5dba23eaad23f4fea3899ab54df97553a55cd` passed CI #3832 and R2 #3509, including full Android unit tests + debug assemble, ASP contracts and Real Clingo.  
 > Architecture invariant: **a provider may be stateless, but recommendation context is not memoryless.** The Host owns and reconstructs current canonical state, current-game longitudinal/narrative history, relevant cross-game player experience and recommendation/diversity history. LLM/chat conversation memory is never correctness authority.  
-> Current execution target: **RES-5 — physical module/dependency convergence.** Begin from fresh live `main` after merging PR #241. Use `docs/APP_HOST_DECOMPOSITION_REAUDIT_2026-10-07.md` as the current decomposition authority: A1/A2 low-risk storage extraction, H0 NightCheckpoint seam convergence, and H1 neutral information-preparation extraction are approved bounded inputs. The dead legacy `StorytellerPolicy*` compatibility adapter family is also an explicit RES-5 deletion candidate; `StorytellerProviderContractV1` remains the neutral survivor.  
-> GSP-2B3/2C/2D remain paused/superseded by RES sequencing. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
+> Current execution target: **resume GSP context retrieval/materializer/benchmark on the neutral RES boundary.** Start from fresh live `main` after PR #242 merges. Preserve `StorytellerProviderContractV1`, Host-owned context reconstruction and engine-owned legal domains; do not restore `StorytellerPolicy*`, named selectors or local heuristic ranking.  
+> The old GSP-2B3/2C/2D continuation remains superseded by the RES boundary. Re-enter GSP by re-auditing the current route against RES-5, then proceed context retrieval/materializer -> prompt materializer -> manual blind benchmark before API integration. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
@@ -30,8 +30,8 @@ This file is deliberately compact. Completed checkpoint detail belongs in linked
 17. `docs/TBGS_2C_SETUP_COORDINATION_SNAPSHOT_CONTEXT_AUDIT_2026-10-03.md` — TBGS-2C setup-coordination acceptance authority
 18. `docs/TBGS_2D_DYNAMIC_STATE_CONSUMER_SELECTION_AUDIT_2026-10-03.md` — post-2C DynamicGameState family audit and accepted TBGS-2D Demon-succession boundary
 19. `docs/TBGS_2E_POST_2D_MAYOR_REDIRECT_REAUDIT_2026-10-04.md` — accepted TBGS-2E Mayor-redirect boundary
-20. `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md` — current execution authority; RES-0/1/2 complete, RES-3 next
-21. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — downstream general-provider/benchmark authority after RES separation; GSP-2B3/2C/2D paused
+20. `docs/RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md` — RES architecture authority; RES-0 through RES-5 complete / accepted
+21. `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md` — current downstream provider/benchmark authority after RES separation; neutral-contract GSP re-entry active, old 2B3/2C/2D sequence superseded
 22. `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` — accepted fail-closed Manual safety foundation; its old LRE-P continuation is superseded by GSP
 23. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — whole-engine retirement evidence/inventory authority; preserve legal/manual/SDE infrastructure
 24. `docs/archive/LRE_STAGED_POLICY_REPLACEMENT_AND_RETIREMENT_ROUTE_2026-10-04.md` — superseded historical route; do not use its family-by-family LRE-P loop as current authority
@@ -103,7 +103,7 @@ DLB-6 old-contract retirement                      COMPLETE / ACCEPTED
 DLB-7 final acceptance                             COMPLETE / ACCEPTED
 DLB campaign                                       COMPLETE / ACCEPTED
 TBGS-2 runtime recommendation projection migration PAUSED AFTER 2E — 2A/2B/2C/2D/2E COMPLETE / ACCEPTED; NO 2F SELECTED
-App/Host bounded decomposition           FRESH 2026-10-07 RE-AUDIT COMPLETE / RES-5 INPUT
+App/Host bounded decomposition           RES-5 A1/A2/H0/H1 COMPLETE / ACCEPTED; A3 OPTIONAL; broader transaction/assembly work requires fresh audit
 ~~~
 
 Repository cleanup state:
@@ -174,7 +174,7 @@ DLB-4A accepted executable checkpoint: `c85448831e73c82868e118c7f47a0ed889267c0c
 
 DLB-5 current executable checkpoint: `bdc31a31bc4652be13e31d7d4c8c6bacd68b9dd5`; CI #3600 and R2 #3331 GREEN on PR #183. Implemented slices are DLB-5.1 typed dependency planning, DLB-5.2 Red Herring latest-safe commitment, DLB-5.3 Demon-bluff commit at Demon-info presentation dependency, DLB-5.5 removal of obsolete setup auto-apply wiring, and DLB-5.4 Poisoner / first-night information convergence audit. DLB-5.4 found no production gap: poison confirmation owns one canonical revision, unshown drafts are invalidated, displayed observations/history remain committed, and subsequent information replans against current poison state plus committed history. DLB-5 is COMPLETE / ACCEPTED. PR #183 passed final exact-head T4 at `3fd1714ce2e18b969e5039bcf6a58f8775745b9d` with CI #3603 / R2 #3334 GREEN and was squash-merged into `main` at `6293a3bb94778338db61f5a1708a1d283d6e8b6f`.
 
-LRE-1 is **COMPLETE / ACCEPTED** under `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` and remains the safety foundation: unique legal outcomes may auto-resolve; unsupported multi-choice decisions must expose the complete Manual legal domain and may not fall back to legacy heuristics. PR #222 later merged INV1-A under the then-current LRE-P approach. GSP-0/1 and GSP-2A/2B1/2B2 remain useful historical/provider foundations, but their former immediate continuation is paused. **RES-0/1/2 are COMPLETE / ACCEPTED; RES-3 is the next executable target.**
+LRE-1 is **COMPLETE / ACCEPTED** under `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md` and remains the safety foundation: unique legal outcomes may auto-resolve; unsupported multi-choice decisions must expose the complete Manual legal domain and may not fall back to legacy heuristics. PR #222 later merged INV1-A under the then-current LRE-P approach. GSP-0/1 and GSP-2A/2B1/2B2 remain useful historical/provider foundations; their former immediate continuation was superseded by RES. **RES-0 through RES-5 are COMPLETE / ACCEPTED; neutral-contract GSP re-entry is the next executable target.**
 
 Current C5 authority:
 
@@ -242,11 +242,11 @@ DLB-0 typed intermediate setup COMPLETE
 || Host-owned context-memory invariant: current-game longitudinal/narrative + relevant cross-game player + soft diversity history; provider chat memory not authoritative
 -> RES-3 legacy heuristic/style/weighted product reachability + physical purge COMPLETE / ACCEPTED — checkpoint 5b4b2a94; CI #3815 / R2 #3495 GREEN
 -> RES-4 named deterministic special-policy purge COMPLETE / ACCEPTED — T4 00aefd1b; CI #3824 / R2 #3502 GREEN
--> RES-5 physical module/dependency convergence NEXT
--> resume GSP context retrieval/materializer -> manual blind benchmark -> repeated/cross-model benchmark -> optional API adapter
+-> RES-5 physical module/dependency convergence COMPLETE / ACCEPTED — T4 `cdf5dba23eaad23f4fea3899ab54df97553a55cd`; CI #3832 / R2 #3509 GREEN
+-> resume GSP context retrieval/materializer -> prompt materializer -> manual blind benchmark -> repeated/cross-model benchmark -> optional API adapter NEXT
 || Android product remains offline-first; remote LLM optional only
 || future player profile/management: per-player BEGINNER / NORMAL / EXPERT; default NORMAL
--> A3 presentation catalog READY / independent maintenance only
+|| A3 presentation catalog remains READY / independent maintenance only
 ```
 
 The App/Host decomposition audit is a constraint on this work, not a prerequisite campaign:
@@ -311,16 +311,16 @@ Do not add new hand-authored policy weights/thresholds, broaden player-count/Tra
 
 ## RES architecture reset — 2026-10-06
 
-The previous immediate GSP continuation is paused. Live-code audit confirmed that authority revocation did not physically remove old recommendation behavior: `ClocktowerHostScreen` still reaches legacy registration/pair/number recommendation paths and `GameBalanceEvaluator`, `RecommendationStyle` still flows through Host/night information surfaces, and `ClocktowerRecommendationCoordinator` still combines legal-domain, scoring, selection, history and explanation responsibilities. At the same time the new `StorytellerPolicyRequestV1` remains coupled to SDE/TB-specific export types.
+The previous immediate GSP continuation was paused by the 2026-10-06 RES reset. That live-code audit confirmed that authority revocation did not physically remove old recommendation behavior: `ClocktowerHostScreen` still reaches legacy registration/pair/number recommendation paths and `GameBalanceEvaluator`, `RecommendationStyle` still flows through Host/night information surfaces, and `ClocktowerRecommendationCoordinator` still combines legal-domain, scoring, selection, history and explanation responsibilities. At the same time the new `StorytellerPolicyRequestV1` remains coupled to SDE/TB-specific export types.
 
-Current sequence is now: **RES-0 COMPLETE -> RES-1 COMPLETE -> RES-2 COMPLETE -> RES-3 COMPLETE / ACCEPTED -> RES-4 COMPLETE / ACCEPTED -> RES-5 physical module/dependency convergence NEXT -> resume GSP context retrieval/materializer/benchmark**.
+Current sequence is now: **RES-0 COMPLETE -> RES-1 COMPLETE -> RES-2 COMPLETE -> RES-3 COMPLETE / ACCEPTED -> RES-4 COMPLETE / ACCEPTED -> RES-5 COMPLETE / ACCEPTED -> resume GSP context retrieval/materializer/benchmark NEXT**.
 
 RES-1 proved the generic engine-owned pending-decision seam with pair information and Mayor redirect. RES-2 established the neutral provider protocol and direct pair/Mayor/Drunk request materialization. PR #237 also freezes the context-memory ownership rule: provider invocations remain stateless and independently reconstructable, while the Host owns current-game longitudinal/narrative memory plus relevant cross-game player and soft-diversity history. RES-3 removed live product/UI/session dependence on the old recommendation ranking stack and physically deleted its dynamic/setup recommenders, style/profile/weighted selectors, local rank/weight metadata and dead ranking tests/benchmarks. Historical `StorytellerDecisionEvent` score/probability/pressure/explanation fields remain only as archival/replay compatibility data; they are not current recommendation authority. RES-3 T4 acceptance is GREEN at `5b4b2a94c332bde462124b133955514a31f23183` (CI #3815 / R2 #3495).
 
 
 ### GSP-2B1 acceptance — 2026-10-06
 
-GSP-2B1 adds model-neutral per-seat enrichment defaults (NORMAL experience, empty claims, absent manual pressure), prefix-bounded effective prior-decision projection, a stateless-provider invocation envelope and immutable decision-episode records. Legacy selector scores/probabilities/candidate audits are intentionally excluded from provider context. The GSP-2B1 data remains valid, but GSP-2B continuation is paused by RES. Recommendation must remain a read-only consumer.
+GSP-2B1 adds model-neutral per-seat enrichment defaults (NORMAL experience, empty claims, absent manual pressure), prefix-bounded effective prior-decision projection, a stateless-provider invocation envelope and immutable decision-episode records. Legacy selector scores/probabilities/candidate audits are intentionally excluded from provider context. The GSP-2B1 data remains valid, but the old GSP-2B continuation was superseded by RES; resumed work must target the neutral provider contract. Recommendation must remain a read-only consumer.
 
 
 ### GSP-2B2 session ownership acceptance — 2026-10-06

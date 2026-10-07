@@ -137,7 +137,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
 import java.util.UUID
@@ -178,15 +177,10 @@ internal fun PlayerCard.abilitySubject(poisonTarget: String?): AbilitySubject = 
 private fun Context.playerName(number: Int): String = getString(R.string.default_player_name_format, number)
 
 private const val PREFS_NAME = "camp_board_game_host"
-private const val COMMON_PLAYERS_KEY = "common_players"
-private const val LANGUAGE_MODE_KEY = "language_mode"
-private const val STORYTELLER_EXPERIENCE_MODE_KEY = "storyteller_experience_mode"
 private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
-private const val GAME_HISTORY_KEY = "game_history"
 internal const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
 internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdate"
 internal const val SDE_HISTORICAL_REPLAY_CAPTURE_LOG_TAG = "SdeHistoricalReplayCapture"
-private const val MAX_GAME_HISTORY = 20
 internal const val MIN_PLAYERS = 3
 internal const val MIN_CLOCKTOWER_PLAYERS = 5
 internal const val MAX_PLAYERS = 15
@@ -197,63 +191,6 @@ private fun Context.localized(languageMode: LanguageMode): Context {
     val config = Configuration(resources.configuration)
     config.setLocale(locale)
     return createConfigurationContext(config)
-}
-
-private fun Context.loadLanguageMode(): LanguageMode {
-    val value = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        .getString(LANGUAGE_MODE_KEY, LanguageMode.System.prefsValue)
-    return LanguageMode.entries.firstOrNull { it.prefsValue == value } ?: LanguageMode.System
-}
-
-private fun Context.saveLanguageMode(languageMode: LanguageMode) {
-    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        .edit()
-        .putString(LANGUAGE_MODE_KEY, languageMode.prefsValue)
-        .apply()
-}
-
-private fun Context.loadStorytellerExperienceMode(): StorytellerExperienceMode =
-    StorytellerExperienceMode.fromPrefsValue(
-        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(STORYTELLER_EXPERIENCE_MODE_KEY, null),
-    )
-
-private fun Context.saveStorytellerExperienceMode(mode: StorytellerExperienceMode) {
-    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        .edit()
-        .putString(STORYTELLER_EXPERIENCE_MODE_KEY, mode.prefsValue)
-        .apply()
-}
-
-private fun Context.loadCommonPlayers(): List<String> {
-    val preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    val hasStoredPlayers = preferences.contains(COMMON_PLAYERS_KEY)
-    val raw = preferences.getString(COMMON_PLAYERS_KEY, null)
-    val storedPlayers = raw?.let { encoded ->
-        runCatching {
-            val json = JSONArray(encoded)
-            List(json.length()) { index -> json.getString(index) }
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-                .distinct()
-        }.getOrElse { emptyList() }
-    } ?: emptyList()
-    return resolveInitialCommonPlayers(
-        hasStoredPlayers = hasStoredPlayers,
-        storedPlayers = storedPlayers,
-    )
-}
-
-private fun Context.saveCommonPlayers(players: List<String>) {
-    val json = JSONArray()
-    players.map { it.trim() }
-        .filter { it.isNotEmpty() }
-        .distinct()
-        .forEach { json.put(it) }
-    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        .edit()
-        .putString(COMMON_PLAYERS_KEY, json.toString())
-        .apply()
 }
 
 private fun Screen.isActiveGameScreen(): Boolean = when (this) {
@@ -300,44 +237,6 @@ private fun Context.loadSavedGamePreview(localizedContext: Context): SavedGamePr
 private fun clocktowerRoleByName(enName: String?): ClocktowerRole? {
     if (enName.isNullOrBlank()) return null
     return completeClocktowerRoles.firstOrNull { it.enName == enName }
-}
-
-private fun archivedGameReviewFromJson(entry: JSONObject): ArchivedGameReview? =
-    GameArchiveJsonCodec.decodeEntry(entry, ::clocktowerRoleByName)
-
-private fun Context.loadGameHistory(): List<ArchivedGameReview> {
-    val raw = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        .getString(GAME_HISTORY_KEY, null)
-        ?: return emptyList()
-    return runCatching {
-        val array = JSONArray(raw)
-        buildList {
-            for (index in 0 until array.length()) {
-                array.optJSONObject(index)?.let { archivedGameReviewFromJson(it)?.let(::add) }
-            }
-        }
-    }.getOrDefault(emptyList())
-}
-
-private fun Context.archiveGame(record: GameArchiveRecord): List<ArchivedGameReview> {
-    if (record.cards.isEmpty()) return loadGameHistory()
-    val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    val existing = runCatching { JSONArray(prefs.getString(GAME_HISTORY_KEY, "[]")) }.getOrDefault(JSONArray())
-    val archivedAt = System.currentTimeMillis()
-    val next = JSONArray().apply {
-        put(
-            GameArchiveJsonCodec.encodeEntry(
-                record = record,
-                id = archivedAt,
-                archivedAtMillis = archivedAt,
-            ),
-        )
-        for (index in 0 until minOf(existing.length(), MAX_GAME_HISTORY - 1)) {
-            existing.optJSONObject(index)?.let(::put)
-        }
-    }
-    prefs.edit().putString(GAME_HISTORY_KEY, next.toString()).commit()
-    return loadGameHistory()
 }
 
 internal fun Role.labelResId(): Int = when (this) {
@@ -434,12 +333,21 @@ internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean =
 @Composable
 internal fun CampBoardGameHostApp() {
     val baseContext = LocalContext.current
+    val appPreferencesStore = remember(baseContext) { AppPreferencesStore(baseContext) }
+    val gameArchivePreferencesStore = remember(baseContext) {
+        GameArchivePreferencesStore(
+            context = baseContext,
+            roleByName = { roleName -> clocktowerRoleByName(roleName) },
+        )
+    }
     val activeGameClocktowerRulesetCatalog = remember(baseContext) {
         BuiltInClocktowerRulesetCatalog.fromContext(baseContext)
     }
     val lifecycleOwner = LocalLifecycleOwner.current
-    var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
-    var storytellerExperienceMode by remember { mutableStateOf(baseContext.loadStorytellerExperienceMode()) }
+    var languageMode by remember { mutableStateOf(appPreferencesStore.loadLanguageMode()) }
+    var storytellerExperienceMode by remember {
+        mutableStateOf(appPreferencesStore.loadStorytellerExperienceMode())
+    }
     val storytellerRecommendationUxPolicy =
         StorytellerRecommendationUxPolicy.fromExperienceMode(storytellerExperienceMode)
     val automaticStorytellerInfo = storytellerRecommendationUxPolicy.automaticExecution
@@ -451,7 +359,7 @@ internal fun CampBoardGameHostApp() {
     }
     var currentGameKind by remember { mutableStateOf(GameKind.Undercover) }
     var savedGamePreview by remember(context) { mutableStateOf(baseContext.loadSavedGamePreview(context)) }
-    var gameHistory by remember { mutableStateOf(baseContext.loadGameHistory()) }
+    var gameHistory by remember { mutableStateOf(gameArchivePreferencesStore.loadGameHistory()) }
     var showHostTools by remember { mutableStateOf(false) }
     var hostToolTab by remember { mutableStateOf(HostToolTab.Roles) }
     var showNewGameConfirmation by remember { mutableStateOf(false) }
@@ -525,7 +433,9 @@ internal fun CampBoardGameHostApp() {
     var showResults by remember { mutableStateOf(false) }
     var gameOutcome by remember { mutableStateOf<GameOutcome?>(null) }
     var newCommonPlayerName by remember { mutableStateOf("") }
-    val commonPlayers = remember { mutableStateListOf<String>().apply { addAll(baseContext.loadCommonPlayers()) } }
+    val commonPlayers = remember {
+        mutableStateListOf<String>().apply { addAll(appPreferencesStore.loadCommonPlayers()) }
+    }
     val playerNames = remember { mutableStateListOf<String>() }
     var hostSeatingSetupFlow by remember { mutableStateOf(HostSeatingSetupFlow()) }
     val cards = remember { mutableStateListOf<PlayerCard>() }
@@ -1465,14 +1375,14 @@ internal fun CampBoardGameHostApp() {
         val trimmedName = newCommonPlayerName.trim()
         if (trimmedName.isNotEmpty() && trimmedName !in commonPlayers) {
             commonPlayers.add(trimmedName)
-            baseContext.saveCommonPlayers(commonPlayers)
+            appPreferencesStore.saveCommonPlayers(commonPlayers)
             newCommonPlayerName = ""
         }
     }
 
     fun removeCommonPlayer(name: String) {
         commonPlayers.remove(name)
-        baseContext.saveCommonPlayers(commonPlayers)
+        appPreferencesStore.saveCommonPlayers(commonPlayers)
     }
 
     fun resetDealState(
@@ -1811,7 +1721,7 @@ internal fun CampBoardGameHostApp() {
         if (cards.isEmpty()) return false
         if (!persistCompletedTroubleBrewingSetupIfNeeded()) return false
         invalidateA4SessionBoundary()
-        gameHistory = baseContext.archiveGame(
+        gameHistory = gameArchivePreferencesStore.archiveGame(
             GameArchiveRecord(
                 gameKind = currentGameKind,
                 round = round,
@@ -2108,11 +2018,11 @@ internal fun CampBoardGameHostApp() {
                         newCommonPlayerName = newCommonPlayerName,
                         onLanguageModeChange = { nextMode ->
                             languageMode = nextMode
-                            baseContext.saveLanguageMode(nextMode)
+                            appPreferencesStore.saveLanguageMode(nextMode)
                         },
                         onStorytellerExperienceModeChange = { mode ->
                             storytellerExperienceMode = mode
-                            baseContext.saveStorytellerExperienceMode(mode)
+                            appPreferencesStore.saveStorytellerExperienceMode(mode)
                         },
                         onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                         onAddCommonPlayer = ::addCommonPlayer,
@@ -2176,8 +2086,6 @@ internal fun CampBoardGameHostApp() {
                         script = currentClocktowerScript,
                         gameId = clocktowerGameId,
                         gameSeed = clocktowerGameSeed,
-                        gameStateRevision = clocktowerGameStateRevision,
-                        playerInputRevision = clocktowerPlayerInputRevision,
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         firstNightNaturalPairReadyProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
@@ -2194,13 +2102,7 @@ internal fun CampBoardGameHostApp() {
                         phase = clocktowerPhase,
                         round = round,
                         nightCheckpoint = currentClocktowerNightCheckpoint(),
-                        pendingNightDeath = clocktowerPendingNightDeath,
-                        demonAttackDraftTarget = clocktowerDemonAttackDraftTarget,
                         selectedExecution = clocktowerSelectedExecution,
-                        // The draft is visible only while the Poisoner is choosing.
-                        // All ability and outcome evaluation must use the confirmed fact.
-                        poisonTarget = clocktowerConfirmedPoisonTarget,
-                        poisonDraftTarget = clocktowerPoisonTarget,
                         fortuneTellerFirst = clocktowerFortuneTellerFirst,
                         fortuneTellerSecond = clocktowerFortuneTellerSecond,
                         chambermaidFirst = clocktowerChambermaidFirst,
@@ -2209,13 +2111,6 @@ internal fun CampBoardGameHostApp() {
                         redHerring = clocktowerRedHerring,
                         recommendedDemonBluffRoleNames = clocktowerRecommendedDemonBluffRoleNames,
                         butlerMaster = clocktowerButlerMaster,
-                        monkProtectedTarget = clocktowerConfirmedMonkProtectedTarget,
-                        monkProtectedDraftTarget = clocktowerMonkProtectedTarget,
-                        mayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
-                        mayorRedirectDraftTarget = clocktowerMayorRedirectTarget,
-                        pendingNewDemonName = clocktowerPendingNewDemonName,
-                        pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
-                        demonSuccessorTarget = clocktowerDemonSuccessorTarget,
                         virginUsed = clocktowerVirginUsed,
                         slayerUsed = clocktowerSlayerUsed,
                         slayerClaimedNames = clocktowerSlayerClaimedNames,
@@ -3578,11 +3473,11 @@ internal fun CampBoardGameHostApp() {
                                 newCommonPlayerName = newCommonPlayerName,
                                 onLanguageModeChange = { nextMode ->
                                     languageMode = nextMode
-                                    baseContext.saveLanguageMode(nextMode)
+                                    appPreferencesStore.saveLanguageMode(nextMode)
                                 },
                                 onStorytellerExperienceModeChange = { mode ->
                                     storytellerExperienceMode = mode
-                                    baseContext.saveStorytellerExperienceMode(mode)
+                                    appPreferencesStore.saveStorytellerExperienceMode(mode)
                                 },
                                 onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                                 onAddCommonPlayer = ::addCommonPlayer,

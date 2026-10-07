@@ -43,7 +43,7 @@ DLB-6 old-contract retirement                               COMPLETE / ACCEPTED
 DLB-7 final DLB acceptance                                  COMPLETE / ACCEPTED
 DLB campaign                                                COMPLETE / ACCEPTED
 TBGS-2 runtime recommendation projection migration           PAUSED AFTER 2E — 2A/2B/2C/2D/2E COMPLETE / ACCEPTED; NO 2F MIGRATION SELECTED
-Bounded App/Host decomposition                         FRESH RE-AUDIT COMPLETE — RES-5 INPUT; A1/A2/H0/H1 BOUNDED SLICES APPROVED
+Bounded App/Host decomposition                         RES-5 BOUNDED SLICES COMPLETE / ACCEPTED — A1/A2/H0/H1 DONE; A3 OPTIONAL
 C5 evidence-backed policy evolution                   C5-A/C5-B/C5-C/C5-D/C5-E COMPLETE / ACCEPTED
 HOST-ML0 ML readiness / ModelLab boundary              COMPLETE / ACCEPTED
 HOST-ML1 typed neutral decision export                   COMPLETE / ACCEPTED — separate from C5-E
@@ -62,7 +62,7 @@ RES-1 engine-only pending-decision/legal-domain boundary      COMPLETE / ACCEPTE
 RES-2 neutral provider-contract extraction                    COMPLETE / ACCEPTED — PR #236/#237; CI #3800 / R2 #3482 GREEN
 RES-3 legacy heuristic/style/weighted physical purge          COMPLETE / ACCEPTED — checkpoint 5b4b2a94; CI #3815 / R2 #3495 GREEN
 RES-4 named deterministic special-policy physical purge       COMPLETE / ACCEPTED — T4 00aefd1b; CI #3824 / R2 #3502 GREEN
-RES-5 physical module/dependency boundary                     NEXT EXECUTABLE
+RES-5 physical module/dependency boundary                     COMPLETE / ACCEPTED — T4 cdf5dba2; CI #3832 / R2 #3509 GREEN
 ~~~
 
 ## 2. Current repository boundary
@@ -293,11 +293,11 @@ query live main / workspace
 || stateless provider != memoryless recommendation: Host owns/rebuilds current-game longitudinal memory, relevant cross-game player history and soft recommendation-diversity history
 -> RES-3 legacy heuristic/style/weighted recommender physical purge COMPLETE / ACCEPTED — checkpoint 5b4b2a94; CI #3815 / R2 #3495 GREEN
 -> RES-4 evidence-case deterministic special-policy physical purge COMPLETE / ACCEPTED — T4 00aefd1b; CI #3824 / R2 #3502 GREEN
--> RES-5 physical module/dependency convergence NEXT
--> resume GSP context materializer/retrieval -> prompt materializer -> GSP-3A manual blind benchmark BEFORE any API integration
+-> RES-5 physical module/dependency convergence COMPLETE / ACCEPTED — T4 `cdf5dba23eaad23f4fea3899ab54df97553a55cd`; CI #3832 / R2 #3509 GREEN
+-> resume GSP context materializer/retrieval -> prompt materializer -> GSP-3A manual blind benchmark BEFORE any API integration NEXT
 || Android product invariant: offline-first; network/LLM optional only
 || later player profile/management: BEGINNER / NORMAL / EXPERT; current default NORMAL
--> A3 presentation catalog READY / independent maintenance only
+|| A3 presentation catalog remains READY / independent maintenance only
 ~~~
 
 A1/A2 may proceed as separate maintenance PRs without blocking the active lanes. C5/V2 is now a separately re-entered evidence-backed lane; its production cutover remains surface-gated.
