@@ -2,7 +2,7 @@
 
 > Repository: `Jazz0006/CampBoardGameHost`
 >
-> Status: **CURRENT ARCHITECTURE / EXECUTION AUTHORITY — RES-0/1/2/3 COMPLETE / ACCEPTED; RES-4 IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING**
+> Status: **CURRENT ARCHITECTURE / EXECUTION AUTHORITY — RES-0/1/2/3/4 COMPLETE / ACCEPTED; RES-5 NEXT**
 >
 > Supersedes the previous immediate continuation `GSP-2B3 -> GSP-2C -> GSP-2D`. GSP remains the later provider/benchmark route, but it is paused until this separation campaign establishes a clean engine-only boundary and removes obsolete recommendation implementations.
 >
@@ -302,7 +302,7 @@ Acceptance includes repository-wide proof that no product/UI path uses legacy st
 
 ### RES-4 — deterministic special-policy purge
 
-Status: **IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING.** Named Q04/V1/V2/Librarian/Investigator executable policy/selector/replay code, runtime/offline policy replay coordinators and DecisionTrace policy archive infrastructure have been physically removed from `app/src/main/java`. Historical value is retained in `docs/RES_4_SPECIAL_POLICY_REFERENCE_FIXTURES_V1.json`, while rules-owned legal domains, exact-consequence evaluation, deterministic feature projection, Host-owned history prefixes and the neutral `RecommendationDecisionExportV1` surface remain policy-free. FAST checkpoint `6a3c46f45284001586facfabd9914ebcf6d34190` passed CI #3823 / R2 #3501. Final T4 acceptance is still required.
+Status: **COMPLETE / ACCEPTED.** Named Q04/V1/V2/Librarian/Investigator executable policy/selector/replay code, runtime/offline policy replay coordinators and DecisionTrace policy archive infrastructure have been physically removed from `app/src/main/java`. Historical value is retained in `docs/RES_4_SPECIAL_POLICY_REFERENCE_FIXTURES_V1.json`, while rules-owned legal domains, exact-consequence evaluation, deterministic feature projection, Host-owned history prefixes and the neutral `RecommendationDecisionExportV1` surface remain policy-free. FAST checkpoint `6a3c46f45284001586facfabd9914ebcf6d34190` passed CI #3823 / R2 #3501. Accepted T4 checkpoint: `00aefd1b05840e23302be8ffe72ccee9dd8f814f`; CI #3824 GREEN with full Android unit tests + debug APK assemble, ASP contract and Real Clingo gates; R2 #3502 GREEN.
 
 Replace executable Q04/V1/V2/Librarian/Investigator special-policy code with non-executable benchmark/reference material where historical evidence is still valuable.
 
@@ -378,8 +378,8 @@ The final purge campaign must prove:
 
 ## 8. Immediate next step
 
-RES-0/1/2/3 are complete and accepted. RES-4 implementation is complete; the immediate step is the explicit T4 checkpoint (`[full-ci]`: full Android JVM suite + debug assemble + full selected gates). Do not start RES-5 until that checkpoint is GREEN.
+RES-0/1/2/3/4 are complete and accepted. The next executable stage is RES-5 physical module/dependency convergence.
 
-> **RES-4 acceptance must prove that no named evidence-case selector or policy-replay identity is required by product execution, while reconstructable reference fixtures and the clean neutral provider boundary remain intact.**
+> **RES-5 must make the physical dependency graph match the accepted Engine / neutral provider architecture, without reintroducing recommendation authority into gameplay or hiding coupling inside giant context/manager objects.**
 
-After T4 acceptance, mark RES-4 COMPLETE / ACCEPTED and enter RES-5 physical module/dependency convergence. The now-unreachable legacy `StorytellerPolicy*` compatibility contract/adapter family is an explicit RES-5 deletion candidate; the neutral `StorytellerProviderContractV1` is the surviving direction. Do not resume old GSP-2B3/2C/2D or add recommendation-owned memory.
+Begin RES-5 from fresh live `main` using `docs/APP_HOST_DECOMPOSITION_REAUDIT_2026-10-07.md` as the current decomposition input. The now-unreachable legacy `StorytellerPolicy*` compatibility contract/adapter family is an explicit deletion candidate; the neutral `StorytellerProviderContractV1` is the surviving direction. The approved bounded A1/A2/H0/H1 slices are inputs to RES-5 convergence. Do not resume old GSP-2B3/2C/2D or add recommendation-owned memory.

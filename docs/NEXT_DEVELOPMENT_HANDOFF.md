@@ -2,9 +2,9 @@
 
 > Updated: 2026-10-07 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
-> RES checkpoint: **RES-0/1/2/3 COMPLETE / ACCEPTED; RES-4 IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING.** RES-4 has physically removed the named Q04/V1/V2/Librarian/Investigator executable selectors/policies/replays plus DecisionTrace policy archive/runtime replay infrastructure. Historical value is retained as non-executable reference data in `docs/RES_4_SPECIAL_POLICY_REFERENCE_FIXTURES_V1.json`. FAST checkpoint `6a3c46f45284001586facfabd9914ebcf6d34190` passed CI #3823 / R2 #3501.  
+> RES checkpoint: **RES-0/1/2/3/4 COMPLETE / ACCEPTED.** RES-4 physically removed the named Q04/V1/V2/Librarian/Investigator executable selectors/policies/replays plus DecisionTrace policy archive/runtime replay infrastructure. Historical value is retained as non-executable reference data in `docs/RES_4_SPECIAL_POLICY_REFERENCE_FIXTURES_V1.json`. Accepted T4 checkpoint: `00aefd1b05840e23302be8ffe72ccee9dd8f814f`; CI #3824 GREEN with full Android unit tests + debug assemble, ASP contract and Real Clingo gates; R2 #3502 GREEN.  
 > Architecture invariant: **a provider may be stateless, but recommendation context is not memoryless.** The Host owns and reconstructs current canonical state, current-game longitudinal/narrative history, relevant cross-game player experience and recommendation/diversity history. LLM/chat conversation memory is never correctness authority.  
-> Current execution target: **RES-4 T4 acceptance closure.** Run `[full-ci]` on the completed purge; after GREEN, mark RES-4 COMPLETE / ACCEPTED and enter RES-5 physical module/dependency convergence. The fresh App/Host decomposition re-audit at `docs/APP_HOST_DECOMPOSITION_REAUDIT_2026-10-07.md` supplies the A1/A2/H0/H1 bounded slices for RES-5.  
+> Current execution target: **RES-5 — physical module/dependency convergence.** Begin from fresh live `main` after merging PR #241. Use `docs/APP_HOST_DECOMPOSITION_REAUDIT_2026-10-07.md` as the current decomposition authority: A1/A2 low-risk storage extraction, H0 NightCheckpoint seam convergence, and H1 neutral information-preparation extraction are approved bounded inputs. The dead legacy `StorytellerPolicy*` compatibility adapter family is also an explicit RES-5 deletion candidate; `StorytellerProviderContractV1` remains the neutral survivor.  
 > GSP-2B3/2C/2D remain paused/superseded by RES sequencing. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
@@ -241,8 +241,8 @@ DLB-0 typed intermediate setup COMPLETE
 -> RES-2 neutral provider contract + direct pair/Mayor/Drunk materialization COMPLETE / ACCEPTED
 || Host-owned context-memory invariant: current-game longitudinal/narrative + relevant cross-game player + soft diversity history; provider chat memory not authoritative
 -> RES-3 legacy heuristic/style/weighted product reachability + physical purge COMPLETE / ACCEPTED — checkpoint 5b4b2a94; CI #3815 / R2 #3495 GREEN
--> RES-4 named deterministic special-policy purge IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING — FAST 6a3c46f; CI #3823 / R2 #3501 GREEN
--> RES-5 physical module/dependency convergence NEXT AFTER RES-4 ACCEPTANCE
+-> RES-4 named deterministic special-policy purge COMPLETE / ACCEPTED — T4 00aefd1b; CI #3824 / R2 #3502 GREEN
+-> RES-5 physical module/dependency convergence NEXT
 -> resume GSP context retrieval/materializer -> manual blind benchmark -> repeated/cross-model benchmark -> optional API adapter
 || Android product remains offline-first; remote LLM optional only
 || future player profile/management: per-player BEGINNER / NORMAL / EXPERT; default NORMAL
@@ -313,7 +313,7 @@ Do not add new hand-authored policy weights/thresholds, broaden player-count/Tra
 
 The previous immediate GSP continuation is paused. Live-code audit confirmed that authority revocation did not physically remove old recommendation behavior: `ClocktowerHostScreen` still reaches legacy registration/pair/number recommendation paths and `GameBalanceEvaluator`, `RecommendationStyle` still flows through Host/night information surfaces, and `ClocktowerRecommendationCoordinator` still combines legal-domain, scoring, selection, history and explanation responsibilities. At the same time the new `StorytellerPolicyRequestV1` remains coupled to SDE/TB-specific export types.
 
-Current sequence is now: **RES-0 COMPLETE -> RES-1 COMPLETE -> RES-2 COMPLETE -> RES-3 COMPLETE / ACCEPTED -> RES-4 IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING -> RES-5 physical module/dependency convergence -> resume GSP context retrieval/materializer/benchmark**.
+Current sequence is now: **RES-0 COMPLETE -> RES-1 COMPLETE -> RES-2 COMPLETE -> RES-3 COMPLETE / ACCEPTED -> RES-4 COMPLETE / ACCEPTED -> RES-5 physical module/dependency convergence NEXT -> resume GSP context retrieval/materializer/benchmark**.
 
 RES-1 proved the generic engine-owned pending-decision seam with pair information and Mayor redirect. RES-2 established the neutral provider protocol and direct pair/Mayor/Drunk request materialization. PR #237 also freezes the context-memory ownership rule: provider invocations remain stateless and independently reconstructable, while the Host owns current-game longitudinal/narrative memory plus relevant cross-game player and soft-diversity history. RES-3 removed live product/UI/session dependence on the old recommendation ranking stack and physically deleted its dynamic/setup recommenders, style/profile/weighted selectors, local rank/weight metadata and dead ranking tests/benchmarks. Historical `StorytellerDecisionEvent` score/probability/pressure/explanation fields remain only as archival/replay compatibility data; they are not current recommendation authority. RES-3 T4 acceptance is GREEN at `5b4b2a94c332bde462124b133955514a31f23183` (CI #3815 / R2 #3495).
 
