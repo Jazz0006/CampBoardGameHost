@@ -60,8 +60,8 @@ GSP-2 provider + decision-specific global-context contract    PAUSED — 2A/2B1/
 RES-0 engine/recommendation separation + purge audit          COMPLETE / ACCEPTED — PR #233
 RES-1 engine-only pending-decision/legal-domain boundary      COMPLETE / ACCEPTED — PR #234/#235
 RES-2 neutral provider-contract extraction                    COMPLETE / ACCEPTED — PR #236/#237; CI #3800 / R2 #3482 GREEN
-RES-3 legacy heuristic/style/weighted physical purge          NEXT EXECUTABLE
-RES-4 named deterministic special-policy physical purge       AFTER RES-3
+RES-3 legacy heuristic/style/weighted physical purge          IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING
+RES-4 named deterministic special-policy physical purge       NEXT AFTER RES-3 T4 ACCEPTANCE
 RES-5 physical module/dependency boundary                     FINAL RES CONVERGENCE
 ~~~
 
@@ -291,8 +291,8 @@ query live main / workspace
 -> RES-1 engine-only pending-decision/legal-domain boundary COMPLETE / ACCEPTED — pair + Mayor prove generic seam
 -> RES-2 neutral script-aware provider contract extraction COMPLETE / ACCEPTED — PR #236 merge 19abd61; Drunk/context-memory closure PR #237 merge 7ae03105
 || stateless provider != memoryless recommendation: Host owns/rebuilds current-game longitudinal memory, relevant cross-game player history and soft recommendation-diversity history
--> RES-3 legacy heuristic/style/weighted recommender physical purge NEXT
--> RES-4 evidence-case deterministic special-policy physical purge
+-> RES-3 legacy heuristic/style/weighted recommender physical purge IMPLEMENTATION COMPLETE / T4 ACCEPTANCE PENDING
+-> RES-4 evidence-case deterministic special-policy physical purge NEXT AFTER RES-3 ACCEPTANCE
 -> RES-5 physical module/dependency convergence
 -> resume GSP context materializer/retrieval -> prompt materializer -> GSP-3A manual blind benchmark BEFORE any API integration
 || Android product invariant: offline-first; network/LLM optional only

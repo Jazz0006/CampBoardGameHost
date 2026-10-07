@@ -162,6 +162,31 @@ jobs:
           done
 
           for symbol in \
+            RecommendationStyle \
+            RecommendationPlan \
+            WeightedStableSelector \
+            RecommendationProfile \
+            GameBalanceEvaluator \
+            TemporaryAutomaticStorytellerPolicy \
+            ImpairedInformationPolicy \
+            SetupRecommendationService \
+            SetupEvaluator \
+            PairInformationAbilityRecommender \
+            MayorRedirectRecommender \
+            DemonSuccessorRecommender \
+            MalfunctionPolicy \
+            RegistrationPolicy \
+            ConsequenceEvaluator \
+            rankFixedPoint \
+            withinFamilyWeightFixedPoint
+          do
+            if grep -R -q "$symbol" app/src/main/java; then
+              echo "Purged RES-3 legacy recommendation symbol returned: $symbol" >&2
+              exit 1
+            fi
+          done
+
+          for symbol in \
             "internal enum class ClocktowerRegistrationDetail" \
             "internal enum class ClocktowerPairInformationAbility" \
             "internal data class ClocktowerNightStepUi"
