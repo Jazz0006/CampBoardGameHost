@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
@@ -35,7 +34,6 @@ internal fun prepareBooleanInformationUiModel(
     subjectSeats: List<Int>,
     trueValue: Boolean,
     reliability: InformationReliability,
-    recommendationStyle: RecommendationStyle,
     revision: InformationDecisionRevision,
     recommendedValue: Boolean?,
 ): StructuredBooleanInformationUiModel {
@@ -58,9 +56,6 @@ internal fun prepareBooleanInformationUiModel(
                 abilityRole = abilityRole,
                 recipientSeat = actorSeat,
                 reliability = reliability,
-                style = recommendationStyle,
-                targetSeats = subjectSeats.toSet(),
-                playerSelectedTarget = subjectSeats.isNotEmpty(),
             ),
         ),
     ).map { evaluation ->

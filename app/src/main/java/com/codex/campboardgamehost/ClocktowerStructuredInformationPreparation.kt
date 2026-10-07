@@ -93,7 +93,6 @@ internal data class ClocktowerNumericInformationPreparation(
     fun prepareUiModel(
         coordinator: ClocktowerRecommendationCoordinator,
         identity: ClocktowerInformationDecisionIdentity,
-        style: RecommendationStyle,
     ): StructuredNumberInformationUiModel = prepareNumericInformationUiModel(
         coordinator = coordinator,
         gameId = identity.gameId,
@@ -108,7 +107,6 @@ internal data class ClocktowerNumericInformationPreparation(
         minimumValue = minimumValue,
         maximumValue = maximumValue,
         reliability = reliability,
-        recommendationStyle = style,
         revision = identity.revision,
         recommendedValue = recommendedValue,
         previousShownValue = previousShownValue,
@@ -172,7 +170,6 @@ internal data class ClocktowerBooleanInformationPreparation(
     fun prepareUiModel(
         coordinator: ClocktowerRecommendationCoordinator,
         identity: ClocktowerInformationDecisionIdentity,
-        style: RecommendationStyle,
     ): StructuredBooleanInformationUiModel = prepareBooleanInformationUiModel(
         coordinator = coordinator,
         gameId = identity.gameId,
@@ -185,7 +182,6 @@ internal data class ClocktowerBooleanInformationPreparation(
         subjectSeats = subjectSeats,
         trueValue = trueValue,
         reliability = reliability,
-        recommendationStyle = style,
         revision = identity.revision,
         recommendedValue = recommendedValue,
     )

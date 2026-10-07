@@ -90,7 +90,6 @@ class StructuredInformationProductionShadowTest {
             minimumValue = 0,
             maximumValue = 2,
             reliability = InformationReliability.RELIABLE,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = 0,
         )
@@ -171,7 +170,6 @@ class StructuredInformationProductionShadowTest {
             minimumValue = 0,
             maximumValue = 2,
             reliability = InformationReliability.POISONED,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = 1,
         )
@@ -317,7 +315,6 @@ class StructuredInformationProductionShadowTest {
             minimumValue = 0,
             maximumValue = 2,
             reliability = InformationReliability.POISONED,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = 0,
         )

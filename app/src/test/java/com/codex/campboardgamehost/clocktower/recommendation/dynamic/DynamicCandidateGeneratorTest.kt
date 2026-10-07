@@ -2,7 +2,6 @@ package com.codex.campboardgamehost.clocktower.recommendation.dynamic
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import org.junit.Assert.assertEquals
@@ -14,7 +13,6 @@ class DynamicCandidateGeneratorTest {
         abilityRole = RoleId("Empath"),
         recipientSeat = 2,
         reliability = InformationReliability.POISONED,
-        style = RecommendationStyle.BALANCED,
     )
 
     @Test

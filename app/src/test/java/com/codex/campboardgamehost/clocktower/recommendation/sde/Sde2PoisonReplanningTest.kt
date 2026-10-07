@@ -221,7 +221,6 @@ class Sde2PoisonReplanningTest {
         minimumValue = 0,
         maximumValue = 2,
         reliability = reliability,
-        recommendationStyle = RecommendationStyle.BALANCED,
         revision = revision,
         recommendedValue = trueValue.takeIf { reliability == InformationReliability.RELIABLE },
     )

@@ -484,8 +484,6 @@ class StructuredInformationShadowAdapterTest {
                         abilityRole = RoleId("Empath"),
                         recipientSeat = 2,
                         reliability = reliability,
-                        style = RecommendationStyle.BALANCED,
-                        targetSeats = setOf(1, 3),
                     ),
                 ),
             )

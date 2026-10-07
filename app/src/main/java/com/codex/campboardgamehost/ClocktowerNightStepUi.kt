@@ -302,7 +302,6 @@ internal fun ClocktowerNightStepCardLocalized(
     val informationIdentity = ClocktowerInformationDecisionIdentity(
         gameId, phase, round, sequence, InformationDecisionRevision(gameStateRevision, playerInputRevision),
     )
-    val structuredStyle = if (effectiveAutomaticInformation) automaticStorytellerStyle else RecommendationStyle.BALANCED
     val structuredActorSeat = step.actor
         ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
     val structuredRecommendedOption = clocktowerStructuredRecommendedOption(
@@ -312,7 +311,7 @@ internal fun ClocktowerNightStepCardLocalized(
         unreliableOptions = if (manualInformationFallback) emptyList() else step.displayOptions,
     )
     val numericPreparation = clocktowerNumericInformationPreparation(manualFallbackStep, structuredActorSeat, structuredRecommendedOption)
-    val structuredNumberUiModel = numericPreparation?.prepareUiModel(recommendationCoordinator, informationIdentity, structuredStyle)
+    val structuredNumberUiModel = numericPreparation?.prepareUiModel(recommendationCoordinator, informationIdentity)
     LaunchedEffect(structuredNumberUiModel?.semanticStateKey) {
         structuredNumberUiModel?.let { onStructuredNumberDecisionPrepared(it) }
     }
@@ -429,7 +428,7 @@ internal fun ClocktowerNightStepCardLocalized(
         step, structuredActorSeat, fortuneTellerSelectedSeats, structuredRecommendedOption,
     )
     val structuredFortuneTellerUiModel = booleanPreparation?.prepareUiModel(
-        recommendationCoordinator, informationIdentity, structuredStyle,
+        recommendationCoordinator, informationIdentity,
     )
     val resultFirstFortuneTellerOptions = resultFirstRegistrationCandidates.filter { option ->
         val proposition = option.proposition as? InformationProposition.BooleanResult

@@ -63,7 +63,7 @@ class SdeOfflineVerticalReplayTest {
         val model = prepareNumericInformationUiModel(
             ClocktowerRecommendationCoordinator(), input.gameId, ClocktowerPhase.FirstNight, 1, 1,
             empath.seat, RoleId("Empath"), NumericMetric.LIVING_EVIL_NEIGHBOURS, neighbours,
-            0, 0, 2, InformationReliability.RELIABLE, RecommendationStyle.BALANCED,
+            0, 0, 2, InformationReliability.RELIABLE,
             revision, recommendedValue = 0,
         )
         val foreignInput = SdeHistoricalReplayInput(
@@ -130,7 +130,7 @@ class SdeOfflineVerticalReplayTest {
         val model = prepareNumericInformationUiModel(
             ClocktowerRecommendationCoordinator(), snapshot.gameId, ClocktowerPhase.Night, 2, 1,
             empath.seat, RoleId("Empath"), NumericMetric.LIVING_EVIL_NEIGHBOURS, neighbours,
-            truth, 0, 2, InformationReliability.POISONED, RecommendationStyle.BALANCED,
+            truth, 0, 2, InformationReliability.POISONED,
             revision, recommendedValue = 0,
         )
 

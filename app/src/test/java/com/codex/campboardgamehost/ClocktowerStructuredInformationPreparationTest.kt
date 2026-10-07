@@ -121,10 +121,10 @@ class ClocktowerStructuredInformationPreparationTest {
     fun `prepared Empath model matches existing adapter including history and confirmation identity`() {
         val prepared = requireNotNull(clocktowerNumericInformationPreparation(step().copy(previousShownNumber = 0), 2, option(2)))
         val coordinator = ClocktowerRecommendationCoordinator()
-        val actual = prepared.prepareUiModel(coordinator, identity, RecommendationStyle.BALANCED)
+        val actual = prepared.prepareUiModel(coordinator, identity)
         val expected = prepareEmpathNumberInformationUiModel(
             coordinator, identity.gameId, identity.phase, identity.round, identity.sequence,
-            2, listOf(1, 3), 1, InformationReliability.POISONED, RecommendationStyle.BALANCED, revision, 2,
+            2, listOf(1, 3), 1, InformationReliability.POISONED, revision, 2,
             previousShownValue = 0,
         )
         assertEquals(expected.choices, actual.choices)
@@ -162,11 +162,11 @@ class ClocktowerStructuredInformationPreparationTest {
             fortuneStep(), 4, listOf(2, 7), option(0).copy(proposition = booleanProposition(false)),
         ))
         val coordinator = ClocktowerRecommendationCoordinator()
-        val actual = prepared.prepareUiModel(coordinator, identity, RecommendationStyle.BALANCED)
+        val actual = prepared.prepareUiModel(coordinator, identity)
         val expected = prepareBooleanInformationUiModel(
             coordinator, identity.gameId, identity.phase, identity.round, identity.sequence,
             4, RoleId("Fortune Teller"), BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, listOf(2, 7),
-            true, InformationReliability.POISONED, RecommendationStyle.BALANCED, revision, false,
+            true, InformationReliability.POISONED, revision, false,
         )
         assertEquals(expected.choices, actual.choices)
         assertEquals(expected.contextSnapshot, actual.contextSnapshot)

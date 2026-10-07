@@ -30,7 +30,6 @@ class StructuredFortuneTellerInformationAdapterTest {
             subjectSeats = listOf(2, 7),
             trueValue = true,
             reliability = InformationReliability.RELIABLE,
-            recommendationStyle = RecommendationStyle.BALANCED,
             revision = revision,
             recommendedValue = true,
         )
@@ -76,7 +75,6 @@ class StructuredFortuneTellerInformationAdapterTest {
         subjectSeats = listOf(2, 7),
         trueValue = true,
         reliability = InformationReliability.POISONED,
-        recommendationStyle = RecommendationStyle.BALANCED,
         revision = revision,
         recommendedValue = false,
     )

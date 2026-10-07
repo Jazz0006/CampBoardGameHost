@@ -47,8 +47,6 @@ class ClocktowerRecommendationCoordinatorTest {
                     abilityRole = RoleId("Empath"),
                     recipientSeat = 2,
                     reliability = InformationReliability.POISONED,
-                    style = RecommendationStyle.BALANCED,
-                    state = DynamicGameState(game, StorytellerPhase.NIGHT, 2),
                 ),
             ),
         )

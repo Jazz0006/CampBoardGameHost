@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -38,7 +37,6 @@ internal fun prepareNumericInformationUiModel(
     minimumValue: Int,
     maximumValue: Int,
     reliability: InformationReliability,
-    recommendationStyle: RecommendationStyle,
     revision: InformationDecisionRevision,
     recommendedValue: Int?,
     previousShownValue: Int? = null,
@@ -64,8 +62,6 @@ internal fun prepareNumericInformationUiModel(
                 abilityRole = abilityRole,
                 recipientSeat = actorSeat,
                 reliability = reliability,
-                style = recommendationStyle,
-                targetSeats = subjectSeats.toSet(),
             ),
         ),
     )
