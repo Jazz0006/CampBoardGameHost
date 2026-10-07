@@ -43,7 +43,7 @@ DLB-6 old-contract retirement                               COMPLETE / ACCEPTED
 DLB-7 final DLB acceptance                                  COMPLETE / ACCEPTED
 DLB campaign                                                COMPLETE / ACCEPTED
 TBGS-2 runtime recommendation projection migration           PAUSED AFTER 2E — 2A/2B/2C/2D/2E COMPLETE / ACCEPTED; NO 2F MIGRATION SELECTED
-Bounded App/Host decomposition                         MAINTENANCE GUARDRAIL / NO BROAD CAMPAIGN
+Bounded App/Host decomposition                         FRESH RE-AUDIT COMPLETE — RES-5 INPUT; A1/A2/H0/H1 BOUNDED SLICES APPROVED
 C5 evidence-backed policy evolution                   C5-A/C5-B/C5-C/C5-D/C5-E COMPLETE / ACCEPTED
 HOST-ML0 ML readiness / ModelLab boundary              COMPLETE / ACCEPTED
 HOST-ML1 typed neutral decision export                   COMPLETE / ACCEPTED — separate from C5-E

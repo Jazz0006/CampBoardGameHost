@@ -4,7 +4,7 @@
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
 > RES checkpoint: **RES-0/1/2/3 COMPLETE / ACCEPTED.** RES-2 neutral provider contract landed in PR #236/#237. RES-3 physically removed the obsolete heuristic/style/weighted recommendation authority and its dead setup/dynamic selector infrastructure. Accepted executable checkpoint: `5b4b2a94c332bde462124b133955514a31f23183`; CI #3815 GREEN with full Android unit tests + debug assemble, ASP contract and Real Clingo gates; R2 #3495 GREEN.  
 > Architecture invariant: **a provider may be stateless, but recommendation context is not memoryless.** The Host owns and reconstructs current canonical state, current-game longitudinal/narrative history, relevant cross-game player experience and recommendation/diversity history. LLM/chat conversation memory is never correctness authority.  
-> Current execution target: **RES-4 — named deterministic special-policy physical purge.** Merge the accepted RES-3 PR #239, then begin RES-4 from fresh live `main`; do not reintroduce any retired style/score/weighted authority.  
+> Current execution target: **RES-4 — named deterministic special-policy physical purge.** RES-3 PR #239 is merged. A fresh post-RES-3 App/Host decomposition re-audit is complete at `docs/APP_HOST_DECOMPOSITION_REAUDIT_2026-10-07.md`; its approved bounded A1/A2/H0/H1 slices feed RES-5 physical convergence, while Host extraction H1 waits until RES-4 removes the named policy hooks.  
 > GSP-2B3/2C/2D remain paused/superseded by RES sequencing. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
@@ -103,7 +103,7 @@ DLB-6 old-contract retirement                      COMPLETE / ACCEPTED
 DLB-7 final acceptance                             COMPLETE / ACCEPTED
 DLB campaign                                       COMPLETE / ACCEPTED
 TBGS-2 runtime recommendation projection migration PAUSED AFTER 2E — 2A/2B/2C/2D/2E COMPLETE / ACCEPTED; NO 2F SELECTED
-App/Host bounded decomposition           GUARDRAIL / NO BROAD CAMPAIGN
+App/Host bounded decomposition           FRESH 2026-10-07 RE-AUDIT COMPLETE / RES-5 INPUT
 ~~~
 
 Repository cleanup state:
