@@ -51,8 +51,6 @@ import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSu
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalDomain
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
-import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningInvestigatorInv1ProductionSelector
-import com.codex.campboardgamehost.clocktower.recommendation.sde.FunctioningLibrarianV2ProductionSelector
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionPoolParityRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
@@ -131,7 +129,6 @@ internal fun ClocktowerJudgeScreen(
     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
-    onStructuredNumberDecisionPrepared: suspend (StructuredNumberInformationUiModel) -> Unit,
     onCommitConfirmedInformationDecision: (ConfirmedInformationDecision) -> Unit,
     onHostTools: () -> Unit,
     onPreviousFromFirstNightReady: () -> Unit,
@@ -1020,70 +1017,6 @@ internal fun ClocktowerJudgeScreen(
                 presentationOptions = presentationOptions,
             )
         }
-    }
-
-    fun functioningLibrarianV2AutomaticOption(actor: PlayerCard): ClocktowerDisplayOption? {
-        if (!automaticStorytellerInfo || script != ClocktowerScript.TroubleBrewing || phase != ClocktowerPhase.FirstNight || round != 1) {
-            return null
-        }
-        val sourceSeat = cards.indexOf(actor).plus(1).takeIf { it > 0 } ?: return null
-        val subject = effectiveAbilitySubjectForRole("Librarian", actor) ?: return null
-        if (AbilityFunctioningSemantics.stateFor(subject, "Librarian") != AbilityFunctioningState.FUNCTIONING) {
-            return null
-        }
-        val context = firstNightPairDecisionContext ?: return null
-        val abilityRole = RoleId("Librarian")
-        val selection = FunctioningLibrarianV2ProductionSelector.select(
-            context = context,
-            sourceSeat = sourceSeat,
-            abilityRole = abilityRole,
-            reliability = ReliabilityState.RELIABLE,
-            decisionId = "first-night:LIBRARIAN:${context.snapshot.gameId}:seat-$sourceSeat",
-            selectionSeed = context.snapshot.gameSeed,
-        ) ?: return null
-        val selectedCandidate = PairInformationLegalDomain.generate(
-            game = context.naturalPairGameState,
-            roleDefinitions = context.roleDefinitions,
-            sourceSeat = sourceSeat,
-            abilityRole = abilityRole,
-            reliability = ReliabilityState.RELIABLE,
-        ).singleOrNull { candidate -> candidate.candidateId == selection.candidateId } ?: return null
-        val presentation = ClocktowerPairManualAuthority.selectionPresentation(
-            legalPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor),
-        )
-        return ClocktowerPairManualAuthority.canonicalManualOption(presentation, selectedCandidate)
-    }
-
-    fun functioningInvestigatorInv1AutomaticOption(actor: PlayerCard): ClocktowerDisplayOption? {
-        if (!automaticStorytellerInfo || script != ClocktowerScript.TroubleBrewing || phase != ClocktowerPhase.FirstNight || round != 1) {
-            return null
-        }
-        val sourceSeat = cards.indexOf(actor).plus(1).takeIf { it > 0 } ?: return null
-        val subject = effectiveAbilitySubjectForRole("Investigator", actor) ?: return null
-        if (AbilityFunctioningSemantics.stateFor(subject, "Investigator") != AbilityFunctioningState.FUNCTIONING) {
-            return null
-        }
-        val context = firstNightPairDecisionContext ?: return null
-        val abilityRole = RoleId("Investigator")
-        val selection = FunctioningInvestigatorInv1ProductionSelector.select(
-            context = context,
-            sourceSeat = sourceSeat,
-            abilityRole = abilityRole,
-            reliability = ReliabilityState.RELIABLE,
-            decisionId = "first-night:INVESTIGATOR:${context.snapshot.gameId}:seat-$sourceSeat",
-            selectionSeed = context.snapshot.gameSeed,
-        ) ?: return null
-        val selectedCandidate = PairInformationLegalDomain.generate(
-            game = context.naturalPairGameState,
-            roleDefinitions = context.roleDefinitions,
-            sourceSeat = sourceSeat,
-            abilityRole = abilityRole,
-            reliability = ReliabilityState.RELIABLE,
-        ).singleOrNull { candidate -> candidate.candidateId == selection.candidateId } ?: return null
-        val presentation = ClocktowerPairManualAuthority.selectionPresentation(
-            legalPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor),
-        )
-        return ClocktowerPairManualAuthority.canonicalManualOption(presentation, selectedCandidate)
     }
 
     val informationStepBuilder = ClocktowerInformationStepBuilder(
@@ -3202,7 +3135,6 @@ internal fun ClocktowerJudgeScreen(
                         }
                     }
                 },
-                onStructuredNumberDecisionPrepared = onStructuredNumberDecisionPrepared,
                 onShowPlayerDisplay = { displayStep ->
                     performClocktowerPlayerRevealHandoff(
                         authorize = { informationDecisionPublicationAllowed(displayStep) },

@@ -187,6 +187,29 @@ jobs:
           done
 
           for symbol in \
+            BeginnerConservativeV1Policy \
+            BeginnerConservativeV1Selector \
+            BeginnerConservativeV2Policy \
+            DrunkAssignmentQ04V1Policy \
+            DrunkAssignmentQ04V1ProductionAdapter \
+            DrunkAssignmentQ04V1ReplayEngine \
+            FunctioningLibrarianV2ProductionSelector \
+            FunctioningInvestigatorInv1ProductionSelector \
+            DecisionPolicyReplay \
+            DecisionTrace \
+            DecisionTraceArchive \
+            MultiPolicyReplay \
+            PairInformationShadowReplayBridge \
+            SdeRuntimeShadowCoordinator \
+            SdeOfflineReplayCoordinator
+          do
+            if grep -R -q "$symbol" app/src/main/java; then
+              echo "Purged RES-4 named policy/trace symbol returned: $symbol" >&2
+              exit 1
+            fi
+          done
+
+          for symbol in \
             "internal enum class ClocktowerRegistrationDetail" \
             "internal enum class ClocktowerPairInformationAbility" \
             "internal data class ClocktowerNightStepUi"

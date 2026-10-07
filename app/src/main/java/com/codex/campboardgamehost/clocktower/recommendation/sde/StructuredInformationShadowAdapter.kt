@@ -26,9 +26,6 @@ internal data class StructuredInformationShadowEvaluation(
     val plannedDecisions: List<PlannedDecisionRef>,
     val consequences: ExactConsequenceEvaluation,
     val featureEvaluation: DecisionFeatureEvaluation,
-    val policyEvaluation: BeginnerConservativePolicyEvaluation,
-    val policySelection: PolicySelection?,
-    val selectionSeed: Long,
 ) {
     init {
         require(sdeCandidates.map(SdeDecisionCandidate::candidateId) == informationSnapshot.legalCandidateIds) {
@@ -45,33 +42,6 @@ internal data class StructuredInformationShadowEvaluation(
         }
         require(featureEvaluation.candidateIds == informationSnapshot.legalCandidateIds) {
             "Structured feature projection must preserve the source legal-candidate order."
-        }
-        require(policyEvaluation.candidateIds == informationSnapshot.legalCandidateIds) {
-            "Structured policy evaluation must preserve the source legal-candidate order."
-        }
-        require(policyEvaluation.policyVersion == PolicyVersions.BEGINNER_CONSERVATIVE_V1) {
-            "Structured policy evaluation must use BEGINNER_CONSERVATIVE_V1."
-        }
-        when (policyEvaluation) {
-            is BeginnerConservativePolicyEvaluation.Ready -> {
-                val selection = requireNotNull(policySelection) {
-                    "Ready structured policy evaluation requires a shadow policy selection."
-                }
-                require(selection.policyVersion == policyEvaluation.policyVersion) {
-                    "Structured shadow selection must use the evaluated policy version."
-                }
-                val selectedEvaluation = policyEvaluation.evaluations.singleOrNull {
-                    it.candidateId == selection.candidateId
-                }
-                require(selectedEvaluation?.disposition == PolicyDisposition.SURVIVOR) {
-                    "Structured shadow selection must select a policy survivor."
-                }
-            }
-
-            is BeginnerConservativePolicyEvaluation.Deferred ->
-                require(policySelection == null) {
-                    "Deferred structured policy evaluation cannot expose a shadow policy selection."
-                }
         }
         when (consequences) {
             is ExactConsequenceEvaluation.Ready ->
@@ -248,21 +218,12 @@ internal object StructuredInformationShadowAdapter {
             } else {
                 baseFeatureEvaluation
             }
-        val policyEvaluation = BeginnerConservativeV1Policy.evaluate(featureEvaluation)
-        val policySelection = BeginnerConservativeV1Selector.select(
-            evaluation = policyEvaluation,
-            decisionId = decisionId,
-            selectionSeed = historical.initialSnapshot.gameSeed,
-        )
         return StructuredInformationShadowEvaluation(
             informationSnapshot = informationSnapshot,
             sdeCandidates = sdeCandidates,
             plannedDecisions = planned,
             consequences = consequences,
             featureEvaluation = featureEvaluation,
-            policyEvaluation = policyEvaluation,
-            policySelection = policySelection,
-            selectionSeed = historical.initialSnapshot.gameSeed,
         )
     }
 

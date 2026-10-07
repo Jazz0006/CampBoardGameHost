@@ -61,8 +61,8 @@ RES-0 engine/recommendation separation + purge audit          COMPLETE / ACCEPTE
 RES-1 engine-only pending-decision/legal-domain boundary      COMPLETE / ACCEPTED — PR #234/#235
 RES-2 neutral provider-contract extraction                    COMPLETE / ACCEPTED — PR #236/#237; CI #3800 / R2 #3482 GREEN
 RES-3 legacy heuristic/style/weighted physical purge          COMPLETE / ACCEPTED — checkpoint 5b4b2a94; CI #3815 / R2 #3495 GREEN
-RES-4 named deterministic special-policy physical purge       NEXT EXECUTABLE
-RES-5 physical module/dependency boundary                     FINAL RES CONVERGENCE
+RES-4 named deterministic special-policy physical purge       COMPLETE / ACCEPTED — T4 00aefd1b; CI #3824 / R2 #3502 GREEN
+RES-5 physical module/dependency boundary                     NEXT EXECUTABLE
 ~~~
 
 ## 2. Current repository boundary
@@ -292,8 +292,8 @@ query live main / workspace
 -> RES-2 neutral script-aware provider contract extraction COMPLETE / ACCEPTED — PR #236 merge 19abd61; Drunk/context-memory closure PR #237 merge 7ae03105
 || stateless provider != memoryless recommendation: Host owns/rebuilds current-game longitudinal memory, relevant cross-game player history and soft recommendation-diversity history
 -> RES-3 legacy heuristic/style/weighted recommender physical purge COMPLETE / ACCEPTED — checkpoint 5b4b2a94; CI #3815 / R2 #3495 GREEN
--> RES-4 evidence-case deterministic special-policy physical purge NEXT
--> RES-5 physical module/dependency convergence
+-> RES-4 evidence-case deterministic special-policy physical purge COMPLETE / ACCEPTED — T4 00aefd1b; CI #3824 / R2 #3502 GREEN
+-> RES-5 physical module/dependency convergence NEXT
 -> resume GSP context materializer/retrieval -> prompt materializer -> GSP-3A manual blind benchmark BEFORE any API integration
 || Android product invariant: offline-first; network/LLM optional only
 || later player profile/management: BEGINNER / NORMAL / EXPERT; current default NORMAL

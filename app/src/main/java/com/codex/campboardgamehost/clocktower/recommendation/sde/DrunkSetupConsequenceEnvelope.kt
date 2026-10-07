@@ -85,8 +85,8 @@ internal data class DrunkSetupFirstNightInformationConsequence(
 /**
  * Score-free, candidate-local setup consequence surface for DLB-3B.
  *
- * This envelope is diagnostic evidence beside the DLB-3 shadow candidate. It is deliberately not a
- * DecisionFeatures projection and therefore has no effect on BEGINNER_CONSERVATIVE_V1.
+ * This envelope is diagnostic evidence beside the Drunk setup candidate. It is descriptive only
+ * and carries no recommendation-policy or selection authority.
  */
 internal data class DrunkSetupConsequenceEnvelope(
     val candidateSeat: Int,

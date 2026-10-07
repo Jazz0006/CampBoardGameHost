@@ -113,8 +113,8 @@ internal data class DrunkAssignmentFeatureLimitations(
 /**
  * Dedicated Drunk-assignment feature surface.
  *
- * This is intentionally separate from ordinary [DecisionFeatures]. It is descriptive only and is
- * not consumed by BEGINNER_CONSERVATIVE_V1.
+ * This is intentionally separate from ordinary [DecisionFeatures]. It is descriptive only and
+ * carries no recommendation-policy or selection authority.
  */
 internal data class DrunkAssignmentFeatures(
     val topology: FeatureProjection<DrunkAssignmentTopologyFeatures>,

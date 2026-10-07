@@ -97,57 +97,10 @@ class StructuredInformationShadowAdapterTest {
         assertEquals(timelineBefore, timeline.reducerFacts())
         assertEquals(observationsBefore, observationLog.records)
         assertEquals(revision, shadow.informationSnapshot.revision)
-        assertEquals(
-            BeginnerConservativeV1Selector.select(
-                evaluation = shadow.policyEvaluation,
-                decisionId = decisionContext.semanticIdentity,
-                selectionSeed = snapshot.gameSeed,
-            ),
-            shadow.policySelection,
-        )
     }
 
     @Test
-    fun `decision trace captures versioned shadow evaluation without becoming canonical history`() {
-        val revision = InformationDecisionRevision(
-            gameStateRevision = snapshot.gameStateRevision,
-            playerInputRevision = snapshot.playerInputRevision,
-        )
-        val decisionContext = structuredEmpathContext(revision)
-        val shadow = StructuredInformationShadowAdapter.evaluate(
-            decisionContext = decisionContext,
-            exactContext = ExactConsequenceContext(
-                validatedRuleset = validatedRuleset,
-                exactContext = exactHistoricalContext(ActionFactTimeline(emptyList()), EpistemicObservationLog()),
-            ),
-        )
-
-        val trace = DecisionTraceFactory.fromStructuredShadow(shadow = shadow)
-
-        assertEquals(DecisionTrace.CURRENT_SCHEMA_VERSION, trace.schemaVersion)
-        assertEquals(
-            StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1.evidenceCheckpoint,
-            trace.evidenceCheckpoint,
-        )
-        assertEquals(decisionContext.semanticIdentity, trace.decisionId)
-        assertEquals(revision, trace.sourceRevision)
-        assertEquals(decisionContext.snapshot.legalCandidateIds, trace.legalCandidateIds)
-        assertEquals(shadow.featureEvaluation, trace.featureEvaluation)
-        assertEquals(shadow.policySelection, trace.policySelection)
-        assertTrue(trace.actualChoice is DecisionTraceActualChoice.Pending)
-        val policySnapshot = trace.policySnapshot as DecisionTracePolicySnapshot.Ready
-        val policyEvaluation = shadow.policyEvaluation as BeginnerConservativePolicyEvaluation.Ready
-        assertEquals(policyEvaluation.policyVersion, policySnapshot.policyVersion)
-        assertEquals(policyEvaluation.evaluations, policySnapshot.evaluations)
-        assertEquals(policyEvaluation.limitations, policySnapshot.limitations)
-        val prefix = trace.historyPrefixRef as SdeHistoricalPrefixRef.Global
-        assertEquals(snapshot.gameId, prefix.gameId)
-        assertTrue(prefix.actionRefs.isEmpty())
-        assertTrue(prefix.observationRefs.isEmpty())
-    }
-
-    @Test
-    fun `historical confirmation features are attached without changing v1 policy ordering`() {
+    fun `historical confirmation features are attached to neutral shadow output`() {
         val revision = InformationDecisionRevision(
             gameStateRevision = snapshot.gameStateRevision,
             playerInputRevision = snapshot.playerInputRevision,
@@ -168,21 +121,6 @@ class StructuredInformationShadowAdapterTest {
             confirmation as FeatureProjection.Projected
             assertTrue(confirmation.value.historicalObservationImpacts.isEmpty())
         }
-
-        val strategicOnly = DecisionFeatureEvaluation.Ready(
-            candidates = features.candidates.map { candidate ->
-                candidate.copy(
-                    features = candidate.features.copy(
-                        confirmationChainImpact =
-                            FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET),
-                    ),
-                )
-            },
-        )
-        assertEquals(
-            BeginnerConservativeV1Policy.evaluate(strategicOnly),
-            shadow.policyEvaluation,
-        )
     }
 
     @Test
@@ -320,25 +258,10 @@ class StructuredInformationShadowAdapterTest {
                 impaired.value.priorImpairedObservationIds,
             )
         }
-
-        val withoutImpairedNarrative = DecisionFeatureEvaluation.Ready(
-            candidates = features.candidates.map { candidate ->
-                candidate.copy(
-                    features = candidate.features.copy(
-                        impairedNarrative =
-                            FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET),
-                    ),
-                )
-            },
-        )
-        assertEquals(
-            BeginnerConservativeV1Policy.evaluate(withoutImpairedNarrative),
-            shadow.policyEvaluation,
-        )
     }
 
     @Test
-    fun `whole table healthy route reaches structured feature without changing v1 policy`() {
+    fun `whole table healthy route reaches structured feature`() {
         val revision = InformationDecisionRevision(
             gameStateRevision = snapshot.gameStateRevision,
             playerInputRevision = snapshot.playerInputRevision,
@@ -409,21 +332,6 @@ class StructuredInformationShadowAdapterTest {
             ),
             healthy.value.currentCandidateHealthyRouteRef,
         )
-
-        val withoutHealthyInformation = DecisionFeatureEvaluation.Ready(
-            candidates = features.candidates.map { candidate ->
-                candidate.copy(
-                    features = candidate.features.copy(
-                        healthyInformationUtility =
-                            FeatureProjection.Unavailable(FeatureUnavailableReason.NOT_PROJECTED_YET),
-                    ),
-                )
-            },
-        )
-        assertEquals(
-            BeginnerConservativeV1Policy.evaluate(withoutHealthyInformation),
-            shadow.policyEvaluation,
-        )
     }
 
     @Test
@@ -447,14 +355,7 @@ class StructuredInformationShadowAdapterTest {
         )
 
         assertTrue(shadow.consequences is ExactConsequenceEvaluation.Deferred)
-        assertNull(shadow.policySelection)
-        val trace = DecisionTraceFactory.fromStructuredShadow(shadow = shadow)
-        assertEquals(
-            StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1.evidenceCheckpoint,
-            trace.evidenceCheckpoint,
-        )
-        assertTrue(trace.policySnapshot is DecisionTracePolicySnapshot.Deferred)
-        assertNull(trace.policySelection)
+        assertTrue(shadow.featureEvaluation is DecisionFeatureEvaluation.Deferred)
         assertEquals(recommendedBefore, shadow.informationSnapshot.recommendedCandidateIds)
         assertEquals(decisionContext.snapshot.legalCandidateIds, shadow.plannedDecisions.map(PlannedDecisionRef::candidateId))
         val recommendedCandidateId = recommendedBefore.single()

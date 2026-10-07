@@ -13,7 +13,6 @@ import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingIntermediateSe
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingShownSeatAssignment
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingVisibleRoster
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -107,7 +106,7 @@ class DrunkAssignmentFeatureSurfaceTest {
     }
 
     @Test
-    fun `shadow exposes dedicated feature evaluation in legal-candidate order without changing frozen V1`() {
+    fun `shadow exposes dedicated feature evaluation in legal-candidate order`() {
         val ruleset = canonicalRuleset()
         val shadow = DrunkSetupShadowAdapter.evaluate(
             gameId = "dlb3b2-feature-surface",
@@ -145,12 +144,6 @@ class DrunkAssignmentFeatureSurfaceTest {
             )
         }
 
-        val policy = shadow.policyEvaluation as BeginnerConservativePolicyEvaluation.Deferred
-        assertEquals(
-            setOf(BeginnerConservativePolicyDeferralReason.STRATEGIC_FEATURE_UNAVAILABLE),
-            policy.reasons,
-        )
-        assertNull(shadow.policySelection)
     }
 
     private fun g10Game2IntermediateSetup(): TroubleBrewingIntermediateSetup =

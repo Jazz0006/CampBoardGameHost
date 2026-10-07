@@ -1,0 +1,131 @@
+{
+  "schema": "botc.res4-special-policy-reference-fixtures",
+  "version": 1,
+  "purpose": "Non-executable historical/reference material retained after RES-4 physical deletion of named special-policy selectors.",
+  "fixtures": [
+    {
+      "id": "q04-drunk-empath-vs-monk",
+      "formerPolicyId": "DRUNK_ASSIGNMENT_Q04_V1",
+      "evidenceKind": "EXPERT_CONDITIONAL_PREFERENCE",
+      "script": "Trouble Brewing",
+      "decisionType": "DRUNK_ASSIGNMENT",
+      "source": {
+        "title": "12: Monk (Trouble Brewing)",
+        "sourceId": "podcast:91574d66c261bb0dd8bcb08469531a9c",
+        "guid": "e8241f55-824b-4dc5-8314-db398b5ece55",
+        "window": "00:43:28-00:44:30",
+        "evidenceLabCheckpoint": "08d95a0c258f687187c0476a0f430fa5ff8229cb"
+      },
+      "reconstructableInput": {
+        "compatibilityCandidateShownRole": "Empath",
+        "legalAlternativeShownRole": "Monk",
+        "empathTopology": {
+          "adjacentEvilSeats": [],
+          "adjacentDemonSeats": []
+        }
+      },
+      "historicalOrExpertChoice": {
+        "kind": "CONDITIONAL_PREFERENCE",
+        "preferredShownRole": "Monk",
+        "alternativeShownRole": "Empath"
+      },
+      "rationale": [
+        "Preserve healthy Empath information when the Empath is between Good players and away from the Demon."
+      ],
+      "nonGeneralization": [
+        "Not a global Monk-over-Empath rule.",
+        "Does not rank Monk above other Townsfolk.",
+        "Does not define a complete Drunk candidate ordering."
+      ]
+    },
+    {
+      "id": "g10-librarian-future-flexibility",
+      "formerPolicyId": "BEGINNER_CONSERVATIVE_V2 / FunctioningLibrarianV2ProductionSelector",
+      "evidenceKind": "HISTORICAL_OBSERVED_CHOICE",
+      "script": "Trouble Brewing",
+      "decisionType": "FIRST_NIGHT_PAIR_INFORMATION",
+      "source": {
+        "case": "The Megavoid Game 2",
+        "decisionTime": "16:52",
+        "evidenceLabCheckpoint": "78f672868ea6603317aeefa20ad91686c5886db9"
+      },
+      "reconstructableInput": {
+        "playerCount": 9,
+        "sourceSeat": 4,
+        "sourceRole": "Librarian",
+        "reliability": "RELIABLE",
+        "seats": [
+          {"seat": 1, "actualRole": "Drunk", "shownRole": "Empath"},
+          {"seat": 2, "actualRole": "Imp"},
+          {"seat": 3, "actualRole": "Undertaker"},
+          {"seat": 4, "actualRole": "Librarian"},
+          {"seat": 5, "actualRole": "Spy"},
+          {"seat": 6, "actualRole": "Monk"},
+          {"seat": 7, "actualRole": "Mayor"},
+          {"seat": 8, "actualRole": "Virgin"},
+          {"seat": 9, "actualRole": "Butler"}
+        ],
+        "legalTruthfulOutcomeCount": 40
+      },
+      "historicalOrExpertChoice": {
+        "kind": "OBSERVED_CHOICE",
+        "shownRole": "Drunk",
+        "candidateSeats": [1, 3],
+        "decoySeatActualRole": "Undertaker"
+      },
+      "rationale": [
+        "Empath and Undertaker both create recurring information, so ambiguity over which player is the Drunk changes how later information streams are trusted.",
+        "Preserve a meaningful competing recurring-information narrative rather than a low-consequence ambiguity."
+      ],
+      "nonGeneralization": [
+        "No Undertaker-specific bonus.",
+        "No global recurring-information-role ranking.",
+        "No numeric future-flexibility score."
+      ]
+    },
+    {
+      "id": "inv1a-investigator-empath-pressure",
+      "formerPolicyId": "FUNCTIONING_INVESTIGATOR_INV1_V1",
+      "evidenceKind": "ACCEPTED_BOUNDED_REFERENCE_SCENARIO",
+      "script": "Trouble Brewing",
+      "decisionType": "FIRST_NIGHT_PAIR_INFORMATION",
+      "source": {
+        "hostAcceptance": "PR #222",
+        "merge": "420eef4e21769e3adf8928f187009f2afc1e5fa2"
+      },
+      "reconstructableInput": {
+        "playerCount": 7,
+        "sourceSeat": 4,
+        "sourceRole": "Investigator",
+        "reliability": "RELIABLE",
+        "seats": [
+          {"seat": 1, "actualRole": "Imp"},
+          {"seat": 2, "actualRole": "Empath"},
+          {"seat": 3, "actualRole": "Monk"},
+          {"seat": 4, "actualRole": "Investigator"},
+          {"seat": 5, "actualRole": "Poisoner"},
+          {"seat": 6, "actualRole": "Chef"},
+          {"seat": 7, "actualRole": "Soldier"}
+        ],
+        "scopeConditions": [
+          "Empath is healthy and adjacent to the Demon.",
+          "Exactly one real Minion is in play."
+        ]
+      },
+      "historicalOrExpertChoice": {
+        "kind": "ACCEPTED_REFERENCE_CHOICE",
+        "shownRole": "Poisoner",
+        "candidateSeats": [3, 5]
+      },
+      "rationale": [
+        "Preserve Demon deniability under Empath pressure by pairing the sole real Minion with the Townsfolk neighbour on the other side of the pressured Empath."
+      ],
+      "nonGeneralization": [
+        "Fails closed when the Empath is not pressuring the Demon.",
+        "Fails closed for unreliable Investigator.",
+        "Fails closed with multiple Minions.",
+        "Not a general Investigator clue-ranking rule."
+      ]
+    }
+  ]
+}

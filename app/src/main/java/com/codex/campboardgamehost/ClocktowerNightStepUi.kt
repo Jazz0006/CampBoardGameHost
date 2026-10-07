@@ -72,7 +72,6 @@ internal fun ClocktowerNightStepCardLocalized(
     onSelectChambermaidFirst: (String) -> Unit,
     onSelectChambermaidSecond: (String) -> Unit,
     onApplyRecommendedDisplayOption: (ClocktowerDisplayOption) -> Unit,
-    onStructuredNumberDecisionPrepared: suspend (StructuredNumberInformationUiModel) -> Unit,
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
@@ -285,9 +284,6 @@ internal fun ClocktowerNightStepCardLocalized(
     )
     val numericPreparation = clocktowerNumericInformationPreparation(manualFallbackStep, structuredActorSeat, structuredRecommendedOption)
     val structuredNumberUiModel = numericPreparation?.prepareUiModel(recommendationCoordinator, informationIdentity)
-    LaunchedEffect(structuredNumberUiModel?.semanticStateKey) {
-        structuredNumberUiModel?.let { onStructuredNumberDecisionPrepared(it) }
-    }
     fun structuredEmpathSelectionIsTruthful(value: Int): Boolean =
         numericPreparation?.isTruthful(value, projectedFirstNightInformationCandidates) ?: false
     val chefPlayers = cards.toClocktowerPlayerStates(poisonedPlayerName = null)

@@ -71,7 +71,6 @@ import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfi
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
-import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
 import com.codex.campboardgamehost.clocktower.session.commitPoisonTargetBoundary
 import com.codex.campboardgamehost.clocktower.session.synchronizePlayerDeathWithinCurrentRevision
@@ -128,9 +127,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputFactory
 import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputJsonCodec
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdePostCommitCorrelationCoordinator
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeRuntimeShadowCoordinator
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeRuntimeShadowIdentity
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
@@ -189,7 +185,7 @@ private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
 private const val GAME_HISTORY_KEY = "game_history"
 internal const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
 internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdate"
-internal const val SDE_RUNTIME_SHADOW_LOG_TAG = "SdeRuntimeShadow"
+internal const val SDE_HISTORICAL_REPLAY_CAPTURE_LOG_TAG = "SdeHistoricalReplayCapture"
 private const val MAX_GAME_HISTORY = 20
 internal const val MIN_PLAYERS = 3
 internal const val MIN_CLOCKTOWER_PLAYERS = 5
@@ -441,10 +437,6 @@ internal fun CampBoardGameHostApp() {
     val activeGameClocktowerRulesetCatalog = remember(baseContext) {
         BuiltInClocktowerRulesetCatalog.fromContext(baseContext)
     }
-    val decisionTracePersistenceLane = remember(baseContext.applicationContext) {
-        DecisionTraceArchivePreferencesStorage.persistenceLaneFromContext(baseContext)
-    }
-    val sdeDiagnosticPersistenceScope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
     var storytellerExperienceMode by remember { mutableStateOf(baseContext.loadStorytellerExperienceMode()) }
@@ -945,46 +937,6 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    suspend fun evaluateSdeRuntimeShadow(model: StructuredNumberInformationUiModel) {
-        if (!BuildConfig.DEBUG || currentClocktowerScript != ClocktowerScript.TroubleBrewing) return
-        val session = clocktowerGameSession ?: return
-        val setup = committedClocktowerSetup ?: return
-        val rulesetRef = clocktowerRulesetRef ?: return
-        val replayInput = runCatching {
-            SdeHistoricalReplayInputFactory.captureFresh(
-                committedSetup = setup,
-                currentSnapshot = session.toGameSnapshot(rulesetRef),
-            ).input
-        }.getOrElse { failure ->
-            Log.w(SDE_RUNTIME_SHADOW_LOG_TAG, "capture_failed:${failure::class.java.simpleName}")
-            return
-        }
-        val report = SdeRuntimeShadowCoordinator.evaluate(
-            replayInput = replayInput,
-            decisionContext = model.shadowDecisionContext,
-            validatedRuleset = activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript),
-            roleDefinitions = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
-            currentIdentity = {
-                clocktowerGameSession?.view?.let { view ->
-                    SdeRuntimeShadowIdentity(
-                        requestIdentity = model.shadowDecisionContext.requestIdentity,
-                        gameStateRevision = view.gameStateRevision,
-                        playerInputRevision = view.playerInputRevision,
-                        nextTimelineGlobalSequence = view.nextTimelineGlobalSequence,
-                    ).takeIf { it.gameId == view.gameId }
-                }
-            },
-            persistTrace = decisionTracePersistenceLane::append,
-        )
-        Log.i(
-            SDE_RUNTIME_SHADOW_LOG_TAG,
-            "outcome=${report.outcome} evaluationMs=${report.evaluationMillis} " +
-                "persistenceQueueMs=${report.persistenceQueueMillis} " +
-                "persistenceMs=${report.persistenceMillis} totalMs=${report.totalElapsedMillis} " +
-                "heapDeltaBytes=${report.coarseHeapDeltaBytes} failure=${report.failureType}",
-        )
-    }
-
     fun commitConfirmedInformationDecision(confirmed: ConfirmedInformationDecision) {
         if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) {
             recordEpistemicObservation(confirmed.draft)
@@ -997,24 +949,6 @@ internal fun CampBoardGameHostApp() {
         publishClocktowerSessionView()
         invalidateA4RevisionScope()
         a4ObservationDurabilityGate.markPending(committed.recordId)
-
-        val postCommitSession = session.view
-        sdeDiagnosticPersistenceScope.launch {
-            val correlation = SdePostCommitCorrelationCoordinator.correlate(
-                persistenceLane = decisionTracePersistenceLane,
-                confirmed = confirmed,
-                committedObservation = committed,
-                postCommitSession = postCommitSession,
-            )
-            if (!correlation.completed) {
-                Log.w(
-                    SDE_RUNTIME_SHADOW_LOG_TAG,
-                    "correlation_failed:${correlation.failureType} " +
-                        "queueMs=${correlation.queueMillis} " +
-                        "persistenceMs=${correlation.persistenceMillis}",
-                )
-            }
-        }
     }
 
     fun preflightClocktowerPublicAliveObservation(
@@ -1210,7 +1144,7 @@ internal fun CampBoardGameHostApp() {
                     )
                 }.onFailure { failure ->
                     Log.w(
-                        SDE_RUNTIME_SHADOW_LOG_TAG,
+                        SDE_HISTORICAL_REPLAY_CAPTURE_LOG_TAG,
                         "recovery_replay_capture_failed:${failure::class.java.simpleName}",
                     )
                 }.getOrNull()
@@ -2313,7 +2247,6 @@ internal fun CampBoardGameHostApp() {
                             addClocktowerEvent(type, title, detail, names)
                         },
                         onRecordEpistemicObservation = ::recordEpistemicObservation,
-                        onStructuredNumberDecisionPrepared = ::evaluateSdeRuntimeShadow,
                         onCommitConfirmedInformationDecision = ::commitConfirmedInformationDecision,
                         onHostTools = {
                             hostToolTab = HostToolTab.Roles

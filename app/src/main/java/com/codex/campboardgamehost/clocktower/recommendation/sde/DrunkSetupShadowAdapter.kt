@@ -39,21 +39,15 @@ internal data class DrunkSetupShadowCandidate(
 }
 
 /**
- * Non-authoritative DLB-3A setup shadow.
+ * Non-authoritative setup shadow for rules-owned Drunk candidates and deterministic feature evidence.
  *
- * Ecology evidence is retained beside each legal candidate, but it is intentionally not projected
- * into BEGINNER_CONSERVATIVE_V1 yet. The frozen policy therefore defers rather than manufacturing
- * an evidence-free Drunk-seat preference.
+ * This adapter owns no policy evaluation, ranking, selection, trace persistence, or replay authority.
  */
 internal data class DrunkSetupShadowEvaluation(
     val decisionContext: DrunkAssignmentDecisionContext,
     val candidates: List<DrunkSetupShadowCandidate>,
     val drunkAssignmentFeatureEvaluation: DrunkAssignmentFeatureEvaluation,
     val featureEvaluation: DecisionFeatureEvaluation,
-    val policyEvaluation: BeginnerConservativePolicyEvaluation,
-    val policySelection: PolicySelection?,
-    val decisionTrace: DecisionTrace,
-    val replayInput: MultiPolicyReplayInput,
 ) {
     val sdeCandidates: List<SdeDecisionCandidate>
         get() = candidates.map(DrunkSetupShadowCandidate::sdeCandidate)
@@ -78,24 +72,6 @@ internal data class DrunkSetupShadowEvaluation(
         }
         require(featureEvaluation.candidateIds == candidateIds) {
             "Drunk setup shadow features must preserve legal-candidate order."
-        }
-        require(policyEvaluation.candidateIds == candidateIds) {
-            "Drunk setup shadow policy must preserve legal-candidate order."
-        }
-        require(policyEvaluation.policyVersion == PolicyVersions.BEGINNER_CONSERVATIVE_V1) {
-            "Drunk setup shadow must use the frozen BEGINNER_CONSERVATIVE_V1 definition."
-        }
-        require(policySelection == null) {
-            "DLB-3A must not select a Drunk candidate before strategic projection is authorized."
-        }
-        require(decisionTrace.legalCandidateIds == candidateIds) {
-            "Drunk setup shadow trace must preserve legal-candidate order."
-        }
-        require(decisionTrace.actualChoice == DecisionTraceActualChoice.Pending) {
-            "Drunk setup shadow trace must remain pending."
-        }
-        require(replayInput.legalCandidateIds == candidateIds) {
-            "Drunk setup shadow replay input must preserve legal-candidate order."
         }
     }
 }
@@ -237,58 +213,11 @@ internal object DrunkSetupShadowAdapter {
                 )
             },
         )
-        val policyEvaluation = BeginnerConservativeV1Policy.evaluate(featureEvaluation)
-        require(policyEvaluation is BeginnerConservativePolicyEvaluation.Deferred) {
-            "DLB-3A must defer frozen V1 until strategic Drunk-assignment projection exists."
-        }
-        require(
-            policyEvaluation.reasons ==
-                setOf(BeginnerConservativePolicyDeferralReason.STRATEGIC_FEATURE_UNAVAILABLE),
-        ) {
-            "DLB-3A frozen V1 must defer specifically because strategic projection is unavailable."
-        }
-
-        val policySelection = BeginnerConservativeV1Selector.select(
-            evaluation = policyEvaluation,
-            decisionId = decisionId,
-            selectionSeed = decisionContext.selectionSeed,
-        )
-        require(policySelection == null) {
-            "DLB-3A deferred policy must not manufacture a deterministic Drunk-seat selection."
-        }
-
-        val definition = StorytellerPolicyDefinitions.BEGINNER_CONSERVATIVE_V1
-        val decisionTrace = DecisionTrace(
-            evidenceCheckpoint = definition.evidenceCheckpoint,
-            decisionId = decisionId,
-            lifecycleStage = SdeDecisionLifecycleStage.SetupPrecommit,
-            sourceRevision = decisionContext.sourceRevision,
-            historyPrefixRef = historyPrefix,
-            legalCandidateIds = legalCandidateIds,
-            featureEvaluation = featureEvaluation,
-            policySnapshot = policyEvaluation.toDecisionTracePolicySnapshot(),
-            policySelection = null,
-            actualChoice = DecisionTraceActualChoice.Pending,
-        )
-        val replayInput = MultiPolicyReplayInput(
-            decisionId = decisionId,
-            lifecycleStage = SdeDecisionLifecycleStage.SetupPrecommit,
-            sourceRevision = decisionContext.sourceRevision,
-            historyPrefixRef = historyPrefix,
-            legalCandidateIds = legalCandidateIds,
-            featureEvaluation = featureEvaluation,
-            selectionSeed = decisionContext.selectionSeed,
-        )
-
         return DrunkSetupShadowEvaluation(
             decisionContext = decisionContext,
             candidates = projectedCandidates,
             drunkAssignmentFeatureEvaluation = drunkAssignmentFeatureEvaluation,
             featureEvaluation = featureEvaluation,
-            policyEvaluation = policyEvaluation,
-            policySelection = null,
-            decisionTrace = decisionTrace,
-            replayInput = replayInput,
         )
     }
 
