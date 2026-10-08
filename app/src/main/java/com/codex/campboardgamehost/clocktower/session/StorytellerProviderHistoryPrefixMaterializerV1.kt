@@ -13,6 +13,16 @@ import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBindi
  * Historical requests require a separately persisted at-decision frozen snapshot (R1C).
  */
 internal object StorytellerProviderHistoryPrefixMaterializerV1 {
+    /**
+     * Explicitly unavailable historical requests must not be reconstructed from a current
+     * SessionState, even if revisions happen to match a past decision.
+     */
+    fun withoutFrozenHistoricalCutoff(
+        gameId: String,
+        sourceRevision: StorytellerProviderRevisionV1,
+    ): StorytellerProviderHistoryPrefixV1 =
+        StorytellerProviderHistoryPrefixV1.unavailableHistoricalCutoff(gameId, sourceRevision)
+
     fun captureLive(
         sessionState: ClocktowerSessionState,
         sourceRevision: StorytellerProviderRevisionV1,
