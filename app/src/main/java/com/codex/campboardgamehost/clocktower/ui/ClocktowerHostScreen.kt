@@ -145,7 +145,7 @@ internal fun ClocktowerJudgeScreen(
     onConfirmArtistQuestion: (String, Boolean, Boolean) -> Unit,
     onSlayerShot: (String, String, Boolean) -> Unit,
     onPreflightVirginExecution: (String, Boolean) -> Unit,
-    onVirginNomination: (String, String, Boolean) -> Unit,
+    onVirginNomination: (String, String, Boolean, Boolean?) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
     onConfirmNight: () -> Unit,
@@ -1969,25 +1969,13 @@ internal fun ClocktowerJudgeScreen(
         val virginRegistrationKey = nominatorCard
             ?.takeIf { it.name == spyCard?.name && virginFirstNomination }
             ?.let { registrationKey("Virgin", it.name) }
-        val virginSpyRegistrationResolution = registrationResolution(
-            virginRegistrationKey,
-            "Virgin",
-            spyCard,
-            listOf(ClocktowerTeam.Townsfolk),
-        )
-        val virginSpyLegalRoles = virginSpyRegistrationResolution
-            ?.special
-            ?.mapNotNull { candidate ->
-                completeTroubleBrewingRoles.firstOrNull { it.enName == candidate.registeredRole.value }
-            }
-            .orEmpty()
         val virginSpyRegistersGood = spyRegistersGood(virginRegistrationKey, "Virgin")
         val virginExecutes = virginAbilityWorks &&
             (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || virginSpyRegistersGood)
         val specialNotice = when {
             virginExecutes -> text(
-                "${playerSeatLabel(cards, nomineeName)} 首次被真实镇民提名：不进行投票，提名者将立即被处决。",
-                "${playerSeatLabel(cards, nomineeName)} was first nominated by a Townsfolk: skip voting and execute the nominator.",
+                "${playerSeatLabel(cards, nomineeName)} 首次被登记为镇民的玩家提名：不进行投票，提名者将立即被处决。",
+                "${playerSeatLabel(cards, nomineeName)} was first nominated by a player registering as Townsfolk: skip voting and execute the nominator.",
             )
             virginFirstNomination -> text(
                 "这是圣女第一次被提名，但能力不会处决提名者；记录能力已用过后继续投票。",
@@ -2026,12 +2014,17 @@ internal fun ClocktowerJudgeScreen(
                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination && virginExecutes) {
                     onPreflightVirginExecution(
                         chosenNominator,
-                        spyRegistrationWillRecord(virginRegistrationKey),
+                        false, // Day ruling is causal, not a fake preceding localized event.
                     )
                 }
                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
-                    recordSpyRegistration(virginRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Virgin")
-                    onVirginNomination(chosenNominator, chosenNominee, virginExecutes)
+                    val explicitSpyRuling = registrationState.explicitChoice(
+                        ClocktowerRegistrationSubject.SPY, virginRegistrationKey,
+                    )?.takeIf { virginAbilityWorks && spyCanRegister("Virgin") }
+                    onVirginNomination(
+                        chosenNominator, chosenNominee, virginExecutes,
+                        explicitSpyRuling?.usesSpecialRegistration,
+                    )
                 }
                 if (chosenNominator != null && chosenNominee != null && virginExecutes) {
                     onRecordEvent(
@@ -2052,16 +2045,14 @@ internal fun ClocktowerJudgeScreen(
             },
             specialContent = {
                 if (virginRegistrationKey != null && spyCard != null) {
-                    ClocktowerSpyRegistrationDecisionControls(
-                        legalRoles = virginSpyLegalRoles.map { it.enName to it.nameFor(language) },
-                        registersGood = spyRegistersGood(virginRegistrationKey, "Virgin"),
-                        registeredRoleEnName = registrationState.spyRole(virginRegistrationKey),
+                    ClocktowerSpyTownsfolkTypeDecisionControls(
+                        registersAsTownsfolk = spyRegistersGood(virginRegistrationKey, "Virgin"),
+                        hasExplicitChoice = registrationState.spyHasExplicitChoice(virginRegistrationKey),
                         enabled = spyCanRegister("Virgin"),
                         language = language,
-                        onRegistersGoodChange = { good ->
-                            registrationState.chooseSpy(virginRegistrationKey, good, defaultRole = "Washerwoman")
+                        onRegistersAsTownsfolkChange = { chosen ->
+                            registrationState.chooseSpy(virginRegistrationKey, chosen)
                         },
-                        onRoleChange = { registrationState.chooseSpyRole(virginRegistrationKey, it) },
                     )
                 }
             },

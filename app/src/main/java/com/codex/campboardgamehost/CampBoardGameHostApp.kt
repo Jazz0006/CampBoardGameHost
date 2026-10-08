@@ -77,6 +77,7 @@ import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequest
 import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
 import com.codex.campboardgamehost.clocktower.session.DayAbilityRegistrationRulingProducerV1
 import com.codex.campboardgamehost.clocktower.session.ConfirmedDaySlayerRegistrationV1
+import com.codex.campboardgamehost.clocktower.session.ConfirmedDayVirginSpyRegistrationV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCausalJournalRecordV1
 import com.codex.campboardgamehost.clocktower.session.ClocktowerConfirmedRegistrationHostWriterV1
 import com.codex.campboardgamehost.clocktower.session.ConfirmedRegistrationResolutionInputV1
@@ -2820,7 +2821,48 @@ internal fun CampBoardGameHostApp() {
                                 )
                             }
                         },
-                        onVirginNomination = { nominatorName, nomineeName, executeNominator ->
+                        onVirginNomination = { nominatorName, nomineeName, executeNominator, explicitSpyRegistersTownsfolk ->
+                            if (
+                                explicitSpyRegistersTownsfolk != null &&
+                                !clocktowerVirginUsed &&
+                                currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
+                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+                            ) {
+                                val virginCard = cards.firstOrNull { it.name == nomineeName }
+                                val spyCard = cards.firstOrNull { it.name == nominatorName }
+                                if (
+                                    virginCard?.clocktowerRole?.enName == "Virgin" &&
+                                    spyCard?.clocktowerRole?.enName == "Spy"
+                                ) {
+                                    // The player chose the public nomination; only this Spy type
+                                    // registration is Storyteller discretion. Freeze BEFORE
+                                    // virginUsed, the execution, death or phase changes.
+                                    val session = requireClocktowerGameSession()
+                                    val rulesetRef = requireNotNull(clocktowerRulesetRef)
+                                    val registry = activeGameClocktowerRulesetCatalog
+                                        .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+                                    val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+                                        gameSnapshot = session.toGameSnapshot(rulesetRef),
+                                        phase = StorytellerPhase.DAY,
+                                        round = round,
+                                        characterRegistry = registry,
+                                    )
+                                    DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
+                                        session = session,
+                                        journal = currentClocktowerCausalJournal(),
+                                        snapshot = snapshot,
+                                        legalRoles = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
+                                        input = ConfirmedDayVirginSpyRegistrationV1(
+                                            interactionId = "day:$round:virgin:${clocktowerSeatFor(nomineeName)}:" +
+                                                clocktowerSeatFor(nominatorName),
+                                            virginSeat = clocktowerSeatFor(nomineeName),
+                                            spyNominatorSeat = clocktowerSeatFor(nominatorName),
+                                            registersAsTownsfolk = explicitSpyRegistersTownsfolk,
+                                        ),
+                                        confirmedExecution = executeNominator,
+                                    )
+                                }
+                            }
                             clocktowerVirginUsed = true
                             advanceClocktowerGameStateRevision()
                             if (executeNominator) {
