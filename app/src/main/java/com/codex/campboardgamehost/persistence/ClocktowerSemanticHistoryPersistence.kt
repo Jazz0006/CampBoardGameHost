@@ -109,6 +109,7 @@ internal object ClocktowerSemanticHistoryPersistence {
                 put("targetSeat", fact.targetSeat)
                 fact.klutzDeathTrigger?.let { put("klutzDeathTrigger", encodeKlutzDeathTrigger(it)) }
             }
+            is ActionFact.NoExecution -> put("kind", "no-execution")
             is ActionFact.SlayerShot -> {
                 put("kind", "slayer-shot")
                 put("claimantSeat", fact.claimantSeat)
@@ -176,6 +177,7 @@ internal object ClocktowerSemanticHistoryPersistence {
             "death" -> ActionFact.Death(
                 actionId, sequence, positiveSeat(json, "targetSeat"), decodeKlutzDeathTrigger(json),
             )
+            "no-execution" -> ActionFact.NoExecution(actionId, sequence)
             "slayer-shot" -> ActionFact.SlayerShot(
                 actionId, sequence, positiveSeat(json, "claimantSeat"), positiveSeat(json, "targetSeat"),
                 booleanValue(json, "abilityConsumed"), booleanValue(json, "hit"),
