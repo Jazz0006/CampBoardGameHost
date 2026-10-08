@@ -148,6 +148,15 @@ internal object RecoverySnapshotStrictDecoder {
                 nextTimelineGlobalSequence = nextTimelineGlobalSequence,
                 events = json.requiredArray("clocktowerEvents").decodeEventsStrict(),
                 epistemicObservations = epistemicObservations,
+                causalDecisionJournal = if (json.has(ClocktowerCausalJournalPersistence.ROOT_KEY)) {
+                    ClocktowerCausalJournalPersistence.decode(
+                        value = json.getJSONObject(ClocktowerCausalJournalPersistence.ROOT_KEY),
+                        expectedGameId = json.requiredNonBlankString("clocktowerGameId"),
+                        actions = actionTimeline,
+                        observations = epistemicObservations,
+                        recoveredCursor = nextTimelineGlobalSequence,
+                    )
+                } else null,
             ),
         )
     }
