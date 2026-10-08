@@ -69,8 +69,12 @@ GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEP
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
 GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
-GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — 1A/#263 and 1B/#265 accepted; 1C bounded actual-script day registration/mechanics COMPLETE via 1C1/#267, 1C2/#269, 1C5A/#276, 1C5B/#278, 1C5C/#280 and 1C6/#282 T4 accepted; synthetic Klutz/Spy 1C3A/#271 and 1C3B/#273 live coverage RETRACTED; C2C-2 confirmed information family NEXT; C2C-3 setup/discretion OPEN; R1C IN PROGRESS
+GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — 1A/#263 and 1B/#265 accepted; 1C bounded actual-script day registration/mechanics COMPLETE via 1C1/#267, 1C2/#269, 1C5A/#276, 1C5B/#278, 1C5C/#280 and 1C6/#282 T4 accepted + P1 perceived-Virgin Recovery 1C6B/#284 FULL T4 accepted; synthetic Klutz/Spy 1C3A/#271 and 1C3B/#273 live coverage RETRACTED; C2C-2 confirmed information family NEXT; C2C-3 setup/discretion OPEN; R1C IN PROGRESS
 ~~~
+
+### GSP-R1C2C-1C6B — Drunk shown Virgin strict Recovery P1 repair accepted — 2026-10-09
+
+[1C6B accepted P1 correction](GSP_R1C2C1C6B_DRUNK_VIRGIN_RECOVERY_CORRECTION_2026-10-09.md): original #282 post-merge review found that first-nomination `firstVirginNomination=true` legitimately occurs for a **Drunk shown Virgin**, because production `AbilityFunctioningSemantics.interactsAs` uses perceived role. An actual-role-only Recovery validation rejected valid TB games after the Drunk died. **PR #284** squash `fc23daf78b70eee824bc9be4d2d35dd75bbbc597`, exact head `aba672ce51ebb8b9df9c27796edba50e9babfff2`, **CI #3968 full T4 GREEN**, **R2 #3603 GREEN**: Recovery now checks actual-or-Drunk-shown Virgin **perceived identity**, not later living state; NGJ still cannot carry Virgin-first. Original P1 thread in #282 was answered and resolved. No Virgin execution for a Drunk; first interaction ≠ ability functioning. **Bounded 1C family accepted as corrected by 1C6B.** **NEXT C2C-2** information-result producers, not GSP-R2/LLM API.
 
 ### GSP-R1C2C-1C6 — actual TB/NGJ public day coverage and Recovery accepted — 2026-10-09
 
