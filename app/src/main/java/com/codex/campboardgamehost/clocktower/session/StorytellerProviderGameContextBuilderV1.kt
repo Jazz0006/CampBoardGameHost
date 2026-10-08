@@ -79,11 +79,19 @@ internal object StorytellerProviderGameContextBuilderV1 {
         require(sessionState.playerInputRevision == sourceRevision.playerInputRevision) {
             "Provider context player-input revision must match the request revision."
         }
-        return build(
+        // Current effective decision events cannot be causally interleaved with GLOBAL_V1 facts.
+        // Until R1C persists exact decision cutoffs and corrections, keep them out of the
+        // historical provider prefix. Coverage explicitly marks PRIOR_DECISIONS unknown.
+        val base = build(
             snapshot = snapshot,
             sourceRevision = sourceRevision,
             playerInputsBySeat = sessionState.storytellerPlayerContextBySeat,
-            decisionHistory = sessionState.decisionHistory,
+        )
+        return base.copy(
+            historyPrefix = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(
+                sessionState = sessionState,
+                sourceRevision = sourceRevision,
+            ),
         )
     }
 }
