@@ -467,7 +467,7 @@ internal fun requireSchemaVersion(version: Int) {
     }
 }
 
-private fun InformationProposition.referencedSeats(): Set<Int> = when (this) {
+internal fun InformationProposition.referencedSeats(): Set<Int> = when (this) {
     is InformationProposition.RoleAt -> setOf(seat)
     is InformationProposition.ShownRoleAt -> setOf(seat)
     is InformationProposition.AlignmentAt -> setOf(seat)
