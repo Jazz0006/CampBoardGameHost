@@ -95,10 +95,13 @@ internal object StorytellerDecisionPrefixCaptureV1 {
                 require(it.value == player.actualRole.value) { "Snapshot actual role diverges from frozen Session." }
             }
             (seat.shownRoleId as? SnapshotField.Known<String>)?.let {
-                require(it.value == player.shownRole.value) { "Snapshot shown role diverges from frozen Session." }
+                require(it.value == (player.shownRole ?: player.actualRole).value) { "Snapshot shown role diverges from frozen Session." }
             }
             (seat.alive as? SnapshotField.Known<Boolean>)?.let {
                 require(it.value == player.alive) { "Snapshot life state diverges from frozen Session." }
+            }
+            (seat.poisoned as? SnapshotField.Known<Boolean>)?.let {
+                require(it.value == player.poisoned) { "Snapshot poison state diverges from frozen Session." }
             }
         }
         (snapshot.position.gameStateRevision as? SnapshotField.Known<Long>)?.let {
