@@ -216,6 +216,16 @@ H-P 本地实施：新增 `ClocktowerInformationHistoryPayload.kt`，只投影�
 
 ### H-I：登记交互 owner 有价值，但不应成为第一刀
 
+Architecture pre-flight（H-I 实施，2026-10-08）：
+- current owner: Host 顶层六个无 key `remember` map，加上 Day 的 Virgin/Klutz 与 Night 的 Spy/Recluse 回调；规则域由 `TroubleBrewingRegistrationDomain` 拥有。
+- proposed responsibility: 一个 UI-local `ClocktowerRegistrationInteractionState` 保存登记选择、所选角色和每个 key 的已记录标记，并集中默认角色选择及推荐选项 witness 写入。
+- authoritative state owner(s): 新 owner 仅拥有六个暂态 UI map；phase/round、玩家身份、规则合法性、事件序号和存储仍由原 owner 提供。
+- narrow typed input/output seam: `registration key + special flag/role/default or display option -> UI selection state`；查询与“首次记录”返回布尔值，Host 决定是否调用 `onRecordEvent`。
+- keep in current owner / extract: 在 Host 原来的无条件位置使用无 key `remember` 创建 owner；保留 key 字符串构造、Spy/Recluse 合法性、Virgin 预检、Day/Night 回调顺序和事件文案写入。
+- reason: 减少正常登记交互修改所需理解的 Host 范围，同时避免另建游戏事实源或改变 Compose 状态寿命。
+
+本切片不把 Slayer 的局部登记开关、publication migration 的 keyed `remember`、规则裁定或六个 map 之外的暂态状态并入 owner；不更改 R2 对 Host 调用登记控件的边界 guard。
+
 Spy/Recluse 的六个 mutable maps、默认选择、已记录标记、option witness 应用散布在 Host 的初始化、Day controls 和 Night controls。可以形成 `ClocktowerRegistrationInteractionState` 这类责任明确的 UI-local owner；领域合法性继续委托 rules。
 
 需要先冻结以下真实行为：
@@ -227,6 +237,8 @@ Spy/Recluse 的六个 mutable maps、默认选择、已记录标记、option wit
 - `onApplyRecommendedDisplayOption` 会先更新 witness、再记录登记；信息展示还走单独 handoff。不能把这几步无证据地变成一个“自动提交”。
 
 纯 reducer/typed characterization 可降低风险；实际 Compose 保留/重进/切阶段仍需集成/UI 证据。抽取函数应先在 Host 原来的无条件位置调用，避免把交互状态随分支销毁。
+
+H-I 本地实施：新增 `ClocktowerRegistrationInteractionState.kt`，在 Host 原六个无 key `remember` 的位置以一个无 key `remember` 创建 UI-local owner。六个 map、手动默认角色、推荐结果 witness 和每 key 首次记录标记转入 owner；Host 仍判断 `spyCanRegister`/`recluseCanRegister`、保留 Virgin 预检、Red Herring 清理以及所有事件写入时机。`ClocktowerRegistrationInteractionStateTest` 覆盖跨 key 保留、切换默认值、推荐 witness 和记录去重；`RegistrationInteractionRulesTest` 及现有 Host/流程测试继续验证规则门槛。Slayer 局部选择和 R2 登记控件调用 guard 未变。本地 `:app:testFast` 执行 1,444 项、`:app:testFull` 执行 1,451 项，均 0 失败/跳过；`:app:assembleDebug` 成功。远端 CI/R2 仍须独立验收。
 
 ## 8. 需要单独规则审查，不能伪装成文件搬迁的部分
 
