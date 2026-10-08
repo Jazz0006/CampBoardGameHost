@@ -1,6 +1,7 @@
 # GSP-R1C2C-1C3B — Canonical Klutz Death-Time State / Recovery Acceptance
 
-> Date: 2026-10-08 Australia/Sydney  
+> Date: 2026-10-08 Australia/Sydney
+> **2026-10-08 semantic/reachability correction:** [C2C-1C4 audit](GSP_R1C2C1C4_LIVE_DAY_REGISTRATION_REACHABILITY_AUDIT_2026-10-08.md) supersedes the earlier claim that Klutz/Spy registration is a reachable production vertical: TB has no Klutz, NGJ has no Spy. This stage's **pre-death evidence infrastructure** remains merged and T4-tested, but `wasPoisoned` when dying does not itself prove ability functioning **when Klutz learns of death**. Treat live choice/ability coverage as unaccepted pending 1C5A. Historical exact CI/merge results remain unchanged.  
 > Status: **C2C-1C3B COMPLETE / ACCEPTED; C2C-1C4 NON-PRIVATE REGISTRATION COVERAGE RE-AUDIT NEXT**. C2C-1C, C2C-1, R1C2C/R1C remain IN PROGRESS pending audit.  
 > Executable [PR #273](https://github.com/Jazz0006/CampBoardGameHost/pull/273), squash merge `fb67736fe5659a7601bdda5f6962afe5d5c87ed7`.  
 > Exact accepted head `0e3b969a3242a35353ec3d33f1caa8267e0e177d`; **CI #3939 T4 GREEN** (Android FULL/debug APK, ASP, Real Clingo), **R2 #3585 GREEN**, no unresolved review threads, verified mergeable-clean gate.  
