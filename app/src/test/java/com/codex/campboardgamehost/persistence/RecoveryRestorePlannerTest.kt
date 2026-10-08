@@ -405,6 +405,164 @@ class RecoveryRestorePlannerTest {
         assertEquals(before, materializer.captureLive(session.state, revision))
     }
 
+    @Test
+    fun causalDecisionRecoveryPreservesFrozenCutoffsAndCorrectionAsOf() {
+        val original = clocktowerSnapshot()
+        val game = original.game as ClocktowerRecovery
+        val initialState = game.cards.toClocktowerGameState(
+            game.identity.script, game.identity.gameSeed, game.mechanics.confirmedPoisonTarget,
+        )
+        val session = com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession.createProduction(
+            gameId = game.identity.gameId,
+            gameSeed = game.identity.gameSeed,
+            initialState = initialState,
+            semanticHistoryMode =
+                com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        val journal = com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1(
+            game.identity.gameId,
+        )
+        fun currentSnapshot(): com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1 =
+            com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1(
+                gameId = game.identity.gameId,
+                gameSeed = game.identity.gameSeed,
+                position = com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition(
+                    stage = com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage.RUNTIME,
+                    phase = com.codex.campboardgamehost.clocktower.domain.SnapshotField.Known(
+                        com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
+                    ),
+                    round = com.codex.campboardgamehost.clocktower.domain.SnapshotField.Known(2),
+                    gameStateRevision = com.codex.campboardgamehost.clocktower.domain.SnapshotField.Known(
+                        session.state.gameStateRevision,
+                    ),
+                    playerInputRevision = com.codex.campboardgamehost.clocktower.domain.SnapshotField.Known(
+                        session.state.playerInputRevision,
+                    ),
+                ),
+                grimoireSeats = session.state.gameState.players.map { player ->
+                    com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSeat(
+                        seat = player.seat,
+                        actualRoleId = com.codex.campboardgamehost.clocktower.domain.SnapshotField.Known(
+                            player.actualRole.value,
+                        ),
+                        shownRoleId = com.codex.campboardgamehost.clocktower.domain.SnapshotField.Known(
+                            (player.shownRole ?: player.actualRole).value,
+                        ),
+                        alive = com.codex.campboardgamehost.clocktower.domain.SnapshotField.Known(player.alive),
+                        poisoned = com.codex.campboardgamehost.clocktower.domain.SnapshotField.Known(player.poisoned),
+                    )
+                },
+                setupState = com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSetupState(
+                    com.codex.campboardgamehost.clocktower.domain.SnapshotField.Unknown,
+                    com.codex.campboardgamehost.clocktower.domain.SnapshotField.Unknown,
+                ),
+            )
+        fun request(id: String): com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1 {
+            val snapshot = currentSnapshot()
+            return com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1(
+                identity = com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionIdentityV1(
+                    snapshot.gameId, snapshot.script.value, "mayor-redirect", id,
+                ),
+                sourceRevision = com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1(
+                    session.state.gameStateRevision, session.state.playerInputRevision,
+                ),
+                state = com.codex.campboardgamehost.clocktower.domain.StorytellerProviderGameStateV1.TroubleBrewing(snapshot),
+                decisionContext = com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.MayorRedirect(1),
+                legalCandidates = listOf(
+                    com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1(
+                        "seat-2",
+                        com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1.SeatTarget(2),
+                    ),
+                    com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1(
+                        "seat-3",
+                        com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1.SeatTarget(3),
+                    ),
+                ),
+                gameContext = journal.contextForRequest(snapshot, session.state),
+            )
+        }
+        fun commit(id: String, eventId: String, selected: String) {
+            val frozen = journal.captureBeforeDecision(request(id), session.state)
+            journal.commit(id, com.codex.campboardgamehost.clocktower.domain.StorytellerProviderPriorDecisionV1(
+                eventId = eventId,
+                gameStateRevision = frozen.revision.gameStateRevision,
+                playerInputRevision = frozen.revision.playerInputRevision,
+                selectedCandidateId = selected,
+                selectedOutcome = com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot(
+                    "mayor-redirect", sortedMapOf("target" to selected),
+                ),
+                abilityState = com.codex.campboardgamehost.clocktower.domain.AbilityState.FUNCTIONING,
+                truthRelation = com.codex.campboardgamehost.clocktower.domain.TruthRelation.NOT_APPLICABLE,
+                registrations = emptyList(),
+            ))
+        }
+        commit("first", "event-first", "seat-2")
+        session.commitGlobalActionFact(
+            com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Poison(
+                "poison-between", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
+                2, 0, 2,
+            ),
+        )
+        commit("second", "event-second", "seat-3")
+        journal.correct("correct-after-second", "event-first", "event-second")
+        val third = journal.captureBeforeDecision(request("third"), session.state)
+        assertEquals(0L, journal.frozenAt("first").exclusiveGlobalSequence)
+        assertEquals(1L, journal.frozenAt("second").exclusiveGlobalSequence)
+        assertEquals(listOf("event-first"), journal.effectiveAt("second").map { it.eventId })
+        assertEquals(listOf("event-second"), journal.effectiveAt("third").map { it.eventId })
+
+        val savedGame = game.copy(
+            history = game.history.copy(
+                gameStateRevision = session.state.gameStateRevision,
+                playerInputRevision = session.state.playerInputRevision,
+                actionTimeline = session.state.actionTimeline,
+                nextTimelineGlobalSequence = session.state.nextTimelineGlobalSequence,
+                epistemicObservations = session.state.epistemicObservationLog.records,
+                causalDecisionJournal = journal.archive(),
+            ),
+        )
+        val raw = RecoverySnapshotJsonCodec.encode(original.copy(game = savedGame))
+        assertTrue(prepare(raw) is RecoveryPlanPreparation.Ready)
+        val decoded = RecoverySnapshotJsonCodec.decodeStrict(raw, ::testRoleByName)
+        val history = (decoded.game as ClocktowerRecovery).history
+        val restored = com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1.restore(
+            requireNotNull(history.causalDecisionJournal),
+            com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState(
+                gameId = game.identity.gameId,
+                gameStateRevision = history.gameStateRevision,
+                playerInputRevision = history.playerInputRevision,
+                gameSeed = game.identity.gameSeed,
+                gameState = initialState,
+                actionTimeline = history.actionTimeline,
+                epistemicObservationLog = EpistemicObservationLog(history.epistemicObservations),
+                semanticHistoryMode =
+                    com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode.GLOBAL_V1,
+                nextTimelineGlobalSequence = history.nextTimelineGlobalSequence,
+            ),
+        )
+        assertEquals(journal.frozenAt("first"), restored.frozenAt("first"))
+        assertEquals(journal.frozenAt("second"), restored.frozenAt("second"))
+        assertEquals(third, restored.frozenAt("third"))
+        assertEquals(listOf("event-first"), restored.effectiveAt("second").map { it.eventId })
+        assertEquals(listOf("event-second"), restored.effectiveAt("third").map { it.eventId })
+
+        val tampered = JSONObject(raw.toString())
+        val journalJson = tampered.getJSONObject(ClocktowerCausalJournalPersistence.ROOT_KEY)
+        journalJson.getJSONArray("records").getJSONObject(1).put("selectedCandidateId", "seat-99")
+        assertRejected(prepare(tampered), RecoveryRejectionReason.InvalidGameState)
+        val wrongPrefix = JSONObject(raw.toString())
+        wrongPrefix.getJSONObject(ClocktowerCausalJournalPersistence.ROOT_KEY)
+            .getJSONArray("records").getJSONObject(2)
+            .put("prefixDigest", "f".repeat(64))
+        assertRejected(prepare(wrongPrefix), RecoveryRejectionReason.MalformedPayload)
+
+        val legacy = JSONObject(raw.toString()).apply {
+            remove(ClocktowerCausalJournalPersistence.ROOT_KEY)
+        }
+        val older = RecoverySnapshotJsonCodec.decodeStrict(legacy, ::testRoleByName)
+        assertEquals(null, (older.game as ClocktowerRecovery).history.causalDecisionJournal)
+    }
+
     private fun prepare(json: JSONObject): RecoveryPlanPreparation = RecoveryRestorePlanner.prepare(
         raw = json,
         expectedCompatibilityToken = TOKEN,
