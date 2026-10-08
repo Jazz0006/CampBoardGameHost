@@ -524,6 +524,7 @@ class RecoveryRestorePlannerTest {
         )
         commit("second", "event-second", "seat-3")
         journal.correct("correct-after-second", "event-first", "event-second")
+        assertEquals(listOf("event-second"), journal.effectiveNow().map { it.eventId })
         val third = journal.captureBeforeDecision(request("third"), session.state)
         assertEquals(0L, journal.frozenAt("first").exclusiveGlobalSequence)
         assertEquals(2L, journal.frozenAt("second").exclusiveGlobalSequence)
@@ -574,6 +575,7 @@ class RecoveryRestorePlannerTest {
         assertEquals(third, restored.frozenAt("third"))
         assertEquals(listOf("event-first"), restored.effectiveAt("second").map { it.eventId })
         assertEquals(listOf("event-second"), restored.effectiveAt("third").map { it.eventId })
+        assertEquals(listOf("event-second"), restored.effectiveNow().map { it.eventId })
 
         val tampered = JSONObject(raw.toString())
         val journalJson = tampered.getJSONObject(ClocktowerCausalJournalPersistence.ROOT_KEY)
