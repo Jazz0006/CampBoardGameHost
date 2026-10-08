@@ -277,6 +277,24 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
             roleByName = byName::get,
             clocktowerRulesetResolver = { _, _ -> null },
         ) is RecoveryPlanPreparation.Rejected)
+
+        val fakeSlayer = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
+            history = saved.game.history.copy(
+                actionTimeline = ActionFactTimeline(learnedHistory.entries + TimelineBoundActionFact(
+                    ActionFact.SlayerShot("ngj-impossible-slayer", 4L, 3, 2,
+                        abilityConsumed = false, hit = false),
+                    TimelinePoint(StorytellerPhase.DAY, 2, 3, 4L),
+                )),
+                nextTimelineGlobalSequence = 5L,
+            ),
+        ))
+        assertTrue(RecoveryRestorePlanner.prepare(
+            raw = RecoverySnapshotJsonCodec.encode(fakeSlayer),
+            expectedCompatibilityToken = TOKEN,
+            nowMillis = NOW,
+            roleByName = byName::get,
+            clocktowerRulesetResolver = { _, _ -> null },
+        ) is RecoveryPlanPreparation.Rejected)
     }
 
     private companion object {
