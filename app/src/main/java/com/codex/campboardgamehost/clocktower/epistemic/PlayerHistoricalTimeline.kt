@@ -48,6 +48,14 @@ internal sealed interface PlayerHistoricalEvent {
         override val point: TimelinePoint,
     ) : PlayerHistoricalEvent
 
+    /** Only the publicly selected seat is visible. Learn-time functioning stays private. */
+    data class PublicKlutzChoice(
+        val actionId: String,
+        val klutzSeat: Int,
+        val chosenSeat: Int,
+        override val point: TimelinePoint,
+    ) : PlayerHistoricalEvent
+
     data class PhaseAdvance(
         val actionId: String,
         val phase: StorytellerPhase,
@@ -97,6 +105,10 @@ internal object PlayerHistoricalTimeline {
                     fact.actionId, fact.nominatorSeat, fact.nomineeSeat,
                     fact.voterSeats, fact.ghostVoterSeats, entry.point,
                 )
+                is ActionFact.KlutzLearnedDeath -> null // never disclose actual Klutz role or functioning
+                is ActionFact.KlutzChoice -> PlayerHistoricalEvent.PublicKlutzChoice(
+                    fact.actionId, fact.klutzSeat, fact.chosenSeat, entry.point,
+                )
                 is ActionFact.PhaseAdvance -> PlayerHistoricalEvent.PhaseAdvance(
                     actionId = fact.actionId,
                     phase = fact.phase,
@@ -132,6 +144,7 @@ internal object PlayerHistoricalTimeline {
         is PlayerHistoricalEvent.PublicSlayerShot -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicNomination -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicVote -> "action:${event.actionId}"
+        is PlayerHistoricalEvent.PublicKlutzChoice -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PhaseAdvance -> "action:${event.actionId}"
         is PlayerHistoricalEvent.Observation -> "observation:${event.record.recordId}"
     }
