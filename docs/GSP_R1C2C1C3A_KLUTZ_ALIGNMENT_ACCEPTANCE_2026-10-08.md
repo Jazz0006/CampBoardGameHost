@@ -1,6 +1,7 @@
 # GSP-R1C2C-1C3A — Klutz/Spy Alignment With Verified Death-Time Prefix: Acceptance
 
 > Date: 2026-10-08 Australia/Sydney
+> **2026-10-08 reachability correction:** [C2C-1C4 audit](GSP_R1C2C1C4_LIVE_DAY_REGISTRATION_REACHABILITY_AUDIT_2026-10-08.md) supersedes the claim that synthetic TB Klutz/Spy is production-reachable: TB has no Klutz; NGJ has no Spy. The historical PR/CI result remains factual; this producer's *live-coverage acceptance claim is withdrawn*. Its historical compatibility contract remains documented.
 > Status: **C2C-1C3A COMPLETE / ACCEPTED; 1C3B DEATH-TRIGGER COMPLETENESS NEXT. C2C-1C/C2C-1/R1C2C/R1C IN PROGRESS.**
 > Executable: [PR #271](https://github.com/Jazz0006/CampBoardGameHost/pull/271); squash `e5653499200898cc0c74839d855370d10dba055c`.
 > Exact accepted head `81775a83d8b40a5b38d24d55c143c2f4ca1b50db`: **CI #3932 T4 GREEN** (Android FULL, debug APK, ASP, Real Clingo), **R2 #3580 GREEN**, zero unresolved review threads and mergeable-clean gate.
