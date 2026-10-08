@@ -87,6 +87,27 @@ sealed interface ActionFact {
         val ghostVoterSeats: List<Int>,
     ) : ActionFact
 
+    /**
+     * The actual dead Klutz has been informed of death. This is NOT the death
+     * action itself, and never publishes the Klutz's hidden role or impairment.
+     */
+    data class KlutzLearnedDeath(
+        override val actionId: String,
+        override val sequence: Long,
+        val klutzSeat: Int,
+        val deathActionId: String,
+        val functioningWhenLearned: Boolean,
+    ) : ActionFact
+
+    /** Public player choice; the Storyteller neither selects the seat nor registers a role. */
+    data class KlutzChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val klutzSeat: Int,
+        val chosenSeat: Int,
+        val learnedActionId: String,
+    ) : ActionFact
+
     data class RoleChange(
         override val actionId: String,
         override val sequence: Long,
@@ -173,6 +194,16 @@ object DynamicActionReducer {
                     require(fact.ghostVoterSeats.distinct().size == fact.ghostVoterSeats.size)
                     require(fact.ghostVoterSeats.all { it in fact.voterSeats })
                     fact.voterSeats.forEach(::requireSeat)
+                }
+                is ActionFact.KlutzLearnedDeath -> {
+                    requireSeat(fact.klutzSeat)
+                    require(fact.deathActionId.isNotBlank())
+                }
+                is ActionFact.KlutzChoice -> {
+                    requireSeat(fact.klutzSeat)
+                    requireSeat(fact.chosenSeat)
+                    require(fact.klutzSeat != fact.chosenSeat)
+                    require(fact.learnedActionId.isNotBlank())
                 }
                 is ActionFact.RoleChange -> updatePlayer(fact.targetSeat) {
                     it.copy(actualRole = fact.role, actualAlignment = fact.alignment, actualType = fact.type)
