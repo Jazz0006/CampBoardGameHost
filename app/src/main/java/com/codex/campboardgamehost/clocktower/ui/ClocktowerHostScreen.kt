@@ -309,10 +309,9 @@ internal fun ClocktowerJudgeScreen(
             !spyCanRegister(queryingRoleEnName) -> text("中毒，按真实邪恶身份登记", "poisoned; registered as actual evil identity")
             !spyRegistersGood(key, queryingRoleEnName) -> text("按真实邪恶身份登记", "registered as actual evil identity")
             detail == ClocktowerRegistrationDetail.AlignmentOnly -> text("登记为善良", "registered as good")
-            else -> text(
-                "登记为${registeredRole(key, teams, queryingRoleEnName)?.nameFor(language).orEmpty()}",
-                "registered as ${registeredRole(key, teams, queryingRoleEnName)?.nameFor(language).orEmpty()}",
-            )
+            else -> registeredRole(key, teams, queryingRoleEnName)?.let { selected ->
+                text("登记为${selected.nameFor(language)}", "registered as ${selected.nameFor(language)}")
+            } ?: text("登记为善良，未指定具体角色", "registered as good, with no specific role selected")
         }
         onRecordEvent(
             ClocktowerEventType.RoleAction,
