@@ -83,6 +83,14 @@ internal data class StorytellerProviderRequestV1(
         ) {
             "Populated provider game context must contain every current-state seat exactly once."
         }
+        gameContext.historyPrefix?.let { prefix ->
+            require(prefix.gameId == identity.gameId) {
+                "Provider history prefix must belong to the current decision game."
+            }
+            require(prefix.sourceRevision == sourceRevision) {
+                "Provider history prefix must match the request's frozen source revision."
+            }
+        }
         require(gameContext.priorDecisions.map { it.eventId }.distinct().size == gameContext.priorDecisions.size) {
             "Provider prior-decision event IDs must be unique."
         }
@@ -276,6 +284,8 @@ internal data class StorytellerProviderPriorDecisionV1(
 internal data class StorytellerProviderGameContextV1(
     val players: List<StorytellerProviderPlayerContextV1>,
     val priorDecisions: List<StorytellerProviderPriorDecisionV1>,
+    /** Null means not provided, NEVER a proven complete empty history. */
+    val historyPrefix: StorytellerProviderHistoryPrefixV1? = null,
 ) {
     companion object {
         val EMPTY = StorytellerProviderGameContextV1(

@@ -189,6 +189,31 @@ class StorytellerProviderRequestFactoryV1Test {
         assertEquals("candidate:past", context.priorDecisions.single().selectedCandidateId)
     }
 
+    @Test
+    fun `session-owned provider context includes live history and does not elevate unsequenced decisions`() {
+        val game = pairGame()
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "provider-direct",
+            gameSeed = game.seed,
+            initialState = game,
+            semanticHistoryMode = com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        session.commitGlobalActionFact(
+            com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Poison(
+                "first-poison", StorytellerPhase.FIRST_NIGHT, 1, 2, 2,
+            ),
+        )
+        val context = StorytellerProviderGameContextBuilderV1.build(
+            snapshot = runtimeSnapshot(StorytellerPhase.FIRST_NIGHT, 0L, 0L),
+            sourceRevision = StorytellerProviderRevisionV1(0L, 0L),
+            sessionState = session.state,
+        )
+        assertEquals("provider-direct", context.historyPrefix?.gameId)
+        assertEquals(1L, context.historyPrefix?.exclusiveGlobalSequence)
+        assertEquals(listOf("first-poison"), context.historyPrefix?.entries?.map { it.entryId })
+        assertTrue(context.priorDecisions.isEmpty())
+    }
+
     private fun pairGame() = GameState(
         script = ScriptId("trouble_brewing"),
         players = listOf(
