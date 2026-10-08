@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost
 
+import android.widget.Toast
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
@@ -114,6 +115,7 @@ internal fun ClocktowerJudgeScreen(
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
     onCommitConfirmedInformationDecision: (ConfirmedInformationDecision) -> Unit,
+    onCommitConfirmedRegistrationResult: (ClocktowerConfirmedRegistrationPublicationV1) -> Unit,
     onHostTools: () -> Unit,
     onPreviousFromFirstNightReady: () -> Unit,
     onMovePreviousNightStep: () -> Unit,
@@ -292,7 +294,7 @@ internal fun ClocktowerJudgeScreen(
     fun registeredRole(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String): ClocktowerRole? {
         if (!spyRegistersGood(key, queryingRoleEnName)) return spyCard?.clocktowerRole
         val allowed = legalRegistrationRoles(key, queryingRoleEnName, spyCard, teams)
-        return allowed.firstOrNull { it.enName == registrationState.spyRole(key) } ?: allowed.firstOrNull()
+        return allowed.firstOrNull { it.enName == registrationState.spyRole(key) }
     }
     fun spyRegistrationWillRecord(key: String?): Boolean =
         registrationState.spyWillRecord(key) && spyCard != null
@@ -327,7 +329,7 @@ internal fun ClocktowerJudgeScreen(
     fun recluseRegisteredRole(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String): ClocktowerRole? {
         if (!recluseRegistersEvil(key, queryingRoleEnName)) return recluseCard?.clocktowerRole
         val allowed = legalRegistrationRoles(key, queryingRoleEnName, recluseCard, teams)
-        return allowed.firstOrNull { it.enName == registrationState.recluseRole(key) } ?: allowed.firstOrNull()
+        return allowed.firstOrNull { it.enName == registrationState.recluseRole(key) }
     }
     fun recordRecluseRegistration(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String) {
         if (key == null || !recluseRegistersEvil(key, queryingRoleEnName) || recluseCard == null || !registrationState.markRecluseRecorded(key)) return
@@ -2514,16 +2516,6 @@ internal fun ClocktowerJudgeScreen(
                 }
                 onConfirmDemonSuccessorTarget(selectedTarget)
             }
-            currentStep.spyRegistrationKey?.let { key ->
-                currentStep.roleEnName?.let { role ->
-                    recordSpyRegistration(key, currentStep.spyRegistrationTeams, role, currentStep.spyRegistrationDetail)
-                }
-            }
-            currentStep.recluseRegistrationKey?.let { key ->
-                currentStep.roleEnName?.let { role ->
-                    recordRecluseRegistration(key, currentStep.recluseRegistrationTeams, role)
-                }
-            }
             recordNightStep(currentStep)
             val flowMayExpandAfterConfirmation = currentStep.action in setOf(
                 ClocktowerNightAction.DemonKill,
@@ -2623,13 +2615,7 @@ internal fun ClocktowerJudgeScreen(
                 spyRegistrationResolution = currentSpyRegistrationResolution,
                 onSpyRegistrationGoodChange = { good ->
                     currentStep.spyRegistrationKey?.let { key ->
-                        registrationState.chooseSpy(
-                            key,
-                            good,
-                            defaultRole = if (currentStep.spyRegistrationDetail == ClocktowerRegistrationDetail.Role) {
-                                currentSpyLegalSpecialRoleEnNames.firstOrNull().orEmpty()
-                            } else null,
-                        )
+                        registrationState.chooseSpy(key, good)
                         if (!good && redHerring == spyCard?.name && currentStep.action == ClocktowerNightAction.RedHerring) {
                             onSelectRedHerring(null)
                         }
@@ -2642,13 +2628,7 @@ internal fun ClocktowerJudgeScreen(
                 recluseRegistrationResolution = currentRecluseRegistrationResolution,
                 onRecluseRegistrationEvilChange = { evil ->
                     currentStep.recluseRegistrationKey?.let { key ->
-                        registrationState.chooseRecluse(
-                            key,
-                            evil,
-                            defaultRole = if (currentStep.recluseRegistrationTeams.isNotEmpty()) {
-                                currentRecluseLegalSpecialRoleEnNames.firstOrNull().orEmpty()
-                            } else null,
-                        )
+                        registrationState.chooseRecluse(key, evil)
                     }
                 },
                 onRecluseRegistrationRoleChange = { roleName ->
@@ -2690,52 +2670,108 @@ internal fun ClocktowerJudgeScreen(
                     onSelectChambermaidSecond(if (chambermaidSecond == it) null else it)
                 },
                 onApplyRecommendedDisplayOption = { option ->
-                    // A player-visible result is NOT a ruling on any of its legal Spy/Recluse
-                    // witnesses. Only explicitly edited registration controls can produce a
-                    // registration event; contradictory manual rulings block publication.
-                    if (!registrationState.manualChoicesMatchResult(
-                            currentStep.spyRegistrationKey,
-                            currentStep.recluseRegistrationKey,
-                            option,
-                        )
-                    ) {
-                        false
-                    } else {
-                        currentStep.spyRegistrationKey?.let { key ->
-                            currentStep.roleEnName?.let { role ->
-                                recordSpyRegistration(key, currentStep.spyRegistrationTeams, role, currentStep.spyRegistrationDetail)
-                            }
-                        }
-                        currentStep.recluseRegistrationKey?.let { key ->
-                            currentStep.roleEnName?.let { role ->
-                                recordRecluseRegistration(key, currentStep.recluseRegistrationTeams, role)
-                            }
-                        }
-                        true
-                    }
+                    // Preview never writes an observed result or a registration ruling.
+                    registrationState.manualChoicesMatchResult(
+                        currentStep.spyRegistrationKey,
+                        currentStep.recluseRegistrationKey,
+                        option,
+                    )
                 },
                 onShowPlayerDisplay = { displayStep ->
-                    performClocktowerPlayerRevealHandoff(
-                        authorize = { informationDecisionPublicationAllowed(displayStep) },
-                        publishFirstNight = { publishFirstNightInformation(displayStep) },
-                        recordPrivateInformation = { recordReliablePrivateInformation(displayStep) },
-                        recordHistory = {
-                            val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
-                            val payload = clocktowerInformationHistoryPayload(
-                                displayStep = displayStep,
-                                orderedPlayerNames = cards.map { it.name },
-                                unreliable = unreliable,
-                                text = ::text,
-                            )
-                            onRecordEvent(
-                                payload.type,
-                                payload.title,
-                                payload.detail,
-                                payload.playerNames,
-                            )
-                        },
-                        openReveal = { playerDisplayStep = displayStep },
+                    val spyChoice = registrationState.explicitChoice(
+                        ClocktowerRegistrationSubject.SPY, currentStep.spyRegistrationKey,
                     )
+                    val recluseChoice = registrationState.explicitChoice(
+                        ClocktowerRegistrationSubject.RECLUSE, currentStep.recluseRegistrationKey,
+                    )
+                    val plan = clocktowerPlanConfirmedResultRegistrations(
+                        shownProposition = displayStep.informationDecisionConfirmation?.draft?.proposition
+                            ?: displayStep.displayProposition,
+                        shownKind = displayStep.displayKind,
+                        shownPrimary = displayStep.displayPrimary,
+                        legalCandidates = currentStep.manualInformationCandidates,
+                        spy = spyChoice,
+                        spySeat = spyCard?.let { cards.indexOf(it).takeIf { index -> index >= 0 }?.plus(1) }
+                            ?.takeIf { currentStep.spyRegistrationKey != null &&
+                                currentSpyRegistrationResolution?.canUseSpecialAbility == true },
+                        spyQuestion = if (currentStep.spyRegistrationDetail == ClocktowerRegistrationDetail.AlignmentOnly) {
+                            RegistrationQuestion.ALIGNMENT
+                        } else RegistrationQuestion.ROLE,
+                        recluse = recluseChoice,
+                        recluseSeat = recluseCard?.let { cards.indexOf(it).takeIf { index -> index >= 0 }?.plus(1) }
+                            ?.takeIf { currentStep.recluseRegistrationKey != null &&
+                                currentRecluseRegistrationResolution?.canUseSpecialAbility == true },
+                        recluseQuestion = if (currentStep.recluseRegistrationTeams.isEmpty()) {
+                            RegistrationQuestion.ALIGNMENT
+                        } else RegistrationQuestion.ROLE,
+                    )
+                    if (plan is ClocktowerResultRegistrationPlanV1.ConflictingManualChoice) {
+                        Toast.makeText(
+                            context,
+                            text(
+                                "当前显示结果与已选择的登记裁定冲突，或缺乏可验证的登记证据。",
+                                "The result conflicts with the selected registration or lacks verified witnesses.",
+                            ),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    } else {
+                        performClocktowerPlayerRevealHandoff(
+                            authorize = { informationDecisionPublicationAllowed(displayStep) },
+                            publishFirstNight = { publishFirstNightInformation(displayStep) },
+                            recordPrivateInformation = {
+                                recordReliablePrivateInformation(displayStep)
+                                // Only a genuinely published typed result can anchor a causal ruling.
+                                val ready = plan as? ClocktowerResultRegistrationPlanV1.Ready
+                                val actor = displayStep.actor
+                                val roleName = displayStep.roleEnName
+                                val shown = displayStep.informationDecisionConfirmation?.draft?.proposition
+                                    ?: displayStep.displayProposition
+                                val canonicalInteraction = displayStep.interactionId?.value
+                                if (ready != null && actor != null && roleName != null &&
+                                    shown != null && canonicalInteraction != null
+                                ) {
+                                    val actorSeat = cards.indexOfFirst { it.name == actor.name }
+                                        .takeIf { index -> index >= 0 }?.plus(1)
+                                    if (actorSeat != null) {
+                                        val recordId = displayStep.informationDecisionConfirmation?.draft?.recordId
+                                            ?: clocktowerPrivateObservationRecordId(
+                                                gameId = gameId,
+                                                phase = phase,
+                                                round = round,
+                                                roleEnName = roleName,
+                                                actorSeat = actorSeat,
+                                                proposition = shown,
+                                            )
+                                        onCommitConfirmedRegistrationResult(
+                                            ClocktowerConfirmedRegistrationPublicationV1(
+                                                interactionId = "${phase.name}:$round:$canonicalInteraction",
+                                                observationRecordId = recordId,
+                                                sourceSeat = actorSeat,
+                                                shownProposition = shown,
+                                                choices = ready.choices,
+                                            ),
+                                        )
+                                    }
+                                }
+                            },
+                            recordHistory = {
+                                val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
+                                val payload = clocktowerInformationHistoryPayload(
+                                    displayStep = displayStep,
+                                    orderedPlayerNames = cards.map { it.name },
+                                    unreliable = unreliable,
+                                    text = ::text,
+                                )
+                                onRecordEvent(
+                                    payload.type,
+                                    payload.title,
+                                    payload.detail,
+                                    payload.playerNames,
+                                )
+                            },
+                            openReveal = { playerDisplayStep = displayStep },
+                        )
+                    }
                 },
                 canGoPrevious = currentStepIndex > 0,
                 onPrevious = onMovePreviousNightStep,
