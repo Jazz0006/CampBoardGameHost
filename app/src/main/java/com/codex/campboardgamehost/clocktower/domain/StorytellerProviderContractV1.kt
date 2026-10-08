@@ -61,6 +61,13 @@ internal data class StorytellerProviderRequestV1(
                 }
             }
 
+            is StorytellerProviderDecisionContextV1.DayAbilityRegistration -> {
+                require(context.actorSeat in stateSeats && context.subjectSeat in stateSeats)
+                require(legalCandidates.all { it.payload is StorytellerProviderCandidatePayloadV1.RegistrationChoice }) {
+                    "Day ability-registration candidates must carry typed choices."
+                }
+            }
+
             is StorytellerProviderDecisionContextV1.RegistrationResolution -> {
                 require(context.sourceSeat in stateSeats && context.subjectSeat in stateSeats)
                 require(legalCandidates.all { candidate ->
@@ -214,6 +221,24 @@ internal sealed interface StorytellerProviderDecisionContextV1 {
         }
     }
 
+    /**
+     * Actual public/day ability interaction, NOT a fabricated private information observation.
+     * The Host alone confirms a ruling at the ability's real outcome boundary.
+     */
+    data class DayAbilityRegistration(
+        val interactionId: String,
+        val abilityRole: RoleId,
+        val actorSeat: Int,
+        val subjectSeat: Int,
+        val question: RegistrationQuestion,
+    ) : StorytellerProviderDecisionContextV1 {
+        override val decisionTypeId: String = DAY_ABILITY_REGISTRATION
+        init {
+            require(interactionId.isNotBlank())
+            require(actorSeat > 0 && subjectSeat > 0 && actorSeat != subjectSeat)
+        }
+    }
+
     data class MayorRedirect(
         val mayorSeat: Int,
     ) : StorytellerProviderDecisionContextV1 {
@@ -229,6 +254,7 @@ internal sealed interface StorytellerProviderDecisionContextV1 {
         const val FIRST_NIGHT_PAIR_INFORMATION = "first-night-pair-information"
         const val MAYOR_REDIRECT = "mayor-redirect"
         const val REGISTRATION_RESOLUTION = "registration-resolution"
+        const val DAY_ABILITY_REGISTRATION = "day-ability-registration"
     }
 }
 

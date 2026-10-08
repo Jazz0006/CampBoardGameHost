@@ -60,8 +60,10 @@ internal object ClocktowerCausalJournalPersistence {
                         put("decisionId", record.decisionId)
                         val decision = record.value
                         require(decision.registrations.isEmpty() ||
-                            decision.selectedOutcome.decisionType ==
-                                StorytellerProviderDecisionContextV1.REGISTRATION_RESOLUTION) {
+                            decision.selectedOutcome.decisionType in setOf(
+                                StorytellerProviderDecisionContextV1.REGISTRATION_RESOLUTION,
+                                StorytellerProviderDecisionContextV1.DAY_ABILITY_REGISTRATION,
+                            )) {
                             "Typed registration facts require a verified registration-resolution commit."
                         }
                         put("eventId", decision.eventId)
