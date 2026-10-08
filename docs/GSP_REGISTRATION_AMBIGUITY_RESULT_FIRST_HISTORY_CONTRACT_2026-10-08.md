@@ -2,8 +2,8 @@
 
 > Date: 2026-10-08 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
-> Status: **ACCEPTED PRODUCT/SEMANTIC DESIGN CONSTRAINT — IMPLEMENTATION PENDING**  
-> Scope: a cross-cutting contract for GSP-R1B/R1C history work and follow-on registration/reveal producer + UI work. **This document changes no executable behavior.**  
+> Status: **ACCEPTED DESIGN; GENERIC RESULT–WITNESS UI FIX ACCEPTED PR #254; DURABLE TYPED RULING CAPTURE/RECOVERY PENDING**  
+> Scope: cross-cutting GSP-R1B/R1C history and registration/reveal contract. This document is a design authority; executable generic result/witness behavior was corrected in [PR #254](GSP_REGISTRATION_RESULT_WITNESS_SEPARATION_FIX_ACCEPTANCE_2026-10-08.md).  
 > Context: [GSP-R1A capture audit](GSP_R1A_CANONICAL_HISTORY_CAPTURE_PREFIX_COVERAGE_AUDIT_2026-10-08.md); [current roadmap](CURRENT_DEVELOPMENT_ROADMAP.md); [handoff](NEXT_DEVELOPMENT_HANDOFF.md).
 
 ## 1. Product decision: one observed result need not have one registration explanation
@@ -57,7 +57,7 @@ If witnesses are derived later, validate using the **frozen at-interaction game/
 
 ## 3. Actual code observation / why this needs fixing
 
-Source inspection on `main@3d3843a82a3e1cabc92499e1f4d0d9b14c30b1ac`:
+**Historical root-cause evidence** on `main@3d3843a82a3e1cabc92499e1f4d0d9b14c30b1ac` (pre-fix; see [accepted code fix](GSP_REGISTRATION_RESULT_WITNESS_SEPARATION_FIX_ACCEPTANCE_2026-10-08.md) for current production semantics):
 
 - `ClocktowerRegistrationResultDomain.kt`: `clocktowerAlignmentRegistrationWitnesses` enumerates Spy/Recluse variants; `distinctClocktowerFinalInformationResults` deduplicates by visible result and **retains the first witness**; its comment explicitly says the retained first witness can be committed by the registration callback.
 - `ClocktowerRegistrationResultPresentation.kt`: a numeric visible option contains `spyRegistersGood` and `recluseRegistersEvil` from a selected enumeration witness, even when other witnesses produce the same number.
@@ -66,7 +66,7 @@ Source inspection on `main@3d3843a82a3e1cabc92499e1f4d0d9b14c30b1ac`:
 - `ClocktowerEmpathSquareTableUi.kt` / `ClocktowerChefSquareTableUi.kt` highlight a particular contributing registration witness in the diagram. An arbitrarily retained witness can visually imply certainty that was never chosen.
 - `TroubleBrewingTopologyObservationWitnessEvaluator.kt` already reasons over **sets of legal registration witnesses**, so uncertainty does not require a rule-engine rewrite.
 
-**Defect statement:** “result-first” visible deduplication is useful, but discarding alternative witnesses while silently choosing and applying the first is **unjustified determinization**. Do not solve it by parsing `ClocktowerEvent` display text, resurrecting recommendation policies, or treating the dedup representative as authoritative.
+**Resolved in generic production result/display flow by PR #254:** “result-first” deduplication now keeps all derived candidate witnesses separately and does not apply/record the first one. Do not reconstruct a committed historical ruling from legacy localized `ClocktowerEvent` text; a canonical durable typed registration producer is still pending.
 
 ## 4. Required behavior and ownership
 
@@ -103,10 +103,10 @@ Source inspection on `main@3d3843a82a3e1cabc92499e1f4d0d9b14c30b1ac`:
 
 ## 5. Implementation sequence and acceptance
 
-**Documented decision now; no production code change or automatic policy promotion in this docs-only slice.**
+**Accepted executable checkpoint:** PR #254 implements the shared result-witness separation, explicit-only manual registration recording, contradiction rejection and conservative Chef/Empath visuals. **Still pending:** typed explicit ruling producer, semantic Recovery, optional full advanced adjudication UI. See [acceptance](GSP_REGISTRATION_RESULT_WITNESS_SEPARATION_FIX_ACCEPTANCE_2026-10-08.md).
 
 - **GSP-R1B (immediate):** honor the negative invariant in neutral history prefix: observations are typed facts, potential witnesses are not canonical rulings; report registration coverage/unknown honestly. R1B's bounded **read-only** materializer is not a license to refactor UI recording or add speculative registration truth.
-- **Follow-on dedicated registration producer/UI slice (requires separate bounded implementation audit; can be sequenced with R1C):** separate result option from witness candidates and explicit selection; introduce interaction-local typed explicit-ruling capture and Recovery; remove implicit first-witness side effect; provide ambiguity-aware squares/controls.
+- **Generic UI result–witness correction:** COMPLETE / ACCEPTED via PR #254, including the previous implicit first-witness effect and ambiguous square hints. **Follow-on dedicated typed registration producer / Recovery / optional explicit-ruling annotation** remains pending; do not confuse existing localized RoleAction UI history with canonical adjudication.
 - **GSP-R1C:** end-to-end fresh/recovered prefix equivalence and historical replay semantics, including case where two distinct witnesses give the same result. Do not claim complete registration capture until producer/Recovery tests prove it.
 
 Mandatory regression cases for executable changes:
