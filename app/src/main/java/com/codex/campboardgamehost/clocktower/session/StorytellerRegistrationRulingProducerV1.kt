@@ -33,14 +33,6 @@ import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSu
  * UNRESOLVED_NOT_REQUIRED is a positive statement attached to a confirmed observation.
  * Missing older provenance is UNAVAILABLE_OR_UNRECORDED, never an invented selection.
  */
-internal enum class RegistrationResolutionStatusV1 {
-    EXPLICIT_SPECIAL,
-    EXPLICIT_ACTUAL,
-    UNRESOLVED_NOT_REQUIRED,
-    NOT_APPLICABLE,
-    UNAVAILABLE_OR_UNRECORDED,
-}
-
 internal data class ConfirmedRegistrationResolutionInputV1(
     val interactionId: String,
     val observationRecordId: String,
