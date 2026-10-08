@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
 import com.codex.campboardgamehost.ClocktowerCausalJournalPersistence
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
@@ -177,6 +178,105 @@ class KlutzSpyDayRegistrationProducerV1Test {
                 )
             }
             assertTrue(journal.archive().records.isEmpty())
+        }
+    }
+
+    /** New games can prove death-time ability state even with no Poisoner and no Poison action. */
+    private fun captureCanonicalDeath(
+        poisonedAtDeath: Boolean = false,
+        byExecution: Boolean = false,
+    ): ClocktowerGameSession {
+        val aliveRoster = players.map { player ->
+            if (player.seat == 1) player.copy(alive = true, poisoned = poisonedAtDeath)
+            else player
+        }
+        val s = session(aliveRoster)
+        val draft = if (byExecution) ActionFactDraft.Execution(
+            "true-execution-klutz", StorytellerPhase.DAY, 2, 0, 1,
+        ) else ActionFactDraft.Death(
+            "true-death-klutz", StorytellerPhase.DAWN, 2, 0, 1,
+        )
+        val committed = s.commitGlobalActionFact(draft)
+        val evidence = when (val fact = committed.fact) {
+            is ActionFact.Death -> fact.klutzDeathTrigger
+            is ActionFact.Execution -> fact.klutzDeathTrigger
+            else -> null
+        }
+        assertEquals(RoleId("Klutz"), evidence?.actualRole)
+        assertEquals(true, evidence?.wasAlive)
+        assertEquals(poisonedAtDeath, evidence?.wasPoisoned)
+        s.synchronizePlayerDeathWithinCurrentRevision(1)
+        assertEquals(false, s.state.gameState.playerAt(1)?.alive)
+        assertEquals(false, s.state.gameState.playerAt(1)?.poisoned)
+        return s
+    }
+
+    @Test fun `unpoisoned Klutz with no Poisoner has session-owned trigger evidence and recovers`() {
+        val s = captureCanonicalDeath()
+        val proof = requireNotNull(KlutzDeathTriggerProvenanceResolverV1.verified(
+            s.state.actionTimeline.reducerFacts(), 1,
+        ))
+        assertEquals("true-death-klutz", proof.deathActionId)
+        assertTrue(proof.isVerifiedDeathSnapshot)
+        assertEquals(null, proof.lastPoisonActionId)
+        val archive = ClocktowerSemanticHistoryPersistence.encodeActionTimeline(s.state.actionTimeline)
+        val timeline = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(org.json.JSONObject().put(
+            ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, archive,
+        ))
+        assertEquals(s.state.actionTimeline, timeline)
+        val journal = StorytellerCausalDecisionJournalV1(s.state.gameId)
+        val event = KlutzSpyDayRegistrationProducerV1.confirm(
+            s, journal, snapshot(s), roles,
+            input(true).copy(interactionId = "day:2:klutz:1:2:true-death-klutz"),
+        )
+        assertEquals("SESSION_TRIGGER", event.selectedOutcome.canonicalFields["deathEvidenceKind"])
+        assertEquals("", event.selectedOutcome.canonicalFields["lastPoisonActionId"])
+        assertEquals(listOf(event), roundtrip(s, journal).effectiveNow())
+        val id = journal.archive().records.filterIsInstance<
+            StorytellerCausalJournalRecordV1.Captured>().single().frozen.identity.decisionId
+        assertEquals(journal.frozenAt(id), roundtrip(s, journal).frozenAt(id))
+    }
+
+    @Test fun `canonical Klutz execution before death captures ability state without Poisoner`() {
+        val s = captureCanonicalDeath(byExecution = true)
+        val proof = requireNotNull(KlutzDeathTriggerProvenanceResolverV1.verified(
+            s.state.actionTimeline.reducerFacts(), 1,
+        ))
+        assertEquals("true-execution-klutz", proof.deathActionId)
+        assertTrue(proof.isVerifiedDeathSnapshot)
+    }
+
+    @Test fun `poisoned at death cannot be reclassified after death clears poisoned flag`() {
+        val s = captureCanonicalDeath(poisonedAtDeath = true)
+        assertEquals(null, KlutzDeathTriggerProvenanceResolverV1.verified(
+            s.state.actionTimeline.reducerFacts(), 1,
+        ))
+        val journal = StorytellerCausalDecisionJournalV1(s.state.gameId)
+        assertThrows(IllegalArgumentException::class.java) {
+            KlutzSpyDayRegistrationProducerV1.confirm(
+                s, journal, snapshot(s), roles,
+                input(true).copy(interactionId = "day:2:klutz:1:2:true-death-klutz"),
+            )
+        }
+        assertTrue(journal.archive().records.isEmpty())
+    }
+
+    @Test fun `serialized death evidence rejects missing boolean or made up role`() {
+        val s = captureCanonicalDeath()
+        val array = ClocktowerSemanticHistoryPersistence.encodeActionTimeline(s.state.actionTimeline)
+        val factJson = array.getJSONObject(0).getJSONObject("fact")
+        factJson.getJSONObject("klutzDeathTrigger").put("role", "Chef")
+        assertThrows(IllegalArgumentException::class.java) {
+            ClocktowerSemanticHistoryPersistence.decodeActionTimeline(org.json.JSONObject().put(
+                ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, array,
+            ))
+        }
+        factJson.getJSONObject("klutzDeathTrigger").put("role", "Klutz")
+        factJson.getJSONObject("klutzDeathTrigger").remove("poisonedBeforeDeath")
+        assertThrows(IllegalArgumentException::class.java) {
+            ClocktowerSemanticHistoryPersistence.decodeActionTimeline(org.json.JSONObject().put(
+                ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, array,
+            ))
         }
     }
 
