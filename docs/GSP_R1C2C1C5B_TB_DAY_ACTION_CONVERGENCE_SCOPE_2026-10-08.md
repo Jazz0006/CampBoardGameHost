@@ -20,6 +20,10 @@
 4. Current-format JSON/strict Recovery round-trip, malformed/tampered fields and old-history compatibility; public history projection hides secret ability-state flags.
 5. Exact-head **CI T4 Android FULL/debug APK + ASP + Real Clingo** and **independent R2**. Never accept code based solely on local source checks.
 
+## Exact-head T4 escalation
+
+A dedicated final `[full-ci]` commit is required after the executable and valid eight-player TB fixture checkpoints. The ordinary synchronize classifier may run only FAST on a later test-only commit; such a run is **not** full T4 evidence. The final `[full-ci]` HEAD must independently complete Android `:app:testFull :app:assembleDebug`, ASP golden/Python and Real Clingo cross-validation, plus R2. All subsequent source changes invalidate this checkpoint.
+
 ## Deliberately open / next gates
 
 - Do not infer retrospective Storyteller rulings from player actions, numeric witnesses, current UI choice or death snapshots.
