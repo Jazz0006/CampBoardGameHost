@@ -275,6 +275,12 @@ class StorytellerRegistrationRulingProducerV1Test {
         assertEquals(null, revised.single().registrations.single().registeredRole)
         assertEquals(2, journal.effectiveNow().size)
         assertEquals(1, journal.effectiveNow().count { it.registrations.isNotEmpty() })
+        // Reopened UI or Recovery has no transient manual selection. An absent toggle does
+        // not revoke the last explicitly confirmed registration.
+        assertTrue(ClocktowerConfirmedRegistrationHostWriterV1.commit(
+            unresolved, session, journal, snapshot(session), roles,
+        ).isEmpty())
+        assertEquals(1, journal.effectiveNow().count { it.registrations.isNotEmpty() })
         val rewrittenDecisionId = journal.archive().records
             .filterIsInstance<StorytellerCausalJournalRecordV1.Committed>()
             .last().decisionId
