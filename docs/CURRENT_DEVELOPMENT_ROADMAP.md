@@ -65,13 +65,17 @@ RES-4 named deterministic special-policy physical purge       COMPLETE / ACCEPTE
 RES-5 physical module/dependency boundary                     COMPLETE / ACCEPTED — T4 cdf5dba2; CI #3832 / R2 #3509 GREEN
 GSP-R0 post-RES-5 re-entry audit                              COMPLETE / DOCS — current authority: GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md
 GSP-R1A canonical capture/prefix coverage audit                CODE AUDIT COMPLETE — docs/GSP_R1A_CANONICAL_HISTORY_CAPTURE_PREFIX_COVERAGE_AUDIT_2026-10-08.md; no Android behavior change
-GSP-R1B neutral typed immutable prefix materializer             NEXT EXECUTABLE — GLOBAL_V1 live snapshot + explicit unknown/coverage; no fabricated historical prefix or registration witness
-GSP-R1C fresh/recovered replay + prefix safety                 AFTER R1B — exact historical cutoff/correction bridge acceptance
+GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEPTED — PR #250, CI #3849 / R2 #3518 GREEN (Android FAST + Clingo); GLOBAL_V1 live only
+GSP-R1C fresh/recovered replay + prefix safety                 NEXT — same frozen logical cutoff across Recovery, historical cutoff/decision correction gates, Spy/Recluse ambiguity tests
 ~~~
 
 ### GSP-R1A capture gate — 2026-10-08
 
 The code-level R1A inventory confirms canonical Global actions and some typed player observations, but incomplete registration/private/public semantic producer coverage and absent production/Recovery decision archive capture. Revision-filtered effective decisions **cannot** be interleaved with action/observation global sequence; correction events lack causal timestamps. R1B must project a neutral read-only prefix with per-dimension coverage/unknown and a captured exclusive cutoff, without pretending that missing observations, public claims or historical decision cutoffs are complete. See [R1A audit](GSP_R1A_CANONICAL_HISTORY_CAPTURE_PREFIX_COVERAGE_AUDIT_2026-10-08.md). R2/R3/R4/GSP-3A order remains unchanged; no production LLM API before the benchmark.
+
+### GSP-R1B accepted — 2026-10-08
+
+[Accepted R1B executable closure](GSP_R1B_NEUTRAL_LIVE_HISTORY_PREFIX_ACCEPTANCE_2026-10-08.md): PR #250 squash `8e788db2f6ad0be1f3c8b1c844306d6210e66cd7`, CI #3849 / R2 #3518 GREEN, Android **FAST** and Real Clingo passed; full Android/T4 was not run. The Host's neutral provider context can carry an immutable, globally ordered current-game Action/Observation prefix bounded by the captured exclusive cursor and session revisions. Mechanical/private/public producer coverage remains PARTIAL; registration and prior-decision causal capture UNKNOWN. LegacyLocal chronology is explicitly unavailable, and no historical replay or production LLM provider was introduced. **GSP-R1C is next**, with real Recovery/frozen-prefix equality and missing-coverage/ambiguity gates. The result-first registration ambiguity authority remains a separate producer/UI follow-up.
 
 ### GSP-R1B / R1C — ambiguous registration semantics (2026-10-08)
 
