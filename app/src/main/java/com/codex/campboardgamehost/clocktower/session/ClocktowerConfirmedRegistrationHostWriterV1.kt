@@ -3,6 +3,7 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.ClocktowerConfirmedRegistrationPublicationV1
 import com.codex.campboardgamehost.isRulesConsistent
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.RegistrationResolutionStatusV1
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderPriorDecisionV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
@@ -55,6 +56,12 @@ internal object ClocktowerConfirmedRegistrationHostWriterV1 {
                     prior.selectedOutcome.canonicalFields["subjectSeat"] == choice.subjectSeat.toString() &&
                     prior.selectedOutcome.canonicalFields["question"] == choice.question.name
             }
+            // A missing UI toggle is NOT consent to erase a durable explicit ruling after
+            // Compose state reset or Recovery. Positive unresolved is recorded only once;
+            // replacing an existing ruling needs an actual explicit new selection.
+            if (previous != null &&
+                choice.status == RegistrationResolutionStatusV1.UNRESOLVED_NOT_REQUIRED
+            ) return@forEach
             if (previous?.selectedOutcome?.canonicalFields?.get("status") == choice.status.name &&
                 previous.selectedOutcome.canonicalFields["selectedRoleId"] == choice.selectedRole?.value
             ) return@forEach
