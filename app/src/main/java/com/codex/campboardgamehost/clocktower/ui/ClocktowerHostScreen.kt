@@ -2731,45 +2731,47 @@ internal fun ClocktowerJudgeScreen(
                             Toast.LENGTH_LONG,
                         ).show()
                     } else {
-                        performClocktowerPlayerRevealHandoff(
+                        val commitVerifiedRegistration: () -> Unit = {
+                            val ready = plan as? ClocktowerResultRegistrationPlanV1.Ready
+                            val actor = displayStep.actor
+                            val roleName = displayStep.roleEnName
+                            val shown = displayStep.informationDecisionConfirmation?.draft?.proposition
+                                ?: displayStep.displayProposition
+                            val canonicalInteraction = displayStep.interactionId?.value
+                            if (ready != null && actor != null && roleName != null &&
+                                shown != null && canonicalInteraction != null
+                            ) {
+                                val actorSeat = cards.indexOfFirst { it.name == actor.name }
+                                    .takeIf { index -> index >= 0 }?.plus(1)
+                                if (actorSeat != null) {
+                                    val recordId = displayStep.informationDecisionConfirmation?.draft?.recordId
+                                        ?: clocktowerPrivateObservationRecordId(
+                                            gameId = gameId,
+                                            phase = phase,
+                                            round = round,
+                                            roleEnName = roleName,
+                                            actorSeat = actorSeat,
+                                            proposition = shown,
+                                        )
+                                    onCommitConfirmedRegistrationResult(
+                                        ClocktowerConfirmedRegistrationPublicationV1(
+                                            interactionId = "${phase.name}:$round:$canonicalInteraction",
+                                            observationRecordId = recordId,
+                                            sourceSeat = actorSeat,
+                                            shownProposition = shown,
+                                            choices = ready.choices,
+                                            legalResultWitnesses = ready.legalResultWitnesses,
+                                        ),
+                                    )
+                                }
+                            }
+                        }
+                        val handoff = performClocktowerPlayerRevealHandoff(
                             authorize = { informationDecisionPublicationAllowed(displayStep) },
                             publishFirstNight = { publishFirstNightInformation(displayStep) },
                             recordPrivateInformation = {
                                 recordReliablePrivateInformation(displayStep)
-                                // Only a genuinely published typed result can anchor a causal ruling.
-                                val ready = plan as? ClocktowerResultRegistrationPlanV1.Ready
-                                val actor = displayStep.actor
-                                val roleName = displayStep.roleEnName
-                                val shown = displayStep.informationDecisionConfirmation?.draft?.proposition
-                                    ?: displayStep.displayProposition
-                                val canonicalInteraction = displayStep.interactionId?.value
-                                if (ready != null && actor != null && roleName != null &&
-                                    shown != null && canonicalInteraction != null
-                                ) {
-                                    val actorSeat = cards.indexOfFirst { it.name == actor.name }
-                                        .takeIf { index -> index >= 0 }?.plus(1)
-                                    if (actorSeat != null) {
-                                        val recordId = displayStep.informationDecisionConfirmation?.draft?.recordId
-                                            ?: clocktowerPrivateObservationRecordId(
-                                                gameId = gameId,
-                                                phase = phase,
-                                                round = round,
-                                                roleEnName = roleName,
-                                                actorSeat = actorSeat,
-                                                proposition = shown,
-                                            )
-                                        onCommitConfirmedRegistrationResult(
-                                            ClocktowerConfirmedRegistrationPublicationV1(
-                                                interactionId = "${phase.name}:$round:$canonicalInteraction",
-                                                observationRecordId = recordId,
-                                                sourceSeat = actorSeat,
-                                                shownProposition = shown,
-                                                choices = ready.choices,
-                                                legalResultWitnesses = ready.legalResultWitnesses,
-                                            ),
-                                        )
-                                    }
-                                }
+                                commitVerifiedRegistration()
                             },
                             recordHistory = {
                                 val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
@@ -2788,6 +2790,12 @@ internal fun ClocktowerJudgeScreen(
                             },
                             openReveal = { playerDisplayStep = displayStep },
                         )
+                        // Re-opening an unchanged confirmed result can correct an explicitly
+                        // adjudicated witness without publishing a duplicate player observation.
+                        // The Host still requires the exact already-stored most recent observation.
+                        if (handoff.openReveal && !handoff.recordPublication) {
+                            commitVerifiedRegistration()
+                        }
                     }
                 },
                 canGoPrevious = currentStepIndex > 0,
