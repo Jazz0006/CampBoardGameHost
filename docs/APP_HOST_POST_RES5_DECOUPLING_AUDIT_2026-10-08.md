@@ -4,9 +4,9 @@
 >
 > 本地基线：`050f9ac72be5510a85f35ec75c89672bf935a6bf`，RES-5 / PR #242 合入提交。审计开始时工作区干净，处于 detached HEAD。
 >
-> 状态：**审计完成；第一轮 H-R / H-M / A-C / A-S 已在本地实施，尚待验证与验收。**
+> 状态：**H-R / H-M / A-C / A-S / H-P / H-I 均已合并并经完整 CI/R2 验收。** PR #244 (CI #3837 / R2 #3512)、#245 (CI #3839 / R2 #3513)、#246 (CI #3841 / R2 #3514) 均 GREEN。当前更新后的独立再审计：`GSP_R1_POST_APP_HOST_SPLIT_REAUDIT_2026-10-08.md`。
 >
-> 范围：直接读取本地文件；未使用 Mini MCP，未查询远端，未修改生产代码、测试或工作流。
+> 原始审计范围：直接读取本地文件；当时未使用 Mini MCP、未查询远端。此文档后半部记录的实施现已通过 PR #244–246 完成；旧行号与「候选/待验收」描述属于历史过程，不得优先于本页当前状态及新 GSP-R1 再审计。
 
 ## 1. 结论
 
@@ -186,7 +186,7 @@ Architecture pre-flight:
 
 这一步能缩小文件阅读范围，但**不会自动修复 RoleCatalogAdapter 依赖呈现目录的历史方向**。若以后要将所有元数据统一到 validated catalog，应作为另一个 fan-out migration，不能宣称本次搬文件已经实现 engine/UI 解耦。
 
-## 7. 第二轮候选：H-P 发布记录准备、H-I 登记交互状态
+## 7. 第二轮已完成：H-P 发布记录准备、H-I 登记交互状态
 
 ### H-P：先拆展示历史 payload，后审查私密 proposition fallback
 
@@ -285,7 +285,7 @@ R2 工作流仍包含要求 `ClocktowerSpyRegistrationDecisionControls` / `Clock
 
 前一份 `APP_HOST_DECOMPOSITION_REAUDIT_2026-10-07.md` 的状态/尺寸已更新到 RES-5，但若干区段仍引用旧行号、86 参数及已删除 named-policy hooks；A1/A2/H0 的说明也包含“仍待拆”的历史措辞。本报告用当前代码重新定位，**不能按旧区段把已完成项目再做一次**。两个文件的字符数仍与 RES-5 完成报告一致；旧文档行数各多一行是计数口径差异，不是新的代码增长。
 
-本报告不改写已完成 RES-5 的验收结论。用户随后要求按第一轮计划实施；本地实现状态见下节。
+本报告不改写已完成 RES-5 的验收结论。第一轮 H-R/H-M/A-C/A-S 随 PR #244 合并；H-P 随 PR #245 合并；H-I 随 PR #246 合并。PR #245 的未解决 P2 文档 review 指出的「H-P 已做却仍写候选」矛盾由本次文档状态修正处理；不是已发现的运行时玩法缺陷。
 
 ## 11. 第一轮本地实施记录（2026-10-08）
 
@@ -296,7 +296,7 @@ R2 工作流仍包含要求 `ClocktowerSpyRegistrationDecisionControls` / `Clock
 
 本地 Android SDK 存在，但项目 Gradle 9.5.0 wrapper 分发包未缓存；已将校验过 SHA-256 的 Gradle/JDK 下载到临时目录，并以临时 truststore 与本地 Maven 缓存绕过本机代理的 Java TLS 问题，不改项目构建配置。新增定向测试及既有 `DemonSuccessionSemanticsTest` 通过；`:app:testFast` 执行 1,435 项测试，0 失败/跳过，Kotlin 主代码和测试代码均编译通过。以上是**本地验证**，尚非远端 CI/R2 或合入验收。
 
-下一轮 H-P/H-I 仍为候选，需要先完成本轮编译、测试和差异复核，再决定是否实施。
+历史注：记录此段时 H-P/H-I 尚未实施；截至 PR #245/#246 合并，两项均已完成并通过完整 CI/R2。不要再次按旧候选路线重复执行。
 
 ## 12. 关键本地证据
 

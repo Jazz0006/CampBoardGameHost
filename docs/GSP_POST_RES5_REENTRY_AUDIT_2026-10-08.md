@@ -4,7 +4,7 @@
 >
 > Audit baseline: live `main@050f9ac72be5510a85f35ec75c89672bf935a6bf`
 >
-> Status: **CURRENT GSP RE-ENTRY AUDIT / ROUTE RESET AFTER RES-5**
+> Status: **ACCEPTED HISTORICAL RE-ENTRY BASELINE — source-shape reassessed after PR #244/#245/#246; latest GSP-R1 preflight is `GSP_R1_POST_APP_HOST_SPLIT_REAUDIT_2026-10-08.md`.**
 >
 > Scope: determine which pre-RES GSP foundations still survive, which recorded gaps are already closed or obsolete, and the smallest safe route from the neutral provider contract to a meaningful whole-game benchmark.
 
