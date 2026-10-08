@@ -86,6 +86,9 @@ internal object StorytellerRegistrationRulingProducerV1 {
         require(record.visibility == ObservationVisibility.PRIVATE)
         require(record.sourceSeat == input.sourceSeat)
         require(record.sourceAbility != null)
+        require(input.subjectSeat in record.proposition.referencedSeats()) {
+            "Registration subject is not a semantic target of the published observation."
+        }
         require(record.reliability != ObservationReliability.NOT_ABILITY_INFORMATION)
         val source = state.gameState.players.single { it.seat == input.sourceSeat }
         val player = state.gameState.players.single { it.seat == input.subjectSeat }
