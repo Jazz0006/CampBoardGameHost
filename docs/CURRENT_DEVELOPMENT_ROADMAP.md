@@ -69,8 +69,12 @@ GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEP
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
 GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
-GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 #260 / 1A #263 / 1B #265 accepted; 1C1 Slayer #267 and 1C2 Virgin #269 reachable TB accepted; synthetic 1C3A/#271, 1C3B/#273 Klutz/Spy production coverage RETRACTED; C2C-1C4 audit FAIL; 1C5A real NGJ Klutz + unreachable TB writer retirement #276 T4 ACCEPTED; 1C5B reachable TB day action/history #278 T4 ACCEPTED; NGJ learned-death/choice 1C5C NEXT; R1C IN PROGRESS
+GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — 1A/#263, 1B/#265, TB 1C1/#267, 1C2/#269; synthetic 1C3A/#271 and 1C3B/#273 coverage RETRACTED; 1C4 audit FAIL; 1C5A NGJ correction #276, 1C5B TB day actions #278, 1C5C NGJ Klutz learn/choice #280 T4 ACCEPTED; 1C6 combined reachable-producer audit NEXT; R1C IN PROGRESS
 ~~~
+
+### GSP-R1C2C-1C5C — NGJ Klutz learned-death and public player-choice accepted — 2026-10-09
+
+[Exact accepted 1C5C](GSP_R1C2C1C5C_NGJ_KLUTZ_ACCEPTANCE_2026-10-09.md) and [scope](GSP_R1C2C1C5C_NGJ_KLUTZ_LEARN_CHOICE_SCOPE_2026-10-09.md): PR #280 squash `1f457783341d5bc9c230f804eac20e653cac6a04`; exact-head `ca57affc3ecb3c27a77d58a78fc7f89d1e0cd66c`, **CI #3960 T4 GREEN** (Android FULL/debug APK, ASP, Real Clingo) and **R2 #3599 GREEN**. Valid NGJ Host now records the actual public `KlutzLearnedDeath` transition separately from its original canonical Death/Execution, then independently records the player's confirmed `KlutzChoice` before game resolution; strict Recovery checks death → learn → choice, rejects missing/forged links and duplicates. Public replay exposes selected seats without revealing true role/ability/alignment. Old unproven death histories remain UNKNOWN; no synthetic TB Klutz/Spy. **NEXT 1C6** is the comprehensive reachable TB/NGJ day-registration and mechanical-action coverage/recovery audit before C2C-1C family closure. **C2C-1C / 1 / R1C2C / R1C remain IN PROGRESS**, C2C-2/3 and GSP-R2/LLM later.
 
 ### GSP-R1C2C-1C5B TB day action history accepted — 2026-10-08
 
