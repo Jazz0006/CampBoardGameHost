@@ -145,7 +145,7 @@ internal fun ClocktowerJudgeScreen(
     onConfirmArtistQuestion: (String, Boolean, Boolean) -> Unit,
     onSlayerShot: (String, String, Boolean) -> Unit,
     onPreflightVirginExecution: (String, Boolean) -> Unit,
-    onVirginNomination: (String, String, Boolean) -> Unit,
+    onVirginNomination: (String, String, Boolean, Boolean?) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
     onConfirmNight: () -> Unit,
@@ -2026,12 +2026,17 @@ internal fun ClocktowerJudgeScreen(
                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination && virginExecutes) {
                     onPreflightVirginExecution(
                         chosenNominator,
-                        spyRegistrationWillRecord(virginRegistrationKey),
+                        false, // Day ruling is causal, not a fake preceding localized event.
                     )
                 }
                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
-                    recordSpyRegistration(virginRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Virgin")
-                    onVirginNomination(chosenNominator, chosenNominee, virginExecutes)
+                    val explicitSpyRuling = registrationState.explicitChoice(
+                        ClocktowerRegistrationSubject.SPY, virginRegistrationKey,
+                    )?.takeIf { virginAbilityWorks && spyCanRegister("Virgin") }
+                    onVirginNomination(
+                        chosenNominator, chosenNominee, virginExecutes,
+                        explicitSpyRuling?.usesSpecialRegistration,
+                    )
                 }
                 if (chosenNominator != null && chosenNominee != null && virginExecutes) {
                     onRecordEvent(
@@ -2059,9 +2064,14 @@ internal fun ClocktowerJudgeScreen(
                         enabled = spyCanRegister("Virgin"),
                         language = language,
                         onRegistersGoodChange = { good ->
-                            registrationState.chooseSpy(virginRegistrationKey, good, defaultRole = "Washerwoman")
+                            // Virgin checks Townsfolk TYPE, not a named Townsfolk role.
+                            registrationState.chooseSpy(virginRegistrationKey, good)
                         },
-                        onRoleChange = { registrationState.chooseSpyRole(virginRegistrationKey, it) },
+                        onRoleChange = {
+                            // Role detail is not required to resolve a Virgin Townsfolk-type ruling.
+                            // Leave this local edit as an optional presentation preference.
+                            registrationState.chooseSpyRole(virginRegistrationKey, it)
+                        },
                     )
                 }
             },
