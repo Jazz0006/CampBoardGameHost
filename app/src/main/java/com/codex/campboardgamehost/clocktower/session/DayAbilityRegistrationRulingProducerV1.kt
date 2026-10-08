@@ -250,7 +250,7 @@ internal object DayAbilityRegistrationRulingProducerV1 {
             return
         }
         if (f["abilityRole"] == "Klutz") {
-            KlutzSpyDayRegistrationProducerV1.validateCommitted(frozen, event)
+            LegacyKlutzSpyRegistrationRecoveryValidatorV1.validateCommitted(frozen, event)
             return
         }
         require(f.keys == setOf(

@@ -256,13 +256,15 @@ jobs:
           grep -q "internal fun ClocktowerSpyRegistrationDecisionControls" "$registration_controls"
           grep -q "internal fun ClocktowerRecluseRegistrationDecisionControls" "$registration_controls"
           grep -q "internal fun ClocktowerAutomaticRegistrationEffect" "$automatic_registration"
-          # Virgin and Klutz now have rule-semantic type/alignment controls instead of
-          # forcing a named Townsfolk/Outsider registration for mechanical outcomes.
+          # TB Virgin genuinely allows Spy-as-Townsfolk TYPE registration.
           grep -q "ClocktowerSpyTownsfolkTypeDecisionControls(" "$host"
-          grep -q "ClocktowerSpyGoodAlignmentDecisionControls(" "$host"
-          # A future interaction may legitimately need a named-role Spy control.
-          # Do not globally prohibit that component: here we assert only the two
-          # current confirmed-day type/alignment surfaces exist.
+          # No supported script has both Klutz and Spy. Guard against restoring
+          # the unreachable special-good UI or invented prechoice ruling.
+          if grep -q "ClocktowerSpyGoodAlignmentDecisionControls(" "$host"; then
+            echo "Unreachable Klutz/Spy alignment picker resurfaced in production Host" >&2
+            exit 1
+          fi
+          # Named-role Spy registration is still legal for OTHER real interactions.
           grep -q "ClocktowerRecluseRegistrationDecisionControls(" "$host"
           grep -q "ClocktowerAutomaticRegistrationEffect(" "$night_step_ui"
 

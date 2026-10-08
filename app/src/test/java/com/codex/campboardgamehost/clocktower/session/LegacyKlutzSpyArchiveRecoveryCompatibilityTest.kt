@@ -10,7 +10,11 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class KlutzSpyDayRegistrationProducerV1Test {
+/** Archival regression ONLY: the synthetic TB/Spy/Klutz combination never occurs
+ * in either of the production script role catalogs. Tests below validate old
+ * Recovery decode/tamper semantics and shared death evidence, NOT live coverage.
+ */
+class LegacyKlutzSpyArchiveRecoveryCompatibilityTest {
     private val script = ScriptId("trouble_brewing")
     private val players = listOf(
         PlayerState(1, "Klutz", RoleId("Klutz"), Alignment.GOOD, CharacterType.OUTSIDER,
