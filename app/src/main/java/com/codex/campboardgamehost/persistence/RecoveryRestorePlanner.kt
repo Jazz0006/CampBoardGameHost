@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
+import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
@@ -424,9 +426,22 @@ internal object RecoveryRestorePlanner {
                     require(fact.nominatorSeat != fact.nomineeSeat)
                     require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
                     if (fact.firstVirginNomination) {
+                        val nominee = game.cards[fact.nomineeSeat - 1]
+                        // Match live onConfirmedNomination: a Drunk SHOWN Virgin interacts as
+                        // Virgin and consumes the first-nomination opportunity, even though
+                        // the actual Drunk ability cannot execute the nominator. Use the
+                        // saved actual+shown role, not the player's later alive/poison state.
+                        val perceivedAtInteraction = AbilityFunctioningSemantics.perceivedRole(
+                            AbilitySubject(
+                                actualRole = nominee.clocktowerRole?.enName,
+                                shownRole = nominee.clocktowerShownRole?.enName,
+                                isPoisoned = false,
+                                isAlive = true,
+                            ),
+                        )
                         require(game.identity.script == ClocktowerScript.TroubleBrewing &&
-                            game.cards[fact.nomineeSeat - 1].clocktowerRole?.enName == "Virgin") {
-                            "First Virgin nomination requires an actual Virgin in Trouble Brewing."
+                            perceivedAtInteraction == "Virgin") {
+                            "First Virgin nomination requires actual or Drunk-shown Virgin in TB."
                         }
                     }
                 }
