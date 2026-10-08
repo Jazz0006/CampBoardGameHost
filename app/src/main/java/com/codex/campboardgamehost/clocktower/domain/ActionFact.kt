@@ -159,7 +159,7 @@ object DynamicActionReducer {
                 is ActionFact.SlayerShot -> {
                     requireSeat(fact.claimantSeat)
                     requireSeat(fact.targetSeat)
-                    require(!fact.hit || fact.abilityConsumed)                    require(!fact.hit || fact.abilityConsumed)
+                    require(!fact.hit || fact.abilityConsumed)
                 }
                 is ActionFact.Nomination -> {
                     requireSeat(fact.nominatorSeat)
