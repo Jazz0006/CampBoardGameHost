@@ -2476,11 +2476,19 @@ internal fun ClocktowerJudgeScreen(
             ?.map { it.registeredRole.value }
             .orEmpty()
         val currentRecluseRegistrationResolution = currentStep.roleEnName?.let { roleEnName ->
+            // Numeric/Boolean alignment questions do not name a specific Evil role; an empty
+            // role filter means ALIGNMENT_ONLY, not that the Recluse is irrelevant.
+            val filteredTeams = currentStep.recluseRegistrationTeams.ifEmpty {
+                listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon)
+            }
             registrationResolution(
                 currentStep.recluseRegistrationKey,
                 roleEnName,
                 recluseCard,
-                currentStep.recluseRegistrationTeams,
+                filteredTeams,
+                detail = if (currentStep.recluseRegistrationTeams.isEmpty()) {
+                    ClocktowerRegistrationDetail.AlignmentOnly
+                } else ClocktowerRegistrationDetail.Role,
             )
         }
         val currentRecluseLegalSpecialRoleEnNames = currentRecluseRegistrationResolution
