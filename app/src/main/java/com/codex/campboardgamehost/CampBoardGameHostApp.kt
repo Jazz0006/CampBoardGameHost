@@ -75,6 +75,8 @@ import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfi
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
+import com.codex.campboardgamehost.clocktower.session.DayAbilityRegistrationRulingProducerV1
+import com.codex.campboardgamehost.clocktower.session.ConfirmedDaySlayerRegistrationV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCausalJournalRecordV1
 import com.codex.campboardgamehost.clocktower.session.ClocktowerConfirmedRegistrationHostWriterV1
 import com.codex.campboardgamehost.clocktower.session.ConfirmedRegistrationResolutionInputV1
@@ -2673,6 +2675,42 @@ internal fun CampBoardGameHostApp() {
                             }
                             val targetRegistersAsDemon = targetCard?.clocktowerTeam == ClocktowerTeam.Demon ||
                                 (targetCard?.clocktowerRole?.enName == "Recluse" && recluseRegistersAsDemon)
+                            if (
+                                currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
+                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1 &&
+                                slayerDecision.effectApplies &&
+                                !clocktowerSlayerUsed &&
+                                targetCard?.clocktowerRole?.enName == "Recluse" &&
+                                targetCard.eliminatedRound == null &&
+                                recluseRegistersAsDemon
+                            ) {
+                                // Real public ability adjudication, recorded BEFORE the shot changes
+                                // player death/ability-used state. No fake private information is made.
+                                val session = requireClocktowerGameSession()
+                                val actorSeat = clocktowerSeatFor(claimantName)
+                                val subjectSeat = targetIndex + 1
+                                val rulesetRef = requireNotNull(clocktowerRulesetRef)
+                                val registry = activeGameClocktowerRulesetCatalog
+                                    .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+                                val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+                                    gameSnapshot = session.toGameSnapshot(rulesetRef),
+                                    phase = StorytellerPhase.DAY,
+                                    round = round,
+                                    characterRegistry = registry,
+                                )
+                                DayAbilityRegistrationRulingProducerV1.confirmSlayer(
+                                    session = session,
+                                    journal = currentClocktowerCausalJournal(),
+                                    snapshot = snapshot,
+                                    legalRoles = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
+                                    input = ConfirmedDaySlayerRegistrationV1(
+                                        interactionId = "day:$round:slayer:$actorSeat:$subjectSeat",
+                                        slayerSeat = actorSeat,
+                                        recluseSeat = subjectSeat,
+                                        registeredDemonRole = RoleId("Imp"),
+                                    ),
+                                )
+                            }
                             if (targetCard?.clocktowerRole?.enName == "Recluse" && recluseRegistersAsDemon) {
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
