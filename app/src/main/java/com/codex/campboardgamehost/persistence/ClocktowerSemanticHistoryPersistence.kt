@@ -109,6 +109,26 @@ internal object ClocktowerSemanticHistoryPersistence {
                 put("targetSeat", fact.targetSeat)
                 fact.klutzDeathTrigger?.let { put("klutzDeathTrigger", encodeKlutzDeathTrigger(it)) }
             }
+            is ActionFact.SlayerShot -> {
+                put("kind", "slayer-shot")
+                put("claimantSeat", fact.claimantSeat)
+                put("targetSeat", fact.targetSeat)
+                put("abilityConsumed", fact.abilityConsumed)
+                put("hit", fact.hit)
+            }
+            is ActionFact.Nomination -> {
+                put("kind", "nomination")
+                put("nominatorSeat", fact.nominatorSeat)
+                put("nomineeSeat", fact.nomineeSeat)
+                put("firstVirginNomination", fact.firstVirginNomination)
+            }
+            is ActionFact.Vote -> {
+                put("kind", "vote")
+                put("nominatorSeat", fact.nominatorSeat)
+                put("nomineeSeat", fact.nomineeSeat)
+                put("voterSeats", JSONArray(fact.voterSeats))
+                put("ghostVoterSeats", JSONArray(fact.ghostVoterSeats))
+            }
             is ActionFact.RoleChange -> {
                 put("kind", "role-change")
                 put("targetSeat", fact.targetSeat)
@@ -144,6 +164,23 @@ internal object ClocktowerSemanticHistoryPersistence {
             "death" -> ActionFact.Death(
                 actionId, sequence, positiveSeat(json, "targetSeat"), decodeKlutzDeathTrigger(json),
             )
+            "slayer-shot" -> ActionFact.SlayerShot(
+                actionId, sequence, positiveSeat(json, "claimantSeat"), positiveSeat(json, "targetSeat"),
+                booleanValue(json, "abilityConsumed"), booleanValue(json, "hit"),
+            ).also {
+                require(!it.hit || it.abilityConsumed)
+            }
+            "nomination" -> ActionFact.Nomination(
+                actionId, sequence, positiveSeat(json, "nominatorSeat"), positiveSeat(json, "nomineeSeat"),
+                booleanValue(json, "firstVirginNomination"),
+            ).also { require(it.nominatorSeat != it.nomineeSeat) }
+            "vote" -> ActionFact.Vote(
+                actionId, sequence, positiveSeat(json, "nominatorSeat"), positiveSeat(json, "nomineeSeat"),
+                positiveSeatArray(json, "voterSeats"), positiveSeatArray(json, "ghostVoterSeats"),
+            ).also {
+                require(it.nominatorSeat != it.nomineeSeat)
+                require(it.ghostVoterSeats.all { seat -> seat in it.voterSeats })
+            }
             "role-change" -> ActionFact.RoleChange(
                 actionId = actionId,
                 sequence = sequence,
@@ -160,6 +197,25 @@ internal object ClocktowerSemanticHistoryPersistence {
             )
             else -> throw IllegalArgumentException("Unknown action fact kind '${stringValue(json, "kind")}'.")
         }
+    }
+
+    private fun booleanValue(json: JSONObject, key: String): Boolean {
+        require(json.has(key) && !json.isNull(key)) { "$key is required." }
+        val value = json.opt(key)
+        require(value is Boolean) { "$key must be a Boolean." }
+        return value
+    }
+
+    private fun positiveSeatArray(json: JSONObject, key: String): List<Int> {
+        val array = json.opt(key) as? JSONArray
+            ?: throw IllegalArgumentException("$key must be an array.")
+        val values = (0 until array.length()).map { index ->
+            val value = array.opt(index)
+            require(value is Int && value > 0) { "$key[$index] must be a positive seat." }
+            value
+        }
+        require(values.distinct().size == values.size) { "$key must not contain duplicates." }
+        return values
     }
 
     private fun encodeKlutzDeathTrigger(value: KlutzDeathTriggerEvidenceV1): JSONObject = JSONObject().apply {

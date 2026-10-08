@@ -406,10 +406,73 @@ internal object RecoveryRestorePlanner {
                 is ActionFact.Attack -> requireKnownSeat(fact.targetSeat, playerCount)
                 is ActionFact.Execution -> requireKnownSeat(fact.targetSeat, playerCount)
                 is ActionFact.Death -> requireKnownSeat(fact.targetSeat, playerCount)
+                is ActionFact.SlayerShot -> {
+                    requireKnownSeat(fact.claimantSeat, playerCount)
+                    requireKnownSeat(fact.targetSeat, playerCount)
+                    require(!fact.hit || fact.abilityConsumed)
+                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
+                }
+                is ActionFact.Nomination -> {
+                    requireKnownSeat(fact.nominatorSeat, playerCount)
+                    requireKnownSeat(fact.nomineeSeat, playerCount)
+                    require(fact.nominatorSeat != fact.nomineeSeat)
+                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
+                }
+                is ActionFact.Vote -> {
+                    requireKnownSeat(fact.nominatorSeat, playerCount)
+                    requireKnownSeat(fact.nomineeSeat, playerCount)
+                    require(fact.nominatorSeat != fact.nomineeSeat)
+                    require(fact.ghostVoterSeats.all { it in fact.voterSeats })
+                    fact.voterSeats.forEach { requireKnownSeat(it, playerCount) }
+                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
+                }
                 is ActionFact.RoleChange -> requireKnownSeat(fact.targetSeat, playerCount)
                 is ActionFact.PhaseAdvance -> require(fact.round in 1..game.round) {
                     "Phase-advance fact is outside the recovered game round."
                 }
+            }
+        }
+
+        // Newly typed player-action events must retain their actual causal order in Recovery.
+        // This does not infer a Storyteller ruling from a shot, nomination or voting result.
+        val orderedDayActions = history.actionTimeline.entries.sortedBy { it.point.globalSequence }
+        val consumedSlayerSeats = mutableSetOf<Int>()
+        val firstVirginNominees = mutableSetOf<Int>()
+        val unvotedNominations = mutableListOf<com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact>()
+        orderedDayActions.forEach { entry ->
+            when (val fact = entry.fact) {
+                is ActionFact.SlayerShot -> {
+                    if (fact.abilityConsumed) {
+                        require(consumedSlayerSeats.add(fact.claimantSeat)) {
+                            "One actual Slayer ability cannot be spent twice."
+                        }
+                    }
+                    if (fact.hit) {
+                        require(orderedDayActions.any { subsequent ->
+                            subsequent.point.globalSequence > entry.point.globalSequence &&
+                                (subsequent.fact as? ActionFact.Death)?.targetSeat == fact.targetSeat
+                        }) { "Confirmed Slayer hit must precede its canonical Death." }
+                    }
+                }
+                is ActionFact.Nomination -> {
+                    if (fact.firstVirginNomination) {
+                        require(firstVirginNominees.add(fact.nomineeSeat)) {
+                            "The same Virgin cannot have two first nominations."
+                        }
+                    }
+                    unvotedNominations.add(entry)
+                }
+                is ActionFact.Vote -> {
+                    val matching = unvotedNominations.indexOfFirst { nomination ->
+                        val previous = nomination.fact as ActionFact.Nomination
+                        previous.nominatorSeat == fact.nominatorSeat &&
+                            previous.nomineeSeat == fact.nomineeSeat &&
+                            nomination.point.round == entry.point.round
+                    }
+                    require(matching >= 0) { "Vote must follow an unconsumed confirmed nomination." }
+                    unvotedNominations.removeAt(matching)
+                }
+                else -> Unit
             }
         }
 

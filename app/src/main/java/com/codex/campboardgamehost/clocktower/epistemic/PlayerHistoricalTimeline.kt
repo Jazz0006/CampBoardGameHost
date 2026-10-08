@@ -24,6 +24,30 @@ internal sealed interface PlayerHistoricalEvent {
         override val point: TimelinePoint,
     ) : PlayerHistoricalEvent
 
+    /** Visible action identities omit concealed actual-role/ability-functioning metadata. */
+    data class PublicSlayerShot(
+        val actionId: String,
+        val claimantSeat: Int,
+        val targetSeat: Int,
+        override val point: TimelinePoint,
+    ) : PlayerHistoricalEvent
+
+    data class PublicNomination(
+        val actionId: String,
+        val nominatorSeat: Int,
+        val nomineeSeat: Int,
+        override val point: TimelinePoint,
+    ) : PlayerHistoricalEvent
+
+    data class PublicVote(
+        val actionId: String,
+        val nominatorSeat: Int,
+        val nomineeSeat: Int,
+        val voterSeats: List<Int>,
+        val ghostVoterSeats: List<Int>,
+        override val point: TimelinePoint,
+    ) : PlayerHistoricalEvent
+
     data class PhaseAdvance(
         val actionId: String,
         val phase: StorytellerPhase,
@@ -63,6 +87,16 @@ internal object PlayerHistoricalTimeline {
                     targetSeat = fact.targetSeat,
                     point = entry.point,
                 )
+                is ActionFact.SlayerShot -> PlayerHistoricalEvent.PublicSlayerShot(
+                    fact.actionId, fact.claimantSeat, fact.targetSeat, entry.point,
+                )
+                is ActionFact.Nomination -> PlayerHistoricalEvent.PublicNomination(
+                    fact.actionId, fact.nominatorSeat, fact.nomineeSeat, entry.point,
+                )
+                is ActionFact.Vote -> PlayerHistoricalEvent.PublicVote(
+                    fact.actionId, fact.nominatorSeat, fact.nomineeSeat,
+                    fact.voterSeats, fact.ghostVoterSeats, entry.point,
+                )
                 is ActionFact.PhaseAdvance -> PlayerHistoricalEvent.PhaseAdvance(
                     actionId = fact.actionId,
                     phase = fact.phase,
@@ -95,6 +129,9 @@ internal object PlayerHistoricalTimeline {
     private fun stableTieBreaker(event: PlayerHistoricalEvent): String = when (event) {
         is PlayerHistoricalEvent.PublicExecution -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicDeath -> "action:${event.actionId}"
+        is PlayerHistoricalEvent.PublicSlayerShot -> "action:${event.actionId}"
+        is PlayerHistoricalEvent.PublicNomination -> "action:${event.actionId}"
+        is PlayerHistoricalEvent.PublicVote -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PhaseAdvance -> "action:${event.actionId}"
         is PlayerHistoricalEvent.Observation -> "observation:${event.record.recordId}"
     }

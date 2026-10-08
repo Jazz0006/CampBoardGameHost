@@ -260,6 +260,9 @@ internal object EnumeratedHistoricalWorldReplay {
 
         events.forEach { event ->
             when (event) {
+                is PlayerHistoricalEvent.PublicSlayerShot,
+                is PlayerHistoricalEvent.PublicNomination,
+                is PlayerHistoricalEvent.PublicVote -> Unit // Public chronology without added alignment/world constraints.
                 is PlayerHistoricalEvent.PublicExecution -> {
                     worldSet = worldSet.eliminate(event.targetSeat)
                 }

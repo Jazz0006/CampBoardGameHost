@@ -14,7 +14,7 @@ internal data class ConfirmedDaySlayerRegistrationV1(
     val interactionId: String,
     val slayerSeat: Int,
     val recluseSeat: Int,
-    val registeredDemonRole: RoleId,
+    val registeredDemonRole: RoleId?, // null is explicit ACTUAL, not an untouched choice
 ) {
     init {
         require(interactionId.isNotBlank())
@@ -70,10 +70,15 @@ internal object DayAbilityRegistrationRulingProducerV1 {
             candidate.registeredType == CharacterType.DEMON &&
                 candidate.registeredRole == input.registeredDemonRole
         }
-        require(legal.size == 1) {
-            "Selected Demon registration is not an exact rules-owned legal candidate."
+        val candidate = if (input.registeredDemonRole == null) null else {
+            require(legal.size == 1) {
+                "Selected Demon registration is not an exact rules-owned legal candidate."
+            }
+            legal.single()
         }
-        val candidate = legal.single()
+        val candidateId = candidate?.let { "special:${it.registeredRole.value}" } ?: "actual"
+        val status = if (candidate == null) RegistrationResolutionStatusV1.EXPLICIT_ACTUAL
+            else RegistrationResolutionStatusV1.EXPLICIT_SPECIAL
         val type = StorytellerProviderDecisionContextV1.DAY_ABILITY_REGISTRATION
         val decisionId = "day-slayer-registration:${input.interactionId}:${input.slayerSeat}:${input.recluseSeat}"
         require(journal.archive().records.none {
@@ -95,12 +100,21 @@ internal object DayAbilityRegistrationRulingProducerV1 {
                 subjectSeat = subject.seat,
                 question = RegistrationQuestion.DEMON,
             ),
-            legalCandidates = listOf(StorytellerProviderCandidateV1(
-                "special:${candidate.registeredRole.value}",
-                StorytellerProviderCandidatePayloadV1.RegistrationChoice(
-                    RegistrationResolutionStatusV1.EXPLICIT_SPECIAL, candidate.registeredRole,
+            legalCandidates = listOf(
+                StorytellerProviderCandidateV1(
+                    "actual",
+                    StorytellerProviderCandidatePayloadV1.RegistrationChoice(
+                        RegistrationResolutionStatusV1.EXPLICIT_ACTUAL,
+                    ),
                 ),
-            )),
+            ) + listOfNotNull(candidate?.let {
+                StorytellerProviderCandidateV1(
+                    "special:${it.registeredRole.value}",
+                    StorytellerProviderCandidatePayloadV1.RegistrationChoice(
+                        RegistrationResolutionStatusV1.EXPLICIT_SPECIAL, it.registeredRole,
+                    ),
+                )
+            }),
             gameContext = journal.contextForRequest(snapshot, state),
         )
         val frozen = journal.captureBeforeDecision(request, state)
@@ -108,21 +122,22 @@ internal object DayAbilityRegistrationRulingProducerV1 {
             eventId = "confirmed:$decisionId",
             gameStateRevision = frozen.revision.gameStateRevision,
             playerInputRevision = frozen.revision.playerInputRevision,
-            selectedCandidateId = "special:${candidate.registeredRole.value}",
+            selectedCandidateId = candidateId,
             selectedOutcome = DecisionOutcomeSnapshot(type, sortedMapOf(
                 "interactionId" to input.interactionId,
                 "abilityRole" to "Slayer",
                 "actorSeat" to actor.seat.toString(),
                 "subjectSeat" to subject.seat.toString(),
                 "question" to RegistrationQuestion.DEMON.name,
-                "status" to RegistrationResolutionStatusV1.EXPLICIT_SPECIAL.name,
-                "registeredRoleId" to candidate.registeredRole.value,
+                "status" to status.name,
+                "registeredRoleId" to (candidate?.registeredRole?.value ?: ""),
             )),
             abilityState = AbilityState.FUNCTIONING,
-            truthRelation = TruthRelation.TRUE_TO_REGISTERED_STATE,
-            registrations = listOf(requireNotNull(candidate.registrationFact(
+            truthRelation = if (candidate == null) TruthRelation.NOT_APPLICABLE
+                else TruthRelation.TRUE_TO_REGISTERED_STATE,
+            registrations = candidate?.let { listOf(requireNotNull(it.registrationFact(
                 input.interactionId, RegistrationQuestion.DEMON,
-            ))),
+            ))) } ?: emptyList(),
         )
         journal.commit(decisionId, event)
         return event
@@ -259,7 +274,10 @@ internal object DayAbilityRegistrationRulingProducerV1 {
         require(f.getValue("interactionId").isNotBlank())
         require(f.getValue("abilityRole") == "Slayer")
         require(f.getValue("question") == RegistrationQuestion.DEMON.name)
-        require(f.getValue("status") == RegistrationResolutionStatusV1.EXPLICIT_SPECIAL.name)
+        val status = RegistrationResolutionStatusV1.valueOf(f.getValue("status"))
+        require(status in setOf(
+            RegistrationResolutionStatusV1.EXPLICIT_SPECIAL, RegistrationResolutionStatusV1.EXPLICIT_ACTUAL,
+        ))
         require((frozen.snapshotIdentity.position.phase as? SnapshotField.Known<StorytellerPhase>)?.value ==
             StorytellerPhase.DAY)
         val actorSeat = f.getValue("actorSeat").toInt()
@@ -273,23 +291,30 @@ internal object DayAbilityRegistrationRulingProducerV1 {
         require((subject.alive as? SnapshotField.Known<Boolean>)?.value == true)
         require((actor.poisoned as? SnapshotField.Known<Boolean>)?.value == false)
         require((subject.poisoned as? SnapshotField.Known<Boolean>)?.value == false)
-        val selectedRole = RoleId(f.getValue("registeredRoleId"))
-        require(selectedRole == RoleId("Imp")) {
-            "Trouble Brewing Slayer's selected Demon must be the actual legal Demon identity."
+        require(event.abilityState == AbilityState.FUNCTIONING)
+        if (status == RegistrationResolutionStatusV1.EXPLICIT_ACTUAL) {
+            require(f.getValue("registeredRoleId").isEmpty())
+            require(event.selectedCandidateId == "actual")
+            require(event.selectedCandidateId in frozen.legalCandidateIds)
+            require(event.truthRelation == TruthRelation.NOT_APPLICABLE && event.registrations.isEmpty())
+        } else {
+            val selectedRole = RoleId(f.getValue("registeredRoleId"))
+            require(selectedRole == RoleId("Imp")) {
+                "Trouble Brewing Slayer's selected Demon must be the actual legal Demon identity."
+            }
+            require(event.selectedCandidateId == "special:${selectedRole.value}")
+            require(event.selectedCandidateId in frozen.legalCandidateIds)
+            require(event.truthRelation == TruthRelation.TRUE_TO_REGISTERED_STATE)
+            require(event.registrations.size == 1)
+            val registration = event.registrations.single()
+            require(registration.interactionId == f.getValue("interactionId"))
+            require(registration.subjectSeat == subjectSeat)
+            require(registration.registrationQuestion == RegistrationQuestion.DEMON)
+            require(registration.reason == RegistrationReason.RECLUSE_ABILITY)
+            require(registration.registeredRole == selectedRole)
+            require(registration.registeredType == CharacterType.DEMON)
+            require(registration.registeredAlignment == Alignment.EVIL)
         }
-        require(event.selectedCandidateId == "special:${selectedRole.value}")
-        require(event.selectedCandidateId in frozen.legalCandidateIds)
-        require(event.abilityState == AbilityState.FUNCTIONING &&
-            event.truthRelation == TruthRelation.TRUE_TO_REGISTERED_STATE)
-        require(event.registrations.size == 1)
-        val registration = event.registrations.single()
-        require(registration.interactionId == f.getValue("interactionId"))
-        require(registration.subjectSeat == subjectSeat)
-        require(registration.registrationQuestion == RegistrationQuestion.DEMON)
-        require(registration.reason == RegistrationReason.RECLUSE_ABILITY)
-        require(registration.registeredRole == selectedRole)
-        require(registration.registeredType == CharacterType.DEMON)
-        require(registration.registeredAlignment == Alignment.EVIL)
     }
 
     private fun validateVirginCommitted(

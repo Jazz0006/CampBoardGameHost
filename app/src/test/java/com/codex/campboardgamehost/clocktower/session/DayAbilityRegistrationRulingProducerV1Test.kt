@@ -103,6 +103,31 @@ class DayAbilityRegistrationRulingProducerV1Test {
         }
     }
 
+    @Test fun `explicit actual Slayer Recluse ruling is durable but untouched produces no decision`() {
+        val untouched = makeSession()
+        val untouchedJournal = StorytellerCausalDecisionJournalV1(untouched.state.gameId)
+        assertTrue(untouchedJournal.archive().records.isEmpty())
+
+        val actual = makeSession()
+        val journal = StorytellerCausalDecisionJournalV1(actual.state.gameId)
+        val committed = DayAbilityRegistrationRulingProducerV1.confirmSlayer(
+            actual, journal, snapshot(actual), roleDefinitions,
+            input().copy(registeredDemonRole = null),
+        )
+        assertEquals(RegistrationResolutionStatusV1.EXPLICIT_ACTUAL.name,
+            committed.selectedOutcome.canonicalFields.getValue("status"))
+        assertEquals("actual", committed.selectedCandidateId)
+        assertTrue(committed.registrations.isEmpty())
+        assertEquals(TruthRelation.NOT_APPLICABLE, committed.truthRelation)
+        assertEquals(listOf(committed), recover(actual, journal).effectiveNow())
+        assertThrows(IllegalArgumentException::class.java) {
+            DayAbilityRegistrationRulingProducerV1.confirmSlayer(
+                actual, journal, snapshot(actual), roleDefinitions,
+                input().copy(registeredDemonRole = null),
+            )
+        }
+    }
+
     @Test fun `non-Slayer claimant poisoned participant and non-day phase never create a ruling`() {
         val cases = listOf(
             basePlayers.map { if (it.seat == 1) it.copy(actualRole = RoleId("Chef")) else it },
