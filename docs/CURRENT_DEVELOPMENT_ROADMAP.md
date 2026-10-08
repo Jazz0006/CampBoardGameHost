@@ -69,7 +69,7 @@ GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEP
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
 GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
-GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 #260 / 1A #263 / 1B #265 ACCEPTED; C2C-1C1 Slayer PR #267 and C2C-1C2 Virgin/Spy Townsfolk-type PR #269 T4 ACCEPTED; C2C-1C3 Klutz NEXT; R1C IN PROGRESS
+GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 #260 / 1A #263 / 1B #265 ACCEPTED; C2C-1C1 Slayer #267, C2C-1C2 Virgin #269 T4 ACCEPTED; C2C-1C3A Klutz verified-death alignment #271 T4 ACCEPTED; C2C-1C3B complete death-trigger provenance NEXT; R1C IN PROGRESS
 ~~~
 
 ### GSP-R1A capture gate — 2026-10-08
@@ -99,6 +99,10 @@ The code-level R1A inventory confirms canonical Global actions and some typed pl
 ### GSP-R1C2C-1C2 accepted Virgin first-nomination Townsfolk-type ruling — 2026-10-08
 
 [Exact C2C-1C2 acceptance](GSP_R1C2C1C2_VIRGIN_TOWNSFOLK_TYPE_ACCEPTANCE_2026-10-08.md) and [scope contract](GSP_R1C2C1C2_VIRGIN_TOWNSFOLK_TYPE_SCOPE_2026-10-08.md): PR #269, squash `3e702dcd8ac16a9c693feab8ee88ee9c15c6b7dc`, exact head `8cdcabfa54cec9c1d6dbfae715eb56cadb8e13b5`; **CI #3925 T4 GREEN**, **R2 #3575 GREEN**. The real Virgin first-nomination confirmation now captures **explicit** Spy-as-Townsfolk `CHARACTER_TYPE` (no invented named role) or explicitly actual Spy, before execution/death/phase effects; untouched remains not recorded. UI default Washerwoman and named-role picker are removed for Virgin, and strict Recovery rejects changed type/role/witness. No fake private observation. **C2C-1C2 COMPLETE, 1C3 Klutz NEXT; C2C-1C/R1C2C/R1C still IN PROGRESS.**
+
+### GSP-R1C2C-1C3A — Klutz/Spy Good alignment with proven death chronology accepted — 2026-10-08
+
+[Exact accepted C2C-1C3A](GSP_R1C2C1C3A_KLUTZ_ALIGNMENT_ACCEPTANCE_2026-10-08.md) and [bounded proof contract](GSP_R1C2C1C3_KLUTZ_ALIGNMENT_DEATH_PROVENANCE_SCOPE_2026-10-08.md): PR #271, squash `e5653499200898cc0c74839d855370d10dba055c`, exact head `81775a83d8b40a5b38d24d55c143c2f4ca1b50db`, **CI #3932 T4 GREEN** (Android FULL/debug APK, ASP, Real Clingo), **R2 #3580 GREEN**. The real Klutz choice now separates player-selected target from the Storyteller's explicit Spy-as-GOOD **alignment-only** ruling, preserving untouched/explicit-actual and not forcing Washerwoman. When canonical death/execution and prior poison-target chronology positively establish a non-poisoned Klutz at death, the Host commits a distinct typed day causal ruling before win/loss or phase mutation; strict Recovery rechecks original death/poison IDs and frozen prefix. Without proven death-time state the game remains playable but typed registration abstains. **1C3A complete; 1C3B next** must add authoritative death-trigger ability provenance to cover games without known poison-action history and audit remaining day/ruling coverage. **C2C-1C, C2C-1, R1C2C/R1C remain IN PROGRESS.**
 
 ### GSP-R1C2B accepted Mayor vertical — 2026-10-08
 
