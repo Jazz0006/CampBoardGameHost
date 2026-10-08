@@ -1,6 +1,12 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
+import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.domain.KlutzDeathTriggerEvidenceV1
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
+import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -109,6 +115,19 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                 eliminatedRound = if (index == 0) 1 else null,
             )
         }
+        val learnedHistory = ActionFactTimeline(listOf(
+            TimelineBoundActionFact(
+                ActionFact.Death(
+                    "real-death", 0L, 1,
+                    KlutzDeathTriggerEvidenceV1(RoleId("Klutz"), true, false, 0L),
+                ),
+                TimelinePoint(StorytellerPhase.DAWN, 1, 1, 0L),
+            ),
+            TimelineBoundActionFact(
+                ActionFact.KlutzLearnedDeath("real-learn", 1L, 1, "real-death", true),
+                TimelinePoint(StorytellerPhase.DAY, 2, 1, 1L),
+            ),
+        ))
         val saved = RecoverySnapshot(
             compatibilityToken = TOKEN,
             savedAtMillis = NOW - 1_000L,
@@ -152,10 +171,10 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                     highestVoteCount = 0,
                 ),
                 history = ClocktowerRecoveryHistory(
-                    gameStateRevision = 1L,
+                    gameStateRevision = 2L,
                     playerInputRevision = 0L,
-                    actionTimeline = ActionFactTimeline(),
-                    nextTimelineGlobalSequence = 0L,
+                    actionTimeline = learnedHistory,
+                    nextTimelineGlobalSequence = 2L,
                     events = emptyList(),
                     epistemicObservations = emptyList(),
                 ),
@@ -176,6 +195,26 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
         assertEquals("Player 1", recoveredGame.mechanics.pendingKlutzName)
         assertTrue(recoveredGame.mechanics.klutzReturnToDawn)
         assertEquals(1, recoveredGame.cards.first().eliminatedRound)
+        assertEquals(learnedHistory, recoveredGame.history.actionTimeline)
+
+        val forgedChoice = TimelineBoundActionFact(
+            ActionFact.KlutzChoice("forged-choice", 2L, 1, 2, "no-such-learn"),
+            TimelinePoint(StorytellerPhase.DAY, 2, 2, 2L),
+        )
+        val bad = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
+            history = saved.game.history.copy(
+                actionTimeline = ActionFactTimeline(learnedHistory.entries + forgedChoice),
+                nextTimelineGlobalSequence = 3L,
+            ),
+        ))
+        val rejected = RecoveryRestorePlanner.prepare(
+            raw = RecoverySnapshotJsonCodec.encode(bad),
+            expectedCompatibilityToken = TOKEN,
+            nowMillis = NOW,
+            roleByName = byName::get,
+            clocktowerRulesetResolver = { _, _ -> null },
+        )
+        assertTrue(rejected is RecoveryPlanPreparation.Rejected)
     }
 
     private companion object {
