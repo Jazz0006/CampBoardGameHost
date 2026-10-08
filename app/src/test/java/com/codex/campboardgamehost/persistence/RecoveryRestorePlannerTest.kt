@@ -264,6 +264,147 @@ class RecoveryRestorePlannerTest {
         assertTrue((result as RecoveryPlanPreparation.Ready).plan.presentResults)
     }
 
+    @Test
+    fun globalProviderPrefixIsIdenticalAcrossStrictRecoveryCodecPlannerAndRestoredSession() {
+        val base = clocktowerSnapshot()
+        val originalRecovery = base.game as ClocktowerRecovery
+        val gameState = com.codex.campboardgamehost.clocktower.domain.GameState(
+            script = ScriptId("trouble_brewing"),
+            players = originalRecovery.cards.mapIndexed { index, card ->
+                val role = requireNotNull(card.clocktowerRole)
+                com.codex.campboardgamehost.clocktower.domain.PlayerState(
+                    seat = index + 1,
+                    name = card.name,
+                    actualRole = RoleId(role.enName),
+                    actualAlignment =
+                        if (role.team in setOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider))
+                            com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD
+                        else com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL,
+                    actualType = when (role.team) {
+                        ClocktowerTeam.Townsfolk -> com.codex.campboardgamehost.clocktower.domain.CharacterType.TOWNSFOLK
+                        ClocktowerTeam.Outsider -> com.codex.campboardgamehost.clocktower.domain.CharacterType.OUTSIDER
+                        ClocktowerTeam.Minion -> com.codex.campboardgamehost.clocktower.domain.CharacterType.MINION
+                        ClocktowerTeam.Demon -> com.codex.campboardgamehost.clocktower.domain.CharacterType.DEMON
+                    },
+                    shownRole = RoleId(role.enName),
+                    alive = true,
+                )
+            },
+            seed = originalRecovery.identity.gameSeed,
+        )
+        val session = com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession.createProduction(
+            gameId = originalRecovery.identity.gameId,
+            gameSeed = gameState.seed,
+            initialState = gameState,
+            semanticHistoryMode =
+                com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        session.commitGlobalActionFact(
+            com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Poison(
+                "first-poison", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT,
+                1, 0, 2,
+            ),
+        )
+        session.commitGlobalEpistemicObservation(
+            com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft(
+                recordId = "first-chef-zero",
+                phase = com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT,
+                round = 1,
+                sequence = 1,
+                sourceSeat = 1,
+                sourceAbility = RoleId("Chef"),
+                visibility = com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PRIVATE,
+                recipientSeats = setOf(1),
+                reliability = com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability.RECEIVED_AS_FUNCTIONING,
+                proposition = com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.NumericResult(
+                    com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS,
+                    sourceSeat = 1, subjectSeats = listOf(1, 2, 3, 4, 5), value = 0,
+                ),
+            ),
+        )
+        session.commitGlobalActionFact(
+            com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Execution(
+                "day-execution", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY,
+                1, 0, 3,
+            ),
+        )
+        session.commitGlobalEpistemicObservation(
+            com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft(
+                recordId = "public-execution",
+                phase = com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY,
+                round = 1,
+                sequence = 1,
+                sourceSeat = null,
+                sourceAbility = null,
+                visibility = com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PUBLIC,
+                recipientSeats = emptySet(),
+                reliability = com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability.NOT_ABILITY_INFORMATION,
+                proposition = com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AliveAt(3, false),
+            ),
+        )
+        session.commitGlobalActionFact(
+            com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Protect(
+                "night-protect", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
+                2, 2, 4,
+            ),
+        )
+        val revision = com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1(
+            session.state.gameStateRevision, session.state.playerInputRevision,
+        )
+        val materializer = com.codex.campboardgamehost.clocktower.session.StorytellerProviderHistoryPrefixMaterializerV1
+        val before = materializer.captureLive(session.state, revision)
+        val source = base.copy(
+            game = originalRecovery.copy(
+                history = originalRecovery.history.copy(
+                    gameStateRevision = session.state.gameStateRevision,
+                    playerInputRevision = session.state.playerInputRevision,
+                    actionTimeline = session.state.actionTimeline,
+                    nextTimelineGlobalSequence = session.state.nextTimelineGlobalSequence,
+                    epistemicObservations = session.state.epistemicObservationLog.records,
+                ),
+            ),
+        )
+        val serialized = RecoverySnapshotJsonCodec.encode(source)
+        assertTrue("A complete Recovery must be accepted by the real restore planner.", prepare(serialized) is RecoveryPlanPreparation.Ready)
+        val decoded = RecoverySnapshotJsonCodec.decodeStrict(serialized, ::testRoleByName)
+        val restoredHistory = (decoded.game as ClocktowerRecovery).history
+        val restored = com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession.restoreProduction(
+            com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState(
+                gameId = (decoded.game as ClocktowerRecovery).identity.gameId,
+                gameStateRevision = restoredHistory.gameStateRevision,
+                playerInputRevision = restoredHistory.playerInputRevision,
+                gameSeed = gameState.seed,
+                gameState = gameState,
+                actionTimeline = restoredHistory.actionTimeline,
+                epistemicObservationLog = EpistemicObservationLog(restoredHistory.epistemicObservations),
+                semanticHistoryMode =
+                    com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode.GLOBAL_V1,
+                nextTimelineGlobalSequence = restoredHistory.nextTimelineGlobalSequence,
+            ),
+        )
+        val after = materializer.captureLive(restored.state, revision)
+        assertEquals(before, after)
+        assertEquals(5L, after.exclusiveGlobalSequence)
+        assertEquals(listOf("first-poison", "first-chef-zero", "day-execution", "public-execution", "night-protect"),
+            after.entries.map { it.entryId })
+        assertEquals(listOf(0L, 1L, 2L, 3L, 4L), after.entries.map { it.point.globalSequence })
+        assertEquals(
+            com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryCoverageStateV1.UNKNOWN,
+            after.coverage.getValue(
+                com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryDimensionV1.REGISTRATION_RULINGS
+            ).state,
+        )
+        restored.commitGlobalActionFact(
+            com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Attack(
+                "night-attack-after-restore",
+                com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
+                2, 3, 2,
+            ),
+        )
+        assertEquals(5L, restored.state.actionTimeline.entries.last().point.globalSequence)
+        assertEquals(before, materializer.captureLive(session.state, revision))
+    }
+
     private fun prepare(json: JSONObject): RecoveryPlanPreparation = RecoveryRestorePlanner.prepare(
         raw = json,
         expectedCompatibilityToken = TOKEN,
