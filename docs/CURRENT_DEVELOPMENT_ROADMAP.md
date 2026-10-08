@@ -69,7 +69,7 @@ GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEP
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
 GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
-GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 producer audit + generic explicit UI choice COMPLETE / ACCEPTED PR #260; C2C-1 typed ruling + Recovery NEXT; R1C overall IN PROGRESS
+GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 ACCEPTED PR #260; C2C-1A typed registration + causal Recovery foundation ACCEPTED PR #263; C2C-1B real Host confirmation wiring NEXT; R1C overall IN PROGRESS
 ~~~
 
 ### GSP-R1A capture gate — 2026-10-08
@@ -83,6 +83,10 @@ The code-level R1A inventory confirms canonical Global actions and some typed pl
 ### GSP-R1C2C-0 producer coverage + generic manual registration selection accepted — 2026-10-08
 
 [Accepted C2C-0 scope and exact CI/R2](GSP_R1C2C0_GENERIC_REGISTRATION_CHOICE_ACCEPTANCE_2026-10-08.md): PR #260 squash `d75d00031bd83ecf340230041443e7612f2e080b`, CI #3880 Android tests GREEN / R2 #3539 GREEN (no T4). Live [producer coverage audit](GSP_R1C2C_PRODUCER_COVERAGE_AUDIT_2026-10-08.md) catalogs decision producers and separates Storyteller rulings from player actions, typed results, and localized events. The shared UI interaction now preserves explicit-only Spy/Recluse manual choice, including explicit false versus untouched, unspecified versus specified role, and multi-witness Number/YesNo/RoleReveal compatibility. **No typed ruling producer, Recovery recording, or complete decision family capture was added.** Next C2C-1 implements Host-confirmed typed interaction-local ruling + causal corrections + strict Recovery; other result and setup producers follow. **R1C2C and R1C remain IN PROGRESS.**
+
+### GSP-R1C2C-1A typed registration-resolution / causal Recovery foundation accepted — 2026-10-08
+
+[Accepted C2C-1A exact scope and CI/R2](GSP_R1C2C1A_TYPED_REGISTRATION_RECOVERY_ACCEPTANCE_2026-10-08.md): PR #263, squash `9d7b844d37c8ebad1448836ad3946b26af006d5c`; CI #3893 Android FAST GREEN / R2 #3549 GREEN, **no full Android T4**. Typed confirmation requires an actual global observation, role/subject legality and current frozen time; explicit special registrations are only admitted through a verified journal commit, survive strict Recovery, and can be corrected with historical as-of equality. **No UI confirmation wiring yet:** no live Host Spy/Recluse ruling is captured by this slice; historical unknown and multi-witness uncertainty remain protected. C2C-1B must wire real UI/Host confirmation with final shown-result witness compatibility and re-confirmation/Recovery tests. **R1C2C / R1C remain IN PROGRESS.**
 
 ### GSP-R1C2B accepted Mayor vertical — 2026-10-08
 
