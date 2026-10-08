@@ -1,5 +1,8 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.ClocktowerConfirmedRegistrationChoiceV1
+import com.codex.campboardgamehost.ClocktowerConfirmedRegistrationPublicationV1
+import com.codex.campboardgamehost.ClocktowerRegistrationWitness
 import com.codex.campboardgamehost.ClocktowerCausalJournalPersistence
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.epistemic.*
@@ -220,5 +223,93 @@ class StorytellerRegistrationRulingProducerV1Test {
             select(missing, newJournal, "unpublished", "never-recorded", 5, 4,
                 RegistrationResolutionStatusV1.EXPLICIT_SPECIAL)
         }
+    }
+
+    private fun chefPublication(
+        spyStatus: RegistrationResolutionStatusV1,
+        recluseStatus: RegistrationResolutionStatusV1,
+    ) = ClocktowerConfirmedRegistrationPublicationV1(
+        interactionId = "FirstNight:1:first_night:role:Chef",
+        observationRecordId = "chef-one",
+        sourceSeat = 1,
+        shownProposition = InformationProposition.NumericResult(
+            NumericMetric.ADJACENT_EVIL_PAIRS, 1, (1..5).toList(), 1,
+        ),
+        choices = listOf(
+            ClocktowerConfirmedRegistrationChoiceV1(2, RegistrationQuestion.ALIGNMENT, spyStatus),
+            ClocktowerConfirmedRegistrationChoiceV1(4, RegistrationQuestion.ALIGNMENT, recluseStatus),
+        ),
+        legalResultWitnesses = listOf(
+            ClocktowerRegistrationWitness(spyRegistersGood = false, recluseRegistersEvil = false),
+            ClocktowerRegistrationWitness(spyRegistersGood = true, recluseRegistersEvil = true),
+        ),
+    )
+
+    @Test
+    fun `real Host writer idempotently confirms and corrects same observed result then recovers`() {
+        val session = session()
+        val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
+        show(session, "chef-one", sourceSeat = 1)
+        val unresolved = chefPublication(
+            RegistrationResolutionStatusV1.UNRESOLVED_NOT_REQUIRED,
+            RegistrationResolutionStatusV1.UNRESOLVED_NOT_REQUIRED,
+        )
+        val first = ClocktowerConfirmedRegistrationHostWriterV1.commit(
+            unresolved, session, journal, snapshot(session), roles,
+        )
+        assertEquals(2, first.size)
+        assertEquals(emptyList<StorytellerProviderPriorDecisionV1>(),
+            ClocktowerConfirmedRegistrationHostWriterV1.commit(
+                unresolved, session, journal, snapshot(session), roles,
+            ))
+        val corrected = unresolved.copy(choices = unresolved.choices.map { choice ->
+            if (choice.subjectSeat == 2) choice.copy(
+                status = RegistrationResolutionStatusV1.EXPLICIT_SPECIAL,
+            ) else choice
+        })
+        val revised = ClocktowerConfirmedRegistrationHostWriterV1.commit(
+            corrected, session, journal, snapshot(session), roles,
+        )
+        assertEquals(1, revised.size)
+        assertEquals(Alignment.GOOD, revised.single().registrations.single().registeredAlignment)
+        assertEquals(null, revised.single().registrations.single().registeredRole)
+        assertEquals(2, journal.effectiveNow().size)
+        assertEquals(1, journal.effectiveNow().count { it.registrations.isNotEmpty() })
+        // Reopened UI or Recovery has no transient manual selection. An absent toggle does
+        // not revoke the last explicitly confirmed registration.
+        assertTrue(ClocktowerConfirmedRegistrationHostWriterV1.commit(
+            unresolved, session, journal, snapshot(session), roles,
+        ).isEmpty())
+        assertEquals(1, journal.effectiveNow().count { it.registrations.isNotEmpty() })
+        val rewrittenDecisionId = journal.archive().records
+            .filterIsInstance<StorytellerCausalJournalRecordV1.Committed>()
+            .last().decisionId
+        assertEquals(first.map { it.eventId },
+            journal.effectiveAt(rewrittenDecisionId).map { it.eventId })
+        val restored = recover(session, journal)
+        assertEquals(journal.effectiveNow(), restored.effectiveNow())
+        assertEquals(journal.effectiveAt(rewrittenDecisionId), restored.effectiveAt(rewrittenDecisionId))
+    }
+
+    @Test
+    fun `real Host writer rejects incompatible joint witness before mutating journal`() {
+        val session = session()
+        val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
+        show(session, "chef-one", sourceSeat = 1)
+        val impossible = chefPublication(
+            RegistrationResolutionStatusV1.EXPLICIT_SPECIAL,
+            RegistrationResolutionStatusV1.EXPLICIT_ACTUAL,
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            ClocktowerConfirmedRegistrationHostWriterV1.commit(
+                impossible, session, journal, snapshot(session), roles,
+            )
+        }
+        assertTrue(journal.archive().records.isEmpty())
+        val stale = impossible.copy(observationRecordId = "not-observed")
+        assertTrue(ClocktowerConfirmedRegistrationHostWriterV1.commit(
+            stale, session, journal, snapshot(session), roles,
+        ).isEmpty())
+        assertTrue(journal.archive().records.isEmpty())
     }
 }

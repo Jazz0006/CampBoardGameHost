@@ -75,6 +75,10 @@ import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfi
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
+import com.codex.campboardgamehost.clocktower.session.StorytellerCausalJournalRecordV1
+import com.codex.campboardgamehost.clocktower.session.ClocktowerConfirmedRegistrationHostWriterV1
+import com.codex.campboardgamehost.clocktower.session.ConfirmedRegistrationResolutionInputV1
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
@@ -799,6 +803,47 @@ internal fun CampBoardGameHostApp() {
         publishClocktowerSessionView()
         invalidateA4RevisionScope()
         a4ObservationDurabilityGate.markPending(committed.recordId)
+    }
+
+    /**
+     * Real Host confirmation after player information was published, never an option preview.
+     * The shared writer validates the persisted typed observation, complete legal witness,
+     * per-subject rules and causal revision before mutating the Host-owned journal.
+     */
+    fun canCommitConfirmedRegistrationResult(publication: ClocktowerConfirmedRegistrationPublicationV1): Boolean {
+        // LEGACY_LOCAL games must continue to display information without claiming a typed
+        // historical ruling. The production typed writer itself is GLOBAL_V1-only.
+        if (currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
+        ) return true
+        val session = clocktowerGameSession ?: return false
+        return publication.isRulesConsistent(
+            session.state.gameState,
+            clocktowerRoleDefinitionsForScript(currentClocktowerScript),
+        )
+    }
+
+    fun commitConfirmedRegistrationResult(publication: ClocktowerConfirmedRegistrationPublicationV1) {
+        if (currentGameKind != GameKind.Clocktower ||
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
+        ) return
+        val session = requireClocktowerGameSession()
+        val rulesetRef = requireNotNull(clocktowerRulesetRef)
+        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+            gameSnapshot = session.toGameSnapshot(rulesetRef),
+            phase = storytellerPhaseFor(clocktowerPhase),
+            round = round,
+            characterRegistry = activeGameClocktowerRulesetCatalog
+                .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry,
+        )
+        ClocktowerConfirmedRegistrationHostWriterV1.commit(
+            publication = publication,
+            session = session,
+            journal = currentClocktowerCausalJournal(),
+            snapshot = snapshot,
+            legalRoles = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
+        )
     }
 
     fun preflightClocktowerPublicAliveObservation(
@@ -2104,6 +2149,8 @@ internal fun CampBoardGameHostApp() {
                         },
                         onRecordEpistemicObservation = ::recordEpistemicObservation,
                         onCommitConfirmedInformationDecision = ::commitConfirmedInformationDecision,
+                        onCommitConfirmedRegistrationResult = ::commitConfirmedRegistrationResult,
+                        onPreflightConfirmedRegistrationResult = ::canCommitConfirmedRegistrationResult,
                         onHostTools = {
                             hostToolTab = HostToolTab.Roles
                             showHostTools = true
