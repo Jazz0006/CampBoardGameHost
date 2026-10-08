@@ -172,6 +172,34 @@ class ClocktowerRegistrationInteractionStateTest {
         assertFalse(state.manualChoicesMatchResult(spy, recluse, option(witnessAlternatives = alternatives)))
     }
 
+    @Test
+    fun `manual alignment without selected role does not invent role while specific role must match`() {
+        val state = ClocktowerRegistrationInteractionState()
+        val spy = "FirstNight:1:Investigator:Spy"
+        val recluse = "FirstNight:1:Investigator:Recluse"
+        val witness = ClocktowerRegistrationWitness(
+            spyRegistersGood = true,
+            spyRegisteredRoleEnName = "Washerwoman",
+            recluseRegistersEvil = true,
+            recluseRegisteredRoleEnName = "Imp",
+        )
+        val shown = option(witnessAlternatives = listOf(witness))
+        state.chooseSpy(spy, good = true)
+        state.chooseRecluse(recluse, evil = true)
+        // Selecting an alignment alone does not certify any particular role.
+        assertTrue(state.manualChoicesMatchResult(spy, recluse, shown))
+        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.SPY, spy)?.selectedRegisteredRoleEnName)
+        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.RECLUSE, recluse)?.selectedRegisteredRoleEnName)
+        // An explicit role selection does constrain the legal interpretation.
+        state.chooseSpyRole(spy, "Librarian")
+        assertFalse(state.manualChoicesMatchResult(spy, recluse, shown))
+        state.chooseSpyRole(spy, "Washerwoman")
+        state.chooseRecluseRole(recluse, "Imp")
+        assertTrue(state.manualChoicesMatchResult(spy, recluse, shown))
+        state.chooseRecluse(recluse, evil = false)
+        assertFalse(state.manualChoicesMatchResult(spy, recluse, shown))
+    }
+
     private fun option(
         spyGood: Boolean? = null,
         spyRole: String? = null,
