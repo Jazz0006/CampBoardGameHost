@@ -21,7 +21,9 @@ import org.junit.Test
  */
 class RecoveryDrunkShownVirginHistoryTest {
     private val tb = ClocktowerScript.TroubleBrewing
-    private val roles = clocktowerRolesForScript(tb).associateBy(ClocktowerRole::enName)
+    private val roles = (clocktowerRolesForScript(tb) +
+        clocktowerRolesForScript(ClocktowerScript.NoGreaterJoy))
+        .associateBy(ClocktowerRole::enName)
     private val names = listOf("Drunk", "Chef", "Empath", "Washerwoman", "Monk", "Investigator", "Spy", "Imp")
 
     private fun cards(
@@ -147,6 +149,18 @@ class RecoveryDrunkShownVirginHistoryTest {
         // shown-identity policy even when the first-nomination history is present.
         assertTrue(restore(snapshot(actualVirginInPlay = true))
             is RecoveryPlanPreparation.Rejected)
+    }
+
+    @Test fun `Drunk shown out-of-script Townsfolk is rejected before action replay`() {
+        // Clockmaker is a real NGJ Townsfolk but not a TB role; a Drunk in TB
+        // cannot use it as their shown identity even when it is unused.
+        val invalid = snapshot(shownDrunkRole = "Clockmaker")
+        val game = invalid.game as ClocktowerRecovery
+        val noActions = invalid.copy(game = game.copy(history = game.history.copy(
+            actionTimeline = ActionFactTimeline(),
+            nextTimelineGlobalSequence = 0L,
+        )))
+        assertTrue(restore(noActions) is RecoveryPlanPreparation.Rejected)
     }
 
     @Test fun `Drunk shown role collision is rejected independently of Virgin action history`() {
