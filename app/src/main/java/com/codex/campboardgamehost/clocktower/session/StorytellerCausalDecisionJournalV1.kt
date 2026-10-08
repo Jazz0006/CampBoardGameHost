@@ -317,6 +317,9 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
         entries += Entry.Corrected(correctionId, replacedEventId, replacementEventId)
     }
 
+    /** Current effective decisions for the next Host-owned decision boundary. */
+    fun effectiveNow(): List<StorytellerProviderPriorDecisionV1> = effectiveBefore(entries.size)
+
     /** Full frozen record survives later commits/corrections unchanged. */
     fun frozenAt(decisionId: String): FrozenStorytellerDecisionPrefixV1 = captureFor(decisionId)
 
