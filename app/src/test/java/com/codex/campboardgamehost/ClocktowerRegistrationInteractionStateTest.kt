@@ -43,40 +43,71 @@ class ClocktowerRegistrationInteractionStateTest {
     }
 
     @Test
-    fun `recommended witness updates both selections before caller records and clears only false roles`() {
+    fun `displayed result leaves all registration choices unresolved unless manually selected`() {
         val state = ClocktowerRegistrationInteractionState()
         val spyKey = "FirstNight:1:Chef:spy"
         val recluseKey = "FirstNight:1:ChefRecluse:Bob"
-        state.applyRecommendedWitness(spyKey, recluseKey, option(
-            spyGood = true,
-            spyRole = "Washerwoman",
-            recluseEvil = true,
-            recluseRole = "Imp",
-        ))
-        assertTrue(state.spyIsGood(spyKey))
-        assertEquals("Washerwoman", state.spyRole(spyKey))
-        assertTrue(state.recluseIsEvil(recluseKey))
-        assertEquals("Imp", state.recluseRole(recluseKey))
-        assertTrue(state.spyWillRecord(spyKey))
-
-        state.applyRecommendedWitness(spyKey, recluseKey, option(spyGood = false, recluseEvil = false))
+        val one = option(
+            witnessAlternatives = listOf(
+                ClocktowerRegistrationWitness(spyRegistersGood = false, recluseRegistersEvil = false),
+                ClocktowerRegistrationWitness(spyRegistersGood = true, recluseRegistersEvil = true),
+            ),
+        )
+        assertTrue(state.manualChoicesMatchResult(spyKey, recluseKey, one))
+        assertFalse(state.spyHasExplicitChoice(spyKey))
+        assertFalse(state.recluseHasExplicitChoice(recluseKey))
+        assertFalse(state.spyWillRecord(spyKey))
+        assertFalse(state.markSpyRecorded(spyKey))
+        assertFalse(state.markRecluseRecorded(recluseKey))
         assertFalse(state.spyIsGood(spyKey))
-        assertNull(state.spyRole(spyKey))
         assertFalse(state.recluseIsEvil(recluseKey))
-        assertNull(state.recluseRole(recluseKey))
+
+        state.chooseSpy(spyKey, good = false)
+        state.chooseRecluse(recluseKey, evil = false)
+        assertTrue(state.manualChoicesMatchResult(spyKey, recluseKey, one))
+        assertTrue(state.spyWillRecord(spyKey))
+        assertTrue(state.markSpyRecorded(spyKey))
+        assertTrue(state.markRecluseRecorded(recluseKey))
+        assertFalse(state.markSpyRecorded(spyKey))
+        assertFalse(state.markRecluseRecorded(recluseKey))
     }
 
     @Test
-    fun `recording markers are independent and only mark each key once`() {
+    fun `explicit registration cannot be recorded against an incompatible displayed result`() {
+        val state = ClocktowerRegistrationInteractionState()
+        val spyKey = "Night:1:Empath:Spy"
+        val recluseKey = "Night:1:Empath:Recluse"
+        val one = option(witnessAlternatives = listOf(
+            ClocktowerRegistrationWitness(spyRegistersGood = false, recluseRegistersEvil = false),
+            ClocktowerRegistrationWitness(spyRegistersGood = true, recluseRegistersEvil = true),
+        ))
+        state.chooseSpy(spyKey, good = false)
+        state.chooseRecluse(recluseKey, evil = true)
+        assertFalse(state.manualChoicesMatchResult(spyKey, recluseKey, one))
+        assertTrue(state.spyWillRecord(spyKey))
+        assertTrue(state.recluseHasExplicitChoice(recluseKey))
+        state.chooseRecluse(recluseKey, evil = false)
+        assertTrue(state.manualChoicesMatchResult(spyKey, recluseKey, one))
+        state.chooseSpy("Night:2:Chef:Spy", good = true)
+        assertFalse(state.spyIsGood(spyKey))
+        assertTrue(state.spyIsGood("Night:2:Chef:Spy"))
+    }
+
+    @Test
+    fun `recording markers are independent and require explicit manual choices`() {
         val state = ClocktowerRegistrationInteractionState()
         val spyKey = "Day:1:Virgin:Spy"
         val recluseKey = "Night:1:FortuneTellerRecluse:Bob"
         assertFalse(state.spyWillRecord(null))
+        assertFalse(state.spyWillRecord(spyKey))
+        assertFalse(state.markSpyRecorded(spyKey))
+        assertFalse(state.markRecluseRecorded(recluseKey))
+        state.chooseSpy(spyKey, good = false)
+        state.chooseRecluse(recluseKey, evil = true)
         assertTrue(state.spyWillRecord(spyKey))
         assertTrue(state.markSpyRecorded(spyKey))
         assertFalse(state.spyWillRecord(spyKey))
         assertFalse(state.markSpyRecorded(spyKey))
-        assertTrue(state.markSpyRecorded("Day:2:Virgin:Spy"))
         assertTrue(state.markRecluseRecorded(recluseKey))
         assertFalse(state.markRecluseRecorded(recluseKey))
     }
@@ -86,6 +117,7 @@ class ClocktowerRegistrationInteractionStateTest {
         spyRole: String? = null,
         recluseEvil: Boolean? = null,
         recluseRole: String? = null,
+        witnessAlternatives: List<ClocktowerRegistrationWitness> = emptyList(),
     ) = ClocktowerDisplayOption(
         label = "result",
         displayKind = ClocktowerDisplayKind.Number,
@@ -97,5 +129,6 @@ class ClocktowerRegistrationInteractionStateTest {
         spyRegisteredRoleEnName = spyRole,
         recluseRegistersEvil = recluseEvil,
         recluseRegisteredRoleEnName = recluseRole,
+        legalRegistrationWitnesses = witnessAlternatives,
     )
 }
