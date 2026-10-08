@@ -2,6 +2,31 @@ package com.codex.campboardgamehost
 
 import androidx.compose.runtime.mutableStateMapOf
 
+/**
+ * Only manual toggles authorize a possible explicit registration ruling. This is a UI choice,
+ * NOT yet a committed canonical fact: the Host must separately check the ability interaction,
+ * legal registration and result, and freeze a causal prefix before publishing a typed ruling.
+ *
+ * Null from [ClocktowerRegistrationInteractionState.explicitChoice] means no manual choice was
+ * made. It must NOT be persisted as a known UNRESOLVED_NOT_REQUIRED result: that status needs
+ * positive confirmation of a displayed result. Older saves are UNAVAILABLE_OR_UNRECORDED.
+ */
+internal enum class ClocktowerRegistrationSubject { SPY, RECLUSE }
+
+internal data class ClocktowerManualRegistrationChoice(
+    val subject: ClocktowerRegistrationSubject,
+    val interactionKey: String,
+    val usesSpecialRegistration: Boolean,
+    val selectedRegisteredRoleEnName: String?,
+) {
+    init {
+        require(interactionKey.isNotBlank())
+        require(selectedRegisteredRoleEnName == null || usesSpecialRegistration) {
+            "An inactive registration cannot carry a stale role choice."
+        }
+    }
+}
+
 /** UI-local Spy/Recluse selections and per-interaction recording markers. */
 internal class ClocktowerRegistrationInteractionState {
     private val spyRegistersGood = mutableStateMapOf<String, Boolean>()
@@ -10,6 +35,32 @@ internal class ClocktowerRegistrationInteractionState {
     private val recluseRegistersEvil = mutableStateMapOf<String, Boolean>()
     private val recluseRoles = mutableStateMapOf<String, String>()
     private val recordedRecluse = mutableStateMapOf<String, Boolean>()
+
+    /**
+     * Explicit-only, interaction-local snapshot for later semantic Host validation. In
+     * particular, false is a deliberate manual choice; it is different from an untouched map.
+     * Role-only edits never count as a choice, and old role values are discarded when inactive.
+     */
+    fun explicitChoice(
+        subject: ClocktowerRegistrationSubject,
+        key: String?,
+    ): ClocktowerManualRegistrationChoice? {
+        if (key == null) return null
+        val choices = when (subject) {
+            ClocktowerRegistrationSubject.SPY -> spyRegistersGood
+            ClocktowerRegistrationSubject.RECLUSE -> recluseRegistersEvil
+        }
+        val special = choices[key] ?: return null
+        val role = if (special) {
+            when (subject) {
+                ClocktowerRegistrationSubject.SPY -> spyRoles[key]
+                ClocktowerRegistrationSubject.RECLUSE -> recluseRoles[key]
+            }?.takeIf(String::isNotBlank)
+        } else {
+            null
+        }
+        return ClocktowerManualRegistrationChoice(subject, key, special, role)
+    }
 
     fun spyIsGood(key: String?): Boolean = key != null && spyRegistersGood[key] == true
 
@@ -71,20 +122,16 @@ internal class ClocktowerRegistrationInteractionState {
     ): Boolean {
         val witnesses = option.legalRegistrationWitnesses
         if (witnesses.isEmpty()) return true
-        val spyChosen = spyHasExplicitChoice(spyKey)
-        val recluseChosen = recluseHasExplicitChoice(recluseKey)
-        if (!spyChosen && !recluseChosen) return true
-        val chosenSpyGood = spyKey?.let(spyRegistersGood::get)
-        val chosenRecluseEvil = recluseKey?.let(recluseRegistersEvil::get)
-        val chosenSpyRole = spyKey?.let(spyRoles::get)
-        val chosenRecluseRole = recluseKey?.let(recluseRoles::get)
+        val spy = explicitChoice(ClocktowerRegistrationSubject.SPY, spyKey)
+        val recluse = explicitChoice(ClocktowerRegistrationSubject.RECLUSE, recluseKey)
+        if (spy == null && recluse == null) return true
         return witnesses.any { witness ->
-            (!spyChosen || witness.spyRegistersGood == chosenSpyGood) &&
-                (!recluseChosen || witness.recluseRegistersEvil == chosenRecluseEvil) &&
-                (!spyChosen || witness.spyRegisteredRoleEnName == null ||
-                    witness.spyRegisteredRoleEnName == chosenSpyRole) &&
-                (!recluseChosen || witness.recluseRegisteredRoleEnName == null ||
-                    witness.recluseRegisteredRoleEnName == chosenRecluseRole)
+            (spy == null || witness.spyRegistersGood == spy.usesSpecialRegistration) &&
+                (recluse == null || witness.recluseRegistersEvil == recluse.usesSpecialRegistration) &&
+                (spy?.selectedRegisteredRoleEnName == null || witness.spyRegisteredRoleEnName == null ||
+                    witness.spyRegisteredRoleEnName == spy.selectedRegisteredRoleEnName) &&
+                (recluse?.selectedRegisteredRoleEnName == null || witness.recluseRegisteredRoleEnName == null ||
+                    witness.recluseRegisteredRoleEnName == recluse.selectedRegisteredRoleEnName)
         }
     }
 }
