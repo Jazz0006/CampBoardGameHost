@@ -130,6 +130,8 @@ internal data class ClocktowerDisplayOption(
     val spyRegisteredRoleEnName: String? = null,
     val recluseRegistersEvil: Boolean? = null,
     val recluseRegisteredRoleEnName: String? = null,
+    /** Legal explanations, not committed facts. Result-first choices never set a witness implicitly. */
+    val legalRegistrationWitnesses: List<ClocktowerRegistrationWitness> = emptyList(),
     val isTruthful: Boolean = true,
     val misinformationPressure: Int = 0,
     val isDefaultRecommendation: Boolean = false,
