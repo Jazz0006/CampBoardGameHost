@@ -116,6 +116,7 @@ internal fun ClocktowerJudgeScreen(
     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
     onCommitConfirmedInformationDecision: (ConfirmedInformationDecision) -> Unit,
     onCommitConfirmedRegistrationResult: (ClocktowerConfirmedRegistrationPublicationV1) -> Unit,
+    onPreflightConfirmedRegistrationResult: (ClocktowerConfirmedRegistrationPublicationV1) -> Boolean,
     onHostTools: () -> Unit,
     onPreviousFromFirstNightReady: () -> Unit,
     onMovePreviousNightStep: () -> Unit,
@@ -2738,43 +2739,45 @@ internal fun ClocktowerJudgeScreen(
                             Toast.LENGTH_LONG,
                         ).show()
                     } else {
-                        val commitVerifiedRegistration: () -> Unit = {
-                            val ready = plan as? ClocktowerResultRegistrationPlanV1.Ready
-                            val actor = displayStep.actor
-                            val roleName = displayStep.roleEnName
-                            val shown = displayStep.informationDecisionConfirmation?.draft?.proposition
-                                ?: displayStep.displayProposition
-                            val canonicalInteraction = displayStep.interactionId?.value
-                            if (ready != null && actor != null && roleName != null &&
-                                shown != null && canonicalInteraction != null
-                            ) {
-                                val actorSeat = cards.indexOfFirst { it.name == actor.name }
-                                    .takeIf { index -> index >= 0 }?.plus(1)
-                                if (actorSeat != null) {
-                                    val recordId = displayStep.informationDecisionConfirmation?.draft?.recordId
-                                        ?: clocktowerPrivateObservationRecordId(
-                                            gameId = gameId,
-                                            phase = phase,
-                                            round = round,
-                                            roleEnName = roleName,
-                                            actorSeat = actorSeat,
-                                            proposition = shown,
-                                        )
-                                    onCommitConfirmedRegistrationResult(
-                                        ClocktowerConfirmedRegistrationPublicationV1(
-                                            interactionId = "${phase.name}:$round:$canonicalInteraction",
-                                            observationRecordId = recordId,
-                                            sourceSeat = actorSeat,
-                                            shownProposition = shown,
-                                            choices = ready.choices,
-                                            legalResultWitnesses = ready.legalResultWitnesses,
-                                        ),
+                        val ready = plan as? ClocktowerResultRegistrationPlanV1.Ready
+                        val actor = displayStep.actor
+                        val shown = displayStep.informationDecisionConfirmation?.draft?.proposition
+                            ?: displayStep.displayProposition
+                        val publication = if (ready != null && actor != null &&
+                            shown != null && displayStep.roleEnName != null &&
+                            displayStep.interactionId != null
+                        ) {
+                            val actorSeat = cards.indexOfFirst { it.name == actor.name }
+                                .takeIf { it >= 0 }?.plus(1)
+                            actorSeat?.let { seat ->
+                                val recordId = displayStep.informationDecisionConfirmation?.draft?.recordId
+                                    ?: clocktowerPrivateObservationRecordId(
+                                        gameId = gameId,
+                                        phase = phase,
+                                        round = round,
+                                        roleEnName = requireNotNull(displayStep.roleEnName),
+                                        actorSeat = seat,
+                                        proposition = shown,
                                     )
-                                }
+                                ClocktowerConfirmedRegistrationPublicationV1(
+                                    interactionId = "${phase.name}:$round:${displayStep.interactionId.value}",
+                                    observationRecordId = recordId,
+                                    sourceSeat = seat,
+                                    shownProposition = shown,
+                                    choices = ready.choices,
+                                    legalResultWitnesses = ready.legalResultWitnesses,
+                                )
                             }
+                        } else null
+                        val commitVerifiedRegistration: () -> Unit = {
+                            publication?.let(onCommitConfirmedRegistrationResult)
                         }
                         val handoff = performClocktowerPlayerRevealHandoff(
-                            authorize = { informationDecisionPublicationAllowed(displayStep) },
+                            authorize = {
+                                informationDecisionPublicationAllowed(displayStep) &&
+                                    (ready == null || (publication != null &&
+                                        onPreflightConfirmedRegistrationResult(publication)))
+                            },
                             publishFirstNight = { publishFirstNightInformation(displayStep) },
                             recordPrivateInformation = {
                                 recordReliablePrivateInformation(displayStep)
