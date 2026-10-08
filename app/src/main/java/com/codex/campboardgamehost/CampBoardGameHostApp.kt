@@ -3160,6 +3160,21 @@ internal fun CampBoardGameHostApp() {
                                 }
                             } else {
                                 clocktowerLastExecutedName = null
+                                if (clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1 &&
+                                    currentClocktowerScript in setOf(
+                                        ClocktowerScript.TroubleBrewing, ClocktowerScript.NoGreaterJoy,
+                                    )
+                                ) {
+                                    // A confirmed no-execution is positive public chronology,
+                                    // NOT absence of a death fact and NOT a Storyteller recommendation.
+                                    // Commit before possible Mayor win and day/phase changes.
+                                    recordClocktowerAction(ActionFactDraft.NoExecution(
+                                        actionId = clocktowerActionId("no-execution"),
+                                        phase = storytellerPhaseFor(),
+                                        round = round,
+                                        sequence = clocktowerEventCounter + 1,
+                                    ))
+                                }
                                 addClocktowerEvent(
                                     ClocktowerEventType.Execution,
                                     localizedText("无人被处决", "No execution"),
