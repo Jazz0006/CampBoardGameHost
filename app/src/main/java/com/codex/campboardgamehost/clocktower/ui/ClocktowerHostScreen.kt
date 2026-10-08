@@ -1080,27 +1080,14 @@ internal fun ClocktowerJudgeScreen(
             currentRecluseRegistersEvil = recluseRegistersEvil(recluseKey, roleEnName),
             recluseSelectable = recluseSelectable,
         )
-        return distinctClocktowerFinalInformationResults(
-            witnesses.map { witness ->
-                val value = valueFor(witness)
-                ClocktowerDisplayOption(
-                    label = value.toString(),
-                    displayKind = ClocktowerDisplayKind.Number,
-                    displayTitle = title,
-                    displayPrimary = value.toString(),
-                    displaySecondary = null,
-                    displayFooter = footer,
-                    proposition = InformationProposition.NumericResult(
-                        metric = metric,
-                        sourceSeat = sourceSeat,
-                        subjectSeats = subjectSeats,
-                        value = value,
-                    ),
-                    spyRegistersGood = witness.spyRegistersGood,
-                    recluseRegistersEvil = witness.recluseRegistersEvil,
-                    isTruthful = true,
-                )
-            },
+        return ClocktowerRegistrationResultPresentation.numericOptions(
+            title = title,
+            sourceSeat = sourceSeat,
+            metric = metric,
+            subjectSeats = subjectSeats,
+            footer = footer,
+            witnesses = witnesses,
+            valueFor = valueFor,
         )
     }
 
@@ -1119,31 +1106,17 @@ internal fun ClocktowerJudgeScreen(
             recluseCard,
             listOf(ClocktowerTeam.Demon),
         ).firstOrNull()
-        return distinctClocktowerFinalInformationResults(
-            listOf(current, !current).mapNotNull { recluseEvil ->
-                val value = fortuneTellerMatches(recluseEvil) ?: return@mapNotNull null
-                val resultText = if (value) text("有", "Yes") else text("没有", "No")
-                ClocktowerDisplayOption(
-                    label = resultText,
-                    displayKind = ClocktowerDisplayKind.YesNo,
-                    displayTitle = text("占卜师信息", "Fortune Teller information"),
-                    displayPrimary = resultText,
-                    displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-                        .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                        .joinToString("   ") { seatNumberText(it) }
-                        .takeIf { it.isNotBlank() },
-                    displayFooter = text("查询这两名玩家", "Checking these two players"),
-                    proposition = InformationProposition.BooleanResult(
-                        BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-                        sourceSeat,
-                        subjectSeats,
-                        value,
-                    ),
-                    recluseRegistersEvil = recluseEvil,
-                    recluseRegisteredRoleEnName = demonRole?.enName?.takeIf { recluseEvil },
-                    isTruthful = true,
-                )
-            },
+        return ClocktowerRegistrationResultPresentation.fortuneTellerOptions(
+            sourceSeat = sourceSeat,
+            subjectSeats = subjectSeats,
+            secondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+                .joinToString("   ") { seatNumberText(it) }
+                .takeIf { it.isNotBlank() },
+            currentRecluseRegistersEvil = current,
+            demonRegistrationRole = demonRole,
+            text = ::text,
+            matches = ::fortuneTellerMatches,
         )
     }
 
@@ -1160,53 +1133,36 @@ internal fun ClocktowerJudgeScreen(
         val resolvedTarget = target ?: return emptyList()
         val targetSeat = cards.indexOf(resolvedTarget) + 1
         if (targetSeat <= 0) return emptyList()
-        val candidates = mutableListOf<ClocktowerDisplayOption>()
-
-        fun add(
-            role: ClocktowerRole,
-            spyGood: Boolean? = null,
-            spyRole: String? = null,
-            recluseEvil: Boolean? = null,
-            recluseRole: String? = null,
-        ) {
-            candidates += ClocktowerDisplayOption(
-                label = role.nameFor(language),
-                displayKind = ClocktowerDisplayKind.RoleReveal,
-                displayTitle = title,
-                displayPrimary = role.nameFor(language),
-                displaySecondary = null,
-                displayFooter = footer,
-                proposition = InformationProposition.RoleAt(targetSeat, RoleId(role.enName)),
-                spyRegistersGood = spyGood,
-                spyRegisteredRoleEnName = spyRole,
-                recluseRegistersEvil = recluseEvil,
-                recluseRegisteredRoleEnName = recluseRole,
-                isTruthful = true,
-            )
-        }
-
-        if (resolvedTarget.name == spyCard?.name && spyKey != null && spyCanRegister(roleEnName)) {
-            val allowed = legalRegistrationRoles(spyKey, roleEnName, spyCard, spyTeams)
-            val currentGood = spyRegistersGood(spyKey, roleEnName)
-            if (currentGood) {
-                registeredRole(spyKey, spyTeams, roleEnName)?.let { add(it, true, it.enName) }
+        val ruling = when {
+            resolvedTarget.name == spyCard?.name && spyKey != null && spyCanRegister(roleEnName) -> {
+                val selected = spyRegistersGood(spyKey, roleEnName)
+                ClocktowerRegistrationResultPresentation.RoleRevealRuling(
+                    specialRegistration = ClocktowerRegistrationResultPresentation.SpecialRegistration.Spy,
+                    specialSelected = selected,
+                    actualRole = resolvedTarget.clocktowerRole,
+                    selectedRole = if (selected) registeredRole(spyKey, spyTeams, roleEnName) else null,
+                    legalSpecialRoles = legalRegistrationRoles(spyKey, roleEnName, spyCard, spyTeams),
+                )
             }
-            resolvedTarget.clocktowerRole?.let { add(it, false) }
-            allowed.forEach { role -> add(role, true, role.enName) }
-        } else if (
-            resolvedTarget.name == recluseCard?.name &&
-            recluseKey != null &&
-            recluseCanRegister(roleEnName)
-        ) {
-            val allowed = legalRegistrationRoles(recluseKey, roleEnName, recluseCard, recluseTeams)
-            val currentEvil = recluseRegistersEvil(recluseKey, roleEnName)
-            if (currentEvil) {
-                recluseRegisteredRole(recluseKey, recluseTeams, roleEnName)?.let { add(it, recluseEvil = true, recluseRole = it.enName) }
+            resolvedTarget.name == recluseCard?.name && recluseKey != null && recluseCanRegister(roleEnName) -> {
+                val selected = recluseRegistersEvil(recluseKey, roleEnName)
+                ClocktowerRegistrationResultPresentation.RoleRevealRuling(
+                    specialRegistration = ClocktowerRegistrationResultPresentation.SpecialRegistration.Recluse,
+                    specialSelected = selected,
+                    actualRole = resolvedTarget.clocktowerRole,
+                    selectedRole = if (selected) recluseRegisteredRole(recluseKey, recluseTeams, roleEnName) else null,
+                    legalSpecialRoles = legalRegistrationRoles(recluseKey, roleEnName, recluseCard, recluseTeams),
+                )
             }
-            resolvedTarget.clocktowerRole?.let { add(it, recluseEvil = false) }
-            allowed.forEach { role -> add(role, recluseEvil = true, recluseRole = role.enName) }
+            else -> return emptyList()
         }
-        return distinctClocktowerFinalInformationResults(candidates)
+        return ClocktowerRegistrationResultPresentation.roleRevealOptions(
+            title = title,
+            targetSeat = targetSeat,
+            footer = footer,
+            ruling = ruling,
+            roleLabel = { role -> role.nameFor(language) },
+        )
     }
 
     val chambermaidStepContent = ClocktowerChambermaidStepContent(
@@ -1237,6 +1193,97 @@ internal fun ClocktowerJudgeScreen(
                     },
                 )
             }.orEmpty()
+        },
+    )
+
+    val empathSubjectSeats = empathNeighbors.map { cards.indexOf(it) + 1 }
+    val empathDisplayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { actor ->
+        ClocktowerNeutralInformationPreparation.numericOptions(
+            title = text("共情者信息", "Empath information"),
+            trueValue = empathReferenceValue,
+            maxValue = 2,
+            footer = text("邪恶存活邻居数量", "Evil living neighbors"),
+            propositionForValue = if (phase == ClocktowerPhase.FirstNight) {
+                { value ->
+                    InformationProposition.NumericResult(
+                        NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                        cards.indexOf(actor) + 1,
+                        empathSubjectSeats,
+                        value,
+                    )
+                }
+            } else null,
+        )
+    }
+    val empathLegalSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { actor ->
+        if (empathAbilityUnreliable) emptyList() else resultFirstNumericRegistrationOptions(
+            title = text("共情者信息", "Empath information"),
+            actor = actor,
+            roleEnName = "Empath",
+            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+            subjectSeats = empathSubjectSeats,
+            footer = text("邪恶存活邻居数量", "Evil living neighbors"),
+            spyKey = empathRegistrationKey,
+            recluseKey = empathRecluseRegistrationKey,
+        ) { witness ->
+            empathNeighbors.count { card ->
+                when {
+                    card.name == spyCard?.name && witness.spyRegistersGood != null -> !witness.spyRegistersGood
+                    card.name == recluseCard?.name && witness.recluseRegistersEvil != null -> witness.recluseRegistersEvil
+                    else -> isClocktowerEvil(card)
+                }
+            }
+        }
+    }
+    val empathStepMaterializer = clocktowerEmpathStepMaterializer(
+        builder = informationStepBuilder,
+        content = ClocktowerEmpathStepContent(
+            result = empathNumber,
+            registrationHint = empathRegistrationHint,
+            previousShownNumber = empathActor?.let { actor ->
+                previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
+                    ?.takeIf { it in 0..2 }
+            },
+            spyRegistrationKey = empathRegistrationKey,
+            recluseRegistrationKey = empathRecluseRegistrationKey,
+        ),
+        text = ::text,
+        displayOptions = empathDisplayOptions,
+        legalSelectionOptions = empathLegalSelectionOptions,
+    )
+
+    val fortuneTellerSelectedNames = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+    val fortuneTellerSubjectSeats = fortuneTellerSelectedNames.mapNotNull { name ->
+        cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+    }
+    val fortuneTellerSecondary = fortuneTellerSelectedNames
+        .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+        .joinToString("   ") { seatNumberText(it) }
+        .takeIf { it.isNotBlank() }
+    val fortuneTellerStepMaterializer = clocktowerFortuneTellerStepMaterializer(
+        builder = informationStepBuilder,
+        content = ClocktowerFortuneTellerStepContent(
+            result = fortuneTellerResult,
+            matched = fortuneTellerMatched,
+            selectedNames = fortuneTellerSelectedNames,
+            displaySecondary = fortuneTellerSecondary,
+            proposition = fortuneTellerMatched?.let { matched ->
+                roleActor("Fortune Teller")?.let { actor ->
+                    InformationProposition.BooleanResult(
+                        BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                        cards.indexOf(actor) + 1,
+                        fortuneTellerSubjectSeats,
+                        matched,
+                    )
+                }
+            },
+            recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,
+        ),
+        cards = cards,
+        text = ::text,
+        legalSelectionOptions = { actor ->
+            if (actorIsUnreliable("Fortune Teller", actor)) emptyList()
+            else resultFirstFortuneTellerRegistrationOptions(actor)
         },
     )
 
@@ -1426,114 +1473,9 @@ internal fun ClocktowerJudgeScreen(
                             )
             },
         ),
-        ClocktowerNightStepMaterializerRegistry.Entry(
-            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Empath")),
-            build = {
-                informationStepBuilder.build(
-                                roleName = "共情者",
-                                enName = "Empath",
-                                tellPlayer = empathNumber,
-                                explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
-                                hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                                    displayOptions = { actor -> ClocktowerNeutralInformationPreparation.numericOptions(text("共情者信息", "Empath information"), empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, empathNeighbors.map { cards.indexOf(it) + 1 }, value) }) },
-                                previousShownNumber = empathActor?.let { actor ->
-                                    previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
-                                        ?.takeIf { it in 0..2 }
-                                },                                legalSelectionOptions = { actor ->
-                                    if (empathAbilityUnreliable) {
-                                        emptyList()
-                                    } else {
-                                        resultFirstNumericRegistrationOptions(
-                                            title = text("共情者信息", "Empath information"),
-                                            actor = actor,
-                                            roleEnName = "Empath",
-                                            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
-                                            subjectSeats = empathNeighbors.map { cards.indexOf(it) + 1 },
-                                            footer = text("邪恶存活邻居数量", "Evil living neighbors"),
-                                            spyKey = empathRegistrationKey,
-                                            recluseKey = empathRecluseRegistrationKey,
-                                        ) { witness ->
-                                            empathNeighbors.count { card ->
-                                                when {
-                                                    card.name == spyCard?.name && witness.spyRegistersGood != null -> !witness.spyRegistersGood
-                                                    card.name == recluseCard?.name && witness.recluseRegistersEvil != null -> witness.recluseRegistersEvil
-                                                    else -> isClocktowerEvil(card)
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-
-                                spyRegistrationKey = empathRegistrationKey,
-                                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                                spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
-                                spyRegistrationHint = empathRegistrationHint,
-                                recluseRegistrationKey = empathRecluseRegistrationKey,
-                            )
-            },
-        ),
+        empathStepMaterializer,
         chambermaidMaterializer,
-        ClocktowerNightStepMaterializerRegistry.Entry(
-            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")),
-            build = {
-                informationStepBuilder.build(
-                                roleName = "占卜师",
-                                enName = "Fortune Teller",
-                                tellPlayer = fortuneTellerResult,
-                                explanation = text("如果两名玩家中包含恶魔或红鲱鱼，向占卜师展示“有”；否则展示“没有”。", "Show Yes if either selected player is the Demon or red herring; otherwise show No."),
-                                action = ClocktowerNightAction.FortuneTeller,
-                                displayProposition = fortuneTellerMatched?.let { matched ->
-                                    roleActor("Fortune Teller")?.let { actor ->
-                                        InformationProposition.BooleanResult(
-                                            BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-                                            cards.indexOf(actor) + 1,
-                                            listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
-                                                cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
-                                            },
-                                            matched,
-                                        )
-                                    }
-                                },
-                                displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-                                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                                    .joinToString("   ") { seatNumberText(it) }
-                                    .takeIf { it.isNotBlank() },
-                                displayFooter = text("查询这两名玩家", "Checking these two players"),
-                                hostInstruction = text("轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后展示“有”或“没有”。", "Tap the Fortune Teller to wake them. Have them point to two players, record both, then show Yes or No."),
-                                displayOptions = { actor ->
-                                    fortuneTellerMatched?.let { matched ->
-                                        ClocktowerNeutralInformationPreparation.yesNoOptions(
-                                            title = text("占卜师信息", "Fortune Teller information"),
-                                            truthfulYes = matched,
-                                            secondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-                                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                                                .joinToString("   ") { seatNumberText(it) }
-                                                .takeIf { it.isNotBlank() },
-                                            footer = text("查询这两名玩家", "Checking these two players"),
-                                            text = ::text,
-                                            propositionForValue = { value -> InformationProposition.BooleanResult(
-                                                BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-                                                cards.indexOf(actor) + 1,
-                                                listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
-                                                    cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
-                                                },
-                                                value,
-                                            ) },
-                                        )
-                                    }.orEmpty()
-                                },                                legalSelectionOptions = { actor ->
-                                    if (actorIsUnreliable("Fortune Teller", actor)) {
-                                        emptyList()
-                                    } else {
-                                        resultFirstFortuneTellerRegistrationOptions(actor)
-                                    }
-                                },
-
-                                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,
-                                recluseRegistrationTeams = listOf(ClocktowerTeam.Demon),
-                            )
-            },
-        ),
+        fortuneTellerStepMaterializer,
         ClocktowerNightStepMaterializerRegistry.Entry(
             identity = ClocktowerProductionNightStepIdentity.role(RoleId("Butler")),
             build = {
@@ -1604,113 +1546,9 @@ internal fun ClocktowerJudgeScreen(
             )
             },
         ),
-        ClocktowerNightStepMaterializerRegistry.Entry(
-            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Empath")),
-            build = {
-            informationStepBuilder.build(
-                roleName = "共情者",
-                enName = "Empath",
-                tellPlayer = empathNumber,
-                explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
-                hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                displayOptions = { _ -> ClocktowerNeutralInformationPreparation.numericOptions(text("共情者信息", "Empath information"), empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors")) },
-                previousShownNumber = empathActor?.let { actor ->
-                    previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
-                        ?.takeIf { it in 0..2 }
-                },                                legalSelectionOptions = { actor ->
-                                    if (empathAbilityUnreliable) {
-                                        emptyList()
-                                    } else {
-                                        resultFirstNumericRegistrationOptions(
-                                            title = text("共情者信息", "Empath information"),
-                                            actor = actor,
-                                            roleEnName = "Empath",
-                                            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
-                                            subjectSeats = empathNeighbors.map { cards.indexOf(it) + 1 },
-                                            footer = text("邪恶存活邻居数量", "Evil living neighbors"),
-                                            spyKey = empathRegistrationKey,
-                                            recluseKey = empathRecluseRegistrationKey,
-                                        ) { witness ->
-                                            empathNeighbors.count { card ->
-                                                when {
-                                                    card.name == spyCard?.name && witness.spyRegistersGood != null -> !witness.spyRegistersGood
-                                                    card.name == recluseCard?.name && witness.recluseRegistersEvil != null -> witness.recluseRegistersEvil
-                                                    else -> isClocktowerEvil(card)
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-
-                spyRegistrationKey = empathRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
-                spyRegistrationHint = empathRegistrationHint,
-                recluseRegistrationKey = empathRecluseRegistrationKey,
-            )
-            },
-        ),
+        empathStepMaterializer,
         chambermaidMaterializer,
-        ClocktowerNightStepMaterializerRegistry.Entry(
-            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")),
-            build = {
-            informationStepBuilder.build(
-                roleName = "占卜师",
-                enName = "Fortune Teller",
-                tellPlayer = fortuneTellerResult,
-                explanation = text("如果两名玩家中包含恶魔或红鲱鱼，向占卜师展示“有”；否则展示“没有”。", "Show Yes if either selected player is the Demon or red herring; otherwise show No."),
-                action = ClocktowerNightAction.FortuneTeller,
-                displayProposition = fortuneTellerMatched?.let { matched ->
-                    roleActor("Fortune Teller")?.let { actor ->
-                        InformationProposition.BooleanResult(
-                            BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-                            cards.indexOf(actor) + 1,
-                            listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
-                                cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
-                            },
-                            matched,
-                        )
-                    }
-                },
-                displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                    .joinToString("   ") { seatNumberText(it) }
-                    .takeIf { it.isNotBlank() },
-                displayFooter = text("查询这两名玩家", "Checking these two players"),
-                hostInstruction = text("轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后展示“有”或“没有”。", "Tap the Fortune Teller to wake them. Have them point to two players, record both, then show Yes or No."),
-                displayOptions = { actor ->
-                    fortuneTellerMatched?.let { matched ->
-                        ClocktowerNeutralInformationPreparation.yesNoOptions(
-                            title = text("占卜师信息", "Fortune Teller information"),
-                            truthfulYes = matched,
-                            secondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                                .joinToString("   ") { seatNumberText(it) }
-                                .takeIf { it.isNotBlank() },
-                            footer = text("查询这两名玩家", "Checking these two players"),
-                            text = ::text,
-                            propositionForValue = { value -> InformationProposition.BooleanResult(
-                                BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-                                cards.indexOf(actor) + 1,
-                                listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
-                                    cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
-                                }, value,
-                            ) },
-                        )
-                    }.orEmpty()
-                },                                legalSelectionOptions = { actor ->
-                                    if (actorIsUnreliable("Fortune Teller", actor)) {
-                                        emptyList()
-                                    } else {
-                                        resultFirstFortuneTellerRegistrationOptions(actor)
-                                    }
-                                },
-
-                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,
-                recluseRegistrationTeams = listOf(ClocktowerTeam.Demon),
-            )
-            },
-        ),
+        fortuneTellerStepMaterializer,
         ClocktowerNightStepMaterializerRegistry.Entry(
             identity = ClocktowerProductionNightStepIdentity.role(RoleId("Undertaker")),
             build = {
