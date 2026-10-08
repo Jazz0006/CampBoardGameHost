@@ -238,6 +238,9 @@ internal object StorytellerRegistrationRulingProducerV1 {
             ?: error("Registration outcome must reference an already frozen typed observation.")
         require(observation.sourceSeat == sourceSeat && observation.visibility == ObservationVisibility.PRIVATE)
         require(observation.sourceAbility != null)
+        require(subjectSeat in observation.proposition.referencedSeats()) {
+            "Recovered registration subject was not part of the frozen observed semantic result."
+        }
         val subject = frozen.snapshotIdentity.seats.single { it.seat == subjectSeat }
         val subjectRole = (subject.actualRoleId as? SnapshotField.Known<String>)?.value
             ?: error("A confirmed registration requires a known frozen subject role.")
