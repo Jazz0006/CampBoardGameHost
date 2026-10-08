@@ -239,11 +239,14 @@ internal object RecoveryRestorePlanner {
         // and NGJ permit a Drunk to be SHOWN an unused Townsfolk character, never
         // a role already in actual play. Do not manufacture a historical choice.
         val inPlayActualRoles = actualRoles.mapTo(linkedSetOf(), ClocktowerRole::enName)
+        val allowedShownRoles = clocktowerRolesForScript(game.identity.script)
+            .filter { it.team == ClocktowerTeam.Townsfolk }
+            .mapTo(linkedSetOf(), ClocktowerRole::enName)
         game.cards.forEach { card ->
             if (card.clocktowerRole?.enName == "Drunk") {
                 val shown = requireNotNull(card.clocktowerShownRole)
-                require(shown.team == ClocktowerTeam.Townsfolk && shown.enName !in inPlayActualRoles) {
-                    "Recovered Drunk must be shown a Townsfolk not already actually in play."
+                require(shown.enName in allowedShownRoles && shown.enName !in inPlayActualRoles) {
+                    "Recovered Drunk must be shown an unused Townsfolk from the actual selected script."
                 }
             }
         }
