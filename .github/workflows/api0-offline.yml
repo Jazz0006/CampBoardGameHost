@@ -1,0 +1,30 @@
+name: API-0 offline benchmark harness
+
+on:
+  pull_request:
+    paths:
+      - 'tools/gsp_api0_responses.py'
+      - 'tools/tests/test_gsp_api0_responses.py'
+      - 'docs/benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json'
+      - '.github/workflows/api0-offline.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit tests without credentials or network
+        env:
+          OPENAI_API_KEY: ''
+        run: python -m unittest discover -v -s tools/tests -p 'test_gsp_api0_responses.py'
+      - name: Dry-run nine requests, zero network
+        env:
+          OPENAI_API_KEY: ''
+        run: python tools/gsp_api0_responses.py
