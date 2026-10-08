@@ -75,6 +75,10 @@ import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfi
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
+import com.codex.campboardgamehost.clocktower.session.StorytellerCausalJournalRecordV1
+import com.codex.campboardgamehost.clocktower.session.StorytellerRegistrationRulingProducerV1
+import com.codex.campboardgamehost.clocktower.session.ConfirmedRegistrationResolutionInputV1
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
@@ -799,6 +803,85 @@ internal fun CampBoardGameHostApp() {
         publishClocktowerSessionView()
         invalidateA4RevisionScope()
         a4ObservationDurabilityGate.markPending(committed.recordId)
+    }
+
+    /**
+     * Only the synchronous real reveal publication boundary may call this path.
+     * The Host refuses invented, legacy, mismatched, or stale observations.
+     * Multiple subject registrations share one published observation but distinct decisions.
+     */
+    fun commitConfirmedRegistrationResult(publication: ClocktowerConfirmedRegistrationPublicationV1) {
+        if (currentGameKind != GameKind.Clocktower ||
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
+        ) return
+        val session = requireClocktowerGameSession()
+        val record = session.state.epistemicObservationLog.records.singleOrNull {
+            it.recordId == publication.observationRecordId
+        } ?: return
+        val binding = record.timelineBinding as? ObservationTimelineBinding.Global ?: return
+        if (record.sourceSeat != publication.sourceSeat ||
+            record.proposition != publication.shownProposition ||
+            record.visibility != ObservationVisibility.PRIVATE ||
+            record.sourceAbility == null ||
+            binding.point.globalSequence != session.state.nextTimelineGlobalSequence - 1L ||
+            record.reliability != ObservationReliability.RECEIVED_AS_FUNCTIONING
+        ) return
+
+        val rulesetRef = requireNotNull(clocktowerRulesetRef)
+        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+            gameSnapshot = session.toGameSnapshot(rulesetRef),
+            phase = storytellerPhaseFor(clocktowerPhase),
+            round = round,
+            characterRegistry = activeGameClocktowerRulesetCatalog
+                .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry,
+        )
+        val legalRoles = clocktowerRoleDefinitionsForScript(currentClocktowerScript)
+        val journal = currentClocktowerCausalJournal()
+        publication.choices.forEach { choice ->
+            // An explicit determination can be corrected later; original frozen captures stay
+            // immutable and the prior decision remains visible at its historical cutoff.
+            val previous = journal.effectiveNow().lastOrNull { event ->
+                event.selectedOutcome.decisionType == "registration-resolution" &&
+                    event.selectedOutcome.canonicalFields["interactionId"] == publication.interactionId &&
+                    event.selectedOutcome.canonicalFields["observationRecordId"] == publication.observationRecordId &&
+                    event.selectedOutcome.canonicalFields["subjectSeat"] == choice.subjectSeat.toString() &&
+                    event.selectedOutcome.canonicalFields["question"] == choice.question.name
+            }
+            if (previous?.selectedOutcome?.canonicalFields?.get("status") == choice.status.name &&
+                previous.selectedOutcome.canonicalFields["selectedRoleId"] == choice.selectedRole?.value
+            ) return@forEach
+            val prefix = "registration:${publication.interactionId}:${publication.observationRecordId}:" +
+                "${choice.subjectSeat}:${choice.question.name}"
+            val ordinal = journal.archive().records.count { item ->
+                item is StorytellerCausalJournalRecordV1.Captured &&
+                    item.frozen.identity.decisionId.startsWith("$prefix:revision:")
+            }
+            val decisionId = "$prefix:revision:$ordinal"
+            val committed = StorytellerRegistrationRulingProducerV1.confirm(
+                session = session,
+                journal = journal,
+                snapshot = snapshot,
+                input = ConfirmedRegistrationResolutionInputV1(
+                    interactionId = publication.interactionId,
+                    observationRecordId = publication.observationRecordId,
+                    sourceSeat = publication.sourceSeat,
+                    subjectSeat = choice.subjectSeat,
+                    question = choice.question,
+                    status = choice.status,
+                    selectedRoleId = choice.selectedRole,
+                ),
+                allowedRoles = legalRoles,
+                decisionId = decisionId,
+            )
+            previous?.let { prior ->
+                journal.correct(
+                    correctionId = "revised:${committed.eventId}",
+                    replacedEventId = prior.eventId,
+                    replacementEventId = committed.eventId,
+                )
+            }
+        }
     }
 
     fun preflightClocktowerPublicAliveObservation(
@@ -2104,6 +2187,7 @@ internal fun CampBoardGameHostApp() {
                         },
                         onRecordEpistemicObservation = ::recordEpistemicObservation,
                         onCommitConfirmedInformationDecision = ::commitConfirmedInformationDecision,
+                        onCommitConfirmedRegistrationResult = ::commitConfirmedRegistrationResult,
                         onHostTools = {
                             hostToolTab = HostToolTab.Roles
                             showHostTools = true
