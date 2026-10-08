@@ -1,5 +1,11 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationResolutionStatusV1
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -108,5 +114,59 @@ class ClocktowerConfirmedRegistrationPublicationV1Test {
                 spyRegistersGood = null, recluseRegistersEvil = null,
             )),
         ) is ClocktowerResultRegistrationPlanV1.NoVerifiedWitness)
+    }
+
+    private val script = ScriptId("trouble_brewing")
+    private val legalRoles = listOf(
+        RoleDefinition(RoleId("Empath"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
+        RoleDefinition(RoleId("Saint"), Alignment.GOOD, CharacterType.OUTSIDER, setOf(script)),
+        RoleDefinition(RoleId("Spy"), Alignment.EVIL, CharacterType.MINION, setOf(script)),
+        RoleDefinition(RoleId("Recluse"), Alignment.GOOD, CharacterType.OUTSIDER, setOf(script)),
+        RoleDefinition(RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON, setOf(script)),
+    )
+    private val game = GameState(script, listOf(
+        PlayerState(1, "spy", RoleId("Spy"), Alignment.EVIL, CharacterType.MINION),
+        PlayerState(2, "empath", RoleId("Empath"), Alignment.GOOD, CharacterType.TOWNSFOLK),
+        PlayerState(3, "recluse", RoleId("Recluse"), Alignment.GOOD, CharacterType.OUTSIDER),
+    ), 42L)
+
+    @Test fun `Host verifies a complete witness and independent actual versus special registrations`() {
+        val ready = plan(spy = manual(ClocktowerRegistrationSubject.SPY, true))
+            as ClocktowerResultRegistrationPlanV1.Ready
+        val publication = ClocktowerConfirmedRegistrationPublicationV1(
+            "FirstNight:1:first_night:role:Empath", "observed-result", 2,
+            numeric, ready.choices, ready.legalResultWitnesses,
+        )
+        assertTrue(publication.isRulesConsistent(game, legalRoles))
+        val contradicted = publication.copy(choices = listOf(
+            ready.choices.first(),
+            ready.choices.last().copy(status = RegistrationResolutionStatusV1.EXPLICIT_ACTUAL),
+        ))
+        assertTrue(!contradicted.isRulesConsistent(game, legalRoles))
+        val wrongRole = publication.copy(choices = listOf(
+            ready.choices.first().copy(
+                question = RegistrationQuestion.ROLE, selectedRole = RoleId("Imp"),
+            ),
+            ready.choices.last(),
+        ))
+        assertTrue(!wrongRole.isRulesConsistent(game, legalRoles))
+        val poisonedSpy = game.copy(players = game.players.map { seat ->
+            if (seat.seat == 1) seat.copy(poisoned = true) else seat
+        })
+        assertTrue(!publication.isRulesConsistent(poisonedSpy, legalRoles))
+    }
+
+    @Test fun `Host rejects forged subject or witness while preserving positive unresolved status`() {
+        val ready = plan() as ClocktowerResultRegistrationPlanV1.Ready
+        val valid = ClocktowerConfirmedRegistrationPublicationV1(
+            "FirstNight:1:first_night:role:Empath", "record", 2,
+            numeric, ready.choices, ready.legalResultWitnesses,
+        )
+        assertTrue(valid.isRulesConsistent(game, legalRoles))
+        assertTrue(!valid.copy(choices = ready.choices.map { it.copy(subjectSeat = 2) })
+            .isRulesConsistent(game, legalRoles))
+        assertTrue(!valid.copy(legalResultWitnesses = listOf(
+            ClocktowerRegistrationWitness(spyRegistersGood = null, recluseRegistersEvil = null),
+        )).isRulesConsistent(game, legalRoles))
     }
 }
