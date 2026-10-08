@@ -2685,7 +2685,29 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerSlayerClaimedNames = clocktowerSlayerClaimedNames + claimantName
                             }
                             val targetRegistersAsDemon = targetCard?.clocktowerTeam == ClocktowerTeam.Demon ||
-                                (targetCard?.clocktowerRole?.enName == "Recluse" && recluseRegistersAsDemon)
+                                (targetCard?.clocktowerRole?.enName == "Recluse" &&
+                                    targetCard.name != clocktowerConfirmedPoisonTarget &&
+                                    recluseRegistersAsDemon == true)
+                            val shotWillHit = slayerDecision.effectApplies &&
+                                targetIndex >= 0 && targetCard != null &&
+                                targetCard.eliminatedRound == null && targetRegistersAsDemon
+                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
+                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1 &&
+                                claimantCard != null && targetCard != null
+                            ) {
+                                // Player's confirmed public shot precedes the optional Storyteller
+                                // registration ruling; misses and non-functioning claims remain facts.
+                                recordClocktowerAction(ActionFactDraft.SlayerShot(
+                                    actionId = clocktowerActionId("slayer-shot", targetSeat = targetIndex + 1),
+                                    phase = storytellerPhaseFor(),
+                                    round = round,
+                                    sequence = clocktowerEventCounter + 1,
+                                    claimantSeat = clocktowerSeatFor(claimantName),
+                                    targetSeat = targetIndex + 1,
+                                    abilityConsumed = slayerDecision.consumesUse,
+                                    hit = shotWillHit,
+                                ))
+                            }
                             if (
                                 currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
                                 clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1 &&
@@ -2693,7 +2715,7 @@ internal fun CampBoardGameHostApp() {
                                 !clocktowerSlayerUsed &&
                                 targetCard?.clocktowerRole?.enName == "Recluse" &&
                                 targetCard.eliminatedRound == null &&
-                                recluseRegistersAsDemon
+                                recluseRegistersAsDemon != null
                             ) {
                                 // Real public ability adjudication, recorded BEFORE the shot changes
                                 // player death/ability-used state. No fake private information is made.
@@ -2718,11 +2740,14 @@ internal fun CampBoardGameHostApp() {
                                         interactionId = "day:$round:slayer:$actorSeat:$subjectSeat",
                                         slayerSeat = actorSeat,
                                         recluseSeat = subjectSeat,
-                                        registeredDemonRole = RoleId("Imp"),
+                                        registeredDemonRole = if (recluseRegistersAsDemon) RoleId("Imp") else null,
                                     ),
                                 )
                             }
-                            if (targetCard?.clocktowerRole?.enName == "Recluse" && recluseRegistersAsDemon) {
+                            if (slayerDecision.effectApplies && targetCard?.clocktowerRole?.enName == "Recluse" &&
+                                targetCard.eliminatedRound == null && targetCard.name != clocktowerConfirmedPoisonTarget &&
+                                recluseRegistersAsDemon == true
+                            ) {
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
                                     localizedText("隐士登记裁定", "Recluse registration"),
@@ -2738,7 +2763,7 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerSlayerUsed = true
                                 advanceClocktowerGameStateRevision()
                             }
-                            if (slayerDecision.effectApplies && targetIndex >= 0 && targetCard != null && targetCard.eliminatedRound == null && targetRegistersAsDemon) {
+                            if (shotWillHit && targetIndex >= 0 && targetCard != null) {
                                 val targetSeat = targetIndex + 1
                                 val localSequence = clocktowerEventCounter + 1
                                 preflightClocktowerPublicAliveObservation(
@@ -2829,6 +2854,45 @@ internal fun CampBoardGameHostApp() {
                                     playerName = nominatorName,
                                     eventSequence = clocktowerEventCounter + if (spyRegistrationWillRecord) 2 else 1,
                                 )
+                            }
+                        },
+                        onConfirmedNomination = { nominatorName, nomineeName ->
+                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
+                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+                            ) {
+                                val nominatedCard = cards.firstOrNull { it.name == nomineeName }
+                                val firstVirginNomination = nominatedCard?.let {
+                                    AbilityFunctioningSemantics.interactsAs(
+                                        it.abilitySubject(clocktowerConfirmedPoisonTarget), "Virgin",
+                                    )
+                                } == true && !clocktowerVirginUsed
+                                recordClocktowerAction(ActionFactDraft.Nomination(
+                                    actionId = clocktowerActionId("nomination", targetSeat = clocktowerSeatFor(nomineeName)),
+                                    phase = storytellerPhaseFor(),
+                                    round = round,
+                                    sequence = clocktowerEventCounter + 1,
+                                    nominatorSeat = clocktowerSeatFor(nominatorName),
+                                    nomineeSeat = clocktowerSeatFor(nomineeName),
+                                    firstVirginNomination = firstVirginNomination,
+                                ))
+                            }
+                        },
+                        onConfirmedVote = { nominatorName, nomineeName, voteRecord ->
+                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
+                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+                            ) {
+                                val voterSeats = voteRecord.voters.map { clocktowerSeatFor(it.playerName) }
+                                recordClocktowerAction(ActionFactDraft.Vote(
+                                    actionId = clocktowerActionId("vote", targetSeat = clocktowerSeatFor(nomineeName)),
+                                    phase = storytellerPhaseFor(),
+                                    round = round,
+                                    sequence = clocktowerEventCounter + 1,
+                                    nominatorSeat = clocktowerSeatFor(nominatorName),
+                                    nomineeSeat = clocktowerSeatFor(nomineeName),
+                                    voterSeats = voterSeats,
+                                    ghostVoterSeats = voteRecord.voters.filter { it.isGhostVote }
+                                        .map { clocktowerSeatFor(it.playerName) },
+                                ))
                             }
                         },
                         onVirginNomination = { nominatorName, nomineeName, executeNominator, explicitSpyRegistersTownsfolk ->

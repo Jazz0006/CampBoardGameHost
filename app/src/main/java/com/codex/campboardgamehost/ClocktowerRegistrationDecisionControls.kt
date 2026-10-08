@@ -82,9 +82,17 @@ internal fun ClocktowerRecluseRegistrationDecisionControls(
     registeredRoleEnName: String?,
     enabled: Boolean,
     language: String,
+    hasExplicitChoice: Boolean = true,
     onRegistersEvilChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
 ) {
+    if (!hasExplicitChoice) {
+        Text(
+            if (language == "en") "No ruling selected; actual registration is only the default."
+            else "尚未明确裁定；界面默认按真实身份显示，不代表已登记。",
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
     ClocktowerRegistrationDecisionControls(
         legalRoles = legalRoles,
         usesSpecialRegistration = registersEvil,

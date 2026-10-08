@@ -15,6 +15,9 @@ class DayAbilityRegistrationRulingProducerV1Test {
         PlayerState(3, "Imp", RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON),
         PlayerState(4, "Recluse", RoleId("Recluse"), Alignment.GOOD, CharacterType.OUTSIDER),
         PlayerState(5, "Spy", RoleId("Spy"), Alignment.EVIL, CharacterType.MINION),
+        PlayerState(6, "Virgin", RoleId("Virgin"), Alignment.GOOD, CharacterType.TOWNSFOLK),
+        PlayerState(7, "Fortune Teller", RoleId("Fortune Teller"), Alignment.GOOD, CharacterType.TOWNSFOLK),
+        PlayerState(8, "Investigator", RoleId("Investigator"), Alignment.GOOD, CharacterType.TOWNSFOLK),
     )
     private val roleDefinitions = listOf(
         RoleDefinition(RoleId("Slayer"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
@@ -22,6 +25,9 @@ class DayAbilityRegistrationRulingProducerV1Test {
         RoleDefinition(RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON, setOf(script)),
         RoleDefinition(RoleId("Recluse"), Alignment.GOOD, CharacterType.OUTSIDER, setOf(script)),
         RoleDefinition(RoleId("Spy"), Alignment.EVIL, CharacterType.MINION, setOf(script)),
+        RoleDefinition(RoleId("Virgin"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
+        RoleDefinition(RoleId("Fortune Teller"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
+        RoleDefinition(RoleId("Investigator"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
     )
     private fun makeSession(players: List<PlayerState> = basePlayers) =
         ClocktowerGameSession.createProduction(
@@ -99,6 +105,31 @@ class DayAbilityRegistrationRulingProducerV1Test {
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmSlayer(
                 session, journal, snapshot(session), roleDefinitions, input(),
+            )
+        }
+    }
+
+    @Test fun `explicit actual Slayer Recluse ruling is durable but untouched produces no decision`() {
+        val untouched = makeSession()
+        val untouchedJournal = StorytellerCausalDecisionJournalV1(untouched.state.gameId)
+        assertTrue(untouchedJournal.archive().records.isEmpty())
+
+        val actual = makeSession()
+        val journal = StorytellerCausalDecisionJournalV1(actual.state.gameId)
+        val committed = DayAbilityRegistrationRulingProducerV1.confirmSlayer(
+            actual, journal, snapshot(actual), roleDefinitions,
+            input().copy(registeredDemonRole = null),
+        )
+        assertEquals(RegistrationResolutionStatusV1.EXPLICIT_ACTUAL.name,
+            committed.selectedOutcome.canonicalFields.getValue("status"))
+        assertEquals("actual", committed.selectedCandidateId)
+        assertTrue(committed.registrations.isEmpty())
+        assertEquals(TruthRelation.NOT_APPLICABLE, committed.truthRelation)
+        assertEquals(listOf(committed), recover(actual, journal).effectiveNow())
+        assertThrows(IllegalArgumentException::class.java) {
+            DayAbilityRegistrationRulingProducerV1.confirmSlayer(
+                actual, journal, snapshot(actual), roleDefinitions,
+                input().copy(registeredDemonRole = null),
             )
         }
     }

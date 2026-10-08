@@ -58,6 +58,35 @@ sealed interface ActionFact {
         val klutzDeathTrigger: KlutzDeathTriggerEvidenceV1? = null,
     ) : ActionFact
 
+    /** Confirmed public player attempt, not a Storyteller decision or a claim that a hit occurred. */
+    data class SlayerShot(
+        override val actionId: String,
+        override val sequence: Long,
+        val claimantSeat: Int,
+        val targetSeat: Int,
+        val abilityConsumed: Boolean,
+        val hit: Boolean,
+    ) : ActionFact
+
+    /** The confirmed public nomination; first-Virgin consumption is rules-owned mechanical history. */
+    data class Nomination(
+        override val actionId: String,
+        override val sequence: Long,
+        val nominatorSeat: Int,
+        val nomineeSeat: Int,
+        val firstVirginNomination: Boolean,
+    ) : ActionFact
+
+    /** Voters are explicit seats; ghost voters remain a subset, never reconstructed from text. */
+    data class Vote(
+        override val actionId: String,
+        override val sequence: Long,
+        val nominatorSeat: Int,
+        val nomineeSeat: Int,
+        val voterSeats: List<Int>,
+        val ghostVoterSeats: List<Int>,
+    ) : ActionFact
+
     data class RoleChange(
         override val actionId: String,
         override val sequence: Long,
@@ -127,6 +156,24 @@ object DynamicActionReducer {
                 }
                 is ActionFact.Execution -> updatePlayer(fact.targetSeat) { it.copy(alive = false, poisoned = false) }
                 is ActionFact.Death -> updatePlayer(fact.targetSeat) { it.copy(alive = false, poisoned = false) }
+                is ActionFact.SlayerShot -> {
+                    requireSeat(fact.claimantSeat)
+                    requireSeat(fact.targetSeat)
+                    require(!fact.hit || fact.abilityConsumed)
+                }
+                is ActionFact.Nomination -> {
+                    requireSeat(fact.nominatorSeat)
+                    requireSeat(fact.nomineeSeat)
+                    require(fact.nominatorSeat != fact.nomineeSeat)
+                }
+                is ActionFact.Vote -> {
+                    requireSeat(fact.nominatorSeat)
+                    requireSeat(fact.nomineeSeat)
+                    require(fact.voterSeats.distinct().size == fact.voterSeats.size)
+                    require(fact.ghostVoterSeats.distinct().size == fact.ghostVoterSeats.size)
+                    require(fact.ghostVoterSeats.all { it in fact.voterSeats })
+                    fact.voterSeats.forEach(::requireSeat)
+                }
                 is ActionFact.RoleChange -> updatePlayer(fact.targetSeat) {
                     it.copy(actualRole = fact.role, actualAlignment = fact.alignment, actualType = fact.type)
                 }

@@ -80,6 +80,21 @@ object EpistemicSemanticJson {
         is ActionFact.Attack -> mapOf("actionId" to value.actionId, "kind" to "attack", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
         is ActionFact.Execution -> mapOf("actionId" to value.actionId, "kind" to "execution", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
         is ActionFact.Death -> mapOf("actionId" to value.actionId, "kind" to "death", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
+        is ActionFact.SlayerShot -> mapOf(
+            "actionId" to value.actionId, "kind" to "slayer-shot", "sequence" to value.sequence,
+            "claimantSeat" to value.claimantSeat, "targetSeat" to value.targetSeat,
+            "abilityConsumed" to value.abilityConsumed, "hit" to value.hit,
+        )
+        is ActionFact.Nomination -> mapOf(
+            "actionId" to value.actionId, "kind" to "nomination", "sequence" to value.sequence,
+            "nominatorSeat" to value.nominatorSeat, "nomineeSeat" to value.nomineeSeat,
+            "firstVirginNomination" to value.firstVirginNomination,
+        )
+        is ActionFact.Vote -> mapOf(
+            "actionId" to value.actionId, "kind" to "vote", "sequence" to value.sequence,
+            "nominatorSeat" to value.nominatorSeat, "nomineeSeat" to value.nomineeSeat,
+            "voterSeats" to value.voterSeats, "ghostVoterSeats" to value.ghostVoterSeats,
+        )
         is ActionFact.RoleChange -> mapOf("actionId" to value.actionId, "alignment" to value.alignment.name, "kind" to "role-change", "role" to value.role.value, "sequence" to value.sequence, "targetSeat" to value.targetSeat, "type" to value.type.name)
         is ActionFact.PhaseAdvance -> mapOf("actionId" to value.actionId, "kind" to "phase-advance", "phase" to value.phase.name, "round" to value.round, "sequence" to value.sequence)
     }
@@ -263,6 +278,22 @@ object EpistemicSemanticJson {
         "attack" -> ActionFact.Attack(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
         "execution" -> ActionFact.Execution(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
         "death" -> ActionFact.Death(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
+        "slayer-shot" -> ActionFact.SlayerShot(
+            json.getString("actionId"), json.getLong("sequence"),
+            json.getInt("claimantSeat"), json.getInt("targetSeat"),
+            json.getBoolean("abilityConsumed"), json.getBoolean("hit"),
+        )
+        "nomination" -> ActionFact.Nomination(
+            json.getString("actionId"), json.getLong("sequence"),
+            json.getInt("nominatorSeat"), json.getInt("nomineeSeat"),
+            json.getBoolean("firstVirginNomination"),
+        )
+        "vote" -> ActionFact.Vote(
+            json.getString("actionId"), json.getLong("sequence"),
+            json.getInt("nominatorSeat"), json.getInt("nomineeSeat"),
+            json.getJSONArray("voterSeats").let { a -> (0 until a.length()).map(a::getInt) },
+            json.getJSONArray("ghostVoterSeats").let { a -> (0 until a.length()).map(a::getInt) },
+        )
         "role-change" -> ActionFact.RoleChange(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"), RoleId(json.getString("role")), Alignment.valueOf(json.getString("alignment")), CharacterType.valueOf(json.getString("type")))
         "phase-advance" -> ActionFact.PhaseAdvance(json.getString("actionId"), json.getLong("sequence"), StorytellerPhase.valueOf(json.getString("phase")), json.getInt("round"))
         else -> error("Unknown B4 action fact kind: ${json.getString("kind")}")

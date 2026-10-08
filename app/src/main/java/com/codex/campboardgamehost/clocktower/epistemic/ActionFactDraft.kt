@@ -86,6 +86,63 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class SlayerShot(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val claimantSeat: Int,
+        val targetSeat: Int,
+        val abilityConsumed: Boolean,
+        val hit: Boolean,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(claimantSeat)
+            requireSeat(targetSeat)
+            require(!hit || abilityConsumed)
+        }
+    }
+
+    data class Nomination(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val nominatorSeat: Int,
+        val nomineeSeat: Int,
+        val firstVirginNomination: Boolean,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(nominatorSeat)
+            requireSeat(nomineeSeat)
+            require(nominatorSeat != nomineeSeat)
+        }
+    }
+
+    data class Vote(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val nominatorSeat: Int,
+        val nomineeSeat: Int,
+        val voterSeats: List<Int>,
+        val ghostVoterSeats: List<Int>,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(nominatorSeat)
+            requireSeat(nomineeSeat)
+            require(nominatorSeat != nomineeSeat)
+            require(voterSeats.distinct().size == voterSeats.size)
+            require(ghostVoterSeats.distinct().size == ghostVoterSeats.size)
+            require(ghostVoterSeats.all { it in voterSeats })
+            voterSeats.forEach(::requireSeat)
+        }
+    }
+
     data class RoleChange(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -151,6 +208,15 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     is ActionFactDraft.Attack -> ActionFact.Attack(actionId, globalSequence, targetSeat)
     is ActionFactDraft.Execution -> ActionFact.Execution(actionId, globalSequence, targetSeat, klutzDeathTrigger)
     is ActionFactDraft.Death -> ActionFact.Death(actionId, globalSequence, targetSeat, klutzDeathTrigger)
+    is ActionFactDraft.SlayerShot -> ActionFact.SlayerShot(
+        actionId, globalSequence, claimantSeat, targetSeat, abilityConsumed, hit,
+    )
+    is ActionFactDraft.Nomination -> ActionFact.Nomination(
+        actionId, globalSequence, nominatorSeat, nomineeSeat, firstVirginNomination,
+    )
+    is ActionFactDraft.Vote -> ActionFact.Vote(
+        actionId, globalSequence, nominatorSeat, nomineeSeat, voterSeats.toList(), ghostVoterSeats.toList(),
+    )
     is ActionFactDraft.RoleChange -> ActionFact.RoleChange(
         actionId = actionId,
         sequence = globalSequence,

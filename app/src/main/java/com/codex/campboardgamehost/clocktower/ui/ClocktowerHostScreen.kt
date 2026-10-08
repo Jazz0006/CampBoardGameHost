@@ -143,9 +143,11 @@ internal fun ClocktowerJudgeScreen(
     onSelectKlutzChoice: (String?) -> Unit,
     onConfirmKlutzChoice: () -> Unit,
     onConfirmArtistQuestion: (String, Boolean, Boolean) -> Unit,
-    onSlayerShot: (String, String, Boolean) -> Unit,
+    onSlayerShot: (String, String, Boolean?) -> Unit,
     onPreflightVirginExecution: (String, Boolean) -> Unit,
     onVirginNomination: (String, String, Boolean, Boolean?) -> Unit,
+    onConfirmedNomination: (String, String) -> Unit,
+    onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
     onConfirmNight: () -> Unit,
@@ -581,7 +583,7 @@ internal fun ClocktowerJudgeScreen(
         selectArtistClaimant(null)
     }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
-    var slayerRecluseRegistersDemon by remember { mutableStateOf(false) }
+    var slayerRecluseRegistersDemon by remember { mutableStateOf<Boolean?>(null) }
     val firstNightNaturalPairPrecomputeRequest = if (
         script == ClocktowerScript.TroubleBrewing &&
         phase == ClocktowerPhase.FirstNight &&
@@ -1942,7 +1944,7 @@ internal fun ClocktowerJudgeScreen(
             onOpenSlayer = {
                 slayerClaimantName = null
                 slayerTargetName = null
-                slayerRecluseRegistersDemon = false
+                slayerRecluseRegistersDemon = null
                 dayMode = ClocktowerDayMode.Slayer
             },
             onOpenArtist = {
@@ -2016,6 +2018,9 @@ internal fun ClocktowerJudgeScreen(
                         chosenNominator,
                         false, // Day ruling is causal, not a fake preceding localized event.
                     )
+                }
+                if (chosenNominator != null && chosenNominee != null) {
+                    onConfirmedNomination(chosenNominator, chosenNominee)
                 }
                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
                     val explicitSpyRuling = registrationState.explicitChoice(
@@ -2115,6 +2120,7 @@ internal fun ClocktowerJudgeScreen(
                 onGhostVoteAuthorityChange(voteTransaction.ghostVoteAuthority)
                 highestVoteName = voteTransaction.highestVoteName
                 highestVoteCount = voteTransaction.highestVoteCount
+                onConfirmedVote(requireNotNull(nominatorName), requireNotNull(nomineeName), voteTransaction.voteRecord)
                 recordVoteEvent(voteTransaction.voteRecord)
                 nominatorName = null
                 nomineeName = null
@@ -2170,16 +2176,16 @@ internal fun ClocktowerJudgeScreen(
                 if (slayerClaimantName == null) {
                     slayerClaimantName = selectedName
                     slayerTargetName = null
-                    slayerRecluseRegistersDemon = false
+                    slayerRecluseRegistersDemon = null
                 } else {
                     slayerTargetName = if (slayerTargetName == selectedName) null else selectedName
-                    slayerRecluseRegistersDemon = false
+                    slayerRecluseRegistersDemon = null
                 }
             },
             onResetClaimant = {
                 slayerClaimantName = null
                 slayerTargetName = null
-                slayerRecluseRegistersDemon = false
+                slayerRecluseRegistersDemon = null
             },
             onResolve = {
                 val claimantName = slayerClaimantName
@@ -2189,18 +2195,18 @@ internal fun ClocktowerJudgeScreen(
                         slayerTargetCard?.clocktowerRole?.enName == "Recluse" &&
                             poisonTarget != targetName
                     val recluseRegistersDemon =
-                        targetIsHealthyRecluse && slayerRecluseRegistersDemon
+                        if (targetIsHealthyRecluse) slayerRecluseRegistersDemon else null
                     onSlayerShot(claimantName, targetName, recluseRegistersDemon)
                     slayerClaimantName = null
                     slayerTargetName = null
-                    slayerRecluseRegistersDemon = false
+                    slayerRecluseRegistersDemon = null
                     dayMode = ClocktowerDayMode.Overview
                 }
             },
             onBack = {
                 slayerClaimantName = null
                 slayerTargetName = null
-                slayerRecluseRegistersDemon = false
+                slayerRecluseRegistersDemon = null
                 dayMode = ClocktowerDayMode.Overview
             },
             specialContent = {
@@ -2213,9 +2219,10 @@ internal fun ClocktowerJudgeScreen(
                             listOf(ClocktowerTeam.Demon),
                         )
                             .map { it.enName to it.nameFor(language) },
-                        registersEvil = slayerRecluseRegistersDemon,
-                        registeredRoleEnName = if (slayerRecluseRegistersDemon) "Imp" else null,
+                        registersEvil = slayerRecluseRegistersDemon == true,
+                        registeredRoleEnName = if (slayerRecluseRegistersDemon == true) "Imp" else null,
                         enabled = recluseCanRegister("Slayer"),
+                        hasExplicitChoice = slayerRecluseRegistersDemon != null,
                         language = language,
                         onRegistersEvilChange = { slayerRecluseRegistersDemon = it },
                         onRoleChange = {},
