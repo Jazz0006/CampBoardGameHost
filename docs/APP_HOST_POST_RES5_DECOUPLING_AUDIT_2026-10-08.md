@@ -190,6 +190,16 @@ Architecture pre-flight:
 
 ### H-P：先拆展示历史 payload，后审查私密 proposition fallback
 
+Architecture pre-flight（H-P 实施，2026-10-08）：
+- current owner: Host 的 `onShowPlayerDisplay.recordHistory` 闭包负责构造事件字段并调用 `onRecordEvent`；`ClocktowerPlayerRevealHandoff` 负责发布效果顺序。
+- proposed responsibility: 独立的纯投影函数从已确定的展示步骤生成历史事件的类型、标题、详情和关联玩家名。
+- authoritative state owner(s): `ClocktowerNightStepUi` 是本次展示快照，`cards` 提供座位到玩家名的当前映射；事件存储与序号仍由既有回调/仓储拥有。
+- narrow typed input/output seam: `displayStep + ordered player names + unreliable flag + language text function -> typed event payload`。
+- keep in current owner / extract: Host 保留授权、首夜发布、私密观察、`onRecordEvent` 和打开展示的调用时序；只抽离无副作用的字段投影。
+- reason: 修改历史文案或关联座位无需进入 Host 的事务闭包，也不引入新的事件或游戏状态权威。
+
+本切片不修改 `ClocktowerNightStepUi` 共享模型、不调整 `DecisionHistoryRepository.extractSeatNumbers` 的现有正则与集合遍历语义，也不触碰 role-specific 私密 proposition fallback。新增 typed 测试只覆盖投影契约；既有 handoff 测试保护调用顺序。
+
 Host 2900 附近的 `recordHistory` 按 displayKind 生成文案、提取座位并选择事件类型。可提取纯 `display step + cards + reliability + language -> event payload`，Host 继续调用 `onRecordEvent`，保留既有 `performClocktowerPlayerRevealHandoff` 顺序：
 
 ```text
@@ -199,6 +209,8 @@ authorize -> first-night publication -> private observation -> history -> open r
 现有 `ClocktowerFirstNightPlayerRevealHandoffTest` 已覆盖拒绝、重复打开、顺序和异常中止，可直接继承。新投影测试覆盖中文/英文、EitherOne/Number/YesNo/RoleReveal/Grimoire、actor 与被引用 seat 去重。
 
 `recordReliablePrivateInformation` 的后半段仍从 role-specific 局部变量构造 legacy proposition。应先审计 `displayProposition` 和 structured confirmation 的全部生产路径，再逐步让 materializer 提供完整语义。**不能现在直接删除 fallback**，也不能传一个装着所有角色结果的大 context 给新 helper。
+
+H-P 本地实施：新增 `ClocktowerInformationHistoryPayload.kt`，只投影事件类型、标题、详情和玩家名；Host 仍在 `recordHistory` 回调内调用 `onRecordEvent`。英文六种展示类型、中文主要格式、关联座位去重及误导/不可靠标题由 `ClocktowerInformationHistoryPayloadTest` 覆盖；既有 `ClocktowerFirstNightPlayerRevealHandoffTest` 继续保护副作用顺序。私密 proposition fallback 与共享 `ClocktowerNightStepUi` 均未改动。
 
 对 `ClocktowerNightStepUi` 的文本引用已分布在 24 个生产文件（不是精确调用图计数）。若改变该 shared model，需要重新列全 producer/consumer；本轮建议优先保持模型不变，缩小实际迁移面。
 
