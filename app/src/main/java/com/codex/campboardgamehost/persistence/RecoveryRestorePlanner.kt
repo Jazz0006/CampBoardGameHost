@@ -234,6 +234,20 @@ internal object RecoveryRestorePlanner {
             role
         }
 
+        // Apply the *setup* shown-identity contract at Recovery ingress, not only
+        // when some later Virgin action happens to reference the Drunk. Both TB
+        // and NGJ permit a Drunk to be SHOWN an unused Townsfolk character, never
+        // a role already in actual play. Do not manufacture a historical choice.
+        val inPlayActualRoles = actualRoles.mapTo(linkedSetOf(), ClocktowerRole::enName)
+        game.cards.forEach { card ->
+            if (card.clocktowerRole?.enName == "Drunk") {
+                val shown = requireNotNull(card.clocktowerShownRole)
+                require(shown.team == ClocktowerTeam.Townsfolk && shown.enName !in inPlayActualRoles) {
+                    "Recovered Drunk must be shown a Townsfolk not already actually in play."
+                }
+            }
+        }
+
         val mechanics = game.mechanics
         listOf(
             mechanics.confirmedAttackTarget,
