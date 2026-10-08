@@ -59,7 +59,7 @@ internal data class ClocktowerAlignmentRegistrationWitness(
     val recluseRegistersEvil: Boolean?,
 )
 
-/** Current ruling comes first so deduplication preserves it whenever it yields the chosen result. */
+/** Enumeration may prefer the current UI state, but order never grants a candidate adjudication authority. */
 internal fun clocktowerAlignmentRegistrationWitnesses(
     currentSpyRegistersGood: Boolean,
     spySelectable: Boolean,
