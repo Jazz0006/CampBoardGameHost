@@ -15,7 +15,7 @@ internal class ClocktowerRegistrationInteractionState {
 
     fun spyRole(key: String?): String? = key?.let(spyRoles::get)
 
-    /** Manual toggles retain the last role; only a final option can clear its witness. */
+    /** Explicit manual toggles retain the last role; displayed results do not change the ruling. */
     fun chooseSpy(key: String, good: Boolean, defaultRole: String? = null) {
         spyRegistersGood[key] = good
         if (good && defaultRole != null && spyRoles[key] == null) spyRoles[key] = defaultRole
