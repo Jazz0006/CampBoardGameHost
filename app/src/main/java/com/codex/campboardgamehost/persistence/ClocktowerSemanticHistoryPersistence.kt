@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.domain.KlutzDeathTriggerEvidenceV1
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
@@ -101,10 +102,12 @@ internal object ClocktowerSemanticHistoryPersistence {
             is ActionFact.Execution -> {
                 put("kind", "execution")
                 put("targetSeat", fact.targetSeat)
+                fact.klutzDeathTrigger?.let { put("klutzDeathTrigger", encodeKlutzDeathTrigger(it)) }
             }
             is ActionFact.Death -> {
                 put("kind", "death")
                 put("targetSeat", fact.targetSeat)
+                fact.klutzDeathTrigger?.let { put("klutzDeathTrigger", encodeKlutzDeathTrigger(it)) }
             }
             is ActionFact.RoleChange -> {
                 put("kind", "role-change")
@@ -135,8 +138,12 @@ internal object ClocktowerSemanticHistoryPersistence {
             )
             "protect" -> ActionFact.Protect(actionId, sequence, positiveSeat(json, "targetSeat"))
             "attack" -> ActionFact.Attack(actionId, sequence, positiveSeat(json, "targetSeat"))
-            "execution" -> ActionFact.Execution(actionId, sequence, positiveSeat(json, "targetSeat"))
-            "death" -> ActionFact.Death(actionId, sequence, positiveSeat(json, "targetSeat"))
+            "execution" -> ActionFact.Execution(
+                actionId, sequence, positiveSeat(json, "targetSeat"), decodeKlutzDeathTrigger(json),
+            )
+            "death" -> ActionFact.Death(
+                actionId, sequence, positiveSeat(json, "targetSeat"), decodeKlutzDeathTrigger(json),
+            )
             "role-change" -> ActionFact.RoleChange(
                 actionId = actionId,
                 sequence = sequence,
@@ -153,6 +160,27 @@ internal object ClocktowerSemanticHistoryPersistence {
             )
             else -> throw IllegalArgumentException("Unknown action fact kind '${stringValue(json, "kind")}'.")
         }
+    }
+
+    private fun encodeKlutzDeathTrigger(value: KlutzDeathTriggerEvidenceV1): JSONObject = JSONObject().apply {
+        put("role", value.actualRole.value)
+        put("aliveBeforeDeath", value.wasAlive)
+        put("poisonedBeforeDeath", value.wasPoisoned)
+        put("sourceGameStateRevision", value.sourceGameStateRevision)
+    }
+
+    private fun decodeKlutzDeathTrigger(json: JSONObject): KlutzDeathTriggerEvidenceV1? {
+        if (!json.has("klutzDeathTrigger")) return null // old format is UNKNOWN, not functioning
+        val raw = json.opt("klutzDeathTrigger")
+        require(raw is JSONObject) { "klutzDeathTrigger must be an object when present." }
+        require(raw.has("aliveBeforeDeath") && raw.opt("aliveBeforeDeath") is Boolean)
+        require(raw.has("poisonedBeforeDeath") && raw.opt("poisonedBeforeDeath") is Boolean)
+        return KlutzDeathTriggerEvidenceV1(
+            actualRole = RoleId(stringValue(raw, "role")),
+            wasAlive = raw.getBoolean("aliveBeforeDeath"),
+            wasPoisoned = raw.getBoolean("poisonedBeforeDeath"),
+            sourceGameStateRevision = longValue(raw, "sourceGameStateRevision"),
+        )
     }
 
     private fun stringValue(json: JSONObject, key: String): String {
