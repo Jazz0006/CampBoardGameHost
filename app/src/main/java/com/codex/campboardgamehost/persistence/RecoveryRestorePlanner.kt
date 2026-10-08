@@ -417,6 +417,10 @@ internal object RecoveryRestorePlanner {
                     requireKnownSeat(fact.nomineeSeat, playerCount)
                     require(fact.nominatorSeat != fact.nomineeSeat)
                     require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
+                    require(!fact.firstVirginNomination ||
+                        game.identity.script == ClocktowerScript.TroubleBrewing) {
+                        "A No Greater Joy nomination cannot consume Trouble Brewing Virgin ability."
+                    }
                 }
                 is ActionFact.Vote -> {
                     requireKnownSeat(fact.nominatorSeat, playerCount)
