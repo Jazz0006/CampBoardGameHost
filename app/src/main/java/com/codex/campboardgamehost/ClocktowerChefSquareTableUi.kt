@@ -98,7 +98,7 @@ internal fun clocktowerChefRecluseSeat(players: List<PlayerState>): Int? = playe
     .firstOrNull { player -> player.actualRole.value == "Recluse" }
     ?.seat
 
-/** Apply the already-selected typed Spy/Recluse registration witness attached to the result. */
+/** Compute a visual explanation only when supplied with a separately adjudicated witness. */
 internal fun clocktowerChefEffectiveEvilSeats(
     players: List<PlayerState>,
     option: ClocktowerDisplayOption?,
