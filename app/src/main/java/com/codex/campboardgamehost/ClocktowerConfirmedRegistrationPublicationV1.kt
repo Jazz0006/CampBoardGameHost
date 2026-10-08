@@ -1,5 +1,9 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDomain
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationResolutionStatusV1
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -130,4 +134,53 @@ internal fun clocktowerPlanConfirmedResultRegistrations(
             else ClocktowerResultRegistrationPlanV1.NoVerifiedWitness
     }
     return ClocktowerResultRegistrationPlanV1.Ready(choices, witnesses)
+}
+
+
+/**
+ * Second, Host-owned validation before any journal mutation. Rules-domain validity AND one
+ * compatible complete result witness are required jointly. Never trust the UI choice alone.
+ */
+internal fun ClocktowerConfirmedRegistrationPublicationV1.isRulesConsistent(
+    game: GameState,
+    legalRoles: List<RoleDefinition>,
+): Boolean {
+    if (choices.any { it.subjectSeat == sourceSeat ||
+        it.subjectSeat !in shownProposition.referencedSeats() }) return false
+    val constraintByRole = mutableMapOf<String, ClocktowerConfirmedRegistrationChoiceV1>()
+    choices.forEach { choice ->
+        val subject = game.playerAt(choice.subjectSeat) ?: return false
+        val role = subject.actualRole.value
+        if (role !in setOf("Spy", "Recluse") || role in constraintByRole) return false
+        val options = TroubleBrewingRegistrationDomain.resolve(
+            TroubleBrewingRegistrationSubject.from(subject), legalRoles, choice.question,
+        )
+        if (options.special.isEmpty()) return false
+        if (choice.status == RegistrationResolutionStatusV1.EXPLICIT_SPECIAL &&
+            choice.selectedRole != null &&
+            options.special.none { it.registeredRole == choice.selectedRole }
+        ) return false
+        if (choice.selectedRole != null && choice.question == RegistrationQuestion.ALIGNMENT) return false
+        constraintByRole[role] = choice
+    }
+    fun compatible(
+        selected: ClocktowerConfirmedRegistrationChoiceV1?,
+        witnessSpecial: Boolean?,
+        witnessRole: String?,
+    ): Boolean {
+        if (selected == null) return true
+        if (witnessSpecial == null) return false
+        when (selected.status) {
+            RegistrationResolutionStatusV1.EXPLICIT_SPECIAL -> if (!witnessSpecial) return false
+            RegistrationResolutionStatusV1.EXPLICIT_ACTUAL -> if (witnessSpecial) return false
+            RegistrationResolutionStatusV1.UNRESOLVED_NOT_REQUIRED -> Unit
+            else -> return false
+        }
+        return selected.selectedRole == null || selected.selectedRole.value == witnessRole
+    }
+    return legalResultWitnesses.any { witness ->
+        compatible(constraintByRole["Spy"], witness.spyRegistersGood, witness.spyRegisteredRoleEnName) &&
+            compatible(constraintByRole["Recluse"], witness.recluseRegistersEvil,
+                witness.recluseRegisteredRoleEnName)
+    }
 }
