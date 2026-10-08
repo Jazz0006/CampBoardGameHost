@@ -42,6 +42,37 @@ internal fun ClocktowerSpyRegistrationDecisionControls(
     )
 }
 
+/** Virgin looks at a Townsfolk CHARACTER TYPE, never an arbitrary first good role. */
+@Composable
+internal fun ClocktowerSpyTownsfolkTypeDecisionControls(
+    registersAsTownsfolk: Boolean,
+    hasExplicitChoice: Boolean,
+    enabled: Boolean,
+    language: String,
+    onRegistersAsTownsfolkChange: (Boolean) -> Unit,
+) {
+    if (!hasExplicitChoice) {
+        Text(
+            if (language == "en") "No explicit ruling selected; showing the actual identity by default."
+            else "尚未明确裁定；默认按真实身份结算。",
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+    ClocktowerRegistrationDecisionControls(
+        legalRoles = emptyList(),
+        usesSpecialRegistration = registersAsTownsfolk,
+        registeredRoleEnName = null,
+        enabled = enabled,
+        language = language,
+        specialLabelEn = "Register as Townsfolk",
+        specialLabelZh = "登记为镇民",
+        disabledTextEn = "The Spy cannot use special registration in this interaction.",
+        disabledTextZh = "间谍当前不能在本次交互中特殊登记。",
+        onUsesSpecialRegistrationChange = onRegistersAsTownsfolkChange,
+        onRoleChange = {},
+    )
+}
+
 /** Embedded square-table controls for Experienced-mode Recluse registration decisions. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
