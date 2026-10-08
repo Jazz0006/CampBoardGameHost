@@ -211,8 +211,10 @@ internal fun ActionFact.b4CanonicalPayload(): String = when (this) {
     is ActionFact.Poison -> "poison:$actionId:$sequence:${targetSeat ?: "none"}"
     is ActionFact.Protect -> "protect:$actionId:$sequence:$targetSeat"
     is ActionFact.Attack -> "attack:$actionId:$sequence:$targetSeat"
-    is ActionFact.Execution -> "execution:$actionId:$sequence:$targetSeat:${klutzDeathTrigger.b4DeathProof()}"
-    is ActionFact.Death -> "death:$actionId:$sequence:$targetSeat:${klutzDeathTrigger.b4DeathProof()}"
+    is ActionFact.Execution -> "execution:$actionId:$sequence:$targetSeat" +
+        (klutzDeathTrigger?.let { ":${it.b4DeathProof()}" } ?: "")
+    is ActionFact.Death -> "death:$actionId:$sequence:$targetSeat" +
+        (klutzDeathTrigger?.let { ":${it.b4DeathProof()}" } ?: "")
     is ActionFact.RoleChange -> "role-change:$actionId:$sequence:$targetSeat:${role.value}:${alignment.name}:${type.name}"
     is ActionFact.PhaseAdvance -> "phase:$actionId:$sequence:${phase.name}:$round"
 }
