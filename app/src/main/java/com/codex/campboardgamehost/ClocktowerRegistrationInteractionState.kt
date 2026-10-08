@@ -74,13 +74,17 @@ internal class ClocktowerRegistrationInteractionState {
         val spyChosen = spyHasExplicitChoice(spyKey)
         val recluseChosen = recluseHasExplicitChoice(recluseKey)
         if (!spyChosen && !recluseChosen) return true
+        val chosenSpyGood = spyKey?.let(spyRegistersGood::get)
+        val chosenRecluseEvil = recluseKey?.let(recluseRegistersEvil::get)
+        val chosenSpyRole = spyKey?.let(spyRoles::get)
+        val chosenRecluseRole = recluseKey?.let(recluseRoles::get)
         return witnesses.any { witness ->
-            (!spyChosen || witness.spyRegistersGood == spyRegistersGood[spyKey]) &&
-                (!recluseChosen || witness.recluseRegistersEvil == recluseRegistersEvil[recluseKey]) &&
+            (!spyChosen || witness.spyRegistersGood == chosenSpyGood) &&
+                (!recluseChosen || witness.recluseRegistersEvil == chosenRecluseEvil) &&
                 (!spyChosen || witness.spyRegisteredRoleEnName == null ||
-                    witness.spyRegisteredRoleEnName == spyRoles[spyKey]) &&
+                    witness.spyRegisteredRoleEnName == chosenSpyRole) &&
                 (!recluseChosen || witness.recluseRegisteredRoleEnName == null ||
-                    witness.recluseRegisteredRoleEnName == recluseRoles[recluseKey])
+                    witness.recluseRegisteredRoleEnName == chosenRecluseRole)
         }
     }
 }
