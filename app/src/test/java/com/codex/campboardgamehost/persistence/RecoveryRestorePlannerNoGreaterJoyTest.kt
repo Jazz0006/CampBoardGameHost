@@ -204,6 +204,17 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
         assertTrue(recoveredGame.mechanics.klutzReturnToDawn)
         assertEquals(2, recoveredGame.cards.first().eliminatedRound)
         assertEquals(learnedHistory, recoveredGame.history.actionTimeline)
+        val publicEvents = com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
+            recipientSeat = 5,
+            actionTimeline = recoveredGame.history.actionTimeline,
+            observationLog = com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog(),
+        )
+        assertTrue(publicEvents[0] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicNomination)
+        assertTrue(publicEvents[1] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicVote)
+        assertTrue(publicEvents[2] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicDeath)
+        assertTrue(publicEvents.none {
+            it is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicKlutzChoice
+        }) // Choice has not been publicly confirmed at the pending recovery point.
         assertEquals(listOf("nomination", "vote"), learnedHistory.entries.take(2).map { entry ->
             when (entry.fact) {
                 is ActionFact.Nomination -> "nomination"
