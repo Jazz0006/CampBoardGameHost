@@ -256,7 +256,14 @@ jobs:
           grep -q "internal fun ClocktowerSpyRegistrationDecisionControls" "$registration_controls"
           grep -q "internal fun ClocktowerRecluseRegistrationDecisionControls" "$registration_controls"
           grep -q "internal fun ClocktowerAutomaticRegistrationEffect" "$automatic_registration"
-          grep -q "ClocktowerSpyRegistrationDecisionControls(" "$host"
+          # Virgin and Klutz now have rule-semantic type/alignment controls instead of
+          # forcing a named Townsfolk/Outsider registration for mechanical outcomes.
+          grep -q "ClocktowerSpyTownsfolkTypeDecisionControls(" "$host"
+          grep -q "ClocktowerSpyGoodAlignmentDecisionControls(" "$host"
+          if grep -q "ClocktowerSpyRegistrationDecisionControls(" "$host"; then
+            echo "Legacy named-role Spy control was reintroduced for a type/alignment-only day ruling" >&2
+            exit 1
+          fi
           grep -q "ClocktowerRecluseRegistrationDecisionControls(" "$host"
           grep -q "ClocktowerAutomaticRegistrationEffect(" "$night_step_ui"
 
