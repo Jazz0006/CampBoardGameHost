@@ -128,9 +128,9 @@ internal class ClocktowerRegistrationInteractionState {
         return witnesses.any { witness ->
             (spy == null || witness.spyRegistersGood == spy.usesSpecialRegistration) &&
                 (recluse == null || witness.recluseRegistersEvil == recluse.usesSpecialRegistration) &&
-                (spy == null || witness.spyRegisteredRoleEnName == null ||
+                (spy?.selectedRegisteredRoleEnName == null || witness.spyRegisteredRoleEnName == null ||
                     witness.spyRegisteredRoleEnName == spy.selectedRegisteredRoleEnName) &&
-                (recluse == null || witness.recluseRegisteredRoleEnName == null ||
+                (recluse?.selectedRegisteredRoleEnName == null || witness.recluseRegisteredRoleEnName == null ||
                     witness.recluseRegisteredRoleEnName == recluse.selectedRegisteredRoleEnName)
         }
     }
