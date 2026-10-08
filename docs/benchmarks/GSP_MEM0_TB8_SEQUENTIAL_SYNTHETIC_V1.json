@@ -1,0 +1,262 @@
+{
+  "schema": "GSP-MEM0-SYNTHETIC-V1",
+  "fixture_id": "MEM0-TB8-CONTINUITY-001",
+  "status": "FROZEN_SYNTHETIC_PILOT_NOT_REAL_EVIDENCE",
+  "script": "Trouble Brewing",
+  "game_id": "MEM0-SYNTHETIC-TB8",
+  "player_count": 8,
+  "player_levels": "NORMAL for all; no cross-game records in pilot",
+  "notes": "All scenes are frozen invented test states, not historical real-game evidence. No unique best answer or expert label. No poisoning/Spy; the Recluse may be subject to rules-legal registration ambiguity, but no unstated registration adjudication has been committed.",
+  "seats": [
+    {
+      "seat": 1,
+      "precommit_role": "Chef",
+      "postcommit_actual_role": "Drunk",
+      "shown_role": "Chef",
+      "team_after": "Outsider"
+    },
+    {
+      "seat": 2,
+      "precommit_role": "Fortune Teller",
+      "postcommit_actual_role": "Fortune Teller",
+      "shown_role": "Fortune Teller",
+      "team_after": "Townsfolk"
+    },
+    {
+      "seat": 3,
+      "precommit_role": "Ravenkeeper",
+      "postcommit_actual_role": "Ravenkeeper",
+      "shown_role": "Ravenkeeper",
+      "team_after": "Townsfolk"
+    },
+    {
+      "seat": 4,
+      "precommit_role": "Butler",
+      "postcommit_actual_role": "Butler",
+      "shown_role": "Butler",
+      "team_after": "Outsider"
+    },
+    {
+      "seat": 5,
+      "precommit_role": "Investigator",
+      "postcommit_actual_role": "Investigator",
+      "shown_role": "Investigator",
+      "team_after": "Townsfolk"
+    },
+    {
+      "seat": 6,
+      "precommit_role": "Recluse",
+      "postcommit_actual_role": "Recluse",
+      "shown_role": "Recluse",
+      "team_after": "Outsider"
+    },
+    {
+      "seat": 7,
+      "precommit_role": "Baron",
+      "postcommit_actual_role": "Baron",
+      "shown_role": "Baron",
+      "team_after": "Minion"
+    },
+    {
+      "seat": 8,
+      "precommit_role": "Imp",
+      "postcommit_actual_role": "Imp",
+      "shown_role": "Imp",
+      "team_after": "Demon"
+    }
+  ],
+  "scenario": "8-player setup with Baron adds two Outsiders; Drunk is selected among four precommit displayed Townsfolk. After seat 1 is chosen Drunk: 3 real Townsfolk, 3 Outsiders, Baron, Imp.",
+  "checkpoints": [
+    {
+      "id": "D0",
+      "phase": "setup before Drunk commitment",
+      "question": "Which displayed Townsfolk becomes the actual Drunk? Give one preferred option and a genuinely distinct alternative, anticipating the first-night information ecology.",
+      "canonical": {
+        "actual_roster_state": "precommit: seat 1 displayed Chef but not yet Drunk; four drawn Townsfolk at seats 1,2,3,5; additional Outsiders already seats 4 and 6; 7 Baron; 8 Imp",
+        "known_current_published_info": [],
+        "unknown": "All first-night displayed information and strategic consequences are future, not yet committed."
+      },
+      "legal_candidates": [
+        {
+          "id": "drunk:1",
+          "seat": 1
+        },
+        {
+          "id": "drunk:2",
+          "seat": 2
+        },
+        {
+          "id": "drunk:3",
+          "seat": 3
+        },
+        {
+          "id": "drunk:5",
+          "seat": 5
+        }
+      ],
+      "prior_facts": [],
+      "strategic_memory": []
+    },
+    {
+      "id": "D1",
+      "phase": "first night before Investigator result publication",
+      "question": "Select a truthful/legal Investigator Baron pair from available choices, considering how the previously chosen Drunk changes the whole first-night information ecology.",
+      "canonical": {
+        "actual_roster_state": "seat 1 ACTUAL Drunk SHOWN Chef; 2 FT; 3 Ravenkeeper; 4 Butler; 5 Investigator; 6 Recluse; 7 Baron; 8 Imp",
+        "known_current_published_info": [],
+        "current_confirmed_choices": {
+          "drunk_seat": 1
+        },
+        "unknown": "Chef has not yet been shown a number; FT red herring not yet selected."
+      },
+      "legal_candidates": [
+        {
+          "id": "investigator:baron:6-7",
+          "pair": [
+            6,
+            7
+          ],
+          "minion": "Baron"
+        },
+        {
+          "id": "investigator:baron:3-7",
+          "pair": [
+            3,
+            7
+          ],
+          "minion": "Baron"
+        },
+        {
+          "id": "investigator:baron:4-7",
+          "pair": [
+            4,
+            7
+          ],
+          "minion": "Baron"
+        }
+      ],
+      "prior_facts": [
+        {
+          "sequence": 1,
+          "type": "DrunkSelectionConfirmed",
+          "seat": 1,
+          "actual_role": "Drunk",
+          "shown_role": "Chef"
+        }
+      ],
+      "strategic_memory": [
+        {
+          "after_decision": "D0",
+          "kind": "INTENT_NOT_FACT",
+          "text": "Seat 1 was selected to limit a possible Chef + Investigator double-pressure pattern on inexperienced evil players; retain clear legal reasoning options and avoid predetermined accusation targeting. Keep Fortune Teller functioning for a future independent information channel."
+        }
+      ]
+    },
+    {
+      "id": "D2",
+      "phase": "first night before first Fortune Teller wake/red-herring choice",
+      "question": "Select a legal Fortune Teller red herring seat and justify coordination with already published Investigator and Chef information. Offer a genuinely different alternative.",
+      "canonical": {
+        "actual_roster_state": "seat 1 ACTUAL Drunk SHOWN Chef; 2 FT; 3 Ravenkeeper; 4 Butler; 5 Investigator; 6 Recluse; 7 Baron; 8 Imp",
+        "known_current_published_info": [
+          {
+            "recipient": 5,
+            "ability": "Investigator",
+            "shown": "One of seat 6 and seat 7 is Baron",
+            "visibility": "PRIVATE",
+            "confirmed": true
+          },
+          {
+            "recipient": 1,
+            "ability_shown": "Chef",
+            "shown": "0",
+            "visibility": "PRIVATE",
+            "confirmed": true,
+            "actual_functioning": false
+          }
+        ],
+        "current_confirmed_choices": {
+          "drunk_seat": 1,
+          "investigator_result": {
+            "minion": "Baron",
+            "pair": [
+              6,
+              7
+            ]
+          },
+          "chef_shown_number": 0
+        },
+        "unknown": "No public day claims or reactions; no Spy/Recluse special registration was explicitly committed. The FT has not woken."
+      },
+      "legal_candidates": [
+        {
+          "id": "red-herring:1",
+          "seat": 1
+        },
+        {
+          "id": "red-herring:3",
+          "seat": 3
+        },
+        {
+          "id": "red-herring:4",
+          "seat": 4
+        },
+        {
+          "id": "red-herring:5",
+          "seat": 5
+        },
+        {
+          "id": "red-herring:6",
+          "seat": 6
+        }
+      ],
+      "prior_facts": [
+        {
+          "sequence": 1,
+          "type": "DrunkSelectionConfirmed",
+          "seat": 1,
+          "actual_role": "Drunk",
+          "shown_role": "Chef"
+        },
+        {
+          "sequence": 2,
+          "type": "InvestigatorResultPublished",
+          "recipient": 5,
+          "minion": "Baron",
+          "pair": [
+            6,
+            7
+          ],
+          "visibility": "PRIVATE"
+        },
+        {
+          "sequence": 3,
+          "type": "ChefResultPublished",
+          "recipient": 1,
+          "number": 0,
+          "visibility": "PRIVATE",
+          "actual_functioning": false
+        }
+      ],
+      "strategic_memory": [
+        {
+          "after_decision": "D0",
+          "kind": "INTENT_NOT_FACT",
+          "text": "Choosing Chef as Drunk was a coordinated early-information decision; keep the alternative-world space broad without forcing a false narrative or overriding rules."
+        },
+        {
+          "after_decision": "D1",
+          "kind": "INTENT_NOT_FACT",
+          "text": "Investigator 6/7 was published because seat 7 really is Baron. Seat 6 is Recluse but we did NOT choose or record a special registration; do not turn a possible explanation into a past adjudication. Re-evaluate whether current pressure is balanced before choosing FT red herring."
+        }
+      ]
+    }
+  ],
+  "arms": {
+    "A": "Only canonical snapshot and legal candidates; included current published information remains available in the snapshot.",
+    "B": "Exactly arm A plus the checkpoint's prior_facts in chronological order, no rationale or model memory.",
+    "C": "Exactly arm B plus strategic_memory; each note marked as soft intent/hypothesis and explicitly revisable. Optional separate continuous-chat subtest after standalone runs.",
+    "rule": "Never include future checkpoint facts in an earlier arm. Keep actual state, published facts, candidate list and question identical across arms."
+  },
+  "expected_outcome": "NO_GOLD_LABEL; compare blinded outputs using the scoring rubric in protocol"
+}
