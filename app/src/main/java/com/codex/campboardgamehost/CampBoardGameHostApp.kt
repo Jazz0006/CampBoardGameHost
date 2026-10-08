@@ -76,6 +76,9 @@ import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecisi
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
 import com.codex.campboardgamehost.clocktower.session.DayAbilityRegistrationRulingProducerV1
+import com.codex.campboardgamehost.clocktower.session.KlutzDeathTriggerProvenanceResolverV1
+import com.codex.campboardgamehost.clocktower.session.KlutzSpyDayRegistrationProducerV1
+import com.codex.campboardgamehost.clocktower.session.ConfirmedDayKlutzSpyRegistrationV1
 import com.codex.campboardgamehost.clocktower.session.ConfirmedDaySlayerRegistrationV1
 import com.codex.campboardgamehost.clocktower.session.ConfirmedDayVirginSpyRegistrationV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCausalJournalRecordV1
@@ -2603,9 +2606,54 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerKlutzChoiceName = it
                         },
-                        onConfirmKlutzChoice = { spyRegistersGoodForChoice ->
+                        onConfirmKlutzChoice = { spyRegistersGoodForChoice, explicitSpyRegistersGood ->
                             val choice = clocktowerKlutzChoiceName
                             if (choice != null) {
+                                val dyingKlutzName = clocktowerPendingKlutzName
+                                val dyingKlutz = cards.firstOrNull { it.name == dyingKlutzName }
+                                val chosenSpy = cards.firstOrNull { it.name == choice }
+                                if (
+                                    explicitSpyRegistersGood != null &&
+                                    dyingKlutz?.clocktowerRole?.enName == "Klutz" &&
+                                    dyingKlutz.eliminatedRound != null &&
+                                    chosenSpy?.clocktowerRole?.enName == "Spy" &&
+                                    chosenSpy.eliminatedRound == null &&
+                                    currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
+                                    clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+                                ) {
+                                    val session = requireClocktowerGameSession()
+                                    val klutzSeat = clocktowerSeatFor(requireNotNull(dyingKlutzName))
+                                    // Only a committed GLOBAL death and a known poison action
+                                    // strictly before that death proves trigger-time functioning.
+                                    // Do not infer a clear death from the current dead-player state.
+                                    val provenance = KlutzDeathTriggerProvenanceResolverV1.verified(
+                                        session.state.actionTimeline.reducerFacts(), klutzSeat,
+                                    )
+                                    if (provenance != null) {
+                                        val rulesetRef = requireNotNull(clocktowerRulesetRef)
+                                        val registry = activeGameClocktowerRulesetCatalog
+                                            .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+                                        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+                                            gameSnapshot = session.toGameSnapshot(rulesetRef),
+                                            phase = StorytellerPhase.DAY,
+                                            round = round,
+                                            characterRegistry = registry,
+                                        )
+                                        KlutzSpyDayRegistrationProducerV1.confirm(
+                                            session = session,
+                                            journal = currentClocktowerCausalJournal(),
+                                            snapshot = snapshot,
+                                            legalRoles = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
+                                            input = ConfirmedDayKlutzSpyRegistrationV1(
+                                                interactionId = "day:$round:klutz:$klutzSeat:" +
+                                                    clocktowerSeatFor(choice) + ":${provenance.deathActionId}",
+                                                klutzSeat = klutzSeat,
+                                                chosenSpySeat = clocktowerSeatFor(choice),
+                                                spyRegistersGood = explicitSpyRegistersGood,
+                                            ),
+                                        )
+                                    }
+                                }
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
                                     localizedText("呆瓜选择", "Klutz choice"),

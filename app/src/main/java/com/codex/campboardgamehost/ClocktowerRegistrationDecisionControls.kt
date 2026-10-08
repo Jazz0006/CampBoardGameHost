@@ -73,6 +73,37 @@ internal fun ClocktowerSpyTownsfolkTypeDecisionControls(
     )
 }
 
+/** Klutz checks an ALIGNMENT, not a named Townsfolk/Outsider. */
+@Composable
+internal fun ClocktowerSpyGoodAlignmentDecisionControls(
+    registersGood: Boolean,
+    hasExplicitChoice: Boolean,
+    enabled: Boolean,
+    language: String,
+    onRegistersGoodChange: (Boolean) -> Unit,
+) {
+    if (!hasExplicitChoice) {
+        Text(
+            if (language == "en") "No explicit ruling; actual evil alignment used by default."
+            else "尚未明确裁定；默认按真实邪恶阵营结算。",
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+    ClocktowerRegistrationDecisionControls(
+        legalRoles = emptyList(),
+        usesSpecialRegistration = registersGood,
+        registeredRoleEnName = null,
+        enabled = enabled,
+        language = language,
+        specialLabelEn = "Register as good",
+        specialLabelZh = "登记为善良",
+        disabledTextEn = "The Spy cannot specially register as good now.",
+        disabledTextZh = "间谍当前不能特殊登记为善良。",
+        onUsesSpecialRegistrationChange = onRegistersGoodChange,
+        onRoleChange = {},
+    )
+}
+
 /** Embedded square-table controls for Experienced-mode Recluse registration decisions. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
