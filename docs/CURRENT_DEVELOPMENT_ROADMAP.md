@@ -69,8 +69,12 @@ GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEP
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
 GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
-GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 #260 / 1A #263 / 1B #265 accepted; 1C1 Slayer #267 and 1C2 Virgin #269 reachable TB accepted; synthetic 1C3A/#271, 1C3B/#273 Klutz/Spy production coverage RETRACTED; C2C-1C4 audit FAIL; 1C5A real NGJ Klutz + unreachable TB writer retirement #276 T4 ACCEPTED; 1C5B reachable TB day convergence NEXT; R1C IN PROGRESS
+GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 #260 / 1A #263 / 1B #265 accepted; 1C1 Slayer #267 and 1C2 Virgin #269 reachable TB accepted; synthetic 1C3A/#271, 1C3B/#273 Klutz/Spy production coverage RETRACTED; C2C-1C4 audit FAIL; 1C5A real NGJ Klutz + unreachable TB writer retirement #276 T4 ACCEPTED; 1C5B reachable TB day action/history #278 T4 ACCEPTED; NGJ learned-death/choice 1C5C NEXT; R1C IN PROGRESS
 ~~~
+
+### GSP-R1C2C-1C5B TB day action history accepted — 2026-10-08
+
+[Accepted 1C5B](GSP_R1C2C1C5B_TB_DAY_ACTION_ACCEPTANCE_2026-10-08.md): PR #278 squash `94445a586411fcfb24bb328ff639e16fd17c435b`, accepted exact-head `ae5f320677d879e270cd5baa353677afdb3b78ca`; **CI #3955 T4 GREEN** (full Android JVM/debug APK, ASP, Real Clingo) and **R2 #3596 GREEN**. Player Slayer attempts/spent/hit, nominations (including Virgin first-use) and vote/ghost-vote actions are distinct typed GLOBAL_V1 facts, not Storyteller rulings or fabricated observations; the functioning Slayer/Recluse adjudication distinguishes untouched, explicit actual and explicit special. Invalid shot narration repaired, strict Recovery and public-safe historical replay extended; legal 8-player TB tests added. Old read-only Klutz/Spy archive Recovery remains; **NGJ Klutz learned-of-death timing and typed player choice remain next**. `GSP-R1C2C` and `R1C` stay **IN PROGRESS**; no GSP-R2 or production LLM API.
 
 ### GSP-R1A capture gate — 2026-10-08
 
