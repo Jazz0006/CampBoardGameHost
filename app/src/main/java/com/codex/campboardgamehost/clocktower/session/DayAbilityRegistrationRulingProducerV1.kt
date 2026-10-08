@@ -249,6 +249,10 @@ internal object DayAbilityRegistrationRulingProducerV1 {
             validateVirginCommitted(frozen, event)
             return
         }
+        if (f["abilityRole"] == "Klutz") {
+            KlutzSpyDayRegistrationProducerV1.validateCommitted(frozen, event)
+            return
+        }
         require(f.keys == setOf(
             "interactionId", "abilityRole", "actorSeat", "subjectSeat", "question", "status", "registeredRoleId",
         ))
