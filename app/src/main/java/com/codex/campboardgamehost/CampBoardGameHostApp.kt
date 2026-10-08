@@ -66,6 +66,7 @@ import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
+import com.codex.campboardgamehost.clocktower.session.NoGreaterJoyKlutzHistoryProducerV1
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
@@ -704,6 +705,21 @@ internal fun CampBoardGameHostApp() {
         if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) return
         requireClocktowerGameSession().commitGlobalActionFact(draft)
         publishClocktowerSessionView()
+    }
+
+    /** An announced death is learned at the real Host transition into the Klutz public choice.
+     * No replay/backfill from an earlier death or a localized note is permitted.
+     */
+    fun captureKlutzLearnedDeathOnPublicAnnouncement(name: String) {
+        if (currentClocktowerScript != ClocktowerScript.NoGreaterJoy ||
+            clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) return
+        val seat = clocktowerSeatFor(name)
+        val source = requireClocktowerGameSession()
+        NoGreaterJoyKlutzHistoryProducerV1.learned(
+            source.state, seat,
+            clocktowerActionId(kind = "klutz-learned", targetSeat = seat),
+            round, clocktowerEventCounter + 1,
+        )?.let(::recordClocktowerAction)
     }
 
     fun materializeClocktowerPoisonExpiryAtDusk() {
@@ -2617,6 +2633,12 @@ internal fun CampBoardGameHostApp() {
                                     chosenSeat = clocktowerSeatFor(choice),
                                     scriptRoles = clocktowerRoleDefinitionsForScript(requireNotNull(currentClocktowerScript)),
                                 )
+                                val klutzSeat = choiceResult.klutzSeat
+                                NoGreaterJoyKlutzHistoryProducerV1.choice(
+                                    session.state, klutzSeat, choiceResult.chosenSeat,
+                                    clocktowerActionId(kind = "klutz-choice", targetSeat = choiceResult.chosenSeat),
+                                    round, clocktowerEventCounter + 1,
+                                )?.let(::recordClocktowerAction)
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
                                     localizedText("呆瓜选择", "Klutz choice"),
@@ -3115,6 +3137,7 @@ internal fun CampBoardGameHostApp() {
                                         clocktowerKlutzReturnToDawn = false
                                         clocktowerPhase = ClocktowerPhase.Day
                                         clocktowerDayModeState.value = ClocktowerDayMode.Klutz
+                                        captureKlutzLearnedDeathOnPublicAnnouncement(executionName)
                                         executionOutcome = null
                                     } else if (executedCard.clocktowerTeam == ClocktowerTeam.Demon) {
                                         val promotedName = promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen = false)
@@ -3546,6 +3569,7 @@ internal fun CampBoardGameHostApp() {
                                 recordClocktowerPhaseAdvance(ClocktowerPhase.Day)
                                 clocktowerPhase = ClocktowerPhase.Day
                                 clocktowerDayModeState.value = ClocktowerDayMode.Klutz
+                                captureKlutzLearnedDeathOnPublicAnnouncement(nightKlutzName)
                             }
                             val nightOutcome =
                                 if (
