@@ -85,6 +85,6 @@ R1B test-first acceptance: typed GLOBAL_V1 intermixed action/observation orderin
 
 ## 7. Evidence status and branch governance
 
-This R1A change is docs-only. Source-code paths and existing tests above were inspected; no new Gradle/Android suite was executed for the audit. Prior CI #3837/#3839/#3841/#3843 and R2 #3512/#3513/#3514/#3515 are **historical accepted checkpoints**, not new test results for this document. GitHub PR #232 remains a historical *open Draft* from the superseded GSP-2B3B route; do not merge or use its state as an R1B prerequisite without explicit re-audit.
+This R1A change is docs-only. Source-code paths and existing tests above were inspected; no new Gradle/Android suite was executed for the audit. Prior CI #3837/#3839/#3841/#3843 and R2 #3512/#3513/#3514/#3515 are **historical accepted checkpoints**, not new test results for this document. GitHub PR #230 (superseded Recovery player-context slice) and PR #232 (superseded GSP-2B3B player-context editing) both remain *open Drafts*; neither should be merged or used as an R1B prerequisite without a separate re-audit.
 
 Required next sequence: **R1A documentation acceptance -> R1B bounded neutral materializer + focused tests -> R1C replay/Recovery/prefix-safety acceptance -> R2 player experience/claims/pressure -> R3 cross-game/diversity -> R4 structured prompt/response -> GSP-3A blinded provider evaluation**.
