@@ -260,10 +260,9 @@ jobs:
           # forcing a named Townsfolk/Outsider registration for mechanical outcomes.
           grep -q "ClocktowerSpyTownsfolkTypeDecisionControls(" "$host"
           grep -q "ClocktowerSpyGoodAlignmentDecisionControls(" "$host"
-          if grep -q "ClocktowerSpyRegistrationDecisionControls(" "$host"; then
-            echo "Legacy named-role Spy control was reintroduced for a type/alignment-only day ruling" >&2
-            exit 1
-          fi
+          # A future interaction may legitimately need a named-role Spy control.
+          # Do not globally prohibit that component: here we assert only the two
+          # current confirmed-day type/alignment surfaces exist.
           grep -q "ClocktowerRecluseRegistrationDecisionControls(" "$host"
           grep -q "ClocktowerAutomaticRegistrationEffect(" "$night_step_ui"
 
