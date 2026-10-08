@@ -2765,6 +2765,7 @@ internal fun ClocktowerJudgeScreen(
                                                 sourceSeat = actorSeat,
                                                 shownProposition = shown,
                                                 choices = ready.choices,
+                                                legalResultWitnesses = ready.legalResultWitnesses,
                                             ),
                                         )
                                     }
