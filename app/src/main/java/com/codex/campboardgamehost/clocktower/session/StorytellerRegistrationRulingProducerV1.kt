@@ -75,7 +75,11 @@ internal object StorytellerRegistrationRulingProducerV1 {
         val record = state.epistemicObservationLog.records.singleOrNull {
             it.recordId == input.observationRecordId
         } ?: error("A registration ruling requires the actual published observation.")
-        require(record.timelineBinding is ObservationTimelineBinding.Global)
+        val timeline = record.timelineBinding as? ObservationTimelineBinding.Global
+            ?: error("Only globally observed results may anchor a registration ruling.")
+        require(timeline.point.globalSequence == state.nextTimelineGlobalSequence - 1L) {
+            "A historical observation cannot be re-adjudicated using a later mutable game state."
+        }
         require(record.visibility == ObservationVisibility.PRIVATE)
         require(record.sourceSeat == input.sourceSeat)
         require(record.sourceAbility != null)
@@ -193,7 +197,7 @@ internal object StorytellerRegistrationRulingProducerV1 {
                 isFunctioning -> AbilityState.FUNCTIONING
                 source.poisoned -> AbilityState.MALFUNCTIONING_POISONED
                 source.actualRole.value == "Drunk" -> AbilityState.MALFUNCTIONING_DRUNK
-                else -> AbilityState.MALFUNCTIONING_POISONED
+                else -> error("Unverified cause of ability malfunction cannot be invented.")
             },
             truthRelation = if (registrations.isNotEmpty()) TruthRelation.TRUE_TO_REGISTERED_STATE
                 else TruthRelation.NOT_APPLICABLE,
@@ -231,6 +235,9 @@ internal object StorytellerRegistrationRulingProducerV1 {
             ?: error("Registration outcome must reference an already frozen typed observation.")
         require(observation.sourceSeat == sourceSeat && observation.visibility == ObservationVisibility.PRIVATE)
         require(observation.sourceAbility != null)
+        require(observation.point.globalSequence == frozen.exclusiveGlobalSequence - 1L) {
+            "Recovered registration cannot use a stale observation or a later state."
+        }
         require(subjectSeat in observation.proposition.referencedSeats()) {
             "Recovered registration subject was not part of the frozen observed semantic result."
         }
@@ -256,8 +263,16 @@ internal object StorytellerRegistrationRulingProducerV1 {
             RegistrationResolutionStatusV1.UNAVAILABLE_OR_UNRECORDED -> error("Unknown status is never committed.")
         }
         require(event.selectedCandidateId == expectedCandidate)
+        if (status != RegistrationResolutionStatusV1.NOT_APPLICABLE) {
+            require(observation.reliability == ObservationReliability.RECEIVED_AS_FUNCTIONING) {
+                "Malfunctioning information cannot prove a registration interpretation."
+            }
+        }
         if (status == RegistrationResolutionStatusV1.EXPLICIT_SPECIAL) {
             require(reason != null && expectedAlignment != null)
+            require((subject.poisoned as? SnapshotField.Known<Boolean>)?.value != true) {
+                "A poisoned subject cannot use a special registration ability."
+            }
             require(event.registrations.size == 1)
             val fact = event.registrations.single()
             require(fact.interactionId == interactionId && fact.subjectSeat == subjectSeat)
