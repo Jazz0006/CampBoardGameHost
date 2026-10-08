@@ -95,6 +95,16 @@ object EpistemicSemanticJson {
             "nominatorSeat" to value.nominatorSeat, "nomineeSeat" to value.nomineeSeat,
             "voterSeats" to value.voterSeats, "ghostVoterSeats" to value.ghostVoterSeats,
         )
+        is ActionFact.KlutzLearnedDeath -> mapOf(
+            "actionId" to value.actionId, "kind" to "klutz-learned-death", "sequence" to value.sequence,
+            "klutzSeat" to value.klutzSeat, "deathActionId" to value.deathActionId,
+            "functioningWhenLearned" to value.functioningWhenLearned,
+        )
+        is ActionFact.KlutzChoice -> mapOf(
+            "actionId" to value.actionId, "kind" to "klutz-choice", "sequence" to value.sequence,
+            "klutzSeat" to value.klutzSeat, "chosenSeat" to value.chosenSeat,
+            "learnedActionId" to value.learnedActionId,
+        )
         is ActionFact.RoleChange -> mapOf("actionId" to value.actionId, "alignment" to value.alignment.name, "kind" to "role-change", "role" to value.role.value, "sequence" to value.sequence, "targetSeat" to value.targetSeat, "type" to value.type.name)
         is ActionFact.PhaseAdvance -> mapOf("actionId" to value.actionId, "kind" to "phase-advance", "phase" to value.phase.name, "round" to value.round, "sequence" to value.sequence)
     }
@@ -293,6 +303,16 @@ object EpistemicSemanticJson {
             json.getInt("nominatorSeat"), json.getInt("nomineeSeat"),
             json.getJSONArray("voterSeats").let { a -> (0 until a.length()).map(a::getInt) },
             json.getJSONArray("ghostVoterSeats").let { a -> (0 until a.length()).map(a::getInt) },
+        )
+        "klutz-learned-death" -> ActionFact.KlutzLearnedDeath(
+            json.getString("actionId"), json.getLong("sequence"),
+            json.getInt("klutzSeat"), json.getString("deathActionId"),
+            json.getBoolean("functioningWhenLearned"),
+        )
+        "klutz-choice" -> ActionFact.KlutzChoice(
+            json.getString("actionId"), json.getLong("sequence"),
+            json.getInt("klutzSeat"), json.getInt("chosenSeat"),
+            json.getString("learnedActionId"),
         )
         "role-change" -> ActionFact.RoleChange(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"), RoleId(json.getString("role")), Alignment.valueOf(json.getString("alignment")), CharacterType.valueOf(json.getString("type")))
         "phase-advance" -> ActionFact.PhaseAdvance(json.getString("actionId"), json.getLong("sequence"), StorytellerPhase.valueOf(json.getString("phase")), json.getInt("round"))

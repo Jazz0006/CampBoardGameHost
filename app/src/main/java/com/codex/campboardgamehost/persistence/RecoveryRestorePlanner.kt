@@ -426,6 +426,19 @@ internal object RecoveryRestorePlanner {
                     fact.voterSeats.forEach { requireKnownSeat(it, playerCount) }
                     require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
                 }
+                is ActionFact.KlutzLearnedDeath -> {
+                    requireKnownSeat(fact.klutzSeat, playerCount)
+                    require(fact.deathActionId.isNotBlank() && fact.functioningWhenLearned)
+                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
+                    require(game.identity.script == ClocktowerScript.NoGreaterJoy)
+                }
+                is ActionFact.KlutzChoice -> {
+                    requireKnownSeat(fact.klutzSeat, playerCount)
+                    requireKnownSeat(fact.chosenSeat, playerCount)
+                    require(fact.klutzSeat != fact.chosenSeat && fact.learnedActionId.isNotBlank())
+                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
+                    require(game.identity.script == ClocktowerScript.NoGreaterJoy)
+                }
                 is ActionFact.RoleChange -> requireKnownSeat(fact.targetSeat, playerCount)
                 is ActionFact.PhaseAdvance -> require(fact.round in 1..game.round) {
                     "Phase-advance fact is outside the recovered game round."
@@ -436,11 +449,50 @@ internal object RecoveryRestorePlanner {
         // Newly typed player-action events must retain their actual causal order in Recovery.
         // This does not infer a Storyteller ruling from a shot, nomination or voting result.
         val orderedDayActions = history.actionTimeline.entries.sortedBy { it.point.globalSequence }
+        val klutzLearnedSeats = mutableSetOf<Int>()
+        val klutzChosenSeats = mutableSetOf<Int>()
+        val klutzLearnedActions = mutableMapOf<String, com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact>()
         val consumedSlayerSeats = mutableSetOf<Int>()
         val firstVirginNominees = mutableSetOf<Int>()
         val unvotedNominations = mutableListOf<com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact>()
         orderedDayActions.forEach { entry ->
             when (val fact = entry.fact) {
+                is ActionFact.KlutzLearnedDeath -> {
+                    require(klutzLearnedSeats.add(fact.klutzSeat)) {
+                        "One Klutz cannot have two learned-death actions."
+                    }
+                    val predecessor = orderedDayActions.firstOrNull { earlier ->
+                        earlier.point.globalSequence < entry.point.globalSequence &&
+                            earlier.fact.actionId == fact.deathActionId &&
+                            when (val death = earlier.fact) {
+                                is ActionFact.Death -> death.targetSeat == fact.klutzSeat &&
+                                    death.klutzDeathTrigger?.actualRole?.value == "Klutz"
+                                is ActionFact.Execution -> death.targetSeat == fact.klutzSeat &&
+                                    death.klutzDeathTrigger?.actualRole?.value == "Klutz"
+                                else -> false
+                            }
+                    }
+                    require(predecessor != null) {
+                        "Klutz learned-death requires an earlier canonical real Klutz death."
+                    }
+                    require(game.cards[fact.klutzSeat - 1].clocktowerRole?.enName == "Klutz")
+                    klutzLearnedActions[fact.actionId] = entry
+                }
+                is ActionFact.KlutzChoice -> {
+                    require(klutzChosenSeats.add(fact.klutzSeat)) {
+                        "Klutz player choice cannot be committed twice."
+                    }
+                    val learn = requireNotNull(klutzLearnedActions[fact.learnedActionId]) {
+                        "Klutz choice requires prior known learned-of-death action."
+                    }
+                    require(learn.point.globalSequence < entry.point.globalSequence)
+                    require((learn.fact as ActionFact.KlutzLearnedDeath).klutzSeat == fact.klutzSeat)
+                    require(orderedDayActions.none { prior ->
+                        prior.point.globalSequence < entry.point.globalSequence &&
+                            ((prior.fact as? ActionFact.Death)?.targetSeat == fact.chosenSeat ||
+                                (prior.fact as? ActionFact.Execution)?.targetSeat == fact.chosenSeat)
+                    }) { "Klutz must select a living player at choice time." }
+                }
                 is ActionFact.SlayerShot -> {
                     if (fact.abilityConsumed) {
                         require(consumedSlayerSeats.add(fact.claimantSeat)) {

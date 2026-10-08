@@ -129,6 +129,18 @@ internal object ClocktowerSemanticHistoryPersistence {
                 put("voterSeats", JSONArray(fact.voterSeats))
                 put("ghostVoterSeats", JSONArray(fact.ghostVoterSeats))
             }
+            is ActionFact.KlutzLearnedDeath -> {
+                put("kind", "klutz-learned-death")
+                put("klutzSeat", fact.klutzSeat)
+                put("deathActionId", fact.deathActionId)
+                put("functioningWhenLearned", fact.functioningWhenLearned)
+            }
+            is ActionFact.KlutzChoice -> {
+                put("kind", "klutz-choice")
+                put("klutzSeat", fact.klutzSeat)
+                put("chosenSeat", fact.chosenSeat)
+                put("learnedActionId", fact.learnedActionId)
+            }
             is ActionFact.RoleChange -> {
                 put("kind", "role-change")
                 put("targetSeat", fact.targetSeat)
@@ -181,6 +193,16 @@ internal object ClocktowerSemanticHistoryPersistence {
                 require(it.nominatorSeat != it.nomineeSeat)
                 require(it.ghostVoterSeats.all { seat -> seat in it.voterSeats })
             }
+            "klutz-learned-death" -> ActionFact.KlutzLearnedDeath(
+                actionId, sequence, positiveSeat(json, "klutzSeat"),
+                stringValue(json, "deathActionId").also { require(it.isNotBlank()) },
+                booleanValue(json, "functioningWhenLearned"),
+            )
+            "klutz-choice" -> ActionFact.KlutzChoice(
+                actionId, sequence, positiveSeat(json, "klutzSeat"),
+                positiveSeat(json, "chosenSeat"),
+                stringValue(json, "learnedActionId").also { require(it.isNotBlank()) },
+            ).also { require(it.klutzSeat != it.chosenSeat) }
             "role-change" -> ActionFact.RoleChange(
                 actionId = actionId,
                 sequence = sequence,

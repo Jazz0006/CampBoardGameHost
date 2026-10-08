@@ -143,6 +143,40 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class KlutzLearnedDeath(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val klutzSeat: Int,
+        val deathActionId: String,
+        val functioningWhenLearned: Boolean,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(klutzSeat)
+            require(deathActionId.isNotBlank())
+        }
+    }
+
+    data class KlutzChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val klutzSeat: Int,
+        val chosenSeat: Int,
+        val learnedActionId: String,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(klutzSeat)
+            requireSeat(chosenSeat)
+            require(klutzSeat != chosenSeat)
+            require(learnedActionId.isNotBlank())
+        }
+    }
+
     data class RoleChange(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -216,6 +250,12 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     )
     is ActionFactDraft.Vote -> ActionFact.Vote(
         actionId, globalSequence, nominatorSeat, nomineeSeat, voterSeats.toList(), ghostVoterSeats.toList(),
+    )
+    is ActionFactDraft.KlutzLearnedDeath -> ActionFact.KlutzLearnedDeath(
+        actionId, globalSequence, klutzSeat, deathActionId, functioningWhenLearned,
+    )
+    is ActionFactDraft.KlutzChoice -> ActionFact.KlutzChoice(
+        actionId, globalSequence, klutzSeat, chosenSeat, learnedActionId,
     )
     is ActionFactDraft.RoleChange -> ActionFact.RoleChange(
         actionId = actionId,
