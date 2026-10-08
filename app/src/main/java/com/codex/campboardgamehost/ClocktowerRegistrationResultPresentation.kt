@@ -5,7 +5,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 
-/** Projects already-legal registration rulings into final player-visible results. */
+/** Projects hypothetical legal registration witnesses into selectable player-visible results. */
 internal object ClocktowerRegistrationResultPresentation {
     fun numericOptions(
         title: String,
