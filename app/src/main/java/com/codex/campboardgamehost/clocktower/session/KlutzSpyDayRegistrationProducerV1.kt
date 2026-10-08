@@ -25,9 +25,12 @@ internal data class ConfirmedDayKlutzSpyRegistrationV1(
 internal data class KlutzDeathTriggerProvenanceV1(
     val deathActionId: String,
     val deathSequence: Long,
-    val lastPoisonActionId: String,
-    val lastPoisonSequence: Long,
-)
+    val lastPoisonActionId: String? = null,
+    val lastPoisonSequence: Long? = null,
+    val deathTriggerRevision: Long? = null,
+) {
+    val isVerifiedDeathSnapshot: Boolean get() = deathTriggerRevision != null
+}
 
 /** Pure proof shared by live writer and strict historical Recovery validation. */
 internal object KlutzDeathTriggerProvenanceResolverV1 {
@@ -43,6 +46,25 @@ internal object KlutzDeathTriggerProvenanceResolverV1 {
                 else -> false
             }
         } ?: return null
+        // New canonical death facts have their actual predeath condition stamped by
+        // ClocktowerGameSession. Never override a known poisoned-at-death value using
+        // an older poison target that may be stale or incomplete.
+        val predeath = when (death) {
+            is ActionFact.Death -> death.klutzDeathTrigger
+            is ActionFact.Execution -> death.klutzDeathTrigger
+            else -> null
+        }
+        if (predeath != null) {
+            if (!predeath.functioningAtDeath || !predeath.wasAlive ||
+                predeath.actualRole != RoleId("Klutz")) return null
+            return KlutzDeathTriggerProvenanceV1(
+                deathActionId = death.actionId,
+                deathSequence = death.sequence,
+                deathTriggerRevision = predeath.sourceGameStateRevision,
+            )
+        }
+        // Historical 1C3A format with no predeath snapshot: retain its narrower
+        // positively proven prior-poison contract; absence remains UNKNOWN.
         val poison = ordered.lastOrNull {
             it is ActionFact.Poison && it.sequence < death.sequence
         } as? ActionFact.Poison ?: return null
@@ -80,7 +102,7 @@ internal object KlutzSpyDayRegistrationProducerV1 {
         val death = requireNotNull(KlutzDeathTriggerProvenanceResolverV1.verified(
             state.actionTimeline.reducerFacts(), klutz.seat,
         )) {
-            "Cannot infer Klutz death-time ability state without an actual death and prior known poison chronology."
+            "Klutz death-time ability state must be captured at death or positively proven by legacy poison chronology."
         }
         require(TroubleBrewingRegistrationDomain.resolve(
             TroubleBrewingRegistrationSubject.from(spy), legalRoles,
@@ -150,8 +172,10 @@ internal object KlutzSpyDayRegistrationProducerV1 {
                 "evilWins" to (!input.spyRegistersGood).toString(),
                 "deathActionId" to death.deathActionId,
                 "deathSequence" to death.deathSequence.toString(),
-                "lastPoisonActionId" to death.lastPoisonActionId,
-                "lastPoisonSequence" to death.lastPoisonSequence.toString(),
+                "lastPoisonActionId" to (death.lastPoisonActionId ?: ""),
+                "lastPoisonSequence" to (death.lastPoisonSequence?.toString() ?: ""),
+                "deathEvidenceKind" to (if (death.isVerifiedDeathSnapshot) "SESSION_TRIGGER" else "LEGACY_POISON"),
+                "deathTriggerRevision" to (death.deathTriggerRevision?.toString() ?: ""),
             )),
             abilityState = AbilityState.FUNCTIONING,
             truthRelation = if (registration.isEmpty()) TruthRelation.NOT_APPLICABLE
@@ -169,11 +193,13 @@ internal object KlutzSpyDayRegistrationProducerV1 {
         val type = StorytellerProviderDecisionContextV1.DAY_ABILITY_REGISTRATION
         require(frozen.identity.decisionTypeId == type && event.selectedOutcome.decisionType == type)
         val f = event.selectedOutcome.canonicalFields
-        require(f.keys == setOf(
+        val priorKeys = setOf(
             "interactionId", "abilityRole", "actorSeat", "subjectSeat", "question",
             "status", "registeredAlignment", "evilWins",
             "deathActionId", "deathSequence", "lastPoisonActionId", "lastPoisonSequence",
-        ))
+        )
+        require(f.keys == priorKeys || f.keys == priorKeys +
+            setOf("deathEvidenceKind", "deathTriggerRevision"))
         require(f.getValue("interactionId").isNotBlank())
         require(f.getValue("abilityRole") == "Klutz")
         require(f.getValue("question") == RegistrationQuestion.ALIGNMENT.name)
@@ -197,8 +223,18 @@ internal object KlutzSpyDayRegistrationProducerV1 {
         }
         require(f.getValue("deathActionId") == death.deathActionId)
         require(f.getValue("deathSequence").toLong() == death.deathSequence)
-        require(f.getValue("lastPoisonActionId") == death.lastPoisonActionId)
-        require(f.getValue("lastPoisonSequence").toLong() == death.lastPoisonSequence)
+        if ("deathEvidenceKind" in f) {
+            require(f.getValue("deathEvidenceKind") ==
+                if (death.isVerifiedDeathSnapshot) "SESSION_TRIGGER" else "LEGACY_POISON")
+            require(f.getValue("deathTriggerRevision") == (death.deathTriggerRevision?.toString() ?: ""))
+            require(f.getValue("lastPoisonActionId") == (death.lastPoisonActionId ?: ""))
+            require(f.getValue("lastPoisonSequence") == (death.lastPoisonSequence?.toString() ?: ""))
+        } else {
+            // Validated 1C3A decision archives retain their original exact schema.
+            require(!death.isVerifiedDeathSnapshot)
+            require(f.getValue("lastPoisonActionId") == death.lastPoisonActionId)
+            require(f.getValue("lastPoisonSequence").toLong() == death.lastPoisonSequence)
+        }
         val status = RegistrationResolutionStatusV1.valueOf(f.getValue("status"))
         require(status == RegistrationResolutionStatusV1.EXPLICIT_ACTUAL ||
             status == RegistrationResolutionStatusV1.EXPLICIT_SPECIAL)
