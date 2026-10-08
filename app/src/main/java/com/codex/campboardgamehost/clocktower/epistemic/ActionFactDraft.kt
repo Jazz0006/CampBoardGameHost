@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.domain.KlutzDeathTriggerEvidenceV1
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -63,6 +64,7 @@ sealed interface ActionFactDraft {
         override val round: Int,
         override val sequence: Int,
         val targetSeat: Int,
+        val klutzDeathTrigger: KlutzDeathTriggerEvidenceV1? = null,
     ) : ActionFactDraft {
         init {
             requireIdentity(actionId, round, sequence)
@@ -76,6 +78,7 @@ sealed interface ActionFactDraft {
         override val round: Int,
         override val sequence: Int,
         val targetSeat: Int,
+        val klutzDeathTrigger: KlutzDeathTriggerEvidenceV1? = null,
     ) : ActionFactDraft {
         init {
             requireIdentity(actionId, round, sequence)
@@ -146,8 +149,8 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     is ActionFactDraft.Poison -> ActionFact.Poison(actionId, globalSequence, targetSeat)
     is ActionFactDraft.Protect -> ActionFact.Protect(actionId, globalSequence, targetSeat)
     is ActionFactDraft.Attack -> ActionFact.Attack(actionId, globalSequence, targetSeat)
-    is ActionFactDraft.Execution -> ActionFact.Execution(actionId, globalSequence, targetSeat)
-    is ActionFactDraft.Death -> ActionFact.Death(actionId, globalSequence, targetSeat)
+    is ActionFactDraft.Execution -> ActionFact.Execution(actionId, globalSequence, targetSeat, klutzDeathTrigger)
+    is ActionFactDraft.Death -> ActionFact.Death(actionId, globalSequence, targetSeat, klutzDeathTrigger)
     is ActionFactDraft.RoleChange -> ActionFact.RoleChange(
         actionId = actionId,
         sequence = globalSequence,
