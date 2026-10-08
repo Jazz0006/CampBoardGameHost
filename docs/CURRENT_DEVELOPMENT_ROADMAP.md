@@ -66,7 +66,8 @@ RES-5 physical module/dependency boundary                     COMPLETE / ACCEPTE
 GSP-R0 post-RES-5 re-entry audit                              COMPLETE / DOCS — current authority: GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md
 GSP-R1A canonical capture/prefix coverage audit                CODE AUDIT COMPLETE — docs/GSP_R1A_CANONICAL_HISTORY_CAPTURE_PREFIX_COVERAGE_AUDIT_2026-10-08.md; no Android behavior change
 GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEPTED — PR #250, CI #3849 / R2 #3518 GREEN (Android FAST + Clingo); GLOBAL_V1 live only
-GSP-R1C fresh/recovered replay + prefix safety                 NEXT — same frozen logical cutoff across Recovery, historical cutoff/decision correction gates, Spy/Recluse ambiguity tests
+GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
+GSP-R1C2 frozen decision cutoff + correction causality          NEXT — authoritative pre-decision capture, durable causal as-of replay; R1C overall IN PROGRESS
 ~~~
 
 ### GSP-R1A capture gate — 2026-10-08
@@ -76,6 +77,10 @@ The code-level R1A inventory confirms canonical Global actions and some typed pl
 ### GSP-R1B accepted — 2026-10-08
 
 [Accepted R1B executable closure](GSP_R1B_NEUTRAL_LIVE_HISTORY_PREFIX_ACCEPTANCE_2026-10-08.md): PR #250 squash `8e788db2f6ad0be1f3c8b1c844306d6210e66cd7`, CI #3849 / R2 #3518 GREEN, Android **FAST** and Real Clingo passed; full Android/T4 was not run. The Host's neutral provider context can carry an immutable, globally ordered current-game Action/Observation prefix bounded by the captured exclusive cursor and session revisions. Mechanical/private/public producer coverage remains PARTIAL; registration and prior-decision causal capture UNKNOWN. LegacyLocal chronology is explicitly unavailable, and no historical replay or production LLM provider was introduced. **GSP-R1C is next**, with real Recovery/frozen-prefix equality and missing-coverage/ambiguity gates. The result-first registration ambiguity authority remains a separate producer/UI follow-up.
+
+### GSP-R1C1 acceptance — 2026-10-08
+
+[Accepted R1C1 code/recovery parity report](GSP_R1C1_RECOVERY_PREFIX_PARITY_AND_HISTORICAL_CUTOFF_ACCEPTANCE_2026-10-08.md): PR #252, squash `fae562f0e52d2d8650b28b6b11964e64a41a3766`, CI #3853/R2 #3520 GREEN. Real Recovery encode/decodeStrict/restore planning plus `ClocktowerGameSession.restoreProduction` now has a passing same-cutoff neutral Provider history-prefix equivalence fixture across FirstNight/Day/OtherNight. An unfrozen historical decision request explicitly returns `HISTORICAL_CUTOFF_UNAVAILABLE` rather than using current state/revisions. A Spy/Recluse-adjacent Empath=1 test verifies the recorded result does not become a fabricated registration fact. **Not complete:** durable at-decision frozen cutoffs, decision/correction as-of history, full typed registration UI/producer, complete private/public coverage and Android full T4. R1C overall remains **IN PROGRESS**; R1C2 is next.
 
 ### GSP-R1B / R1C — ambiguous registration semantics (2026-10-08)
 
