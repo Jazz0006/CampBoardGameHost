@@ -68,7 +68,8 @@ GSP-R1A canonical capture/prefix coverage audit                CODE AUDIT COMPLE
 GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEPTED — PR #250, CI #3849 / R2 #3518 GREEN (Android FAST + Clingo); GLOBAL_V1 live only
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
-GSP-R1C2B durable producer + Recovery causality                NEXT — real Host producer, typed save/replay, correction as-of; R1C overall IN PROGRESS
+GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
+GSP-R1C2C remaining producers + registration ruling history    NEXT — broader typed producer capture and semantic Recovery; R1C overall IN PROGRESS
 ~~~
 
 ### GSP-R1A capture gate — 2026-10-08
@@ -78,6 +79,10 @@ The code-level R1A inventory confirms canonical Global actions and some typed pl
 ### GSP-R1B accepted — 2026-10-08
 
 [Accepted R1B executable closure](GSP_R1B_NEUTRAL_LIVE_HISTORY_PREFIX_ACCEPTANCE_2026-10-08.md): PR #250 squash `8e788db2f6ad0be1f3c8b1c844306d6210e66cd7`, CI #3849 / R2 #3518 GREEN, Android **FAST** and Real Clingo passed; full Android/T4 was not run. The Host's neutral provider context can carry an immutable, globally ordered current-game Action/Observation prefix bounded by the captured exclusive cursor and session revisions. Mechanical/private/public producer coverage remains PARTIAL; registration and prior-decision causal capture UNKNOWN. LegacyLocal chronology is explicitly unavailable, and no historical replay or production LLM provider was introduced. **GSP-R1C is next**, with real Recovery/frozen-prefix equality and missing-coverage/ambiguity gates. The result-first registration ambiguity authority remains a separate producer/UI follow-up.
+
+### GSP-R1C2B accepted Mayor vertical — 2026-10-08
+
+[Accepted real production/Recovery causal replay](GSP_R1C2B_MAYOR_DURABLE_CAUSAL_RECOVERY_ACCEPTANCE_2026-10-08.md): PR #258 squash `7d6255922e8db33b7ce297958d6ee467c339a9f4`, CI #3874 **T4 GREEN** (Android FULL + debug APK, ASP, Real Clingo), R2 #3535 GREEN. Trouble Brewing Mayor target confirmation now captures the exact predecision GLOBAL_V1 prefix, persists the typed selected outcome, records later re-confirmation as a causal correction, and survives real Recovery JSON/strict decode/planner with as-of equality. Missing legacy sidecar remains explicitly unrecorded, not complete empty history. **Only Mayor producer is live.** Drunk, pair/numeric/FT/role and other discretionary decisions plus typed explicit Spy/Recluse registration capture are still incomplete; next **GSP-R1C2C** covers systematic remaining producer adoption. No LLM API or heuristic authority.
 
 ### GSP-R1C2A accepted — 2026-10-08
 
