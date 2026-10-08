@@ -411,15 +411,20 @@ internal object RecoveryRestorePlanner {
                     requireKnownSeat(fact.targetSeat, playerCount)
                     require(!fact.hit || fact.abilityConsumed)
                     require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
+                    require(game.identity.script == ClocktowerScript.TroubleBrewing) {
+                        "No Greater Joy has no Slayer ability and cannot carry a canonical SlayerShot."
+                    }
                 }
                 is ActionFact.Nomination -> {
                     requireKnownSeat(fact.nominatorSeat, playerCount)
                     requireKnownSeat(fact.nomineeSeat, playerCount)
                     require(fact.nominatorSeat != fact.nomineeSeat)
                     require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
-                    require(!fact.firstVirginNomination ||
-                        game.identity.script == ClocktowerScript.TroubleBrewing) {
-                        "A No Greater Joy nomination cannot consume Trouble Brewing Virgin ability."
+                    if (fact.firstVirginNomination) {
+                        require(game.identity.script == ClocktowerScript.TroubleBrewing &&
+                            game.cards[fact.nomineeSeat - 1].clocktowerRole?.enName == "Virgin") {
+                            "First Virgin nomination requires an actual Virgin in Trouble Brewing."
+                        }
                     }
                 }
                 is ActionFact.Vote -> {
