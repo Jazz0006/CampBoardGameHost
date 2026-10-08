@@ -125,15 +125,19 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                 TimelinePoint(StorytellerPhase.DAY, 1, 2, 1L),
             ),
             TimelineBoundActionFact(
-                ActionFact.Death(
-                    "real-death", 2L, 1,
-                    KlutzDeathTriggerEvidenceV1(RoleId("Klutz"), true, false, 0L),
-                ),
-                TimelinePoint(StorytellerPhase.DAWN, 2, 1, 2L),
+                ActionFact.NoExecution("ngj-confirmed-no-execution", 2L),
+                TimelinePoint(StorytellerPhase.DAY, 1, 3, 2L),
             ),
             TimelineBoundActionFact(
-                ActionFact.KlutzLearnedDeath("real-learn", 3L, 1, "real-death", true),
-                TimelinePoint(StorytellerPhase.DAY, 2, 2, 3L),
+                ActionFact.Death(
+                    "real-death", 3L, 1,
+                    KlutzDeathTriggerEvidenceV1(RoleId("Klutz"), true, false, 0L),
+                ),
+                TimelinePoint(StorytellerPhase.DAWN, 2, 1, 3L),
+            ),
+            TimelineBoundActionFact(
+                ActionFact.KlutzLearnedDeath("real-learn", 4L, 1, "real-death", true),
+                TimelinePoint(StorytellerPhase.DAY, 2, 2, 4L),
             ),
         ))
         val saved = RecoverySnapshot(
@@ -179,10 +183,10 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                     highestVoteCount = 0,
                 ),
                 history = ClocktowerRecoveryHistory(
-                    gameStateRevision = 4L,
+                    gameStateRevision = 5L,
                     playerInputRevision = 0L,
                     actionTimeline = learnedHistory,
-                    nextTimelineGlobalSequence = 4L,
+                    nextTimelineGlobalSequence = 5L,
                     events = emptyList(),
                     epistemicObservations = emptyList(),
                 ),
@@ -211,7 +215,8 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
         )
         assertTrue(publicEvents[0] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicNomination)
         assertTrue(publicEvents[1] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicVote)
-        assertTrue(publicEvents[2] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicDeath)
+        assertTrue(publicEvents[2] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicNoExecution)
+        assertTrue(publicEvents[3] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicDeath)
         assertTrue(publicEvents.none {
             it is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicKlutzChoice
         }) // Choice has not been publicly confirmed at the pending recovery point.
@@ -224,13 +229,13 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
         })
 
         val forgedChoice = TimelineBoundActionFact(
-            ActionFact.KlutzChoice("forged-choice", 4L, 1, 2, "no-such-learn"),
-            TimelinePoint(StorytellerPhase.DAY, 2, 3, 4L),
+            ActionFact.KlutzChoice("forged-choice", 5L, 1, 2, "no-such-learn"),
+            TimelinePoint(StorytellerPhase.DAY, 2, 3, 5L),
         )
         val bad = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
             history = saved.game.history.copy(
                 actionTimeline = ActionFactTimeline(learnedHistory.entries + forgedChoice),
-                nextTimelineGlobalSequence = 5L,
+                nextTimelineGlobalSequence = 6L,
             ),
         ))
         val rejected = RecoveryRestorePlanner.prepare(
@@ -281,11 +286,11 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
         val fakeSlayer = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
             history = saved.game.history.copy(
                 actionTimeline = ActionFactTimeline(learnedHistory.entries + TimelineBoundActionFact(
-                    ActionFact.SlayerShot("ngj-impossible-slayer", 4L, 3, 2,
+                    ActionFact.SlayerShot("ngj-impossible-slayer", 5L, 3, 2,
                         abilityConsumed = false, hit = false),
-                    TimelinePoint(StorytellerPhase.DAY, 2, 3, 4L),
+                    TimelinePoint(StorytellerPhase.DAY, 2, 3, 5L),
                 )),
-                nextTimelineGlobalSequence = 5L,
+                nextTimelineGlobalSequence = 6L,
             ),
         ))
         assertTrue(RecoveryRestorePlanner.prepare(
