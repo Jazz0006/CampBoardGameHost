@@ -1974,8 +1974,8 @@ internal fun ClocktowerJudgeScreen(
             (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || virginSpyRegistersGood)
         val specialNotice = when {
             virginExecutes -> text(
-                "${playerSeatLabel(cards, nomineeName)} 首次被真实镇民提名：不进行投票，提名者将立即被处决。",
-                "${playerSeatLabel(cards, nomineeName)} was first nominated by a Townsfolk: skip voting and execute the nominator.",
+                "${playerSeatLabel(cards, nomineeName)} 首次被登记为镇民的玩家提名：不进行投票，提名者将立即被处决。",
+                "${playerSeatLabel(cards, nomineeName)} was first nominated by a player registering as Townsfolk: skip voting and execute the nominator.",
             )
             virginFirstNomination -> text(
                 "这是圣女第一次被提名，但能力不会处决提名者；记录能力已用过后继续投票。",
