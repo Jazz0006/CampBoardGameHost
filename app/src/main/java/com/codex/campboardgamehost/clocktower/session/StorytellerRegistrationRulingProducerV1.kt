@@ -7,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
 import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
+import com.codex.campboardgamehost.clocktower.domain.RegistrationResolutionStatusV1
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
