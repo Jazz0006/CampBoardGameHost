@@ -51,7 +51,7 @@ internal data class ConfirmedRegistrationResolutionInputV1(
 ) {
     init {
         require(interactionId.isNotBlank() && observationRecordId.isNotBlank())
-        require(sourceSeat > 0 && subjectSeat > 0)
+        require(sourceSeat > 0 && subjectSeat > 0 && sourceSeat != subjectSeat)
         require(status != RegistrationResolutionStatusV1.UNAVAILABLE_OR_UNRECORDED)
         require(status == RegistrationResolutionStatusV1.EXPLICIT_SPECIAL || selectedRoleId == null)
     }
