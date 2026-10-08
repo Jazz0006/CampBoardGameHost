@@ -837,6 +837,9 @@ internal fun CampBoardGameHostApp() {
                 .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry,
         )
         val legalRoles = clocktowerRoleDefinitionsForScript(currentClocktowerScript)
+        require(publication.isRulesConsistent(session.state.gameState, legalRoles)) {
+            "The confirmed registration must match the rules-owned subjects and one complete legal result witness."
+        }
         val journal = currentClocktowerCausalJournal()
         publication.choices.forEach { choice ->
             // An explicit determination can be corrected later; original frozen captures stay
