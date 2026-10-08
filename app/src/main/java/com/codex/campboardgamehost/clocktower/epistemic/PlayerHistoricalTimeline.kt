@@ -24,6 +24,12 @@ internal sealed interface PlayerHistoricalEvent {
         override val point: TimelinePoint,
     ) : PlayerHistoricalEvent
 
+    /** Publicly confirmed day outcome, even if no one was executed. */
+    data class PublicNoExecution(
+        val actionId: String,
+        override val point: TimelinePoint,
+    ) : PlayerHistoricalEvent
+
     /** Visible action identities omit concealed actual-role/ability-functioning metadata. */
     data class PublicSlayerShot(
         val actionId: String,
@@ -95,6 +101,9 @@ internal object PlayerHistoricalTimeline {
                     targetSeat = fact.targetSeat,
                     point = entry.point,
                 )
+                is ActionFact.NoExecution -> PlayerHistoricalEvent.PublicNoExecution(
+                    fact.actionId, entry.point,
+                )
                 is ActionFact.SlayerShot -> PlayerHistoricalEvent.PublicSlayerShot(
                     fact.actionId, fact.claimantSeat, fact.targetSeat, entry.point,
                 )
@@ -141,6 +150,7 @@ internal object PlayerHistoricalTimeline {
     private fun stableTieBreaker(event: PlayerHistoricalEvent): String = when (event) {
         is PlayerHistoricalEvent.PublicExecution -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicDeath -> "action:${event.actionId}"
+        is PlayerHistoricalEvent.PublicNoExecution -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicSlayerShot -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicNomination -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicVote -> "action:${event.actionId}"

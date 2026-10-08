@@ -215,6 +215,7 @@ internal fun ActionFact.b4CanonicalPayload(): String = when (this) {
         (klutzDeathTrigger?.let { ":${it.b4DeathProof()}" } ?: "")
     is ActionFact.Death -> "death:$actionId:$sequence:$targetSeat" +
         (klutzDeathTrigger?.let { ":${it.b4DeathProof()}" } ?: "")
+    is ActionFact.NoExecution -> "no-execution:$actionId:$sequence"
     is ActionFact.SlayerShot -> "slayer-shot:$actionId:$sequence:$claimantSeat:$targetSeat:$abilityConsumed:$hit"
     is ActionFact.Nomination -> "nomination:$actionId:$sequence:$nominatorSeat:$nomineeSeat:$firstVirginNomination"
     is ActionFact.Vote -> "vote:$actionId:$sequence:$nominatorSeat:$nomineeSeat:" +

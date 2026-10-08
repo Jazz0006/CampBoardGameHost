@@ -76,6 +76,28 @@ class ClocktowerTypedDayActionHistoryTest {
         assertEquals(listOf(0L, 1L, 2L), public.map { it.point.globalSequence })
     }
 
+    @Test fun `explicit no execution is canonical and publicly visible not an inferred missing death`() {
+        val actions = listOf(
+            ActionFact.Nomination("nominee", 0L, 2, 3, firstVirginNomination = false),
+            ActionFact.Vote("voting", 1L, 2, 3, listOf(1, 2, 4), emptyList()),
+            ActionFact.NoExecution("confirmed-nobody", 2L),
+        )
+        val timeline = ActionFactTimeline(actions.mapIndexed { index, fact ->
+            entry(fact, index + 1)
+        })
+        val restored = roundTrip(timeline)
+        assertEquals(timeline, restored)
+        val public = com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
+            recipientSeat = 5,
+            actionTimeline = restored,
+            observationLog = com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog(),
+        )
+        assertEquals(3, public.size)
+        assertTrue(public.last() is
+            com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicNoExecution)
+        assertTrue(restored.entries.none { it.fact is ActionFact.Execution })
+    }
+
     @Test fun `typed action fields cannot be silently omitted from current format`() {
         val timeline = ActionFactTimeline(listOf(
             entry(ActionFact.Nomination("nomination", 0L, 1, 2, firstVirginNomination = true), 1),

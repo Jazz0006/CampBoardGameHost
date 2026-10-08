@@ -58,6 +58,15 @@ sealed interface ActionFact {
         val klutzDeathTrigger: KlutzDeathTriggerEvidenceV1? = null,
     ) : ActionFact
 
+    /**
+     * The public day was explicitly resolved with no execution. Absent actions in
+     * older histories are UNKNOWN, never evidence that no execution occurred.
+     */
+    data class NoExecution(
+        override val actionId: String,
+        override val sequence: Long,
+    ) : ActionFact
+
     /** Confirmed public player attempt, not a Storyteller decision or a claim that a hit occurred. */
     data class SlayerShot(
         override val actionId: String,
@@ -177,6 +186,7 @@ object DynamicActionReducer {
                 }
                 is ActionFact.Execution -> updatePlayer(fact.targetSeat) { it.copy(alive = false, poisoned = false) }
                 is ActionFact.Death -> updatePlayer(fact.targetSeat) { it.copy(alive = false, poisoned = false) }
+                is ActionFact.NoExecution -> Unit
                 is ActionFact.SlayerShot -> {
                     requireSeat(fact.claimantSeat)
                     requireSeat(fact.targetSeat)

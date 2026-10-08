@@ -80,6 +80,7 @@ object EpistemicSemanticJson {
         is ActionFact.Attack -> mapOf("actionId" to value.actionId, "kind" to "attack", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
         is ActionFact.Execution -> mapOf("actionId" to value.actionId, "kind" to "execution", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
         is ActionFact.Death -> mapOf("actionId" to value.actionId, "kind" to "death", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
+        is ActionFact.NoExecution -> mapOf("actionId" to value.actionId, "kind" to "no-execution", "sequence" to value.sequence)
         is ActionFact.SlayerShot -> mapOf(
             "actionId" to value.actionId, "kind" to "slayer-shot", "sequence" to value.sequence,
             "claimantSeat" to value.claimantSeat, "targetSeat" to value.targetSeat,
@@ -288,6 +289,7 @@ object EpistemicSemanticJson {
         "attack" -> ActionFact.Attack(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
         "execution" -> ActionFact.Execution(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
         "death" -> ActionFact.Death(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
+        "no-execution" -> ActionFact.NoExecution(json.getString("actionId"), json.getLong("sequence"))
         "slayer-shot" -> ActionFact.SlayerShot(
             json.getString("actionId"), json.getLong("sequence"),
             json.getInt("claimantSeat"), json.getInt("targetSeat"),

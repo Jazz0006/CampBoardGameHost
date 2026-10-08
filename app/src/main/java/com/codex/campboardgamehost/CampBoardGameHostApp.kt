@@ -2879,15 +2879,19 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onConfirmedNomination = { nominatorName, nomineeName ->
-                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
-                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+                            if (currentClocktowerScript in setOf(
+                                    ClocktowerScript.TroubleBrewing, ClocktowerScript.NoGreaterJoy,
+                                ) && clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
                             ) {
+                                // Public nomination belongs to both supported scripts. The hidden
+                                // first-Virgin marker is only meaningful in real Trouble Brewing.
                                 val nominatedCard = cards.firstOrNull { it.name == nomineeName }
                                 val firstVirginNomination = nominatedCard?.let {
                                     AbilityFunctioningSemantics.interactsAs(
                                         it.abilitySubject(clocktowerConfirmedPoisonTarget), "Virgin",
                                     )
-                                } == true && !clocktowerVirginUsed
+                                } == true && !clocktowerVirginUsed &&
+                                    currentClocktowerScript == ClocktowerScript.TroubleBrewing
                                 recordClocktowerAction(ActionFactDraft.Nomination(
                                     actionId = clocktowerActionId("nomination", targetSeat = clocktowerSeatFor(nomineeName)),
                                     phase = storytellerPhaseFor(),
@@ -2900,8 +2904,9 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onConfirmedVote = { nominatorName, nomineeName, voteRecord ->
-                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
-                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+                            if (currentClocktowerScript in setOf(
+                                    ClocktowerScript.TroubleBrewing, ClocktowerScript.NoGreaterJoy,
+                                ) && clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
                             ) {
                                 val voterSeats = voteRecord.voters.map { clocktowerSeatFor(it.playerName) }
                                 recordClocktowerAction(ActionFactDraft.Vote(
@@ -3155,6 +3160,21 @@ internal fun CampBoardGameHostApp() {
                                 }
                             } else {
                                 clocktowerLastExecutedName = null
+                                if (clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1 &&
+                                    currentClocktowerScript in setOf(
+                                        ClocktowerScript.TroubleBrewing, ClocktowerScript.NoGreaterJoy,
+                                    )
+                                ) {
+                                    // A confirmed no-execution is positive public chronology,
+                                    // NOT absence of a death fact and NOT a Storyteller recommendation.
+                                    // Commit before possible Mayor win and day/phase changes.
+                                    recordClocktowerAction(ActionFactDraft.NoExecution(
+                                        actionId = clocktowerActionId("no-execution"),
+                                        phase = storytellerPhaseFor(),
+                                        round = round,
+                                        sequence = clocktowerEventCounter + 1,
+                                    ))
+                                }
                                 addClocktowerEvent(
                                     ClocktowerEventType.Execution,
                                     localizedText("无人被处决", "No execution"),

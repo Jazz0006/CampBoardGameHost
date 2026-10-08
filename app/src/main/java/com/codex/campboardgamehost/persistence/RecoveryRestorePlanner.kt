@@ -406,17 +406,29 @@ internal object RecoveryRestorePlanner {
                 is ActionFact.Attack -> requireKnownSeat(fact.targetSeat, playerCount)
                 is ActionFact.Execution -> requireKnownSeat(fact.targetSeat, playerCount)
                 is ActionFact.Death -> requireKnownSeat(fact.targetSeat, playerCount)
+                is ActionFact.NoExecution -> require(
+                    entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY
+                ) { "No-execution can only be a confirmed Day outcome." }
                 is ActionFact.SlayerShot -> {
                     requireKnownSeat(fact.claimantSeat, playerCount)
                     requireKnownSeat(fact.targetSeat, playerCount)
                     require(!fact.hit || fact.abilityConsumed)
                     require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
+                    require(game.identity.script == ClocktowerScript.TroubleBrewing) {
+                        "No Greater Joy has no Slayer ability and cannot carry a canonical SlayerShot."
+                    }
                 }
                 is ActionFact.Nomination -> {
                     requireKnownSeat(fact.nominatorSeat, playerCount)
                     requireKnownSeat(fact.nomineeSeat, playerCount)
                     require(fact.nominatorSeat != fact.nomineeSeat)
                     require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
+                    if (fact.firstVirginNomination) {
+                        require(game.identity.script == ClocktowerScript.TroubleBrewing &&
+                            game.cards[fact.nomineeSeat - 1].clocktowerRole?.enName == "Virgin") {
+                            "First Virgin nomination requires an actual Virgin in Trouble Brewing."
+                        }
+                    }
                 }
                 is ActionFact.Vote -> {
                     requireKnownSeat(fact.nominatorSeat, playerCount)
@@ -452,11 +464,29 @@ internal object RecoveryRestorePlanner {
         val klutzLearnedSeats = mutableSetOf<Int>()
         val klutzChosenSeats = mutableSetOf<Int>()
         val klutzLearnedActions = mutableMapOf<String, com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact>()
+        val noExecutionRounds = mutableSetOf<Int>()
         val consumedSlayerSeats = mutableSetOf<Int>()
         val firstVirginNominees = mutableSetOf<Int>()
         val unvotedNominations = mutableListOf<com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact>()
         orderedDayActions.forEach { entry ->
             when (val fact = entry.fact) {
+                is ActionFact.NoExecution -> {
+                    require(noExecutionRounds.add(entry.point.round)) {
+                        "A day cannot be confirmed as no-execution twice."
+                    }
+                    require(orderedDayActions.none { other ->
+                        other.point.round == entry.point.round &&
+                            other.fact is ActionFact.Execution
+                    }) { "No-execution contradicts a same-day confirmed execution." }
+                    require(orderedDayActions.none { other ->
+                        other.point.round == entry.point.round &&
+                            other.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY &&
+                            other.point.globalSequence > entry.point.globalSequence &&
+                            (other.fact is ActionFact.Nomination ||
+                                other.fact is ActionFact.Vote ||
+                                other.fact is ActionFact.SlayerShot)
+                    }) { "No player day actions may follow confirmed end-of-day no-execution." }
+                }
                 is ActionFact.KlutzLearnedDeath -> {
                     require(klutzLearnedSeats.add(fact.klutzSeat)) {
                         "One Klutz cannot have two learned-death actions."
