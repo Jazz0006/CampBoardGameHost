@@ -43,7 +43,7 @@ DLB-6 old-contract retirement                               COMPLETE / ACCEPTED
 DLB-7 final DLB acceptance                                  COMPLETE / ACCEPTED
 DLB campaign                                                COMPLETE / ACCEPTED
 TBGS-2 runtime recommendation projection migration           PAUSED AFTER 2E — 2A/2B/2C/2D/2E COMPLETE / ACCEPTED; NO 2F MIGRATION SELECTED
-Bounded App/Host decomposition                         RES-5 BOUNDED SLICES COMPLETE / ACCEPTED — A1/A2/H0/H1 DONE; A3 OPTIONAL
+Bounded App/Host decomposition                         RES-5 A1/A2/H0/H1 + post-RES5 H-R/H-M/A-C/A-S/H-P/H-I COMPLETE / ACCEPTED — PR #244/#245/#246; A3 OPTIONAL
 C5 evidence-backed policy evolution                   C5-A/C5-B/C5-C/C5-D/C5-E COMPLETE / ACCEPTED
 HOST-ML0 ML readiness / ModelLab boundary              COMPLETE / ACCEPTED
 HOST-ML1 typed neutral decision export                   COMPLETE / ACCEPTED — separate from C5-E
@@ -64,7 +64,7 @@ RES-3 legacy heuristic/style/weighted physical purge          COMPLETE / ACCEPTE
 RES-4 named deterministic special-policy physical purge       COMPLETE / ACCEPTED — T4 00aefd1b; CI #3824 / R2 #3502 GREEN
 RES-5 physical module/dependency boundary                     COMPLETE / ACCEPTED — T4 cdf5dba2; CI #3832 / R2 #3509 GREEN
 GSP-R0 post-RES-5 re-entry audit                              COMPLETE / DOCS — current authority: GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md
-GSP-R1 neutral current-game longitudinal context              NEXT EXECUTABLE
+GSP-R1 neutral current-game longitudinal context              NEXT EXECUTABLE — R1A canonical capture/coverage audit, then R1B neutral prefix materializer and R1C acceptance; re-audit GSP_R1_POST_APP_HOST_SPLIT_REAUDIT_2026-10-08.md
 ~~~
 
 ## 2. Current repository boundary

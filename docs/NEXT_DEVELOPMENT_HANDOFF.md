@@ -1,11 +1,11 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: 2026-10-07 Australia/Sydney  
+> Updated: 2026-10-08 Australia/Sydney  
 > Current baseline: live `main` — query exact HEAD/PR state at session start  
 > RES checkpoint: **RES-0/1/2/3/4/5 COMPLETE / ACCEPTED; RES CAMPAIGN CLOSED.** RES-5 completion authority is `docs/RES_5_PHYSICAL_MODULE_DEPENDENCY_CONVERGENCE_ACCEPTANCE_2026-10-07.md`. Final T4 checkpoint `cdf5dba23eaad23f4fea3899ab54df97553a55cd` passed CI #3832 and R2 #3509, including full Android unit tests + debug assemble, ASP contracts and Real Clingo.  
 > Architecture invariant: **a provider may be stateless, but recommendation context is not memoryless.** The Host owns and reconstructs current canonical state, current-game longitudinal/narrative history, relevant cross-game player experience and recommendation/diversity history. LLM/chat conversation memory is never correctness authority.  
-> Current execution target: **GSP-R1 — neutral current-game longitudinal context.** Start from fresh live `main` after the GSP-R0 audit docs merge. Preserve `StorytellerProviderContractV1`, Host-owned canonical history and engine-owned legal domains; do not restore `StorytellerPolicy*`, named selectors, SDE-owned prefix types or local heuristic ranking.  
-> GSP-R0 authority: `docs/GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md`. The audit confirmed Recovery persistence for session player-context is already complete; the actual first blocker is that the neutral provider context does not yet carry `ActionFactTimeline` / `EpistemicObservationLog` longitudinal history. CampBoardGameHost remains offline-first; no provider is required for complete gameplay.
+> Current execution target: **GSP-R1A — canonical current-game history capture/prefix coverage audit**, then R1B typed provider materialization and R1C acceptance. Start from fresh live `main`; post-RES5 App/Host extraction PR #244/#245/#246 is COMPLETE / ACCEPTED (CI #3837/#3839/#3841; R2 #3512/#3513/#3514 GREEN). Preserve `StorytellerProviderContractV1`, Host-owned canonical history and engine-owned legal domains; do not restore `StorytellerPolicy*`, named selectors, SDE-owned prefix types or local heuristic ranking.  
+> GSP re-audit authority: `docs/GSP_R1_POST_APP_HOST_SPLIT_REAUDIT_2026-10-08.md`, updating the prior `GSP_POST_RES5_REENTRY_AUDIT_2026-10-08.md`. Recovery for session player context is already complete, but provider context still lacks typed `ActionFactTimeline` / `EpistemicObservationLog`. New `ClocktowerInformationHistoryPayload` is only localized UI history, not canonical provider facts; `LEGACY_LOCAL` must not masquerade as full `GLOBAL_V1` chronology. CampBoardGameHost remains offline-first.
 
 This file is deliberately compact. Completed checkpoint detail belongs in linked completion/audit/archive documents rather than being copied forward indefinitely.
 
