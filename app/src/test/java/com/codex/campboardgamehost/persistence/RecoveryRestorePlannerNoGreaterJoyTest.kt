@@ -283,6 +283,40 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
             clocktowerRulesetResolver = { _, _ -> null },
         ) is RecoveryPlanPreparation.Rejected)
 
+        val doubleNoExecution = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
+            history = saved.game.history.copy(
+                actionTimeline = ActionFactTimeline(learnedHistory.entries + TimelineBoundActionFact(
+                    ActionFact.NoExecution("duplicate-no-execution", 5L),
+                    TimelinePoint(StorytellerPhase.DAY, 1, 4, 5L),
+                )),
+                nextTimelineGlobalSequence = 6L,
+            ),
+        ))
+        assertTrue(RecoveryRestorePlanner.prepare(
+            raw = RecoverySnapshotJsonCodec.encode(doubleNoExecution),
+            expectedCompatibilityToken = TOKEN,
+            nowMillis = NOW,
+            roleByName = byName::get,
+            clocktowerRulesetResolver = { _, _ -> null },
+        ) is RecoveryPlanPreparation.Rejected)
+
+        val executionContradiction = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
+            history = saved.game.history.copy(
+                actionTimeline = ActionFactTimeline(learnedHistory.entries + TimelineBoundActionFact(
+                    ActionFact.Execution("fabricated-same-day-execution", 5L, 4),
+                    TimelinePoint(StorytellerPhase.DAY, 1, 4, 5L),
+                )),
+                nextTimelineGlobalSequence = 6L,
+            ),
+        ))
+        assertTrue(RecoveryRestorePlanner.prepare(
+            raw = RecoverySnapshotJsonCodec.encode(executionContradiction),
+            expectedCompatibilityToken = TOKEN,
+            nowMillis = NOW,
+            roleByName = byName::get,
+            clocktowerRulesetResolver = { _, _ -> null },
+        ) is RecoveryPlanPreparation.Rejected)
+
         val fakeSlayer = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
             history = saved.game.history.copy(
                 actionTimeline = ActionFactTimeline(learnedHistory.entries + TimelineBoundActionFact(
