@@ -142,6 +142,114 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
     }
 
     @Test
+    fun `unfrozen historical cutoff refuses later same-revision facts and corrections`() {
+        val session = newSession()
+        val oldRevision = revision(session)
+        session.commitGlobalActionFact(
+            ActionFactDraft.Attack("after-unrecorded-decision", StorytellerPhase.NIGHT, 2, 5, 3),
+        )
+        val unavailable = StorytellerProviderHistoryPrefixMaterializerV1.withoutFrozenHistoricalCutoff(
+            gameId = session.state.gameId,
+            sourceRevision = oldRevision,
+        )
+        assertEquals(StorytellerProviderHistoryCutoffSourceV1.UNAVAILABLE, unavailable.cutoffSource)
+        assertEquals(null, unavailable.exclusiveGlobalSequence)
+        assertTrue(unavailable.entries.isEmpty())
+        assertTrue(unavailable.coverage.values.all {
+            it.state == StorytellerProviderHistoryCoverageStateV1.UNRECONSTRUCTABLE &&
+                it.reasonCode == "HISTORICAL_CUTOFF_UNAVAILABLE"
+        })
+        assertEquals(oldRevision, revision(session)) // Same revisions cannot prove chronology.
+        assertEquals(1, StorytellerProviderHistoryPrefixMaterializerV1.captureLive(
+            session.state, revision(session),
+        ).entries.size)
+    }
+
+    @Test
+    fun `ambiguous Spy Recluse Empath observation never becomes a canonical witness`() {
+        val game = com.codex.campboardgamehost.clocktower.domain.GameState(
+            script = com.codex.campboardgamehost.clocktower.domain.ScriptId("trouble_brewing"),
+            players = listOf(
+                com.codex.campboardgamehost.clocktower.domain.PlayerState(
+                    1, "Spy", RoleId("Spy"),
+                    com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL,
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.MINION,
+                    RoleId("Spy"), true,
+                ),
+                com.codex.campboardgamehost.clocktower.domain.PlayerState(
+                    2, "Empath", RoleId("Empath"),
+                    com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD,
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.TOWNSFOLK,
+                    RoleId("Empath"), true,
+                ),
+                com.codex.campboardgamehost.clocktower.domain.PlayerState(
+                    3, "Recluse", RoleId("Recluse"),
+                    com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD,
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.OUTSIDER,
+                    RoleId("Recluse"), true,
+                ),
+                com.codex.campboardgamehost.clocktower.domain.PlayerState(
+                    4, "Chef", RoleId("Chef"),
+                    com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD,
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.TOWNSFOLK,
+                    RoleId("Chef"), true,
+                ),
+                com.codex.campboardgamehost.clocktower.domain.PlayerState(
+                    5, "Imp", RoleId("Imp"),
+                    com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL,
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.DEMON,
+                    RoleId("Imp"), true,
+                ),
+            ),
+            seed = 99L,
+        )
+        val witnesses = com.codex.campboardgamehost.clocktowerAlignmentRegistrationWitnesses(
+            currentSpyRegistersGood = false, spySelectable = true,
+            currentRecluseRegistersEvil = false, recluseSelectable = true,
+        ).filter { witness ->
+            (if (witness.spyRegistersGood == false) 1 else 0) +
+                (if (witness.recluseRegistersEvil == true) 1 else 0) == 1
+        }
+        assertEquals(2, witnesses.size)
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "empath-ambiguous",
+            gameSeed = game.seed,
+            initialState = game,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        session.commitGlobalEpistemicObservation(
+            EpistemicObservationDraft(
+                recordId = "empath-result-one",
+                phase = StorytellerPhase.FIRST_NIGHT,
+                round = 1,
+                sequence = 0,
+                sourceSeat = 2,
+                sourceAbility = RoleId("Empath"),
+                visibility = ObservationVisibility.PRIVATE,
+                recipientSeats = setOf(2),
+                reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+                proposition = InformationProposition.NumericResult(
+                    NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 1,
+                ),
+            ),
+        )
+        val prefix = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(
+            session.state, revision(session),
+        )
+        assertEquals(1, prefix.entries.size)
+        assertEquals("empath-result-one", prefix.entries.single().entryId)
+        assertEquals(
+            StorytellerProviderHistoryCoverageStateV1.UNKNOWN,
+            prefix.coverage.getValue(StorytellerProviderHistoryDimensionV1.REGISTRATION_RULINGS).state,
+        )
+        assertTrue(prefix.entries.none { it is StorytellerProviderHistoryEntryV1.Action })
+        // No arbitrarily chosen Spy/Recluse witness can be invented from the observed number.
+        val numeric = (prefix.entries.single() as StorytellerProviderHistoryEntryV1.Observation)
+            .proposition as InformationProposition.NumericResult
+        assertEquals(1, numeric.value)
+    }
+
+    @Test
     fun `legacy is explicit unavailable and no local positions become global`() {
         val session = newSession(ClocktowerSemanticHistoryMode.LEGACY_LOCAL)
         val prefix = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(session.state, revision(session))
