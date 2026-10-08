@@ -81,10 +81,9 @@ internal object StorytellerDecisionPrefixCaptureV1 {
         require(request.sourceRevision == StorytellerProviderRevisionV1(
             sessionState.gameStateRevision, sessionState.playerInputRevision,
         ))
-        require(request.gameContext.priorDecisions.isEmpty() ||
-            request.gameContext.priorDecisions.all { it.registrations.isEmpty() }) {
-            "Unverified legacy registration decisions cannot become frozen canonical facts."
-        }
+        // Prior typed registrations enter this context only through this journal's verified
+        // commits. Unverified candidate witnesses are still forbidden in the commit path.
+
         val snapshot = (request.state as? com.codex.campboardgamehost.clocktower.domain.StorytellerProviderGameStateV1.TroubleBrewing)
             ?.snapshot ?: error("R1C2A supports only the typed Trouble Brewing snapshot.")
         require(snapshot.gameId == sessionState.gameId && snapshot.gameSeed == sessionState.gameSeed)
@@ -284,8 +283,14 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
     /** The Host may commit only a confirmed legal outcome, not an unselected registration witness. */
     fun commit(decisionId: String, event: StorytellerProviderPriorDecisionV1) {
         val frozen = captureFor(decisionId)
-        require(event.registrations.isEmpty()) {
-            "Typed explicit registration rulings need a verified producer, not a candidate witness."
+        if (frozen.identity.decisionTypeId ==
+            com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.REGISTRATION_RESOLUTION
+        ) {
+            StorytellerRegistrationRulingProducerV1.validateCommitted(frozen, event)
+        } else {
+            require(event.registrations.isEmpty()) {
+                "Only the verified registration producer can commit explicit RegistrationFact values."
+            }
         }
         require(event.selectedCandidateId in frozen.legalCandidateIds)
         require(event.gameStateRevision == frozen.revision.gameStateRevision &&
