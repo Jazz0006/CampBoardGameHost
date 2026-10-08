@@ -24,8 +24,12 @@ class RecoveryDrunkShownVirginHistoryTest {
     private val roles = clocktowerRolesForScript(tb).associateBy(ClocktowerRole::enName)
     private val names = listOf("Drunk", "Chef", "Empath", "Washerwoman", "Monk", "Investigator", "Spy", "Imp")
 
-    private fun cards(shownDrunkRole: String = "Virgin"): List<PlayerCard> =
-        names.mapIndexed { i, name ->
+    private fun cards(
+        shownDrunkRole: String = "Virgin",
+        actualVirginInPlay: Boolean = false,
+    ): List<PlayerCard> =
+        names.mapIndexed { i, assignedName ->
+            val name = if (actualVirginInPlay && assignedName == "Investigator") "Virgin" else assignedName
             val role = requireNotNull(roles[name])
             val shown = requireNotNull(roles[if (i == 0) shownDrunkRole else name])
             PlayerCard(
@@ -41,7 +45,10 @@ class RecoveryDrunkShownVirginHistoryTest {
             )
         }
 
-    private fun snapshot(shownDrunkRole: String = "Virgin"): RecoverySnapshot =
+    private fun snapshot(
+        shownDrunkRole: String = "Virgin",
+        actualVirginInPlay: Boolean = false,
+    ): RecoverySnapshot =
         RecoverySnapshot(
             compatibilityToken = "drunk-virgin-regression",
             savedAtMillis = 999_000L,
@@ -49,7 +56,7 @@ class RecoveryDrunkShownVirginHistoryTest {
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 0,
                 round = 2,
-                cards = cards(shownDrunkRole),
+                cards = cards(shownDrunkRole, actualVirginInPlay),
                 records = listOf(EliminationRecord(2, "P1")),
                 outcome = null,
                 identity = ClocktowerRecoveryIdentity(
@@ -132,6 +139,24 @@ class RecoveryDrunkShownVirginHistoryTest {
         assertEquals("Virgin", game.cards[0].clocktowerShownRole?.enName)
         assertEquals(2, game.cards[0].eliminatedRound)
         assertEquals(true, (game.history.actionTimeline.entries.first().fact as ActionFact.Nomination).firstVirginNomination)
+    }
+
+    @Test fun `Drunk cannot be shown Virgin when an actual Virgin is already in play`() {
+        // This otherwise 8-player-legal TB role pool replaces Investigator with Virgin.
+        // Recovering actual Virgin plus a Drunk also shown Virgin violates setup
+        // shown-identity policy even when the first-nomination history is present.
+        assertTrue(restore(snapshot(actualVirginInPlay = true))
+            is RecoveryPlanPreparation.Rejected)
+    }
+
+    @Test fun `Drunk shown role collision is rejected independently of Virgin action history`() {
+        val invalid = snapshot(actualVirginInPlay = true)
+        val game = invalid.game as ClocktowerRecovery
+        val noActions = invalid.copy(game = game.copy(history = game.history.copy(
+            actionTimeline = ActionFactTimeline(),
+            nextTimelineGlobalSequence = 0L,
+        )))
+        assertTrue(restore(noActions) is RecoveryPlanPreparation.Rejected)
     }
 
     @Test fun `first Virgin marker cannot be forged by changing Drunk shown role`() {
