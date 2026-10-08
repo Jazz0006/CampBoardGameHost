@@ -61,6 +61,15 @@ internal data class StorytellerProviderRequestV1(
                 }
             }
 
+            is StorytellerProviderDecisionContextV1.RegistrationResolution -> {
+                require(context.sourceSeat in stateSeats && context.subjectSeat in stateSeats)
+                require(legalCandidates.all { candidate ->
+                    candidate.payload is StorytellerProviderCandidatePayloadV1.RegistrationChoice
+                }) {
+                    "Registration-resolution candidates must be typed registration choices."
+                }
+            }
+
             is StorytellerProviderDecisionContextV1.MayorRedirect -> {
                 require(context.mayorSeat in stateSeats) {
                     "Mayor seat must belong to the current state."
@@ -186,6 +195,25 @@ internal sealed interface StorytellerProviderDecisionContextV1 {
         }
     }
 
+    /**
+     * A confirmed, globally recorded player-facing observation is the anchor. One interaction
+     * may have multiple independent Spy/Recluse subject decisions; never collapse them.
+     */
+    data class RegistrationResolution(
+        val interactionId: String,
+        val observationRecordId: String,
+        val sourceSeat: Int,
+        val subjectSeat: Int,
+        val question: RegistrationQuestion,
+    ) : StorytellerProviderDecisionContextV1 {
+        override val decisionTypeId: String = REGISTRATION_RESOLUTION
+
+        init {
+            require(interactionId.isNotBlank() && observationRecordId.isNotBlank())
+            require(sourceSeat > 0 && subjectSeat > 0)
+        }
+    }
+
     data class MayorRedirect(
         val mayorSeat: Int,
     ) : StorytellerProviderDecisionContextV1 {
@@ -200,6 +228,7 @@ internal sealed interface StorytellerProviderDecisionContextV1 {
         const val DRUNK_ASSIGNMENT = "drunk-assignment"
         const val FIRST_NIGHT_PAIR_INFORMATION = "first-night-pair-information"
         const val MAYOR_REDIRECT = "mayor-redirect"
+        const val REGISTRATION_RESOLUTION = "registration-resolution"
     }
 }
 
@@ -213,6 +242,14 @@ internal data class StorytellerProviderCandidateV1(
 }
 
 /** Candidate semantics are rules/domain facts only. */
+internal enum class RegistrationResolutionStatusV1 {
+    EXPLICIT_SPECIAL,
+    EXPLICIT_ACTUAL,
+    UNRESOLVED_NOT_REQUIRED,
+    NOT_APPLICABLE,
+    UNAVAILABLE_OR_UNRECORDED,
+}
+
 internal sealed interface StorytellerProviderCandidatePayloadV1 {
     data class DrunkAssignment(
         val seat: Int,
@@ -236,6 +273,19 @@ internal sealed interface StorytellerProviderCandidatePayloadV1 {
             }
             require(candidateSeats.all { it > 0 }) {
                 "Pair-information candidate seats must be positive."
+            }
+        }
+    }
+
+    data class RegistrationChoice(
+        val status: RegistrationResolutionStatusV1,
+        /** Only an explicitly selected exact role; never the first legal witness. */
+        val selectedRoleId: RoleId? = null,
+    ) : StorytellerProviderCandidatePayloadV1 {
+        init {
+            require(status == RegistrationResolutionStatusV1.EXPLICIT_SPECIAL || selectedRoleId == null)
+            require(status != RegistrationResolutionStatusV1.UNAVAILABLE_OR_UNRECORDED) {
+                "Unrecorded historical registration cannot be a confirmed candidate."
             }
         }
     }

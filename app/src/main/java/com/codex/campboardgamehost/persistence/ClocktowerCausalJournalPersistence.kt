@@ -59,8 +59,10 @@ internal object ClocktowerCausalJournalPersistence {
                         put("kind", "commit")
                         put("decisionId", record.decisionId)
                         val decision = record.value
-                        require(decision.registrations.isEmpty()) {
-                            "Unsupported candidate registration is not a canonical historical ruling."
+                        require(decision.registrations.isEmpty() ||
+                            decision.selectedOutcome.decisionType ==
+                                StorytellerProviderDecisionContextV1.REGISTRATION_RESOLUTION) {
+                            "Typed registration facts require a verified registration-resolution commit."
                         }
                         put("eventId", decision.eventId)
                         put("gameRevision", decision.gameStateRevision)
@@ -70,6 +72,17 @@ internal object ClocktowerCausalJournalPersistence {
                         put("outcomeFields", JSONObject(decision.selectedOutcome.canonicalFields))
                         put("abilityState", decision.abilityState.name)
                         put("truthRelation", decision.truthRelation.name)
+                        put("registrations", JSONArray().apply {
+                            decision.registrations.forEach { fact -> put(JSONObject().apply {
+                                put("interactionId", fact.interactionId)
+                                put("subjectSeat", fact.subjectSeat)
+                                put("registeredRole", fact.registeredRole?.value ?: JSONObject.NULL)
+                                put("registeredType", fact.registeredType?.name ?: JSONObject.NULL)
+                                put("registeredAlignment", fact.registeredAlignment?.name ?: JSONObject.NULL)
+                                put("registrationQuestion", fact.registrationQuestion.name)
+                                put("reason", fact.reason.name)
+                            }) }
+                        })
                     }
                     is StorytellerCausalJournalRecordV1.Corrected -> JSONObject().apply {
                         put("kind", "correction")
@@ -173,7 +186,27 @@ internal object ClocktowerCausalJournalPersistence {
                             DecisionOutcomeSnapshot(record.getString("outcomeType"), map),
                             AbilityState.valueOf(record.getString("abilityState")),
                             TruthRelation.valueOf(record.getString("truthRelation")),
-                            registrations = emptyList(),
+                            registrations = if (record.has("registrations")) {
+                                record.getJSONArray("registrations").let { array ->
+                                    (0 until array.length()).map { i ->
+                                        val fact = array.getJSONObject(i)
+                                        RegistrationFact(
+                                            interactionId = fact.getString("interactionId"),
+                                            subjectSeat = fact.getInt("subjectSeat"),
+                                            registeredRole = if (fact.isNull("registeredRole")) null
+                                                else RoleId(fact.getString("registeredRole")),
+                                            registeredType = if (fact.isNull("registeredType")) null
+                                                else CharacterType.valueOf(fact.getString("registeredType")),
+                                            registeredAlignment = if (fact.isNull("registeredAlignment")) null
+                                                else Alignment.valueOf(fact.getString("registeredAlignment")),
+                                            registrationQuestion = RegistrationQuestion.valueOf(
+                                                fact.getString("registrationQuestion"),
+                                            ),
+                                            reason = RegistrationReason.valueOf(fact.getString("reason")),
+                                        )
+                                    }
+                                }
+                            } else emptyList(),
                         ),
                     )
                 }
