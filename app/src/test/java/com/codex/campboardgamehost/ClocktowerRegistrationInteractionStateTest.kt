@@ -112,6 +112,66 @@ class ClocktowerRegistrationInteractionStateTest {
         assertFalse(state.markRecluseRecorded(recluseKey))
     }
 
+    @Test
+    fun `generic manual choice distinguishes untouched from explicit false and discards inactive role`() {
+        val state = ClocktowerRegistrationInteractionState()
+        val spy = "FirstNight:1:Empath:Spy"
+        val recluse = "FirstNight:1:Empath:Recluse"
+        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.SPY, spy))
+        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.RECLUSE, recluse))
+        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.SPY, null))
+
+        // Editing an explanatory role alone is not an explicit ruling.
+        state.chooseSpyRole(spy, "Librarian")
+        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.SPY, spy))
+
+        // Explicit false is NOT the same as no recorded choice.
+        state.chooseSpy(spy, good = false)
+        assertEquals(
+            ClocktowerManualRegistrationChoice(
+                ClocktowerRegistrationSubject.SPY, spy, usesSpecialRegistration = false,
+                selectedRegisteredRoleEnName = null,
+            ),
+            state.explicitChoice(ClocktowerRegistrationSubject.SPY, spy),
+        )
+        state.chooseSpy(spy, good = true)
+        assertEquals("Librarian",
+            state.explicitChoice(ClocktowerRegistrationSubject.SPY, spy)?.selectedRegisteredRoleEnName)
+        state.chooseSpy(spy, good = false)
+        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.SPY, spy)?.selectedRegisteredRoleEnName)
+
+        state.chooseRecluse(recluse, evil = false)
+        assertEquals(false,
+            state.explicitChoice(ClocktowerRegistrationSubject.RECLUSE, recluse)?.usesSpecialRegistration)
+        state.chooseRecluse(recluse, evil = true, defaultRole = "")
+        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.RECLUSE, recluse)?.selectedRegisteredRoleEnName)
+        state.chooseRecluseRole(recluse, "Imp")
+        assertEquals("Imp",
+            state.explicitChoice(ClocktowerRegistrationSubject.RECLUSE, recluse)?.selectedRegisteredRoleEnName)
+        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.RECLUSE, "Night:2:ChefRecluse:Recluse"))
+    }
+
+    @Test
+    fun `same result with two legal explanations never selects a witness in any information shape`() {
+        val state = ClocktowerRegistrationInteractionState()
+        val spy = "FirstNight:1:Chef:spy"
+        val recluse = "FirstNight:1:ChefRecluse:Recluse"
+        val alternatives = listOf(
+            ClocktowerRegistrationWitness(spyRegistersGood = false, recluseRegistersEvil = false),
+            ClocktowerRegistrationWitness(spyRegistersGood = true, recluseRegistersEvil = true),
+        )
+        // This gate is based on witness compatibility, independent of the player's result kind.
+        for (kind in listOf(ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo, ClocktowerDisplayKind.RoleReveal)) {
+            val result = option(witnessAlternatives = alternatives).copy(displayKind = kind)
+            assertTrue(state.manualChoicesMatchResult(spy, recluse, result))
+            assertNull(state.explicitChoice(ClocktowerRegistrationSubject.SPY, spy))
+            assertNull(state.explicitChoice(ClocktowerRegistrationSubject.RECLUSE, recluse))
+        }
+        state.chooseSpy(spy, good = false)
+        state.chooseRecluse(recluse, evil = true)
+        assertFalse(state.manualChoicesMatchResult(spy, recluse, option(witnessAlternatives = alternatives)))
+    }
+
     private fun option(
         spyGood: Boolean? = null,
         spyRole: String? = null,
