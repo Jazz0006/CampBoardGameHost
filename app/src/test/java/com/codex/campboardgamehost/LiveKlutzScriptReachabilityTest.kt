@@ -3,6 +3,7 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.rules.NoGreaterJoyKlutzChoiceRuleV1
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
+import com.codex.campboardgamehost.clocktower.session.NoGreaterJoyKlutzHistoryProducerV1
 import com.codex.campboardgamehost.clocktower.session.synchronizePlayerDeathWithinCurrentRevision
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import org.junit.Assert.assertEquals
@@ -126,4 +127,92 @@ class LiveKlutzScriptReachabilityTest {
             session.state.gameState, 1, 2, definitions,
         ).evilWins)
     }
+    @Test fun `actual NGJ announcement then public choice is globally ordered and persisted`() {
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "ngj-learn-real", gameSeed = 75L,
+            initialState = state(klutzAlive = true),
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        session.commitGlobalActionFact(ActionFactDraft.Death(
+            "night-death", StorytellerPhase.DAWN, 2, 1, 1,
+        ))
+        session.synchronizePlayerDeathWithinCurrentRevision(1)
+        val learn = requireNotNull(NoGreaterJoyKlutzHistoryProducerV1.learned(
+            session.state, 1, "learn-public", 2, 2,
+        ))
+        assertEquals("night-death", learn.deathActionId)
+        assertTrue(learn.functioningWhenLearned)
+        session.commitGlobalActionFact(learn)
+        assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.learned(
+            session.state, 1, "duplicate-learn", 2, 3,
+        ))
+        val chosen = requireNotNull(NoGreaterJoyKlutzHistoryProducerV1.choice(
+            session.state, 1, 2, "public-choice", 2, 3,
+        ))
+        assertEquals("learn-public", chosen.learnedActionId)
+        session.commitGlobalActionFact(chosen)
+        assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.choice(
+            session.state, 1, 3, "duplicate-choice", 2, 4,
+        ))
+        val timeline = session.state.actionTimeline
+        assertEquals(listOf("night-death", "learn-public", "public-choice"),
+            timeline.entries.map { it.fact.actionId })
+        val archive = ClocktowerSemanticHistoryPersistence.encodeActionTimeline(timeline)
+        val recovered = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(
+            org.json.JSONObject().put(ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, archive),
+        )
+        assertEquals(timeline, recovered)
+        val public = com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
+            recipientSeat = 3, actionTimeline = recovered,
+            observationLog = com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog(),
+        )
+        assertTrue(public.none { it.actionIdOrNull() == "learn-public" })
+        assertTrue(public.any {
+            it is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicKlutzChoice &&
+                it.klutzSeat == 1 && it.chosenSeat == 2
+        })
+    }
+
+    private fun com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.actionIdOrNull(): String? =
+        when (this) {
+            is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicDeath -> actionId
+            is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicKlutzChoice -> actionId
+            else -> null
+        }
+
+    @Test fun `legacy NGJ death with no predeath provenance stays unknown and cannot invent learned event`() {
+        val game = state(klutzAlive = false)
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "ngj-legacy-unknown", gameSeed = 75L, initialState = game,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        session.commitGlobalActionFact(ActionFactDraft.Death(
+            "legacy-no-proof", StorytellerPhase.DAWN, 2, 1, 1,
+        ))
+        assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.learned(
+            session.state, 1, "invented-learn", 2, 2,
+        ))
+        assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.choice(
+            session.state, 1, 2, "invented-choice", 2, 3,
+        ))
+    }
+
+    @Test fun `Klutz cannot record a chosen dead player even after valid learned action`() {
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "ngj-chosen-dead", gameSeed = 75L,
+            initialState = state(klutzAlive = true, evilAlive = false),
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        session.commitGlobalActionFact(ActionFactDraft.Death(
+            "klutz-night", StorytellerPhase.DAWN, 2, 1, 1,
+        ))
+        session.synchronizePlayerDeathWithinCurrentRevision(1)
+        session.commitGlobalActionFact(requireNotNull(NoGreaterJoyKlutzHistoryProducerV1.learned(
+            session.state, 1, "learn", 2, 2,
+        )))
+        assertThrows(IllegalArgumentException::class.java) {
+            NoGreaterJoyKlutzHistoryProducerV1.choice(session.state, 1, 2, "invalid-choice", 2, 3)
+        }
+    }
+
 }
