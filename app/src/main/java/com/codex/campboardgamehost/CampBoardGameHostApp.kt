@@ -3044,6 +3044,25 @@ internal fun CampBoardGameHostApp() {
                                 val index = cards.indexOfFirst { it.name == executionName }
                                 val executedCard = cards.getOrNull(index)
                                 if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
+                                    val isKlutzDeathCapture = executedCard.clocktowerRole?.enName == "Klutz" &&
+                                        clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+                                    if (isKlutzDeathCapture) {
+                                        // Commit the exact execution before death clears Klutz.poisoned.
+                                        // The canonical session (not the UI) stamps ability-state evidence.
+                                        val actionSequence = clocktowerEventCounter + 1
+                                        recordClocktowerAction(ActionFactDraft.Execution(
+                                            actionId = clocktowerActionId(
+                                                kind = "execution",
+                                                actionRound = round,
+                                                localSequence = actionSequence,
+                                                targetSeat = index + 1,
+                                            ),
+                                            phase = storytellerPhaseFor(),
+                                            round = round,
+                                            sequence = actionSequence,
+                                            targetSeat = index + 1,
+                                        ))
+                                    }
                                     requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
                                         targetSeat = index + 1,
                                     )
@@ -3053,8 +3072,9 @@ internal fun CampBoardGameHostApp() {
                                     addClocktowerEvent(
                                         ClocktowerEventType.Execution,
                                         localizedText("处决", "Execution"),
-                                    playerSeatLabel(cards, executionName),
+                                        playerSeatLabel(cards, executionName),
                                         listOf(executionName),
+                                        projectSemanticHistory = !isKlutzDeathCapture,
                                     )
                                     clocktowerLastExecutedName = executionName
                                     if (executedCard.clocktowerRole?.enName == "Saint") {
