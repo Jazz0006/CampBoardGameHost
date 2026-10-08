@@ -1969,18 +1969,6 @@ internal fun ClocktowerJudgeScreen(
         val virginRegistrationKey = nominatorCard
             ?.takeIf { it.name == spyCard?.name && virginFirstNomination }
             ?.let { registrationKey("Virgin", it.name) }
-        val virginSpyRegistrationResolution = registrationResolution(
-            virginRegistrationKey,
-            "Virgin",
-            spyCard,
-            listOf(ClocktowerTeam.Townsfolk),
-        )
-        val virginSpyLegalRoles = virginSpyRegistrationResolution
-            ?.special
-            ?.mapNotNull { candidate ->
-                completeTroubleBrewingRoles.firstOrNull { it.enName == candidate.registeredRole.value }
-            }
-            .orEmpty()
         val virginSpyRegistersGood = spyRegistersGood(virginRegistrationKey, "Virgin")
         val virginExecutes = virginAbilityWorks &&
             (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || virginSpyRegistersGood)
@@ -2057,20 +2045,13 @@ internal fun ClocktowerJudgeScreen(
             },
             specialContent = {
                 if (virginRegistrationKey != null && spyCard != null) {
-                    ClocktowerSpyRegistrationDecisionControls(
-                        legalRoles = virginSpyLegalRoles.map { it.enName to it.nameFor(language) },
-                        registersGood = spyRegistersGood(virginRegistrationKey, "Virgin"),
-                        registeredRoleEnName = registrationState.spyRole(virginRegistrationKey),
+                    ClocktowerSpyTownsfolkTypeDecisionControls(
+                        registersAsTownsfolk = spyRegistersGood(virginRegistrationKey, "Virgin"),
+                        hasExplicitChoice = registrationState.spyHasExplicitChoice(virginRegistrationKey),
                         enabled = spyCanRegister("Virgin"),
                         language = language,
-                        onRegistersGoodChange = { good ->
-                            // Virgin checks Townsfolk TYPE, not a named Townsfolk role.
-                            registrationState.chooseSpy(virginRegistrationKey, good)
-                        },
-                        onRoleChange = {
-                            // Role detail is not required to resolve a Virgin Townsfolk-type ruling.
-                            // Leave this local edit as an optional presentation preference.
-                            registrationState.chooseSpyRole(virginRegistrationKey, it)
+                        onRegistersAsTownsfolkChange = { chosen ->
+                            registrationState.chooseSpy(virginRegistrationKey, chosen)
                         },
                     )
                 }
