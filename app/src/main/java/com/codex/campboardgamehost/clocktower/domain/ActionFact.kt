@@ -4,6 +4,24 @@ package com.codex.campboardgamehost.clocktower.domain
  * A committed, replayable mechanical fact. These facts intentionally contain no
  * localized text or UI callbacks: the ordered list is the persisted timeline.
  */
+/**
+ * Captured by the game-session authority before the Klutz's death changes alive/poisoned.
+ * An absent field on pre-migration Death/Execution means UNKNOWN, never "functioning".
+ */
+data class KlutzDeathTriggerEvidenceV1(
+    val actualRole: RoleId,
+    val wasAlive: Boolean,
+    val wasPoisoned: Boolean,
+    val sourceGameStateRevision: Long,
+) {
+    init {
+        require(actualRole.value == "Klutz")
+        require(wasAlive)
+        require(sourceGameStateRevision >= 0L)
+    }
+    val functioningAtDeath: Boolean get() = !wasPoisoned
+}
+
 sealed interface ActionFact {
     val actionId: String
     val sequence: Long
@@ -30,12 +48,14 @@ sealed interface ActionFact {
         override val actionId: String,
         override val sequence: Long,
         val targetSeat: Int,
+        val klutzDeathTrigger: KlutzDeathTriggerEvidenceV1? = null,
     ) : ActionFact
 
     data class Death(
         override val actionId: String,
         override val sequence: Long,
         val targetSeat: Int,
+        val klutzDeathTrigger: KlutzDeathTriggerEvidenceV1? = null,
     ) : ActionFact
 
     data class RoleChange(
