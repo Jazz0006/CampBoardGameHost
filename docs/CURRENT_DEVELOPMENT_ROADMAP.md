@@ -69,7 +69,7 @@ GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEP
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
 GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
-GSP-R1C2C remaining producers + registration ruling history    NEXT — broader typed producer capture and semantic Recovery; R1C overall IN PROGRESS
+GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 producer audit + generic explicit UI choice COMPLETE / ACCEPTED PR #260; C2C-1 typed ruling + Recovery NEXT; R1C overall IN PROGRESS
 ~~~
 
 ### GSP-R1A capture gate — 2026-10-08
@@ -79,6 +79,10 @@ The code-level R1A inventory confirms canonical Global actions and some typed pl
 ### GSP-R1B accepted — 2026-10-08
 
 [Accepted R1B executable closure](GSP_R1B_NEUTRAL_LIVE_HISTORY_PREFIX_ACCEPTANCE_2026-10-08.md): PR #250 squash `8e788db2f6ad0be1f3c8b1c844306d6210e66cd7`, CI #3849 / R2 #3518 GREEN, Android **FAST** and Real Clingo passed; full Android/T4 was not run. The Host's neutral provider context can carry an immutable, globally ordered current-game Action/Observation prefix bounded by the captured exclusive cursor and session revisions. Mechanical/private/public producer coverage remains PARTIAL; registration and prior-decision causal capture UNKNOWN. LegacyLocal chronology is explicitly unavailable, and no historical replay or production LLM provider was introduced. **GSP-R1C is next**, with real Recovery/frozen-prefix equality and missing-coverage/ambiguity gates. The result-first registration ambiguity authority remains a separate producer/UI follow-up.
+
+### GSP-R1C2C-0 producer coverage + generic manual registration selection accepted — 2026-10-08
+
+[Accepted C2C-0 scope and exact CI/R2](GSP_R1C2C0_GENERIC_REGISTRATION_CHOICE_ACCEPTANCE_2026-10-08.md): PR #260 squash `d75d00031bd83ecf340230041443e7612f2e080b`, CI #3880 Android tests GREEN / R2 #3539 GREEN (no T4). Live [producer coverage audit](GSP_R1C2C_PRODUCER_COVERAGE_AUDIT_2026-10-08.md) catalogs decision producers and separates Storyteller rulings from player actions, typed results, and localized events. The shared UI interaction now preserves explicit-only Spy/Recluse manual choice, including explicit false versus untouched, unspecified versus specified role, and multi-witness Number/YesNo/RoleReveal compatibility. **No typed ruling producer, Recovery recording, or complete decision family capture was added.** Next C2C-1 implements Host-confirmed typed interaction-local ruling + causal corrections + strict Recovery; other result and setup producers follow. **R1C2C and R1C remain IN PROGRESS.**
 
 ### GSP-R1C2B accepted Mayor vertical — 2026-10-08
 
