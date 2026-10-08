@@ -293,6 +293,9 @@ internal object RecoveryRestorePlanner {
         // Validate the entire optional causal journal BEFORE creating a Ready restore plan.
         // Invalid corrections or old-prefix chronology must never fail halfway through UI apply.
         game.history.causalDecisionJournal?.let { archive ->
+            require(game.identity.script == ClocktowerScript.TroubleBrewing || archive.records.isEmpty()) {
+                "Only the current Trouble Brewing typed snapshot can own a causal decision journal."
+            }
             StorytellerCausalDecisionJournalV1.restore(
                 archive = archive,
                 currentSession = ClocktowerSessionState(
