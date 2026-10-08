@@ -163,8 +163,12 @@ class ClocktowerConfirmedRegistrationPublicationV1Test {
             numeric, ready.choices, ready.legalResultWitnesses,
         )
         assertTrue(valid.isRulesConsistent(game, legalRoles))
-        assertTrue(!valid.copy(choices = ready.choices.map { it.copy(subjectSeat = 2) })
-            .isRulesConsistent(game, legalRoles))
+        // Keep the typed envelope structurally legal (unique seats) but forge a ruling
+        // against the querying Empath seat: semantic Host verification must reject it.
+        assertTrue(!valid.copy(choices = listOf(
+            ready.choices.first().copy(subjectSeat = 2),
+            ready.choices.last(),
+        )).isRulesConsistent(game, legalRoles))
         assertTrue(!valid.copy(legalResultWitnesses = listOf(
             ClocktowerRegistrationWitness(spyRegistersGood = null, recluseRegistersEvil = null),
         )).isRulesConsistent(game, legalRoles))
