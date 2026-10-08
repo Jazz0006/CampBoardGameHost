@@ -69,7 +69,7 @@ GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEP
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
 GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
-GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 PR #260 / 1A PR #263 ACCEPTED; C2C-1B private-night Host typed registration/Recovery ACCEPTED PR #265 (T4); C2C-1C daytime/non-private registrations NEXT; R1C IN PROGRESS
+GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 #260 / 1A #263 / 1B #265 ACCEPTED; C2C-1C1 Slayer day producer ACCEPTED PR #267 (T4); C2C-1C2 Virgin NEXT, 1C3 Klutz PENDING; R1C IN PROGRESS
 ~~~
 
 ### GSP-R1A capture gate — 2026-10-08
@@ -91,6 +91,10 @@ The code-level R1A inventory confirms canonical Global actions and some typed pl
 ### GSP-R1C2C-1B — actual Host private-night registration/Recovery accepted — 2026-10-08
 
 [Exact C2C-1B acceptance](GSP_R1C2C1B_LIVE_REGISTRATION_ACCEPTANCE_2026-10-08.md) and [production coverage contract](GSP_R1C2C1B_LIVE_REGISTRATION_PRODUCER_SCOPE_2026-10-08.md): PR #265 squash `81ee09066a9f4648cc42f8ff1abe3a0d157f5ae7`, exact-head CI **#3914 T4 GREEN** (full Android JVM + debug APK, ASP, Real Clingo) and R2 **#3568 GREEN**. Confirmed numeric/boolean/role information with verified legal registration witnesses now has a real Host preflight, typed global publication, explicit/known-unresolved causal ruling, correction and Recovery path. A no-longer-present UI toggle cannot erase previously explicit history. Not all private result families have sufficient verified candidate coverage; no Day/Virgin/Klutz/Slayer mechanical registration producer exists yet. **C2C-1B private-night vertical COMPLETE; C2C-1 and overall R1C2C/R1C remain IN PROGRESS. Next C2C-1C audits and implements daytime/non-private registration events without inventing private observations.** No provider/LLM authority or GSP-R2 advancement.
+
+### GSP-R1C2C-1C1 accepted public Slayer registration producer — 2026-10-08
+
+[Exact accepted C2C-1C1](GSP_R1C2C1C1_SLAYER_PUBLIC_REGISTRATION_ACCEPTANCE_2026-10-08.md) and [Day registration inventory](GSP_R1C2C1C_DAY_REGISTRATION_AUDIT_2026-10-08.md): PR #267 squash `57cfa93c6638c8c4f9e6e4b6feb1af5ddda65ed0`; exact PR head `b43dc81d04e3d1e05b18ad84cc0e27967ce39c87`; **CI #3919 T4 GREEN** (Android FULL / debug APK / ASP / Real Clingo), **R2 #3571 GREEN**. Actual functioning Slayer's explicit Recluse-as-Demon selection now captures a frozen **day ability event** before the irreversible shot/Death; typed RegistrationFact, strict canonical validation and causal Recovery, with **no invented private observation**. Virgin/Spy Townsfolk-type and Klutz/Spy Good-alignment remain independent unimplemented day producers; no default role should be inferred. **C2C-1C1 COMPLETE; C2C-1C2 Virgin NEXT; C2C-1, R1C2C and R1C remain IN PROGRESS.**
 
 ### GSP-R1C2B accepted Mayor vertical — 2026-10-08
 
