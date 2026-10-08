@@ -130,6 +130,9 @@ internal fun clocktowerChefEffectivePairSeats(
     option: ClocktowerDisplayOption?,
     value: Int,
 ): Set<Int> {
+    // A result may have multiple equally legal contributing pairs. Never imply the first
+    // explanation was selected by highlighting its seats.
+    if (option?.legalRegistrationWitnesses?.isNotEmpty() == true) return emptySet()
     val effectiveEvilSeats = clocktowerChefEffectiveEvilSeats(players, option)
     val evaluatedValue = FixedInformationEvaluator.chefEvilPairs(players) { player ->
         player.seat in effectiveEvilSeats
