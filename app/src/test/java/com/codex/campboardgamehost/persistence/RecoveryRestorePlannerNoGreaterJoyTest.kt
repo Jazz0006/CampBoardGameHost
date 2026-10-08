@@ -112,20 +112,28 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                 clocktowerTeam = role.team,
                 clocktowerRole = role,
                 clocktowerShownRole = role,
-                eliminatedRound = if (index == 0) 1 else null,
+                eliminatedRound = if (index == 0) 2 else null,
             )
         }
         val learnedHistory = ActionFactTimeline(listOf(
             TimelineBoundActionFact(
-                ActionFact.Death(
-                    "real-death", 0L, 1,
-                    KlutzDeathTriggerEvidenceV1(RoleId("Klutz"), true, false, 0L),
-                ),
-                TimelinePoint(StorytellerPhase.DAWN, 1, 1, 0L),
+                ActionFact.Nomination("ngj-nomination", 0L, 3, 4, firstVirginNomination = false),
+                TimelinePoint(StorytellerPhase.DAY, 1, 1, 0L),
             ),
             TimelineBoundActionFact(
-                ActionFact.KlutzLearnedDeath("real-learn", 1L, 1, "real-death", true),
-                TimelinePoint(StorytellerPhase.DAY, 2, 1, 1L),
+                ActionFact.Vote("ngj-vote", 1L, 3, 4, listOf(2, 3, 4), emptyList()),
+                TimelinePoint(StorytellerPhase.DAY, 1, 2, 1L),
+            ),
+            TimelineBoundActionFact(
+                ActionFact.Death(
+                    "real-death", 2L, 1,
+                    KlutzDeathTriggerEvidenceV1(RoleId("Klutz"), true, false, 0L),
+                ),
+                TimelinePoint(StorytellerPhase.DAWN, 2, 1, 2L),
+            ),
+            TimelineBoundActionFact(
+                ActionFact.KlutzLearnedDeath("real-learn", 3L, 1, "real-death", true),
+                TimelinePoint(StorytellerPhase.DAY, 2, 2, 3L),
             ),
         ))
         val saved = RecoverySnapshot(
@@ -136,7 +144,7 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                 currentDealIndex = 0,
                 round = 2,
                 cards = cards,
-                records = listOf(EliminationRecord(1, "Player 1")),
+                records = listOf(EliminationRecord(2, "Player 1")),
                 outcome = null,
                 identity = ClocktowerRecoveryIdentity(
                     script = ClocktowerScript.NoGreaterJoy,
@@ -171,10 +179,10 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                     highestVoteCount = 0,
                 ),
                 history = ClocktowerRecoveryHistory(
-                    gameStateRevision = 2L,
+                    gameStateRevision = 4L,
                     playerInputRevision = 0L,
                     actionTimeline = learnedHistory,
-                    nextTimelineGlobalSequence = 2L,
+                    nextTimelineGlobalSequence = 4L,
                     events = emptyList(),
                     epistemicObservations = emptyList(),
                 ),
@@ -194,17 +202,24 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
         assertEquals(ClocktowerScript.NoGreaterJoy, recoveredGame.identity.script)
         assertEquals("Player 1", recoveredGame.mechanics.pendingKlutzName)
         assertTrue(recoveredGame.mechanics.klutzReturnToDawn)
-        assertEquals(1, recoveredGame.cards.first().eliminatedRound)
+        assertEquals(2, recoveredGame.cards.first().eliminatedRound)
         assertEquals(learnedHistory, recoveredGame.history.actionTimeline)
+        assertEquals(listOf("nomination", "vote"), learnedHistory.entries.take(2).map { entry ->
+            when (entry.fact) {
+                is ActionFact.Nomination -> "nomination"
+                is ActionFact.Vote -> "vote"
+                else -> "unexpected"
+            }
+        })
 
         val forgedChoice = TimelineBoundActionFact(
-            ActionFact.KlutzChoice("forged-choice", 2L, 1, 2, "no-such-learn"),
-            TimelinePoint(StorytellerPhase.DAY, 2, 2, 2L),
+            ActionFact.KlutzChoice("forged-choice", 4L, 1, 2, "no-such-learn"),
+            TimelinePoint(StorytellerPhase.DAY, 2, 3, 4L),
         )
         val bad = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
             history = saved.game.history.copy(
                 actionTimeline = ActionFactTimeline(learnedHistory.entries + forgedChoice),
-                nextTimelineGlobalSequence = 3L,
+                nextTimelineGlobalSequence = 5L,
             ),
         ))
         val rejected = RecoveryRestorePlanner.prepare(
@@ -215,6 +230,42 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
             clocktowerRulesetResolver = { _, _ -> null },
         )
         assertTrue(rejected is RecoveryPlanPreparation.Rejected)
+
+        // A forged Virgin-first marker on NGJ must not survive strict Recovery.
+        val fakeVirgin = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
+            history = saved.game.history.copy(
+                actionTimeline = ActionFactTimeline(learnedHistory.entries.mapIndexed { index, entry ->
+                    if (index == 0) entry.copy(fact =
+                        (entry.fact as ActionFact.Nomination).copy(firstVirginNomination = true))
+                    else entry
+                }),
+            ),
+        ))
+        assertTrue(RecoveryRestorePlanner.prepare(
+            raw = RecoverySnapshotJsonCodec.encode(fakeVirgin),
+            expectedCompatibilityToken = TOKEN,
+            nowMillis = NOW,
+            roleByName = byName::get,
+            clocktowerRulesetResolver = { _, _ -> null },
+        ) is RecoveryPlanPreparation.Rejected)
+
+        // An NGJ vote with no matching confirmed nomination also must fail.
+        val unmatchedVote = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
+            history = saved.game.history.copy(
+                actionTimeline = ActionFactTimeline(learnedHistory.entries.mapIndexed { index, entry ->
+                    if (index == 1) entry.copy(fact =
+                        (entry.fact as ActionFact.Vote).copy(nomineeSeat = 5))
+                    else entry
+                }),
+            ),
+        ))
+        assertTrue(RecoveryRestorePlanner.prepare(
+            raw = RecoverySnapshotJsonCodec.encode(unmatchedVote),
+            expectedCompatibilityToken = TOKEN,
+            nowMillis = NOW,
+            roleByName = byName::get,
+            clocktowerRulesetResolver = { _, _ -> null },
+        ) is RecoveryPlanPreparation.Rejected)
     }
 
     private companion object {
