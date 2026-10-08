@@ -287,6 +287,10 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
             com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.REGISTRATION_RESOLUTION
         ) {
             StorytellerRegistrationRulingProducerV1.validateCommitted(frozen, event)
+        } else if (frozen.identity.decisionTypeId ==
+            com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.DAY_ABILITY_REGISTRATION
+        ) {
+            DayAbilityRegistrationRulingProducerV1.validateCommitted(frozen, event)
         } else {
             require(event.registrations.isEmpty()) {
                 "Only the verified registration producer can commit explicit RegistrationFact values."
