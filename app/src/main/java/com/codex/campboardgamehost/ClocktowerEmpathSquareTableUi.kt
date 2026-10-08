@@ -99,6 +99,8 @@ internal fun clocktowerEmpathContributingSeats(
     option: ClocktowerDisplayOption?,
     value: Int,
 ): Set<Int> {
+    // Legal Spy/Recluse explanations are not a committed registration ruling.
+    if (option?.legalRegistrationWitnesses?.isNotEmpty() == true) return emptySet()
     val scopeSeats = clocktowerEmpathScopeSeats(option?.proposition, players.size)
     if (scopeSeats.isEmpty()) return emptySet()
     val contributing = clocktowerEmpathEffectiveEvilSeats(players, option)

@@ -2690,20 +2690,28 @@ internal fun ClocktowerJudgeScreen(
                     onSelectChambermaidSecond(if (chambermaidSecond == it) null else it)
                 },
                 onApplyRecommendedDisplayOption = { option ->
-                    registrationState.applyRecommendedWitness(
-                        currentStep.spyRegistrationKey,
-                        currentStep.recluseRegistrationKey,
-                        option,
-                    )
-                    currentStep.spyRegistrationKey?.let { key ->
-                        currentStep.roleEnName?.let { role ->
-                            recordSpyRegistration(key, currentStep.spyRegistrationTeams, role, currentStep.spyRegistrationDetail)
+                    // A player-visible result is NOT a ruling on any of its legal Spy/Recluse
+                    // witnesses. Only explicitly edited registration controls can produce a
+                    // registration event; contradictory manual rulings block publication.
+                    if (!registrationState.manualChoicesMatchResult(
+                            currentStep.spyRegistrationKey,
+                            currentStep.recluseRegistrationKey,
+                            option,
+                        )
+                    ) {
+                        false
+                    } else {
+                        currentStep.spyRegistrationKey?.let { key ->
+                            currentStep.roleEnName?.let { role ->
+                                recordSpyRegistration(key, currentStep.spyRegistrationTeams, role, currentStep.spyRegistrationDetail)
+                            }
                         }
-                    }
-                    currentStep.recluseRegistrationKey?.let { key ->
-                        currentStep.roleEnName?.let { role ->
-                            recordRecluseRegistration(key, currentStep.recluseRegistrationTeams, role)
+                        currentStep.recluseRegistrationKey?.let { key ->
+                            currentStep.roleEnName?.let { role ->
+                                recordRecluseRegistration(key, currentStep.recluseRegistrationTeams, role)
+                            }
                         }
+                        true
                     }
                 },
                 onShowPlayerDisplay = { displayStep ->

@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -71,14 +72,15 @@ internal fun ClocktowerNightStepCardLocalized(
     onSelectFortuneTellerSecond: (String) -> Unit,
     onSelectChambermaidFirst: (String) -> Unit,
     onSelectChambermaidSecond: (String) -> Unit,
-    onApplyRecommendedDisplayOption: (ClocktowerDisplayOption) -> Unit,
+    onApplyRecommendedDisplayOption: (ClocktowerDisplayOption) -> Boolean,
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
+    val hostContext = LocalContext.current
+    val language = hostContext.resources.configuration.locales[0].language
     val plannedFullScreenSurface =
         (surfacePlan as? ClocktowerNightSurfacePlan.FullScreen)?.surface
     val presentationRoleEnName = clocktowerNightPresentationRoleEnName(
@@ -425,7 +427,15 @@ internal fun ClocktowerNightStepCardLocalized(
         option: ClocktowerDisplayOption,
         transformDisplayStep: (ClocktowerNightStepUi) -> ClocktowerNightStepUi = { it },
     ) {
-        onApplyRecommendedDisplayOption(option)
+        if (!onApplyRecommendedDisplayOption(option)) {
+            Toast.makeText(
+                hostContext,
+                if (language == "en") "The selected result conflicts with an explicitly chosen registration."
+                else "当前结果与手动指定的登记解释冲突，请先修改登记选择。",
+                Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
         onShowPlayerDisplay(transformDisplayStep(resolveClocktowerPlayerDisplay(step, option)))
     }
 

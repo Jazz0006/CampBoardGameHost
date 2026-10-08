@@ -1,15 +1,50 @@
 package com.codex.campboardgamehost
 
 /**
- * Result-first projection for information affected by Spy/Recluse registration.
- *
- * Different legal registration witnesses may produce the same player-visible proposition. The
- * Storyteller chooses that final proposition once; the first candidate's witness remains attached
- * so the existing registration callback can commit a deterministic legal ruling before display.
+ * An explanation that COULD legally produce an observed result. It is not a Storyteller ruling.
+ * Scope is the current ability interaction, never a permanent property of Spy or Recluse.
+ */
+internal data class ClocktowerRegistrationWitness(
+    val spyRegistersGood: Boolean? = null,
+    val spyRegisteredRoleEnName: String? = null,
+    val recluseRegistersEvil: Boolean? = null,
+    val recluseRegisteredRoleEnName: String? = null,
+)
+
+/**
+ * Result-first means selecting a result does NOT select an arbitrary legal witness.
+ * Keep ALL possible explanations explicitly on the projected option, and erase the old witness
+ * fields so no consumer can accidentally commit/display the first enumeration as canonical.
+ * The same grouping applies to numeric, boolean and role-reveal propositions.
  */
 internal fun distinctClocktowerFinalInformationResults(
     candidates: List<ClocktowerDisplayOption>,
-): List<ClocktowerDisplayOption> = candidates.distinctBy(::clocktowerFinalInformationResultId)
+): List<ClocktowerDisplayOption> = candidates
+    .groupBy(::clocktowerFinalInformationResultId)
+    .values.map { alternatives ->
+        val witnesses = alternatives.flatMap { candidate ->
+            candidate.legalRegistrationWitnesses.ifEmpty {
+                if (
+                    candidate.spyRegistersGood != null || candidate.recluseRegistersEvil != null ||
+                    candidate.spyRegisteredRoleEnName != null || candidate.recluseRegisteredRoleEnName != null
+                ) {
+                    listOf(ClocktowerRegistrationWitness(
+                        spyRegistersGood = candidate.spyRegistersGood,
+                        spyRegisteredRoleEnName = candidate.spyRegisteredRoleEnName,
+                        recluseRegistersEvil = candidate.recluseRegistersEvil,
+                        recluseRegisteredRoleEnName = candidate.recluseRegisteredRoleEnName,
+                    ))
+                } else emptyList()
+            }
+        }.distinct()
+        alternatives.first().copy(
+            spyRegistersGood = null,
+            spyRegisteredRoleEnName = null,
+            recluseRegistersEvil = null,
+            recluseRegisteredRoleEnName = null,
+            legalRegistrationWitnesses = witnesses,
+        )
+    }
 
 internal fun clocktowerFinalInformationResultId(option: ClocktowerDisplayOption): String = listOf(
     option.displayKind.name,
@@ -24,7 +59,7 @@ internal data class ClocktowerAlignmentRegistrationWitness(
     val recluseRegistersEvil: Boolean?,
 )
 
-/** Current ruling comes first so deduplication preserves it whenever it yields the chosen result. */
+/** Enumeration may prefer the current UI state, but order never grants a candidate adjudication authority. */
 internal fun clocktowerAlignmentRegistrationWitnesses(
     currentSpyRegistersGood: Boolean,
     spySelectable: Boolean,

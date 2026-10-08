@@ -9,16 +9,34 @@ import org.junit.Test
 
 class ClocktowerRegistrationResultDomainTest {
     @Test
-    fun `duplicate final result keeps the first registration witness`() {
-        val currentWitness = numberOption(value = 1, spyRegistersGood = false)
-        val alternateWitness = numberOption(value = 1, spyRegistersGood = true)
+    fun `every result keeps all legal witnesses but no implied ruling regardless of input order`() {
+        val a = numberOption(value = 1, spyRegistersGood = false)
+        val b = numberOption(value = 1, spyRegistersGood = true)
+        listOf(listOf(a, b), listOf(b, a), listOf(a, b, a)).forEach { variants ->
+            val projected = distinctClocktowerFinalInformationResults(variants)
+            assertEquals(1, projected.size)
+            val result = projected.single()
+            assertEquals(null, result.spyRegistersGood)
+            assertEquals(null, result.recluseRegistersEvil)
+            assertEquals(null, result.spyRegisteredRoleEnName)
+            assertEquals(null, result.recluseRegisteredRoleEnName)
+            assertEquals(
+                setOf(ClocktowerRegistrationWitness(spyRegistersGood = false),
+                    ClocktowerRegistrationWitness(spyRegistersGood = true)),
+                result.legalRegistrationWitnesses.toSet(),
+            )
+        }
+    }
 
-        val projected = distinctClocktowerFinalInformationResults(
-            listOf(currentWitness, alternateWitness),
+    @Test
+    fun `result grouping is idempotent and works for every proposition type`() {
+        val options = listOf(
+            numberOption(value = 1, spyRegistersGood = false),
+            numberOption(value = 1, spyRegistersGood = true),
         )
-
-        assertEquals(1, projected.size)
-        assertEquals(false, projected.single().spyRegistersGood)
+        val projected = distinctClocktowerFinalInformationResults(options)
+        assertEquals(projected, distinctClocktowerFinalInformationResults(projected))
+        assertEquals(2, projected.single().legalRegistrationWitnesses.size)
     }
 
     @Test

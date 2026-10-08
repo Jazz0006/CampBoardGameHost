@@ -98,7 +98,7 @@ internal fun clocktowerChefRecluseSeat(players: List<PlayerState>): Int? = playe
     .firstOrNull { player -> player.actualRole.value == "Recluse" }
     ?.seat
 
-/** Apply the already-selected typed Spy/Recluse registration witness attached to the result. */
+/** Compute a visual explanation only when supplied with a separately adjudicated witness. */
 internal fun clocktowerChefEffectiveEvilSeats(
     players: List<PlayerState>,
     option: ClocktowerDisplayOption?,
@@ -130,6 +130,9 @@ internal fun clocktowerChefEffectivePairSeats(
     option: ClocktowerDisplayOption?,
     value: Int,
 ): Set<Int> {
+    // A result may have multiple equally legal contributing pairs. Never imply the first
+    // explanation was selected by highlighting its seats.
+    if (option?.legalRegistrationWitnesses?.isNotEmpty() == true) return emptySet()
     val effectiveEvilSeats = clocktowerChefEffectiveEvilSeats(players, option)
     val evaluatedValue = FixedInformationEvaluator.chefEvilPairs(players) { player ->
         player.seat in effectiveEvilSeats

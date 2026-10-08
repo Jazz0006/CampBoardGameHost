@@ -15,7 +15,7 @@ internal class ClocktowerRegistrationInteractionState {
 
     fun spyRole(key: String?): String? = key?.let(spyRoles::get)
 
-    /** Manual toggles retain the last role; only a final option can clear its witness. */
+    /** Explicit manual toggles retain the last role; displayed results do not change the ruling. */
     fun chooseSpy(key: String, good: Boolean, defaultRole: String? = null) {
         spyRegistersGood[key] = good
         if (good && defaultRole != null && spyRoles[key] == null) spyRoles[key] = defaultRole
@@ -25,15 +25,22 @@ internal class ClocktowerRegistrationInteractionState {
         spyRoles[key] = role
     }
 
-    fun spyWillRecord(key: String?): Boolean = key != null && recordedSpy[key] != true
+    /** Only an explicit manual choice can be committed as a registration ruling. */
+    fun spyHasExplicitChoice(key: String?): Boolean = key != null && spyRegistersGood.containsKey(key)
+
+    fun spyWillRecord(key: String?): Boolean =
+        spyHasExplicitChoice(key) && recordedSpy[key] != true
 
     fun markSpyRecorded(key: String): Boolean {
-        if (recordedSpy[key] == true) return false
+        if (!spyHasExplicitChoice(key) || recordedSpy[key] == true) return false
         recordedSpy[key] = true
         return true
     }
 
     fun recluseIsEvil(key: String?): Boolean = key != null && recluseRegistersEvil[key] == true
+
+    fun recluseHasExplicitChoice(key: String?): Boolean =
+        key != null && recluseRegistersEvil.containsKey(key)
 
     fun recluseRole(key: String?): String? = key?.let(recluseRoles::get)
 
@@ -47,32 +54,37 @@ internal class ClocktowerRegistrationInteractionState {
     }
 
     fun markRecluseRecorded(key: String): Boolean {
-        if (recordedRecluse[key] == true) return false
+        if (!recluseHasExplicitChoice(key) || recordedRecluse[key] == true) return false
         recordedRecluse[key] = true
         return true
     }
 
-    /** Witness mutation precedes the caller's registration-recording effects. */
-    fun applyRecommendedWitness(spyKey: String?, recluseKey: String?, option: ClocktowerDisplayOption) {
-        if (spyKey != null) {
-            option.spyRegistersGood?.let { good ->
-                spyRegistersGood[spyKey] = good
-                if (good) {
-                    option.spyRegisteredRoleEnName?.let { spyRoles[spyKey] = it }
-                } else {
-                    spyRoles.remove(spyKey)
-                }
-            }
-        }
-        if (recluseKey != null) {
-            option.recluseRegistersEvil?.let { evil ->
-                recluseRegistersEvil[recluseKey] = evil
-                if (evil) {
-                    option.recluseRegisteredRoleEnName?.let { recluseRoles[recluseKey] = it }
-                } else {
-                    recluseRoles.remove(recluseKey)
-                }
-            }
+    /**
+     * Validate a manually specified interpretation against ALL explanations for this exact result.
+     * A displayed result alone never modifies registration. Empty witness coverage is not evidence
+     * of a specific ruling; it is left to the ability's ordinary manual interaction.
+     */
+    fun manualChoicesMatchResult(
+        spyKey: String?,
+        recluseKey: String?,
+        option: ClocktowerDisplayOption,
+    ): Boolean {
+        val witnesses = option.legalRegistrationWitnesses
+        if (witnesses.isEmpty()) return true
+        val spyChosen = spyHasExplicitChoice(spyKey)
+        val recluseChosen = recluseHasExplicitChoice(recluseKey)
+        if (!spyChosen && !recluseChosen) return true
+        val chosenSpyGood = spyKey?.let(spyRegistersGood::get)
+        val chosenRecluseEvil = recluseKey?.let(recluseRegistersEvil::get)
+        val chosenSpyRole = spyKey?.let(spyRoles::get)
+        val chosenRecluseRole = recluseKey?.let(recluseRoles::get)
+        return witnesses.any { witness ->
+            (!spyChosen || witness.spyRegistersGood == chosenSpyGood) &&
+                (!recluseChosen || witness.recluseRegistersEvil == chosenRecluseEvil) &&
+                (!spyChosen || witness.spyRegisteredRoleEnName == null ||
+                    witness.spyRegisteredRoleEnName == chosenSpyRole) &&
+                (!recluseChosen || witness.recluseRegisteredRoleEnName == null ||
+                    witness.recluseRegisteredRoleEnName == chosenRecluseRole)
         }
     }
 }
