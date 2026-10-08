@@ -33,19 +33,23 @@ internal data class ClocktowerConfirmedRegistrationPublicationV1(
     val sourceSeat: Int,
     val shownProposition: InformationProposition,
     val choices: List<ClocktowerConfirmedRegistrationChoiceV1>,
+    val legalResultWitnesses: List<ClocktowerRegistrationWitness>,
 ) {
     init {
         require(interactionId.isNotBlank() && observationRecordId.isNotBlank() && sourceSeat > 0)
         require(choices.isNotEmpty() && choices.map { it.subjectSeat }.distinct().size == choices.size)
+        require(legalResultWitnesses.isNotEmpty())
     }
 }
 
 internal sealed interface ClocktowerResultRegistrationPlanV1 {
     data object NoVerifiedWitness : ClocktowerResultRegistrationPlanV1
     data object ConflictingManualChoice : ClocktowerResultRegistrationPlanV1
-    data class Ready(val choices: List<ClocktowerConfirmedRegistrationChoiceV1>) :
-        ClocktowerResultRegistrationPlanV1 {
-        init { require(choices.isNotEmpty()) }
+    data class Ready(
+        val choices: List<ClocktowerConfirmedRegistrationChoiceV1>,
+        val legalResultWitnesses: List<ClocktowerRegistrationWitness>,
+    ) : ClocktowerResultRegistrationPlanV1 {
+        init { require(choices.isNotEmpty() && legalResultWitnesses.isNotEmpty()) }
     }
 }
 
@@ -83,9 +87,9 @@ internal fun clocktowerPlanConfirmedResultRegistrations(
     fun matchesChoice(witness: ClocktowerRegistrationWitness): Boolean =
         (spy == null || witness.spyRegistersGood == spy.usesSpecialRegistration) &&
         (recluse == null || witness.recluseRegistersEvil == recluse.usesSpecialRegistration) &&
-        (spy?.selectedRegisteredRoleEnName == null || witness.spyRegisteredRoleEnName == null ||
+        (spy?.selectedRegisteredRoleEnName == null ||
             witness.spyRegisteredRoleEnName == spy.selectedRegisteredRoleEnName) &&
-        (recluse?.selectedRegisteredRoleEnName == null || witness.recluseRegisteredRoleEnName == null ||
+        (recluse?.selectedRegisteredRoleEnName == null ||
             witness.recluseRegisteredRoleEnName == recluse.selectedRegisteredRoleEnName)
     if (hasManual && witnesses.none(::matchesChoice)) {
         return ClocktowerResultRegistrationPlanV1.ConflictingManualChoice
@@ -125,5 +129,5 @@ internal fun clocktowerPlanConfirmedResultRegistrations(
         return if (hasManual) ClocktowerResultRegistrationPlanV1.ConflictingManualChoice
             else ClocktowerResultRegistrationPlanV1.NoVerifiedWitness
     }
-    return ClocktowerResultRegistrationPlanV1.Ready(choices)
+    return ClocktowerResultRegistrationPlanV1.Ready(choices, witnesses)
 }
