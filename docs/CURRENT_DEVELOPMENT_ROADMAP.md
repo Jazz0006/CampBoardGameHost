@@ -69,7 +69,7 @@ GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEP
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
 GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
-GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 ACCEPTED PR #260; C2C-1A typed registration + causal Recovery foundation ACCEPTED PR #263; C2C-1B real Host confirmation wiring NEXT; R1C overall IN PROGRESS
+GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 PR #260 / 1A PR #263 ACCEPTED; C2C-1B private-night Host typed registration/Recovery ACCEPTED PR #265 (T4); C2C-1C daytime/non-private registrations NEXT; R1C IN PROGRESS
 ~~~
 
 ### GSP-R1A capture gate — 2026-10-08
@@ -87,6 +87,10 @@ The code-level R1A inventory confirms canonical Global actions and some typed pl
 ### GSP-R1C2C-1A typed registration-resolution / causal Recovery foundation accepted — 2026-10-08
 
 [Accepted C2C-1A exact scope and CI/R2](GSP_R1C2C1A_TYPED_REGISTRATION_RECOVERY_ACCEPTANCE_2026-10-08.md): PR #263, squash `9d7b844d37c8ebad1448836ad3946b26af006d5c`; CI #3893 Android FAST GREEN / R2 #3549 GREEN, **no full Android T4**. Typed confirmation requires an actual global observation, role/subject legality and current frozen time; explicit special registrations are only admitted through a verified journal commit, survive strict Recovery, and can be corrected with historical as-of equality. **No UI confirmation wiring yet:** no live Host Spy/Recluse ruling is captured by this slice; historical unknown and multi-witness uncertainty remain protected. C2C-1B must wire real UI/Host confirmation with final shown-result witness compatibility and re-confirmation/Recovery tests. **R1C2C / R1C remain IN PROGRESS.**
+
+### GSP-R1C2C-1B — actual Host private-night registration/Recovery accepted — 2026-10-08
+
+[Exact C2C-1B acceptance](GSP_R1C2C1B_LIVE_REGISTRATION_ACCEPTANCE_2026-10-08.md) and [production coverage contract](GSP_R1C2C1B_LIVE_REGISTRATION_PRODUCER_SCOPE_2026-10-08.md): PR #265 squash `81ee09066a9f4648cc42f8ff1abe3a0d157f5ae7`, exact-head CI **#3914 T4 GREEN** (full Android JVM + debug APK, ASP, Real Clingo) and R2 **#3568 GREEN**. Confirmed numeric/boolean/role information with verified legal registration witnesses now has a real Host preflight, typed global publication, explicit/known-unresolved causal ruling, correction and Recovery path. A no-longer-present UI toggle cannot erase previously explicit history. Not all private result families have sufficient verified candidate coverage; no Day/Virgin/Klutz/Slayer mechanical registration producer exists yet. **C2C-1B private-night vertical COMPLETE; C2C-1 and overall R1C2C/R1C remain IN PROGRESS. Next C2C-1C audits and implements daytime/non-private registration events without inventing private observations.** No provider/LLM authority or GSP-R2 advancement.
 
 ### GSP-R1C2B accepted Mayor vertical — 2026-10-08
 
