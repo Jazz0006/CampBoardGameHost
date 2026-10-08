@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-10-08 Australia/Sydney  
+> Updated: 2026-10-09 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**  
 > Historical checkpoint detail belongs in completion/audit documents under `docs/archive/` or the linked slice audits, not in this live roadmap.
@@ -69,8 +69,12 @@ GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEP
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
 GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
-GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — 1A/#263, 1B/#265, TB 1C1/#267, 1C2/#269; synthetic 1C3A/#271 and 1C3B/#273 coverage RETRACTED; 1C4 audit FAIL; 1C5A NGJ correction #276, 1C5B TB day actions #278, 1C5C NGJ Klutz learn/choice #280 T4 ACCEPTED; 1C6 combined reachable-producer audit NEXT; R1C IN PROGRESS
+GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — 1A/#263 and 1B/#265 accepted; 1C bounded actual-script day registration/mechanics COMPLETE via 1C1/#267, 1C2/#269, 1C5A/#276, 1C5B/#278, 1C5C/#280 and 1C6/#282 T4 accepted; synthetic Klutz/Spy 1C3A/#271 and 1C3B/#273 live coverage RETRACTED; C2C-2 confirmed information family NEXT; C2C-3 setup/discretion OPEN; R1C IN PROGRESS
 ~~~
+
+### GSP-R1C2C-1C6 — actual TB/NGJ public day coverage and Recovery accepted — 2026-10-09
+
+[Exact accepted C2C-1C6](GSP_R1C2C1C6_DAY_FAMILY_ACCEPTANCE_2026-10-09.md) and [audit matrix](GSP_R1C2C1C6_REAL_DAY_COVERAGE_AUDIT_2026-10-09.md): PR #282 squash `a5a6e170a13ba886b396400e5e692d2161892cd4`, exact head `19f74820f69b3d7b2559137d8bd10ed2152e4ba1`, **CI #3964 FULL T4 GREEN** (Android FULL + debug APK, ASP, Real Clingo), **R2 #3601 GREEN**. Live **No Greater Joy** public nomination/vote were missing from canonical GLOBAL_V1 due to a TB-only gate; now both scripts emit these typed player facts without inventing NGJ Virgin ability. Newly typed `NoExecution` explicitly records public end-of-day with no execution **before** Mayor win or phase transition, not inferred from missing death history. Strict Recovery rejects NGJ faux Slayer/first Virgin, duplicate no-execution, or same-day execution contradiction; actual NGJ nomination → vote → no-execution → death → Klutz-learned chronology and public replay tested. **Bounded C2C-1C public/day mechanical and real-registration family COMPLETE** for currently supported TB/NGJ, **but C2C-1 / R1C2C / R1C remain IN PROGRESS**. **NEXT C2C-2** information-result producers incl. NGJ Artist question/answer and Sage/Clockmaker/Chambermaid; C2C-3 setup remains. No GSP-R2/LLM API.
 
 ### GSP-R1C2C-1C5C — NGJ Klutz learned-death and public player-choice accepted — 2026-10-09
 
