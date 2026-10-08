@@ -238,7 +238,7 @@ class StorytellerCausalDecisionJournalV1Test {
                     interactionId = "hypothetical",
                     subjectSeat = 4,
                     registeredAlignment = Alignment.EVIL,
-                    registrationQuestion = com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion.Alignment,
+                    registrationQuestion = com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion.ALIGNMENT,
                     reason = com.codex.campboardgamehost.clocktower.domain.RegistrationReason.RECLUSE_ABILITY,
                 ),
             ),
