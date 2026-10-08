@@ -263,6 +263,7 @@ internal object EnumeratedHistoricalWorldReplay {
                 is PlayerHistoricalEvent.PublicSlayerShot,
                 is PlayerHistoricalEvent.PublicNomination,
                 is PlayerHistoricalEvent.PublicVote,
+                is PlayerHistoricalEvent.PublicNoExecution,
                 is PlayerHistoricalEvent.PublicKlutzChoice -> Unit // Player choice does not, by itself, reveal true target alignment.
                 is PlayerHistoricalEvent.PublicExecution -> {
                     worldSet = worldSet.eliminate(event.targetSeat)
