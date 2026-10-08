@@ -69,7 +69,7 @@ GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEP
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
 GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
 GSP-R1C2B Mayor durable producer + Recovery causality          COMPLETE / ACCEPTED — PR #258; CI #3874 T4 / R2 #3535 GREEN; Mayor production vertical only
-GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 #260 / 1A #263 / 1B #265 ACCEPTED; C2C-1C1 Slayer #267 / 1C2 Virgin #269 / 1C3A Klutz #271 / 1C3B canonical death trigger #273 T4 ACCEPTED; C2C-1C4 production coverage re-audit NEXT; R1C IN PROGRESS
+GSP-R1C2C remaining producers + registration ruling history    IN PROGRESS — C2C-0 #260 / 1A #263 / 1B #265 accepted; 1C1 Slayer #267 and 1C2 Virgin #269 reachable TB accepted; 1C3A/#271 and 1C3B/#273 synthetic Klutz/Spy live coverage RETRACTED (1C3B death snapshot infrastructure remains T4-tested); C2C-1C4 AUDIT COMPLETE / COVERAGE FAILED; 1C5A production-reachable correction NEXT; R1C IN PROGRESS
 ~~~
 
 ### GSP-R1A capture gate — 2026-10-08
@@ -107,6 +107,10 @@ The code-level R1A inventory confirms canonical Global actions and some typed pl
 ### GSP-R1C2C-1C3B — canonical Klutz predeath ability-state and Recovery accepted — 2026-10-08
 
 [Exact accepted C2C-1C3B](GSP_R1C2C1C3B_KLUTZ_DEATH_TRIGGER_ACCEPTANCE_2026-10-08.md) and [scope](GSP_R1C2C1C3B_KLUTZ_DEATH_TRIGGER_SCOPE_2026-10-08.md): PR #273 squash `fb67736fe5659a7601bdda5f6962afe5d5c87ed7`, exact head `0e3b969a3242a35353ec3d33f1caa8267e0e177d`, **CI #3939 T4 GREEN** Android FULL/debug APK, ASP, Real Clingo; **R2 #3585 GREEN**. Session canonical Klutz Death/Execution captures actual role, alive, poisoned and revision before death clears poisoning; action timeline and strict Recovery carry that proof, including no-Poisoner games and correct poisoned-at-death rejection. Old missing predeath snapshots remain unknown; historical 1C3A old-poison proof remains supported. **C2C-1C3B COMPLETE; NEXT C2C-1C4** re-audits other day/non-private registration, death/learn-time mechanics, pending action coverage and strict Recovery before C2C-1C can close. **C2C-1C, C2C-1, R1C2C, R1C all IN PROGRESS**, no GSP-R2/provider authority.
+
+### GSP-R1C2C-1C4 — real script reachability and Klutz learn-time audit — 2026-10-08
+
+[Authoritative C2C-1C4 audit](GSP_R1C2C1C4_LIVE_DAY_REGISTRATION_REACHABILITY_AUDIT_2026-10-08.md): **AUDIT COMPLETE / COVERAGE GATE FAILED**. Live `clocktowerRolesForScript` disjoint sets: **TB has Spy/Recluse/Virgin/Slayer but NO Klutz or Artist**; **No Greater Joy has Klutz/Artist but NO Spy/Recluse/Virgin/Slayer**. Thus C2C-1C3A #271 and 1C3B #273 used synthetic `trouble_brewing + Klutz + Spy` test rosters; those CI results were real but **claims of reachable Klutz/Spy production coverage are withdrawn**. C2C-1C3B's engine-owned pre-death snapshot remains useful and T4-tested, but `wasPoisoned` at *death* cannot prove ability functioning when Klutz **learns** of death. Current Klutz mechanical evil-win branch and its Storyteller/Recovery writer do not own a separate learned-of-death functioning point. TB Slayer explicit-actual/untouched and failed-shot history and some Virgin nomination replay also remain partial; NGJ Artist's shown yes/no is localized. **NEXT 1C5A**: real script-roster negative tests; remove/retire unreachable Klutz/Spy special production/UI while preserving durable Death/Execution proof; converge actual NGJ Klutz player-choice mechanics and `learn`-time semantics before C2C-1C5B live TB day registration/action closure. **C2C-1C, 1, R1C2C and R1C still IN PROGRESS.** Never treat GREEN synthetic tests as production reachability.
 
 ### GSP-R1C2B accepted Mayor vertical — 2026-10-08
 
