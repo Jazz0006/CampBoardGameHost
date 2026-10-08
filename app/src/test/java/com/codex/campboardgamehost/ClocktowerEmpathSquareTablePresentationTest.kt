@@ -156,6 +156,22 @@ class ClocktowerEmpathSquareTablePresentationTest {
     }
 
     @Test
+    fun `unresolved multiple Empath witnesses never mark one neighbour as the contributor`() {
+        val options = ClocktowerRegistrationResultPresentation.numericOptions(
+            title = "Empath", sourceSeat = 1, metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+            subjectSeats = listOf(2, 5), footer = "neighbours",
+            witnesses = listOf(
+                ClocktowerAlignmentRegistrationWitness(false, false),
+                ClocktowerAlignmentRegistrationWitness(true, true),
+            ),
+            valueFor = { 1 },
+        )
+        val result = options.single()
+        assertEquals(2, result.legalRegistrationWitnesses.size)
+        assertEquals(emptySet<Int>(), clocktowerEmpathContributingSeats(players(), result, value = 1))
+    }
+
+    @Test
     fun `single result never exposes contribution as a selection`() {
         val only = ClocktowerEmpathResultChoice(
             key = "one",
