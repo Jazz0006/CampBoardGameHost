@@ -52,7 +52,7 @@ class Api0OfflineTest(unittest.TestCase):
         self.assertEqual({(a["arm"], a["checkpoint"]) for a in first}, {
             (arm, d) for arm in api.ARMS for d in ("D0", "D1", "D2")
         })
-        self.assertEqual(len({a["prompt_sha256"] for a in first}), 7)  # D0 A/B identical
+        self.assertEqual(len({a["prompt_sha256"] for a in first}), 9)  # A/B/C have distinct input contracts
 
     def sample(self, candidate: str) -> dict:
         return {
