@@ -960,7 +960,12 @@ internal fun ClocktowerJudgeScreen(
             phase = phase.toStorytellerPhase(),
             round = round, sequence = nightStepIndex, sourceSeat = actorSeat,
             sourceAbility = RoleId(requireNotNull(displayStep.roleEnName)), visibility = ObservationVisibility.PRIVATE,
-            recipientSeats = setOf(actorSeat), reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            recipientSeats = setOf(actorSeat),
+            reliability = if (clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)) {
+                ObservationReliability.KNOWN_MALFUNCTIONING
+            } else {
+                ObservationReliability.RECEIVED_AS_FUNCTIONING
+            },
             proposition = proposition,
         ))
     }
@@ -2684,7 +2689,18 @@ internal fun ClocktowerJudgeScreen(
                     val recluseChoice = registrationState.explicitChoice(
                         ClocktowerRegistrationSubject.RECLUSE, currentStep.recluseRegistrationKey,
                     )
-                    val plan = clocktowerPlanConfirmedResultRegistrations(
+                    val plan = if (clocktowerDisplayedInformationIsUnreliable(
+                            displayStep, ::actorIsUnreliable,
+                        )
+                    ) {
+                        // Drunk/poisoned results are arbitrary: a matching truthful witness is
+                        // not a historical explanation. Do not turn it into a canonical ruling.
+                        if (spyChoice != null || recluseChoice != null) {
+                            ClocktowerResultRegistrationPlanV1.ConflictingManualChoice
+                        } else {
+                            ClocktowerResultRegistrationPlanV1.NoVerifiedWitness
+                        }
+                    } else clocktowerPlanConfirmedResultRegistrations(
                         shownProposition = displayStep.informationDecisionConfirmation?.draft?.proposition
                             ?: displayStep.displayProposition,
                         shownKind = displayStep.displayKind,
