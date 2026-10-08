@@ -141,7 +141,7 @@ internal fun ClocktowerJudgeScreen(
     onConfirmDemonSuccessorTarget: (String) -> Unit,
     onConfirmNewDemon: () -> Unit,
     onSelectKlutzChoice: (String?) -> Unit,
-    onConfirmKlutzChoice: (Boolean) -> Unit,
+    onConfirmKlutzChoice: (Boolean, Boolean?) -> Unit,
     onConfirmArtistQuestion: (String, Boolean, Boolean) -> Unit,
     onSlayerShot: (String, String, Boolean) -> Unit,
     onPreflightVirginExecution: (String, Boolean) -> Unit,
@@ -2352,31 +2352,24 @@ internal fun ClocktowerJudgeScreen(
                 onSelectKlutzChoice(if (klutzChoiceName == playerName) null else playerName)
             },
             onConfirm = {
-                recordSpyRegistration(
-                    klutzRegistrationKey,
-                    listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                    "Klutz",
+                val explicitSpy = registrationState.explicitChoice(
+                    ClocktowerRegistrationSubject.SPY, klutzRegistrationKey,
+                )?.takeIf { spyCanRegister("Klutz") }
+                onConfirmKlutzChoice(
+                    spyRegistersGood(klutzRegistrationKey, "Klutz"),
+                    explicitSpy?.usesSpecialRegistration,
                 )
-                onConfirmKlutzChoice(spyRegistersGood(klutzRegistrationKey, "Klutz"))
             },
             specialContent = {
                 if (klutzRegistrationKey != null && spyCard != null) {
-                    ClocktowerSpyRegistrationDecisionControls(
-                        legalRoles = legalRegistrationRoles(
-                            klutzRegistrationKey,
-                            "Klutz",
-                            spyCard,
-                            listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                        )
-                            .map { it.enName to it.nameFor(language) },
+                    ClocktowerSpyGoodAlignmentDecisionControls(
                         registersGood = spyRegistersGood(klutzRegistrationKey, "Klutz"),
-                        registeredRoleEnName = registrationState.spyRole(klutzRegistrationKey),
+                        hasExplicitChoice = registrationState.spyHasExplicitChoice(klutzRegistrationKey),
                         enabled = spyCanRegister("Klutz"),
                         language = language,
                         onRegistersGoodChange = { good ->
-                            registrationState.chooseSpy(klutzRegistrationKey, good, defaultRole = "Washerwoman")
+                            registrationState.chooseSpy(klutzRegistrationKey, good)
                         },
-                        onRoleChange = { registrationState.chooseSpyRole(klutzRegistrationKey, it) },
                     )
                 }
             },
