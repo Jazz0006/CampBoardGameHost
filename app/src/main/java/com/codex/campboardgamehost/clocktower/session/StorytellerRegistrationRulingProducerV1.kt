@@ -23,6 +23,7 @@ import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.epistemic.referencedSeats
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDomain
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 
