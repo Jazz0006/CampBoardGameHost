@@ -810,6 +810,19 @@ internal fun CampBoardGameHostApp() {
      * The shared writer validates the persisted typed observation, complete legal witness,
      * per-subject rules and causal revision before mutating the Host-owned journal.
      */
+    fun canCommitConfirmedRegistrationResult(publication: ClocktowerConfirmedRegistrationPublicationV1): Boolean {
+        // LEGACY_LOCAL games must continue to display information without claiming a typed
+        // historical ruling. The production typed writer itself is GLOBAL_V1-only.
+        if (currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
+        ) return true
+        val session = clocktowerGameSession ?: return false
+        return publication.isRulesConsistent(
+            session.state.gameState,
+            clocktowerRoleDefinitionsForScript(currentClocktowerScript),
+        )
+    }
+
     fun commitConfirmedRegistrationResult(publication: ClocktowerConfirmedRegistrationPublicationV1) {
         if (currentGameKind != GameKind.Clocktower ||
             currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
@@ -2137,6 +2150,7 @@ internal fun CampBoardGameHostApp() {
                         onRecordEpistemicObservation = ::recordEpistemicObservation,
                         onCommitConfirmedInformationDecision = ::commitConfirmedInformationDecision,
                         onCommitConfirmedRegistrationResult = ::commitConfirmedRegistrationResult,
+                        onPreflightConfirmedRegistrationResult = ::canCommitConfirmedRegistrationResult,
                         onHostTools = {
                             hostToolTab = HostToolTab.Roles
                             showHostTools = true
