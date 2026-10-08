@@ -3,6 +3,9 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
+import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
+import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.requireCompatible
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
@@ -287,6 +290,32 @@ internal object RecoveryRestorePlanner {
         }
 
         validateSemanticHistory(game)
+        // Validate the entire optional causal journal BEFORE creating a Ready restore plan.
+        // Invalid corrections or old-prefix chronology must never fail halfway through UI apply.
+        game.history.causalDecisionJournal?.let { archive ->
+            require(game.identity.script == ClocktowerScript.TroubleBrewing || archive.records.isEmpty()) {
+                "Only the current Trouble Brewing typed snapshot can own a causal decision journal."
+            }
+            StorytellerCausalDecisionJournalV1.restore(
+                archive = archive,
+                currentSession = ClocktowerSessionState(
+                    gameId = game.identity.gameId,
+                    gameStateRevision = game.history.gameStateRevision,
+                    playerInputRevision = game.history.playerInputRevision,
+                    gameSeed = game.identity.gameSeed,
+                    gameState = game.cards.toClocktowerGameState(
+                        script = game.identity.script,
+                        seed = game.identity.gameSeed,
+                        poisonedPlayerName = mechanics.confirmedPoisonTarget,
+                    ),
+                    storytellerPlayerContextBySeat = game.history.storytellerPlayerContextBySeat,
+                    actionTimeline = game.history.actionTimeline,
+                    epistemicObservationLog = EpistemicObservationLog(game.history.epistemicObservations),
+                    semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+                    nextTimelineGlobalSequence = game.history.nextTimelineGlobalSequence,
+                ),
+            )
+        }
 
         val basis = ClocktowerRulesetPersistenceBasis(
             actualRoles.mapTo(linkedSetOf()) { role -> RoleId(role.enName) },

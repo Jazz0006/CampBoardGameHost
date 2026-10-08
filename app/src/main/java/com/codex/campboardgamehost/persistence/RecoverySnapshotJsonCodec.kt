@@ -106,6 +106,9 @@ internal object RecoverySnapshotJsonCodec {
         put("clocktowerHighestVoteCount", game.mechanics.highestVoteCount.coerceAtLeast(0))
         put("clocktowerEvents", AppGameStateJsonCodec.encodeEvents(game.history.events))
         put("clocktowerEpistemicObservations", encodeObservations(game.history.epistemicObservations))
+        game.history.causalDecisionJournal?.let { archive ->
+            put(ClocktowerCausalJournalPersistence.ROOT_KEY, ClocktowerCausalJournalPersistence.encode(archive))
+        }
     }
 
     private fun encodeStorytellerPlayerContext(

@@ -43,6 +43,10 @@ import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.AbilityState
+import com.codex.campboardgamehost.clocktower.domain.TruthRelation
+import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderPriorDecisionV1
 import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
@@ -69,6 +73,8 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevisio
 import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionBoundary
 import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
+import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
+import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
@@ -334,6 +340,8 @@ internal fun CampBoardGameHostApp() {
     var selectedClocktowerScript by remember { mutableStateOf<ClocktowerScript?>(null) }
     var clocktowerGameSession by remember { mutableStateOf<ClocktowerGameSession?>(null) }
     var clocktowerSessionView by remember { mutableStateOf<ClocktowerSessionView?>(null) }
+    // Host-owned, current-session causal event store; Recovery restores only validated typed entries.
+    val clocktowerCausalJournals = remember { mutableMapOf<String, StorytellerCausalDecisionJournalV1>() }
     val currentClocktowerScript = clocktowerSessionView?.scriptId
         ?.let { scriptId ->
             ClocktowerScript.entries.singleOrNull { script -> script.toRecommendationScriptId() == scriptId }
@@ -415,6 +423,13 @@ internal fun CampBoardGameHostApp() {
             "Clocktower session authority is unavailable."
         }
 
+    fun currentClocktowerCausalJournal(): StorytellerCausalDecisionJournalV1 {
+        val session = requireClocktowerGameSession()
+        return clocktowerCausalJournals.getOrPut(session.state.gameId) {
+            StorytellerCausalDecisionJournalV1(session.state.gameId)
+        }
+    }
+
     fun currentTroubleBrewingFirstNightPairDecisionContext(): TroubleBrewingFirstNightPairDecisionContext? {
         if (
             currentGameKind != GameKind.Clocktower ||
@@ -463,7 +478,7 @@ internal fun CampBoardGameHostApp() {
         return MayorRedirectDecisionBoundary.create(
             requestIdentity = StorytellerDecisionRequestIdentity(
                 gameId = snapshot.gameId,
-                requestId = "night:${round}:mayor-redirect",
+                requestId = "night:${round}:mayor-redirect:game-${session.state.gameStateRevision}:input-${session.state.playerInputRevision}:cursor-${session.state.nextTimelineGlobalSequence}",
             ),
             revision = StorytellerDecisionRevision(
                 gameStateRevision = clocktowerGameStateRevision,
@@ -1049,6 +1064,7 @@ internal fun CampBoardGameHostApp() {
                     nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
                     events = clocktowerEvents.toList(),
                     epistemicObservations = clocktowerEpistemicObservations.toList(),
+                    causalDecisionJournal = currentClocktowerCausalJournal().archive(),
                 ),
             )
         }
@@ -1184,6 +1200,10 @@ internal fun CampBoardGameHostApp() {
                     ),
                 )
                 publishClocktowerSessionView()
+                clocktowerCausalJournals[game.identity.gameId] =
+                    history.causalDecisionJournal?.let { archive ->
+                        StorytellerCausalDecisionJournalV1.restore(archive, requireClocktowerGameSession().state)
+                    } ?: StorytellerCausalDecisionJournalV1(game.identity.gameId)
                 clocktowerRulesetRef = runtime?.rulesetRef
                 committedClocktowerSetup =
                     runtime?.sdeReplayMaterialization?.input?.toCommittedSetup()
@@ -2267,6 +2287,55 @@ internal fun CampBoardGameHostApp() {
                                     is MayorRedirectDecisionConfirmation.Confirmed -> {
                                         require(confirmation.targetSeat == targetSeat) {
                                             "Mayor redirect confirmation changed the selected target."
+                                        }
+                                        if (checkpoint.confirmedMayorRedirectTarget != selectedTarget) {
+                                            // Rules-owned confirmation has passed, but no mechanical
+                                            // mutation/observation has been published yet. Capture the
+                                            // exact global prefix BEFORE updating the game revision.
+                                            val session = requireClocktowerGameSession()
+                                            val rulesetRef = requireNotNull(clocktowerRulesetRef)
+                                            val registry = activeGameClocktowerRulesetCatalog
+                                                .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+                                            val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+                                                gameSnapshot = session.toGameSnapshot(rulesetRef),
+                                                phase = StorytellerPhase.NIGHT,
+                                                round = round,
+                                                characterRegistry = registry,
+                                            )
+                                            val journal = currentClocktowerCausalJournal()
+                                            val request = StorytellerProviderRequestFactoryV1.fromMayorRedirect(
+                                                decision = pendingDecision,
+                                                snapshot = snapshot,
+                                                gameContext = journal.contextForRequest(snapshot, session.state),
+                                            )
+                                            val previousConfirmed = journal.effectiveNow().lastOrNull { earlier ->
+                                                earlier.eventId.startsWith("confirmed:night:${round}:mayor-redirect:")
+                                            }
+                                            val frozen = journal.captureBeforeDecision(request, session.state)
+                                            val newEventId = "confirmed:${request.identity.decisionId}"
+                                            journal.commit(request.identity.decisionId, StorytellerProviderPriorDecisionV1(
+                                                eventId = newEventId,
+                                                gameStateRevision = frozen.revision.gameStateRevision,
+                                                playerInputRevision = frozen.revision.playerInputRevision,
+                                                selectedCandidateId = candidateId,
+                                                selectedOutcome = DecisionOutcomeSnapshot(
+                                                    decisionType = "mayor-redirect",
+                                                    canonicalFields = sortedMapOf("targetSeat" to targetSeat.toString()),
+                                                ),
+                                                abilityState = AbilityState.FUNCTIONING,
+                                                truthRelation = TruthRelation.NOT_APPLICABLE,
+                                                registrations = emptyList(),
+                                            ))
+                                            // Reconfirmation is a *later correction*, not two
+                                            // simultaneously effective Mayor decisions. Earlier
+                                            // frozen inputs still observe the old confirmation.
+                                            previousConfirmed?.let { prior ->
+                                                journal.correct(
+                                                    correctionId = "revised:${newEventId}",
+                                                    replacedEventId = prior.eventId,
+                                                    replacementEventId = newEventId,
+                                                )
+                                            }
                                         }
                                     }
                                     is MayorRedirectDecisionConfirmation.Blocked -> {
