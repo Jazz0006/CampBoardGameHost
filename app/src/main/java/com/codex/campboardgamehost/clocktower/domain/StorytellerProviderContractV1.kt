@@ -242,6 +242,14 @@ internal data class StorytellerProviderCandidateV1(
 }
 
 /** Candidate semantics are rules/domain facts only. */
+internal enum class RegistrationResolutionStatusV1 {
+    EXPLICIT_SPECIAL,
+    EXPLICIT_ACTUAL,
+    UNRESOLVED_NOT_REQUIRED,
+    NOT_APPLICABLE,
+    UNAVAILABLE_OR_UNRECORDED,
+}
+
 internal sealed interface StorytellerProviderCandidatePayloadV1 {
     data class DrunkAssignment(
         val seat: Int,
