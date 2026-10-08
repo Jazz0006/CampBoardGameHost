@@ -141,7 +141,7 @@ internal fun ClocktowerJudgeScreen(
     onConfirmDemonSuccessorTarget: (String) -> Unit,
     onConfirmNewDemon: () -> Unit,
     onSelectKlutzChoice: (String?) -> Unit,
-    onConfirmKlutzChoice: (Boolean, Boolean?) -> Unit,
+    onConfirmKlutzChoice: () -> Unit,
     onConfirmArtistQuestion: (String, Boolean, Boolean) -> Unit,
     onSlayerShot: (String, String, Boolean) -> Unit,
     onPreflightVirginExecution: (String, Boolean) -> Unit,
@@ -2324,10 +2324,6 @@ internal fun ClocktowerJudgeScreen(
     }
 
     if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Klutz) {
-        val klutzChoiceCard = cards.firstOrNull { it.name == klutzChoiceName }
-        val klutzRegistrationKey = klutzChoiceCard
-            ?.takeIf { it.name == spyCard?.name }
-            ?.let { registrationKey("Klutz", it.name) }
         val klutzTableState = clocktowerKlutzTableState(
             seats = clocktowerDayOverviewTableState(
                 cards.toClocktowerGameState(
@@ -2351,28 +2347,7 @@ internal fun ClocktowerJudgeScreen(
                 val playerName = klutzTableState.playerNameForSeat(seatId)
                 onSelectKlutzChoice(if (klutzChoiceName == playerName) null else playerName)
             },
-            onConfirm = {
-                val explicitSpy = registrationState.explicitChoice(
-                    ClocktowerRegistrationSubject.SPY, klutzRegistrationKey,
-                )?.takeIf { spyCanRegister("Klutz") }
-                onConfirmKlutzChoice(
-                    spyRegistersGood(klutzRegistrationKey, "Klutz"),
-                    explicitSpy?.usesSpecialRegistration,
-                )
-            },
-            specialContent = {
-                if (klutzRegistrationKey != null && spyCard != null) {
-                    ClocktowerSpyGoodAlignmentDecisionControls(
-                        registersGood = spyRegistersGood(klutzRegistrationKey, "Klutz"),
-                        hasExplicitChoice = registrationState.spyHasExplicitChoice(klutzRegistrationKey),
-                        enabled = spyCanRegister("Klutz"),
-                        language = language,
-                        onRegistersGoodChange = { good ->
-                            registrationState.chooseSpy(klutzRegistrationKey, good)
-                        },
-                    )
-                }
-            },
+            onConfirm = onConfirmKlutzChoice,
         )
         return
     }
