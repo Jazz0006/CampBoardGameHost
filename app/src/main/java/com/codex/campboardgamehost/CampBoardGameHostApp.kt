@@ -2308,9 +2308,13 @@ internal fun CampBoardGameHostApp() {
                                                 snapshot = snapshot,
                                                 gameContext = journal.contextForRequest(snapshot, session.state),
                                             )
+                                            val previousConfirmed = journal.effectiveNow().lastOrNull { earlier ->
+                                                earlier.eventId.startsWith("confirmed:night:${round}:mayor-redirect:")
+                                            }
                                             val frozen = journal.captureBeforeDecision(request, session.state)
+                                            val newEventId = "confirmed:${request.identity.decisionId}"
                                             journal.commit(request.identity.decisionId, StorytellerProviderPriorDecisionV1(
-                                                eventId = "confirmed:${request.identity.decisionId}",
+                                                eventId = newEventId,
                                                 gameStateRevision = frozen.revision.gameStateRevision,
                                                 playerInputRevision = frozen.revision.playerInputRevision,
                                                 selectedCandidateId = candidateId,
@@ -2322,6 +2326,16 @@ internal fun CampBoardGameHostApp() {
                                                 truthRelation = TruthRelation.NOT_APPLICABLE,
                                                 registrations = emptyList(),
                                             ))
+                                            // Reconfirmation is a *later correction*, not two
+                                            // simultaneously effective Mayor decisions. Earlier
+                                            // frozen inputs still observe the old confirmation.
+                                            previousConfirmed?.let { prior ->
+                                                journal.correct(
+                                                    correctionId = "revised:${newEventId}",
+                                                    replacedEventId = prior.eventId,
+                                                    replacementEventId = newEventId,
+                                                )
+                                            }
                                         }
                                     }
                                     is MayorRedirectDecisionConfirmation.Blocked -> {
