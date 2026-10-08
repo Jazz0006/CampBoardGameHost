@@ -77,6 +77,24 @@ internal class StorytellerProviderHistoryPrefixV1 private constructor(
             },
         )
 
+        /**
+         * Historical recommendation input WITHOUT a durably frozen at-decision cursor is not
+         * replayable. Even an identical game/player revision cannot recover global ordering.
+         */
+        fun unavailableHistoricalCutoff(
+            gameId: String,
+            sourceRevision: StorytellerProviderRevisionV1,
+        ): StorytellerProviderHistoryPrefixV1 = StorytellerProviderHistoryPrefixV1(
+            gameId, sourceRevision, ClocktowerSemanticHistoryMode.GLOBAL_V1,
+            StorytellerProviderHistoryCutoffSourceV1.UNAVAILABLE, null, emptyList(),
+            StorytellerProviderHistoryDimensionV1.entries.associateWith {
+                StorytellerProviderHistoryCoverageV1(
+                    StorytellerProviderHistoryCoverageStateV1.UNRECONSTRUCTABLE,
+                    "HISTORICAL_CUTOFF_UNAVAILABLE",
+                )
+            },
+        )
+
         private fun liveCoverage(): Map<StorytellerProviderHistoryDimensionV1, StorytellerProviderHistoryCoverageV1> =
             mapOf(
                 StorytellerProviderHistoryDimensionV1.MECHANICAL to StorytellerProviderHistoryCoverageV1(
