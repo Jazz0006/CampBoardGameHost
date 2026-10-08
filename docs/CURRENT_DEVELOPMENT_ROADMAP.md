@@ -67,7 +67,8 @@ GSP-R0 post-RES-5 re-entry audit                              COMPLETE / DOCS �
 GSP-R1A canonical capture/prefix coverage audit                CODE AUDIT COMPLETE — docs/GSP_R1A_CANONICAL_HISTORY_CAPTURE_PREFIX_COVERAGE_AUDIT_2026-10-08.md; no Android behavior change
 GSP-R1B neutral typed immutable prefix materializer             COMPLETE / ACCEPTED — PR #250, CI #3849 / R2 #3518 GREEN (Android FAST + Clingo); GLOBAL_V1 live only
 GSP-R1C1 Recovery parity / missing historical cutoff gate      COMPLETE / ACCEPTED — PR #252; CI #3853 / R2 #3520 GREEN (Android FAST + Clingo)
-GSP-R1C2 frozen decision cutoff + correction causality          NEXT — authoritative pre-decision capture, durable causal as-of replay; R1C overall IN PROGRESS
+GSP-R1C2A frozen predecision + in-memory causal journal        COMPLETE / ACCEPTED — PR #256, CI #3864 / R2 #3527 GREEN; NOT durable/production-wired
+GSP-R1C2B durable producer + Recovery causality                NEXT — real Host producer, typed save/replay, correction as-of; R1C overall IN PROGRESS
 ~~~
 
 ### GSP-R1A capture gate — 2026-10-08
@@ -77,6 +78,10 @@ The code-level R1A inventory confirms canonical Global actions and some typed pl
 ### GSP-R1B accepted — 2026-10-08
 
 [Accepted R1B executable closure](GSP_R1B_NEUTRAL_LIVE_HISTORY_PREFIX_ACCEPTANCE_2026-10-08.md): PR #250 squash `8e788db2f6ad0be1f3c8b1c844306d6210e66cd7`, CI #3849 / R2 #3518 GREEN, Android **FAST** and Real Clingo passed; full Android/T4 was not run. The Host's neutral provider context can carry an immutable, globally ordered current-game Action/Observation prefix bounded by the captured exclusive cursor and session revisions. Mechanical/private/public producer coverage remains PARTIAL; registration and prior-decision causal capture UNKNOWN. LegacyLocal chronology is explicitly unavailable, and no historical replay or production LLM provider was introduced. **GSP-R1C is next**, with real Recovery/frozen-prefix equality and missing-coverage/ambiguity gates. The result-first registration ambiguity authority remains a separate producer/UI follow-up.
+
+### GSP-R1C2A accepted — 2026-10-08
+
+[Accepted frozen decision capture / causal journal contract](GSP_R1C2A_FROZEN_CAUSAL_DECISION_PREFIX_ACCEPTANCE_2026-10-08.md): PR #256, merge `38503670d93d925603e12cfc6388990550421c44`, CI #3864 and R2 #3527 GREEN (Android FAST; no T4). Exact GLOBAL_V1 predecision game/revision/snapshot/observation cutoff is frozen; an independent append-only **in-memory** decision/commit/correction chronology can replay as-of earlier captures without later correction leakage or inventing registration facts. **Not yet durable or production-wired**: no Host producer integrated with the neutral provider request, no Recovery codec or complete decision data coverage. Proceed to **GSP-R1C2B** real producer + typed durable Recovery/admission, then full R1C acceptance; no LLM API or heuristic authority.
 
 ### GSP-R1C1 acceptance — 2026-10-08
 
