@@ -504,12 +504,40 @@ class RecoveryRestorePlannerTest {
                 2, 0, 2,
             ),
         )
+        // A private numeric result stays a player-observed fact; no candidate Spy/Recluse
+        // interpretation becomes a canonical ruling during durable historical replay.
+        session.commitGlobalEpistemicObservation(
+            com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft(
+                recordId = "visible-numeric-one",
+                phase = com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
+                round = 2, sequence = 1,
+                sourceSeat = 2, sourceAbility = RoleId("Empath"),
+                visibility = com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PRIVATE,
+                recipientSeats = setOf(2),
+                reliability =
+                    com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability.RECEIVED_AS_FUNCTIONING,
+                proposition = com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.NumericResult(
+                    com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                    sourceSeat = 2, subjectSeats = listOf(1, 3), value = 1,
+                ),
+            ),
+        )
         commit("second", "event-second", "seat-3")
         journal.correct("correct-after-second", "event-first", "event-second")
         val third = journal.captureBeforeDecision(request("third"), session.state)
         assertEquals(0L, journal.frozenAt("first").exclusiveGlobalSequence)
-        assertEquals(1L, journal.frozenAt("second").exclusiveGlobalSequence)
+        assertEquals(2L, journal.frozenAt("second").exclusiveGlobalSequence)
         assertEquals(listOf("event-first"), journal.effectiveAt("second").map { it.eventId })
+        assertEquals(
+            listOf("poison-between", "visible-numeric-one"),
+            journal.frozenAt("second").historyPrefix.entries.map { it.entryId },
+        )
+        assertEquals(
+            com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryCoverageStateV1.UNKNOWN,
+            journal.frozenAt("second").historyPrefix.coverage.getValue(
+                com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryDimensionV1.REGISTRATION_RULINGS,
+            ).state,
+        )
         assertEquals(listOf("event-second"), journal.effectiveAt("third").map { it.eventId })
 
         val savedGame = game.copy(
