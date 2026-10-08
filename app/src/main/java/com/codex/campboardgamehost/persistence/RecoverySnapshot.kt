@@ -140,6 +140,8 @@ internal data class ClocktowerRecoveryHistory(
     val nextTimelineGlobalSequence: Long,
     val events: List<ClocktowerEvent>,
     val epistemicObservations: List<RecordedEpistemicObservation>,
+    /** Null means legacy/unrecorded: never interpret it as complete empty causal history. */
+    val causalDecisionJournal: com.codex.campboardgamehost.clocktower.session.StorytellerCausalJournalArchiveV1? = null,
 ) {
     init {
         require(storytellerPlayerContextBySeat.keys.all { it > 0 }) {
