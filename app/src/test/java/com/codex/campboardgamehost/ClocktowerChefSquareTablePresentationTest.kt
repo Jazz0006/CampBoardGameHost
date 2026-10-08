@@ -71,6 +71,22 @@ class ClocktowerChefSquareTablePresentationTest {
     }
 
     @Test
+    fun `unresolved multiple Chef witnesses never draw one counted pair as definitive`() {
+        val options = ClocktowerRegistrationResultPresentation.numericOptions(
+            title = "Chef", sourceSeat = 1, metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+            subjectSeats = listOf(1, 2, 3, 4, 5), footer = "pairs",
+            witnesses = listOf(
+                ClocktowerAlignmentRegistrationWitness(false, false),
+                ClocktowerAlignmentRegistrationWitness(true, true),
+            ),
+            valueFor = { 1 },
+        )
+        val result = options.single()
+        assertEquals(2, result.legalRegistrationWitnesses.size)
+        assertEquals(emptySet<Int>(), clocktowerChefEffectivePairSeats(players(), result, value = 1))
+    }
+
+    @Test
     fun `single chef result never presents counted players as a choice`() {
         val choice = ClocktowerChefResultChoice(
             key = "only",
