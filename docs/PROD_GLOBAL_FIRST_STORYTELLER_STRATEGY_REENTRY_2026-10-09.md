@@ -70,6 +70,23 @@ The owner is willing to trade some complexity for single-user convenience and pr
 Prioritize **global prompt/strategy quality over deployment-path churn**. `tools/storyteller_gateway.py` and `ProductionDrunkAiGatewayV1` are transport/validation spikes, not the final role-specific recommendation abstraction.
 
 
+
+## Required dynamic replanning trigger — Poisoner target + partial human acceptance (2026-10-10)
+
+This is a **PROD-GLOBAL-1 product acceptance requirement, not a later heuristic optimization**. A night-wide strategy is provisional until its actual in-order upstream events have occurred. The Poisoner is an **evil player choice**, not a choice the Storyteller or model can precommit. The Poisoner's confirmed night target may change which abilities function and therefore the reliability, legal presentation, and mutual implications of *all still-undelivered information*. No model may treat the pre-Poisoner plan as final after the target is known.
+
+Event-driven sequence:
+1. Host plans only *conditional* first-night information intentions before Poisoner action. The first-night scheduler keeps its canonical dependency/order barriers.
+2. After the Poisoner **actually chooses** and Host confirms the action, commit a typed `POISON_TARGET_CONFIRMED` fact with game/night, action order, target seat and revision. Independently obtain the **effective** poisoning/reliability from Host rules; chosen target and actual effect must not be conflated.
+3. Invalidate recommendations prepared against the earlier revision and **reassess the whole game** with committed setup, effective ability reliability, prior confirmed information/registration outcomes, action/history prefix, player context and still-pending legal choices. Keep/revise/retire strategy and explicitly call out any changed assumptions. No stale pending decision may commit while assessment is running.
+4. For each subsequent first-night information step, give the current Host-legal recommendation and meaningful alternatives; the human may accept, alter or decline it. Only an actually committed/shown information result becomes immutable game history. An overridden or corrected result triggers the same downstream replan; accepting an unchanged recommendation may reuse the existing strategy **only after checking the factual/revision dependency**, never based solely on matching display text.
+5. Recalculate only *remaining* contingent advice. Never retroactively rewrite already delivered clues, fabricate a unique Spy/Recluse registration witness, or assume poisoned players must receive false information. Their ability may be nonfunctional but the displayed information can coincidentally be true.
+6. Each night may select a different Poisoner target; newly committed targets and expired effects trigger the same dependent update, as do material demon/role/death/player-input changes. When AI is unavailable, assisted play continues with clearly marked unsupported/manual decisions; automatic mode pauses, never using stale pre-poison advice.
+
+**Mandatory executable acceptance scenario**: initial multi-clue plan -> Poisoner chooses an information-bearing seat -> Host updates effective reliability -> remaining clue recommendations are recomputed -> first clue confirmed as recommended -> second clue manually overridden and confirmed -> subsequent clue is regenerated with both confirmed facts and revised plan. Assert no recommendation uses the pre-poison revision, no confirmed prior information is overwritten, and distinct candidates remain Host-legal. Add a control scenario where Poisoner chooses a non-information seat and the dependency planner still considers implications rather than hardcoding per-role recalculation.
+
+This requirement sits **before** completion of the next real-decision strategy continuity milestone. Passing the Drunk/post-commit analysis tests alone does not satisfy it.
+
 ## 2026-10-09 implementation checkpoint — DONE / NEXT precisely distinguished
 
 **Implemented in Draft #292**:
