@@ -1,50 +1,48 @@
 # CampBoardGameHost
 
-离线优先的 Android 桌游主持/辅助应用。目前代码中包含「谁是卧底」「狼人杀」和 Blood on the Clocktower（血染钟楼）主持流程；当前主要工程重点仍是 Trouble Brewing（暗流涌动）自动说书人的规则正确性、玩家认知一致性、主持流程稳定性与可维护性。
+离线优先的 Android 桌游主持应用，包含 Blood on the Clocktower（血染钟楼）、狼人杀和谁是卧底。当前研发重点是 **Trouble Brewing（暗流涌动）的规则正确性、可独立运行的 Game Engine，以及可替换的说书人推荐 Provider**。
 
-## 当前开发状态
+## 当前方向（2026-10-09）
 
-当前工程主线是 Storyteller Decision Engine（SDE）。最新完成状态和下一步只以[开发路线](docs/CURRENT_DEVELOPMENT_ROADMAP.md)与[当前交接](docs/NEXT_DEVELOPMENT_HANDOFF.md)为准；这里不复制易过期的阶段状态。
+- **Game Engine / 规则 / 合法候选 / 状态写入** 均由 Host 掌握；无网络、无 LLM 时仍可完整进行 Manual 游戏。
+- 旧版权重式、风格式、角色特例式自动推荐引擎已按 RES-0～5 / GSP-1 退役。多个合法候选若没有合格 Provider，应保持 `MANUAL_REQUIRED`；不得恢复旧 heuristic。
+- **GSP-MEM0 是当前研究优先级**：用冻结的多决策测试比较当前状态、事实历史及战术/跨局战略记忆的实际推荐质量。尚无独立模型实验结论。
+- **GSP-API0 已合入**：仅提供开发者端可选 Responses API benchmark runner，默认零网络。它不是 Android 正式接入或质量验收；付费调用必须由开发者显式启动。
+- **Recovery 只用于同版本、同兼容令牌、4 小时内的当前游戏意外中断恢复**。不把完整历史、任意时点重建或长久存档作为产品目标。
 
-当前 SDE 已完成 typed replay / runtime shadow / correctness repair / C4 descriptive feature / RH-E 等工程闭环；`BEGINNER_CONSERVATIVE_V1` 保持冻结。新的政策演进必须通过当前 evidence gate，详见 [`docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md`](docs/SDE_E3_E4_QUALIFICATION_AUDIT_2026-09-27.md)。在没有 qualifying E3/E4 evidence 前，不创建占位 V2，也不引入新的权重或阈值。
+## 权威文档与测试
 
-D6 之后继续保持：`ClocktowerGameSession` 是 canonical writable game/session authority；Planner/Reducer 负责纯语义与 durable intent planning；App 保留跨 owner 的 Compose-facing application choreography。大 composition root 本身不再作为继续拆分的充分理由。
+1. [开发规范](AGENTS.md)
+2. [文档入口](docs/README.md)
+3. [当前路线（唯一优先级权威）](docs/CURRENT_DEVELOPMENT_ROADMAP.md)
+4. [当前交接（唯一活动 handoff）](docs/NEXT_DEVELOPMENT_HANDOFF.md)
+5. [测试策略](docs/TESTING_STRATEGY.md)
 
-A4/ZDD 仍不切换到 production。
+历史路线、已完成阶段和验收快照收录于 [文档归档](docs/archive/README.md)，**不**决定下一阶段任务。
 
-**开发前请先阅读 [`docs/README.md`](docs/README.md)、[`docs/CURRENT_DEVELOPMENT_ROADMAP.md`](docs/CURRENT_DEVELOPMENT_ROADMAP.md) 和当前 active handoff。** 历史 D6/R3 audit、checkpoint 与旧 handoff 已归档；其中的 `PASS / COMPLETE / READY / NEXT` 只作为证据，不控制当前优先级。
+## 工程结构与本地运行
 
-## 项目结构
+- `app/`：Android 客户端与游戏主持逻辑。
+- `tools/asp_oracle/`：ASP Oracle / golden fixture。
+- `tools/gsp_api0_responses.py`：离线默认的 MEM0 API benchmark transport（参阅 [API0 说明](docs/GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)）。
+- `player/`、`ui/`、`web/`：其他客户端与界面资产；`docs/`：规范与记录。
 
-- `app/` — Android 应用与测试。
-- `docs/` — 当前规范、开发路线、验证参考与历史归档。
-- `tools/asp_oracle/` — 冻结 ASP Oracle 的开发/测试工具和 golden fixtures。
-- `player/`, `ui/`, `web/` — 项目中的其他客户端/界面资源目录。
-
-## 打开与运行 Android 项目
-
-1. 用 Android Studio 打开仓库根目录。
-2. 等待 Gradle 同步完成。
-3. 连接 Android 真机或启动模拟器。
-4. 运行 `app`。
-
-常用 JVM 回归测试：
+用 Android Studio 打开仓库根目录。常用 Android JVM 检查：
 
 ```bash
 ./gradlew :app:testFast
 ./gradlew :app:testFull
 ```
 
-ASP Oracle 工具测试：
+ASP Oracle：
 
 ```bash
 python3 -m unittest discover -s tools/asp_oracle -p 'test_*.py'
 ```
 
-## 文档维护约定
+API0 本地（**不需 API key，不发网络请求**）：
 
-- 当前开发状态与全局优先级只写入 `docs/CURRENT_DEVELOPMENT_ROADMAP.md`。
-- `docs/README.md` 只维护当前默认阅读入口，不复制详细 checkpoint 历史。
-- 当前 active handoff 只允许一份；完成或被取代后移入 `docs/archive/handoffs/`。
-- 已完成的 slice audit/progress/acceptance 证据移入 `docs/archive/checkpoints/`。
-- 总体认知一致性架构以 v2.2 主规范为准；专项 spec 不能绕过规则权威和玩家知识边界。
+```bash
+python3 tools/gsp_api0_responses.py
+python3 -m unittest discover -v -s tools/tests -p 'test_gsp_api0_responses.py'
+```
