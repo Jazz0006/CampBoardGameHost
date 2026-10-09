@@ -5,6 +5,16 @@
 
 当前开发入口：[`../README.md`](../README.md) 与 [`../CURRENT_DEVELOPMENT_ROADMAP.md`](../CURRENT_DEVELOPMENT_ROADMAP.md)。
 
+## 2026-10-09 global documentation convergence
+
+The full pre-MEM0 authoritative texts are archived as **historical, non-executable snapshots**:
+
+- [Former current roadmap](checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md) — 62 KB of sequential project history, PR/CI/R2 references and prior NEXT labels.
+- [Former active handoff](handoffs/NEXT_DEVELOPMENT_HANDOFF_PRE_MEM0_CONVERGENCE_2026-10-09.md) — cumulative 46 KB handoff history.
+- [Former docs index](checkpoints/DOCS_INDEX_PRE_MEM0_CONVERGENCE_2026-10-09.md) — superseded default reading list and stale SDE/GSP status summaries.
+
+These are faithful source copies plus an archive banner and a link to their exact original Git commit, so prior evidence remains inspectable. Current MEM0 experiment, API0 benchmark transport, and short-horizon Recovery product policy are governed by [current roadmap](../CURRENT_DEVELOPMENT_ROADMAP.md) and [current handoff](../NEXT_DEVELOPMENT_HANDOFF.md), not these snapshots.
+
 ## 1. Directory layout
 
 ```text
