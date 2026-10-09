@@ -67,4 +67,4 @@ Android offline Host (canonical state + legal candidates)
 
 Accept API-0 when the offline tests and the no-key Github workflow pass, no Android files/permissions/keys change, manual neutral provider contract remains untouched, the exact PR diff is audited, and documents correctly distinguish API capability from live network/model quality.
 
-**Not tested/claimed:** authenticated real OpenAI request, actual provider fidelity, continuous conversation quality, model superiority, Android live API display, Android secret delivery, deployment, or inference cost. Live requests require valid credentials and explicit cost budget and are a subsequent controlled experiment.
+**Tested:** one authenticated developer-side S001 OpenAI request returned a structurally valid, Host-legal recommendation (1 attempted / 1 succeeded). **Not tested/claimed:** nine-group blind MEM0 outcome, statistical/qualitative model superiority, continuous conversation quality, Android live API display, Android secret delivery, deployment, or reliable cost extrapolation. Any further paid runs require new explicit authorization and withheld blind identity mapping.
