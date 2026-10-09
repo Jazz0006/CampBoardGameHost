@@ -1,4 +1,6 @@
-# PROD-1 — Live TB Drunk recommendation: first production-facing vertical
+# PROD-1 — Transport/Host legality SPIKE, not complete global recommendation
+
+> **2026-10-09 PRODUCT CORRECTION:** This implementation's standalone Drunk-screen recommendation is not an acceptable PROD-1 endpoint. Keep useful transport, schema, rules-domain, freshness and setup-confirmation tests, but **do not merge #292 as-is**. Whole-game issue-first diagnosis, conditional plan, private after-deal square-table relationship view, and per-decision plan continuity are required. See [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md).
 
 Status: implementation candidate / **not accepted until Android CI, R2 and an authenticated HTTPS device-to-gateway smoke pass**.
 
