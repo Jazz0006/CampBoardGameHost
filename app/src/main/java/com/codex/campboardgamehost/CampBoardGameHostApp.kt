@@ -1667,7 +1667,7 @@ internal fun CampBoardGameHostApp() {
                             }
                             val candidate = pending.request.candidates.singleOrNull {
                                 it.seat == legal?.payload?.seat &&
-                                    it.shownRoleId == legal.payload.shownRoleId
+                                    it.shownRoleId == legal?.payload?.shownRoleId
                             }
                             val confirmation = if (candidate != null &&
                                 pendingTroubleBrewingDrunkSelection === pending &&
@@ -2123,7 +2123,12 @@ internal fun CampBoardGameHostApp() {
                         onGatewayEndpointChange = { storytellerGatewayEndpoint = it },
                         gatewayToken = storytellerGatewayToken,
                         onGatewayTokenChange = { storytellerGatewayToken = it },
-                        onScriptChange = { selectedClocktowerScript = it },
+                        onScriptChange = {
+                            selectedClocktowerScript = it
+                            if (it != ClocktowerScript.TroubleBrewing) {
+                                storytellerOperationMode = StorytellerOperationMode.MANUAL
+                            }
+                        }
                         onBack = {
                             applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
                         },
