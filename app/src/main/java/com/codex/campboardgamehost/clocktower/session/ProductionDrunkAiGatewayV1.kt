@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.URL
+import java.net.URI
 import javax.net.ssl.HttpsURLConnection
 
 /**
@@ -135,11 +135,12 @@ internal object ProductionDrunkAiGatewayV1 {
         accessToken: String,
         request: StorytellerProviderRequestV1,
     ): StorytellerProviderResponseV1 = withContext(Dispatchers.IO) {
-        val url = URL(endpoint.trim())
-        require(url.protocol == "https" && url.host.isNotBlank() &&
-            url.userInfo == null && url.ref == null && url.port != 0) {
+        val uri = URI(endpoint.trim())
+        require(uri.scheme == "https" && !uri.host.isNullOrBlank() &&
+            uri.userInfo == null && uri.fragment == null && uri.rawQuery == null && uri.port != 0) {
             "Gateway must be an HTTPS endpoint without embedded credentials."
         }
+        val url = uri.toURL()
         require(accessToken.isNotBlank()) { "Gateway access token is required." }
         val connection = (url.openConnection() as HttpsURLConnection).apply {
             requestMethod = "POST"
