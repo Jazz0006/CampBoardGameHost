@@ -69,6 +69,23 @@ The owner is willing to trade some complexity for single-user convenience and pr
 
 Prioritize **global prompt/strategy quality over deployment-path churn**. `tools/storyteller_gateway.py` and `ProductionDrunkAiGatewayV1` are transport/validation spikes, not the final role-specific recommendation abstraction.
 
+
+## 2026-10-09 implementation checkpoint — DONE / NEXT precisely distinguished
+
+**Implemented in Draft #292**:
+- Host-authoritative precommit roster -> global issue-first strategy and actionable legal Drunk recommendation; Host validates pending identity/revision/current choice, auto confirm only in explicit bounded AUTO mode.
+- Host-authoritative **committed** roster -> independent `ANALYSIS_ONLY` model call, even with **no Drunk**; this call contains all actual/shown role IDs and never fabricates a pending decision or legal candidate. Earlier strategy is submitted as advisory fallible `priorStrategy` (with matching game identity) so the LLM must keep/revise/retire earlier intentions and reconcile human Drunk overrides.
+- After-deal Host-only strategy overview with same canonical seat geometry, hypotheses clearly styled as dashed links; if analysis is pending/unavailable, the UI offers retry/explicit Manual takeover rather than passing off stale precommit advice as fact.
+- Both provider and Android reject invalid seat/issue references and wrong analysis identity/revision; App rejects late callback after game identity/mode/first-night setup boundary changes.
+- API key remains server-side; private per-session gateway URL/token is set before dealing. No production gateway deployment/real Android paid call is claimed.
+
+**NOT IMPLEMENTED / still blocks PROD-1 acceptance**:
+- Following **a second actual Host pending TB decision** (e.g., first-night information) through the **same** strategic intent, latest canonically observed facts and full legal candidates, to a fresh global diagnosis/recommendation with UI and Host confirmation. Postcommit analysis is an additional strategic checkpoint but does not yet cover the next discretion.
+- Complete TB-first-night and subsequent AUTO coverage, more than bounded Drunk auto-confirm, and production end-to-end model deployment. Existing unsupported auto steps pause.
+- Strong live-model smoke and trustworthy private TLS gateway reachability; green offline contract/Android CI is not equivalent to real API evidence.
+
+Acceptance remains **NO-GO until the next real decision consumes strategy**, with no new role-specific heuristic or new Recovery subsystem.
+
 ## Re-entry and tests (one coherent PR, no repetitive audit)
 
 1. Update current PR #292 scope and prevent merge as standalone Drunk; retain useful transport, legality, stale-request and setup-commit tests.
