@@ -18,9 +18,57 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 API_URL = "https://api.openai.com/v1/responses"
 PATH = "/v1/storyteller/recommend"
 MAX_BODY = 64 * 1024
+# The model must diagnose and coordinate the entire board BEFORE choosing the pending action.
+# This is a provider-neutral strategic artifact; it never changes Host rules or GameState.
+ISSUE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "issueId": {"type": "string"},
+        "priority": {"type": "integer"},
+        "seats": {"type": "array", "items": {"type": "integer"}},
+        "diagnosis": {"type": "string"},
+        "futureEffect": {"type": "string"},
+    },
+    "required": ["issueId", "priority", "seats", "diagnosis", "futureEffect"],
+    "additionalProperties": False,
+}
+RELATION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "fromSeat": {"type": "integer"},
+        "toSeat": {"type": "integer"},
+        "label": {"type": "string"},
+        "issueId": {"type": "string"},
+    },
+    "required": ["fromSeat", "toSeat", "label", "issueId"],
+    "additionalProperties": False,
+}
+INTENTION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "trigger": {"type": "string"},
+        "approach": {"type": "string"},
+        "tradeoff": {"type": "string"},
+    },
+    "required": ["trigger", "approach", "tradeoff"],
+    "additionalProperties": False,
+}
+STRATEGY_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "situationSummary": {"type": "string"},
+        "issues": {"type": "array", "items": ISSUE_SCHEMA},
+        "relations": {"type": "array", "items": RELATION_SCHEMA},
+        "intentions": {"type": "array", "items": INTENTION_SCHEMA},
+        "planRevisionNote": {"type": "string"},
+    },
+    "required": ["situationSummary", "issues", "relations", "intentions", "planRevisionNote"],
+    "additionalProperties": False,
+}
 SCHEMA = {
     "type": "object",
     "properties": {
+        "strategy": STRATEGY_SCHEMA,
         "primaryCandidateId": {"type": "string"},
         "rationale": {"type": "string"},
         "alternatives": {
@@ -37,20 +85,31 @@ SCHEMA = {
         },
         "uncertainty": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["primaryCandidateId", "rationale", "alternatives", "uncertainty"],
+    "required": ["strategy", "primaryCandidateId", "rationale", "alternatives", "uncertainty"],
     "additionalProperties": False,
 }
 INSTRUCTIONS = (
-    "You are advising a Blood on the Clocktower Trouble Brewing Storyteller. "
-    "Consider the entire seat topology and all roles, all displayed roles, legal candidates, "
-    "ability interactions, future information and multiple viable worlds jointly. "
-    "Aim for fair, interesting and solvable games, NOT either team's victory. "
-    "Every legal candidate is a possible choice. Choose the best and explain concrete "
-    "cross-role tradeoffs; include a meaningfully distinct alternative when multiple options exist. "
-    "Only choose exact legal candidateId values. Never claim an UNCOMMITTED role is an observed "
-    "actual identity. Never invent player claims, past facts, or registration witnesses. "
-    "History marked unavailable is not evidence that nothing happened. "
-    "Use concise Chinese prose for rationale, and explicitly state important uncertainty."
+    "You are an expert Blood on the Clocktower (Trouble Brewing) Storyteller STRATEGIST, "
+    "not a standalone Drunk selector. You receive a complete PRECOMMIT board with ordered seats, "
+    "shown and actual roles (some Townsfolk actual roles UNCOMMITTED), experience and exact legal choices. "
+    "FIRST produce a concise whole-game situation diagnosis: identify the most important setup tension, "
+    "evil-player pressure, combinations of Good information (Chef, Investigator, Empath, Fortune Teller etc. "
+    "ONLY if actually present), alternate plausible worlds, and chain reactions across the coming night. "
+    "THEN identify 1-4 high-impact, NON-DUPLICATE issues with stable issueId, seat references and the "
+    "likely effects on future decisions. Map 0-4 crucial player-to-player strategic relations; each line "
+    "MUST cite an existing issueId and actual seat numbers. These are HYPOTHESES, not registration facts. "
+    "THEN propose 1-4 CONDITIONAL intentions: trigger, future approach and tradeoff. Do NOT promise "
+    "future choices are already legal or predetermined. "
+    "ONLY AFTER this global plan select the exact legal primaryCandidateId; tie its rationale explicitly "
+    "to the diagnosed issues and conditional future effects, with a genuinely distinct legal alternative "
+    "when there are multiple candidates. Aim for interesting, fair, solvable games, not a Good/Evil win. "
+    "Do not rank roles independently, do not fall back to memorized named-role rules or a fixed score. "
+    "NEVER treat UNCOMMITTED as known, invent claims/history/future events, or claim a unique Spy/Recluse "
+    "registration witness when a displayed result has multiple legal explanations. "
+    "History marked unavailable is UNKNOWN, not proof that no previous events occurred. "
+    "Use concise natural Chinese, concrete seat-linked reasons, and admit uncertainty. "
+    "Return all strategy fields in the required structured JSON. "
+    "Never reveal private chain-of-thought; present a brief auditable decision summary instead."
 )
 
 
@@ -106,14 +165,16 @@ def build_openai_request(case: dict, model: str) -> dict:
         "store": False,
         "text": {"format": {
             "type": "json_schema",
-            "name": "botc_production_drunk_v1",
+            "name": "botc_global_storyteller_v1",
             "strict": True,
             "schema": SCHEMA,
         }},
     }
 
 
-def parse_openai_response(response: dict, allowed: set[str]) -> dict:
+def parse_openai_response(response: dict, allowed: set[str], allowed_seats: set[int] | None = None) -> dict:
+    if allowed_seats is None:
+        raise ValueError("Validated seat domain is required")
     if response.get("status") != "completed":
         raise ValueError("Model did not complete")
     texts = [
@@ -145,6 +206,60 @@ def parse_openai_response(response: dict, allowed: set[str]) -> dict:
         raise ValueError("No distinct alternative")
     if not all(isinstance(x, str) and x.strip() for x in result["uncertainty"]):
         raise ValueError("Invalid uncertainty")
+    strategy = result["strategy"]
+    if not isinstance(strategy, dict) or set(strategy) != set(STRATEGY_SCHEMA["required"]):
+        raise ValueError("Missing whole-game diagnosis")
+    summary = strategy["situationSummary"]
+    if not isinstance(summary, str) or not summary.strip() or len(summary) > 2400:
+        raise ValueError("Invalid situation summary")
+    issues, relations, intentions = (
+        strategy["issues"], strategy["relations"], strategy["intentions"]
+    )
+    if not isinstance(issues, list) or not 1 <= len(issues) <= 4:
+        raise ValueError("Global issue diagnosis is required")
+    if not isinstance(relations, list) or len(relations) > 4:
+        raise ValueError("Too many relation hypotheses")
+    if not isinstance(intentions, list) or not 1 <= len(intentions) <= 4:
+        raise ValueError("Conditional whole-game intentions are required")
+    issue_ids = []
+    # Only the Host can establish facts. All model-supplied graph links remain hypotheses.
+    # Seat domain was validated on the input side before any paid request was sent.
+    for item in issues:
+        if not isinstance(item, dict) or set(item) != set(ISSUE_SCHEMA["required"]):
+            raise ValueError("Malformed issue")
+        if not isinstance(item["issueId"], str) or not item["issueId"].strip():
+            raise ValueError("Missing issue ID")
+        issue_ids.append(item["issueId"])
+        if type(item["priority"]) is not int or item["priority"] not in range(1, 5):
+            raise ValueError("Invalid issue priority")
+        if not isinstance(item["seats"], list) or not item["seats"]:
+            raise ValueError("No linked seats")
+        if any(type(x) is not int or x not in range(1, len(allowed_seats) + 1)
+               for x in item["seats"]):
+            raise ValueError("Issue references nonexistent seat")
+        for field in ("diagnosis", "futureEffect"):
+            if not isinstance(item[field], str) or not item[field].strip() or len(item[field]) > 1600:
+                raise ValueError("Invalid issue narrative")
+    if len(issue_ids) != len(set(issue_ids)):
+        raise ValueError("Duplicate issue IDs")
+    for relation in relations:
+        if not isinstance(relation, dict) or set(relation) != set(RELATION_SCHEMA["required"]):
+            raise ValueError("Malformed relation")
+        if relation["issueId"] not in issue_ids:
+            raise ValueError("Relation lacks a known issue")
+        if any(type(relation[k]) is not int or relation[k] not in allowed_seats
+               for k in ("fromSeat", "toSeat")) or relation["fromSeat"] == relation["toSeat"]:
+            raise ValueError("Relation references nonexistent or identical seats")
+        if not isinstance(relation["label"], str) or not relation["label"].strip() or len(relation["label"]) > 500:
+            raise ValueError("Invalid relation narrative")
+    for intention in intentions:
+        if not isinstance(intention, dict) or set(intention) != set(INTENTION_SCHEMA["required"]):
+            raise ValueError("Malformed intention")
+        for field in ("trigger", "approach", "tradeoff"):
+            if not isinstance(intention[field], str) or not intention[field].strip() or len(intention[field]) > 900:
+                raise ValueError("Invalid strategic intention")
+    if not isinstance(strategy["planRevisionNote"], str) or len(strategy["planRevisionNote"]) > 900:
+        raise ValueError("Invalid plan revision note")
     return result
 
 
@@ -216,7 +331,8 @@ class Handler(BaseHTTPRequestHandler):
                 data = stream.read(256_001)
                 if len(data) > 256_000:
                     raise ValueError("Model response too large")
-                result = parse_openai_response(json.loads(data), allowed)
+                result = parse_openai_response(json.loads(data), allowed,
+                                               set(range(1, len(case["state"]["seats"]) + 1)))
             self.send_json(200, {
                 "schemaId": "botc.storyteller-provider-response",
                 "schemaVersion": 1,
