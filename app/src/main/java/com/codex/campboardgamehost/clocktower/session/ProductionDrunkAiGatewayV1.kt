@@ -146,7 +146,7 @@ internal object ProductionDrunkAiGatewayV1 {
             requestMethod = "POST"
             instanceFollowRedirects = false
             connectTimeout = 10000
-            readTimeout = 25000
+            readTimeout = 90000
             doOutput = true
             setRequestProperty("Content-Type", "application/json; charset=utf-8")
             setRequestProperty("Authorization", "Bearer ${accessToken.trim()}")
