@@ -21,6 +21,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +45,12 @@ internal fun ClocktowerSettingsScreen(
     playerCount: Int,
     playerNames: List<String>,
     selectedScript: ClocktowerScript,
+    operationMode: StorytellerOperationMode,
+    onOperationModeChange: (StorytellerOperationMode) -> Unit,
+    gatewayEndpoint: String,
+    onGatewayEndpointChange: (String) -> Unit,
+    gatewayToken: String,
+    onGatewayTokenChange: (String) -> Unit,
     onScriptChange: (ClocktowerScript) -> Unit,
     onBack: () -> Unit,
     onStart: () -> Unit,
@@ -59,7 +67,11 @@ internal fun ClocktowerSettingsScreen(
     )
     val showScriptChoice = playerCount in 5..6
     val effectiveScript = if (showScriptChoice) selectedScript else ClocktowerScript.TroubleBrewing
-    val canStart = playerCount >= MIN_CLOCKTOWER_PLAYERS && canStartClocktowerScript(effectiveScript)
+    val aiSupported = effectiveScript == ClocktowerScript.TroubleBrewing
+    val canStart = playerCount >= MIN_CLOCKTOWER_PLAYERS &&
+        canStartClocktowerScript(effectiveScript) &&
+        (operationMode != StorytellerOperationMode.AI_AUTOMATIC ||
+            (aiSupported && gatewayEndpoint.startsWith("https://") && gatewayToken.isNotBlank()))
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val stepTitles = listOf(
         text("确认玩家", "Confirm players"),
@@ -268,6 +280,65 @@ internal fun ClocktowerSettingsScreen(
                                     "${team.label(context)} ${distribution[team] ?: 0}"
                                 },
                             )
+                            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                            Text(
+                                text = text("说书人模式", "Storyteller mode"),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            StorytellerOperationMode.entries.forEach { mode ->
+                                val available = aiSupported || mode == StorytellerOperationMode.MANUAL
+                                Card(
+                                    onClick = { if (available) onOperationModeChange(mode) },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (operationMode == mode && available)
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                    ),
+                                ) {
+                                    Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                                        Text(
+                                            when (mode) {
+                                                StorytellerOperationMode.MANUAL -> text("全手动 · 不调用 AI", "Manual · offline, no AI")
+                                                StorytellerOperationMode.AI_ASSISTED -> text("AI 推荐 · 全局局势分析 + 人工确认", "AI assisted · global analysis + human approval")
+                                                StorytellerOperationMode.AI_AUTOMATIC -> text("AI 自动 · 有限覆盖，遇未支持决策须人工接管", "AI automatic · bounded coverage; unsupported decisions require takeover")
+                                            },
+                                            fontWeight = if (operationMode == mode && available) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (available) MaterialTheme.colorScheme.onSurface
+                                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                            }
+                            if (aiSupported && operationMode != StorytellerOperationMode.MANUAL) {
+                                Text(
+                                    text = text("私人 HTTPS Gateway（仅本次运行；不在 APK 内保存 API Key）",
+                                        "Private HTTPS gateway (this session only; no OpenAI Key in APK)"),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                OutlinedTextField(
+                                    value = gatewayEndpoint,
+                                    onValueChange = onGatewayEndpointChange,
+                                    label = { Text(text("Gateway HTTPS 地址", "Gateway HTTPS URL")) },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                OutlinedTextField(
+                                    value = gatewayToken,
+                                    onValueChange = onGatewayTokenChange,
+                                    label = { Text(text("Gateway 访问令牌", "Gateway access token")) },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                if (operationMode == StorytellerOperationMode.AI_AUTOMATIC) {
+                                    Text(
+                                        text = text("实验性自动模式：目前只覆盖酒鬼选择；后续未覆盖的裁量不能无人值守，必须暂停接管。",
+                                            "Experimental: only Drunk assignment is automated. Later unsupported actions require human takeover."),
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                }
+                            }
                             HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
                             Text(
                                 text = text(
