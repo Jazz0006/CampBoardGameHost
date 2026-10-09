@@ -18,6 +18,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 API_URL = "https://api.openai.com/v1/responses"
 PATH = "/v1/storyteller/recommend"
 MAX_BODY = 64 * 1024
+ANALYSIS_SCHEMA_ID = "botc.storyteller-global-analysis-request"
+ANALYSIS_RESPONSE_SCHEMA_ID = "botc.storyteller-global-analysis-response"
 # The model must diagnose and coordinate the entire board BEFORE choosing the pending action.
 # This is a provider-neutral strategic artifact; it never changes Host rules or GameState.
 ISSUE_SCHEMA = {
@@ -156,23 +158,83 @@ def validate_host_request(case: dict) -> set[str]:
     return set(ids)
 
 
+def validate_host_analysis_request(case: dict) -> set[int]:
+    """Informational only: no invented pending Host decision."""
+    if case.get("schemaId") != ANALYSIS_SCHEMA_ID or case.get("schemaVersion") != 1:
+        raise ValueError("Unsupported analysis contract")
+    ident = case["analysisIdentity"]
+    if ident.get("scriptId") != "trouble_brewing" or not isinstance(ident.get("gameId"), str) or not ident["gameId"]:
+        raise ValueError("Invalid game identity")
+    if not isinstance(ident.get("analysisId"), str) or not ident["analysisId"]:
+        raise ValueError("Invalid analysis identity")
+    revision = case["sourceRevision"]
+    if not all(type(revision.get(key)) is int and revision[key] >= 0
+               for key in ("gameStateRevision", "playerInputRevision")):
+        raise ValueError("Invalid source revision")
+    state = case["state"]
+    if state.get("stage") != "SETUP_COMMITTED" or type(state.get("hasDrunk")) is not bool:
+        raise ValueError("Analysis requires confirmed setup")
+    seats = state["seats"]
+    if not isinstance(seats, list) or not 5 <= len(seats) <= 15:
+        raise ValueError("Incomplete roster")
+    if [seat.get("seat") for seat in seats] != list(range(1, len(seats) + 1)):
+        raise ValueError("Noncanonical seat order")
+    for seat in seats:
+        if not isinstance(seat.get("shownRoleId"), str) or not isinstance(seat.get("actualRoleId"), str):
+            raise ValueError("Incomplete committed identities")
+        if seat["shownRoleId"] in ("UNCOMMITTED", "UNKNOWN", "NOT_APPLICABLE") or seat["actualRoleId"] in ("UNCOMMITTED", "UNKNOWN", "NOT_APPLICABLE"):
+            raise ValueError("Uncommitted identity after setup commit")
+    actual_drunk = next((seat["seat"] for seat in seats if seat["actualRoleId"] == "drunk"), None)
+    if (actual_drunk is not None) != state["hasDrunk"]:
+        raise ValueError("Drunk state contradicts committed roster")
+    if state.get("drunkAssignmentSeat") != (actual_drunk if actual_drunk is not None else "NOT_APPLICABLE"):
+        raise ValueError("Drunk seat contradiction")
+    if "legalCandidates" in case or "decisionId" in ident:
+        raise ValueError("Analysis cannot impersonate a pending Host decision")
+    if case.get("historyCoverage") != "SETUP_ONLY_NO_FUTURE_OBSERVATIONS":
+        raise ValueError("Missing prefix coverage")
+    prior = case.get("priorStrategy")
+    if prior is not None:
+        if not isinstance(prior, dict) or prior.get("sourceGameId") != ident["gameId"]:
+            raise ValueError("Cross-game prior strategy")
+        if type(prior.get("gameStateRevision")) is not int or prior["gameStateRevision"] > revision["gameStateRevision"]:
+            raise ValueError("Future previous strategy")
+        if not isinstance(prior.get("strategy"), dict) or len(json.dumps(prior["strategy"])) > 16000:
+            raise ValueError("Malformed previous strategy")
+    return set(range(1, len(seats) + 1))
+
+
 def build_openai_request(case: dict, model: str) -> dict:
     # No raw player names or OAuth/client credentials in this request.
+    analysis_only = case.get("schemaId") == ANALYSIS_SCHEMA_ID
+    instructions = INSTRUCTIONS
+    if analysis_only:
+        instructions = (
+            INSTRUCTIONS +
+            " IMPORTANT: confirmed setup with complete actual roles. This is ANALYSIS-ONLY "
+            "(there is no legal action). Reconcile what changed from priorStrategy: keep, revise "
+            "or retire conditional intentions, explaining the newly committed Drunk or absence "
+            "of Drunk. Do not hallucinate any first-night observations or choose a candidate. "
+            "Respond with only {strategy}."
+        )
     return {
         "model": model,
-        "instructions": INSTRUCTIONS,
+        "instructions": instructions,
         "input": json.dumps(case, ensure_ascii=False, separators=(",", ":")),
         "store": False,
         "text": {"format": {
             "type": "json_schema",
-            "name": "botc_global_storyteller_v1",
+            "name": "botc_global_analysis_v1" if analysis_only else "botc_global_storyteller_v1",
             "strict": True,
-            "schema": SCHEMA,
+            "schema": {
+                "type": "object", "properties": {"strategy": STRATEGY_SCHEMA},
+                "required": ["strategy"], "additionalProperties": False,
+            } if analysis_only else SCHEMA,
         }},
     }
 
 
-def parse_openai_response(response: dict, allowed: set[str], allowed_seats: set[int] | None = None) -> dict:
+def parse_openai_response(response: dict, allowed: set[str], allowed_seats: set[int] | None = None, analysis_only: bool = False) -> dict:
     if allowed_seats is None:
         raise ValueError("Validated seat domain is required")
     if response.get("status") != "completed":
@@ -187,25 +249,27 @@ def parse_openai_response(response: dict, allowed: set[str], allowed_seats: set[
     if not texts:
         raise ValueError("Missing structured response")
     result = json.loads("".join(texts))
-    if not isinstance(result, dict) or set(result) != set(SCHEMA["required"]):
+    required = {"strategy"} if analysis_only else set(SCHEMA["required"])
+    if not isinstance(result, dict) or set(result) != required:
         raise ValueError("Invalid response shape")
-    ids = [result["primaryCandidateId"]]
-    if ids[0] not in allowed or not isinstance(result["rationale"], str) or not result["rationale"].strip():
-        raise ValueError("Invalid primary recommendation")
-    if not isinstance(result["alternatives"], list) or not isinstance(result["uncertainty"], list):
-        raise ValueError("Invalid output lists")
-    for alt in result["alternatives"]:
-        if not isinstance(alt, dict) or set(alt) != {"candidateId", "rationale"}:
-            raise ValueError("Malformed alternative")
-        ids.append(alt["candidateId"])
-        if not isinstance(alt["rationale"], str) or not alt["rationale"].strip():
-            raise ValueError("Missing alternative rationale")
-    if len(ids) != len(set(ids)) or set(ids) - allowed:
-        raise ValueError("Illegal or duplicate recommendation")
-    if len(allowed) > 1 and len(ids) == 1:
-        raise ValueError("No distinct alternative")
-    if not all(isinstance(x, str) and x.strip() for x in result["uncertainty"]):
-        raise ValueError("Invalid uncertainty")
+    if not analysis_only:
+        ids = [result["primaryCandidateId"]]
+        if ids[0] not in allowed or not isinstance(result["rationale"], str) or not result["rationale"].strip():
+            raise ValueError("Invalid primary recommendation")
+        if not isinstance(result["alternatives"], list) or not isinstance(result["uncertainty"], list):
+            raise ValueError("Invalid output lists")
+        for alt in result["alternatives"]:
+            if not isinstance(alt, dict) or set(alt) != {"candidateId", "rationale"}:
+                raise ValueError("Malformed alternative")
+            ids.append(alt["candidateId"])
+            if not isinstance(alt["rationale"], str) or not alt["rationale"].strip():
+                raise ValueError("Missing alternative rationale")
+        if len(ids) != len(set(ids)) or set(ids) - allowed:
+            raise ValueError("Illegal or duplicate recommendation")
+        if len(allowed) > 1 and len(ids) == 1:
+            raise ValueError("No distinct alternative")
+        if not all(isinstance(x, str) and x.strip() for x in result["uncertainty"]):
+            raise ValueError("Invalid uncertainty")
     strategy = result["strategy"]
     if not isinstance(strategy, dict) or set(strategy) != set(STRATEGY_SCHEMA["required"]):
         raise ValueError("Missing whole-game diagnosis")
@@ -310,7 +374,13 @@ class Handler(BaseHTTPRequestHandler):
             if length < 1 or length > MAX_BODY:
                 return self.send_json(413, {"error": "invalid_size"})
             case = json.loads(self.rfile.read(length))
-            allowed = validate_host_request(case)
+            analysis_only = case.get("schemaId") == ANALYSIS_SCHEMA_ID
+            if analysis_only:
+                allowed_seats = validate_host_analysis_request(case)
+                allowed = set()
+            else:
+                allowed = validate_host_request(case)
+                allowed_seats = set(range(1, len(case["state"]["seats"]) + 1))
         except (ValueError, TypeError, KeyError, IndexError, json.JSONDecodeError):
             return self.send_json(400, {"error": "invalid_request"})
         if not BUDGET.acquire():
@@ -331,15 +401,25 @@ class Handler(BaseHTTPRequestHandler):
                 data = stream.read(256_001)
                 if len(data) > 256_000:
                     raise ValueError("Model response too large")
-                result = parse_openai_response(json.loads(data), allowed,
-                                               set(range(1, len(case["state"]["seats"]) + 1)))
-            self.send_json(200, {
-                "schemaId": "botc.storyteller-provider-response",
-                "schemaVersion": 1,
-                "decisionId": case["identity"]["decisionId"],
-                "sourceRevision": case["sourceRevision"],
-                **result,
-            })
+                result = parse_openai_response(
+                    json.loads(data), allowed, allowed_seats, analysis_only=analysis_only,
+                )
+            if analysis_only:
+                self.send_json(200, {
+                    "schemaId": ANALYSIS_RESPONSE_SCHEMA_ID,
+                    "schemaVersion": 1,
+                    "analysisId": case["analysisIdentity"]["analysisId"],
+                    "sourceRevision": case["sourceRevision"],
+                    **result,
+                })
+            else:
+                self.send_json(200, {
+                    "schemaId": "botc.storyteller-provider-response",
+                    "schemaVersion": 1,
+                    "decisionId": case["identity"]["decisionId"],
+                    "sourceRevision": case["sourceRevision"],
+                    **result,
+                })
         except (urllib.error.URLError, TimeoutError, ConnectionError, ValueError, KeyError, TypeError):
             self.send_json(502, {"error": "model_unavailable_or_invalid"})
         finally:
