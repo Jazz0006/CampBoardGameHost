@@ -38,6 +38,38 @@ internal data class StorytellerGlobalStrategyV1(
     val intentions: List<StorytellerGlobalIntentionV1>,
     val planRevisionNote: String,
 ) {
+    /** Only advisory intent is serialised. No magic proof of player registration or fact. */
+    fun toJson(): JSONObject = JSONObject()
+        .put("situationSummary", situationSummary)
+        .put("issues", JSONArray().also { out ->
+            issues.forEach { issue ->
+                out.put(JSONObject()
+                    .put("issueId", issue.issueId)
+                    .put("priority", issue.priority)
+                    .put("seats", JSONArray(issue.seats))
+                    .put("diagnosis", issue.diagnosis)
+                    .put("futureEffect", issue.futureEffect))
+            }
+        })
+        .put("relations", JSONArray().also { out ->
+            relations.forEach { relation ->
+                out.put(JSONObject()
+                    .put("fromSeat", relation.fromSeat)
+                    .put("toSeat", relation.toSeat)
+                    .put("issueId", relation.issueId)
+                    .put("label", relation.label))
+            }
+        })
+        .put("intentions", JSONArray().also { out ->
+            intentions.forEach { intention ->
+                out.put(JSONObject()
+                    .put("trigger", intention.trigger)
+                    .put("approach", intention.approach)
+                    .put("tradeoff", intention.tradeoff))
+            }
+        })
+        .put("planRevisionNote", planRevisionNote)
+
     /** Model-proposed relationships are hypotheses. Never label them confirmed registrations. */
     companion object {
         fun decode(raw: JSONObject, legalSeatNumbers: Set<Int>): StorytellerGlobalStrategyV1 {
