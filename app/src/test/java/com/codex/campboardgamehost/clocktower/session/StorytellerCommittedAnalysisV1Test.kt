@@ -68,6 +68,21 @@ class StorytellerCommittedAnalysisV1Test {
             assertTrue(!body.has("decisionId"))
             assertEquals("committed-game",
                 body.getJSONObject("priorStrategy").getString("sourceGameId"))
+            // The previous global plan is advisory continuity, not an executable legal action.
+            assertEquals(
+                "Precommit note",
+                body.getJSONObject("priorStrategy")
+                    .getJSONObject("strategy")
+                    .getString("planRevisionNote"),
+            )
+            assertEquals(
+                "chef",
+                state.getJSONArray("seats").getJSONObject(0).getString("shownRoleId"),
+            )
+            assertEquals(
+                if (seat == 1) "drunk" else "chef",
+                state.getJSONArray("seats").getJSONObject(0).getString("actualRoleId"),
+            )
         }
     }
 
