@@ -56,6 +56,24 @@ def case():
 
 def model_output(primary="setup:drunk-seat:seat-1", alternative="setup:drunk-seat:seat-2"):
     answer = {
+        "strategy": {
+            "situationSummary": "首夜厨师与调查员信息容易重叠，需全局考虑邪恶承压。",
+            "issues": [{
+                "issueId": "issue-1", "priority": 1, "seats": [1, 3, 4],
+                "diagnosis": "厨师与调查员可能叠加信息压力",
+                "futureEffect": "未来占卜等信息需延续多个可推理世界",
+            }],
+            "relations": [{
+                "fromSeat": 1, "toSeat": 3, "issueId": "issue-1",
+                "label": "信息交叉（假设，非已确认登记）",
+            }],
+            "intentions": [{
+                "trigger": "若第一夜信息叠加",
+                "approach": "在未来合法裁量时继续审查信息生态",
+                "tradeoff": "不可为了保护邪恶凭空捏造事实",
+            }],
+            "planRevisionNote": "首次分析，尚无已确认的历史战略计划",
+        },
         "primaryCandidateId": primary,
         "rationale": "Consider the interaction of seats 1, 4 and 5.",
         "alternatives": [{"candidateId": alternative, "rationale": "Different clue economy"}],
@@ -94,7 +112,7 @@ class GatewayContractTests(unittest.TestCase):
 
     def test_model_ids_checked_before_host_reply(self):
         legal = gateway.validate_host_request(case())
-        assert gateway.parse_openai_response(model_output(), legal)["primaryCandidateId"] in legal
+        assert gateway.parse_openai_response(model_output(), legal, set(range(1, 6)))["primaryCandidateId"] in legal
         for bad in [
             model_output(primary="nonexistent"),
             model_output(alternative="nonexistent"),
@@ -102,7 +120,32 @@ class GatewayContractTests(unittest.TestCase):
             {"status": "incomplete", "output": []},
         ]:
             with self.assertRaises(ValueError):
-                gateway.parse_openai_response(bad, legal)
+                gateway.parse_openai_response(bad, legal, set(range(1, 6)))
+
+    def test_global_diagnosis_must_precede_and_ground_action(self):
+        live = case()
+        allowed = gateway.validate_host_request(live)
+        payload = gateway.build_openai_request(live, "model")
+        assert payload["text"]["format"]["schema"]["required"][0] == "strategy"
+        assert "FIRST" in payload["instructions"]
+        answer = gateway.parse_openai_response(
+            model_output(), allowed, set(range(1, 6))
+        )
+        assert answer["strategy"]["issues"][0]["seats"] == [1, 3, 4]
+        for invalid in ("missing_issue", "wrong_seat", "wrong_relation", "no_intention"):
+            bad = model_output()
+            body = json.loads(bad["output"][0]["content"][0]["text"])
+            if invalid == "missing_issue":
+                body["strategy"]["issues"] = []
+            elif invalid == "wrong_seat":
+                body["strategy"]["issues"][0]["seats"] = [13]
+            elif invalid == "wrong_relation":
+                body["strategy"]["relations"][0]["issueId"] = "invented-issue"
+            else:
+                body["strategy"]["intentions"] = []
+            bad["output"][0]["content"][0]["text"] = json.dumps(body)
+            with self.assertRaises(ValueError):
+                gateway.parse_openai_response(bad, allowed, set(range(1, 6)))
 
     def test_budget_bounds_paid_calls(self):
         budget = gateway.Budget(1)
