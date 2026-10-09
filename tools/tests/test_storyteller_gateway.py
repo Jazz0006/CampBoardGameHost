@@ -1,5 +1,8 @@
 """Offline PROD-1 gateway contract tests: no paid calls or listening socket."""
 import importlib.util
+import io
+import os
+from unittest import mock
 import json
 from pathlib import Path
 import unittest
@@ -105,6 +108,42 @@ class GatewayContractTests(unittest.TestCase):
         budget = gateway.Budget(1)
         assert budget.acquire()
         assert not budget.acquire()
+
+    def _fake_handler(self, access_token="valid-token"):
+        handler = object.__new__(gateway.Handler)
+        payload = json.dumps(case()).encode("utf-8")
+        handler.path = gateway.PATH
+        handler.headers = {
+            "Authorization": "Bearer " + access_token,
+            "Content-Length": str(len(payload)),
+        }
+        handler.rfile = io.BytesIO(payload)
+        output = []
+        handler.send_json = lambda status, body: output.append((status, body))
+        return handler, output
+
+    def test_gateway_timeout_returns_safe_error_without_leaking_secret(self):
+        handler, output = self._fake_handler()
+        env = {
+            "OPENAI_API_KEY": "never-print-this",
+            "OPENAI_MODEL": "model-id",
+            "GATEWAY_ACCESS_TOKEN": "valid-token",
+        }
+        with mock.patch.dict(os.environ, env), \
+             mock.patch.object(gateway.BUDGET, "acquire", return_value=True), \
+             mock.patch.object(gateway.CONCURRENCY, "acquire", return_value=True), \
+             mock.patch.object(gateway.CONCURRENCY, "release"), \
+             mock.patch.object(gateway.urllib.request, "urlopen", side_effect=TimeoutError("secret body")):
+            handler.do_POST()
+        assert output == [(502, {"error": "model_unavailable_or_invalid"})]
+
+    def test_gateway_wrong_token_is_rejected_before_model_call(self):
+        handler, output = self._fake_handler(access_token="wrong-token")
+        with mock.patch.dict(os.environ, {"GATEWAY_ACCESS_TOKEN": "valid-token"}), \
+             mock.patch.object(gateway.urllib.request, "urlopen") as call:
+            handler.do_POST()
+            call.assert_not_called()
+        assert output == [(401, {"error": "unauthorized"})]
 
 
 if __name__ == "__main__":
