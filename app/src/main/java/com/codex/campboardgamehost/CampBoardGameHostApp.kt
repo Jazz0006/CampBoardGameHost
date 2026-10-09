@@ -75,6 +75,16 @@ import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionBound
 import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
+import com.codex.campboardgamehost.clocktower.session.StorytellerProviderGameContextBuilderV1
+import com.codex.campboardgamehost.clocktower.session.DrunkAssignmentDecisionBoundary
+import com.codex.campboardgamehost.clocktower.session.PendingDrunkAssignmentDecision
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionConfirmation
+import com.codex.campboardgamehost.clocktower.session.ProductionDrunkAiGatewayV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderOutcomeV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderValidationV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
 import com.codex.campboardgamehost.clocktower.session.DayAbilityRegistrationRulingProducerV1
 import com.codex.campboardgamehost.clocktower.rules.NoGreaterJoyKlutzChoiceRuleV1
@@ -177,6 +187,8 @@ private data class PendingTroubleBrewingDrunkSelection(
     val preparedGameId: String,
     val preparedSetup: TroubleBrewingPreparedSetup,
     val request: TroubleBrewingDrunkSelectionRequest,
+    val decision: PendingDrunkAssignmentDecision,
+    val providerRequest: StorytellerProviderRequestV1,
 )
 
 internal enum class LanguageMode(val prefsValue: String) {
@@ -297,6 +309,10 @@ internal fun CampBoardGameHostApp() {
     var pendingTroubleBrewingDrunkSelection by remember {
         mutableStateOf<PendingTroubleBrewingDrunkSelection?>(null)
     }
+    var drunkAiResponse by remember { mutableStateOf<StorytellerProviderResponseV1?>(null) }
+    var drunkAiBusy by remember { mutableStateOf(false) }
+    var drunkAiError by remember { mutableStateOf<String?>(null) }
+    val drunkAiScope = rememberCoroutineScope()
     var currentGameKind by remember { mutableStateOf(GameKind.Undercover) }
     var savedGamePreview by remember(context) { mutableStateOf(baseContext.loadSavedGamePreview(context)) }
     var gameHistory by remember { mutableStateOf(gameArchivePreferencesStore.loadGameHistory()) }
@@ -1530,6 +1546,9 @@ internal fun CampBoardGameHostApp() {
     ) {
         require(preparedGameId.isNotBlank()) { "Trouble Brewing prepared game ID cannot be blank." }
         pendingTroubleBrewingDrunkSelection = null
+        drunkAiResponse = null
+        drunkAiBusy = false
+        drunkAiError = null
         val preparedSeed = preparedSetup.intermediateSetup.gameSeed
         val characterRegistry = activeGameClocktowerRulesetCatalog
             .ruleset(ClocktowerScript.TroubleBrewing)
@@ -1599,6 +1618,10 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun startTroubleBrewingGame() {
+        pendingTroubleBrewingDrunkSelection = null
+        drunkAiResponse = null
+        drunkAiBusy = false
+        drunkAiError = null
         val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
         val preparedSeed = newClocktowerSeed()
         val preparedGameId = UUID.randomUUID().toString()
@@ -1653,10 +1676,31 @@ internal fun CampBoardGameHostApp() {
                 )
 
             is TroubleBrewingDrunkSelectionRoute.ManualSelection -> {
+                val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
+                    gameId = preparedGameId,
+                    intermediateSetup = preparedSetup.intermediateSetup,
+                )
+                val decision = DrunkAssignmentDecisionBoundary.create(
+                    snapshot = snapshot,
+                    characterRegistry = characterRegistry,
+                    revision = StorytellerDecisionRevision(0, 0),
+                )
+                val revision = StorytellerProviderRevisionV1(0, 0)
+                val providerRequest = StorytellerProviderRequestFactoryV1.fromDrunkAssignment(
+                    decision = decision,
+                    snapshot = snapshot,
+                    gameContext = StorytellerProviderGameContextBuilderV1.build(snapshot, revision),
+                )
+                require(route.request.candidates.map { it.seat to it.shownRoleId } ==
+                    decision.legalCandidates.map { it.payload.seat to it.payload.shownRoleId }) {
+                    "Displayed Drunk candidates must exactly match Host's legal domain."
+                }
                 pendingTroubleBrewingDrunkSelection = PendingTroubleBrewingDrunkSelection(
                     preparedGameId = preparedGameId,
                     preparedSetup = preparedSetup,
                     request = route.request,
+                    decision = decision,
+                    providerRequest = providerRequest,
                 )
                 screen = Screen.ClocktowerDrunkSelection
             }
@@ -2006,8 +2050,69 @@ internal fun CampBoardGameHostApp() {
                         val characterRegistry = activeGameClocktowerRulesetCatalog
                             .ruleset(ClocktowerScript.TroubleBrewing)
                             .characterRegistry
+                        val outcome = (drunkAiResponse?.outcome as?
+                            StorytellerProviderOutcomeV1.Recommendation)
+                        val primaryRef = outcome?.let { result ->
+                            pending.decision.legalCandidates.singleOrNull {
+                                it.candidateId == result.primary.candidateId
+                            }?.payload
+                        }
+                        val primary = pending.request.candidates.singleOrNull {
+                            it.seat == primaryRef?.seat && it.shownRoleId == primaryRef?.shownRoleId
+                        }
+                        val aiDisplay = outcome?.let { result ->
+                            DrunkAiDisplay(
+                                rationale = result.primary.rationale.joinToString("\n"),
+                                alternatives = result.alternatives.mapNotNull { alternative ->
+                                    pending.decision.legalCandidates.singleOrNull {
+                                        it.candidateId == alternative.candidateId
+                                    }?.let { legal ->
+                                        legal.payload.seat to alternative.rationale.joinToString("\n")
+                                    }
+                                },
+                                uncertainty = drunkAiResponse?.uncertainty.orEmpty(),
+                            )
+                        }
                         ClocktowerDrunkSelectionScreen(
-                            request = pending.request,
+                            request = pending.request.copy(recommendedCandidate = primary),
+                            aiDisplay = aiDisplay,
+                            aiBusy = drunkAiBusy,
+                            aiError = drunkAiError,
+                            onRequestAi = { endpoint, token ->
+                                if (!drunkAiBusy &&
+                                    screen == Screen.ClocktowerDrunkSelection &&
+                                    pendingTroubleBrewingDrunkSelection === pending
+                                ) {
+                                    drunkAiBusy = true
+                                    drunkAiResponse = null
+                                    drunkAiError = null
+                                    drunkAiScope.launch {
+                                        val result = runCatching {
+                                            ProductionDrunkAiGatewayV1.recommend(
+                                                endpoint, token, pending.providerRequest,
+                                            )
+                                        }
+                                        if (screen == Screen.ClocktowerDrunkSelection &&
+                                            pendingTroubleBrewingDrunkSelection === pending
+                                        ) {
+                                            drunkAiBusy = false
+                                            result.onSuccess { response ->
+                                                val validation = ProductionDrunkAiGatewayV1.validateCurrent(
+                                                    pending.providerRequest, pending.decision,
+                                                    pendingTroubleBrewingDrunkSelection?.decision, response,
+                                                )
+                                                if (validation is StorytellerProviderValidationV1.AcceptedRecommendation) {
+                                                    drunkAiResponse = response
+                                                } else {
+                                                    drunkAiError = "Invalid or stale AI response. Choose manually."
+                                                }
+                                            }.onFailure {
+                                                drunkAiError = "AI unavailable. Choose manually or retry."
+                                            }
+                                        }
+                                    }
+                                }
+                            },
                             language = language,
                             roleNameForExternalId = { externalId ->
                                 val definition = requireNotNull(
@@ -2022,11 +2127,27 @@ internal fun CampBoardGameHostApp() {
                             },
                             onBack = {
                                 pendingTroubleBrewingDrunkSelection = null
+                                drunkAiResponse = null
+                                drunkAiBusy = false
+                                drunkAiError = null
                                 screen = Screen.ClocktowerSettings
                             },
                             onConfirm = { candidate ->
                                 require(candidate in pending.request.candidates) {
                                     "Trouble Brewing Drunk selection confirmation must use a displayed legal candidate."
+                                }
+                                val legalId = requireNotNull(pending.decision.legalCandidates.singleOrNull {
+                                    it.payload.seat == candidate.seat &&
+                                        it.payload.shownRoleId == candidate.shownRoleId
+                                }) { "Drunk candidate not in current Host domain." }.candidateId
+                                val fresh = pendingTroubleBrewingDrunkSelection === pending &&
+                                    screen == Screen.ClocktowerDrunkSelection
+                                val confirmation = if (fresh) {
+                                    pending.decision.confirm(legalId, pending.decision.revision)
+                                } else null
+                                if (confirmation !is StorytellerDecisionConfirmation.Confirmed<*>) {
+                                    drunkAiError = "Setup decision changed. Start setup again."
+                                    return@ClocktowerDrunkSelectionScreen
                                 }
                                 commitAndStartTroubleBrewingGame(
                                     preparedGameId = pending.preparedGameId,
