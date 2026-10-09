@@ -134,3 +134,50 @@ internal fun StorytellerGlobalOverviewScreen(
         }
     }
 }
+
+
+/**
+ * No provisional PRECOMMIT plan is displayed as confirmed truth while post-commit
+ * reassessment is in flight. A missing model never forces a fabricated recommendation.
+ */
+@Composable
+internal fun StorytellerGlobalOverviewStatusScreen(
+    busy: Boolean,
+    error: String?,
+    language: String,
+    onRetry: () -> Unit,
+    onTakeOverManually: () -> Unit,
+) {
+    fun label(zh: String, en: String) = if (language == "en") en else zh
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                label("确认阵容后全局分析", "POST-COMMIT WHOLE-GAME ASSESSMENT"),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black,
+            )
+            Text(
+                if (busy) label(
+                    "正在根据最终角色和酒鬼裁定重新分析整局，不会把发牌前的战略假设当成已确认事实。",
+                    "Reassessing all confirmed roles and the actual Drunk decision; provisional predeal analysis is not confirmed fact.",
+                ) else label(
+                    "没有可验证的当前全局策略。可以重新获取，或接管为全手动模式。",
+                    "No verified current-game strategy. Retry, or take over in Manual mode.",
+                ),
+            )
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            Button(
+                onClick = onRetry,
+                enabled = !busy,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(label("重新分析整局", "Retry whole-game analysis")) }
+            OutlinedButton(
+                onClick = onTakeOverManually,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(label("切换全手动并继续", "Continue in Manual mode")) }
+        }
+    }
+}
