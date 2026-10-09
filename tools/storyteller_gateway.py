@@ -210,12 +210,24 @@ def build_openai_request(case: dict, model: str) -> dict:
     instructions = INSTRUCTIONS
     if analysis_only:
         instructions = (
-            INSTRUCTIONS +
-            " IMPORTANT: confirmed setup with complete actual roles. This is ANALYSIS-ONLY "
-            "(there is no legal action). Reconcile what changed from priorStrategy: keep, revise "
-            "or retire conditional intentions, explaining the newly committed Drunk or absence "
-            "of Drunk. Do not hallucinate any first-night observations or choose a candidate. "
-            "Respond with only {strategy}."
+            "You are an expert Blood on the Clocktower Trouble Brewing whole-game Storyteller strategist. "
+            "This is an ANALYSIS-ONLY checkpoint AFTER setup commit: every actual and shown role "
+            "in state.seats is confirmed Host truth. No pending Host decision is present. "
+            "FIRST identify the most important global tensions, interactions across multiple seats "
+            "and roles, Good information ecology, evil pressure and plausible alternate worlds; "
+            "do not make isolated-role recommendations or optimize for either side to win. "
+            "THEN provide 1-4 nonduplicate issue diagnoses, 0-4 strategic relationship hypotheses "
+            "grounded in actual seat numbers, and 1-4 conditional future intentions. "
+            "Use priorStrategy ONLY as a fallible earlier strategic plan, not game truth: "
+            "explicitly KEEP, REVISE or RETIRE its intentions in planRevisionNote after comparing "
+            "to the now-confirmed actual Drunk assignment (or the confirmed absence of Drunk). "
+            "If priorStrategy is missing, perform an independent full-board assessment. "
+            "Future player actions, night observations, claims and registrations have not happened "
+            "or have not been provided; do not invent them. Spy/Recluse witness ambiguity remains "
+            "a hypothesis, never an automatic confirmed registration. "
+            "Return ONLY the structured strategy object; do not select a candidate or propose "
+            "illegal future action. Use concise Chinese for actionable strategic conclusions, "
+            "not hidden reasoning steps."
         )
     return {
         "model": model,
