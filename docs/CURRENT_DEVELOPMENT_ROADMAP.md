@@ -9,7 +9,7 @@
 | 顺位 | 工作 | 状态 / 边界 |
 | --- | --- | --- |
 | **NOW** | **GSP-MEM0**：冻结 TB 8 人合成多决策例子的 A/B/C memory ablation，采集独立模型回答并盲评 | Fixture / rubric **已冻结；模型运行和盲评仍待进行**。不预设 C 优于 A/B |
-| **PARALLEL (bounded)** | **GSP-API0**：本地开发者端可选 Responses API transport | PR #288 **已合并**；默认不联网、严格 candidate-ID 验证；真实收费请求须显式开启；**不代表产品 API 接入或模型质量证明** |
+| **PARALLEL (bounded)** | **DEV-EXEC1 / GSP-API0**：开发机 Mini MCP 远程离线任务 | [执行与隔离规范](DEV_EXEC1_ORACLE_REMOTE_EXPERIMENT_WORKFLOW_2026-10-09.md)；Mini MCP PR #8 代码本地测试已过，**实际服务重启/新任务执行待验收**；API0 单次付费烟雾测试已成功，不代表九组 MEM0 或模型质量 |
 | AFTER MEM0 | **GSP-MEM1**：比较全局质量、连续性、矛盾/泄漏、成本及可移植性；用 EvidenceLab 可重建全局真人局进行复核 | 根据实验结果决定最小必需事实/记忆形态 |
 | CONDITIONAL | **GSP-R1C2C-2/3** 信息生产者、setup/裁量历史扩展 | **PAUSED**；仅对有具体真实用途、真实可达缺口、可量化推荐价值的事实重新开启；不再把严格历史重演/Recovery 完备作为每个 family 的先决条件 |
 | LATER, gated | GSP-R2 玩家信息、R3 跨局多样性、R4 生产格式化 provider request/response、API-1 Android 可选联网 | 尚未全面实施；必须先过语义/安全/质量/隐私门；无网络游戏完整可用 |
@@ -41,13 +41,13 @@
 | GSP-R1C2C-1 已限定的真实脚本裁定/白天公共动作 | **已验收**（PR #263、#265、#267、#269、#276、#278、#280、#282、#284）；Drunk-shown Virgin P1 已修复；非真实脚本的 synthetic Klutz/Spy writer 已撤销 |
 | GSP-R1C2C-2/3、R1C overall | **未完成且当前暂停**，只保持有用的现有事实与安全功能 |
 | GSP-MEM0 | 设计、合成 fixture 冻结（#287）；独立实验 **PENDING** |
-| GSP-API0 | 可选 Python Responses benchmark runner 已合入（#288）；开发者实际调用与效果 **NOT YET VERIFIED** |
+| GSP-API0 / DEV-EXEC1 | #288 已合入；开发者单次 S001 真实 API 调用 **1 attempted / 1 succeeded**，结构及合法候选已审；**九组 MEM0、模型质量、Mini MCP 远程任务执行均未验收** |
 
 ## 4. 执行与验收门
 
 - 每轮先查 **live GitHub main、全部开放 PR、本地工作区**，再按 `AGENTS.md` 选择最小安全执行路径。不要引用固定 HEAD 当现状。已通过验证的完整 PR 在符合规范后可以直接合并；失败、不完整或扩大范围的工作不得以清理为名合并。
 - MEM0：[范围决定](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md) → [ablation 设计](GSP_MEMORY_ABLATION_EXPERIMENT_2026-10-09.md) → [冻结 fixture](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json)。A＝当前事实与合法候选；B＝A 加事实历史；C＝B 加清晰标注的战略记忆。在同一合法 as-of 时点独立比较；不得偷看未来。真实局证据明确区分合成演示。
-- API0：[开发与密钥操作说明](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)。`tools/gsp_api0_responses.py` 默认 offline、严格 schema、显式 `--live`、私有输出且 `store:false`；API 账单和 ChatGPT 订阅独立。不将密钥植入 Android/APK；未来 API-1 需要 authenticated secret-owning gateway、权限、限流、额度、Host freshness/legality 校验和人工确认。
+- DEV-EXEC1：[开发机远程实验执行与结果隔离](DEV_EXEC1_ORACLE_REMOTE_EXPERIMENT_WORKFLOW_2026-10-09.md)，当前仅离线、无额外计费授权；Mini MCP systemd 重启状态须经实际 instance ID 验证，旧任务白名单仍阻塞生产 canary。\n- API0：[开发与密钥操作说明](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)。`tools/gsp_api0_responses.py` 默认 offline、严格 schema、显式 `--live`、私有输出且 `store:false`；API 账单和 ChatGPT 订阅独立。不将密钥植入 Android/APK；未来 API-1 需要 authenticated secret-owning gateway、权限、限流、额度、Host freshness/legality 校验和人工确认。
 - 新历史事实入库之前，需要真实支持的游戏场景、实际消费者、当前 snapshot/事件/战略摘要不能替代的原因、明确排除的非目标以及比例合适的测试。不要为填满历史日志而继续实现 Recovery。
 - **无关文档、历史分支与代码重构**不得混入 MEM0 实验；文档整理遵循 [清理审计](BRANCH_RETENTION_AND_PRUNING_AUDIT_2026-10-09.md)。
 
