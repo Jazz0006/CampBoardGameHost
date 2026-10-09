@@ -178,6 +178,7 @@ private enum class Screen {
     ClocktowerSettings,
     ClocktowerDrunkSelection,
     ClocktowerAiOverview,
+    ClocktowerAutoPause,
     Settings,
     PassPhone,
     RevealCard,
@@ -229,6 +230,7 @@ private fun Screen.isActiveGameScreen(): Boolean = when (this) {
     Screen.PassPhone,
     Screen.RevealCard,
     Screen.ClocktowerAiOverview,
+    Screen.ClocktowerAutoPause,
     Screen.ClocktowerJudge,
     Screen.Game -> true
     Screen.Landing,
@@ -2259,10 +2261,15 @@ internal fun CampBoardGameHostApp() {
                         onNext = {
                             if (currentGameKind == GameKind.Clocktower) {
                                 if (currentDealIndex == cards.lastIndex) {
-                                    screen = if (currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
-                                        storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
-                                        drunkAiStrategy != null
-                                    ) Screen.ClocktowerAiOverview else Screen.ClocktowerJudge
+                                    screen = when {
+                                        currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
+                                            storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC ->
+                                            Screen.ClocktowerAutoPause
+                                        currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
+                                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
+                                            drunkAiStrategy != null -> Screen.ClocktowerAiOverview
+                                        else -> Screen.ClocktowerJudge
+                                    }
                                 } else {
                                     currentDealIndex += 1
                                 }
@@ -2287,6 +2294,15 @@ internal fun CampBoardGameHostApp() {
                                     }
                                 }
                             }
+                        },
+                    )
+
+                    Screen.ClocktowerAutoPause -> StorytellerAutoPauseScreen(
+                        hasGlobalPlan = drunkAiStrategy != null,
+                        language = language,
+                        onTakeOverManually = {
+                            storytellerOperationMode = StorytellerOperationMode.MANUAL
+                            screen = Screen.ClocktowerJudge
                         },
                     )
 
