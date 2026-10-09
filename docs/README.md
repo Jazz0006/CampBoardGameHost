@@ -14,6 +14,7 @@
 
 - [GSP-MEM0 / Recovery 范围决策](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md)：战略记忆可以参与建议，但 Host 规则/事实/候选仍是权威；Recovery 仅恢复短期意外中断。
 - **[生产接入与全自动说书人路线（GSP-PROD-AUTO）](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)**：当前产品首要路线；真实 TB 中 LLM 推荐 → 自动裁量 → 完整无人类说书人。MEM0/MEM1 改为非阻塞实验。
+- **[PROD-GLOBAL-1 整局全局分析、可修订策略与方桌 UI](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)**：2026-10-09 用户纠偏后的 PROD-1 产品验收权威。先全局诊断/交互/未来计划，再当前合法推荐；MANUAL 无 AI，ASSISTED 方桌图形分析，AUTO 验证后自动推进。PR #292 原独立酒鬼推荐为 Draft SPIKE，尚不可合并。
 - [MEM0 实验与评分协议](GSP_MEMORY_ABLATION_EXPERIMENT_2026-10-09.md) 与 [冻结合成 TB8 fixture](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json)：B2 已有九份真实模型响应，**未做正式 A/B/C 盲评**，用于辅助生产上下文检查，不阻塞接入。
 - [API0 Responses benchmark 接口](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)：**已验证开发机真实结构化 API 实验；尚无 Android 生产集成/安全网关**。
 - [通用说书人 Policy 规范](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md)：推荐只对 Host 的合法选择 rank/recommend/explain，不继承旧自动特例。
