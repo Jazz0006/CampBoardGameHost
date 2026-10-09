@@ -47,7 +47,8 @@
 
 - 每轮先查 **live GitHub main、全部开放 PR、本地工作区**，再按 `AGENTS.md` 选择最小安全执行路径。不要引用固定 HEAD 当现状。已通过验证的完整 PR 在符合规范后可以直接合并；失败、不完整或扩大范围的工作不得以清理为名合并。
 - MEM0：[范围决定](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md) → [ablation 设计](GSP_MEMORY_ABLATION_EXPERIMENT_2026-10-09.md) → [冻结 fixture](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json)。A＝当前事实与合法候选；B＝A 加事实历史；C＝B 加清晰标注的战略记忆。在同一合法 as-of 时点独立比较；不得偷看未来。真实局证据明确区分合成演示。
-- DEV-EXEC1：[开发机远程实验执行与结果隔离](DEV_EXEC1_ORACLE_REMOTE_EXPERIMENT_WORKFLOW_2026-10-09.md)，当前仅离线、无额外计费授权；Mini MCP systemd 重启状态须经实际 instance ID 验证，旧任务白名单仍阻塞生产 canary。\n- API0：[开发与密钥操作说明](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)。`tools/gsp_api0_responses.py` 默认 offline、严格 schema、显式 `--live`、私有输出且 `store:false`；API 账单和 ChatGPT 订阅独立。不将密钥植入 Android/APK；未来 API-1 需要 authenticated secret-owning gateway、权限、限流、额度、Host freshness/legality 校验和人工确认。
+- DEV-EXEC1：[开发机远程实验执行与结果隔离](DEV_EXEC1_ORACLE_REMOTE_EXPERIMENT_WORKFLOW_2026-10-09.md)，当前仅离线、无额外计费授权；Mini MCP systemd 重启状态须经实际 instance ID 验证，旧任务白名单仍阻塞生产 canary。
+- API0：[开发与密钥操作说明](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)。`tools/gsp_api0_responses.py` 默认 offline、严格 schema、显式 `--live`、私有输出且 `store:false`；API 账单和 ChatGPT 订阅独立。不将密钥植入 Android/APK；未来 API-1 需要 authenticated secret-owning gateway、权限、限流、额度、Host freshness/legality 校验和人工确认。
 - 新历史事实入库之前，需要真实支持的游戏场景、实际消费者、当前 snapshot/事件/战略摘要不能替代的原因、明确排除的非目标以及比例合适的测试。不要为填满历史日志而继续实现 Recovery。
 - **无关文档、历史分支与代码重构**不得混入 MEM0 实验；文档整理遵循 [清理审计](BRANCH_RETENTION_AND_PRUNING_AUDIT_2026-10-09.md)。
 
