@@ -21,6 +21,11 @@ import javax.net.ssl.HttpsURLConnection
  * PROD-1 transport adapter. The OpenAI credential lives only in a separate gateway.
  * A short-lived gateway access token is supplied interactively, never stored or compiled into the APK.
  */
+internal data class StorytellerGlobalAdviceV1(
+    val response: StorytellerProviderResponseV1,
+    val globalStrategy: StorytellerGlobalStrategyV1,
+)
+
 internal object ProductionDrunkAiGatewayV1 {
     private const val MAX_RESPONSE_BYTES = 65536
 
@@ -78,8 +83,18 @@ internal object ProductionDrunkAiGatewayV1 {
             .put("legalCandidates", candidates)
             .put("playerContext", players)
             .put("historyCoverage", "NOT_AVAILABLE_AT_SETUP_PRECOMMIT")
+            .put("strategicAnalysisStage", "WHOLE_GAME_PRECOMMIT_BEFORE_DRUNK")
+            .put("strategicPlanningScope", "GLOBAL_ISSUE_FIRST_THEN_LEGAL_DECISION")
             .put("coordinationHorizon", request.coordinationHorizon.name)
             .toString()
+    }
+
+    fun decodeGlobal(raw: String, request: StorytellerProviderRequestV1): StorytellerGlobalAdviceV1 {
+        val json = JSONObject(raw)
+        val snapshot = (request.state as StorytellerProviderGameStateV1.TroubleBrewing).snapshot
+        val seats = snapshot.grimoireSeats.map { it.seat }.toSet()
+        val strategy = StorytellerGlobalStrategyV1.decode(json.getJSONObject("strategy"), seats)
+        return StorytellerGlobalAdviceV1(decode(raw), strategy)
     }
 
     fun decode(raw: String): StorytellerProviderResponseV1 {
@@ -134,7 +149,7 @@ internal object ProductionDrunkAiGatewayV1 {
         endpoint: String,
         accessToken: String,
         request: StorytellerProviderRequestV1,
-    ): StorytellerProviderResponseV1 = withContext(Dispatchers.IO) {
+    ): StorytellerGlobalAdviceV1 = withContext(Dispatchers.IO) {
         val uri = URI(endpoint.trim())
         require(uri.scheme == "https" && !uri.host.isNullOrBlank() &&
             uri.userInfo == null && uri.fragment == null && uri.rawQuery == null && uri.port != 0) {
@@ -169,7 +184,7 @@ internal object ProductionDrunkAiGatewayV1 {
                 }
                 output.toString("UTF-8")
             }
-            decode(raw)
+            decodeGlobal(raw, request)
         } finally {
             connection.disconnect()
         }
