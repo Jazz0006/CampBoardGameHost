@@ -8,26 +8,27 @@
 2. 实时核对 GitHub `main`、open PR、branch HEAD 和本地 working tree。不要丢弃本地未提交改动。
 3. 本次全局文档收敛开始时的基线为 `main@2886dcca876ef81a164ef700d748408223c029d3`（PR #288 已合并），仅作为历史记录，不是下一轮必然的 HEAD。
 
-## 2. 下一项：GSP-MEM0
+## 2. 下一项：PROD-0 → PROD-1（真实游戏 AI 推荐接入）
 
-**NOW：运行冻结的独立模型 A/B/C 记忆消融盲测，而不是继续扩展存档。**
+**最新产品授权（2026-10-09）：不再以 MEM0/MEM1 质量盲评作为接入生产前置条件。** 强通用 LLM 的现实建议质量已经足以支持立即做可玩的原型。产品特色长期目标是 **AI_AUTOMATIC / 无人工说书人**，而不是让人类永远确认每个裁量。
 
-- 产品授权：[2026-10-09 范围决定](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md)；协议：[MEM0 ablation](GSP_MEMORY_ABLATION_EXPERIMENT_2026-10-09.md)；fixture：[合成 TB8 多步局](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json)。
-- A 只给当前 Host 权威事实/合法候选；B 加当前决策前冻结的真实历史；C 加显式区分假设、动机、计划与不确定性的战略摘要。必须同一合法 as-of 时点，不携带未来信息，不用“是否猜中作者预选答案”当唯一分数。
-- 独立记录整局信息生态、公平性、多种合理世界、记忆一致性、玩家压力、可解释备选、错误、成本与延迟；独立模型调用和盲评 **仍待完成**。实验数据不得声称已验证模型效果。
-- 后续 GSP-MEM1 审查结果，优先使用 EvidenceLab 可重建完整真人局复核；只为真实改进补充最小信息 producer。C2C-2/3 的旧历史覆盖计划 **PAUSED**，并未取消已有规则/真实语义的正确性。
+完整路线：[GSP-PROD-AUTO — 生产接入与自动说书人](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。
 
-## 3. 并行的 API0（已实现，不是 Android 生产）
+### 当前立即执行的 PROD-0 / PROD-1
 
-[API0 transport 使用说明](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)：PR #288 已将 Python `tools/gsp_api0_responses.py` 合入 main；可生成 9 个冻结 A/B/C×D0/D1/D2 请求指纹，默认不发网络请求。开发者须自备 `OPENAI_API_KEY`、指定可用 `OPENAI_MODEL`，显式 `--live` 并设置 `--max-requests` 和 repo 外私有输出目录后才能产生计费调用。S001 的一次有界真实请求已经成功（1 attempted / 1 succeeded），schema 与合法 ID 已审，**无需再次重复支付冒烟测试**。进入 9 次正式盲测前必须修复公开默认 seed 可推导分组的问题、单独明确预算与授权。不要把 key 写入源码或 APK，不要自动发送任务或重试。
+1. 用 live GitHub main 复核已有 `StorytellerProviderRequestV1`、`StorytellerProviderResponseV1`、`StorytellerProviderRequestFactoryV1`、`StorytellerProviderResponseValidatorV1`、`StorytellerProviderGameContextBuilderV1`、真实 pending decision 与确认 owner；不要再建第二套推荐引擎。
+2. 选择 **一个真实 TB 角色裁量**（优先酒鬼 late-binding），做完整链路：运行中当前游戏状态/所有显示角色/合法候选/必要已确认历史 → 格式化上下文 → 安全后端服务可配置 LLM → Host 校验 ID/来源 revision/当前可达动作 → UI 展示主方案和备选 → 调用现有 Host confirm 路径。
+3. 用真实 Host 游戏态测试合法候选、缺角色信息、stale revision、网络错误/超时/无额度、无 API key 入 APK、同一决策不重复提交，以及原有离线 Manual 流程；**不要求 27 次 MEM0 复测或 MEM1 完成**。
+4. PROD-1 完成后立即实现 **PROD-2 的可选自动模式**：Host 验证同一合法选择后自动确认，失败明确暂停/支持接管。随后推进 TB 首夜自动流程，最终扩展到完整无人类说书人局（但玩家实际选择/提名/投票仍需由玩家交互输入）。
 
-此功能 **没有**验证真实 OpenAI API 模型质量，没有上线 Android；后续 API-1 需要服务端保管密钥的认证网关和 Host 本地合法性/状态新鲜度复验，仍只展示建议，由说书人确认。
+**模型策略：** 用户已在直接对话中观察到较强模型（Sol）输出好于本次 Luna API 模型，不把单个较弱模型的表现当成 LLM 能力天花板。真实部署采用可配置模型、质量优先、记录费用与延迟，不假设聊天名称=实际 API model ID。
 
-### DEV-EXEC1 开发机远程实验（2026-10-09）
+## 3. MEM0/API0/开发机状态 — 留证但不得阻塞生产
 
-[DEV-EXEC1 工作流与验收状态](DEV_EXEC1_ORACLE_REMOTE_EXPERIMENT_WORKFLOW_2026-10-09.md)：Mini MCP PR #8 已注册固定 `api0-offline` 任务及回归测试，本地 `npm run check` exit 0；目前服务重启接口停留旧实例，真实 `run_task(clocktower, api0-offline)` 仍遭旧白名单拒绝。需 Oracle 开发机管理员用 systemd 重启服务，核对 instance ID 后再进行 10 项单元测试 + 九组 `network_calls: 0` manifest 的端到端验收。暂不运行付费九组或回传盲样映射。
-
-API0 先前单次 S001 真实调用已确认 `1 attempted / 1 succeeded`，格式和合法候选检查通过，仍不代表 MEM0 效果验证。
+- API0 由 Host PR #288 提供 Python 开发者端 Responses script；**尚未**提供 Android 生产网关。
+- Oracle Mini MCP DEV-EXEC1/2 已完成服务自重启、固定离线任务与安全结果读取。B1 预执行因输出目录非空未发出请求且永久封存；B2 私有只读审计：**9 attempted / 9 succeeded / 9 valid outputs**，累计输入 5,187、输出 12,667 tokens。B2 的一次重复运行被单批次保护拒绝，不代表又发送九次；还不能据此证明 LLM 质量或统计意义上的记忆效果。
+- MEM0 现有 9 份响应可供将来审阅，D0 合成 prompt 对备选候选的显示角色信息不足、少量回答有酒鬼规则断言问题，应反馈给 **生产 context completeness**，而不是要求马上重新扩大盲测。完整 MEM0 盲评转 **NON-BLOCKING**，EvidenceLab 完整真人局检验随后按实际产品缺陷开展。
+- 原 GSP-R1C2C-2/3 历史工程继续暂停；Recovery 只为同当前格式、≤4h 突发中断续局。不要又将 Recovery 当记忆或生产接入的先决条件。
 
 ## 4. 施工禁区与保留项
 
@@ -35,7 +36,7 @@ API0 先前单次 S001 真实调用已确认 `1 attempted / 1 succeeded`，格�
 - Recovery 仅同当前格式/令牌、**≤4 小时紧急续局**；不扩展长期存档、历史版本迁移、任意 cut-off strict replay。PR #286 已关闭且未合并，**不得重复添加已由合法 setup 保证的酒鬼 shown-role collision 校验**，除非发现可达输入边界缺陷。
 - 已有 Drunk shown Virgin 的首次提名兼容真实修复（#284）、真实 TB/NGJ 公共/裁定行动记录（#282 等）要保留。Spy/Recluse 结果若有多个合法 witness，只将 Storyteller 真正明确裁定的注册记成明确事实。
 - Legacy heuristic/style/special-policy 已退休。不得重新引入 named Drunk/Mayor/Investigator if/else 自动排序。
-- GSP-R2 玩家资料、R3 跨局经验与推荐多样性、R4 production materializer 未作当前选择；旧关闭未合并的 PR #232 分支 `gsp-2b3b-player-context-edit-surface` 有参考代码，**保留其远端分支**，日后需重新按 live 架构审计，不能照搬。
+- GSP-R2/R3 玩家资料与跨局经验按照真实使用需要渐进接入，**R4 的必要部分已进入 PROD-1 的生产上下文/格式化与验证工作**；旧关闭未合并的 PR #232 分支 `gsp-2b3b-player-context-edit-surface` 有参考代码，**保留其远端分支**，日后需重新按 live 架构审计，不能照搬。
 
 ## 5. 文档/分支清理的独立交接
 
@@ -43,4 +44,4 @@ API0 先前单次 S001 真实调用已确认 `1 attempted / 1 succeeded`，格�
 
 ## 6. 本轮验收
 
-文档-only 更改不需要伪造 Android RED 测试；需检查 diff、文档相互引用、无业务代码变更、GitHub 独立 PR/checks。后续任何功能行为改动按 `AGENTS.md` 和 `TESTING_STRATEGY.md` 进行风险分级验证。
+本轮为生产优先级文档路线决策，不是已完成 Android 接入。文档-only 更改不需要伪造 Android RED 测试；需检查 diff、文档相互引用、无业务代码变更、GitHub 独立 PR/checks。后续任何功能行为改动按 `AGENTS.md` 和 `TESTING_STRATEGY.md` 进行风险分级验证。

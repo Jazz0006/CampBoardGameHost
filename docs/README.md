@@ -13,8 +13,9 @@
 ## 当前研究与产品约束
 
 - [GSP-MEM0 / Recovery 范围决策](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md)：战略记忆可以参与建议，但 Host 规则/事实/候选仍是权威；Recovery 仅恢复短期意外中断。
-- [MEM0 实验与评分协议](GSP_MEMORY_ABLATION_EXPERIMENT_2026-10-09.md) 与 [冻结的合成 TB 8 人局 fixture](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json)：当前实验优先，独立模型输出尚待采集。
-- [API0 Responses benchmark 接口](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)：**已实现开发环境可选 API transport；无 Android 网络生产切换**。
+- **[生产接入与全自动说书人路线（GSP-PROD-AUTO）](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)**：当前产品首要路线；真实 TB 中 LLM 推荐 → 自动裁量 → 完整无人类说书人。MEM0/MEM1 改为非阻塞实验。
+- [MEM0 实验与评分协议](GSP_MEMORY_ABLATION_EXPERIMENT_2026-10-09.md) 与 [冻结合成 TB8 fixture](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json)：B2 已有九份真实模型响应，**未做正式 A/B/C 盲评**，用于辅助生产上下文检查，不阻塞接入。
+- [API0 Responses benchmark 接口](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)：**已验证开发机真实结构化 API 实验；尚无 Android 生产集成/安全网关**。
 - [通用说书人 Policy 规范](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md)：推荐只对 Host 的合法选择 rank/recommend/explain，不继承旧自动特例。
 - [GSP-R1 现有历史捕捉审计](GSP_R1A_CANONICAL_HISTORY_CAPTURE_PREFIX_COVERAGE_AUDIT_2026-10-08.md) 与 [registration ambiguity 约束](GSP_REGISTRATION_AMBIGUITY_RESULT_FIRST_HISTORY_CONTRACT_2026-10-08.md)：已实现机械历史继续有效；C2C-2/3 可选扩展目前暂停，不能因旧 NEXT 文字擅自恢复。
 
@@ -28,6 +29,6 @@
 
 ## 判断冲突与维护规则
 
-官方 BoTC 规则负责游戏规则真伪；`AGENTS.md` 负责协作执行与所有权；`TESTING_STRATEGY.md` 负责测试；**当前 roadmap + handoff + 2026-10-09 owner 范围决策** 负责下一步任务。专项旧路线与 archived docs 仅作为历史/设计证据；Mini MCP developer memory 仅供导航，不覆盖 live 状态。
+官方 BoTC 规则负责游戏规则真伪；`AGENTS.md` 负责协作执行与所有权；`TESTING_STRATEGY.md` 负责测试；**当前 roadmap + handoff + 最新 GSP-PROD-AUTO 授权（不取消先前 Recovery 范围边界）** 负责下一步任务。专项旧路线与 archived docs 仅作为历史/设计证据；Mini MCP developer memory 仅供导航，不覆盖 live 状态。
 
 历史 SDE/C5/DLB/TBGS/RSR/LRE 完成状态不再占据活动入口，也不能从其旧 `NEXT` 推断可实施任务。迁移、归档和删除文件前应先核对实际引用，确保不损坏深链接；完成一次阶段验收应回收过时 handoff，而不是叠加新入口。

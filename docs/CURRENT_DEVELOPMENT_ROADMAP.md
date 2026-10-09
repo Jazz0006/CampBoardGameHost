@@ -4,23 +4,27 @@
 >
 > 2026-10-09 收敛前的完整路线、PR/CI/R2 验收与逐步历史已完整归档为 [pre-MEM0 roadmap snapshot](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md)。需要复核已完成 stage 的 exact-head 验收时查此快照及相应原始 PR，不把这些历史重写到本文件。
 
-## 1. 当前唯一执行顺序
+## 1. 当前唯一执行顺序 — **PRODUCTION FIRST / AUTONOMOUS GOAL**
+
+> 2026-10-09 **最新用户产品授权覆盖**：不再要求 MEM0 盲评、MEM1 真人局研究或进一步 Recovery 覆盖完成后，才准生产接入。直接推进可玩的 LLM 推荐与自动说书人。唯一执行设计权威：[GSP-PROD-AUTO](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。
 
 | 顺位 | 工作 | 状态 / 边界 |
 | --- | --- | --- |
-| **NOW** | **GSP-MEM0**：冻结 TB 8 人合成多决策例子的 A/B/C memory ablation，采集独立模型回答并盲评 | Fixture / rubric **已冻结；模型运行和盲评仍待进行**。不预设 C 优于 A/B |
-| **PARALLEL (bounded)** | **DEV-EXEC1 / GSP-API0**：开发机 Mini MCP 远程离线任务 | [执行与隔离规范](DEV_EXEC1_ORACLE_REMOTE_EXPERIMENT_WORKFLOW_2026-10-09.md)；Mini MCP PR #8 代码本地测试已过，**实际服务重启/新任务执行待验收**；API0 单次付费烟雾测试已成功，不代表九组 MEM0 或模型质量 |
-| AFTER MEM0 | **GSP-MEM1**：比较全局质量、连续性、矛盾/泄漏、成本及可移植性；用 EvidenceLab 可重建全局真人局进行复核 | 根据实验结果决定最小必需事实/记忆形态 |
-| CONDITIONAL | **GSP-R1C2C-2/3** 信息生产者、setup/裁量历史扩展 | **PAUSED**；仅对有具体真实用途、真实可达缺口、可量化推荐价值的事实重新开启；不再把严格历史重演/Recovery 完备作为每个 family 的先决条件 |
-| LATER, gated | GSP-R2 玩家信息、R3 跨局多样性、R4 生产格式化 provider request/response、API-1 Android 可选联网 | 尚未全面实施；必须先过语义/安全/质量/隐私门；无网络游戏完整可用 |
-| INDEPENDENT | 局部 App/Host 维护与真实规则缺陷 | 仅在可证实的维护需要出现时独立处理，不阻塞 MEM0，也不借机再拆大模块 |
+| **NOW** | **PROD-0：真实运行入口/所有权审计** | 找到现有 Host pending decision、RES provider contract、上下文与确认路径；选择一个真实 TB 决策为最小生产切入。不要再建新的推荐算法或全面扩展历史 |
+| **NEXT** | **PROD-1：AI_ASSISTED 真实游戏垂直链路** | 当前真实 GameState + 完整候选/显示角色 + 必要历史/战略摘要 → 可配置强模型的安全后端 → Host fresh/legality 验证 → 游戏 UI 建议/备选 → 说书人确认 |
+| **THEN** | **PROD-2：AI_AUTOMATIC 自动裁量** | 用户明确开启自动模式后，由 Host 验证并调用**现有**规则确认路径自动提交；网络失败、非法或过期响应则暂停/人工接管，不静默恢复旧 heuristic |
+| **FOLLOW-ON** | **PROD-3/4：TB 首夜自动主持 → 完整 TB 无人工说书人** | 扩大真实夜间/白天裁量家族、输入采集、顺序与终局，逐段验收完整可玩 |
+| **NON-BLOCKING** | GSP-MEM0/MEM1、EvidenceLab、模型对比与训练 | B2 已有 9/9 真实结构化结果；质量与记忆优势未完成正式盲评。按实际产品问题选择性验证；不阻塞 PROD-1 |
+| **PAUSED** | GSP-R1C2C-2/3 及 Recovery 历史扩展 | 只有真实游戏决策的不可替代缺口才可重新进入；Recovery 仍限当前格式、≤4h 紧急续局 |
 
-**不可误读：** 旧文档中“C2C-2 NEXT”“GSP-R1 后立刻做 R2/R3/R4”“API 必须等整个历史收敛完成”“旧 SDE/特例推荐等待 cutover”等语句现均非当期指令。
+**模型策略：** 产品所有者报告强模型 Sol 的直接测试质量高于近期 Luna API 试验；这是主观质量观察，不宣称对应公开 API 模型 ID 或统计显著性。生产模型可配置且质量优先，避免弱模型实验结果阻塞部署。
+
+**不可误读：** 旧文档中“MEM0 NOW”“盲评或 R1 历史补齐是生产 API 前置条件”“永远必须人工确认”等均由本次新授权覆盖；人工确认仅为 AI_ASSISTED 模式的契约。旧算法不复活。
 
 ## 2. 冻结的架构与产品原则
 
-1. **规则与游戏权威独立：** Host/Game Engine 拥有 canonical current game/session、rules、legal candidates、committed facts 和游戏状态写入。任何 LLM/provider 只返回合法候选的推荐、备选和理由，不得自动提交或伪造事实。
-2. **离线优先：** 在没有模型、网络、额度、有效响应时，Manual 主持、规则与合法选择仍可运行。唯一合法结果可由 rules 自动确定；多个未获合格推荐的合法结果为 `MANUAL_REQUIRED`。
+1. **规则与游戏权威独立：** Host/Game Engine 拥有 canonical current game/session、rules、legal candidates、committed facts 和游戏状态写入。任何 LLM/provider 只返回合法候选的推荐、备选和理由，**provider 本身不得写入事实**；AI_ASSISTED 由人确认，显式启用 AI_AUTOMATIC 后可由 Host 在即时合法性/版本核验通过后调用现有确认路径自动提交。
+2. **离线优先：** 在没有模型、网络、额度、有效响应时，Manual 主持、规则与合法选择仍可运行。唯一合法结果可由 rules 自动确定；多个未获合格推荐的合法结果：手动模式为 `MANUAL_REQUIRED`，自动模式须暂停并提示/支持人工接管；**不得**擅自选择任意结果。
 3. **旧引擎退役：** RES-0～5 的 heuristic/style/weighted/named special-policy 自动推荐权限已移除或物理删除；GSP-1 已撤销 Q04 Drunk、functioning Librarian V2、INV1-A 的多候选特例自动权威。旧案例/算法只能供证据、benchmark 或审计。
 4. **Strategic memory 允许且需检验：** Host 真实事实和 legal domain 优先；LLM 短期推理/战略摘要、跨局经验与相同局面多样性是 **advisory**，明确区分 FACT / INTENT / HYPOTHESIS / UNCERTAINTY；模型记忆不等于可写规则事实。
 5. **Recovery 的产品范围严格限定：** 仅同一当前版本格式、精确兼容令牌、**4 小时以内**的当前游戏突发关闭恢复（restore game, not App）。不新增跨版本迁移、长期未完局存档、任意历史 cut-off 复演、无可达风险的重复 setup 校验；既有已验证的真实机械正确性与短期恢复保持不变。
@@ -40,20 +44,21 @@
 | GSP-R1A / R1B / R1C1 / R1C2A / R1C2B | **COMPLETE / ACCEPTED**，但不意味着任意历史时点可恢复 |
 | GSP-R1C2C-1 已限定的真实脚本裁定/白天公共动作 | **已验收**（PR #263、#265、#267、#269、#276、#278、#280、#282、#284）；Drunk-shown Virgin P1 已修复；非真实脚本的 synthetic Klutz/Spy writer 已撤销 |
 | GSP-R1C2C-2/3、R1C overall | **未完成且当前暂停**，只保持有用的现有事实与安全功能 |
-| GSP-MEM0 | 设计、合成 fixture 冻结（#287）；独立实验 **PENDING** |
-| GSP-API0 / DEV-EXEC1 | #288 已合入；开发者单次 S001 真实 API 调用 **1 attempted / 1 succeeded**，结构及合法候选已审；**九组 MEM0、模型质量、Mini MCP 远程任务执行均未验收** |
+| GSP-MEM0 | B2 经只读批次审计：9 attempted / 9 succeeded / 9 response JSON；正式盲评仍未完成，转为 NON-BLOCKING |
+| GSP-API0 / DEV-EXEC1/2 | #288 API0 及 Mini MCP Oracle 远程离线/付费实验已验收：B2 9/9，5,187 input / 12,667 output tokens（私有批次审计）；**不等于 Android 生产接入或模型质量验收** |
 
 ## 4. 执行与验收门
 
-- 每轮先查 **live GitHub main、全部开放 PR、本地工作区**，再按 `AGENTS.md` 选择最小安全执行路径。不要引用固定 HEAD 当现状。已通过验证的完整 PR 在符合规范后可以直接合并；失败、不完整或扩大范围的工作不得以清理为名合并。
-- MEM0：[范围决定](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md) → [ablation 设计](GSP_MEMORY_ABLATION_EXPERIMENT_2026-10-09.md) → [冻结 fixture](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json)。A＝当前事实与合法候选；B＝A 加事实历史；C＝B 加清晰标注的战略记忆。在同一合法 as-of 时点独立比较；不得偷看未来。真实局证据明确区分合成演示。
-- DEV-EXEC1：[开发机远程实验执行与结果隔离](DEV_EXEC1_ORACLE_REMOTE_EXPERIMENT_WORKFLOW_2026-10-09.md)，当前仅离线、无额外计费授权；Mini MCP systemd 重启状态须经实际 instance ID 验证，旧任务白名单仍阻塞生产 canary。
-- API0：[开发与密钥操作说明](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)。`tools/gsp_api0_responses.py` 默认 offline、严格 schema、显式 `--live`、私有输出且 `store:false`；API 账单和 ChatGPT 订阅独立。不将密钥植入 Android/APK；未来 API-1 需要 authenticated secret-owning gateway、权限、限流、额度、Host freshness/legality 校验和人工确认。
-- 新历史事实入库之前，需要真实支持的游戏场景、实际消费者、当前 snapshot/事件/战略摘要不能替代的原因、明确排除的非目标以及比例合适的测试。不要为填满历史日志而继续实现 Recovery。
-- **无关文档、历史分支与代码重构**不得混入 MEM0 实验；文档整理遵循 [清理审计](BRANCH_RETENTION_AND_PRUNING_AUDIT_2026-10-09.md)。
+- **先执行 PROD-0/1。** 每轮核对 live GitHub main、所有开放 PR、本地工作树，按 `AGENTS.md` 选择最小变更；在可运行的真实 TB 决策上验收。参考 [生产自动说书人路线](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。
+- PROD-1 的 **必要**测试：真实全座位/显示身份与合法候选上下文、模型结构化有效返回、非法 ID、已变更 decision/revision、超时离线/额度失败、密钥不进入 APK、手动流程可用；无 MEM0 大样本质量研究前置门。
+- PROD-2 的 **必要**测试：自动模式必须显式选择、单次合法确认、取消/去重/过期拒绝/状态重复进入、无提供方时暂停；所有状态提交属于 Host。整个完整自动 TB 游戏是 PROD-4 的独立目标，不能由单决策成功宣称完成。
+- Oracle VM 当前是 **开发机**，其已完成的 Mini MCP 执行/结果返回不构成安全的 Android 生产网关。生产需要有鉴权、额度限制、TLS、服务端密钥保管及私有数据最小化的实际部署。
+- MEM0 旧冻结合成 fixture/评分协议继续作为证据但 **不阻塞** 产品；若研发时遇到具体质量退化才开展针对性评估。Host 缺什么字段就对着真实用例补，不扩展任意历史 Replay/Recovery。
+- 当前新方案不创建旧 heuristic/special-policy 推荐，不改变规则权威、Spy/Recluse 多 witness 结果优先语义、现有 Recovery 范围。无关文档和分支清理不可阻塞 PROD-0/1。
 
 ## 5. 权威索引
 
+- [最新产品路线：生产 LLM 接入与自动说书人](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。
 - [唯一当期 handoff](NEXT_DEVELOPMENT_HANDOFF.md)、[文档导航](README.md) 与根目录 [AGENTS.md](../AGENTS.md)。
 - [GSP 通用 policy 设计](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md)，以本路线、2026-10-09 memory/recovery 决定作为后续优先级覆盖。
 - [RES 架构解耦和旧引擎退役](RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md)、[核心所有权](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md)、[TB canonical snapshot](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md)、[HOST-ML1](HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md)。
