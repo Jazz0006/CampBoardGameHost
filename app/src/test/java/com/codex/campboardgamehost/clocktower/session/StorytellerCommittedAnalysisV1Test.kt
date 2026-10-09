@@ -63,7 +63,7 @@ class StorytellerCommittedAnalysisV1Test {
             assertEquals("SETUP_COMMITTED", state.getString("stage"))
             assertEquals(5, state.getJSONArray("seats").length())
             assertEquals(seat ?: "NOT_APPLICABLE", state.get("drunkAssignmentSeat"))
-            assertEquals(seat ?: false, state.getBoolean("hasDrunk"))
+            assertEquals(seat != null, state.getBoolean("hasDrunk"))
             assertTrue(!body.has("legalCandidates"))
             assertTrue(!body.has("decisionId"))
             assertEquals("committed-game",
