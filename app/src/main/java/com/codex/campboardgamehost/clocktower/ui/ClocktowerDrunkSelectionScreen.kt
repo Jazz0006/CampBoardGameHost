@@ -18,6 +18,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,9 +36,19 @@ import androidx.compose.ui.unit.sp
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkCandidate
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkSelectionRequest
 
+internal data class DrunkAiDisplay(
+    val rationale: String,
+    val alternatives: List<Pair<Int, String>>,
+    val uncertainty: List<String>,
+)
+
 @Composable
 internal fun ClocktowerDrunkSelectionScreen(
     request: TroubleBrewingDrunkSelectionRequest,
+    aiDisplay: DrunkAiDisplay? = null,
+    aiBusy: Boolean = false,
+    aiError: String? = null,
+    onRequestAi: (String, String) -> Unit = { _, _ -> },
     language: String,
     roleNameForExternalId: (String) -> String,
     onBack: () -> Unit,
@@ -45,6 +58,8 @@ internal fun ClocktowerDrunkSelectionScreen(
     var selectedCandidate by remember(request) {
         mutableStateOf(request.recommendedCandidate)
     }
+    var endpoint by remember { mutableStateOf("") }
+    var token by remember { mutableStateOf("") }
 
     BackHandler(onBack = onBack)
 
@@ -83,6 +98,64 @@ internal fun ClocktowerDrunkSelectionScreen(
                                 "The recommendation is preselected; you may choose any other rules-legal Townsfolk.",
                             )
                         },
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = text("可选：获取 AI 全局推荐（需 HTTPS 网关）",
+                            "Optional: request global AI advice via HTTPS gateway"),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    OutlinedTextField(
+                        value = endpoint,
+                        onValueChange = { endpoint = it },
+                        label = { Text(text("网关 HTTPS 地址", "Gateway HTTPS URL")) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                    OutlinedTextField(
+                        value = token,
+                        onValueChange = { token = it },
+                        label = { Text(text("网关访问令牌（非 OpenAI Key）", "Gateway token (not OpenAI Key)")) },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                    Button(
+                        onClick = { onRequestAi(endpoint, token) },
+                        enabled = !aiBusy && endpoint.startsWith("https://") && token.isNotBlank(),
+                    ) {
+                        Text(if (aiBusy) text("正在获取推荐", "Requesting advice")
+                            else text("获取 AI 推荐", "Get AI recommendation"))
+                    }
+                    aiError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    aiDisplay?.let { advice ->
+                        Text(
+                            text = text("推荐理由", "Recommendation rationale") + ": " + advice.rationale,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        advice.alternatives.forEach { (seat, reason) ->
+                            Text(
+                                text = text("备选 ", "Alternative ") + seat + ": " + reason,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        if (advice.uncertainty.isNotEmpty()) {
+                            Text(
+                                text = text("不确定因素：", "Uncertainty: ") +
+                                    advice.uncertainty.joinToString("; "),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    Text(
+                        text = text("无网络或推荐无效时，仍可直接手动选择。",
+                            "Manual selection remains available if AI is offline or invalid."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
