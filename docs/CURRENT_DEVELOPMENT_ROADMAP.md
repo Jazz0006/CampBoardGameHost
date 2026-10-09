@@ -25,6 +25,8 @@
 
 **不可误读：** 旧文档中“MEM0 NOW”“盲评或 R1 历史补齐是生产 API 前置条件”“永远必须人工确认”等均由本次新授权覆盖；人工确认仅为 AI_ASSISTED 模式的契约。旧算法不复活。
 
+> **2026-10-10 再次纠偏 — 真人说书人持续判断，不做角色特例：** PROD-GLOBAL-1/2 的战略连续性以**全游戏、全阶段的已确认因果事件流**驱动，不是单独的投毒者或酒鬼重算器。既要考虑真实生效/无效的能力行动，也要考虑公开但无机械效果的声称、杀手射击、处女提名、已展示信息及其对玩家认知的影响；明确区分真实机制、玩家看见或声称的内容、未证实的推测和说书人可修订的战略意图。按时点重新评估**未来仍待决定**的动作，绝不因白天新事件回写首夜历史，绝不以技能名 if/else 复活旧推荐算法。完整设计与多阶段验收场景见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。
+
 ## 2. 冻结的架构与产品原则
 
 1. **规则与游戏权威独立：** Host/Game Engine 拥有 canonical current game/session、rules、legal candidates、committed facts 和游戏状态写入。任何 LLM/provider 只返回合法候选的推荐、备选和理由，**provider 本身不得写入事实**；AI_ASSISTED 由人确认，显式启用 AI_AUTOMATIC 后可由 Host 在即时合法性/版本核验通过后调用现有确认路径自动提交。
