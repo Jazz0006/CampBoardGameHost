@@ -138,4 +138,48 @@ class ProductionDrunkAiGatewayV1Test {
         assertTrue(validation is StorytellerProviderValidationV1.Rejected)
         assertEquals(2, original.legalCandidates.size)
     }
+    @Test
+    fun `live provider envelope decodes global tensions and only legal seats`() {
+        val req = request()
+        val raw = JSONObject()
+            .put("schemaId", StorytellerProviderResponseV1.SCHEMA_ID)
+            .put("schemaVersion", 1)
+            .put("decisionId", req.identity.decisionId)
+            .put("sourceRevision", JSONObject()
+                .put("gameStateRevision", 0).put("playerInputRevision", 0))
+            .put("primaryCandidateId", req.legalCandidateIds.first())
+            .put("rationale", "Issue-1: overlapping investigator and Chef information")
+            .put("alternatives", org.json.JSONArray().put(JSONObject()
+                .put("candidateId", req.legalCandidateIds.last())
+                .put("rationale", "Alternative future information balance")))
+            .put("uncertainty", org.json.JSONArray().put("Unknown social claims"))
+            .put("strategy", JSONObject()
+                .put("situationSummary", "Combined first-night clues create pressure.")
+                .put("issues", org.json.JSONArray().put(JSONObject()
+                    .put("issueId", "issue-1")
+                    .put("priority", 1)
+                    .put("seats", org.json.JSONArray().put(1).put(3).put(4))
+                    .put("diagnosis", "Chef and Investigator interact")
+                    .put("futureEffect", "Avoid an unreasonably forced opening world")))
+                .put("relations", org.json.JSONArray().put(JSONObject()
+                    .put("fromSeat", 1).put("toSeat", 3).put("issueId", "issue-1")
+                    .put("label", "Hypothesis of information overlap")))
+                .put("intentions", org.json.JSONArray().put(JSONObject()
+                    .put("trigger", "If the first-night clues converge")
+                    .put("approach", "Reevaluate future legal publication")
+                    .put("tradeoff", "Never invent registration witnesses")))
+                .put("planRevisionNote", "Initial provisional strategy"))
+        val envelope = ProductionDrunkAiGatewayV1.decodeGlobal(raw.toString(), req)
+        assertEquals(1, envelope.globalStrategy.relations.size)
+        assertTrue(envelope.globalStrategy.issues.first().seats.contains(4))
+        assertTrue(ProductionDrunkAiGatewayV1.validateCurrent(
+            req, decision(), decision(), envelope.response,
+        ) == null) // A new PendingDecision instance cannot inherit the previous decision's validity.
+        raw.getJSONObject("strategy").getJSONArray("relations").getJSONObject(0)
+            .put("toSeat", 99)
+        assertTrue(runCatching {
+            ProductionDrunkAiGatewayV1.decodeGlobal(raw.toString(), req)
+        }.isFailure)
+    }
+
 }
