@@ -2150,6 +2150,7 @@ internal fun CampBoardGameHostApp() {
                         val aiDisplay = outcome?.let { result ->
                             DrunkAiDisplay(
                                 rationale = result.primary.rationale.joinToString("\n"),
+                                globalStrategy = requireNotNull(drunkAiStrategy),
                                 alternatives = result.alternatives.mapNotNull { alternative ->
                                     pending.decision.legalCandidates.singleOrNull {
                                         it.candidateId == alternative.candidateId
@@ -2165,41 +2166,8 @@ internal fun CampBoardGameHostApp() {
                             aiDisplay = aiDisplay,
                             aiBusy = drunkAiBusy,
                             aiError = drunkAiError,
-                            onRequestAi = { endpoint, token ->
-                                if (!drunkAiBusy &&
-                                    screen == Screen.ClocktowerDrunkSelection &&
-                                    pendingTroubleBrewingDrunkSelection === pending
-                                ) {
-                                    drunkAiBusy = true
-                                    drunkAiResponse = null
-                                    drunkAiError = null
-                                    drunkAiScope.launch {
-                                        val result = runCatching {
-                                            ProductionDrunkAiGatewayV1.recommend(
-                                                endpoint, token, pending.providerRequest,
-                                            )
-                                        }
-                                        if (screen == Screen.ClocktowerDrunkSelection &&
-                                            pendingTroubleBrewingDrunkSelection === pending
-                                        ) {
-                                            drunkAiBusy = false
-                                            result.onSuccess { response ->
-                                                val validation = ProductionDrunkAiGatewayV1.validateCurrent(
-                                                    pending.providerRequest, pending.decision,
-                                                    pendingTroubleBrewingDrunkSelection?.decision, response,
-                                                )
-                                                if (validation is StorytellerProviderValidationV1.AcceptedRecommendation) {
-                                                    drunkAiResponse = response
-                                                } else {
-                                                    drunkAiError = "Invalid or stale AI response. Choose manually."
-                                                }
-                                            }.onFailure {
-                                                drunkAiError = "AI unavailable. Choose manually or retry."
-                                            }
-                                        }
-                                    }
-                                }
-                            },
+                            operationMode = storytellerOperationMode,
+                            onRequestAi = { requestGlobalDrunkAdvice(pending) },
                             language = language,
                             roleNameForExternalId = { externalId ->
                                 val definition = requireNotNull(
@@ -2215,6 +2183,7 @@ internal fun CampBoardGameHostApp() {
                             onBack = {
                                 pendingTroubleBrewingDrunkSelection = null
                                 drunkAiResponse = null
+                                drunkAiStrategy = null
                                 drunkAiBusy = false
                                 drunkAiError = null
                                 screen = Screen.ClocktowerSettings
@@ -2285,7 +2254,10 @@ internal fun CampBoardGameHostApp() {
                         onNext = {
                             if (currentGameKind == GameKind.Clocktower) {
                                 if (currentDealIndex == cards.lastIndex) {
-                                    screen = Screen.ClocktowerJudge
+                                    screen = if (currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
+                                        storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
+                                        drunkAiStrategy != null
+                                    ) Screen.ClocktowerAiOverview else Screen.ClocktowerJudge
                                 } else {
                                     currentDealIndex += 1
                                 }
@@ -2312,6 +2284,23 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                     )
+
+                    Screen.ClocktowerAiOverview -> {
+                        val plan = drunkAiStrategy
+                        if (plan != null && currentGameKind == GameKind.Clocktower &&
+                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED
+                        ) {
+                            StorytellerGlobalOverviewScreen(
+                                cards = cards,
+                                strategy = plan,
+                                language = language,
+                                onContinue = { screen = Screen.ClocktowerJudge },
+                            )
+                        } else {
+                            // No strategy must never fabricate an AI overview.
+                            LaunchedEffect(screen) { screen = Screen.ClocktowerJudge }
+                        }
+                    }
 
                     Screen.ClocktowerJudge -> ClocktowerJudgeScreen(
                         automaticStorytellerInfo = automaticStorytellerInfo,
