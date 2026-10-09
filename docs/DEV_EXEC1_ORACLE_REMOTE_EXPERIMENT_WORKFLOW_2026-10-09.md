@@ -47,7 +47,7 @@ run_task({ repo: "clocktower", task: "api0-offline" })
 
 API0 目前输出 `S001.json`…`S009.json`、`S###.prompt.txt` 和 `private_arm_mapping.json`，位于开发机仓库外。Mini MCP 的通用 `read_file` 仅能读取已配置 Git 仓库，因此**暂时不能直接读取 repo 外的响应文件**。不能把结果复制回 Git 以规避路径限制。
 
-下一阶段需实现受控只读接口，例如 `read_experiment_sample(sample_id)`：
+Mini MCP PR #8 已准备受控只读代码 `read_mem0_sample({sample_id:"S001"})`，并通过合成样本、本地类型检查与 MCP 协议测试；**尚未在实际服务进程启用或对真实批次验收**。服务只有配置 `MINI_MCP_MEM0_SAMPLE_DIR` 到一个私有、仓库外、`0700` 的**唯一批次目录**后才允许读取；响应文件必须 `0600`、小于 64 KiB。安全限制如下：
 
 1. 服务配置绑定唯一的非 Git 实验批次输出目录，不接受用户给的任意文件路径；
 2. 只允许精确 `S001`—`S009` 的 JSON，检查真实路径、符号链接、普通文件、大小上限与 JSON 结构；
@@ -59,6 +59,6 @@ API0 目前输出 `S001.json`…`S009.json`、`S###.prompt.txt` 和 `private_arm
 
 **已证实：** ChatGPT → Mini MCP 访问开发机仓库、固定任务框架、Mini MCP `check` 本地验收。
 
-**待证实：** 新 task 在实际服务进程生效、Python 3.12 Host API0 离线测试执行与完整结果回传。**未启用：** MEM0 付费任务和盲样只读回传工具。
+**待证实：** 新 task 在实际服务进程生效、Python 3.12 Host API0 离线测试执行，以及只读工具加载/真实响应读取。**未启用：** MEM0 付费任务；盲样只读工具当前未配置真实批次目录。
 
 后续必须先解除 systemd 重启阻塞，再完成离线 GREEN 验收；之后设计并测试受限 JSON 读取，最后才寻求九次付费调用的显式授权。
