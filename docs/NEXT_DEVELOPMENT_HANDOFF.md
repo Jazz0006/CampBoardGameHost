@@ -23,7 +23,7 @@
 
 此功能 **没有**验证真实 OpenAI API 模型质量，没有上线 Android；后续 API-1 需要服务端保管密钥的认证网关和 Host 本地合法性/状态新鲜度复验，仍只展示建议，由说书人确认。
 
-## 4. 施工禁区与保留项
+### DEV-EXEC1 开发机远程实验（2026-10-09）\n\n[DEV-EXEC1 工作流与验收状态](DEV_EXEC1_ORACLE_REMOTE_EXPERIMENT_WORKFLOW_2026-10-09.md)：Mini MCP PR #8 已注册固定 `api0-offline` 任务及回归测试，本地 `npm run check` exit 0；目前服务重启接口停留旧实例，真实 `run_task(clocktower, api0-offline)` 仍遭旧白名单拒绝。需 Oracle 开发机管理员用 systemd 重启服务，核对 instance ID 后再进行 10 项单元测试 + 九组 `network_calls: 0` manifest 的端到端验收。暂不运行付费九组或回传盲样映射。\n\nAPI0 先前单次 S001 真实调用已确认 `1 attempted / 1 succeeded`，格式和合法候选检查通过，仍不代表 MEM0 效果验证。\n\n## 4. 施工禁区与保留项
 
 - `Host truth > provider memory`：Model 的连续对话/长短期战略记忆可以帮助推理，但不能作为规则、角色、真实登记、游戏状态的最终事实来源。Provider 可替换，手动流程必须离线完整。
 - Recovery 仅同当前格式/令牌、**≤4 小时紧急续局**；不扩展长期存档、历史版本迁移、任意 cut-off strict replay。PR #286 已关闭且未合并，**不得重复添加已由合法 setup 保证的酒鬼 shown-role collision 校验**，除非发现可达输入边界缺陷。
