@@ -19,7 +19,7 @@
 
 ## 3. 并行的 API0（已实现，不是 Android 生产）
 
-[API0 transport 使用说明](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)：PR #288 已将 Python `tools/gsp_api0_responses.py` 合入 main；可生成 9 个冻结 A/B/C×D0/D1/D2 请求指纹，默认不发网络请求。开发者须自备 `OPENAI_API_KEY`、指定可用 `OPENAI_MODEL`，显式 `--live` 并设置 `--max-requests` 和 repo 外私有输出目录后才能产生计费调用。先做 1 次有界实际请求，核查 schema、合法 ID 和费用，再考虑整组 9 次。不要把 key 写入源码或 APK，不要自动发送任务或重试。
+[API0 transport 使用说明](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)：PR #288 已将 Python `tools/gsp_api0_responses.py` 合入 main；可生成 9 个冻结 A/B/C×D0/D1/D2 请求指纹，默认不发网络请求。开发者须自备 `OPENAI_API_KEY`、指定可用 `OPENAI_MODEL`，显式 `--live` 并设置 `--max-requests` 和 repo 外私有输出目录后才能产生计费调用。S001 的一次有界真实请求已经成功（1 attempted / 1 succeeded），schema 与合法 ID 已审，**无需再次重复支付冒烟测试**。进入 9 次正式盲测前必须修复公开默认 seed 可推导分组的问题、单独明确预算与授权。不要把 key 写入源码或 APK，不要自动发送任务或重试。
 
 此功能 **没有**验证真实 OpenAI API 模型质量，没有上线 Android；后续 API-1 需要服务端保管密钥的认证网关和 Host 本地合法性/状态新鲜度复验，仍只展示建议，由说书人确认。
 
