@@ -54,6 +54,33 @@ def case():
     }
 
 
+def committed_case(drunk=True, prior=True):
+    live = case()
+    roster = live["state"]["seats"]
+    roster[0]["actualRoleId"] = "drunk" if drunk else "chef"
+    roster[1]["actualRoleId"] = "empath"
+    roster[2]["actualRoleId"] = "investigator"
+    live["state"]["stage"] = "SETUP_COMMITTED"
+    live["state"]["hasDrunk"] = drunk
+    live["state"]["drunkAssignmentSeat"] = 1 if drunk else "NOT_APPLICABLE"
+    live.pop("legalCandidates")
+    live.pop("identity")
+    live["schemaId"] = gateway.ANALYSIS_SCHEMA_ID
+    live["analysisIdentity"] = {
+        "gameId": "test-live-game",
+        "scriptId": "trouble_brewing",
+        "analysisId": "committed:test-live-game",
+    }
+    live["historyCoverage"] = "SETUP_ONLY_NO_FUTURE_OBSERVATIONS"
+    if prior:
+        live["priorStrategy"] = {
+            "sourceGameId": "test-live-game",
+            "gameStateRevision": 0,
+            "strategy": json.loads(model_output()["output"][0]["content"][0]["text"])["strategy"],
+        }
+    return live
+
+
 def model_output(primary="setup:drunk-seat:seat-1", alternative="setup:drunk-seat:seat-2"):
     answer = {
         "strategy": {
@@ -146,6 +173,38 @@ class GatewayContractTests(unittest.TestCase):
             bad["output"][0]["content"][0]["text"] = json.dumps(body)
             with self.assertRaises(ValueError):
                 gateway.parse_openai_response(bad, allowed, set(range(1, 6)))
+
+    def test_committed_analysis_needs_no_fabricated_host_decision(self):
+        for drunk in (False, True):
+            request = committed_case(drunk=drunk)
+            assert gateway.validate_host_analysis_request(request) == {1, 2, 3, 4, 5}
+            output = gateway.build_openai_request(request, "strong-model")
+            assert output["text"]["format"]["schema"]["required"] == ["strategy"]
+            assert "no legal action" in output["instructions"] or "ANALYSIS-ONLY" in output["instructions"]
+            response = model_output()
+            strategy = json.loads(response["output"][0]["content"][0]["text"])["strategy"]
+            response["output"][0]["content"][0]["text"] = json.dumps({"strategy": strategy})
+            result = gateway.parse_openai_response(
+                response, set(), {1, 2, 3, 4, 5}, analysis_only=True,
+            )
+            assert result["strategy"]["issues"][0]["issueId"] == "issue-1"
+            with self.assertRaises(ValueError):
+                gateway.parse_openai_response(response, set(), {1, 2, 3, 4, 5})
+
+    def test_committed_analysis_rejects_false_truth_and_cross_game_plan(self):
+        request = committed_case(drunk=False)
+        request["state"]["seats"][0]["actualRoleId"] = "UNCOMMITTED"
+        with self.assertRaises(ValueError):
+            gateway.validate_host_analysis_request(request)
+        request = committed_case(drunk=True)
+        request["priorStrategy"]["sourceGameId"] = "another-game"
+        with self.assertRaises(ValueError):
+            gateway.validate_host_analysis_request(request)
+        request = committed_case(drunk=True)
+        request["sourceRevision"]["gameStateRevision"] = 0
+        request["priorStrategy"]["gameStateRevision"] = 1
+        with self.assertRaises(ValueError):
+            gateway.validate_host_analysis_request(request)
 
     def test_budget_bounds_paid_calls(self):
         budget = gateway.Budget(1)
