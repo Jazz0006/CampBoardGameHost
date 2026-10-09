@@ -1572,9 +1572,19 @@ internal fun CampBoardGameHostApp() {
                 )
             }
             // Responses may return after a player hands the phone back or starts a new game.
+            val stillAtDealtSetupBoundary = screen in setOf(
+                Screen.PassPhone, Screen.RevealCard,
+                Screen.ClocktowerAiOverview, Screen.ClocktowerAutoPause,
+            )
             if (committedAiSnapshot === snapshot &&
                 clocktowerGameId == snapshot.gameId &&
-                storytellerOperationMode != StorytellerOperationMode.MANUAL
+                storytellerOperationMode != StorytellerOperationMode.MANUAL &&
+                currentGameKind == GameKind.Clocktower &&
+                clocktowerPhase == ClocktowerPhase.FirstNight &&
+                round == 1 &&
+                stillAtDealtSetupBoundary &&
+                clocktowerGameSession?.state?.gameStateRevision == 0L &&
+                clocktowerGameSession?.state?.playerInputRevision == 0L
             ) {
                 committedAiBusy = false
                 response.onSuccess { result ->
