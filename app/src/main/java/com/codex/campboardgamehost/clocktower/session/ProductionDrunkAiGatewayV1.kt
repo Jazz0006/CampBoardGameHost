@@ -156,9 +156,17 @@ internal object ProductionDrunkAiGatewayV1 {
                 throw IllegalStateException("Gateway unavailable (HTTP ${connection.responseCode}).")
             }
             val raw = connection.inputStream.use { stream ->
-                val bytes = stream.readNBytes(MAX_RESPONSE_BYTES + 1)
-                require(bytes.size <= MAX_RESPONSE_BYTES) { "Gateway response exceeds size limit." }
-                bytes.toString(Charsets.UTF_8)
+                val buffer = ByteArray(4096)
+                val output = java.io.ByteArrayOutputStream()
+                while (true) {
+                    val count = stream.read(buffer)
+                    if (count == -1) break
+                    require(output.size() + count <= MAX_RESPONSE_BYTES) {
+                        "Gateway response exceeds size limit."
+                    }
+                    output.write(buffer, 0, count)
+                }
+                output.toString("UTF-8")
             }
             decode(raw)
         } finally {
