@@ -6,12 +6,16 @@
 
 ## 1. 当前唯一执行顺序 — **PRODUCTION FIRST / AUTONOMOUS GOAL**
 
+> **2026-10-09 最新产品纠偏 — PROD-GLOBAL-1 为 PROD-1 的强制补充/覆盖：** 先基于全局已定座位、完整显示角色、尚未确认的酒鬼合法域分析整局脆弱点、信息链路、邪恶压力及未来连锁裁量，形成可修订的全局策略，再推荐**当前**合法决定。发完牌后在说书人专用方桌界面展示整局局势、座位间关系与后续计划；后续动作必须引用同一策略并按新事实更新。MANUAL 不调用 LLM、不出现 AI 推荐；AI_AUTOMATIC 经过 Host 验证自动提交。详见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。**PR #292 当前代码虽然 CI/R2 GREEN，但仍是单点推荐 SPIKE / Draft / 产品验收 NO-GO，不可直接合并。**
+
+
+
 > 2026-10-09 **最新用户产品授权覆盖**：不再要求 MEM0 盲评、MEM1 真人局研究或进一步 Recovery 覆盖完成后，才准生产接入。直接推进可玩的 LLM 推荐与自动说书人。唯一执行设计权威：[GSP-PROD-AUTO](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。
 
 | 顺位 | 工作 | 状态 / 边界 |
 | --- | --- | --- |
 | **NOW** | **PROD-0：真实运行入口/所有权审计** | 找到现有 Host pending decision、RES provider contract、上下文与确认路径；选择一个真实 TB 决策为最小生产切入。不要再建新的推荐算法或全面扩展历史 |
-| **NEXT** | **PROD-1：AI_ASSISTED 真实游戏垂直链路** | 当前真实 GameState + 完整候选/显示角色 + 必要历史/战略摘要 → 可配置强模型的安全后端 → Host fresh/legality 验证 → 游戏 UI 建议/备选 → 说书人确认 |
+| **NEXT** | **PROD-1：整局全局策略分析先行 + AI_ASSISTED** | 真实完整阵容/关系 → 先诊断最重要的局势问题、交叉信息链与未来计划 → 当前合法候选推荐并链接全局策略 → Host 校验 → Host-only 方桌图形化分析/关系/备选 → 人工确认；下一决策增量更新策略。不可用独立酒鬼推荐作为验收。 |
 | **THEN** | **PROD-2：AI_AUTOMATIC 自动裁量** | 用户明确开启自动模式后，由 Host 验证并调用**现有**规则确认路径自动提交；网络失败、非法或过期响应则暂停/人工接管，不静默恢复旧 heuristic |
 | **FOLLOW-ON** | **PROD-3/4：TB 首夜自动主持 → 完整 TB 无人工说书人** | 扩大真实夜间/白天裁量家族、输入采集、顺序与终局，逐段验收完整可玩 |
 | **NON-BLOCKING** | GSP-MEM0/MEM1、EvidenceLab、模型对比与训练 | B2 已有 9/9 真实结构化结果；质量与记忆优势未完成正式盲评。按实际产品问题选择性验证；不阻塞 PROD-1 |
