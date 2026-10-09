@@ -224,7 +224,7 @@ class Handler(BaseHTTPRequestHandler):
                 "sourceRevision": case["sourceRevision"],
                 **result,
             })
-        except (urllib.error.URLError, ValueError, KeyError, TypeError):
+        except (urllib.error.URLError, TimeoutError, ConnectionError, ValueError, KeyError, TypeError):
             self.send_json(502, {"error": "model_unavailable_or_invalid"})
         finally:
             CONCURRENCY.release()
