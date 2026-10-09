@@ -2,7 +2,7 @@
 
 > **ACTIVE PRODUCT DIRECTION / PRIORITY OVERRIDE.** Replaces the earlier MEM0-first research gate in the current roadmap/handoff. This is a **product decision and implementation route**, not a claim that API-1 or autonomous runtime has already shipped.
 >
-> First objective: get **real Host state -> LLM recommendation -> Host-validated recommendation in gameplay** into Trouble Brewing as quickly as safely possible. Long-term objective: **fully automatic Storyteller** (no human Storyteller needed) with complete, independently running rules-engine authority.
+> **PRODUCT-OWNER RE-ENTRY (2026-10-09):** the immediate first objective is **whole-game situation diagnosis -> conditional strategic plan -> current Host-legal recommendation -> situation/relationship overview on the existing square table**, rather than invoking the LLM independently for each isolated clue. See [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md) for superseding implementation/UX and private single-user transport decisions. PR #292's standalone Drunk-screen recommendation remains **DRAFT / DO NOT MERGE AS IS**, despite green CI. Long-term objective: **fully automatic Storyteller** (no human Storyteller needed) with complete, independently running rules-engine authority.
 
 ## Why this route
 
