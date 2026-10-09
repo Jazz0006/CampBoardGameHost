@@ -212,7 +212,7 @@ class Handler(BaseHTTPRequestHandler):
                     "Content-Type": "application/json",
                 },
             )
-            with urllib.request.urlopen(request, timeout=35) as stream:
+            with urllib.request.urlopen(request, timeout=75) as stream:
                 data = stream.read(256_001)
                 if len(data) > 256_000:
                     raise ValueError("Model response too large")
