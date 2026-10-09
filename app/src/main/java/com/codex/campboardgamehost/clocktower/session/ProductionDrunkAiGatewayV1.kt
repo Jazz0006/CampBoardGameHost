@@ -149,7 +149,16 @@ internal object ProductionDrunkAiGatewayV1 {
         endpoint: String,
         accessToken: String,
         request: StorytellerProviderRequestV1,
-    ): StorytellerGlobalAdviceV1 = withContext(Dispatchers.IO) {
+    ): StorytellerGlobalAdviceV1 = decodeGlobal(
+        post(endpoint, accessToken, encode(request)), request,
+    )
+
+    /** Shared authenticated HTTPS transport for decisions and analysis-only strategy. */
+    suspend fun post(
+        endpoint: String,
+        accessToken: String,
+        payload: String,
+    ): String = withContext(Dispatchers.IO) {
         val uri = URI(endpoint.trim())
         require(uri.scheme == "https" && !uri.host.isNullOrBlank() &&
             uri.userInfo == null && uri.fragment == null && uri.rawQuery == null && uri.port != 0) {
@@ -167,7 +176,7 @@ internal object ProductionDrunkAiGatewayV1 {
             setRequestProperty("Authorization", "Bearer ${accessToken.trim()}")
         }
         try {
-            connection.outputStream.use { it.write(encode(request).toByteArray(Charsets.UTF_8)) }
+            connection.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
             if (connection.responseCode != 200) {
                 throw IllegalStateException("Gateway unavailable (HTTP ${connection.responseCode}).")
             }
@@ -184,7 +193,7 @@ internal object ProductionDrunkAiGatewayV1 {
                 }
                 output.toString("UTF-8")
             }
-            decodeGlobal(raw, request)
+            raw
         } finally {
             connection.disconnect()
         }
