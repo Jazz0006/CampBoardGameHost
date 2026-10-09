@@ -2128,7 +2128,7 @@ internal fun CampBoardGameHostApp() {
                             if (it != ClocktowerScript.TroubleBrewing) {
                                 storytellerOperationMode = StorytellerOperationMode.MANUAL
                             }
-                        }
+                        },
                         onBack = {
                             applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
                         },
