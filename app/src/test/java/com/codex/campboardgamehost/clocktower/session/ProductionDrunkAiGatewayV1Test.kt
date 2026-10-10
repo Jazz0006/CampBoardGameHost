@@ -182,4 +182,42 @@ class ProductionDrunkAiGatewayV1Test {
         }.isFailure)
     }
 
+    @Test
+    fun `compact live advice remains advisory with no invented rich strategy`() {
+        val req = request()
+        val raw = JSONObject()
+            .put("schemaId", StorytellerProviderResponseV1.SCHEMA_ID)
+            .put("schemaVersion", 1)
+            .put("responseProfile", "COMPACT_MEMO_V1")
+            .put("decisionId", req.identity.decisionId)
+            .put("sourceRevision", JSONObject()
+                .put("gameStateRevision", 0).put("playerInputRevision", 0))
+            .put("primaryCandidateId", req.legalCandidateIds.first())
+            .put("rationale", "考虑完整游戏的角色互动和已记录行动")
+            .put("alternatives", org.json.JSONArray())
+            .put("uncertainty", org.json.JSONArray())
+
+        val compact = StorytellerGlobalDecisionRequestV1.decodeLiveAdvice(
+            raw.toString(), (1..5).toSet(),
+        )
+        assertNull(compact.globalStrategy)
+        assertTrue(com.codex.campboardgamehost.clocktower.domain
+            .StorytellerProviderResponseValidatorV1.validate(req, compact.response)
+            is StorytellerProviderValidationV1.AcceptedRecommendation)
+        val outcome = compact.response.outcome as StorytellerProviderOutcomeV1.Recommendation
+        assertEquals(0, outcome.alternatives.size)
+        assertEquals(req.legalCandidateIds.first(), outcome.primary.candidateId)
+
+        // A response cannot secretly claim a full strategic or canonical state.
+        raw.put("strategy", JSONObject())
+        assertTrue(runCatching {
+            StorytellerGlobalDecisionRequestV1.decodeLiveAdvice(raw.toString(), (1..5).toSet())
+        }.isFailure)
+        raw.remove("strategy")
+        raw.put("responseProfile", "UNRECOGNIZED")
+        assertTrue(runCatching {
+            StorytellerGlobalDecisionRequestV1.decodeLiveAdvice(raw.toString(), (1..5).toSet())
+        }.isFailure)
+    }
+
 }
