@@ -2,6 +2,8 @@
 
 > Updated: **2026-10-10 Australia/Sydney**. **唯一活动 handoff**，会话开始必须重新查 live GitHub / 本地状态；旧 PR/head 数值不代表现状。完整的旧交接与逐步验收历史在 [归档快照](archive/handoffs/NEXT_DEVELOPMENT_HANDOFF_PRE_MEM0_CONVERGENCE_2026-10-09.md)，其中旧 NEXT 均无执行权威。
 
+> **2026-10-10 新方向 — 实际整局游戏优先：** 用户选择继续采用 `gpt-6-luna`，把已进行的 B 极简推荐试验（首次样本 7.52s，相对 A 22.86s；第 4 次 503）接入当前 `prod-1-live-drunk-ai-assisted` Draft PR #292 的 **AI_ASSISTED 实时决策**。Gateway opt-in `responseProfile=COMPACT_MEMO_V1` 返回唯一合法候选及 ≤200 字的临时 planMemo，Android 兼容旧完整格式。完整开局全局分析/酒鬼选择不变。前一次模型 memo 仅同局咨询上下文，并非 Host truth，不替代完整因果记录；仍由 Host 校验合法性/版本和真人确认。尚未做真机 Android E2E 与完整 TB 对局，PR 保持 Draft。**先实测整局连续首夜→白天→次夜→结束，记录可追溯人机冲突和一致性；不能用孤立 9-call 合成实验宣布整局已通过。**
+
 ## 1. 进入工作前
 
 1. 阅读根目录 `AGENTS.md`、[当前路线](CURRENT_DEVELOPMENT_ROADMAP.md) 和 [当前文档入口](README.md)。行为变更另查 [测试策略](TESTING_STRATEGY.md)。
