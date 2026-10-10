@@ -5,6 +5,7 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderOutcomeV
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRecommendationV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseValidatorV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderValidationV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
@@ -201,8 +202,7 @@ class ProductionDrunkAiGatewayV1Test {
             raw.toString(), (1..5).toSet(),
         )
         assertNull(compact.globalStrategy)
-        assertTrue(com.codex.campboardgamehost.clocktower.domain
-            .StorytellerProviderResponseValidatorV1.validate(req, compact.response)
+        assertTrue(StorytellerProviderResponseValidatorV1.validate(req, compact.response)
             is StorytellerProviderValidationV1.AcceptedRecommendation)
         val outcome = compact.response.outcome as StorytellerProviderOutcomeV1.Recommendation
         assertEquals(0, outcome.alternatives.size)
