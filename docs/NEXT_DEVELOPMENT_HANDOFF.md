@@ -24,6 +24,8 @@
 
 **2026-10-10 PROD-GLOBAL-1C 真实模型测试入口：** 添加 `tools/prod_global_live_smoke.py`：默认离线校验；在 Oracle 开发机上明确执行 `python3 tools/prod_global_live_smoke.py --live` 才会用现有 Gateway 和服务端密钥执行**最多三次**真实模型调用，产生权限 0600 的 `~/.local/share/botc-evaluation/prod-global-1c-llm-smoke-report.json`。三个独立/连续场景涵盖中毒厨师、已手动覆盖的厨师结果影响调查员后续建议、以及带已确认信息的中毒占卜师。**样例状态是 synthetic，不是 Android/Host 实际生成，因此不能代替手机端真正的完整 E2E 质量验收。** 当前 Mini MCP Codex 远程执行协议报错，现有 allowlist 不含 gateway smoke，不得虚称已付费调通；待所有 CI GREEN 后由 Oracle 开发机执行 --live 并对报告作人工质量复审。详细测试操作及局限见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。
 
+**2026-10-10 Gateway 配置持久化与 PROD-GLOBAL-1D 预规划设计：** 当前 Android `StorytellerGatewayConnectionStore` 已新增 HTTPS 地址本地保存及 Android Keystore AES-GCM 加密令牌，后者存于 `noBackupFilesDir`，setup 页面恢复并异步防抖保存；同一 debug APK 包名/签名的覆盖安装应保留配置（完整 Android CI/真机行为仍须验收）。实际首夜时序审计：当前先在 `startTroubleBrewingGame` 确定 shown roles 并决策 Drunk，再在 `commitAndStartTroubleBrewingGame` 创建正式卡牌，不能在未引入“待定真实身份、安全展示身份”边界的情况下直接让首夜行为越过酒鬼确认。用户希望 shown roles 全部确定即后台启动全球规划，利用逐人展示身份的时间预取首夜策略/Drunk/Pair；已记为后续 `PROD-GLOBAL-1D` 实施方向。投毒者只是通用因果变更的一例；新事实只能使未确认的建议失效/再规划。**后续互动刷新低于5秒仅为体验目标，现有 Luna 22.83/25.92/25.32秒未证明增量更快。** 必须先测服务端耗时、模型输出量、首次/延续调用，再按完整 Host 时序实施预取与合法域刷新。完整边界见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。
+
 **最新产品授权（2026-10-09）：不再以 MEM0/MEM1 质量盲评作为接入生产前置条件。** 强通用 LLM 的现实建议质量已经足以支持立即做可玩的原型。产品特色长期目标是 **AI_AUTOMATIC / 无人工说书人**，而不是让人类永远确认每个裁量。
 
 完整路线：[GSP-PROD-AUTO — 生产接入与自动说书人](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。

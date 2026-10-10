@@ -51,6 +51,7 @@ internal fun ClocktowerSettingsScreen(
     onGatewayEndpointChange: (String) -> Unit,
     gatewayToken: String,
     onGatewayTokenChange: (String) -> Unit,
+    gatewayCredentialSaveFailed: Boolean,
     onScriptChange: (ClocktowerScript) -> Unit,
     onBack: () -> Unit,
     onStart: () -> Unit,
@@ -312,8 +313,8 @@ internal fun ClocktowerSettingsScreen(
                             }
                             if (aiSupported && operationMode != StorytellerOperationMode.MANUAL) {
                                 Text(
-                                    text = text("私人 HTTPS Gateway（仅本次运行；不在 APK 内保存 API Key）",
-                                        "Private HTTPS gateway (this session only; no OpenAI Key in APK)"),
+                                    text = text("HTTPS Gateway 地址保存在本机，访问令牌由 Android Keystore 加密保存；APK 不含 OpenAI Key。",
+                                        "Gateway URL saved locally; token encrypted with Android Keystore. No OpenAI Key in APK."),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 OutlinedTextField(
@@ -331,6 +332,13 @@ internal fun ClocktowerSettingsScreen(
                                     singleLine = true,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
+                                if (gatewayCredentialSaveFailed) {
+                                    Text(
+                                        text = text("连接配置无法安全保存，重启后可能需要重新输入。",
+                                            "Connection settings could not be stored securely and may need re-entry."),
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                }
                                 if (operationMode == StorytellerOperationMode.AI_AUTOMATIC) {
                                     Text(
                                         text = text("实验性自动模式：目前只覆盖酒鬼选择；后续未覆盖的裁量不能无人值守，必须暂停接管。",

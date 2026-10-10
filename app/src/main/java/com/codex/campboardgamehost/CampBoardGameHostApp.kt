@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -296,6 +297,9 @@ internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean =
 internal fun CampBoardGameHostApp() {
     val baseContext = LocalContext.current
     val appPreferencesStore = remember(baseContext) { AppPreferencesStore(baseContext) }
+    val gatewayConnectionStore = remember(baseContext) {
+        StorytellerGatewayConnectionStore(baseContext)
+    }
     val gameArchivePreferencesStore = remember(baseContext) {
         GameArchivePreferencesStore(
             context = baseContext,
@@ -322,6 +326,30 @@ internal fun CampBoardGameHostApp() {
     var storytellerOperationMode by remember { mutableStateOf(StorytellerOperationMode.MANUAL) }
     var storytellerGatewayEndpoint by remember { mutableStateOf("") }
     var storytellerGatewayToken by remember { mutableStateOf("") }
+    var gatewayConfigurationLoaded by remember { mutableStateOf(false) }
+    var gatewayCredentialSaveFailed by remember { mutableStateOf(false) }
+    LaunchedEffect(gatewayConnectionStore) {
+        val restored = withContext(Dispatchers.IO) {
+            gatewayConnectionStore.loadEndpoint() to gatewayConnectionStore.loadToken()
+        }
+        storytellerGatewayEndpoint = restored.first
+        storytellerGatewayToken = restored.second
+        gatewayConfigurationLoaded = true
+    }
+    LaunchedEffect(gatewayConfigurationLoaded, storytellerGatewayEndpoint, storytellerGatewayToken) {
+        if (!gatewayConfigurationLoaded) return@LaunchedEffect
+        // Do not run AndroidKeyStore AES/GCM on every keystroke or on the UI thread.
+        delay(700)
+        val endpoint = storytellerGatewayEndpoint
+        val token = storytellerGatewayToken
+        val saved = withContext(Dispatchers.IO) {
+            runCatching {
+                gatewayConnectionStore.saveEndpoint(endpoint)
+                gatewayConnectionStore.saveToken(token)
+            }.getOrDefault(false)
+        }
+        gatewayCredentialSaveFailed = !saved
+    }
     var drunkAiResponse by remember { mutableStateOf<StorytellerProviderResponseV1?>(null) }
     var drunkAiStrategy by remember { mutableStateOf<StorytellerGlobalStrategyV1?>(null) }
     var committedAiStrategy by remember { mutableStateOf<StorytellerGlobalStrategyV1?>(null) }
@@ -2393,6 +2421,7 @@ internal fun CampBoardGameHostApp() {
                         onGatewayEndpointChange = { storytellerGatewayEndpoint = it },
                         gatewayToken = storytellerGatewayToken,
                         onGatewayTokenChange = { storytellerGatewayToken = it },
+                        gatewayCredentialSaveFailed = gatewayCredentialSaveFailed,
                         onScriptChange = {
                             selectedClocktowerScript = it
                             if (it != ClocktowerScript.TroubleBrewing) {
