@@ -337,7 +337,15 @@ def validate_host_analysis_request(case: dict) -> set[int]:
     return set(range(1, len(seats) + 1))
 
 
-def build_openai_request(case: dict, model: str) -> dict:
+def build_openai_request(
+    case: dict, model: str, *, reasoning_effort: str | None = None,
+    compact: bool = False,
+) -> dict:
+    """The default production payload is unchanged; optional arms are test-only."""
+    if reasoning_effort is not None and reasoning_effort not in ("low", "medium", "high"):
+        raise ValueError("Unsupported reasoning effort")
+    if type(compact) is not bool:
+        raise ValueError("Invalid output profile")
     # No raw player names or OAuth/client credentials in this request.
     analysis_only = case.get("schemaId") == ANALYSIS_SCHEMA_ID
     instructions = INSTRUCTIONS
@@ -380,7 +388,18 @@ def build_openai_request(case: dict, model: str) -> dict:
             "illegal future action. Use concise Chinese for actionable strategic conclusions, "
             "not hidden reasoning steps."
         )
-    return {
+    if compact:
+        # Preserve ALL strategic dimensions and strict schema; shorten narration only.
+        # Never turn a whole-game diagnosis into independent role-only advice.
+        instructions += (
+            " BENCHMARK COMPACT REPORT: Keep the same whole-game causal analysis, "
+            "legal alternatives and auditable tradeoffs. Return 1-2 prioritized "
+            "cross-seat issues, 0-2 high-value relations and 1-2 conditional "
+            "intentions. Each explanation should be one concise Chinese sentence "
+            "without repeating the roster; preserve uncertainty and factual "
+            "versus hypothetical distinctions. Do not omit required fields."
+        )
+    payload = {
         "model": model,
         "instructions": instructions,
         "input": json.dumps(case, ensure_ascii=False, separators=(",", ":")),
@@ -395,6 +414,9 @@ def build_openai_request(case: dict, model: str) -> dict:
             } if analysis_only else SCHEMA,
         }},
     }
+    if reasoning_effort is not None:
+        payload["reasoning"] = {"effort": reasoning_effort}
+    return payload
 
 
 def parse_openai_response(response: dict, allowed: set[str], allowed_seats: set[int] | None = None, analysis_only: bool = False) -> dict:
@@ -516,12 +538,18 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):  # noqa: A002
         pass  # Do not persist secret-bearing headers, private prompts, or URLs.
 
-    def send_json(self, status: int, body: dict) -> None:
+    def send_json(self, status: int, body: dict, profile: dict | None = None) -> None:
         data = json.dumps(body, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(data)))
+        # Opt-in, authenticated metrics only. Never expose prompts, IDs, credentials
+        # or model text. No private content is written to process logs.
+        if profile and os.environ.get("GATEWAY_PROFILE_HEADERS") == "1":
+            for field, value in profile.items():
+                if type(value) is int and value >= 0:
+                    self.send_header("X-Botc-Profile-" + field, str(value))
         self.end_headers()
         self.wfile.write(data)
 
@@ -551,22 +579,49 @@ class Handler(BaseHTTPRequestHandler):
         if not CONCURRENCY.acquire(blocking=False):
             return self.send_json(429, {"error": "busy"})
         try:
+            upstream_payload = json.dumps(
+                build_openai_request(case, os.environ["OPENAI_MODEL"])
+            ).encode("utf-8")
             request = urllib.request.Request(
                 API_URL,
-                data=json.dumps(build_openai_request(case, os.environ["OPENAI_MODEL"])).encode("utf-8"),
+                data=upstream_payload,
                 method="POST",
                 headers={
                     "Authorization": "Bearer " + os.environ["OPENAI_API_KEY"],
                     "Content-Type": "application/json",
                 },
             )
+            upstream_started = time.perf_counter()
             with urllib.request.urlopen(request, timeout=75) as stream:
+                headers_received = time.perf_counter()
                 data = stream.read(256_001)
+                body_received = time.perf_counter()
                 if len(data) > 256_000:
                     raise ValueError("Model response too large")
+                upstream_response = json.loads(data)
                 result = parse_openai_response(
-                    json.loads(data), allowed, allowed_seats, analysis_only=analysis_only,
+                    upstream_response, allowed, allowed_seats, analysis_only=analysis_only,
                 )
+            validated = time.perf_counter()
+            # The buffered HTTP response cannot provide time-to-first-model-token.
+            # Time-to-headers contains upstream model generation plus connection.
+            profile = {
+                "To-Headers-Ms": round((headers_received - upstream_started) * 1000),
+                "Body-Read-Ms": round((body_received - headers_received) * 1000),
+                "Validate-Ms": round((validated - body_received) * 1000),
+                "Upstream-Ms": round((validated - upstream_started) * 1000),
+                "Request-Bytes": len(upstream_payload),
+                "Response-Bytes": len(data),
+            }
+            usage = upstream_response.get("usage") or {}
+            token_fields = {
+                "Input-Tokens": usage.get("input_tokens"),
+                "Output-Tokens": usage.get("output_tokens"),
+                "Total-Tokens": usage.get("total_tokens"),
+                "Cached-Tokens": (usage.get("input_tokens_details") or {}).get("cached_tokens"),
+                "Reasoning-Tokens": (usage.get("output_tokens_details") or {}).get("reasoning_tokens"),
+            }
+            profile.update(token_fields)
             if analysis_only:
                 self.send_json(200, {
                     "schemaId": ANALYSIS_RESPONSE_SCHEMA_ID,
@@ -574,7 +629,7 @@ class Handler(BaseHTTPRequestHandler):
                     "analysisId": case["analysisIdentity"]["analysisId"],
                     "sourceRevision": case["sourceRevision"],
                     **result,
-                })
+                }, profile)
             else:
                 self.send_json(200, {
                     "schemaId": "botc.storyteller-provider-response",
@@ -582,7 +637,7 @@ class Handler(BaseHTTPRequestHandler):
                     "decisionId": case["identity"]["decisionId"],
                     "sourceRevision": case["sourceRevision"],
                     **result,
-                })
+                }, profile)
         except (urllib.error.URLError, TimeoutError, ConnectionError, ValueError, KeyError, TypeError):
             self.send_json(502, {"error": "model_unavailable_or_invalid"})
         finally:
