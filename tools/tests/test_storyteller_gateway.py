@@ -81,6 +81,62 @@ def committed_case(drunk=True, prior=True):
     return live
 
 
+def live_pair_case():
+    live = committed_case(drunk=False, prior=False)
+    live["schemaId"] = "botc.storyteller-provider-request"
+    live.pop("analysisIdentity")
+    live.pop("historyCoverage")
+    live["identity"] = {
+        "gameId": "test-live-game",
+        "scriptId": "trouble_brewing",
+        "decisionTypeId": "first-night-pair-information",
+        "decisionId": "first-night:1:information:3",
+    }
+    live["state"]["stage"] = "RUNTIME"
+    live["state"]["phase"] = "FIRST_NIGHT"
+    live["state"]["round"] = 1
+    live["sourceRevision"] = {"gameStateRevision": 1, "playerInputRevision": 1}
+    live["decisionContext"] = {
+        "sourceSeat": 3, "abilityRoleId": "Investigator", "reliability": "RELIABLE"
+    }
+    live["legalCandidates"] = [
+        {
+            "candidateId": "pair-1", "shownRoleId": "poisoner",
+            "candidateSeats": [3, 4], "semanticTruth": "TRUE",
+            "registrationWitnessesArePossibilities": True,
+        },
+        {
+            "candidateId": "pair-2", "shownRoleId": "poisoner",
+            "candidateSeats": [2, 4], "semanticTruth": "TRUE",
+            "registrationWitnessesArePossibilities": True,
+        },
+    ]
+    live["causalHistory"] = {
+        "historyMode": "GLOBAL_V1", "cutoffSource": "LIVE_CAPTURED",
+        "exclusiveGlobalSequence": 2,
+        "coverage": {"MECHANICAL": {"state": "PARTIAL", "reasonCode": "ACTION_PRODUCER_SUBSET"}},
+        "events": [
+            {
+                "eventId": "action1", "kind": "action", "phase": "FIRST_NIGHT",
+                "round": 1, "localSequence": 1, "globalSequence": 0,
+                "epistemicClass": "HOST_CONFIRMED_ACTION",
+                "action": {"type": "POISON", "targetSeat": 2, "visibility": "HOST_PRIVATE"},
+            },
+            {
+                "eventId": "observation1", "kind": "observation", "phase": "FIRST_NIGHT",
+                "round": 1, "localSequence": 2, "globalSequence": 1,
+                "epistemicClass": "PLAYER_RECEIVED_OR_PUBLIC_INFORMATION",
+                "sourceSeat": 1, "sourceAbility": "Chef", "visibility": "PRIVATE",
+                "recipientSeats": [1], "receivedReliabilityLabel": "RECEIVED_AS_FUNCTIONING",
+                "proposition": {"type": "NUMERIC_RESULT", "value": 0},
+            },
+        ],
+    }
+    live["priorStrategy"] = json.loads(model_output()["output"][0]["content"][0]["text"])["strategy"]
+    live["strategicPlanningScope"] = "GLOBAL_EVENT_DRIVEN_CONTINUATION"
+    return live
+
+
 def model_output(primary="setup:drunk-seat:seat-1", alternative="setup:drunk-seat:seat-2"):
     answer = {
         "strategy": {
@@ -205,6 +261,38 @@ class GatewayContractTests(unittest.TestCase):
         request["priorStrategy"]["gameStateRevision"] = 1
         with self.assertRaises(ValueError):
             gateway.validate_host_analysis_request(request)
+
+    def test_live_pair_continuation_uses_ordered_host_events_and_prior_strategy(self):
+        live = live_pair_case()
+        allowed = gateway.validate_host_request(live)
+        assert allowed == {"pair-1", "pair-2"}
+        prompt = gateway.build_openai_request(live, "strong-model")
+        assert prompt["store"] is False
+        assert "FIRST" in prompt["instructions"]
+        assert "causalHistory" in json.loads(prompt["input"])
+        answer = gateway.parse_openai_response(
+            model_output(primary="pair-2", alternative="pair-1"),
+            allowed, set(range(1, 6)),
+        )
+        assert answer["primaryCandidateId"] == "pair-2"
+        assert answer["strategy"]["intentions"]
+
+    def test_live_pair_rejects_future_reordered_and_fabricated_causal_events(self):
+        import copy
+        base = live_pair_case()
+        for mutate in (
+            lambda c: c["causalHistory"]["events"][1].update(globalSequence=2),
+            lambda c: c["causalHistory"]["events"][1].update(globalSequence=0),
+            lambda c: c["causalHistory"]["events"][1].update(epistemicClass="HOST_CONFIRMED_ACTION"),
+            lambda c: c["causalHistory"].update(cutoffSource="UNAVAILABLE"),
+            lambda c: c["legalCandidates"][0].update(registrationWitnessesArePossibilities=False),
+            lambda c: c["state"]["seats"][0].update(actualRoleId="UNCOMMITTED"),
+            lambda c: c.update(strategicPlanningScope="DRUNK_ONLY"),
+        ):
+            invalid = copy.deepcopy(base)
+            mutate(invalid)
+            with self.assertRaises(ValueError):
+                gateway.validate_host_request(invalid)
 
     def test_budget_bounds_paid_calls(self):
         budget = gateway.Budget(1)

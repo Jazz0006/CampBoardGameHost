@@ -119,8 +119,12 @@ def validate_host_request(case: dict) -> set[str]:
     if case.get("schemaId") != "botc.storyteller-provider-request" or case.get("schemaVersion") != 1:
         raise ValueError("Unsupported request version")
     ident = case["identity"]
-    if ident["scriptId"] != "trouble_brewing" or ident["decisionTypeId"] != "drunk-assignment":
+    if ident["scriptId"] != "trouble_brewing" or ident["decisionTypeId"] not in (
+        "drunk-assignment", "first-night-pair-information",
+    ):
         raise ValueError("Unsupported decision family")
+    if ident["decisionTypeId"] == "first-night-pair-information":
+        return validate_live_global_decision_request(case)
     if not isinstance(ident["gameId"], str) or not ident["gameId"]:
         raise ValueError("Missing game identity")
     if not isinstance(ident["decisionId"], str) or not ident["decisionId"]:
@@ -155,6 +159,104 @@ def validate_host_request(case: dict) -> set[str]:
     players = case["playerContext"]
     if [p["seat"] for p in players] != list(range(1, len(seats) + 1)):
         raise ValueError("Missing player context")
+    return set(ids)
+
+
+def validate_live_global_decision_request(case: dict) -> set[str]:
+    """One engine-legal live decision, with the existing ordered, partial Host event prefix.
+
+    No candidate ranking or role-specific replanning: every event remains a typed fact
+    or observation, while social consequences and plans remain explicit uncertainty.
+    """
+    identity = case["identity"]
+    revision = case["sourceRevision"]
+    if not isinstance(identity.get("gameId"), str) or not identity["gameId"] or not isinstance(
+        identity.get("decisionId"), str
+    ) or not identity["decisionId"]:
+        raise ValueError("Missing decision identity")
+    if not all(type(revision.get(key)) is int and revision[key] >= 0
+               for key in ("gameStateRevision", "playerInputRevision")):
+        raise ValueError("Invalid source revision")
+    if case.get("strategicPlanningScope") != "GLOBAL_EVENT_DRIVEN_CONTINUATION":
+        raise ValueError("Missing global continuation scope")
+    state = case["state"]
+    if state.get("stage") != "RUNTIME" or type(state.get("hasDrunk")) is not bool:
+        raise ValueError("Expected live runtime state")
+    seats = state["seats"]
+    if not isinstance(seats, list) or not 5 <= len(seats) <= 15 or [
+        s.get("seat") for s in seats
+    ] != list(range(1, len(seats) + 1)):
+        raise ValueError("Incomplete ordered roster")
+    for seat in seats:
+        if any(not isinstance(seat.get(k), str) or seat[k] in
+               ("UNCOMMITTED", "UNKNOWN", "NOT_APPLICABLE")
+               for k in ("shownRoleId", "actualRoleId")):
+            raise ValueError("Unknown role in committed live roster")
+        if type(seat.get("alive")) is not bool or type(seat.get("poisoned")) is not bool:
+            raise ValueError("Missing mechanical status")
+    players = case["playerContext"]
+    if not isinstance(players, list) or [p.get("seat") for p in players] != [
+        s["seat"] for s in seats
+    ]:
+        raise ValueError("Incomplete player context")
+    context = case["decisionContext"]
+    if type(context.get("sourceSeat")) is not int or not 1 <= context["sourceSeat"] <= len(seats):
+        raise ValueError("Invalid decision source seat")
+    if not isinstance(context.get("abilityRoleId"), str) or not context["abilityRoleId"]:
+        raise ValueError("Missing decision ability")
+    if context.get("reliability") not in ("RELIABLE", "DRUNK", "POISONED"):
+        raise ValueError("Invalid reliability")
+    legal = case["legalCandidates"]
+    if not isinstance(legal, list) or not legal:
+        raise ValueError("Missing legal candidates")
+    ids = []
+    for item in legal:
+        if not isinstance(item.get("candidateId"), str) or not item["candidateId"]:
+            raise ValueError("Invalid legal ID")
+        ids.append(item["candidateId"])
+        if not isinstance(item.get("candidateSeats"), list) or any(
+            type(s) is not int or s not in range(1, len(seats) + 1)
+            for s in item["candidateSeats"]
+        ):
+            raise ValueError("Invalid candidate seats")
+        if item.get("registrationWitnessesArePossibilities") is not True:
+            raise ValueError("Registration witnesses are not verified registration facts")
+        if item.get("semanticTruth") not in ("TRUE", "FALSE", "PARTIALLY_TRUE", "NOT_APPLICABLE"):
+            raise ValueError("Invalid candidate truth marker")
+    if len(ids) != len(set(ids)):
+        raise ValueError("Duplicate candidate IDs")
+    history = case["causalHistory"]
+    if history.get("cutoffSource") != "LIVE_CAPTURED" or history.get("historyMode") != "GLOBAL_V1":
+        raise ValueError("Unknown causal prefix")
+    cutoff = history.get("exclusiveGlobalSequence")
+    if type(cutoff) is not int or cutoff < 0:
+        raise ValueError("Invalid causal cutoff")
+    if not isinstance(history.get("coverage"), dict) or not isinstance(history.get("events"), list):
+        raise ValueError("Missing coverage/chronology")
+    previous = -1
+    for event in history["events"]:
+        seq = event.get("globalSequence")
+        if type(seq) is not int or not previous < seq < cutoff:
+            raise ValueError("Out-of-order or future causal event")
+        previous = seq
+        if event.get("kind") == "action":
+            if event.get("epistemicClass") != "HOST_CONFIRMED_ACTION" or not isinstance(
+                event.get("action"), dict
+            ):
+                raise ValueError("Unverified action")
+        elif event.get("kind") == "observation":
+            if event.get("epistemicClass") != "PLAYER_RECEIVED_OR_PUBLIC_INFORMATION":
+                raise ValueError("Unverified observation")
+            if event.get("visibility") not in ("PUBLIC", "PRIVATE") or not isinstance(
+                event.get("proposition"), dict
+            ):
+                raise ValueError("Invalid player-visible observation")
+        else:
+            raise ValueError("Unknown event class")
+    prior = case.get("priorStrategy")
+    if prior is not None and (not isinstance(prior, dict) or
+                              len(json.dumps(prior)) > 16000):
+        raise ValueError("Invalid advisory strategy")
     return set(ids)
 
 
@@ -208,6 +310,24 @@ def build_openai_request(case: dict, model: str) -> dict:
     # No raw player names or OAuth/client credentials in this request.
     analysis_only = case.get("schemaId") == ANALYSIS_SCHEMA_ID
     instructions = INSTRUCTIONS
+    if case.get("strategicPlanningScope") == "GLOBAL_EVENT_DRIVEN_CONTINUATION":
+        instructions = (
+            "You are a whole-game Blood on the Clocktower Storyteller strategist. "
+            "FIRST examine the FULL current actual/shown roster and causalHistory in its exact as-of order. "
+            "Host-confirmed actions and player-facing observations are different: private actions can "
+            "affect real ability functioning without being known to players, and public failed or fake "
+            "actions can change players' plausible worlds without mechanically succeeding. "
+            "The causalHistory coverage is PARTIAL, so unrecorded social speech is UNKNOWN. "
+            "Compare priorStrategy with all committed facts, keep/revise/retire contingent intentions "
+            "in planRevisionNote, and diagnose multi-seat information ecology, trust, pressure and fairness. "
+            "Only THEN propose the next currently legal candidate ID and a genuinely different legal "
+            "alternative if available, referencing how the combined plan affects future information. "
+            "Do NOT treat option previews as published, retroactively change observations, declare a "
+            "Spy/Recluse registration witness definite from an ambiguous result, or invent claims. "
+            "The Host will validate every candidate and remains sole game-state authority. "
+            "No role-specific ranking or hardcoded action-trigger policy. "
+            "Return the same required structured JSON with concise auditable Chinese explanations."
+        )
     if analysis_only:
         instructions = (
             "You are an expert Blood on the Clocktower Trouble Brewing whole-game Storyteller strategist. "
