@@ -226,6 +226,15 @@ jobs:
         if: needs.changes.outputs.android_full == 'true'
         run: ./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks
 
+      - name: Attach draft whole-game AI Android test APK
+        if: needs.changes.outputs.android_full == 'true' && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: botc-ai-assisted-pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
   asp-contract-tests:
     name: ASP contract tests
     needs: changes

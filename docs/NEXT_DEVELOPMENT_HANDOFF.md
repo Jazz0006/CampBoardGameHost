@@ -1,6 +1,8 @@
 # CampBoardGameHost — Next Development Handoff
 
-> Updated: **2026-10-09 Australia/Sydney**. **唯一活动 handoff**，会话开始必须重新查 live GitHub / 本地状态；旧 PR/head 数值不代表现状。完整的旧交接与逐步验收历史在 [归档快照](archive/handoffs/NEXT_DEVELOPMENT_HANDOFF_PRE_MEM0_CONVERGENCE_2026-10-09.md)，其中旧 NEXT 均无执行权威。
+> Updated: **2026-10-10 Australia/Sydney**. **唯一活动 handoff**，会话开始必须重新查 live GitHub / 本地状态；旧 PR/head 数值不代表现状。完整的旧交接与逐步验收历史在 [归档快照](archive/handoffs/NEXT_DEVELOPMENT_HANDOFF_PRE_MEM0_CONVERGENCE_2026-10-09.md)，其中旧 NEXT 均无执行权威。
+
+> **2026-10-10 新方向 — 实际整局游戏优先：** 用户选择继续采用 `gpt-6-luna`，把已进行的 B 极简推荐试验（首次样本 7.52s，相对 A 22.86s；第 4 次 503）接入当前 `prod-1-live-drunk-ai-assisted` Draft PR #292 的 **AI_ASSISTED 实时决策**。Gateway opt-in `responseProfile=COMPACT_MEMO_V1` 返回唯一合法候选及 ≤200 字的临时 planMemo，Android 兼容旧完整格式。完整开局全局分析/酒鬼选择不变。前一次模型 memo 仅同局咨询上下文，并非 Host truth，不替代完整因果记录；仍由 Host 校验合法性/版本和真人确认。尚未做真机 Android E2E 与完整 TB 对局，PR 保持 Draft。**先实测整局连续首夜→白天→次夜→结束，记录可追溯人机冲突和一致性；不能用孤立 9-call 合成实验宣布整局已通过。**
 
 ## 1. 进入工作前
 
@@ -8,40 +10,32 @@
 2. 实时核对 GitHub `main`、open PR、branch HEAD 和本地 working tree。不要丢弃本地未提交改动。
 3. 本次全局文档收敛开始时的基线为 `main@2886dcca876ef81a164ef700d748408223c029d3`（PR #288 已合并），仅作为历史记录，不是下一轮必然的 HEAD。
 
-## 2. 下一项：PROD-0 → PROD-1（真实游戏 AI 推荐接入）
+## 2. 当前唯一接棒：PROD-GLOBAL-1D-0 — API 延迟 / 输出质量对照
 
-**最新产品授权（2026-10-09）：不再以 MEM0/MEM1 质量盲评作为接入生产前置条件。** 强通用 LLM 的现实建议质量已经足以支持立即做可玩的原型。产品特色长期目标是 **AI_AUTOMATIC / 无人工说书人**，而不是让人类永远确认每个裁量。
+**本轮真实基线（2026-10-10）：** [PR #292](https://github.com/Jazz0006/CampBoardGameHost/pull/292) `prod-1-live-drunk-ai-assisted` 保持 Draft。既有 Host/Engine 独占规则、真实状态、合法候选与确认。已接入 TB 首夜 Washerwoman/Librarian/Investigator pair、Chef/Empath numeric、Fortune Teller 已选查询对象的 Boolean、全局战略与历史因果续航；已有次夜 SeatTarget 和跨阶段观察的测试。MANUAL 零 LLM，AI_ASSISTED 真人确认，AI_AUTOMATIC 现阶段仅有限覆盖，不能称完整自动说书人。
 
-完整路线：[GSP-PROD-AUTO — 生产接入与自动说书人](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。
+**设备与代码验证：** Android 调用现有 Oracle 开发机 Gateway（Bearer + 配额 + HTTPS Funnel；OpenAI API key 仅服务端）。APK 的 Gateway 地址已写入偏好设置，Gateway 令牌 Android Keystore AES-GCM 加密存储于非备份目录（`13b31d0`；Android CI #4049、R2 #3677、Gateway #59 GREEN）。需要手机实际检查重启及同签名、同 applicationId 的覆盖安装保留设置；**真正 Android→HTTPS→Gateway→LLM→Host 首夜游戏 E2E 仍未完成**。
 
-### 当前立即执行的 PROD-0 / PROD-1
+**真实模型实验：** Oracle 上 `tools/prod_global_live_smoke.py --live` 已完成 3 次 `gpt-6-luna` 付费请求（22.83/25.92/25.32 秒）；返回结构化有效、A2 能识别人工覆盖，但质量不足以评价整局产品。报告 `~/.local/share/botc-evaluation/prod-global-1c-llm-smoke-report.json` 属于合成局，A2 的 Chef→Investigator 事件顺序 **不符合官方首夜次序**。**新的 Mini MCP `read_botc_evaluation_report({report_id:"prod-global-1c"})` 已实际读取该报告 + SHA-256**（Mini MCP `master@f40e202`，服务已重启）；不需要人工再次上传本固定报告。
 
-1. 用 live GitHub main 复核已有 `StorytellerProviderRequestV1`、`StorytellerProviderResponseV1`、`StorytellerProviderRequestFactoryV1`、`StorytellerProviderResponseValidatorV1`、`StorytellerProviderGameContextBuilderV1`、真实 pending decision 与确认 owner；不要再建第二套推荐引擎。
-2. 选择 **一个真实 TB 角色裁量**（优先酒鬼 late-binding），做完整链路：运行中当前游戏状态/所有显示角色/合法候选/必要已确认历史 → 格式化上下文 → 安全后端服务可配置 LLM → Host 校验 ID/来源 revision/当前可达动作 → UI 展示主方案和备选 → 调用现有 Host confirm 路径。
-3. 用真实 Host 游戏态测试合法候选、缺角色信息、stale revision、网络错误/超时/无额度、无 API key 入 APK、同一决策不重复提交，以及原有离线 Manual 流程；**不要求 27 次 MEM0 复测或 MEM1 完成**。
-4. PROD-1 完成后立即实现 **PROD-2 的可选自动模式**：Host 验证同一合法选择后自动确认，失败明确暂停/支持接管。随后推进 TB 首夜自动流程，最终扩展到完整无人类说书人局（但玩家实际选择/提名/投票仍需由玩家交互输入）。
+**酒鬼晚绑定 / 身份展示修正（明确产品授权）：** setup 预留酒鬼并固定全体展示角色后，**可以先向所有玩家逐人展示身份，展示完再从合法的“展示为镇民”玩家中选实际酒鬼**；选择只需早于受到影响的首夜能力裁定。现有 App 把 Drunk 选择挡在角色卡生成/展示之前只是代码时序，不是 BoTC 规则。PROD-GLOBAL-1D 要新增安全的 shown-only 身份展示边界，同时后台启动**整局联合策略**，包含酒鬼、Pair、首夜条件信息规划；酒鬼与投毒、占卜师查询对象等未确认事实不得预填进 Host 真实状态。
 
-**模型策略：** 用户已在直接对话中观察到较强模型（Sol）输出好于本次 Luna API 模型，不把单个较弱模型的表现当成 LLM 能力天花板。真实部署采用可配置模型、质量优先、记录费用与延迟，不假设聊天名称=实际 API model ID。
+**下轮马上做：** 对同一个规则合法、首夜真实顺序的固定局面，增加不含密钥的 Gateway/API 延迟分段和 token usage 观测；对照首轮 vs 连续请求、默认 vs 较低推理强度、完整 vs 精简全局报告，记录结果质量、合法率与总耗时。**5 秒后续重算仅体验目标，尚无任何测得证据**。基于测量再落地 `PROD-GLOBAL-1D-1` 身份展示后台全局预规划，`1D-2` Host 因果事件驱动、依剩余合法域更新战略与未执行建议；无角色专用投毒/酒鬼 if/else 推荐。未达到目标应支持旧有效建议/等待提示及人工接管，不能使用过期模型决定。
 
-## 3. MEM0/API0/开发机状态 — 留证但不得阻塞生产
+**未变约束：** 无 MEM0/MEM1、EvidenceLab、训练或扩 Recovery 的发布前置门；旧推荐 heuristic/style/special policy 均退休。模型只输出意图/推荐，Host 对 revision、legal ID 和真实顺序享有最终权威。Recovery 仅用于当前格式、≤4 小时意外中断。Spy/Recluse 多 witness 的结果优先歧义继续保留。
 
-- API0 由 Host PR #288 提供 Python 开发者端 Responses script；**尚未**提供 Android 生产网关。
-- Oracle Mini MCP DEV-EXEC1/2 已完成服务自重启、固定离线任务与安全结果读取。B1 预执行因输出目录非空未发出请求且永久封存；B2 私有只读审计：**9 attempted / 9 succeeded / 9 valid outputs**，累计输入 5,187、输出 12,667 tokens。B2 的一次重复运行被单批次保护拒绝，不代表又发送九次；还不能据此证明 LLM 质量或统计意义上的记忆效果。
-- MEM0 现有 9 份响应可供将来审阅，D0 合成 prompt 对备选候选的显示角色信息不足、少量回答有酒鬼规则断言问题，应反馈给 **生产 context completeness**，而不是要求马上重新扩大盲测。完整 MEM0 盲评转 **NON-BLOCKING**，EvidenceLab 完整真人局检验随后按实际产品缺陷开展。
-- 原 GSP-R1C2C-2/3 历史工程继续暂停；Recovery 只为同当前格式、≤4h 突发中断续局。不要又将 Recovery 当记忆或生产接入的先决条件。
+**查阅：** [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md) → [PROD-GLOBAL-1/1D 设计与事实边界](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md) → [GSP-PROD-AUTO 长期目标](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。旧 PROD-0/1A/1B 逐提交行动列表是 Git/PR 历史，不是本轮 NEXT；仅查真实代码和 CI。
 
-## 4. 施工禁区与保留项
+## 3. 工程/分支边界与暂停事项
 
-- `Host truth > provider memory`：Model 的连续对话/长短期战略记忆可以帮助推理，但不能作为规则、角色、真实登记、游戏状态的最终事实来源。Provider 可替换，手动流程必须离线完整。
-- Recovery 仅同当前格式/令牌、**≤4 小时紧急续局**；不扩展长期存档、历史版本迁移、任意 cut-off strict replay。PR #286 已关闭且未合并，**不得重复添加已由合法 setup 保证的酒鬼 shown-role collision 校验**，除非发现可达输入边界缺陷。
-- 已有 Drunk shown Virgin 的首次提名兼容真实修复（#284）、真实 TB/NGJ 公共/裁定行动记录（#282 等）要保留。Spy/Recluse 结果若有多个合法 witness，只将 Storyteller 真正明确裁定的注册记成明确事实。
-- Legacy heuristic/style/special-policy 已退休。不得重新引入 named Drunk/Mayor/Investigator if/else 自动排序。
-- GSP-R2/R3 玩家资料与跨局经验按照真实使用需要渐进接入，**R4 的必要部分已进入 PROD-1 的生产上下文/格式化与验证工作**；旧关闭未合并的 PR #232 分支 `gsp-2b3b-player-context-edit-surface` 有参考代码，**保留其远端分支**，日后需重新按 live 架构审计，不能照搬。
+- PR #292 **保持 Draft**；即使此次 docs-only CI GREEN，也不能代替正式 E2E 产品质量/安全验收。
+- `Host truth > provider memory`；不虚构未记录的玩家私聊/声称，不把模型推断变成规则事实；确认过的信息不可因后续事件回写。
+- 保留已经通过验收的 Drunk-shown Virgin、真实 TB/NGJ 裁定历史、短期 Recovery；**不要再次添加由合法 setup 已保证的酒鬼身份冲突特判**。
+- 仍按 [分支清理审计](BRANCH_RETENTION_AND_PRUNING_AUDIT_2026-10-09.md) 保留未合并唯一证据分支，特别是 `gsp-2b3b-player-context-edit-surface`；本次是文档同步，不处理 Git 分支。
+- 10 月 9 日已将 pre-MEM0 旧 roadmap/handoff/docs index 的原文归档至 `docs/archive/`；此后归档信息只供历史追溯，**不能从其旧 NEXT 复活已经退出的任务**。
 
-## 5. 文档/分支清理的独立交接
+## 4. 验收纪律
 
-参见 [分支清理审计](BRANCH_RETENTION_AND_PRUNING_AUDIT_2026-10-09.md)。已把收敛前的 roadmap、handoff 和 docs index 作为保留原文的 archive snapshot；活动入口不再包含 DLB/C5/GSP-R1C 的逐提交流水账。Git 分支删除必须基于已经 merge/closed 的精确 PR、独立内容审查和显式保留白名单。没有得到完整证明前不删除未合并的唯一证据分支；分支清理不得覆盖 MEM0 工作。
+文档同步只需检查引用、diff 与 GitHub 独立 CI/R2；行为改动应按 `AGENTS.md` 和 `TESTING_STRATEGY.md` 选择实际测试。开新对话时先核对 **live remote main、PR #292、当前 branch/HEAD、本地工作树、CI**，绝不假设本交接记载的 SHA 仍是最新状态。
 
-## 6. 本轮验收
-
-本轮为生产优先级文档路线决策，不是已完成 Android 接入。文档-only 更改不需要伪造 Android RED 测试；需检查 diff、文档相互引用、无业务代码变更、GitHub 独立 PR/checks。后续任何功能行为改动按 `AGENTS.md` 和 `TESTING_STRATEGY.md` 进行风险分级验证。
+> **Full CI required:** PROD-GLOBAL compact adapter changes include Kotlin production source; use `[full-ci]` on this checkpoint so Android compilation/unit tests and APK assembly are mandatory even if prior docs-only commit caused synchronize diff classification to skip them.
