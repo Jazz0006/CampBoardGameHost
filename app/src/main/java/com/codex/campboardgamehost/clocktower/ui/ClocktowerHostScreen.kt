@@ -2603,11 +2603,11 @@ internal fun ClocktowerJudgeScreen(
                         onClick = { onRequestGlobalAiAdvice(currentStep, currentStepIndex) },
                         enabled = !globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey,
                     ) {
-                        Text(text("AI 全局局势与当前合法裁量 / Global AI advice"))
+                        Text(text("AI 全局局势与当前合法裁量", "Global AI advice"))
                     }
                     if (globalAiAdviceKey == globalAiCurrentKey) {
                         if (globalAiAdviceBusy) Text(
-                            text("正在重新评估已确认的游戏事件… / Analysing committed game history…"),
+                            text("正在重新评估已确认的游戏事件…", "Analysing committed game history…"),
                         )
                         globalAiAdviceError?.let { error -> Text(text = error) }
                         globalAiAdviceText?.let { advice -> Text(text = advice) }

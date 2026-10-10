@@ -16,6 +16,8 @@
 
 > **2026-10-10 全局设计约束：** 不要把先前的 `Poisoner target` 误解成需要单独实现的重算触发器。产品目标是尽可能模拟真人说书人的整个认知—判断—裁量循环：Host 记录并按时间顺序解释所有确实发生的事件；LLM 结合真实机械效果、玩家实际收到/公开的信息、尚不确定的合理世界、玩家水平与可修订的整局意图，对**尚未执行**的裁量持续重新规划。无效/假杀手声称依然可能影响公共认知；处女提名的触发与否是 Host 权威裁定；这些白天事件不倒灌首夜。实现和验收一套通用事件/认知机制，不写投毒者/杀手/处女各自专用的推荐排序。详见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。
 
+**2026-10-10 PROD-GLOBAL-1A 代码 checkpoint：** PR #292 Draft 分支 `prod-1-live-drunk-ai-assisted` 新增首次首夜 Host 真实 pair decision 的连续策略通道（`d72faee0c64fd099d056167ca4e668bd3d1d4148`）：利用原有 Session GLOBAL_V1 行动/观察因果前缀、完整角色/玩家输入/合法候选及先前整体战略，经同一个 LLM gateway 更新；AI_ASSISTED 的真实首夜页面展示合法建议，实际结果仍由主持人依现有 Host 操作确认，后续裁量读取已确认动作和信息，不再使用推荐草稿作为事实。Gateway 离线测试与独立 CI/R2 需按最新 HEAD 查验。**尚缺跨白天/后续夜晚通用裁量、全部首夜信息家族、AUTO 自动合法提交和实际 Android→TLS→LLM 端到端实测；PR #292 保持 Draft，不能合并。** 完整设计/遗留验收见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。
+
 **最新产品授权（2026-10-09）：不再以 MEM0/MEM1 质量盲评作为接入生产前置条件。** 强通用 LLM 的现实建议质量已经足以支持立即做可玩的原型。产品特色长期目标是 **AI_AUTOMATIC / 无人工说书人**，而不是让人类永远确认每个裁量。
 
 完整路线：[GSP-PROD-AUTO — 生产接入与自动说书人](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。

@@ -1625,6 +1625,8 @@ internal fun CampBoardGameHostApp() {
         liveAiAdviceKey = key
         liveAiAdviceText = null
         liveAiAdviceError = null
+        // An older in-flight response belongs to a different key and cannot own this state.
+        liveAiAdviceBusy = false
         if (!storytellerGatewayEndpoint.startsWith("https://") ||
             storytellerGatewayToken.isBlank()
         ) {

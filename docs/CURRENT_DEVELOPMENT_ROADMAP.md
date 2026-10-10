@@ -6,7 +6,7 @@
 
 ## 1. 当前唯一执行顺序 — **PRODUCTION FIRST / AUTONOMOUS GOAL**
 
-> **2026-10-09 最新产品纠偏 — PROD-GLOBAL-1 为 PROD-1 的强制补充/覆盖：** 先基于全局已定座位、完整显示角色、尚未确认的酒鬼合法域分析整局脆弱点、信息链路、邪恶压力及未来连锁裁量，形成可修订的全局策略，再推荐**当前**合法决定。发完牌后在说书人专用方桌界面展示整局局势、座位间关系与后续计划；后续动作必须引用同一策略并按新事实更新。MANUAL 不调用 LLM、不出现 AI 推荐；AI_AUTOMATIC 经过 Host 验证自动提交。详见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。**PR #292 当前代码虽然 CI/R2 GREEN，但仍是单点推荐 SPIKE / Draft / 产品验收 NO-GO，不可直接合并。**
+> **2026-10-09 最新产品纠偏 — PROD-GLOBAL-1 为 PROD-1 的强制补充/覆盖：** 先基于全局已定座位、完整显示角色、尚未确认的酒鬼合法域分析整局脆弱点、信息链路、邪恶压力及未来连锁裁量，形成可修订的全局策略，再推荐**当前**合法决定。发完牌后在说书人专用方桌界面展示整局局势、座位间关系与后续计划；后续动作必须引用同一策略并按新事实更新。MANUAL 不调用 LLM、不出现 AI 推荐；AI_AUTOMATIC 经过 Host 验证自动提交。详见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。**PR #292 仍是 Draft / 产品验收 NO-GO，不可直接合并。2026-10-10 已推进首夜真实 Host pair decision 的事件/连续战略纵向链路（初始 checkpoint `d72faee`）；完整首夜、白天/后续夜晚、自主执行和真实模型网关实测尚未收口，不能因既有检查 GREEN 提前宣称完成。**
 
 
 
