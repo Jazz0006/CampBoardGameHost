@@ -170,8 +170,8 @@ class ProductionDrunkAiGatewayV1Test {
                     .put("tradeoff", "Never invent registration witnesses")))
                 .put("planRevisionNote", "Initial provisional strategy"))
         val envelope = ProductionDrunkAiGatewayV1.decodeGlobal(raw.toString(), req)
-        assertEquals(1, envelope.globalStrategy.relations.size)
-        assertTrue(envelope.globalStrategy.issues.first().seats.contains(4))
+        assertEquals(1, requireNotNull(envelope.globalStrategy).relations.size)
+        assertTrue(requireNotNull(envelope.globalStrategy).issues.first().seats.contains(4))
         assertTrue(ProductionDrunkAiGatewayV1.validateCurrent(
             req, decision(), decision(), envelope.response,
         ) == null) // A new PendingDecision instance cannot inherit the previous decision's validity.
