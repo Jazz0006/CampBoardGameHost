@@ -58,6 +58,7 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevisio
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
+import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
 import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
@@ -83,6 +84,7 @@ internal fun ClocktowerJudgeScreen(
     gameSeed: Long,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
     globalAiAssisted: Boolean = false,
+    globalNightPendingDecision: PendingMayorRedirectDecision? = null,
     globalAiAdviceKey: String? = null,
     globalAiAdviceText: String? = null,
     globalAiAdviceBusy: Boolean = false,
@@ -2439,9 +2441,16 @@ internal fun ClocktowerJudgeScreen(
                 currentStep, phase, round, cards, firstNightPairDecisionContext,
             )
         } else null
-        val globalAiCurrentKey = globalAiPending?.let { pending ->
+        val globalAiTargetPending = globalNightPendingDecision?.takeIf {
+            globalAiAssisted && phase == ClocktowerPhase.Night &&
+                currentStep.action == ClocktowerNightAction.MayorRedirect &&
+                currentStep.isRealAction
+        }
+        val globalAiDecisionIdentity = globalAiPending?.requestIdentity
+            ?: globalAiTargetPending?.requestIdentity
+        val globalAiCurrentKey = globalAiDecisionIdentity?.let { identity ->
             listOf(
-                gameId, round, currentStepIndex, pending.requestIdentity.requestId,
+                gameId, round, currentStepIndex, identity.requestId,
                 gameStateRevision, playerInputRevision, nightCheckpoint.nextTimelineGlobalSequence,
             ).joinToString(":")
         }
@@ -2596,7 +2605,7 @@ internal fun ClocktowerJudgeScreen(
             contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (globalAiAssisted && globalAiPending != null &&
+                if (globalAiAssisted && globalAiDecisionIdentity != null &&
                     globalAiCurrentKey != null
                 ) {
                     OutlinedButton(

@@ -137,6 +137,35 @@ def live_pair_case():
     return live
 
 
+def late_night_target_case():
+    """Day events are in the same generic chronological context, never first-night rewrites."""
+    live = live_pair_case()
+    live["identity"]["decisionTypeId"] = "mayor-redirect"
+    live["identity"]["decisionId"] = "night:2:redirect"
+    live["state"]["round"] = 2
+    live["state"]["phase"] = "NIGHT"
+    live["state"]["seats"][0]["actualRoleId"] = "mayor"
+    live["state"]["seats"][0]["shownRoleId"] = "mayor"
+    live["decisionContext"] = {
+        "sourceSeat": 1, "abilityRoleId": "Mayor", "reliability": "NOT_APPLICABLE",
+    }
+    live["legalCandidates"] = [
+        {"candidateId": "redirect-seat-1", "targetSeat": 1},
+        {"candidateId": "redirect-seat-4", "targetSeat": 4},
+    ]
+    live["causalHistory"]["events"].append({
+        "eventId": "day-public-nomination", "kind": "action", "phase": "DAY",
+        "round": 1, "localSequence": 3, "globalSequence": 2,
+        "epistemicClass": "HOST_CONFIRMED_ACTION",
+        "action": {
+            "type": "NOMINATION", "nominatorSeat": 4, "nomineeSeat": 1,
+            "firstVirginNomination": False, "visibility": "PUBLIC",
+        },
+    })
+    live["causalHistory"]["exclusiveGlobalSequence"] = 3
+    return live
+
+
 def model_output(primary="setup:drunk-seat:seat-1", alternative="setup:drunk-seat:seat-2"):
     answer = {
         "strategy": {
@@ -276,6 +305,29 @@ class GatewayContractTests(unittest.TestCase):
         )
         assert answer["primaryCandidateId"] == "pair-2"
         assert answer["strategy"]["intentions"]
+
+    def test_same_global_strategy_survives_into_subsequent_night_legal_target(self):
+        live = late_night_target_case()
+        assert gateway.validate_host_request(live) == {"redirect-seat-1", "redirect-seat-4"}
+        prompt = gateway.build_openai_request(live, "configurable-model")
+        assert "causalHistory" in prompt["instructions"]
+        assert "priorStrategy" in prompt["instructions"]
+        assert len(json.loads(prompt["input"])["causalHistory"]["events"]) == 3
+        output = gateway.parse_openai_response(
+            model_output(primary="redirect-seat-4", alternative="redirect-seat-1"),
+            {"redirect-seat-1", "redirect-seat-4"}, set(range(1, 6)),
+        )
+        assert output["primaryCandidateId"] == "redirect-seat-4"
+        for change in (
+            lambda c: c["legalCandidates"][0].update(targetSeat=16),
+            lambda c: c["legalCandidates"][0].update(candidateSeats=[1, 2]),
+            lambda c: c["causalHistory"]["events"][-1].update(globalSequence=3),
+            lambda c: c["decisionContext"].update(reliability="RELIABLE"),
+        ):
+            invalid = json.loads(json.dumps(live))
+            change(invalid)
+            with self.assertRaises(ValueError):
+                gateway.validate_host_request(invalid)
 
     def test_live_pair_rejects_future_reordered_and_fabricated_causal_events(self):
         import copy

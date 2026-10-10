@@ -31,8 +31,11 @@ internal object StorytellerGlobalDecisionRequestV1 {
         request: StorytellerProviderRequestV1,
         priorStrategy: StorytellerGlobalStrategyV1?,
     ): String {
-        val context = request.decisionContext as? StorytellerProviderDecisionContextV1.FirstNightPairInformation
-            ?: error("This bounded production bridge needs an engine-owned first-night pair decision.")
+        val context = request.decisionContext
+        require(context is StorytellerProviderDecisionContextV1.FirstNightPairInformation ||
+            context is StorytellerProviderDecisionContextV1.MayorRedirect) {
+            "Global live advice needs an engine-owned legal information or redirection decision."
+        }
         val snapshot = (request.state as StorytellerProviderGameStateV1.TroubleBrewing).snapshot
         val prefix = requireNotNull(request.gameContext.historyPrefix) {
             "Global continuation requires a frozen Host causal prefix."
@@ -73,20 +76,32 @@ internal object StorytellerGlobalDecisionRequestV1 {
                             .put("poisoned", field(seat.poisoned)))
                     }
                 }))
-            .put("decisionContext", JSONObject()
-                .put("sourceSeat", context.sourceSeat)
-                .put("abilityRoleId", context.abilityRole.value)
-                .put("reliability", context.reliability.name))
+            .put("decisionContext", when (context) {
+                is StorytellerProviderDecisionContextV1.FirstNightPairInformation ->
+                    JSONObject().put("sourceSeat", context.sourceSeat)
+                        .put("abilityRoleId", context.abilityRole.value)
+                        .put("reliability", context.reliability.name)
+                is StorytellerProviderDecisionContextV1.MayorRedirect ->
+                    JSONObject().put("sourceSeat", context.mayorSeat)
+                        .put("abilityRoleId", "Mayor")
+                        .put("reliability", "NOT_APPLICABLE")
+                else -> error("Unsupported live decision context")
+            })
             .put("legalCandidates", JSONArray().also { array ->
                 request.legalCandidates.forEach { candidate ->
-                    val payload = candidate.payload as StorytellerProviderCandidatePayloadV1.PairInformation
-                    array.put(JSONObject()
-                        .put("candidateId", candidate.candidateId)
-                        .put("shownRoleId", payload.shownRoleId ?: JSONObject.NULL)
-                        .put("candidateSeats", JSONArray(payload.candidateSeats))
-                        .put("semanticTruth", payload.semanticTruth.name)
-                        // Witness possibilities never assert one uniquely committed registration.
-                        .put("registrationWitnessesArePossibilities", true))
+                    val item = JSONObject().put("candidateId", candidate.candidateId)
+                    when (val payload = candidate.payload) {
+                        is StorytellerProviderCandidatePayloadV1.PairInformation ->
+                            item.put("shownRoleId", payload.shownRoleId ?: JSONObject.NULL)
+                                .put("candidateSeats", JSONArray(payload.candidateSeats))
+                                .put("semanticTruth", payload.semanticTruth.name)
+                                // Possible registration witnesses are NOT a unique Host-committed fact.
+                                .put("registrationWitnessesArePossibilities", true)
+                        is StorytellerProviderCandidatePayloadV1.SeatTarget ->
+                            item.put("targetSeat", payload.seat)
+                        else -> error("Unsupported live decision payload")
+                    }
+                    array.put(item)
                 }
             })
             .put("playerContext", JSONArray().also { array ->
@@ -113,18 +128,51 @@ internal object StorytellerGlobalDecisionRequestV1 {
         latestSessionState: ClocktowerSessionState,
         response: StorytellerProviderResponseV1,
     ): StorytellerProviderValidationV1? {
+        return validateFresh(
+            request, original.requestIdentity, original.revision,
+            current?.requestIdentity, current?.revision,
+            current?.legalCandidates?.map { it.candidateId }, latestSessionState, response,
+        )
+    }
+
+    /** The same neutral freshness proof applies to any engine-owned legal decision family. */
+    fun validateCurrent(
+        request: StorytellerProviderRequestV1,
+        original: PendingMayorRedirectDecision,
+        current: PendingMayorRedirectDecision?,
+        latestSessionState: ClocktowerSessionState,
+        response: StorytellerProviderResponseV1,
+    ): StorytellerProviderValidationV1? = validateFresh(
+        request, original.requestIdentity, original.revision,
+        current?.requestIdentity, current?.revision,
+        current?.pending?.legalCandidates?.map { it.candidateId },
+        latestSessionState, response,
+    )
+
+    private fun validateFresh(
+        request: StorytellerProviderRequestV1,
+        originalIdentity: StorytellerDecisionRequestIdentity,
+        originalRevision: StorytellerDecisionRevision,
+        currentIdentity: StorytellerDecisionRequestIdentity?,
+        currentRevision: StorytellerDecisionRevision?,
+        currentIds: List<String>?,
+        latestSessionState: ClocktowerSessionState,
+        response: StorytellerProviderResponseV1,
+    ): StorytellerProviderValidationV1? {
         val expected = request.sourceRevision
-        if (current == null ||
-            current.requestIdentity != original.requestIdentity ||
-            current.revision != original.revision ||
-            current.legalCandidates.map { it.candidateId } != request.legalCandidateIds ||
-            current.requestIdentity.requestId != request.identity.decisionId ||
-            current.requestIdentity.gameId != latestSessionState.gameId ||
-            StorytellerProviderRevisionV1(latestSessionState.gameStateRevision,
-                latestSessionState.playerInputRevision) != expected ||
-            current.revision.gameStateRevision != expected.gameStateRevision ||
-            current.revision.playerInputRevision != expected.playerInputRevision ||
-            request.gameContext.historyPrefix?.exclusiveGlobalSequence != latestSessionState.nextTimelineGlobalSequence
+        if (currentIdentity == null ||
+            currentIdentity != originalIdentity ||
+            currentRevision != originalRevision ||
+            currentIds != request.legalCandidateIds ||
+            currentIdentity.requestId != request.identity.decisionId ||
+            currentIdentity.gameId != latestSessionState.gameId ||
+            StorytellerProviderRevisionV1(
+                latestSessionState.gameStateRevision, latestSessionState.playerInputRevision,
+            ) != expected ||
+            currentRevision.gameStateRevision != expected.gameStateRevision ||
+            currentRevision.playerInputRevision != expected.playerInputRevision ||
+            request.gameContext.historyPrefix?.exclusiveGlobalSequence !=
+                latestSessionState.nextTimelineGlobalSequence
         ) return null
         return StorytellerProviderResponseValidatorV1.validate(request, response)
     }

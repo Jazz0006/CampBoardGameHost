@@ -120,10 +120,10 @@ def validate_host_request(case: dict) -> set[str]:
         raise ValueError("Unsupported request version")
     ident = case["identity"]
     if ident["scriptId"] != "trouble_brewing" or ident["decisionTypeId"] not in (
-        "drunk-assignment", "first-night-pair-information",
+        "drunk-assignment", "first-night-pair-information", "mayor-redirect",
     ):
         raise ValueError("Unsupported decision family")
-    if ident["decisionTypeId"] == "first-night-pair-information":
+    if ident["decisionTypeId"] in ("first-night-pair-information", "mayor-redirect"):
         return validate_live_global_decision_request(case)
     if not isinstance(ident["gameId"], str) or not ident["gameId"]:
         raise ValueError("Missing game identity")
@@ -204,8 +204,11 @@ def validate_live_global_decision_request(case: dict) -> set[str]:
         raise ValueError("Invalid decision source seat")
     if not isinstance(context.get("abilityRoleId"), str) or not context["abilityRoleId"]:
         raise ValueError("Missing decision ability")
-    if context.get("reliability") not in ("RELIABLE", "DRUNK", "POISONED"):
+    if context.get("reliability") not in ("RELIABLE", "DRUNK", "POISONED", "NOT_APPLICABLE"):
         raise ValueError("Invalid reliability")
+    is_target_decision = identity["decisionTypeId"] == "mayor-redirect"
+    if is_target_decision != (context["reliability"] == "NOT_APPLICABLE"):
+        raise ValueError("Invalid decision reliability kind")
     legal = case["legalCandidates"]
     if not isinstance(legal, list) or not legal:
         raise ValueError("Missing legal candidates")
@@ -214,15 +217,21 @@ def validate_live_global_decision_request(case: dict) -> set[str]:
         if not isinstance(item.get("candidateId"), str) or not item["candidateId"]:
             raise ValueError("Invalid legal ID")
         ids.append(item["candidateId"])
-        if not isinstance(item.get("candidateSeats"), list) or any(
-            type(s) is not int or s not in range(1, len(seats) + 1)
-            for s in item["candidateSeats"]
-        ):
-            raise ValueError("Invalid candidate seats")
-        if item.get("registrationWitnessesArePossibilities") is not True:
-            raise ValueError("Registration witnesses are not verified registration facts")
-        if item.get("semanticTruth") not in ("TRUE", "FALSE", "PARTIALLY_TRUE", "NOT_APPLICABLE"):
-            raise ValueError("Invalid candidate truth marker")
+        if is_target_decision:
+            if type(item.get("targetSeat")) is not int or item["targetSeat"] not in range(1, len(seats) + 1):
+                raise ValueError("Invalid target decision seat")
+            if "candidateSeats" in item or "semanticTruth" in item:
+                raise ValueError("Target choice cannot impersonate a displayed information result")
+        else:
+            if not isinstance(item.get("candidateSeats"), list) or any(
+                type(s) is not int or s not in range(1, len(seats) + 1)
+                for s in item["candidateSeats"]
+            ):
+                raise ValueError("Invalid candidate seats")
+            if item.get("registrationWitnessesArePossibilities") is not True:
+                raise ValueError("Registration witnesses are not verified registration facts")
+            if item.get("semanticTruth") not in ("TRUE", "FALSE", "PARTIALLY_TRUE", "NOT_APPLICABLE"):
+                raise ValueError("Invalid candidate truth marker")
     if len(ids) != len(set(ids)):
         raise ValueError("Duplicate candidate IDs")
     history = case["causalHistory"]

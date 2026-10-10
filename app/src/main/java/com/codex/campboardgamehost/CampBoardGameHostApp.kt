@@ -1602,22 +1602,31 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun requestLiveGlobalFirstNightAdvice(step: ClocktowerNightStepUi, stepIndex: Int) {
+    fun requestLiveGlobalAdvice(step: ClocktowerNightStepUi, stepIndex: Int) {
         if (storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED ||
             screen != Screen.ClocktowerJudge ||
             currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
-            clocktowerPhase != ClocktowerPhase.FirstNight
+            clocktowerPhase !in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night)
         ) return
         val session = clocktowerGameSession ?: return
-        val context = currentTroubleBrewingFirstNightPairDecisionContext() ?: return
-        val pending = pendingGlobalFirstNightPairDecision(
-            step, clocktowerPhase, round, cards, context,
-        ) ?: return
+        val context = currentTroubleBrewingFirstNightPairDecisionContext()
+        val pendingPair = context?.let {
+            pendingGlobalFirstNightPairDecision(
+                step, clocktowerPhase, round, cards, it,
+            )
+        }
+        // Engine-specific routing supplies a Host-legal pending decision; the LLM policy
+        // below is identical regardless of which legal candidate shape is current.
+        val pendingTarget = if (clocktowerPhase == ClocktowerPhase.Night &&
+            step.action == ClocktowerNightAction.MayorRedirect && step.isRealAction
+        ) runCatching { currentTroubleBrewingMayorRedirectPendingDecision() }.getOrNull()
+        else null
+        val identity = pendingPair?.requestIdentity ?: pendingTarget?.requestIdentity ?: return
         val revision = StorytellerProviderRevisionV1(
             session.state.gameStateRevision, session.state.playerInputRevision,
         )
         val key = listOf(
-            session.state.gameId, round, stepIndex, pending.requestIdentity.requestId,
+            session.state.gameId, round, stepIndex, identity.requestId,
             revision.gameStateRevision, revision.playerInputRevision,
             session.state.nextTimelineGlobalSequence,
         ).joinToString(":")
@@ -1634,13 +1643,30 @@ internal fun CampBoardGameHostApp() {
             return
         }
         val providerRequest = runCatching {
-            StorytellerProviderRequestFactoryV1.fromPairInformation(
-                decision = pending,
-                snapshot = context.snapshot,
-                gameContext = StorytellerProviderGameContextBuilderV1.build(
-                    context.snapshot, revision, session.state,
-                ),
+            val snapshot = context?.snapshot ?: run {
+                val rulesetRef = requireNotNull(clocktowerRulesetRef)
+                val registry = activeGameClocktowerRulesetCatalog
+                    .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+                TroubleBrewingGameSnapshotProjector.fromRuntime(
+                    gameSnapshot = session.toGameSnapshot(rulesetRef),
+                    phase = StorytellerPhase.NIGHT,
+                    round = round,
+                    characterRegistry = registry,
+                )
+            }
+            val gameContext = StorytellerProviderGameContextBuilderV1.build(
+                snapshot, revision, session.state,
             )
+            if (pendingPair != null) {
+                StorytellerProviderRequestFactoryV1.fromPairInformation(
+                    decision = pendingPair, snapshot = snapshot, gameContext = gameContext,
+                )
+            } else {
+                StorytellerProviderRequestFactoryV1.fromMayorRedirect(
+                    decision = requireNotNull(pendingTarget),
+                    snapshot = snapshot, gameContext = gameContext,
+                )
+            }
         }.getOrElse {
             liveAiAdviceError = "Current game history is not available for live strategy."
             return
@@ -1658,17 +1684,27 @@ internal fun CampBoardGameHostApp() {
                 screen != Screen.ClocktowerJudge ||
                 clocktowerGameSession !== session ||
                 clocktowerNightStepIndexState.value != stepIndex ||
-                clocktowerPhase != ClocktowerPhase.FirstNight
+                clocktowerPhase !in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night)
             ) return@launch
             liveAiAdviceBusy = false
             result.onSuccess { advice ->
-                val freshContext = currentTroubleBrewingFirstNightPairDecisionContext()
-                val freshPending = pendingGlobalFirstNightPairDecision(
-                    step, clocktowerPhase, round, cards, freshContext,
-                )
-                val accepted = StorytellerGlobalDecisionRequestV1.validateCurrent(
-                    providerRequest, pending, freshPending, session.state, advice.response,
-                )
+                val accepted = if (pendingPair != null) {
+                    val freshContext = currentTroubleBrewingFirstNightPairDecisionContext()
+                    val freshPending = pendingGlobalFirstNightPairDecision(
+                        step, clocktowerPhase, round, cards, freshContext,
+                    )
+                    StorytellerGlobalDecisionRequestV1.validateCurrent(
+                        providerRequest, pendingPair, freshPending, session.state, advice.response,
+                    )
+                } else {
+                    val freshTarget = runCatching {
+                        currentTroubleBrewingMayorRedirectPendingDecision()
+                    }.getOrNull()
+                    StorytellerGlobalDecisionRequestV1.validateCurrent(
+                        providerRequest, requireNotNull(pendingTarget), freshTarget,
+                        session.state, advice.response,
+                    )
+                }
                 val outcome = advice.response.outcome as? StorytellerProviderOutcomeV1.Recommendation
                 if (accepted !is StorytellerProviderValidationV1.AcceptedRecommendation ||
                     outcome == null
@@ -1676,18 +1712,22 @@ internal fun CampBoardGameHostApp() {
                     liveAiAdviceError = "Strategy response is stale or illegal. Refresh or choose manually."
                     return@onSuccess
                 }
-                val primary = pending.legalCandidates.singleOrNull {
-                    it.candidateId == outcome.primary.candidateId
-                } ?: return@onSuccess
                 fun candidateLabel(candidateId: String): String {
-                    val candidate = pending.legalCandidates.singleOrNull {
+                    pendingPair?.legalCandidates?.singleOrNull {
                         it.candidateId == candidateId
-                    } ?: return candidateId
-                    return listOfNotNull(
-                        candidate.outcome.shownRole?.value,
-                        candidate.outcome.candidateSeats.joinToString("/") { it.toString() }
-                            .takeIf { it.isNotBlank() },
-                    ).joinToString(" — ").ifBlank { candidateId }
+                    }?.let { candidate ->
+                        return listOfNotNull(
+                            candidate.outcome.shownRole?.value,
+                            candidate.outcome.candidateSeats.joinToString("/") { it.toString() }
+                                .takeIf { it.isNotBlank() },
+                        ).joinToString(" — ").ifBlank { candidateId }
+                    }
+                    pendingTarget?.pending?.legalCandidates?.singleOrNull {
+                        it.candidateId == candidateId
+                    }?.let { candidate ->
+                        return "座位 ${candidate.payload}"
+                    }
+                    return candidateId
                 }
                 // Advisory strategy only; actual published observations remain Host-owned.
                 committedAiStrategy = advice.globalStrategy
@@ -2524,11 +2564,16 @@ internal fun CampBoardGameHostApp() {
                         gameSeed = clocktowerGameSeed,
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         globalAiAssisted = storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED,
+                        globalNightPendingDecision = if (
+                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
+                            clocktowerPhase == ClocktowerPhase.Night
+                        ) runCatching { currentTroubleBrewingMayorRedirectPendingDecision() }.getOrNull()
+                        else null,
                         globalAiAdviceKey = liveAiAdviceKey,
                         globalAiAdviceText = liveAiAdviceText,
                         globalAiAdviceBusy = liveAiAdviceBusy,
                         globalAiAdviceError = liveAiAdviceError,
-                        onRequestGlobalAiAdvice = ::requestLiveGlobalFirstNightAdvice,
+                        onRequestGlobalAiAdvice = ::requestLiveGlobalAdvice,
                         firstNightNaturalPairReadyProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
                                 troubleBrewingFirstNightPrecomputeCoordinator::readyFor
