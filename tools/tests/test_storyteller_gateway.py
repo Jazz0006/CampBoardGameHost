@@ -388,7 +388,7 @@ class GatewayContractTests(unittest.TestCase):
                 gateway.validate_host_request(invalid)
 
     def test_opt_in_paid_smoke_uses_valid_eight_player_global_prefixes_offline(self):
-        script = MODULE.parents[1] / "prod_global_live_smoke.py"
+        script = MODULE.parent / "prod_global_live_smoke.py"
         smoke_spec = importlib.util.spec_from_file_location("botc_prod_global_live_smoke", script)
         smoke = importlib.util.module_from_spec(smoke_spec)
         smoke_spec.loader.exec_module(smoke)
