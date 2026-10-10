@@ -20,6 +20,7 @@ PATH = "/v1/storyteller/recommend"
 MAX_BODY = 64 * 1024
 ANALYSIS_SCHEMA_ID = "botc.storyteller-global-analysis-request"
 ANALYSIS_RESPONSE_SCHEMA_ID = "botc.storyteller-global-analysis-response"
+COMPACT_MEMO_PROFILE = "COMPACT_MEMO_V1"
 # The model must diagnose and coordinate the entire board BEFORE choosing the pending action.
 # This is a provider-neutral strategic artifact; it never changes Host rules or GameState.
 ISSUE_SCHEMA = {
@@ -288,6 +289,12 @@ def validate_live_global_decision_request(case: dict) -> set[str]:
     if prior is not None and (not isinstance(prior, dict) or
                               len(json.dumps(prior)) > 16000):
         raise ValueError("Invalid advisory strategy")
+    profile = case.get("responseProfile")
+    if profile is not None and (
+        profile != COMPACT_MEMO_PROFILE
+        or case.get("strategicPlanningScope") != "GLOBAL_EVENT_DRIVEN_CONTINUATION"
+    ):
+        raise ValueError("Unrecognized or non-live response profile")
     return set(ids)
 
 
@@ -367,6 +374,29 @@ def build_openai_request(
             "No role-specific ranking or hardcoded action-trigger policy. "
             "Return the same required structured JSON with concise auditable Chinese explanations."
         )
+    # Explicit, live-only compact output: retain the entire Host history and
+    # full-board reasoning duty while removing expensive narrative fields.
+    # The memo is advisory and is NOT a substitute for canonical events.
+    if case.get("responseProfile") == COMPACT_MEMO_PROFILE:
+        if analysis_only or case.get("strategicPlanningScope") != "GLOBAL_EVENT_DRIVEN_CONTINUATION":
+            raise ValueError("Compact memo allowed only for live global decisions")
+        instructions = (
+            "You are a whole-game Blood on the Clocktower Storyteller strategist. "
+            "Evaluate the COMPLETE actual/shown seat roster, player levels, evil pressure, "
+            "all Good information and its interactions, and the FULL ordered causalHistory "
+            "as-of the pending Host decision. Compare priorStrategy against confirmed facts; "
+            "confirmed actions and player-received observations outrank any prior plan. "
+            "Poisoning and registrations may change reliability but don't create player "
+            "knowledge; Spy/Recluse registration ambiguity is a hypothesis, NOT a fact. "
+            "Never invent player claims, retroactively change a previous observation, "
+            "or rank one role in isolation. Consider multiple plausible worlds, "
+            "future conditional information and fair pressure, not either side winning. "
+            "FIRST complete the global strategic assessment, THEN choose exactly ONE "
+            "candidateId from legalCandidates. Return only candidateId and a compact "
+            "Chinese planMemo (one sentence, no more than 80 Chinese characters) "
+            "linking the key confirmed event, cross-seat tradeoff, and future caveat. "
+            "Do not output hidden reasoning, alternatives or a full strategy."
+        )
     if analysis_only:
         instructions = (
             "You are an expert Blood on the Clocktower Trouble Brewing whole-game Storyteller strategist. "
@@ -399,6 +429,28 @@ def build_openai_request(
             "without repeating the roster; preserve uncertainty and factual "
             "versus hypothetical distinctions. Do not omit required fields."
         )
+    if case.get("responseProfile") == COMPACT_MEMO_PROFILE:
+        payload = {
+            "model": model, "instructions": instructions,
+            "input": json.dumps(case, ensure_ascii=False, separators=(",", ":")),
+            "store": False,
+            "text": {"format": {
+                "type": "json_schema", "name": "botc_global_compact_memo_v1",
+                "strict": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "candidateId": {"type": "string"},
+                        "planMemo": {"type": "string"},
+                    },
+                    "required": ["candidateId", "planMemo"],
+                    "additionalProperties": False,
+                },
+            }},
+        }
+        if reasoning_effort is not None:
+            payload["reasoning"] = {"effort": reasoning_effort}
+        return payload
     payload = {
         "model": model,
         "instructions": instructions,
@@ -512,6 +564,37 @@ def parse_openai_response(response: dict, allowed: set[str], allowed_seats: set[
     return result
 
 
+def parse_compact_memo_response(response: dict, legal_ids: set[str]) -> dict:
+    """Model output is advisory; only exact Host-legal IDs can cross the gateway."""
+    if response.get("status") != "completed":
+        raise ValueError("Model did not complete")
+    texts = [
+        block["text"]
+        for item in response.get("output", [])
+        if item.get("type") == "message"
+        for block in item.get("content", [])
+        if block.get("type") == "output_text" and isinstance(block.get("text"), str)
+    ]
+    if not texts:
+        raise ValueError("Missing compact output")
+    obj = json.loads("".join(texts))
+    if not isinstance(obj, dict) or set(obj) != {"candidateId", "planMemo"}:
+        raise ValueError("Unexpected compact output structure")
+    candidate = obj["candidateId"]
+    memo = obj["planMemo"]
+    if type(candidate) is not str or candidate not in legal_ids:
+        raise ValueError("Non-legal compact candidate")
+    if type(memo) is not str or not memo.strip() or len(memo) > 200:
+        raise ValueError("Invalid compact strategic memo")
+    return {
+        "responseProfile": COMPACT_MEMO_PROFILE,
+        "primaryCandidateId": candidate,
+        "rationale": memo,
+        "alternatives": [],
+        "uncertainty": [],
+    }
+
+
 class Budget:
     def __init__(self, max_per_hour: int):
         self.limit = max_per_hour
@@ -599,9 +682,12 @@ class Handler(BaseHTTPRequestHandler):
                 if len(data) > 256_000:
                     raise ValueError("Model response too large")
                 upstream_response = json.loads(data)
-                result = parse_openai_response(
-                    upstream_response, allowed, allowed_seats, analysis_only=analysis_only,
-                )
+                if case.get("responseProfile") == COMPACT_MEMO_PROFILE:
+                    result = parse_compact_memo_response(upstream_response, allowed)
+                else:
+                    result = parse_openai_response(
+                        upstream_response, allowed, allowed_seats, analysis_only=analysis_only,
+                    )
             validated = time.perf_counter()
             # The buffered HTTP response cannot provide time-to-first-model-token.
             # Time-to-headers contains upstream model generation plus connection.
