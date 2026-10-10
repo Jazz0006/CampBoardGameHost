@@ -295,6 +295,10 @@ def validate_live_global_decision_request(case: dict) -> set[str]:
         or case.get("strategicPlanningScope") != "GLOBAL_EVENT_DRIVEN_CONTINUATION"
     ):
         raise ValueError("Unrecognized or non-live response profile")
+    memo = case.get("priorCompactMemo")
+    if memo is not None and (profile != COMPACT_MEMO_PROFILE
+                             or type(memo) is not str or len(memo) > 200):
+        raise ValueError("Invalid advisory memo")
     return set(ids)
 
 
@@ -386,6 +390,9 @@ def build_openai_request(
             "all Good information and its interactions, and the FULL ordered causalHistory "
             "as-of the pending Host decision. Compare priorStrategy against confirmed facts; "
             "confirmed actions and player-received observations outrank any prior plan. "
+            "priorCompactMemo, if supplied, is a fallible earlier recommendation, "
+            "NOT evidence that its recommended action was accepted or that a future "
+            "conditional event occurred. Prefer the CURRENT confirmed causalHistory. "
             "Poisoning and registrations may change reliability but don't create player "
             "knowledge; Spy/Recluse registration ambiguity is a hypothesis, NOT a fact. "
             "Never invent player claims, retroactively change a previous observation, "
