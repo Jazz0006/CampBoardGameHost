@@ -32,13 +32,13 @@ class PersonalDirectOpenAiV1Test {
             .put("tradeoff", "Preserve deductibility")))
         .put("planRevisionNote", "Independent assessment")
 
-    private fun upstream(result: JSONObject) = JSONObject()
-        .put("status", "completed")
-        .put("output", JSONArray().put(JSONObject()
-            .put("type", "message")
-            .put("content", JSONArray().put(JSONObject()
-                .put("type", "output_text").put("text", result.toString()))))
-        .toString()
+    private fun upstream(result: JSONObject): String {
+        val block = JSONObject().put("type", "output_text").put("text", result.toString())
+        val message = JSONObject().put("type", "message")
+            .put("content", JSONArray().put(block))
+        return JSONObject().put("status", "completed")
+            .put("output", JSONArray().put(message)).toString()
+    }
 
     @Test
     fun `request uses strict responses schema store false and no credentials`() {
@@ -70,7 +70,7 @@ class PersonalDirectOpenAiV1Test {
             case().toString(), upstream(answer))
         val decoded = ProductionDrunkAiGatewayV1.decode(result)
         assertEquals("test-decision", decoded.decisionId)
-        assertEquals(2, decoded.sourceRevision.gameStateRevision)
+        assertEquals(2L, decoded.sourceRevision.gameStateRevision)
         assertTrue(JSONObject(result).has("strategy"))
         assertTrue(runCatching {
             val wrong = JSONObject(answer.toString()).put("primaryCandidateId", "illegal")
