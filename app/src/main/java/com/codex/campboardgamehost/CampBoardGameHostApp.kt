@@ -81,6 +81,7 @@ import com.codex.campboardgamehost.clocktower.session.DrunkAssignmentDecisionBou
 import com.codex.campboardgamehost.clocktower.session.PendingDrunkAssignmentDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.ProductionDrunkAiGatewayV1
+import com.codex.campboardgamehost.clocktower.session.PersonalDirectOpenAiV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalStrategyV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalDecisionRequestV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCommittedAnalysisV1
@@ -300,6 +301,9 @@ internal fun CampBoardGameHostApp() {
     val gatewayConnectionStore = remember(baseContext) {
         StorytellerGatewayConnectionStore(baseContext)
     }
+    val personalOpenAiStore = remember(baseContext) {
+        PersonalOpenAiSettingsStore(baseContext)
+    }
     val gameArchivePreferencesStore = remember(baseContext) {
         GameArchivePreferencesStore(
             context = baseContext,
@@ -328,6 +332,42 @@ internal fun CampBoardGameHostApp() {
     var storytellerGatewayToken by remember { mutableStateOf("") }
     var gatewayConfigurationLoaded by remember { mutableStateOf(false) }
     var gatewayCredentialSaveFailed by remember { mutableStateOf(false) }
+    var personalDirectEnabled by remember { mutableStateOf(false) }
+    var personalDirectKey by remember { mutableStateOf("") }
+    var personalDirectModel by remember {
+        mutableStateOf(PersonalDirectOpenAiV1.DEFAULT_MODEL)
+    }
+    var personalDirectLoaded by remember { mutableStateOf(false) }
+    var personalDirectSaveFailed by remember { mutableStateOf(false) }
+    LaunchedEffect(personalOpenAiStore) {
+        val restored = withContext(Dispatchers.IO) {
+            Triple(personalOpenAiStore.loadEnabled(),
+                personalOpenAiStore.loadModel(), personalOpenAiStore.loadKey())
+        }
+        personalDirectEnabled = restored.first
+        personalDirectModel = restored.second
+        personalDirectKey = restored.third
+        personalDirectLoaded = true
+    }
+    LaunchedEffect(personalDirectLoaded, personalDirectEnabled, personalDirectModel, personalDirectKey) {
+        if (!personalDirectLoaded) return@LaunchedEffect
+        delay(700)
+        val enabled = personalDirectEnabled
+        val model = personalDirectModel
+        val key = personalDirectKey
+        val saved = withContext(Dispatchers.IO) {
+            runCatching {
+                personalOpenAiStore.saveEnabled(enabled)
+                personalOpenAiStore.saveModel(model)
+                personalOpenAiStore.saveKey(key)
+            }.getOrDefault(false)
+        }
+        personalDirectSaveFailed = !saved
+    }
+    val aiEndpoint = if (personalDirectEnabled) PersonalDirectOpenAiV1.ENDPOINT
+        else storytellerGatewayEndpoint
+    val aiToken = if (personalDirectEnabled) personalDirectKey else storytellerGatewayToken
+    val aiDirectModel = if (personalDirectEnabled) personalDirectModel.trim() else null
     LaunchedEffect(gatewayConnectionStore) {
         val restored = withContext(Dispatchers.IO) {
             gatewayConnectionStore.loadEndpoint() to gatewayConnectionStore.loadToken()
@@ -1596,7 +1636,7 @@ internal fun CampBoardGameHostApp() {
         if (storytellerOperationMode == StorytellerOperationMode.MANUAL ||
             committedAiSnapshot !== snapshot || committedAiBusy
         ) return
-        if (!storytellerGatewayEndpoint.startsWith("https://") || storytellerGatewayToken.isBlank()) {
+        if (!aiEndpoint.startsWith("https://") || aiToken.isBlank()) {
             committedAiError = "Set a private HTTPS gateway to analyse this confirmed game."
             return
         }
@@ -1606,7 +1646,7 @@ internal fun CampBoardGameHostApp() {
         drunkAiScope.launch {
             val response = runCatching {
                 StorytellerCommittedAnalysisV1.analyse(
-                    storytellerGatewayEndpoint, storytellerGatewayToken, snapshot, previous,
+                    aiEndpoint, aiToken, snapshot, previous, aiDirectModel,
                 )
             }
             // Responses may return after a player hands the phone back or starts a new game.
@@ -1683,8 +1723,8 @@ internal fun CampBoardGameHostApp() {
         liveAiAdviceError = null
         // An older in-flight response belongs to a different key and cannot own this state.
         liveAiAdviceBusy = false
-        if (!storytellerGatewayEndpoint.startsWith("https://") ||
-            storytellerGatewayToken.isBlank()
+        if (!aiEndpoint.startsWith("https://") ||
+            aiToken.isBlank()
         ) {
             liveAiAdviceError = "AI unavailable: configure the private HTTPS gateway."
             return
@@ -1732,8 +1772,9 @@ internal fun CampBoardGameHostApp() {
         drunkAiScope.launch {
             val result = runCatching {
                 StorytellerGlobalDecisionRequestV1.recommend(
-                    storytellerGatewayEndpoint, storytellerGatewayToken, providerRequest, prior,
+                    aiEndpoint, aiToken, providerRequest, prior,
                     if (liveAiMemoGameId == session.state.gameId) liveAiCompactMemo else null,
+                    aiDirectModel,
                 )
             }
             if (liveAiAdviceKey != key ||
@@ -1937,7 +1978,7 @@ internal fun CampBoardGameHostApp() {
             screen != Screen.ClocktowerDrunkSelection ||
             pendingTroubleBrewingDrunkSelection !== pending
         ) return
-        if (!storytellerGatewayEndpoint.startsWith("https://") || storytellerGatewayToken.isBlank()) {
+        if (!aiEndpoint.startsWith("https://") || aiToken.isBlank()) {
             drunkAiError = "Set a private HTTPS gateway and access token before requesting AI advice."
             return
         }
@@ -1948,7 +1989,7 @@ internal fun CampBoardGameHostApp() {
         drunkAiScope.launch {
             val result = runCatching {
                 ProductionDrunkAiGatewayV1.recommend(
-                    storytellerGatewayEndpoint, storytellerGatewayToken, pending.providerRequest,
+                    aiEndpoint, aiToken, pending.providerRequest, aiDirectModel,
                 )
             }
             if (screen == Screen.ClocktowerDrunkSelection &&
@@ -2435,6 +2476,13 @@ internal fun CampBoardGameHostApp() {
                         gatewayToken = storytellerGatewayToken,
                         onGatewayTokenChange = { storytellerGatewayToken = it },
                         gatewayCredentialSaveFailed = gatewayCredentialSaveFailed,
+                        personalDirectEnabled = personalDirectEnabled,
+                        onPersonalDirectEnabledChange = { personalDirectEnabled = it },
+                        personalDirectModel = personalDirectModel,
+                        onPersonalDirectModelChange = { personalDirectModel = it },
+                        personalDirectKey = personalDirectKey,
+                        onPersonalDirectKeyChange = { personalDirectKey = it },
+                        personalDirectSaveFailed = personalDirectSaveFailed,
                         onScriptChange = {
                             selectedClocktowerScript = it
                             if (it != ClocktowerScript.TroubleBrewing) {

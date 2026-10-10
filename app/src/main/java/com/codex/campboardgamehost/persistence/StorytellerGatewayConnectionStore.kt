@@ -22,16 +22,26 @@ import javax.crypto.spec.GCMParameterSpec
  */
 internal class StorytellerGatewayConnectionStore(
     context: Context,
+    scope: String = "gateway",
 ) {
+    init { require(scope == "gateway" || scope == "direct") }
     private val app = context.applicationContext
-    private val tokenFile = AtomicFile(File(app.noBackupFilesDir, TOKEN_FILE))
+    private val prefsName = if (scope == "gateway") PREFS_NAME else "personal_openai_connection"
+    private val keyAlias = if (scope == "gateway") KEY_ALIAS else "campboardgamehost.openai.personal.token.v1"
+    private val aad = (if (scope == "gateway") {
+        "com.codex.campboardgamehost.storyteller.gateway.v1"
+    } else {
+        "com.codex.campboardgamehost.openai.personal.v1"
+    }).toByteArray(StandardCharsets.UTF_8)
+    private val tokenFile = AtomicFile(File(app.noBackupFilesDir,
+        if (scope == "gateway") TOKEN_FILE else "personal_openai_key_v1.enc"))
 
     fun loadEndpoint(): String =
-        app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        app.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
             .getString(ENDPOINT_KEY, "").orEmpty()
 
     fun saveEndpoint(endpoint: String) {
-        app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        app.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
             .edit().putString(ENDPOINT_KEY, endpoint.trim()).apply()
     }
 
@@ -41,7 +51,7 @@ internal class StorytellerGatewayConnectionStore(
         val (iv, ciphertext) = GatewayTokenEnvelopeV1.decode(bytes)
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, loadOrCreateKey(), GCMParameterSpec(TAG_BITS, iv))
-        cipher.updateAAD(AAD)
+        cipher.updateAAD(aad)
         String(cipher.doFinal(ciphertext), StandardCharsets.UTF_8)
     }.getOrDefault("") // Missing/revoked device key fails closed; never log token/ciphertext.
 
@@ -53,7 +63,7 @@ internal class StorytellerGatewayConnectionStore(
         require(token.toByteArray(StandardCharsets.UTF_8).size <= MAX_PLAINTEXT_BYTES)
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, loadOrCreateKey())
-        cipher.updateAAD(AAD)
+        cipher.updateAAD(aad)
         val encrypted = cipher.doFinal(token.toByteArray(StandardCharsets.UTF_8))
         val envelope = GatewayTokenEnvelopeV1.encode(cipher.iv, encrypted)
         val stream = tokenFile.startWrite()
@@ -69,12 +79,12 @@ internal class StorytellerGatewayConnectionStore(
 
     private fun loadOrCreateKey(): SecretKey {
         val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        val existing = keyStore.getKey(KEY_ALIAS, null)
+        val existing = keyStore.getKey(keyAlias, null)
         if (existing is SecretKey) return existing
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
         generator.init(
             KeyGenParameterSpec.Builder(
-                KEY_ALIAS,
+                keyAlias,
                 KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
             )
                 .setKeySize(256)
@@ -94,7 +104,5 @@ internal class StorytellerGatewayConnectionStore(
         const val TRANSFORMATION = "AES/GCM/NoPadding"
         const val TAG_BITS = 128
         const val MAX_PLAINTEXT_BYTES = 4096
-        val AAD: ByteArray = "com.codex.campboardgamehost.storyteller.gateway.v1"
-            .toByteArray(StandardCharsets.UTF_8)
     }
 }

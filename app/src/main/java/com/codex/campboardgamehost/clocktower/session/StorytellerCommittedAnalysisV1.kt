@@ -92,9 +92,10 @@ internal object StorytellerCommittedAnalysisV1 {
         accessToken: String,
         snapshot: TroubleBrewingGameSnapshotV1,
         prior: StorytellerGlobalStrategyV1?,
+        directModel: String? = null,
     ): StorytellerGlobalStrategyV1 {
         val request = encode(snapshot, prior)
-        val response = ProductionDrunkAiGatewayV1.post(endpoint, accessToken, request)
+        val response = ProductionDrunkAiGatewayV1.post(endpoint, accessToken, request, directModel)
         return decode(response, snapshot)
     }
 }

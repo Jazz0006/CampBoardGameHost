@@ -238,6 +238,7 @@ internal object StorytellerGlobalDecisionRequestV1 {
         request: StorytellerProviderRequestV1,
         priorStrategy: StorytellerGlobalStrategyV1?,
         priorCompactMemo: String? = null,
+        directModel: String? = null,
     ): StorytellerGlobalAdviceV1 {
         // Only live advice requests use the compact model response.
         // Opening analysis and Drunk selection keep their full strategy.
@@ -249,7 +250,7 @@ internal object StorytellerGlobalDecisionRequestV1 {
             requestJson.put("priorCompactMemo", priorCompactMemo.take(200))
         }
         val raw = ProductionDrunkAiGatewayV1.post(
-            endpoint, accessToken, requestJson.toString(),
+            endpoint, accessToken, requestJson.toString(), directModel,
         )
         return decodeLiveAdvice(
             raw, (request.state as StorytellerProviderGameStateV1.TroubleBrewing)
