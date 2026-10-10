@@ -5,7 +5,9 @@ on:
     paths:
       - 'tools/storyteller_gateway.py'
       - 'tools/prod_global_live_smoke.py'
+      - 'tools/prod_global_latency_profile.py'
       - 'tools/tests/test_storyteller_gateway.py'
+      - 'tools/tests/test_prod_global_latency_profile.py'
       - '.github/workflows/prod1-gateway-offline.yml'
   workflow_dispatch:
 
@@ -24,4 +26,7 @@ jobs:
         env:
           OPENAI_API_KEY: ''
           GATEWAY_ACCESS_TOKEN: ''
-        run: python -m unittest discover -v -s tools/tests -p 'test_storyteller_gateway.py'
+        run: |
+          python tools/prod_global_latency_profile.py
+          python -m unittest discover -v -s tools/tests -p 'test_storyteller_gateway.py'
+          python -m unittest discover -v -s tools/tests -p 'test_prod_global_latency_profile.py'
