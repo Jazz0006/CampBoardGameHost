@@ -13,7 +13,7 @@
 ## 当前研究与产品约束
 
 - [GSP-MEM0 / Recovery 范围决策](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md)：战略记忆可以参与建议，但 Host 规则/事实/候选仍是权威；Recovery 仅恢复短期意外中断。
-- **[生产接入与全自动说书人路线（GSP-PROD-AUTO）](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)**：当前产品首要路线；真实 TB 中 LLM 推荐 → 自动裁量 → 完整无人类说书人。MEM0/MEM1 改为非阻塞实验。
+- **[生产接入与全自动说书人路线（GSP-PROD-AUTO）](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)**：长期产品目标：真实 TB 中 LLM 推荐 → 自动裁量 → 完整无人类说书人；**当前执行优先级以 roadmap/handoff 和 PROD-GLOBAL-1D 为准**。 MEM0/MEM1 改为非阻塞实验。
 - **[PROD-GLOBAL-1/1D 整局策略、展示身份后台预规划、全阶段事件重规划](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)**：当前 PROD-1 产品验收与首夜时序权威。2026-10-10 再确认 **先展示身份、再定酒鬼完全合法**；后台首次整局规划可与逐人展示重叠，Host 在投毒、人工覆盖等**真实确认事件**后按当前合法状态更新剩余建议。低于 5 秒尚未验证。PR #292 已含多信息家族代码、Keystore 凭据持久化，仍为 Draft，不能当完成的自动说书人。
 - [MEM0 实验与评分协议](GSP_MEMORY_ABLATION_EXPERIMENT_2026-10-09.md) 与 [冻结合成 TB8 fixture](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json)：B2 九份历史响应仅作为非阻塞研究证据，不替代 PROD-GLOBAL-1 的真实游戏验收。
 - [API0 Responses benchmark 接口](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)：历史纯开发者端 benchmark，不是当前 Android 入口。开发机现有 `tools/storyteller_gateway.py` 及 Android AI_ASSISTED 代码见 PR #292；真实 Android E2E 尚未验收。

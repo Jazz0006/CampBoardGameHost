@@ -49,7 +49,7 @@ Host canonical GameState + rules-derived pending decision + full legal IDs
 | **PROD-3** | Full legal TB setup and first-night automation | Every action/target/observation chronologically consistent |
 | **PROD-4** | Whole TB automatic Storyteller | Real-play end-to-end rules, players' actions and error handling |
 
-Earlier PROD-0/1 instructions below are retained only as historical decision rationale. Refer to the current roadmap/handoff before executing any item.
+Earlier PROD-0/1 plans remain recoverable through Git history and archived context; they do not supply a second executable NEXT. Refer to the current roadmap/handoff before executing any item.
 
 Keep PRs reviewable by coherent playable slices rather than splitting every field into a PR. Use minimal targeted tests for gameplay correctness, identity/staleness/security and full-slice regression; **do not** require new 9/27-sample blind quality research before PROD-1.
 
