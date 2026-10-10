@@ -202,6 +202,18 @@ internal object StorytellerGlobalDecisionRequestV1 {
         return StorytellerProviderResponseValidatorV1.validate(request, response)
     }
 
+    /** Only a compact live provider envelope may omit the rich global strategy. */
+    fun decodeCompactResponse(raw: String): StorytellerProviderResponseV1 {
+        val json = JSONObject(raw)
+        require(json.getString("responseProfile") == "COMPACT_MEMO_V1") {
+            "Expected compact recommendation protocol"
+        }
+        require(!json.has("strategy")) {
+            "Compact recommendation cannot manufacture canonical strategy"
+        }
+        return ProductionDrunkAiGatewayV1.decode(raw)
+    }
+
     suspend fun recommend(
         endpoint: String,
         accessToken: String,
@@ -215,15 +227,8 @@ internal object StorytellerGlobalDecisionRequestV1 {
         val raw = ProductionDrunkAiGatewayV1.post(
             endpoint, accessToken, requestJson.toString(),
         )
-        val json = JSONObject(raw)
-        require(json.getString("responseProfile") == "COMPACT_MEMO_V1") {
-            "Expected compact recommendation protocol"
-        }
-        require(!json.has("strategy")) {
-            "Compact recommendation must not fabricate a full global strategy"
-        }
         return StorytellerGlobalAdviceV1(
-            response = ProductionDrunkAiGatewayV1.decode(raw),
+            response = decodeCompactResponse(raw),
             globalStrategy = null,
         )
     }
