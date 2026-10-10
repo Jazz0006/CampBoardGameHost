@@ -158,6 +158,19 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
             .put("uncertainty", result.getJSONArray("uncertainty")).toString()
     }
 
+    /** Show only a safe network/error category; never expose payloads, tokens or responses. */
+    fun safeFailure(error: Throwable): String = when (error) {
+        is javax.net.ssl.SSLException -> "TLS certificate"
+        is java.net.UnknownHostException -> "DNS"
+        is java.net.SocketTimeoutException -> "timeout"
+        is java.net.ConnectException -> "network connection"
+        else -> {
+            val code = Regex("OpenAI HTTP ([0-9]{3})").find(error.message.orEmpty())
+                ?.groupValues?.get(1)
+            if (code != null) "HTTP $code" else "response or configuration validation"
+        }
+    }
+
     /** No redirects, arbitrary destinations, request logging, or upstream body in errors. */
     fun post(apiKey: String, hostPayload: String, model: String): String {
         require(apiKey.startsWith("sk-") && apiKey.length >= 12) {

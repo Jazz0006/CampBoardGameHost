@@ -1637,7 +1637,7 @@ internal fun CampBoardGameHostApp() {
             committedAiSnapshot !== snapshot || committedAiBusy
         ) return
         if (!aiEndpoint.startsWith("https://") || aiToken.isBlank()) {
-            committedAiError = "Set a private HTTPS gateway to analyse this confirmed game."
+            committedAiError = "Configure the selected AI connection to analyse this confirmed game."
             return
         }
         val previous = drunkAiStrategy
@@ -1668,8 +1668,12 @@ internal fun CampBoardGameHostApp() {
                 response.onSuccess { result ->
                     committedAiStrategy = result
                     committedAiError = null
-                }.onFailure {
-                    committedAiError = "Global analysis unavailable. Retry or continue manually."
+                }.onFailure { error ->
+                    committedAiError = if (personalDirectEnabled) {
+                        "OpenAI direct unavailable (${PersonalDirectOpenAiV1.safeFailure(error)}). Retry or continue manually."
+                    } else {
+                        "Global analysis unavailable. Retry or continue manually."
+                    }
                 }
             }
         }
@@ -1726,7 +1730,7 @@ internal fun CampBoardGameHostApp() {
         if (!aiEndpoint.startsWith("https://") ||
             aiToken.isBlank()
         ) {
-            liveAiAdviceError = "AI unavailable: configure the private HTTPS gateway."
+            liveAiAdviceError = "AI unavailable: configure the selected AI connection."
             return
         }
         val providerRequest = runCatching {
@@ -1876,8 +1880,12 @@ internal fun CampBoardGameHostApp() {
                     append("\n请在当前主持界面手动确认实际决定；AI 不会代替 Host 写入事实。")
                 }
                 liveAiAdviceError = null
-            }.onFailure {
-                liveAiAdviceError = "Global strategy unavailable. Continue with Host manual choices."
+            }.onFailure { error ->
+                liveAiAdviceError = if (personalDirectEnabled) {
+                    "OpenAI direct unavailable (${PersonalDirectOpenAiV1.safeFailure(error)}). Continue manually."
+                } else {
+                    "Global strategy unavailable. Continue with Host manual choices."
+                }
             }
         }
     }
@@ -1979,7 +1987,7 @@ internal fun CampBoardGameHostApp() {
             pendingTroubleBrewingDrunkSelection !== pending
         ) return
         if (!aiEndpoint.startsWith("https://") || aiToken.isBlank()) {
-            drunkAiError = "Set a private HTTPS gateway and access token before requesting AI advice."
+            drunkAiError = "Configure the selected AI connection and credentials before requesting advice."
             return
         }
         val automatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC
@@ -2036,8 +2044,12 @@ internal fun CampBoardGameHostApp() {
                             }
                         }
                     }
-                }.onFailure {
-                    drunkAiError = "AI unavailable. Automatic setup paused; manual takeover is available."
+                }.onFailure { error ->
+                    drunkAiError = if (personalDirectEnabled) {
+                        "OpenAI direct unavailable (${PersonalDirectOpenAiV1.safeFailure(error)}). Manual takeover is available."
+                    } else {
+                        "AI unavailable. Automatic setup paused; manual takeover is available."
+                    }
                 }
             }
         }
