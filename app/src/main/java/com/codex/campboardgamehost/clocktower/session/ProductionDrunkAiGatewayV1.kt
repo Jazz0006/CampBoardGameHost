@@ -23,7 +23,7 @@ import javax.net.ssl.HttpsURLConnection
  */
 internal data class StorytellerGlobalAdviceV1(
     val response: StorytellerProviderResponseV1,
-    val globalStrategy: StorytellerGlobalStrategyV1,
+    val globalStrategy: StorytellerGlobalStrategyV1?,
 )
 
 internal object ProductionDrunkAiGatewayV1 {
