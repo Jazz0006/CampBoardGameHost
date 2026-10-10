@@ -47,6 +47,19 @@ class CompactProductionTests(unittest.TestCase):
                 self.assertEqual(set(minimal["text"]["format"]["schema"]["properties"]),
                                  {"candidateId","planMemo"})
                 self.assertEqual(full["text"]["format"]["schema"]["required"][0],"strategy")
+                # Advisory memo can be passed to the next decision only as a
+                # fallible model hint, never a new Host truth.
+                compact["priorCompactMemo"]="上轮考虑投毒者周围的隐士登记歧义"
+                self.assertEqual(gateway.validate_host_request(compact),allowed)
+                self.assertEqual(json.loads(gateway.build_openai_request(
+                    compact,"gpt-6-luna")["input"])["priorCompactMemo"],
+                    compact["priorCompactMemo"])
+                compact["priorCompactMemo"]="x"*201
+                with self.assertRaises(ValueError):
+                    gateway.validate_host_request(compact)
+                compact["priorCompactMemo"]=False
+                with self.assertRaises(ValueError):
+                    gateway.validate_host_request(compact)
 
     def test_legality_strict_shape_and_no_pretend_strategy(self):
         for case in self.setup():
