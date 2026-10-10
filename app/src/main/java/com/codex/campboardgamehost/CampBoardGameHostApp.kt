@@ -358,6 +358,9 @@ internal fun CampBoardGameHostApp() {
     var committedAiError by remember { mutableStateOf<String?>(null) }
     var liveAiAdviceKey by remember { mutableStateOf<String?>(null) }
     var liveAiAdviceText by remember { mutableStateOf<String?>(null) }
+    // Bounded, game-scoped model memo is not Host truth or a recovered game record.
+    var liveAiCompactMemo by remember { mutableStateOf<String?>(null) }
+    var liveAiMemoGameId by remember { mutableStateOf<String?>(null) }
     var liveAiAdviceBusy by remember { mutableStateOf(false) }
     var liveAiAdviceError by remember { mutableStateOf<String?>(null) }
     var drunkAiBusy by remember { mutableStateOf(false) }
@@ -1730,6 +1733,7 @@ internal fun CampBoardGameHostApp() {
             val result = runCatching {
                 StorytellerGlobalDecisionRequestV1.recommend(
                     storytellerGatewayEndpoint, storytellerGatewayToken, providerRequest, prior,
+                    if (liveAiMemoGameId == session.state.gameId) liveAiCompactMemo else null,
                 )
             }
             if (liveAiAdviceKey != key ||
@@ -1809,6 +1813,10 @@ internal fun CampBoardGameHostApp() {
                 // The compact memo is advisory. Do NOT replace the confirmed
                 // opening plan with a fabricated rich strategy.
                 advice.globalStrategy?.let { committedAiStrategy = it }
+                liveAiMemoGameId = session.state.gameId
+                liveAiCompactMemo = if (advice.globalStrategy == null) {
+                    outcome.primary.rationale.joinToString(" ").take(200)
+                } else null
                 liveAiAdviceText = buildString {
                     advice.globalStrategy?.let {
                         append(it.situationSummary)
