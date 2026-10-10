@@ -387,6 +387,45 @@ class GatewayContractTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 gateway.validate_host_request(invalid)
 
+    def test_opt_in_paid_smoke_uses_valid_eight_player_global_prefixes_offline(self):
+        script = MODULE.parents[1] / "prod_global_live_smoke.py"
+        smoke_spec = importlib.util.spec_from_file_location("botc_prod_global_live_smoke", script)
+        smoke = importlib.util.module_from_spec(smoke_spec)
+        smoke_spec.loader.exec_module(smoke)
+
+        # Game A has 5 Townsfolk + 1 Outsider + 1 Minion + 1 Demon.
+        chef = smoke.chef_case([smoke.action(0, 1)])
+        assert chef["state"]["seats"][0]["poisoned"]
+        assert chef["state"]["seats"][6]["actualRoleId"] == "Poisoner"
+        assert smoke.check_case(chef) == {"chef-0", "chef-1"}
+        observed = smoke.observation(
+            1, 1, "Chef", {"type": "NUMERIC_RESULT", "value": 0},
+        )
+        followup = smoke.investigator_case(
+            [smoke.action(0, 1), observed], {"situationSummary": "previous plan"},
+        )
+        assert smoke.check_case(followup) == {"investigator-6-7", "investigator-5-7"}
+        assert followup["priorStrategy"]["situationSummary"] == "previous plan"
+        assert followup["causalHistory"]["events"][1]["proposition"]["value"] == 0
+
+        # Different Game B: FT is poisoned, but Chef/Empath/Investigator results
+        # are committed observations, not the model's unconfirmed previews.
+        fortune = smoke.fortune_teller_case()
+        assert smoke.check_case(fortune) == {"fortune-yes", "fortune-no"}
+        assert fortune["state"]["seats"][3]["poisoned"]
+        assert fortune["decisionContext"]["subjectSeats"] == [5, 6]
+        assert len(fortune["causalHistory"]["events"]) == 4
+        invalid = json.loads(json.dumps(fortune))
+        invalid["causalHistory"]["events"][-1]["globalSequence"] = 4
+        with self.assertRaises(ValueError):
+            smoke.check_case(invalid)
+
+        # By default the harness does not read credentials or call the network.
+        with mock.patch("sys.argv", ["prod_global_live_smoke.py"]), \
+             mock.patch.object(smoke, "authenticate", side_effect=AssertionError("credential read")), \
+             mock.patch.object(smoke.urllib.request, "urlopen", side_effect=AssertionError("paid request")):
+            assert smoke.main() == 0
+
     def test_budget_bounds_paid_calls(self):
         budget = gateway.Budget(1)
         assert budget.acquire()

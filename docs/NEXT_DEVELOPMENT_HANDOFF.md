@@ -22,6 +22,8 @@
 
 **2026-10-10 PROD-GLOBAL-1C 首夜信息推荐 checkpoint：** 同一事件驱动全局 LLM 推荐已接入 TB 的 Washerwoman/Librarian/Investigator 双人信息及 Chef/Empath 数值、Fortune Teller 选定两名查询对象后的布尔结果。数值/布尔使用现有 Foundation 合法候选或 Host result-first 登记歧义域；不新增角色专用推荐策略；实际显示/采纳依然由 Host 确认，改变未确认的占卜师查询对象会使原候选域无效。实现提交 `57982dcd37e172bd2140593848d8d57be069e493`，后续修订以 live HEAD 为准。**立即目标：在最新 CI/R2/Gateway 通过后开展真人 Android + 私有 HTTPS + Oracle Gateway + 强模型的首夜真实推荐质量 smoke，记录交叉信息连贯性、玩家部分覆写、邪恶方压力、真实效应和成本。不是等待 MEM0 盲测。** 需要先确认 TLS/Gateway 可达、实际 API model ID/预算及安卓运行；PR #292 仍为 Draft，AUTO 与完整游戏支持不在本 checkpoint 验收范围。
 
+**2026-10-10 PROD-GLOBAL-1C 真实模型测试入口：** 添加 `tools/prod_global_live_smoke.py`：默认离线校验；在 Oracle 开发机上明确执行 `python3 tools/prod_global_live_smoke.py --live` 才会用现有 Gateway 和服务端密钥执行**最多三次**真实模型调用，产生权限 0600 的 `~/.local/share/botc-evaluation/prod-global-1c-llm-smoke-report.json`。三个独立/连续场景涵盖中毒厨师、已手动覆盖的厨师结果影响调查员后续建议、以及带已确认信息的中毒占卜师。**样例状态是 synthetic，不是 Android/Host 实际生成，因此不能代替手机端真正的完整 E2E 质量验收。** 当前 Mini MCP Codex 远程执行协议报错，现有 allowlist 不含 gateway smoke，不得虚称已付费调通；待所有 CI GREEN 后由 Oracle 开发机执行 --live 并对报告作人工质量复审。详细测试操作及局限见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。
+
 **最新产品授权（2026-10-09）：不再以 MEM0/MEM1 质量盲评作为接入生产前置条件。** 强通用 LLM 的现实建议质量已经足以支持立即做可玩的原型。产品特色长期目标是 **AI_AUTOMATIC / 无人工说书人**，而不是让人类永远确认每个裁量。
 
 完整路线：[GSP-PROD-AUTO — 生产接入与自动说书人](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。

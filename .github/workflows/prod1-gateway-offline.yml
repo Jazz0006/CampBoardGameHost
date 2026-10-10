@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'tools/storyteller_gateway.py'
+      - 'tools/prod_global_live_smoke.py'
       - 'tools/tests/test_storyteller_gateway.py'
       - '.github/workflows/prod1-gateway-offline.yml'
   workflow_dispatch:
