@@ -1665,7 +1665,9 @@ internal fun CampBoardGameHostApp() {
                     .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
                 TroubleBrewingGameSnapshotProjector.fromRuntime(
                     gameSnapshot = session.toGameSnapshot(rulesetRef),
-                    phase = StorytellerPhase.NIGHT,
+                    phase = if (clocktowerPhase == ClocktowerPhase.FirstNight) {
+                        StorytellerPhase.FIRST_NIGHT
+                    } else StorytellerPhase.NIGHT,
                     round = round,
                     characterRegistry = registry,
                 )
@@ -1789,7 +1791,7 @@ internal fun CampBoardGameHostApp() {
                         append(" — ")
                         append(alternative.rationale.joinToString(" "))
                     }
-                    append("\n需在现有首夜界面手动确认实际展示结果；AI 不会代替 Host 写入事实。")
+                    append("\n请在当前主持界面手动确认实际决定；AI 不会代替 Host 写入事实。")
                 }
                 liveAiAdviceError = null
             }.onFailure {
