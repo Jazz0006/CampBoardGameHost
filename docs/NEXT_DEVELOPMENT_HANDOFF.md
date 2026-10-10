@@ -18,6 +18,8 @@
 
 **2026-10-10 PROD-GLOBAL-1A 代码 checkpoint：** PR #292 Draft 分支 `prod-1-live-drunk-ai-assisted` 新增首次首夜 Host 真实 pair decision 的连续策略通道（`d72faee0c64fd099d056167ca4e668bd3d1d4148`）：利用原有 Session GLOBAL_V1 行动/观察因果前缀、完整角色/玩家输入/合法候选及先前整体战略，经同一个 LLM gateway 更新；AI_ASSISTED 的真实首夜页面展示合法建议，实际结果仍由主持人依现有 Host 操作确认，后续裁量读取已确认动作和信息，不再使用推荐草稿作为事实。Gateway 离线测试与独立 CI/R2 需按最新 HEAD 查验。**尚缺跨白天/后续夜晚通用裁量、全部首夜信息家族、AUTO 自动合法提交和实际 Android→TLS→LLM 端到端实测；PR #292 保持 Draft，不能合并。** 完整设计/遗留验收见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。
 
+**2026-10-10 PROD-GLOBAL-1B 续航 checkpoint：** PR #292 Draft `1c278ffbbb8c4e1292be67f7089564e8c589b2c8`：同一事件驱动全局战略和中立合法候选验证已跨越首夜到次夜，接入现有 Host pending SeatTarget 决策；测试使用私有首夜观察、公开白天提名/无效射击和后续夜间行动。没有角色独立的 AI 策略。当前真实 Android↔TLS Gateway↔LLM 行程、Foundation 数值/布尔信息族、完整首夜和 AUTO 自动确认仍待验收；继续 Draft。后续优先用 `StructuredNumberInformationUiModel` / `StructuredBooleanInformationUiModel` 现有 Foundation 候选作为真实 Host 法定域，延伸统一 planner；拒绝另建角色专用 AI selector。独立 CI/R2 必须对照当前 HEAD 重新确认。
+
 **最新产品授权（2026-10-09）：不再以 MEM0/MEM1 质量盲评作为接入生产前置条件。** 强通用 LLM 的现实建议质量已经足以支持立即做可玩的原型。产品特色长期目标是 **AI_AUTOMATIC / 无人工说书人**，而不是让人类永远确认每个裁量。
 
 完整路线：[GSP-PROD-AUTO — 生产接入与自动说书人](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。

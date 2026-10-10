@@ -1734,7 +1734,7 @@ internal fun CampBoardGameHostApp() {
                 liveAiAdviceText = buildString {
                     append(advice.globalStrategy.situationSummary)
                     append("\n\n当前合法建议：")
-                    append(candidateLabel(primary.candidateId))
+                    append(candidateLabel(outcome.primary.candidateId))
                     append("\n")
                     append(outcome.primary.rationale.joinToString(" "))
                     outcome.alternatives.take(2).forEach { alternative ->
