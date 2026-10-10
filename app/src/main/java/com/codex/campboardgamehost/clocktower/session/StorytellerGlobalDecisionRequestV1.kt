@@ -208,17 +208,23 @@ internal object StorytellerGlobalDecisionRequestV1 {
         request: StorytellerProviderRequestV1,
         priorStrategy: StorytellerGlobalStrategyV1?,
     ): StorytellerGlobalAdviceV1 {
+        // Only live advice requests use the compact model response.
+        // Opening analysis and Drunk selection keep their full strategy.
+        val requestJson = JSONObject(encode(request, priorStrategy))
+            .put("responseProfile", "COMPACT_MEMO_V1")
         val raw = ProductionDrunkAiGatewayV1.post(
-            endpoint, accessToken, encode(request, priorStrategy),
+            endpoint, accessToken, requestJson.toString(),
         )
-        val strategy = StorytellerGlobalStrategyV1.decode(
-            JSONObject(raw).getJSONObject("strategy"),
-            (request.state as StorytellerProviderGameStateV1.TroubleBrewing)
-                .snapshot.grimoireSeats.map { it.seat }.toSet(),
-        )
+        val json = JSONObject(raw)
+        require(json.getString("responseProfile") == "COMPACT_MEMO_V1") {
+            "Expected compact recommendation protocol"
+        }
+        require(!json.has("strategy")) {
+            "Compact recommendation must not fabricate a full global strategy"
+        }
         return StorytellerGlobalAdviceV1(
             response = ProductionDrunkAiGatewayV1.decode(raw),
-            globalStrategy = strategy,
+            globalStrategy = null,
         )
     }
 }
