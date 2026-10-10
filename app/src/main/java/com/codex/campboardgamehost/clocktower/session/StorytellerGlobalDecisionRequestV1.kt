@@ -214,6 +214,24 @@ internal object StorytellerGlobalDecisionRequestV1 {
         return ProductionDrunkAiGatewayV1.decode(raw)
     }
 
+    /** A legacy gateway can still return the validated full V1 protocol. */
+    fun decodeLiveAdvice(raw: String, allowedSeats: Set<Int>): StorytellerGlobalAdviceV1 {
+        val json = JSONObject(raw)
+        val strategy = if (json.has("responseProfile")) {
+            require(json.getString("responseProfile") == "COMPACT_MEMO_V1")
+            decodeCompactResponse(raw)
+            null
+        } else {
+            StorytellerGlobalStrategyV1.decode(
+                json.getJSONObject("strategy"), allowedSeats,
+            )
+        }
+        return StorytellerGlobalAdviceV1(
+            response = ProductionDrunkAiGatewayV1.decode(raw),
+            globalStrategy = strategy,
+        )
+    }
+
     suspend fun recommend(
         endpoint: String,
         accessToken: String,
@@ -227,9 +245,9 @@ internal object StorytellerGlobalDecisionRequestV1 {
         val raw = ProductionDrunkAiGatewayV1.post(
             endpoint, accessToken, requestJson.toString(),
         )
-        return StorytellerGlobalAdviceV1(
-            response = decodeCompactResponse(raw),
-            globalStrategy = null,
+        return decodeLiveAdvice(
+            raw, (request.state as StorytellerProviderGameStateV1.TroubleBrewing)
+                .snapshot.grimoireSeats.map { it.seat }.toSet(),
         )
     }
 }
