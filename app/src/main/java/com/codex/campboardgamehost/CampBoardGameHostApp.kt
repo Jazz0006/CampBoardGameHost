@@ -1806,10 +1806,15 @@ internal fun CampBoardGameHostApp() {
                     return candidateId
                 }
                 // Advisory strategy only; actual published observations remain Host-owned.
-                committedAiStrategy = advice.globalStrategy
+                // The compact memo is advisory. Do NOT replace the confirmed
+                // opening plan with a fabricated rich strategy.
+                advice.globalStrategy?.let { committedAiStrategy = it }
                 liveAiAdviceText = buildString {
-                    append(advice.globalStrategy.situationSummary)
-                    append("\n\n当前合法建议：")
+                    advice.globalStrategy?.let {
+                        append(it.situationSummary)
+                        append("\n\n")
+                    }
+                    append("当前合法建议：")
                     append(candidateLabel(outcome.primary.candidateId))
                     append("\n")
                     append(outcome.primary.rationale.joinToString(" "))
