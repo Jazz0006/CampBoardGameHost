@@ -120,10 +120,10 @@ def validate_host_request(case: dict) -> set[str]:
         raise ValueError("Unsupported request version")
     ident = case["identity"]
     if ident["scriptId"] != "trouble_brewing" or ident["decisionTypeId"] not in (
-        "drunk-assignment", "first-night-pair-information", "mayor-redirect",
+        "drunk-assignment", "first-night-pair-information", "scalar-information", "mayor-redirect",
     ):
         raise ValueError("Unsupported decision family")
-    if ident["decisionTypeId"] in ("first-night-pair-information", "mayor-redirect"):
+    if ident["decisionTypeId"] in ("first-night-pair-information", "scalar-information", "mayor-redirect"):
         return validate_live_global_decision_request(case)
     if not isinstance(ident["gameId"], str) or not ident["gameId"]:
         raise ValueError("Missing game identity")
@@ -207,8 +207,18 @@ def validate_live_global_decision_request(case: dict) -> set[str]:
     if context.get("reliability") not in ("RELIABLE", "DRUNK", "POISONED", "NOT_APPLICABLE"):
         raise ValueError("Invalid reliability")
     is_target_decision = identity["decisionTypeId"] == "mayor-redirect"
+    is_scalar_decision = identity["decisionTypeId"] == "scalar-information"
     if is_target_decision != (context["reliability"] == "NOT_APPLICABLE"):
         raise ValueError("Invalid decision reliability kind")
+    if is_scalar_decision:
+        if context.get("resultKind") not in ("NUMBER", "BOOLEAN") or not isinstance(
+            context.get("metric"), str
+        ) or not context["metric"]:
+            raise ValueError("Invalid scalar information context")
+        subjects = context.get("subjectSeats")
+        if not isinstance(subjects, list) or any(type(s) is not int or s not in
+            range(1, len(seats) + 1) for s in subjects) or len(subjects) != len(set(subjects)):
+            raise ValueError("Invalid scalar information subjects")
     legal = case["legalCandidates"]
     if not isinstance(legal, list) or not legal:
         raise ValueError("Missing legal candidates")
@@ -217,7 +227,19 @@ def validate_live_global_decision_request(case: dict) -> set[str]:
         if not isinstance(item.get("candidateId"), str) or not item["candidateId"]:
             raise ValueError("Invalid legal ID")
         ids.append(item["candidateId"])
-        if is_target_decision:
+        if is_scalar_decision:
+            value = item.get("resultValue")
+            if not isinstance(value, str) or not value:
+                raise ValueError("Missing scalar legal result")
+            if context["resultKind"] == "BOOLEAN" and value not in ("true", "false"):
+                raise ValueError("Illegal Boolean representation")
+            if context["resultKind"] == "NUMBER" and (
+                not value.lstrip("-").isdigit() or str(int(value)) != value
+            ):
+                raise ValueError("Illegal numeric representation")
+            if any(key in item for key in ("targetSeat", "candidateSeats", "semanticTruth")):
+                raise ValueError("Scalar result must not masquerade as another decision")
+        elif is_target_decision:
             if type(item.get("targetSeat")) is not int or item["targetSeat"] not in range(1, len(seats) + 1):
                 raise ValueError("Invalid target decision seat")
             if "candidateSeats" in item or "semanticTruth" in item:

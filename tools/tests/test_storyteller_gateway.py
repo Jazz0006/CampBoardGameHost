@@ -137,6 +137,22 @@ def live_pair_case():
     return live
 
 
+def live_scalar_case(kind="NUMBER"):
+    live = live_pair_case()
+    live["identity"]["decisionTypeId"] = "scalar-information"
+    live["identity"]["decisionId"] = "first-night:scalar:seat-1"
+    live["decisionContext"] = {
+        "sourceSeat": 1, "abilityRoleId": "Chef", "reliability": "POISONED",
+        "resultKind": kind, "metric": "ADJACENT_EVIL_PAIRS" if kind == "NUMBER"
+        else "DEMON_OR_RED_HERRING_PRESENT", "subjectSeats": [1, 2, 3, 4, 5],
+    }
+    live["legalCandidates"] = [
+        {"candidateId": "result-one", "resultValue": "1" if kind == "NUMBER" else "true"},
+        {"candidateId": "result-zero", "resultValue": "0" if kind == "NUMBER" else "false"},
+    ]
+    return live
+
+
 def late_night_target_case():
     """Day events are in the same generic chronological context, never first-night rewrites."""
     live = live_pair_case()
@@ -305,6 +321,31 @@ class GatewayContractTests(unittest.TestCase):
         )
         assert answer["primaryCandidateId"] == "pair-2"
         assert answer["strategy"]["intentions"]
+
+    def test_same_global_plan_handles_first_night_numeric_and_boolean(self):
+        for kind in ("NUMBER", "BOOLEAN"):
+            with self.subTest(kind=kind):
+                live = live_scalar_case(kind)
+                assert gateway.validate_host_request(live) == {"result-one", "result-zero"}
+                prompt = gateway.build_openai_request(live, "test-model")
+                sent = json.loads(prompt["input"])
+                assert sent["decisionContext"]["resultKind"] == kind
+                assert len(sent["causalHistory"]["events"]) == 2
+                output = gateway.parse_openai_response(
+                    model_output(primary="result-zero", alternative="result-one"),
+                    {"result-one", "result-zero"}, set(range(1, 6)),
+                )
+                assert output["primaryCandidateId"] == "result-zero"
+                for modify in (
+                    lambda x: x["decisionContext"].update(resultKind="UNKNOWN"),
+                    lambda x: x["legalCandidates"][0].update(resultValue="wrong"),
+                    lambda x: x["legalCandidates"][0].update(targetSeat=3),
+                    lambda x: x["causalHistory"]["events"][-1].update(globalSequence=2),
+                ):
+                    invalid = json.loads(json.dumps(live))
+                    modify(invalid)
+                    with self.assertRaises(ValueError):
+                        gateway.validate_host_request(invalid)
 
     def test_same_global_strategy_survives_into_subsequent_night_legal_target(self):
         live = late_night_target_case()

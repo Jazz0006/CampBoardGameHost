@@ -2441,12 +2441,21 @@ internal fun ClocktowerJudgeScreen(
                 currentStep, phase, round, cards, firstNightPairDecisionContext,
             )
         } else null
+        val globalAiScalarPending = if (globalAiAssisted &&
+            phase == ClocktowerPhase.FirstNight && globalAiPending == null
+        ) pendingGlobalFirstNightScalarDecision(
+            currentStep, phase, round, currentStepIndex, cards, gameId,
+            InformationDecisionRevision(gameStateRevision, playerInputRevision),
+            listOfNotNull(fortuneTellerFirst, fortuneTellerSecond),
+            recommendationCoordinator,
+        ) else null
         val globalAiTargetPending = globalNightPendingDecision?.takeIf {
             globalAiAssisted && phase == ClocktowerPhase.Night &&
                 currentStep.action == ClocktowerNightAction.MayorRedirect &&
                 currentStep.isRealAction
         }
         val globalAiDecisionIdentity = globalAiPending?.requestIdentity
+            ?: globalAiScalarPending?.requestIdentity
             ?: globalAiTargetPending?.requestIdentity
         val globalAiCurrentKey = globalAiDecisionIdentity?.let { identity ->
             listOf(

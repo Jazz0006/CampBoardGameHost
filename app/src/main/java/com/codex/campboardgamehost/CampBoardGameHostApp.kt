@@ -87,6 +87,8 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderOutcomeV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderValidationV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
@@ -1615,13 +1617,23 @@ internal fun CampBoardGameHostApp() {
                 step, clocktowerPhase, round, cards, it,
             )
         }
-        // Engine-specific routing supplies a Host-legal pending decision; the LLM policy
-        // below is identical regardless of which legal candidate shape is current.
+        val pendingScalar = if (clocktowerPhase == ClocktowerPhase.FirstNight &&
+            pendingPair == null
+        ) pendingGlobalFirstNightScalarDecision(
+            step, clocktowerPhase, round, stepIndex, cards, session.state.gameId,
+            StorytellerDecisionRevision(
+                session.state.gameStateRevision, session.state.playerInputRevision,
+            ),
+            listOfNotNull(clocktowerFortuneTellerFirst, clocktowerFortuneTellerSecond),
+        ) else null
+        // The Host supplies a currently legal decision. The LLM uses the same
+        // global strategy for pair, numeric/Boolean and later-night target decisions.
         val pendingTarget = if (clocktowerPhase == ClocktowerPhase.Night &&
             step.action == ClocktowerNightAction.MayorRedirect && step.isRealAction
         ) runCatching { currentTroubleBrewingMayorRedirectPendingDecision() }.getOrNull()
         else null
-        val identity = pendingPair?.requestIdentity ?: pendingTarget?.requestIdentity ?: return
+        val identity = pendingPair?.requestIdentity ?: pendingScalar?.requestIdentity
+            ?: pendingTarget?.requestIdentity ?: return
         val revision = StorytellerProviderRevisionV1(
             session.state.gameStateRevision, session.state.playerInputRevision,
         )
@@ -1661,6 +1673,13 @@ internal fun CampBoardGameHostApp() {
                 StorytellerProviderRequestFactoryV1.fromPairInformation(
                     decision = pendingPair, snapshot = snapshot, gameContext = gameContext,
                 )
+            } else if (pendingScalar != null) {
+                StorytellerProviderRequestFactoryV1.fromScalarInformation(
+                    pendingScalar.requestIdentity, pendingScalar.revision,
+                    pendingScalar.sourceSeat, pendingScalar.abilityRole, pendingScalar.reliability,
+                    pendingScalar.kind, pendingScalar.metric, pendingScalar.subjectSeats,
+                    pendingScalar.legalCandidates, snapshot, gameContext,
+                )
             } else {
                 StorytellerProviderRequestFactoryV1.fromMayorRedirect(
                     decision = requireNotNull(pendingTarget),
@@ -1696,6 +1715,20 @@ internal fun CampBoardGameHostApp() {
                     StorytellerGlobalDecisionRequestV1.validateCurrent(
                         providerRequest, pendingPair, freshPending, session.state, advice.response,
                     )
+                } else if (pendingScalar != null) {
+                    val freshScalar = pendingGlobalFirstNightScalarDecision(
+                        step, clocktowerPhase, round, stepIndex, cards, session.state.gameId,
+                        StorytellerDecisionRevision(
+                            session.state.gameStateRevision, session.state.playerInputRevision,
+                        ),
+                        listOfNotNull(clocktowerFortuneTellerFirst, clocktowerFortuneTellerSecond),
+                    )
+                    StorytellerGlobalDecisionRequestV1.validateCurrent(
+                        providerRequest, pendingScalar.requestIdentity, pendingScalar.revision,
+                        freshScalar?.requestIdentity, freshScalar?.revision,
+                        freshScalar?.legalCandidates?.map { it.candidateId },
+                        session.state, advice.response,
+                    )
                 } else {
                     val freshTarget = runCatching {
                         currentTroubleBrewingMayorRedirectPendingDecision()
@@ -1721,6 +1754,15 @@ internal fun CampBoardGameHostApp() {
                             candidate.outcome.candidateSeats.joinToString("/") { it.toString() }
                                 .takeIf { it.isNotBlank() },
                         ).joinToString(" — ").ifBlank { candidateId }
+                    }
+                    pendingScalar?.legalCandidates?.singleOrNull {
+                        it.candidateId == candidateId
+                    }?.let { candidate ->
+                        val value = (candidate.payload as
+                            StorytellerProviderCandidatePayloadV1.ScalarResult).value
+                        return if (pendingScalar.kind ==
+                            StorytellerProviderScalarKindV1.BOOLEAN
+                        ) { if (value == "true") "是" else "否" } else value
                     }
                     pendingTarget?.pending?.legalCandidates?.singleOrNull {
                         it.candidateId == candidateId

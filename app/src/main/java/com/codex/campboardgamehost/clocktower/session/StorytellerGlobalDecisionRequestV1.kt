@@ -33,6 +33,7 @@ internal object StorytellerGlobalDecisionRequestV1 {
     ): String {
         val context = request.decisionContext
         require(context is StorytellerProviderDecisionContextV1.FirstNightPairInformation ||
+            context is StorytellerProviderDecisionContextV1.ScalarInformation ||
             context is StorytellerProviderDecisionContextV1.MayorRedirect) {
             "Global live advice needs an engine-owned legal information or redirection decision."
         }
@@ -81,6 +82,13 @@ internal object StorytellerGlobalDecisionRequestV1 {
                     JSONObject().put("sourceSeat", context.sourceSeat)
                         .put("abilityRoleId", context.abilityRole.value)
                         .put("reliability", context.reliability.name)
+                is StorytellerProviderDecisionContextV1.ScalarInformation ->
+                    JSONObject().put("sourceSeat", context.sourceSeat)
+                        .put("abilityRoleId", context.abilityRole.value)
+                        .put("reliability", context.reliability.name)
+                        .put("resultKind", context.kind.name)
+                        .put("metric", context.metric)
+                        .put("subjectSeats", JSONArray(context.subjectSeats))
                 is StorytellerProviderDecisionContextV1.MayorRedirect ->
                     JSONObject().put("sourceSeat", context.mayorSeat)
                         .put("abilityRoleId", "Mayor")
@@ -97,6 +105,8 @@ internal object StorytellerGlobalDecisionRequestV1 {
                                 .put("semanticTruth", payload.semanticTruth.name)
                                 // Possible registration witnesses are NOT a unique Host-committed fact.
                                 .put("registrationWitnessesArePossibilities", true)
+                        is StorytellerProviderCandidatePayloadV1.ScalarResult ->
+                            item.put("resultValue", payload.value)
                         is StorytellerProviderCandidatePayloadV1.SeatTarget ->
                             item.put("targetSeat", payload.seat)
                         else -> error("Unsupported live decision payload")
@@ -147,6 +157,21 @@ internal object StorytellerGlobalDecisionRequestV1 {
         current?.requestIdentity, current?.revision,
         current?.pending?.legalCandidates?.map { it.candidateId },
         latestSessionState, response,
+    )
+
+    /** Typed Foundation / Host scalar value decisions use the same exact freshness barrier. */
+    fun validateCurrent(
+        request: StorytellerProviderRequestV1,
+        originalIdentity: StorytellerDecisionRequestIdentity,
+        originalRevision: StorytellerDecisionRevision,
+        currentIdentity: StorytellerDecisionRequestIdentity?,
+        currentRevision: StorytellerDecisionRevision?,
+        currentLegalCandidateIds: List<String>?,
+        latestSessionState: ClocktowerSessionState,
+        response: StorytellerProviderResponseV1,
+    ): StorytellerProviderValidationV1? = validateFresh(
+        request, originalIdentity, originalRevision, currentIdentity, currentRevision,
+        currentLegalCandidateIds, latestSessionState, response,
     )
 
     private fun validateFresh(
