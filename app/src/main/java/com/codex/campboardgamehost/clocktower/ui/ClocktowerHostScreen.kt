@@ -2457,10 +2457,15 @@ internal fun ClocktowerJudgeScreen(
         val globalAiDecisionIdentity = globalAiPending?.requestIdentity
             ?: globalAiScalarPending?.requestIdentity
             ?: globalAiTargetPending?.requestIdentity
+        val globalAiLegalIds = globalAiPending?.legalCandidates?.map { it.candidateId }
+            ?: globalAiScalarPending?.legalCandidates?.map { it.candidateId }
+            ?: globalAiTargetPending?.pending?.legalCandidates?.map { it.candidateId }
         val globalAiCurrentKey = globalAiDecisionIdentity?.let { identity ->
+            val legalIds = requireNotNull(globalAiLegalIds)
             listOf(
                 gameId, round, currentStepIndex, identity.requestId,
                 gameStateRevision, playerInputRevision, nightCheckpoint.nextTimelineGlobalSequence,
+                legalIds.size, legalIds.hashCode(),
             ).joinToString(":")
         }
         LaunchedEffect(globalAiCurrentKey, globalAiAssisted) {

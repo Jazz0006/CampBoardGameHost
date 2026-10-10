@@ -1637,10 +1637,14 @@ internal fun CampBoardGameHostApp() {
         val revision = StorytellerProviderRevisionV1(
             session.state.gameStateRevision, session.state.playerInputRevision,
         )
+        val legalIds = pendingPair?.legalCandidates?.map { it.candidateId }
+            ?: pendingScalar?.legalCandidates?.map { it.candidateId }
+            ?: pendingTarget?.pending?.legalCandidates?.map { it.candidateId }
+            ?: return
         val key = listOf(
             session.state.gameId, round, stepIndex, identity.requestId,
             revision.gameStateRevision, revision.playerInputRevision,
-            session.state.nextTimelineGlobalSequence,
+            session.state.nextTimelineGlobalSequence, legalIds.size, legalIds.hashCode(),
         ).joinToString(":")
         if (liveAiAdviceKey == key && (liveAiAdviceBusy || liveAiAdviceText != null)) return
         liveAiAdviceKey = key
