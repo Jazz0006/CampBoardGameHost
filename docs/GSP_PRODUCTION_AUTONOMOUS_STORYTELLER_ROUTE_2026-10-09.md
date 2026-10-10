@@ -1,8 +1,8 @@
 # GSP-PROD-AUTO — Production LLM Recommendation to Autonomous Storyteller Route (2026-10-09)
 
-> **ACTIVE PRODUCT DIRECTION / PRIORITY OVERRIDE.** Replaces the earlier MEM0-first research gate in the current roadmap/handoff. This is a **product decision and implementation route**, not a claim that API-1 or autonomous runtime has already shipped.
+> **LONG-TERM PRODUCT AUTHORITY, NOT A SECOND CURRENT IMPLEMENTATION SCHEDULE.** Full autonomous Storyteller remains the objective, but the exact present priority and confirmed status are maintained only in [current roadmap](CURRENT_DEVELOPMENT_ROADMAP.md), [handoff](NEXT_DEVELOPMENT_HANDOFF.md), and [PROD-GLOBAL-1/1D](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md).
 >
-> **PRODUCT-OWNER RE-ENTRY (2026-10-09):** the immediate first objective is **whole-game situation diagnosis -> conditional strategic plan -> current Host-legal recommendation -> situation/relationship overview on the existing square table**, rather than invoking the LLM independently for each isolated clue. See [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md) for superseding implementation/UX and private single-user transport decisions. PR #292's standalone Drunk-screen recommendation remains **DRAFT / DO NOT MERGE AS IS**, despite green CI. Long-term objective: **fully automatic Storyteller** (no human Storyteller needed) with complete, independently running rules-engine authority.
+> **2026-10-10 progress reconciliation:** PR #292 (Draft) now contains whole-game global strategy + several genuine Host first-night pair/numeric/Boolean AI_ASSISTED paths, Android secured Gateway connection persistence and model-continuation code. Oracle Gateway has completed three genuine paid Luna *synthetic* tests, but the Android real-play E2E, full initial overnight planning and fully autonomous runtime are **not** accepted. The former single Drunk spike and PROD-0 entry audit are historical. **Shown roles may be dealt before Drunk is bound**; the next main work is measured API latency and a single background whole-game first-night plan overlapping card reveal.
 
 ## Why this route
 
@@ -38,15 +38,18 @@ Host canonical GameState + rules-derived pending decision + full legal IDs
 - Keep secrets off the Android APK/client, prompts out of Git/logs, use an **authenticated TLS gateway with quota, timeouts and cancellation**. Oracle VM can be used as a private development prototype **only** until external access, authentication and secret lifecycle are explicitly designed. Do not expose an unauthenticated developer endpoint.
 - Do not silently equate chat UI model names with API model IDs or assert a model quality ranking without deployment-specific evidence. Allow provider/model configuration and observe quality, cost and latency from gameplay. No model training required for the initial rollout.
 
-## Near-term implementation order (do not turn into a research campaign)
+## Long-term implementation phases; current NOW is PROD-GLOBAL-1D, not the original PROD-0
 
-| Order | Slice / actual consumer | Exit criterion |
+| Product stage | Purpose | Current interpretation |
 | --- | --- | --- |
-| **NOW: PROD-0 — architecture-to-code entry audit** | Identify the **real** Host pending-decision/confirmation owner, existing RES neutral provider request/response seam, available game context, Android coroutine/network permission situation and gateway deployment boundary. Choose a single **real TB discretionary decision** (prefer Drunk assignment) and locate exact test/UI consumers. | A short owner map and one bounded executable cut; **not** another large code/module refactor or MEM0 scoring campaign |
-| **PROD-1 — AI_ASSISTED playable vertical** | Serialize **live Host** request with full role roster/candidates and as-of history/strategic summary, call configurable remote gateway, show legal primary and alternative with explanation, confirm via existing Host path. | One real TB decision from actual running app -> real model response -> correct Host confirmation; invalid, stale, timeout and offline test cases pass; manual remains available |
-| **PROD-2 — autonomous decision gate** | Opt-in AI_AUTOMATIC mode; after fresh legality/revision validation commit via Host's existing confirmation barrier; dedupe network/resume requests; expose pause/manual takeover. | The **same** end-to-end decision can progress without human Storyteller confirmation; no wrong, repeated or stale application; model controls no game facts |
-| **PROD-3 — first-night autonomous TB loop** | Incrementally cover additional first-night discretionary families (e.g. Investigator/Librarian pair, Fortune Teller red herring, poison/drunk effects) and preserve earliest/latest-safe sequencing. | Complete TB setup + first night for selected supported setup without human Storyteller decision; precise paused/unsupported report elsewhere |
-| **PROD-4 — full TB Storyteller** | Iterate remaining setup, night, day adjudications, player action collection and terminal outcome; use genuine-play simulation. | TB play-through from start to game end without a human Storyteller, with explicitly recorded player input and no illegal or invented outcomes |
+| **PROD-0 (historical)** | Entry/ownership contract, first real Host decision | Entry audit already used; **not** next work |
+| **PROD-GLOBAL-1C / PROD-1 (active Draft)** | Whole-game strategy, validated Host decisions, MANUAL/ASSISTED flow | First-night legal information families integrated, but actual Android E2E still missing |
+| **PROD-GLOBAL-1D (NEXT)** | Real API latency decomposition, conditional Drunk + first-night full-board background planning during shown-role reveal, event-driven global residual updates | Under-5-second interactive updates are **an unproven acceptance target**, not a claim that short continuation is fast |
+| **PROD-2** | Validate and commit opt-in automated decisions with pause/retry/manual takeover | Only current explicitly supported families; no invented default |
+| **PROD-3** | Full legal TB setup and first-night automation | Every action/target/observation chronologically consistent |
+| **PROD-4** | Whole TB automatic Storyteller | Real-play end-to-end rules, players' actions and error handling |
+
+Earlier PROD-0/1 instructions below are retained only as historical decision rationale. Refer to the current roadmap/handoff before executing any item.
 
 Keep PRs reviewable by coherent playable slices rather than splitting every field into a PR. Use minimal targeted tests for gameplay correctness, identity/staleness/security and full-slice regression; **do not** require new 9/27-sample blind quality research before PROD-1.
 
@@ -59,8 +62,6 @@ Keep PRs reviewable by coherent playable slices rather than splitting every fiel
 - **Recovery:** current-format, <=4-hour emergency game resumption only; no second replay engine. Manual remains offline-complete.
 - **Model fine-tuning:** revisit only after production use and high-quality evidence expose persistent limits of configurable general-purpose LLMs.
 
-## Immediate handoff
+## Current handoff pointer (replaces 2026-10-09 instructions)
 
-**Implement PROD-0 then PROD-1**. First confirm live repo state. Reuse existing Kotlin provider-neutral RES seam and existing Host confirmation actions; inspect whether `StorytellerProviderResponseValidatorV1` guards the *current* revision when applying results, not merely the request's self-contained revision. Implement secure gateway contract and one end-to-end TB decision before new role families. Maintain a narrow test surface (correct legal IDs, full current role visibility, one stale response, one timeout, no key in app, no duplicate commit). Report results with real runtime evidence, not benchmark-only success.
-
-**Product-owner accepted priority:** strong LLM recommendation is promising enough to integrate first; the special goal is **fully automatic Storyteller**, rather than permanently human-confirmed assisted advice.
+**Begin PROD-GLOBAL-1D-0:** check live GitHub main / PR #292 / local branch and worktree, then instrument Gateway API timing and usage without secrets. Run the **same legal, chronological TB Host scenario** for initial and follow-up with configurable reasoning settings and compact versus full structured outputs; compare response quality. Next implement shown-role reveal parallel with first global preplanning and Drunk binding after dealing; then safe state/event invalidation and still-pending decisions. Retain this document for the long-term autonomous product stages; [handoff](NEXT_DEVELOPMENT_HANDOFF.md) is the only live next-task authority.

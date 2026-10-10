@@ -1,6 +1,6 @@
 # CampBoardGameHost — 当前文档入口
 
-> 同步日期：2026-10-09（Australia/Sydney）。这里是 **导航，不是第二份 roadmap**。旧索引原文已存于 [归档](archive/checkpoints/DOCS_INDEX_PRE_MEM0_CONVERGENCE_2026-10-09.md)。
+> 同步日期：2026-10-10（Australia/Sydney）。这里是 **导航，不是第二份 roadmap**。旧索引原文已存于 [归档](archive/checkpoints/DOCS_INDEX_PRE_MEM0_CONVERGENCE_2026-10-09.md)。
 
 ## 新开发会话：按需阅读
 
@@ -14,11 +14,17 @@
 
 - [GSP-MEM0 / Recovery 范围决策](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md)：战略记忆可以参与建议，但 Host 规则/事实/候选仍是权威；Recovery 仅恢复短期意外中断。
 - **[生产接入与全自动说书人路线（GSP-PROD-AUTO）](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)**：当前产品首要路线；真实 TB 中 LLM 推荐 → 自动裁量 → 完整无人类说书人。MEM0/MEM1 改为非阻塞实验。
-- **[PROD-GLOBAL-1 整局全局分析、可修订策略与方桌 UI](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)**：2026-10-09 用户纠偏后的 PROD-1 产品验收权威。先全局诊断/交互/未来计划，再当前合法推荐；MANUAL 无 AI，ASSISTED 方桌图形分析，AUTO 验证后自动推进。PR #292 原独立酒鬼推荐为 Draft SPIKE，尚不可合并。
-- [MEM0 实验与评分协议](GSP_MEMORY_ABLATION_EXPERIMENT_2026-10-09.md) 与 [冻结合成 TB8 fixture](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json)：B2 已有九份真实模型响应，**未做正式 A/B/C 盲评**，用于辅助生产上下文检查，不阻塞接入。
-- [API0 Responses benchmark 接口](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)：**已验证开发机真实结构化 API 实验；尚无 Android 生产集成/安全网关**。
+- **[PROD-GLOBAL-1/1D 整局策略、展示身份后台预规划、全阶段事件重规划](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)**：当前 PROD-1 产品验收与首夜时序权威。2026-10-10 再确认 **先展示身份、再定酒鬼完全合法**；后台首次整局规划可与逐人展示重叠，Host 在投毒、人工覆盖等**真实确认事件**后按当前合法状态更新剩余建议。低于 5 秒尚未验证。PR #292 已含多信息家族代码、Keystore 凭据持久化，仍为 Draft，不能当完成的自动说书人。
+- [MEM0 实验与评分协议](GSP_MEMORY_ABLATION_EXPERIMENT_2026-10-09.md) 与 [冻结合成 TB8 fixture](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json)：B2 九份历史响应仅作为非阻塞研究证据，不替代 PROD-GLOBAL-1 的真实游戏验收。
+- [API0 Responses benchmark 接口](GSP_API0_OPTIONAL_RESPONSES_BENCHMARK_TRANSPORT_2026-10-09.md)：历史纯开发者端 benchmark，不是当前 Android 入口。开发机现有 `tools/storyteller_gateway.py` 及 Android AI_ASSISTED 代码见 PR #292；真实 Android E2E 尚未验收。
 - [通用说书人 Policy 规范](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md)：推荐只对 Host 的合法选择 rank/recommend/explain，不继承旧自动特例。
 - [GSP-R1 现有历史捕捉审计](GSP_R1A_CANONICAL_HISTORY_CAPTURE_PREFIX_COVERAGE_AUDIT_2026-10-08.md) 与 [registration ambiguity 约束](GSP_REGISTRATION_AMBIGUITY_RESULT_FIRST_HISTORY_CONTRACT_2026-10-08.md)：已实现机械历史继续有效；C2C-2/3 可选扩展目前暂停，不能因旧 NEXT 文字擅自恢复。
+
+## 本轮已验证的工具与待验收项
+
+- **Mini MCP 直接读取开发机评测报告：已实际验收。** `read_botc_evaluation_report({report_id:"prod-global-1c"})` 已成功返回固定私有报告和 SHA-256，不再需要人工上传同类 JSON；Mini MCP `master@f40e202`，服务已重启。该报告是三次 Luna 真实 API、**合成**游戏状态，非 Android E2E。
+- 首夜合成测试 A2 的“厨师已确认 → 调查员给信息”不是正式 Trouble Brewing 首夜顺序，**只能证明历史覆盖后 API 延续理解，不能算真正首夜时序验收**。
+- [产品路线和待测项](CURRENT_DEVELOPMENT_ROADMAP.md)：先做 API 延迟分段、不同 `reasoning.effort` / 输出长度的**同一局面质量-时间**对比，之后实施展示身份阶段的后台联合规划和全局事件驱动增量刷新；最终验收仍需 Android 真实操作。
 
 ## 长期架构与独立证据
 
