@@ -37,3 +37,5 @@
 ## 4. 验收纪律
 
 文档同步只需检查引用、diff 与 GitHub 独立 CI/R2；行为改动应按 `AGENTS.md` 和 `TESTING_STRATEGY.md` 选择实际测试。开新对话时先核对 **live remote main、PR #292、当前 branch/HEAD、本地工作树、CI**，绝不假设本交接记载的 SHA 仍是最新状态。
+
+> **Full CI required:** PROD-GLOBAL compact adapter changes include Kotlin production source; use `[full-ci]` on this checkpoint so Android compilation/unit tests and APK assembly are mandatory even if prior docs-only commit caused synchronize diff classification to skip them.
