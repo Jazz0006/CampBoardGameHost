@@ -170,6 +170,11 @@ class StorytellerGlobalNightContinuationV1Test {
         assertTrue(StorytellerGlobalDecisionRequestV1.validateCurrent(
             request, current, current, session.state, answer,
         ) is StorytellerProviderValidationV1.AcceptedRecommendation)
+        // The human may reject the AI primary and confirm an alternative using the real Host boundary.
+        val humanChosen = current.confirm(options[1].candidateId, current.revision)
+            as MayorRedirectDecisionConfirmation.Confirmed
+        assertEquals(options[1].candidateId, humanChosen.candidateId)
+        assertEquals(options[1].payload, humanChosen.targetSeat)
         // A later committed event can invalidate the old advice even when revisions did not change.
         session.commitGlobalActionFact(
             ActionFactDraft.Attack("night-two-confirmed-attack", StorytellerPhase.NIGHT, 2, 3, 1),
