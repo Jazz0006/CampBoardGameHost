@@ -45,3 +45,7 @@
 ## 6. 本轮验收
 
 本轮为生产优先级文档路线决策，不是已完成 Android 接入。文档-only 更改不需要伪造 Android RED 测试；需检查 diff、文档相互引用、无业务代码变更、GitHub 独立 PR/checks。后续任何功能行为改动按 `AGENTS.md` 和 `TESTING_STRATEGY.md` 进行风险分级验证。
+
+## TB setup simplification
+
+The active TB setup contract is schema v3: preset `townsfolk` is the complete shown Townsfolk roster, `drunk` is a boolean, and `outsiders` excludes the actual Drunk. No runtime three-option selection or TB-specific shown-identity option policy remains. See `TB_SETUP_SIMPLIFICATION_TEMPLATE_AUDIT.json` for the exact 208 old-three-to-one mappings and per-template rationale. Visible identities are dealt before the existing canonical Drunk seat selection/commit; this slice documents but does not change that sequence. Setup diversity history uses all completed shown identities, including the eventual Drunk's shown role, while player rotation retains actual-plus-shown identity history.

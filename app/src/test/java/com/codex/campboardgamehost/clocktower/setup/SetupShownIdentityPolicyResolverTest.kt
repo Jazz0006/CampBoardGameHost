@@ -18,56 +18,6 @@ import org.junit.Test
 
 class SetupShownIdentityPolicyResolverTest {
     @Test
-    fun `template candidate resolves canonical Drunk options through durable provenance without changing actual roles`() {
-        val ruleset = troubleBrewingLikeRuleset()
-        val dataset = templateDataset()
-        val preset = dataset.pools.getValue(6).first { it.id == DRUNK_PRESET_ID }
-        val candidate = templateCandidate(preset, ruleset)
-        val actualRolesBefore = candidate.actualRoles
-        val resolver = SetupShownIdentityPolicyResolver(
-            templatePolicySource = TroubleBrewingShownIdentityPolicySource(
-                dataset = dataset,
-                characterRegistry = ruleset.characterRegistry,
-            ),
-        )
-
-        val policy = resolver.resolve(candidate, ruleset)
-
-        assertEquals(actualRolesBefore, candidate.actualRoles)
-        assertTrue(policy.requiresOverride)
-        assertEquals(1, policy.overrides.size)
-        assertEquals(RoleId("Drunk"), policy.overrides.single().actualRole)
-        assertEquals(
-            listOf(RoleId("Tf4"), RoleId("Tf5"), RoleId("Tf6")),
-            policy.overrides.single().legalShownRoles,
-        )
-        assertEquals(3, policy.overrides.single().legalShownRoles.size)
-    }
-
-    @Test
-    fun `template metadata source converts TB drunkAsOptions without exposing preset model to generic policy`() {
-        val ruleset = troubleBrewingLikeRuleset()
-        val dataset = templateDataset()
-        val source: TemplateShownIdentityPolicySource = TroubleBrewingShownIdentityPolicySource(
-            dataset = dataset,
-            characterRegistry = ruleset.characterRegistry,
-        )
-
-        val policy = source.find(
-            TemplateShownIdentityPolicyKey(
-                providerId = DATASET_ID,
-                candidateId = DRUNK_PRESET_ID,
-            ),
-        )
-
-        requireNotNull(policy)
-        assertEquals(
-            listOf(RoleId("Tf4"), RoleId("Tf5"), RoleId("Tf6")),
-            policy.overrides.single().legalShownRoles,
-        )
-    }
-
-    @Test
     fun `generated candidate options are only unused Townsfolk in canonical order`() {
         val ruleset = troubleBrewingLikeRuleset().reordered()
         val candidate = generatedCandidate(
@@ -127,24 +77,6 @@ class SetupShownIdentityPolicyResolverTest {
     }
 
     @Test
-    fun `known template without Drunk returns explicit no override policy`() {
-        val ruleset = troubleBrewingLikeRuleset()
-        val dataset = templateDataset()
-        val preset = dataset.pools.getValue(6).first { it.id == NO_DRUNK_PRESET_ID }
-        val resolver = SetupShownIdentityPolicyResolver(
-            templatePolicySource = TroubleBrewingShownIdentityPolicySource(
-                dataset = dataset,
-                characterRegistry = ruleset.characterRegistry,
-            ),
-        )
-
-        val policy = resolver.resolve(templateCandidate(preset, ruleset), ruleset)
-
-        assertFalse(policy.requiresOverride)
-        assertTrue(policy.overrides.isEmpty())
-    }
-
-    @Test
     fun `generated Drunk with no unused Townsfolk fails closed`() {
         val ruleset = ruleset(
             characters = listOf(
@@ -163,50 +95,6 @@ class SetupShownIdentityPolicyResolverTest {
 
         expectIllegalArgument {
             SetupShownIdentityPolicyResolver().resolve(candidate, ruleset)
-        }
-    }
-
-    @Test
-    fun `unknown template candidate id fails instead of falling back`() {
-        val ruleset = troubleBrewingLikeRuleset()
-        val dataset = templateDataset()
-        val preset = dataset.pools.getValue(6).first { it.id == DRUNK_PRESET_ID }
-        val candidate = templateCandidate(
-            preset = preset,
-            ruleset = ruleset,
-            candidateId = "missing-template",
-        )
-        val resolver = SetupShownIdentityPolicyResolver(
-            templatePolicySource = TroubleBrewingShownIdentityPolicySource(
-                dataset = dataset,
-                characterRegistry = ruleset.characterRegistry,
-            ),
-        )
-
-        expectIllegalArgument {
-            resolver.resolve(candidate, ruleset)
-        }
-    }
-
-    @Test
-    fun `cross provider template provenance fails instead of falling back`() {
-        val ruleset = troubleBrewingLikeRuleset()
-        val dataset = templateDataset()
-        val preset = dataset.pools.getValue(6).first { it.id == DRUNK_PRESET_ID }
-        val candidate = templateCandidate(
-            preset = preset,
-            ruleset = ruleset,
-            providerId = "another-provider",
-        )
-        val resolver = SetupShownIdentityPolicyResolver(
-            templatePolicySource = TroubleBrewingShownIdentityPolicySource(
-                dataset = dataset,
-                characterRegistry = ruleset.characterRegistry,
-            ),
-        )
-
-        expectIllegalArgument {
-            resolver.resolve(candidate, ruleset)
         }
     }
 
@@ -345,26 +233,26 @@ class SetupShownIdentityPolicyResolverTest {
                 TroubleBrewingSetupPreset(
                     id = DRUNK_PRESET_ID,
                     playerCount = 6,
-                    townsfolk = listOf("tf1", "tf2", "tf3"),
-                    outsiders = listOf("drunk"),
+                    townsfolk = listOf("tf1", "tf2", "tf3", "tf4"),
+                    outsiders = emptyList(),
                     minions = listOf("poisoner"),
                     demons = listOf("imp"),
                     source = "test",
                     complexity = "test",
                     styleTags = emptyList(),
-                    drunkAsOptions = listOf("tf6", "tf4", "tf5"),
+                    drunk = true,
                 ),
                 TroubleBrewingSetupPreset(
                     id = NO_DRUNK_PRESET_ID,
                     playerCount = 6,
-                    townsfolk = listOf("tf1", "tf2", "tf3"),
+                    townsfolk = listOf("tf1", "tf2", "tf3", "tf4"),
                     outsiders = listOf("saint"),
                     minions = listOf("poisoner"),
                     demons = listOf("imp"),
                     source = "test",
                     complexity = "test",
                     styleTags = emptyList(),
-                    drunkAsOptions = emptyList(),
+                    drunk = false,
                 ),
             ),
         ),

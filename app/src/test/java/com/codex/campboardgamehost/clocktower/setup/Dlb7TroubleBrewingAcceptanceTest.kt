@@ -12,24 +12,19 @@ import java.io.File
 
 class Dlb7TroubleBrewingAcceptanceTest {
     @Test
-    fun `every built in Drunk template option exposes every and only dealt Townsfolk and commits one Drunk`() {
+    fun `every built in Drunk template exposes full Townsfolk roster and commits one Drunk`() {
         val dataset = builtInDataset()
         val registry = canonicalRegistry()
         val drunkPresets = dataset.pools.values
             .flatten()
-            .filter { preset -> "drunk" in preset.outsiders }
+            .filter { preset -> preset.drunk }
 
         assertTrue("Expected built-in Trouble Brewing data to contain Drunk presets.", drunkPresets.isNotEmpty())
 
         drunkPresets.forEach { preset ->
-            assertTrue(
-                "Drunk preset ${preset.id} must expose at least one visible Townsfolk option.",
-                preset.drunkAsOptions.isNotEmpty(),
-            )
-            preset.drunkAsOptions.forEach { addedVisibleTownsfolk ->
+            run {
                 val visibleRoster = TroubleBrewingVisibleRosterRealizer.realize(
                     preset = preset,
-                    addedVisibleTownsfolkRoleId = addedVisibleTownsfolk,
                 )
                 val intermediate = intermediateSetup(preset, visibleRoster)
                 val candidates = TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate)
@@ -40,12 +35,12 @@ class Dlb7TroubleBrewingAcceptanceTest {
                     "drunk" in visibleRoster.visibleRoleIds,
                 )
                 assertEquals(
-                    "Drunk preset ${preset.id} option $addedVisibleTownsfolk must preserve player count.",
+                    "Drunk preset ${preset.id} must preserve player count.",
                     preset.playerCount,
                     visibleRoster.visibleRoleIds.size,
                 )
                 assertEquals(
-                    "Drunk preset ${preset.id} option $addedVisibleTownsfolk must expose every and only dealt Townsfolk as legal candidates.",
+                    "Drunk preset ${preset.id} must expose every and only dealt Townsfolk as legal candidates.",
                     visibleRoster.townsfolkRoleIds.toSet(),
                     candidates.map { candidate -> candidate.shownRoleId }.toSet(),
                 )
@@ -94,7 +89,7 @@ class Dlb7TroubleBrewingAcceptanceTest {
         val registry = canonicalRegistry()
         val nonDrunkPresets = dataset.pools.values
             .flatten()
-            .filterNot { preset -> "drunk" in preset.outsiders }
+            .filterNot { preset -> preset.drunk }
 
         assertTrue(
             "Expected built-in Trouble Brewing data to contain non-Drunk presets.",
@@ -104,7 +99,6 @@ class Dlb7TroubleBrewingAcceptanceTest {
         nonDrunkPresets.forEach { preset ->
             val visibleRoster = TroubleBrewingVisibleRosterRealizer.realize(
                 preset = preset,
-                addedVisibleTownsfolkRoleId = null,
             )
             val intermediate = intermediateSetup(preset, visibleRoster)
 
