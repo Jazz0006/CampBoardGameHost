@@ -43,7 +43,7 @@ class TroubleBrewingIntermediateSetupTest {
     }
 
     @Test
-    fun `non drunk preset preserves its visible roster` {
+    fun `non drunk preset preserves its visible roster`() {
         val preset = nonDrunkPreset()
 
         val visibleRoster = TroubleBrewingVisibleRosterRealizer.realize(
