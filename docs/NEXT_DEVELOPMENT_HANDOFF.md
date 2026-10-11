@@ -6,7 +6,7 @@
 
 当前工作分支 `legacy-experience-retirement-20261011` 基于 Draft PR #293（其基于 Draft #292），不更改两者原始分支。旧说书人“新手/熟练”运行模式、设置开关/SharedPreferences 键及三个候选推荐专属 UI 已在清理分支删除；Drunk 路由不再接收说书人熟练模式；Fortune Teller/红鲱鱼不能在没有 Host 唯一合法结果时任取首项；Spy/Recluse 多解登记不可被自动定为单个见证。独立合法候选的人工选择和 `PlayerExperienceLevelV1` 均必须保留。
 
-正式操作权限仅有 `MANUAL`（全程手动且无 AI 请求）、`AI_ASSISTED`（推荐/明确采纳，不自动提交）与 `AI_AUTOMATIC`（只有 Host 核验当前合法性、版本和明确候选成功才可自动提交；失败安全暂停）。规则计算/唯一确定结果不取决于 AI。这是目标契约；**完整无人说书人尚未实现**。本清理不会修复 PROD-GLOBAL-3 旧独立 Drunk 请求的时序、Android 展示崩溃，亦不会分裂初始 Drunk + 全首夜一次联合规划目标。先完成此分支 CI/R2/代码审查，按 #292→#293→清理 PR 的依赖顺序合并，再重回 PROD-GLOBAL-3。
+正式操作权限仅有 `MANUAL`（全程手动且无 AI 请求）、`AI_ASSISTED`（推荐/明确采纳，不自动提交）与 `AI_AUTOMATIC`（只有 Host 核验当前合法性、版本和明确候选成功才可自动提交；失败安全暂停）。规则计算/唯一确定结果不取决于 AI。这是目标契约；**完整无人说书人尚未实现**。本清理不会修复 PROD-GLOBAL-3 旧独立 Drunk 请求的时序、Android 展示崩溃，亦不会分裂初始 Drunk + 全首夜一次联合规划目标。已创建 stacked Draft PR #295。角色简化夜间展示也须仅在唯一合法候选时展示快捷确认，绝不能因旧文本样式自动提交多个候选中的第一项。CI/R2 只对 base main 自动触发，因此另建临时 **仅验收、禁止合并** PR #296 运行组合检查；以 #295 为唯一正式实现 PR。先完成此分支 CI/R2/代码审查，按 #292→#293→#295 的依赖顺序合并，再重回 PROD-GLOBAL-3。
 
 ## 1. 当前基线 — VERIFIED at this documentation session
 
