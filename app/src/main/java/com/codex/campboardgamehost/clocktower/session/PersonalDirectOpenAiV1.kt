@@ -21,6 +21,22 @@ internal object PersonalDirectOpenAiV1 {
     private val analysisSchema = JSONObject("""{"type":"object","properties":{"strategy":{"type":"object","properties":{"situationSummary":{"type":"string"},"issues":{"type":"array","items":{"type":"object","properties":{"issueId":{"type":"string"},"priority":{"type":"integer"},"seats":{"type":"array","items":{"type":"integer"}},"diagnosis":{"type":"string"},"futureEffect":{"type":"string"}},"required":["issueId","priority","seats","diagnosis","futureEffect"],"additionalProperties":false}},"relations":{"type":"array","items":{"type":"object","properties":{"fromSeat":{"type":"integer"},"toSeat":{"type":"integer"},"label":{"type":"string"},"issueId":{"type":"string"}},"required":["fromSeat","toSeat","label","issueId"],"additionalProperties":false}},"intentions":{"type":"array","items":{"type":"object","properties":{"trigger":{"type":"string"},"approach":{"type":"string"},"tradeoff":{"type":"string"}},"required":["trigger","approach","tradeoff"],"additionalProperties":false}},"planRevisionNote":{"type":"string"}},"required":["situationSummary","issues","relations","intentions","planRevisionNote"],"additionalProperties":false}},"required":["strategy"],"additionalProperties":false}""")
     private val compactSchema = JSONObject("""{"type":"object","properties":{"candidateId":{"type":"string"},"planMemo":{"type":"string"}},"required":["candidateId","planMemo"],"additionalProperties":false}""")
 
+    private val oneShotSchema = JSONObject("""{"type":"object","properties":{"gameId":{"type":"string"},"gameStateRevision":{"type":"integer"},"playerInputRevision":{"type":"integer"},"demonBluffRoleIds":{"type":["array","null"],"items":{"type":"string"}},"choices":{"type":"array","items":{"type":"object","properties":{"decisionId":{"type":"string"},"candidateId":{"type":"string"}},"required":["decisionId","candidateId"],"additionalProperties":false}},"deferredDecisionIds":{"type":"array","items":{"type":"string"}}},"required":["gameId","gameStateRevision","playerInputRevision","demonBluffRoleIds","choices","deferredDecisionIds"],"additionalProperties":false}""")
+
+    private const val ONE_SHOT_INSTRUCTIONS = """
+You are a Trouble Brewing expert Storyteller building ONE FULL-BOARD coordinated first-night
+configuration. Reason internally across EVERY actual/shown seat and all legal choice domains:
+Good information intersections, fair alternative worlds, evil pressure, player experience, and
+how Demon bluffs interact with the available information.
+Output ONLY a single complete legal first-night package, no commentary or alternatives.
+For each legalScope.availableDecisions return EXACTLY ONE candidateId from its legalCandidateIds.
+When legalDemonBluffRoleIds is not null, return EXACTLY THREE distinct legal bluff role IDs.
+When it is null, return null. Copy deferredDecisionIds EXACTLY; they represent choices whose
+player action or future dependency is not yet known. Do NOT invent poison targets, selected
+Fortune Teller query seats, observations or registration witnesses. Never select an ID outside
+the Host legalScope. Copy gameId/revisions exactly. The Host owns all truth and confirmation.
+"""
+
     private const val SETUP_INSTRUCTIONS = """
 You are an expert Trouble Brewing whole-game Storyteller strategist, not a Drunk selector.
 FIRST diagnose the FULL actual/shown seat roster, Good information interaction, evil pressure,
@@ -57,14 +73,17 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
         require(modelPattern.matches(model)) { "Invalid OpenAI model ID." }
         val case = JSONObject(hostPayload)
         val analysis = case.optString("schemaId") == "botc.storyteller-global-analysis-request"
+        val oneShot = case.optString("schemaId") == FirstNightOneShotRequestV1.REQUEST_SCHEMA
         val compact = case.optString("responseProfile") == "COMPACT_MEMO_V1"
-        require(!analysis || !compact)
+        require(!(analysis && compact) && !(oneShot && compact))
         val schema = when {
+            oneShot -> oneShotSchema
             analysis -> analysisSchema
             compact -> compactSchema
             else -> fullSchema
         }
         val instructions = when {
+            oneShot -> ONE_SHOT_INSTRUCTIONS
             analysis -> COMMITTED_INSTRUCTIONS
             compact -> LIVE_INSTRUCTIONS
             else -> SETUP_INSTRUCTIONS
@@ -77,6 +96,7 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
             .put("text", JSONObject().put("format", JSONObject()
                 .put("type", "json_schema")
                 .put("name", when {
+                    oneShot -> "botc_first_night_one_shot_v1"
                     analysis -> "botc_global_analysis_v1"
                     compact -> "botc_global_compact_memo_v1"
                     else -> "botc_global_storyteller_v1"
@@ -103,6 +123,12 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
         }
         require(text.isNotEmpty()) { "OpenAI returned no structured text." }
         val result = JSONObject(text.toString())
+        if (case.optString("schemaId") == FirstNightOneShotRequestV1.REQUEST_SCHEMA) {
+            // The caller validates the entire returned bundle against the
+            // exact in-memory Host legal scope and current revision. Never
+            // fill missing or illegal values with a default.
+            return result.toString()
+        }
         val analysis = case.optString("schemaId") == "botc.storyteller-global-analysis-request"
         val compact = case.optString("responseProfile") == "COMPACT_MEMO_V1"
         val response = JSONObject()

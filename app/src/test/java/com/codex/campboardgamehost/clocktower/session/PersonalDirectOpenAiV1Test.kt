@@ -41,6 +41,54 @@ class PersonalDirectOpenAiV1Test {
     }
 
     @Test
+    fun `one-shot full-board mode returns one legal bundle without strategy prose`() {
+        val scope = FirstNightOneShotScopeV1(
+            gameId = "test-opening",
+            gameStateRevision = 0L,
+            playerInputRevision = 0L,
+            legalDemonBluffRoleIds = listOf("Saint", "Monk", "Soldier"),
+            availableDecisions = listOf(FirstNightOneShotDecisionScopeV1(
+                "first-night:Investigator:seat-3", 3, "Investigator",
+                listOf("fn-a", "fn-b"),
+                mapOf("fn-a" to "Spy-like alternate world", "fn-b" to "Investigator good information"),
+            )),
+            deferredDecisionIds = listOf("first-night:Fortune Teller:seat-6"),
+        )
+        val payload = JSONObject()
+            .put("schemaId", FirstNightOneShotRequestV1.REQUEST_SCHEMA)
+            .put("schemaVersion", 1)
+            .put("sourceRevision", JSONObject().put("gameStateRevision", 0)
+                .put("playerInputRevision", 0))
+            .put("legalScope", scope.providerLegalScope())
+        val request = JSONObject(PersonalDirectOpenAiV1.buildRequest(
+            payload.toString(), "gpt-5.6-luna",
+        ))
+        assertEquals("botc_first_night_one_shot_v1",
+            request.getJSONObject("text").getJSONObject("format").getString("name"))
+        assertFalse(request.getBoolean("store"))
+        assertTrue(request.getString("instructions").contains("FULL-BOARD"))
+        val response = JSONObject()
+            .put("gameId", "test-opening")
+            .put("gameStateRevision", 0)
+            .put("playerInputRevision", 0)
+            .put("demonBluffRoleIds", JSONArray(listOf("Saint", "Monk", "Soldier")))
+            .put("choices", JSONArray().put(JSONObject()
+                .put("decisionId", "first-night:Investigator:seat-3")
+                .put("candidateId", "fn-a")))
+            .put("deferredDecisionIds", JSONArray(listOf("first-night:Fortune Teller:seat-6")))
+        val raw = PersonalDirectOpenAiV1.adaptResponse(payload.toString(), upstream(response))
+        assertEquals("fn-a", FirstNightOneShotRequestV1.decode(raw, scope)
+            .candidateByDecisionId["first-night:Investigator:seat-3"])
+        assertTrue(runCatching {
+            FirstNightOneShotRequestV1.decode(
+                JSONObject(raw).put("demonBluffRoleIds", JSONArray(listOf("Monk", "Monk", "Saint")))
+                    .toString(),
+                scope,
+            )
+        }.isFailure)
+    }
+
+    @Test
     fun `request uses strict responses schema store false and no credentials`() {
         val raw = PersonalDirectOpenAiV1.buildRequest(
             case().toString(), "gpt-5.6-luna")

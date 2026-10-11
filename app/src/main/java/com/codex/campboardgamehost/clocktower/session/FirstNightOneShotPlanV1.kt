@@ -17,6 +17,8 @@ internal data class FirstNightOneShotDecisionScopeV1(
     val sourceSeat: Int?,
     val family: String,
     val legalCandidateIds: List<String>,
+    // Host-authored display semantics for cross-role LLM reasoning; never a rule authority.
+    val candidateDescriptions: Map<String, String> = emptyMap(),
 ) {
     init {
         require(decisionId.isNotBlank() && decisionId.length <= 180)
@@ -26,6 +28,8 @@ internal data class FirstNightOneShotDecisionScopeV1(
             legalCandidateIds.size <= 512 &&
             legalCandidateIds.size == legalCandidateIds.distinct().size &&
             legalCandidateIds.all { it.isNotBlank() && it.length <= 280 })
+        require(candidateDescriptions.keys.all { it in legalCandidateIds } &&
+            candidateDescriptions.values.all { it.length <= 600 })
     }
 }
 
@@ -63,7 +67,8 @@ internal data class FirstNightOneShotScopeV1(
                     .put("decisionId", scope.decisionId)
                     .put("sourceSeat", scope.sourceSeat ?: JSONObject.NULL)
                     .put("family", scope.family)
-                    .put("legalCandidateIds", JSONArray(scope.legalCandidateIds)))
+                    .put("legalCandidateIds", JSONArray(scope.legalCandidateIds))
+                    .put("candidateDescriptions", JSONObject(scope.candidateDescriptions)))
             }
         })
         .put("deferredDecisionIds", JSONArray(deferredDecisionIds))

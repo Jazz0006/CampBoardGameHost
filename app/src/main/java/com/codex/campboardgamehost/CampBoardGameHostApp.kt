@@ -86,6 +86,9 @@ import com.codex.campboardgamehost.clocktower.session.PersonalDirectOpenAiV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalStrategyV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalDecisionRequestV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCommittedAnalysisV1
+import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotRequestV1
+import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotScopeV1
+import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotPlanV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseV1
@@ -394,6 +397,12 @@ internal fun CampBoardGameHostApp() {
     var drunkAiResponse by remember { mutableStateOf<StorytellerProviderResponseV1?>(null) }
     var drunkAiStrategy by remember { mutableStateOf<StorytellerGlobalStrategyV1?>(null) }
     var committedAiStrategy by remember { mutableStateOf<StorytellerGlobalStrategyV1?>(null) }
+    var firstNightOneShotPlan by remember { mutableStateOf<FirstNightOneShotPlanV1?>(null) }
+    var firstNightOneShotBusy by remember { mutableStateOf(false) }
+    var firstNightOneShotError by remember { mutableStateOf<String?>(null) }
+    var firstNightOneShotAccepted by remember { mutableStateOf(false) }
+    var firstNightAdoptedChoices by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var firstNightOneShotRequestSerial by remember { mutableStateOf(0) }
     var committedAiSnapshot by remember { mutableStateOf<TroubleBrewingGameSnapshotV1?>(null) }
     var committedAiBusy by remember { mutableStateOf(false) }
     var committedAiError by remember { mutableStateOf<String?>(null) }
@@ -1785,6 +1794,106 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
+    fun requestFirstNightOneShot(scope: FirstNightOneShotScopeV1) {
+        val session = clocktowerGameSession?.state ?: return
+        val snapshot = committedAiSnapshot ?: return
+        if (!personalDirectEnabled ||
+            storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED ||
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            clocktowerPhase != ClocktowerPhase.FirstNight ||
+            scope.gameId != session.gameId || snapshot.gameId != scope.gameId ||
+            scope.gameStateRevision != session.gameStateRevision ||
+            scope.playerInputRevision != session.playerInputRevision ||
+            firstNightOneShotBusy || firstNightOneShotAccepted
+        ) return
+        firstNightOneShotBusy = true
+        firstNightOneShotError = null
+        firstNightOneShotPlan = null
+        firstNightOneShotRequestSerial += 1
+        val serial = firstNightOneShotRequestSerial
+        val requestedKey = aiToken
+        val requestedModel = aiDirectModel
+        val startTime = SystemClock.elapsedRealtime()
+        drunkAiScope.launch {
+            val result = runCatching {
+                FirstNightOneShotRequestV1.recommend(
+                    endpoint = PersonalDirectOpenAiV1.ENDPOINT,
+                    accessToken = requestedKey,
+                    snapshot = snapshot,
+                    scope = scope,
+                    model = requestedModel,
+                )
+            }
+            if (serial != firstNightOneShotRequestSerial) return@launch
+            val live = clocktowerGameSession?.state
+            if (live?.gameId != scope.gameId ||
+                live?.gameStateRevision != scope.gameStateRevision ||
+                live?.playerInputRevision != scope.playerInputRevision ||
+                screen != Screen.ClocktowerJudge ||
+                clocktowerPhase != ClocktowerPhase.FirstNight ||
+                storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED
+            ) {
+                firstNightOneShotBusy = false
+                firstNightOneShotError = "Game changed while planning; retry for current first night."
+                return@launch
+            }
+            firstNightOneShotBusy = false
+            result.onSuccess { plan ->
+                firstNightOneShotPlan = plan
+                firstNightOneShotError = null
+                DebugFlightRecorder.record(
+                    "FIRST_NIGHT_ONE_SHOT_READY",
+                    mapOf("elapsedMs" to (SystemClock.elapsedRealtime() - startTime).toString(),
+                        "recommendationCount" to plan.candidateByDecisionId.size.toString()),
+                )
+            }.onFailure { error ->
+                firstNightOneShotError =
+                    "One-shot AI unavailable (${PersonalDirectOpenAiV1.safeFailure(error)}). Manual hosting is available."
+                DebugFlightRecorder.record(
+                    "FIRST_NIGHT_ONE_SHOT_FAILED",
+                    mapOf("category" to PersonalDirectOpenAiV1.safeFailure(error)),
+                )
+            }
+        }
+    }
+
+    fun adoptFirstNightOneShot(
+        plan: FirstNightOneShotPlanV1,
+        scope: FirstNightOneShotScopeV1,
+    ) {
+        val live = clocktowerGameSession?.state ?: return
+        if (storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED ||
+            clocktowerPhase != ClocktowerPhase.FirstNight ||
+            clocktowerNightStartedState.value ||
+            live.gameId != scope.gameId ||
+            live.gameStateRevision != scope.gameStateRevision ||
+            live.playerInputRevision != scope.playerInputRevision ||
+            !plan.validFor(scope) || firstNightOneShotPlan != plan
+        ) return
+        val bluffs = plan.demonBluffRoleIds
+        if (bluffs != null && bluffs != clocktowerRecommendedDemonBluffRoleNames) {
+            clocktowerRecommendedDemonBluffRoleNames = bluffs
+            advanceClocktowerPlayerInputRevision()
+        }
+        val redHerringSeat = plan.candidateByDecisionId["setup.red-herring"]
+            ?.removePrefix("seat-")?.toIntOrNull()
+        redHerringSeat?.let { seat ->
+            val card = cards.getOrNull(seat - 1)
+            if (card?.clocktowerTeam in setOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider) &&
+                clocktowerRedHerring != card?.name
+            ) {
+                clocktowerRedHerring = card?.name
+                advanceClocktowerPlayerInputRevision()
+            }
+        }
+        // Accept the remaining candidate IDs as a PRELIMINARY proposal only.
+        // A later night step must re-match the ID against its current legal domain.
+        firstNightAdoptedChoices = plan.candidateByDecisionId
+        firstNightOneShotAccepted = true
+        DebugFlightRecorder.record("FIRST_NIGHT_ONE_SHOT_ADOPTED",
+            mapOf("recommendationCount" to plan.candidateByDecisionId.size.toString()))
+    }
+
     fun requestLiveGlobalAdvice(step: ClocktowerNightStepUi, stepIndex: Int) {
         if (storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED ||
             screen != Screen.ClocktowerJudge ||
@@ -2073,7 +2182,11 @@ internal fun CampBoardGameHostApp() {
                 committedSetup = committedSetup.committedSetup,
                 characterRegistry = characterRegistry,
             )
-        committedAiSnapshot?.let(::requestCommittedGlobalAdvice)
+        // The experimental personal direct assisted path starts a SINGLE
+        // actionable one-shot joint opening at preflight, not a paid prose essay.
+        if (!(storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
+                personalDirectEnabled)
+        ) committedAiSnapshot?.let(::requestCommittedGlobalAdvice)
         currentTroubleBrewingFirstNightPairDecisionContext()?.let { request ->
             troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
                 request = request,
@@ -2162,6 +2275,12 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun startTroubleBrewingGame() {
+        firstNightOneShotRequestSerial += 1
+        firstNightOneShotBusy = false
+        firstNightOneShotPlan = null
+        firstNightOneShotError = null
+        firstNightOneShotAccepted = false
+        firstNightAdoptedChoices = emptyMap()
         pendingTroubleBrewingDrunkSelection = null
         drunkAiResponse = null
         drunkAiStrategy = null
@@ -2742,7 +2861,8 @@ internal fun CampBoardGameHostApp() {
                                             storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC ->
                                             Screen.ClocktowerAutoPause
                                         currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
-                                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED ->
+                                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
+                                            !personalDirectEnabled ->
                                             Screen.ClocktowerAiOverview
                                         else -> Screen.ClocktowerJudge
                                     }
@@ -2825,6 +2945,15 @@ internal fun CampBoardGameHostApp() {
                         gameSeed = clocktowerGameSeed,
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         globalAiAssisted = storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED,
+                        oneShotEnabled = personalDirectEnabled &&
+                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED,
+                        oneShotPlan = firstNightOneShotPlan,
+                        oneShotBusy = firstNightOneShotBusy,
+                        oneShotError = firstNightOneShotError,
+                        oneShotAccepted = firstNightOneShotAccepted,
+                        adoptedOneShotChoices = firstNightAdoptedChoices,
+                        onRequestOneShot = ::requestFirstNightOneShot,
+                        onAdoptOneShot = ::adoptFirstNightOneShot,
                         globalNightPendingDecision = if (
                             storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
                             clocktowerPhase == ClocktowerPhase.Night
