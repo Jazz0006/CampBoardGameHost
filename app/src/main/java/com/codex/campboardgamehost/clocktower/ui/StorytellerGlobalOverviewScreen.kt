@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 import android.os.SystemClock
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalStrategyV1
 import kotlinx.coroutines.delay
 
-/** Post-commit private strategy: readable outline first, seat graph only on demand. */
+/** Private storyteller overlay: only hypotheses; the grimoire is factual authority. */
 @Composable
 internal fun StorytellerGlobalOverviewScreen(
     cards: List<PlayerCard>,
@@ -41,244 +40,96 @@ internal fun StorytellerGlobalOverviewScreen(
     onContinue: () -> Unit,
 ) {
     fun label(zh: String, en: String) = if (language == "en") en else zh
-    val issues = remember(strategy) { strategy.issues.sortedBy { it.priority } }
-    var graphVisible by remember(strategy) { mutableStateOf(false) }
-    var selectedIssue by remember(strategy) { mutableStateOf(issues.first().issueId) }
-    val selected = issues.firstOrNull { it.issueId == selectedIssue } ?: issues.first()
+    var selectedIssue by remember(strategy) { mutableStateOf(strategy.issues.first().issueId) }
+    val selected = strategy.issues.firstOrNull { it.issueId == selectedIssue }
+        ?: strategy.issues.first()
     val relatedSeats = selected.seats.toSet()
-    val relations = strategy.relations.filter { it.issueId == selected.issueId }.take(4)
-    val seatDescriptions = remember(cards, language) {
-        cards.mapIndexed { index, card ->
-            "${index + 1}号 ${card.clocktowerRole?.nameFor(language).orEmpty()}"
-        }
-    }
-    fun seatsLabel(seats: List<Int>): String =
-        seats.joinToString(" · ") { seat ->
-            seatDescriptions.getOrNull(seat - 1) ?: "${seat}号"
-        }
+    val relations = strategy.relations
+        .filter { it.issueId == selected.issueId }
+        .take(4)
+        .map { it.fromSeat to it.toSeat }
 
     ClocktowerDarkTheme {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                label("说书人 · 全局战略", "STORYTELLER · GLOBAL STRATEGY"),
+                label("说书人专用 · 全局局势分析", "STORYTELLER ONLY · WHOLE-GAME ANALYSIS"),
                 color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                label("已确认阵容 · AI 提出的是推测，不是魔典事实",
-                    "Confirmed roster · AI hypotheses are not grimoire facts"),
+                label(
+                    "虚线仅表示 AI 战略假设，不代表已确认的登记或事实。此分析基于发牌前阵容；已确认裁量以魔典为准。",
+                    "Dashed links are hypotheses, not confirmed registrations. This analysis began before dealing; grimoire wins.",
+                ),
+                fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                OutlinedButton(
-                    onClick = { graphVisible = false },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(if (!graphVisible) label("✓ 战略摘要", "✓ Summary")
-                        else label("战略摘要", "Summary"))
-                }
-                OutlinedButton(
-                    onClick = { graphVisible = true },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(if (graphVisible) label("✓ 方桌关系", "✓ Seat graph")
-                        else label("方桌关系", "Seat graph"))
+                strategy.issues.take(4).forEachIndexed { index, issue ->
+                    OutlinedButton(
+                        onClick = { selectedIssue = issue.issueId },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text((index + 1).toString() + if (issue.issueId == selectedIssue) " ✓" else "", fontSize = 12.sp)
+                    }
                 }
             }
-            if (!graphVisible) {
-                Column(
-                    modifier = Modifier.weight(1f)
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                ClocktowerSquareTableSeatSurface(
+                    seats = cards.mapIndexed { index, card ->
+                        val seat = index + 1
+                        ClocktowerSquareTableSeatUiModel(
+                            seatId = seat.toString(),
+                            seatNumber = seat,
+                            label = seat.toString() + " · " + card.name,
+                            detailLabels = listOfNotNull(card.clocktowerRole?.nameFor(language)),
+                            state = if (seat in relatedSeats)
+                                ClocktowerSquareTableSeatState.HighlightedInformation
+                            else ClocktowerSquareTableSeatState.Neutral,
+                            isAlive = card.eliminatedRound == null,
+                        )
+                    },
+                    strategicRelations = relations,
+                    interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
                 ) {
-                    androidx.compose.material3.Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = androidx.compose.material3.CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                        ),
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                        horizontalAlignment = Alignment.Start,
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                label("局势总览", "WHOLE-GAME SUMMARY"),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                strategy.situationSummary,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                    }
-                    Text(
-                        label("关键问题（${issues.size}）", "KEY ISSUES (${issues.size})"),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    issues.forEachIndexed { index, issue ->
-                        androidx.compose.material3.Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                            ),
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
+                        Text(selected.diagnosis, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(selected.futureEffect, fontSize = 11.sp)
+                        strategy.relations.filter { it.issueId == selected.issueId }
+                            .forEach {
                                 Text(
-                                    label("问题 ${index + 1}", "ISSUE ${index + 1}"),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                Text(
-                                    seatsLabel(issue.seats),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                                Text(
-                                    issue.diagnosis,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                                androidx.compose.material3.HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                )
-                                Text(
-                                    label("可能影响", "POSSIBLE IMPACT"),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Text(issue.futureEffect, style = MaterialTheme.typography.bodyMedium)
-                            }
-                        }
-                    }
-                    Text(
-                        label("后续条件策略", "CONDITIONAL NEXT STEPS"),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    strategy.intentions.forEachIndexed { index, intention ->
-                        androidx.compose.material3.Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                            ),
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Text(
-                                    label("条件 ${index + 1}", "CONDITION ${index + 1}"),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                                Text(intention.trigger, style = MaterialTheme.typography.bodyLarge)
-                                Text(
-                                    intention.approach,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                                Text(
-                                    label("取舍：", "Tradeoff: ") + intention.tradeoff,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    it.fromSeat.toString() + " ↔ " + it.toSeat + ": " + it.label,
+                                    fontSize = 10.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                        }
-                    }
-                    if (strategy.planRevisionNote.isNotBlank()) {
-                        Text(
-                            label("计划修订：", "Plan revision: ") + strategy.planRevisionNote,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
                     }
                 }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    issues.forEachIndexed { index, issue ->
-                        OutlinedButton(onClick = { selectedIssue = issue.issueId }) {
-                            Text(
-                                if (issue.issueId == selectedIssue) "${index + 1} ✓"
-                                else "${index + 1}",
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    }
-                }
-                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    ClocktowerSquareTableSeatSurface(
-                        seats = cards.mapIndexed { index, card ->
-                            val seat = index + 1
-                            ClocktowerSquareTableSeatUiModel(
-                                seatId = seat.toString(),
-                                seatNumber = seat,
-                                label = "${seat} · ${card.name}",
-                                detailLabels = listOfNotNull(card.clocktowerRole?.nameFor(language)),
-                                state = if (seat in relatedSeats)
-                                    ClocktowerSquareTableSeatState.HighlightedInformation
-                                else ClocktowerSquareTableSeatState.Neutral,
-                                isAlive = card.eliminatedRound == null,
-                            )
-                        },
-                        strategicRelations = relations.map { it.fromSeat to it.toSeat },
-                        interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
-                    ) {
-                        Text(
-                            label("关系假设", "HYPOTHESES"),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.align(Alignment.Center),
-                        )
-                    }
-                }
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                        .heightIn(max = 164.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        seatsLabel(selected.seats),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(selected.diagnosis, style = MaterialTheme.typography.bodyMedium)
-                    relations.forEach { relation ->
-                        Text(
-                            "${relation.fromSeat} ↔ ${relation.toSeat} · ${relation.label}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Text(
-                        label("虚线是推测，不代表真实登记", "Dashed lines are hypotheses, not registrations"),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            }
+            Column(
+                modifier = Modifier.fillMaxWidth().heightIn(max = 160.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                Text(strategy.situationSummary, style = MaterialTheme.typography.bodyMedium)
+                Text(label("后续条件策略", "CONDITIONAL FUTURE PLAN"), fontWeight = FontWeight.Bold)
+                strategy.intentions.take(3).forEach {
+                    Text("• " + it.trigger + " → " + it.approach + "（" + it.tradeoff + "）", fontSize = 12.sp)
                 }
             }
             Button(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
@@ -287,6 +138,7 @@ internal fun StorytellerGlobalOverviewScreen(
         }
     }
 }
+
 
 /**
  * No provisional PRECOMMIT plan is displayed as confirmed truth while post-commit

@@ -45,16 +45,12 @@ The repair:
 
 Acceptance: Full Android CI and independent R2; run the same Xiaomi setup with the device still connected. Record the displayed stage and sanitized error after HTTP 200. A 200 response by itself is NOT a successful strategic analysis; further repair may be required if the diagnostics surface an output-contract violation.
 
-## Real-phone second pass: initial stale, retry succeeds, strategy text unreadable
+## Real-phone second pass: first stale, retry successful, low text contrast
 
-On 2026-10-11 the user reported that the first post-commit strategy was discarded but a retry succeeded. The AI direct HTTPS exchange and model strategy can therefore work. The exact first-discard reason was not yet supplied; do not falsely claim a confirmed root cause.
+User confirmed the first whole-game analysis was discarded; retry accepted the resulting global strategy. The **exact stale reason remains unconfirmed**. The existing diagnostic export writes a `GLOBAL_AI_STALE` breadcrumb with a bounded `reason` field such as `PLAYER_REVISION_CHANGED`, `SCREEN_CHANGED` or `GAME_REVISION_CHANGED`. Ask for that **reason code only**, not the full secret-bearing Network Inspector request.
 
-Current mitigation is tightly scoped to the **same confirmed setup** while dealing identities: revision-only changes can reuse the already-paid analysis only when canonical GameState, player context, decision history, action history, observation log, global timeline and identity are still identical. It is prohibited after first-night activity, for a changed game, or for live pending-action recommendations. Distinct stale reasons remain reported for diagnosis.
+No ordinary identity-reveal action is expected to mutate the canonical game state. Do not loosen revision freshness based on the hypothesis that some version increment must have caused the rejection. Existing strict Host freshness checks continue to reject altered game facts or moved gameplay phases. If a proven benign revision-only change is found, fix the triggering revision semantics first.
 
-The previous private full-board page used 10–12sp narrative inside a narrow square-table center, then another scroll pane constrained to 160dp, resulting in extremely poor readability on a phone. Redesigned UX:
-- The default is a single, naturally scrolling *strategic brief*: 16sp body for the full-board overview and issue diagnosis; headings, involved seat/role labels, future impact, and conditional plans are visibly separated.
-- A separate *seat graph* view keeps the existing canonical Host table layout, highlighted seats and dotted speculative relations. Only a tiny non-narrative legend remains in the table center. On a phone, tap an issue number to switch map focus.
-- “Continue hosting” stays visible at the bottom in both views; the UI is private to the storyteller; AI relation lines remain hypotheses, never confirmed Spy/Recluse registrations or Host facts.
-- No additional model call, prompt truncation, rules changes, or new recommendation algorithm was introduced by the UI change.
+The old poor-readability pattern was reconfirmed: a dark Material colorScheme did not bind `LocalContentColor` for uncoloured Compose `Text` beneath a plain `Modifier.background()`. The dark Clocktower theme now explicitly supplies `onBackground` as the default content colour through `CompositionLocalProvider`. This maintains the previously agreed dark background, warm-white body, gold headings and dark cards. No reflow, model/prompt changes, or unproven stale-revision acceptance logic are shipped as part of the colour correction.
 
-Pending acceptance: CI full Android build and screenshots from at least one narrow Android phone on both summary and map tabs; verify first request and manual fallback. Never expose the real Key in screenshots or exported debug bundles.
+Pending acceptance: CI Android full tests + device screenshot verifying readable actual foreground text; capture the *specific* first-discard reason with no API credential and test whether subsequent attempt starts cleanly.

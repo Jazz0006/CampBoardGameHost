@@ -1,8 +1,5 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
-import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
@@ -56,39 +53,6 @@ class StorytellerCommittedAnalysisV1Test {
         intentions = listOf(StorytellerGlobalIntentionV1("First night", "Balance", "Avoid lies")),
         planRevisionNote = "Precommit note",
     )
-
-    @Test
-    fun `setup analysis survives only nonsemantic revision drift during identity dealing`() {
-        val game = TroubleBrewingFixtures.eightPlayerExample()
-        val submitted = ClocktowerSessionState(
-            gameId = "dealing",
-            gameStateRevision = 0L,
-            playerInputRevision = 0L,
-            gameSeed = game.seed,
-            gameState = game,
-        )
-        assertTrue(setupOnlyAnalysisFactsUnchanged(
-            submitted, submitted.copy(gameStateRevision = 1L, playerInputRevision = 2L),
-        ))
-        val changedRolesOrLife = submitted.copy(
-            gameStateRevision = 1L,
-            gameState = game.copy(players = game.players.mapIndexed { i, p ->
-                if (i == 0) p.copy(alive = false) else p
-            }),
-        )
-        assertTrue(!setupOnlyAnalysisFactsUnchanged(submitted, changedRolesOrLife))
-        val changedContext = submitted.copy(
-            playerInputRevision = 1L,
-            storytellerPlayerContextBySeat = mapOf(
-                1 to StorytellerPlayerContextInputV1(
-                    experienceLevel = PlayerExperienceLevelV1.BEGINNER,
-                ),
-            ),
-        )
-        assertTrue(!setupOnlyAnalysisFactsUnchanged(submitted, changedContext))
-        val changedChronology = submitted.copy(nextTimelineGlobalSequence = 1L)
-        assertTrue(!setupOnlyAnalysisFactsUnchanged(submitted, changedChronology))
-    }
 
     @Test
     fun `committed analysis includes real Drunk and full roster or no Drunk`() {
