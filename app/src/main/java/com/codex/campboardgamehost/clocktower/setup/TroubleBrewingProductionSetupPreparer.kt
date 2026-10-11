@@ -34,7 +34,7 @@ internal object TroubleBrewingProductionSetupPreparer {
         val candidates = pool.map { preset ->
             SetupCandidate(
                 script = TROUBLE_BREWING_SCRIPT,
-                actualRoles = preset.actualExternalRoleIds().map { externalId ->
+                actualRoles = preset.visibleExternalRoleIds().map { externalId ->
                     requireNotNull(characterRegistry.findByExternalId(externalId)) {
                         "Validated Trouble Brewing preset '${preset.id}' references unknown role '$externalId'."
                     }.id
@@ -62,7 +62,7 @@ internal object TroubleBrewingProductionSetupPreparer {
         )
         val selectedCandidate = SetupDiversitySelector().select(
             candidates = provider.candidates(request),
-            history = recentSetupRotationHistory.toGenericHistory(characterRegistry),
+            history = recentSetupRotationHistory.toSetupDiversityHistory(characterRegistry),
             selectionSeed = gameSeed,
         )
         val selectedPresetId = requireNotNull(selectedCandidate.provenance.candidateId) {
@@ -72,16 +72,8 @@ internal object TroubleBrewingProductionSetupPreparer {
             "Generic Trouble Brewing selection '$selectedPresetId' does not resolve to the validated preset pool."
         }
 
-        val addedVisibleTownsfolkRoleId =
-            TroubleBrewingVisibleRosterOptionSelector.selectAddedTownsfolk(
-                candidate = selectedCandidate,
-                preset = selectedPreset,
-                characterRegistry = characterRegistry,
-                setupSeed = gameSeed,
-            )
         val visibleRoster = TroubleBrewingVisibleRosterRealizer.realize(
             preset = selectedPreset,
-            addedVisibleTownsfolkRoleId = addedVisibleTownsfolkRoleId,
         )
         val shownSeatAssignments = TroubleBrewingSetupDealPlanner.planVisibleRoster(
             datasetId = dataset.datasetId,
@@ -107,30 +99,9 @@ internal object TroubleBrewingProductionSetupPreparer {
         )
     }
 
-    private fun TroubleBrewingSetupPreset.actualExternalRoleIds(): List<String> =
-        townsfolk + outsiders + minions + demons
-
-    private fun TroubleBrewingSetupRotationHistory.toGenericHistory(
-        characterRegistry: ClocktowerCharacterRegistry,
-    ): SetupDiversityHistory {
-        val impRole = requireNotNull(characterRegistry.findByExternalId(IMP_EXTERNAL_ID)) {
-            "Trouble Brewing generic setup history requires the canonical Imp role."
-        }.id
-        return SetupDiversityHistory(
-            recentSetups = recentGames.map { record ->
-                TroubleBrewingSetupRotationRecordFactory.validate(record)
-                SetupDiversityRecord(
-                    script = TROUBLE_BREWING_SCRIPT,
-                    actualRoles = record.realNonDemonRoleIds.map { externalId ->
-                        requireNotNull(characterRegistry.findByExternalId(externalId)) {
-                            "Trouble Brewing setup history references unknown role '$externalId'."
-                        }.id
-                    } + impRole,
-                )
-            },
-        )
-    }
+    private fun TroubleBrewingSetupPreset.visibleExternalRoleIds(): List<String> =
+        townsfolk + outsiders.filterNot { it == DRUNK_EXTERNAL_ID } + minions + demons
 
     private val TROUBLE_BREWING_SCRIPT = ScriptId("trouble_brewing")
-    private const val IMP_EXTERNAL_ID = "imp"
+    private const val DRUNK_EXTERNAL_ID = "drunk"
 }

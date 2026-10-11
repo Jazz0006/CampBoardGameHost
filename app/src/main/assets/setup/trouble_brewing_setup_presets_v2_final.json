@@ -1,11 +1,11 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "dataset_id": "trouble_brewing_setup_presets_v2_final",
   "script": "Trouble Brewing",
   "script_zh": "暗流涌动",
   "generated_date": "2026-08-28",
   "status": "final_ready_for_program_integration",
-  "important_note": "Final globally balanced Trouble Brewing recommendation pool. Official examples remain hard anchors; external references are soft references. Every Drunk preset contains exactly three legal absent Townsfolk in `drunk_as_options`; non-Drunk presets contain an empty list.",
+  "important_note": "Curated Trouble Brewing presets store the complete visible roster. Drunk is a boolean; when true, one original absent Townsfolk is added to townsfolk and drunk remains in outsiders as the actual role.",
   "role_catalog": {
     "washerwoman": {
       "name": "Washerwoman",
@@ -204,8 +204,8 @@
   },
   "runtime_selection_policy": {
     "exact_repeat": "reject",
-    "similarity_scope": "Compare real in-play non-Demon role IDs. Imp is excluded because it is always present in Trouble Brewing.",
-    "role_overlap_formula": "intersection(candidate_non_demon_roles, previous_non_demon_roles) / (player_count - 1)",
+    "similarity_scope": "Compare completed shown non-Demon role IDs. The full shown Townsfolk roster is projected before any actual Drunk seat is committed.",
+    "role_overlap_formula": "intersection(candidate_shown_non_demon_roles, previous_shown_non_demon_roles) / (player_count - 1)",
     "last_game_max_overlap": {
       "5": 0.6,
       "6": 0.6,
@@ -301,7 +301,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_002",
@@ -325,7 +325,7 @@
           "misinformation",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_003",
@@ -349,7 +349,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_004",
@@ -373,7 +373,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_005",
@@ -397,7 +397,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_006",
@@ -421,7 +421,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_007",
@@ -444,7 +444,7 @@
           "information-heavy",
           "misinformation"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_008",
@@ -468,7 +468,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_009",
@@ -492,7 +492,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_010",
@@ -516,7 +516,7 @@
           "first-night-heavy",
           "registration-chaos"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_011",
@@ -540,7 +540,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_012",
@@ -564,7 +564,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_013",
@@ -588,7 +588,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_014",
@@ -612,7 +612,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_015",
@@ -636,7 +636,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_016",
@@ -660,7 +660,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_017",
@@ -684,7 +684,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_018",
@@ -708,7 +708,7 @@
           "registration-chaos",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_019",
@@ -732,7 +732,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_020",
@@ -756,7 +756,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_021",
@@ -780,7 +780,7 @@
           "misinformation",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_022",
@@ -804,7 +804,7 @@
           "registration-chaos",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_023",
@@ -828,7 +828,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_024",
@@ -852,7 +852,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_025",
@@ -876,7 +876,7 @@
           "registration-chaos",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_026",
@@ -900,7 +900,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_027",
@@ -924,7 +924,7 @@
           "registration-chaos",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_028",
@@ -948,7 +948,7 @@
           "misinformation",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_029",
@@ -972,7 +972,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_5_030",
@@ -996,7 +996,7 @@
           "registration-chaos",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       }
     ],
     "6": [
@@ -1024,7 +1024,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_002",
@@ -1032,7 +1032,8 @@
         "townsfolk": [
           "investigator",
           "undertaker",
-          "virgin"
+          "virgin",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk"
@@ -1051,11 +1052,7 @@
           "misinformation",
           "public-verification"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "fortuneteller",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_6_003",
@@ -1081,7 +1078,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_004",
@@ -1108,7 +1105,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_005",
@@ -1116,7 +1113,8 @@
         "townsfolk": [
           "washerwoman",
           "empath",
-          "ravenkeeper"
+          "ravenkeeper",
+          "chef"
         ],
         "outsiders": [
           "drunk"
@@ -1133,11 +1131,7 @@
           "information-heavy",
           "misinformation"
         ],
-        "drunk_as_options": [
-          "chef",
-          "monk",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_6_006",
@@ -1163,7 +1157,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_007",
@@ -1189,7 +1183,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_008",
@@ -1215,7 +1209,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_009",
@@ -1241,7 +1235,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_010",
@@ -1267,7 +1261,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_011",
@@ -1293,7 +1287,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_012",
@@ -1320,7 +1314,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_013",
@@ -1346,7 +1340,7 @@
           "registration-chaos",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_014",
@@ -1372,7 +1366,7 @@
           "registration-chaos",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_015",
@@ -1380,7 +1374,8 @@
         "townsfolk": [
           "washerwoman",
           "monk",
-          "ravenkeeper"
+          "ravenkeeper",
+          "empath"
         ],
         "outsiders": [
           "drunk"
@@ -1398,11 +1393,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": [
-          "empath",
-          "fortuneteller",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_6_016",
@@ -1428,7 +1419,7 @@
           "registration-chaos",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_017",
@@ -1436,7 +1427,8 @@
         "townsfolk": [
           "librarian",
           "empath",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "drunk"
@@ -1454,11 +1446,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": [
-          "chef",
-          "undertaker",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_6_018",
@@ -1483,7 +1471,7 @@
           "information-heavy",
           "registration-chaos"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_019",
@@ -1491,7 +1479,8 @@
         "townsfolk": [
           "washerwoman",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "drunk"
@@ -1510,11 +1499,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "empath",
-          "fortuneteller",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_6_020",
@@ -1522,7 +1507,8 @@
         "townsfolk": [
           "librarian",
           "fortuneteller",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk"
@@ -1540,11 +1526,7 @@
           "misinformation",
           "endgame"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "empath",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_6_021",
@@ -1552,7 +1534,8 @@
         "townsfolk": [
           "chef",
           "fortuneteller",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "drunk"
@@ -1570,11 +1553,7 @@
           "misinformation",
           "endgame"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "investigator",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_6_022",
@@ -1582,7 +1561,8 @@
         "townsfolk": [
           "librarian",
           "empath",
-          "slayer"
+          "slayer",
+          "soldier"
         ],
         "outsiders": [
           "drunk"
@@ -1601,11 +1581,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "undertaker",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_6_023",
@@ -1613,7 +1589,8 @@
         "townsfolk": [
           "librarian",
           "undertaker",
-          "virgin"
+          "virgin",
+          "empath"
         ],
         "outsiders": [
           "drunk"
@@ -1632,11 +1609,7 @@
           "misinformation",
           "public-verification"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "empath",
-          "ravenkeeper"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_6_024",
@@ -1662,7 +1635,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_025",
@@ -1688,7 +1661,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_026",
@@ -1714,7 +1687,7 @@
           "first-night-heavy",
           "registration-chaos"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_027",
@@ -1740,7 +1713,7 @@
           "registration-chaos",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_028",
@@ -1766,7 +1739,7 @@
           "misinformation",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_029",
@@ -1792,7 +1765,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_6_030",
@@ -1818,7 +1791,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       }
     ],
     "7": [
@@ -1846,7 +1819,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_002",
@@ -1873,7 +1846,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_003",
@@ -1899,7 +1872,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_004",
@@ -1926,7 +1899,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_005",
@@ -1953,7 +1926,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_006",
@@ -1981,7 +1954,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_007",
@@ -2008,7 +1981,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_008",
@@ -2035,7 +2008,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_009",
@@ -2043,7 +2016,8 @@
         "townsfolk": [
           "chef",
           "fortuneteller",
-          "soldier"
+          "soldier",
+          "monk"
         ],
         "outsiders": [
           "butler",
@@ -2063,11 +2037,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "investigator",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_7_010",
@@ -2075,7 +2045,8 @@
         "townsfolk": [
           "investigator",
           "empath",
-          "slayer"
+          "slayer",
+          "chef"
         ],
         "outsiders": [
           "drunk",
@@ -2096,11 +2067,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "chef",
-          "virgin",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_7_011",
@@ -2128,7 +2095,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_012",
@@ -2155,7 +2122,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_013",
@@ -2182,7 +2149,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_014",
@@ -2209,7 +2176,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_015",
@@ -2236,7 +2203,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_016",
@@ -2263,7 +2230,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_017",
@@ -2271,7 +2238,8 @@
         "townsfolk": [
           "investigator",
           "empath",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "drunk",
@@ -2292,11 +2260,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "undertaker",
-          "monk",
-          "ravenkeeper"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_7_018",
@@ -2323,7 +2287,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_019",
@@ -2349,7 +2313,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_020",
@@ -2357,7 +2321,8 @@
         "townsfolk": [
           "washerwoman",
           "empath",
-          "mayor"
+          "mayor",
+          "monk"
         ],
         "outsiders": [
           "drunk",
@@ -2377,11 +2342,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "monk",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_7_021",
@@ -2408,7 +2369,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_022",
@@ -2436,7 +2397,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_023",
@@ -2462,7 +2423,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_024",
@@ -2489,7 +2450,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_025",
@@ -2515,7 +2476,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_026",
@@ -2542,7 +2503,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_027",
@@ -2569,7 +2530,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_028",
@@ -2596,7 +2557,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_029",
@@ -2623,7 +2584,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_030",
@@ -2650,7 +2611,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_031",
@@ -2658,7 +2619,8 @@
         "townsfolk": [
           "librarian",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "soldier"
         ],
         "outsiders": [
           "drunk",
@@ -2678,11 +2640,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "empath",
-          "virgin",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_7_032",
@@ -2708,7 +2666,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_033",
@@ -2735,7 +2693,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_034",
@@ -2762,7 +2720,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_035",
@@ -2788,7 +2746,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_036",
@@ -2815,7 +2773,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_037",
@@ -2842,7 +2800,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_038",
@@ -2850,7 +2808,8 @@
         "townsfolk": [
           "investigator",
           "empath",
-          "virgin"
+          "virgin",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk",
@@ -2871,11 +2830,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "monk",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_7_039",
@@ -2883,7 +2838,8 @@
         "townsfolk": [
           "chef",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "butler",
@@ -2903,11 +2859,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "empath",
-          "virgin",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_7_040",
@@ -2933,7 +2885,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_041",
@@ -2941,7 +2893,8 @@
         "townsfolk": [
           "chef",
           "fortuneteller",
-          "virgin"
+          "virgin",
+          "slayer"
         ],
         "outsiders": [
           "butler",
@@ -2961,11 +2914,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "investigator",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_7_042",
@@ -2992,7 +2941,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_043",
@@ -3000,7 +2949,8 @@
         "townsfolk": [
           "washerwoman",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "librarian"
         ],
         "outsiders": [
           "drunk",
@@ -3020,11 +2970,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "fortuneteller",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_7_044",
@@ -3051,7 +2997,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_045",
@@ -3078,7 +3024,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_046",
@@ -3106,7 +3052,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_047",
@@ -3133,7 +3079,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_048",
@@ -3160,7 +3106,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_049",
@@ -3187,7 +3133,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_7_050",
@@ -3214,7 +3160,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       }
     ],
     "8": [
@@ -3244,7 +3190,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB_8_002",
@@ -3272,7 +3218,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB_8_003",
@@ -3282,7 +3228,8 @@
           "empath",
           "fortuneteller",
           "undertaker",
-          "virgin"
+          "virgin",
+          "mayor"
         ],
         "outsiders": [
           "drunk"
@@ -3301,11 +3248,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "monk",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_004",
@@ -3313,7 +3256,8 @@
         "townsfolk": [
           "librarian",
           "fortuneteller",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -3334,11 +3278,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "chef",
-          "undertaker",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_005",
@@ -3368,7 +3308,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_006",
@@ -3378,7 +3318,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "drunk"
@@ -3397,11 +3338,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "slayer",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_007",
@@ -3431,7 +3368,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_008",
@@ -3439,7 +3376,8 @@
         "townsfolk": [
           "chef",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "mayor"
         ],
         "outsiders": [
           "butler",
@@ -3460,11 +3398,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "empath",
-          "undertaker",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_009",
@@ -3492,7 +3426,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_010",
@@ -3521,7 +3455,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_011",
@@ -3529,7 +3463,8 @@
         "townsfolk": [
           "chef",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "butler",
@@ -3550,11 +3485,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "fortuneteller",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_012",
@@ -3584,7 +3515,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_013",
@@ -3612,7 +3543,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_014",
@@ -3620,7 +3551,8 @@
         "townsfolk": [
           "librarian",
           "fortuneteller",
-          "monk"
+          "monk",
+          "ravenkeeper"
         ],
         "outsiders": [
           "butler",
@@ -3641,11 +3573,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "empath",
-          "ravenkeeper",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_015",
@@ -3655,7 +3583,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "empath"
         ],
         "outsiders": [
           "drunk"
@@ -3674,11 +3603,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "empath",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_016",
@@ -3708,7 +3633,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_017",
@@ -3716,7 +3641,8 @@
         "townsfolk": [
           "chef",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "monk"
         ],
         "outsiders": [
           "butler",
@@ -3737,11 +3663,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "undertaker",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_018",
@@ -3749,7 +3671,8 @@
         "townsfolk": [
           "washerwoman",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "soldier"
         ],
         "outsiders": [
           "butler",
@@ -3770,11 +3693,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "fortuneteller",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_019",
@@ -3802,7 +3721,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_020",
@@ -3830,7 +3749,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_021",
@@ -3858,7 +3777,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_022",
@@ -3868,7 +3787,8 @@
           "librarian",
           "undertaker",
           "virgin",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "drunk"
@@ -3888,11 +3808,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "chef",
-          "fortuneteller",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_023",
@@ -3922,7 +3838,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_024",
@@ -3951,7 +3867,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_025",
@@ -3980,7 +3896,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_026",
@@ -3988,7 +3904,8 @@
         "townsfolk": [
           "librarian",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -4009,11 +3926,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "fortuneteller",
-          "undertaker"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_027",
@@ -4041,7 +3954,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_028",
@@ -4049,7 +3962,8 @@
         "townsfolk": [
           "chef",
           "fortuneteller",
-          "mayor"
+          "mayor",
+          "soldier"
         ],
         "outsiders": [
           "butler",
@@ -4070,11 +3984,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "virgin",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_029",
@@ -4103,7 +4013,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_030",
@@ -4132,7 +4042,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_031",
@@ -4161,7 +4071,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_032",
@@ -4191,7 +4101,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_033",
@@ -4201,7 +4111,8 @@
           "chef",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "drunk"
@@ -4220,11 +4131,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "investigator",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_034",
@@ -4254,7 +4161,7 @@
           "protection"
         ],
         "reference_name": "social-balance",
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_035",
@@ -4262,7 +4169,8 @@
         "townsfolk": [
           "librarian",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "virgin"
         ],
         "outsiders": [
           "butler",
@@ -4283,11 +4191,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "chef",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_036",
@@ -4297,7 +4201,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "chef"
         ],
         "outsiders": [
           "drunk"
@@ -4315,11 +4220,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": [
-          "chef",
-          "virgin",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_037",
@@ -4347,7 +4248,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_038",
@@ -4376,7 +4277,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_039",
@@ -4384,7 +4285,8 @@
         "townsfolk": [
           "washerwoman",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "butler",
@@ -4405,11 +4307,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "undertaker",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_040",
@@ -4419,7 +4317,8 @@
           "librarian",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk"
@@ -4437,11 +4336,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": [
-          "empath",
-          "fortuneteller",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_041",
@@ -4451,7 +4346,8 @@
           "librarian",
           "undertaker",
           "virgin",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "drunk"
@@ -4471,11 +4367,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": [
-          "empath",
-          "monk",
-          "ravenkeeper"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_042",
@@ -4504,7 +4396,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_043",
@@ -4534,7 +4426,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_044",
@@ -4564,7 +4456,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_045",
@@ -4572,7 +4464,8 @@
         "townsfolk": [
           "chef",
           "fortuneteller",
-          "soldier"
+          "soldier",
+          "monk"
         ],
         "outsiders": [
           "butler",
@@ -4593,11 +4486,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "empath",
-          "undertaker",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_046",
@@ -4607,7 +4496,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "investigator"
         ],
         "outsiders": [
           "drunk"
@@ -4625,11 +4515,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "investigator",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_047",
@@ -4637,7 +4523,8 @@
         "townsfolk": [
           "washerwoman",
           "fortuneteller",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "butler",
@@ -4658,11 +4545,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "chef",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_8_048",
@@ -4691,7 +4574,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_049",
@@ -4720,7 +4603,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_8_050",
@@ -4748,7 +4631,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       }
     ],
     "9": [
@@ -4781,7 +4664,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_002",
@@ -4789,7 +4672,8 @@
         "townsfolk": [
           "investigator",
           "empath",
-          "monk"
+          "monk",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -4812,11 +4696,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "undertaker",
-          "ravenkeeper",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_003",
@@ -4824,7 +4704,8 @@
         "townsfolk": [
           "chef",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "fortuneteller"
         ],
         "outsiders": [
           "butler",
@@ -4847,11 +4728,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "slayer",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_004",
@@ -4861,7 +4738,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "drunk",
@@ -4880,11 +4758,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "undertaker",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_005",
@@ -4892,7 +4766,8 @@
         "townsfolk": [
           "investigator",
           "empath",
-          "slayer"
+          "slayer",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -4915,11 +4790,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "chef",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_006",
@@ -4929,7 +4800,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk",
@@ -4949,11 +4821,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "investigator",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_007",
@@ -4963,7 +4831,8 @@
           "ravenkeeper",
           "slayer",
           "soldier",
-          "mayor"
+          "mayor",
+          "virgin"
         ],
         "outsiders": [
           "drunk",
@@ -4984,11 +4853,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "fortuneteller",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_008",
@@ -5017,7 +4882,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_009",
@@ -5027,7 +4892,8 @@
           "investigator",
           "undertaker",
           "virgin",
-          "soldier"
+          "soldier",
+          "empath"
         ],
         "outsiders": [
           "drunk",
@@ -5048,11 +4914,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "empath",
-          "fortuneteller",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_010",
@@ -5062,7 +4924,8 @@
           "empath",
           "undertaker",
           "slayer",
-          "soldier"
+          "soldier",
+          "investigator"
         ],
         "outsiders": [
           "drunk",
@@ -5084,11 +4947,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "fortuneteller",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_011",
@@ -5096,7 +4955,8 @@
         "townsfolk": [
           "chef",
           "empath",
-          "slayer"
+          "slayer",
+          "fortuneteller"
         ],
         "outsiders": [
           "butler",
@@ -5119,11 +4979,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "fortuneteller",
-          "ravenkeeper"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_012",
@@ -5133,7 +4989,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "drunk",
@@ -5153,11 +5010,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "investigator",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_013",
@@ -5165,7 +5018,8 @@
         "townsfolk": [
           "chef",
           "ravenkeeper",
-          "slayer"
+          "slayer",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -5188,11 +5042,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "undertaker",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_014",
@@ -5202,7 +5052,8 @@
           "fortuneteller",
           "ravenkeeper",
           "slayer",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "butler",
@@ -5223,11 +5074,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "virgin",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_015",
@@ -5257,7 +5104,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_016",
@@ -5267,7 +5114,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -5287,11 +5135,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "undertaker",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_017",
@@ -5301,7 +5145,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -5320,11 +5165,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "empath",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_018",
@@ -5355,7 +5196,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_019",
@@ -5386,7 +5227,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_020",
@@ -5396,7 +5237,8 @@
           "empath",
           "undertaker",
           "virgin",
-          "slayer"
+          "slayer",
+          "chef"
         ],
         "outsiders": [
           "drunk",
@@ -5416,11 +5258,7 @@
           "misinformation",
           "public-verification"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "chef",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_021",
@@ -5430,7 +5268,8 @@
           "empath",
           "undertaker",
           "slayer",
-          "mayor"
+          "mayor",
+          "chef"
         ],
         "outsiders": [
           "drunk",
@@ -5452,11 +5291,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "ravenkeeper",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_022",
@@ -5464,7 +5299,8 @@
         "townsfolk": [
           "chef",
           "empath",
-          "monk"
+          "monk",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -5487,11 +5323,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "undertaker",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_023",
@@ -5499,7 +5331,8 @@
         "townsfolk": [
           "chef",
           "empath",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -5522,11 +5355,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "undertaker",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_024",
@@ -5536,7 +5365,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -5555,11 +5385,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "chef",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_025",
@@ -5569,7 +5395,8 @@
           "librarian",
           "undertaker",
           "virgin",
-          "mayor"
+          "mayor",
+          "slayer"
         ],
         "outsiders": [
           "butler",
@@ -5590,11 +5417,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": [
-          "ravenkeeper",
-          "slayer",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_026",
@@ -5602,7 +5425,8 @@
         "townsfolk": [
           "chef",
           "empath",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -5625,11 +5449,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "undertaker",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_027",
@@ -5637,7 +5457,8 @@
         "townsfolk": [
           "chef",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "butler",
@@ -5660,11 +5481,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "slayer",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_028",
@@ -5694,7 +5511,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_029",
@@ -5704,7 +5521,8 @@
           "empath",
           "undertaker",
           "slayer",
-          "mayor"
+          "mayor",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk",
@@ -5726,11 +5544,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "ravenkeeper",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_030",
@@ -5740,7 +5554,8 @@
           "investigator",
           "undertaker",
           "virgin",
-          "mayor"
+          "mayor",
+          "slayer"
         ],
         "outsiders": [
           "drunk",
@@ -5761,11 +5576,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": [
-          "monk",
-          "ravenkeeper",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_031",
@@ -5795,7 +5606,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_032",
@@ -5805,7 +5616,8 @@
           "investigator",
           "undertaker",
           "virgin",
-          "slayer"
+          "slayer",
+          "chef"
         ],
         "outsiders": [
           "drunk",
@@ -5825,11 +5637,7 @@
           "misinformation",
           "public-verification"
         ],
-        "drunk_as_options": [
-          "chef",
-          "ravenkeeper",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_033",
@@ -5859,7 +5667,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_034",
@@ -5888,7 +5696,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_035",
@@ -5898,7 +5706,8 @@
           "librarian",
           "undertaker",
           "virgin",
-          "mayor"
+          "mayor",
+          "chef"
         ],
         "outsiders": [
           "drunk",
@@ -5919,11 +5728,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": [
-          "chef",
-          "fortuneteller",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_036",
@@ -5931,7 +5736,8 @@
         "townsfolk": [
           "investigator",
           "empath",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -5954,11 +5760,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "undertaker",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_037",
@@ -5988,7 +5790,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_038",
@@ -5998,7 +5800,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "empath"
         ],
         "outsiders": [
           "drunk",
@@ -6018,11 +5821,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "empath",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_039",
@@ -6032,7 +5831,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "butler",
@@ -6052,11 +5852,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "virgin",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_040",
@@ -6066,7 +5862,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk",
@@ -6086,11 +5883,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "investigator",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_041",
@@ -6098,7 +5891,8 @@
         "townsfolk": [
           "chef",
           "empath",
-          "virgin"
+          "virgin",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -6121,11 +5915,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "undertaker",
-          "ravenkeeper",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_042",
@@ -6154,7 +5944,7 @@
           "registration-chaos",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_043",
@@ -6162,7 +5952,8 @@
         "townsfolk": [
           "investigator",
           "empath",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -6185,11 +5976,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "undertaker",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_044",
@@ -6199,7 +5986,8 @@
           "chef",
           "undertaker",
           "virgin",
-          "slayer"
+          "slayer",
+          "mayor"
         ],
         "outsiders": [
           "drunk",
@@ -6219,11 +6007,7 @@
           "misinformation",
           "public-verification"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "ravenkeeper",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_045",
@@ -6233,7 +6017,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk",
@@ -6252,11 +6037,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "chef",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_046",
@@ -6266,7 +6047,8 @@
           "librarian",
           "undertaker",
           "virgin",
-          "soldier"
+          "soldier",
+          "investigator"
         ],
         "outsiders": [
           "drunk",
@@ -6287,11 +6069,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "ravenkeeper",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_047",
@@ -6320,7 +6098,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_048",
@@ -6330,7 +6108,8 @@
           "investigator",
           "undertaker",
           "virgin",
-          "slayer"
+          "slayer",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk",
@@ -6350,11 +6129,7 @@
           "misinformation",
           "public-verification"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "empath",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_9_049",
@@ -6384,7 +6159,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_9_050",
@@ -6415,7 +6190,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       }
     ],
     "10": [
@@ -6448,7 +6223,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_002",
@@ -6479,7 +6254,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_003",
@@ -6511,7 +6286,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_004",
@@ -6542,7 +6317,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_005",
@@ -6573,7 +6348,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_006",
@@ -6604,7 +6379,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_007",
@@ -6637,7 +6412,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_008",
@@ -6647,7 +6422,8 @@
           "chef",
           "empath",
           "monk",
-          "ravenkeeper"
+          "ravenkeeper",
+          "undertaker"
         ],
         "outsiders": [
           "drunk",
@@ -6671,11 +6447,7 @@
           "outsider-heavy"
         ],
         "reference_name": "baron-fog",
-        "drunk_as_options": [
-          "librarian",
-          "undertaker",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_009",
@@ -6685,7 +6457,8 @@
           "empath",
           "undertaker",
           "virgin",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk",
@@ -6708,11 +6481,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "chef",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_010",
@@ -6722,7 +6491,8 @@
           "chef",
           "empath",
           "undertaker",
-          "virgin"
+          "virgin",
+          "librarian"
         ],
         "outsiders": [
           "drunk",
@@ -6745,11 +6515,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "monk",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_011",
@@ -6780,7 +6546,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_012",
@@ -6790,7 +6556,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -6812,11 +6579,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "slayer",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_013",
@@ -6847,7 +6610,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_014",
@@ -6878,7 +6641,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_015",
@@ -6909,7 +6672,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_016",
@@ -6919,7 +6682,8 @@
           "empath",
           "fortuneteller",
           "monk",
-          "soldier"
+          "soldier",
+          "ravenkeeper"
         ],
         "outsiders": [
           "butler",
@@ -6940,11 +6704,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "ravenkeeper",
-          "virgin",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_017",
@@ -6954,7 +6714,8 @@
           "empath",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "drunk",
@@ -6976,11 +6737,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "undertaker",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_018",
@@ -7011,7 +6768,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_019",
@@ -7043,7 +6800,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_020",
@@ -7075,7 +6832,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_021",
@@ -7106,7 +6863,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_022",
@@ -7138,7 +6895,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_023",
@@ -7148,7 +6905,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "drunk",
@@ -7170,11 +6928,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "investigator",
-          "empath"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_024",
@@ -7205,7 +6959,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_025",
@@ -7215,7 +6969,8 @@
           "empath",
           "fortuneteller",
           "monk",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "drunk",
@@ -7237,11 +6992,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "undertaker",
-          "ravenkeeper",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_026",
@@ -7272,7 +7023,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_027",
@@ -7303,7 +7054,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_028",
@@ -7334,7 +7085,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_029",
@@ -7365,7 +7116,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_030",
@@ -7396,7 +7147,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_031",
@@ -7428,7 +7179,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_032",
@@ -7460,7 +7211,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_033",
@@ -7491,7 +7242,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_034",
@@ -7522,7 +7273,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_035",
@@ -7532,7 +7283,8 @@
           "empath",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "fortuneteller"
         ],
         "outsiders": [
           "butler",
@@ -7553,11 +7305,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "fortuneteller",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_036",
@@ -7588,7 +7336,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_037",
@@ -7598,7 +7346,8 @@
           "empath",
           "undertaker",
           "virgin",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "drunk",
@@ -7621,11 +7370,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "chef",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_038",
@@ -7657,7 +7402,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_039",
@@ -7688,7 +7433,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_040",
@@ -7719,7 +7464,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_041",
@@ -7751,7 +7496,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_042",
@@ -7782,7 +7527,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_043",
@@ -7814,7 +7559,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_044",
@@ -7824,7 +7569,8 @@
           "chef",
           "empath",
           "undertaker",
-          "slayer"
+          "slayer",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk",
@@ -7848,11 +7594,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "fortuneteller",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_045",
@@ -7884,7 +7626,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_046",
@@ -7894,7 +7636,8 @@
           "empath",
           "fortuneteller",
           "monk",
-          "soldier"
+          "soldier",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk",
@@ -7915,11 +7658,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "virgin",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_10_047",
@@ -7951,7 +7690,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_048",
@@ -7983,7 +7722,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_049",
@@ -8015,7 +7754,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_10_050",
@@ -8046,7 +7785,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       }
     ],
     "11": [
@@ -8082,7 +7821,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_002",
@@ -8115,7 +7854,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_003",
@@ -8127,7 +7866,8 @@
           "undertaker",
           "monk",
           "virgin",
-          "soldier"
+          "soldier",
+          "investigator"
         ],
         "outsiders": [
           "drunk"
@@ -8148,11 +7888,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "ravenkeeper",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_004",
@@ -8164,7 +7900,8 @@
           "undertaker",
           "monk",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk"
@@ -8185,11 +7922,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "slayer",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_005",
@@ -8199,7 +7932,8 @@
           "empath",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "butler",
@@ -8222,11 +7956,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "fortuneteller",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_006",
@@ -8236,7 +7966,8 @@
           "empath",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -8259,11 +7990,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "investigator",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_007",
@@ -8295,7 +8022,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_008",
@@ -8305,7 +8032,8 @@
           "fortuneteller",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "butler",
@@ -8328,11 +8056,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "empath",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_009",
@@ -8342,7 +8066,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -8364,11 +8089,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "empath",
-          "undertaker"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_010",
@@ -8380,7 +8101,8 @@
           "fortuneteller",
           "undertaker",
           "virgin",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "drunk"
@@ -8401,11 +8123,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": [
-          "empath",
-          "ravenkeeper",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_011",
@@ -8439,7 +8157,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_012",
@@ -8472,7 +8190,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_013",
@@ -8505,7 +8223,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_014",
@@ -8515,7 +8233,8 @@
           "empath",
           "fortuneteller",
           "monk",
-          "soldier"
+          "soldier",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -8537,11 +8256,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "virgin",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_015",
@@ -8574,7 +8289,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_016",
@@ -8606,7 +8321,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_017",
@@ -8638,7 +8353,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_018",
@@ -8671,7 +8386,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_019",
@@ -8681,7 +8396,8 @@
           "empath",
           "fortuneteller",
           "soldier",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "butler",
@@ -8704,11 +8420,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "monk",
-          "ravenkeeper"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_020",
@@ -8720,7 +8432,8 @@
           "undertaker",
           "monk",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "empath"
         ],
         "outsiders": [
           "drunk"
@@ -8741,11 +8454,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "empath",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_021",
@@ -8755,7 +8464,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "chef"
         ],
         "outsiders": [
           "butler",
@@ -8778,11 +8488,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "chef",
-          "slayer",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_022",
@@ -8792,7 +8498,8 @@
           "empath",
           "fortuneteller",
           "monk",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -8815,11 +8522,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "undertaker",
-          "ravenkeeper",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_023",
@@ -8851,7 +8554,7 @@
           "misinformation",
           "public-verification"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_024",
@@ -8885,7 +8588,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_025",
@@ -8919,7 +8622,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_026",
@@ -8952,7 +8655,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_027",
@@ -8985,7 +8688,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_028",
@@ -8997,7 +8700,8 @@
           "fortuneteller",
           "undertaker",
           "monk",
-          "virgin"
+          "virgin",
+          "empath"
         ],
         "outsiders": [
           "drunk"
@@ -9018,11 +8722,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "empath",
-          "ravenkeeper",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_029",
@@ -9054,7 +8754,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_030",
@@ -9064,7 +8764,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -9087,11 +8788,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "empath",
-          "undertaker",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_031",
@@ -9103,7 +8800,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "undertaker"
         ],
         "outsiders": [
           "drunk"
@@ -9124,11 +8822,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "empath",
-          "undertaker",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_032",
@@ -9138,7 +8832,8 @@
           "empath",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -9160,11 +8855,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "librarian",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_033",
@@ -9197,7 +8888,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_034",
@@ -9230,7 +8921,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_035",
@@ -9242,7 +8933,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "drunk"
@@ -9264,11 +8956,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "empath",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_036",
@@ -9278,7 +8966,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -9300,11 +8989,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "undertaker",
-          "virgin",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_037",
@@ -9338,7 +9023,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_038",
@@ -9350,7 +9035,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "drunk"
@@ -9371,11 +9057,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "chef",
-          "undertaker",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_039",
@@ -9408,7 +9090,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_040",
@@ -9441,7 +9123,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_041",
@@ -9474,7 +9156,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_042",
@@ -9484,7 +9166,8 @@
           "fortuneteller",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -9507,11 +9190,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "empath",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_043",
@@ -9521,7 +9200,8 @@
           "fortuneteller",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -9544,11 +9224,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "undertaker",
-          "monk",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_044",
@@ -9580,7 +9256,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_045",
@@ -9613,7 +9289,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_046",
@@ -9623,7 +9299,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "butler",
@@ -9646,11 +9323,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "investigator",
-          "empath"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_047",
@@ -9684,7 +9357,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_048",
@@ -9694,7 +9367,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -9716,11 +9390,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "undertaker",
-          "virgin",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_11_049",
@@ -9754,7 +9424,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_11_050",
@@ -9787,7 +9457,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       }
     ],
     "12": [
@@ -9799,7 +9469,8 @@
           "investigator",
           "undertaker",
           "virgin",
-          "soldier"
+          "soldier",
+          "chef"
         ],
         "outsiders": [
           "butler",
@@ -9824,11 +9495,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "chef",
-          "fortuneteller",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_002",
@@ -9863,7 +9530,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_003",
@@ -9875,7 +9542,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "soldier"
+          "soldier",
+          "chef"
         ],
         "outsiders": [
           "butler",
@@ -9897,11 +9565,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "chef",
-          "empath",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_004",
@@ -9913,7 +9577,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "soldier"
+          "soldier",
+          "chef"
         ],
         "outsiders": [
           "drunk",
@@ -9935,11 +9600,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "chef",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_005",
@@ -9949,7 +9610,8 @@
           "chef",
           "empath",
           "fortuneteller",
-          "soldier"
+          "soldier",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -9974,11 +9636,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "librarian",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_006",
@@ -9990,7 +9648,8 @@
           "empath",
           "undertaker",
           "monk",
-          "soldier"
+          "soldier",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk",
@@ -10011,11 +9670,7 @@
           "misinformation",
           "protection"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "ravenkeeper",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_007",
@@ -10025,7 +9680,8 @@
           "empath",
           "undertaker",
           "slayer",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -10051,11 +9707,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "ravenkeeper",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_008",
@@ -10089,7 +9741,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_009",
@@ -10101,7 +9753,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "drunk",
@@ -10124,11 +9777,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "ravenkeeper",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_010",
@@ -10138,7 +9787,8 @@
           "chef",
           "undertaker",
           "virgin",
-          "soldier"
+          "soldier",
+          "empath"
         ],
         "outsiders": [
           "butler",
@@ -10163,11 +9813,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "empath",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_011",
@@ -10179,7 +9825,8 @@
           "empath",
           "undertaker",
           "virgin",
-          "slayer"
+          "slayer",
+          "mayor"
         ],
         "outsiders": [
           "drunk",
@@ -10201,11 +9848,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "soldier",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_012",
@@ -10239,7 +9882,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_013",
@@ -10273,7 +9916,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_014",
@@ -10308,7 +9951,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_015",
@@ -10320,7 +9963,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -10343,11 +9987,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "undertaker",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_016",
@@ -10357,7 +9997,8 @@
           "investigator",
           "fortuneteller",
           "undertaker",
-          "virgin"
+          "virgin",
+          "chef"
         ],
         "outsiders": [
           "butler",
@@ -10383,11 +10024,7 @@
           "outsider-heavy"
         ],
         "reference_name": "baron-vote-risk",
-        "drunk_as_options": [
-          "chef",
-          "empath",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_017",
@@ -10397,7 +10034,8 @@
           "undertaker",
           "ravenkeeper",
           "slayer",
-          "soldier"
+          "soldier",
+          "investigator"
         ],
         "outsiders": [
           "butler",
@@ -10423,11 +10061,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "investigator",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_018",
@@ -10462,7 +10096,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_019",
@@ -10474,7 +10108,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "mayor"
+          "mayor",
+          "chef"
         ],
         "outsiders": [
           "drunk",
@@ -10497,11 +10132,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "empath",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_020",
@@ -10511,7 +10142,8 @@
           "fortuneteller",
           "undertaker",
           "slayer",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "butler",
@@ -10537,11 +10169,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "ravenkeeper",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_021",
@@ -10553,7 +10181,8 @@
           "ravenkeeper",
           "slayer",
           "soldier",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "drunk",
@@ -10576,11 +10205,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "chef",
-          "undertaker"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_022",
@@ -10592,7 +10217,8 @@
           "fortuneteller",
           "undertaker",
           "monk",
-          "slayer"
+          "slayer",
+          "librarian"
         ],
         "outsiders": [
           "drunk",
@@ -10615,11 +10241,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "ravenkeeper",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_023",
@@ -10629,7 +10251,8 @@
           "chef",
           "empath",
           "undertaker",
-          "virgin"
+          "virgin",
+          "fortuneteller"
         ],
         "outsiders": [
           "butler",
@@ -10654,11 +10277,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "fortuneteller",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_024",
@@ -10668,7 +10287,8 @@
           "undertaker",
           "ravenkeeper",
           "slayer",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -10694,11 +10314,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "empath",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_025",
@@ -10710,7 +10326,8 @@
           "undertaker",
           "monk",
           "ravenkeeper",
-          "slayer"
+          "slayer",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk",
@@ -10733,11 +10350,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "fortuneteller",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_026",
@@ -10771,7 +10384,7 @@
           "public-verification",
           "protection"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_027",
@@ -10783,7 +10396,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "soldier"
+          "soldier",
+          "empath"
         ],
         "outsiders": [
           "butler",
@@ -10805,11 +10419,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "empath",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_028",
@@ -10821,7 +10431,8 @@
           "undertaker",
           "slayer",
           "soldier",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "drunk",
@@ -10845,11 +10456,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "librarian",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_029",
@@ -10861,7 +10468,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "drunk",
@@ -10884,11 +10492,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "chef",
-          "empath"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_030",
@@ -10898,7 +10502,8 @@
           "investigator",
           "undertaker",
           "virgin",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "butler",
@@ -10923,11 +10528,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "empath",
-          "ravenkeeper",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_031",
@@ -10962,7 +10563,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_032",
@@ -10974,7 +10575,8 @@
           "monk",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "chef"
         ],
         "outsiders": [
           "butler",
@@ -10996,11 +10598,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "virgin",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_033",
@@ -11012,7 +10610,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -11035,11 +10634,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "undertaker",
-          "slayer",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_034",
@@ -11074,7 +10669,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_035",
@@ -11086,7 +10681,8 @@
           "ravenkeeper",
           "virgin",
           "soldier",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -11109,11 +10705,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "chef",
-          "undertaker",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_036",
@@ -11125,7 +10717,8 @@
           "monk",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "drunk",
@@ -11147,11 +10740,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "chef",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_037",
@@ -11163,7 +10752,8 @@
           "ravenkeeper",
           "virgin",
           "soldier",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "drunk",
@@ -11186,11 +10776,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "chef",
-          "empath",
-          "undertaker"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_038",
@@ -11225,7 +10811,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_039",
@@ -11237,7 +10823,8 @@
           "empath",
           "undertaker",
           "monk",
-          "mayor"
+          "mayor",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk",
@@ -11259,11 +10846,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "ravenkeeper",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_040",
@@ -11273,7 +10856,8 @@
           "chef",
           "empath",
           "fortuneteller",
-          "monk"
+          "monk",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -11298,11 +10882,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "virgin",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_041",
@@ -11336,7 +10916,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_042",
@@ -11369,7 +10949,7 @@
           "public-verification",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_043",
@@ -11381,7 +10961,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "mayor"
+          "mayor",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk",
@@ -11404,11 +10985,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "fortuneteller",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_044",
@@ -11420,7 +10997,8 @@
           "monk",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -11442,11 +11020,7 @@
           "protection",
           "endgame"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "empath",
-          "undertaker"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_045",
@@ -11456,7 +11030,8 @@
           "investigator",
           "empath",
           "undertaker",
-          "virgin"
+          "virgin",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -11481,11 +11056,7 @@
           "public-verification",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "chef",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_046",
@@ -11497,7 +11068,8 @@
           "empath",
           "undertaker",
           "slayer",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk",
@@ -11520,11 +11092,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "virgin",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_047",
@@ -11534,7 +11102,8 @@
           "empath",
           "undertaker",
           "virgin",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -11559,11 +11128,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "chef",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_048",
@@ -11597,7 +11162,7 @@
           "public-verification",
           "endgame"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_12_049",
@@ -11607,7 +11172,8 @@
           "empath",
           "undertaker",
           "slayer",
-          "soldier"
+          "soldier",
+          "investigator"
         ],
         "outsiders": [
           "butler",
@@ -11633,11 +11199,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "monk",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_12_050",
@@ -11649,7 +11211,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "drunk",
@@ -11671,11 +11234,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "undertaker",
-          "mayor"
-        ]
+        "drunk": true
       }
     ],
     "13": [
@@ -11713,7 +11272,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_002",
@@ -11748,7 +11307,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_003",
@@ -11784,7 +11343,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_004",
@@ -11796,7 +11355,8 @@
           "fortuneteller",
           "undertaker",
           "monk",
-          "soldier"
+          "soldier",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk",
@@ -11819,11 +11379,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "ravenkeeper",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_13_005",
@@ -11859,7 +11415,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_006",
@@ -11894,7 +11450,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_007",
@@ -11906,7 +11462,8 @@
           "undertaker",
           "slayer",
           "soldier",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk",
@@ -11932,11 +11489,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "monk",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_13_008",
@@ -11971,7 +11524,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_009",
@@ -11983,7 +11536,8 @@
           "fortuneteller",
           "monk",
           "slayer",
-          "soldier"
+          "soldier",
+          "investigator"
         ],
         "outsiders": [
           "drunk",
@@ -12007,11 +11561,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "virgin",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_13_010",
@@ -12048,7 +11598,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_011",
@@ -12083,7 +11633,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_012",
@@ -12119,7 +11669,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_013",
@@ -12154,7 +11704,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_014",
@@ -12191,7 +11741,7 @@
           "evil-safety-net"
         ],
         "reference_name": "public-pressure",
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_015",
@@ -12227,7 +11777,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_016",
@@ -12262,7 +11812,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_017",
@@ -12274,7 +11824,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "slayer"
+          "slayer",
+          "undertaker"
         ],
         "outsiders": [
           "drunk",
@@ -12299,11 +11850,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "undertaker",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_13_018",
@@ -12315,7 +11862,8 @@
           "fortuneteller",
           "monk",
           "slayer",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "butler",
@@ -12340,11 +11888,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "ravenkeeper",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_13_019",
@@ -12380,7 +11924,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_020",
@@ -12392,7 +11936,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "drunk",
@@ -12417,11 +11962,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "monk",
-          "ravenkeeper"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_13_021",
@@ -12456,7 +11997,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_022",
@@ -12492,7 +12033,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_023",
@@ -12528,7 +12069,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_024",
@@ -12564,7 +12105,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_025",
@@ -12599,7 +12140,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_026",
@@ -12611,7 +12152,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "soldier"
+          "soldier",
+          "mayor"
         ],
         "outsiders": [
           "drunk",
@@ -12636,11 +12178,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "fortuneteller",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_13_027",
@@ -12652,7 +12190,8 @@
           "fortuneteller",
           "monk",
           "virgin",
-          "mayor"
+          "mayor",
+          "chef"
         ],
         "outsiders": [
           "butler",
@@ -12677,11 +12216,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "chef",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_13_028",
@@ -12717,7 +12252,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_029",
@@ -12753,7 +12288,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_030",
@@ -12788,7 +12323,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_031",
@@ -12824,7 +12359,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_032",
@@ -12860,7 +12395,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_033",
@@ -12895,7 +12430,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_034",
@@ -12930,7 +12465,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_035",
@@ -12966,7 +12501,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_036",
@@ -12978,7 +12513,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "investigator"
         ],
         "outsiders": [
           "drunk",
@@ -13002,11 +12538,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "soldier",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_13_037",
@@ -13042,7 +12574,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_038",
@@ -13077,7 +12609,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_039",
@@ -13113,7 +12645,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_13_040",
@@ -13125,7 +12657,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -13149,11 +12682,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "empath",
-          "undertaker"
-        ]
+        "drunk": true
       }
     ],
     "14": [
@@ -13169,7 +12698,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "soldier"
+          "soldier",
+          "washerwoman"
         ],
         "outsiders": [
           "drunk"
@@ -13192,11 +12722,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "slayer",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_002",
@@ -13233,7 +12759,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_003",
@@ -13270,7 +12796,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_004",
@@ -13307,7 +12833,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_005",
@@ -13345,7 +12871,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_006",
@@ -13382,7 +12908,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_007",
@@ -13394,7 +12920,8 @@
           "fortuneteller",
           "monk",
           "slayer",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -13420,11 +12947,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "undertaker",
-          "ravenkeeper"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_008",
@@ -13462,7 +12985,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_009",
@@ -13474,7 +12997,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -13500,11 +13024,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "undertaker",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_010",
@@ -13518,7 +13038,8 @@
           "monk",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk"
@@ -13541,11 +13062,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "virgin",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_011",
@@ -13557,7 +13074,8 @@
           "undertaker",
           "virgin",
           "soldier",
-          "mayor"
+          "mayor",
+          "chef"
         ],
         "outsiders": [
           "butler",
@@ -13584,11 +13102,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "chef",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_012",
@@ -13600,7 +13114,8 @@
           "undertaker",
           "virgin",
           "soldier",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -13627,11 +13142,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "monk",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_013",
@@ -13668,7 +13179,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_014",
@@ -13705,7 +13216,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_015",
@@ -13743,7 +13254,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_016",
@@ -13780,7 +13291,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_017",
@@ -13792,7 +13303,8 @@
           "ravenkeeper",
           "virgin",
           "soldier",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "butler",
@@ -13819,11 +13331,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "empath",
-          "monk",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_018",
@@ -13860,7 +13368,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_019",
@@ -13898,7 +13406,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_020",
@@ -13912,7 +13420,8 @@
           "ravenkeeper",
           "virgin",
           "slayer",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "drunk"
@@ -13935,11 +13444,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "monk",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_021",
@@ -13951,7 +13456,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "chef"
         ],
         "outsiders": [
           "butler",
@@ -13976,11 +13482,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "chef",
-          "slayer",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_022",
@@ -13992,7 +13494,8 @@
           "fortuneteller",
           "monk",
           "virgin",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -14017,11 +13520,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "undertaker",
-          "ravenkeeper"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_023",
@@ -14033,7 +13532,8 @@
           "fortuneteller",
           "monk",
           "soldier",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -14058,11 +13558,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "undertaker",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_024",
@@ -14074,7 +13570,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "mayor"
+          "mayor",
+          "fortuneteller"
         ],
         "outsiders": [
           "butler",
@@ -14100,11 +13597,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "fortuneteller",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_025",
@@ -14142,7 +13635,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_026",
@@ -14154,7 +13647,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "slayer"
+          "slayer",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -14179,11 +13673,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "investigator",
-          "undertaker"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_027",
@@ -14220,7 +13710,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_028",
@@ -14232,7 +13722,8 @@
           "ravenkeeper",
           "virgin",
           "soldier",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "butler",
@@ -14259,11 +13750,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "empath",
-          "fortuneteller",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_029",
@@ -14275,7 +13762,8 @@
           "monk",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -14300,11 +13788,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "undertaker",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_030",
@@ -14341,7 +13825,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_031",
@@ -14378,7 +13862,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_032",
@@ -14416,7 +13900,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_033",
@@ -14453,7 +13937,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_034",
@@ -14467,7 +13951,8 @@
           "monk",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "drunk"
@@ -14490,11 +13975,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "empath",
-          "virgin",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_035",
@@ -14532,7 +14013,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_036",
@@ -14546,7 +14027,8 @@
           "undertaker",
           "monk",
           "virgin",
-          "mayor"
+          "mayor",
+          "chef"
         ],
         "outsiders": [
           "drunk"
@@ -14570,11 +14052,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "ravenkeeper",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_037",
@@ -14612,7 +14090,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_14_038",
@@ -14624,7 +14102,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -14649,11 +14128,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "empath",
-          "undertaker",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_039",
@@ -14667,7 +14142,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "soldier"
+          "soldier",
+          "empath"
         ],
         "outsiders": [
           "drunk"
@@ -14690,11 +14166,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "empath",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_14_040",
@@ -14706,7 +14178,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -14731,11 +14204,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "investigator",
-          "undertaker"
-        ]
+        "drunk": true
       }
     ],
     "15": [
@@ -14751,7 +14220,8 @@
           "ravenkeeper",
           "virgin",
           "slayer",
-          "mayor"
+          "mayor",
+          "fortuneteller"
         ],
         "outsiders": [
           "drunk",
@@ -14775,11 +14245,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "fortuneteller",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_002",
@@ -14817,7 +14283,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_15_003",
@@ -14829,7 +14295,8 @@
           "undertaker",
           "slayer",
           "soldier",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -14857,11 +14324,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "fortuneteller",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_004",
@@ -14873,7 +14336,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -14899,11 +14363,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "undertaker",
-          "slayer",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_005",
@@ -14917,7 +14377,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "soldier"
+          "soldier",
+          "empath"
         ],
         "outsiders": [
           "butler",
@@ -14941,11 +14402,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "empath",
-          "slayer",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_006",
@@ -14983,7 +14440,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_15_007",
@@ -14995,7 +14452,8 @@
           "fortuneteller",
           "monk",
           "virgin",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -15022,11 +14480,7 @@
           "endgame",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "ravenkeeper",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_008",
@@ -15065,7 +14519,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_15_009",
@@ -15079,7 +14533,8 @@
           "ravenkeeper",
           "virgin",
           "soldier",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "drunk",
@@ -15104,11 +14559,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "monk",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_010",
@@ -15122,7 +14573,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "butler",
@@ -15147,11 +14599,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "slayer",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_011",
@@ -15189,7 +14637,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_15_012",
@@ -15201,7 +14649,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "soldier"
+          "soldier",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -15228,11 +14677,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "monk",
-          "ravenkeeper"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_013",
@@ -15246,7 +14691,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "soldier"
+          "soldier",
+          "librarian"
         ],
         "outsiders": [
           "drunk",
@@ -15270,11 +14716,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "ravenkeeper",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_014",
@@ -15288,7 +14730,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "soldier"
+          "soldier",
+          "investigator"
         ],
         "outsiders": [
           "drunk",
@@ -15312,11 +14755,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "slayer",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_015",
@@ -15328,7 +14767,8 @@
           "fortuneteller",
           "monk",
           "slayer",
-          "soldier"
+          "soldier",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -15355,11 +14795,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "librarian",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_016",
@@ -15373,7 +14809,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "mayor"
+          "mayor",
+          "chef"
         ],
         "outsiders": [
           "drunk",
@@ -15397,11 +14834,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "monk",
-          "ravenkeeper"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_017",
@@ -15415,7 +14848,8 @@
           "ravenkeeper",
           "virgin",
           "soldier",
-          "mayor"
+          "mayor",
+          "undertaker"
         ],
         "outsiders": [
           "drunk",
@@ -15441,11 +14875,7 @@
           "evil-safety-net"
         ],
         "reference_name": "long-table",
-        "drunk_as_options": [
-          "fortuneteller",
-          "undertaker",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_018",
@@ -15484,7 +14914,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_15_019",
@@ -15496,7 +14926,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "mayor"
+          "mayor",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -15523,11 +14954,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "ravenkeeper",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_020",
@@ -15541,7 +14968,8 @@
           "ravenkeeper",
           "slayer",
           "soldier",
-          "mayor"
+          "mayor",
+          "chef"
         ],
         "outsiders": [
           "drunk",
@@ -15566,11 +14994,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "monk",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_021",
@@ -15582,7 +15006,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "mayor"
+          "mayor",
+          "fortuneteller"
         ],
         "outsiders": [
           "butler",
@@ -15609,11 +15034,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "fortuneteller",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_022",
@@ -15625,7 +15046,8 @@
           "fortuneteller",
           "undertaker",
           "monk",
-          "virgin"
+          "virgin",
+          "mayor"
         ],
         "outsiders": [
           "butler",
@@ -15651,11 +15073,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "ravenkeeper",
-          "slayer",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_023",
@@ -15667,7 +15085,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "soldier"
+          "soldier",
+          "chef"
         ],
         "outsiders": [
           "butler",
@@ -15692,11 +15111,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "chef",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_024",
@@ -15710,7 +15125,8 @@
           "ravenkeeper",
           "virgin",
           "slayer",
-          "soldier"
+          "soldier",
+          "empath"
         ],
         "outsiders": [
           "drunk",
@@ -15734,11 +15150,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "empath",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_025",
@@ -15752,7 +15164,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "drunk",
@@ -15776,11 +15189,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "monk",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_026",
@@ -15794,7 +15203,8 @@
           "monk",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "drunk",
@@ -15818,11 +15228,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "empath",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_027",
@@ -15860,7 +15266,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_15_028",
@@ -15874,7 +15280,8 @@
           "undertaker",
           "virgin",
           "slayer",
-          "soldier"
+          "soldier",
+          "chef"
         ],
         "outsiders": [
           "drunk",
@@ -15898,11 +15305,7 @@
           "protection",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "chef",
-          "ravenkeeper",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_029",
@@ -15914,7 +15317,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -15942,11 +15346,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "librarian",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_030",
@@ -15985,7 +15385,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_15_031",
@@ -15999,7 +15399,8 @@
           "ravenkeeper",
           "slayer",
           "soldier",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "drunk",
@@ -16024,11 +15425,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "empath",
-          "monk"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_032",
@@ -16066,7 +15463,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_15_033",
@@ -16078,7 +15475,8 @@
           "fortuneteller",
           "monk",
           "slayer",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "butler",
@@ -16106,11 +15504,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "virgin",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_034",
@@ -16149,7 +15543,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": []
+        "drunk": false
       },
       {
         "id": "TB2_15_035",
@@ -16161,7 +15555,8 @@
           "empath",
           "monk",
           "ravenkeeper",
-          "virgin"
+          "virgin",
+          "mayor"
         ],
         "outsiders": [
           "butler",
@@ -16187,11 +15582,7 @@
           "protection",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "slayer",
-          "soldier",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_036",
@@ -16203,7 +15594,8 @@
           "fortuneteller",
           "monk",
           "ravenkeeper",
-          "slayer"
+          "slayer",
+          "washerwoman"
         ],
         "outsiders": [
           "butler",
@@ -16230,11 +15622,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "washerwoman",
-          "soldier",
-          "mayor"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_037",
@@ -16248,7 +15636,8 @@
           "monk",
           "ravenkeeper",
           "virgin",
-          "mayor"
+          "mayor",
+          "empath"
         ],
         "outsiders": [
           "drunk",
@@ -16273,11 +15662,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "empath",
-          "slayer",
-          "soldier"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_038",
@@ -16291,7 +15676,8 @@
           "monk",
           "ravenkeeper",
           "soldier",
-          "mayor"
+          "mayor",
+          "investigator"
         ],
         "outsiders": [
           "butler",
@@ -16315,11 +15701,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "investigator",
-          "empath",
-          "slayer"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_039",
@@ -16333,7 +15715,8 @@
           "undertaker",
           "slayer",
           "soldier",
-          "mayor"
+          "mayor",
+          "librarian"
         ],
         "outsiders": [
           "drunk",
@@ -16358,11 +15741,7 @@
           "endgame",
           "evil-safety-net"
         ],
-        "drunk_as_options": [
-          "librarian",
-          "ravenkeeper",
-          "virgin"
-        ]
+        "drunk": true
       },
       {
         "id": "TB2_15_040",
@@ -16374,7 +15753,8 @@
           "monk",
           "ravenkeeper",
           "slayer",
-          "soldier"
+          "soldier",
+          "undertaker"
         ],
         "outsiders": [
           "butler",
@@ -16401,11 +15781,7 @@
           "evil-safety-net",
           "outsider-heavy"
         ],
-        "drunk_as_options": [
-          "fortuneteller",
-          "undertaker",
-          "mayor"
-        ]
+        "drunk": true
       }
     ]
   },

@@ -12,7 +12,6 @@ class TroubleBrewingIntermediateSetupTest {
 
         val visibleRoster = TroubleBrewingVisibleRosterRealizer.realize(
             preset = preset,
-            addedVisibleTownsfolkRoleId = "chef",
         )
         val setup = TroubleBrewingIntermediateSetup(
             datasetId = "tb-test",
@@ -44,12 +43,11 @@ class TroubleBrewingIntermediateSetupTest {
     }
 
     @Test
-    fun `non drunk preset preserves visible roster and rejects an added townsfolk`() {
+    fun `non drunk preset preserves its visible roster` {
         val preset = nonDrunkPreset()
 
         val visibleRoster = TroubleBrewingVisibleRosterRealizer.realize(
             preset = preset,
-            addedVisibleTownsfolkRoleId = null,
         )
 
         assertFalse(visibleRoster.hasDrunk)
@@ -58,12 +56,6 @@ class TroubleBrewingIntermediateSetupTest {
             visibleRoster.visibleRoleIds.sorted(),
         )
 
-        expectIllegalArgument {
-            TroubleBrewingVisibleRosterRealizer.realize(
-                preset = preset,
-                addedVisibleTownsfolkRoleId = "chef",
-            )
-        }
     }
 
     @Test
@@ -71,7 +63,6 @@ class TroubleBrewingIntermediateSetupTest {
         val preset = drunkPreset()
         val visibleRoster = TroubleBrewingVisibleRosterRealizer.realize(
             preset = preset,
-            addedVisibleTownsfolkRoleId = "chef",
         )
         val assignments = visibleRoster.visibleRoleIds.mapIndexed { index, roleId ->
             TroubleBrewingShownSeatAssignment(
@@ -97,14 +88,14 @@ class TroubleBrewingIntermediateSetupTest {
     private fun drunkPreset() = TroubleBrewingSetupPreset(
         id = "drunk-preset",
         playerCount = 6,
-        townsfolk = listOf("washerwoman", "librarian", "investigator"),
+        townsfolk = listOf("washerwoman", "librarian", "investigator", "chef"),
         outsiders = listOf("drunk"),
         minions = listOf("poisoner"),
         demons = listOf("imp"),
         source = "test",
         complexity = "beginner",
         styleTags = emptyList(),
-        drunkAsOptions = listOf("chef", "empath", "fortuneteller"),
+        drunk = true,
     )
 
     private fun nonDrunkPreset() = TroubleBrewingSetupPreset(
@@ -117,7 +108,7 @@ class TroubleBrewingIntermediateSetupTest {
         source = "test",
         complexity = "beginner",
         styleTags = emptyList(),
-        drunkAsOptions = emptyList(),
+        drunk = false,
     )
 
     private fun expectIllegalArgument(block: () -> Unit) {

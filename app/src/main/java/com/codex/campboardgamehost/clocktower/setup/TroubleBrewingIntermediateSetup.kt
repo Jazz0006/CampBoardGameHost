@@ -46,8 +46,8 @@ internal data class TroubleBrewingShownSeatAssignment(
  * Post-visible-roster, post-seating Trouble Brewing setup before a Drunk seat is committed.
  *
  * This contract intentionally contains shown identities only. It must not encode which visible
- * Townsfolk was introduced through drunk_as_options, an actual Drunk role, or a committed Drunk
- * seat. Those become later DLB decisions.
+ * Townsfolk was selected for the visible roster, an actual Drunk role, or a committed Drunk seat.
+ * Actual Drunk assignment remains a later decision.
  */
 internal data class TroubleBrewingIntermediateSetup(
     val datasetId: String,
@@ -95,18 +95,16 @@ internal data class TroubleBrewingIntermediateSetup(
 /**
  * Pure edge adapter from a validated Trouble Brewing preset to its realized visible roster.
  *
- * For a Drunk preset, [addedVisibleTownsfolkRoleId] is a transitional input selected from
- * drunk_as_options. It is deliberately forgotten by the returned roster so every dealt Townsfolk
- * is a peer for later Drunk candidacy.
+ * Preset townsfolk already contains the complete visible roster. The actual Drunk outsider is
+ * omitted from visible outsiders so every shown Townsfolk is a peer for later Drunk candidacy.
  */
 internal object TroubleBrewingVisibleRosterRealizer {
     fun realize(
         preset: TroubleBrewingSetupPreset,
-        addedVisibleTownsfolkRoleId: String?,
     ): TroubleBrewingVisibleRoster {
         val actualRoleIds =
             preset.townsfolk + preset.outsiders + preset.minions + preset.demons
-        require(actualRoleIds.size == preset.playerCount) {
+        require(actualRoleIds.size - (if (preset.drunk) 1 else 0) == preset.playerCount) {
             "Trouble Brewing preset role count must match player count."
         }
         require(actualRoleIds.none(String::isBlank)) {
@@ -116,31 +114,11 @@ internal object TroubleBrewingVisibleRosterRealizer {
             "Trouble Brewing preset actual role IDs must be unique."
         }
 
-        val hasDrunk = DRUNK_EXTERNAL_ID in preset.outsiders
-        val visibleTownsfolk = if (hasDrunk) {
-            val addedRole = requireNotNull(addedVisibleTownsfolkRoleId) {
-                "Trouble Brewing Drunk preset requires one added visible Townsfolk identity."
-            }
-            require(addedRole.isNotBlank()) {
-                "Trouble Brewing added visible Townsfolk identity cannot be blank."
-            }
-            require(addedRole in preset.drunkAsOptions) {
-                "Trouble Brewing added visible Townsfolk identity must come from drunk_as_options."
-            }
-            require(addedRole !in actualRoleIds) {
-                "Trouble Brewing added visible Townsfolk identity must not already be an actual role."
-            }
-            preset.townsfolk + addedRole
-        } else {
-            require(addedVisibleTownsfolkRoleId == null) {
-                "Trouble Brewing non-Drunk preset cannot add a visible Townsfolk identity."
-            }
-            preset.townsfolk
-        }
+        val hasDrunk = preset.drunk
 
         return TroubleBrewingVisibleRoster(
             hasDrunk = hasDrunk,
-            townsfolkRoleIds = visibleTownsfolk,
+            townsfolkRoleIds = preset.townsfolk,
             outsiderRoleIds = preset.outsiders.filterNot { it == DRUNK_EXTERNAL_ID },
             minionRoleIds = preset.minions,
             demonRoleIds = preset.demons,

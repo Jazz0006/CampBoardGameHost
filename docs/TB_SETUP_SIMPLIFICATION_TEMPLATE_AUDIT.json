@@ -1,0 +1,4219 @@
+{
+  "schema_version": 1,
+  "source_dataset_id": "trouble_brewing_setup_presets_v2_final",
+  "selection_method": "max functional interaction score; then least-selected original option globally; then lexical ID",
+  "templates": [
+    {
+      "id": "TB2_5_001",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_002",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_003",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_004",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_005",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_006",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_007",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_008",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_009",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_010",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_011",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_012",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_013",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_014",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_015",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_016",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_017",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_018",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_019",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_020",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_021",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_022",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_023",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_024",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_025",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_026",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_027",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_028",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_029",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_5_030",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_001",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_002",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "fortuneteller",
+        "slayer"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 5; global use 1"
+    },
+    {
+      "id": "TB2_6_003",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_004",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_005",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "monk",
+        "slayer"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 1"
+    },
+    {
+      "id": "TB2_6_006",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_007",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_008",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_009",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_010",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_011",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_012",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_013",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_014",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_015",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "fortuneteller",
+        "soldier"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 1"
+    },
+    {
+      "id": "TB2_6_016",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_017",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "undertaker",
+        "virgin"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 1"
+    },
+    {
+      "id": "TB2_6_018",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_019",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "fortuneteller",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 1"
+    },
+    {
+      "id": "TB2_6_020",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "empath",
+        "slayer"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 1"
+    },
+    {
+      "id": "TB2_6_021",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "investigator",
+        "soldier"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 1"
+    },
+    {
+      "id": "TB2_6_022",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "undertaker",
+        "soldier"
+      ],
+      "chosen": "soldier",
+      "rationale": "interaction score 3; global use 1"
+    },
+    {
+      "id": "TB2_6_023",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "empath",
+        "ravenkeeper"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 5; global use 2"
+    },
+    {
+      "id": "TB2_6_024",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_025",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_026",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_027",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_028",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_029",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_6_030",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_001",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_002",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_003",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_004",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_005",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_006",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_007",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_008",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_009",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "investigator",
+        "monk"
+      ],
+      "chosen": "monk",
+      "rationale": "interaction score 3; global use 1"
+    },
+    {
+      "id": "TB2_7_010",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "virgin",
+        "soldier"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 5; global use 2"
+    },
+    {
+      "id": "TB2_7_011",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_012",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_013",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_014",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_015",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_016",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_017",
+      "drunk": true,
+      "old_three": [
+        "undertaker",
+        "monk",
+        "ravenkeeper"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 7; global use 2"
+    },
+    {
+      "id": "TB2_7_018",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_019",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_020",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "monk",
+        "virgin"
+      ],
+      "chosen": "monk",
+      "rationale": "interaction score 3; global use 2"
+    },
+    {
+      "id": "TB2_7_021",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_022",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_023",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_024",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_025",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_026",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_027",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_028",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_029",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_030",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_031",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "virgin",
+        "soldier"
+      ],
+      "chosen": "soldier",
+      "rationale": "interaction score 3; global use 2"
+    },
+    {
+      "id": "TB2_7_032",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_033",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_034",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_035",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_036",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_037",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_038",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "monk",
+        "slayer"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 5; global use 2"
+    },
+    {
+      "id": "TB2_7_039",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "virgin",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 3; global use 2"
+    },
+    {
+      "id": "TB2_7_040",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_041",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "investigator",
+        "slayer"
+      ],
+      "chosen": "slayer",
+      "rationale": "interaction score 0; global use 1"
+    },
+    {
+      "id": "TB2_7_042",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_043",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "fortuneteller",
+        "virgin"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 0; global use 1"
+    },
+    {
+      "id": "TB2_7_044",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_045",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_046",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_047",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_048",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_049",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_7_050",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB_8_001",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB_8_002",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB_8_003",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "monk",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 3"
+    },
+    {
+      "id": "TB2_8_004",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "undertaker",
+        "slayer"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 2; global use 3"
+    },
+    {
+      "id": "TB2_8_005",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_006",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "slayer",
+        "soldier"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 2"
+    },
+    {
+      "id": "TB2_8_007",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_008",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "undertaker",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 3; global use 4"
+    },
+    {
+      "id": "TB2_8_009",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_010",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_011",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "fortuneteller",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 3; global use 5"
+    },
+    {
+      "id": "TB2_8_012",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_013",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_014",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "ravenkeeper",
+        "virgin"
+      ],
+      "chosen": "ravenkeeper",
+      "rationale": "interaction score 2; global use 1"
+    },
+    {
+      "id": "TB2_8_015",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "empath",
+        "soldier"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 3"
+    },
+    {
+      "id": "TB2_8_016",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_017",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "undertaker",
+        "monk"
+      ],
+      "chosen": "monk",
+      "rationale": "interaction score 3; global use 3"
+    },
+    {
+      "id": "TB2_8_018",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "fortuneteller",
+        "soldier"
+      ],
+      "chosen": "soldier",
+      "rationale": "interaction score 3; global use 3"
+    },
+    {
+      "id": "TB2_8_019",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_020",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_021",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_022",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "fortuneteller",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 6"
+    },
+    {
+      "id": "TB2_8_023",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_024",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_025",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_026",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "fortuneteller",
+        "undertaker"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 2; global use 4"
+    },
+    {
+      "id": "TB2_8_027",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_028",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "virgin",
+        "soldier"
+      ],
+      "chosen": "soldier",
+      "rationale": "interaction score 3; global use 4"
+    },
+    {
+      "id": "TB2_8_029",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_030",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_031",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_032",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_033",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "investigator",
+        "virgin"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 2"
+    },
+    {
+      "id": "TB2_8_034",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_035",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "chef",
+        "virgin"
+      ],
+      "chosen": "virgin",
+      "rationale": "interaction score 0; global use 1"
+    },
+    {
+      "id": "TB2_8_036",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "virgin",
+        "mayor"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 3"
+    },
+    {
+      "id": "TB2_8_037",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_038",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_039",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "undertaker",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 3; global use 7"
+    },
+    {
+      "id": "TB2_8_040",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "fortuneteller",
+        "virgin"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 7; global use 3"
+    },
+    {
+      "id": "TB2_8_041",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "monk",
+        "ravenkeeper"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 5; global use 4"
+    },
+    {
+      "id": "TB2_8_042",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_043",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_044",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_045",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "undertaker",
+        "monk"
+      ],
+      "chosen": "monk",
+      "rationale": "interaction score 3; global use 4"
+    },
+    {
+      "id": "TB2_8_046",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "investigator",
+        "mayor"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 3"
+    },
+    {
+      "id": "TB2_8_047",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "chef",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 3; global use 8"
+    },
+    {
+      "id": "TB2_8_048",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_049",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_8_050",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_001",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_002",
+      "drunk": true,
+      "old_three": [
+        "undertaker",
+        "ravenkeeper",
+        "mayor"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 7; global use 5"
+    },
+    {
+      "id": "TB2_9_003",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "slayer",
+        "soldier"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 5; global use 4"
+    },
+    {
+      "id": "TB2_9_004",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "undertaker",
+        "virgin"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 6"
+    },
+    {
+      "id": "TB2_9_005",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "chef",
+        "virgin"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 5; global use 3"
+    },
+    {
+      "id": "TB2_9_006",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "investigator",
+        "soldier"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 2"
+    },
+    {
+      "id": "TB2_9_007",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "fortuneteller",
+        "virgin"
+      ],
+      "chosen": "virgin",
+      "rationale": "interaction score 3; global use 2"
+    },
+    {
+      "id": "TB2_9_008",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_009",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "fortuneteller",
+        "slayer"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 5; global use 5"
+    },
+    {
+      "id": "TB2_9_010",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "fortuneteller",
+        "monk"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 5; global use 4"
+    },
+    {
+      "id": "TB2_9_011",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "fortuneteller",
+        "ravenkeeper"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 5; global use 5"
+    },
+    {
+      "id": "TB2_9_012",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "investigator",
+        "virgin"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 4"
+    },
+    {
+      "id": "TB2_9_013",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "undertaker",
+        "virgin"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 7; global use 7"
+    },
+    {
+      "id": "TB2_9_014",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "virgin",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 9"
+    },
+    {
+      "id": "TB2_9_015",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_016",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "undertaker",
+        "virgin"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 8"
+    },
+    {
+      "id": "TB2_9_017",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "empath",
+        "mayor"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 3"
+    },
+    {
+      "id": "TB2_9_018",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_019",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_020",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "chef",
+        "monk"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 5; global use 4"
+    },
+    {
+      "id": "TB2_9_021",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "ravenkeeper",
+        "virgin"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 5; global use 5"
+    },
+    {
+      "id": "TB2_9_022",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "undertaker",
+        "mayor"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 7; global use 9"
+    },
+    {
+      "id": "TB2_9_023",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "undertaker",
+        "monk"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 7; global use 10"
+    },
+    {
+      "id": "TB2_9_024",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "chef",
+        "slayer"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 5"
+    },
+    {
+      "id": "TB2_9_025",
+      "drunk": true,
+      "old_three": [
+        "ravenkeeper",
+        "slayer",
+        "soldier"
+      ],
+      "chosen": "slayer",
+      "rationale": "interaction score 3; global use 2"
+    },
+    {
+      "id": "TB2_9_026",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "undertaker",
+        "monk"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 7; global use 11"
+    },
+    {
+      "id": "TB2_9_027",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "slayer",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 10"
+    },
+    {
+      "id": "TB2_9_028",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_029",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "ravenkeeper",
+        "soldier"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 5; global use 6"
+    },
+    {
+      "id": "TB2_9_030",
+      "drunk": true,
+      "old_three": [
+        "monk",
+        "ravenkeeper",
+        "slayer"
+      ],
+      "chosen": "slayer",
+      "rationale": "interaction score 3; global use 3"
+    },
+    {
+      "id": "TB2_9_031",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_032",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "ravenkeeper",
+        "soldier"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 5; global use 6"
+    },
+    {
+      "id": "TB2_9_033",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_034",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_035",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "fortuneteller",
+        "monk"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 5; global use 7"
+    },
+    {
+      "id": "TB2_9_036",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "undertaker",
+        "slayer"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 7; global use 12"
+    },
+    {
+      "id": "TB2_9_037",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_038",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "empath",
+        "mayor"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 6"
+    },
+    {
+      "id": "TB2_9_039",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "virgin",
+        "slayer"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 5"
+    },
+    {
+      "id": "TB2_9_040",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "investigator",
+        "mayor"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 4"
+    },
+    {
+      "id": "TB2_9_041",
+      "drunk": true,
+      "old_three": [
+        "undertaker",
+        "ravenkeeper",
+        "slayer"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 7; global use 13"
+    },
+    {
+      "id": "TB2_9_042",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_043",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "undertaker",
+        "monk"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 7; global use 14"
+    },
+    {
+      "id": "TB2_9_044",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "ravenkeeper",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 11"
+    },
+    {
+      "id": "TB2_9_045",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "chef",
+        "slayer"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 5"
+    },
+    {
+      "id": "TB2_9_046",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "ravenkeeper",
+        "slayer"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 5; global use 6"
+    },
+    {
+      "id": "TB2_9_047",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_048",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "empath",
+        "monk"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 5; global use 6"
+    },
+    {
+      "id": "TB2_9_049",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_9_050",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_001",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_002",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_003",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_004",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_005",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_006",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_007",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_008",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "undertaker",
+        "soldier"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 15"
+    },
+    {
+      "id": "TB2_10_009",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "chef",
+        "monk"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 5; global use 7"
+    },
+    {
+      "id": "TB2_10_010",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "monk",
+        "slayer"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 5; global use 6"
+    },
+    {
+      "id": "TB2_10_011",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_012",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "slayer",
+        "soldier"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 8"
+    },
+    {
+      "id": "TB2_10_013",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_014",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_015",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_016",
+      "drunk": true,
+      "old_three": [
+        "ravenkeeper",
+        "virgin",
+        "slayer"
+      ],
+      "chosen": "ravenkeeper",
+      "rationale": "interaction score 2; global use 2"
+    },
+    {
+      "id": "TB2_10_017",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "undertaker",
+        "slayer"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 16"
+    },
+    {
+      "id": "TB2_10_018",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_019",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_020",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_021",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_022",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_023",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "investigator",
+        "empath"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 7"
+    },
+    {
+      "id": "TB2_10_024",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_025",
+      "drunk": true,
+      "old_three": [
+        "undertaker",
+        "ravenkeeper",
+        "virgin"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 17"
+    },
+    {
+      "id": "TB2_10_026",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_027",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_028",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_029",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_030",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_031",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_032",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_033",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_034",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_035",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "fortuneteller",
+        "slayer"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 7; global use 7"
+    },
+    {
+      "id": "TB2_10_036",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_037",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "chef",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 12"
+    },
+    {
+      "id": "TB2_10_038",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_039",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_040",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_041",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_042",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_043",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_044",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "fortuneteller",
+        "virgin"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 5; global use 8"
+    },
+    {
+      "id": "TB2_10_045",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_046",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "virgin",
+        "slayer"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 9"
+    },
+    {
+      "id": "TB2_10_047",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_048",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_049",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_10_050",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_001",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_002",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_003",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "ravenkeeper",
+        "mayor"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 7"
+    },
+    {
+      "id": "TB2_11_004",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "slayer",
+        "mayor"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 7; global use 9"
+    },
+    {
+      "id": "TB2_11_005",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "fortuneteller",
+        "slayer"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 8"
+    },
+    {
+      "id": "TB2_11_006",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "investigator",
+        "slayer"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 7"
+    },
+    {
+      "id": "TB2_11_007",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_008",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "empath",
+        "monk"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 8"
+    },
+    {
+      "id": "TB2_11_009",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "empath",
+        "undertaker"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 18"
+    },
+    {
+      "id": "TB2_11_010",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "ravenkeeper",
+        "soldier"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 9"
+    },
+    {
+      "id": "TB2_11_011",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_012",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_013",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_014",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "virgin",
+        "slayer"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 8"
+    },
+    {
+      "id": "TB2_11_015",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_016",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_017",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_018",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_019",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "monk",
+        "ravenkeeper"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 9"
+    },
+    {
+      "id": "TB2_11_020",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "empath",
+        "soldier"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 10"
+    },
+    {
+      "id": "TB2_11_021",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "slayer",
+        "soldier"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 8"
+    },
+    {
+      "id": "TB2_11_022",
+      "drunk": true,
+      "old_three": [
+        "undertaker",
+        "ravenkeeper",
+        "soldier"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 19"
+    },
+    {
+      "id": "TB2_11_023",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_024",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_025",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_026",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_027",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_028",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "ravenkeeper",
+        "mayor"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 11"
+    },
+    {
+      "id": "TB2_11_029",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_030",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "undertaker",
+        "virgin"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 20"
+    },
+    {
+      "id": "TB2_11_031",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "undertaker",
+        "soldier"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 21"
+    },
+    {
+      "id": "TB2_11_032",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "librarian",
+        "slayer"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 9"
+    },
+    {
+      "id": "TB2_11_033",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_034",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_035",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "empath",
+        "virgin"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 10"
+    },
+    {
+      "id": "TB2_11_036",
+      "drunk": true,
+      "old_three": [
+        "undertaker",
+        "virgin",
+        "slayer"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 22"
+    },
+    {
+      "id": "TB2_11_037",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_038",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "undertaker",
+        "mayor"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 23"
+    },
+    {
+      "id": "TB2_11_039",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_040",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_041",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_042",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "empath",
+        "virgin"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 10"
+    },
+    {
+      "id": "TB2_11_043",
+      "drunk": true,
+      "old_three": [
+        "undertaker",
+        "monk",
+        "slayer"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 24"
+    },
+    {
+      "id": "TB2_11_044",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_045",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_046",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "investigator",
+        "empath"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 10"
+    },
+    {
+      "id": "TB2_11_047",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_048",
+      "drunk": true,
+      "old_three": [
+        "undertaker",
+        "virgin",
+        "mayor"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 25"
+    },
+    {
+      "id": "TB2_11_049",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_11_050",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_001",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "fortuneteller",
+        "slayer"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 5; global use 9"
+    },
+    {
+      "id": "TB2_12_002",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_003",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "empath",
+        "mayor"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 10"
+    },
+    {
+      "id": "TB2_12_004",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "chef",
+        "mayor"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 11"
+    },
+    {
+      "id": "TB2_12_005",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "librarian",
+        "monk"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 11"
+    },
+    {
+      "id": "TB2_12_006",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "ravenkeeper",
+        "slayer"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 7; global use 10"
+    },
+    {
+      "id": "TB2_12_007",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "ravenkeeper",
+        "virgin"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 5; global use 11"
+    },
+    {
+      "id": "TB2_12_008",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_009",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "ravenkeeper",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 13"
+    },
+    {
+      "id": "TB2_12_010",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "empath",
+        "slayer"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 5; global use 12"
+    },
+    {
+      "id": "TB2_12_011",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "soldier",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 14"
+    },
+    {
+      "id": "TB2_12_012",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_013",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_014",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_015",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "undertaker",
+        "soldier"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 26"
+    },
+    {
+      "id": "TB2_12_016",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "empath",
+        "monk"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 5; global use 12"
+    },
+    {
+      "id": "TB2_12_017",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "investigator",
+        "monk"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 5; global use 11"
+    },
+    {
+      "id": "TB2_12_018",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_019",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "empath",
+        "soldier"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 13"
+    },
+    {
+      "id": "TB2_12_020",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "ravenkeeper",
+        "virgin"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 5; global use 12"
+    },
+    {
+      "id": "TB2_12_021",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "chef",
+        "undertaker"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 27"
+    },
+    {
+      "id": "TB2_12_022",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "ravenkeeper",
+        "soldier"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 12"
+    },
+    {
+      "id": "TB2_12_023",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "fortuneteller",
+        "soldier"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 5; global use 11"
+    },
+    {
+      "id": "TB2_12_024",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "empath",
+        "soldier"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 5; global use 12"
+    },
+    {
+      "id": "TB2_12_025",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "fortuneteller",
+        "mayor"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 7; global use 12"
+    },
+    {
+      "id": "TB2_12_026",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_027",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "empath",
+        "virgin"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 13"
+    },
+    {
+      "id": "TB2_12_028",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "librarian",
+        "virgin"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 5; global use 13"
+    },
+    {
+      "id": "TB2_12_029",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "chef",
+        "empath"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 13"
+    },
+    {
+      "id": "TB2_12_030",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "ravenkeeper",
+        "slayer"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 5; global use 14"
+    },
+    {
+      "id": "TB2_12_031",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_032",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "virgin",
+        "slayer"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 14"
+    },
+    {
+      "id": "TB2_12_033",
+      "drunk": true,
+      "old_three": [
+        "undertaker",
+        "slayer",
+        "soldier"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 28"
+    },
+    {
+      "id": "TB2_12_034",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_035",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "undertaker",
+        "monk"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 29"
+    },
+    {
+      "id": "TB2_12_036",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "chef",
+        "slayer"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 14"
+    },
+    {
+      "id": "TB2_12_037",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "empath",
+        "undertaker"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 30"
+    },
+    {
+      "id": "TB2_12_038",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_039",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "ravenkeeper",
+        "virgin"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 7; global use 13"
+    },
+    {
+      "id": "TB2_12_040",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "virgin",
+        "mayor"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 13"
+    },
+    {
+      "id": "TB2_12_041",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_042",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_043",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "fortuneteller",
+        "soldier"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 5; global use 14"
+    },
+    {
+      "id": "TB2_12_044",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "empath",
+        "undertaker"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 31"
+    },
+    {
+      "id": "TB2_12_045",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "chef",
+        "soldier"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 5; global use 14"
+    },
+    {
+      "id": "TB2_12_046",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "virgin",
+        "soldier"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 5; global use 15"
+    },
+    {
+      "id": "TB2_12_047",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "chef",
+        "soldier"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 5; global use 14"
+    },
+    {
+      "id": "TB2_12_048",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_12_049",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "monk",
+        "virgin"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 5; global use 15"
+    },
+    {
+      "id": "TB2_12_050",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "undertaker",
+        "mayor"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 32"
+    },
+    {
+      "id": "TB2_13_001",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_002",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_003",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_004",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "ravenkeeper",
+        "slayer"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 16"
+    },
+    {
+      "id": "TB2_13_005",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_006",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_007",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "monk",
+        "virgin"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 5; global use 17"
+    },
+    {
+      "id": "TB2_13_008",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_009",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "virgin",
+        "mayor"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 16"
+    },
+    {
+      "id": "TB2_13_010",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_011",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_012",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_013",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_014",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_015",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_016",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_017",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "undertaker",
+        "soldier"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 33"
+    },
+    {
+      "id": "TB2_13_018",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "ravenkeeper",
+        "soldier"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 17"
+    },
+    {
+      "id": "TB2_13_019",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_020",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "monk",
+        "ravenkeeper"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 5; global use 15"
+    },
+    {
+      "id": "TB2_13_021",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_022",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_023",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_024",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_025",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_026",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "fortuneteller",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 15"
+    },
+    {
+      "id": "TB2_13_027",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "chef",
+        "soldier"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 15"
+    },
+    {
+      "id": "TB2_13_028",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_029",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_030",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_031",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_032",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_033",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_034",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_035",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_036",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "soldier",
+        "mayor"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 18"
+    },
+    {
+      "id": "TB2_13_037",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_038",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_039",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_13_040",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "empath",
+        "undertaker"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 34"
+    },
+    {
+      "id": "TB2_14_001",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "slayer",
+        "mayor"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 18"
+    },
+    {
+      "id": "TB2_14_002",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_003",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_004",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_005",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_006",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_007",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "undertaker",
+        "ravenkeeper"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 35"
+    },
+    {
+      "id": "TB2_14_008",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_009",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "undertaker",
+        "soldier"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 36"
+    },
+    {
+      "id": "TB2_14_010",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "virgin",
+        "slayer"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 7; global use 15"
+    },
+    {
+      "id": "TB2_14_011",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "chef",
+        "monk"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 5; global use 16"
+    },
+    {
+      "id": "TB2_14_012",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "monk",
+        "slayer"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 5; global use 19"
+    },
+    {
+      "id": "TB2_14_013",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_014",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_015",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_016",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_017",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "monk",
+        "slayer"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 5; global use 15"
+    },
+    {
+      "id": "TB2_14_018",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_019",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_020",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "monk",
+        "soldier"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 19"
+    },
+    {
+      "id": "TB2_14_021",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "slayer",
+        "mayor"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 17"
+    },
+    {
+      "id": "TB2_14_022",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "undertaker",
+        "ravenkeeper"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 37"
+    },
+    {
+      "id": "TB2_14_023",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "undertaker",
+        "slayer"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 38"
+    },
+    {
+      "id": "TB2_14_024",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "fortuneteller",
+        "virgin"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 7; global use 16"
+    },
+    {
+      "id": "TB2_14_025",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_026",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "investigator",
+        "undertaker"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 39"
+    },
+    {
+      "id": "TB2_14_027",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_028",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "fortuneteller",
+        "monk"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 5; global use 16"
+    },
+    {
+      "id": "TB2_14_029",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "undertaker",
+        "virgin"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 40"
+    },
+    {
+      "id": "TB2_14_030",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_031",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_032",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_033",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_034",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "virgin",
+        "slayer"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 17"
+    },
+    {
+      "id": "TB2_14_035",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_036",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "ravenkeeper",
+        "slayer"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 18"
+    },
+    {
+      "id": "TB2_14_037",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_14_038",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "undertaker",
+        "slayer"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 41"
+    },
+    {
+      "id": "TB2_14_039",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "empath",
+        "slayer"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 18"
+    },
+    {
+      "id": "TB2_14_040",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "investigator",
+        "undertaker"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 42"
+    },
+    {
+      "id": "TB2_15_001",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "fortuneteller",
+        "soldier"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 7; global use 17"
+    },
+    {
+      "id": "TB2_15_002",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_15_003",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "fortuneteller",
+        "monk"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 5; global use 16"
+    },
+    {
+      "id": "TB2_15_004",
+      "drunk": true,
+      "old_three": [
+        "undertaker",
+        "slayer",
+        "mayor"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 43"
+    },
+    {
+      "id": "TB2_15_005",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "slayer",
+        "mayor"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 19"
+    },
+    {
+      "id": "TB2_15_006",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_15_007",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "ravenkeeper",
+        "slayer"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 17"
+    },
+    {
+      "id": "TB2_15_008",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_15_009",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "monk",
+        "slayer"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 20"
+    },
+    {
+      "id": "TB2_15_010",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "slayer",
+        "soldier"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 21"
+    },
+    {
+      "id": "TB2_15_011",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_15_012",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "monk",
+        "ravenkeeper"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 5; global use 20"
+    },
+    {
+      "id": "TB2_15_013",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "ravenkeeper",
+        "mayor"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 18"
+    },
+    {
+      "id": "TB2_15_014",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "slayer",
+        "mayor"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 22"
+    },
+    {
+      "id": "TB2_15_015",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "librarian",
+        "mayor"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 19"
+    },
+    {
+      "id": "TB2_15_016",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "monk",
+        "ravenkeeper"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 19"
+    },
+    {
+      "id": "TB2_15_017",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "undertaker",
+        "slayer"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 44"
+    },
+    {
+      "id": "TB2_15_018",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_15_019",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "ravenkeeper",
+        "soldier"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 5; global use 21"
+    },
+    {
+      "id": "TB2_15_020",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "monk",
+        "virgin"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 20"
+    },
+    {
+      "id": "TB2_15_021",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "fortuneteller",
+        "monk"
+      ],
+      "chosen": "fortuneteller",
+      "rationale": "interaction score 5; global use 18"
+    },
+    {
+      "id": "TB2_15_022",
+      "drunk": true,
+      "old_three": [
+        "ravenkeeper",
+        "slayer",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 16"
+    },
+    {
+      "id": "TB2_15_023",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "chef",
+        "virgin"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 21"
+    },
+    {
+      "id": "TB2_15_024",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "empath",
+        "mayor"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 20"
+    },
+    {
+      "id": "TB2_15_025",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "monk",
+        "soldier"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 20"
+    },
+    {
+      "id": "TB2_15_026",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "empath",
+        "virgin"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 21"
+    },
+    {
+      "id": "TB2_15_027",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_15_028",
+      "drunk": true,
+      "old_three": [
+        "chef",
+        "ravenkeeper",
+        "mayor"
+      ],
+      "chosen": "chef",
+      "rationale": "interaction score 7; global use 22"
+    },
+    {
+      "id": "TB2_15_029",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "librarian",
+        "soldier"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 21"
+    },
+    {
+      "id": "TB2_15_030",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_15_031",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "empath",
+        "monk"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 22"
+    },
+    {
+      "id": "TB2_15_032",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_15_033",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "virgin",
+        "soldier"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 22"
+    },
+    {
+      "id": "TB2_15_034",
+      "drunk": false,
+      "old_three": [],
+      "chosen": null,
+      "rationale": "no Drunk; no additional Townsfolk"
+    },
+    {
+      "id": "TB2_15_035",
+      "drunk": true,
+      "old_three": [
+        "slayer",
+        "soldier",
+        "mayor"
+      ],
+      "chosen": "mayor",
+      "rationale": "interaction score 6; global use 17"
+    },
+    {
+      "id": "TB2_15_036",
+      "drunk": true,
+      "old_three": [
+        "washerwoman",
+        "soldier",
+        "mayor"
+      ],
+      "chosen": "washerwoman",
+      "rationale": "interaction score 7; global use 22"
+    },
+    {
+      "id": "TB2_15_037",
+      "drunk": true,
+      "old_three": [
+        "empath",
+        "slayer",
+        "soldier"
+      ],
+      "chosen": "empath",
+      "rationale": "interaction score 7; global use 23"
+    },
+    {
+      "id": "TB2_15_038",
+      "drunk": true,
+      "old_three": [
+        "investigator",
+        "empath",
+        "slayer"
+      ],
+      "chosen": "investigator",
+      "rationale": "interaction score 7; global use 23"
+    },
+    {
+      "id": "TB2_15_039",
+      "drunk": true,
+      "old_three": [
+        "librarian",
+        "ravenkeeper",
+        "virgin"
+      ],
+      "chosen": "librarian",
+      "rationale": "interaction score 7; global use 23"
+    },
+    {
+      "id": "TB2_15_040",
+      "drunk": true,
+      "old_three": [
+        "fortuneteller",
+        "undertaker",
+        "mayor"
+      ],
+      "chosen": "undertaker",
+      "rationale": "interaction score 9; global use 45"
+    }
+  ],
+  "aggregate": {
+    "presets": 480,
+    "drunk_true": 208,
+    "drunk_false": 272,
+    "selected_usage": {
+      "chef": 22,
+      "empath": 23,
+      "fortuneteller": 18,
+      "investigator": 23,
+      "librarian": 23,
+      "mayor": 17,
+      "monk": 4,
+      "ravenkeeper": 2,
+      "slayer": 3,
+      "soldier": 4,
+      "undertaker": 45,
+      "virgin": 2,
+      "washerwoman": 22
+    }
+  }
+}

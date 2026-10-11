@@ -81,14 +81,14 @@ class TroubleBrewingGenericProductionAuthorityTest {
     private fun drunkPreset(): TroubleBrewingSetupPreset = TroubleBrewingSetupPreset(
         id = "tb-8-generic-a",
         playerCount = 8,
-        townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk"),
+        townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk", "slayer"),
         outsiders = listOf("drunk"),
         minions = listOf("poisoner"),
         demons = listOf("imp"),
         source = "test",
         complexity = "standard",
         styleTags = listOf("balanced"),
-        drunkAsOptions = listOf("washerwoman", "librarian", "investigator"),
+        drunk = true,
     )
 
     private fun nonDrunkPreset(): TroubleBrewingSetupPreset = TroubleBrewingSetupPreset(
@@ -101,7 +101,7 @@ class TroubleBrewingGenericProductionAuthorityTest {
         source = "test",
         complexity = "standard",
         styleTags = listOf("balanced"),
-        drunkAsOptions = emptyList(),
+        drunk = false,
     )
 
     private fun dataset(

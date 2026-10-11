@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "trouble_brewing_setup_presets_v3.schema.json",
+  "title": "Trouble Brewing setup preset dataset v3",
+  "type": "object",
+  "required": ["schema_version", "dataset_id", "status", "pool_sizes", "runtime_selection_policy", "pools"],
+  "properties": {
+    "schema_version": { "const": 3 },
+    "dataset_id": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "minLength": 1 },
+    "pool_sizes": { "type": "object" },
+    "runtime_selection_policy": { "type": "object" },
+    "pools": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["id", "player_count", "townsfolk", "outsiders", "minions", "demons", "source", "complexity", "style_tags", "drunk"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "player_count": { "type": "integer", "minimum": 5, "maximum": 15 },
+            "townsfolk": { "type": "array", "items": { "type": "string" } },
+            "outsiders": { "type": "array", "items": { "type": "string" } },
+            "minions": { "type": "array", "items": { "type": "string" } },
+            "demons": { "type": "array", "items": { "type": "string" } },
+            "source": { "type": "string" },
+            "complexity": { "type": "string" },
+            "style_tags": { "type": "array", "items": { "type": "string" } },
+            "drunk": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

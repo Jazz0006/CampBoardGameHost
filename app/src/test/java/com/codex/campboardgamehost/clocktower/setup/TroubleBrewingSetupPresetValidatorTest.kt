@@ -19,11 +19,13 @@ class TroubleBrewingSetupPresetValidatorTest {
             .flatten()
             .filter { "drunk" in it.outsiders }
         assertEquals(208, drunkPresets.size)
-        assertEquals(624, drunkPresets.sumOf { it.drunkAsOptions.size })
-        assertEquals(
-            208,
-            drunkPresets.map { it.drunkAsOptions.sorted() }.toSet().size,
-        )
+        assertEquals(208, drunkPresets.count { it.drunk })
+        assertEquals(272, dataset.pools.values.flatten().count { !it.drunk })
+        assertEquals(480, dataset.totalPresetCount)
+        assertEquals(480, dataset.pools.values.flatten().map { it.id }.toSet().size)
+        drunkPresets.forEach { preset ->
+            assertEquals(preset.playerCount, preset.townsfolk.size + preset.outsiders.size - 1 + preset.minions.size + preset.demons.size)
+        }
     }
 
     @Test
@@ -131,7 +133,7 @@ class TroubleBrewingSetupPresetValidatorTest {
             source = "test",
             complexity = "standard",
             styleTags = emptyList(),
-            drunkAsOptions = emptyList(),
+            drunk = false,
         )
         TroubleBrewingSetupPresetValidator.validate(datasetOf(7, validBaronPreset), canonicalRegistry())
 
@@ -156,41 +158,11 @@ class TroubleBrewingSetupPresetValidatorTest {
             source = "test",
             complexity = "standard",
             styleTags = emptyList(),
-            drunkAsOptions = emptyList(),
+            drunk = false,
         )
 
         assertValidationCode(TroubleBrewingSetupPresetValidationCode.BARON_NOT_ALLOWED_IN_CURATED_SMALL_GAME) {
             TroubleBrewingSetupPresetValidator.validate(datasetOf(5, fivePlayerBaronPreset), canonicalRegistry())
-        }
-    }
-
-    @Test
-    fun `non Drunk presets must not declare Drunk shown role options`() {
-        val preset = standardSevenPlayerPreset().copy(
-            drunkAsOptions = listOf("fortuneteller", "monk", "undertaker"),
-        )
-
-        assertValidationCode(TroubleBrewingSetupPresetValidationCode.INVALID_DRUNK_OPTIONS) {
-            TroubleBrewingSetupPresetValidator.validate(datasetOf(7, preset), canonicalRegistry())
-        }
-    }
-
-    @Test
-    fun `Drunk options must be exactly three unique absent Townsfolk`() {
-        val valid = drunkEightPlayerPreset()
-        TroubleBrewingSetupPresetValidator.validate(datasetOf(8, valid), canonicalRegistry())
-
-        val invalidOptions = listOf(
-            valid.copy(drunkAsOptions = listOf("washerwoman", "librarian")),
-            valid.copy(drunkAsOptions = listOf("washerwoman", "washerwoman", "librarian")),
-            valid.copy(drunkAsOptions = listOf("washerwoman", "librarian", "recluse")),
-            valid.copy(drunkAsOptions = listOf("washerwoman", "librarian", "chef")),
-        )
-
-        invalidOptions.forEach { preset ->
-            assertValidationCode(TroubleBrewingSetupPresetValidationCode.INVALID_DRUNK_OPTIONS) {
-                TroubleBrewingSetupPresetValidator.validate(datasetOf(8, preset), canonicalRegistry())
-            }
         }
     }
 
@@ -239,20 +211,20 @@ class TroubleBrewingSetupPresetValidatorTest {
             source = "test",
             complexity = "standard",
             styleTags = emptyList(),
-            drunkAsOptions = emptyList(),
+            drunk = false,
         )
 
     private fun drunkEightPlayerPreset(): TroubleBrewingSetupPreset = TroubleBrewingSetupPreset(
         id = "drunk-eight",
         playerCount = 8,
-        townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk"),
+        townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk", "slayer"),
         outsiders = listOf("drunk"),
         minions = listOf("poisoner"),
         demons = listOf("imp"),
         source = "test",
         complexity = "standard",
         styleTags = emptyList(),
-        drunkAsOptions = listOf("washerwoman", "librarian", "investigator"),
+        drunk = true,
     )
 
     private fun assertValidationCode(
