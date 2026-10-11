@@ -69,7 +69,7 @@ internal fun clocktowerUndertakerTypedResult(
 internal fun clocktowerUndertakerResultChoices(
     step: ClocktowerNightStepUi,
     seatCount: Int,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     recommendedOptionIds: Set<String> = emptySet(),
@@ -105,7 +105,7 @@ internal fun clocktowerUndertakerResultChoices(
         }.distinctBy { it.key }
     }
 
-    if (automaticStorytellerInfo) {
+    if (allowRuleDeterminedAutoUi) {
         automaticDisplayOption?.let { option ->
             return choicesFrom(
                 options = listOf(option),

@@ -8,7 +8,7 @@ import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
 internal class ClocktowerInformationStepBuilder(
     private val cards: List<PlayerCard>,
     private val language: String,
-    private val automaticStorytellerInfo: Boolean,
+    private val allowRuleDeterminedAutoUi: Boolean,
     private val text: (String, String) -> String,
     private val roleActor: (String) -> PlayerCard?,
     private val roleMissingReason: (String) -> String,
@@ -76,7 +76,7 @@ internal class ClocktowerInformationStepBuilder(
             .distinctBy(::clocktowerInformationCandidateId)
         val reliableRecommendations = actor?.takeUnless { actorAbilityUnreliable }?.let(reliableDisplayOptions).orEmpty()
         val automaticRecommendations = when {
-            !automaticStorytellerInfo -> reliableRecommendations
+            !allowRuleDeterminedAutoUi -> reliableRecommendations
             actorAbilityUnreliable -> unreliableOptions
             else -> reliableRecommendations
         }
@@ -148,7 +148,7 @@ internal class ClocktowerInformationStepBuilder(
             displayPrimary = if (actor != null && unreliableOptions.isEmpty()) displayPrimary ?: tellPlayer else null,
             displaySecondary = if (actor != null && unreliableOptions.isEmpty()) displaySecondary else null,
             displayFooter = if (actor != null && unreliableOptions.isEmpty()) displayFooter ?: explanation else null,
-            displayOptions = if (automaticStorytellerInfo) emptyList() else unreliableOptions,
+            displayOptions = if (allowRuleDeterminedAutoUi) emptyList() else unreliableOptions,
             recommendedDisplayOptions = automaticRecommendations,
             legacyInformationCandidates = completeLegacyCandidates,
             manualInformationCandidates = legalSelectionDomain,

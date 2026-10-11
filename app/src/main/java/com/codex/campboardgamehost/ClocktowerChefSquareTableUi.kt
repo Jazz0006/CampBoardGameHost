@@ -156,7 +156,7 @@ internal fun clocktowerChefEffectivePairSeats(
 internal fun clocktowerChefResultChoices(
     step: ClocktowerNightStepUi,
     players: List<PlayerState>,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     structuredNumberUiModel: StructuredNumberInformationUiModel?,
@@ -166,7 +166,7 @@ internal fun clocktowerChefResultChoices(
     fun numericValue(option: ClocktowerDisplayOption): Int? =
         (option.proposition as? InformationProposition.NumericResult)?.value
 
-    if (automaticStorytellerInfo) {
+    if (allowRuleDeterminedAutoUi) {
         automaticDisplayOption?.let { option ->
             val value = numericValue(option)
             if (value != null) {
@@ -198,15 +198,14 @@ internal fun clocktowerChefResultChoices(
     }
 
     structuredNumberUiModel?.let { model ->
-        val visibleChoices = if (automaticStorytellerInfo) {
+        val visibleChoices = if (allowRuleDeterminedAutoUi) {
             listOfNotNull(
-                model.choices.firstOrNull { it.recommended }
-                    ?: model.choices.singleOrNull(),
+                model.choices.singleOrNull(),
             )
         } else {
             model.choices
         }
-        if (automaticStorytellerInfo && model.choices.isNotEmpty() && visibleChoices.isEmpty()) return emptyList()
+        if (allowRuleDeterminedAutoUi && model.choices.isNotEmpty() && visibleChoices.isEmpty()) return emptyList()
         if (visibleChoices.isNotEmpty()) return visibleChoices.map { choice ->
             ClocktowerChefResultChoice(
                 key = choice.candidateId,

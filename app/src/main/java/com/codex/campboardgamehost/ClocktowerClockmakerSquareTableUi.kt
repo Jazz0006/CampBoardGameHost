@@ -47,7 +47,7 @@ internal data class ClocktowerClockmakerResultChoice(
  */
 internal fun clocktowerClockmakerResultChoices(
     step: ClocktowerNightStepUi,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     recommendedOptionIds: Set<String> = emptySet(),
 ): List<ClocktowerClockmakerResultChoice> {
@@ -72,7 +72,7 @@ internal fun clocktowerClockmakerResultChoices(
         }.distinctBy { it.key }
     }
 
-    if (automaticStorytellerInfo) {
+    if (allowRuleDeterminedAutoUi) {
         automaticDisplayOption?.let { option ->
             return fromOptions(
                 options = listOf(option),

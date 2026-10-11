@@ -146,7 +146,7 @@ internal fun clocktowerEmpathSeatVisual(
 internal fun clocktowerEmpathResultChoices(
     step: ClocktowerNightStepUi,
     players: List<PlayerState>,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     structuredNumberUiModel: StructuredNumberInformationUiModel?,
@@ -173,7 +173,7 @@ internal fun clocktowerEmpathResultChoices(
         )
     }
 
-    if (automaticStorytellerInfo) {
+    if (allowRuleDeterminedAutoUi) {
         automaticDisplayOption
             ?.let { choiceFor(it, recommended = true) }
             ?.let { return listOf(it) }
@@ -192,15 +192,14 @@ internal fun clocktowerEmpathResultChoices(
             .firstOrNull { it.isNotEmpty() }
             .orEmpty()
         if (scope.isEmpty()) return emptyList()
-        val visibleChoices = if (automaticStorytellerInfo) {
+        val visibleChoices = if (allowRuleDeterminedAutoUi) {
             listOfNotNull(
-                model.choices.firstOrNull { it.recommended }
-                    ?: model.choices.singleOrNull(),
+                model.choices.singleOrNull(),
             )
         } else {
             model.choices
         }
-        if (automaticStorytellerInfo && model.choices.isNotEmpty() && visibleChoices.isEmpty()) return emptyList()
+        if (allowRuleDeterminedAutoUi && model.choices.isNotEmpty() && visibleChoices.isEmpty()) return emptyList()
         if (visibleChoices.isNotEmpty()) return visibleChoices.map { choice ->
             ClocktowerEmpathResultChoice(
                 key = choice.candidateId,

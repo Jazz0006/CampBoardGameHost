@@ -57,7 +57,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     redHerringSeat: Int? = null,
     legalResults: Set<Boolean>,
     recommendedResult: Boolean?,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     language: String,
     canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
@@ -116,7 +116,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
             selectedSeats = selectedSeats,
             legalResults = legalResults,
             recommendedResult = recommendedResult,
-            automaticStorytellerInfo = automaticStorytellerInfo,
+            allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
             language = language,
             onResultSelected = onResultSelected,
             onAutomaticResultSelected = onAutomaticResultSelected,
@@ -130,7 +130,7 @@ private fun ClocktowerFortuneTellerCenterControls(
     selectedSeats: List<Int>,
     legalResults: Set<Boolean>,
     recommendedResult: Boolean?,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     language: String,
     onResultSelected: (Boolean) -> Unit,
     onAutomaticResultSelected: (Boolean) -> Unit,
@@ -160,8 +160,9 @@ private fun ClocktowerFortuneTellerCenterControls(
                     )
                 }
 
-                automaticStorytellerInfo -> {
-                    val result = recommendedResult?.takeIf { it in legalResults } ?: actions.first()
+                allowRuleDeterminedAutoUi && legalResults.size == 1 -> {
+                    // Only a Host-unique legal result may use the rule-deterministic shortcut.
+                    val result = legalResults.single()
                     Button(
                         onClick = { onAutomaticResultSelected(result) },
                         modifier = Modifier.fillMaxWidth(),

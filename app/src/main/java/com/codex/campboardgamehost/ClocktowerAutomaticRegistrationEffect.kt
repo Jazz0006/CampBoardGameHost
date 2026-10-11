@@ -28,23 +28,23 @@ internal fun clocktowerRuleDeterministicRegistrationRuling(
  */
 @Composable
 internal fun ClocktowerAutomaticRegistrationEffect(
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     registration: TroubleBrewingRegistrationResolution,
     applyRegisteredRole: Boolean,
     onUsesSpecialRegistrationChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
 ) {
-    val automaticRuling = if (automaticStorytellerInfo) {
+    val automaticRuling = if (allowRuleDeterminedAutoUi) {
         clocktowerRuleDeterministicRegistrationRuling(registration)
     } else {
         null
     }
 
     LaunchedEffect(
-        automaticStorytellerInfo,
+        allowRuleDeterminedAutoUi,
         automaticRuling,
     ) {
-        if (automaticStorytellerInfo && automaticRuling != null) {
+        if (allowRuleDeterminedAutoUi && automaticRuling != null) {
             onUsesSpecialRegistrationChange(automaticRuling.usesSpecialRegistration)
             if (automaticRuling.usesSpecialRegistration && applyRegisteredRole) {
                 automaticRuling.registeredRoleEnName?.let(onRoleChange)

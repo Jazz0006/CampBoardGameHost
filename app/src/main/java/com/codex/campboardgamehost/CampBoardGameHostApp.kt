@@ -325,7 +325,7 @@ internal fun CampBoardGameHostApp() {
     }
     var storytellerOperationMode by remember { mutableStateOf(StorytellerOperationMode.MANUAL) }
     // Mode-derived, constrained to Host rule-deterministic UI paths; multi-choice remains manual.
-    val automaticStorytellerInfo = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC
+    val allowRuleDeterminedAutoUi = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC
     var storytellerGatewayEndpoint by remember { mutableStateOf("") }
     var storytellerGatewayToken by remember { mutableStateOf("") }
     var gatewayConfigurationLoaded by remember { mutableStateOf(false) }
@@ -2935,7 +2935,7 @@ internal fun CampBoardGameHostApp() {
                     }
 
                     Screen.ClocktowerJudge -> ClocktowerJudgeScreen(
-                        automaticStorytellerInfo = automaticStorytellerInfo,
+                        allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                         cards = cards,
                         events = clocktowerEvents,
                         script = currentClocktowerScript,

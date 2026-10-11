@@ -90,25 +90,26 @@ internal fun resolveChambermaidSelection(
 }
 
 internal fun shouldAutoAdvanceRedHerring(
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     isRedHerringStep: Boolean,
     isRealAction: Boolean,
     hasSelectedRedHerring: Boolean,
-): Boolean = automaticStorytellerInfo &&
+): Boolean = allowRuleDeterminedAutoUi &&
     isRedHerringStep &&
     (!isRealAction || hasSelectedRedHerring)
 
 internal fun automaticRedHerringSelectionAtBarrier(
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     isRedHerringStep: Boolean,
     isRealAction: Boolean,
     currentSelection: String?,
     recommendedSelection: String?,
     legalSelections: Set<String>,
 ): String? {
-    if (!automaticStorytellerInfo || !isRedHerringStep || !isRealAction) return null
+    if (!allowRuleDeterminedAutoUi || !isRedHerringStep || !isRealAction) return null
     if (currentSelection != null) return null
-    return recommendedSelection?.takeIf { it in legalSelections }
+    // A legacy UI recommendation has no current Host validation. Only a singleton is deterministic.
+    return legalSelections.singleOrNull()
 }
 
 internal data class ClocktowerDisplayOption(
