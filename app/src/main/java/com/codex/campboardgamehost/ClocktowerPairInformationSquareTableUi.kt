@@ -312,6 +312,7 @@ private fun ClocktowerPairInformationCenterControls(
             Text(
                 text = abilityLabel,
                 style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )

@@ -33,6 +33,7 @@ internal fun <T> ClocktowerExperiencedRecommendationButtons(
         Text(
             text = if (language == "en") "Recommended information" else "推荐信息",
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.SemiBold,
         )
         Spacer(Modifier.height(4.dp))
