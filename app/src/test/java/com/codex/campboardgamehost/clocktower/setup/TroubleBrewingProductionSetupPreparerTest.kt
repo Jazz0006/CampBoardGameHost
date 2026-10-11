@@ -36,9 +36,7 @@ class TroubleBrewingProductionSetupPreparerTest {
         assertEquals((1..8).toList(), intermediate.shownSeatAssignments.map { it.seat })
         assertTrue(intermediate.visibleRoster.hasDrunk)
         assertEquals(0, intermediate.visibleRoster.visibleRoleIds.count { it == "drunk" })
-        val addedVisibleTownsfolk = intermediate.visibleRoster.townsfolkRoleIds
-            .single { roleId -> roleId !in prepared.preset.townsfolk }
-        assertTrue(addedVisibleTownsfolk in prepared.preset.drunkAsOptions)
+        assertEquals(prepared.preset.townsfolk.toSet(), intermediate.visibleRoster.townsfolkRoleIds.toSet())
     }
 
     @Test
@@ -113,14 +111,14 @@ class TroubleBrewingProductionSetupPreparerTest {
     private fun validPreset(): TroubleBrewingSetupPreset = TroubleBrewingSetupPreset(
         id = "tb-8-production-a",
         playerCount = 8,
-        townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk"),
-        outsiders = listOf("drunk"),
+        townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk", "slayer"),
+        outsiders = emptyList(),
         minions = listOf("poisoner"),
         demons = listOf("imp"),
         source = "test",
         complexity = "standard",
         styleTags = listOf("balanced"),
-        drunkAsOptions = listOf("washerwoman", "librarian", "investigator"),
+        drunk = true,
     )
 
     private fun dataset(preset: TroubleBrewingSetupPreset): TroubleBrewingSetupPresetDataset =

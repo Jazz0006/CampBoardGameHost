@@ -47,3 +47,6 @@ Regression anchor: previously discussed eight-seat Chef / Fortune Teller / Raven
 
 **Next chat begins at PROD-GLOBAL-3A and prepares unified 3B–3D architecture, not another Drunk-only model call.**
 
+## TB setup simplification
+
+The active TB setup contract is schema v3: preset `townsfolk` is the complete shown Townsfolk roster, `drunk` is a boolean, and `outsiders` excludes the actual Drunk. No runtime three-option selection or TB-specific shown-identity option policy remains. See `TB_SETUP_SIMPLIFICATION_TEMPLATE_AUDIT.json` for the exact 208 old-three-to-one mappings and per-template rationale. Visible identities are dealt before the existing canonical Drunk seat selection/commit; this slice documents but does not change that sequence. Setup diversity history uses all completed shown identities, including the eventual Drunk's shown role, while player rotation retains actual-plus-shown identity history.

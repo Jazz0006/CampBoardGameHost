@@ -55,7 +55,7 @@ internal object TroubleBrewingSetupPresetJson {
                     source = preset.requiredString("source"),
                     complexity = preset.requiredString("complexity"),
                     styleTags = preset.requiredStringList("style_tags"),
-                    drunkAsOptions = preset.requiredStringList("drunk_as_options"),
+                    drunk = preset.requiredBoolean("drunk"),
                 )
             }
             playerCount to presets
@@ -75,6 +75,12 @@ internal object TroubleBrewingSetupPresetJson {
         require(value is Number) { "Field '$key' must be an integer." }
         return value.toString().toIntOrNull()
             ?: throw IllegalArgumentException("Field '$key' must be an integer.")
+    }
+
+    private fun JSONObject.requiredBoolean(key: String): Boolean {
+        val value = get(key)
+        require(value is Boolean) { "Field '$key' must be a boolean." }
+        return value
     }
 
     private fun JSONObject.requiredDouble(key: String): Double {
