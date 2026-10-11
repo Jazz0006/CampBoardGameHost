@@ -87,6 +87,32 @@ class StorytellerCommittedAnalysisV1Test {
     }
 
     @Test
+    fun `confirmed analysis preserves nonzero Host source revisions and rejects stale models`() {
+        val current = snapshot(1)
+        val sent = JSONObject(StorytellerCommittedAnalysisV1.encode(
+            current, strategy(), gameStateRevision = 4, playerInputRevision = 2,
+        ))
+        val revisions = sent.getJSONObject("sourceRevision")
+        assertEquals(4L, revisions.getLong("gameStateRevision"))
+        assertEquals(2L, revisions.getLong("playerInputRevision"))
+        val response = JSONObject()
+            .put("schemaId", "botc.storyteller-global-analysis-response")
+            .put("schemaVersion", 1)
+            .put("analysisId", "committed-setup:committed-game")
+            .put("sourceRevision", revisions)
+            .put("strategy", strategy().toJson())
+            .toString()
+        assertEquals(1, StorytellerCommittedAnalysisV1.decode(
+            response, current, expectedGameStateRevision = 4, expectedPlayerInputRevision = 2,
+        ).issues.size)
+        assertTrue(runCatching {
+            StorytellerCommittedAnalysisV1.decode(
+                response, current, expectedGameStateRevision = 0, expectedPlayerInputRevision = 0,
+            )
+        }.isFailure)
+    }
+
+    @Test
     fun `strategy callback rejects unrelated game and stale source revision`() {
         val current = snapshot(null)
         val good = JSONObject()

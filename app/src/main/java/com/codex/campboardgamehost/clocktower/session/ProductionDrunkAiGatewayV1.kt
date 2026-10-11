@@ -160,11 +160,13 @@ internal object ProductionDrunkAiGatewayV1 {
         accessToken: String,
         payload: String,
         directModel: String? = null,
+        onStage: (String) -> Unit = {},
     ): String = withContext(Dispatchers.IO) {
         if (endpoint.trim() == PersonalDirectOpenAiV1.ENDPOINT) {
             return@withContext PersonalDirectOpenAiV1.post(
                 accessToken, payload,
                 requireNotNull(directModel) { "Personal direct mode requires a model ID." },
+                onStage,
             )
         }
         val uri = URI(endpoint.trim())

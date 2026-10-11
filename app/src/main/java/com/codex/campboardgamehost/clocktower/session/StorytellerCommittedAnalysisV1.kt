@@ -93,9 +93,16 @@ internal object StorytellerCommittedAnalysisV1 {
         snapshot: TroubleBrewingGameSnapshotV1,
         prior: StorytellerGlobalStrategyV1?,
         directModel: String? = null,
+        gameStateRevision: Long = 0,
+        playerInputRevision: Long = 0,
+        onStage: (String) -> Unit = {},
     ): StorytellerGlobalStrategyV1 {
-        val request = encode(snapshot, prior)
-        val response = ProductionDrunkAiGatewayV1.post(endpoint, accessToken, request, directModel)
-        return decode(response, snapshot)
+        onStage("BUILDING_HOST_CONTEXT")
+        val request = encode(snapshot, prior, gameStateRevision, playerInputRevision)
+        val response = ProductionDrunkAiGatewayV1.post(
+            endpoint, accessToken, request, directModel, onStage,
+        )
+        onStage("VALIDATING_HOST_RESPONSE")
+        return decode(response, snapshot, gameStateRevision, playerInputRevision)
     }
 }

@@ -164,19 +164,35 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
         is java.net.UnknownHostException -> "DNS"
         is java.net.SocketTimeoutException -> "timeout"
         is java.net.ConnectException -> "network connection"
+        is org.json.JSONException -> "JSON response shape"
         else -> {
             val code = Regex("OpenAI HTTP ([0-9]{3})").find(error.message.orEmpty())
                 ?.groupValues?.get(1)
-            if (code != null) "HTTP $code" else "response or configuration validation"
+            when {
+                code != null -> "HTTP $code"
+                error.message?.contains("incomplete", ignoreCase = true) == true ->
+                    "incomplete model response"
+                error.message?.contains("structured text", ignoreCase = true) == true ->
+                    "missing structured output"
+                error is IllegalArgumentException -> "strategy contract validation"
+                else -> "response or configuration validation"
+            }
         }
     }
 
     /** No redirects, arbitrary destinations, request logging, or upstream body in errors. */
-    fun post(apiKey: String, hostPayload: String, model: String): String {
+    fun post(
+        apiKey: String,
+        hostPayload: String,
+        model: String,
+        onStage: (String) -> Unit = {},
+    ): String {
+        onStage("PREPARING")
         require(apiKey.startsWith("sk-") && apiKey.length >= 12) {
             "A personal OpenAI API key is required."
         }
         val wire = buildRequest(hostPayload, model)
+        onStage("CONNECTING")
         val connection = URL(ENDPOINT).openConnection() as HttpsURLConnection
         connection.apply {
             requestMethod = "POST"
@@ -189,7 +205,9 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
         }
         try {
             connection.outputStream.use { it.write(wire.toByteArray(Charsets.UTF_8)) }
+            onStage("AWAITING_MODEL")
             val status = connection.responseCode
+            onStage("HTTP_RESPONSE")
             if (status != 200) {
                 throw IllegalStateException("OpenAI HTTP $status (credential, model, quota or network).")
             }
@@ -205,6 +223,7 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
                     raw.write(buffer, 0, count)
                 }
             }
+            onStage("PARSING_RESPONSE")
             return adaptResponse(hostPayload, raw.toString("UTF-8"))
         } finally {
             connection.disconnect()
