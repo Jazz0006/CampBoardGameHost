@@ -1821,7 +1821,7 @@ internal fun CampBoardGameHostApp() {
                     accessToken = requestedKey,
                     snapshot = snapshot,
                     scope = scope,
-                    model = requestedModel,
+                    model = requestedModel ?: PersonalDirectOpenAiV1.DEFAULT_MODEL,
                 )
             }
             if (serial != firstNightOneShotRequestSerial) return@launch
