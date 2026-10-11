@@ -13,7 +13,7 @@ internal enum class TroubleBrewingSetupPresetValidationCode {
     ROLE_TEAM_MISMATCH,
     INVALID_COMPOSITION,
     BARON_NOT_ALLOWED_IN_CURATED_SMALL_GAME,
-    INVALID_DRUNK_OPTIONS,
+    INVALID_DRUNK_ROSTER,
 }
 
 internal class TroubleBrewingSetupPresetValidationException(
@@ -60,13 +60,14 @@ internal object TroubleBrewingSetupPresetValidator {
             "Preset '${preset.id}' declares ${preset.playerCount} players but belongs to pool $poolPlayerCount."
         }
 
-        val actualRoleIds = preset.actualRoleIds()
+        val presetRoleIds = preset.presetRoleIds()
         presetValidate(
-            actualRoleIds.size == preset.playerCount,
+            preset.townsfolk.size + preset.outsiders.size +
+                preset.minions.size + preset.demons.size == preset.playerCount,
             code = TroubleBrewingSetupPresetValidationCode.ROLE_COUNT_MISMATCH,
             preset = preset,
         ) {
-            "Preset '${preset.id}' contains ${actualRoleIds.size} actual roles for ${preset.playerCount} players."
+            "Preset '${preset.id}' visible roster does not contain ${preset.playerCount} roles."
         }
 
         presetValidate(
@@ -78,7 +79,7 @@ internal object TroubleBrewingSetupPresetValidator {
         }
 
         presetValidate(
-            actualRoleIds.distinct().size == actualRoleIds.size,
+            presetRoleIds.distinct().size == presetRoleIds.size,
             code = TroubleBrewingSetupPresetValidationCode.DUPLICATE_ACTUAL_ROLE,
             preset = preset,
         ) {
@@ -110,8 +111,8 @@ internal object TroubleBrewingSetupPresetValidator {
             characterRegistry = characterRegistry,
         )
 
+        validateDrunkRoster(preset, characterRegistry)
         validateComposition(preset)
-        validateDrunkOptions(preset, actualRoleIds.toSet(), characterRegistry)
     }
 
     private fun validateRoleCategory(
@@ -139,6 +140,7 @@ internal object TroubleBrewingSetupPresetValidator {
 
     private fun validateComposition(preset: TroubleBrewingSetupPreset) {
         val includesBaron = BARON_EXTERNAL_ID in preset.minions
+        val includesDrunk = preset.drunk
         if (includesBaron) {
             presetValidate(
                 preset.playerCount !in 5..6,
@@ -151,8 +153,9 @@ internal object TroubleBrewingSetupPresetValidator {
 
         val standard = clocktowerSetupDistribution(preset.playerCount)
         val baronShift = if (includesBaron) 2 else 0
-        val expectedTownsfolk = standard.townsfolk - baronShift
-        val expectedOutsiders = standard.outsiders + baronShift
+        val drunkShift = if (includesDrunk) 1 else 0
+        val expectedTownsfolk = standard.townsfolk - baronShift + drunkShift
+        val expectedOutsiders = standard.outsiders + baronShift - drunkShift
         val expectedMinions = standard.minions
         val expectedDemons = standard.demons
 
@@ -172,52 +175,30 @@ internal object TroubleBrewingSetupPresetValidator {
         }
     }
 
-    private fun validateDrunkOptions(
+    private fun validateDrunkRoster(
         preset: TroubleBrewingSetupPreset,
-        actualRoleIds: Set<String>,
         characterRegistry: ClocktowerCharacterRegistry,
     ) {
-        val hasDrunk = DRUNK_EXTERNAL_ID in preset.outsiders
-        if (!hasDrunk) {
-            presetValidate(
-                preset.drunkAsOptions.isEmpty(),
-                code = TroubleBrewingSetupPresetValidationCode.INVALID_DRUNK_OPTIONS,
-                preset = preset,
-            ) {
-                "Preset '${preset.id}' has no Drunk but declares Drunk shown-role options."
-            }
-            return
-        }
-
-        val options = preset.drunkAsOptions
         presetValidate(
-            options.size == 3 && options.distinct().size == 3,
-            code = TroubleBrewingSetupPresetValidationCode.INVALID_DRUNK_OPTIONS,
+            DRUNK_EXTERNAL_ID !in preset.outsiders,
+            code = TroubleBrewingSetupPresetValidationCode.INVALID_DRUNK_ROSTER,
             preset = preset,
         ) {
-            "Preset '${preset.id}' must declare exactly three unique Drunk shown-role options."
+            "Preset '${preset.id}' must not list Drunk among displayed Outsiders."
         }
-
-        options.forEach { externalId ->
+        preset.townsfolk.forEach { externalId ->
             val definition = characterRegistry.findByExternalId(externalId)
             presetValidate(
                 definition?.team == ClocktowerCatalogTeam.TOWNSFOLK,
-                code = TroubleBrewingSetupPresetValidationCode.INVALID_DRUNK_OPTIONS,
+                code = TroubleBrewingSetupPresetValidationCode.INVALID_DRUNK_ROSTER,
                 preset = preset,
             ) {
-                "Preset '${preset.id}' Drunk option '$externalId' must resolve to a Trouble Brewing Townsfolk."
-            }
-            presetValidate(
-                externalId !in actualRoleIds,
-                code = TroubleBrewingSetupPresetValidationCode.INVALID_DRUNK_OPTIONS,
-                preset = preset,
-            ) {
-                "Preset '${preset.id}' Drunk option '$externalId' is already an actual in-play role."
+                "Preset '${preset.id}' townsfolk '$externalId' must resolve to a Trouble Brewing Townsfolk."
             }
         }
     }
 
-    private fun TroubleBrewingSetupPreset.actualRoleIds(): List<String> =
+    private fun TroubleBrewingSetupPreset.presetRoleIds(): List<String> =
         townsfolk + outsiders + minions + demons
 
     private const val IMP_EXTERNAL_ID = "imp"

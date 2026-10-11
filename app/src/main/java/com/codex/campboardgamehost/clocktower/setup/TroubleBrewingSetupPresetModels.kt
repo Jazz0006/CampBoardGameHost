@@ -32,5 +32,5 @@ internal data class TroubleBrewingSetupPreset(
     val source: String,
     val complexity: String,
     val styleTags: List<String>,
-    val drunkAsOptions: List<String>,
+    val drunk: Boolean,
 )

@@ -194,6 +194,6 @@ class TroubleBrewingVisibleRosterSeatPlannerTest {
         source = "test",
         complexity = "test",
         styleTags = emptyList(),
-        drunkAsOptions = emptyList(),
+        drunk = false,
     )
 }

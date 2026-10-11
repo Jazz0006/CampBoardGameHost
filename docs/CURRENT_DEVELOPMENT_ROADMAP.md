@@ -75,3 +75,7 @@
 - [GSP 通用 policy 设计](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md)，以本路线、2026-10-09 memory/recovery 决定作为后续优先级覆盖。
 - [RES 架构解耦和旧引擎退役](RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md)、[核心所有权](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md)、[TB canonical snapshot](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md)、[HOST-ML1](HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md)。
 - 2026-10-09 之前全部工程阶段详情与 exact-head 验收：参阅 [旧 roadmap 快照](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md)；不再在唯一执行计划里堆叠几百行历史。
+
+## TB setup simplification checkpoint (2026-10-11)
+
+TB setup template schema v3 now stores the full visible Townsfolk roster and a boolean `drunk`; the 480 preset IDs and style metadata remain stable (208 Drunk, 272 non-Drunk). The deterministic one-time migration, old-three-to-one selection audit, and aggregate choice counts are recorded in `TB_SETUP_SIMPLIFICATION_TEMPLATE_AUDIT.json`. Runtime setup selection has no per-template Drunk shown-role choice. Setup diversity history compares the completed shown roster; player-specific identity rotation continues to use recorded actual and shown identities. The Drunk is still selected and canonically committed after visible identities are dealt; sequencing is unchanged.
