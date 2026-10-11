@@ -1,0 +1,32 @@
+name: PROD-1 gateway offline contract
+
+on:
+  pull_request:
+    paths:
+      - 'tools/storyteller_gateway.py'
+      - 'tools/prod_global_live_smoke.py'
+      - 'tools/prod_global_latency_profile.py'
+      - 'tools/tests/test_storyteller_gateway.py'
+      - 'tools/tests/test_prod_global_latency_profile.py'
+      - '.github/workflows/prod1-gateway-offline.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gateway-offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Strict offline gateway schema and legality tests
+        env:
+          OPENAI_API_KEY: ''
+          GATEWAY_ACCESS_TOKEN: ''
+        run: |
+          python tools/prod_global_latency_profile.py
+          python -m unittest discover -v -s tools/tests -p 'test_storyteller_gateway.py'
+          python -m unittest discover -v -s tools/tests -p 'test_prod_global_latency_profile.py'

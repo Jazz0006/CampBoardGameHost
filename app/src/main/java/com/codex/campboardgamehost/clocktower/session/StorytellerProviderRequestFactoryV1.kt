@@ -10,6 +10,9 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderGameStat
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1
 
 /** Direct RES-1 engine decision -> RES-2 neutral provider request materialization. */
 internal object StorytellerProviderRequestFactoryV1 {
@@ -86,6 +89,36 @@ internal object StorytellerProviderRequestFactoryV1 {
             },
             gameContext = gameContext,
             coordinationHorizon = coordinationHorizon,
+        )
+    }
+
+    /** Adapts an existing Host scalar result domain into the common LLM interface. */
+    fun fromScalarInformation(
+        identity: StorytellerDecisionRequestIdentity,
+        revision: StorytellerDecisionRevision,
+        sourceSeat: Int,
+        abilityRole: RoleId,
+        reliability: ReliabilityState,
+        kind: StorytellerProviderScalarKindV1,
+        metric: String,
+        subjectSeats: List<Int>,
+        legalCandidates: List<StorytellerProviderCandidateV1>,
+        snapshot: TroubleBrewingGameSnapshotV1,
+        gameContext: StorytellerProviderGameContextV1,
+    ): StorytellerProviderRequestV1 {
+        require(identity.gameId == snapshot.gameId)
+        val context = StorytellerProviderDecisionContextV1.ScalarInformation(
+            sourceSeat, abilityRole, reliability, kind, metric, subjectSeats,
+        )
+        return StorytellerProviderRequestV1(
+            identity = StorytellerProviderDecisionIdentityV1(
+                snapshot.gameId, snapshot.script.value, context.decisionTypeId, identity.requestId,
+            ),
+            sourceRevision = revision.toProviderRevision(),
+            state = StorytellerProviderGameStateV1.TroubleBrewing(snapshot),
+            decisionContext = context,
+            legalCandidates = legalCandidates,
+            gameContext = gameContext,
         )
     }
 

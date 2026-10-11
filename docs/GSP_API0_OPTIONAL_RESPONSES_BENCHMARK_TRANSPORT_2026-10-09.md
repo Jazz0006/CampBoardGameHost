@@ -1,7 +1,6 @@
 # GSP-API0 — Optional Responses API Benchmark Transport (2026-10-09)
 
-> Scope: **experimental developer-side transport only**, in parallel with MEM0 independent testing.
-> User-approved priority change: preparing the API interface need not await completed MEM0 blind scores; **actual production cutover and network gameplay dependency remain gated**.
+> **HISTORICAL API0 TRANSPORT REFERENCE — not a live development NEXT or Android Gateway specification.** API0 was the independent developer-side synthetic benchmark with optional paid Responses calls. The separate Oracle Gateway and Host AI_ASSISTED paths have since been implemented in [PR #292](https://github.com/Jazz0006/CampBoardGameHost/pull/292); actual phone E2E remains pending. New execution priority is [PROD-GLOBAL-1D](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md) and [current handoff](NEXT_DEVELOPMENT_HANDOFF.md), not the outdated API-1 suggestions below.
 > Preserves: Android offline Manual gameplay, Host authoritative state, legal candidate validation, provider-neutral RES contract, Recovery <=4h.
 
 ## Decision

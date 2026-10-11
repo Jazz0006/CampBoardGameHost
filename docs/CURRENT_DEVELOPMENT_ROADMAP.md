@@ -1,25 +1,37 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: **2026-10-09 Australia/Sydney**. **唯一当前状态与优先级权威**；不要从 archived docs 或旧 PR 的 `NEXT` 继续施工。
+> Updated: **2026-10-10 Australia/Sydney**. **唯一当前状态与优先级权威**；不要从 archived docs 或旧 PR 的 `NEXT` 继续施工。
 >
 > 2026-10-09 收敛前的完整路线、PR/CI/R2 验收与逐步历史已完整归档为 [pre-MEM0 roadmap snapshot](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md)。需要复核已完成 stage 的 exact-head 验收时查此快照及相应原始 PR，不把这些历史重写到本文件。
 
+> **2026-10-10 PROD-GLOBAL-1D-3（Luna compact-on-live，开发分支待 Android 验收）：** 延迟实验在同一个真实合法 8 人 TB 调查员候选决策中取得完整 A 22.858s/2193 output tokens、简洁 B 7.516s/646 tokens、仅 ID C 8.957s/782 tokens。第 4 个请求 HTTP 503，后两个场景没有模型验证，故 **B 是单场景初步指标而非整局证明**。用户明确优先 Luna/成本与实战质量。当前 PR #292 分支实现针对 **AI_ASSISTED 的实时合法决策** opt-in `COMPACT_MEMO_V1`，返回唯一候选 + 一句可延续的暂定战略摘要；开局分析和酒鬼决策仍原完整协议。旧 Gateway 完整响应兼容；Host 校验事件游标、决策 ID、revision 和合法候选，助手不自动确认。此变更尚未经过整局 Android→Gateway→LLM E2E 验收，不能视为产品通过，也不能把 AI_AUTOMATIC 说成全自动完整 TB。**NEXT：实际 8 人 TB 一局贯穿首夜与白天/次夜并记录每次 Host 事实、玩家已见信息、模型候选、接受/人工覆盖、合法性与耗时；错误/503 人工接管；分析连贯性后决定扩大自动覆盖。**
+
 ## 1. 当前唯一执行顺序 — **PRODUCTION FIRST / AUTONOMOUS GOAL**
 
-> 2026-10-09 **最新用户产品授权覆盖**：不再要求 MEM0 盲评、MEM1 真人局研究或进一步 Recovery 覆盖完成后，才准生产接入。直接推进可玩的 LLM 推荐与自动说书人。唯一执行设计权威：[GSP-PROD-AUTO](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。
+> **2026-10-10 当前状态：PROD-GLOBAL-1C 代码就绪；PROD-GLOBAL-1D 正式接棒。** Draft [PR #292](https://github.com/Jazz0006/CampBoardGameHost/pull/292) 已在真实 Host 信息决策接入统一全局推荐：首夜 Washerwoman/Librarian/Investigator pair，Chef/Empath number，Fortune Teller 选定对象后 Boolean，以及跨白天/次夜的通用因果续航；Gateway 服务端认证/限额与 Android HTTPS 客户端已接通代码边界。Android HTTPS 地址现在会持久保存，Bearer 令牌经 Android Keystore AES-GCM 加密保存，`13b31d0` 的 Android CI #4049、R2 #3677、Gateway #59 GREEN。**尚无真实 Android 整局 E2E 产品验收，不合并 Draft。**
+>
+> **真实模型 / 开发机工具验收已发生：** Oracle Gateway 对 `gpt-6-luna` 完成三次**付费、结构化、合成 TB** 请求：22.83 / 25.92 / 25.32 秒，最后请求完成不代表续航更快。合成 A2 先 Chef 再 Investigator 与 TB 正式首夜顺序不符，只能作为 API continuation smoke，须修正真实 Host 时序。Mini MCP `master@f40e202` 的 `read_botc_evaluation_report(report_id="prod-global-1c")` 已实际返回真实报告与 SHA-256；以后不必手动上传这一固定报告。**这些都不是 Android E2E 证据。**
+>
+> **酒鬼时序用户纠偏：** 若 setup 已预留 Drunk 并固定全体 shown roles，玩家**可以先逐人看到身份**，说书人**在展示结束后才选定哪位展示为镇民的玩家实际为 Drunk**；只须在受影响的首夜能力/信息裁定前绑定。当前 App 阻塞在 Drunk 选择再造正式卡牌是实现顺序，不是规则强制。PROD-GLOBAL-1D 将分离安全的 shown-only 展示与待确认实际身份，在逐人展示时后台全局预规划 Drunk/Pair/首夜信息；投毒与 Fortune Teller 选对象等未发生行动只能条件规划，发生后 Host 校验和按全局事件重规划**未执行**裁量。不制造角色特例策略。
+>
+> **下个会话首先验证延迟瓶颈，不空等重构：** 当前 Gateway 不记录完整的 API 推理/输出 token、首字时间、HTTP 上传下载等分段，因此 20–26 秒不能判定为网络延迟或推理延迟。固定同一个真实合法 TB 上下文，加入无密钥的计时/usage 采集，有限预算对比 API 推理强度、结构化输出长度、首次 vs 续航对结果质量与耗时；交互刷新 **< 5 秒**是体验目标，尚未实现或证明。然后实施预取和 event-driven delta，MANUAL 完全离线，AI_ASSISTED 仍由真人确认，AI_AUTOMATIC 由 Host 校验后自动确认。
+>
+> 原 GSP-PROD-AUTO 的 `PROD-0 NOW`、独立单角色入口与“尚无 Gateway”均是 **2026-10-09 阶段历史**，不是现在的待办。旧路线只提供长期自动主持目标；当前详细方案以 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md) 为准。
 
-| 顺位 | 工作 | 状态 / 边界 |
+| 顺位 | 工作 | 当前状态 / 退出条件 |
 | --- | --- | --- |
-| **NOW** | **PROD-0：真实运行入口/所有权审计** | 找到现有 Host pending decision、RES provider contract、上下文与确认路径；选择一个真实 TB 决策为最小生产切入。不要再建新的推荐算法或全面扩展历史 |
-| **NEXT** | **PROD-1：AI_ASSISTED 真实游戏垂直链路** | 当前真实 GameState + 完整候选/显示角色 + 必要历史/战略摘要 → 可配置强模型的安全后端 → Host fresh/legality 验证 → 游戏 UI 建议/备选 → 说书人确认 |
-| **THEN** | **PROD-2：AI_AUTOMATIC 自动裁量** | 用户明确开启自动模式后，由 Host 验证并调用**现有**规则确认路径自动提交；网络失败、非法或过期响应则暂停/人工接管，不静默恢复旧 heuristic |
-| **FOLLOW-ON** | **PROD-3/4：TB 首夜自动主持 → 完整 TB 无人工说书人** | 扩大真实夜间/白天裁量家族、输入采集、顺序与终局，逐段验收完整可玩 |
-| **NON-BLOCKING** | GSP-MEM0/MEM1、EvidenceLab、模型对比与训练 | B2 已有 9/9 真实结构化结果；质量与记忆优势未完成正式盲评。按实际产品问题选择性验证；不阻塞 PROD-1 |
-| **PAUSED** | GSP-R1C2C-2/3 及 Recovery 历史扩展 | 只有真实游戏决策的不可替代缺口才可重新进入；Recovery 仍限当前格式、≤4h 紧急续局 |
+| **NOW** | **PROD-GLOBAL-1D-0：API 延迟/质量基线** | 同一合法上下文实测 HTTP 总/上游耗时、model API usage、输出长度、推理强度和首次/续航；拒绝以聊天界面体感替代 API 证据；下一轮优先实施 |
+| **NEXT** | **PROD-GLOBAL-1D-1：展示身份期间的首次全局预规划** | shown roles 全部固定 → 前台逐人展示 → 后台规划 Drunk 和首夜条件信息；发牌后绑定实际 Drunk，再按事件有效性验证剩余合法域 |
+| **THEN** | **PROD-GLOBAL-1D-2：全局事件驱动增量重算** | 投毒、人工部分覆盖、夜间/白天其他已确认事件统一进 Host causal prefix，撤销过时建议，≤5 秒作为实验目标；未达到时明确等待/人工接管 |
+| **PRODUCT GATE** | **PROD-1 Android 真实 E2E / PR #292** | 真机→HTTPS Funnel→Gateway→LLM→Host 法定决策、时序、部分覆盖、失效拒绝和手动回退验收后才评估 Draft 合并 |
+| **FOLLOW-ON** | **PROD-2/3/4：自主裁量 → 首夜 → 完整 TB** | 完整 Auto 决策覆盖、出错暂停、人类玩家正常交互和整局验收；无旧 heuristic |
+| **NON-BLOCKING** | MEM0/MEM1、EvidenceLab、训练、旧 GSP-R1 历史扩展 | 仅针对当前质量证据缺口，不作为生产前置项；Recovery 仅当前短期意外关闭 |
 
 **模型策略：** 产品所有者报告强模型 Sol 的直接测试质量高于近期 Luna API 试验；这是主观质量观察，不宣称对应公开 API 模型 ID 或统计显著性。生产模型可配置且质量优先，避免弱模型实验结果阻塞部署。
 
 **不可误读：** 旧文档中“MEM0 NOW”“盲评或 R1 历史补齐是生产 API 前置条件”“永远必须人工确认”等均由本次新授权覆盖；人工确认仅为 AI_ASSISTED 模式的契约。旧算法不复活。
+
+> **2026-10-10 再次纠偏 — 真人说书人持续判断，不做角色特例：** PROD-GLOBAL-1/2 的战略连续性以**全游戏、全阶段的已确认因果事件流**驱动，不是单独的投毒者或酒鬼重算器。既要考虑真实生效/无效的能力行动，也要考虑公开但无机械效果的声称、杀手射击、处女提名、已展示信息及其对玩家认知的影响；明确区分真实机制、玩家看见或声称的内容、未证实的推测和说书人可修订的战略意图。按时点重新评估**未来仍待决定**的动作，绝不因白天新事件回写首夜历史，绝不以技能名 if/else 复活旧推荐算法。完整设计与多阶段验收场景见 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。
 
 ## 2. 冻结的架构与产品原则
 
@@ -45,14 +57,14 @@
 | GSP-R1C2C-1 已限定的真实脚本裁定/白天公共动作 | **已验收**（PR #263、#265、#267、#269、#276、#278、#280、#282、#284）；Drunk-shown Virgin P1 已修复；非真实脚本的 synthetic Klutz/Spy writer 已撤销 |
 | GSP-R1C2C-2/3、R1C overall | **未完成且当前暂停**，只保持有用的现有事实与安全功能 |
 | GSP-MEM0 | B2 经只读批次审计：9 attempted / 9 succeeded / 9 response JSON；正式盲评仍未完成，转为 NON-BLOCKING |
-| GSP-API0 / DEV-EXEC1/2 | #288 API0 及 Mini MCP Oracle 远程离线/付费实验已验收：B2 9/9，5,187 input / 12,667 output tokens（私有批次审计）；**不等于 Android 生产接入或模型质量验收** |
+| GSP-API0 / DEV-EXEC1/2 / PROD-GLOBAL-1C | 历史 API0、B2 9/9 与当前 Gateway 三次真实 Luna 合成测试均有独立记录；Mini MCP 新固定报告读取器已实读验收。Android Keystore/Gateway 客户端本轮 CI GREEN；**全局预规划、低于 5 秒响应及真机全流程均待验收** |
 
 ## 4. 执行与验收门
 
-- **先执行 PROD-0/1。** 每轮核对 live GitHub main、所有开放 PR、本地工作树，按 `AGENTS.md` 选择最小变更；在可运行的真实 TB 决策上验收。参考 [生产自动说书人路线](GSP_PRODUCTION_AUTONOMOUS_STORYTELLER_ROUTE_2026-10-09.md)。
+- **下轮先执行 PROD-GLOBAL-1D-0（测量）再实施 1D-1/2（预规划 / 重算）**。每轮核对 live GitHub main、开放 PR、本地 working tree 和 CI；仍须用真实 TB Host 合法候选、真实首夜顺序及 Android E2E 验收产品。参考 [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md)。
 - PROD-1 的 **必要**测试：真实全座位/显示身份与合法候选上下文、模型结构化有效返回、非法 ID、已变更 decision/revision、超时离线/额度失败、密钥不进入 APK、手动流程可用；无 MEM0 大样本质量研究前置门。
 - PROD-2 的 **必要**测试：自动模式必须显式选择、单次合法确认、取消/去重/过期拒绝/状态重复进入、无提供方时暂停；所有状态提交属于 Host。整个完整自动 TB 游戏是 PROD-4 的独立目标，不能由单决策成功宣称完成。
-- Oracle VM 当前是 **开发机**，其已完成的 Mini MCP 执行/结果返回不构成安全的 Android 生产网关。生产需要有鉴权、额度限制、TLS、服务端密钥保管及私有数据最小化的实际部署。
+- Oracle VM 是 **开发机**：Gateway 已有本地服务端密钥、Bearer、配额与 Tailscale Funnel HTTPS；开发机/本机 smoke 已实测，**仍须手机真实调用及运行时安全性、时序、配额测试**。Mini MCP 工具权限不等于 Android Gateway 权限。
 - MEM0 旧冻结合成 fixture/评分协议继续作为证据但 **不阻塞** 产品；若研发时遇到具体质量退化才开展针对性评估。Host 缺什么字段就对着真实用例补，不扩展任意历史 Replay/Recovery。
 - 当前新方案不创建旧 heuristic/special-policy 推荐，不改变规则权威、Spy/Recluse 多 witness 结果优先语义、现有 Recovery 范围。无关文档和分支清理不可阻塞 PROD-0/1。
 

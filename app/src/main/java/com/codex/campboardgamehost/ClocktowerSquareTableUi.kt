@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -185,6 +186,7 @@ internal fun ClocktowerSquareTableSeatSurface(
     directionalGestureSourceSeatIds: Set<String> = emptySet(),
     directionalGestureTargetSeatIds: Set<String> = emptySet(),
     directionalLink: Pair<String, String>? = null,
+    strategicRelations: List<Pair<Int, Int>> = emptyList(),
     onDirectionalGestureCommit: (String, String) -> Unit = { _, _ -> },
     centerContent: @Composable BoxScope.() -> Unit = {},
 ) {
@@ -353,6 +355,31 @@ internal fun ClocktowerSquareTableSeatSurface(
                     )
                     drawLine(arrowColor, end, firstHead, strokeWidth)
                     drawLine(arrowColor, end, secondHead, strokeWidth)
+                }
+            }
+        }
+
+        // Model-suggested relations are Host-only HYPOTHESES. They use the same canonical
+        // seat placement used for tapping, drag, night steps and vote calculations.
+        if (strategicRelations.isNotEmpty()) {
+            val seatSlots = placements.associate { placement ->
+                placement.seat.seatNumber to placement.spatialSlot
+            }
+            require(strategicRelations.all { (from, to) ->
+                from != to && from in seatSlots && to in seatSlots
+            }) { "A strategic overlay cannot reference a nonexistent Host seat" }
+            val hypothesisColor = MaterialTheme.colorScheme.tertiary
+            Canvas(Modifier.fillMaxSize().zIndex(0.45f)) {
+                strategicRelations.take(4).forEach { (from, to) ->
+                    val source = requireNotNull(seatSlots[from])
+                    val target = requireNotNull(seatSlots[to])
+                    drawLine(
+                        color = hypothesisColor.copy(alpha = 0.85f),
+                        start = Offset(source.centerX * densityScale, source.centerY * densityScale),
+                        end = Offset(target.centerX * densityScale, target.centerY * densityScale),
+                        strokeWidth = 3.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(11.dp.toPx(), 7.dp.toPx())),
+                    )
                 }
             }
         }

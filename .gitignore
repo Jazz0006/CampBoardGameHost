@@ -9,3 +9,6 @@ app/build/
 *.apk
 *.aab
 .DS_Store
+# Private real-model evaluation output and Python bytecode: never commit
+**/__pycache__/
+tools/.private-botc-evaluation/

@@ -1,6 +1,6 @@
 # GSP-MEM0 — Short/Long Memory Ablation: Frozen Pilot Protocol (2026-10-09)
 
-> **State:** pilot case and measurement plan established; **independent LLM runs NOT YET EXECUTED**. No outcome, superiority or quality improvement claimed.
+> **Historical/non-blocking experiment:** the original protocol and frozen fixture below are preserved; later B2 Oracle developer-side execution was independently audited as **9 attempted / 9 succeeded / 9 response files**, but the A/B/C quality advantage and formal blinded scoring have **not** been established. The old "runs not yet executed" statement was obsolete. PROD-GLOBAL-1D real Host/API performance work takes priority; this file is **not** a launch gate or current NEXT. See [current roadmap](CURRENT_DEVELOPMENT_ROADMAP.md).
 > **Product decision:** [Memory / Recovery scope correction](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md).
 > **Frozen case:** [MEM0-TB8-CONTINUITY-001](benchmarks/GSP_MEM0_TB8_SEQUENTIAL_SYNTHETIC_V1.json). Synthetic TB scenario; NOT real-game EvidenceLab evidence.
 

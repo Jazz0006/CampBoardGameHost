@@ -58,6 +58,7 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevisio
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
+import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
 import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
@@ -82,6 +83,13 @@ internal fun ClocktowerJudgeScreen(
     gameId: String,
     gameSeed: Long,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
+    globalAiAssisted: Boolean = false,
+    globalNightPendingDecision: PendingMayorRedirectDecision? = null,
+    globalAiAdviceKey: String? = null,
+    globalAiAdviceText: String? = null,
+    globalAiAdviceBusy: Boolean = false,
+    globalAiAdviceError: String? = null,
+    onRequestGlobalAiAdvice: (ClocktowerNightStepUi, Int) -> Unit = { _, _ -> },
     firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
     firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
     phase: ClocktowerPhase,
@@ -2428,6 +2436,45 @@ internal fun ClocktowerJudgeScreen(
         require(nightSteps.isNotEmpty()) { "A started night must contain an actionable step." }
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
+        val globalAiPending = if (globalAiAssisted && phase == ClocktowerPhase.FirstNight) {
+            pendingGlobalFirstNightPairDecision(
+                currentStep, phase, round, cards, firstNightPairDecisionContext,
+            )
+        } else null
+        val globalAiScalarPending = if (globalAiAssisted &&
+            phase == ClocktowerPhase.FirstNight && globalAiPending == null
+        ) pendingGlobalFirstNightScalarDecision(
+            currentStep, phase, round, currentStepIndex, cards, gameId,
+            InformationDecisionRevision(gameStateRevision, playerInputRevision),
+            listOfNotNull(fortuneTellerFirst, fortuneTellerSecond),
+            recommendationCoordinator,
+        ) else null
+        val globalAiTargetPending = globalNightPendingDecision?.takeIf {
+            globalAiAssisted && phase == ClocktowerPhase.Night &&
+                currentStep.action == ClocktowerNightAction.MayorRedirect &&
+                currentStep.isRealAction
+        }
+        val globalAiDecisionIdentity = globalAiPending?.requestIdentity
+            ?: globalAiScalarPending?.requestIdentity
+            ?: globalAiTargetPending?.requestIdentity
+        val globalAiLegalIds = globalAiPending?.legalCandidates?.map { it.candidateId }
+            ?: globalAiScalarPending?.legalCandidates?.map { it.candidateId }
+            ?: globalAiTargetPending?.pending?.legalCandidates?.map { it.candidateId }
+        val globalAiCurrentKey = globalAiDecisionIdentity?.let { identity ->
+            val legalIds = requireNotNull(globalAiLegalIds)
+            listOf(
+                gameId, round, currentStepIndex, identity.requestId,
+                gameStateRevision, playerInputRevision, nightCheckpoint.nextTimelineGlobalSequence,
+                legalIds.size, legalIds.hashCode(),
+            ).joinToString(":")
+        }
+        LaunchedEffect(globalAiCurrentKey, globalAiAssisted) {
+            if (globalAiAssisted && globalAiCurrentKey != null &&
+                globalAiAdviceKey != globalAiCurrentKey
+            ) {
+                onRequestGlobalAiAdvice(currentStep, currentStepIndex)
+            }
+        }
         val currentSurfacePlan = clocktowerNightSurfacePlan(currentStep, phase)
         val currentSpyRegistrationResolution = currentStep.roleEnName?.let { roleEnName ->
             registrationResolution(
@@ -2571,7 +2618,25 @@ internal fun ClocktowerJudgeScreen(
             onNext = advanceNightStep,
             contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
         ) {
-            ClocktowerNightStepCardLocalized(
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (globalAiAssisted && globalAiDecisionIdentity != null &&
+                    globalAiCurrentKey != null
+                ) {
+                    OutlinedButton(
+                        onClick = { onRequestGlobalAiAdvice(currentStep, currentStepIndex) },
+                        enabled = !globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey,
+                    ) {
+                        Text(text("AI 全局局势与当前合法裁量", "Global AI advice"))
+                    }
+                    if (globalAiAdviceKey == globalAiCurrentKey) {
+                        if (globalAiAdviceBusy) Text(
+                            text("正在重新评估已确认的游戏事件…", "Analysing committed game history…"),
+                        )
+                        globalAiAdviceError?.let { error -> Text(text = error) }
+                        globalAiAdviceText?.let { advice -> Text(text = advice) }
+                    }
+                }
+                ClocktowerNightStepCardLocalized(
                 recommendationCoordinator = recommendationCoordinator,
                 automaticStorytellerInfo = automaticStorytellerInfo,
                 phase = phase,
@@ -2778,7 +2843,8 @@ internal fun ClocktowerJudgeScreen(
                 onPrevious = onMovePreviousNightStep,
                 onHostTools = onHostTools,
                 onNext = advanceNightStep,
-            )
+                )
+            }
         }
         return
     }

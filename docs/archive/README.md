@@ -13,7 +13,7 @@ The full pre-MEM0 authoritative texts are archived as **historical, non-executab
 - [Former active handoff](handoffs/NEXT_DEVELOPMENT_HANDOFF_PRE_MEM0_CONVERGENCE_2026-10-09.md) — cumulative 46 KB handoff history.
 - [Former docs index](checkpoints/DOCS_INDEX_PRE_MEM0_CONVERGENCE_2026-10-09.md) — superseded default reading list and stale SDE/GSP status summaries.
 
-These are faithful source copies plus an archive banner and a link to their exact original Git commit, so prior evidence remains inspectable. Current MEM0 experiment, API0 benchmark transport, and short-horizon Recovery product policy are governed by [current roadmap](../CURRENT_DEVELOPMENT_ROADMAP.md) and [current handoff](../NEXT_DEVELOPMENT_HANDOFF.md), not these snapshots.
+These are faithful source copies plus an archive banner and a link to their exact original Git commit, so prior evidence remains inspectable. **2026-10-10 documentation cleanup:** active entry documents no longer treat MEM0/API0 or PROD-0 as NEXT; the originally retained API0 and MEM0 experiment files are explicitly marked historical/non-blocking rather than deleted or duplicated. Full-product work now follows PROD-GLOBAL-1D (measured API latency, shown-role reveal overlap and global event-driven replanning) in [current roadmap](../CURRENT_DEVELOPMENT_ROADMAP.md) and [current handoff](../NEXT_DEVELOPMENT_HANDOFF.md). Older checklists and prior PR/CI results are evidence only; their NEXT labels have no execution authority.
 
 ## 1. Directory layout
 

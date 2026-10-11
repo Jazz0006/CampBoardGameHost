@@ -61,6 +61,21 @@ internal data class StorytellerProviderRequestV1(
                 }
             }
 
+            is StorytellerProviderDecisionContextV1.ScalarInformation -> {
+                require(context.sourceSeat in stateSeats && context.subjectSeats.all { it in stateSeats }) {
+                    "Scalar-information subjects must belong to the current game."
+                }
+                require(legalCandidates.all { candidate ->
+                    val payload = candidate.payload as? StorytellerProviderCandidatePayloadV1.ScalarResult
+                    payload != null && when (context.kind) {
+                        StorytellerProviderScalarKindV1.NUMBER ->
+                            payload.value.toIntOrNull()?.toString() == payload.value
+                        StorytellerProviderScalarKindV1.BOOLEAN ->
+                            payload.value == "true" || payload.value == "false"
+                    }
+                }) { "Scalar-information candidates must be typed legal results." }
+            }
+
             is StorytellerProviderDecisionContextV1.DayAbilityRegistration -> {
                 require(context.actorSeat in stateSeats && context.subjectSeat in stateSeats)
                 require(legalCandidates.all { it.payload is StorytellerProviderCandidatePayloadV1.RegistrationChoice }) {
@@ -202,6 +217,22 @@ internal sealed interface StorytellerProviderDecisionContextV1 {
         }
     }
 
+    /** One Host-owned numeric/Boolean displayed result; no role-specific AI policy. */
+    data class ScalarInformation(
+        val sourceSeat: Int,
+        val abilityRole: RoleId,
+        val reliability: ReliabilityState,
+        val kind: StorytellerProviderScalarKindV1,
+        val metric: String,
+        val subjectSeats: List<Int>,
+    ) : StorytellerProviderDecisionContextV1 {
+        override val decisionTypeId: String = SCALAR_INFORMATION
+        init {
+            require(sourceSeat > 0 && metric.isNotBlank())
+            require(subjectSeats.distinct().size == subjectSeats.size && subjectSeats.all { it > 0 })
+        }
+    }
+
     /**
      * A confirmed, globally recorded player-facing observation is the anchor. One interaction
      * may have multiple independent Spy/Recluse subject decisions; never collapse them.
@@ -252,10 +283,17 @@ internal sealed interface StorytellerProviderDecisionContextV1 {
     companion object {
         const val DRUNK_ASSIGNMENT = "drunk-assignment"
         const val FIRST_NIGHT_PAIR_INFORMATION = "first-night-pair-information"
+        const val SCALAR_INFORMATION = "scalar-information"
         const val MAYOR_REDIRECT = "mayor-redirect"
         const val REGISTRATION_RESOLUTION = "registration-resolution"
         const val DAY_ABILITY_REGISTRATION = "day-ability-registration"
     }
+}
+
+/** Scalar values remain typed by the current engine information context. */
+internal enum class StorytellerProviderScalarKindV1 {
+    NUMBER,
+    BOOLEAN,
 }
 
 internal data class StorytellerProviderCandidateV1(
@@ -301,6 +339,10 @@ internal sealed interface StorytellerProviderCandidatePayloadV1 {
                 "Pair-information candidate seats must be positive."
             }
         }
+    }
+
+    data class ScalarResult(val value: String) : StorytellerProviderCandidatePayloadV1 {
+        init { require(value.isNotBlank()) }
     }
 
     data class RegistrationChoice(
