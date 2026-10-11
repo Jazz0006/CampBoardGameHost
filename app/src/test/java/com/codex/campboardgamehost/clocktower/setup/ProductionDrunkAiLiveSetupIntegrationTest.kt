@@ -2,7 +2,6 @@ package com.codex.campboardgamehost.clocktower.setup
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
-import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderOutcomeV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRecommendationV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseV1
@@ -63,7 +62,6 @@ class ProductionDrunkAiLiveSetupIntegrationTest {
         )
         val route = TroubleBrewingDrunkSelectionRouter.route(
             preparedSetup = prepared,
-            experienceMode = StorytellerExperienceMode.EXPERIENCED,
             recommendedCandidate = null,
         ) as TroubleBrewingDrunkSelectionRoute.ManualSelection
         val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(

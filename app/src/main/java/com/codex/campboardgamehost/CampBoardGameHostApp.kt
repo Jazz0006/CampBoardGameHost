@@ -54,8 +54,6 @@ import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
-import com.codex.campboardgamehost.clocktower.domain.StorytellerRecommendationUxPolicy
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.kind
@@ -319,12 +317,6 @@ internal fun CampBoardGameHostApp() {
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(appPreferencesStore.loadLanguageMode()) }
-    var storytellerExperienceMode by remember {
-        mutableStateOf(appPreferencesStore.loadStorytellerExperienceMode())
-    }
-    val storytellerRecommendationUxPolicy =
-        StorytellerRecommendationUxPolicy.fromExperienceMode(storytellerExperienceMode)
-    val automaticStorytellerInfo = storytellerRecommendationUxPolicy.automaticExecution
     val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
     var screen by remember { mutableStateOf(Screen.Landing) }
@@ -332,6 +324,8 @@ internal fun CampBoardGameHostApp() {
         mutableStateOf<PendingTroubleBrewingDrunkSelection?>(null)
     }
     var storytellerOperationMode by remember { mutableStateOf(StorytellerOperationMode.MANUAL) }
+    // Mode-derived, constrained to Host rule-deterministic UI paths; multi-choice remains manual.
+    val automaticStorytellerInfo = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC
     var storytellerGatewayEndpoint by remember { mutableStateOf("") }
     var storytellerGatewayToken by remember { mutableStateOf("") }
     var gatewayConfigurationLoaded by remember { mutableStateOf(false) }
@@ -2335,9 +2329,7 @@ internal fun CampBoardGameHostApp() {
         when (
             val route = TroubleBrewingDrunkSelectionRouter.route(
                 preparedSetup = preparedSetup,
-                experienceMode = storytellerExperienceMode,
                 recommendedCandidate = null,
-                beginnerAutomaticCandidate = null,
             )
         ) {
             TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded ->
@@ -2347,7 +2339,7 @@ internal fun CampBoardGameHostApp() {
                     confirmedDrunkCandidate = null,
                 )
 
-            is TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic ->
+            is TroubleBrewingDrunkSelectionRoute.RuleDetermined ->
                 commitAndStartTroubleBrewingGame(
                     preparedGameId = preparedGameId,
                     preparedSetup = preparedSetup,
@@ -2829,16 +2821,11 @@ internal fun CampBoardGameHostApp() {
 
                     Screen.Settings -> SettingsScreen(
                         languageMode = languageMode,
-                        storytellerExperienceMode = storytellerExperienceMode,
                         commonPlayers = commonPlayers,
                         newCommonPlayerName = newCommonPlayerName,
                         onLanguageModeChange = { nextMode ->
                             languageMode = nextMode
                             appPreferencesStore.saveLanguageMode(nextMode)
-                        },
-                        onStorytellerExperienceModeChange = { mode ->
-                            storytellerExperienceMode = mode
-                            appPreferencesStore.saveStorytellerExperienceMode(mode)
                         },
                         onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                         onAddCommonPlayer = ::addCommonPlayer,
@@ -4605,16 +4592,11 @@ internal fun CampBoardGameHostApp() {
                         settingsContent = {
                             SettingsContent(
                                 languageMode = languageMode,
-                                storytellerExperienceMode = storytellerExperienceMode,
                                 commonPlayers = commonPlayers,
                                 newCommonPlayerName = newCommonPlayerName,
                                 onLanguageModeChange = { nextMode ->
                                     languageMode = nextMode
                                     appPreferencesStore.saveLanguageMode(nextMode)
-                                },
-                                onStorytellerExperienceModeChange = { mode ->
-                                    storytellerExperienceMode = mode
-                                    appPreferencesStore.saveStorytellerExperienceMode(mode)
                                 },
                                 onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                                 onAddCommonPlayer = ::addCommonPlayer,

@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.setup
 
-import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
@@ -8,110 +7,32 @@ import org.junit.Test
 
 class TroubleBrewingDrunkSelectionRouterTest {
     @Test
-    fun `experienced drunk setup requires manual selection across exact legal domain`() {
+    fun `multiple legal Drunk assignments remain manual without a recommendation`() {
         val prepared = drunkPreparedSetup()
         val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
-
-        val route = TroubleBrewingDrunkSelectionRouter.route(
-            preparedSetup = prepared,
-            experienceMode = StorytellerExperienceMode.EXPERIENCED,
-            recommendedCandidate = null,
-        )
-
+        val route = TroubleBrewingDrunkSelectionRouter.route(prepared, null)
         val manual = route as TroubleBrewingDrunkSelectionRoute.ManualSelection
         assertEquals(legal, manual.request.candidates)
         assertNull(manual.request.recommendedCandidate)
     }
 
     @Test
-    fun `experienced manual request may carry only exact current legal recommendation`() {
+    fun `recommended Drunk must exactly match the live Host legal domain`() {
         val prepared = drunkPreparedSetup()
-        val recommended = TroubleBrewingDrunkCandidateDomain
-            .legalCandidates(prepared.intermediateSetup)
-            .first()
-
-        val route = TroubleBrewingDrunkSelectionRouter.route(
-            preparedSetup = prepared,
-            experienceMode = StorytellerExperienceMode.EXPERIENCED,
-            recommendedCandidate = recommended,
-        )
-
-        val manual = route as TroubleBrewingDrunkSelectionRoute.ManualSelection
-        assertEquals(recommended, manual.request.recommendedCandidate)
-
-        val stale = recommended.copy(playerName = "Stale Player")
+        val selected = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup).first()
+        val route = TroubleBrewingDrunkSelectionRouter.route(prepared, selected)
+        assertEquals(selected,
+            (route as TroubleBrewingDrunkSelectionRoute.ManualSelection).request.recommendedCandidate)
         assertThrows(IllegalArgumentException::class.java) {
-            TroubleBrewingDrunkSelectionRouter.route(
-                preparedSetup = prepared,
-                experienceMode = StorytellerExperienceMode.EXPERIENCED,
-                recommendedCandidate = stale,
-            )
+            TroubleBrewingDrunkSelectionRouter.route(prepared,
+                selected.copy(playerName = "Stale Player"))
         }
     }
 
     @Test
-    fun `beginner multi choice drunk setup requires manual selection across exact legal domain`() {
-        val prepared = drunkPreparedSetup()
-        val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
-
-        val route = TroubleBrewingDrunkSelectionRouter.route(
-            preparedSetup = prepared,
-            experienceMode = StorytellerExperienceMode.BEGINNER,
-            recommendedCandidate = null,
-            beginnerAutomaticCandidate = null,
-        )
-
-        val manual = route as TroubleBrewingDrunkSelectionRoute.ManualSelection
-        assertEquals(legal, manual.request.candidates)
-        assertNull(manual.request.recommendedCandidate)
-    }
-
-    @Test
-    fun `beginner automatic candidate must belong to current legal domain`() {
-        val prepared = drunkPreparedSetup()
-        val automatic = TroubleBrewingDrunkCandidateDomain
-            .legalCandidates(prepared.intermediateSetup)
-            .first()
-        val stale = automatic.copy(playerName = "Stale Player")
-
-        assertThrows(IllegalArgumentException::class.java) {
-            TroubleBrewingDrunkSelectionRouter.route(
-                preparedSetup = prepared,
-                experienceMode = StorytellerExperienceMode.BEGINNER,
-                recommendedCandidate = null,
-                beginnerAutomaticCandidate = stale,
-            )
-        }
-    }
-
-    @Test
-    fun `beginner rejects experienced recommendation channel`() {
-        val prepared = drunkPreparedSetup()
-        val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
-        val automatic = legal.first()
-
-        assertThrows(IllegalArgumentException::class.java) {
-            TroubleBrewingDrunkSelectionRouter.route(
-                preparedSetup = prepared,
-                experienceMode = StorytellerExperienceMode.BEGINNER,
-                recommendedCandidate = legal.last(),
-                beginnerAutomaticCandidate = automatic,
-            )
-        }
-    }
-
-    @Test
-    fun `setup without drunk needs no selection in either experience mode`() {
-        val prepared = nonDrunkPreparedSetup()
-
-        StorytellerExperienceMode.entries.forEach { mode ->
-            val route = TroubleBrewingDrunkSelectionRouter.route(
-                preparedSetup = prepared,
-                experienceMode = mode,
-                recommendedCandidate = null,
-            )
-            assertEquals(TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded, route)
-        }
+    fun `setup without Drunk never requires a Drunk selection`() {
+        assertEquals(TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded,
+            TroubleBrewingDrunkSelectionRouter.route(nonDrunkPreparedSetup(), null))
     }
 
     private fun drunkPreparedSetup(): TroubleBrewingPreparedSetup {
