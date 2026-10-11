@@ -36,6 +36,7 @@ internal fun SettingsScreen(
     onNewCommonPlayerNameChange: (String) -> Unit,
     onAddCommonPlayer: () -> Unit,
     onRemoveCommonPlayer: (String) -> Unit,
+    aiSettingsSection: @Composable () -> Unit,
     onBack: () -> Unit,
 ) {
     SettingsContent(
@@ -46,6 +47,7 @@ internal fun SettingsScreen(
         onNewCommonPlayerNameChange = onNewCommonPlayerNameChange,
         onAddCommonPlayer = onAddCommonPlayer,
         onRemoveCommonPlayer = onRemoveCommonPlayer,
+        aiSettingsSection = aiSettingsSection,
         onBack = onBack,
     )
 }
@@ -60,6 +62,7 @@ internal fun SettingsContent(
     onNewCommonPlayerNameChange: (String) -> Unit,
     onAddCommonPlayer: () -> Unit,
     onRemoveCommonPlayer: (String) -> Unit,
+    aiSettingsSection: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
 ) {
@@ -161,6 +164,8 @@ internal fun SettingsContent(
                 }
             }
         }
+
+        item { aiSettingsSection() }
 
         item {
             Card(

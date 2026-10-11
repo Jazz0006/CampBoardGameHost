@@ -2,6 +2,13 @@
 
 > Updated: **2026-10-11 Australia/Sydney**. **唯一当前执行优先级权威。** Historical PROD-GLOBAL-1D/2B instructions are NOT current NEXT; see [PROD-GLOBAL-3 unified opening plan](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md) and [handoff](NEXT_DEVELOPMENT_HANDOFF.md). Previous checkpoint detail remains in original route documents and [archive](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md).
 
+## AI-SETTINGS-RELOCATION — 2026-10-12 (on stacked Draft #295, Android CI pending)
+
+- AI 运行**默认模式**、网关/个人 OpenAI 直连、模型 ID 和凭据统一在应用“设置”界面管理；开局确认页只显示本局有效模式、配置状态及设置入口，不再编辑连接参数或切换模式。
+- 默认模式通过新增独立 `storyteller_operation_mode` 应用设置键持久化（默认 MANUAL，未知值回退 MANUAL）；现有 Keystore 密钥和网关凭据存储不迁移、不复制。此前已删除的旧 `storyteller_experience_mode` 不复活。
+- “原班人马快速再来一局”重新采用**全局默认模式**与现有连接配置，不继承上一局故障时的临时 MANUAL takeover；保留原剧本及座位。AI 凭据尚未就绪时**不归档前局**而提示进入设置；非 TB 剧本仍使用规则允许的手动模式。开局与快速重开共用合法的配置就绪门。
+- 变更仅属于 AI 设置/重开 UX；不宣称 PROD-GLOBAL-3 的酒鬼与首夜联合 LLM 规划已完成，也不代表真机全局推荐展示崩溃已验收。
+
 ## LEGACY-EXPERIENCE-RETIREMENT — 2026-10-11 (stacked Draft #295; final semantic cleanup)
 
 - 独立清理分支 `legacy-experience-retirement-20261011` 从 PR #293 head 建立；其依赖链是本分支 → Draft #293 → Draft #292 → main。必须逐层验收/合并，不得把下游直接合到 main。

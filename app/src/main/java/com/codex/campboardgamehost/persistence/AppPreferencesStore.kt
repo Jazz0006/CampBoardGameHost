@@ -22,6 +22,15 @@ internal class AppPreferencesStore(
             .apply()
     }
 
+    fun loadStorytellerOperationMode(): StorytellerOperationMode =
+        preferences.getString(STORYTELLER_OPERATION_MODE_KEY, null)
+            ?.let { stored -> StorytellerOperationMode.entries.firstOrNull { it.name == stored } }
+            ?: StorytellerOperationMode.MANUAL
+
+    fun saveStorytellerOperationMode(mode: StorytellerOperationMode) {
+        preferences.edit().putString(STORYTELLER_OPERATION_MODE_KEY, mode.name).apply()
+    }
+
     fun loadCommonPlayers(): List<String> {
         val hasStoredPlayers = preferences.contains(COMMON_PLAYERS_KEY)
         val raw = preferences.getString(COMMON_PLAYERS_KEY, null)
@@ -58,5 +67,6 @@ internal class AppPreferencesStore(
         const val PREFS_NAME = "camp_board_game_host"
         const val COMMON_PLAYERS_KEY = "common_players"
         const val LANGUAGE_MODE_KEY = "language_mode"
+        const val STORYTELLER_OPERATION_MODE_KEY = "storyteller_operation_mode"
     }
 }

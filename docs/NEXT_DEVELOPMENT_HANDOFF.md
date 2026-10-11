@@ -2,6 +2,13 @@
 
 > Updated **2026-10-11 Australia/Sydney**. **唯一活动交接。** 进入新会话必须重新查开发机 live state / GitHub main、PR、CI，不能假设下述 commit 仍是最新。当前单一执行路线是 [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)；此文件只记录状态及下一步。旧 PROD-GLOBAL-1D/2B/analysis-first NEXT 作为历史，不得再次触发独立酒鬼模型规划。
 
+## 2026-10-12 当前 UI 小切片：AI 设置归位与原班人马快速重开
+
+- PR #295 stacked Draft 上已实施：App Settings 统一呈现 AI 模式、直连/Gateway 凭据/模型；开局仅展示默认模式与配置就绪状态，并可进入 App Settings 后返回相同开局步骤。模式默认值保存至 `AppPreferencesStore` 的 `storyteller_operation_mode`；API Key / Gateway token 保持原 Keystore 存储。
+- **经源码确认的旧行为**：快速重开直接调用 `startClocktowerGame`，使用尚在内存中的 `storytellerOperationMode`。此前的人工接管会使下一局意外 MANUAL，App 重新启动又默认 MANUAL；现以**独立的全局默认模式**纠正。
+- **新行为**：开新局/快速重开都会通过 `storytellerModeForNewGame` 取得新局模式、通过 `storytellerNewGameConfigurationReady` 拒绝未配置的 AI 开局；快速重开先检查凭据再归档旧局，并保留 5/6 人原剧本。NoGreaterJoy 不覆盖全局默认 AI 配置，只在当前不支持的剧本运行手动。
+- 此切片的自动化及 Android/真机状态需以本次最新 PR head 的 CI/R2 核对。尚未完成的 PROD-GLOBAL-3 全局开局、真机展示崩溃仍是主线下一项。
+
 ## 当前并行清理：LEGACY-EXPERIENCE-RETIREMENT (2026-10-11)
 
 当前工作分支 `legacy-experience-retirement-20261011` 基于 Draft PR #293（其基于 Draft #292），不更改两者原始分支。旧说书人“新手/熟练”运行模式、设置开关/SharedPreferences 键及三个候选推荐专属 UI 已在清理分支删除；Drunk 路由不再接收说书人熟练模式；Fortune Teller/红鲱鱼不能在没有 Host 唯一合法结果时任取首项；Spy/Recluse 多解登记不可被自动定为单个见证。独立合法候选的人工选择和 `PlayerExperienceLevelV1` 均必须保留。

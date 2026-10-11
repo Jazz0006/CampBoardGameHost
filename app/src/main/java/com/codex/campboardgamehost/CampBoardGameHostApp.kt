@@ -320,10 +320,15 @@ internal fun CampBoardGameHostApp() {
     val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
     var screen by remember { mutableStateOf(Screen.Landing) }
+    var settingsReturnScreen by remember { mutableStateOf(Screen.Setup) }
     var pendingTroubleBrewingDrunkSelection by remember {
         mutableStateOf<PendingTroubleBrewingDrunkSelection?>(null)
     }
-    var storytellerOperationMode by remember { mutableStateOf(StorytellerOperationMode.MANUAL) }
+    var preferredStorytellerOperationMode by remember {
+        mutableStateOf(appPreferencesStore.loadStorytellerOperationMode())
+    }
+    // Per-game mode can change for manual takeover; never overwrite the saved new-game default.
+    var storytellerOperationMode by remember { mutableStateOf(preferredStorytellerOperationMode) }
     // Mode-derived, constrained to Host rule-deterministic UI paths; multi-choice remains manual.
     val allowRuleDeterminedAutoUi = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC
     var storytellerGatewayEndpoint by remember { mutableStateOf("") }
@@ -496,6 +501,8 @@ internal fun CampBoardGameHostApp() {
     }
     val playerNames = remember { mutableStateListOf<String>() }
     var hostSeatingSetupFlow by remember { mutableStateOf(HostSeatingSetupFlow()) }
+    // Retain the setup step when the user visits app-wide AI settings and returns.
+    var clocktowerSetupStep by remember { mutableStateOf(0) }
     val cards = remember { mutableStateListOf<PlayerCard>() }
     val records = remember { mutableStateListOf<EliminationRecord>() }
     val recoveryWriteGate = remember { RecoveryWriteGate() }
@@ -2387,6 +2394,18 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
+    fun readyForNewClocktowerGame(script: ClocktowerScript): Boolean =
+        storytellerNewGameConfigurationReady(
+            mode = storytellerModeForNewGame(preferredStorytellerOperationMode, script),
+            directEnabled = personalDirectEnabled,
+            directLoaded = personalDirectLoaded,
+            directModel = personalDirectModel,
+            directKey = personalDirectKey,
+            gatewayLoaded = gatewayConfigurationLoaded,
+            gatewayEndpoint = storytellerGatewayEndpoint,
+            gatewayToken = storytellerGatewayToken,
+        )
+
     fun startClocktowerGame() {
         val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
         if (playerNames.size < MIN_CLOCKTOWER_PLAYERS) return
@@ -2395,7 +2414,10 @@ internal fun CampBoardGameHostApp() {
         } else {
             ClocktowerScript.TroubleBrewing
         }
-        if (!canStartClocktowerScript(script)) return
+        if (!canStartClocktowerScript(script) || !readyForNewClocktowerGame(script)) return
+        // Reapply the global preference on every new game, including a quick restart
+        // after the previous game's AI pause/manual takeover.
+        storytellerOperationMode = storytellerModeForNewGame(preferredStorytellerOperationMode, script)
 
         if (script == ClocktowerScript.TroubleBrewing) {
             startTroubleBrewingGame()
@@ -2487,10 +2509,22 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun archiveAndStartNewGame() {
+        val restartScript = if (currentGameKind == GameKind.Clocktower) currentClocktowerScript else null
+        if (restartScript != null && !readyForNewClocktowerGame(restartScript)) {
+            // Do not archive the old game when the selected AI transport cannot start the next one.
+            settingsReturnScreen = screen
+            screen = Screen.Settings
+            showNewGameConfirmation = false
+            return
+        }
         if (!archiveCurrentGameForRestart()) return
         when (currentGameKind) {
             GameKind.Undercover -> startUndercoverGame()
-            GameKind.Clocktower -> startClocktowerGame()
+            GameKind.Clocktower -> {
+                // A five/six-player quick restart must not silently switch scripts.
+                selectedClocktowerScript = restartScript
+                startClocktowerGame()
+            }
         }
     }
 
@@ -2628,6 +2662,28 @@ internal fun CampBoardGameHostApp() {
         applyHostSeatingBack(requireNotNull(hostSeatingBackOrigin))
     }
 
+    val aiSettingsSection: @Composable () -> Unit = {
+        StorytellerAiSettingsPanel(
+            preferredMode = preferredStorytellerOperationMode,
+            onPreferredModeChange = { mode ->
+                preferredStorytellerOperationMode = mode
+                appPreferencesStore.saveStorytellerOperationMode(mode)
+            },
+            directEnabled = personalDirectEnabled,
+            onDirectEnabledChange = { personalDirectEnabled = it },
+            directModel = personalDirectModel,
+            onDirectModelChange = { personalDirectModel = it },
+            directKey = personalDirectKey,
+            onDirectKeyChange = { personalDirectKey = it },
+            directSaveFailed = personalDirectSaveFailed,
+            gatewayEndpoint = storytellerGatewayEndpoint,
+            onGatewayEndpointChange = { storytellerGatewayEndpoint = it },
+            gatewayToken = storytellerGatewayToken,
+            onGatewayTokenChange = { storytellerGatewayToken = it },
+            gatewaySaveFailed = gatewayCredentialSaveFailed,
+        )
+    }
+
     CompositionLocalProvider(LocalContext provides context) {
         MaterialTheme(
             colorScheme = androidx.compose.material3.lightColorScheme(
@@ -2671,7 +2727,10 @@ internal fun CampBoardGameHostApp() {
                     onMoveCurrentPlayerTo = ::moveCurrentPlayerTo,
                     onResumeSavedGame = ::restoreSavedGame,
                     onDiscardSavedGame = ::clearSavedGameState,
-                    onOpenSettings = { screen = Screen.Settings },
+                    onOpenSettings = {
+                        settingsReturnScreen = Screen.Setup
+                        screen = Screen.Settings
+                    },
                     onConfirmSeats = {
                         hostSeatingSetupFlow = hostSeatingSetupFlow.confirmSeats(playerNames)
                         screen = Screen.GameSelection
@@ -2691,6 +2750,7 @@ internal fun CampBoardGameHostApp() {
                     },
                     onOpenClocktowerSettings = {
                         hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Clocktower)
+                        clocktowerSetupStep = 0
                         screen = Screen.ClocktowerSettings
                     },
                 )
@@ -2715,27 +2775,20 @@ internal fun CampBoardGameHostApp() {
                         playerNames = requireNotNull(hostSeatingSetupFlow.confirmedSeating) {
                             "Clocktower settings require confirmed seating"
                         }.playerNames,
+                        step = clocktowerSetupStep,
+                        onStepChange = { clocktowerSetupStep = it },
                         selectedScript = selectedClocktowerScript ?: defaultClocktowerScriptFor(playerCount),
-                        operationMode = storytellerOperationMode,
-                        onOperationModeChange = { storytellerOperationMode = it },
-                        gatewayEndpoint = storytellerGatewayEndpoint,
-                        onGatewayEndpointChange = { storytellerGatewayEndpoint = it },
-                        gatewayToken = storytellerGatewayToken,
-                        onGatewayTokenChange = { storytellerGatewayToken = it },
-                        gatewayCredentialSaveFailed = gatewayCredentialSaveFailed,
-                        personalDirectEnabled = personalDirectEnabled,
-                        onPersonalDirectEnabledChange = { personalDirectEnabled = it },
-                        personalDirectModel = personalDirectModel,
-                        onPersonalDirectModelChange = { personalDirectModel = it },
-                        personalDirectKey = personalDirectKey,
-                        onPersonalDirectKeyChange = { personalDirectKey = it },
-                        personalDirectSaveFailed = personalDirectSaveFailed,
-                        onScriptChange = {
-                            selectedClocktowerScript = it
-                            if (it != ClocktowerScript.TroubleBrewing) {
-                                storytellerOperationMode = StorytellerOperationMode.MANUAL
-                            }
+                        preferredOperationMode = preferredStorytellerOperationMode,
+                        aiConfigurationReady = readyForNewClocktowerGame(
+                            if (playerCount in 5..6) selectedClocktowerScript
+                                ?: defaultClocktowerScriptFor(playerCount)
+                            else ClocktowerScript.TroubleBrewing
+                        ),
+                        onOpenAiSettings = {
+                            settingsReturnScreen = Screen.ClocktowerSettings
+                            screen = Screen.Settings
                         },
+                        onScriptChange = { selectedClocktowerScript = it },
                         onBack = {
                             applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
                         },
@@ -2837,7 +2890,8 @@ internal fun CampBoardGameHostApp() {
                         onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                         onAddCommonPlayer = ::addCommonPlayer,
                         onRemoveCommonPlayer = ::removeCommonPlayer,
-                        onBack = { screen = Screen.Setup },
+                        aiSettingsSection = aiSettingsSection,
+                        onBack = { screen = settingsReturnScreen },
                     )
 
                     Screen.PassPhone -> PassPhoneScreen(
@@ -4608,6 +4662,7 @@ internal fun CampBoardGameHostApp() {
                                 onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                                 onAddCommonPlayer = ::addCommonPlayer,
                                 onRemoveCommonPlayer = ::removeCommonPlayer,
+                                aiSettingsSection = aiSettingsSection,
                             )
                         },
                         onDismiss = { showHostTools = false },
