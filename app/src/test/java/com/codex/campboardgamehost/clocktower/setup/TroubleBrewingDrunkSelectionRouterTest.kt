@@ -119,7 +119,7 @@ class TroubleBrewingDrunkSelectionRouterTest {
             id = "tb-drunk-selection-test",
             playerCount = 5,
             townsfolk = listOf("chef", "empath", "slayer"),
-            outsiders = listOf("drunk"),
+            outsiders = emptyList(),
             minions = listOf("poisoner"),
             demons = listOf("imp"),
             source = "test",

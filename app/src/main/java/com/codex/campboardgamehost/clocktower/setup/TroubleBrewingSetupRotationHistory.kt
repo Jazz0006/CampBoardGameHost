@@ -58,7 +58,7 @@ internal fun TroubleBrewingSetupRotationHistory.toSetupDiversityHistory(
                 requireNotNull(characterRegistry.findByExternalId(identity.shownRoleId)) {
                     "Trouble Brewing setup history references unknown shown role '${identity.shownRoleId}'."
                 }.id
-            }.distinct()
+            }.distinct().sortedBy { it.value }
             require(shownRoles.size == record.playerCount) {
                 "Trouble Brewing completed shown roster must contain one distinct role per seat."
             }

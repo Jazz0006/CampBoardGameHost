@@ -49,7 +49,7 @@ def main():
     for pool in data["pools"].values():
         for p in pool:
             options = p.pop(LEGACY_OPTION_FIELD, None)
-            has_drunk = "drunk" in p["outsiders"]
+            has_drunk = p.get("drunk") is True or "drunk" in p["outsiders"]
             if has_drunk and options is None:
                 previous = prior.get(p["id"])
                 if not previous or not previous.get("chosen"):
@@ -60,6 +60,7 @@ def main():
                 # An already converted tree is reconstructed above from the audit mapping.
                 pass
             p["drunk"] = has_drunk
+            p["outsiders"] = [role for role in p["outsiders"] if role != "drunk"]
             chosen = None
             rationale = "no Drunk; no additional Townsfolk"
             if has_drunk:
@@ -74,7 +75,9 @@ def main():
                 "old_three": options if has_drunk else [], "chosen": chosen,
                 "rationale": rationale})
     data["schema_version"] = 3
-    data["important_note"] = "Curated Trouble Brewing presets store the complete visible roster. Drunk is a boolean; when true, one original absent Townsfolk is added to townsfolk and drunk remains in outsiders as the actual role."
+    data["important_note"] = "Curated Trouble Brewing presets store the complete shown roster. drunk is a boolean; outsiders never contains drunk. When drunk is true, one displayed Townsfolk is committed as the actual Drunk after the visible roster is fixed."
+    data.pop("drunk_shown_role_policy", None)
+    data.pop("drunk_shown_role_status", None)
     ASSET.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
     audit["aggregate"] = {"presets": len(audit["templates"]), "drunk_true": sum(x["drunk"] for x in audit["templates"]),
                           "drunk_false": sum(not x["drunk"] for x in audit["templates"]), "selected_usage": dict(sorted(usage.items()))}

@@ -89,7 +89,7 @@ class TroubleBrewingIntermediateSetupTest {
         id = "drunk-preset",
         playerCount = 6,
         townsfolk = listOf("washerwoman", "librarian", "investigator", "chef"),
-        outsiders = listOf("drunk"),
+        outsiders = emptyList(),
         minions = listOf("poisoner"),
         demons = listOf("imp"),
         source = "test",

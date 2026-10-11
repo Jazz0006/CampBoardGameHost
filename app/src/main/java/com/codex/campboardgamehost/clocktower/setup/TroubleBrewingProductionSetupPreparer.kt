@@ -38,7 +38,7 @@ internal object TroubleBrewingProductionSetupPreparer {
                     requireNotNull(characterRegistry.findByExternalId(externalId)) {
                         "Validated Trouble Brewing preset '${preset.id}' references unknown role '$externalId'."
                     }.id
-                },
+                }.sortedBy { it.value },
                 provenance = SetupProvenance(
                     sourceKind = SetupSourceKind.TEMPLATE,
                     providerId = dataset.datasetId,
@@ -100,8 +100,7 @@ internal object TroubleBrewingProductionSetupPreparer {
     }
 
     private fun TroubleBrewingSetupPreset.visibleExternalRoleIds(): List<String> =
-        townsfolk + outsiders.filterNot { it == DRUNK_EXTERNAL_ID } + minions + demons
+        townsfolk + outsiders + minions + demons
 
     private val TROUBLE_BREWING_SCRIPT = ScriptId("trouble_brewing")
-    private const val DRUNK_EXTERNAL_ID = "drunk"
 }

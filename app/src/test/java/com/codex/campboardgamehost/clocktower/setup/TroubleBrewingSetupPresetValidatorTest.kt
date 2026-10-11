@@ -17,14 +17,26 @@ class TroubleBrewingSetupPresetValidatorTest {
 
         val drunkPresets = dataset.pools.values
             .flatten()
-            .filter { "drunk" in it.outsiders }
+            .filter { it.drunk }
         assertEquals(208, drunkPresets.size)
         assertEquals(208, drunkPresets.count { it.drunk })
+        assertEquals(0, dataset.pools.values.flatten().count { "drunk" in it.outsiders })
         assertEquals(272, dataset.pools.values.flatten().count { !it.drunk })
         assertEquals(480, dataset.totalPresetCount)
         assertEquals(480, dataset.pools.values.flatten().map { it.id }.toSet().size)
         drunkPresets.forEach { preset ->
-            assertEquals(preset.playerCount, preset.townsfolk.size + preset.outsiders.size - 1 + preset.minions.size + preset.demons.size)
+            assertEquals(preset.playerCount, preset.townsfolk.size + preset.outsiders.size + preset.minions.size + preset.demons.size)
+        }
+    }
+
+    @Test
+    fun `Drunk outsider in displayed roster is rejected under the new contract`() {
+        val invalid = drunkEightPlayerPreset().copy(
+            townsfolk = drunkEightPlayerPreset().townsfolk.dropLast(1),
+            outsiders = listOf("drunk"),
+        )
+        assertValidationCode(TroubleBrewingSetupPresetValidationCode.INVALID_DRUNK_ROSTER) {
+            TroubleBrewingSetupPresetValidator.validate(datasetOf(8, invalid), canonicalRegistry())
         }
     }
 
@@ -218,7 +230,7 @@ class TroubleBrewingSetupPresetValidatorTest {
         id = "drunk-eight",
         playerCount = 8,
         townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk", "slayer"),
-        outsiders = listOf("drunk"),
+        outsiders = emptyList(),
         minions = listOf("poisoner"),
         demons = listOf("imp"),
         source = "test",

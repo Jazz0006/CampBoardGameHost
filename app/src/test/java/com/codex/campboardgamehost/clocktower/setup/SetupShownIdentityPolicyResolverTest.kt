@@ -234,7 +234,7 @@ class SetupShownIdentityPolicyResolverTest {
                     id = DRUNK_PRESET_ID,
                     playerCount = 6,
                     townsfolk = listOf("tf1", "tf2", "tf3", "tf4"),
-                    outsiders = listOf("drunk"),
+                    outsiders = emptyList(),
                     minions = listOf("poisoner"),
                     demons = listOf("imp"),
                     source = "test",

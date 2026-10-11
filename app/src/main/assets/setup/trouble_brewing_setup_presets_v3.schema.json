@@ -21,14 +21,15 @@
             "id": { "type": "string", "minLength": 1 },
             "player_count": { "type": "integer", "minimum": 5, "maximum": 15 },
             "townsfolk": { "type": "array", "items": { "type": "string" } },
-            "outsiders": { "type": "array", "items": { "type": "string" } },
+            "outsiders": { "type": "array", "items": { "type": "string" }, "not": { "contains": { "const": "drunk" } } },
             "minions": { "type": "array", "items": { "type": "string" } },
             "demons": { "type": "array", "items": { "type": "string" } },
             "source": { "type": "string" },
             "complexity": { "type": "string" },
             "style_tags": { "type": "array", "items": { "type": "string" } },
             "drunk": { "type": "boolean" }
-          }
+          },
+          "additionalProperties": false
         }
       }
     }

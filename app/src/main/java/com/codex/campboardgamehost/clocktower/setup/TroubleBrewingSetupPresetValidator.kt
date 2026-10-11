@@ -62,7 +62,7 @@ internal object TroubleBrewingSetupPresetValidator {
 
         val presetRoleIds = preset.presetRoleIds()
         presetValidate(
-            preset.townsfolk.size + preset.outsiders.count { it != DRUNK_EXTERNAL_ID } +
+            preset.townsfolk.size + preset.outsiders.size +
                 preset.minions.size + preset.demons.size == preset.playerCount,
             code = TroubleBrewingSetupPresetValidationCode.ROLE_COUNT_MISMATCH,
             preset = preset,
@@ -111,8 +111,8 @@ internal object TroubleBrewingSetupPresetValidator {
             characterRegistry = characterRegistry,
         )
 
-        validateComposition(preset)
         validateDrunkRoster(preset, characterRegistry)
+        validateComposition(preset)
     }
 
     private fun validateRoleCategory(
@@ -155,7 +155,7 @@ internal object TroubleBrewingSetupPresetValidator {
         val baronShift = if (includesBaron) 2 else 0
         val drunkShift = if (includesDrunk) 1 else 0
         val expectedTownsfolk = standard.townsfolk - baronShift + drunkShift
-        val expectedOutsiders = standard.outsiders + baronShift
+        val expectedOutsiders = standard.outsiders + baronShift - drunkShift
         val expectedMinions = standard.minions
         val expectedDemons = standard.demons
 
@@ -180,11 +180,11 @@ internal object TroubleBrewingSetupPresetValidator {
         characterRegistry: ClocktowerCharacterRegistry,
     ) {
         presetValidate(
-            (DRUNK_EXTERNAL_ID in preset.outsiders) == preset.drunk,
+            DRUNK_EXTERNAL_ID !in preset.outsiders,
             code = TroubleBrewingSetupPresetValidationCode.INVALID_DRUNK_ROSTER,
             preset = preset,
         ) {
-            "Preset '${preset.id}' Drunk boolean must match its outsider roster."
+            "Preset '${preset.id}' must not list Drunk among displayed Outsiders."
         }
         preset.townsfolk.forEach { externalId ->
             val definition = characterRegistry.findByExternalId(externalId)

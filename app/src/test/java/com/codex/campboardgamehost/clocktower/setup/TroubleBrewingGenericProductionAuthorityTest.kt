@@ -82,7 +82,7 @@ class TroubleBrewingGenericProductionAuthorityTest {
         id = "tb-8-generic-a",
         playerCount = 8,
         townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk", "slayer"),
-        outsiders = listOf("drunk"),
+        outsiders = emptyList(),
         minions = listOf("poisoner"),
         demons = listOf("imp"),
         source = "test",

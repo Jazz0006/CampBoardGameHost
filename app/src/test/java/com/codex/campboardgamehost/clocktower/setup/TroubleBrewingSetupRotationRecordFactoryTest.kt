@@ -3,6 +3,9 @@ package com.codex.campboardgamehost.clocktower.setup
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
+import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
@@ -17,7 +20,7 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
             drunkShownRole = "chef",
         )
         val sameShownRosterDifferentDrunkSeat = completedRecord(
-            shownRoles = listOf("chef", "empath", "poisoner", "butler", "slayer", "imp"),
+            shownRoles = listOf("imp", "slayer", "butler", "poisoner", "empath", "chef"),
             drunkShownRole = "slayer",
         )
         val recent = listOf(
@@ -38,8 +41,30 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
                 requireNotNull(canonicalRegistry().findByRoleId(role)).externalId
             }.toSet(),
         )
-        assertEquals(projected.recentSetups[0].actualRoles.toSet(), projected.recentSetups[1].actualRoles.toSet())
+        assertEquals(projected.recentSetups[0].actualRoles, projected.recentSetups[1].actualRoles)
         assertNotEquals(first.realNonDemonRoleIds, sameShownRosterDifferentDrunkSeat.realNonDemonRoleIds)
+        assertEquals(listOf(100L, 65L, 40L, 20L, 10L), SetupDiversityPolicy().historyWeights)
+
+        val script = ScriptId("trouble_brewing")
+        val original = projected.recentSetups[0].actualRoles
+        val chef = requireNotNull(canonicalRegistry().findByExternalId("chef")).id
+        val washerwoman = requireNotNull(canonicalRegistry().findByExternalId("washerwoman")).id
+        val sameShownRoster = SetupCandidate(
+            script = script,
+            actualRoles = original.reversed(),
+            provenance = SetupProvenance(SetupSourceKind.TEMPLATE, "tb-test", "same"),
+        )
+        val differentShownRoster = SetupCandidate(
+            script = script,
+            actualRoles = original.filterNot { it == chef } + washerwoman,
+            provenance = SetupProvenance(SetupSourceKind.TEMPLATE, "tb-test", "different"),
+        )
+        val selected = SetupDiversitySelector().select(
+            candidates = listOf(sameShownRoster, differentShownRoster),
+            history = projected,
+            selectionSeed = 17L,
+        )
+        assertEquals("different", selected.provenance.candidateId)
     }
 
     private fun completedRecord(
@@ -80,8 +105,8 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
         val preset = TroubleBrewingSetupPreset(
             id = "tb-6-dlb4",
             playerCount = 6,
-            townsfolk = listOf("chef", "empath", "slayer"),
-            outsiders = listOf("drunk", "saint"),
+            townsfolk = listOf("chef", "empath", "washerwoman"),
+            outsiders = listOf("saint"),
             minions = listOf("poisoner"),
             demons = listOf("imp"),
             source = "test",

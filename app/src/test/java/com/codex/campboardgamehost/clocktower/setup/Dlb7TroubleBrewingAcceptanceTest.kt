@@ -105,7 +105,7 @@ class Dlb7TroubleBrewingAcceptanceTest {
             assertFalse("Non-Drunk preset ${preset.id} must remain non-Drunk.", visibleRoster.hasDrunk)
             assertEquals(
                 "Non-Drunk preset ${preset.id} must preserve its exact visible role set.",
-                (preset.townsfolk + preset.outsiders.filterNot { it == "drunk" } + preset.minions + preset.demons).toSet(),
+                (preset.townsfolk + preset.outsiders + preset.minions + preset.demons).toSet(),
                 visibleRoster.visibleRoleIds.toSet(),
             )
             assertTrue(

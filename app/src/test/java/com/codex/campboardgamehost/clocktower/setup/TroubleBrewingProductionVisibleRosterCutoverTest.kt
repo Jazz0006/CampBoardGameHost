@@ -15,7 +15,7 @@ class TroubleBrewingProductionVisibleRosterCutoverTest {
             id = "tb-visible-roster",
             playerCount = 8,
             townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk", "ravenkeeper"),
-            outsiders = listOf("drunk"),
+            outsiders = emptyList(),
             minions = listOf("poisoner"),
             demons = listOf("imp"),
             source = "test", complexity = "standard", styleTags = listOf("balanced"), drunk = true,

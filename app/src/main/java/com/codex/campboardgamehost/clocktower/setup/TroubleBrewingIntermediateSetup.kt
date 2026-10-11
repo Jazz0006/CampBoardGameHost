@@ -102,16 +102,16 @@ internal object TroubleBrewingVisibleRosterRealizer {
     fun realize(
         preset: TroubleBrewingSetupPreset,
     ): TroubleBrewingVisibleRoster {
-        val actualRoleIds =
+        val visibleRoleIds =
             preset.townsfolk + preset.outsiders + preset.minions + preset.demons
-        require(actualRoleIds.size - (if (preset.drunk) 1 else 0) == preset.playerCount) {
+        require(visibleRoleIds.size == preset.playerCount) {
             "Trouble Brewing preset role count must match player count."
         }
-        require(actualRoleIds.none(String::isBlank)) {
+        require(visibleRoleIds.none(String::isBlank)) {
             "Trouble Brewing preset role IDs cannot be blank."
         }
-        require(actualRoleIds.distinct().size == actualRoleIds.size) {
-            "Trouble Brewing preset actual role IDs must be unique."
+        require(visibleRoleIds.distinct().size == visibleRoleIds.size) {
+            "Trouble Brewing preset shown role IDs must be unique."
         }
 
         val hasDrunk = preset.drunk
@@ -119,7 +119,7 @@ internal object TroubleBrewingVisibleRosterRealizer {
         return TroubleBrewingVisibleRoster(
             hasDrunk = hasDrunk,
             townsfolkRoleIds = preset.townsfolk,
-            outsiderRoleIds = preset.outsiders.filterNot { it == DRUNK_EXTERNAL_ID },
+            outsiderRoleIds = preset.outsiders,
             minionRoleIds = preset.minions,
             demonRoleIds = preset.demons,
         ).also { roster ->
