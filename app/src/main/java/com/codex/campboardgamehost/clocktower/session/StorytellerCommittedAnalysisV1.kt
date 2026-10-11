@@ -3,8 +3,28 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
+
 import org.json.JSONArray
 import org.json.JSONObject
+
+/**
+ * Pre-deal identity passing can advance a session revision without changing any
+ * strategy-relevant game fact. The initially requested setup analysis is reusable
+ * ONLY when its canonical game, player context and causal history are unchanged.
+ * Do not use this check for live, post-night or pending legal-action decisions.
+ */
+internal fun setupOnlyAnalysisFactsUnchanged(
+    submitted: ClocktowerSessionState,
+    current: ClocktowerSessionState,
+): Boolean =
+    submitted.gameId == current.gameId &&
+    submitted.gameSeed == current.gameSeed &&
+    submitted.gameState == current.gameState &&
+    submitted.decisionHistory == current.decisionHistory &&
+    submitted.actionTimeline == current.actionTimeline &&
+    submitted.epistemicObservationLog == current.epistemicObservationLog &&
+    submitted.nextTimelineGlobalSequence == current.nextTimelineGlobalSequence &&
+    submitted.storytellerPlayerContextBySeat == current.storytellerPlayerContextBySeat
 
 /**
  * Pure informational checkpoint, separate from a Host PendingStorytellerDecision.

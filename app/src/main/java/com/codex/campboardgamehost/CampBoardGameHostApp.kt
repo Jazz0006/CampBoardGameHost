@@ -86,6 +86,7 @@ import com.codex.campboardgamehost.clocktower.session.PersonalDirectOpenAiV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalStrategyV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalDecisionRequestV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCommittedAnalysisV1
+import com.codex.campboardgamehost.clocktower.session.setupOnlyAnalysisFactsUnchanged
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseV1
@@ -1646,8 +1647,9 @@ internal fun CampBoardGameHostApp() {
             return
         }
         val session = clocktowerGameSession
-        val submittedGameRevision = session?.state?.gameStateRevision
-        val submittedInputRevision = session?.state?.playerInputRevision
+        val submittedSessionState = session?.state
+        val submittedGameRevision = submittedSessionState?.gameStateRevision
+        val submittedInputRevision = submittedSessionState?.playerInputRevision
         if (session == null || submittedGameRevision == null || submittedInputRevision == null) {
             committedAiBusy = false
             committedAiStage = "FAILED"
@@ -1705,6 +1707,12 @@ internal fun CampBoardGameHostApp() {
             val elapsed = (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0L)
             committedAiBusy = false  // Always release the spinner, including discarded responses.
             val currentSessionState = clocktowerGameSession?.state
+            val revisionDrift = currentSessionState?.gameStateRevision != submittedGameRevision ||
+                currentSessionState?.playerInputRevision != submittedInputRevision
+            val harmlessSetupDrift = revisionDrift &&
+                submittedSessionState != null && currentSessionState != null &&
+                !clocktowerNightStartedState.value && clocktowerEvents.isEmpty() &&
+                setupOnlyAnalysisFactsUnchanged(submittedSessionState, currentSessionState)
             val rejectReason = when {
                 clocktowerGameId != snapshot.gameId -> "GAME_CHANGED"
                 storytellerOperationMode == StorytellerOperationMode.MANUAL -> "MANUAL_TAKEOVER"
@@ -1715,9 +1723,9 @@ internal fun CampBoardGameHostApp() {
                     Screen.PassPhone, Screen.RevealCard,
                     Screen.ClocktowerAiOverview, Screen.ClocktowerAutoPause,
                 ) -> "SCREEN_CHANGED"
-                currentSessionState?.gameStateRevision != submittedGameRevision ->
+                currentSessionState?.gameStateRevision != submittedGameRevision && !harmlessSetupDrift ->
                     "GAME_REVISION_CHANGED"
-                currentSessionState?.playerInputRevision != submittedInputRevision ->
+                currentSessionState?.playerInputRevision != submittedInputRevision && !harmlessSetupDrift ->
                     "PLAYER_REVISION_CHANGED"
                 else -> null
             }
@@ -1734,6 +1742,12 @@ internal fun CampBoardGameHostApp() {
                         "Whole-game analysis was discarded: $rejectReason. Retry or continue manually."
                 }
                 return@launch
+            }
+            if (harmlessSetupDrift) {
+                DebugFlightRecorder.record(
+                    "GLOBAL_AI_SETUP_ONLY_REVISION_DRIFT",
+                    mapOf("elapsedMs" to elapsed.toString()),
+                )
             }
             response.onSuccess { result ->
                 committedAiStrategy = result
