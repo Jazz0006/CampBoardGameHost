@@ -194,7 +194,7 @@ internal fun ClocktowerClockmakerSquareTableDialog(
                 Spacer(Modifier.height(8.dp))
 
                 if (!manualSelection) {
-                    ClocktowerExperiencedRecommendationButtons(
+                    ClocktowerSingleRecommendationButtons(
                         recommendations = recommendations,
                         language = language,
                         labelOf = { choice ->

@@ -281,7 +281,7 @@ private fun ClocktowerPairInformationCenterControls(
             verticalArrangement = Arrangement.Center,
         ) {
             ClocktowerNightActionWakeInstruction(wakeInstruction)
-            ClocktowerExperiencedRecommendationButtons(
+            ClocktowerSingleRecommendationButtons(
                 recommendations = recommendedOptions,
                 language = language,
                 labelOf = { option ->

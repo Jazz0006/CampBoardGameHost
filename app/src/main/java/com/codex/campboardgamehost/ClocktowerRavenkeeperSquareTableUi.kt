@@ -253,7 +253,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                 }
 
                 if (!manualSelection && recommendations.isNotEmpty()) {
-                    ClocktowerExperiencedRecommendationButtons(
+                    ClocktowerSingleRecommendationButtons(
                         recommendations = recommendations,
                         language = language,
                         labelOf = { choice ->

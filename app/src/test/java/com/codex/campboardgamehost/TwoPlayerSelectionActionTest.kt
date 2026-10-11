@@ -45,7 +45,7 @@ class TwoPlayerSelectionActionTest {
         assertEquals(
             true,
             shouldAutoAdvanceRedHerring(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = true,
                 hasSelectedRedHerring = true,
@@ -58,7 +58,7 @@ class TwoPlayerSelectionActionTest {
         assertEquals(
             false,
             shouldAutoAdvanceRedHerring(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = true,
                 hasSelectedRedHerring = false,
@@ -71,7 +71,7 @@ class TwoPlayerSelectionActionTest {
         assertEquals(
             true,
             shouldAutoAdvanceRedHerring(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = false,
                 hasSelectedRedHerring = false,
@@ -84,7 +84,7 @@ class TwoPlayerSelectionActionTest {
         assertEquals(
             false,
             shouldAutoAdvanceRedHerring(
-                automaticStorytellerInfo = false,
+                allowRuleDeterminedAutoUi = false,
                 isRedHerringStep = true,
                 isRealAction = true,
                 hasSelectedRedHerring = true,

@@ -268,7 +268,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                 ClocktowerNightActionWakeInstruction(wakeInstruction)
 
                 if (!manualSelection) {
-                    ClocktowerExperiencedRecommendationButtons(
+                    ClocktowerSingleRecommendationButtons(
                         recommendations = recommendations,
                         language = language,
                         labelOf = { choice ->

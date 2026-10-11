@@ -53,7 +53,7 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
             step = ravenkeeperStep(),
             selectedSeat = 5,
             seatCount = 7,
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = listOf(chef, washerwoman),
         )
@@ -77,7 +77,7 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
             step = ravenkeeperStep(),
             selectedSeat = 5,
             seatCount = 7,
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = listOf(
                 option(seat = 5, role = "Chef"),
@@ -99,7 +99,7 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
             ),
             selectedSeat = 5,
             seatCount = 7,
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = emptyList(),
         )
@@ -134,7 +134,7 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
             step = ravenkeeperStep(),
             selectedSeat = 5,
             seatCount = 7,
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = emptyList(),
         )
@@ -157,7 +157,7 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
             ),
             selectedSeat = 5,
             seatCount = 7,
-            automaticStorytellerInfo = true,
+            allowRuleDeterminedAutoUi = true,
             automaticDisplayOption = selected,
             resultFirstRegistrationCandidates = emptyList(),
         )

@@ -9,7 +9,7 @@ class ClocktowerAutomaticRulingsTest {
     fun `automatic rulings advance only after the rule-owned target is applied`() {
         assertFalse(
             clocktowerAutomaticMayorRulingShouldAdvance(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 action = ClocktowerNightAction.MayorRedirect,
                 selectedName = null,
                 automaticTargetName = "Alice",
@@ -17,7 +17,7 @@ class ClocktowerAutomaticRulingsTest {
         )
         assertFalse(
             clocktowerAutomaticMayorRulingShouldAdvance(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 action = ClocktowerNightAction.MayorRedirect,
                 selectedName = "Bob",
                 automaticTargetName = "Alice",
@@ -25,7 +25,7 @@ class ClocktowerAutomaticRulingsTest {
         )
         assertTrue(
             clocktowerAutomaticMayorRulingShouldAdvance(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 action = ClocktowerNightAction.MayorRedirect,
                 selectedName = "Alice",
                 automaticTargetName = "Alice",
@@ -33,7 +33,7 @@ class ClocktowerAutomaticRulingsTest {
         )
         assertFalse(
             clocktowerAutomaticMayorRulingShouldAdvance(
-                automaticStorytellerInfo = false,
+                allowRuleDeterminedAutoUi = false,
                 action = ClocktowerNightAction.MayorRedirect,
                 selectedName = "Alice",
                 automaticTargetName = "Alice",
@@ -41,7 +41,7 @@ class ClocktowerAutomaticRulingsTest {
         )
         assertTrue(
             clocktowerAutomaticMayorRulingShouldAdvance(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 action = ClocktowerNightAction.DemonSuccessor,
                 selectedName = "Alice",
                 automaticTargetName = "Alice",
