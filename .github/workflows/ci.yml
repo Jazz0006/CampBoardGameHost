@@ -4,9 +4,8 @@ on:
   push:
     branches:
       - main
+  # Stacked feature PRs need the same independent gate as main-targeted PRs.
   pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 concurrency:

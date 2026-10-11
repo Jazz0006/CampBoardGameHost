@@ -1660,6 +1660,7 @@ internal fun CampBoardGameHostApp() {
             DebugFlightRecorder.record("GLOBAL_AI_SESSION_MISSING")
             return
         }
+        val requestedOperationMode = storytellerOperationMode
         val previous = drunkAiStrategy
         val direct = personalDirectEnabled
         val requestedEndpoint = aiEndpoint
@@ -1730,7 +1731,8 @@ internal fun CampBoardGameHostApp() {
                 !StorytellerCommittedAnalysisV1.isCurrentGame(
                     snapshot, clocktowerGameSession,
                 ) -> "GAME_CHANGED"
-                storytellerOperationMode == StorytellerOperationMode.MANUAL -> "MANUAL_TAKEOVER"
+                !storytellerAiResponseMayApply(requestedOperationMode, storytellerOperationMode) ->
+                    "OPERATION_MODE_CHANGED"
                 currentGameKind != GameKind.Clocktower -> "GAME_KIND_CHANGED"
                 clocktowerPhase != ClocktowerPhase.FirstNight -> "PHASE_CHANGED"
                 round != 1 -> "ROUND_CHANGED"
@@ -2214,7 +2216,7 @@ internal fun CampBoardGameHostApp() {
             drunkAiError = "Configure the selected AI connection and credentials before requesting advice."
             return
         }
-        val automatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC
+        val requestedOperationMode = storytellerOperationMode
         drunkAiBusy = true
         drunkAiResponse = null
         drunkAiError = null
@@ -2228,6 +2230,11 @@ internal fun CampBoardGameHostApp() {
                 pendingTroubleBrewingDrunkSelection === pending
             ) {
                 drunkAiBusy = false
+                if (!storytellerAiResponseMayApply(requestedOperationMode, storytellerOperationMode)) {
+                    drunkAiResponse = null
+                    drunkAiError = "Storyteller operation mode changed; AI response discarded. Continue manually."
+                    return@launch
+                }
                 result.onSuccess { advice ->
                     val validation = ProductionDrunkAiGatewayV1.validateCurrent(
                         pending.providerRequest, pending.decision,
@@ -2241,7 +2248,7 @@ internal fun CampBoardGameHostApp() {
                     } else {
                         drunkAiResponse = advice.response
                         drunkAiStrategy = advice.globalStrategy
-                        if (automatic) {
+                        if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC) {
                             val legal = pending.decision.legalCandidates.singleOrNull {
                                 it.candidateId == outcome.primary.candidateId
                             }

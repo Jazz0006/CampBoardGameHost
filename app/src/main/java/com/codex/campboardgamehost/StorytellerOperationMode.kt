@@ -10,3 +10,13 @@ internal enum class StorytellerOperationMode {
     AI_ASSISTED,
     AI_AUTOMATIC,
 }
+
+/**
+ * A response must never gain fresh commit authority when the operator switches modes
+ * during a network request. MANUAL does not accept any AI response.
+ */
+internal fun storytellerAiResponseMayApply(
+    requestedMode: StorytellerOperationMode,
+    currentMode: StorytellerOperationMode,
+): Boolean = requestedMode != StorytellerOperationMode.MANUAL && requestedMode == currentMode
+
