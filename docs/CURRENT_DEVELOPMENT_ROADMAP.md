@@ -2,6 +2,13 @@
 
 > Updated: **2026-10-11 Australia/Sydney**. **唯一当前执行优先级权威。** Historical PROD-GLOBAL-1D/2B instructions are NOT current NEXT; see [PROD-GLOBAL-3 unified opening plan](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md) and [handoff](NEXT_DEVELOPMENT_HANDOFF.md). Previous checkpoint detail remains in original route documents and [archive](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md).
 
+## Latest live checkpoint — 2026-10-12 (supersedes stale PR status below)
+
+- Verified live `main = 2288d58f4bbc212e1e6d8cdd60f6ced539f32312`, local `main` clean and remote-equal, **zero open PRs**; PR #292/#293/#294/#295 **merged**. The stacked Draft/status text below is historical, not the current authority.
+- User re-tested first-night AI recommendation **display successfully** on Android; previously observed crash is not currently reproducible. No fatal stack/root fix has been established; final crash/double-publication regression remains in 3F.
+- **PROD-GLOBAL-3P** prompt A/B/B2 findings and external engineering review recorded at [this design note](PROD_GLOBAL_3P_PROMPT_DESIGN_AND_EXTERNAL_PROJECT_REVIEW_2026-10-12.md). Retain Luna-only one-bundle strategy, evaluate player-visible vs Host-known worlds, rule mechanism opportunity costs, and explicit conditional dependencies. External per-wake-item recommender architecture is **not** adopted.
+- **3B1 in isolated feature PR development**: new precommit conditional domain contract/validator, no Drunk commit and no provider call. This does **not** mean full 3B/3C/3D wired or accepted. NEXT: real Host legal candidate producers for every conditional branch (3B2), then one background Luna initial call paired with shown-only identity reveal (3C/3D).
+
 ## AI-SETTINGS-RELOCATION — 2026-10-12 (on stacked Draft #295, Android CI pending)
 
 - AI 运行**默认模式**、网关/个人 OpenAI 直连、模型 ID 和凭据统一在应用“设置”界面管理；开局确认页只显示本局有效模式、配置状态及设置入口，不再编辑连接参数或切换模式。

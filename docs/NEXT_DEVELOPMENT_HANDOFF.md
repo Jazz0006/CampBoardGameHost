@@ -2,6 +2,15 @@
 
 > Updated **2026-10-11 Australia/Sydney**. **唯一活动交接。** 进入新会话必须重新查开发机 live state / GitHub main、PR、CI，不能假设下述 commit 仍是最新。当前单一执行路线是 [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)；此文件只记录状态及下一步。旧 PROD-GLOBAL-1D/2B/analysis-first NEXT 作为历史，不得再次触发独立酒鬼模型规划。
 
+## 2026-10-12 PROD-GLOBAL-3P/3B1 current handoff (overrides historical sections below)
+
+- GitHub `main` and Oracle Mini MCP `clocktower/main`: `2288d58f4bbc212e1e6d8cdd60f6ced539f32312`, clean/equal at audit; zero open PRs; #292–#295 **all merged**. The old stacked-Draft directions below are superseded.
+- Android real-phone follow-up: AI recommendation display succeeded without earlier app exit. Earlier root cause remains undetermined, so keep E2E and double-publication check in 3F, do not invent a fix.
+- Source-grounded external prompt study and Luna A/B/B2 findings: [3P design lessons](PROD_GLOBAL_3P_PROMPT_DESIGN_AND_EXTERNAL_PROJECT_REVIEW_2026-10-12.md). Incorporate explicit unknown coverage, rules research supplied by Host, fail-closed ID validation and mechanism opportunity cost; **do not copy** Olalall per-wake-item model calls.
+- Current feature branch: `prod-global-3b1-precommit-contract-20261012` starts from that exact main. 3B1 adds a pure Host precommit **one branch per legal Drunk candidate, or one none branch** schema + fail-closed selection. No API call, AI UI, auto-commit or Host candidate computation is yet wired. Validation/CI is required before merging.
+- **NEXT** complete 3B2 by deriving every branch's actual legal info/pair/scalar/red-herring/bluff and all deferred dependencies from real Host owners, preserving result-first Spy/Recluse uncertainty and avoiding synthetic ID fallback. Then 3C/3D single background Luna request with identity reveal and strict strategy memory; 3E residual global replanning; 3F phone/CI/R2.
+- Mini MCP experiments directory work is a **separate concurrent project**. Do not change that repository while working in Host.
+
 ## 2026-10-12 当前 UI 小切片：AI 设置归位与原班人马快速重开
 
 - PR #295 stacked Draft 上已实施：App Settings 统一呈现 AI 模式、直连/Gateway 凭据/模型；开局仅展示默认模式与配置就绪状态，并可进入 App Settings 后返回相同开局步骤。模式默认值保存至 `AppPreferencesStore` 的 `storyteller_operation_mode`；API Key / Gateway token 保持原 Keystore 存储。
