@@ -43,3 +43,10 @@
 文档同步只需检查引用、diff 与 GitHub 独立 CI/R2；行为改动应按 `AGENTS.md` 和 `TESTING_STRATEGY.md` 选择实际测试。开新对话时先核对 **live remote main、PR #292、当前 branch/HEAD、本地工作树、CI**，绝不假设本交接记载的 SHA 仍是最新状态。
 
 > **Full CI required:** PROD-GLOBAL compact adapter changes include Kotlin production source; use `[full-ci]` on this checkpoint so Android compilation/unit tests and APK assembly are mandatory even if prior docs-only commit caused synchronize diff classification to skip them.
+
+
+### 2026-10-11 integration checkpoint — Android one-tap single bundle
+
+Product-owner phone feedback: readable theme acceptable; do not spend this iteration on new color layouts. Experimental PR #293 now has new personal-**direct** AI_ASSISTED first-night path: setup commit stores snapshot but skips redundant verbose postcommit analysis, reveal leads to private first-night preflight; one joint Host-legal opening request yields a single Demon bluff triple + one recommendation per currently known decision. FT unknown query and not-yet-chosen Poisoner target are kept as dependencies, not imagined observations. Explicit one-tap acceptance commits bluff preselection/red herring only and retains per-information candidate IDs as advice; when night steps arrive, only current Host manual-legal matching IDs are displayed, otherwise existing legal/manual fallback applies. Full first-night Host facts and observations remain step-committed. The Gateway AI_ASSISTED path intentionally remains unchanged until its protocol is extended.
+
+Implemented vs pending: code checkpoint currently requires full Android CI and device acceptance, including one actual 8-player first-night test with Investigator, Demon bluffs, Chef/Empath, Poisoner and FT target dependency. User specifically does not want multi-paragraph analysis page. No auto-claim that the old full analysis already delivered a coordinated plan.
