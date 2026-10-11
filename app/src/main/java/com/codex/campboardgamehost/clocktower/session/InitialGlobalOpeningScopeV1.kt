@@ -283,10 +283,13 @@ internal data class InitialGlobalOpeningSelectionV1(
             "Future actions cannot be invented or dropped."
         }
         val bluffs = scope.legalDemonBluffs
-        if (bluffs == null) require(demonBluffs == null)
-        else require(demonBluffs?.size == 3 &&
-            demonBluffs.distinct().size == 3 &&
-            demonBluffs.all { it in bluffs }) { "Illegal Demon bluff trio." }
+        if (bluffs == null) {
+            require(demonBluffs == null)
+        } else {
+            val chosen = requireNotNull(demonBluffs) { "Missing required Demon bluffs." }
+            require(chosen.size == 3 && chosen.distinct().size == 3 &&
+                chosen.all { it in bluffs }) { "Illegal Demon bluff trio." }
+        }
     }
 
     companion object {
