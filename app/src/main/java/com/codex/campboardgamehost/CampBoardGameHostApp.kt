@@ -1641,6 +1641,7 @@ internal fun CampBoardGameHostApp() {
             committedAiSnapshot !== snapshot || committedAiBusy
         ) return
         if (!aiEndpoint.startsWith("https://") || aiToken.isBlank()) {
+            BotcAiTrace.blocked("MISSING_CREDENTIALS")
             committedAiError = "Configure the selected AI connection to analyse this confirmed game."
             committedAiStage = "FAILED"
             return
@@ -1652,6 +1653,7 @@ internal fun CampBoardGameHostApp() {
             committedAiBusy = false
             committedAiStage = "FAILED"
             committedAiError = "Confirmed game session is missing. Continue manually."
+            BotcAiTrace.blocked("MISSING_SESSION")
             DebugFlightRecorder.record("GLOBAL_AI_SESSION_MISSING")
             return
         }
@@ -1667,6 +1669,7 @@ internal fun CampBoardGameHostApp() {
         committedAiStage = "BUILDING_HOST_CONTEXT"
         committedAiBusy = true
         committedAiError = null
+        BotcAiTrace.started(serial, direct, submittedGameRevision, submittedInputRevision)
         DebugFlightRecorder.record(
             "GLOBAL_AI_STARTED",
             mapOf("connection" to if (direct) "DIRECT" else "GATEWAY",
@@ -1683,6 +1686,9 @@ internal fun CampBoardGameHostApp() {
                     gameStateRevision = submittedGameRevision,
                     playerInputRevision = submittedInputRevision,
                     onStage = { stage ->
+                        // Logcat is thread-safe and displays the actual network phase immediately.
+                        // The Compose state still updates only on the owning main scope.
+                        BotcAiTrace.stage(serial, stage)
                         // Network callback executes on Dispatchers.IO; dispatch Compose state updates
                         // to the owning main scope, without ever passing the API key or prompt.
                         drunkAiScope.launch {
@@ -1699,6 +1705,14 @@ internal fun CampBoardGameHostApp() {
             if (serial != committedAiRequestSerial ||
                 committedAiSnapshot !== snapshot
             ) {
+                val current = clocktowerGameSession?.state
+                BotcAiTrace.dropped(
+                    serial, if (serial != committedAiRequestSerial) "NEWER_REQUEST"
+                    else "SNAPSHOT_CHANGED",
+                    (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0L),
+                    submittedGameRevision, current?.gameStateRevision,
+                    submittedInputRevision, current?.playerInputRevision,
+                )
                 DebugFlightRecorder.record("GLOBAL_AI_SUPERSEDED")
                 return@launch
             }
@@ -1723,6 +1737,11 @@ internal fun CampBoardGameHostApp() {
             }
             if (rejectReason != null) {
                 committedAiStage = "STALE"
+                BotcAiTrace.dropped(
+                    serial, rejectReason, elapsed,
+                    submittedGameRevision, currentSessionState?.gameStateRevision,
+                    submittedInputRevision, currentSessionState?.playerInputRevision,
+                )
                 DebugFlightRecorder.record(
                     "GLOBAL_AI_STALE",
                     mapOf("reason" to rejectReason, "elapsedMs" to elapsed.toString()),
@@ -1739,11 +1758,13 @@ internal fun CampBoardGameHostApp() {
                 committedAiStrategy = result
                 committedAiError = null
                 committedAiStage = "SUCCESS"
+                BotcAiTrace.finished(serial, elapsed)
                 DebugFlightRecorder.record(
                     "GLOBAL_AI_ACCEPTED", mapOf("elapsedMs" to elapsed.toString()),
                 )
             }.onFailure { error ->
                 val category = PersonalDirectOpenAiV1.safeFailure(error)
+                BotcAiTrace.failed(serial, elapsed, category)
                 committedAiStage = "FAILED"
                 committedAiError = if (direct) {
                     "OpenAI direct response failed ($category). Retry or continue manually."

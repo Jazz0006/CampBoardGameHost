@@ -54,3 +54,30 @@ No ordinary identity-reveal action is expected to mutate the canonical game stat
 The old poor-readability pattern was reconfirmed: a dark Material colorScheme did not bind `LocalContentColor` for uncoloured Compose `Text` beneath a plain `Modifier.background()`. The dark Clocktower theme now explicitly supplies `onBackground` as the default content colour through `CompositionLocalProvider`. This maintains the previously agreed dark background, warm-white body, gold headings and dark cards. No reflow, model/prompt changes, or unproven stale-revision acceptance logic are shipped as part of the colour correction.
 
 Pending acceptance: CI Android full tests + device screenshot verifying readable actual foreground text; capture the *specific* first-discard reason with no API credential and test whether subsequent attempt starts cleanly.
+
+## First-class Android Studio / ADB tracing (debug builds only)
+
+For a local Android Studio debug build, open **Logcat** and filter with:
+
+```text
+tag:BotcAiTrace
+```
+
+Or, from PowerShell/Linux shell with the phone connected and authorized:
+
+```sh
+adb devices
+adb logcat -v time -s BotcAiTrace:I
+```
+
+Reproduce the post-commit whole-game analysis. The trace contains only `START`,
+`STAGE`, `DISCARDED`, `ACCEPTED`, `FAILED` or `BLOCKED` events.
+`DISCARDED reason=...` provides the **precise first-discard cause**.
+`sentGameRev` and `currentGameRev`, plus player-input counterparts, distinguish
+real revision drift from a screen/phase mismatch.
+No API key, bearer header, model body, game UUID or grimoire content is logged.
+Debug logs are disabled in release builds. This does not change Host validation logic.
+
+**Do not treat the previously guessed revision drift as confirmed.**
+For test feedback, share only lines beginning with `postcommit`, or the
+`reason` + four revision numbers. Avoid sharing an unfiltered Logcat transcript.
