@@ -46,6 +46,12 @@ internal fun clocktowerFortuneTellerResultActions(
     }
 }
 
+/** Only a Host-unique legal result is automatically presentable; a UI recommendation is not authority. */
+internal fun ruleDeterminedFortuneTellerResult(
+    allowRuleDeterminedAutoUi: Boolean,
+    legalResults: Set<Boolean>,
+): Boolean? = if (allowRuleDeterminedAutoUi) legalResults.singleOrNull() else null
+
 @Composable
 internal fun ClocktowerFortuneTellerSquareTableDialog(
     seats: List<HostSeatPresentation>,
@@ -140,6 +146,9 @@ private fun ClocktowerFortuneTellerCenterControls(
         recommendedResult = recommendedResult,
     )
     val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
+    val ruleDeterminedResult = ruleDeterminedFortuneTellerResult(
+        allowRuleDeterminedAutoUi, legalResults,
+    )
 
     Column(
         modifier = Modifier
@@ -160,9 +169,8 @@ private fun ClocktowerFortuneTellerCenterControls(
                     )
                 }
 
-                allowRuleDeterminedAutoUi && legalResults.size == 1 -> {
-                    // Only a Host-unique legal result may use the rule-deterministic shortcut.
-                    val result = legalResults.single()
+                ruleDeterminedResult != null -> {
+                    val result = ruleDeterminedResult
                     Button(
                         onClick = { onAutomaticResultSelected(result) },
                         modifier = Modifier.fillMaxWidth(),

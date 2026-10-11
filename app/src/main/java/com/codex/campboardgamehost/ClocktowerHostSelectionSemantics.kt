@@ -96,7 +96,8 @@ internal fun shouldAutoAdvanceRedHerring(
     hasSelectedRedHerring: Boolean,
 ): Boolean = allowRuleDeterminedAutoUi &&
     isRedHerringStep &&
-    (!isRealAction || hasSelectedRedHerring)
+    // Never auto-advance a genuine choice merely because the UI has some selection.
+    !isRealAction
 
 internal fun automaticRedHerringSelectionAtBarrier(
     allowRuleDeterminedAutoUi: Boolean,

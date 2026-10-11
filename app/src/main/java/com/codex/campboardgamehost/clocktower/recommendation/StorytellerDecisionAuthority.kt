@@ -45,4 +45,4 @@ internal fun storytellerDecisionPresentationIsAutomatic(
     authority: StorytellerDecisionAuthority,
 ): Boolean =
     allowRuleDeterminedAutoUi &&
-        authority !is StorytellerDecisionAuthority.ManualRequired
+        authority is StorytellerDecisionAuthority.RuleDeterministic

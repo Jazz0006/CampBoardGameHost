@@ -8,7 +8,7 @@ import org.junit.Test
 
 class ClocktowerRedHerringAutoAdvancePolicyTest {
     @Test
-    fun `automatic red herring advance waits for a real recommendation but skips non-actions`() {
+    fun `red herring auto advance skips only non-actions and never silently confirms real selection`() {
         assertFalse(
             shouldAutoAdvanceRedHerring(
                 allowRuleDeterminedAutoUi = false,
@@ -33,7 +33,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
                 hasSelectedRedHerring = false,
             ),
         )
-        assertTrue(
+        assertFalse(
             shouldAutoAdvanceRedHerring(
                 allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
@@ -52,9 +52,8 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
     }
 
     @Test
-    fun `automatic selection commits only a current legal recommendation at the barrier`() {
-        assertEquals(
-            "Alice",
+    fun `legacy red herring recommendation cannot bypass Host singleton gate`() {
+        assertNull(
             automaticRedHerringSelectionAtBarrier(
                 allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
@@ -104,7 +103,8 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
                 legalSelections = setOf("Alice", "Bob"),
             ),
         )
-        assertNull(
+        assertEquals(
+            "Alice",
             automaticRedHerringSelectionAtBarrier(
                 allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
