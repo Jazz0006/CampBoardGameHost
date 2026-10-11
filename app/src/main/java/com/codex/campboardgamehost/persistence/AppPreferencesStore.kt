@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost
 
 import android.content.Context
-import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
 import org.json.JSONArray
 
 /**
@@ -23,15 +22,13 @@ internal class AppPreferencesStore(
             .apply()
     }
 
-    fun loadStorytellerExperienceMode(): StorytellerExperienceMode =
-        StorytellerExperienceMode.fromPrefsValue(
-            preferences.getString(STORYTELLER_EXPERIENCE_MODE_KEY, null),
-        )
+    fun loadStorytellerOperationMode(): StorytellerOperationMode =
+        preferences.getString(STORYTELLER_OPERATION_MODE_KEY, null)
+            ?.let { stored -> StorytellerOperationMode.entries.firstOrNull { it.name == stored } }
+            ?: StorytellerOperationMode.MANUAL
 
-    fun saveStorytellerExperienceMode(mode: StorytellerExperienceMode) {
-        preferences.edit()
-            .putString(STORYTELLER_EXPERIENCE_MODE_KEY, mode.prefsValue)
-            .apply()
+    fun saveStorytellerOperationMode(mode: StorytellerOperationMode) {
+        preferences.edit().putString(STORYTELLER_OPERATION_MODE_KEY, mode.name).apply()
     }
 
     fun loadCommonPlayers(): List<String> {
@@ -70,6 +67,6 @@ internal class AppPreferencesStore(
         const val PREFS_NAME = "camp_board_game_host"
         const val COMMON_PLAYERS_KEY = "common_players"
         const val LANGUAGE_MODE_KEY = "language_mode"
-        const val STORYTELLER_EXPERIENCE_MODE_KEY = "storyteller_experience_mode"
+        const val STORYTELLER_OPERATION_MODE_KEY = "storyteller_operation_mode"
     }
 }

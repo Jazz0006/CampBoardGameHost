@@ -8,10 +8,10 @@ import org.junit.Test
 
 class ClocktowerRedHerringAutoAdvancePolicyTest {
     @Test
-    fun `automatic red herring advance waits for a real recommendation but skips non-actions`() {
+    fun `red herring auto advance skips only non-actions and never silently confirms real selection`() {
         assertFalse(
             shouldAutoAdvanceRedHerring(
-                automaticStorytellerInfo = false,
+                allowRuleDeterminedAutoUi = false,
                 isRedHerringStep = true,
                 isRealAction = true,
                 hasSelectedRedHerring = true,
@@ -19,7 +19,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         )
         assertFalse(
             shouldAutoAdvanceRedHerring(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = false,
                 isRealAction = true,
                 hasSelectedRedHerring = true,
@@ -27,15 +27,15 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         )
         assertFalse(
             shouldAutoAdvanceRedHerring(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = true,
                 hasSelectedRedHerring = false,
             ),
         )
-        assertTrue(
+        assertFalse(
             shouldAutoAdvanceRedHerring(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = true,
                 hasSelectedRedHerring = true,
@@ -43,7 +43,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         )
         assertTrue(
             shouldAutoAdvanceRedHerring(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = false,
                 hasSelectedRedHerring = false,
@@ -52,11 +52,10 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
     }
 
     @Test
-    fun `automatic selection commits only a current legal recommendation at the barrier`() {
-        assertEquals(
-            "Alice",
+    fun `legacy red herring recommendation cannot bypass Host singleton gate`() {
+        assertNull(
             automaticRedHerringSelectionAtBarrier(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = true,
                 currentSelection = null,
@@ -66,7 +65,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         )
         assertNull(
             automaticRedHerringSelectionAtBarrier(
-                automaticStorytellerInfo = false,
+                allowRuleDeterminedAutoUi = false,
                 isRedHerringStep = true,
                 isRealAction = true,
                 currentSelection = null,
@@ -76,7 +75,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         )
         assertNull(
             automaticRedHerringSelectionAtBarrier(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = false,
                 isRealAction = true,
                 currentSelection = null,
@@ -86,7 +85,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         )
         assertNull(
             automaticRedHerringSelectionAtBarrier(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = false,
                 currentSelection = null,
@@ -96,7 +95,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         )
         assertNull(
             automaticRedHerringSelectionAtBarrier(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = true,
                 currentSelection = "Bob",
@@ -104,9 +103,10 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
                 legalSelections = setOf("Alice", "Bob"),
             ),
         )
-        assertNull(
+        assertEquals(
+            "Alice",
             automaticRedHerringSelectionAtBarrier(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = true,
                 currentSelection = null,
@@ -116,7 +116,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         )
         assertNull(
             automaticRedHerringSelectionAtBarrier(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,
                 isRealAction = true,
                 currentSelection = null,

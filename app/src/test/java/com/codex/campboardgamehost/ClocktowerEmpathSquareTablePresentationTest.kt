@@ -220,7 +220,7 @@ class ClocktowerEmpathSquareTablePresentationTest {
                 player(2, "Imp", Alignment.EVIL, CharacterType.DEMON),
                 player(3, "Washerwoman", Alignment.GOOD, CharacterType.TOWNSFOLK),
             ),
-            automaticStorytellerInfo = true,
+            allowRuleDeterminedAutoUi = true,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = emptyList(),
             structuredNumberUiModel = null,

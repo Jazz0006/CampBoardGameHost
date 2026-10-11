@@ -105,12 +105,12 @@ class ClocktowerNightFullScreenOwnershipTest {
     }
 
     @Test
-    fun `new demon identity uses private read only square table in beginner mode`() {
+    fun `new demon identity uses private read only square table when grouped wake is compact`() {
         val presentation = clocktowerEvilInfoSquareTablePresentation(
             step = newDemonIdentityStep(),
             actorSeat = 3,
             wakeInstruction = "Wake player 3",
-            beginnerMode = true,
+            compactTeamWake = true,
         )
 
         assertNotNull(presentation)

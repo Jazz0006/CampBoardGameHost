@@ -37,7 +37,7 @@ class ClocktowerSageSquareTablePresentationTest {
         val choices = clocktowerSageResultChoices(
             step = step,
             seatCount = 5,
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
         )
 
@@ -65,7 +65,7 @@ class ClocktowerSageSquareTablePresentationTest {
         val choices = clocktowerSageResultChoices(
             step = step,
             seatCount = 5,
-            automaticStorytellerInfo = true,
+            allowRuleDeterminedAutoUi = true,
             automaticDisplayOption = selected,
         )
 
@@ -86,7 +86,7 @@ class ClocktowerSageSquareTablePresentationTest {
         val choices = clocktowerSageResultChoices(
             step = step,
             seatCount = 5,
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
         )
 
@@ -117,7 +117,7 @@ class ClocktowerSageSquareTablePresentationTest {
                 clocktowerSageResultChoices(
                     step = step,
                     seatCount = 5,
-                    automaticStorytellerInfo = false,
+                    allowRuleDeterminedAutoUi = false,
                     automaticDisplayOption = null,
                 ).isEmpty(),
             )

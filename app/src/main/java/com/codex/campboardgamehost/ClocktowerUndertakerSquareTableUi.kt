@@ -69,7 +69,7 @@ internal fun clocktowerUndertakerTypedResult(
 internal fun clocktowerUndertakerResultChoices(
     step: ClocktowerNightStepUi,
     seatCount: Int,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     recommendedOptionIds: Set<String> = emptySet(),
@@ -105,7 +105,7 @@ internal fun clocktowerUndertakerResultChoices(
         }.distinctBy { it.key }
     }
 
-    if (automaticStorytellerInfo) {
+    if (allowRuleDeterminedAutoUi) {
         automaticDisplayOption?.let { option ->
             return choicesFrom(
                 options = listOf(option),
@@ -200,7 +200,9 @@ internal fun ClocktowerUndertakerSquareTableDialog(
 ) {
     if (choices.isEmpty()) return
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
+        clocktowerRuleOnlyCompactChoice(choices) != null
+    ) {
         ClocktowerBeginnerReadOnlyRevealDialog(
             seats = seats,
             actorSeat = actorSeat,
@@ -214,7 +216,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
         )
         return
     }
-    val recommendations = choices.filter { it.recommended }.take(3).ifEmpty { listOf(initialChoice) }
+    val recommendations = choices.filter { it.recommended }.take(1)
     val manualChoices = choices.filterNot { it in recommendations }
     var manualSelection by remember(choices.map { it.key }, recommendations.map { it.key }) {
         mutableStateOf(false)
@@ -268,7 +270,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                 ClocktowerNightActionWakeInstruction(wakeInstruction)
 
                 if (!manualSelection) {
-                    ClocktowerExperiencedRecommendationButtons(
+                    ClocktowerSingleRecommendationButtons(
                         recommendations = recommendations,
                         language = language,
                         labelOf = { choice ->

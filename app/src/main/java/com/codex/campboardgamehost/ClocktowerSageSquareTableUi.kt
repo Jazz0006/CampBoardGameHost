@@ -57,7 +57,7 @@ private fun validSageSubjectSeats(
 internal fun clocktowerSageResultChoices(
     step: ClocktowerNightStepUi,
     seatCount: Int,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     recommendedOptionIds: Set<String> = emptySet(),
 ): List<ClocktowerSageResultChoice> {
@@ -86,7 +86,7 @@ internal fun clocktowerSageResultChoices(
         }.distinctBy { it.key }
     }
 
-    if (automaticStorytellerInfo) {
+    if (allowRuleDeterminedAutoUi) {
         automaticDisplayOption?.let { option ->
             return fromOptions(
                 options = listOf(option),
@@ -148,7 +148,9 @@ internal fun ClocktowerSageSquareTableDialog(
 ) {
     if (choices.isEmpty()) return
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
+        clocktowerRuleOnlyCompactChoice(choices) != null
+    ) {
         ClocktowerBeginnerReadOnlyRevealDialog(
             seats = seats,
             actorSeat = actorSeat,
@@ -162,10 +164,10 @@ internal fun ClocktowerSageSquareTableDialog(
         )
         return
     }
-    val recommendations = choices.filter { it.recommended }.take(3).ifEmpty { listOf(initialChoice) }
+    val recommendations = choices.filter { it.recommended }.take(1)
     val manualChoices = choices.filterNot { it in recommendations }
     var manualSelection by remember(choices.map { it.key }, recommendations.map { it.key }) {
-        mutableStateOf(false)
+        mutableStateOf(recommendations.isEmpty())
     }
     var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice.key) }
     var menuExpanded by remember(choices.map { it.key }) { mutableStateOf(false) }
@@ -220,7 +222,7 @@ internal fun ClocktowerSageSquareTableDialog(
                 Spacer(Modifier.height(8.dp))
 
                 if (!manualSelection) {
-                    ClocktowerExperiencedRecommendationButtons(
+                    ClocktowerSingleRecommendationButtons(
                         recommendations = recommendations,
                         language = language,
                         labelOf = { choice -> choice.selectionLabel },

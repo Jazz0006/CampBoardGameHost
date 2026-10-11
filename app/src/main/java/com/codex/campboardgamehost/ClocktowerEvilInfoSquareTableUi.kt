@@ -45,7 +45,6 @@ internal fun clocktowerEvilInfoSquareTablePresentation(
     step: ClocktowerNightStepUi,
     actorSeat: Int?,
     wakeInstruction: String?,
-    beginnerMode: Boolean = false,
     compactTeamWake: Boolean = false,
     highlightedSeats: Set<Int> = emptySet(),
     groupLines: List<String> = emptyList(),
@@ -62,7 +61,7 @@ internal fun clocktowerEvilInfoSquareTablePresentation(
         secondary = step.displaySecondary,
         footer = step.displayFooter,
         showPlayerDisplayAction = step.tellPlayer?.isNotBlank() == true,
-        showHostDetails = !beginnerMode && !compactTeamWake,
+        showHostDetails = !compactTeamWake,
         highlightedSeats = highlightedSeats,
         groupLines = groupLines,
     )

@@ -14,21 +14,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /**
- * Shared Experienced-mode recommendation controls.
+ * Shared single-advisory recommendation controls.
  *
- * The caller supplies an already-ranked stream. This surface shows at most the first three real
- * recommendations and never fills missing slots from the manual legal domain. Manual selection is
- * an explicitly separate action owned by the role-specific surface.
+ * Only a single recommendation can be shown, never three ranked legacy alternatives.
+ * Manual selection remains separate, presenting the full Host-legal domain.
  */
 @Composable
-internal fun <T> ClocktowerExperiencedRecommendationButtons(
+internal fun <T> ClocktowerSingleRecommendationButtons(
     recommendations: List<T>,
     language: String,
     labelOf: (T) -> String,
     onConfirm: (T) -> Unit,
     onManualSelection: (() -> Unit)? = null,
 ) {
-    val visibleRecommendations = recommendations.distinct().take(3)
+    val visibleRecommendations = recommendations.distinct().take(1)
     if (visibleRecommendations.isNotEmpty()) {
         Text(
             text = if (language == "en") "Recommended information" else "推荐信息",

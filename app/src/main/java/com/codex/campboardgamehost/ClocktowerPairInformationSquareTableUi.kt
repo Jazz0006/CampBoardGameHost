@@ -29,8 +29,8 @@ import androidx.compose.ui.unit.dp
 /**
  * Square-table composition for first-night pair information (Washerwoman/Librarian/Investigator).
  *
- * Recommendation ranking and Manual legality stay outside this file. Experienced mode presents up
- * to three already-ranked recommendations before entering the complete typed Manual legal domain.
+ * A single externally validated recommendation may be presented; the complete Host-legal
+ * domain remains available through explicit manual editing.
  */
 @Composable
 internal fun ClocktowerPairInformationSquareTableDialog(
@@ -42,7 +42,6 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     wakeInstruction: String? = null,
     abilityLabel: String,
     roleLabel: (String) -> String,
-    allowManualEditing: Boolean,
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
@@ -50,12 +49,11 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
 ) {
-    val beginnerMode = !allowManualEditing
     val canonicalRecommendedOptions = remember(interactionKey, presentation, recommendedOptions) {
         recommendedOptions
             .mapNotNull { option -> ClocktowerPairManualAuthority.canonicalManualOption(presentation, option) }
             .distinct()
-            .take(3)
+            .take(1)
     }
     val canonicalRecommendedOption = canonicalRecommendedOptions.firstOrNull()
     val recommendedSelection = remember(interactionKey, presentation, canonicalRecommendedOption) {
@@ -64,13 +62,14 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     var selection by remember(interactionKey, presentation, canonicalRecommendedOption) {
         mutableStateOf(recommendedSelection)
     }
-    var editing by remember(interactionKey, presentation, canonicalRecommendedOption, allowManualEditing) {
-        mutableStateOf(allowManualEditing && recommendedSelection.resolvedOption == null)
+    // Legal manual override is always available, regardless of AI operation mode.
+    var editing by remember(interactionKey, presentation, canonicalRecommendedOption) {
+        mutableStateOf(recommendedSelection.resolvedOption == null)
     }
 
     fun restoreRecommendation() {
         selection = recommendedSelection
-        editing = allowManualEditing && recommendedSelection.resolvedOption == null
+        editing = recommendedSelection.resolvedOption == null
     }
 
     ClocktowerHostSquareTableScaffold(
@@ -96,22 +95,14 @@ internal fun ClocktowerPairInformationSquareTableDialog(
             }
         },
         seatUiModel = { seat ->
-            val seatPresentation = if (beginnerMode) {
-                clocktowerBeginnerPairSeatPresentation(
-                    seatNumber = seat.seatId.number,
-                    actorSeat = actorSeat,
-                )
-            } else {
-                clocktowerPairInformationSeatPresentation(
-                    selection = selection,
-                    seatNumber = seat.seatId.number,
-                    editing = editing,
-                    actorSeat = actorSeat,
-                )
-            }
-            val isSelectedCandidate = !beginnerMode &&
-                (seat.seatId.number == selection.selectedFirstSeat ||
-                    seat.seatId.number == selection.selectedSecondSeat)
+            val seatPresentation = clocktowerPairInformationSeatPresentation(
+                selection = selection,
+                seatNumber = seat.seatId.number,
+                editing = editing,
+                actorSeat = actorSeat,
+            )
+            val isSelectedCandidate = seat.seatId.number == selection.selectedFirstSeat ||
+                seat.seatId.number == selection.selectedSecondSeat
             clocktowerPairManualSquareTableSeat(
                 seat = seat,
                 language = language,
@@ -130,7 +121,6 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     ) {
         ClocktowerPairInformationCenterControls(
             wakeInstruction = wakeInstruction,
-            beginnerMode = beginnerMode,
             abilityLabel = abilityLabel,
             selection = selection,
             recommendedSelection = recommendedSelection,
@@ -138,10 +128,9 @@ internal fun ClocktowerPairInformationSquareTableDialog(
             editing = editing,
             presentation = presentation,
             roleLabel = roleLabel,
-            allowManualEditing = allowManualEditing,
             language = language,
             onSelectionChange = { selection = it },
-            onStartEditing = { if (allowManualEditing) editing = true },
+            onStartEditing = { editing = true },
             onRestoreRecommendation = ::restoreRecommendation,
             onConfirm = onConfirm,
         )
@@ -149,7 +138,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
 }
 
 /**
- * Host-private truth cue for Experienced pair information. Reliability is deliberately absent from
+ * Host-private truth cue for pair information. Reliability is deliberately absent from
  * this projection: the check means only that this selected candidate's authoritative actual role
  * equals the role being shown. A poisoned/unreliable result can therefore still carry a check when
  * it happens to be truthful, while a false candidate never receives one.
@@ -237,7 +226,6 @@ private fun clocktowerPairRecommendationLabel(
 @Composable
 private fun ClocktowerPairInformationCenterControls(
     wakeInstruction: String?,
-    beginnerMode: Boolean,
     abilityLabel: String,
     selection: ClocktowerPairManualSelectionModel,
     recommendedSelection: ClocktowerPairManualSelectionModel,
@@ -245,33 +233,12 @@ private fun ClocktowerPairInformationCenterControls(
     editing: Boolean,
     presentation: ClocktowerPairManualPresentation,
     roleLabel: (String) -> String,
-    allowManualEditing: Boolean,
     language: String,
     onSelectionChange: (ClocktowerPairManualSelectionModel) -> Unit,
     onStartEditing: () -> Unit,
     onRestoreRecommendation: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
 ) {
-    if (beginnerMode) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            ClocktowerNightActionWakeInstruction(wakeInstruction)
-            OutlinedButton(
-                onClick = { selection.resolvedOption?.let(onConfirm) },
-                enabled = selection.resolvedOption != null,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (language == "en") "Show to player" else "展示给玩家")
-            }
-        }
-        return
-    }
-
     if (!editing) {
         Column(
             modifier = Modifier
@@ -281,14 +248,14 @@ private fun ClocktowerPairInformationCenterControls(
             verticalArrangement = Arrangement.Center,
         ) {
             ClocktowerNightActionWakeInstruction(wakeInstruction)
-            ClocktowerExperiencedRecommendationButtons(
+            ClocktowerSingleRecommendationButtons(
                 recommendations = recommendedOptions,
                 language = language,
                 labelOf = { option ->
                     clocktowerPairRecommendationLabel(option, presentation, roleLabel, language)
                 },
                 onConfirm = onConfirm,
-                onManualSelection = if (allowManualEditing) onStartEditing else null,
+                onManualSelection = onStartEditing,
             )
         }
         return
@@ -384,7 +351,7 @@ private fun ClocktowerPairInformationCenterControls(
             ) {
                 Text(if (language == "en") "Show to player" else "展示给玩家")
             }
-            if (allowManualEditing && recommendedSelection.resolvedOption != null) {
+            if (recommendedSelection.resolvedOption != null) {
                 Spacer(Modifier.height(4.dp))
                 TextButton(onClick = onRestoreRecommendation) {
                     Text(if (language == "en") "Use recommendation" else "恢复推荐")

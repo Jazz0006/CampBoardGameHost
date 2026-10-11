@@ -37,13 +37,15 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
+        resultOptions.distinctBy(::clocktowerInformationCandidateId).size <= 1
+    ) {
         val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
         val orderedOptions = resultOptions.sortedBy { option -> if (option.isDefaultRecommendation) 0 else 1 }
         val reveal: (() -> Unit)? = when {
             !completePair -> null
             orderedOptions.isEmpty() -> onShowDeterminedResult
-            else -> ({ onResultSelected(orderedOptions.first()) })
+            else -> ({ onResultSelected(orderedOptions.single()) })
         }
         ClocktowerBeginnerTwoTargetRevealDialog(
             seats = seats,
@@ -104,7 +106,7 @@ private fun ClocktowerChambermaidCenterControls(
 ) {
     val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
     fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
-    val recommendations = recommendedResultOptions.distinctBy(::optionId).take(3)
+    val recommendations = recommendedResultOptions.distinctBy(::optionId).take(1)
     val recommendationIds = recommendations.mapTo(linkedSetOf(), ::optionId)
     val manualOptions = resultOptions.distinctBy(::optionId)
         .filterNot { option -> optionId(option) in recommendationIds }

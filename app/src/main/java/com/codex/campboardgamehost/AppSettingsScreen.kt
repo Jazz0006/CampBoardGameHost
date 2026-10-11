@@ -15,7 +15,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,32 +25,29 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
 import com.codex.campboardgamehost.debug.DebugFlightRecorder
 
 @Composable
 internal fun SettingsScreen(
     languageMode: LanguageMode,
-    storytellerExperienceMode: StorytellerExperienceMode,
     commonPlayers: List<String>,
     newCommonPlayerName: String,
     onLanguageModeChange: (LanguageMode) -> Unit,
-    onStorytellerExperienceModeChange: (StorytellerExperienceMode) -> Unit,
     onNewCommonPlayerNameChange: (String) -> Unit,
     onAddCommonPlayer: () -> Unit,
     onRemoveCommonPlayer: (String) -> Unit,
+    aiSettingsSection: @Composable () -> Unit,
     onBack: () -> Unit,
 ) {
     SettingsContent(
         languageMode = languageMode,
-        storytellerExperienceMode = storytellerExperienceMode,
         commonPlayers = commonPlayers,
         newCommonPlayerName = newCommonPlayerName,
         onLanguageModeChange = onLanguageModeChange,
-        onStorytellerExperienceModeChange = onStorytellerExperienceModeChange,
         onNewCommonPlayerNameChange = onNewCommonPlayerNameChange,
         onAddCommonPlayer = onAddCommonPlayer,
         onRemoveCommonPlayer = onRemoveCommonPlayer,
+        aiSettingsSection = aiSettingsSection,
         onBack = onBack,
     )
 }
@@ -60,14 +56,13 @@ internal fun SettingsScreen(
 @Composable
 internal fun SettingsContent(
     languageMode: LanguageMode,
-    storytellerExperienceMode: StorytellerExperienceMode,
     commonPlayers: List<String>,
     newCommonPlayerName: String,
     onLanguageModeChange: (LanguageMode) -> Unit,
-    onStorytellerExperienceModeChange: (StorytellerExperienceMode) -> Unit,
     onNewCommonPlayerNameChange: (String) -> Unit,
     onAddCommonPlayer: () -> Unit,
     onRemoveCommonPlayer: (String) -> Unit,
+    aiSettingsSection: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
 ) {
@@ -124,49 +119,6 @@ internal fun SettingsContent(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Text(
-                            if (isEnglish) "Experienced mode" else "熟练模式",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            if (isEnglish) {
-                                "Allow the Storyteller to manually adjust system-recommended information."
-                            } else {
-                                "允许说书人手动调整系统推荐的线索"
-                            },
-                            color = Color(0xFF5C6A63),
-                        )
-                    }
-                    Switch(
-                        checked = storytellerExperienceMode == StorytellerExperienceMode.EXPERIENCED,
-                        onCheckedChange = { enabled ->
-                            onStorytellerExperienceModeChange(
-                                if (enabled) StorytellerExperienceMode.EXPERIENCED else StorytellerExperienceMode.BEGINNER,
-                            )
-                        },
-                    )
-                }
-            }
-        }
-
-        item {
-            Card(
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -212,6 +164,8 @@ internal fun SettingsContent(
                 }
             }
         }
+
+        item { aiSettingsSection() }
 
         item {
             Card(

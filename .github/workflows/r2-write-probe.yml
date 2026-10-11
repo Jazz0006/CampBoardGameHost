@@ -1,9 +1,8 @@
 name: R2 main-thread boundary
 
 on:
+  # Validate stacked PRs as well as main-bound PRs.
   pull_request:
-    branches:
-      - main
   push:
     branches:
       - codex/storyteller-algorithm-v4

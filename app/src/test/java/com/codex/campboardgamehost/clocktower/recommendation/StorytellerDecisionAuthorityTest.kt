@@ -36,22 +36,22 @@ class StorytellerDecisionAuthorityTest {
     }
 
     @Test
-    fun beginnerPresentationRemainsAutomaticOnlyWhenAuthorityAllowsIt() {
+    fun ruleOnlyPresentationNeverTreatsPolicyReadyAsValidatedAiCommit() {
         assertTrue(
             storytellerDecisionPresentationIsAutomatic(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 authority = StorytellerDecisionAuthority.RuleDeterministic,
             ),
         )
-        assertTrue(
+        assertFalse(
             storytellerDecisionPresentationIsAutomatic(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 authority = StorytellerDecisionAuthority.PolicyReady("TEST_POLICY_V1"),
             ),
         )
         assertFalse(
             storytellerDecisionPresentationIsAutomatic(
-                automaticStorytellerInfo = true,
+                allowRuleDeterminedAutoUi = true,
                 authority = StorytellerDecisionAuthority.ManualRequired(
                     StorytellerManualReason.POLICY_NOT_READY,
                 ),
@@ -59,7 +59,7 @@ class StorytellerDecisionAuthorityTest {
         )
         assertFalse(
             storytellerDecisionPresentationIsAutomatic(
-                automaticStorytellerInfo = false,
+                allowRuleDeterminedAutoUi = false,
                 authority = StorytellerDecisionAuthority.PolicyReady("TEST_POLICY_V1"),
             ),
         )

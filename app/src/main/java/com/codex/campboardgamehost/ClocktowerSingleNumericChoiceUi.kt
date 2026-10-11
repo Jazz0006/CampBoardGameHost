@@ -14,15 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-/** Compatibility entry point for callers that have not migrated to a ranked recommendation set. */
+/** Single-advisory entry point with full manual legal alternatives. */
 @Composable
-internal fun <T> ClocktowerExperiencedNumericChoiceRows(
+internal fun <T> ClocktowerSingleNumericChoiceRows(
     choices: List<T>,
     recommendedChoice: T,
     language: String,
     valueOf: (T) -> Int,
     onConfirm: (T) -> Unit,
-) = ClocktowerExperiencedNumericChoiceRows(
+) = ClocktowerSingleNumericChoiceRows(
     choices = choices,
     recommendedChoices = listOf(recommendedChoice),
     language = language,
@@ -31,11 +31,11 @@ internal fun <T> ClocktowerExperiencedNumericChoiceRows(
 )
 
 /**
- * Experienced picker: show up to three real ranked recommendations first, then the remaining legal
- * domain as manual choices. Recommendations are never padded from the manual domain.
+ * At most one advisory option may be emphasized; all other legal choices remain manual.
+ * Do not invent fallback recommendations from the legal domain.
  */
 @Composable
-internal fun <T> ClocktowerExperiencedNumericChoiceRows(
+internal fun <T> ClocktowerSingleNumericChoiceRows(
     choices: List<T>,
     recommendedChoices: List<T>,
     language: String,
@@ -45,7 +45,7 @@ internal fun <T> ClocktowerExperiencedNumericChoiceRows(
     val recommendations = recommendedChoices
         .filter { recommendation -> recommendation in choices }
         .distinct()
-        .take(3)
+        .take(1)
     if (recommendations.isNotEmpty()) {
         Text(
             text = if (language == "en") "Recommended information" else "推荐信息",

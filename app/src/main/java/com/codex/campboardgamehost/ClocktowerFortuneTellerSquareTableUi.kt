@@ -46,6 +46,12 @@ internal fun clocktowerFortuneTellerResultActions(
     }
 }
 
+/** Only a Host-unique legal result is automatically presentable; a UI recommendation is not authority. */
+internal fun ruleDeterminedFortuneTellerResult(
+    allowRuleDeterminedAutoUi: Boolean,
+    legalResults: Set<Boolean>,
+): Boolean? = if (allowRuleDeterminedAutoUi) legalResults.singleOrNull() else null
+
 @Composable
 internal fun ClocktowerFortuneTellerSquareTableDialog(
     seats: List<HostSeatPresentation>,
@@ -57,7 +63,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     redHerringSeat: Int? = null,
     legalResults: Set<Boolean>,
     recommendedResult: Boolean?,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     language: String,
     canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
@@ -116,7 +122,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
             selectedSeats = selectedSeats,
             legalResults = legalResults,
             recommendedResult = recommendedResult,
-            automaticStorytellerInfo = automaticStorytellerInfo,
+            allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
             language = language,
             onResultSelected = onResultSelected,
             onAutomaticResultSelected = onAutomaticResultSelected,
@@ -130,7 +136,7 @@ private fun ClocktowerFortuneTellerCenterControls(
     selectedSeats: List<Int>,
     legalResults: Set<Boolean>,
     recommendedResult: Boolean?,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     language: String,
     onResultSelected: (Boolean) -> Unit,
     onAutomaticResultSelected: (Boolean) -> Unit,
@@ -140,6 +146,9 @@ private fun ClocktowerFortuneTellerCenterControls(
         recommendedResult = recommendedResult,
     )
     val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
+    val ruleDeterminedResult = ruleDeterminedFortuneTellerResult(
+        allowRuleDeterminedAutoUi, legalResults,
+    )
 
     Column(
         modifier = Modifier
@@ -160,8 +169,8 @@ private fun ClocktowerFortuneTellerCenterControls(
                     )
                 }
 
-                automaticStorytellerInfo -> {
-                    val result = recommendedResult?.takeIf { it in legalResults } ?: actions.first()
+                ruleDeterminedResult != null -> {
+                    val result = ruleDeterminedResult
                     Button(
                         onClick = { onAutomaticResultSelected(result) },
                         modifier = Modifier.fillMaxWidth(),

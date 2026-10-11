@@ -182,7 +182,6 @@ class ClocktowerStructuredInformationPreparationTest {
         val builder = ClocktowerInformationStepBuilder(
             cards = listOf(actor),
             language = "en",
-            automaticStorytellerInfo = false,
             text = { _, en -> en },
             roleActor = { actor },
             roleMissingReason = { "" },

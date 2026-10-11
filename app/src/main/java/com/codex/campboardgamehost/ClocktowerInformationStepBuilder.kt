@@ -8,7 +8,6 @@ import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
 internal class ClocktowerInformationStepBuilder(
     private val cards: List<PlayerCard>,
     private val language: String,
-    private val automaticStorytellerInfo: Boolean,
     private val text: (String, String) -> String,
     private val roleActor: (String) -> PlayerCard?,
     private val roleMissingReason: (String) -> String,
@@ -75,11 +74,9 @@ internal class ClocktowerInformationStepBuilder(
             .orEmpty()
             .distinctBy(::clocktowerInformationCandidateId)
         val reliableRecommendations = actor?.takeUnless { actorAbilityUnreliable }?.let(reliableDisplayOptions).orEmpty()
-        val automaticRecommendations = when {
-            !automaticStorytellerInfo -> reliableRecommendations
-            actorAbilityUnreliable -> unreliableOptions
-            else -> reliableRecommendations
-        }
+        // Build the full legal information domain independently of the operation mode.
+        val automaticRecommendations =
+            if (actorAbilityUnreliable) unreliableOptions else reliableRecommendations
         val resolvedDisplayKind = when (enName) {
             "Chef", "Empath", "Clockmaker", "Chambermaid" -> ClocktowerDisplayKind.Number
             "Fortune Teller" -> ClocktowerDisplayKind.YesNo
@@ -148,7 +145,7 @@ internal class ClocktowerInformationStepBuilder(
             displayPrimary = if (actor != null && unreliableOptions.isEmpty()) displayPrimary ?: tellPlayer else null,
             displaySecondary = if (actor != null && unreliableOptions.isEmpty()) displaySecondary else null,
             displayFooter = if (actor != null && unreliableOptions.isEmpty()) displayFooter ?: explanation else null,
-            displayOptions = if (automaticStorytellerInfo) emptyList() else unreliableOptions,
+            displayOptions = unreliableOptions,
             recommendedDisplayOptions = automaticRecommendations,
             legacyInformationCandidates = completeLegacyCandidates,
             manualInformationCandidates = legalSelectionDomain,

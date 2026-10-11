@@ -51,7 +51,6 @@ class ClocktowerSageStepMaterializerTest {
         val builder = ClocktowerInformationStepBuilder(
             cards = cards,
             language = "en",
-            automaticStorytellerInfo = false,
             text = { _, en -> en },
             roleActor = { null },
             roleMissingReason = { "missing" },

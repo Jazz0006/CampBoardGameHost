@@ -6,12 +6,12 @@ internal data class ClocktowerAutomaticRegistrationRuling(
 )
 
 internal fun clocktowerAutomaticMayorRulingShouldAdvance(
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     action: ClocktowerNightAction,
     selectedName: String?,
     automaticTargetName: String?,
 ): Boolean =
-    automaticStorytellerInfo &&
+    allowRuleDeterminedAutoUi &&
         action in setOf(ClocktowerNightAction.MayorRedirect, ClocktowerNightAction.DemonSuccessor) &&
         automaticTargetName != null &&
         selectedName == automaticTargetName

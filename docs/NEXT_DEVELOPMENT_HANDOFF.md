@@ -2,6 +2,19 @@
 
 > Updated **2026-10-11 Australia/Sydney**. **唯一活动交接。** 进入新会话必须重新查开发机 live state / GitHub main、PR、CI，不能假设下述 commit 仍是最新。当前单一执行路线是 [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)；此文件只记录状态及下一步。旧 PROD-GLOBAL-1D/2B/analysis-first NEXT 作为历史，不得再次触发独立酒鬼模型规划。
 
+## 2026-10-12 当前 UI 小切片：AI 设置归位与原班人马快速重开
+
+- PR #295 stacked Draft 上已实施：App Settings 统一呈现 AI 模式、直连/Gateway 凭据/模型；开局仅展示默认模式与配置就绪状态，并可进入 App Settings 后返回相同开局步骤。模式默认值保存至 `AppPreferencesStore` 的 `storyteller_operation_mode`；API Key / Gateway token 保持原 Keystore 存储。
+- **经源码确认的旧行为**：快速重开直接调用 `startClocktowerGame`，使用尚在内存中的 `storytellerOperationMode`。此前的人工接管会使下一局意外 MANUAL，App 重新启动又默认 MANUAL；现以**独立的全局默认模式**纠正。
+- **新行为**：开新局/快速重开都会通过 `storytellerModeForNewGame` 取得新局模式、通过 `storytellerNewGameConfigurationReady` 拒绝未配置的 AI 开局；快速重开先检查凭据再归档旧局，并保留 5/6 人原剧本。NoGreaterJoy 不覆盖全局默认 AI 配置，只在当前不支持的剧本运行手动。
+- 此切片的自动化及 Android/真机状态需以本次最新 PR head 的 CI/R2 核对。尚未完成的 PROD-GLOBAL-3 全局开局、真机展示崩溃仍是主线下一项。
+
+## 当前并行清理：LEGACY-EXPERIENCE-RETIREMENT (2026-10-11)
+
+当前工作分支 `legacy-experience-retirement-20261011` 基于 Draft PR #293（其基于 Draft #292），不更改两者原始分支。旧说书人“新手/熟练”运行模式、设置开关/SharedPreferences 键及三个候选推荐专属 UI 已在清理分支删除；Drunk 路由不再接收说书人熟练模式；Fortune Teller/红鲱鱼不能在没有 Host 唯一合法结果时任取首项；Spy/Recluse 多解登记不可被自动定为单个见证。独立合法候选的人工选择和 `PlayerExperienceLevelV1` 均必须保留。
+
+正式操作权限仅有 `MANUAL`（全程手动且无 AI 请求）、`AI_ASSISTED`（推荐/明确采纳，不自动提交）与 `AI_AUTOMATIC`（只有 Host 核验当前合法性、版本和明确候选成功才可自动提交；失败安全暂停）。规则计算/唯一确定结果不取决于 AI。这是目标契约；**完整无人说书人尚未实现**。本清理不会修复 PROD-GLOBAL-3 旧独立 Drunk 请求的时序、Android 展示崩溃，亦不会分裂初始 Drunk + 全首夜一次联合规划目标。已创建 stacked Draft PR #295。角色简化夜间展示也须仅在唯一合法候选时展示快捷确认，绝不能因旧文本样式自动提交多个候选中的第一项。旧 CI/R2 仅针对 main；#295 已改为支持 stacked PR 直接触发，临时验收 PR #296 因与 main 冲突而关闭（从未合并）。#295 在 `2d1954f` 获 CI #4090 / R2 #3717 GREEN；本轮语义审查又发现 `allowRuleDeterminedAutoUi` 影响操作模式无关的 UI 排版、候选展示及 Pair 信息人工覆盖入口，已继续解除相关耦合，**需重跑更新后的 CI/R2**。#292 已通过双父合并提交 `02a19015` 吸收 main 的 TB schema-v3 (#294)，消除了上游的 GitHub 冲突；#293 集成父分支的提交为 `3c8b5724`。#295 此次需纳入上述历史并以 schema-v3 修正旧测试 fixture；三层均保持 Draft，CI/R2 与真机产品验收不可混为一谈。
+
 ## 1. 当前基线 — VERIFIED at this documentation session
 
 - Repo: Jazz0006/CampBoardGameHost；Oracle 开发机 Mini MCP alias: clocktower，目录 /home/opc/repos/CampBoardGameHost。
@@ -47,6 +60,7 @@ Regression anchor: previously discussed eight-seat Chef / Fortune Teller / Raven
 
 **Next chat begins at PROD-GLOBAL-3A and prepares unified 3B–3D architecture, not another Drunk-only model call.**
 
+
 ## TB setup simplification
 
-The active TB setup contract is schema v3: preset `townsfolk` is the complete shown Townsfolk roster, `drunk` is a boolean, and `outsiders` excludes the actual Drunk. No runtime three-option selection or TB-specific shown-identity option policy remains. See `TB_SETUP_SIMPLIFICATION_TEMPLATE_AUDIT.json` for the exact 208 old-three-to-one mappings and per-template rationale. Visible identities are dealt before the existing canonical Drunk seat selection/commit; this slice documents but does not change that sequence. Setup diversity history uses all completed shown identities, including the eventual Drunk's shown role, while player rotation retains actual-plus-shown identity history.
+TB presets use schema v3: full shown `townsfolk`, `drunk` boolean, no Drunk outsider or runtime three-choice selection. See `TB_SETUP_SIMPLIFICATION_TEMPLATE_AUDIT.json`; the late canonical Drunk assignment still happens after shown-role dealing.

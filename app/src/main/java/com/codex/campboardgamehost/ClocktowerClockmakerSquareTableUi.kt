@@ -47,7 +47,7 @@ internal data class ClocktowerClockmakerResultChoice(
  */
 internal fun clocktowerClockmakerResultChoices(
     step: ClocktowerNightStepUi,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     recommendedOptionIds: Set<String> = emptySet(),
 ): List<ClocktowerClockmakerResultChoice> {
@@ -72,7 +72,7 @@ internal fun clocktowerClockmakerResultChoices(
         }.distinctBy { it.key }
     }
 
-    if (automaticStorytellerInfo) {
+    if (allowRuleDeterminedAutoUi) {
         automaticDisplayOption?.let { option ->
             return fromOptions(
                 options = listOf(option),
@@ -122,7 +122,9 @@ internal fun ClocktowerClockmakerSquareTableDialog(
 ) {
     if (choices.isEmpty()) return
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
+        clocktowerRuleOnlyCompactChoice(choices) != null
+    ) {
         ClocktowerBeginnerReadOnlyRevealDialog(
             seats = seats,
             actorSeat = actorSeat,
@@ -136,7 +138,7 @@ internal fun ClocktowerClockmakerSquareTableDialog(
         )
         return
     }
-    val recommendations = choices.filter { it.recommended }.take(3).ifEmpty { listOf(initialChoice) }
+    val recommendations = choices.filter { it.recommended }.take(1)
     val manualChoices = choices.filterNot { it in recommendations }
     var manualSelection by remember(choices.map { it.key }, recommendations.map { it.key }) {
         mutableStateOf(recommendations.isEmpty())
@@ -194,7 +196,7 @@ internal fun ClocktowerClockmakerSquareTableDialog(
                 Spacer(Modifier.height(8.dp))
 
                 if (!manualSelection) {
-                    ClocktowerExperiencedRecommendationButtons(
+                    ClocktowerSingleRecommendationButtons(
                         recommendations = recommendations,
                         language = language,
                         labelOf = { choice ->

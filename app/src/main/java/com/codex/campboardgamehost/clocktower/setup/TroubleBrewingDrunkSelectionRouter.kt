@@ -1,105 +1,48 @@
 package com.codex.campboardgamehost.clocktower.setup
 
-import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
-
 internal data class TroubleBrewingDrunkSelectionRequest(
     val candidates: List<TroubleBrewingDrunkCandidate>,
     val recommendedCandidate: TroubleBrewingDrunkCandidate?,
 ) {
     init {
-        require(candidates.isNotEmpty()) {
-            "Trouble Brewing manual Drunk selection requires at least one legal candidate."
-        }
-        require(candidates.distinct().size == candidates.size) {
-            "Trouble Brewing manual Drunk candidates must be unique."
-        }
+        require(candidates.isNotEmpty()) { "Drunk selection requires legal candidates." }
+        require(candidates.distinct().size == candidates.size) { "Drunk candidates must be unique." }
         require(recommendedCandidate == null || recommendedCandidate in candidates) {
-            "Trouble Brewing manual Drunk recommendation must belong to the current legal candidate domain."
+            "Drunk recommendation must belong to the current Host legal domain."
         }
     }
 }
 
 internal sealed interface TroubleBrewingDrunkSelectionRoute {
     data object NoSelectionNeeded : TroubleBrewingDrunkSelectionRoute
-
-    data class ManualSelection(
-        val request: TroubleBrewingDrunkSelectionRequest,
-    ) : TroubleBrewingDrunkSelectionRoute
-
-    data class BeginnerAutomatic(
-        val candidate: TroubleBrewingDrunkCandidate,
-    ) : TroubleBrewingDrunkSelectionRoute
+    /** Unique Host-legal outcome, not an AI or experience-mode decision. */
+    data class RuleDetermined(val candidate: TroubleBrewingDrunkCandidate) : TroubleBrewingDrunkSelectionRoute
+    data class ManualSelection(val request: TroubleBrewingDrunkSelectionRequest) : TroubleBrewingDrunkSelectionRoute
 }
 
 /**
- * DLB-4A UX router.
- *
- * Rules/setup owns legality, the App owns only the transient interaction lifetime, and the canonical
- * commit owner still revalidates the final candidate. The router may consume an already-evaluated
- * Beginner automatic candidate but does not invoke or reinterpret SDE policy.
+ * Host legality owns routing, not the retired experience-level toggle.
+ * Multi-choice Drunk assignment always needs an explicitly validated Host confirmation.
  */
 internal object TroubleBrewingDrunkSelectionRouter {
     fun route(
         preparedSetup: TroubleBrewingPreparedSetup,
-        experienceMode: StorytellerExperienceMode,
         recommendedCandidate: TroubleBrewingDrunkCandidate?,
-        beginnerAutomaticCandidate: TroubleBrewingDrunkCandidate? = null,
     ): TroubleBrewingDrunkSelectionRoute {
         val intermediate = preparedSetup.intermediateSetup
         val legalCandidates = TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate)
-
         if (!intermediate.visibleRoster.hasDrunk) {
-            require(legalCandidates.isEmpty()) {
-                "Trouble Brewing setup without Drunk cannot expose Drunk candidates."
-            }
-            require(recommendedCandidate == null) {
-                "Trouble Brewing setup without Drunk cannot carry a Drunk recommendation."
-            }
-            require(beginnerAutomaticCandidate == null) {
-                "Trouble Brewing setup without Drunk cannot carry a Beginner automatic Drunk candidate."
-            }
+            require(legalCandidates.isEmpty()) { "No-Drunk setup cannot expose Drunk candidates." }
+            require(recommendedCandidate == null) { "No-Drunk setup cannot carry a Drunk recommendation." }
             return TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded
         }
-
-        require(legalCandidates.isNotEmpty()) {
-            "Trouble Brewing Drunk setup requires a non-empty legal candidate domain."
+        require(legalCandidates.isNotEmpty()) { "Drunk setup requires a legal candidate." }
+        require(recommendedCandidate == null || recommendedCandidate in legalCandidates) {
+            "Drunk recommendation must belong to the current Host legal domain."
         }
-
-        return when (experienceMode) {
-            StorytellerExperienceMode.EXPERIENCED -> {
-                require(beginnerAutomaticCandidate == null) {
-                    "Experienced Drunk selection cannot consume a Beginner automatic candidate."
-                }
-                TroubleBrewingDrunkSelectionRoute.ManualSelection(
-                    TroubleBrewingDrunkSelectionRequest(
-                        candidates = legalCandidates,
-                        recommendedCandidate = recommendedCandidate,
-                    ),
-                )
-            }
-
-            StorytellerExperienceMode.BEGINNER -> {
-                require(recommendedCandidate == null) {
-                    "Beginner Drunk selection cannot consume the Experienced recommendation channel."
-                }
-                val soleLegalCandidate = legalCandidates.singleOrNull()
-                if (soleLegalCandidate != null) {
-                    require(beginnerAutomaticCandidate == null || beginnerAutomaticCandidate == soleLegalCandidate) {
-                        "Beginner automatic Drunk selection must resolve to the sole current legal candidate."
-                    }
-                    TroubleBrewingDrunkSelectionRoute.BeginnerAutomatic(soleLegalCandidate)
-                } else {
-                    require(beginnerAutomaticCandidate == null) {
-                        "Beginner multi-choice Drunk selection cannot consume special-policy automatic authority."
-                    }
-                    TroubleBrewingDrunkSelectionRoute.ManualSelection(
-                        TroubleBrewingDrunkSelectionRequest(
-                            candidates = legalCandidates,
-                            recommendedCandidate = null,
-                        ),
-                    )
-                }
-            }
-        }
+        return legalCandidates.singleOrNull()?.let(TroubleBrewingDrunkSelectionRoute::RuleDetermined)
+            ?: TroubleBrewingDrunkSelectionRoute.ManualSelection(
+                TroubleBrewingDrunkSelectionRequest(legalCandidates, recommendedCandidate),
+            )
     }
 }

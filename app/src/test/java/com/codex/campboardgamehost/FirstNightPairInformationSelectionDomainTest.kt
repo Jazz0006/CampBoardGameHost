@@ -57,7 +57,6 @@ class FirstNightPairInformationSelectionDomainTest {
     private fun builder() = ClocktowerInformationStepBuilder(
         cards = listOf(actor),
         language = "en",
-        automaticStorytellerInfo = true,
         text = { _, en -> en },
         roleActor = { actor },
         roleMissingReason = { "missing" },

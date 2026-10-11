@@ -31,7 +31,7 @@ class ClocktowerEvilInfoSquareTablePresentationTest {
     }
 
     @Test
-    fun `Beginner keeps private evil payload off host surface until player reveal`() {
+    fun `compact team wake keeps private payload off host surface until player reveal`() {
         val presentation = clocktowerEvilInfoSquareTablePresentation(
             step = evilInfoStep(
                 tellPlayer = "Show the Demon their Minions and bluffs.",
@@ -39,7 +39,7 @@ class ClocktowerEvilInfoSquareTablePresentationTest {
             ),
             actorSeat = 7,
             wakeInstruction = "Wake Demon\nP7 Eve",
-            beginnerMode = true,
+            compactTeamWake = true,
         )!!
 
         assertEquals("Minions\nP2 · P5", presentation.primary)

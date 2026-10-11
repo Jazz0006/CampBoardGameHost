@@ -7,7 +7,7 @@ import org.junit.Test
 
 class ClocktowerRecommendationPresentationTest {
     @Test
-    fun `ranked recommendations expose first three as recommendations without reordering`() {
+    fun `the advisory surface exposes only one candidate even from a larger ranked set`() {
         val top = displayOption("top")
         val second = displayOption("second")
         val third = displayOption("third")
@@ -18,8 +18,7 @@ class ClocktowerRecommendationPresentationTest {
         )
 
         assertSame(top, presentation.primary)
-        assertEquals(listOf(second, third), presentation.alternatives)
-        assertEquals(listOf(top, second, third), presentation.recommendations)
+        assertEquals(listOf(top), presentation.recommendations)
     }
 
     @Test
@@ -38,7 +37,7 @@ class ClocktowerRecommendationPresentationTest {
         assertEquals(listOf(only), single.recommendations)
 
         assertSame(only, pair.primary)
-        assertEquals(listOf(only, second), pair.recommendations)
+        assertEquals(listOf(only), pair.recommendations)
     }
 
     private fun displayOption(label: String) = ClocktowerDisplayOption(

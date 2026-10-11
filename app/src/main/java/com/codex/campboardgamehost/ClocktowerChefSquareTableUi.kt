@@ -156,7 +156,7 @@ internal fun clocktowerChefEffectivePairSeats(
 internal fun clocktowerChefResultChoices(
     step: ClocktowerNightStepUi,
     players: List<PlayerState>,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     structuredNumberUiModel: StructuredNumberInformationUiModel?,
@@ -166,7 +166,7 @@ internal fun clocktowerChefResultChoices(
     fun numericValue(option: ClocktowerDisplayOption): Int? =
         (option.proposition as? InformationProposition.NumericResult)?.value
 
-    if (automaticStorytellerInfo) {
+    if (allowRuleDeterminedAutoUi) {
         automaticDisplayOption?.let { option ->
             val value = numericValue(option)
             if (value != null) {
@@ -198,15 +198,14 @@ internal fun clocktowerChefResultChoices(
     }
 
     structuredNumberUiModel?.let { model ->
-        val visibleChoices = if (automaticStorytellerInfo) {
+        val visibleChoices = if (allowRuleDeterminedAutoUi) {
             listOfNotNull(
-                model.choices.firstOrNull { it.recommended }
-                    ?: model.choices.singleOrNull(),
+                model.choices.singleOrNull(),
             )
         } else {
             model.choices
         }
-        if (automaticStorytellerInfo && model.choices.isNotEmpty() && visibleChoices.isEmpty()) return emptyList()
+        if (allowRuleDeterminedAutoUi && model.choices.isNotEmpty() && visibleChoices.isEmpty()) return emptyList()
         if (visibleChoices.isNotEmpty()) return visibleChoices.map { choice ->
             ClocktowerChefResultChoice(
                 key = choice.candidateId,
@@ -260,7 +259,9 @@ internal fun ClocktowerChefSquareTableDialog(
 ) {
     if (choices.isEmpty()) return
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
+        clocktowerRuleOnlyCompactChoice(choices) != null
+    ) {
         ClocktowerBeginnerReadOnlyRevealDialog(
             seats = seats,
             actorSeat = actorSeat,
@@ -275,8 +276,8 @@ internal fun ClocktowerChefSquareTableDialog(
         return
     }
     val displayedPairSeats = clocktowerChefDisplayedPairSeats(choices, initialChoice.key)
-    val recommendedChoices = choices.filter { it.recommended }.take(3)
-        .ifEmpty { listOf(initialChoice) }
+    val recommendedChoices = choices.filter { it.recommended }.take(1)
+        
 
     ClocktowerHostSquareTableScaffold(
         seats = seats,
@@ -333,7 +334,7 @@ internal fun ClocktowerChefSquareTableDialog(
                 )
                 Spacer(Modifier.height(8.dp))
 
-                ClocktowerExperiencedNumericChoiceRows(
+                ClocktowerSingleNumericChoiceRows(
                     choices = choices,
                     recommendedChoices = recommendedChoices,
                     language = language,

@@ -36,7 +36,7 @@ import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationRe
 @Composable
 internal fun ClocktowerNightStepCardLocalized(
     recommendationCoordinator: ClocktowerRecommendationCoordinator,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     phase: ClocktowerPhase,
     gameId: String,
     round: Int,
@@ -114,15 +114,6 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val projectedFirstNightInformationCandidates =
         projectFirstNightCandidateSource(step.legacyInformationCandidates)
-    val projectedAutomaticFirstNightInformationCandidates = projectFirstNightCandidateSource(
-        step.automaticInformationCandidates.ifEmpty { step.legacyInformationCandidates },
-    )
-    val firstNightAutomaticPool = projectedAutomaticFirstNightInformationCandidates
-        .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
-        ?.let { options -> unifiedFirstNightInformationPool(
-            options = options,
-            familyId = presentationRoleEnName ?: "first-night-information",
-        ) }
     // The legacy assisted recommendation surface keeps the curated compatibility pool.
     // Pair Manual selection below consumes step.manualInformationCandidates directly.
     val firstNightPool = projectedFirstNightInformationCandidates
@@ -131,10 +122,6 @@ internal fun ClocktowerNightStepCardLocalized(
             options = options,
             familyId = presentationRoleEnName ?: "first-night-information",
         ) }
-    val automaticInformationOptions = firstNightAutomaticPool
-        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
-        ?.map { it.payload }
-        ?: step.recommendedDisplayOptions
     val assistedInformationOptions = firstNightPool
         ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
         ?.map { it.payload }
@@ -144,7 +131,8 @@ internal fun ClocktowerNightStepCardLocalized(
             step.automaticInformationCandidates.ifEmpty { step.legacyInformationCandidates }
         },
     ).distinctBy(::clocktowerInformationCandidateId)
-    val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
+    // Display the same legal information domain regardless of whether Host can auto-resolve a singleton.
+    val displayedInformationOptions = assistedInformationOptions
     val recommendationPresentation = clocktowerRecommendationPresentation(displayedInformationOptions)
     val recommendedOptionIds = recommendationPresentation.recommendations
         .mapTo(linkedSetOf(), ::optionId)
@@ -187,7 +175,7 @@ internal fun ClocktowerNightStepCardLocalized(
         .takeIf { it.isNotEmpty() }
         ?.let { storytellerDecisionAuthority(legalCandidateCount = it.size) }
     val automaticMayorTargetName = if (
-        automaticStorytellerInfo &&
+        allowRuleDeterminedAutoUi &&
         step.isRealAction &&
         step.action == ClocktowerNightAction.MayorRedirect &&
         mayorRedirectAuthority is StorytellerDecisionAuthority.RuleDeterministic
@@ -205,7 +193,7 @@ internal fun ClocktowerNightStepCardLocalized(
         .takeIf { it.isNotEmpty() }
         ?.let { storytellerDecisionAuthority(legalCandidateCount = it.size) }
     val automaticDemonSuccessorTargetName = if (
-        automaticStorytellerInfo &&
+        allowRuleDeterminedAutoUi &&
         step.isRealAction &&
         step.action == ClocktowerNightAction.DemonSuccessor &&
         demonSuccessorAuthority is StorytellerDecisionAuthority.RuleDeterministic
@@ -221,16 +209,16 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val rulingPresentationAutomatic = when (step.action) {
         ClocktowerNightAction.MayorRedirect -> mayorRedirectAuthority?.let { authority ->
-            storytellerDecisionPresentationIsAutomatic(automaticStorytellerInfo, authority)
+            storytellerDecisionPresentationIsAutomatic(allowRuleDeterminedAutoUi, authority)
         } ?: false
         ClocktowerNightAction.DemonSuccessor -> demonSuccessorAuthority?.let { authority ->
-            storytellerDecisionPresentationIsAutomatic(automaticStorytellerInfo, authority)
+            storytellerDecisionPresentationIsAutomatic(allowRuleDeterminedAutoUi, authority)
         } ?: false
         else -> false
     }
     if (!usesResultFirstRegistration && step.spyRegistrationKey != null && spyCard != null && spyRegistrationResolution?.canUseSpecialAbility == true) {
         ClocktowerAutomaticRegistrationEffect(
-            automaticStorytellerInfo = automaticStorytellerInfo,
+            allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
             registration = spyRegistrationResolution,
             applyRegisteredRole = step.spyRegistrationDetail == ClocktowerRegistrationDetail.Role,
             onUsesSpecialRegistrationChange = onSpyRegistrationGoodChange,
@@ -239,7 +227,7 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     if (!usesResultFirstRegistration && step.recluseRegistrationKey != null && recluseCard != null && recluseRegistrationResolution?.canUseSpecialAbility == true) {
         ClocktowerAutomaticRegistrationEffect(
-            automaticStorytellerInfo = automaticStorytellerInfo,
+            allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
             registration = recluseRegistrationResolution,
             applyRegisteredRole = true,
             onUsesSpecialRegistrationChange = onRecluseRegistrationEvilChange,
@@ -249,11 +237,11 @@ internal fun ClocktowerNightStepCardLocalized(
     val automaticDisplayOption = clocktowerAutomaticInformationOption(
         currentOptions = automaticAuthorityDomain,
     )
-    val manualInformationFallback = automaticStorytellerInfo &&
+    val manualInformationFallback = allowRuleDeterminedAutoUi &&
         step.isRealAction &&
         automaticDisplayOption == null &&
         automaticAuthorityDomain.size > 1
-    val effectiveAutomaticInformation = automaticStorytellerInfo && !manualInformationFallback
+    val effectiveAutomaticInformation = allowRuleDeterminedAutoUi && !manualInformationFallback
     val manualFallbackStep = if (manualInformationFallback && automaticAuthorityDomain.isNotEmpty()) {
         step.copy(
             displayOptions = clocktowerManualInformationDomain(automaticAuthorityDomain),
@@ -292,7 +280,7 @@ internal fun ClocktowerNightStepCardLocalized(
         clocktowerChefResultChoices(
             step = manualFallbackStep,
             players = chefPlayers,
-            automaticStorytellerInfo = effectiveAutomaticInformation,
+            allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
             structuredNumberUiModel = structuredNumberUiModel,
@@ -309,7 +297,7 @@ internal fun ClocktowerNightStepCardLocalized(
         clocktowerEmpathResultChoices(
             step = manualFallbackStep,
             players = empathPlayers,
-            automaticStorytellerInfo = effectiveAutomaticInformation,
+            allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
             structuredNumberUiModel = structuredNumberUiModel,
@@ -325,7 +313,7 @@ internal fun ClocktowerNightStepCardLocalized(
         clocktowerUndertakerResultChoices(
             step = manualFallbackStep,
             seatCount = cards.size,
-            automaticStorytellerInfo = effectiveAutomaticInformation,
+            allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
             recommendedOptionIds = effectiveRecommendedOptionIds,
@@ -342,7 +330,7 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val clockmakerResultChoices = clocktowerClockmakerResultChoices(
         step = manualFallbackStep,
-        automaticStorytellerInfo = effectiveAutomaticInformation,
+        allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
         automaticDisplayOption = automaticDisplayOption,
         recommendedOptionIds = effectiveRecommendedOptionIds,
     )
@@ -351,7 +339,7 @@ internal fun ClocktowerNightStepCardLocalized(
     val sageResultChoices = clocktowerSageResultChoices(
         step = manualFallbackStep,
         seatCount = cards.size,
-        automaticStorytellerInfo = effectiveAutomaticInformation,
+        allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
         automaticDisplayOption = automaticDisplayOption,
         recommendedOptionIds = effectiveRecommendedOptionIds,
     )
@@ -371,7 +359,7 @@ internal fun ClocktowerNightStepCardLocalized(
             step = manualFallbackStep,
             selectedSeat = ravenkeeperSelectedSeat,
             seatCount = cards.size,
-            automaticStorytellerInfo = effectiveAutomaticInformation,
+            allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
             recommendedOptionIds = effectiveRecommendedOptionIds,
@@ -618,13 +606,13 @@ internal fun ClocktowerNightStepCardLocalized(
         onShowPlayerDisplay(displayStep)
     }
 
-    LaunchedEffect(automaticStorytellerInfo, step.title, automaticDecisionTargetName) {
-        if (automaticStorytellerInfo && automaticDecisionTargetName != null && selectedName != automaticDecisionTargetName) {
+    LaunchedEffect(allowRuleDeterminedAutoUi, step.title, automaticDecisionTargetName) {
+        if (allowRuleDeterminedAutoUi && automaticDecisionTargetName != null && selectedName != automaticDecisionTargetName) {
             onSelectName(automaticDecisionTargetName)
         }
     }
     LaunchedEffect(
-        automaticStorytellerInfo,
+        allowRuleDeterminedAutoUi,
         step.title,
         step.action,
         selectedName,
@@ -632,7 +620,7 @@ internal fun ClocktowerNightStepCardLocalized(
     ) {
         if (
             clocktowerAutomaticMayorRulingShouldAdvance(
-                automaticStorytellerInfo = automaticStorytellerInfo,
+                allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                 action = step.action,
                 selectedName = selectedName,
                 automaticTargetName = automaticDecisionTargetName,
@@ -655,7 +643,8 @@ internal fun ClocktowerNightStepCardLocalized(
             },
     )
     val command = compactNightGuidance?.asWakeInstruction(
-        experiencedFormat = !automaticStorytellerInfo,
+        // Wake instruction formatting is a presentation choice, never AI authority.
+        expandedFormat = true,
     ) ?: when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
@@ -774,7 +763,6 @@ internal fun ClocktowerNightStepCardLocalized(
                 step = step,
                 actorSeat = actionActorSeat,
                 wakeInstruction = command,
-                beginnerMode = automaticStorytellerInfo,
                 compactTeamWake = evilInfoTeam != null,
                 highlightedSeats = evilInfoHighlightedSeats,
                 groupLines = evilInfoGroupLines,
@@ -896,7 +884,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     redHerringSeat = redHerringSeat,
                     legalResults = fortuneTellerLegalResults,
                     recommendedResult = fortuneTellerRecommendedResult,
-                    automaticStorytellerInfo = effectiveAutomaticInformation,
+                    allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onSeatSelected = { seatNumber ->
@@ -1025,7 +1013,6 @@ internal fun ClocktowerNightStepCardLocalized(
                         roleLabel = { roleId ->
                             clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                         },
-                        allowManualEditing = !effectiveAutomaticInformation,
                         language = language,
                         canGoPrevious = canGoPrevious,
                         onPrevious = onPrevious,

@@ -76,7 +76,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ClocktowerJudgeScreen(
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     cards: List<PlayerCard>,
     events: List<ClocktowerEvent>,
     script: ClocktowerScript,
@@ -786,7 +786,6 @@ internal fun ClocktowerJudgeScreen(
     val informationStepBuilder = ClocktowerInformationStepBuilder(
         cards = cards,
         language = language,
-        automaticStorytellerInfo = automaticStorytellerInfo,
         text = ::text,
         roleActor = ::roleActor,
         roleMissingReason = ::roleMissingReason,
@@ -1891,7 +1890,7 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerNewDemonConfirmationScreen(
             newDemonLabel = newDemon?.seatLabel(cards).orEmpty(),
             hasNewDemon = newDemon != null,
-            compact = !automaticStorytellerInfo,
+            compact = false,
             onHostTools = onHostTools,
             onShowPlayerDisplay = { playerDisplayStep = newDemonStep },
             onConfirm = onConfirmNewDemon,
@@ -2004,7 +2003,7 @@ internal fun ClocktowerJudgeScreen(
         }
         ClocktowerPendingNominationTableScreen(
             round = round,
-            compact = !automaticStorytellerInfo,
+            compact = false,
             cards = cards,
             tableState = clocktowerDayOverviewTableState(
                 cards.toClocktowerGameState(
@@ -2186,7 +2185,7 @@ internal fun ClocktowerJudgeScreen(
             round = round,
             tableState = slayerTableState,
             actionsEnabled = gameOutcome == null,
-            compact = !automaticStorytellerInfo,
+            compact = false,
             onHostTools = onHostTools,
             onSeatClick = { seatId ->
                 val selectedName = slayerTableState.playerNameForSeat(seatId)
@@ -2263,9 +2262,9 @@ internal fun ClocktowerJudgeScreen(
         }
         val artistManualRequired = !artistReliable && artistAnswerOptions.size > 1
         val automaticArtistAnswer = currentArtistTruthfulAnswer
-            ?.takeIf { automaticStorytellerInfo && artistReliable }
-        LaunchedEffect(automaticStorytellerInfo, artistClaimantName, currentArtistTruthfulAnswer, automaticArtistAnswer) {
-            if (automaticStorytellerInfo && automaticArtistAnswer != null && artistShownAnswer != automaticArtistAnswer) {
+            ?.takeIf { allowRuleDeterminedAutoUi && artistReliable }
+        LaunchedEffect(allowRuleDeterminedAutoUi, artistClaimantName, currentArtistTruthfulAnswer, automaticArtistAnswer) {
+            if (allowRuleDeterminedAutoUi && automaticArtistAnswer != null && artistShownAnswer != automaticArtistAnswer) {
                 selectArtistShownAnswer(automaticArtistAnswer)
             }
         }
@@ -2327,7 +2326,7 @@ internal fun ClocktowerJudgeScreen(
                 HostActionSection(title = text("告诉玩家的答案", "Answer to show")) {
                     artistAnswerOptions.forEach { answer ->
                         val label = if (answer) text("是", "Yes") else text("否", "No")
-                        if (automaticStorytellerInfo && !artistManualRequired) {
+                        if (allowRuleDeterminedAutoUi && !artistManualRequired) {
                             Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         } else if (artistShownAnswer == answer) {
                             Button(
@@ -2692,7 +2691,7 @@ internal fun ClocktowerJudgeScreen(
         }
 
         LaunchedEffect(
-            automaticStorytellerInfo,
+            allowRuleDeterminedAutoUi,
             currentStepIndex,
             currentStep.action,
             currentStep.isRealAction,
@@ -2700,7 +2699,7 @@ internal fun ClocktowerJudgeScreen(
         ) {
             if (
                 shouldAutoAdvanceRedHerring(
-                    automaticStorytellerInfo = automaticStorytellerInfo,
+                    allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                     isRedHerringStep = currentStep.action == ClocktowerNightAction.RedHerring,
                     isRealAction = currentStep.isRealAction,
                     hasSelectedRedHerring = redHerring != null,
@@ -2748,7 +2747,7 @@ internal fun ClocktowerJudgeScreen(
                 }
                 ClocktowerNightStepCardLocalized(
                 recommendationCoordinator = recommendationCoordinator,
-                automaticStorytellerInfo = automaticStorytellerInfo,
+                allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                 phase = phase,
                 gameId = gameId,
                 round = round,

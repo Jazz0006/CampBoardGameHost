@@ -43,7 +43,7 @@ class ClocktowerUndertakerSquareTablePresentationTest {
         val choices = clocktowerUndertakerResultChoices(
             step = undertakerStep(),
             seatCount = 7,
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = listOf(chef, spy),
         )
@@ -66,7 +66,7 @@ class ClocktowerUndertakerSquareTablePresentationTest {
         val choices = clocktowerUndertakerResultChoices(
             step = undertakerStep(),
             seatCount = 7,
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = listOf(
                 option(seat = 4, role = "Chef"),
@@ -87,7 +87,7 @@ class ClocktowerUndertakerSquareTablePresentationTest {
                 ),
             ),
             seatCount = 7,
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = emptyList(),
         )

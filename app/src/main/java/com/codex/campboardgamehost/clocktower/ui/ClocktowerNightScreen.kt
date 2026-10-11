@@ -41,7 +41,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
     compact: Boolean = false,
 ) {
     if (compact) {
-        ClocktowerExperiencedNewDemonConfirmationScreen(
+        ClocktowerCompactNewDemonConfirmationScreen(
             newDemonLabel = newDemonLabel,
             hasNewDemon = hasNewDemon,
             onHostTools = onHostTools,
@@ -201,7 +201,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
 }
 
 @Composable
-private fun ClocktowerExperiencedNewDemonConfirmationScreen(
+private fun ClocktowerCompactNewDemonConfirmationScreen(
     newDemonLabel: String,
     hasNewDemon: Boolean,
     onHostTools: () -> Unit,
