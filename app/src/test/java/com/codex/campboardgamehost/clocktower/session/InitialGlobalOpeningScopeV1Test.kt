@@ -60,11 +60,11 @@ class InitialGlobalOpeningScopeV1Test {
                     mapOf("pair-a" to "A lawful pair result", "pair-b" to "Another lawful pair result"),
                 )),
                 determined = listOf(InitialOpeningDeterminedV1(
-                    "chef", "chef-known-1", "Host-determined truthful Chef number (not a model choice)",
+                    "setup.counts", "known-counts", "Host-determined setup count (not a model choice)",
                 )),
                 deferred = listOf(
                     InitialOpeningDeferredV1("poisoner-target", listOf("POISONER_TARGET_CONFIRMED")),
-                    InitialOpeningDeferredV1("fortune-teller-query", listOf("FORTUNE_TELLER_QUERY_CONFIRMED")),
+                    InitialOpeningDeferredV1("first-night:chef", listOf("POISONER_TARGET_CONFIRMED")),
                 ),
             )
         }
@@ -88,7 +88,7 @@ class InitialGlobalOpeningScopeV1Test {
                 .put("decisionId", "investigator").put("candidateId", "pair-a")))
             .put("demonBluffRoleIds", JSONObject.NULL)
             .put("deferredDecisionIds", JSONArray(
-                listOf("poisoner-target", "fortune-teller-query"),
+                listOf("poisoner-target", "first-night:chef"),
             ))
 
     @Test
@@ -136,7 +136,7 @@ class InitialGlobalOpeningScopeV1Test {
         val deterministicSelected = valid(scope, 1)
             .put("choices", JSONArray().put(JSONObject()
                 .put("decisionId", "investigator").put("candidateId", "pair-a"))
-                .put(JSONObject().put("decisionId", "chef").put("candidateId", "chef-known-1")))
+                .put(JSONObject().put("decisionId", "setup.counts").put("candidateId", "known-counts")))
         assertTrue(runCatching {
             InitialGlobalOpeningSelectionV1.decode(deterministicSelected, scope)
         }.isFailure)
@@ -148,23 +148,44 @@ class InitialGlobalOpeningScopeV1Test {
     }
 
     @Test
-    fun `unknown player action dependency cannot be dropped or guessed`() {
+    fun `unresolved Poisoner dependency cannot be dropped or guessed`() {
         val scope = scope(true)
         assertTrue(runCatching {
             InitialGlobalOpeningSelectionV1.decode(
-                valid(scope, 1).put("deferredDecisionIds", JSONArray(listOf("fortune-teller-query"))),
+                valid(scope, 1).put("deferredDecisionIds", JSONArray(listOf("first-night:chef"))),
                 scope,
             )
         }.isFailure)
         assertTrue(runCatching {
             InitialGlobalOpeningSelectionV1.decode(
                 valid(scope, 1).put("deferredDecisionIds",
-                    JSONArray(listOf("poisoner-target", "fortune-teller-query", "imagined-death"))),
+                    JSONArray(listOf("poisoner-target", "first-night:chef", "imagined-death"))),
                 scope,
             )
         }.isFailure)
         val defer = scope.hypothesis(1).deferred.first()
         assertEquals(listOf("POISONER_TARGET_CONFIRMED"), defer.waitingForEvents)
+    }
+
+    @Test
+    fun `changed legal domains invalidate an otherwise valid opening selection`() {
+        val scope = scope(true)
+        val plan = InitialGlobalOpeningSelectionV1.decode(valid(scope, 1), scope)
+        val changed = InitialGlobalOpeningScopeV1.fromHost(
+            snapshot(true), registry,
+            branches(true).map { branch ->
+                if (branch.drunkSeat == 1) branch.copy(
+                    discretionary = listOf(InitialOpeningDecisionV1(
+                        "investigator", "PAIR_INFORMATION", 5,
+                        mapOf("pair-b" to "Different legal outcome only"),
+                    )),
+                ) else branch
+            },
+            legalDemonBluffs = null,
+            playerExperience = mapOf(4 to OpeningPlayerExperienceV1.BEGINNER),
+        )
+        assertEquals(scope.rosterFingerprint, changed.rosterFingerprint)
+        assertFalse(plan.validFor(changed))
     }
 
     @Test
