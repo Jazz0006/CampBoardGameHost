@@ -14,6 +14,14 @@ internal object StorytellerCommittedAnalysisV1 {
     private const val REQUEST_SCHEMA = "botc.storyteller-global-analysis-request"
     private const val RESPONSE_SCHEMA = "botc.storyteller-global-analysis-response"
 
+    /**
+     * Read current Host authority at response time. A plain Compose-derived
+     * gameId captured by a setup click handler can predate the immediately
+     * created session until the next composition pass.
+     */
+    fun isCurrentGame(snapshot: TroubleBrewingGameSnapshotV1, session: ClocktowerGameSession?): Boolean =
+        session?.state?.gameId == snapshot.gameId
+
     private fun <T> field(value: SnapshotField<T>): Any = when (value) {
         is SnapshotField.Known -> value.value as Any
         SnapshotField.Uncommitted -> "UNCOMMITTED"

@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
@@ -53,6 +54,30 @@ class StorytellerCommittedAnalysisV1Test {
         intentions = listOf(StorytellerGlobalIntentionV1("First night", "Balance", "Avoid lies")),
         planRevisionNote = "Precommit note",
     )
+
+    @Test
+    fun `setup response reads canonical Host session ID rather than stale Compose capture`() {
+        val actualGame = TroubleBrewingFixtures.eightPlayerExample()
+        val expected = snapshot(null)
+        // At setup click time Compose may still have no rendered game session.
+        val stalePresentationId = ""
+        assertTrue(stalePresentationId != expected.gameId)
+
+        val current = ClocktowerGameSession.createProduction(
+            gameId = expected.gameId,
+            gameSeed = actualGame.seed,
+            initialState = actualGame,
+        )
+        assertTrue(StorytellerCommittedAnalysisV1.isCurrentGame(expected, current))
+
+        val otherGame = ClocktowerGameSession.createProduction(
+            gameId = "new-game",
+            gameSeed = actualGame.seed,
+            initialState = actualGame,
+        )
+        assertTrue(!StorytellerCommittedAnalysisV1.isCurrentGame(expected, otherGame))
+        assertTrue(!StorytellerCommittedAnalysisV1.isCurrentGame(expected, null))
+    }
 
     @Test
     fun `committed analysis includes real Drunk and full roster or no Drunk`() {

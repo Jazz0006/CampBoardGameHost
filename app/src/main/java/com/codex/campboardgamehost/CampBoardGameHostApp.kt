@@ -1720,7 +1720,13 @@ internal fun CampBoardGameHostApp() {
             committedAiBusy = false  // Always release the spinner, including discarded responses.
             val currentSessionState = clocktowerGameSession?.state
             val rejectReason = when {
-                clocktowerGameId != snapshot.gameId -> "GAME_CHANGED"
+                // Setup may create the Host Session and start this coroutine in
+                // the same Compose event callback, before recomposition refreshes
+                // the derived clocktowerGameId local captured by this closure.
+                // Compare against live Host-owned identity, never the UI projection.
+                !StorytellerCommittedAnalysisV1.isCurrentGame(
+                    snapshot, clocktowerGameSession,
+                ) -> "GAME_CHANGED"
                 storytellerOperationMode == StorytellerOperationMode.MANUAL -> "MANUAL_TAKEOVER"
                 currentGameKind != GameKind.Clocktower -> "GAME_KIND_CHANGED"
                 clocktowerPhase != ClocktowerPhase.FirstNight -> "PHASE_CHANGED"

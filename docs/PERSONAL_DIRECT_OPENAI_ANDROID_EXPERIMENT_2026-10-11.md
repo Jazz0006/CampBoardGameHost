@@ -81,3 +81,30 @@ Debug logs are disabled in release builds. This does not change Host validation 
 **Do not treat the previously guessed revision drift as confirmed.**
 For test feedback, share only lines beginning with `postcommit`, or the
 `reason` + four revision numbers. Avoid sharing an unfiltered Logcat transcript.
+
+## Confirmed first-attempt GAME_CHANGED root cause and fix
+
+Real device ADB trace:
+```text
+postcommit DISCARDED seq=1 reason=GAME_CHANGED elapsedMs=12357 sentGameRev=0 currentGameRev=0 sentInputRev=0 currentInputRev=0
+```
+Both revision counters remained zero. This rules out a revision-based discard for this
+occurrence. Auditing the actual setup click path identified a Compose stale-closure bug:
+`clocktowerGameId` was a derived plain `val` from `clocktowerSessionView` on the
+pre-game composition pass. `commitAndStartTroubleBrewingGame` creates and publishes
+the live Host session and immediately launches `requestCommittedGlobalAdvice` **within
+that same event callback**; the coroutine closure still held the pre-game rendered
+`clocktowerGameId` (usually empty). The fresh Host Session and AI request had the
+correct game ID, but the result was rejected against the stale presentation copy.
+After recomposition, retry captured the correct ID and succeeded.
+
+Repair: postcommit freshness now reads `clocktowerGameSession?.state?.gameId` at
+completion through `StorytellerCommittedAnalysisV1.isCurrentGame`, not the
+UI-derived ID. The unit regression reproduces an empty stale UI ID versus a valid
+new Host Session; a different or missing session remains rejected. No rules,
+revision, game-phase, or manual-takeover freshness gates were relaxed.
+
+Acceptance: confirm full Android CI/R2 GREEN; verify that the very first
+postcommit direct analysis yields `postcommit ACCEPTED seq=1` without a
+`DISCARDED reason=GAME_CHANGED` or a paid retry, and that a truly new game
+still discards responses from the previous game.
