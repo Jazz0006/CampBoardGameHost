@@ -60,10 +60,19 @@ internal fun clocktowerFirstNightOneShotScope(
             deferred.add(id)
             return@forEach
         }
-        // Only Host-published Manual legality is authoritative: no fallback
-        // to curated/legacy recommender lists which may be subsets.
-        val legal = step.manualInformationCandidates
+        // Prefer Host-published Manual legality. A healthy numeric ability
+        // with exactly one direct deterministic displayed result has no
+        // Storyteller choice, but it must still appear in the complete package.
+        // Never convert a curated multi-option recommendation into legality.
+        val manual = step.manualInformationCandidates
             .distinctBy(::clocktowerOneShotCandidateId)
+        val deterministic = step.legacyInformationCandidates
+            .takeIf { role in setOf("Chef", "Empath") &&
+                step.displayPrimary != null &&
+                it.size == 1 &&
+                it.single().displayPrimary == step.displayPrimary }
+            .orEmpty()
+        val legal = manual.ifEmpty { deterministic }
         if (legal.isEmpty()) {
             deferred.add(id)
             return@forEach

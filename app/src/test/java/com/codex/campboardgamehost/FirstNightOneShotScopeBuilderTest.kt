@@ -84,6 +84,32 @@ class FirstNightOneShotScopeBuilderTest {
     }
 
     @Test
+    fun `fixed Chef number remains visible even without discretionary Manual candidates`() {
+        val roster = cards()
+        val result = ClocktowerDisplayOption(
+            label = "fixed",
+            displayKind = ClocktowerDisplayKind.Number,
+            displayTitle = "Chef",
+            displayPrimary = "1",
+            displaySecondary = null,
+            displayFooter = null,
+        )
+        val fixedStep = step(roster[0], "Chef").copy(
+            displayPrimary = "1",
+            legacyInformationCandidates = listOf(result),
+        )
+        val scope = clocktowerFirstNightOneShotScope(
+            "deterministic", 0, 0, ClocktowerScript.TroubleBrewing, roster,
+            listOf(fixedStep),
+        )
+        val chef = scope.availableDecisions.single {
+            it.decisionId == "first-night:Chef:seat-1"
+        }
+        assertEquals(listOf(clocktowerOneShotCandidateId(result)), chef.legalCandidateIds)
+        assertFalse(chef.decisionId in scope.deferredDecisionIds)
+    }
+
+    @Test
     fun `same Host information gives the same opaque candidate identity`() {
         val option = ClocktowerDisplayOption(
             label = "anything",

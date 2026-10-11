@@ -1837,7 +1837,6 @@ internal fun CampBoardGameHostApp() {
                 firstNightOneShotError = "Game changed while planning; retry for current first night."
                 return@launch
             }
-            firstNightOneShotBusy = false
             result.onSuccess { plan ->
                 firstNightOneShotPlan = plan
                 firstNightOneShotError = null
@@ -1854,6 +1853,10 @@ internal fun CampBoardGameHostApp() {
                     mapOf("category" to PersonalDirectOpenAiV1.safeFailure(error)),
                 )
             }
+            // Publish terminal model outcome before releasing the busy barrier.
+            // The preflight LaunchedEffect must never see IDLE + no result and
+            // accidentally start a second paid request in the same game.
+            firstNightOneShotBusy = false
         }
     }
 

@@ -2556,9 +2556,18 @@ internal fun ClocktowerJudgeScreen(
             adoptedOneShotChoices["first-night:${currentStep.roleEnName}:seat-$seat"]
         }
         val approvedOpeningOption = preplannedChoice?.let { id ->
-            currentStep.manualInformationCandidates.singleOrNull {
-                clocktowerOneShotCandidateId(it) == id
+            val options = currentStep.manualInformationCandidates.ifEmpty {
+                currentStep.legacyInformationCandidates.takeIf { legacy ->
+                    currentStep.roleEnName in setOf("Chef", "Empath") &&
+                        currentStep.displayPrimary != null &&
+                        legacy.size == 1 &&
+                        legacy.single().displayPrimary == currentStep.displayPrimary
+                }.orEmpty()
             }
+            // A genuine player action may have changed the legal domain.
+            // Re-match against CURRENT Host-produced choices, never just the
+            // stale initial candidate ID from the accepted bundle.
+            options.singleOrNull { clocktowerOneShotCandidateId(it) == id }
         }
         LaunchedEffect(globalAiCurrentKey, globalAiAssisted, approvedOpeningOption) {
             if (globalAiAssisted && globalAiCurrentKey != null &&
