@@ -108,7 +108,6 @@ class ClocktowerChambermaidStepMaterializerTest {
     ) = ClocktowerInformationStepBuilder(
         cards = listOfNotNull(actor),
         language = "en",
-        allowRuleDeterminedAutoUi = true,
         text = { _, en -> en },
         roleActor = { actor },
         roleMissingReason = { "missing $it" },

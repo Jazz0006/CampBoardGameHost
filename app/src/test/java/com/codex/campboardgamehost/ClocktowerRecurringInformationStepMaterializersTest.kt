@@ -61,7 +61,6 @@ class ClocktowerRecurringInformationStepMaterializersTest {
     private fun builder(state: AbilityFunctioningState) = ClocktowerInformationStepBuilder(
         cards = cards,
         language = "en",
-        allowRuleDeterminedAutoUi = true,
         text = { _, en -> en },
         roleActor = { actor },
         roleMissingReason = { "missing $it" },
