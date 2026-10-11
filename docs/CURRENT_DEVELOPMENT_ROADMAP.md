@@ -6,6 +6,12 @@
 
 > **2026-10-10 PROD-GLOBAL-1D-3（Luna compact-on-live，开发分支待 Android 验收）：** 延迟实验在同一个真实合法 8 人 TB 调查员候选决策中取得完整 A 22.858s/2193 output tokens、简洁 B 7.516s/646 tokens、仅 ID C 8.957s/782 tokens。第 4 个请求 HTTP 503，后两个场景没有模型验证，故 **B 是单场景初步指标而非整局证明**。用户明确优先 Luna/成本与实战质量。当前 PR #292 分支实现针对 **AI_ASSISTED 的实时合法决策** opt-in `COMPACT_MEMO_V1`，返回唯一候选 + 一句可延续的暂定战略摘要；开局分析和酒鬼决策仍原完整协议。旧 Gateway 完整响应兼容；Host 校验事件游标、决策 ID、revision 和合法候选，助手不自动确认。此变更尚未经过整局 Android→Gateway→LLM E2E 验收，不能视为产品通过，也不能把 AI_AUTOMATIC 说成全自动完整 TB。**NEXT：实际 8 人 TB 一局贯穿首夜与白天/次夜并记录每次 Host 事实、玩家已见信息、模型候选、接受/人工覆盖、合法性与耗时；错误/503 人工接管；分析连贯性后决定扩大自动覆盖。**
 
+> **2026-10-11 真机新阻塞 — 完整首夜方案不是可选附加：** 用户已通过 Android Studio 直连获得调查员 AI 建议，但未同时获得恶魔三个掩饰身份。经代码核查，当前 committed analysis 只包含 issue/relations/intentions，首夜仍按单个 pending role 请求建议，恶魔掩饰身份在独立手动确认路径。这**尚未实现用户要求的「首夜全局信息/恶魔伪装联合规划」**，不得将「调查员信息 AI 可用」视为完整首夜验收。**立即将全首夜 bundle typed Host legal domains + LLM 一次联合计划 + 事件前缀驱动的剩余计划重算置于生产最高优先级**，详细边界见 PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md 的 PROD-GLOBAL-2 节。2026-10-11 的独立 UI 缺陷是调查员阶段仍有低对比度字色；PR #293 的共享主题、全屏方桌 foreground contract 和 WCAG AA 4.5:1 自动测试为第一步，需真实手机截图复核。不使用单角色推荐器或角色特例补洞。
+
+> **2026-10-11 新执行目标：单一推荐首夜配置 + 一键采纳。** 模型内部保留整局联合思考，前台不再输出大段 issues/intentions/alternatives，而是返回唯一推荐配置：恶魔三个合法掩饰身份及首夜各项可立即确定的 Host 合法候选；等待投毒、占卜师选人的项目须明确标为依赖待定。第一阶段假设说书人不手动覆盖，但不得预设玩家行动或改变游戏规则。首先完成 Host 全首夜合法域输入、单一结果校验、模型/Gateway 协议及 UI 一键采纳；已经确认玩家看到的信息不可追改。共享深色主题必须拥有背景和文字颜色，并在 CI 对真实 Material 调色板的全部文字/背景配对做 WCAG AA >=4.5:1 检查；禁止靠调查员专用补丁蒙混通过。
+>
+> **当前进度边界：** 已新增 FirstNightOneShotPlanV1 的纯合同/测试及全局 Surface/主题对比度加强（PR #293 的开发分支），**尚未接入可执行的模型首夜单包及一键采纳**；这是真实生产验收阻塞，不能称已完成。
+
 ## 1. 当前唯一执行顺序 — **PRODUCTION FIRST / AUTONOMOUS GOAL**
 
 > **2026-10-10 当前状态：PROD-GLOBAL-1C 代码就绪；PROD-GLOBAL-1D 正式接棒。** Draft [PR #292](https://github.com/Jazz0006/CampBoardGameHost/pull/292) 已在真实 Host 信息决策接入统一全局推荐：首夜 Washerwoman/Librarian/Investigator pair，Chef/Empath number，Fortune Teller 选定对象后 Boolean，以及跨白天/次夜的通用因果续航；Gateway 服务端认证/限额与 Android HTTPS 客户端已接通代码边界。Android HTTPS 地址现在会持久保存，Bearer 令牌经 Android Keystore AES-GCM 加密保存，`13b31d0` 的 Android CI #4049、R2 #3677、Gateway #59 GREEN。**尚无真实 Android 整局 E2E 产品验收，不合并 Draft。**
@@ -20,7 +26,7 @@
 
 | 顺位 | 工作 | 当前状态 / 退出条件 |
 | --- | --- | --- |
-| **NOW** | **PROD-GLOBAL-1D-0：API 延迟/质量基线** | 同一合法上下文实测 HTTP 总/上游耗时、model API usage、输出长度、推理强度和首次/续航；拒绝以聊天界面体感替代 API 证据；下一轮优先实施 |
+| **NOW** | **PROD-GLOBAL-2B：完整首夜唯一推荐包与一键采纳** | 同一合法上下文实测 HTTP 总/上游耗时、model API usage、输出长度、推理强度和首次/续航；拒绝以聊天界面体感替代 API 证据；下一轮优先实施 |
 | **NEXT** | **PROD-GLOBAL-1D-1：展示身份期间的首次全局预规划** | shown roles 全部固定 → 前台逐人展示 → 后台规划 Drunk 和首夜条件信息；发牌后绑定实际 Drunk，再按事件有效性验证剩余合法域 |
 | **THEN** | **PROD-GLOBAL-1D-2：全局事件驱动增量重算** | 投毒、人工部分覆盖、夜间/白天其他已确认事件统一进 Host causal prefix，撤销过时建议，≤5 秒作为实验目标；未达到时明确等待/人工接管 |
 | **PRODUCT GATE** | **PROD-1 Android 真实 E2E / PR #292** | 真机→HTTPS Funnel→Gateway→LLM→Host 法定决策、时序、部分覆盖、失效拒绝和手动回退验收后才评估 Draft 合并 |
@@ -75,3 +81,12 @@
 - [GSP 通用 policy 设计](GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md)，以本路线、2026-10-09 memory/recovery 决定作为后续优先级覆盖。
 - [RES 架构解耦和旧引擎退役](RES_ENGINE_RECOMMENDATION_SEPARATION_AND_PURGE_ROUTE_2026-10-06.md)、[核心所有权](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md)、[TB canonical snapshot](TB_CANONICAL_GAME_SNAPSHOT_INTEGRATION_ROUTE_2026-09-30.md)、[HOST-ML1](HOST_ML1_NEUTRAL_DECISION_EXPORT_IMPLEMENTATION_2026-10-03.md)。
 - 2026-10-09 之前全部工程阶段详情与 exact-head 验收：参阅 [旧 roadmap 快照](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md)；不再在唯一执行计划里堆叠几百行历史。
+
+
+### 2026-10-11 PROD-GLOBAL-2B implementation checkpoint — one-shot first-night actionability
+
+The owner accepted revised cross-screen color readability on real Android and requested implementation priority on a SINGLE recommended whole-night configuration. In experimental personal direct AI_ASSISTED mode only, code now constructs one Host-supplied legal information scope from current first-night materialized Manual domains, legal off-board Demon bluff role IDs and actual Good red herring seats. It provides compact hashed candidate IDs with Host-authored result descriptions so the model can analyze the whole roster in ONE structured Responses call. The model output contains exactly one eligible candidate per available decision, one distinct legal bluff trio if applicable, and exactly all deferred choice/dependency IDs — without prose issue essays or alternatives. All are fail-closed validated and gated on exact game/revisions.
+
+The private first-night preflight can display that one recommended package and a one-tap accept action, after which only Demon bluff preselection and FT red herring are stored. Other candidate IDs remain advisory and are re-matched to the exact step's current Host Manual-legal candidates before use. A Poisoner choice may invalidate a previously recommended candidate; the normal step-level live advice/manual control remains fallback; no old proposed observation is forcibly published. Unknown FT player query is deferred. The old verbose whole-board checkpoint is skipped ONLY for personal direct assisted first-night path; Gateway and automatic remain unchanged until independently upgraded.
+
+**Acceptance not yet granted** until current-head full Android CI and device end-to-end: one full actual opening including Demon's triple, Investigator, Chef or Empath, Poisoner and deferred FT, plus change/staleness, offline manual fallback, latency and cost. Never treat unexecuted accepted plan IDs as Host observations or Recovery facts. Real-phone readable-color feedback applies to current visual baseline.

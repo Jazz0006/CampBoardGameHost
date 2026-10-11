@@ -205,3 +205,97 @@ Facts verified against current production source:
 ### Gateway settings persistence (same checkpoint)
 
 For the Android debug prototype only, `StorytellerGatewayConnectionStore` persists the HTTPS endpoint as app-owned preferences and keeps the Gateway bearer token encrypted with an AndroidKeyStore AES/GCM key in `noBackupFilesDir`, rather than baking OpenAI Key or bearer token into the APK. The save is debounced off the UI thread and failed secure persistence is visible on the setup screen; ordinary in-place APK updates preserve settings, while uninstall/clear-data or restored backups may need re-entry. This concerns **connection configuration**, not game Recovery or LLM narrative memory.
+
+
+### PROD-GLOBAL-2 acceptance correction — whole first-night package and palette contract (2026-10-11)
+
+**Real Android product defect:** A test game reached Investigator information, but the
+first-night "global" output had not provided the Demon bluff trio at all. This is
+not missing text in one role: `StorytellerCommittedAnalysisV1`'s
+`ANALYSIS_ONLY` output contains situation summary/issues/relations/conditional
+intentions, not a playable first-night joint decision package.
+`ClocktowerJudgeScreen` generates fresh AI requests only for the *current*
+Host-legal pair/scalar/target point; its Demon bluff path is an independent
+Host-owned manual triple confirmation with no global AI candidate today.
+**The code is not yet an implementation of the owner's agreed joint-first-night
+planning requirement. Do not claim otherwise or merge the draft on that basis.**
+
+Reentry priority: before further quality comparisons, implement a **single,
+script-driven, whole-first-night plan** with coordinated decisions. The shared
+plan must cover applicable Demon bluffs (three legal off-board role identities,
+7+ player TB where the Demon receives bluffs), each relevant first-night
+information disclosure, and red-herring/registration-dependent information
+where applicable. It must record **not-applicable vs blocked-on-unknown-player
+action vs proposed-and-legally-validated** for each family, so a missing Demon
+bluff cannot be silently presented as "complete". Build the typed
+`FirstNightJointPlanV1` and Host-supplied legal scope rather than teaching
+the LLM to fabricate possibilities.
+
+- Host remains the only legal-candidate generator. It supplies canonical
+  identity, roles, each legal candidate domain (including Demon bluff triples,
+  no in-play roles/duplication), latest causal history and input revisions.
+  Partially unknown dependencies such as Poisoner target and Fortune Teller
+  chosen pair are explicitly deferred as *conditional* alternatives; no
+  invented player actions or confirmed Spy/Recluse registration witnesses.
+- Request one globally coupled set of alternatives/intentions across all open
+  decision families. The model must consider information interaction and
+  Demon bluff opportunity cost together; never add a separate Demon-bluff
+  heuristic/selector or quietly resurrect retired special policies.
+- Validate all generated candidate IDs against their corresponding Host domain
+  and revision. Store the bundle in memory as advisory (not Recovery truth).
+  Apply no Host fact, Demon bluff reveal or player observation until the
+  storyteller explicitly confirms the correct pending Host decision.
+- As confirmations, poison, manual overrides or other actions occur, commit
+  their typed action/observation first. Mark unchanged, still-legal bundle
+  proposals reusable; invalidate/replan **all affected remaining** portions
+  against the new complete causal prefix. Never retroactively rewrite player
+  information. Support a fast compact residual-plan request but measure real
+  latency instead of assuming under 5s.
+- UI preflight must display coverage and key joint interactions, including
+  Demon bluffs, before claiming the full first-night package is ready. No
+  misleading "globally planned" state when only Investigator is available.
+  Manual hosting remains uninterrupted with clear pending states.
+- Tests: 7/8-player Investigator-with-Demon-bluffs setup; no-Drunk setup;
+  no applicable Demon-bluff rule; duplicate/on-board bluff rejection;
+  Poisoner target causing legal candidate/quality revision; manual override of
+  first accepted clue before the next; changed pending choice vs unchanged
+  planned choice; recorded historical observations never overwritten.
+
+**Visual accessibility cross-screen policy:** Another real test found nearly
+unreadable upper Investigator-stage text after the initial theme workaround.
+The fix cannot be a per-role local color patch. Shared `ClocktowerDarkTheme`
+must define semantic text/background colors; full-screen night and square-table
+role surfaces explicitly own the dark canvas/foreground even in the
+`contentOwnsFullScreen` branch. Introduce a WCAG AA contrast guard
+(**>=4.5:1 for ordinary text**) for standard, muted, headings, primary/secondary
+button surfaces and role center content. Run it in Android CI, not just manual
+review. Check both Investigator (pair information) and the full-board strategy
+page on a real narrow phone; contrast math does not replace image acceptance.
+Do not regress Host readability to create a new layout.
+
+**Status:** contrast policy and shared component fixes are being implemented
+in PR #293; the true whole-first-night joint planning implementation remains
+an explicit **open production blocker**, not a completed milestone.
+
+### PROD-GLOBAL-2B (2026-10-11) — one best first-night package, no narrative wall
+
+Product owner confirms: the LLM must STILL reason across the complete board internally, but the UI should display ONLY ONE recommended first-night configuration rather than 1-4 issue essays, multiple hypotheses, competing options or long justifications. The Storyteller should be able to accept the package in one tap. For the first prototype we assume the Storyteller does not manually override. Real player choices, poisoning, legal dependencies and already-shown observations cannot be assumed away.
+
+**Authoritative design:** A Host-produced scope lists every currently open first-night decision ID and its exact legal candidates, the eligible unique Demon bluff role set, and explicit decision IDs deferred on unknown player choices (Poisoner target, Fortune Teller's selected players, etc.). The model returns ONE candidate ID for each currently executable Host decision and ONE legal triple of Demon bluffs, with the deferred IDs untouched. No narratives or alternatives. Full package validation requires exact game ID, game/input revisions, coverage and current Host candidate legality; incomplete results FAIL CLOSED, never silently look complete. Any future re-plan uses the updated global causal prefix and only remaining decisions, not isolated role policies.
+
+The new pure FirstNightOneShotPlanV1 contract and adversarial unit tests are the first infrastructure stage, **not yet a live AI integration or one-tap UI**. Next wire the complete Host decision-scope generator, strict Responses schema plus Gateway parity, and a one-tap adoption of the vetted proposed package. Runtime Host must revalidate before each actual fact/observation commit. No AI text is itself a Host fact. Until end-to-end proof, the current experimental postcommit analysis UI remains active; do not pretend the one-shot package is already delivered.
+
+Real game acceptance must include Demon bluffs + Investigator + Chef or other information roles as one interacting package; Player-driven Poisoner/Fortune Teller unknown targets as explicit dependencies; no Drunk, actual Drunk, manually covered roles, different player counts, stale/illegal response rejection, offline Manual fallback, and direct Android response timing.
+
+### Shared dark-palette ownership and anti-regression
+
+The recurring illegible Investigator-stage foreground is a design-level problem, not role-specific. A dark Material colorScheme without an owning Surface can leak inherited foreground from the surrounding light UI. ClocktowerDarkTheme now owns the dark Surface canvas and foreground; ClocktowerHostColorScheme centrally binds all button/card/text/outline/error tokens. Shared square-table and night full-screen containers explicitly own their content foreground. Android unit tests enforce >=4.5:1 actual Material semantic token pairs. Maintain real-phone screenshots as a separate gate; adding named-role text patches is not a long-term fix.
+
+
+### 2026-10-11 PROD-GLOBAL-2B implementation checkpoint — one-shot first-night actionability
+
+The owner accepted revised cross-screen color readability on real Android and requested implementation priority on a SINGLE recommended whole-night configuration. In experimental personal direct AI_ASSISTED mode only, code now constructs one Host-supplied legal information scope from current first-night materialized Manual domains, legal off-board Demon bluff role IDs and actual Good red herring seats. It provides compact hashed candidate IDs with Host-authored result descriptions so the model can analyze the whole roster in ONE structured Responses call. The model output contains exactly one eligible candidate per available decision, one distinct legal bluff trio if applicable, and exactly all deferred choice/dependency IDs — without prose issue essays or alternatives. All are fail-closed validated and gated on exact game/revisions.
+
+The private first-night preflight can display that one recommended package and a one-tap accept action, after which only Demon bluff preselection and FT red herring are stored. Other candidate IDs remain advisory and are re-matched to the exact step's current Host Manual-legal candidates before use. A Poisoner choice may invalidate a previously recommended candidate; the normal step-level live advice/manual control remains fallback; no old proposed observation is forcibly published. Unknown FT player query is deferred. The old verbose whole-board checkpoint is skipped ONLY for personal direct assisted first-night path; Gateway and automatic remain unchanged until independently upgraded.
+
+**Acceptance not yet granted** until current-head full Android CI and device end-to-end: one full actual opening including Demon's triple, Investigator, Chef or Empath, Poisoner and deferred FT, plus change/staleness, offline manual fallback, latency and cost. Never treat unexecuted accepted plan IDs as Host observations or Recovery facts. Real-phone readable-color feedback applies to current visual baseline.

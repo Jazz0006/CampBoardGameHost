@@ -149,8 +149,9 @@ internal object ProductionDrunkAiGatewayV1 {
         endpoint: String,
         accessToken: String,
         request: StorytellerProviderRequestV1,
+        directModel: String? = null,
     ): StorytellerGlobalAdviceV1 = decodeGlobal(
-        post(endpoint, accessToken, encode(request)), request,
+        post(endpoint, accessToken, encode(request), directModel), request,
     )
 
     /** Shared authenticated HTTPS transport for decisions and analysis-only strategy. */
@@ -158,7 +159,16 @@ internal object ProductionDrunkAiGatewayV1 {
         endpoint: String,
         accessToken: String,
         payload: String,
+        directModel: String? = null,
+        onStage: (String) -> Unit = {},
     ): String = withContext(Dispatchers.IO) {
+        if (endpoint.trim() == PersonalDirectOpenAiV1.ENDPOINT) {
+            return@withContext PersonalDirectOpenAiV1.post(
+                accessToken, payload,
+                requireNotNull(directModel) { "Personal direct mode requires a model ID." },
+                onStage,
+            )
+        }
         val uri = URI(endpoint.trim())
         require(uri.scheme == "https" && !uri.host.isNullOrBlank() &&
             uri.userInfo == null && uri.fragment == null && uri.rawQuery == null && uri.port != 0) {
