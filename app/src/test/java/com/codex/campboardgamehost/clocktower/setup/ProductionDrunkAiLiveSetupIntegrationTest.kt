@@ -29,17 +29,18 @@ class ProductionDrunkAiLiveSetupIntegrationTest {
         val preset = TroubleBrewingSetupPreset(
             id = "prod1-real-setup",
             playerCount = 8,
-            townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk"),
-            outsiders = listOf("drunk"),
+            // Schema v3 lists all six displayed Townsfolk, including the eventual Drunk's shown role.
+            townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk", "washerwoman"),
+            outsiders = emptyList(),
             minions = listOf("poisoner"),
             demons = listOf("imp"),
             source = "test",
             complexity = "standard",
             styleTags = listOf("balanced"),
-            drunkAsOptions = listOf("washerwoman", "librarian", "investigator"),
+            drunk = true,
         )
         val dataset = TroubleBrewingSetupPresetDataset(
-            schemaVersion = 2,
+            schemaVersion = 3,
             datasetId = "prod1-fixture",
             status = "test",
             declaredPoolSizes = mapOf(8 to 1),
