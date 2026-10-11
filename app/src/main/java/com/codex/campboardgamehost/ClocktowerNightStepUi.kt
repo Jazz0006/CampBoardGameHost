@@ -114,15 +114,6 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val projectedFirstNightInformationCandidates =
         projectFirstNightCandidateSource(step.legacyInformationCandidates)
-    val projectedAutomaticFirstNightInformationCandidates = projectFirstNightCandidateSource(
-        step.automaticInformationCandidates.ifEmpty { step.legacyInformationCandidates },
-    )
-    val firstNightAutomaticPool = projectedAutomaticFirstNightInformationCandidates
-        .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
-        ?.let { options -> unifiedFirstNightInformationPool(
-            options = options,
-            familyId = presentationRoleEnName ?: "first-night-information",
-        ) }
     // The legacy assisted recommendation surface keeps the curated compatibility pool.
     // Pair Manual selection below consumes step.manualInformationCandidates directly.
     val firstNightPool = projectedFirstNightInformationCandidates
@@ -131,10 +122,6 @@ internal fun ClocktowerNightStepCardLocalized(
             options = options,
             familyId = presentationRoleEnName ?: "first-night-information",
         ) }
-    val automaticInformationOptions = firstNightAutomaticPool
-        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
-        ?.map { it.payload }
-        ?: step.recommendedDisplayOptions
     val assistedInformationOptions = firstNightPool
         ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
         ?.map { it.payload }
@@ -144,7 +131,8 @@ internal fun ClocktowerNightStepCardLocalized(
             step.automaticInformationCandidates.ifEmpty { step.legacyInformationCandidates }
         },
     ).distinctBy(::clocktowerInformationCandidateId)
-    val displayedInformationOptions = if (allowRuleDeterminedAutoUi) automaticInformationOptions else assistedInformationOptions
+    // Display the same legal information domain regardless of whether Host can auto-resolve a singleton.
+    val displayedInformationOptions = assistedInformationOptions
     val recommendationPresentation = clocktowerRecommendationPresentation(displayedInformationOptions)
     val recommendedOptionIds = recommendationPresentation.recommendations
         .mapTo(linkedSetOf(), ::optionId)
@@ -655,7 +643,8 @@ internal fun ClocktowerNightStepCardLocalized(
             },
     )
     val command = compactNightGuidance?.asWakeInstruction(
-        expandedFormat = !allowRuleDeterminedAutoUi,
+        // Wake instruction formatting is a presentation choice, never AI authority.
+        expandedFormat = true,
     ) ?: when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
@@ -774,7 +763,6 @@ internal fun ClocktowerNightStepCardLocalized(
                 step = step,
                 actorSeat = actionActorSeat,
                 wakeInstruction = command,
-                beginnerMode = allowRuleDeterminedAutoUi,
                 compactTeamWake = evilInfoTeam != null,
                 highlightedSeats = evilInfoHighlightedSeats,
                 groupLines = evilInfoGroupLines,
@@ -1025,7 +1013,6 @@ internal fun ClocktowerNightStepCardLocalized(
                         roleLabel = { roleId ->
                             clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                         },
-                        allowManualEditing = !effectiveAutomaticInformation,
                         language = language,
                         canGoPrevious = canGoPrevious,
                         onPrevious = onPrevious,

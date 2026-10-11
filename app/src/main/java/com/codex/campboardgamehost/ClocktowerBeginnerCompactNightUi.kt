@@ -19,14 +19,6 @@ internal fun clocktowerUsesBeginnerCompactNightGuidance(instruction: String?): B
         (lines.firstOrNull()?.startsWith("唤醒 ") == true || lines.firstOrNull()?.startsWith("Wake ") == true)
 }
 
-internal fun clocktowerBeginnerPairSeatPresentation(
-    seatNumber: Int,
-    actorSeat: Int?,
-): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
-    targetState = ClocktowerSquareTableSeatState.Neutral,
-    isCurrentActor = seatNumber == actorSeat,
-)
-
 @Composable
 internal fun ClocktowerBeginnerSingleTargetAbilityDialog(
     seats: List<HostSeatPresentation>,

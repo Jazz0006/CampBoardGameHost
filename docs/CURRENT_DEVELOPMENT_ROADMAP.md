@@ -2,14 +2,15 @@
 
 > Updated: **2026-10-11 Australia/Sydney**. **唯一当前执行优先级权威。** Historical PROD-GLOBAL-1D/2B instructions are NOT current NEXT; see [PROD-GLOBAL-3 unified opening plan](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md) and [handoff](NEXT_DEVELOPMENT_HANDOFF.md). Previous checkpoint detail remains in original route documents and [archive](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md).
 
-## LEGACY-EXPERIENCE-RETIREMENT — 2026-10-11 (stacked Draft, CI/R2 pending)
+## LEGACY-EXPERIENCE-RETIREMENT — 2026-10-11 (stacked Draft #295; final semantic cleanup)
 
 - 独立清理分支 `legacy-experience-retirement-20261011` 从 PR #293 head 建立；其依赖链是本分支 → Draft #293 → Draft #292 → main。必须逐层验收/合并，不得把下游直接合到 main。
 - 旧说书人“新手/熟练”开关已移除：删除 `StorytellerExperienceMode`、`StorytellerRecommendationUxPolicy`、设置页开关及 `storyteller_experience_mode` 持久化；**不做旧设置迁移**。这与玩家自己的 `PlayerExperienceLevelV1` 熟练度毫无关系。
 - 唯一运行操作模式仍是 `MANUAL`（不发 AI 请求/人工主持）、`AI_ASSISTED`（AI 建议、人工确认/覆盖）、`AI_AUTOMATIC`（限定范围内、经 Host 当前合法域与 revision 核验才可提交；否则暂停/人工接管）。Host 唯一合法结果为规则确定性，不等于 AI 授权。新老模式不得直接映射。
 - 已删除旧“三项推荐”界面。独立人工候选选择保留；多个合法裁量不能由旧展示布尔值、首个候选或缺失的模型建议决定。Fortune Teller、红鲱鱼与注册/夜间信息入口向**唯一合法结果**或显式人工选择收敛；非唯一 Spy/Recluse 登记见证仍不是事实。
 - 本次只退役旧模式和错误自动控制链，**并未完成** PROD-GLOBAL-3 的统一初始 Drunk/首夜联合规划、条件合法域、持续战略记忆或完整自动说书人。当前 Draft Android 的旧 Drunk 请求时序/展示故障仍按 PROD-GLOBAL-3A–3F 处理；不得标为已发布能力。
-- 本分支代码仍需独立 GitHub Android CI / R2、差异审计及真机相关签收；本节不是验收完成公告。
+- 旧版 #295 HEAD `2d1954f` 已获 CI #4090 / R2 #3717 GREEN；但额外语义审查发现 `allowRuleDeterminedAutoUi` 仍间接控制展示格式、Host 私有资料和手动候选入口，因此已继续解除这些布局/候选域耦合，**新 HEAD 必须重跑 CI/R2**。不得用旧 GREEN 代替新提交验收。
+- 合并阻塞：最新 `main` `8ac78163` 已合入 TB 模板简化 PR #294，但上游 Draft #292 仍基于 `3e1cc407`，导致 #292 `mergeable=false/dirty`。其冲突涉及 Drunk setup/测试及文档；不能直接强行合并或覆盖新模板。按 #292→#293→#295 顺序整合并独立重新验收。原临时仅验收 PR #296 已关闭、未合并。
 
 ## 1. 当前唯一执行顺序 — PROD-GLOBAL-3
 
