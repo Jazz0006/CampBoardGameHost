@@ -5,7 +5,7 @@
   "script_zh": "暗流涌动",
   "generated_date": "2026-08-28",
   "status": "final_ready_for_program_integration",
-  "important_note": "Curated Trouble Brewing presets store the complete visible roster. Drunk is a boolean; when true, one original absent Townsfolk is added to townsfolk and drunk remains in outsiders as the actual role.",
+  "important_note": "Curated Trouble Brewing presets store the complete shown roster. drunk is a boolean; outsiders never contains drunk. When drunk is true, one displayed Townsfolk is committed as the actual Drunk after the visible roster is fixed.",
   "role_catalog": {
     "washerwoman": {
       "name": "Washerwoman",
@@ -220,7 +220,7 @@
       "15": 0.86
     },
     "history_weights": [
-      1.0,
+      1,
       0.65,
       0.4,
       0.2,
@@ -249,8 +249,8 @@
       "butler": 0.21
     },
     "baron_target_inclusion": {
-      "5": 0.0,
-      "6": 0.0,
+      "5": 0,
+      "6": 0,
       "7": 0.3,
       "8": 0.24,
       "9": 0.24,
@@ -276,7 +276,6 @@
     },
     "townsfolk_frequency_policy": "per player count: blend 50% prior curated marginal distribution with 50% neutral/equal marginal distribution, then optimize local gameplay quality"
   },
-  "drunk_shown_role_status": "finalized_three_options_per_drunk_preset",
   "pools": {
     "5": [
       {
@@ -1035,9 +1034,7 @@
           "virgin",
           "fortuneteller"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "spy"
         ],
@@ -1116,9 +1113,7 @@
           "ravenkeeper",
           "chef"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -1377,9 +1372,7 @@
           "ravenkeeper",
           "empath"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -1430,9 +1423,7 @@
           "soldier",
           "undertaker"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -1482,9 +1473,7 @@
           "soldier",
           "mayor"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "scarletwoman"
         ],
@@ -1510,9 +1499,7 @@
           "mayor",
           "washerwoman"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -1537,9 +1524,7 @@
           "mayor",
           "investigator"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -1564,9 +1549,7 @@
           "slayer",
           "soldier"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "scarletwoman"
         ],
@@ -1592,9 +1575,7 @@
           "virgin",
           "empath"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "spy"
         ],
@@ -2020,8 +2001,7 @@
           "monk"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "baron"
@@ -2049,7 +2029,6 @@
           "chef"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -2242,7 +2221,6 @@
           "undertaker"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -2325,7 +2303,6 @@
           "monk"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -2623,7 +2600,6 @@
           "soldier"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -2812,7 +2788,6 @@
           "fortuneteller"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -2842,8 +2817,7 @@
           "mayor"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "baron"
@@ -2897,8 +2871,7 @@
           "slayer"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "baron"
@@ -2953,7 +2926,6 @@
           "librarian"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -3231,9 +3203,7 @@
           "virgin",
           "mayor"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "scarletwoman"
         ],
@@ -3261,7 +3231,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -3321,9 +3290,7 @@
           "mayor",
           "librarian"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -3381,7 +3348,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -3468,7 +3434,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -3556,7 +3521,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -3586,9 +3550,7 @@
           "virgin",
           "empath"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -3646,7 +3608,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -3676,7 +3637,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -3790,9 +3750,7 @@
           "soldier",
           "mayor"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "spy"
         ],
@@ -3909,7 +3867,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -3967,7 +3924,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -4114,9 +4070,7 @@
           "mayor",
           "investigator"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -4174,7 +4128,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -4204,9 +4157,7 @@
           "soldier",
           "chef"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -4290,7 +4241,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -4320,9 +4270,7 @@
           "soldier",
           "fortuneteller"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -4349,9 +4297,7 @@
           "mayor",
           "empath"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "spy"
         ],
@@ -4469,7 +4415,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -4499,9 +4444,7 @@
           "soldier",
           "investigator"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner"
         ],
@@ -4528,7 +4471,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -4677,7 +4619,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -4709,7 +4650,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -4742,7 +4682,6 @@
           "undertaker"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -4771,7 +4710,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -4804,7 +4742,6 @@
           "washerwoman"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -4835,7 +4772,6 @@
           "virgin"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -4896,7 +4832,6 @@
           "empath"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -4928,7 +4863,6 @@
           "investigator"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -4960,7 +4894,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -4993,7 +4926,6 @@
           "librarian"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -5023,7 +4955,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -5056,8 +4987,7 @@
           "mayor"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "scarletwoman"
@@ -5118,8 +5048,7 @@
           "undertaker"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner"
@@ -5149,8 +5078,7 @@
           "washerwoman"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner"
@@ -5241,7 +5169,6 @@
           "chef"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -5272,7 +5199,6 @@
           "chef"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -5304,7 +5230,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -5336,7 +5261,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -5369,8 +5293,7 @@
           "librarian"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner"
@@ -5399,8 +5322,7 @@
           "slayer"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "spy"
@@ -5430,7 +5352,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -5462,7 +5383,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -5525,7 +5445,6 @@
           "fortuneteller"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -5558,7 +5477,6 @@
           "slayer"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -5620,7 +5538,6 @@
           "chef"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -5710,7 +5627,6 @@
           "chef"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -5741,7 +5657,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -5804,7 +5719,6 @@
           "empath"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -5835,8 +5749,7 @@
           "investigator"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner"
@@ -5866,7 +5779,6 @@
           "washerwoman"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -5896,7 +5808,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -5957,7 +5868,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -5990,7 +5900,6 @@
           "mayor"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -6021,7 +5930,6 @@
           "washerwoman"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -6051,7 +5959,6 @@
           "investigator"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -6112,7 +6019,6 @@
           "washerwoman"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -6426,7 +6332,6 @@
           "undertaker"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -6461,7 +6366,6 @@
           "washerwoman"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -6495,7 +6399,6 @@
           "librarian"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -6560,8 +6463,7 @@
           "washerwoman"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "baron",
@@ -6686,8 +6588,7 @@
           "ravenkeeper"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "baron",
@@ -6718,7 +6619,6 @@
           "undertaker"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -6909,7 +6809,6 @@
           "empath"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -6973,7 +6872,6 @@
           "undertaker"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -7287,8 +7185,7 @@
           "fortuneteller"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "baron",
@@ -7350,7 +7247,6 @@
           "mayor"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -7573,7 +7469,6 @@
           "fortuneteller"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -7640,7 +7535,6 @@
           "washerwoman"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -7869,9 +7763,7 @@
           "soldier",
           "investigator"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy"
@@ -7903,9 +7795,7 @@
           "virgin",
           "fortuneteller"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy"
@@ -7937,7 +7827,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -7971,7 +7860,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -8037,7 +7925,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -8071,7 +7958,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -8104,9 +7990,7 @@
           "mayor",
           "empath"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy"
@@ -8238,7 +8122,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -8401,7 +8284,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -8435,9 +8317,7 @@
           "virgin",
           "empath"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy"
@@ -8469,7 +8349,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -8503,7 +8382,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -8703,9 +8581,7 @@
           "virgin",
           "empath"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy"
@@ -8769,7 +8645,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -8803,9 +8678,7 @@
           "virgin",
           "undertaker"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy"
@@ -8837,7 +8710,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -8936,9 +8808,7 @@
           "mayor",
           "librarian"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "scarletwoman"
@@ -8971,7 +8841,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -9038,9 +8907,7 @@
           "soldier",
           "undertaker"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy"
@@ -9171,7 +9038,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -9205,7 +9071,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -9304,7 +9169,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -9372,7 +9236,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -9474,7 +9337,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -9546,8 +9408,7 @@
           "chef"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner",
@@ -9581,7 +9442,6 @@
           "chef"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -9615,7 +9475,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -9652,7 +9511,6 @@
           "fortuneteller"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -9685,7 +9543,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -9757,7 +9614,6 @@
           "mayor"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -9792,7 +9648,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -9829,7 +9684,6 @@
           "mayor"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -9967,8 +9821,7 @@
           "undertaker"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner",
@@ -10002,7 +9855,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -10039,7 +9891,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -10112,7 +9963,6 @@
           "chef"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -10147,7 +9997,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -10185,7 +10034,6 @@
           "undertaker"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -10221,7 +10069,6 @@
           "librarian"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -10256,7 +10103,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -10292,7 +10138,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -10330,7 +10175,6 @@
           "fortuneteller"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -10400,8 +10244,7 @@
           "empath"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner",
@@ -10435,7 +10278,6 @@
           "librarian"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -10472,7 +10314,6 @@
           "investigator"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -10507,7 +10348,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -10579,8 +10419,7 @@
           "chef"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner",
@@ -10614,8 +10453,7 @@
           "undertaker"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner",
@@ -10685,8 +10523,7 @@
           "undertaker"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner",
@@ -10721,7 +10558,6 @@
           "investigator"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -10756,7 +10592,6 @@
           "undertaker"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -10827,7 +10662,6 @@
           "fortuneteller"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -10861,7 +10695,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -10965,7 +10798,6 @@
           "fortuneteller"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -11001,8 +10833,7 @@
           "undertaker"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner",
@@ -11035,7 +10866,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -11072,7 +10902,6 @@
           "washerwoman"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -11107,7 +10936,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -11177,7 +11005,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -11215,7 +11042,6 @@
           "undertaker"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -11359,7 +11185,6 @@
           "washerwoman"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -11466,7 +11291,6 @@
           "washerwoman"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -11540,7 +11364,6 @@
           "investigator"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -11828,7 +11651,6 @@
           "undertaker"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -11866,8 +11688,7 @@
           "investigator"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "baron",
@@ -11940,7 +11761,6 @@
           "librarian"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -12156,7 +11976,6 @@
           "mayor"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -12194,8 +12013,7 @@
           "chef"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "baron",
@@ -12517,7 +12335,6 @@
           "investigator"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -12661,8 +12478,7 @@
           "undertaker"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "baron",
@@ -12701,9 +12517,7 @@
           "soldier",
           "washerwoman"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy",
@@ -12925,7 +12739,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13002,7 +12815,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13041,9 +12853,7 @@
           "mayor",
           "fortuneteller"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy",
@@ -13079,7 +12889,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13119,7 +12928,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13308,7 +13116,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13423,9 +13230,7 @@
           "mayor",
           "investigator"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy",
@@ -13461,7 +13266,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13499,7 +13303,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13537,7 +13340,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13575,7 +13377,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13652,7 +13453,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13727,7 +13527,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13767,7 +13566,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -13954,9 +13752,7 @@
           "mayor",
           "empath"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy",
@@ -14030,9 +13826,7 @@
           "mayor",
           "chef"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy",
@@ -14107,7 +13901,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -14145,9 +13938,7 @@
           "soldier",
           "empath"
         ],
-        "outsiders": [
-          "drunk"
-        ],
+        "outsiders": [],
         "minions": [
           "poisoner",
           "spy",
@@ -14183,7 +13974,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -14224,7 +14014,6 @@
           "fortuneteller"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -14300,7 +14089,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -14341,7 +14129,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -14381,8 +14168,7 @@
           "empath"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner",
@@ -14457,7 +14243,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -14537,7 +14322,6 @@
           "investigator"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -14577,8 +14361,7 @@
           "investigator"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner",
@@ -14654,7 +14437,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -14695,7 +14477,6 @@
           "librarian"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -14734,7 +14515,6 @@
           "investigator"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -14772,7 +14552,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -14813,7 +14592,6 @@
           "chef"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -14852,7 +14630,6 @@
           "undertaker"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -14931,7 +14708,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -14972,7 +14748,6 @@
           "chef"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -15011,7 +14786,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -15051,7 +14825,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -15090,7 +14863,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -15129,7 +14901,6 @@
           "empath"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -15168,7 +14939,6 @@
           "librarian"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -15207,7 +14977,6 @@
           "empath"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -15284,7 +15053,6 @@
           "chef"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -15322,7 +15090,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -15403,7 +15170,6 @@
           "empath"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -15480,7 +15246,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -15560,7 +15325,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -15599,7 +15363,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -15640,7 +15403,6 @@
           "empath"
         ],
         "outsiders": [
-          "drunk",
           "saint"
         ],
         "minions": [
@@ -15680,8 +15442,7 @@
           "investigator"
         ],
         "outsiders": [
-          "butler",
-          "drunk"
+          "butler"
         ],
         "minions": [
           "poisoner",
@@ -15719,7 +15480,6 @@
           "librarian"
         ],
         "outsiders": [
-          "drunk",
           "recluse"
         ],
         "minions": [
@@ -15758,7 +15518,6 @@
         ],
         "outsiders": [
           "butler",
-          "drunk",
           "recluse",
           "saint"
         ],
@@ -15784,30 +15543,5 @@
         "drunk": true
       }
     ]
-  },
-  "drunk_shown_role_policy": {
-    "options_per_drunk_preset": 3,
-    "candidate_rules": [
-      "Townsfolk only",
-      "must be absent from the actual in-play Townsfolk",
-      "three unique roles per preset"
-    ],
-    "distribution_policy": "follow the natural legal-opportunity distribution across the finalized global setup pool, with per-player-count coverage and local experience diversity used to choose among legal alternatives",
-    "global_target_counts": {
-      "washerwoman": 47,
-      "librarian": 46,
-      "investigator": 56,
-      "chef": 46,
-      "empath": 49,
-      "fortuneteller": 40,
-      "undertaker": 50,
-      "monk": 42,
-      "ravenkeeper": 42,
-      "virgin": 51,
-      "slayer": 61,
-      "soldier": 47,
-      "mayor": 47
-    },
-    "triple_repetition_policy": "all 208 Drunk presets use unique option triples"
   }
 }
