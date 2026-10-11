@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
+import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCatalogTeam
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
@@ -90,7 +91,7 @@ internal class InitialGlobalOpeningScopeV1 private constructor(
         (seat.shownRoleId as SnapshotField.Known<String>).value
     }
     val scopeFingerprint: String by lazy {
-        sha256(legalScopeJson().toString())
+        sha256(legalScopeJson().toString() + "|" + playerExperience.entries.sortedBy { it.key }.joinToString("|") { "${it.key}:${it.value.name}" })
     }
 
     fun hypothesis(drunkSeat: Int?): InitialOpeningHypothesisV1 =
@@ -136,6 +137,13 @@ internal class InitialGlobalOpeningScopeV1 private constructor(
                 out.put(JSONObject()
                     .put("drunkSeat", branch.drunkSeat ?: JSONObject.NULL)
                     .put("conditionalNotCommitted", true)
+                    .put("conditionalActualRoles", JSONArray().also { roles ->
+                        snapshot.grimoireSeats.forEach { seat ->
+                            val shown = (seat.shownRoleId as SnapshotField.Known<String>).value
+                            roles.put(JSONObject().put("seat", seat.seat)
+                                .put("roleId", if (seat.seat == branch.drunkSeat) "drunk" else shown))
+                        }
+                    })
                     .put("discretionary", JSONArray().also { choices ->
                         branch.discretionary.forEach { decision ->
                             choices.put(JSONObject()
@@ -188,7 +196,10 @@ internal class InitialGlobalOpeningScopeV1 private constructor(
                 hypotheses.map { it.drunkSeat }.toSet() == expectedBranches) {
                 "Exactly one Host-generated legal scope is required per Drunk hypothesis."
             }
-            if (!hasDrunk) require(snapshot.setupState.drunkAssignmentSeat === SnapshotField.NotApplicable)
+            if (!hasDrunk) {
+                require(snapshot.setupState.drunkAssignmentSeat === SnapshotField.NotApplicable)
+                require(seats.all { it.actualRoleId is SnapshotField.Known<*> })
+            }
             if (hasDrunk) require(snapshot.setupState.drunkAssignmentSeat === SnapshotField.Uncommitted)
             require(playerExperience.keys.all { it in 1..seats.size })
             val shown = seats.map { (it.shownRoleId as SnapshotField.Known<String>).value }
@@ -196,8 +207,14 @@ internal class InitialGlobalOpeningScopeV1 private constructor(
             legalDemonBluffs?.let { bluffs ->
                 require(bluffs.size >= 3 && bluffs.distinct().size == bluffs.size)
                 require(bluffs.all { it.isNotBlank() && it !in shown &&
-                    characterRegistry.findByExternalId(it) != null })
+                    characterRegistry.findByExternalId(it)?.team in
+                        setOf(ClocktowerCatalogTeam.TOWNSFOLK, ClocktowerCatalogTeam.OUTSIDER) })
             }
+            val demonPresent = seats.any { seat ->
+                val roleId = (seat.shownRoleId as SnapshotField.Known<String>).value
+                characterRegistry.findByExternalId(roleId)?.team == ClocktowerCatalogTeam.DEMON
+            }
+            if (seats.size >= 7 && demonPresent) require(legalDemonBluffs != null)
             hypotheses.forEach { branch ->
                 branch.discretionary.forEach {
                     require(it.sourceSeat == null || it.sourceSeat in 1..seats.size)
@@ -219,7 +236,7 @@ internal class InitialGlobalOpeningScopeV1 private constructor(
                 }
             }
             return InitialGlobalOpeningScopeV1(
-                snapshot, hasDrunk, hypotheses.sortedWith(compareBy(nullsFirst()) { it.drunkSeat }),
+                snapshot, hasDrunk, hypotheses.sortedBy { it.drunkSeat ?: 0 },
                 legalDemonBluffs?.sorted(), (1..seats.size).associateWith { seat ->
                     playerExperience[seat] ?: OpeningPlayerExperienceV1.UNKNOWN
                 }, gameStateRevision, playerInputRevision, sha256(rosterKey),
@@ -274,6 +291,7 @@ internal data class InitialGlobalOpeningSelectionV1(
 
     companion object {
         fun decode(raw: JSONObject, scope: InitialGlobalOpeningScopeV1): InitialGlobalOpeningSelectionV1 {
+            require(raw.has("drunkSeat"))
             val array = raw.getJSONArray("choices")
             require(array.length() <= 64)
             val choices = linkedMapOf<String, String>()
