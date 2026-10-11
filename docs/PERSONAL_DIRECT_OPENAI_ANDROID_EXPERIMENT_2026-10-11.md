@@ -1,6 +1,6 @@
 # PERSONAL-DIRECT-1 — Android owner-only OpenAI Responses experiment
 
-Status: **isolated experimental branch** based on PROD-GLOBAL-1 PR #292.
+Status: **isolated experimental branch** based on PROD-GLOBAL-1 PR #292. **2026-10-11 handoff correction:** this file describes the evolving prototype; its separate Drunk and postcommit AI workflow was confirmed not to satisfy the product's single initial joint planning objective. The binding implementation route is [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md). Current model fixed to Luna for prompt/input optimization; no cross-model testing this stage. The recommended-information reveal crash remains unlocated pending AndroidRuntime FATAL EXCEPTION.
 This is not a public mobile release, a verified device-to-OpenAI smoke test or a substitute for the private gateway.
 
 ## User-facing workflow
@@ -8,8 +8,8 @@ This is not a public mobile release, a verified device-to-OpenAI smoke test or a
 1. Install a build of this experimental branch on **your own trusted Android device**.
 2. Configure a new TB game, select **AI assisted** (or bounded AI automatic), and set **OpenAI direct** under AI connection.
 3. Paste your **own newly generated, scoped OpenAI project API Key** into the masked field. It is encrypted with a distinct Android Keystore AES-GCM key and held in `noBackupFilesDir`, not compiled into the APK or Git.
-4. Leave model ID at `gpt-5.6-luna` or explicitly enter another available Responses API model ID such as `gpt-5.6-sol`. This is an API model ID, not a ChatGPT UI setting.
-5. Begin TB; the existing precommit whole-board Drunk assessment, post-deal strategy and compact live recommendation paths use the exact same Host serializer/validator/Host commit control as the existing gateway transport.
+4. For the current PROD-GLOBAL-3 quality work, leave the model ID at `gpt-5.6-luna`. Do **not** schedule Sol/other-model comparisons in this phase. This is an API model ID, not a ChatGPT UI setting.
+5. **Legacy experimental flow (to be retired):** TB currently invokes precommit Drunk advice, then post-Drunk first-night preflight. These paths are separate and should **not** be construed as a single opening plan. PROD-GLOBAL-3 will replace the split with one precommit Host-legal conditional scope, single joint Luna request, and shared Host validation/commit control.
 6. To stop using the personal credential, tap **Erase local API Key**. To resume the old server design, switch back to **Gateway**; the two credentials are stored under different Keystore aliases, AAD, and no-backup ciphertext files. Disabling direct mode does not silently send the personal Key to the gateway.
 
 ## Security boundaries

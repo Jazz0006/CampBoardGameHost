@@ -1,6 +1,8 @@
 # PROD-GLOBAL-1 — Whole-game AI Storyteller strategy and table UX re-entry (2026-10-09)
 
-> **ACTIVE DESIGN CORRECTION / PROD-1 MERGE BLOCKER.** Product-owner feedback replaces the decision-by-decision entry assumptions in GSP-PROD-AUTO. Do not treat PR #292's green tests as product acceptance. No MEM0 retest, Recovery expansion, retired heuristic, or extra standalone Drunk policy is needed. One strong LLM should reason about the **whole game first**, and every downstream recommendation is a constrained step within that continually revised plan.
+> **HISTORICAL DESIGN / SUPERSEDED NEXT (2026-10-11):** This document records PROD-GLOBAL-1/1D/2B evolution, useful code gaps and Host rules. Its earlier separate Drunk request, postcommit analysis/one-shot call, visible issues/alternatives and cross-model testing commands are **not active implementation instructions**. The owner approved [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md): **one initial precommit coordinated opening plan including Drunk, concurrent with identity reveal**, compact private strategyMemory, same Luna, and globally revised remaining decisions. Refer to [current roadmap](CURRENT_DEVELOPMENT_ROADMAP.md)/[handoff](NEXT_DEVELOPMENT_HANDOFF.md) for NEXT. No historical implementation checkpoint here is proof of phone product acceptance.
+
+> **HISTORICAL 2026-10-09 DESIGN CORRECTION (still a PROD-1 merge caution, not active NEXT).** Product-owner feedback replaced decision-by-decision entry assumptions in GSP-PROD-AUTO. Do not treat PR #292's green tests as product acceptance. No MEM0 retest, Recovery expansion, retired heuristic, or extra standalone Drunk policy is needed. One strong LLM should reason about the **whole game first**, and every downstream recommendation is a constrained step within that continually revised plan.
 
 ## Product and user experience — independent of experience level
 
