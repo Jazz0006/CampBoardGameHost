@@ -6,6 +6,8 @@
 
 > **2026-10-10 PROD-GLOBAL-1D-3（Luna compact-on-live，开发分支待 Android 验收）：** 延迟实验在同一个真实合法 8 人 TB 调查员候选决策中取得完整 A 22.858s/2193 output tokens、简洁 B 7.516s/646 tokens、仅 ID C 8.957s/782 tokens。第 4 个请求 HTTP 503，后两个场景没有模型验证，故 **B 是单场景初步指标而非整局证明**。用户明确优先 Luna/成本与实战质量。当前 PR #292 分支实现针对 **AI_ASSISTED 的实时合法决策** opt-in `COMPACT_MEMO_V1`，返回唯一候选 + 一句可延续的暂定战略摘要；开局分析和酒鬼决策仍原完整协议。旧 Gateway 完整响应兼容；Host 校验事件游标、决策 ID、revision 和合法候选，助手不自动确认。此变更尚未经过整局 Android→Gateway→LLM E2E 验收，不能视为产品通过，也不能把 AI_AUTOMATIC 说成全自动完整 TB。**NEXT：实际 8 人 TB 一局贯穿首夜与白天/次夜并记录每次 Host 事实、玩家已见信息、模型候选、接受/人工覆盖、合法性与耗时；错误/503 人工接管；分析连贯性后决定扩大自动覆盖。**
 
+> **2026-10-11 真机新阻塞 — 完整首夜方案不是可选附加：** 用户已通过 Android Studio 直连获得调查员 AI 建议，但未同时获得恶魔三个掩饰身份。经代码核查，当前 committed analysis 只包含 issue/relations/intentions，首夜仍按单个 pending role 请求建议，恶魔掩饰身份在独立手动确认路径。这**尚未实现用户要求的「首夜全局信息/恶魔伪装联合规划」**，不得将「调查员信息 AI 可用」视为完整首夜验收。**立即将全首夜 bundle typed Host legal domains + LLM 一次联合计划 + 事件前缀驱动的剩余计划重算置于生产最高优先级**，详细边界见 PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md 的 PROD-GLOBAL-2 节。2026-10-11 的独立 UI 缺陷是调查员阶段仍有低对比度字色；PR #293 的共享主题、全屏方桌 foreground contract 和 WCAG AA 4.5:1 自动测试为第一步，需真实手机截图复核。不使用单角色推荐器或角色特例补洞。
+
 ## 1. 当前唯一执行顺序 — **PRODUCTION FIRST / AUTONOMOUS GOAL**
 
 > **2026-10-10 当前状态：PROD-GLOBAL-1C 代码就绪；PROD-GLOBAL-1D 正式接棒。** Draft [PR #292](https://github.com/Jazz0006/CampBoardGameHost/pull/292) 已在真实 Host 信息决策接入统一全局推荐：首夜 Washerwoman/Librarian/Investigator pair，Chef/Empath number，Fortune Teller 选定对象后 Boolean，以及跨白天/次夜的通用因果续航；Gateway 服务端认证/限额与 Android HTTPS 客户端已接通代码边界。Android HTTPS 地址现在会持久保存，Bearer 令牌经 Android Keystore AES-GCM 加密保存，`13b31d0` 的 Android CI #4049、R2 #3677、Gateway #59 GREEN。**尚无真实 Android 整局 E2E 产品验收，不合并 Draft。**

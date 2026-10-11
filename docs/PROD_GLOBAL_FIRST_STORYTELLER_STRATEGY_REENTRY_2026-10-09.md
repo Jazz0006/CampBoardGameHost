@@ -205,3 +205,74 @@ Facts verified against current production source:
 ### Gateway settings persistence (same checkpoint)
 
 For the Android debug prototype only, `StorytellerGatewayConnectionStore` persists the HTTPS endpoint as app-owned preferences and keeps the Gateway bearer token encrypted with an AndroidKeyStore AES/GCM key in `noBackupFilesDir`, rather than baking OpenAI Key or bearer token into the APK. The save is debounced off the UI thread and failed secure persistence is visible on the setup screen; ordinary in-place APK updates preserve settings, while uninstall/clear-data or restored backups may need re-entry. This concerns **connection configuration**, not game Recovery or LLM narrative memory.
+
+
+### PROD-GLOBAL-2 acceptance correction — whole first-night package and palette contract (2026-10-11)
+
+**Real Android product defect:** A test game reached Investigator information, but the
+first-night "global" output had not provided the Demon bluff trio at all. This is
+not missing text in one role: `StorytellerCommittedAnalysisV1`'s
+`ANALYSIS_ONLY` output contains situation summary/issues/relations/conditional
+intentions, not a playable first-night joint decision package.
+`ClocktowerJudgeScreen` generates fresh AI requests only for the *current*
+Host-legal pair/scalar/target point; its Demon bluff path is an independent
+Host-owned manual triple confirmation with no global AI candidate today.
+**The code is not yet an implementation of the owner's agreed joint-first-night
+planning requirement. Do not claim otherwise or merge the draft on that basis.**
+
+Reentry priority: before further quality comparisons, implement a **single,
+script-driven, whole-first-night plan** with coordinated decisions. The shared
+plan must cover applicable Demon bluffs (three legal off-board role identities,
+7+ player TB where the Demon receives bluffs), each relevant first-night
+information disclosure, and red-herring/registration-dependent information
+where applicable. It must record **not-applicable vs blocked-on-unknown-player
+action vs proposed-and-legally-validated** for each family, so a missing Demon
+bluff cannot be silently presented as "complete". Build the typed
+`FirstNightJointPlanV1` and Host-supplied legal scope rather than teaching
+the LLM to fabricate possibilities.
+
+- Host remains the only legal-candidate generator. It supplies canonical
+  identity, roles, each legal candidate domain (including Demon bluff triples,
+  no in-play roles/duplication), latest causal history and input revisions.
+  Partially unknown dependencies such as Poisoner target and Fortune Teller
+  chosen pair are explicitly deferred as *conditional* alternatives; no
+  invented player actions or confirmed Spy/Recluse registration witnesses.
+- Request one globally coupled set of alternatives/intentions across all open
+  decision families. The model must consider information interaction and
+  Demon bluff opportunity cost together; never add a separate Demon-bluff
+  heuristic/selector or quietly resurrect retired special policies.
+- Validate all generated candidate IDs against their corresponding Host domain
+  and revision. Store the bundle in memory as advisory (not Recovery truth).
+  Apply no Host fact, Demon bluff reveal or player observation until the
+  storyteller explicitly confirms the correct pending Host decision.
+- As confirmations, poison, manual overrides or other actions occur, commit
+  their typed action/observation first. Mark unchanged, still-legal bundle
+  proposals reusable; invalidate/replan **all affected remaining** portions
+  against the new complete causal prefix. Never retroactively rewrite player
+  information. Support a fast compact residual-plan request but measure real
+  latency instead of assuming under 5s.
+- UI preflight must display coverage and key joint interactions, including
+  Demon bluffs, before claiming the full first-night package is ready. No
+  misleading "globally planned" state when only Investigator is available.
+  Manual hosting remains uninterrupted with clear pending states.
+- Tests: 7/8-player Investigator-with-Demon-bluffs setup; no-Drunk setup;
+  no applicable Demon-bluff rule; duplicate/on-board bluff rejection;
+  Poisoner target causing legal candidate/quality revision; manual override of
+  first accepted clue before the next; changed pending choice vs unchanged
+  planned choice; recorded historical observations never overwritten.
+
+**Visual accessibility cross-screen policy:** Another real test found nearly
+unreadable upper Investigator-stage text after the initial theme workaround.
+The fix cannot be a per-role local color patch. Shared `ClocktowerDarkTheme`
+must define semantic text/background colors; full-screen night and square-table
+role surfaces explicitly own the dark canvas/foreground even in the
+`contentOwnsFullScreen` branch. Introduce a WCAG AA contrast guard
+(**>=4.5:1 for ordinary text**) for standard, muted, headings, primary/secondary
+button surfaces and role center content. Run it in Android CI, not just manual
+review. Check both Investigator (pair information) and the full-board strategy
+page on a real narrow phone; contrast math does not replace image acceptance.
+Do not regress Host readability to create a new layout.
+
+**Status:** contrast policy and shared component fixes are being implemented
+in PR #293; the true whole-first-night joint planning implementation remains
+an explicit **open production blocker**, not a completed milestone.
