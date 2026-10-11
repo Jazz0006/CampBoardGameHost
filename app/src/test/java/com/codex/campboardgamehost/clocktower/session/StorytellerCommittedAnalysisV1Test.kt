@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
@@ -55,6 +56,30 @@ class StorytellerCommittedAnalysisV1Test {
     )
 
     @Test
+    fun `setup response reads canonical Host session ID rather than stale Compose capture`() {
+        val actualGame = TroubleBrewingFixtures.eightPlayerExample()
+        val expected = snapshot(null)
+        // At setup click time Compose may still have no rendered game session.
+        val stalePresentationId = ""
+        assertTrue(stalePresentationId != expected.gameId)
+
+        val current = ClocktowerGameSession.createProduction(
+            gameId = expected.gameId,
+            gameSeed = actualGame.seed,
+            initialState = actualGame,
+        )
+        assertTrue(StorytellerCommittedAnalysisV1.isCurrentGame(expected, current))
+
+        val otherGame = ClocktowerGameSession.createProduction(
+            gameId = "new-game",
+            gameSeed = actualGame.seed,
+            initialState = actualGame,
+        )
+        assertTrue(!StorytellerCommittedAnalysisV1.isCurrentGame(expected, otherGame))
+        assertTrue(!StorytellerCommittedAnalysisV1.isCurrentGame(expected, null))
+    }
+
+    @Test
     fun `committed analysis includes real Drunk and full roster or no Drunk`() {
         for (seat in listOf<Int?>(1, null)) {
             val current = snapshot(seat)
@@ -84,6 +109,32 @@ class StorytellerCommittedAnalysisV1Test {
                 state.getJSONArray("seats").getJSONObject(0).getString("actualRoleId"),
             )
         }
+    }
+
+    @Test
+    fun `confirmed analysis preserves nonzero Host source revisions and rejects stale models`() {
+        val current = snapshot(1)
+        val sent = JSONObject(StorytellerCommittedAnalysisV1.encode(
+            current, strategy(), gameStateRevision = 4, playerInputRevision = 2,
+        ))
+        val revisions = sent.getJSONObject("sourceRevision")
+        assertEquals(4L, revisions.getLong("gameStateRevision"))
+        assertEquals(2L, revisions.getLong("playerInputRevision"))
+        val response = JSONObject()
+            .put("schemaId", "botc.storyteller-global-analysis-response")
+            .put("schemaVersion", 1)
+            .put("analysisId", "committed-setup:committed-game")
+            .put("sourceRevision", revisions)
+            .put("strategy", strategy().toJson())
+            .toString()
+        assertEquals(1, StorytellerCommittedAnalysisV1.decode(
+            response, current, expectedGameStateRevision = 4, expectedPlayerInputRevision = 2,
+        ).issues.size)
+        assertTrue(runCatching {
+            StorytellerCommittedAnalysisV1.decode(
+                response, current, expectedGameStateRevision = 0, expectedPlayerInputRevision = 0,
+            )
+        }.isFailure)
     }
 
     @Test

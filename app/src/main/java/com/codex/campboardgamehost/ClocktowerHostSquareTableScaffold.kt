@@ -1,7 +1,10 @@
 package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 
 /** Shared full-screen navigation and stable-seat routing for Clocktower square-table surfaces. */
@@ -54,7 +57,14 @@ internal fun ClocktowerHostSquareTableScaffold(
                 }
             },
         ) {
-            centerContent()
+            // Pair-information, Investigator and all future full-screen role
+            // surfaces share the same legible semantic foreground by contract.
+            // Do not let Text() inherit the outer app's light-theme dark ink.
+            CompositionLocalProvider(
+                LocalContentColor provides MaterialTheme.colorScheme.onBackground,
+            ) {
+                centerContent()
+            }
         }
     }
 }

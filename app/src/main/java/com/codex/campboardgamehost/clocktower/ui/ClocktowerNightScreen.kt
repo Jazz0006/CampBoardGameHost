@@ -299,7 +299,14 @@ internal fun ClocktowerNightActiveScreen(
     ClocktowerDarkTheme {
         CompositionLocalProvider(LocalClocktowerNightProgress provides progress) {
             if (contentOwnsFullScreen) {
-                Box(modifier = Modifier.fillMaxSize()) {
+                // A full-screen role surface bypasses the ordinary scaffold.
+                // Own its opaque canvas and foreground explicitly so text never
+                // inherits an unrelated screen's light-theme content color.
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.onBackground,
+                ) {
                     content()
                 }
             } else {

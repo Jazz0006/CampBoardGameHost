@@ -14,6 +14,14 @@ internal object StorytellerCommittedAnalysisV1 {
     private const val REQUEST_SCHEMA = "botc.storyteller-global-analysis-request"
     private const val RESPONSE_SCHEMA = "botc.storyteller-global-analysis-response"
 
+    /**
+     * Read current Host authority at response time. A plain Compose-derived
+     * gameId captured by a setup click handler can predate the immediately
+     * created session until the next composition pass.
+     */
+    fun isCurrentGame(snapshot: TroubleBrewingGameSnapshotV1, session: ClocktowerGameSession?): Boolean =
+        session?.state?.gameId == snapshot.gameId
+
     private fun <T> field(value: SnapshotField<T>): Any = when (value) {
         is SnapshotField.Known -> value.value as Any
         SnapshotField.Uncommitted -> "UNCOMMITTED"
@@ -92,9 +100,17 @@ internal object StorytellerCommittedAnalysisV1 {
         accessToken: String,
         snapshot: TroubleBrewingGameSnapshotV1,
         prior: StorytellerGlobalStrategyV1?,
+        directModel: String? = null,
+        gameStateRevision: Long = 0,
+        playerInputRevision: Long = 0,
+        onStage: (String) -> Unit = {},
     ): StorytellerGlobalStrategyV1 {
-        val request = encode(snapshot, prior)
-        val response = ProductionDrunkAiGatewayV1.post(endpoint, accessToken, request)
-        return decode(response, snapshot)
+        onStage("BUILDING_HOST_CONTEXT")
+        val request = encode(snapshot, prior, gameStateRevision, playerInputRevision)
+        val response = ProductionDrunkAiGatewayV1.post(
+            endpoint, accessToken, request, directModel, onStage,
+        )
+        onStage("VALIDATING_HOST_RESPONSE")
+        return decode(response, snapshot, gameStateRevision, playerInputRevision)
     }
 }

@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost
 
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,10 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalStrategyV1
+import kotlinx.coroutines.delay
 
 /** Private storyteller overlay: only hypotheses; the grimoire is factual authority. */
 @Composable
@@ -145,10 +149,34 @@ internal fun StorytellerGlobalOverviewStatusScreen(
     busy: Boolean,
     error: String?,
     language: String,
+    startedAtElapsedMs: Long = 0L,
+    diagnosticStage: String = "IDLE",
     onRetry: () -> Unit,
+    onExportDebugBundle: () -> Unit = {},
     onTakeOverManually: () -> Unit,
 ) {
     fun label(zh: String, en: String) = if (language == "en") en else zh
+    var elapsedSeconds by remember(startedAtElapsedMs) { mutableStateOf(0L) }
+    LaunchedEffect(startedAtElapsedMs, busy) {
+        while (busy && startedAtElapsedMs > 0L) {
+            elapsedSeconds = ((SystemClock.elapsedRealtime() - startedAtElapsedMs) / 1000L)
+                .coerceAtLeast(0L)
+            delay(1000)
+        }
+    }
+    val stageText = when (diagnosticStage) {
+        "BUILDING_HOST_CONTEXT" -> label("构建已确认阵容上下文", "Building confirmed roster")
+        "PREPARING" -> label("准备 OpenAI 请求", "Preparing OpenAI request")
+        "CONNECTING" -> label("连接 OpenAI HTTPS 服务", "Connecting via HTTPS")
+        "AWAITING_MODEL" -> label("已发送，等待模型响应", "Sent; waiting for model")
+        "HTTP_RESPONSE" -> label("已收到 HTTP 响应", "Received HTTP response")
+        "PARSING_RESPONSE" -> label("解析结构化返回", "Parsing structured response")
+        "VALIDATING_HOST_RESPONSE" -> label("验证 Host 策略约束", "Checking Host strategy constraints")
+        "SUCCESS" -> label("已完成", "Completed")
+        "FAILED" -> label("失败", "Failed")
+        "STALE" -> label("游戏状态已发生变化", "Game state changed")
+        else -> label("等待请求", "Waiting to start")
+    }
     ClocktowerDarkTheme {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -168,7 +196,26 @@ internal fun StorytellerGlobalOverviewStatusScreen(
                     "No verified current-game strategy. Retry, or take over in Manual mode.",
                 ),
             )
+            if (busy) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            Text(
+                label("请求阶段：", "Request stage: ") + stageText +
+                    if (startedAtElapsedMs > 0L) " · ${elapsedSeconds}s" else "",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                label(
+                    "约 20–90 秒内可能完成，超过正常等待可切换全手动；重新分析会产生新的 API 调用费用。",
+                    "Analysis can take tens of seconds. Manual takeover is always available; retry makes another billable API call.",
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+            )
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            OutlinedButton(
+                onClick = onExportDebugBundle,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(label("导出调试包（发送前请检查内容）", "Export debug bundle (review before sharing)")) }
             Button(
                 onClick = onRetry,
                 enabled = !busy,

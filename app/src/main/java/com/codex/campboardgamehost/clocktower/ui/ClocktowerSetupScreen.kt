@@ -21,6 +21,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.runtime.Composable
@@ -52,6 +53,13 @@ internal fun ClocktowerSettingsScreen(
     gatewayToken: String,
     onGatewayTokenChange: (String) -> Unit,
     gatewayCredentialSaveFailed: Boolean,
+    personalDirectEnabled: Boolean,
+    onPersonalDirectEnabledChange: (Boolean) -> Unit,
+    personalDirectModel: String,
+    onPersonalDirectModelChange: (String) -> Unit,
+    personalDirectKey: String,
+    onPersonalDirectKeyChange: (String) -> Unit,
+    personalDirectSaveFailed: Boolean,
     onScriptChange: (ClocktowerScript) -> Unit,
     onBack: () -> Unit,
     onStart: () -> Unit,
@@ -72,7 +80,11 @@ internal fun ClocktowerSettingsScreen(
     val canStart = playerCount >= MIN_CLOCKTOWER_PLAYERS &&
         canStartClocktowerScript(effectiveScript) &&
         (operationMode != StorytellerOperationMode.AI_AUTOMATIC ||
-            (aiSupported && gatewayEndpoint.startsWith("https://") && gatewayToken.isNotBlank()))
+            (aiSupported && if (personalDirectEnabled) {
+                personalDirectKey.isNotBlank() && personalDirectModel.isNotBlank()
+            } else {
+                gatewayEndpoint.startsWith("https://") && gatewayToken.isNotBlank()
+            }))
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val stepTitles = listOf(
         text("确认玩家", "Confirm players"),
@@ -313,31 +325,85 @@ internal fun ClocktowerSettingsScreen(
                             }
                             if (aiSupported && operationMode != StorytellerOperationMode.MANUAL) {
                                 Text(
-                                    text = text("HTTPS Gateway 地址保存在本机，访问令牌由 Android Keystore 加密保存；APK 不含 OpenAI Key。",
-                                        "Gateway URL saved locally; token encrypted with Android Keystore. No OpenAI Key in APK."),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    text = text("AI 连接方式", "AI connection"),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
                                 )
-                                OutlinedTextField(
-                                    value = gatewayEndpoint,
-                                    onValueChange = onGatewayEndpointChange,
-                                    label = { Text(text("Gateway HTTPS 地址", "Gateway HTTPS URL")) },
-                                    singleLine = true,
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                                OutlinedTextField(
-                                    value = gatewayToken,
-                                    onValueChange = onGatewayTokenChange,
-                                    label = { Text(text("Gateway 访问令牌", "Gateway access token")) },
-                                    visualTransformation = PasswordVisualTransformation(),
-                                    singleLine = true,
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                                if (gatewayCredentialSaveFailed) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    OutlinedButton(
+                                        onClick = { onPersonalDirectEnabledChange(false) },
+                                    ) {
+                                        Text(if (personalDirectEnabled) text("网关", "Gateway")
+                                             else text("✓ 网关", "✓ Gateway"))
+                                    }
+                                    OutlinedButton(
+                                        onClick = { onPersonalDirectEnabledChange(true) },
+                                    ) {
+                                        Text(if (personalDirectEnabled) text("✓ OpenAI 直连", "✓ OpenAI direct")
+                                             else text("OpenAI 直连", "OpenAI direct"))
+                                    }
+                                }
+                                if (personalDirectEnabled) {
                                     Text(
-                                        text = text("连接配置无法安全保存，重启后可能需要重新输入。",
-                                            "Connection settings could not be stored securely and may need re-entry."),
-                                        color = MaterialTheme.colorScheme.error,
+                                        text = text(
+                                            "仅限你个人控制的测试版。API Key 由本机 Keystore 加密保存，不进入 APK 或仓库；手机被入侵仍有泄露风险。",
+                                            "Private test only. Your key is encrypted with Android Keystore, not included in the APK or repository; compromised devices can still expose it.",
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
+                                    OutlinedTextField(
+                                        value = personalDirectModel,
+                                        onValueChange = onPersonalDirectModelChange,
+                                        label = { Text(text("OpenAI API 模型 ID", "OpenAI API model ID")) },
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                    OutlinedTextField(
+                                        value = personalDirectKey,
+                                        onValueChange = onPersonalDirectKeyChange,
+                                        label = { Text(text("OpenAI API Key（仅本机）", "OpenAI API Key (device only)")) },
+                                        visualTransformation = PasswordVisualTransformation(),
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                    OutlinedButton(onClick = { onPersonalDirectKeyChange("") }) {
+                                        Text(text("删除本机 API Key", "Erase local API Key"))
+                                    }
+                                    if (personalDirectSaveFailed) {
+                                        Text(
+                                            text = text("API Key 安全保存失败，请不要依赖重启后的恢复。",
+                                                "Could not securely persist API Key."),
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
+                                } else {
+                                    Text(
+                                        text = text("HTTPS Gateway 地址保存在本机，访问令牌由 Android Keystore 加密保存。",
+                                            "Gateway URL saved locally; its access token is encrypted with Android Keystore."),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    OutlinedTextField(
+                                        value = gatewayEndpoint,
+                                        onValueChange = onGatewayEndpointChange,
+                                        label = { Text(text("Gateway HTTPS 地址", "Gateway HTTPS URL")) },
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                    OutlinedTextField(
+                                        value = gatewayToken,
+                                        onValueChange = onGatewayTokenChange,
+                                        label = { Text(text("Gateway 访问令牌", "Gateway access token")) },
+                                        visualTransformation = PasswordVisualTransformation(),
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                    if (gatewayCredentialSaveFailed) {
+                                        Text(
+                                            text = text("连接配置无法安全保存，重启后可能需要重新输入。",
+                                                "Connection settings could not be stored securely and may need re-entry."),
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
                                 }
                                 if (operationMode == StorytellerOperationMode.AI_AUTOMATIC) {
                                     Text(

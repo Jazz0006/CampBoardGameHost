@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import android.content.Context
 import android.content.res.Configuration
+import android.os.SystemClock
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -81,9 +82,13 @@ import com.codex.campboardgamehost.clocktower.session.DrunkAssignmentDecisionBou
 import com.codex.campboardgamehost.clocktower.session.PendingDrunkAssignmentDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.ProductionDrunkAiGatewayV1
+import com.codex.campboardgamehost.clocktower.session.PersonalDirectOpenAiV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalStrategyV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalDecisionRequestV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerCommittedAnalysisV1
+import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotRequestV1
+import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotScopeV1
+import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotPlanV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseV1
@@ -300,6 +305,9 @@ internal fun CampBoardGameHostApp() {
     val gatewayConnectionStore = remember(baseContext) {
         StorytellerGatewayConnectionStore(baseContext)
     }
+    val personalOpenAiStore = remember(baseContext) {
+        PersonalOpenAiSettingsStore(baseContext)
+    }
     val gameArchivePreferencesStore = remember(baseContext) {
         GameArchivePreferencesStore(
             context = baseContext,
@@ -328,6 +336,42 @@ internal fun CampBoardGameHostApp() {
     var storytellerGatewayToken by remember { mutableStateOf("") }
     var gatewayConfigurationLoaded by remember { mutableStateOf(false) }
     var gatewayCredentialSaveFailed by remember { mutableStateOf(false) }
+    var personalDirectEnabled by remember { mutableStateOf(false) }
+    var personalDirectKey by remember { mutableStateOf("") }
+    var personalDirectModel by remember {
+        mutableStateOf(PersonalDirectOpenAiV1.DEFAULT_MODEL)
+    }
+    var personalDirectLoaded by remember { mutableStateOf(false) }
+    var personalDirectSaveFailed by remember { mutableStateOf(false) }
+    LaunchedEffect(personalOpenAiStore) {
+        val restored = withContext(Dispatchers.IO) {
+            Triple(personalOpenAiStore.loadEnabled(),
+                personalOpenAiStore.loadModel(), personalOpenAiStore.loadKey())
+        }
+        personalDirectEnabled = restored.first
+        personalDirectModel = restored.second
+        personalDirectKey = restored.third
+        personalDirectLoaded = true
+    }
+    LaunchedEffect(personalDirectLoaded, personalDirectEnabled, personalDirectModel, personalDirectKey) {
+        if (!personalDirectLoaded) return@LaunchedEffect
+        delay(700)
+        val enabled = personalDirectEnabled
+        val model = personalDirectModel
+        val key = personalDirectKey
+        val saved = withContext(Dispatchers.IO) {
+            runCatching {
+                personalOpenAiStore.saveEnabled(enabled)
+                personalOpenAiStore.saveModel(model)
+                personalOpenAiStore.saveKey(key)
+            }.getOrDefault(false)
+        }
+        personalDirectSaveFailed = !saved
+    }
+    val aiEndpoint = if (personalDirectEnabled) PersonalDirectOpenAiV1.ENDPOINT
+        else storytellerGatewayEndpoint
+    val aiToken = if (personalDirectEnabled) personalDirectKey else storytellerGatewayToken
+    val aiDirectModel = if (personalDirectEnabled) personalDirectModel.trim() else null
     LaunchedEffect(gatewayConnectionStore) {
         val restored = withContext(Dispatchers.IO) {
             gatewayConnectionStore.loadEndpoint() to gatewayConnectionStore.loadToken()
@@ -353,9 +397,18 @@ internal fun CampBoardGameHostApp() {
     var drunkAiResponse by remember { mutableStateOf<StorytellerProviderResponseV1?>(null) }
     var drunkAiStrategy by remember { mutableStateOf<StorytellerGlobalStrategyV1?>(null) }
     var committedAiStrategy by remember { mutableStateOf<StorytellerGlobalStrategyV1?>(null) }
+    var firstNightOneShotPlan by remember { mutableStateOf<FirstNightOneShotPlanV1?>(null) }
+    var firstNightOneShotBusy by remember { mutableStateOf(false) }
+    var firstNightOneShotError by remember { mutableStateOf<String?>(null) }
+    var firstNightOneShotAccepted by remember { mutableStateOf(false) }
+    var firstNightAdoptedChoices by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var firstNightOneShotRequestSerial by remember { mutableStateOf(0) }
     var committedAiSnapshot by remember { mutableStateOf<TroubleBrewingGameSnapshotV1?>(null) }
     var committedAiBusy by remember { mutableStateOf(false) }
     var committedAiError by remember { mutableStateOf<String?>(null) }
+    var committedAiStage by remember { mutableStateOf("IDLE") }
+    var committedAiStartedAtElapsedMs by remember { mutableStateOf(0L) }
+    var committedAiRequestSerial by remember { mutableStateOf(0) }
     var liveAiAdviceKey by remember { mutableStateOf<String?>(null) }
     var liveAiAdviceText by remember { mutableStateOf<String?>(null) }
     // Bounded, game-scoped model memo is not Host truth or a recovered game record.
@@ -1596,43 +1649,260 @@ internal fun CampBoardGameHostApp() {
         if (storytellerOperationMode == StorytellerOperationMode.MANUAL ||
             committedAiSnapshot !== snapshot || committedAiBusy
         ) return
-        if (!storytellerGatewayEndpoint.startsWith("https://") || storytellerGatewayToken.isBlank()) {
-            committedAiError = "Set a private HTTPS gateway to analyse this confirmed game."
+        if (!aiEndpoint.startsWith("https://") || aiToken.isBlank()) {
+            BotcAiTrace.blocked("MISSING_CREDENTIALS")
+            committedAiError = "Configure the selected AI connection to analyse this confirmed game."
+            committedAiStage = "FAILED"
+            return
+        }
+        val session = clocktowerGameSession
+        val submittedGameRevision = session?.state?.gameStateRevision
+        val submittedInputRevision = session?.state?.playerInputRevision
+        if (session == null || submittedGameRevision == null || submittedInputRevision == null) {
+            committedAiBusy = false
+            committedAiStage = "FAILED"
+            committedAiError = "Confirmed game session is missing. Continue manually."
+            BotcAiTrace.blocked("MISSING_SESSION")
+            DebugFlightRecorder.record("GLOBAL_AI_SESSION_MISSING")
             return
         }
         val previous = drunkAiStrategy
+        val direct = personalDirectEnabled
+        val requestedEndpoint = aiEndpoint
+        val requestedToken = aiToken
+        val requestedModel = aiDirectModel
+        committedAiRequestSerial += 1
+        val serial = committedAiRequestSerial
+        val startedAt = SystemClock.elapsedRealtime()
+        committedAiStartedAtElapsedMs = startedAt
+        committedAiStage = "BUILDING_HOST_CONTEXT"
         committedAiBusy = true
         committedAiError = null
+        BotcAiTrace.started(serial, direct, submittedGameRevision, submittedInputRevision)
+        DebugFlightRecorder.record(
+            "GLOBAL_AI_STARTED",
+            mapOf("connection" to if (direct) "DIRECT" else "GATEWAY",
+                "stage" to "SETUP_COMMITTED"),
+        )
         drunkAiScope.launch {
             val response = runCatching {
                 StorytellerCommittedAnalysisV1.analyse(
-                    storytellerGatewayEndpoint, storytellerGatewayToken, snapshot, previous,
+                    endpoint = requestedEndpoint,
+                    accessToken = requestedToken,
+                    snapshot = snapshot,
+                    prior = previous,
+                    directModel = requestedModel,
+                    gameStateRevision = submittedGameRevision,
+                    playerInputRevision = submittedInputRevision,
+                    onStage = { stage ->
+                        // Logcat is thread-safe and displays the actual network phase immediately.
+                        // The Compose state still updates only on the owning main scope.
+                        BotcAiTrace.stage(serial, stage)
+                        // Network callback executes on Dispatchers.IO; dispatch Compose state updates
+                        // to the owning main scope, without ever passing the API key or prompt.
+                        drunkAiScope.launch {
+                            if (serial == committedAiRequestSerial && committedAiBusy) {
+                                committedAiStage = stage
+                                DebugFlightRecorder.record("GLOBAL_AI_STAGE", mapOf("stage" to stage))
+                            }
+                        }
+                    },
                 )
             }
-            // Responses may return after a player hands the phone back or starts a new game.
-            val stillAtDealtSetupBoundary = screen in setOf(
-                Screen.PassPhone, Screen.RevealCard,
-                Screen.ClocktowerAiOverview, Screen.ClocktowerAutoPause,
-            )
-            if (committedAiSnapshot === snapshot &&
-                clocktowerGameId == snapshot.gameId &&
-                storytellerOperationMode != StorytellerOperationMode.MANUAL &&
-                currentGameKind == GameKind.Clocktower &&
-                clocktowerPhase == ClocktowerPhase.FirstNight &&
-                round == 1 &&
-                stillAtDealtSetupBoundary &&
-                clocktowerGameSession?.state?.gameStateRevision == 0L &&
-                clocktowerGameSession?.state?.playerInputRevision == 0L
+            // Only the latest request may touch its UI state. This is not a
+            // game fact or an authorization to commit an engine decision.
+            if (serial != committedAiRequestSerial ||
+                committedAiSnapshot !== snapshot
             ) {
-                committedAiBusy = false
-                response.onSuccess { result ->
-                    committedAiStrategy = result
-                    committedAiError = null
-                }.onFailure {
-                    committedAiError = "Global analysis unavailable. Retry or continue manually."
+                val current = clocktowerGameSession?.state
+                BotcAiTrace.dropped(
+                    serial, if (serial != committedAiRequestSerial) "NEWER_REQUEST"
+                    else "SNAPSHOT_CHANGED",
+                    (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0L),
+                    submittedGameRevision, current?.gameStateRevision,
+                    submittedInputRevision, current?.playerInputRevision,
+                )
+                DebugFlightRecorder.record("GLOBAL_AI_SUPERSEDED")
+                return@launch
+            }
+            val elapsed = (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0L)
+            committedAiBusy = false  // Always release the spinner, including discarded responses.
+            val currentSessionState = clocktowerGameSession?.state
+            val rejectReason = when {
+                // Setup may create the Host Session and start this coroutine in
+                // the same Compose event callback, before recomposition refreshes
+                // the derived clocktowerGameId local captured by this closure.
+                // Compare against live Host-owned identity, never the UI projection.
+                !StorytellerCommittedAnalysisV1.isCurrentGame(
+                    snapshot, clocktowerGameSession,
+                ) -> "GAME_CHANGED"
+                storytellerOperationMode == StorytellerOperationMode.MANUAL -> "MANUAL_TAKEOVER"
+                currentGameKind != GameKind.Clocktower -> "GAME_KIND_CHANGED"
+                clocktowerPhase != ClocktowerPhase.FirstNight -> "PHASE_CHANGED"
+                round != 1 -> "ROUND_CHANGED"
+                screen !in setOf(
+                    Screen.PassPhone, Screen.RevealCard,
+                    Screen.ClocktowerAiOverview, Screen.ClocktowerAutoPause,
+                ) -> "SCREEN_CHANGED"
+                currentSessionState?.gameStateRevision != submittedGameRevision ->
+                    "GAME_REVISION_CHANGED"
+                currentSessionState?.playerInputRevision != submittedInputRevision ->
+                    "PLAYER_REVISION_CHANGED"
+                else -> null
+            }
+            if (rejectReason != null) {
+                committedAiStage = "STALE"
+                BotcAiTrace.dropped(
+                    serial, rejectReason, elapsed,
+                    submittedGameRevision, currentSessionState?.gameStateRevision,
+                    submittedInputRevision, currentSessionState?.playerInputRevision,
+                )
+                DebugFlightRecorder.record(
+                    "GLOBAL_AI_STALE",
+                    mapOf("reason" to rejectReason, "elapsedMs" to elapsed.toString()),
+                )
+                if (storytellerOperationMode != StorytellerOperationMode.MANUAL &&
+                    screen == Screen.ClocktowerAiOverview
+                ) {
+                    committedAiError =
+                        "Whole-game analysis was discarded: $rejectReason. Retry or continue manually."
                 }
+                return@launch
+            }
+            response.onSuccess { result ->
+                committedAiStrategy = result
+                committedAiError = null
+                committedAiStage = "SUCCESS"
+                BotcAiTrace.finished(serial, elapsed)
+                DebugFlightRecorder.record(
+                    "GLOBAL_AI_ACCEPTED", mapOf("elapsedMs" to elapsed.toString()),
+                )
+            }.onFailure { error ->
+                val category = PersonalDirectOpenAiV1.safeFailure(error)
+                BotcAiTrace.failed(serial, elapsed, category)
+                committedAiStage = "FAILED"
+                committedAiError = if (direct) {
+                    "OpenAI direct response failed ($category). Retry or continue manually."
+                } else {
+                    "Gateway response failed ($category). Retry or continue manually."
+                }
+                DebugFlightRecorder.record(
+                    "GLOBAL_AI_FAILED",
+                    mapOf("category" to category, "elapsedMs" to elapsed.toString()),
+                )
             }
         }
+    }
+
+    fun requestFirstNightOneShot(scope: FirstNightOneShotScopeV1) {
+        val session = clocktowerGameSession?.state ?: return
+        val snapshot = committedAiSnapshot ?: return
+        if (!personalDirectEnabled ||
+            storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED ||
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            clocktowerPhase != ClocktowerPhase.FirstNight ||
+            scope.gameId != session.gameId || snapshot.gameId != scope.gameId ||
+            scope.gameStateRevision != session.gameStateRevision ||
+            scope.playerInputRevision != session.playerInputRevision ||
+            firstNightOneShotBusy || firstNightOneShotAccepted
+        ) return
+        firstNightOneShotBusy = true
+        firstNightOneShotError = null
+        firstNightOneShotPlan = null
+        firstNightOneShotRequestSerial += 1
+        val serial = firstNightOneShotRequestSerial
+        val requestedKey = aiToken
+        val requestedModel = aiDirectModel
+        val startTime = SystemClock.elapsedRealtime()
+        BotcAiTrace.firstNightEvent(serial, "START")
+        drunkAiScope.launch {
+            val result = runCatching {
+                FirstNightOneShotRequestV1.recommend(
+                    endpoint = PersonalDirectOpenAiV1.ENDPOINT,
+                    accessToken = requestedKey,
+                    snapshot = snapshot,
+                    scope = scope,
+                    model = requestedModel ?: PersonalDirectOpenAiV1.DEFAULT_MODEL,
+                    onStage = { stage -> BotcAiTrace.firstNightStage(serial, stage) },
+                )
+            }
+            if (serial != firstNightOneShotRequestSerial) return@launch
+            val live = clocktowerGameSession?.state
+            if (live?.gameId != scope.gameId ||
+                live?.gameStateRevision != scope.gameStateRevision ||
+                live?.playerInputRevision != scope.playerInputRevision ||
+                screen != Screen.ClocktowerJudge ||
+                clocktowerPhase != ClocktowerPhase.FirstNight ||
+                storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED
+            ) {
+                firstNightOneShotBusy = false
+                firstNightOneShotError = "Game changed while planning; retry for current first night."
+                BotcAiTrace.firstNightEvent(serial, "STALE", SystemClock.elapsedRealtime() - startTime)
+                return@launch
+            }
+            result.onSuccess { plan ->
+                firstNightOneShotPlan = plan
+                firstNightOneShotError = null
+                BotcAiTrace.firstNightEvent(serial, "READY",
+                    SystemClock.elapsedRealtime() - startTime, plan.candidateByDecisionId.size)
+                DebugFlightRecorder.record(
+                    "FIRST_NIGHT_ONE_SHOT_READY",
+                    mapOf("elapsedMs" to (SystemClock.elapsedRealtime() - startTime).toString(),
+                        "recommendationCount" to plan.candidateByDecisionId.size.toString()),
+                )
+            }.onFailure { error ->
+                firstNightOneShotError =
+                    "One-shot AI unavailable (${PersonalDirectOpenAiV1.safeFailure(error)}). Manual hosting is available."
+                BotcAiTrace.firstNightEvent(serial, "FAILED", SystemClock.elapsedRealtime() - startTime)
+                DebugFlightRecorder.record(
+                    "FIRST_NIGHT_ONE_SHOT_FAILED",
+                    mapOf("category" to PersonalDirectOpenAiV1.safeFailure(error)),
+                )
+            }
+            // Publish terminal model outcome before releasing the busy barrier.
+            // The preflight LaunchedEffect must never see IDLE + no result and
+            // accidentally start a second paid request in the same game.
+            firstNightOneShotBusy = false
+        }
+    }
+
+    fun adoptFirstNightOneShot(
+        plan: FirstNightOneShotPlanV1,
+        scope: FirstNightOneShotScopeV1,
+    ) {
+        val live = clocktowerGameSession?.state ?: return
+        if (storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED ||
+            clocktowerPhase != ClocktowerPhase.FirstNight ||
+            clocktowerNightStartedState.value ||
+            live.gameId != scope.gameId ||
+            live.gameStateRevision != scope.gameStateRevision ||
+            live.playerInputRevision != scope.playerInputRevision ||
+            !plan.validFor(scope) || firstNightOneShotPlan != plan
+        ) return
+        val bluffs = plan.demonBluffRoleIds
+        if (bluffs != null && bluffs != clocktowerRecommendedDemonBluffRoleNames) {
+            clocktowerRecommendedDemonBluffRoleNames = bluffs
+            advanceClocktowerPlayerInputRevision()
+        }
+        val redHerringSeat = plan.candidateByDecisionId["setup.red-herring"]
+            ?.removePrefix("seat-")?.toIntOrNull()
+        redHerringSeat?.let { seat ->
+            val card = cards.getOrNull(seat - 1)
+            if (card?.clocktowerTeam in setOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider) &&
+                clocktowerRedHerring != card?.name
+            ) {
+                clocktowerRedHerring = card?.name
+                advanceClocktowerPlayerInputRevision()
+            }
+        }
+        // Accept the remaining candidate IDs as a PRELIMINARY proposal only.
+        // A later night step must re-match the ID against its current legal domain.
+        firstNightAdoptedChoices = plan.candidateByDecisionId
+        firstNightOneShotAccepted = true
+        BotcAiTrace.firstNightEvent(firstNightOneShotRequestSerial, "ADOPTED",
+            recommendationCount = plan.candidateByDecisionId.size)
+        DebugFlightRecorder.record("FIRST_NIGHT_ONE_SHOT_ADOPTED",
+            mapOf("recommendationCount" to plan.candidateByDecisionId.size.toString()))
     }
 
     fun requestLiveGlobalAdvice(step: ClocktowerNightStepUi, stepIndex: Int) {
@@ -1683,10 +1953,10 @@ internal fun CampBoardGameHostApp() {
         liveAiAdviceError = null
         // An older in-flight response belongs to a different key and cannot own this state.
         liveAiAdviceBusy = false
-        if (!storytellerGatewayEndpoint.startsWith("https://") ||
-            storytellerGatewayToken.isBlank()
+        if (!aiEndpoint.startsWith("https://") ||
+            aiToken.isBlank()
         ) {
-            liveAiAdviceError = "AI unavailable: configure the private HTTPS gateway."
+            liveAiAdviceError = "AI unavailable: configure the selected AI connection."
             return
         }
         val providerRequest = runCatching {
@@ -1732,8 +2002,9 @@ internal fun CampBoardGameHostApp() {
         drunkAiScope.launch {
             val result = runCatching {
                 StorytellerGlobalDecisionRequestV1.recommend(
-                    storytellerGatewayEndpoint, storytellerGatewayToken, providerRequest, prior,
+                    aiEndpoint, aiToken, providerRequest, prior,
                     if (liveAiMemoGameId == session.state.gameId) liveAiCompactMemo else null,
+                    aiDirectModel,
                 )
             }
             if (liveAiAdviceKey != key ||
@@ -1835,8 +2106,12 @@ internal fun CampBoardGameHostApp() {
                     append("\n请在当前主持界面手动确认实际决定；AI 不会代替 Host 写入事实。")
                 }
                 liveAiAdviceError = null
-            }.onFailure {
-                liveAiAdviceError = "Global strategy unavailable. Continue with Host manual choices."
+            }.onFailure { error ->
+                liveAiAdviceError = if (personalDirectEnabled) {
+                    "OpenAI direct unavailable (${PersonalDirectOpenAiV1.safeFailure(error)}). Continue manually."
+                } else {
+                    "Global strategy unavailable. Continue with Host manual choices."
+                }
             }
         }
     }
@@ -1918,7 +2193,11 @@ internal fun CampBoardGameHostApp() {
                 committedSetup = committedSetup.committedSetup,
                 characterRegistry = characterRegistry,
             )
-        committedAiSnapshot?.let(::requestCommittedGlobalAdvice)
+        // The experimental personal direct assisted path starts a SINGLE
+        // actionable one-shot joint opening at preflight, not a paid prose essay.
+        if (!(storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
+                personalDirectEnabled)
+        ) committedAiSnapshot?.let(::requestCommittedGlobalAdvice)
         currentTroubleBrewingFirstNightPairDecisionContext()?.let { request ->
             troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
                 request = request,
@@ -1937,8 +2216,8 @@ internal fun CampBoardGameHostApp() {
             screen != Screen.ClocktowerDrunkSelection ||
             pendingTroubleBrewingDrunkSelection !== pending
         ) return
-        if (!storytellerGatewayEndpoint.startsWith("https://") || storytellerGatewayToken.isBlank()) {
-            drunkAiError = "Set a private HTTPS gateway and access token before requesting AI advice."
+        if (!aiEndpoint.startsWith("https://") || aiToken.isBlank()) {
+            drunkAiError = "Configure the selected AI connection and credentials before requesting advice."
             return
         }
         val automatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC
@@ -1948,7 +2227,7 @@ internal fun CampBoardGameHostApp() {
         drunkAiScope.launch {
             val result = runCatching {
                 ProductionDrunkAiGatewayV1.recommend(
-                    storytellerGatewayEndpoint, storytellerGatewayToken, pending.providerRequest,
+                    aiEndpoint, aiToken, pending.providerRequest, aiDirectModel,
                 )
             }
             if (screen == Screen.ClocktowerDrunkSelection &&
@@ -1995,14 +2274,24 @@ internal fun CampBoardGameHostApp() {
                             }
                         }
                     }
-                }.onFailure {
-                    drunkAiError = "AI unavailable. Automatic setup paused; manual takeover is available."
+                }.onFailure { error ->
+                    drunkAiError = if (personalDirectEnabled) {
+                        "OpenAI direct unavailable (${PersonalDirectOpenAiV1.safeFailure(error)}). Manual takeover is available."
+                    } else {
+                        "AI unavailable. Automatic setup paused; manual takeover is available."
+                    }
                 }
             }
         }
     }
 
     fun startTroubleBrewingGame() {
+        firstNightOneShotRequestSerial += 1
+        firstNightOneShotBusy = false
+        firstNightOneShotPlan = null
+        firstNightOneShotError = null
+        firstNightOneShotAccepted = false
+        firstNightAdoptedChoices = emptyMap()
         pendingTroubleBrewingDrunkSelection = null
         drunkAiResponse = null
         drunkAiStrategy = null
@@ -2435,6 +2724,13 @@ internal fun CampBoardGameHostApp() {
                         gatewayToken = storytellerGatewayToken,
                         onGatewayTokenChange = { storytellerGatewayToken = it },
                         gatewayCredentialSaveFailed = gatewayCredentialSaveFailed,
+                        personalDirectEnabled = personalDirectEnabled,
+                        onPersonalDirectEnabledChange = { personalDirectEnabled = it },
+                        personalDirectModel = personalDirectModel,
+                        onPersonalDirectModelChange = { personalDirectModel = it },
+                        personalDirectKey = personalDirectKey,
+                        onPersonalDirectKeyChange = { personalDirectKey = it },
+                        personalDirectSaveFailed = personalDirectSaveFailed,
                         onScriptChange = {
                             selectedClocktowerScript = it
                             if (it != ClocktowerScript.TroubleBrewing) {
@@ -2576,7 +2872,8 @@ internal fun CampBoardGameHostApp() {
                                             storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC ->
                                             Screen.ClocktowerAutoPause
                                         currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
-                                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED ->
+                                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
+                                            !personalDirectEnabled ->
                                             Screen.ClocktowerAiOverview
                                         else -> Screen.ClocktowerJudge
                                     }
@@ -2633,6 +2930,11 @@ internal fun CampBoardGameHostApp() {
                                     busy = committedAiBusy,
                                     error = committedAiError,
                                     language = language,
+                                    startedAtElapsedMs = committedAiStartedAtElapsedMs,
+                                    diagnosticStage = committedAiStage,
+                                    onExportDebugBundle = {
+                                        DebugFlightRecorder.shareDebugBundle(baseContext)
+                                    },
                                     onRetry = { committedAiSnapshot?.let(::requestCommittedGlobalAdvice) },
                                     onTakeOverManually = {
                                         storytellerOperationMode = StorytellerOperationMode.MANUAL
@@ -2654,6 +2956,15 @@ internal fun CampBoardGameHostApp() {
                         gameSeed = clocktowerGameSeed,
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         globalAiAssisted = storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED,
+                        oneShotEnabled = personalDirectEnabled &&
+                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED,
+                        oneShotPlan = firstNightOneShotPlan,
+                        oneShotBusy = firstNightOneShotBusy,
+                        oneShotError = firstNightOneShotError,
+                        oneShotAccepted = firstNightOneShotAccepted,
+                        adoptedOneShotChoices = firstNightAdoptedChoices,
+                        onRequestOneShot = ::requestFirstNightOneShot,
+                        onAdoptOneShot = ::adoptFirstNightOneShot,
                         globalNightPendingDecision = if (
                             storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
                             clocktowerPhase == ClocktowerPhase.Night
