@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.setup
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -11,14 +12,14 @@ class TroubleBrewingSetupPresetJsonTest {
         val parsed = TroubleBrewingSetupPresetJson.parse(
             """
             {
-              "schema_version": 2,
+              "schema_version": 3,
               "dataset_id": "trouble_brewing_setup_presets_v2_final",
               "status": "final_ready_for_program_integration",
               "pool_sizes": {"5": 1},
               "runtime_selection_policy": {
                 "exact_repeat": "reject",
-                "similarity_scope": "Compare real in-play non-Demon role IDs.",
-                "role_overlap_formula": "intersection / (player_count - 1)",
+                "similarity_scope": "Compare completed shown non-Demon role IDs.",
+                "role_overlap_formula": "intersection(candidate_shown_non_demon_roles, previous_shown_non_demon_roles) / (player_count - 1)",
                 "last_game_max_overlap": {"5": 0.6},
                 "history_weights": [1.0, 0.65, 0.4, 0.2, 0.1],
                 "extra_soft_penalties": ["same minion set"],
@@ -36,7 +37,7 @@ class TroubleBrewingSetupPresetJsonTest {
                     "source": "curated_balanced_v2",
                     "complexity": "standard",
                     "style_tags": ["balanced", "registration-chaos"],
-                    "drunk_as_options": []
+                    "drunk": false
                   }
                 ]
               }
@@ -44,7 +45,7 @@ class TroubleBrewingSetupPresetJsonTest {
             """.trimIndent(),
         )
 
-        assertEquals(2, parsed.schemaVersion)
+        assertEquals(3, parsed.schemaVersion)
         assertEquals("trouble_brewing_setup_presets_v2_final", parsed.datasetId)
         assertEquals("final_ready_for_program_integration", parsed.status)
         assertEquals(mapOf(5 to 1), parsed.declaredPoolSizes)
@@ -68,7 +69,7 @@ class TroubleBrewingSetupPresetJsonTest {
         assertEquals("curated_balanced_v2", preset.source)
         assertEquals("standard", preset.complexity)
         assertEquals(listOf("balanced", "registration-chaos"), preset.styleTags)
-        assertEquals(emptyList<String>(), preset.drunkAsOptions)
+        assertFalse(preset.drunk)
     }
 
     @Test
@@ -78,7 +79,7 @@ class TroubleBrewingSetupPresetJsonTest {
 
         val parsed = TroubleBrewingSetupPresetJson.parse(asset.readText(Charsets.UTF_8))
 
-        assertEquals(2, parsed.schemaVersion)
+        assertEquals(3, parsed.schemaVersion)
         assertEquals("trouble_brewing_setup_presets_v2_final", parsed.datasetId)
         assertEquals("final_ready_for_program_integration", parsed.status)
         assertEquals(EXPECTED_POOL_SIZES.keys, parsed.pools.keys)

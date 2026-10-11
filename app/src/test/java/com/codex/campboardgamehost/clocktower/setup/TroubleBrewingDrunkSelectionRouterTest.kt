@@ -39,14 +39,14 @@ class TroubleBrewingDrunkSelectionRouterTest {
         val preset = TroubleBrewingSetupPreset(
             id = "tb-drunk-selection-test",
             playerCount = 5,
-            townsfolk = listOf("chef", "empath"),
-            outsiders = listOf("drunk"),
+            townsfolk = listOf("chef", "empath", "washerwoman"),
+            outsiders = emptyList(),
             minions = listOf("poisoner"),
             demons = listOf("imp"),
             source = "test",
             complexity = "test",
             styleTags = emptyList(),
-            drunkAsOptions = listOf("washerwoman"),
+            drunk = true,
         )
         val intermediate = TroubleBrewingIntermediateSetup(
             datasetId = "test-dataset",
@@ -86,7 +86,7 @@ class TroubleBrewingDrunkSelectionRouterTest {
             source = "test",
             complexity = "test",
             styleTags = emptyList(),
-            drunkAsOptions = emptyList(),
+            drunk = false,
         )
         val intermediate = TroubleBrewingIntermediateSetup(
             datasetId = "test-dataset",

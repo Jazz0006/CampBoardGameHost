@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.setup
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderOutcomeV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRecommendationV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseV1
@@ -28,17 +29,18 @@ class ProductionDrunkAiLiveSetupIntegrationTest {
         val preset = TroubleBrewingSetupPreset(
             id = "prod1-real-setup",
             playerCount = 8,
-            townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk"),
-            outsiders = listOf("drunk"),
+            // Schema v3 lists all six displayed Townsfolk, including the eventual Drunk's shown role.
+            townsfolk = listOf("chef", "empath", "fortuneteller", "undertaker", "monk", "washerwoman"),
+            outsiders = emptyList(),
             minions = listOf("poisoner"),
             demons = listOf("imp"),
             source = "test",
             complexity = "standard",
             styleTags = listOf("balanced"),
-            drunkAsOptions = listOf("washerwoman", "librarian", "investigator"),
+            drunk = true,
         )
         val dataset = TroubleBrewingSetupPresetDataset(
-            schemaVersion = 2,
+            schemaVersion = 3,
             datasetId = "prod1-fixture",
             status = "test",
             declaredPoolSizes = mapOf(8 to 1),
@@ -62,6 +64,7 @@ class ProductionDrunkAiLiveSetupIntegrationTest {
         )
         val route = TroubleBrewingDrunkSelectionRouter.route(
             preparedSetup = prepared,
+            experienceMode = StorytellerExperienceMode.EXPERIENCED,
             recommendedCandidate = null,
         ) as TroubleBrewingDrunkSelectionRoute.ManualSelection
         val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(

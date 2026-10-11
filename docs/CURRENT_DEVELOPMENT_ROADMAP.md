@@ -10,7 +10,7 @@
 - 已删除旧“三项推荐”界面。独立人工候选选择保留；多个合法裁量不能由旧展示布尔值、首个候选或缺失的模型建议决定。Fortune Teller、红鲱鱼与注册/夜间信息入口向**唯一合法结果**或显式人工选择收敛；非唯一 Spy/Recluse 登记见证仍不是事实。
 - 本次只退役旧模式和错误自动控制链，**并未完成** PROD-GLOBAL-3 的统一初始 Drunk/首夜联合规划、条件合法域、持续战略记忆或完整自动说书人。当前 Draft Android 的旧 Drunk 请求时序/展示故障仍按 PROD-GLOBAL-3A–3F 处理；不得标为已发布能力。
 - 旧版 #295 HEAD `2d1954f` 已获 CI #4090 / R2 #3717 GREEN；但额外语义审查发现 `allowRuleDeterminedAutoUi` 仍间接控制展示格式、Host 私有资料和手动候选入口，因此已继续解除这些布局/候选域耦合，**新 HEAD 必须重跑 CI/R2**。不得用旧 GREEN 代替新提交验收。
-- 合并阻塞：最新 `main` `8ac78163` 已合入 TB 模板简化 PR #294，但上游 Draft #292 仍基于 `3e1cc407`，导致 #292 `mergeable=false/dirty`。其冲突涉及 Drunk setup/测试及文档；不能直接强行合并或覆盖新模板。按 #292→#293→#295 顺序整合并独立重新验收。原临时仅验收 PR #296 已关闭、未合并。
+- 上游集成：#292 已将 #294 的 TB schema-v3 模板、setup、测试与文档以双父合并提交 `02a19015` 纳入，原 `mergeable=false/dirty` 已解除；须以组合 HEAD 的 CI/R2 再验收。#293 随后接入父分支（`3c8b5724`），#295 还需集成其上游并重验收，全部仍保留 Draft、不得绕过真机产品验收。
 
 ## 1. 当前唯一执行顺序 — PROD-GLOBAL-3
 
@@ -84,3 +84,7 @@ The owner accepted revised cross-screen color readability on real Android and re
 The private first-night preflight can display that one recommended package and a one-tap accept action, after which only Demon bluff preselection and FT red herring are stored. Other candidate IDs remain advisory and are re-matched to the exact step's current Host Manual-legal candidates before use. A Poisoner choice may invalidate a previously recommended candidate; the normal step-level live advice/manual control remains fallback; no old proposed observation is forcibly published. Unknown FT player query is deferred. The old verbose whole-board checkpoint is skipped ONLY for personal direct assisted first-night path; Gateway and automatic remain unchanged until independently upgraded.
 
 **Acceptance not yet granted** until current-head full Android CI and device end-to-end: one full actual opening including Demon's triple, Investigator, Chef or Empath, Poisoner and deferred FT, plus change/staleness, offline manual fallback, latency and cost. Never treat unexecuted accepted plan IDs as Host observations or Recovery facts. Real-phone readable-color feedback applies to current visual baseline.
+
+## TB setup simplification checkpoint (2026-10-11)
+
+TB setup schema v3 stores the full shown Townsfolk roster, `drunk: true/false`, and no `drunk` outsider or three-option runtime field. The 208 old-three-to-one selections are audited in `TB_SETUP_SIMPLIFICATION_TEMPLATE_AUDIT.json`; late Drunk binding and shown-roster history rotation are preserved.
