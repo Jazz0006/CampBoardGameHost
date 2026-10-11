@@ -28,3 +28,19 @@ Before marking ready: Android Kotlin/JVM tests (full/compact/analysis conversion
 References:
 - https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety
 - https://developers.openai.com/api/docs/guides/structured-outputs
+
+## Troubleshooting the post-commit analysis spinner (2026-10-11)
+
+A real Xiaomi field test confirmed `POST https://api.openai.com/v1/responses`, **HTTP 200**, ~20.6 seconds, ~24.1 KiB response, while the application remained on “确认阵容后全局分析”. This demonstrates that the HTTP exchange succeeded, NOT that the model JSON passed Host validation or was accepted by the UI. No secret-bearing request/response was collected.
+
+The previous callback had a silent-release bug: `committedAiBusy = false` executed only if ALL freshness conditions held, including hard-coded `gameStateRevision == 0` and `playerInputRevision == 0`. A legitimate nonzero revision or changed screen could leave the UI indefinitely busy after a network response.
+
+The repair:
+- Captures and round-trips actual Host revisions for the analysis contract rather than assuming zero.
+- Always releases the spinner when the current request finishes; discarded results surface an explicit categorical stale reason, not a hanging screen.
+- Displays elapsed time and named `PREPARING`, `CONNECTING`, `AWAITING_MODEL`, `PARSING_RESPONSE`, `VALIDATING_HOST_RESPONSE`, `SUCCESS`, `FAILED` or `STALE` phases.
+- Uses safe, bounded `DebugFlightRecorder` breadcrumb event names, elapsed milliseconds and error categories; **never records the API key, bearer headers, payload JSON, player names or model text** in the new AI events.
+- Includes a debug-bundle export control. The generic crash recorder may contain information from other parts of the app, so **review the archive before sharing**. Do not upload Network Inspector request screenshots containing Authorization headers.
+- Host rules, source revision checks, legal candidates and Manual takeover remain authoritative.
+
+Acceptance: Full Android CI and independent R2; run the same Xiaomi setup with the device still connected. Record the displayed stage and sanitized error after HTTP 200. A 200 response by itself is NOT a successful strategic analysis; further repair may be required if the diagnostics surface an output-contract violation.
