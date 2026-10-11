@@ -170,7 +170,7 @@ class ClocktowerChefSquareTablePresentationTest {
                 player(2, "Imp", Alignment.EVIL, CharacterType.DEMON),
                 player(3, "Poisoner", Alignment.EVIL, CharacterType.MINION),
             ),
-            automaticStorytellerInfo = true,
+            allowRuleDeterminedAutoUi = true,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = emptyList(),
             structuredNumberUiModel = null,

@@ -73,7 +73,7 @@ internal fun clocktowerRavenkeeperResultChoices(
     step: ClocktowerNightStepUi,
     selectedSeat: Int?,
     seatCount: Int,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     recommendedOptionIds: Set<String> = emptySet(),
@@ -111,7 +111,7 @@ internal fun clocktowerRavenkeeperResultChoices(
         }.distinctBy { it.key }
     }
 
-    if (automaticStorytellerInfo) {
+    if (allowRuleDeterminedAutoUi) {
         automaticDisplayOption?.let { option ->
             return choicesFrom(
                 options = listOf(option),

@@ -10,7 +10,7 @@ class ClocktowerClockmakerSquareTablePresentationTest {
     fun `healthy Clockmaker keeps one direct number reveal`() {
         val choices = clocktowerClockmakerResultChoices(
             step = clockmakerStep(displayKind = ClocktowerDisplayKind.Number, displayPrimary = "2"),
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
         )
 
@@ -30,7 +30,7 @@ class ClocktowerClockmakerSquareTablePresentationTest {
                     option(label = "Recommended · balanced: 3", value = "3", recommended = true),
                 ),
             ),
-            automaticStorytellerInfo = false,
+            allowRuleDeterminedAutoUi = false,
             automaticDisplayOption = null,
         )
 
@@ -52,7 +52,7 @@ class ClocktowerClockmakerSquareTablePresentationTest {
                 displayKind = ClocktowerDisplayKind.None,
                 displayPrimary = null,
             ),
-            automaticStorytellerInfo = true,
+            allowRuleDeterminedAutoUi = true,
             automaticDisplayOption = selected,
         )
 
@@ -67,21 +67,21 @@ class ClocktowerClockmakerSquareTablePresentationTest {
         assertTrue(
             clocktowerClockmakerResultChoices(
                 step = clockmakerStep(roleEnName = "Empath"),
-                automaticStorytellerInfo = false,
+                allowRuleDeterminedAutoUi = false,
                 automaticDisplayOption = null,
             ).isEmpty(),
         )
         assertTrue(
             clocktowerClockmakerResultChoices(
                 step = clockmakerStep(actor = null),
-                automaticStorytellerInfo = false,
+                allowRuleDeterminedAutoUi = false,
                 automaticDisplayOption = null,
             ).isEmpty(),
         )
         assertTrue(
             clocktowerClockmakerResultChoices(
                 step = clockmakerStep(displayPrimary = ""),
-                automaticStorytellerInfo = false,
+                allowRuleDeterminedAutoUi = false,
                 automaticDisplayOption = null,
             ).isEmpty(),
         )

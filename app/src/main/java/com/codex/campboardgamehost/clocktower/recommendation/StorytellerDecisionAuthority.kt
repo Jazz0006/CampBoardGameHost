@@ -41,8 +41,8 @@ internal fun storytellerDecisionAuthority(
 }
 
 internal fun storytellerDecisionPresentationIsAutomatic(
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     authority: StorytellerDecisionAuthority,
 ): Boolean =
-    automaticStorytellerInfo &&
+    allowRuleDeterminedAutoUi &&
         authority !is StorytellerDecisionAuthority.ManualRequired

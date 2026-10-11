@@ -57,7 +57,7 @@ private fun validSageSubjectSeats(
 internal fun clocktowerSageResultChoices(
     step: ClocktowerNightStepUi,
     seatCount: Int,
-    automaticStorytellerInfo: Boolean,
+    allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     recommendedOptionIds: Set<String> = emptySet(),
 ): List<ClocktowerSageResultChoice> {
@@ -86,7 +86,7 @@ internal fun clocktowerSageResultChoices(
         }.distinctBy { it.key }
     }
 
-    if (automaticStorytellerInfo) {
+    if (allowRuleDeterminedAutoUi) {
         automaticDisplayOption?.let { option ->
             return fromOptions(
                 options = listOf(option),
