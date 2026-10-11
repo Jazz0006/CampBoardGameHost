@@ -41,9 +41,9 @@ class TwoPlayerSelectionActionTest {
     }
 
     @Test
-    fun `automatic storyteller skips a completed red herring step`() {
+    fun `automatic storyteller cannot bypass a real red herring decision`() {
         assertEquals(
-            true,
+            false,
             shouldAutoAdvanceRedHerring(
                 allowRuleDeterminedAutoUi = true,
                 isRedHerringStep = true,

@@ -655,7 +655,7 @@ internal fun ClocktowerNightStepCardLocalized(
             },
     )
     val command = compactNightGuidance?.asWakeInstruction(
-        experiencedFormat = !allowRuleDeterminedAutoUi,
+        expandedFormat = !allowRuleDeterminedAutoUi,
     ) ?: when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
