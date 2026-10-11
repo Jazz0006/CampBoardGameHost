@@ -276,3 +276,17 @@ Do not regress Host readability to create a new layout.
 **Status:** contrast policy and shared component fixes are being implemented
 in PR #293; the true whole-first-night joint planning implementation remains
 an explicit **open production blocker**, not a completed milestone.
+
+### PROD-GLOBAL-2B (2026-10-11) — one best first-night package, no narrative wall
+
+Product owner confirms: the LLM must STILL reason across the complete board internally, but the UI should display ONLY ONE recommended first-night configuration rather than 1-4 issue essays, multiple hypotheses, competing options or long justifications. The Storyteller should be able to accept the package in one tap. For the first prototype we assume the Storyteller does not manually override. Real player choices, poisoning, legal dependencies and already-shown observations cannot be assumed away.
+
+**Authoritative design:** A Host-produced scope lists every currently open first-night decision ID and its exact legal candidates, the eligible unique Demon bluff role set, and explicit decision IDs deferred on unknown player choices (Poisoner target, Fortune Teller's selected players, etc.). The model returns ONE candidate ID for each currently executable Host decision and ONE legal triple of Demon bluffs, with the deferred IDs untouched. No narratives or alternatives. Full package validation requires exact game ID, game/input revisions, coverage and current Host candidate legality; incomplete results FAIL CLOSED, never silently look complete. Any future re-plan uses the updated global causal prefix and only remaining decisions, not isolated role policies.
+
+The new pure FirstNightOneShotPlanV1 contract and adversarial unit tests are the first infrastructure stage, **not yet a live AI integration or one-tap UI**. Next wire the complete Host decision-scope generator, strict Responses schema plus Gateway parity, and a one-tap adoption of the vetted proposed package. Runtime Host must revalidate before each actual fact/observation commit. No AI text is itself a Host fact. Until end-to-end proof, the current experimental postcommit analysis UI remains active; do not pretend the one-shot package is already delivered.
+
+Real game acceptance must include Demon bluffs + Investigator + Chef or other information roles as one interacting package; Player-driven Poisoner/Fortune Teller unknown targets as explicit dependencies; no Drunk, actual Drunk, manually covered roles, different player counts, stale/illegal response rejection, offline Manual fallback, and direct Android response timing.
+
+### Shared dark-palette ownership and anti-regression
+
+The recurring illegible Investigator-stage foreground is a design-level problem, not role-specific. A dark Material colorScheme without an owning Surface can leak inherited foreground from the surrounding light UI. ClocktowerDarkTheme now owns the dark Surface canvas and foreground; ClocktowerHostColorScheme centrally binds all button/card/text/outline/error tokens. Shared square-table and night full-screen containers explicitly own their content foreground. Android unit tests enforce >=4.5:1 actual Material semantic token pairs. Maintain real-phone screenshots as a separate gate; adding named-role text patches is not a long-term fix.

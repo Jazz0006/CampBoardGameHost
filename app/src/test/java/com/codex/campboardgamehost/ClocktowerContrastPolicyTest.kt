@@ -30,6 +30,31 @@ class ClocktowerContrastPolicyTest {
     }
 
     @Test
+    fun `actual shared Material colors are readable on every role surface`() {
+        val c = ClocktowerHostColorScheme
+        val p = ClocktowerContrastPolicy
+        val pairs = mapOf(
+            "host background" to (c.onBackground to c.background),
+            "host card" to (c.onSurface to c.surface),
+            "host secondary card" to (c.onSurfaceVariant to c.surfaceVariant),
+            "primary button" to (c.onPrimary to c.primary),
+            "primary container" to (c.onPrimaryContainer to c.primaryContainer),
+            "secondary button" to (c.onSecondary to c.secondary),
+            "secondary container" to (c.onSecondaryContainer to c.secondaryContainer),
+            "tertiary button" to (c.onTertiary to c.tertiary),
+            "error button" to (c.onError to c.error),
+            "error text on card" to (c.error to c.surface),
+            "error text on background" to (c.error to c.background),
+            "inverted UI" to (c.inverseOnSurface to c.inverseSurface),
+            "secondary text on host background" to (c.onSurfaceVariant to c.background),
+        )
+        pairs.forEach { (name, pair) ->
+            assertTrue("$name is not legible at 4.5:1",
+                p.contrastRatio(pair.first, pair.second) >= 4.5)
+        }
+    }
+
+    @Test
     fun `contrast checker detects illegible inherited light-theme text`() {
         val p = ClocktowerContrastPolicy
         assertTrue(p.contrastRatio(Color.Black, p.background) < 4.5)

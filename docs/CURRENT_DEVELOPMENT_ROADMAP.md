@@ -8,6 +8,10 @@
 
 > **2026-10-11 真机新阻塞 — 完整首夜方案不是可选附加：** 用户已通过 Android Studio 直连获得调查员 AI 建议，但未同时获得恶魔三个掩饰身份。经代码核查，当前 committed analysis 只包含 issue/relations/intentions，首夜仍按单个 pending role 请求建议，恶魔掩饰身份在独立手动确认路径。这**尚未实现用户要求的「首夜全局信息/恶魔伪装联合规划」**，不得将「调查员信息 AI 可用」视为完整首夜验收。**立即将全首夜 bundle typed Host legal domains + LLM 一次联合计划 + 事件前缀驱动的剩余计划重算置于生产最高优先级**，详细边界见 PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md 的 PROD-GLOBAL-2 节。2026-10-11 的独立 UI 缺陷是调查员阶段仍有低对比度字色；PR #293 的共享主题、全屏方桌 foreground contract 和 WCAG AA 4.5:1 自动测试为第一步，需真实手机截图复核。不使用单角色推荐器或角色特例补洞。
 
+> **2026-10-11 新执行目标：单一推荐首夜配置 + 一键采纳。** 模型内部保留整局联合思考，前台不再输出大段 issues/intentions/alternatives，而是返回唯一推荐配置：恶魔三个合法掩饰身份及首夜各项可立即确定的 Host 合法候选；等待投毒、占卜师选人的项目须明确标为依赖待定。第一阶段假设说书人不手动覆盖，但不得预设玩家行动或改变游戏规则。首先完成 Host 全首夜合法域输入、单一结果校验、模型/Gateway 协议及 UI 一键采纳；已经确认玩家看到的信息不可追改。共享深色主题必须拥有背景和文字颜色，并在 CI 对真实 Material 调色板的全部文字/背景配对做 WCAG AA >=4.5:1 检查；禁止靠调查员专用补丁蒙混通过。
+>
+> **当前进度边界：** 已新增 FirstNightOneShotPlanV1 的纯合同/测试及全局 Surface/主题对比度加强（PR #293 的开发分支），**尚未接入可执行的模型首夜单包及一键采纳**；这是真实生产验收阻塞，不能称已完成。
+
 ## 1. 当前唯一执行顺序 — **PRODUCTION FIRST / AUTONOMOUS GOAL**
 
 > **2026-10-10 当前状态：PROD-GLOBAL-1C 代码就绪；PROD-GLOBAL-1D 正式接棒。** Draft [PR #292](https://github.com/Jazz0006/CampBoardGameHost/pull/292) 已在真实 Host 信息决策接入统一全局推荐：首夜 Washerwoman/Librarian/Investigator pair，Chef/Empath number，Fortune Teller 选定对象后 Boolean，以及跨白天/次夜的通用因果续航；Gateway 服务端认证/限额与 Android HTTPS 客户端已接通代码边界。Android HTTPS 地址现在会持久保存，Bearer 令牌经 Android Keystore AES-GCM 加密保存，`13b31d0` 的 Android CI #4049、R2 #3677、Gateway #59 GREEN。**尚无真实 Android 整局 E2E 产品验收，不合并 Draft。**
@@ -22,7 +26,7 @@
 
 | 顺位 | 工作 | 当前状态 / 退出条件 |
 | --- | --- | --- |
-| **NOW** | **PROD-GLOBAL-1D-0：API 延迟/质量基线** | 同一合法上下文实测 HTTP 总/上游耗时、model API usage、输出长度、推理强度和首次/续航；拒绝以聊天界面体感替代 API 证据；下一轮优先实施 |
+| **NOW** | **PROD-GLOBAL-2B：完整首夜唯一推荐包与一键采纳** | 同一合法上下文实测 HTTP 总/上游耗时、model API usage、输出长度、推理强度和首次/续航；拒绝以聊天界面体感替代 API 证据；下一轮优先实施 |
 | **NEXT** | **PROD-GLOBAL-1D-1：展示身份期间的首次全局预规划** | shown roles 全部固定 → 前台逐人展示 → 后台规划 Drunk 和首夜条件信息；发牌后绑定实际 Drunk，再按事件有效性验证剩余合法域 |
 | **THEN** | **PROD-GLOBAL-1D-2：全局事件驱动增量重算** | 投毒、人工部分覆盖、夜间/白天其他已确认事件统一进 Host causal prefix，撤销过时建议，≤5 秒作为实验目标；未达到时明确等待/人工接管 |
 | **PRODUCT GATE** | **PROD-1 Android 真实 E2E / PR #292** | 真机→HTTPS Funnel→Gateway→LLM→Host 法定决策、时序、部分覆盖、失效拒绝和手动回退验收后才评估 Draft 合并 |
