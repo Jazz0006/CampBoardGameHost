@@ -70,6 +70,24 @@ internal object BotcAiTrace {
         write("postcommit FAILED seq=$serial elapsedMs=$elapsedMs category=$sanitized")
     }
 
+    /** Dedicated minimal first-night one-shot lifecycle in Android Studio Logcat. */
+    fun firstNightStage(serial: Int, stage: String) {
+        write("oneshot STAGE seq=$serial stage=${stage.takeIf { it in safeStages } ?: "OTHER"}")
+    }
+
+    fun firstNightEvent(
+        serial: Int,
+        event: String,
+        elapsedMs: Long = 0L,
+        recommendationCount: Int = 0,
+    ) {
+        val safeEvent = event.takeIf {
+            it in setOf("START", "READY", "FAILED", "STALE", "ADOPTED")
+        } ?: "OTHER"
+        write("oneshot $safeEvent seq=$serial elapsedMs=$elapsedMs " +
+            "recommendations=${recommendationCount.coerceIn(0, 64)}")
+    }
+
     fun blocked(reason: String) {
         write("postcommit BLOCKED reason=${reason.takeIf { it in safeReasons } ?: "OTHER"}")
     }

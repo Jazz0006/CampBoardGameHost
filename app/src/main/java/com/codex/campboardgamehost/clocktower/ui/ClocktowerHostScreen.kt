@@ -2379,10 +2379,12 @@ internal fun ClocktowerJudgeScreen(
     if (phase == ClocktowerPhase.FirstNight && !nightStarted) {
         val oneShotScope = if (oneShotEnabled && globalAiAssisted &&
             script == ClocktowerScript.TroubleBrewing
-        ) clocktowerFirstNightOneShotScope(
-            gameId, gameStateRevision, playerInputRevision,
-            script, cards, nightSteps,
-        ) else null
+        ) runCatching {
+            clocktowerFirstNightOneShotScope(
+                gameId, gameStateRevision, playerInputRevision,
+                script, cards, nightSteps,
+            )
+        }.getOrNull() else null
         // Load the ONE entire legal opening while the Storyteller is at
         // private preflight, rather than waiting for an isolated role step.
         LaunchedEffect(oneShotScope, oneShotAccepted, oneShotBusy, oneShotError) {
@@ -2417,6 +2419,13 @@ internal fun ClocktowerJudgeScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ClocktowerNightReadyCard()
+                if (oneShotEnabled && oneShotScope == null && !oneShotAccepted) {
+                    Text(
+                        text("完整首夜候选尚未准备就绪，可以手动主持。",
+                            "Full first-night legal domain is unavailable; use Manual hosting."),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 if (oneShotScope != null && !oneShotAccepted) {
                     if (oneShotBusy) {
                         Text(text("AI 正在联合配置完整首夜…", "AI planning all first-night information…"))

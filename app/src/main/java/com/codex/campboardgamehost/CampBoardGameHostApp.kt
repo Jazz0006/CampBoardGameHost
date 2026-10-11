@@ -1814,6 +1814,7 @@ internal fun CampBoardGameHostApp() {
         val requestedKey = aiToken
         val requestedModel = aiDirectModel
         val startTime = SystemClock.elapsedRealtime()
+        BotcAiTrace.firstNightEvent(serial, "START")
         drunkAiScope.launch {
             val result = runCatching {
                 FirstNightOneShotRequestV1.recommend(
@@ -1822,6 +1823,7 @@ internal fun CampBoardGameHostApp() {
                     snapshot = snapshot,
                     scope = scope,
                     model = requestedModel ?: PersonalDirectOpenAiV1.DEFAULT_MODEL,
+                    onStage = { stage -> BotcAiTrace.firstNightStage(serial, stage) },
                 )
             }
             if (serial != firstNightOneShotRequestSerial) return@launch
@@ -1835,11 +1837,14 @@ internal fun CampBoardGameHostApp() {
             ) {
                 firstNightOneShotBusy = false
                 firstNightOneShotError = "Game changed while planning; retry for current first night."
+                BotcAiTrace.firstNightEvent(serial, "STALE", SystemClock.elapsedRealtime() - startTime)
                 return@launch
             }
             result.onSuccess { plan ->
                 firstNightOneShotPlan = plan
                 firstNightOneShotError = null
+                BotcAiTrace.firstNightEvent(serial, "READY",
+                    SystemClock.elapsedRealtime() - startTime, plan.candidateByDecisionId.size)
                 DebugFlightRecorder.record(
                     "FIRST_NIGHT_ONE_SHOT_READY",
                     mapOf("elapsedMs" to (SystemClock.elapsedRealtime() - startTime).toString(),
@@ -1848,6 +1853,7 @@ internal fun CampBoardGameHostApp() {
             }.onFailure { error ->
                 firstNightOneShotError =
                     "One-shot AI unavailable (${PersonalDirectOpenAiV1.safeFailure(error)}). Manual hosting is available."
+                BotcAiTrace.firstNightEvent(serial, "FAILED", SystemClock.elapsedRealtime() - startTime)
                 DebugFlightRecorder.record(
                     "FIRST_NIGHT_ONE_SHOT_FAILED",
                     mapOf("category" to PersonalDirectOpenAiV1.safeFailure(error)),
@@ -1893,6 +1899,8 @@ internal fun CampBoardGameHostApp() {
         // A later night step must re-match the ID against its current legal domain.
         firstNightAdoptedChoices = plan.candidateByDecisionId
         firstNightOneShotAccepted = true
+        BotcAiTrace.firstNightEvent(firstNightOneShotRequestSerial, "ADOPTED",
+            recommendationCount = plan.candidateByDecisionId.size)
         DebugFlightRecorder.record("FIRST_NIGHT_ONE_SHOT_ADOPTED",
             mapOf("recommendationCount" to plan.candidateByDecisionId.size.toString()))
     }
