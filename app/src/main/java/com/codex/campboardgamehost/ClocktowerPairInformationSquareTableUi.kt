@@ -29,8 +29,8 @@ import androidx.compose.ui.unit.dp
 /**
  * Square-table composition for first-night pair information (Washerwoman/Librarian/Investigator).
  *
- * Recommendation ranking and Manual legality stay outside this file. Experienced mode presents up
- * to three already-ranked recommendations before entering the complete typed Manual legal domain.
+ * A single externally validated recommendation may be presented; the complete Host-legal
+ * domain remains available through explicit manual editing.
  */
 @Composable
 internal fun ClocktowerPairInformationSquareTableDialog(
@@ -55,7 +55,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
         recommendedOptions
             .mapNotNull { option -> ClocktowerPairManualAuthority.canonicalManualOption(presentation, option) }
             .distinct()
-            .take(3)
+            .take(1)
     }
     val canonicalRecommendedOption = canonicalRecommendedOptions.firstOrNull()
     val recommendedSelection = remember(interactionKey, presentation, canonicalRecommendedOption) {

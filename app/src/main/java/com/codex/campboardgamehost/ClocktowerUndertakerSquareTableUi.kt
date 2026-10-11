@@ -200,7 +200,9 @@ internal fun ClocktowerUndertakerSquareTableDialog(
 ) {
     if (choices.isEmpty()) return
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
+        clocktowerRuleOnlyCompactChoice(choices) != null
+    ) {
         ClocktowerBeginnerReadOnlyRevealDialog(
             seats = seats,
             actorSeat = actorSeat,
@@ -214,7 +216,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
         )
         return
     }
-    val recommendations = choices.filter { it.recommended }.take(3).ifEmpty { listOf(initialChoice) }
+    val recommendations = choices.filter { it.recommended }.take(1)
     val manualChoices = choices.filterNot { it in recommendations }
     var manualSelection by remember(choices.map { it.key }, recommendations.map { it.key }) {
         mutableStateOf(false)

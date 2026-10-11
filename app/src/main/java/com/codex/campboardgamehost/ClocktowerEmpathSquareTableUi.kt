@@ -269,7 +269,9 @@ internal fun ClocktowerEmpathSquareTableDialog(
 ) {
     if (choices.isEmpty()) return
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
+        clocktowerRuleOnlyCompactChoice(choices) != null
+    ) {
         ClocktowerBeginnerReadOnlyRevealDialog(
             seats = seats,
             actorSeat = actorSeat,
@@ -284,8 +286,8 @@ internal fun ClocktowerEmpathSquareTableDialog(
         return
     }
     val displayedContributionSeats = clocktowerEmpathDisplayedContributionSeats(choices, initialChoice.key)
-    val recommendedChoices = choices.filter { it.recommended }.take(3)
-        .ifEmpty { listOf(initialChoice) }
+    val recommendedChoices = choices.filter { it.recommended }.take(1)
+        
 
     ClocktowerHostSquareTableScaffold(
         seats = seats,
@@ -335,7 +337,7 @@ internal fun ClocktowerEmpathSquareTableDialog(
                 verticalArrangement = Arrangement.Center,
             ) {
                 ClocktowerNightActionWakeInstruction(wakeInstruction)
-                ClocktowerExperiencedNumericChoiceRows(
+                ClocktowerSingleNumericChoiceRows(
                     choices = choices,
                     recommendedChoices = recommendedChoices,
                     language = language,
