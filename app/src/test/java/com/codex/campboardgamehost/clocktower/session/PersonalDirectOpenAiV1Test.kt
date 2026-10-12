@@ -88,6 +88,37 @@ class PersonalDirectOpenAiV1Test {
         }.isFailure)
     }
 
+
+    @Test
+    fun unifiedV2UsesOneStructuredSchemaWithoutCandidateMenusOrAnalysisCall() {
+        val host = JSONObject()
+            .put("schemaId", InitialJointOpeningDirectV2.REQUEST_SCHEMA)
+            .put("schemaVersion", 2)
+            .put("requestIdentity", JSONObject().put("gameId", "g"))
+        val request = JSONObject(PersonalDirectOpenAiV1.buildRequest(
+            host.toString(), "gpt-5.6-luna"))
+        assertEquals("botc_initial_joint_opening_v2",
+            request.getJSONObject("text").getJSONObject("format").getString("name"))
+        assertFalse(request.getBoolean("store"))
+        assertTrue(request.getString("instructions").contains("酒鬼"))
+        assertTrue(request.getString("instructions").contains("同一次请求"))
+        val schema = request.getJSONObject("text").getJSONObject("format")
+            .getJSONObject("schema")
+        assertEquals(6, schema.getJSONArray("required").length())
+        assertTrue(schema.getJSONObject("properties").getJSONObject("openingPlan")
+            .getJSONObject("properties").has("drunkSeat"))
+        assertFalse(schema.getJSONObject("properties").has("primaryCandidateId"))
+        assertFalse(request.toString().contains("sk-test"))
+        val response = JSONObject()
+            .put("schemaVersion", 2).put("asOfRevision", 0)
+            .put("requestIdentity", JSONObject().put("gameId", "g"))
+            .put("openingPlan", JSONObject())
+        val adapted = JSONObject(PersonalDirectOpenAiV1.adaptResponse(
+            host.toString(), upstream(response)))
+        assertTrue(adapted.has("openingPlan"))
+        assertFalse(adapted.has("primaryCandidateId"))
+    }
+
     @Test
     fun `request uses strict responses schema store false and no credentials`() {
         val raw = PersonalDirectOpenAiV1.buildRequest(

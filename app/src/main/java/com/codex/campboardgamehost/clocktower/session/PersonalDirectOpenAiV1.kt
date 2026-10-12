@@ -74,15 +74,18 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
         val case = JSONObject(hostPayload)
         val analysis = case.optString("schemaId") == "botc.storyteller-global-analysis-request"
         val oneShot = case.optString("schemaId") == FirstNightOneShotRequestV1.REQUEST_SCHEMA
+        val jointOpening = case.optString("schemaId") == InitialJointOpeningDirectV2.REQUEST_SCHEMA
         val compact = case.optString("responseProfile") == "COMPACT_MEMO_V1"
-        require(!(analysis && compact) && !(oneShot && compact))
+        require(!(analysis && compact) && !(oneShot && compact) && !(jointOpening && compact))
         val schema = when {
+            jointOpening -> InitialJointOpeningDirectV2.responseSchema
             oneShot -> oneShotSchema
             analysis -> analysisSchema
             compact -> compactSchema
             else -> fullSchema
         }
         val instructions = when {
+            jointOpening -> InitialJointOpeningDirectV2.INSTRUCTIONS
             oneShot -> ONE_SHOT_INSTRUCTIONS
             analysis -> COMMITTED_INSTRUCTIONS
             compact -> LIVE_INSTRUCTIONS
@@ -96,6 +99,7 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
             .put("text", JSONObject().put("format", JSONObject()
                 .put("type", "json_schema")
                 .put("name", when {
+                    jointOpening -> "botc_initial_joint_opening_v2"
                     oneShot -> "botc_first_night_one_shot_v1"
                     analysis -> "botc_global_analysis_v1"
                     compact -> "botc_global_compact_memo_v1"
@@ -123,7 +127,10 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
         }
         require(text.isNotEmpty()) { "OpenAI returned no structured text." }
         val result = JSONObject(text.toString())
-        if (case.optString("schemaId") == FirstNightOneShotRequestV1.REQUEST_SCHEMA) {
+        if (case.optString("schemaId") in setOf(
+                FirstNightOneShotRequestV1.REQUEST_SCHEMA,
+                InitialJointOpeningDirectV2.REQUEST_SCHEMA,
+            )) {
             // The caller validates the entire returned bundle against the
             // exact in-memory Host legal scope and current revision. Never
             // fill missing or illegal values with a default.
