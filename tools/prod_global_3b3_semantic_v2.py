@@ -60,7 +60,7 @@ SCHEMA = obj({
             }),
             "observation": obj({
                 "kind": {"type": "string", "enum": [
-                    "NONE", "NUMBER", "ROLE", "BOOLEAN"]},
+                    "NONE", "NUMBER", "ROLE", "BOOLEAN", "ZERO_OUTSIDERS"]},
                 "number": {"type": ["integer", "null"]},
                 "roleId": role_ref(nullable=True),
                 "boolean": {"type": ["boolean", "null"]},
@@ -244,7 +244,8 @@ def screen_v2(result: dict, fixture: dict, data: dict) -> list[str]:
             issues.append("undeclared_information_decision")
         if (seat == drunk and effective is not None) or (seat != drunk and effective != ability):
             issues.append("effective_ability_mismatch")
-        if (seat == drunk) != (basis == "DRUNK_MISINFORMATION"):
+        if (seat == drunk) != (basis == "DRUNK_MISINFORMATION") and (
+                resolution not in ("DEFERRED", "CONDITIONAL_INTENT") or basis != "STATUS_DEPENDENT"):
             issues.append("drunk_basis_mismatch")
         if resolution == "DECISION":
             if obs["kind"] == "NONE" or waiting:
@@ -284,8 +285,11 @@ def screen_v2(result: dict, fixture: dict, data: dict) -> list[str]:
         if k == "BOOLEAN" and (type(obs["boolean"]) is not bool
                                or obs["number"] is not None or obs["roleId"] is not None):
             issues.append("invalid_boolean_payload")
-        if k == "NONE" and any(obs[v] is not None for v in ("number", "roleId", "boolean")):
+        if k in ("NONE", "ZERO_OUTSIDERS") and any(
+                obs[v] is not None for v in ("number", "roleId", "boolean")):
             issues.append("nonempty_none_payload")
+        if k == "ZERO_OUTSIDERS" and (ability != "librarian" or mode != "NONE"):
+            issues.append("invalid_zero_outsiders")
     events = [x["event"] for x in plan["deferredActions"]]
     if len(events) != len(set(events)):
         issues.append("duplicate_deferred_action")
