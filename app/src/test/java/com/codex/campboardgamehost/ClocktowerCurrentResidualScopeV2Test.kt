@@ -133,6 +133,22 @@ class ClocktowerCurrentResidualScopeV2Test {
             StorytellerProviderGameContextV1.EMPTY, null)
         val pending = scope(current)
         assertEquals(1, pending.requests.size)
+        val first = pending.requests.single()
+        val chosen = first.legalCandidates.single().candidateId
+        val selection = mapOf(first.identity.decisionId to chosen)
+        assertTrue(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+            pending.requests, selection, listOf(current), cards))
+        assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+            pending.requests, emptyMap(), listOf(current), cards))
+        assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+            listOf(first, first), selection, listOf(current), cards))
+        assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+            pending.requests, selection, listOf(current.copy(
+                automaticInformationCandidates = listOf(roleOption.copy(
+                    recluseRegistersEvil = true)))), cards))
+        assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+            pending.requests, selection, listOf(current.copy(
+                automaticInformationCandidates = listOf(roleOption, roleOption))), cards))
         assertEquals(1, pending.barrierStep)
         val legal = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
             session.state, StorytellerPhase.NIGHT, 2, pending.requests)

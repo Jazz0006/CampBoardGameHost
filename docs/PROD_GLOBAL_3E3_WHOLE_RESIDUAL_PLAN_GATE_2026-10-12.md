@@ -29,11 +29,18 @@ One expert Storyteller plans the whole game across roles and nights from bounded
 - Distinct registration witnesses collapse into one semantic role-result candidate (`role-result:targetSeat:roleId`), so candidate ID carries no unique Spy/Recluse registration witness. Only uniquely matching, witness-free current Host UI options are preselected; explicit special registration options remain manually resolved. Completed/published observations remain excluded by existing Host inventory.
 - Added tests for typed Role results in the same Night Host legal inventory, player-action dependency barriers, missing target, and inability to auto-commit ambiguous registration. This does **not** make the preselection engine an automatic publication authority.
 
+## Automatic-mode bridge (2026-10-13)
+
+- The **same** 3E3 whole-residual Host scope, versioned strategy and single continuation call now drive both assisted and automatic operation modes; no independent auto-only per-role AI recommender. Automatic mode privately adopts the returned package after complete current Host revalidation instead of showing an extra adoption button. The step's existing Host player-facing confirmation/presentation remains authoritative; it does not prematurely reveal a result.
+- For **automatic** adoption, every model choice in the complete package must also correspond to exactly one currently renderable, witness-free Host information option. Any unresolved registration, duplicate/missing presentation, or non-information target/ruling decision blocks automatic adoption of the entire proposal and gives a manual-takeover error. Assisted mode retains its ability to override safely. A mode switch or stale in-flight response is discarded.
+- UI auto mode now triggers the generic checkpoint without manual request tapping, hides the assisted request/adopt controls and minimizes strategic text. Existing initial opening options are hidden while a new auto replan is pending/invalid, rather than silently falling back to an obsolete plan. The 450ms change window and no-material-change no-call behavior are retained.
+- These changes are an **automatic private plan preselection bridge**, not proof of fully autonomous Host publication or comprehensive multi-night acceptance. The default Host-led confirmation is still required at the actual player wake/observation boundary.
+
 ## Still required for actual 3E3 completion
 
 1. Expand authoritative complete multi-night/current-phase legal-domain coverage beyond current first-night pair, any-night typed number/boolean/role-result and active Mayor redirect, without guessing actions; prove same-causal-segment completeness and support independent downstream choices when dependencies allow.
 2. Improve production deduplication/change coalescing, explicit cancellation and fresh Host scope regeneration at every adoption boundary; add comprehensive real multi-night integration tests and parallel-response failure handling.
-3. Complete **AI automatic** Host-confirmed adoption (currently the newly wired runtime continuation is **assisted only**). Never auto-display earlier proposed information while its prerequisites or current replan are unresolved. Human override must trigger generic strategy revision once the Host records it.
+3. Complete end-to-end **AI automatic** Host confirmation across every supported current decision family, plus clear operator fallback for unsupported/ambiguous rulings. Automatic preselection now shares the same planner and Host gate but does not force an unsupported registration nor publish an observation early. Human override must trigger generic strategy revision once the Host records it.
 4. Paid Luna schema/strategy tests, Android Studio/ADB end-to-end with #305 diagnostics integrated, real 5–10-seat phone play. Retire superseded V1 per-step paths only after functional parity and device acceptance.
 
 ## Acceptance status

@@ -1961,7 +1961,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun adoptWholeResidualProposal(steps: List<ClocktowerNightStepUi>, stepIndex: Int) {
-        if (storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED ||
+        if (storytellerOperationMode == StorytellerOperationMode.MANUAL ||
             residualProposedKey != liveAiAdviceKey) return
         val proposal = residualProposedPackage ?: return
         val latest = clocktowerGameSession?.state ?: return
@@ -1998,7 +1998,10 @@ internal fun CampBoardGameHostApp() {
                 mayor, redHerringAlreadyChosen = clocktowerRedHerring != null)
             val open = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
                 latest, position.phase, position.round, scope.requests)
-            open == residualProposedOpen
+            open == residualProposedOpen &&
+                (storytellerOperationMode != StorytellerOperationMode.AI_AUTOMATIC ||
+                    ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+                        scope.requests, proposal.choices, steps, cards))
         }.getOrDefault(false)
         if (!sameScope) {
             residualProposedPackage = null
@@ -2016,12 +2019,13 @@ internal fun CampBoardGameHostApp() {
 
     fun requestLiveGlobalAdvice(steps: List<ClocktowerNightStepUi>, stepIndex: Int) {
         val step = steps.getOrNull(stepIndex) ?: return
-        if (storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED ||
+        if (storytellerOperationMode == StorytellerOperationMode.MANUAL ||
             screen != Screen.ClocktowerJudge ||
             currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
             clocktowerPhase !in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night)
         ) return
         val session = clocktowerGameSession ?: return
+        val requestedOperationMode = storytellerOperationMode
         val context = currentTroubleBrewingFirstNightPairDecisionContext()
         val pendingPair = context?.let {
             pendingGlobalFirstNightPairDecision(
@@ -2117,6 +2121,14 @@ internal fun CampBoardGameHostApp() {
         val wholeOpening = adoptedJointOpening
         val wholeCursor = strategicPolicyCursor
         val wholeBaseline = strategicLastReviewedHost
+        if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC &&
+            (!personalDirectEnabled || wholeOpening == null ||
+                wholeCursor == null || wholeBaseline == null)
+        ) {
+            liveAiAdviceError = "Whole-game strategy is not available; automatic AI paused. Use Host manual decisions."
+            DebugFlightRecorder.record("RESIDUAL_AUTO_NO_WHOLE_CONTEXT")
+            return
+        }
         if (personalDirectEnabled && wholeOpening != null &&
             wholeCursor != null && wholeBaseline != null
         ) {
@@ -2182,6 +2194,7 @@ internal fun CampBoardGameHostApp() {
                 if (liveAiAdviceKey != key || clocktowerGameSession !== session ||
                     session.state !== currentHost.state ||
                     strategicPolicyCursor != wholeCursor ||
+                    storytellerOperationMode != requestedOperationMode ||
                     clocktowerNightStepIndexState.value != stepIndex) return@launch
                 val result = runCatching {
                     StorytellerStrategicContinuationV2.recommend(
@@ -2194,7 +2207,8 @@ internal fun CampBoardGameHostApp() {
                     clocktowerNightStepIndexState.value != stepIndex ||
                     clocktowerPhase.toStorytellerPhase() != phasePosition.phase ||
                     round != phasePosition.round ||
-                    strategicPolicyCursor != wholeCursor
+                    strategicPolicyCursor != wholeCursor ||
+                    storytellerOperationMode != requestedOperationMode
                 ) return@launch
                 liveAiAdviceBusy = false
                 result.onSuccess { proposal ->
@@ -2238,6 +2252,19 @@ internal fun CampBoardGameHostApp() {
                         DebugFlightRecorder.record("RESIDUAL_WHOLE_ACCEPTED", mapOf(
                             "choiceCount" to verified.choices.size.toString(),
                             "memoryVersion" to advanced.version.toString()))
+                        if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC) {
+                            // Same current Host-domain CAS and private preselection as
+                            // assisted mode. Publication still belongs to the existing
+                            // Host step / actual player-facing confirmation boundary.
+                            adoptWholeResidualProposal(steps, stepIndex)
+                            if (residualAdoptedPackage != verified) {
+                                liveAiAdviceError = "Automatic plan changed before Host adoption; take over manually."
+                                DebugFlightRecorder.record("RESIDUAL_AUTO_PAUSED")
+                            } else {
+                                DebugFlightRecorder.record("RESIDUAL_AUTO_PRESELECTED", mapOf(
+                                    "choiceCount" to verified.choices.size.toString()))
+                            }
+                        }
                     }.onFailure {
                         liveAiAdviceError =
                             "Whole residual proposal is stale or illegal; continue manually."
@@ -3558,7 +3585,8 @@ internal fun CampBoardGameHostApp() {
                         gameId = clocktowerGameId,
                         gameSeed = clocktowerGameSeed,
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
-                        globalAiAssisted = storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED,
+                        globalAiAssisted = storytellerOperationMode != StorytellerOperationMode.MANUAL,
+                        globalAiAutomatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC,
                         oneShotEnabled = personalDirectEnabled &&
                             storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
                             !jointOpeningApplied,
@@ -3572,7 +3600,7 @@ internal fun CampBoardGameHostApp() {
                         onRequestOneShot = ::requestFirstNightOneShot,
                         onAdoptOneShot = ::adoptFirstNightOneShot,
                         globalNightPendingDecision = if (
-                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
+                            storytellerOperationMode != StorytellerOperationMode.MANUAL &&
                             clocktowerPhase == ClocktowerPhase.Night
                         ) runCatching { currentTroubleBrewingMayorRedirectPendingDecision() }.getOrNull()
                         else null,

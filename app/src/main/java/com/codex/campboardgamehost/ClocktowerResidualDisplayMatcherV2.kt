@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
 
@@ -12,6 +14,90 @@ import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDeci
 internal object ClocktowerResidualDisplayMatcherV2 {
     private fun normalize(value: String): String =
         value.filter(Char::isLetterOrDigit).lowercase()
+
+    /**
+     * Whole-package automatic safety gate. A legal model choice must also have
+     * exactly one witness-free Host presentation at its current real step.
+     * This never publishes information and never infers a future player target.
+     */
+    fun allChoicesCanBePresented(
+        requests: List<StorytellerProviderRequestV1>,
+        choices: Map<String, String>,
+        steps: List<ClocktowerNightStepUi>,
+        cards: List<PlayerCard>,
+    ): Boolean {
+        if (requests.isEmpty() ||
+            requests.map { it.identity.decisionId }.distinct().size != requests.size ||
+            choices.keys != requests.map { it.identity.decisionId }.toSet()) return false
+        return requests.all { request ->
+            val id = choices[request.identity.decisionId] ?: return@all false
+            val candidate = request.legalCandidates.singleOrNull { it.candidateId == id }
+                ?: return@all false
+            val context = request.decisionContext
+            val actorSeat = when (context) {
+                is StorytellerProviderDecisionContextV1.ScalarInformation -> context.sourceSeat
+                is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> context.sourceSeat
+                else -> return@all false // no supported automatic Host presentation
+            }
+            val abilityRole = when (context) {
+                is StorytellerProviderDecisionContextV1.ScalarInformation -> context.abilityRole.value
+                is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> context.abilityRole.value
+                else -> return@all false
+            }
+            val actorName = cards.getOrNull(actorSeat - 1)?.name ?: return@all false
+            steps.count { step ->
+                if (!step.isRealAction || step.actor?.name != actorName ||
+                    step.roleEnName != abilityRole) return@count false
+                val options = step.manualInformationCandidates.ifEmpty {
+                    step.automaticInformationCandidates
+                }
+                options.filter(::safe).count { option ->
+                    when (val payload = candidate.payload) {
+                        is StorytellerProviderCandidatePayloadV1.ScalarResult -> {
+                            if (context !is StorytellerProviderDecisionContextV1.ScalarInformation) {
+                                false
+                            } else when (val proposition = option.proposition) {
+                                is InformationProposition.NumericResult ->
+                                    proposition.sourceSeat == context.sourceSeat &&
+                                        proposition.metric.name == context.metric &&
+                                        proposition.subjectSeats == context.subjectSeats &&
+                                        proposition.value.toString() == payload.value
+                                is InformationProposition.BooleanResult ->
+                                    proposition.sourceSeat == context.sourceSeat &&
+                                        proposition.metric.name == context.metric &&
+                                        proposition.subjectSeats == context.subjectSeats &&
+                                        proposition.value.toString() == payload.value
+                                is InformationProposition.RoleAt ->
+                                    context.metric == "REVEALED_CHARACTER" &&
+                                        context.subjectSeats == listOf(proposition.seat) &&
+                                        proposition.role.value == payload.value
+                                else ->
+                                    context.metric == "REVEALED_CHARACTER" &&
+                                        option.displayKind == ClocktowerDisplayKind.RoleReveal &&
+                                        option.presentationSubjectSeats == context.subjectSeats &&
+                                        option.presentationRoleId == payload.value
+                            }
+                        }
+                        is StorytellerProviderCandidatePayloadV1.PairInformation -> {
+                            if (context !is StorytellerProviderDecisionContextV1.FirstNightPairInformation) {
+                                false
+                            } else {
+                                val proposition = option.proposition as? InformationProposition.AnyOf
+                                val parts = proposition?.alternatives
+                                    ?.filterIsInstance<InformationProposition.RoleAt>().orEmpty()
+                                parts.size == 2 &&
+                                    parts.map { it.seat }.sorted() == payload.candidateSeats.sorted() &&
+                                    payload.shownRoleId != null &&
+                                    parts.all { normalize(it.role.value) ==
+                                        normalize(payload.shownRoleId) }
+                            }
+                        }
+                        else -> false
+                    }
+                } == 1
+            } == 1
+        }
+    }
 
     private fun safe(option: ClocktowerDisplayOption): Boolean =
         option.spyRegistersGood == null &&

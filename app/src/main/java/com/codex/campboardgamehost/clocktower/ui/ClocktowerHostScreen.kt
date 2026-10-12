@@ -85,6 +85,8 @@ internal fun ClocktowerJudgeScreen(
     gameSeed: Long,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
     globalAiAssisted: Boolean = false,
+    /** The same joint planner is used, but verified plans are privately adopted by Host. */
+    globalAiAutomatic: Boolean = false,
     oneShotEnabled: Boolean = false,
     oneShotPlan: com.codex.campboardgamehost.clocktower.session.FirstNightOneShotPlanV1? = null,
     oneShotBusy: Boolean = false,
@@ -2601,7 +2603,11 @@ internal fun ClocktowerJudgeScreen(
                 } else currentStep.manualInformationCandidates)
             else -> null
         }
-        val approvedOpeningOption = residualApprovedOption ?: oldApprovedOpeningOption ?: preplannedSeat?.let { seat ->
+        val approvedOpeningOption = if (globalAiAutomatic &&
+            (globalAiAdviceBusy || globalAiAdviceError != null ||
+                (jointOpeningAdopted && globalAiCurrentKey != null &&
+                    globalAiAdviceKey != globalAiCurrentKey))) null else
+            residualApprovedOption ?: oldApprovedOpeningOption ?: preplannedSeat?.let { seat ->
             jointOpeningSemantics[seat]?.let { planned ->
                 ClocktowerJointOpeningDisplayMatcherV2.match(
                     plan = planned,
@@ -2767,19 +2773,27 @@ internal fun ClocktowerJudgeScreen(
                 if (globalAiAssisted && globalAiDecisionIdentity != null &&
                     globalAiCurrentKey != null
                 ) {
-                    OutlinedButton(
-                        onClick = { onRequestGlobalAiAdvice(nightSteps, currentStepIndex) },
-                        enabled = !globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey,
-                    ) {
-                        Text(text("AI 全局局势与当前合法裁量", "Global AI advice"))
+                    if (!globalAiAutomatic) {
+                        OutlinedButton(
+                            onClick = { onRequestGlobalAiAdvice(nightSteps, currentStepIndex) },
+                            enabled = !globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey,
+                        ) {
+                            Text(text("AI 全局局势与当前合法裁量", "Global AI advice"))
+                        }
                     }
                     if (globalAiAdviceKey == globalAiCurrentKey) {
                         if (globalAiAdviceBusy) Text(
                             text("正在重新评估已确认的游戏事件…", "Analysing committed game history…"),
                         )
                         globalAiAdviceError?.let { error -> Text(text = error) }
-                        globalAiAdviceText?.let { advice -> Text(text = advice) }
-                        if (globalResidualProposalAvailable && !globalAiAdviceBusy) {
+                        globalAiAdviceText?.let { advice ->
+                            Text(text = if (globalAiAutomatic && globalAiAdviceError == null)
+                                text("AI 已更新整局规划，合法结果将在相应夜晚步骤使用。",
+                                    "Whole-game strategy updated; legal results are used in their night steps.")
+                            else advice)
+                        }
+                        if (globalResidualProposalAvailable && !globalAiAdviceBusy &&
+                            !globalAiAutomatic) {
                             Button(onClick = {
                                 onAdoptGlobalResidual(nightSteps, currentStepIndex)
                             }) {
