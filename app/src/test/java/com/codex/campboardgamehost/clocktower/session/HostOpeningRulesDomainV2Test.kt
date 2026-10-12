@@ -351,6 +351,31 @@ class HostOpeningRulesDomainV2Test {
         }.isFailure)
     }
 
+    @Test fun drunkShownFortuneTellerQueryNeedsNoRedHerringAndStillChecksLegalTargets() {
+        val shown = listOf("chef", "fortuneteller", "ravenkeeper", "butler",
+            "investigator", "recluse", "baron", "imp")
+        val branch = make(shown, true).forDrunkSeat(2)
+        assertTrue(branch.redHerringCandidatesBySeat.isEmpty())
+        val raw = plan(branch)
+        val info = raw.getJSONObject("openingPlan").getJSONArray("information")
+        val ft = (0 until info.length()).map { info.getJSONObject(it) }
+            .single { it.getString("decisionId") == "first-night:seat-2" }
+        assertTrue(ft.isNull("effectiveAbilityRoleId"))
+        ft.put("resolution", "CONDITIONAL_INTENT")
+        ft.getJSONObject("observation").put("kind", "BOOLEAN").put("boolean", true)
+        val original = HostOpeningSemanticGateV2.accept(raw, branch)
+        val resolved = firstNightFacts(branch, shown, ftTargets = mapOf(2 to listOf(6, 7)))
+        val review = HostOpeningResidualEventGateV2.review(
+            original, branch, resolved, registry, definitions)
+        assertEquals(HostOpeningResidualDispositionV2.STILL_LEGAL_UNPUBLISHED,
+            review.decisions.single { it.decisionId == "first-night:seat-2" }.disposition)
+        assertTrue(runCatching {
+            HostOpeningResidualEventGateV2.review(
+                original, branch, resolved.copy(redHerringSeat = 4),
+                registry, definitions)
+        }.isFailure)
+    }
+
     @Test fun publishedHostObservationStaysFrozenAndIsNeverRewritten() {
         val shown = listOf("chef", "empath", "washerwoman", "fortuneteller",
             "recluse", "butler", "spy", "imp")
