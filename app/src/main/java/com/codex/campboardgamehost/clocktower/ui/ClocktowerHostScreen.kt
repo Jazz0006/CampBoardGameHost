@@ -90,6 +90,8 @@ internal fun ClocktowerJudgeScreen(
     oneShotError: String? = null,
     oneShotAccepted: Boolean = false,
     adoptedOneShotChoices: Map<String, String> = emptyMap(),
+    jointOpeningAdopted: Boolean = false,
+    jointOpeningSemantics: Map<Int, com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2> = emptyMap(),
     onRequestOneShot: (com.codex.campboardgamehost.clocktower.session.FirstNightOneShotScopeV1) -> Unit = {},
     onAdoptOneShot: (com.codex.campboardgamehost.clocktower.session.FirstNightOneShotPlanV1,
         com.codex.campboardgamehost.clocktower.session.FirstNightOneShotScopeV1) -> Unit = { _, _ -> },
@@ -2563,7 +2565,7 @@ internal fun ClocktowerJudgeScreen(
         val preplannedChoice = preplannedSeat?.let { seat ->
             adoptedOneShotChoices["first-night:${currentStep.roleEnName}:seat-$seat"]
         }
-        val approvedOpeningOption = preplannedChoice?.let { id ->
+        val oldApprovedOpeningOption = preplannedChoice?.let { id ->
             val options = currentStep.manualInformationCandidates.ifEmpty {
                 currentStep.legacyInformationCandidates.takeIf { legacy ->
                     currentStep.roleEnName in setOf("Chef", "Empath") &&
@@ -2577,8 +2579,19 @@ internal fun ClocktowerJudgeScreen(
             // stale initial candidate ID from the accepted bundle.
             options.singleOrNull { clocktowerOneShotCandidateId(it) == id }
         }
-        LaunchedEffect(globalAiCurrentKey, globalAiAssisted, approvedOpeningOption) {
-            if (globalAiAssisted && globalAiCurrentKey != null &&
+        val approvedOpeningOption = oldApprovedOpeningOption ?: preplannedSeat?.let { seat ->
+            jointOpeningSemantics[seat]?.let { planned ->
+                ClocktowerJointOpeningDisplayMatcherV2.match(
+                    plan = planned,
+                    currentSourceSeat = seat,
+                    currentOptions = currentStep.manualInformationCandidates,
+                )
+            }
+        }
+        LaunchedEffect(globalAiCurrentKey, globalAiAssisted, approvedOpeningOption,
+            jointOpeningAdopted, phase) {
+            if (globalAiAssisted && !(jointOpeningAdopted && phase == ClocktowerPhase.FirstNight) &&
+                globalAiCurrentKey != null &&
                 globalAiAdviceKey != globalAiCurrentKey && approvedOpeningOption == null
             ) {
                 onRequestGlobalAiAdvice(currentStep, currentStepIndex)

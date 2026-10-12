@@ -2,6 +2,12 @@
 
 > Updated: **2026-10-11 Australia/Sydney**. **唯一当前执行优先级权威。** Historical PROD-GLOBAL-1D/2B instructions are NOT current NEXT; see [PROD-GLOBAL-3 unified opening plan](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md) and [handoff](NEXT_DEVELOPMENT_HANDOFF.md). Previous checkpoint detail remains in original route documents and [archive](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md).
 
+## CURRENT DEVELOPMENT — PROD-GLOBAL-3C/3D app route wired, needs independent acceptance (2026-10-12)
+
+Active stacked Draft PR #304: first commit `e7e044b2` creates precommit Responses V2 transport and Host semantic gate; current unpushed app-level continuation adds **shown-only parallel revealing**, single joint request at shown roster lock for personal-direct TB AI, private same-game plan acceptance, late Drunk commit, Red Herring/bluffs adoption and strict current-Host first-night typed matching with no second initial paid request. Android CI/R2 and actual Luna schema acceptance not yet verified for this continuation. Manual + external gateway paths remain as before until full fanout. Conditional future event validation must connect to real Host session, and auto mode/phone/recovery must be audited before acceptance. [Active route](PROD_GLOBAL_3C3D_SINGLE_JOINT_OPENING_CUTOVER_2026-10-12.md).
+
+### Earlier 3C/3D transport checkpoint
+
 ## CURRENT DEVELOPMENT — PROD-GLOBAL-3C/3D single expert precommit call (2026-10-12)
 
 Prerequisite Draft #303 final head `58303c130bf26f84355a0c684363b19dec8ea0f9`, CI #4120 + R2 #3742 GREEN. Active branch `feature/prod-global-3c3d-single-precommit-opening-20261012` introduces `InitialJointOpeningDirectV2`: a genuine personal-direct Responses request, formed from the actual uncommitted shown roster plus compact rules/experience, returning ONE entire structured strategy plan. It binds output to all current Host Drunk-conditional legal domains with `HostOpeningSemanticGateV2`, never enumerates legal candidate outcomes into model input, never commits/publishes implicitly. **This is the transport seam, not yet a production flow replacement.** Exact CI/R2 required. NEXT within 3C: shown-only identity dealing in parallel, one-time result/Host commit and one-tap night adoption; explicitly stop old standalone Drunk + postcommit one-shot calls and connect confirmed-event residual gate to real Host journal. Do not call production fixed before phone/Host semantic/model quality acceptance. [3C/3D route](PROD_GLOBAL_3C3D_SINGLE_JOINT_OPENING_CUTOVER_2026-10-12.md).

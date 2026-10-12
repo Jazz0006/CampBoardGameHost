@@ -87,6 +87,10 @@ import com.codex.campboardgamehost.clocktower.session.StorytellerCommittedAnalys
 import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotRequestV1
 import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotScopeV1
 import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotPlanV1
+import com.codex.campboardgamehost.clocktower.session.InitialJointOpeningDirectV2
+import com.codex.campboardgamehost.clocktower.session.HostOpeningRulesDomainV2
+import com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticAcceptanceV2
+import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderResponseV1
@@ -186,6 +190,9 @@ private enum class Screen {
     UndercoverSettings,
     ClocktowerSettings,
     ClocktowerDrunkSelection,
+    ClocktowerJointPass,
+    ClocktowerJointReveal,
+    ClocktowerJointReview,
     ClocktowerAiOverview,
     ClocktowerAutoPause,
     Settings,
@@ -201,6 +208,14 @@ private data class PendingTroubleBrewingDrunkSelection(
     val request: TroubleBrewingDrunkSelectionRequest,
     val decision: PendingDrunkAssignmentDecision,
     val providerRequest: StorytellerProviderRequestV1,
+)
+
+/** Showing roles may begin while Drunk actual identity is uncommitted. No real session yet. */
+private data class PendingTroubleBrewingJointOpening(
+    val preparedGameId: String,
+    val preparedSetup: TroubleBrewingPreparedSetup,
+    val domain: HostOpeningRulesDomainV2,
+    val shownOnlyCards: List<PlayerCard>,
 )
 
 internal enum class LanguageMode(val prefsValue: String) {
@@ -402,6 +417,17 @@ internal fun CampBoardGameHostApp() {
     var firstNightOneShotAccepted by remember { mutableStateOf(false) }
     var firstNightAdoptedChoices by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var firstNightOneShotRequestSerial by remember { mutableStateOf(0) }
+    var pendingJointOpening by remember { mutableStateOf<PendingTroubleBrewingJointOpening?>(null) }
+    var jointOpeningResult by remember { mutableStateOf<HostOpeningSemanticAcceptanceV2?>(null) }
+    var jointOpeningBusy by remember { mutableStateOf(false) }
+    var jointOpeningError by remember { mutableStateOf<String?>(null) }
+    var jointOpeningSerial by remember { mutableStateOf(0) }
+    var jointRevealIndex by remember { mutableStateOf(0) }
+    var jointOpeningApplied by remember { mutableStateOf(false) }
+    var adoptedJointOpening by remember { mutableStateOf<HostOpeningSemanticAcceptanceV2?>(null) }
+    var adoptedJointInformation by remember { mutableStateOf<Map<Int,
+        com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2>>(emptyMap()) }
+    var shownOnlyDealCompleted by remember { mutableStateOf(false) }
     var committedAiSnapshot by remember { mutableStateOf<TroubleBrewingGameSnapshotV1?>(null) }
     var committedAiBusy by remember { mutableStateOf(false) }
     var committedAiError by remember { mutableStateOf<String?>(null) }
@@ -2196,11 +2222,12 @@ internal fun CampBoardGameHostApp() {
                 committedSetup = committedSetup.committedSetup,
                 characterRegistry = characterRegistry,
             )
-        // The experimental personal direct assisted path starts a SINGLE
-        // actionable one-shot joint opening at preflight, not a paid prose essay.
-        if (!(storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
-                personalDirectEnabled)
-        ) committedAiSnapshot?.let(::requestCommittedGlobalAdvice)
+        // The V2 precommit plan is already a full-board proposal.
+        // NEVER pay for a second mandatory initial setup analysis after binding Drunk.
+        if (!jointOpeningApplied && !(storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
+                personalDirectEnabled)) {
+            committedAiSnapshot?.let(::requestCommittedGlobalAdvice)
+        }
         currentTroubleBrewingFirstNightPairDecisionContext()?.let { request ->
             troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
                 request = request,
@@ -2210,6 +2237,169 @@ internal fun CampBoardGameHostApp() {
                     }
                 },
             )
+        }
+    }
+
+
+    /** 3C: the only INITIAL paid model request for personal-direct TB opening. */
+    fun requestJointOpening(pending: PendingTroubleBrewingJointOpening) {
+        if (pendingJointOpening !== pending || jointOpeningBusy ||
+            storytellerOperationMode == StorytellerOperationMode.MANUAL ||
+            !personalDirectEnabled) return
+        if (aiToken.isBlank() || !aiEndpoint.startsWith("https://")) {
+            jointOpeningError = "AI credentials unavailable. You can continue manually."
+            return
+        }
+        val requestedMode = storytellerOperationMode
+        val requestedKey = aiToken
+        val requestedModel = aiDirectModel ?: PersonalDirectOpenAiV1.DEFAULT_MODEL
+        jointOpeningSerial += 1
+        val serial = jointOpeningSerial
+        jointOpeningBusy = true
+        jointOpeningResult = null
+        jointOpeningError = null
+        val registry = activeGameClocktowerRulesetCatalog
+            .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+        BotcAiTrace.firstNightEvent(serial, "JOINT_PRECOMMIT_START")
+        drunkAiScope.launch {
+            val result = runCatching {
+                InitialJointOpeningDirectV2.recommend(
+                    endpoint = PersonalDirectOpenAiV1.ENDPOINT,
+                    accessToken = requestedKey,
+                    domain = pending.domain,
+                    registry = registry,
+                    model = requestedModel,
+                    onStage = { stage -> BotcAiTrace.firstNightStage(serial, stage) },
+                )
+            }
+            // Precommit has NO committed session. Never compare against a
+            // fake session state; bind directly to this immutable pending game.
+            if (serial != jointOpeningSerial || pendingJointOpening !== pending ||
+                storytellerOperationMode != requestedMode || !personalDirectEnabled ||
+                screen !in setOf(Screen.ClocktowerJointPass,
+                    Screen.ClocktowerJointReveal, Screen.ClocktowerJointReview)
+            ) return@launch
+            result.onSuccess { accepted ->
+                if (accepted.selection.validFor(pending.domain.scope)) {
+                    jointOpeningResult = accepted
+                    jointOpeningError = null
+                    BotcAiTrace.firstNightEvent(serial, "JOINT_PRECOMMIT_READY")
+                } else {
+                    jointOpeningError = "Opening is stale. Retry whole planning or take over manually."
+                }
+            }.onFailure { error ->
+                jointOpeningResult = null
+                jointOpeningError = "Whole-game AI plan failed (" +
+                    PersonalDirectOpenAiV1.safeFailure(error) + "). Manual takeover is available."
+                BotcAiTrace.firstNightEvent(serial, "JOINT_PRECOMMIT_FAILED")
+            }
+            jointOpeningBusy = false
+        }
+    }
+
+    fun adoptJointOpeningAfterReveal() {
+        val pending = pendingJointOpening ?: return
+        val accepted = jointOpeningResult ?: return
+        if (screen != Screen.ClocktowerJointReview ||
+            storytellerOperationMode == StorytellerOperationMode.MANUAL ||
+            !accepted.selection.validFor(pending.domain.scope)
+        ) return
+        val selectedDrunk = accepted.selection.drunkSeat
+        val route = TroubleBrewingDrunkSelectionRouter.route(
+            preparedSetup = pending.preparedSetup,
+            recommendedCandidate = null,
+        )
+        val candidate = when (route) {
+            TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded -> {
+                require(selectedDrunk == null)
+                null
+            }
+            is TroubleBrewingDrunkSelectionRoute.RuleDetermined -> {
+                require(selectedDrunk == route.candidate.seat)
+                route.candidate
+            }
+            is TroubleBrewingDrunkSelectionRoute.ManualSelection ->
+                requireNotNull(route.request.candidates.singleOrNull {
+                    it.seat == selectedDrunk
+                }) { "AI Drunk is not in current Host legal domain." }
+        }
+        // The full model proposal is already Host-validated. Commit the
+        // actual Drunk only NOW, after all shown roles were revealed.
+        jointOpeningSerial += 1
+        jointOpeningBusy = false
+        pendingJointOpening = null
+        jointOpeningApplied = true
+        adoptedJointOpening = accepted
+        val projection = pending.domain.forDrunkSeat(selectedDrunk)
+        adoptedJointInformation = accepted.selection.choices.mapNotNull { (id, option) ->
+            projection.candidatesByDecision[id]?.get(option)?.let { meaning ->
+                meaning.sourceSeat to meaning
+            }
+        }.toMap()
+        commitAndStartTroubleBrewingGame(
+            preparedGameId = pending.preparedGameId,
+            preparedSetup = pending.preparedSetup,
+            confirmedDrunkCandidate = candidate,
+        )
+        val registry = activeGameClocktowerRulesetCatalog
+            .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+        accepted.selection.demonBluffs?.let { externalIds ->
+            clocktowerRecommendedDemonBluffRoleNames = externalIds.map { role ->
+                requireNotNull(registry.findByExternalId(role)).id.value
+            }
+        }
+        val redId = accepted.selection.choices["setup.red-herring"]
+        val redSeat = pending.domain.forDrunkSeat(selectedDrunk)
+            .redHerringCandidatesBySeat.entries.singleOrNull { it.value == redId }?.key
+        redSeat?.let { seat ->
+            clocktowerRedHerring = cards[seat - 1].name
+        }
+        firstNightOneShotAccepted = true  // Suppress the *second* initial LLM call.
+        firstNightOneShotPlan = null
+        firstNightAdoptedChoices = emptyMap() // V2 semantics are NOT the V1 opaque IDs.
+        screen = Screen.ClocktowerJudge
+    }
+
+    fun takeOverJointOpeningManually() {
+        val pending = pendingJointOpening ?: return
+        if (screen !in setOf(Screen.ClocktowerJointPass,
+                Screen.ClocktowerJointReveal, Screen.ClocktowerJointReview)) return
+        jointOpeningSerial += 1
+        jointOpeningBusy = false
+        jointOpeningResult = null
+        jointOpeningError = null
+        pendingJointOpening = null
+        storytellerOperationMode = StorytellerOperationMode.MANUAL
+        shownOnlyDealCompleted = true
+        val route = TroubleBrewingDrunkSelectionRouter.route(pending.preparedSetup, null)
+        when (route) {
+            TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded -> {
+                commitAndStartTroubleBrewingGame(
+                    pending.preparedGameId, pending.preparedSetup, null)
+                screen = Screen.ClocktowerJudge // shown roles already dealt
+            }
+            is TroubleBrewingDrunkSelectionRoute.RuleDetermined -> {
+                commitAndStartTroubleBrewingGame(
+                    pending.preparedGameId, pending.preparedSetup, route.candidate)
+                screen = Screen.ClocktowerJudge
+            }
+            is TroubleBrewingDrunkSelectionRoute.ManualSelection -> {
+                val registry = activeGameClocktowerRulesetCatalog
+                    .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+                val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
+                    pending.preparedGameId, pending.preparedSetup.intermediateSetup)
+                val decision = DrunkAssignmentDecisionBoundary.create(
+                    snapshot, registry, StorytellerDecisionRevision(0, 0))
+                val providerRequest = StorytellerProviderRequestFactoryV1.fromDrunkAssignment(
+                    decision, snapshot,
+                    StorytellerProviderGameContextBuilderV1.build(
+                        snapshot, StorytellerProviderRevisionV1(0, 0)))
+                pendingTroubleBrewingDrunkSelection = PendingTroubleBrewingDrunkSelection(
+                    pending.preparedGameId, pending.preparedSetup, route.request,
+                    decision, providerRequest)
+                screen = Screen.ClocktowerDrunkSelection
+                // Deliberately NO standalone AI call. Manual fallback is local.
+            }
         }
     }
 
@@ -2300,6 +2490,17 @@ internal fun CampBoardGameHostApp() {
         firstNightOneShotError = null
         firstNightOneShotAccepted = false
         firstNightAdoptedChoices = emptyMap()
+        // Invalidate any prior asynchronous callback before preparing the next setup.
+        jointOpeningSerial += 1
+        jointOpeningApplied = false
+        adoptedJointOpening = null
+        adoptedJointInformation = emptyMap()
+        shownOnlyDealCompleted = false
+        pendingJointOpening = null
+        jointOpeningResult = null
+        jointOpeningBusy = false
+        jointOpeningError = null
+        jointRevealIndex = 0
         pendingTroubleBrewingDrunkSelection = null
         drunkAiResponse = null
         drunkAiStrategy = null
@@ -2340,6 +2541,38 @@ internal fun CampBoardGameHostApp() {
             recentSetupRotationHistory = rotationHistory,
             recentPlayerStartingIdentityHistory = playerRotationHistory,
         )
+        if (personalDirectEnabled &&
+            storytellerOperationMode != StorytellerOperationMode.MANUAL
+        ) {
+            val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
+                preparedGameId, preparedSetup.intermediateSetup)
+            val domain = HostOpeningRulesDomainV2.fromHostSnapshot(
+                snapshot, characterRegistry,
+                clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
+            )
+            val visibleCards = preparedSetup.intermediateSetup.shownSeatAssignments.map { assignment ->
+                val role = requireNotNull(completeTroubleBrewingRoles.singleOrNull { available ->
+                    available.enName.filter(Char::isLetterOrDigit).lowercase() == assignment.shownRoleId
+                }) { "Missing shown-only precommit role." }
+                PlayerCard(
+                    name = assignment.playerName,
+                    role = Role.Civilian,
+                    word = role.descriptionFor(language),
+                    roleLabel = role.nameFor(language),
+                    actualRoleLabel = null,
+                    clocktowerTeam = role.team,
+                    clocktowerRole = null, // No speculative actual Drunk identity.
+                    clocktowerShownRole = role,
+                )
+            }
+            val pending = PendingTroubleBrewingJointOpening(
+                preparedGameId, preparedSetup, domain, visibleCards)
+            pendingJointOpening = pending
+            jointRevealIndex = 0
+            screen = Screen.ClocktowerJointPass
+            requestJointOpening(pending) // One network request, concurrently with visible-only dealing.
+            return
+        }
         when (
             val route = TroubleBrewingDrunkSelectionRouter.route(
                 preparedSetup = preparedSetup,
@@ -2795,6 +3028,56 @@ internal fun CampBoardGameHostApp() {
                         onStart = ::startClocktowerGame,
                     )
 
+                    Screen.ClocktowerJointPass -> {
+                        val pending = requireNotNull(pendingJointOpening)
+                        val previewCards = pending.shownOnlyCards
+                        require(jointRevealIndex in previewCards.indices)
+                        PassPhoneScreen(
+                            playerName = previewCards[jointRevealIndex].name,
+                            playerNames = previewCards.map { it.name },
+                            gameKind = GameKind.Clocktower,
+                            current = jointRevealIndex + 1,
+                            total = previewCards.size,
+                            onReveal = { screen = Screen.ClocktowerJointReveal },
+                            onPrevious = {
+                                if (jointRevealIndex > 0) jointRevealIndex -= 1
+                            },
+                            onHostTools = {}, // No actual Host grimoire exists yet.
+                            onNext = {
+                                if (jointRevealIndex == previewCards.lastIndex) {
+                                    screen = Screen.ClocktowerJointReview
+                                } else {
+                                    jointRevealIndex += 1
+                                }
+                            },
+                        )
+                    }
+
+                    Screen.ClocktowerJointReveal -> {
+                        val pending = requireNotNull(pendingJointOpening)
+                        RevealCardScreen(
+                            card = pending.shownOnlyCards[jointRevealIndex],
+                            gameKind = GameKind.Clocktower,
+                            current = jointRevealIndex + 1,
+                            total = pending.shownOnlyCards.size,
+                            onHide = { screen = Screen.ClocktowerJointPass },
+                        )
+                    }
+
+                    Screen.ClocktowerJointReview -> {
+                        val pending = requireNotNull(pendingJointOpening)
+                        ClocktowerJointOpeningReviewScreen(
+                            acceptance = jointOpeningResult?.takeIf {
+                                it.selection.validFor(pending.domain.scope)
+                            },
+                            busy = jointOpeningBusy,
+                            error = jointOpeningError,
+                            onAdopt = ::adoptJointOpeningAfterReveal,
+                            onRetry = { requestJointOpening(pending) },
+                            onManual = ::takeOverJointOpeningManually,
+                        )
+                    }
+
                     Screen.ClocktowerDrunkSelection -> {
                         val pending = requireNotNull(pendingTroubleBrewingDrunkSelection) {
                             "Trouble Brewing Drunk selection screen requires a pending manual request."
@@ -2875,6 +3158,10 @@ internal fun CampBoardGameHostApp() {
                                     preparedSetup = pending.preparedSetup,
                                     confirmedDrunkCandidate = candidate,
                                 )
+                                if (shownOnlyDealCompleted) {
+                                    shownOnlyDealCompleted = false
+                                    screen = Screen.ClocktowerJudge
+                                }
                             },
                         )
                     }
@@ -3005,7 +3292,10 @@ internal fun CampBoardGameHostApp() {
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         globalAiAssisted = storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED,
                         oneShotEnabled = personalDirectEnabled &&
-                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED,
+                            storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
+                            !jointOpeningApplied,
+                        jointOpeningAdopted = jointOpeningApplied,
+                        jointOpeningSemantics = adoptedJointInformation,
                         oneShotPlan = firstNightOneShotPlan,
                         oneShotBusy = firstNightOneShotBusy,
                         oneShotError = firstNightOneShotError,
