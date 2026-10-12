@@ -6,7 +6,7 @@
 
 - tools/prod_global_3b2_manual_probe.py — Python 3 标准库、默认零网络、显式授权的真实 Luna 请求。
 - tools/tests/test_prod_global_3b2_manual_probe.py — 零网络单元测试。
-- docs/PROD_GLOBAL_3B2_EXPERT_PROBE_FIXTURES_V1.json — E01–E04 四个 TB 输入和 22 种角色知识；评分目标 graderOnly 不发给模型。
+- docs/PROD_GLOBAL_3B2_EXPERT_PROBE_FIXTURES_V1.json — E01–E04 四个冻结基线案例、可选 E05 全员新手案例及 22 种角色知识；评分目标 graderOnly 不发给模型。
 - docs/PROD_GLOBAL_3B2_EXPERT_PROBE_DESIGN_V1_2026-10-12.md — 专家 system 指令、实验协议和评估标准。
 
 脚本直接从上述设计文档第 2 节提取提示词；模型 JSON 仅包含 roleCatalog、roleEffects、rules 和 fixture.input，不发送 graderOnly、B2 历史答案或 Host 候选枚举。
@@ -20,7 +20,7 @@
     python3 -m unittest -v tools.tests.test_prod_global_3b2_manual_probe
     python3 tools/prod_global_3b2_manual_probe.py --case all
 
-预期八个单元测试通过，并打印 mode=OFFLINE_PREFLIGHT、networkCalls=0、四个测试编号及 request SHA-256。如果失败，不要执行 --live。
+预期九个单元测试通过，并打印 mode=OFFLINE_PREFLIGHT、networkCalls=0、四个测试编号及 request SHA-256。如果失败，不要执行 --live。
 
 ## 第二步：先真实测试 E01 一次
 
@@ -56,6 +56,17 @@
 最后可从 shell 清理环境变量：
 
     unset OPENAI_API_KEY
+
+## 可选：与聊天界面盲测局面一致的 E05
+
+用户提供的 ChatGPT 5.5 Low / High 测试为八名玩家全部新手，但 E01 原始冻结输入包含混合熟练度。不要偷偷覆盖 E01。E05 仅把这 8 个座位的熟练度设为 BEGINNER，其余本局座位及规则事实保持相同；**聊天界面旧结果不输入 Luna**。
+
+    OUT="$HOME/botc-3b2-novices-$(date +%Y%m%d-%H%M%S)"
+    python3 tools/prod_global_3b2_manual_probe.py \
+      --live --case E05 --max-calls 1 \
+      --output-dir "$OUT"
+
+这另计费一次。`--case all` 仍只覆盖已冻结的 E01–E04，绝不会静默增加 E05 付费次数。两者虽相同局面/熟练度，但聊天测试与本实验采用不同模型、提示词、结构化输出格式，**不可视为同一 API A/B**。
 
 ## 私有文件与回传
 

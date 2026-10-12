@@ -62,7 +62,7 @@ def load_fixture():
     all_roles = sum(role_catalog.values(), [])
     if len(set(all_roles)) != len(all_roles) or set(all_roles) != set(data["roleEffects"]):
         raise ValueError("Duplicate/missing role reference")
-    if [f["id"] for f in data["fixtures"]] != ["E01", "E02", "E03", "E04"]:
+    if [f["id"] for f in data["fixtures"]] != ["E01", "E02", "E03", "E04", "E05"]:
         raise ValueError("Unexpected test IDs")
     for f in data["fixtures"]:
         w = f["input"]
@@ -219,7 +219,7 @@ def call_responses(payload, timeout):
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--case", choices=["all", "E01", "E02", "E03", "E04"], default="all")
+    p.add_argument("--case", choices=["all", "E01", "E02", "E03", "E04", "E05"], default="all")
     p.add_argument("--repeat", type=int, choices=[1, 2], default=1)
     p.add_argument("--live", action="store_true")
     p.add_argument("--max-calls", type=int, default=0)
@@ -228,7 +228,10 @@ def main(argv=None):
     args = p.parse_args(argv)
     data = load_fixture()
     system = instructions()
-    fixtures = [f for f in data["fixtures"] if args.case in ("all", f["id"])]
+    # "all" intentionally preserves frozen E01-E04 baseline; optional E05 is opt-in.
+    fixtures = [f for f in data["fixtures"] if
+                (f["id"] in ("E01", "E02", "E03", "E04") if args.case == "all"
+                 else f["id"] == args.case)]
     prepared = []
     for rep in range(1, args.repeat + 1):
         for f in fixtures:

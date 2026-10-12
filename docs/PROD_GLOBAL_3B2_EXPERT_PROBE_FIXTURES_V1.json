@@ -336,6 +336,72 @@
         "scenarioAim": "4展示镇民+2展示外来者+Baron+Imp。Drunk 候选可能影响 Washerwoman/Librarian/Empath 以及 Fortune Teller 是否实际存在、红鲱鱼是否应设置；不必定向选择。",
         "doNotSendToModel": true
       }
+    },
+    {
+      "id": "E05",
+      "title": "8人男爵酒鬼，全员新手：聊天界面盲测条件对照",
+      "input": {
+        "schemaVersion": 1,
+        "script": "Trouble Brewing",
+        "phase": "SHOWN_ROSTER_LOCKED",
+        "asOfRevision": 1,
+        "hasDrunk": true,
+        "drunkAssignment": "UNCOMMITTED",
+        "circleSeats": [
+          {
+            "seat": 1,
+            "shownRole": "Chef",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 2,
+            "shownRole": "Fortune Teller",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 3,
+            "shownRole": "Ravenkeeper",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 4,
+            "shownRole": "Butler",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 5,
+            "shownRole": "Investigator",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 6,
+            "shownRole": "Recluse",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 7,
+            "shownRole": "Baron",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 8,
+            "shownRole": "Imp",
+            "experience": "BEGINNER"
+          }
+        ],
+        "confirmedEvents": [],
+        "unknownEvents": [
+          "fortune_teller.targets",
+          "butler.master",
+          "ravenkeeper.future_death_and_target"
+        ],
+        "recentGames": []
+      },
+      "graderOnly": {
+        "scenarioAim": "与用户在聊天界面独立测试的全员新手设定对齐，仅比较输入局面而非提示词、模型或响应格式；不得给模型任何先前 High/Low 的选择、解释或预期答案。",
+        "doNotSendToModel": true,
+        "referenceKind": "EXTERNAL_HUMAN_REPORTED_CHAT_RESULTS_EXCLUDED_FROM_INPUT"
+      }
     }
   ]
 }

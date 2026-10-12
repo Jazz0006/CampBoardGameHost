@@ -2,7 +2,7 @@
 
 > 2026-10-12 · **EXPERIMENT DESIGN / NOT RUN / NO PRODUCTION CUTOVER**  
 > 唯一规则权威：[`PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md`](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md)。基线 `main@10e5da8f165cbae0288b42d33c50bd0344b116d8`（写入时的核对值，执行时必须复查）。  
-> 机器输入固定见 [`PROD_GLOBAL_3B2_EXPERT_PROBE_FIXTURES_V1.json`](PROD_GLOBAL_3B2_EXPERT_PROBE_FIXTURES_V1.json)，目前四个合法 8 人 TB 配置。禁止将 `graderOnly` 送入模型。
+> 机器输入固定见 [`PROD_GLOBAL_3B2_EXPERT_PROBE_FIXTURES_V1.json`](PROD_GLOBAL_3B2_EXPERT_PROBE_FIXTURES_V1.json)，包含四个冻结基线配置 E01–E04，及额外可选、全员新手的 E05 同局对照。禁止将 `graderOnly` 送入模型。
 
 ## 1. 实验目的与边界
 
@@ -99,8 +99,9 @@
 | E02 | Washerwoman / Librarian / Chef / Empath / Fortune Teller / Recluse / Poisoner / Imp；无 Drunk | Poisoner 必须先选目标，之后信息才可能受影响；未中毒的 Empath 0 属规则确定信息，模型不得把毒选人捏造成事实 |
 | E03 | Investigator / Chef / Fortune Teller / Recluse / Empath / Spy / Washerwoman / Imp；无 Drunk | Empath 同时夹 Recluse 与 Spy、数值可能有多种登记解释，Investigator/Washerwoman 与 Spy 配对的可能性 |
 | E04 | Washerwoman / Librarian / Empath / Fortune Teller / Saint / Butler / Baron / Imp；Drunk 存在 | 两个首夜配对信息与 Drunk 的互相影响；选择醉酒的 FT 会令“实际 FT 红鲱鱼”不适用；可选近期局经验仅温和影响 |
+| E05（可选） | 与 E01 座位完全相同，**八人经验全部 BEGINNER** | 对齐用户 ChatGPT 5.5 Low/High 盲测时的局面经验设定，但保持 Luna 的独立专家系统提示词、候选禁发及结构化输出；此前聊天结果永远不发入模型 |
 
-测试案例经过 8 人 TB 基本构成核算：E01/E04 为 4 个展示镇民 + 2 个展示外来者 + Baron + Imp，且指定 Drunk 使实际角色类别变为 3 镇民 + 3 外来者；E02/E03 为 5 镇民 + 1 外来者 + 1 爪牙 + Imp，无 Drunk。
+测试案例经过 8 人 TB 基本构成核算：E01/E04/E05 为 4 个展示镇民 + 2 个展示外来者 + Baron + Imp，且指定 Drunk 使实际角色类别变为 3 镇民 + 3 外来者；E02/E03 为 5 镇民 + 1 外来者 + 1 爪牙 + Imp，无 Drunk。E05 不参与默认 `--case all` 四局付费批次，可用 `--case E05` 单独测试。ChatGPT 5.5 Low/High 参考审阅见 [独立参考文档](PROD_GLOBAL_3B2_CHAT_BENCHMARK_REFERENCE_2026-10-12.md)，绝不作为提示词示例、Gold 答案或盲评分标准。
 
 ## 5. 实际运行与盲评分离
 

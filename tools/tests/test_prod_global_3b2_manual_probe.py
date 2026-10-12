@@ -19,9 +19,11 @@ class ManualExpertProbeTest(unittest.TestCase):
         cls.data = probe.load_fixture()
         cls.system = probe.instructions()
 
-    def test_four_distinct_valid_fixture_shapes(self):
+    def test_five_distinct_valid_fixture_shapes(self):
         self.assertEqual([f["id"] for f in self.data["fixtures"]],
-                         ["E01", "E02", "E03", "E04"])
+                         ["E01", "E02", "E03", "E04", "E05"])
+        self.assertEqual({s["experience"] for s in self.data["fixtures"][4]["input"]["circleSeats"]},
+                         {"BEGINNER"})
         self.assertIn("联合策略", self.system)
         for f in self.data["fixtures"]:
             self.assertEqual(len(f["input"]["circleSeats"]), 8)
@@ -30,6 +32,15 @@ class ManualExpertProbeTest(unittest.TestCase):
             self.assertNotIn("graderOnly", prompt)
             self.assertNotIn("metadata", prompt)
             self.assertNotIn("legalCandidates", prompt)
+
+    def test_optional_novice_reference_is_not_in_default_batch(self):
+        output = io.StringIO()
+        with patch.object(probe, "call_responses", side_effect=AssertionError("network")), \
+             contextlib.redirect_stdout(output):
+            self.assertEqual(probe.main(["--case", "E05"]), 0)
+        manifest = json.loads(output.getvalue())
+        self.assertEqual([x["case"] for x in manifest["plan"]], ["E05"])
+        self.assertEqual(manifest["networkCalls"], 0)
 
     def test_request_has_one_model_no_storage_strict_output(self):
         f = self.data["fixtures"][0]
