@@ -164,6 +164,14 @@ internal object StorytellerStrategicChangeCheckpointV2 {
         require(response.affectedOpenDecisionIds.all { id ->
             reviewed.openDecisions.any { it.decisionId == id }
         })
+        val legalChoices = reviewed.openDecisions.filter { it.legalCandidates.isNotEmpty() }
+            .associate { it.decisionId to it.legalCandidates.map { option ->
+                option.candidateId
+            }.toSet() }
+        require(response.remainingChoices.keys == legalChoices.keys &&
+            response.remainingChoices.all { (id, option) ->
+                option in requireNotNull(legalChoices[id])
+            }) { "Strategy memory cannot advance with an incomplete or illegal residual bundle." }
         require(response.gameId == reviewed.gameId &&
             response.gameStateRevision == reviewed.gameStateRevision &&
             response.playerInputRevision == reviewed.playerInputRevision &&

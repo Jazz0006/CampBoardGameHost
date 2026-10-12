@@ -236,6 +236,51 @@ class StorytellerStrategicChangeCheckpointV2Test {
         )
     }
 
+    @Test fun residualPackageGateRequiresCurrentWholeHostDomainBeforeAnyAdoption() {
+        val host = session()
+        val first = scalarRequest(host)
+        val second = first.copy(
+            identity = first.identity.copy(decisionId = "second-current-choice"),
+            legalCandidates = listOf(StorytellerProviderCandidateV1(
+                "number-1", StorytellerProviderCandidatePayloadV1.ScalarResult("1"))),
+        )
+        val requests = listOf(first, second)
+        val original = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
+            host.state, StorytellerPhase.FIRST_NIGHT, 1, requests)
+        val reply = StorytellerStrategicContinuationV2.Result(
+            gameId = host.state.gameId,
+            gameStateRevision = host.state.gameStateRevision,
+            playerInputRevision = host.state.playerInputRevision,
+            exclusiveGlobalSequence = host.state.nextTimelineGlobalSequence,
+            memoryVersion = 0,
+            revisions = emptyList(), affectedOpenDecisionIds = original.map { it.decisionId }.toSet(),
+            remainingChoices = mapOf("current-chef-info" to "number-0", "second-current-choice" to "number-1"),
+            updatedMemory = memory, strategicDirection = "Linked current decisions",
+        )
+        val accepted = StorytellerResidualPackageGateV2.verify(
+            host.state, StorytellerPhase.FIRST_NIGHT, 1, original, requests, reply, cursor())
+        assertEquals(2, accepted.choices.size)
+        assertTrue(runCatching {
+            StorytellerResidualPackageGateV2.verify(host.state, StorytellerPhase.FIRST_NIGHT, 1,
+                original, requests.dropLast(1), reply, cursor())
+        }.isFailure)
+        assertTrue(runCatching {
+            StorytellerResidualPackageGateV2.verify(host.state, StorytellerPhase.FIRST_NIGHT, 1,
+                original, requests, reply.copy(remainingChoices = mapOf("current-chef-info" to "number-0")), cursor())
+        }.isFailure)
+        assertTrue(runCatching {
+            StorytellerResidualPackageGateV2.verify(host.state, StorytellerPhase.FIRST_NIGHT, 1,
+                original, listOf(first, second.copy(legalCandidates = listOf(
+                    StorytellerProviderCandidateV1("number-1",
+                        StorytellerProviderCandidatePayloadV1.ScalarResult("2"))))), reply, cursor())
+        }.isFailure) // same opaque ID but changed public meaning
+        host.recordPlayerInput()
+        assertTrue(runCatching {
+            StorytellerResidualPackageGateV2.verify(host.state, StorytellerPhase.FIRST_NIGHT, 1,
+                original, requests, reply, cursor())
+        }.isFailure)
+    }
+
     @Test fun onlyCurrentRulesOwnedPendingDecisionBecomesAnOpenId() {
         val host = session()
         val request = scalarRequest(host)
@@ -244,6 +289,25 @@ class StorytellerStrategicChangeCheckpointV2Test {
         assertEquals(listOf("current-chef-info"), correct.map { it.decisionId })
         assertEquals("NIGHT_INFORMATION", correct.single().family)
         assertEquals(1, correct.single().sourceSeat)
+        assertEquals(listOf("number-0"), correct.single().legalCandidates.map { it.candidateId })
+        assertEquals("Chef", correct.single().abilityRoleId)
+        // Multiple independent Host-owned requests form ONE coherent residual scope.
+        val secondContext = StorytellerProviderDecisionContextV1.ScalarInformation(
+            sourceSeat = 2, abilityRole = RoleId("Empath"),
+            reliability = ReliabilityState.RELIABLE,
+            kind = StorytellerProviderScalarKindV1.NUMBER,
+            metric = "ADJACENT_EVIL_PLAYERS", subjectSeats = emptyList())
+        val second = request.copy(
+            identity = request.identity.copy(decisionId = "current-empath-info"),
+            decisionContext = secondContext,
+            legalCandidates = listOf(StorytellerProviderCandidateV1(
+                "number-1", StorytellerProviderCandidatePayloadV1.ScalarResult("1"))),
+        )
+        val whole = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
+            host.state, StorytellerPhase.FIRST_NIGHT, 1, listOf(request, second))
+        assertEquals(listOf("current-chef-info", "current-empath-info"),
+            whole.map { it.decisionId })
+        assertTrue(whole.all { it.legalCandidates.isNotEmpty() })
         assertTrue(runCatching {
             HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
                 host.state, StorytellerPhase.FIRST_NIGHT, 1,

@@ -7,6 +7,8 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
@@ -97,6 +99,7 @@ class StorytellerStrategicContinuationV2Test {
                     .put("verdict", "KEEP").put("reason", "Still a valid conditional approach"))
             })
             .put("affectedOpenDecisionIds", JSONArray(listOf("current:seat-2")))
+            .put("remainingChoices", JSONArray())
             .put("updatedStrategyMemory", host.getJSONObject("priorStrategyMemory"))
             .put("strategicDirection", "Update entire remaining plan without rewriting history.")
     }
@@ -215,6 +218,43 @@ class StorytellerStrategicContinuationV2Test {
             .getJSONArray("intentions").put(JSONObject().put("trigger", "")
                 .put("approach", "x").put("risk", "y")) }
         reject { it.put("newInformation", "uncommitted false clue") }
+    }
+
+    @Test fun wholeRemainingPlanRequiresEveryCurrentLegalDecisionInOneAtomicBundle() {
+        val candidatesA = listOf(
+            StorytellerProviderCandidateV1("n0", StorytellerProviderCandidatePayloadV1.ScalarResult("0")),
+            StorytellerProviderCandidateV1("n1", StorytellerProviderCandidatePayloadV1.ScalarResult("1")),
+        )
+        val candidatesB = listOf(
+            StorytellerProviderCandidateV1("yes", StorytellerProviderCandidatePayloadV1.ScalarResult("true")),
+            StorytellerProviderCandidateV1("no", StorytellerProviderCandidatePayloadV1.ScalarResult("false")),
+        )
+        val domains = listOf(
+            StorytellerStrategicContinuationV2.OpenDecision("a", 1, "NIGHT_INFORMATION", candidatesA, "Chef"),
+            StorytellerStrategicContinuationV2.OpenDecision("b", 2, "NIGHT_INFORMATION", candidatesB, "Empath"),
+        )
+        val host = JSONObject(StorytellerStrategicContinuationV2.encode(session().state, prior(), domains))
+        val response = result(host)
+        response.put("remainingChoices", JSONArray().put(JSONObject()
+            .put("decisionId", "a").put("candidateId", "n1"))
+            .put(JSONObject().put("decisionId", "b").put("candidateId", "no")))
+        val accepted = StorytellerStrategicContinuationV2.decode(host.toString(), response.toString())
+        assertEquals(mapOf("a" to "n1", "b" to "no"), accepted.remainingChoices)
+        assertEquals("SCALAR_RESULT", host.getJSONArray("openDecisions").getJSONObject(0)
+            .getJSONArray("legalCandidates").getJSONObject(0)
+            .getJSONObject("meaning").getString("kind"))
+        fun rejects(change: (JSONObject) -> Unit) {
+            val bad = JSONObject(response.toString())
+            change(bad)
+            assertTrue(runCatching {
+                StorytellerStrategicContinuationV2.decode(host.toString(), bad.toString())
+            }.isFailure)
+        }
+        rejects { it.getJSONArray("remainingChoices").remove(1) } // no partial adoption
+        rejects { it.getJSONArray("remainingChoices").getJSONObject(1).put("candidateId", "n1") }
+        rejects { it.getJSONArray("remainingChoices").getJSONObject(1).put("decisionId", "a") }
+        rejects { it.getJSONArray("remainingChoices").getJSONObject(0).put("decisionId", "published") }
+        rejects { it.getJSONObject("source").put("memoryVersion", 91) }
     }
 
     @Test fun everyRoleAndChangedStateUsesSameGenericStrategyContract() {
