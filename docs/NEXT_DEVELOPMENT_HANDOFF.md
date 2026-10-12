@@ -2,6 +2,12 @@
 
 > Updated **2026-10-11 Australia/Sydney**. **唯一活动交接。** 进入新会话必须重新查开发机 live state / GitHub main、PR、CI，不能假设下述 commit 仍是最新。当前单一执行路线是 [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)；此文件只记录状态及下一步。旧 PROD-GLOBAL-1D/2B/analysis-first NEXT 作为历史，不得再次触发独立酒鬼模型规划。
 
+## LATEST HANDOFF — PROD-GLOBAL-3B3D-1 Host semantic matching boundary (2026-10-12)
+
+From confirmed PR #300 head `6c2286b7b9ee4c4c6baa960c200f83edf59b7056` (CI #4114 + R2 #3736 GREEN), use new branch `experiment/prod-global-3b3d-host-semantic-gate-20261012`, stacked on #300 (which stacks on #299). [3B3D implementation/remaining-work route](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md). EXPERIMENT ONLY: Kotlin `HostOpeningSemanticGateV2` uses exact typed public semantics and Host-supplied candidate domain, refuses stale/incomplete/unknown/duplicate/mismatched plans and retains event-dependent proposals uncommitted; Python V2 input/output now carries requestIdentity, logical decision IDs and nullable bluffs. **No production wiring, no real Host candidate projector, no independent TB rule verdict**: current Android tests are synthetic projection contracts, not semantic or strategic acceptance. Still only offline/mock EXPT and no paid API call. NEXT = exact CI/R2 for this branch, followed by 3B3D-2 actual rules-owned projection/coverage and sample parity, then controlled Luna blind study if paid EXPT is genuinely enabled.
+
+### Previous 3B3 handoff
+
 ## LATEST HANDOFF — PROD-GLOBAL-3B3 semantic V2 / expert quality (2026-10-12)
 
 At audit live main/local main = `10e5da8f165cbae0288b42d33c50bd0344b116d8`; active 3B2 Draft #299 at `3f87a397c542c64532623bb62694d0b3467a1c87` with CI #4112 and R2 #3734 GREEN, clean. 3B3 stacked Draft [PR #300](https://github.com/Jazz0006/CampBoardGameHost/pull/300), branch `experiment/prod-global-3b3-semantic-v2-20261012`, initial commit `1b5db290c093e4bda821745cca98b4f34b480b5e` based on #299; initial CI #4113/R2 #3735 GREEN **only for that initial commit**, later amendments require a new check. Check live SHA/PR/CI again on return. 3B2 paid Luna tests E05/E02/E03/E04 did actually run in private directories; 3B2 `NOT RUN` text below was historical. Structural E03/E04 warnings are not proof of illegal content, and **no sample has independent Host semantic acceptance**.

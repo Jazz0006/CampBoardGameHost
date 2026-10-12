@@ -19,6 +19,7 @@ def info(seat, role, basis="FUNCTIONING", resolution="DECISION",
          mode="NONE", subjects=None, kind="NUMBER", number=0,
          witness_role=None, boolean=None, waiting=None):
     return {
+        "decisionId": "first-night:seat-" + str(seat),
         "sourceSeat": seat, "abilityRoleId": role,
         "effectiveAbilityRoleId": None if basis == "DRUNK_MISINFORMATION" else role,
         "resolution": resolution, "basis": basis,
@@ -37,6 +38,7 @@ def synthetic(case: str):
         drunk = 1
     return {
         "schemaVersion": 2, "asOfRevision": f["input"]["asOfRevision"],
+        "requestIdentity": v2.input_v2(DATA, f)["requestIdentity"],
         "openingPlan": {
             "drunkSeat": drunk,
             "redHerringSeat": 5 if case == "E04" else 4 if case == "E03"
@@ -83,6 +85,7 @@ class ExpertSemanticV2Test(unittest.TestCase):
             self.assertFalse(req["store"])
             self.assertTrue(req["text"]["format"]["strict"])
             self.assertNotIn("graderOnly", req["input"])
+            self.assertIn("requestIdentity", json.loads(req["input"]))
 
     def test_number_has_fixed_subject_not_target_choice(self):
         e03 = synthetic("E03")
@@ -117,8 +120,8 @@ class ExpertSemanticV2Test(unittest.TestCase):
             info(4, "empath", resolution="DEFERRED", basis="STATUS_DEPENDENT",
                  mode="FIXED_NEIGHBORS", kind="NONE", waiting=["poisoner.target"])]
         e02["openingPlan"]["deferredActions"] = [
-            {"event": "poisoner.target", "actorSeat": 7},
-            {"event": "fortune_teller.targets", "actorSeat": 5}]
+            {"decisionId": "event:poisoner.target", "event": "poisoner.target", "actorSeat": 7},
+            {"decisionId": "event:fortune_teller.targets", "event": "fortune_teller.targets", "actorSeat": 5}]
         self.assertEqual(v2.screen_v2(e02, CASES["E02"], DATA), [])
         invalid = copy.deepcopy(e02)
         invalid["openingPlan"]["information"][0]["observation"]["kind"] = "NUMBER"
@@ -139,7 +142,7 @@ class ExpertSemanticV2Test(unittest.TestCase):
                  waiting=["poisoner.target"]),
         ]
         e02["openingPlan"]["deferredActions"] = [
-            {"event": "poisoner.target", "actorSeat": 7}]
+            {"decisionId": "event:poisoner.target", "event": "poisoner.target", "actorSeat": 7}]
         self.assertEqual(v2.screen_v2(e02, CASES["E02"], DATA), [])
         missing_dependency = copy.deepcopy(e02)
         missing_dependency["openingPlan"]["information"][1]["waitingForEvents"] = []
@@ -171,6 +174,9 @@ class ExpertSemanticV2Test(unittest.TestCase):
         case["asOfRevision"] = 1
         case["openingPlan"]["information"][0]["sourceSeat"] = 8
         self.assertIn("source_ability_identity", v2.screen_v2(case, CASES["E03"], DATA))
+        case = synthetic("E03")
+        case["requestIdentity"]["gameId"] = "a-different-game"
+        self.assertIn("stale_revision", v2.screen_v2(case, CASES["E03"], DATA))
 
     def test_legacy_structural_problems_reported_without_rewriting(self):
         sample = {"openingPlan": {"informationIntents": [

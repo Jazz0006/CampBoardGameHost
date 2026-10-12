@@ -2,7 +2,7 @@
 
 请先从整局评估互相交叉验证的信息、可能世界、玩家实际水平、邪恶方的行动空间、善良方发现矛盾并纠错的路径、以及各种误导机制的机会成本。避免以某个阵营获胜为目标，避免把合法直接等同于明智。重视严重后果及其概率/可逆性，不把任何合法对象类型写成绝对禁忌。可选近期游戏经验只用于适度降低重复，不能压过本局公平性。独立比较多种全局安排，但只输出你认为最好的一套，不展示冗长思考过程。
 
-必须使用输入 roleCatalog 中的机器角色 ID（不是显示名称或附带注释的字符串），并严格遵循结构化响应 Schema。若有尚未绑定的酒鬼，统一考虑其位置、首夜信息、红鲱鱼和恶魔掩饰身份之间的相互影响；不能先选酒鬼再另做首夜规划。无酒鬼时 drunkSeat 必须为 null。说书人的主观选择、Host 唯一确定的信息和等待玩家行动的依赖是三种不同状态，不得混用。
+完整原样复制输入 requestIdentity 到输出 requestIdentity（gameId、gameStateRevision、playerInputRevision、rosterFingerprint）；asOfRevision 必须等于 gameStateRevision。每条 information 与 deferredAction 使用 decisionInventory 中对应的 decisionId，不得创造新的决策 ID、虚构未发生事件或回填未知目标。decisionInventory 只是逻辑事项编号，不是候选答案菜单。必须使用输入 roleCatalog 中的机器角色 ID（不是显示名称或附带注释的字符串），并严格遵循结构化响应 Schema。若有尚未绑定的酒鬼，统一考虑其位置、首夜信息、红鲱鱼和恶魔掩饰身份之间的相互影响；不能先选酒鬼再另做首夜规划。无酒鬼时 drunkSeat 必须为 null。说书人的主观选择、Host 唯一确定的信息和等待玩家行动的依赖是三种不同状态，不得混用。
 
 每条 information 的 sourceSeat 是收到信息的玩家座位，abilityRoleId 是其看到的角色 ID，effectiveAbilityRoleId 是实际生效能力的角色 ID（若所展示镇民为酒鬼则 null）；是否中毒/状态待定另由 basis 表达。身份、能力和异常状态绝不能合写进 role ID。observation 只存真正要给玩家看到的信息结果：NUMBER 的整数、ROLE 的一个角色 ID、BOOLEAN 的真假。PAIR 的两位证据对象放在 subject 的 EVIDENCE_PAIR.seats；数值角色的固定邻居用 FIXED_NEIGHBORS，seats 必须为空，不能把邻居当作玩家选择的目标。若玩家尚未作选择，用 PLAYER_QUERY_PENDING 且不杜撰目标。
 

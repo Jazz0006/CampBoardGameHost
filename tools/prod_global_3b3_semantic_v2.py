@@ -6,6 +6,7 @@ screening is intentionally separate from the authoritative Host rules validator.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -31,11 +32,18 @@ def role_ref(nullable: bool = False) -> dict:
 SCHEMA = obj({
     "schemaVersion": {"type": "integer", "enum": [2]},
     "asOfRevision": {"type": "integer"},
+    "requestIdentity": obj({
+        "gameId": {"type": "string"},
+        "gameStateRevision": {"type": "integer"},
+        "playerInputRevision": {"type": "integer"},
+        "rosterFingerprint": {"type": "string"},
+    }),
     "openingPlan": obj({
         "drunkSeat": {"type": ["integer", "null"]},
         "redHerringSeat": {"type": ["integer", "null"]},
-        "demonBluffRoleIds": {"type": "array", "items": role_ref()},
+        "demonBluffRoleIds": {"type": ["array", "null"], "items": role_ref()},
         "information": {"type": "array", "items": obj({
+            "decisionId": {"type": "string"},
             "sourceSeat": {"type": "integer"},
             "abilityRoleId": role_ref(),
             "effectiveAbilityRoleId": role_ref(nullable=True),
@@ -60,6 +68,7 @@ SCHEMA = obj({
             "waitingForEvents": {"type": "array", "items": {"type": "string"}},
         })},
         "deferredActions": {"type": "array", "items": obj({
+            "decisionId": {"type": "string"},
             "event": {"type": "string"},
             "actorSeat": {"type": ["integer", "null"]},
         })},
@@ -85,6 +94,9 @@ def input_v2(data: dict, fixture: dict) -> dict:
     """Strict input allowlist; no graderOnly and no exhaustive legal candidates."""
     world = fixture["input"]
     roles = data["roleCatalog"]
+    fingerprint = hashlib.sha256(json.dumps({
+        "seats": world["circleSeats"], "hasDrunk": world["hasDrunk"],
+    }, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
     return {
         "schemaVersion": 2,
         "scriptId": "troublebrewing",
@@ -94,6 +106,25 @@ def input_v2(data: dict, fixture: dict) -> dict:
             role_id(name): {"name": name, "effect": effect}
             for name, effect in data["roleEffects"].items()},
         "rules": data["rules"],
+        "requestIdentity": {
+            "gameId": "offline-probe-" + fixture["id"],
+            "gameStateRevision": world["asOfRevision"],
+            "playerInputRevision": 0,
+            "rosterFingerprint": fingerprint,
+        },
+        "decisionInventory": {
+            "information": [
+                {"decisionId": "first-night:seat-" + str(s["seat"]),
+                 "sourceSeat": s["seat"], "shownRoleId": role_id(s["shownRole"])}
+                for s in world["circleSeats"] if s["shownRole"] in (
+                    "Washerwoman", "Librarian", "Investigator", "Chef",
+                    "Empath", "Fortune Teller")
+            ],
+            "events": [
+                {"decisionId": "event:" + event, "event": event}
+                for event in world["unknownEvents"]
+            ],
+        },
         "state": {
             "asOfRevision": world["asOfRevision"],
             "phase": world["phase"],
@@ -165,8 +196,16 @@ def screen_v2(result: dict, fixture: dict, data: dict) -> list[str]:
     good = townsfolk | set(catalog["Outsider"])
     plan = result["openingPlan"]
     drunk = plan["drunkSeat"]
-    if result["asOfRevision"] != state["asOfRevision"]:
+    if result["asOfRevision"] != state["asOfRevision"] or (
+            result["requestIdentity"] != input_v2(data, fixture)["requestIdentity"]):
         issues.append("stale_revision")
+    inventory = input_v2(data, fixture)["decisionInventory"]
+    info_ids = {v["decisionId"]: v for v in inventory["information"]}
+    event_ids = {v["decisionId"]: v for v in inventory["events"]}
+    used_ids = [i["decisionId"] for i in plan["information"]] + [
+        a["decisionId"] for a in plan["deferredActions"]]
+    if len(used_ids) != len(set(used_ids)):
+        issues.append("duplicate_decision_id")
     if state["hasDrunk"]:
         if shown.get(drunk) not in townsfolk:
             issues.append("invalid_drunk_seat")
@@ -174,9 +213,14 @@ def screen_v2(result: dict, fixture: dict, data: dict) -> list[str]:
         issues.append("unexpected_drunk")
     active = {role for seat, role in shown.items() if seat != drunk}
     bluffs = plan["demonBluffRoleIds"]
-    if len(bluffs) != 3 or len(set(bluffs)) != 3 or any(
-            role not in good or role in active for role in bluffs):
-        issues.append("bluff_structure_or_presence")
+    needs_bluffs = len(shown) >= 7 and any(
+        role in set(catalog["Demon"]) for role in active)
+    if needs_bluffs:
+        if bluffs is None or len(bluffs) != 3 or len(set(bluffs)) != 3 or any(
+                role not in good or role in active for role in bluffs):
+            issues.append("bluff_structure_or_presence")
+    elif bluffs is not None:
+        issues.append("unexpected_demon_bluffs")
     red = plan["redHerringSeat"]
     if "fortuneteller" not in active:
         if red is not None:
@@ -194,6 +238,10 @@ def screen_v2(result: dict, fixture: dict, data: dict) -> list[str]:
         waiting = info["waitingForEvents"]
         if shown.get(seat) != ability:
             issues.append("source_ability_identity")
+        declaration = info_ids.get(info["decisionId"])
+        if declaration is None or declaration["sourceSeat"] != seat or (
+                declaration["shownRoleId"] != ability):
+            issues.append("undeclared_information_decision")
         if (seat == drunk and effective is not None) or (seat != drunk and effective != ability):
             issues.append("effective_ability_mismatch")
         if (seat == drunk) != (basis == "DRUNK_MISINFORMATION"):
@@ -244,6 +292,8 @@ def screen_v2(result: dict, fixture: dict, data: dict) -> list[str]:
     for d in plan["deferredActions"]:
         if d["actorSeat"] is not None and d["actorSeat"] not in shown:
             issues.append("invalid_deferred_actor")
+        if d["decisionId"] not in event_ids or event_ids[d["decisionId"]]["event"] != d["event"]:
+            issues.append("undeclared_event_decision")
     if len(result["strategyMemory"]["intentions"]) > 3:
         issues.append("overlong_intentions")
     return sorted(set(issues))
