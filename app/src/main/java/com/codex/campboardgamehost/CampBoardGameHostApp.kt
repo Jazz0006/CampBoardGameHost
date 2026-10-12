@@ -88,6 +88,9 @@ import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotRequestV1
 import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotScopeV1
 import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotPlanV1
 import com.codex.campboardgamehost.clocktower.session.InitialJointOpeningDirectV2
+import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicChangeCheckpointV2
+import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2
+import com.codex.campboardgamehost.clocktower.session.HostCurrentOpenDecisionInventoryV2
 import com.codex.campboardgamehost.clocktower.session.HostOpeningRulesDomainV2
 import com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticAcceptanceV2
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
@@ -428,6 +431,12 @@ internal fun CampBoardGameHostApp() {
     var jointRevealIndex by remember { mutableStateOf(0) }
     var jointOpeningApplied by remember { mutableStateOf(false) }
     var adoptedJointOpening by remember { mutableStateOf<HostOpeningSemanticAcceptanceV2?>(null) }
+    var strategicPolicyCursor by remember {
+        mutableStateOf<StorytellerStrategicContinuationV2.MemoryCursor?>(null)
+    }
+    var strategicLastReviewedHost by remember {
+        mutableStateOf<StorytellerStrategicChangeCheckpointV2.Baseline?>(null)
+    }
     var adoptedJointInformation by remember { mutableStateOf<Map<Int,
         com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2>>(emptyMap()) }
     var shownOnlyDealCompleted by remember { mutableStateOf(false) }
@@ -2029,6 +2038,39 @@ internal fun CampBoardGameHostApp() {
             liveAiAdviceError = "Current game history is not available for live strategy."
             return
         }
+        // 3E: inspect the same live Host-owned pending request as a *generic*
+        // whole-board material-change checkpoint. This does not yet pay for a
+        // second model call or pretend the strategy-only response selects a clue.
+        // Existing per-decision fallback remains until the whole residual
+        // planner provides actual legal options (separate acceptance gate).
+        val strategyOpening = adoptedJointOpening
+        val strategyBaseline = strategicLastReviewedHost
+        val strategyCursor = strategicPolicyCursor
+        if (personalDirectEnabled && strategyOpening != null &&
+            strategyBaseline != null && strategyCursor != null
+        ) {
+            val phasePosition = StorytellerStrategicChangeCheckpointV2.Position(
+                clocktowerPhase.toStorytellerPhase(), round)
+            val currentGate = runCatching {
+                val legalOpen = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
+                    session.state, phasePosition.phase, phasePosition.round, listOf(providerRequest))
+                StorytellerStrategicChangeCheckpointV2.review(
+                    strategyBaseline,
+                    StorytellerStrategicChangeCheckpointV2.capture(session, phasePosition),
+                    strategyCursor, legalOpen)
+            }
+            currentGate.onSuccess { review ->
+                if (review.needsReview) {
+                    DebugFlightRecorder.record("STRATEGIC_HOST_REVIEW_REQUIRED", mapOf(
+                        "changeFamilies" to review.changeKinds.size.toString(),
+                        "currentHostOpenDecisions" to review.openDecisions.size.toString(),
+                        "stage" to "ADVISORY_ONLY",
+                    ))
+                }
+            }.onFailure {
+                DebugFlightRecorder.record("STRATEGIC_HOST_CHECKPOINT_REJECTED")
+            }
+        }
         val prior = committedAiStrategy
         liveAiAdviceBusy = true
         drunkAiScope.launch {
@@ -2333,6 +2375,9 @@ internal fun CampBoardGameHostApp() {
         pendingJointOpening = null
         jointOpeningApplied = true
         adoptedJointOpening = accepted
+        strategicPolicyCursor = accepted.strategyMemory?.let {
+            StorytellerStrategicContinuationV2.MemoryCursor.initial(accepted)
+        }
         val projection = pending.domain.forDrunkSeat(selectedDrunk)
         adoptedJointInformation = accepted.selection.choices.mapNotNull { (id, option) ->
             projection.candidatesByDecision[id]?.get(option)?.let { meaning ->
@@ -2344,6 +2389,11 @@ internal fun CampBoardGameHostApp() {
             preparedSetup = pending.preparedSetup,
             confirmedDrunkCandidate = candidate,
         )
+        strategicLastReviewedHost = clocktowerGameSession?.let { committedSession ->
+            StorytellerStrategicChangeCheckpointV2.capture(committedSession,
+                StorytellerStrategicChangeCheckpointV2.Position(
+                    clocktowerPhase.toStorytellerPhase(), round))
+        }
         val registry = activeGameClocktowerRulesetCatalog
             .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
         accepted.selection.demonBluffs?.let { externalIds ->
@@ -2497,6 +2547,8 @@ internal fun CampBoardGameHostApp() {
         jointOpeningSerial += 1
         jointOpeningApplied = false
         adoptedJointOpening = null
+        strategicPolicyCursor = null
+        strategicLastReviewedHost = null
         adoptedJointInformation = emptyMap()
         shownOnlyDealCompleted = false
         pendingJointOpening = null

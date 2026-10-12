@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.DecisionEventStatus
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryCutoffSourceV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryEntryV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
@@ -128,6 +129,8 @@ internal object StorytellerStrategicContinuationV2 {
 你是同一局血染钟楼的资深 AI 说书人，现在继续先前整局、多夜的战略，而不是重新从零挑一条线索。
 首先阅读最新完整实际/展示角色、状态、玩家水平与已记录的声明，以及 Host 有来源和先后顺序的事实记录。
 历史覆盖是局部的：没有记录的行动、声明、登记或观测必须视为未知。声明不等于事实。
+已确认的说书人决策档案单独放在 unsequencedDecisionHistory，不具备与动作和玩家观察日志可证明的统一时间次序；
+不要替它猜测事件先后，也不能把档案中的推断或登记歧义升级成唯一真实登记。
 priorStrategyMemory 仅为以前的可错战略假说，优先相信已确认 Host 事实。
 从跨角色关系、善恶压力、可推理的多个世界、各夜可能的发展与玩家水平看整局；适用于所有角色。
 逐一对 priorStrategyMemory.intentions 作 KEEP / REVISE / RETIRE，并简述真实的变化理由。
@@ -231,6 +234,37 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
                             }
                         }
                         array.put(data)
+                    }
+                }))
+            // Legacy decision archive has no global timeline points; keep it
+            // explicitly separate from the provably ordered action/observation
+            // prefix, never fabricate ordering or treat proposals as committed.
+            .put("unsequencedDecisionHistory", JSONObject()
+                .put("ordering", "UNKNOWN_RELATIVE_TO_CAUSAL_HISTORY")
+                .put("confirmedEvents", JSONArray().also { array ->
+                    session.decisionHistory.events.filter { event ->
+                        event.status == DecisionEventStatus.CONFIRMED ||
+                            event.status == DecisionEventStatus.APPLIED
+                    }.forEach { event ->
+                        array.put(JSONObject()
+                            .put("eventId", event.eventId)
+                            .put("status", event.status.name)
+                            .put("gameStateRevision", event.gameStateRevision)
+                            .put("playerInputRevision", event.playerInputRevision)
+                            .put("decisionType", event.selectedOutcomeSnapshot.decisionType)
+                            .put("canonicalFields",
+                                JSONObject(event.selectedOutcomeSnapshot.canonicalFields))
+                            .put("registrationWitnessStatus",
+                                "NOT_RECONSTRUCTED_FROM_ARCHIVE"))
+                    }
+                })
+                .put("corrections", JSONArray().also { array ->
+                    session.decisionHistory.corrections.forEach { correction ->
+                        array.put(JSONObject()
+                            .put("eventId", correction.eventId)
+                            .put("replacedEventId", correction.replacedEventId)
+                            .put("replacementEventId", correction.replacementEventId)
+                            .put("reasonCode", correction.reasonCode))
                     }
                 }))
             .put("noUnobservedFutureFactMayBeAssumed", true)
