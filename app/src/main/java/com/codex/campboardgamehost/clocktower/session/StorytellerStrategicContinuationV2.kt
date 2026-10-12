@@ -28,6 +28,49 @@ internal object StorytellerStrategicContinuationV2 {
         }
     }
 
+    /**
+     * Game-scoped client-owned advisory policy cursor. Each accepted continuation
+     * replaces the previous memory; later requests do not restart from night one.
+     * This is NOT Host canonical state and grants no decision/publication authority.
+     */
+    internal data class MemoryCursor(
+        val gameId: String,
+        val gameStateRevision: Long,
+        val playerInputRevision: Long,
+        val exclusiveGlobalSequence: Long,
+        val version: Int,
+        val memory: HostOpeningStrategyMemoryV2,
+    ) {
+        init {
+            require(gameId.isNotBlank() && version >= 0)
+            require(gameStateRevision >= 0 && playerInputRevision >= 0 &&
+                exclusiveGlobalSequence >= 0)
+        }
+
+        fun advance(accepted: Result): MemoryCursor {
+            require(accepted.gameId == gameId && accepted.memoryVersion == version)
+            require(accepted.gameStateRevision >= gameStateRevision &&
+                accepted.playerInputRevision >= playerInputRevision &&
+                accepted.exclusiveGlobalSequence >= exclusiveGlobalSequence)
+            require(accepted.gameStateRevision > gameStateRevision ||
+                accepted.playerInputRevision > playerInputRevision ||
+                accepted.exclusiveGlobalSequence > exclusiveGlobalSequence) {
+                "Do not advance strategy without any new Host change."
+            }
+            return MemoryCursor(
+                gameId, accepted.gameStateRevision, accepted.playerInputRevision,
+                accepted.exclusiveGlobalSequence, version + 1, accepted.updatedMemory)
+        }
+
+        companion object {
+            fun initial(accepted: HostOpeningSemanticAcceptanceV2): MemoryCursor =
+                MemoryCursor(
+                    accepted.selection.gameId, accepted.selection.gameStateRevision,
+                    accepted.selection.playerInputRevision, 0, 0,
+                    requireNotNull(accepted.strategyMemory))
+        }
+    }
+
     internal data class Revision(
         val priorIndex: Int,
         val verdict: String,
@@ -39,6 +82,7 @@ internal object StorytellerStrategicContinuationV2 {
         val gameStateRevision: Long,
         val playerInputRevision: Long,
         val exclusiveGlobalSequence: Long,
+        val memoryVersion: Int,
         val revisions: List<Revision>,
         val affectedOpenDecisionIds: Set<String>,
         val updatedMemory: HostOpeningStrategyMemoryV2,
@@ -63,6 +107,7 @@ internal object StorytellerStrategicContinuationV2 {
                 "gameStateRevision" to integer(),
                 "playerInputRevision" to integer(),
                 "exclusiveGlobalSequence" to integer(),
+                "memoryVersion" to integer(),
             ),
             "revisions" to arr(obj(
                 "priorIndex" to integer(),
@@ -100,14 +145,14 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
         session: ClocktowerSessionState,
         prior: HostOpeningSemanticAcceptanceV2,
         openDecisions: List<OpenDecision>,
+        cursor: MemoryCursor = MemoryCursor.initial(prior),
     ): String {
-        require(prior.selection.gameId == session.gameId)
-        val memory = requireNotNull(prior.strategyMemory) {
-            "Generic continuation needs the accepted opening strategic memory."
-        }
+        require(prior.selection.gameId == session.gameId && cursor.gameId == session.gameId)
+        val memory = cursor.memory
         require(session.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1)
-        require(session.gameStateRevision >= prior.selection.gameStateRevision &&
-            session.playerInputRevision >= prior.selection.playerInputRevision)
+        require(session.gameStateRevision >= cursor.gameStateRevision &&
+            session.playerInputRevision >= cursor.playerInputRevision &&
+            session.nextTimelineGlobalSequence >= cursor.exclusiveGlobalSequence)
         val seats = session.gameState.players.sortedBy { it.seat }
         require(seats.map { it.seat } == (1..seats.size).toList())
         require(openDecisions.map { it.decisionId }.distinct().size == openDecisions.size)
@@ -125,7 +170,8 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
                 .put("gameId", session.gameId)
                 .put("gameStateRevision", session.gameStateRevision)
                 .put("playerInputRevision", session.playerInputRevision)
-                .put("exclusiveGlobalSequence", cutoff))
+                .put("exclusiveGlobalSequence", cutoff)
+                .put("memoryVersion", cursor.version))
             .put("state", JSONObject()
                 .put("scriptId", session.gameState.script.value)
                 .put("gameSeed", session.gameSeed)
@@ -203,7 +249,7 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
         require(observed.keys().asSequence().toSet() ==
             expected.keys().asSequence().toSet())
         for (field in listOf("gameId", "gameStateRevision",
-                "playerInputRevision", "exclusiveGlobalSequence")) {
+                "playerInputRevision", "exclusiveGlobalSequence", "memoryVersion")) {
             require(observed.get(field) == expected.get(field)) {
                 "Stale/modified Host causal-prefix identity."
             }
@@ -256,6 +302,7 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
             gameStateRevision = expected.getLong("gameStateRevision"),
             playerInputRevision = expected.getLong("playerInputRevision"),
             exclusiveGlobalSequence = expected.getLong("exclusiveGlobalSequence"),
+            memoryVersion = expected.getInt("memoryVersion"),
             revisions = revisions,
             affectedOpenDecisionIds = changed.toSet(),
             updatedMemory = updated,
@@ -270,12 +317,13 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
         session: ClocktowerGameSession,
         prior: HostOpeningSemanticAcceptanceV2,
         openDecisions: List<OpenDecision>,
+        cursor: MemoryCursor = MemoryCursor.initial(prior),
         onStage: (String) -> Unit = {},
     ): Result {
         require(endpoint == PersonalDirectOpenAiV1.ENDPOINT)
         val frozen = session.state
         onStage("FROZEN_WHOLE_GAME_PREFIX")
-        val input = encode(frozen, prior, openDecisions)
+        val input = encode(frozen, prior, openDecisions, cursor)
         val raw = ProductionDrunkAiGatewayV1.post(
             endpoint, accessToken, input, model, onStage)
         onStage("VALIDATING_STRATEGIC_CONTINUATION")

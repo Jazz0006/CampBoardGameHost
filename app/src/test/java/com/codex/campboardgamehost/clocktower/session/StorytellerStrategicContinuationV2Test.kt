@@ -155,6 +155,45 @@ class StorytellerStrategicContinuationV2Test {
             accepted.exclusiveGlobalSequence)
     }
 
+    @Test fun acceptedPolicyCursorFeedsTheLatestMemoryAcrossMultipleNights() {
+        val game = session()
+        game.advanceGameStateRevision()
+        val initialPolicy = StorytellerStrategicContinuationV2.MemoryCursor.initial(prior())
+        val firstInput = JSONObject(StorytellerStrategicContinuationV2.encode(
+            game.state, prior(), open, initialPolicy))
+        val firstModel = result(firstInput)
+        firstModel.getJSONObject("updatedStrategyMemory").getJSONArray("intentions")
+            .getJSONObject(0).put("approach", "Changed after a real mechanical event")
+        val first = StorytellerStrategicContinuationV2.decode(
+            firstInput.toString(), firstModel.toString())
+        val nextPolicy = initialPolicy.advance(first)
+        assertEquals(1, nextPolicy.version)
+        assertTrue(nextPolicy.memory.intentions.first().approach.startsWith("Changed"))
+
+        // A new Host state revision changes the causal prefix: the next request
+        // must use the newly accepted policy, NOT replay the original opening memory.
+        game.recordPlayerInput()
+        val nextInput = JSONObject(StorytellerStrategicContinuationV2.encode(
+            game.state, prior(), open, nextPolicy))
+        assertEquals(1, nextInput.getJSONObject("source").getInt("memoryVersion"))
+        assertEquals("Changed after a real mechanical event",
+            nextInput.getJSONObject("priorStrategyMemory")
+                .getJSONArray("intentions").getJSONObject(0).getString("approach"))
+        val nextAccepted = StorytellerStrategicContinuationV2.decode(
+            nextInput.toString(), result(nextInput).toString())
+        val finalPolicy = nextPolicy.advance(nextAccepted)
+        assertEquals(2, finalPolicy.version)
+        assertTrue(runCatching { nextPolicy.advance(first) }.isFailure)
+        assertTrue(runCatching {
+            StorytellerStrategicContinuationV2.encode(
+                game.state, prior(), open, finalPolicy)
+        }.isSuccess) // same snapshot can be read, but no next model call is automatic
+        assertTrue(runCatching {
+            StorytellerStrategicContinuationV2.decode(
+                nextInput.toString(), result(firstInput).toString())
+        }.isFailure)
+    }
+
     @Test fun forbidsInventedChangedOrPublishedDecisionAndStaleResponse() {
         val host = JSONObject(StorytellerStrategicContinuationV2.encode(
             session().state, prior(), open))
