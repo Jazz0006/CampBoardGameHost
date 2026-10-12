@@ -89,9 +89,12 @@ internal object ClocktowerCurrentResidualScopeV2 {
                 // If the CURRENT player interaction has already supplied enough
                 // exact subjects for the Host to open its legal information
                 // domain, include that domain; do not infer any FUTURE action.
-                if (i == startIndex && phase == StorytellerPhase.FIRST_NIGHT && round == 1) {
-                    val current = pendingGlobalFirstNightScalarDecision(
-                        step, ClocktowerPhase.FirstNight, round, i, cards,
+                if (i == startIndex && phase in setOf(
+                        StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT)) {
+                    val current = pendingGlobalNightScalarDecision(
+                        step, if (phase == StorytellerPhase.FIRST_NIGHT)
+                            ClocktowerPhase.FirstNight else ClocktowerPhase.Night,
+                        round, i, cards,
                         state.gameId, revision, fortuneTellerSelectedNames)
                     if (current != null) {
                         produced += StorytellerProviderRequestFactoryV1.fromScalarInformation(
@@ -104,16 +107,20 @@ internal object ClocktowerCurrentResidualScopeV2 {
                 }
                 return Scope(produced, i, "PLAYER_OR_HOST_ACTION_NOT_YET_CONFIRMED")
             }
-            if (phase != StorytellerPhase.FIRST_NIGHT || round != 1) continue
-            val pair = pendingGlobalFirstNightPairDecision(
-                step, ClocktowerPhase.FirstNight, round, cards, pairContext)
+            if (phase !in setOf(StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT)) continue
+            val pair = if (phase == StorytellerPhase.FIRST_NIGHT && round == 1)
+                pendingGlobalFirstNightPairDecision(
+                    step, ClocktowerPhase.FirstNight, round, cards, pairContext)
+            else null
             if (pair != null) {
                 produced += StorytellerProviderRequestFactoryV1.fromPairInformation(
                     pair, snapshot, gameContext)
                 continue
             }
-            val scalar = pendingGlobalFirstNightScalarDecision(
-                step, ClocktowerPhase.FirstNight, round, i, cards, state.gameId,
+            val scalar = pendingGlobalNightScalarDecision(
+                step, if (phase == StorytellerPhase.FIRST_NIGHT)
+                    ClocktowerPhase.FirstNight else ClocktowerPhase.Night,
+                round, i, cards, state.gameId,
                 revision, fortuneTellerSelectedNames)
             if (scalar != null) {
                 produced += StorytellerProviderRequestFactoryV1.fromScalarInformation(

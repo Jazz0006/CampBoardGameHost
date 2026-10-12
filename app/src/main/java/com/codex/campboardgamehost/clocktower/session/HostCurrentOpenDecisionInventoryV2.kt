@@ -45,8 +45,10 @@ internal object HostCurrentOpenDecisionInventoryV2 {
             val information = context is StorytellerProviderDecisionContextV1.FirstNightPairInformation ||
                 context is StorytellerProviderDecisionContextV1.ScalarInformation
             if (information) {
-                require(phase == StorytellerPhase.FIRST_NIGHT && round == 1) {
-                    "First-night information pending domain cannot be reused in a later phase."
+                require(phase in setOf(StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT) &&
+                    (context !is StorytellerProviderDecisionContextV1.FirstNightPairInformation ||
+                        (phase == StorytellerPhase.FIRST_NIGHT && round == 1))) {
+                    "Information pending must belong to its actual night and ability domain."
                 }
                 require(frozen.epistemicObservationLog.records.none {
                     it.phase == phase && it.round == round && it.sourceSeat == seat

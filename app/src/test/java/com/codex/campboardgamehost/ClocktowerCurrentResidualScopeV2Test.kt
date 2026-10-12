@@ -4,6 +4,9 @@ import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
+import com.codex.campboardgamehost.clocktower.session.HostCurrentOpenDecisionInventoryV2
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
@@ -42,14 +45,16 @@ class ClocktowerCurrentResidualScopeV2Test {
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1)
     }
 
-    private fun snapshot(session: ClocktowerGameSession): TroubleBrewingGameSnapshotV1 {
+    private fun snapshot(session: ClocktowerGameSession,
+        phase: StorytellerPhase = StorytellerPhase.FIRST_NIGHT,
+        round: Int = 1): TroubleBrewingGameSnapshotV1 {
         val state = session.state
         return TroubleBrewingGameSnapshotV1(
             gameId = state.gameId, gameSeed = state.gameSeed,
             position = TroubleBrewingSnapshotPosition(
                 TroubleBrewingSnapshotStage.RUNTIME,
-                SnapshotField.Known(StorytellerPhase.FIRST_NIGHT),
-                SnapshotField.Known(1)),
+                SnapshotField.Known(phase),
+                SnapshotField.Known(round)),
             grimoireSeats = state.gameState.players.map {
                 TroubleBrewingSnapshotSeat(
                     it.seat, SnapshotField.Known(it.actualRole.value),
@@ -83,6 +88,28 @@ class ClocktowerCurrentResidualScopeV2Test {
             pairContext = null)
         assertEquals(null, past.barrierStep)
         assertTrue(past.requests.isEmpty())
+    }
+
+    @Test fun secondNightRealNumericInformationIsOpenAndHostLegal() {
+        val session = host()
+        val cards = (0..4).map { PlayerCard("Player $it", Role.Civilian, "") }
+        val empath = step(ClocktowerNightAction.None).copy(
+            actor = cards[1], roleEnName = "Empath",
+            displayProposition = InformationProposition.NumericResult(
+                NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 0),
+            numericMinimumValue = 0, numericMaximumValue = 2)
+        val scope = ClocktowerCurrentResidualScopeV2.collect(
+            state = session.state, phase = StorytellerPhase.NIGHT, round = 2,
+            steps = listOf(empath, step(ClocktowerNightAction.DemonKill)),
+            startIndex = 0, cards = cards, snapshot = snapshot(session, StorytellerPhase.NIGHT, 2),
+            gameContext = StorytellerProviderGameContextV1.EMPTY,
+            pairContext = null)
+        assertEquals(1, scope.requests.size)
+        assertEquals(1, scope.barrierStep)
+        val open = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
+            session.state, StorytellerPhase.NIGHT, 2, scope.requests)
+        assertEquals(1, open.size)
+        assertEquals("Empath", open.single().abilityRoleId)
     }
 
     @Test fun actionKindsAreFlowBarriersNotIndependentAiRoleRecommenders() {

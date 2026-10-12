@@ -47,7 +47,7 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
     private fun build(
         step: ClocktowerNightStepUi, selected: List<String> = emptyList(),
         phase: ClocktowerPhase = ClocktowerPhase.FirstNight,
-    ) = pendingGlobalFirstNightScalarDecision(
+    ) = pendingGlobalNightScalarDecision(
         step, phase, 1, 4, cards, "game-810", revision, selected,
     )
 
@@ -108,6 +108,16 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
         assertEquals(StorytellerProviderScalarKindV1.BOOLEAN, pending.kind)
         assertEquals(setOf("true", "false"), values(pending))
         assertEquals(listOf(1, 8), pending.subjectSeats)
+    }
+
+    @Test
+    fun `later night scalar uses the same current legal domain without a new recommender`() {
+        val empath = step(2, "Empath", InformationProposition.NumericResult(
+            NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 1))
+        val later = requireNotNull(build(empath, phase = ClocktowerPhase.Night))
+        assertEquals(setOf("1"), values(later))
+        assertTrue(later.requestIdentity.requestId.contains("night-scalar:NIGHT"))
+        assertEquals(2, later.sourceSeat)
     }
 
     @Test

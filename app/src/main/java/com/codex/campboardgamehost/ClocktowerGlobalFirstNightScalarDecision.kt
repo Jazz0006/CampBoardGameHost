@@ -12,7 +12,7 @@ import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequest
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 
 /**
- * A current, real first-night scalar information boundary for the GLOBAL strategist.
+ * A current, real-night scalar information boundary for the GLOBAL strategist.
  *
  * This is an adaptation of the existing Host legal domains, not a second selector.
  * Result-first registration options remain possible legal explanations, never an
@@ -30,7 +30,7 @@ internal data class PendingGlobalScalarInformationDecision(
     val legalCandidates: List<StorytellerProviderCandidateV1>,
 )
 
-internal fun pendingGlobalFirstNightScalarDecision(
+internal fun pendingGlobalNightScalarDecision(
     step: ClocktowerNightStepUi,
     phase: ClocktowerPhase,
     round: Int,
@@ -41,7 +41,8 @@ internal fun pendingGlobalFirstNightScalarDecision(
     fortuneTellerSelectedNames: List<String> = emptyList(),
     coordinator: ClocktowerRecommendationCoordinator = ClocktowerRecommendationCoordinator(),
 ): PendingGlobalScalarInformationDecision? {
-    if (phase != ClocktowerPhase.FirstNight || !step.isRealAction) return null
+    if (phase !in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) ||
+        !step.isRealAction) return null
     val actor = step.actor ?: return null
     val actorSeat = cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
         ?: return null
@@ -127,7 +128,7 @@ internal fun pendingGlobalFirstNightScalarDecision(
     }
     return PendingGlobalScalarInformationDecision(
         requestIdentity = StorytellerDecisionRequestIdentity(
-            gameId, "first-night-scalar:${phase.name}:$round:$sequence:$actorSeat:" +
+            gameId, "night-scalar:${phase.name}:$round:$sequence:$actorSeat:" +
                 "$metric:${subjects.joinToString(",")}",
         ),
         revision = revision,

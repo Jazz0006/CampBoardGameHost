@@ -2535,8 +2535,9 @@ internal fun ClocktowerJudgeScreen(
             )
         } else null
         val globalAiScalarPending = if (globalAiAssisted &&
-            phase == ClocktowerPhase.FirstNight && globalAiPending == null
-        ) pendingGlobalFirstNightScalarDecision(
+            phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
+            globalAiPending == null
+        ) pendingGlobalNightScalarDecision(
             currentStep, phase, round, currentStepIndex, cards, gameId,
             InformationDecisionRevision(gameStateRevision, playerInputRevision),
             listOfNotNull(fortuneTellerFirst, fortuneTellerSecond),

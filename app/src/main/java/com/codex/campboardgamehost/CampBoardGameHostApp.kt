@@ -1984,9 +1984,10 @@ internal fun CampBoardGameHostApp() {
                 step, clocktowerPhase, round, cards, it,
             )
         }
-        val pendingScalar = if (clocktowerPhase == ClocktowerPhase.FirstNight &&
+        val pendingScalar = if (clocktowerPhase in setOf(
+                ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
             pendingPair == null
-        ) pendingGlobalFirstNightScalarDecision(
+        ) pendingGlobalNightScalarDecision(
             step, clocktowerPhase, round, stepIndex, cards, session.state.gameId,
             StorytellerDecisionRevision(
                 session.state.gameStateRevision, session.state.playerInputRevision,
@@ -2256,7 +2257,7 @@ internal fun CampBoardGameHostApp() {
                         providerRequest, pendingPair, freshPending, session.state, advice.response,
                     )
                 } else if (pendingScalar != null) {
-                    val freshScalar = pendingGlobalFirstNightScalarDecision(
+                    val freshScalar = pendingGlobalNightScalarDecision(
                         step, clocktowerPhase, round, stepIndex, cards, session.state.gameId,
                         StorytellerDecisionRevision(
                             session.state.gameStateRevision, session.state.playerInputRevision,
