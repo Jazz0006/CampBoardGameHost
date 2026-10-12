@@ -46,7 +46,25 @@ internal fun pendingGlobalNightScalarDecision(
     val actor = step.actor ?: return null
     val actorSeat = cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
         ?: return null
-    val proposition = step.displayProposition
+    fun typedRoleResult(option: ClocktowerDisplayOption): Pair<Int, String>? {
+        if (option.displayKind != ClocktowerDisplayKind.RoleReveal) return null
+        (option.proposition as? InformationProposition.RoleAt)?.let {
+            return it.seat to it.role.value
+        }
+        val seat = option.presentationSubjectSeats.singleOrNull() ?: return null
+        val role = option.presentationRoleId?.takeIf { it.isNotBlank() } ?: return null
+        return seat to role
+    }
+    val proposition = step.displayProposition ?: run {
+        // A registration-sensitive Host step may not yet have a single true
+        // role proposition, although its legal *possible* results already
+        // identify one confirmed queried target. Preserve that ambiguity.
+        val typed = (step.manualInformationCandidates + step.automaticInformationCandidates)
+            .mapNotNull(::typedRoleResult)
+        if (typed.isNotEmpty() && typed.map { it.first }.distinct().size == 1)
+            InformationProposition.RoleAt(typed.first().first, RoleId(typed.first().second))
+        else null
+    }
     val kind: StorytellerProviderScalarKindV1
     val metric: String
     val subjects: List<Int>
@@ -116,6 +134,37 @@ internal fun pendingGlobalNightScalarDecision(
                         gameId, phase, round, sequence, revision,
                     ),
                 ).choices.map { it.value.toString() to it.candidateId }
+            }
+        }
+        is InformationProposition.RoleAt -> {
+            // A real target is a prerequisite. Never produce role-result choices
+            // for a future player query whose target has not been observed.
+            if (proposition.seat !in 1..cards.size ||
+                step.displayKind != ClocktowerDisplayKind.RoleReveal &&
+                    step.automaticInformationCandidates.none {
+                        it.displayKind == ClocktowerDisplayKind.RoleReveal
+                    }) return null
+            kind = StorytellerProviderScalarKindV1.ROLE
+            metric = "REVEALED_CHARACTER"
+            subjects = listOf(proposition.seat)
+            // Prefer the Host's exact legal result-first domain. When there
+            // is no special registration, use the complete Host-rendered role
+            // choice domain; only typed RoleAt can enter the model request.
+            val roleOptions = step.manualInformationCandidates.ifEmpty {
+                step.automaticInformationCandidates
+            }
+            val typed = roleOptions.mapNotNull(::typedRoleResult)
+                .filter { it.first == proposition.seat }
+                .map { it.second }.distinct()
+            val legalRoles = typed.ifEmpty {
+                // Reliable, ordinary target has exactly one confirmed true
+                // role, which the Host itself has materialized as RoleAt.
+                if (step.informationReliability == InformationReliability.RELIABLE &&
+                    step.manualInformationCandidates.isEmpty()
+                ) listOf(proposition.role.value) else emptyList()
+            }
+            legalValues = legalRoles.map { role ->
+                role to "role-result:${proposition.seat}:$role"
             }
         }
         else -> return null

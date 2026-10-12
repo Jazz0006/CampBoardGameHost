@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.session.HostCurrentOpenDecisionInventoryV2
@@ -27,7 +28,7 @@ import org.junit.Test
 /** Boundary safety tests against a real production GLOBAL_V1 Host session. */
 class ClocktowerCurrentResidualScopeV2Test {
     private fun host(): ClocktowerGameSession {
-        val roles = listOf("Chef", "Empath", "Monk", "Poisoner", "Imp")
+        val roles = listOf("Ravenkeeper", "Empath", "Monk", "Poisoner", "Imp")
         return ClocktowerGameSession.createProduction(
             "residual-boundary", 17,
             GameState(ScriptId("trouble_brewing"), roles.mapIndexed { index, role ->
@@ -110,6 +111,36 @@ class ClocktowerCurrentResidualScopeV2Test {
             session.state, StorytellerPhase.NIGHT, 2, scope.requests)
         assertEquals(1, open.size)
         assertEquals("Empath", open.single().abilityRoleId)
+    }
+
+    @Test fun aCurrentNightRoleResultOpensOnlyAfterPlayerTargetIsKnown() {
+        val session = host()
+        val cards = (0..4).map { PlayerCard("Player $it", Role.Civilian, "") }
+        val roleOption = ClocktowerDisplayOption(
+            label = "Monk", displayKind = ClocktowerDisplayKind.RoleReveal,
+            displayTitle = "revealed", displayPrimary = "Monk",
+            displaySecondary = null, displayFooter = null,
+            proposition = InformationProposition.RoleAt(3, RoleId("Monk")))
+        val current = step(ClocktowerNightAction.Ravenkeeper).copy(
+            actor = cards[0], roleEnName = "Ravenkeeper",
+            displayKind = ClocktowerDisplayKind.RoleReveal,
+            displayProposition = InformationProposition.RoleAt(3, RoleId("Monk")),
+            automaticInformationCandidates = listOf(roleOption))
+        fun scope(value: ClocktowerNightStepUi) = ClocktowerCurrentResidualScopeV2.collect(
+            session.state, StorytellerPhase.NIGHT, 2,
+            listOf(value, step(ClocktowerNightAction.DemonKill)), 0, cards,
+            snapshot(session, StorytellerPhase.NIGHT, 2),
+            StorytellerProviderGameContextV1.EMPTY, null)
+        val pending = scope(current)
+        assertEquals(1, pending.requests.size)
+        assertEquals(1, pending.barrierStep)
+        val legal = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
+            session.state, StorytellerPhase.NIGHT, 2, pending.requests)
+        assertEquals("Ravenkeeper", legal.single().abilityRoleId)
+        assertEquals("ROLE", (legal.single().currentDecisionContext as
+            StorytellerProviderDecisionContextV1.ScalarInformation).kind.name)
+        assertTrue(scope(current.copy(displayProposition = null,
+            automaticInformationCandidates = emptyList())).requests.isEmpty())
     }
 
     @Test fun actionKindsAreFlowBarriersNotIndependentAiRoleRecommenders() {

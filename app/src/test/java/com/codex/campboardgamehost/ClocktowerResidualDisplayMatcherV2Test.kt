@@ -38,6 +38,36 @@ class ClocktowerResidualDisplayMatcherV2Test {
                 NumericMetric.ADJACENT_EVIL_PAIRS, 1, value = value),
             spyRegistersGood = if (explicitWitness) true else null)
 
+    @Test fun semanticRoleResultMatchesOnlyOneSafeHostOptionWithoutFixingRegistration() {
+        val decision = decision().copy(
+            kind = StorytellerProviderScalarKindV1.ROLE,
+            metric = "REVEALED_CHARACTER", subjectSeats = listOf(4),
+            legalCandidates = listOf(StorytellerProviderCandidateV1(
+                "role-result:4:Recluse",
+                StorytellerProviderCandidatePayloadV1.ScalarResult("Recluse"))),
+        )
+        fun roleOption(witness: Boolean? = null) = ClocktowerDisplayOption(
+            label = "Recluse", displayKind = ClocktowerDisplayKind.RoleReveal,
+            displayTitle = "role", displayPrimary = "Recluse",
+            displaySecondary = null, displayFooter = null,
+            proposition = InformationProposition.RoleAt(4, RoleId("Recluse")),
+            recluseRegistersEvil = witness)
+        assertEquals("Recluse", ClocktowerResidualDisplayMatcherV2.matchScalar(
+            decision, "role-result:4:Recluse", listOf(roleOption()))?.displayPrimary)
+        val misinformation = roleOption().copy(proposition = null,
+            presentationSubjectSeats = listOf(4), presentationRoleId = "Recluse")
+        assertNull(misinformation.proposition) // never creates a false canonical observation
+        assertEquals("Recluse", ClocktowerResidualDisplayMatcherV2.matchScalar(
+            decision, "role-result:4:Recluse", listOf(misinformation))?.displayPrimary)
+        assertNull(ClocktowerResidualDisplayMatcherV2.matchScalar(
+            decision, "role-result:4:Recluse", listOf(roleOption(true))))
+        assertNull(ClocktowerResidualDisplayMatcherV2.matchScalar(
+            decision, "role-result:4:Recluse", listOf(roleOption(), roleOption())))
+        assertNull(ClocktowerResidualDisplayMatcherV2.matchScalar(
+            decision, "role-result:4:Recluse", listOf(roleOption().copy(
+                proposition = InformationProposition.RoleAt(5, RoleId("Recluse")))))
+    }
+
     @Test fun onlyUniqueTypedHostLegalCurrentOptionCanBePreselected() {
         val chosen = ClocktowerResidualDisplayMatcherV2.matchScalar(
             decision(), "n1", listOf(display(0), display(1)))

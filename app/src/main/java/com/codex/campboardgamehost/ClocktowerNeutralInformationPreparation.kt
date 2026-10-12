@@ -64,8 +64,10 @@ internal object ClocktowerNeutralInformationPreparation {
         scriptRoles: List<ClocktowerRole>,
         roleLabel: (ClocktowerRole) -> String,
         footer: String,
+        /** Player-selected or previously executed target, never an inferred future choice. */
+        targetSeat: Int? = null,
     ): List<ClocktowerDisplayOption> {
-        if (truthfulRole == null) return emptyList()
+        if (truthfulRole == null || (targetSeat != null && targetSeat <= 0)) return emptyList()
         return (scriptRoles + truthfulRole)
             .distinctBy(ClocktowerRole::enName)
             .sortedBy(ClocktowerRole::enName)
@@ -76,6 +78,10 @@ internal object ClocktowerNeutralInformationPreparation {
                     title = title,
                     primary = roleLabel(role),
                     footer = footer,
+                    // Misinformation needs typed candidate metadata, NOT a
+                    // fabricated epistemic RoleAt observation.
+                    presentationSubjectSeats = targetSeat?.let(::listOf).orEmpty(),
+                    presentationRoleId = role.enName,
                     isTruthful = role.enName == truthfulRole.enName,
                 )
             }
@@ -252,6 +258,8 @@ internal object ClocktowerNeutralInformationPreparation {
         secondary: String? = null,
         footer: String? = null,
         proposition: InformationProposition? = null,
+        presentationSubjectSeats: List<Int> = emptyList(),
+        presentationRoleId: String? = null,
         isTruthful: Boolean = true,
     ) = ClocktowerDisplayOption(
         label = label,
@@ -261,6 +269,8 @@ internal object ClocktowerNeutralInformationPreparation {
         displaySecondary = secondary,
         displayFooter = footer,
         proposition = proposition,
+        presentationSubjectSeats = presentationSubjectSeats,
+        presentationRoleId = presentationRoleId,
         isTruthful = isTruthful,
         misinformationPressure = 0,
         isDefaultRecommendation = false,

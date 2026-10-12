@@ -62,7 +62,16 @@ internal object ClocktowerResidualDisplayMatcherV2 {
                         statement.metric.name == decision.metric &&
                         statement.subjectSeats == decision.subjectSeats &&
                         statement.value.toString() == chosen.value
-                else -> false
+                is InformationProposition.RoleAt ->
+                    decision.metric == "REVEALED_CHARACTER" &&
+                        decision.subjectSeats == listOf(statement.seat) &&
+                        statement.role.value == chosen.value
+                else -> decision.kind ==
+                    com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1.ROLE &&
+                    statement == null &&
+                    option.displayKind == ClocktowerDisplayKind.RoleReveal &&
+                    option.presentationSubjectSeats == decision.subjectSeats &&
+                    option.presentationRoleId == chosen.value
             }
         }
     }

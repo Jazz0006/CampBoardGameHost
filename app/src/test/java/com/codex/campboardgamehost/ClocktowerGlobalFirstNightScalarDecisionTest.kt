@@ -121,6 +121,50 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
     }
 
     @Test
+    fun `typed role results use the same Host information contract after a real query`() {
+        val role = step(3, "Ravenkeeper", InformationProposition.RoleAt(6,
+            com.codex.campboardgamehost.clocktower.domain.RoleId("Recluse"))).copy(
+            action = ClocktowerNightAction.Ravenkeeper,
+            displayKind = ClocktowerDisplayKind.RoleReveal,
+            automaticInformationCandidates = listOf("Recluse", "Imp").map { shown ->
+                ClocktowerDisplayOption(
+                    label = shown, displayKind = ClocktowerDisplayKind.RoleReveal,
+                    displayTitle = "role", displayPrimary = shown,
+                    displaySecondary = null, displayFooter = null,
+                    presentationSubjectSeats = listOf(6),
+                    presentationRoleId = shown)
+            })
+        val decision = requireNotNull(build(role, phase = ClocktowerPhase.Night))
+        assertEquals(StorytellerProviderScalarKindV1.ROLE, decision.kind)
+        assertEquals(listOf(6), decision.subjectSeats)
+        assertEquals(setOf("Recluse", "Imp"), values(decision))
+        assertNull(build(role.copy(displayProposition = null,
+            automaticInformationCandidates = emptyList()), phase = ClocktowerPhase.Night))
+    }
+
+    @Test
+    fun `possible Spy registration results never become a uniquely recorded witness`() {
+        val role = step(3, "Undertaker", InformationProposition.RoleAt(7,
+            com.codex.campboardgamehost.clocktower.domain.RoleId("Spy"))).copy(
+            displayKind = ClocktowerDisplayKind.RoleReveal,
+            manualInformationCandidates = listOf("Spy", "Chef").map { shown ->
+                ClocktowerDisplayOption(
+                    label = shown, displayKind = ClocktowerDisplayKind.RoleReveal,
+                    displayTitle = "role", displayPrimary = shown,
+                    displaySecondary = null, displayFooter = null,
+                    proposition = InformationProposition.RoleAt(7,
+                        com.codex.campboardgamehost.clocktower.domain.RoleId(shown)),
+                    spyRegistersGood = shown == "Chef")
+            })
+        val decision = requireNotNull(build(role.copy(displayProposition = null),
+            phase = ClocktowerPhase.Night))
+        assertEquals(setOf("Spy", "Chef"), values(decision))
+        assertTrue(decision.legalCandidates.all {
+            it.payload is StorytellerProviderCandidatePayloadV1.ScalarResult
+        })
+    }
+
+    @Test
     fun `does not infer an information decision from a nonexistent or completed phase actor`() {
         val chef = step(1, "Chef", InformationProposition.NumericResult(
             NumericMetric.ADJACENT_EVIL_PAIRS, 1, (1..8).toList(), 0,

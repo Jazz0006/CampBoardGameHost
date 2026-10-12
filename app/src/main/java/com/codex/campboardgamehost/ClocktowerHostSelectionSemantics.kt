@@ -128,6 +128,8 @@ internal data class ClocktowerDisplayOption(
      * epistemic observation.
      */
     val presentationSubjectSeats: List<Int> = emptyList(),
+    /** Role-result UI meaning only; never asserts an observed or game-truth proposition. */
+    val presentationRoleId: String? = null,
     val spyRegistersGood: Boolean? = null,
     val spyRegisteredRoleEnName: String? = null,
     val recluseRegistersEvil: Boolean? = null,
@@ -148,6 +150,7 @@ internal fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): 
     option.displayPrimary.orEmpty(),
     option.displaySecondary.orEmpty(),
     option.displayFooter.orEmpty(),
+    option.presentationRoleId.orEmpty(),
     option.spyRegistersGood?.toString().orEmpty(),
     option.spyRegisteredRoleEnName.orEmpty(),
     option.recluseRegistersEvil?.toString().orEmpty(),

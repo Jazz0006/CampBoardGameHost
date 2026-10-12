@@ -1611,6 +1611,7 @@ internal fun ClocktowerJudgeScreen(
                             ClocktowerNeutralInformationPreparation.roleRevealOptions(
                                 title = text("送葬者信息", "Undertaker information"),
                                 truthfulRole = undertakerTarget?.clocktowerRole,
+                                targetSeat = undertakerTarget?.let { cards.indexOf(it) + 1 },
                                 scriptRoles = clocktowerRolesForScript(script),
                                 roleLabel = { role -> role.nameFor(language) },
                                 footer = text("今天被处决：${playerSeatLabel(cards, executedName)}", "Executed today: ${playerSeatLabel(cards, executedName)}"),
@@ -1815,6 +1816,7 @@ internal fun ClocktowerJudgeScreen(
                             ClocktowerNeutralInformationPreparation.roleRevealOptions(
                                 title = text("守鸦人信息", "Ravenkeeper information"),
                                 truthfulRole = ravenkeeperTargetCard?.clocktowerRole,
+                                targetSeat = ravenkeeperTargetCard?.let { cards.indexOf(it) + 1 },
                                 scriptRoles = clocktowerRolesForScript(script),
                                 roleLabel = { role -> role.nameFor(language) },
                                 footer = ravenkeeperTarget?.let { text("查询目标：${playerSeatLabel(cards, it)}", "Checked player: ${playerSeatLabel(cards, it)}") }.orEmpty(),
@@ -2592,7 +2594,11 @@ internal fun ClocktowerJudgeScreen(
             globalAiScalarPending != null -> ClocktowerResidualDisplayMatcherV2.matchScalar(
                 globalAiScalarPending,
                 globalResidualAdoptedChoices[globalAiScalarPending.requestIdentity.requestId],
-                currentStep.manualInformationCandidates)
+                if (globalAiScalarPending.kind ==
+                    com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1.ROLE
+                ) currentStep.manualInformationCandidates.ifEmpty {
+                    currentStep.automaticInformationCandidates
+                } else currentStep.manualInformationCandidates)
             else -> null
         }
         val approvedOpeningOption = residualApprovedOption ?: oldApprovedOpeningOption ?: preplannedSeat?.let { seat ->
