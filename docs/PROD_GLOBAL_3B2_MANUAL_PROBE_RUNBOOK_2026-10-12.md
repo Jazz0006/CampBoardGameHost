@@ -1,6 +1,6 @@
 # PROD-GLOBAL-3B2 — 开发机手动 Luna 测试包（2026-10-12）
 
-状态：READY FOR USER MANUAL EXECUTION；ChatGPT 尚未发起任何付费请求。本包是开发机终端执行工具，不是 Mini MCP EXPT 服务，也不是生产 Android 接口。
+状态：READY FOR USER MANUAL EXECUTION；ChatGPT 尚未发起任何付费请求。Mini MCP 已部署 EXPT-0/1 **离线**实验登记/预检/读取/比较，可以登记本套输入；没有 EXPT-2 付费运行接口，因此本包仍通过开发机终端明确执行真实请求，不是生产 Android 接口。
 
 ## 包内文件
 
@@ -9,7 +9,7 @@
 - docs/PROD_GLOBAL_3B2_EXPERT_PROBE_FIXTURES_V1.json — E01–E04 四个冻结基线案例、可选 E05 全员新手案例及 22 种角色知识；评分目标 graderOnly 不发给模型。
 - docs/PROD_GLOBAL_3B2_EXPERT_PROBE_DESIGN_V1_2026-10-12.md — 专家 system 指令、实验协议和评估标准。
 
-脚本直接从上述设计文档第 2 节提取提示词；模型 JSON 仅包含 roleCatalog、roleEffects、rules 和 fixture.input，不发送 graderOnly、B2 历史答案或 Host 候选枚举。
+脚本直接从上述设计文档第 2 节提取提示词；模型 JSON 仅包含 roleCatalog、roleEffects、rules 和 fixture.input，不发送 graderOnly、B2 历史答案或 Host 候选枚举。Mini MCP 私有离线实验登记 ID 为 `botc-3b2-luna6-inputs-20261012`，已用 `experiment_define` / `experiment_preflight` / `experiment_read` 验证（`valid:true`、`networkRequests:0`、`paidExecutionAuthorized:false`），该登记不是 API 运行结果，不能通过 `experiment_read` 读取尚不存在的模型结果。
 
 ## 第一步：离线预检，零 API 费用
 
@@ -28,9 +28,10 @@
 
     read -rsp 'OpenAI API key: ' OPENAI_API_KEY; echo
     export OPENAI_API_KEY
+    export OPENAI_MODEL=gpt-6-luna
     umask 077
 
-执行一笔真实计费请求（固定 gpt-5.6-luna）：
+确认这两个环境变量在**当前 SSH shell** 可用（不要打印 API Key）；若此前遗留 `OPENAI_MODEL=gpt-5.6-luna`，需如上覆盖为 `gpt-6-luna`。执行一笔真实计费请求（固定 gpt-6-luna）：
 
     OUT="$HOME/botc-3b2-e01-$(date +%Y%m%d-%H%M%S)"
     python3 tools/prod_global_3b2_manual_probe.py \
@@ -38,7 +39,7 @@
       --output-dir "$OUT"
     python3 -m json.tool "$OUT/summary.json"
 
-命令显式规定了最多 1 次调用。真实 API 用量另行收费；模型固定为 gpt-5.6-luna，store=false，strict JSON Schema，max_output_tokens=8192，超时 180 秒，无重试。API HTTP 错误只保留状态，不记录密钥、请求头或上游错误正文。
+命令显式规定了最多 1 次调用。真实 API 用量另行收费；模型固定为 gpt-6-luna，store=false，strict JSON Schema，max_output_tokens=8192，超时 180 秒，无重试。API HTTP 错误只保留状态，不记录密钥、请求头或上游错误正文。
 
 结果仅能写入 Git 仓库外的绝对路径，且要求路径全新、私有（0700）；JSON 文件为 0600。
 

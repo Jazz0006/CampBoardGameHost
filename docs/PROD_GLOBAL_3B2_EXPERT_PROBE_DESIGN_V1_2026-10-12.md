@@ -6,9 +6,9 @@
 
 ## 1. 实验目的与边界
 
-测试 **gpt-5.6-luna** 能否在不给候选枚举、不给示范答案的前提下，根据完整展示身份、Drunk 是否存在及其尚未绑定状态、经验等级、必要 TB 角色知识，独立输出 **一套** 可行、有推理空间的开局方案。AI 可独立理解规则，Host 仍独立验证并只在正确的时间提交。
+测试 **gpt-6-luna** 能否在不给候选枚举、不给示范答案的前提下，根据完整展示身份、Drunk 是否存在及其尚未绑定状态、经验等级、必要 TB 角色知识，独立输出 **一套** 可行、有推理空间的开局方案。AI 可独立理解规则，Host 仍独立验证并只在正确的时间提交。
 
-只做实验文件；**不改生产、Mini MCP 或 Host 校验规则**，不恢复旧 heuristic。真实付费请求需在独立、已授权、明确限额且可读取原始输出的执行接口下进行。Mini MCP 的旧版 18 个 BoTC 实验任务已经退役（其 `docs/ORACLE_VM_DEPLOYMENT_RUNBOOK.md`）；通用 EXPT-0/1、EXPT-2 目前仍在开发交接中。现有 `run_task` 测试能力不等于付费模型实验能力。不能声称本 V1 已测过 Luna。
+只做实验文件；**不改生产、Mini MCP 或 Host 校验规则**，不恢复旧 heuristic。真实付费请求需在独立、已授权、明确限额且可读取原始输出的执行接口下进行。Mini MCP 的旧版 18 个 BoTC 实验任务已经退役（其 `docs/ORACLE_VM_DEPLOYMENT_RUNBOOK.md`）；Mini MCP EXPT-0/1 已于 2026-10-12 部署并通过真实连接的离线 canary；EXPT-2 付费调用接口尚未部署。现有 `run_task` 测试能力不等于付费模型实验能力。不能声称本 V1 已测过 Luna。
 
 ## 2. V1 System/Developer 提示词（固定，不带候选菜单）
 
@@ -108,8 +108,8 @@
 ### 执行协议
 
 1. 首先检查 `main`/实验分支和 Mini MCP **现有**工具。没有授权的付费任务接口不得绕开 MCP 用外部副作用或借旧退役任务；本阶段可以完成全部离线实验设计，但必须如实标为 `NOT RUN`。
-2. 通用 EXPT 的 `experiment_define/preflight/read` 可以部署后使用；只有独立开放且获得计费授权的 `experiment_run/status` 才用于实际 Luna 请求。先单次 preflight 检查 secret presence（不能返回 secret）、输入 SHA256、输出目录、令牌上限及 `store:false`。不提交任何 Key、原始隐藏身份/回答至公共仓库。
-3. 控制同一 `gpt-5.6-luna`、同一 API transport、同一输出格式预算/超时与重复次数。首轮建议 4 个 fixture × 2 次重复；若需完整同局直接 A/B，应额外为同四局制作对应 B2 输入后以同预算测，不可把历史不同输入/不同运行条件的 B2 响应当严格统计基线。
+2. 通用 EXPT-0/1 已部署；现在使用 `experiment_define/preflight/read` 登记和核验离线输入及元数据，其中 `preflight` 始终报告 `networkRequests:0` / `paidExecutionAuthorized:false`。EXPT-0/1 不会检查真实 API Key 是否存在，也不能发起请求。真正通过 Mini MCP 付费执行仍需未来独立授权的 EXPT-2 `experiment_run/status`；当前可由用户在开发机明确执行受限手动 runner。所有真实 API 请求均需 `store:false`、限额及私有结果目录。不提交 Key、原始隐藏身份/回答至公共仓库。
+3. 控制同一 `gpt-6-luna`、同一 API transport、同一输出格式预算/超时与重复次数。首轮建议 4 个 fixture × 2 次重复；若需完整同局直接 A/B，应额外为同四局制作对应 B2 输入后以同预算测，不可把历史不同输入/不同运行条件的 B2 响应当严格统计基线。
 4. 每条样本私有保存原请求/响应、是否完整/拒答、结构验证、API 错误、真实延迟、usage tokens、成本（仅账单有可靠数据时）。失败不自动重试；需要重新执行必须单独记为新试次。
 5. 评判者看匿名响应与匿名样本 ID，**不得**看到 `graderOnly` 或此前 A/B/B2 答案来推定“标准选择”；可使用单独的规则审查记录做合法校验。
 

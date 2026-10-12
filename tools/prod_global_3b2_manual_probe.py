@@ -15,7 +15,7 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "docs/PROD_GLOBAL_3B2_EXPERT_PROBE_FIXTURES_V1.json"
 DESIGN = ROOT / "docs/PROD_GLOBAL_3B2_EXPERT_PROBE_DESIGN_V1_2026-10-12.md"
-MODEL = "gpt-5.6-luna"
+MODEL = "gpt-6-luna"
 API_URL = "https://api.openai.com/v1/responses"
 MAX_OUTPUT_TOKENS = 8192
 
@@ -255,7 +255,7 @@ def main(argv=None):
     if not os.environ.get("OPENAI_API_KEY"):
         p.error("Set OPENAI_API_KEY securely in your developer shell")
     if os.environ.get("OPENAI_MODEL") not in (None, "", MODEL):
-        p.error("OPENAI_MODEL conflicts with fixed gpt-5.6-luna")
+        p.error("OPENAI_MODEL conflicts with fixed gpt-6-luna")
     try:
         out = validate_output_dir(args.output_dir)
     except ValueError as exc:

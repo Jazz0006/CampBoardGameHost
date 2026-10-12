@@ -45,7 +45,7 @@ class ManualExpertProbeTest(unittest.TestCase):
     def test_request_has_one_model_no_storage_strict_output(self):
         f = self.data["fixtures"][0]
         req = probe.make_request(self.system, probe.make_input(self.data, f))
-        self.assertEqual(req["model"], "gpt-5.6-luna")
+        self.assertEqual(req["model"], "gpt-6-luna")
         self.assertIs(req["store"], False)
         self.assertEqual(req["text"]["format"]["type"], "json_schema")
         self.assertIs(req["text"]["format"]["strict"], True)
@@ -98,7 +98,7 @@ class ManualExpertProbeTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             result_dir = str(Path(folder) / "private-result")
             with patch.dict(os.environ, {"OPENAI_API_KEY": "test-only-dummy",
-                                      "OPENAI_MODEL": "gpt-5.6-luna"}), \
+                                      "OPENAI_MODEL": "gpt-6-luna"}), \
                  patch.object(probe, "call_responses", side_effect=RuntimeError("HTTP_400")) as calls, \
                  contextlib.redirect_stdout(io.StringIO()):
                 code = probe.main(["--live", "--case", "all", "--max-calls", "4",
