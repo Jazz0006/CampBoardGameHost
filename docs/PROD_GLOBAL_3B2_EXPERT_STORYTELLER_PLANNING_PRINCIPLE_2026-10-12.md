@@ -31,7 +31,7 @@ Host can still provide focused, verified rule context for genuinely tricky or cu
 
 ## 3. Expert output and validation
 
-- Return **one** structured `openingPlan` with **concrete semantic decisions** (Drunk seat if applicable, each currently decidable Storyteller information result, red herring if an actual functioning Fortune Teller requires one, three legal off-board distinct Demon bluffs, clearly deferred event-dependent decisions) plus **short private `strategyMemory`**.
+- Return **one** structured `openingPlan` with **concrete semantic decisions** (Drunk seat if applicable, each currently decidable Storyteller information result, red herring when a Fortune Teller actually exists and script setup requires it, three legal off-board distinct Demon bluffs, clearly deferred event-dependent decisions) plus **short private `strategyMemory`**.
 - Prefer concise, unambiguous semantic fields such as seat numbers, role IDs, roles shown to pair-information players, scalar result, and deferred event IDs. **Do not require the model to select opaque Host pre-enumerated candidate IDs as the default interface**. Host resolves/checks its choices against its own current legal domain and role rules when adopting.
 - Separate genuinely deterministic outcomes (calculated by Host, not a model discretion) from actual Storyteller choices. Truth/validity for Recluse/Spy must use result-first semantics; possible registration witnesses are not automatically committed facts.
 - All necessary model decisions must be present and legal at the specified as-of revision. If invalid: report the **specific rule/field** and optionally request **whole-bundle correction** against current facts (bounded, explicit cost/latency policy); if still unusable, return manual takeover. Do not automatically replace one item with a convenient local choice because that breaks global strategy.
@@ -62,6 +62,6 @@ Do not assume prompt improvements imply perfect legality or human-level judgment
 
 - User is sole developer/current operator; no unnecessary cross-version migration or widening current-game Recovery.
 - Maintain explicit `MANUAL`, `AI_ASSISTED`, `AI_AUTOMATIC` authority; LLM never directly mutates canonical state.
-- No regression to retired weighted/ranking/heurstic style engines or per-role isolated LLM policies.
+- No regression to retired weighted/ranking/heuristic style engines or per-role isolated LLM policies.
 - This is **general expert competence** work. No Chef-seat-1 special-case prompt, test whitelist, override or "fix" for a single benchmark answer.
 - Mini MCP generic experiments facility is being upgraded in parallel in its *own* repository. Do not touch that repo from Host changes. Use it if available, otherwise a bounded script/fixture can be used without compromising keys.
