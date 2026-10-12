@@ -38,6 +38,16 @@ class ClocktowerResidualDisplayMatcherV2Test {
                 NumericMetric.ADJACENT_EVIL_PAIRS, 1, value = value),
             spyRegistersGood = if (explicitWitness) true else null)
 
+    @Test fun typedPresentationRoleIdDoesNotChangeUnrelatedLegacyCandidateIds() {
+        val existing = display(1)
+        val baseline = clocktowerInformationCandidateId(existing)
+        val extended = clocktowerInformationCandidateId(existing.copy(
+            presentationRoleId = "Recluse"))
+        assertEquals("$baseline|shownRole:Recluse", extended)
+        assertEquals(baseline, clocktowerInformationCandidateId(existing.copy(
+            presentationRoleId = null)))
+    }
+
     @Test fun semanticRoleResultMatchesOnlyOneSafeHostOptionWithoutFixingRegistration() {
         val decision = decision().copy(
             kind = StorytellerProviderScalarKindV1.ROLE,
@@ -65,7 +75,7 @@ class ClocktowerResidualDisplayMatcherV2Test {
             decision, "role-result:4:Recluse", listOf(roleOption(), roleOption())))
         assertNull(ClocktowerResidualDisplayMatcherV2.matchScalar(
             decision, "role-result:4:Recluse", listOf(roleOption().copy(
-                proposition = InformationProposition.RoleAt(5, RoleId("Recluse")))))
+                proposition = InformationProposition.RoleAt(5, RoleId("Recluse"))))))
     }
 
     @Test fun onlyUniqueTypedHostLegalCurrentOptionCanBePreselected() {

@@ -80,7 +80,7 @@ internal object ClocktowerNeutralInformationPreparation {
                     footer = footer,
                     // Misinformation needs typed candidate metadata, NOT a
                     // fabricated epistemic RoleAt observation.
-                    presentationSubjectSeats = targetSeat?.let(::listOf).orEmpty(),
+                    presentationSubjectSeats = targetSeat?.let { listOf(it) }.orEmpty(),
                     presentationRoleId = role.enName,
                     isTruthful = role.enName == truthfulRole.enName,
                 )

@@ -150,13 +150,15 @@ internal fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): 
     option.displayPrimary.orEmpty(),
     option.displaySecondary.orEmpty(),
     option.displayFooter.orEmpty(),
-    option.presentationRoleId.orEmpty(),
     option.spyRegistersGood?.toString().orEmpty(),
     option.spyRegisteredRoleEnName.orEmpty(),
     option.recluseRegistersEvil?.toString().orEmpty(),
     option.recluseRegisteredRoleEnName.orEmpty(),
     option.isTruthful.toString(),
-).joinToString("|")
+).joinToString("|").let { baseline ->
+    // Leave every unrelated established candidate ID unchanged.
+    option.presentationRoleId?.let { "$baseline|shownRole:$it" } ?: baseline
+}
 
 internal fun projectFirstNightNumericInformationOptions(
     phase: ClocktowerPhase,
