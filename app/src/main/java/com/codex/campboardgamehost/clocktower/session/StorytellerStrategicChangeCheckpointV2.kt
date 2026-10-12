@@ -105,7 +105,7 @@ internal object StorytellerStrategicChangeCheckpointV2 {
             before.decisionHistory.corrections)
 
         require(openDecisions.map { it.decisionId }.distinct().size == openDecisions.size)
-        val legalSeats = after.gameState.players.mapTo(setOf()) { it.seat }
+        val legalSeats = after.gameState.players.mapTo(mutableSetOf<Int>()) { it.seat }
         require(openDecisions.all { it.sourceSeat == null || it.sourceSeat in legalSeats })
 
         // An already-published same-round/private-observation cannot become
