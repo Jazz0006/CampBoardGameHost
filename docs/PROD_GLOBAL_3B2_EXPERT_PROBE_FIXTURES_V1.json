@@ -1,0 +1,341 @@
+{
+  "schemaId": "botc.expert-storyteller-probe-fixtures",
+  "schemaVersion": 1,
+  "metadata": {
+    "status": "DESIGN_ONLY_NO_LIVE_SAMPLES",
+    "model": "gpt-5.6-luna",
+    "sourceHead": "10e5da8f165cbae0288b42d33c50bd0344b116d8",
+    "runInput": "ONLY fixture.input + rules + roleCatalog + roleEffects + expert system prompt; NEVER graderOnly",
+    "baseline": "3P previous B2 values are separately documented and not additional paid calls"
+  },
+  "roleCatalog": {
+    "Townsfolk": [
+      "Washerwoman",
+      "Librarian",
+      "Investigator",
+      "Chef",
+      "Empath",
+      "Fortune Teller",
+      "Undertaker",
+      "Monk",
+      "Ravenkeeper",
+      "Virgin",
+      "Slayer",
+      "Soldier",
+      "Mayor"
+    ],
+    "Outsider": [
+      "Butler",
+      "Drunk",
+      "Recluse",
+      "Saint"
+    ],
+    "Minion": [
+      "Poisoner",
+      "Spy",
+      "Scarlet Woman",
+      "Baron"
+    ],
+    "Demon": [
+      "Imp"
+    ]
+  },
+  "roleEffects": {
+    "Washerwoman": "首夜得知两名玩家中至少一人是一个具体镇民角色。",
+    "Librarian": "首夜得知两名玩家中至少一人是一个具体外来者角色；若没有外来者，得知0。",
+    "Investigator": "首夜得知两名玩家中至少一人是一个具体爪牙角色。",
+    "Chef": "首夜得知围桌相邻邪恶玩家的配对数量，含首尾相邻。",
+    "Empath": "每夜得知自己最近的两名存活邻居中邪恶人数。",
+    "Fortune Teller": "每夜玩家选择两人，得知其中是否有恶魔；一名善良玩家会登记成恶魔。",
+    "Undertaker": "每夜（非首夜）得知今日被处决者的角色。",
+    "Monk": "每夜（非首夜）选择非自己的玩家，使其当夜免受恶魔侵害。",
+    "Ravenkeeper": "若在夜间死亡，醒来选择一人，得知其角色。",
+    "Virgin": "镇民第一次提名你时，提名者立即被处决。",
+    "Slayer": "每局一次公开选择一人；若目标为恶魔则恶魔死亡。",
+    "Soldier": "你不会被恶魔杀死。",
+    "Mayor": "若最后三人存活且当天无人被处决，善良获胜；恶魔夜间攻击你时，可能改杀其他人。",
+    "Butler": "每夜选择一位主人；次日你只有在主人投票时才可投票。",
+    "Drunk": "你以为自己是镇民，实际是外来者 Drunk；你没有所展示的镇民能力，可能得到错误信息。",
+    "Recluse": "可能登记成邪恶及爪牙/恶魔，即使死亡。",
+    "Saint": "如果因处决死亡，善良阵营输掉游戏。",
+    "Poisoner": "每夜选择玩家，使其当夜及次日中毒。",
+    "Spy": "每夜查看魔典；可能登记为善良及镇民或外来者，即使死亡。",
+    "Scarlet Woman": "若恶魔死亡时仍有至少5人存活，你成为恶魔。",
+    "Baron": "本局额外有两位外来者，以取代两位镇民。",
+    "Imp": "每夜（非首夜）选择一人死亡；若此法自杀，一位爪牙成为 Imp。"
+  },
+  "rules": {
+    "setup": "8 人基础 5 镇民、1 外来者、1 爪牙、1 恶魔。Baron 使额外 2 外来者取代 2 镇民。Drunk 实际是外来者，玩家看到未实际在场的镇民身份；若有 Drunk，shown Townsfolk 名单包含此人，Drunk 具体座位尚未绑定。",
+    "firstNight": "7 人以上恶魔得知爪牙与 3 个不在场的善良角色作为掩饰。首夜先执行 Poisoner/Spy，后执行 Washerwoman、Librarian、Investigator、Chef、Empath、Fortune Teller、Butler 等；先后依赖必须尊重。",
+    "initialInfo": "Washerwoman：二人中有一个指定镇民；Librarian：二人中有一个指定外来者，或实际没有外来者时得知零；Investigator：二人中有一个指定爪牙；Chef：相邻邪恶玩家对数；Empath：两侧仍存活邻居中的邪恶人数；Fortune Teller：每夜玩家选两人，只告知是否至少一人为恶魔或红鲱鱼。",
+    "statuses": "Drunk 无镇民能力但误认自己是展示角色，可能得到任意误导信息；Poisoner 首夜选人后令其当夜及次日中毒，当前目标尚未选定时不得当成既成事实。",
+    "registration": "Recluse 可能登记为邪恶及爪牙/恶魔；Spy 可能登记为善良及镇民/外来者。合法数字或二人信息可以有多个登记解释；只选择观察结果，不擅自把某个解释确定为事实。",
+    "late": "Butler 首夜自行选择主人；Ravenkeeper 在夜间被杀时才会选人知晓角色；Fortune Teller 的两个查询目标直到玩家选择才确定。所有未发生事件仅可预留条件意图。",
+    "redHerring": "只在有实际具备能力的 Fortune Teller 时设置一名善良玩家为红鲱鱼；Drunk 展示为 Fortune Teller 不等于有真正 Fortune Teller。",
+    "bluffs": "推荐三个不同的、当前不在场的善良角色 ID 作为 Imp 掩饰身份；必须通过 Host 基于实际/展示配置的独立合法性校验。",
+    "principle": "优先公平且有推理空间、善良可解而不必获胜、邪恶有可操作空间，兼顾玩家熟练度。近期局历史只轻度减少重复，不是硬性禁令。"
+  },
+  "fixtures": [
+    {
+      "id": "E01",
+      "title": "8人男爵酒鬼、厨师与调查员交叉压力",
+      "input": {
+        "schemaVersion": 1,
+        "script": "Trouble Brewing",
+        "phase": "SHOWN_ROSTER_LOCKED",
+        "asOfRevision": 1,
+        "hasDrunk": true,
+        "drunkAssignment": "UNCOMMITTED",
+        "circleSeats": [
+          {
+            "seat": 1,
+            "shownRole": "Chef",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 2,
+            "shownRole": "Fortune Teller",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 3,
+            "shownRole": "Ravenkeeper",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 4,
+            "shownRole": "Butler",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 5,
+            "shownRole": "Investigator",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 6,
+            "shownRole": "Recluse",
+            "experience": "UNKNOWN"
+          },
+          {
+            "seat": 7,
+            "shownRole": "Baron",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 8,
+            "shownRole": "Imp",
+            "experience": "BEGINNER"
+          }
+        ],
+        "confirmedEvents": [],
+        "unknownEvents": [
+          "fortune_teller.targets",
+          "butler.master",
+          "ravenkeeper.future_death_and_target"
+        ],
+        "recentGames": []
+      },
+      "graderOnly": {
+        "scenarioAim": "基础阵容为4展示镇民、2展示外来者、Baron、Imp。考察 Drunk+Chef 邪恶相邻+Investigator Baron 双重压力与 Recluse 登记、FT红鲱鱼、恶魔掩饰之间的机会成本；不能把任何固定座位/信息当标准答案。",
+        "doNotSendToModel": true
+      }
+    },
+    {
+      "id": "E02",
+      "title": "8人无酒鬼、投毒者先行动",
+      "input": {
+        "schemaVersion": 1,
+        "script": "Trouble Brewing",
+        "phase": "SHOWN_ROSTER_LOCKED",
+        "asOfRevision": 1,
+        "hasDrunk": false,
+        "drunkAssignment": "NOT_APPLICABLE",
+        "circleSeats": [
+          {
+            "seat": 1,
+            "shownRole": "Washerwoman",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 2,
+            "shownRole": "Librarian",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 3,
+            "shownRole": "Chef",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 4,
+            "shownRole": "Empath",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 5,
+            "shownRole": "Fortune Teller",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 6,
+            "shownRole": "Recluse",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 7,
+            "shownRole": "Poisoner",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 8,
+            "shownRole": "Imp",
+            "experience": "BEGINNER"
+          }
+        ],
+        "confirmedEvents": [],
+        "unknownEvents": [
+          "poisoner.target",
+          "fortune_teller.targets"
+        ],
+        "recentGames": []
+      },
+      "graderOnly": {
+        "scenarioAim": "5展示镇民+1外来者+Poisoner+Imp。投毒者目标尚未定；考虑真信息、被毒可能与先后顺序，不能发明投毒者行动。Empath 4 两侧为 Chef3/FT5，未中毒则数字由 Host 确定为0。",
+        "doNotSendToModel": true
+      }
+    },
+    {
+      "id": "E03",
+      "title": "8人无酒鬼、间谍隐士多解释登记",
+      "input": {
+        "schemaVersion": 1,
+        "script": "Trouble Brewing",
+        "phase": "SHOWN_ROSTER_LOCKED",
+        "asOfRevision": 1,
+        "hasDrunk": false,
+        "drunkAssignment": "NOT_APPLICABLE",
+        "circleSeats": [
+          {
+            "seat": 1,
+            "shownRole": "Investigator",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 2,
+            "shownRole": "Chef",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 3,
+            "shownRole": "Fortune Teller",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 4,
+            "shownRole": "Recluse",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 5,
+            "shownRole": "Empath",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 6,
+            "shownRole": "Spy",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 7,
+            "shownRole": "Washerwoman",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 8,
+            "shownRole": "Imp",
+            "experience": "BEGINNER"
+          }
+        ],
+        "confirmedEvents": [],
+        "unknownEvents": [
+          "fortune_teller.targets"
+        ],
+        "recentGames": []
+      },
+      "graderOnly": {
+        "scenarioAim": "5镇民+1外来者+Spy+Imp。Empath 5 邻居为 Recluse4 和 Spy6；可能有多种合法观察数字及多个登记见证，不能自动承诺某一见证。Investigator 可涉及 Spy；Bluff 不得占用已展示角色。",
+        "doNotSendToModel": true
+      }
+    },
+    {
+      "id": "E04",
+      "title": "8人男爵酒鬼、双配对信息与真占卜师可失效",
+      "input": {
+        "schemaVersion": 1,
+        "script": "Trouble Brewing",
+        "phase": "SHOWN_ROSTER_LOCKED",
+        "asOfRevision": 1,
+        "hasDrunk": true,
+        "drunkAssignment": "UNCOMMITTED",
+        "circleSeats": [
+          {
+            "seat": 1,
+            "shownRole": "Washerwoman",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 2,
+            "shownRole": "Librarian",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 3,
+            "shownRole": "Empath",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 4,
+            "shownRole": "Fortune Teller",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 5,
+            "shownRole": "Saint",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 6,
+            "shownRole": "Butler",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 7,
+            "shownRole": "Baron",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 8,
+            "shownRole": "Imp",
+            "experience": "REGULAR"
+          }
+        ],
+        "confirmedEvents": [],
+        "unknownEvents": [
+          "fortune_teller.targets",
+          "butler.master"
+        ],
+        "recentGames": [
+          {
+            "summary": "上一局曾用配对信息误导作为主要线索；只作轻量避免重复的提示，非事实或硬性约束",
+            "weight": "LIGHT"
+          }
+        ]
+      },
+      "graderOnly": {
+        "scenarioAim": "4展示镇民+2展示外来者+Baron+Imp。Drunk 候选可能影响 Washerwoman/Librarian/Empath 以及 Fortune Teller 是否实际存在、红鲱鱼是否应设置；不必定向选择。",
+        "doNotSendToModel": true
+      }
+    }
+  ]
+}
