@@ -2608,7 +2608,8 @@ internal fun ClocktowerJudgeScreen(
             jointOpeningAdopted, phase) {
             if (globalAiAssisted &&
                 globalAiCurrentKey != null &&
-                globalAiAdviceKey != globalAiCurrentKey && approvedOpeningOption == null
+                globalAiAdviceKey != globalAiCurrentKey &&
+                (approvedOpeningOption == null || jointOpeningAdopted)
             ) {
                 onRequestGlobalAiAdvice(nightSteps, currentStepIndex)
             }
