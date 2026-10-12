@@ -100,6 +100,12 @@ internal object InitialJointOpeningDirectV2 {
 具有多个合理世界，且适合当前玩家水平的游戏。请先在内部分析整局的善良信息生态、邪恶压力、跨角色线索交互、
 隐士和间谍的合法登记歧义、酒鬼的全局影响、恶魔掩饰身份、占卜师红鲱鱼与玩家熟练度，然后联合选择唯一完整方案。
 不要把每条线索拆开独立优化；不要套用固定座位或特例，也不要优先猜测标准答案。
+你的规划跨度是**整局、多夜**，不是仅首夜。审视所有在场角色及其跨夜、死亡、角色变化、玩家行动、
+登记歧义和公开信息之间的关系。对每个候选酒鬼的实际能力失效、以后可能收到的连续信息、
+其他玩家如何理解和验证这些信息，以及邪恶方可能的行动和声明，形成相互协调的长期方向。
+本要求适用于所有角色和角色组合，不得只为某几个会持续获取信息的角色建立特例。
+未来信息的“一贯性”是指在既有记录、实际新局面和合法登记下形成合理可解释的线索轨迹，
+**不**表示未来必须重复同一数字或真假；更不能虚构将来的目标、击杀、声明或具体观测值。
 当前全部玩家展示身份已经确定，但酒鬼（若有）尚未绑定。酒鬼必须与首夜其他信息、红鲱鱼和恶魔掩饰身份
 在同一次请求中共同选择；不得要求 Host 先推荐酒鬼后再调用模型。
 完整复制 requestIdentity 与 asOfRevision。每条首夜 information / deferredActions 必须使用
@@ -107,11 +113,19 @@ decisionInventory 中的 decisionId；不可编造未发生的玩家行动或已
 真实且唯一由规则决定的结果使用 HOST_DETERMINED / RULE_DETERMINED / NONE，由 Host 计算。
 现在可以选择的合法信息使用 DECISION，填具体可见观察值；显示为酒鬼的能力要明确失效。
 图书管理员的「没有外来者」为 ZERO_OUTSIDERS，不能写成 NONE。
-尚未发生的投毒与占卜师选定目标是事件依赖：若只表示等待则 DEFERRED / STATUS_DEPENDENT / NONE；
-若为未来提交一个具体且未验证的全局协调意图，则 CONDITIONAL_INTENT / STATUS_DEPENDENT，
-必须填写 waitingForEvents，Host 确认真实行动后重验。严禁预先假定某个目标。
+尚未发生的任何玩家动作、说书人裁量、能力触发及影响信息合法性的状态变化，都必须作为未知条件；
+由 Host 确定本次 request 中明确列出的 waitingForEvents，不能擅自扩展已承诺的信息域。
+只表示等待则 DEFERRED / STATUS_DEPENDENT / NONE；对已列出依赖提出尚未验证的策略意图
+则 CONDITIONAL_INTENT / STATUS_DEPENDENT，并准确填写 waitingForEvents。严禁预先假定真实行动结果。
+今后若说书人推翻原酒鬼选择、玩家行动或公开信息改变局势，需结合新事实及已有战略，
+整体修订未执行部分，而不是逐角色修补；不要把任意具体动作设为唯一重规划触发器。
 多个登记见证只需要证明给玩家的可见结果合法，不得把一种解释冒充确定事实。
 没有实际占卜师时不得选红鲱鱼。7人或以上需要三种合法且不在场的善良恶魔掩饰身份；否则为 null。
+strategyMemory 是接下来多夜延续的短期战略记忆：tensions 记录最重要的跨角色张力；
+intentions 用 trigger / approach / risk 表述重要的跨夜信息连续性目标、未来变化条件及取舍
+（关注整局关系，不依赖特定角色的模板）；uncertainties 记录尚未知道的关键事实。
+意图不是 Host 已发生的事实、不可约束未来非法信息、也不是承诺未来一定给某个具体数字。
+以后修订要据实 KEEP / REVISE / RETIRE，不要每次重新从零构造互不相关的“首夜计划”。
 只返回符合 JSON Schema 的结构化数据和简短 private strategyMemory / tradeoffSummary；不写长篇解释。
 """
 
@@ -176,6 +190,9 @@ decisionInventory 中的 decisionId；不可编造未发生的玩家行动或已
                 "If a real Fortune Teller is present choose a Good red herring; a Drunk shown Fortune Teller is not real.",
                 "Demon bluffs must be three distinct Good offboard roles when 7+ players.",
                 "Every early information result must be consistent with the same whole-board opening.",
+                "Plan the whole game across nights, for every active and possibly impaired role: preserve a coherent but revisable information trajectory.",
+                "No future role observation, player choice, death, registration or Storyteller override has happened until Host confirms it.",
+                "On any material change, compare prior multi-night intentions to the new complete Host facts; revise all affected unpublished decisions together.",
             )))
             .put("decisionInventory", JSONObject()
                 .put("information", info)

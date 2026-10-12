@@ -86,6 +86,15 @@ class InitialJointOpeningDirectV2Test {
             rendered, "gpt-5.6-luna"))
         assertEquals(InitialJointOpeningDirectV2.INSTRUCTIONS,
             responses.getString("instructions"))
+        assertTrue("Strategy must look across nights rather than first-night only",
+            InitialJointOpeningDirectV2.INSTRUCTIONS.contains("整局、多夜"))
+        assertTrue("Strategy must generalize beyond special Drunk roles",
+            InitialJointOpeningDirectV2.INSTRUCTIONS.contains("适用于所有角色和角色组合"))
+        assertTrue("Future information cannot be precommitted as fabricated fact",
+            InitialJointOpeningDirectV2.INSTRUCTIONS.contains("不能虚构将来的目标"))
+        assertTrue("Prior intentions must be revisable rather than fixed",
+            InitialJointOpeningDirectV2.INSTRUCTIONS.contains("KEEP / REVISE / RETIRE"))
+        assertTrue(host.getJSONArray("rules").toString().contains("across nights"))
         assertFalse(responses.getBoolean("store"))
         assertTrue(responses.getJSONObject("text").getJSONObject("format")
             .getBoolean("strict"))

@@ -2,6 +2,16 @@
 
 > **ACTIVE / PRODUCT-OWNER CONFIRMED.** Authoritative NEXT for TB AI_ASSISTED personal-direct Android experiment. Replaces old standalone Drunk-model request followed by post-Drunk first-night model request, long strategy essay UI, and multi-model comparison proposals. Historical documents are evidence, not active execution orders. **Design accepted; implementation/phone acceptance NOT completed.**
 
+## 2026-10-12 PRODUCT OWNER DESIGN UPDATE — any role, any material event, multi-night first
+
+Authoritative detailed contract: [3C/3D generic strategic continuity correction](PROD_GLOBAL_3C3D_SINGLE_JOINT_OPENING_CUTOVER_2026-10-12.md#2026-10-12-product-owner-correction--generic-whole-game-and-multi-night-strategic-continuity-mandatory).
+
+The expert model **starts by examining the whole game and future nights for EVERY affected role**. The single opening output is a concrete legal now-plan PLUS a short, conditional, revisable strategy memory covering information-coherence and interaction over possible later nights. Not just the first-night snapshot. Any impaired role, not just Empath/Fortune Teller, changes future information ecology. Long-run coherence does not fix or fabricate a future number/answer.
+
+All **material confirmed Host facts and Storyteller overrides** use one generic strategy revision mechanism, not separate Poisoner, FT, Drunk or role-specific recommenders. Host role/event-specific legal checks remain necessary but **never define the model's planning architecture or the update trigger**. After a manual changed Drunk assignment or any meaningful later action: combine actual Host prefix and previously retained strategy memory, compare KEEP/REVISE/RETIRE, globally update affected uncommitted plan only, freeze historical published facts. A statement or player claim is only a claim; don't pretend to know a human motive. No fixed sample configuration or output oracle.
+
+This is the current strategic principle. Existing first-night Poisoner/FT-only gating code is a limited legality validator, **not** proof of general continuous Storyteller planning. Current PR #304 must still pass genuine model/phone/continuation acceptance.
+
 ## 2026-10-12 NEXT ROUTE — PROD-GLOBAL-3B3 semantic/quality convergence
 
 3B2 actual Luna 4-case run is now observed; V1 JSON shape annotations reveal structural issues. **New active route:** [PROD-GLOBAL-3B3](PROD_GLOBAL_3B3_SEMANTIC_V2_AND_EXPERT_QUALITY_ROUTE_2026-10-12.md). Current production one-shot remains postcommit/candidate-centric until independent Host semantic adapter + whole-bundle acceptance are proven. Experimental V2 and prompt are not a cutover. Read previous 3B2 NEXT below as historical, and do not infer that green 3B2 CI means Host correctness.

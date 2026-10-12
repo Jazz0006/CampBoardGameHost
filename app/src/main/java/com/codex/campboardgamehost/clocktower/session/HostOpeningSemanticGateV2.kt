@@ -105,12 +105,40 @@ internal data class HostOpeningConditionalIntentV2(
     val waitingForEvents: List<String>,
 )
 
+/**
+ * Bounded editable multi-night *strategic intent*, not a causal fact.
+ * Its conditions apply to ANY role, observed action, intervention or game phase;
+ * neither this type nor its producer chooses a future role-specific outcome.
+ */
+internal data class HostOpeningStrategicIntentionV2(
+    val trigger: String,
+    val approach: String,
+    val risk: String,
+) {
+    init {
+        require(listOf(trigger, approach, risk).all { it.isNotBlank() && it.length <= 300 })
+    }
+}
+
+internal data class HostOpeningStrategyMemoryV2(
+    val tensions: List<String>,
+    val intentions: List<HostOpeningStrategicIntentionV2>,
+    val uncertainties: List<String>,
+) {
+    init {
+        require(tensions.size <= 3 && intentions.size <= 3 && uncertainties.size <= 3)
+        require((tensions + uncertainties).all { it.isNotBlank() && it.length <= 300 })
+    }
+}
+
 /** A validated *private proposal*, never a committed or published observation. */
 internal data class HostOpeningSemanticAcceptanceV2(
     val selection: InitialGlobalOpeningSelectionV1,
     val conditional: List<HostOpeningConditionalIntentV2>,
     /** All matching Host candidates; representative selection IDs never settle registration. */
     val matchingCandidateIds: Map<String, Set<String>> = emptyMap(),
+    /** Carried into later whole-board revisions; NEVER trust as Host history. */
+    val strategyMemory: HostOpeningStrategyMemoryV2? = null,
 )
 
 internal object HostOpeningSemanticGateV2 {
@@ -197,15 +225,20 @@ internal object HostOpeningSemanticGateV2 {
         // Strategy is advisory. Still bound its shape; never parse it as a fact.
         val strategy = raw.getJSONObject("strategyMemory")
         strategy.exact("tensions", "intentions", "uncertainties")
-        require(strategy.getJSONArray("tensions").length() <= 3 &&
-            strategy.getJSONArray("intentions").length() <= 3 &&
-            strategy.getJSONArray("uncertainties").length() <= 3)
-        strategy.getJSONArray("tensions").strings()
-        strategy.getJSONArray("uncertainties").strings()
-        for (i in 0 until strategy.getJSONArray("intentions").length()) {
-            strategy.getJSONArray("intentions").getJSONObject(i)
-                .exact("trigger", "approach", "risk")
+        val intentions = strategy.getJSONArray("intentions")
+        val strategicIntentions = (0 until intentions.length()).map { i ->
+            intentions.getJSONObject(i).also {
+                it.exact("trigger", "approach", "risk")
+            }.let {
+                HostOpeningStrategicIntentionV2(
+                    it.getString("trigger"), it.getString("approach"), it.getString("risk"))
+            }
         }
+        val strategyMemory = HostOpeningStrategyMemoryV2(
+            tensions = strategy.getJSONArray("tensions").strings(),
+            intentions = strategicIntentions,
+            uncertainties = strategy.getJSONArray("uncertainties").strings(),
+        )
         require(raw.getString("tradeoffSummary").length <= 1200)
 
         val plan = raw.getJSONObject("openingPlan")
@@ -315,6 +348,7 @@ internal object HostOpeningSemanticGateV2 {
             demonBluffs = bluffs,
             deferredDecisionIds = projection.branch.deferred.map { it.decisionId },
         ).also { it.validate(scope) }
-        return HostOpeningSemanticAcceptanceV2(selection, pending.values.toList(), matchingCandidateIds)
+        return HostOpeningSemanticAcceptanceV2(
+            selection, pending.values.toList(), matchingCandidateIds, strategyMemory)
     }
 }
