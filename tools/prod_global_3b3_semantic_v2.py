@@ -40,7 +40,7 @@ SCHEMA = obj({
             "abilityRoleId": role_ref(),
             "effectiveAbilityRoleId": role_ref(nullable=True),
             "resolution": {"type": "string", "enum": [
-                "DECISION", "HOST_DETERMINED", "DEFERRED"]},
+                "DECISION", "HOST_DETERMINED", "CONDITIONAL_INTENT", "DEFERRED"]},
             "basis": {"type": "string", "enum": [
                 "FUNCTIONING", "DRUNK_MISINFORMATION",
                 "STATUS_DEPENDENT", "RULE_DETERMINED"]},
@@ -204,6 +204,11 @@ def screen_v2(result: dict, fixture: dict, data: dict) -> list[str]:
         elif resolution == "HOST_DETERMINED":
             if obs["kind"] != "NONE" or basis != "RULE_DETERMINED" or waiting:
                 issues.append("host_determined_not_authoritative")
+        elif resolution == "CONDITIONAL_INTENT":
+            # A conditional suggestion preserves cross-role coordination. It is
+            # NEVER a committed observation before its events are confirmed.
+            if obs["kind"] == "NONE" or not waiting or basis != "STATUS_DEPENDENT":
+                issues.append("invalid_conditional_intent")
         elif obs["kind"] != "NONE" or not waiting:
             issues.append("deferred_observation_invented")
         if basis == "RULE_DETERMINED" and resolution != "HOST_DETERMINED":

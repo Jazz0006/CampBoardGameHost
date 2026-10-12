@@ -6,7 +6,7 @@
 
 每条 information 的 sourceSeat 是收到信息的玩家座位，abilityRoleId 是其看到的角色 ID，effectiveAbilityRoleId 是实际生效能力的角色 ID（若所展示镇民为酒鬼则 null）；是否中毒/状态待定另由 basis 表达。身份、能力和异常状态绝不能合写进 role ID。observation 只存真正要给玩家看到的信息结果：NUMBER 的整数、ROLE 的一个角色 ID、BOOLEAN 的真假。PAIR 的两位证据对象放在 subject 的 EVIDENCE_PAIR.seats；数值角色的固定邻居用 FIXED_NEIGHBORS，seats 必须为空，不能把邻居当作玩家选择的目标。若玩家尚未作选择，用 PLAYER_QUERY_PENDING 且不杜撰目标。
 
-当且仅当 Host 可以唯一确定观察值且不涉及说书人可变登记时，使用 HOST_DETERMINED / RULE_DETERMINED，observation.kind 为 NONE；Host 稍后自行计算该值。存在多个合法登记解释时，可以直接选择一个合法观察结果，无须制造唯一登记见证。选择了酒鬼展示身份的玩家可获得误导信息，basis 为 DRUNK_MISINFORMATION。尚未发生的投毒、占卜查询、死亡等事件不得视为事实；有影响时使用 DEFERRED / STATUS_DEPENDENT，列出 waitingForEvents，暂不填观察结果，策略记忆可留下条件性意图。
+当且仅当 Host 可以唯一确定观察值且不涉及说书人可变登记时，使用 HOST_DETERMINED / RULE_DETERMINED，observation.kind 为 NONE；Host 稍后自行计算该值。存在多个合法登记解释时，可以直接选择一个合法观察结果，无须制造唯一登记见证。选择了酒鬼展示身份的玩家可获得误导信息，basis 为 DRUNK_MISINFORMATION。尚未发生的投毒、占卜查询、死亡等事件不得视为事实；有影响时显式列出 waitingForEvents：若尚不能选出合适观察结果，使用 DEFERRED / STATUS_DEPENDENT，observation.kind 为 NONE；若希望预先提出一个与全局方案协调、需等待事件确认才可能采用的具体信息，可使用 CONDITIONAL_INTENT / STATUS_DEPENDENT 并填写拟议 observation。CONDITIONAL_INTENT 只是备选的未生效提案，绝不是已发布或确定有效的观察；事件发生后必须由 Host 重新验证或整体修订。策略记忆可保留条件意图。
 
 输出包含当前能明确决定的完整联合方案、必要待定项和简洁私有 strategyMemory。后续真实事件发生时，保留已发布观察的不可变性，使用 Host 事实和此前记忆重新权衡所有尚未执行、受影响的决定。记忆是可修订的假设与意图，不是 Host 事实，也不是要求未来必须服从的命令。
 

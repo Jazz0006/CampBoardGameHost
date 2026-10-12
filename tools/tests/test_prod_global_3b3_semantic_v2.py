@@ -126,6 +126,30 @@ class ExpertSemanticV2Test(unittest.TestCase):
         self.assertIn("deferred_observation_invented",
                       v2.screen_v2(invalid, CASES["E02"], DATA))
 
+    def test_conditional_global_info_keeps_value_without_premature_publication(self):
+        # Models may propose one coordinated as-if-unpoisoned plan, while the
+        # Poisoner's actual target remains a causal dependency. No publication.
+        e02 = synthetic("E02")
+        e02["openingPlan"]["information"] = [
+            info(1, "washerwoman", resolution="CONDITIONAL_INTENT",
+                 basis="STATUS_DEPENDENT", mode="EVIDENCE_PAIR", subjects=[3, 4],
+                 kind="ROLE", witness_role="empath", waiting=["poisoner.target"]),
+            info(3, "chef", resolution="CONDITIONAL_INTENT",
+                 basis="STATUS_DEPENDENT", kind="NUMBER", number=1,
+                 waiting=["poisoner.target"]),
+        ]
+        e02["openingPlan"]["deferredActions"] = [
+            {"event": "poisoner.target", "actorSeat": 7}]
+        self.assertEqual(v2.screen_v2(e02, CASES["E02"], DATA), [])
+        missing_dependency = copy.deepcopy(e02)
+        missing_dependency["openingPlan"]["information"][1]["waitingForEvents"] = []
+        self.assertIn("invalid_conditional_intent",
+                      v2.screen_v2(missing_dependency, CASES["E02"], DATA))
+        ungrounded_condition = copy.deepcopy(e02)
+        ungrounded_condition["openingPlan"]["information"][0]["basis"] = "FUNCTIONING"
+        self.assertIn("invalid_conditional_intent",
+                      v2.screen_v2(ungrounded_condition, CASES["E02"], DATA))
+
     def test_host_determined_is_not_model_selected_observation(self):
         e03 = synthetic("E03")
         e03["openingPlan"]["information"] = [
