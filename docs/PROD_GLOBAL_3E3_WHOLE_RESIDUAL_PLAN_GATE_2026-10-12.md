@@ -37,6 +37,14 @@ One expert Storyteller plans the whole game across roles and nights from bounded
 - UI auto mode now triggers the generic checkpoint without manual request tapping, hides the assisted request/adopt controls and minimizes strategic text. Existing initial opening options are hidden while a new auto replan is pending/invalid, rather than silently falling back to an obsolete plan. The 450ms change window and no-material-change no-call behavior are retained.
 - These changes are an **automatic private plan preselection bridge**, not proof of fully autonomous Host publication or comprehensive multi-night acceptance. The default Host-led confirmation is still required at the actual player wake/observation boundary.
 
+## 3E3 auto transaction and multi-night regression (2026-10-13)
+
+- Fixed a real automatic execution bug: the UI previously copied an accepted recommendation into a one-item `automaticInformationCandidates` list. Automatic mode now passes the model's approved option **separately** and keeps `currentStep`'s full original Host legal/automatic domain unchanged. Subsequent manual override stays possible.
+- An entire automatic residual package must pass **presentation coverage for every choice**, then a fresh Host scope check and actual private adoption BEFORE the strategy cursor and `strategicLastReviewedHost` are advanced. An unrenderable or stale option now fails closed without consuming a strategy-memory version. Assisted-mode verified proposals retain the existing manual acceptance semantics.
+- Added a single common cache-key builder for App and UI, including operation mode. Switching Assisted ↔ Automatic invalidates previous cached approval even if all Host revisions remain equal. Adopted packages are stamped with their mode so a previously operator-adopted assisted package cannot silently acquire automatic authority. Tests check this and invalidation on Host candidate or chronology changes.
+- Initial joint opening suggestions/one-shot IDs are confined to **first night**. Later-night wakeups must rely on fresh Host decision results and an appropriate whole-game replan; an unchanged role/seat or similar numeric value does not authorize replaying the opening's observation.
+- Real `GLOBAL_V1` Host test covers a player-received first-night private observation being excluded from reopening while the same role's second-night legal information becomes newly available. Phone/ADB multi-night acceptance is still pending.
+
 ## Still required for actual 3E3 completion
 
 1. Expand authoritative complete multi-night/current-phase legal-domain coverage beyond current first-night pair, any-night typed number/boolean/role-result and active Mayor redirect, without guessing actions; prove same-causal-segment completeness and support independent downstream choices when dependencies allow.

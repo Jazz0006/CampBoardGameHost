@@ -451,6 +451,9 @@ internal fun CampBoardGameHostApp() {
     var residualAdoptedPackage by remember {
         mutableStateOf<StorytellerResidualPackageGateV2.Accepted?>(null)
     }
+    var residualAdoptedOperationMode by remember {
+        mutableStateOf<StorytellerOperationMode?>(null)
+    }
     var adoptedJointInformation by remember { mutableStateOf<Map<Int,
         com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2>>(emptyMap()) }
     var shownOnlyDealCompleted by remember { mutableStateOf(false) }
@@ -2013,6 +2016,7 @@ internal fun CampBoardGameHostApp() {
         // Adopting is a private preselection for still-open steps, not a
         // publication. Every step must re-match its current Host-legal option.
         residualAdoptedPackage = proposal
+        residualAdoptedOperationMode = storytellerOperationMode
         DebugFlightRecorder.record("RESIDUAL_WHOLE_ADOPTED", mapOf(
             "choiceCount" to proposal.choices.size.toString()))
     }
@@ -2057,11 +2061,11 @@ internal fun CampBoardGameHostApp() {
             ?: pendingScalar?.legalCandidates?.map { it.candidateId }
             ?: pendingTarget?.pending?.legalCandidates?.map { it.candidateId }
             ?: return
-        val key = listOf(
+        val key = ClocktowerResidualRequestIdentityV2.build(
             session.state.gameId, round, stepIndex, identity.requestId,
             revision.gameStateRevision, revision.playerInputRevision,
-            session.state.nextTimelineGlobalSequence, legalIds.size, legalIds.hashCode(),
-        ).joinToString(":")
+            session.state.nextTimelineGlobalSequence, legalIds, requestedOperationMode,
+        )
         if (liveAiAdviceKey == key && (liveAiAdviceBusy || liveAiAdviceText != null)) return
         liveAiAdviceKey = key
         residualProposedPackage = null
@@ -2219,13 +2223,40 @@ internal fun CampBoardGameHostApp() {
                         val advanced = StorytellerStrategicChangeCheckpointV2.accept(
                             review, currentHost, proposal, wholeCursor)
                         verified to advanced
-                    }.onSuccess { (verified, advanced) ->
-                        strategicPolicyCursor = advanced
-                        strategicLastReviewedHost = currentHost
+                    }.onSuccess acceptedResidual@{ (verified, advanced) ->
+                        if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC &&
+                            !ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+                                remainingScope.requests, verified.choices, steps, cards)
+                        ) {
+                            // The model decision is legal but not safely executable by
+                            // the current Host presentation. NEVER advance memory or
+                            // publish a partial automatic package.
+                            liveAiAdviceError = "Whole plan has an unresolved Host decision; manual takeover required."
+                            residualAdoptedPackage = null
+                            residualAdoptedOperationMode = null
+                            DebugFlightRecorder.record("RESIDUAL_AUTO_UNPRESENTABLE")
+                            return@acceptedResidual
+                        }
                         residualProposedPackage = verified
                         residualProposedKey = key
                         residualProposedOpen = legalOpen
                         residualProposedPosition = phasePosition
+                        if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC) {
+                            // Recompute the current Host domain at the actual adoption
+                            // boundary, before accepting the model's memory revision.
+                            adoptWholeResidualProposal(steps, stepIndex)
+                            if (residualAdoptedPackage != verified) {
+                                residualProposedPackage = null
+                                residualProposedKey = null
+                                residualAdoptedPackage = null
+                                residualAdoptedOperationMode = null
+                                liveAiAdviceError = "Automatic plan became stale; manual takeover required."
+                                DebugFlightRecorder.record("RESIDUAL_AUTO_PAUSED")
+                                return@acceptedResidual
+                            }
+                        }
+                        strategicPolicyCursor = advanced
+                        strategicLastReviewedHost = currentHost
                         liveAiAdviceText = buildString {
                             append("本次整局续规划：")
                             append(verified.choices.size)
@@ -2253,17 +2284,8 @@ internal fun CampBoardGameHostApp() {
                             "choiceCount" to verified.choices.size.toString(),
                             "memoryVersion" to advanced.version.toString()))
                         if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC) {
-                            // Same current Host-domain CAS and private preselection as
-                            // assisted mode. Publication still belongs to the existing
-                            // Host step / actual player-facing confirmation boundary.
-                            adoptWholeResidualProposal(steps, stepIndex)
-                            if (residualAdoptedPackage != verified) {
-                                liveAiAdviceError = "Automatic plan changed before Host adoption; take over manually."
-                                DebugFlightRecorder.record("RESIDUAL_AUTO_PAUSED")
-                            } else {
-                                DebugFlightRecorder.record("RESIDUAL_AUTO_PRESELECTED", mapOf(
-                                    "choiceCount" to verified.choices.size.toString()))
-                            }
+                            DebugFlightRecorder.record("RESIDUAL_AUTO_PRESELECTED", mapOf(
+                                "choiceCount" to verified.choices.size.toString()))
                         }
                     }.onFailure {
                         liveAiAdviceError =
@@ -3610,6 +3632,7 @@ internal fun CampBoardGameHostApp() {
                         globalAiAdviceError = liveAiAdviceError,
                         globalResidualAdoptedChoices = residualAdoptedPackage?.takeIf { plan ->
                             val latest = clocktowerGameSession?.state
+                            if (residualAdoptedOperationMode != storytellerOperationMode) return@takeIf false
                             latest?.gameId == plan.gameId &&
                                 latest.gameStateRevision == plan.gameStateRevision &&
                                 latest.playerInputRevision == plan.playerInputRevision &&

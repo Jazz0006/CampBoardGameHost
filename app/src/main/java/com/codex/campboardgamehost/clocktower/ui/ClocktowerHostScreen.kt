@@ -2560,18 +2560,23 @@ internal fun ClocktowerJudgeScreen(
             ?: globalAiTargetPending?.pending?.legalCandidates?.map { it.candidateId }
         val globalAiCurrentKey = globalAiDecisionIdentity?.let { identity ->
             val legalIds = requireNotNull(globalAiLegalIds)
-            listOf(
+            ClocktowerResidualRequestIdentityV2.build(
                 gameId, round, currentStepIndex, identity.requestId,
                 gameStateRevision, playerInputRevision, nightCheckpoint.nextTimelineGlobalSequence,
-                legalIds.size, legalIds.hashCode(),
-            ).joinToString(":")
+                legalIds, if (globalAiAutomatic) StorytellerOperationMode.AI_AUTOMATIC
+                else StorytellerOperationMode.AI_ASSISTED,
+            )
         }
         // Revalidate any adopted proposed option against the CURRENT Host
         // legal choices after each real player action (especially Poisoner).
         val preplannedSeat = currentStep.actor?.let { actor ->
             cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
         }
-        val preplannedChoice = preplannedSeat?.let { seat ->
+        // An opening information choice is NEVER a valid default for a later
+        // night, even when the same role wakes again and the number matches.
+        val preplannedChoice = preplannedSeat?.takeIf {
+            phase == ClocktowerPhase.FirstNight
+        }?.let { seat ->
             adoptedOneShotChoices["first-night:${currentStep.roleEnName}:seat-$seat"]
         }
         val oldApprovedOpeningOption = preplannedChoice?.let { id ->
@@ -2607,7 +2612,9 @@ internal fun ClocktowerJudgeScreen(
             (globalAiAdviceBusy || globalAiAdviceError != null ||
                 (jointOpeningAdopted && globalAiCurrentKey != null &&
                     globalAiAdviceKey != globalAiCurrentKey))) null else
-            residualApprovedOption ?: oldApprovedOpeningOption ?: preplannedSeat?.let { seat ->
+            residualApprovedOption ?: oldApprovedOpeningOption ?: preplannedSeat?.takeIf {
+                phase == ClocktowerPhase.FirstNight
+            }?.let { seat ->
             jointOpeningSemantics[seat]?.let { planned ->
                 ClocktowerJointOpeningDisplayMatcherV2.match(
                     plan = planned,
@@ -2823,7 +2830,9 @@ internal fun ClocktowerJudgeScreen(
                 approvedAiInformationOption = approvedOpeningOption.takeIf {
                     globalAiAutomatic && globalAiAdviceError == null && !globalAiAdviceBusy
                 },
-                step = approvedOpeningOption?.let { chosen ->
+                // In AI auto the preselection is provided separately. Never
+                // shrink Host legal/automatic domains to a one-choice model list.
+                step = if (globalAiAutomatic) currentStep else approvedOpeningOption?.let { chosen ->
                     currentStep.copy(
                         legacyInformationCandidates = listOf(chosen),
                         automaticInformationCandidates = listOf(chosen),

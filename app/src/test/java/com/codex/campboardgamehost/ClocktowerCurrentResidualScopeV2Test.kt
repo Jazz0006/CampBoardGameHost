@@ -6,6 +6,9 @@ import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMo
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.session.HostCurrentOpenDecisionInventoryV2
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
@@ -111,6 +114,37 @@ class ClocktowerCurrentResidualScopeV2Test {
             session.state, StorytellerPhase.NIGHT, 2, scope.requests)
         assertEquals(1, open.size)
         assertEquals("Empath", open.single().abilityRoleId)
+    }
+
+    @Test fun publishedFirstNightObservationIsImmutableYetNextNightGetsFreshHostDomain() {
+        val host = host()
+        val cards = (0..4).map { PlayerCard("Player $it", Role.Civilian, "") }
+        val information = step(ClocktowerNightAction.None).copy(
+            actor = cards[1], roleEnName = "Empath",
+            displayProposition = InformationProposition.NumericResult(
+                NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 0),
+            numericMinimumValue = 0, numericMaximumValue = 2)
+        val received = InformationProposition.NumericResult(
+            NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 0)
+        host.commitGlobalEpistemicObservation(EpistemicObservationDraft(
+            recordId = "night-one-actor-two", phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1, sequence = 0, sourceSeat = 2, sourceAbility = RoleId("Empath"),
+            visibility = ObservationVisibility.PRIVATE, recipientSeats = setOf(2),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = received))
+        fun scope(phase: StorytellerPhase, round: Int) =
+            ClocktowerCurrentResidualScopeV2.collect(
+                host.state, phase, round, listOf(information), 0, cards,
+                snapshot(host, phase, round), StorytellerProviderGameContextV1.EMPTY,
+                pairContext = null)
+        assertTrue(scope(StorytellerPhase.FIRST_NIGHT, 1).requests.isEmpty())
+        val second = scope(StorytellerPhase.NIGHT, 2)
+        assertEquals(1, second.requests.size)
+        val open = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
+            host.state, StorytellerPhase.NIGHT, 2, second.requests)
+        assertEquals(1, open.size)
+        assertEquals(2, open.single().sourceSeat)
+        assertEquals(1, host.state.epistemicObservationLog.records.size)
     }
 
     @Test fun aCurrentNightRoleResultOpensOnlyAfterPlayerTargetIsKnown() {
