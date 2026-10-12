@@ -442,6 +442,12 @@ internal fun CampBoardGameHostApp() {
         mutableStateOf<StorytellerResidualPackageGateV2.Accepted?>(null)
     }
     var residualProposedKey by remember { mutableStateOf<String?>(null) }
+    var residualProposedOpen by remember {
+        mutableStateOf<List<StorytellerStrategicContinuationV2.OpenDecision>>(emptyList())
+    }
+    var residualProposedPosition by remember {
+        mutableStateOf<StorytellerStrategicChangeCheckpointV2.Position?>(null)
+    }
     var residualAdoptedPackage by remember {
         mutableStateOf<StorytellerResidualPackageGateV2.Accepted?>(null)
     }
@@ -1954,15 +1960,53 @@ internal fun CampBoardGameHostApp() {
             mapOf("recommendationCount" to plan.candidateByDecisionId.size.toString()))
     }
 
-    fun adoptWholeResidualProposal() {
+    fun adoptWholeResidualProposal(steps: List<ClocktowerNightStepUi>, stepIndex: Int) {
         if (storytellerOperationMode != StorytellerOperationMode.AI_ASSISTED ||
             residualProposedKey != liveAiAdviceKey) return
         val proposal = residualProposedPackage ?: return
         val latest = clocktowerGameSession?.state ?: return
+        val position = residualProposedPosition ?: return
         if (proposal.gameId != latest.gameId ||
             proposal.gameStateRevision != latest.gameStateRevision ||
             proposal.playerInputRevision != latest.playerInputRevision ||
-            proposal.exclusiveGlobalSequence != latest.nextTimelineGlobalSequence) return
+            proposal.exclusiveGlobalSequence != latest.nextTimelineGlobalSequence ||
+            position.phase != clocktowerPhase.toStorytellerPhase() ||
+            position.round != round ||
+            clocktowerNightStepIndexState.value != stepIndex) return
+        // Regenerate the ENTIRE pending domain against the latest Host and UI
+        // action inputs. Revision equality alone cannot authorize a changed
+        // registration explanation or manually altered current candidate pool.
+        val sameScope = runCatching {
+            val session = requireClocktowerGameSession()
+            val rulesetRef = requireNotNull(clocktowerRulesetRef)
+            val registry = activeGameClocktowerRulesetCatalog
+                .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+            val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+                session.toGameSnapshot(rulesetRef), position.phase, position.round, registry)
+            val revision = StorytellerProviderRevisionV1(
+                latest.gameStateRevision, latest.playerInputRevision)
+            val context = StorytellerProviderGameContextBuilderV1.build(
+                snapshot, revision, latest)
+            val step = steps[stepIndex]
+            val mayor = if (position.phase == StorytellerPhase.NIGHT &&
+                step.action == ClocktowerNightAction.MayorRedirect)
+                currentTroubleBrewingMayorRedirectPendingDecision() else null
+            val scope = ClocktowerCurrentResidualScopeV2.collect(
+                latest, position.phase, position.round, steps, stepIndex, cards,
+                snapshot, context, currentTroubleBrewingFirstNightPairDecisionContext(),
+                listOfNotNull(clocktowerFortuneTellerFirst, clocktowerFortuneTellerSecond),
+                mayor, redHerringAlreadyChosen = clocktowerRedHerring != null)
+            val open = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
+                latest, position.phase, position.round, scope.requests)
+            open == residualProposedOpen
+        }.getOrDefault(false)
+        if (!sameScope) {
+            residualProposedPackage = null
+            residualProposedKey = null
+            liveAiAdviceError = "Current Host legal decisions changed; regenerate the whole plan."
+            DebugFlightRecorder.record("RESIDUAL_WHOLE_ADOPTION_STALE")
+            return
+        }
         // Adopting is a private preselection for still-open steps, not a
         // publication. Every step must re-match its current Host-legal option.
         residualAdoptedPackage = proposal
@@ -2018,6 +2062,8 @@ internal fun CampBoardGameHostApp() {
         liveAiAdviceKey = key
         residualProposedPackage = null
         residualProposedKey = null
+        residualProposedOpen = emptyList()
+        residualProposedPosition = null
         liveAiAdviceText = null
         liveAiAdviceError = null
         // An older in-flight response belongs to a different key and cannot own this state.
@@ -2130,6 +2176,13 @@ internal fun CampBoardGameHostApp() {
                 "barrier" to (remainingScope.barrierReason ?: "NONE"),
                 "memoryVersion" to wholeCursor.version.toString()))
             drunkAiScope.launch {
+                // Coalesce rapid related Host updates before paying for a new
+                // whole-game request. A newer state/key cancels this pending call.
+                delay(450)
+                if (liveAiAdviceKey != key || clocktowerGameSession !== session ||
+                    session.state !== currentHost.state ||
+                    strategicPolicyCursor != wholeCursor ||
+                    clocktowerNightStepIndexState.value != stepIndex) return@launch
                 val result = runCatching {
                     StorytellerStrategicContinuationV2.recommend(
                         aiEndpoint, aiToken, requireNotNull(aiDirectModel), session, wholeOpening,
@@ -2157,6 +2210,8 @@ internal fun CampBoardGameHostApp() {
                         strategicLastReviewedHost = currentHost
                         residualProposedPackage = verified
                         residualProposedKey = key
+                        residualProposedOpen = legalOpen
+                        residualProposedPosition = phasePosition
                         liveAiAdviceText = buildString {
                             append("本次整局续规划：")
                             append(verified.choices.size)

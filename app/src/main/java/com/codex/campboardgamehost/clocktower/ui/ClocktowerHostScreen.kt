@@ -103,7 +103,7 @@ internal fun ClocktowerJudgeScreen(
     globalAiAdviceError: String? = null,
     globalResidualAdoptedChoices: Map<String, String> = emptyMap(),
     globalResidualProposalAvailable: Boolean = false,
-    onAdoptGlobalResidual: () -> Unit = {},
+    onAdoptGlobalResidual: (List<ClocktowerNightStepUi>, Int) -> Unit = { _, _ -> },
     onRequestGlobalAiAdvice: (List<ClocktowerNightStepUi>, Int) -> Unit = { _, _ -> },
     firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
     firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
@@ -2773,7 +2773,9 @@ internal fun ClocktowerJudgeScreen(
                         globalAiAdviceError?.let { error -> Text(text = error) }
                         globalAiAdviceText?.let { advice -> Text(text = advice) }
                         if (globalResidualProposalAvailable && !globalAiAdviceBusy) {
-                            Button(onClick = onAdoptGlobalResidual) {
+                            Button(onClick = {
+                                onAdoptGlobalResidual(nightSteps, currentStepIndex)
+                            }) {
                                 Text(text("一键采纳剩余方案（逐步确认后公布）",
                                     "Adopt remaining plan (confirm each step before release)"))
                             }
