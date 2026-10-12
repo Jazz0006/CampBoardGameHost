@@ -290,6 +290,11 @@ def main(argv=None):
         summary.append(info)
         print(name + ": " + info["status"] + ", " + str(info["latencySeconds"]) + "s, tokens="
               + str((info.get("usage") or {}).get("total_tokens")), flush=True)
+        if info["status"] == "error":
+            # Technical/API/schema failure: stop this batch instead of billing more calls.
+            # Strategy/basic-check issues remain recorded without silently patching choices.
+            print("Stopping batch after technical/model-response failure.", flush=True)
+            break
     private_json(out / "summary.json", {"experiment": "PROD-GLOBAL-3B2-EXPERT-PROBE",
         "model": MODEL, "attempted": len(summary), "basicPassed":
         sum(x["status"] == "basic_checks_ok" for x in summary),

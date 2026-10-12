@@ -83,6 +83,21 @@ class ManualExpertProbeTest(unittest.TestCase):
         fake["openingPlan"]["drunkSeat"] = 3
         self.assertIn("unexpected_drunk", probe.basic_checks(fake, f, self.data))
 
+    def test_http_error_stops_paid_batch_without_retry(self):
+        with tempfile.TemporaryDirectory() as folder:
+            result_dir = str(Path(folder) / "private-result")
+            with patch.dict(os.environ, {"OPENAI_API_KEY": "test-only-dummy",
+                                      "OPENAI_MODEL": "gpt-5.6-luna"}), \
+                 patch.object(probe, "call_responses", side_effect=RuntimeError("HTTP_400")) as calls, \
+                 contextlib.redirect_stdout(io.StringIO()):
+                code = probe.main(["--live", "--case", "all", "--max-calls", "4",
+                                   "--output-dir", result_dir])
+            self.assertEqual(code, 1)
+            self.assertEqual(calls.call_count, 1)
+            summary = json.loads((Path(result_dir) / "summary.json").read_text())
+            self.assertEqual(summary["attempted"], 1)
+            self.assertEqual(summary["samples"][0]["httpStatus"], "HTTP_400")
+
     def test_private_output_only_outside_repo(self):
         with self.assertRaisesRegex(ValueError, "outside"):
             probe.validate_output_dir(str(probe.ROOT / "private-test"))

@@ -20,7 +20,7 @@
     python3 -m unittest -v tools.tests.test_prod_global_3b2_manual_probe
     python3 tools/prod_global_3b2_manual_probe.py --case all
 
-预期七个单元测试通过，并打印 mode=OFFLINE_PREFLIGHT、networkCalls=0、四个测试编号及 request SHA-256。如果失败，不要执行 --live。
+预期八个单元测试通过，并打印 mode=OFFLINE_PREFLIGHT、networkCalls=0、四个测试编号及 request SHA-256。如果失败，不要执行 --live。
 
 ## 第二步：先真实测试 E01 一次
 
@@ -51,7 +51,7 @@
       --live --case all --repeat 1 --max-calls 4 \
       --output-dir "$OUT"
 
-要对全部四局各重复两次，换一个新的私有目录，使用 --case all --repeat 2 --max-calls 8（八笔额外付费请求）。失败不自动重试，任何再次执行均是新的样本。
+要对全部四局各重复两次，换一个新的私有目录，使用 --case all --repeat 2 --max-calls 8（八笔额外付费请求）。失败不自动重试；发生 HTTP、模型拒答或解析错误等技术/协议失败时立即停止本批，不继续发生额外付费调用，已完成结果仍保留。收到完整计划但基础检查存在问题时会保留样本继续实验，由后续人工审查。任何再次执行均是新的样本。
 
 最后可从 shell 清理环境变量：
 
