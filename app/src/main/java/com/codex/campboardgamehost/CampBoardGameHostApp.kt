@@ -263,6 +263,9 @@ private fun Screen.isActiveGameScreen(): Boolean = when (this) {
     Screen.UndercoverSettings,
     Screen.ClocktowerSettings,
     Screen.ClocktowerDrunkSelection,
+    Screen.ClocktowerJointPass,
+    Screen.ClocktowerJointReveal,
+    Screen.ClocktowerJointReview,
     Screen.Settings -> false
 }
 
