@@ -233,6 +233,91 @@ class HostOpeningSemanticGateV2Test {
         }
     }
 
+
+    @Test fun drunkActualAbilityIsNotConflatedWithShownRoleOrStatus() {
+        val shownDrunk = listOf(
+            "washerwoman", "librarian", "empath", "fortuneteller",
+            "saint", "butler", "baron", "imp")
+        val snapshot = TroubleBrewingGameSnapshotV1(
+            gameId = "3b3d-drunk", gameSeed = 72,
+            position = TroubleBrewingSnapshotPosition(
+                TroubleBrewingSnapshotStage.SETUP_PRECOMMIT,
+                SnapshotField.NotApplicable, SnapshotField.NotApplicable),
+            grimoireSeats = shownDrunk.mapIndexed { index, role ->
+                TroubleBrewingSnapshotSeat(
+                    seat = index + 1, shownRoleId = SnapshotField.Known(role),
+                    actualRoleId = if (index < 4) SnapshotField.Uncommitted
+                        else SnapshotField.Known(role),
+                    alive = SnapshotField.Known(true), poisoned = SnapshotField.Known(false))
+            },
+            setupState = TroubleBrewingSnapshotSetupState(
+                SnapshotField.Known(true), SnapshotField.Uncommitted),
+        )
+        val branches = (1..4).map { candidateSeat ->
+            InitialOpeningHypothesisV1(
+                drunkSeat = candidateSeat,
+                discretionary = listOf(
+                    InitialOpeningDecisionV1("first-night:seat-2", "PAIR_INFORMATION", 2,
+                        mapOf("librarian-fake" to "Host public observation")),
+                    InitialOpeningDecisionV1("setup.red-herring", "RED_HERRING", null,
+                        mapOf("rh-5" to "Good seat 5", "rh-6" to "Good seat 6")),
+                ),
+                determined = emptyList(),
+                deferred = emptyList(),
+            )
+        }
+        val scope = InitialGlobalOpeningScopeV1.fromHost(
+            snapshot, registry, branches,
+            legalDemonBluffs = listOf("chef", "monk", "slayer"),
+            gameStateRevision = 9, playerInputRevision = 2,
+        )
+        val drunkInfo = HostOpeningSemanticValueV2(
+            sourceSeat = 2, abilityRoleId = "librarian",
+            effectiveAbilityRoleId = null,
+            basis = "DRUNK_MISINFORMATION",
+            subjectMode = "EVIDENCE_PAIR", subjectSeats = listOf(5, 6),
+            observationKind = "ROLE", roleId = "recluse")
+        val projection = HostOpeningSemanticProjectionV2(
+            scope, 2, shownDrunk.toSet() + setOf("chef", "monk", "slayer", "recluse"),
+            candidatesByDecision = mapOf("first-night:seat-2" to
+                mapOf("librarian-fake" to drunkInfo)),
+            redHerringDecisionId = "setup.red-herring",
+            redHerringCandidatesBySeat = mapOf(5 to "rh-5", 6 to "rh-6"),
+        )
+        val output = JSONObject()
+            .put("schemaVersion", 2).put("asOfRevision", 9)
+            .put("requestIdentity", JSONObject()
+                .put("gameId", scope.snapshot.gameId).put("gameStateRevision", 9)
+                .put("playerInputRevision", 2)
+                .put("rosterFingerprint", scope.rosterFingerprint))
+            .put("openingPlan", JSONObject()
+                .put("drunkSeat", 2).put("redHerringSeat", 5)
+                .put("demonBluffRoleIds", JSONArray(listOf("chef", "monk", "slayer")))
+                .put("information", JSONArray().put(info(
+                    "first-night:seat-2", drunkInfo, "DECISION")))
+                .put("deferredActions", JSONArray()))
+            .put("strategyMemory", JSONObject()
+                .put("tensions", JSONArray()).put("intentions", JSONArray())
+                .put("uncertainties", JSONArray()))
+            .put("tradeoffSummary", "Synthetic drunk identity boundary")
+        val accepted = HostOpeningSemanticGateV2.accept(output, projection)
+        assertEquals(2, accepted.selection.drunkSeat)
+        assertEquals("librarian-fake",
+            accepted.selection.choices["first-night:seat-2"])
+        val malformed = JSONObject(output.toString())
+        malformed.getJSONObject("openingPlan").getJSONArray("information")
+            .getJSONObject(0).put("abilityRoleId", "librarian (Drunk misinformation)")
+        assertTrue(runCatching {
+            HostOpeningSemanticGateV2.accept(malformed, projection)
+        }.isFailure)
+        val malformedBasis = JSONObject(output.toString())
+        malformedBasis.getJSONObject("openingPlan").getJSONArray("information")
+            .getJSONObject(0).put("basis", "FUNCTIONING")
+        assertTrue(runCatching {
+            HostOpeningSemanticGateV2.accept(malformedBasis, projection)
+        }.isFailure)
+    }
+
     @Test fun malformedHostProjectionCannotMakeAnInvalidModelPass() {
         val scope = scope()
         assertTrue(runCatching {
