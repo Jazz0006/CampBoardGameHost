@@ -318,6 +318,42 @@ class HostOpeningSemanticGateV2Test {
         }.isFailure)
     }
 
+    @Test fun identicalPublicInformationCanHaveMoreThanOneLegalRegistrationWitness() {
+        val base = scope()
+        val old = base.hypothesis(null)
+        val expanded = InitialGlobalOpeningScopeV1.fromHost(
+            snapshot(), registry,
+            listOf(old.copy(discretionary = old.discretionary.map { decision ->
+                if (decision.decisionId == "first-night:seat-1") decision.copy(
+                    legalCandidates = decision.legalCandidates +
+                        ("ww-second-registration" to "Same player-visible observation"),
+                ) else decision
+            })),
+            listOf("monk", "soldier", "mayor", "slayer"),
+            gameStateRevision = 7, playerInputRevision = 12,
+        )
+        val original = projection(base)
+        val visible = original.candidatesByDecision.getValue("first-night:seat-1")
+            .values.single()
+        val domain = original.candidatesByDecision +
+            ("first-night:seat-1" to mapOf(
+                "ww-3-4-empath" to visible,
+                "ww-second-registration" to visible,
+            ))
+        val revised = HostOpeningSemanticProjectionV2(
+            expanded, null, known, domain,
+            deferredActions = original.deferredActions,
+            redHerringDecisionId = original.redHerringDecisionId,
+            redHerringCandidatesBySeat = original.redHerringCandidatesBySeat,
+        )
+        val accepted = HostOpeningSemanticGateV2.accept(plan(expanded), revised)
+        assertEquals(setOf("ww-3-4-empath", "ww-second-registration"),
+            accepted.matchingCandidateIds.getValue("first-night:seat-1"))
+        assertTrue(accepted.selection.validFor(expanded))
+        // The representative ID may be used only for validation; the two
+        // explanations MUST remain available until any registration ruling.
+    }
+
     @Test fun malformedHostProjectionCannotMakeAnInvalidModelPass() {
         val scope = scope()
         assertTrue(runCatching {

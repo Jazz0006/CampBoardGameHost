@@ -80,10 +80,10 @@ class HostOpeningRulesDomainV2Test {
     ): JSONObject {
         val scope = projection.scope
         val candidateBluffs = scope.legalDemonBluffs?.take(3)
-        val information = JSONArray()
+        val infoArray = JSONArray()
         val choices = projection.candidatesByDecision
         choices.forEach { (id, values) ->
-            information.put(information(id,
+            infoArray.put(information(id,
                 override[id] ?: values.values.first(), "DECISION"))
         }
         projection.determinedInformationIds.forEach { id ->
@@ -96,7 +96,7 @@ class HostOpeningRulesDomainV2Test {
                 basis = "RULE_DETERMINED",
                 subjectMode = if (ability == "empath") "FIXED_NEIGHBORS" else "NONE",
                 subjectSeats = emptyList(), observationKind = "NONE")
-            information.put(information(id, value, "HOST_DETERMINED"))
+            infoArray.put(information(id, value, "HOST_DETERMINED"))
         }
         projection.branch.deferred.filter { it.decisionId.startsWith("first-night:seat-") }
             .forEach { d ->
@@ -113,7 +113,7 @@ class HostOpeningRulesDomainV2Test {
                         else -> "NONE"
                     },
                     subjectSeats = emptyList(), observationKind = "NONE")
-                information.put(information(d.decisionId, value, "DEFERRED", d.waitingForEvents))
+                infoArray.put(information(d.decisionId, value, "DEFERRED", d.waitingForEvents))
             }
         val actions = JSONArray()
         projection.deferredActions.forEach { (id, action) ->
@@ -132,7 +132,7 @@ class HostOpeningRulesDomainV2Test {
                 .put("redHerringSeat", projection.redHerringCandidatesBySeat.keys.firstOrNull()
                     ?: JSONObject.NULL)
                 .put("demonBluffRoleIds", candidateBluffs?.let(::JSONArray) ?: JSONObject.NULL)
-                .put("information", information).put("deferredActions", actions))
+                .put("information", infoArray).put("deferredActions", actions))
             .put("strategyMemory", JSONObject()
                 .put("tensions", JSONArray()).put("intentions", JSONArray())
                 .put("uncertainties", JSONArray()))
