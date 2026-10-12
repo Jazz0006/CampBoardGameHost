@@ -2820,6 +2820,9 @@ internal fun ClocktowerJudgeScreen(
                 chambermaidTargetCards = chambermaidTargetCards,
                 mayorRedirectTargetCards = mayorRedirectTargetCards,
                 demonSuccessorTargetCards = demonSuccessorTargetCards,
+                approvedAiInformationOption = approvedOpeningOption.takeIf {
+                    globalAiAutomatic && globalAiAdviceError == null && !globalAiAdviceBusy
+                },
                 step = approvedOpeningOption?.let { chosen ->
                     currentStep.copy(
                         legacyInformationCandidates = listOf(chosen),

@@ -52,6 +52,8 @@ internal fun ClocktowerNightStepCardLocalized(
     mayorRedirectTargetCards: List<PlayerCard>,
     demonSuccessorTargetCards: List<PlayerCard>,
     step: ClocktowerNightStepUi,
+    /** Already validated joint-plan choice; does not replace the full Host domain. */
+    approvedAiInformationOption: ClocktowerDisplayOption? = null,
     surfacePlan: ClocktowerNightSurfacePlan,
     spyCard: PlayerCard?,
     spyRegistrationResolution: TroubleBrewingRegistrationResolution?,
@@ -236,6 +238,7 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val automaticDisplayOption = clocktowerAutomaticInformationOption(
         currentOptions = automaticAuthorityDomain,
+        approvedOption = approvedAiInformationOption.takeIf { allowRuleDeterminedAutoUi },
     )
     val manualInformationFallback = allowRuleDeterminedAutoUi &&
         step.isRealAction &&
