@@ -88,6 +88,7 @@ import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotRequestV1
 import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotScopeV1
 import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotPlanV1
 import com.codex.campboardgamehost.clocktower.session.InitialJointOpeningDirectV2
+import com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
 import com.codex.campboardgamehost.clocktower.session.HostOpeningRulesDomainV2
 import com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticAcceptanceV2
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
@@ -2360,6 +2361,7 @@ internal fun CampBoardGameHostApp() {
         firstNightOneShotAccepted = true  // Suppress the *second* initial LLM call.
         firstNightOneShotPlan = null
         firstNightAdoptedChoices = emptyMap() // V2 semantics are NOT the V1 opaque IDs.
+        BotcAiWireTrace.hostAdoption(selectedDrunk, adoptedJointInformation.size)
         screen = Screen.ClocktowerJudge
     }
 

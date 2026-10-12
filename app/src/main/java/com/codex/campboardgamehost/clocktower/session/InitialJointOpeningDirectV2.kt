@@ -258,6 +258,15 @@ intentions 用 trigger / approach / risk 表述重要的跨夜信息连续性目
             endpoint, accessToken, payload, model, onStage,
         )
         onStage("VALIDATING_COMPLETE_HOST_OPENING")
-        return decode(response, domain)
+        return try {
+            decode(response, domain).also { accepted ->
+                BotcAiWireTrace.hostValidation(
+                    "JOINT_OPENING", true, accepted.selection.choices.size)
+            }
+        } catch (error: Throwable) {
+            BotcAiWireTrace.hostValidation("JOINT_OPENING", false, 0,
+                error.message ?: error.javaClass.simpleName)
+            throw error
+        }
     }
 }

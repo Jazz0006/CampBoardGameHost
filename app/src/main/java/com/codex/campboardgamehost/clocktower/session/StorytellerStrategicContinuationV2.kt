@@ -327,9 +327,18 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
         val raw = ProductionDrunkAiGatewayV1.post(
             endpoint, accessToken, input, model, onStage)
         onStage("VALIDATING_STRATEGIC_CONTINUATION")
-        val outcome = decode(input, raw)
-        require(session.state === frozen) {
-            "Host state changed during whole-game continuation; discard obsolete response."
+        val outcome = try {
+            decode(input, raw).also { decoded ->
+                require(session.state === frozen) {
+                    "Host state changed during whole-game continuation; discard obsolete response."
+                }
+                BotcAiWireTrace.hostValidation(
+                    "STRATEGIC_CONTINUATION", true, decoded.affectedOpenDecisionIds.size)
+            }
+        } catch (error: Throwable) {
+            BotcAiWireTrace.hostValidation("STRATEGIC_CONTINUATION", false, 0,
+                error.message ?: error.javaClass.simpleName)
+            throw error
         }
         return outcome
     }
