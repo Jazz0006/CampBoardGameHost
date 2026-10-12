@@ -2,6 +2,12 @@
 
 > Updated **2026-10-11 Australia/Sydney**. **唯一活动交接。** 进入新会话必须重新查开发机 live state / GitHub main、PR、CI，不能假设下述 commit 仍是最新。当前单一执行路线是 [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)；此文件只记录状态及下一步。旧 PROD-GLOBAL-1D/2B/analysis-first NEXT 作为历史，不得再次触发独立酒鬼模型规划。
 
+## LATEST HANDOFF — PROD-GLOBAL-3B3D-2B residual event review (2026-10-12)
+
+Confirmed Draft PR #302 head `9d5331b386c1109bca8fe6f6491e52e9450cab3c`, CI #4118/R2 #3740 GREEN, local clean, stacked #301 -> #300 -> #299. New branch `experiment/prod-global-3b3d2b-event-revalidation-20261012` introduces read-only `HostOpeningResidualEventGateV2` with typed first-night Host-confirmed game state, Poisoner/FT event facts, immutable published-observation references and current rules-owned candidate verification. Re-uses authoritative pair/numeric/FT/registration semantics. Returns WAIT / REPLAN WHOLE UNPUBLISHED / REVIEW READY (never publication), preserves all published record IDs. Key limitation: NOT YET connected to atomic production Host session, confirmed action journal or observation log, hence a positive experimental test cannot grant UI publication/adoption authority. Tests require full Android CI/R2. NEXT: audit this PR, then wire authoritative Host event/observation inputs and 3C/3D **one** background precommit Luna call instead of standalone Drunk plus postcommit call, followed by 3F phone checks. No paid API call or production cutover in this slice. [3B3D route](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md).
+
+### Previous 3B3D-2A handoff
+
 ## LATEST HANDOFF — PROD-GLOBAL-3B3D-2A real rules integration (2026-10-12)
 
 PR #301 latest confirmed HEAD `9056b6b0560bb85764668b5c8b49eefbe7b50f29`, CI #4116 / R2 #3738 GREEN and clean; stacked on Draft #300 -> #299. New branch `experiment/prod-global-3b3d2-rules-projection-20261012` contains experimental pure `HostOpeningRulesDomainV2` which materializes Host TB legal pair/numeric/setup domains per uncommitted Drunk branch, pending actions as barriers, with matching Kotlin real-rules scenarios. AI output V2 adds ZERO_OUTSIDERS; multi-witness semantics permitted without asserting a unique registration. New tests not yet independently run at this checkpoint. [Active 3B3D route](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md). NEXT: audit exact new PR CI/R2, repair real-domain test failures if any, then event-confirmation revalidation and 3C/3D single initial background Luna call. No production API/UI change, no paid EXPT, no full strategic/model or phone acceptance.

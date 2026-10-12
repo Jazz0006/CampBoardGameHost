@@ -2,6 +2,12 @@
 
 > Updated: **2026-10-11 Australia/Sydney**. **唯一当前执行优先级权威。** Historical PROD-GLOBAL-1D/2B instructions are NOT current NEXT; see [PROD-GLOBAL-3 unified opening plan](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md) and [handoff](NEXT_DEVELOPMENT_HANDOFF.md). Previous checkpoint detail remains in original route documents and [archive](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md).
 
+## CURRENT DEVELOPMENT — PROD-GLOBAL-3B3D-2B Host event-time residual gate (2026-10-12)
+
+3B3D-2A Draft PR #302 final head `9d5331b3`, CI #4118 / R2 #3740 GREEN. New experimental `HostOpeningResidualEventGateV2` reviews prior single-opening plan against **confirmed** first-night Host state after Poisoner/FT, recomputes legal pair/numeric/FT outcomes, never infers one Spy/Recluse witness, preserves published record IDs, and returns **whole-unpublished-residual replan required** if any proposed information becomes illegal or incomplete. This does not mutate game state or authorize publishing. **Still outstanding** before 3C production call replacement: attach actual atomic Host confirmed-action/observation journal (not caller-fabricated facts), initial V2 request to live exact Host inventory, full adaptive remaining-plan revision and precommit one-call provider, then 3F device acceptance. Independent new PR CI/R2 pending. [3B3D active route](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md).
+
+### Previous 3B3D-2A checkpoint
+
 ## CURRENT DEVELOPMENT — PROD-GLOBAL-3B3D-2A real rules-owned Host projection (2026-10-12)
 
 PR #301 exact head `9056b6b` CI #4116 / R2 #3738 GREEN, Draft and stacked on #300. New 3B3D-2A experimental branch implements real TB first-night domains, in-memory per-Drunk hypothesis, Host red herring/bluffs, numeric and pair rule domains, unknown player action barriers and public semantic matching. Uses existing TB rules-owning generators, not hardcoded benchmark answers or a new scorer; importantly, multiple registration witnesses may support the same public result. Android real-domain tests and current PR CI/R2 must be audited before declaring even this slice accepted. **Remaining:** event-time revalidation/conditional-intent feasibility under confirmed poison/queries, demonstrated full-domain/per-mode acceptance, 3C single joint provider request and 3F phone/production retirement. [3B3D route](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md).

@@ -198,6 +198,182 @@ class HostOpeningRulesDomainV2Test {
         }.isFailure)
     }
 
+
+    private fun firstNightGame(
+        shown: List<String>,
+        drunkSeat: Int? = null,
+        poisonedSeat: Int? = null,
+    ): com.codex.campboardgamehost.clocktower.domain.GameState {
+        val players = shown.mapIndexed { index, external ->
+            val seat = index + 1
+            val displayed = requireNotNull(registry.findByExternalId(external))
+            val actual = if (seat == drunkSeat) requireNotNull(
+                registry.findByExternalId("drunk")) else displayed
+            val type = when (actual.team) {
+                com.codex.campboardgamehost.clocktower.catalog.ClocktowerCatalogTeam.TOWNSFOLK ->
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.TOWNSFOLK
+                com.codex.campboardgamehost.clocktower.catalog.ClocktowerCatalogTeam.OUTSIDER ->
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.OUTSIDER
+                com.codex.campboardgamehost.clocktower.catalog.ClocktowerCatalogTeam.MINION ->
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.MINION
+                com.codex.campboardgamehost.clocktower.catalog.ClocktowerCatalogTeam.DEMON ->
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.DEMON
+                else -> error("Unsupported test role.")
+            }
+            com.codex.campboardgamehost.clocktower.domain.PlayerState(
+                seat = seat, name = "seat-" + seat, actualRole = actual.id,
+                actualAlignment = if (type in setOf(
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.TOWNSFOLK,
+                    com.codex.campboardgamehost.clocktower.domain.CharacterType.OUTSIDER))
+                    com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD
+                else com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL,
+                actualType = type, shownRole = displayed.id,
+                poisoned = seat == poisonedSeat,
+            )
+        }
+        return com.codex.campboardgamehost.clocktower.domain.GameState(
+            com.codex.campboardgamehost.clocktower.domain.ScriptId("trouble_brewing"),
+            players, 42,
+        )
+    }
+
+    private fun firstNightFacts(
+        projection: HostOpeningSemanticProjectionV2,
+        shown: List<String>,
+        poisoned: Int? = null,
+        ftTargets: Map<Int, List<Int>> = emptyMap(),
+        published: List<HostOpeningPublishedInformationV2> = emptyList(),
+    ): HostOpeningConfirmedFirstNightV2 =
+        HostOpeningConfirmedFirstNightV2(
+            gameId = projection.scope.snapshot.gameId,
+            gameStateRevision = 11,
+            playerInputRevision = 5,
+            phase = com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            game = firstNightGame(shown, projection.drunkSeat, poisoned),
+            drunkSeat = projection.drunkSeat,
+            redHerringSeat = projection.redHerringCandidatesBySeat.keys.firstOrNull(),
+            confirmedPoisonerTargetSeat = poisoned,
+            confirmedFortuneTellerTargets = ftTargets,
+            published = published,
+        )
+
+    @Test fun confirmedPoisonerActionRechecksAllUnpublishedAndCannotAssumeMissingPlan() {
+        val shown = listOf("chef", "empath", "washerwoman", "fortuneteller",
+            "poisoner", "recluse", "librarian", "imp")
+        val domain = make(shown, false)
+        val branch = domain.forDrunkSeat(null)
+        val original = HostOpeningSemanticGateV2.accept(plan(branch), branch)
+        val before = firstNightFacts(branch, shown).copy(
+            gameStateRevision = 10, playerInputRevision = 4)
+        val waiting = HostOpeningResidualEventGateV2.review(
+            original, branch, before, registry, definitions)
+        assertEquals(HostOpeningResidualOutcomeV2.WAIT_FOR_HOST_ACTION, waiting.outcome)
+        assertTrue(waiting.decisions.any {
+            it.disposition == HostOpeningResidualDispositionV2.WAITING_EVENT })
+
+        // Poisoner confirms target 2. The earlier plan had only deferred
+        // statements and MUST NOT silently manufacture a result for them.
+        val after = firstNightFacts(branch, shown, poisoned = 2)
+        val reviewed = HostOpeningResidualEventGateV2.review(
+            original, branch, after, registry, definitions)
+        assertEquals(HostOpeningResidualOutcomeV2.REPLAN_WHOLE_UNPUBLISHED_RESIDUAL,
+            reviewed.outcome)
+        assertTrue("Empath remains an unplanned Host decision",
+            "first-night:seat-2" in reviewed.replanDecisionIds)
+        assertTrue("FT still waits for real query, not a fictitious result",
+            reviewed.decisions.any {
+                it.decisionId == "first-night:seat-4" &&
+                    it.disposition == HostOpeningResidualDispositionV2.WAITING_EVENT })
+        val forged = after.copy(confirmedPoisonerTargetSeat = 3)
+        assertTrue(runCatching {
+            HostOpeningResidualEventGateV2.review(original, branch, forged, registry, definitions)
+        }.isFailure)
+    }
+
+    @Test fun conditionalIntentIsAdvisoryAndMustMatchResolvedHostDomain() {
+        val shown = listOf("chef", "empath", "washerwoman", "fortuneteller",
+            "poisoner", "recluse", "librarian", "imp")
+        val branch = make(shown, false).forDrunkSeat(null)
+        fun proposed(number: Int): HostOpeningSemanticAcceptanceV2 {
+            val raw = plan(branch)
+            val info = raw.getJSONObject("openingPlan").getJSONArray("information")
+            val empath = (0 until info.length()).map { info.getJSONObject(it) }
+                .single { it.getString("decisionId") == "first-night:seat-2" }
+            empath.put("resolution", "CONDITIONAL_INTENT")
+            empath.getJSONObject("observation").put("kind", "NUMBER").put("number", number)
+            return HostOpeningSemanticGateV2.accept(raw, branch)
+        }
+        // If Poisoner chose himself, the two good neighbours of the Empath
+        // are clear, and 0 is Host-legal. This is a candidate, not a publication.
+        val confirmed = firstNightFacts(branch, shown, poisoned = 5)
+        val retained = HostOpeningResidualEventGateV2.review(
+            proposed(0), branch, confirmed, registry, definitions)
+        assertEquals(HostOpeningResidualDispositionV2.STILL_LEGAL_UNPUBLISHED,
+            retained.decisions.single { it.decisionId == "first-night:seat-2" }.disposition)
+
+        // The original gate accepts conditional speculation *before* the
+        // target is known; the event-time gate must reject an impossible 99.
+        val invalid = HostOpeningResidualEventGateV2.review(
+            proposed(99), branch, confirmed, registry, definitions)
+        assertEquals(HostOpeningResidualDispositionV2.REPLAN_REQUIRED,
+            invalid.decisions.single { it.decisionId == "first-night:seat-2" }.disposition)
+        assertEquals(HostOpeningResidualOutcomeV2.REPLAN_WHOLE_UNPUBLISHED_RESIDUAL,
+            invalid.outcome)
+    }
+
+    @Test fun fortuneTellerTargetsUseHostRuleDomainAndRecluseMayLegallyRegisterDemon() {
+        val shown = listOf("chef", "empath", "washerwoman", "fortuneteller",
+            "recluse", "butler", "spy", "imp")
+        val branch = make(shown, false).forDrunkSeat(null)
+        val raw = plan(branch)
+        val info = raw.getJSONObject("openingPlan").getJSONArray("information")
+        val ft = (0 until info.length()).map { info.getJSONObject(it) }
+            .single { it.getString("decisionId") == "first-night:seat-4" }
+        ft.put("resolution", "CONDITIONAL_INTENT")
+        ft.getJSONObject("observation").put("kind", "BOOLEAN").put("boolean", true)
+        val original = HostOpeningSemanticGateV2.accept(raw, branch)
+        val stillWaiting = HostOpeningResidualEventGateV2.review(
+            original, branch, firstNightFacts(branch, shown), registry, definitions)
+        assertEquals(HostOpeningResidualDispositionV2.WAITING_EVENT,
+            stillWaiting.decisions.single { it.decisionId == "first-night:seat-4" }.disposition)
+        // Neither the Demon (8) nor the Red Herring (1) was inspected,
+        // but Recluse (5) may register Demon. Keep both possible worlds.
+        val actual = firstNightFacts(branch, shown, ftTargets = mapOf(4 to listOf(5, 6)))
+        val reviewed = HostOpeningResidualEventGateV2.review(
+            original, branch, actual, registry, definitions)
+        assertEquals(HostOpeningResidualDispositionV2.STILL_LEGAL_UNPUBLISHED,
+            reviewed.decisions.single { it.decisionId == "first-night:seat-4" }.disposition)
+        val badQuery = actual.copy(confirmedFortuneTellerTargets = mapOf(4 to listOf(5, 5)))
+        assertTrue(runCatching {
+            HostOpeningResidualEventGateV2.review(
+                original, branch, badQuery, registry, definitions)
+        }.isFailure)
+    }
+
+    @Test fun publishedHostObservationStaysFrozenAndIsNeverRewritten() {
+        val shown = listOf("chef", "empath", "washerwoman", "fortuneteller",
+            "recluse", "butler", "spy", "imp")
+        val branch = make(shown, false).forDrunkSeat(null)
+        val accepted = HostOpeningSemanticGateV2.accept(plan(branch), branch)
+        val locked = branch.candidatesByDecision["first-night:seat-3"]
+            .orEmpty().values.first()
+        val originalRecord = HostOpeningPublishedInformationV2(
+            "first-night:seat-3", "host-observation-17", locked)
+        val facts = firstNightFacts(branch, shown, published = listOf(originalRecord))
+        val reviewed = HostOpeningResidualEventGateV2.review(
+            accepted, branch, facts, registry, definitions)
+        assertEquals(setOf("host-observation-17"),
+            reviewed.preservedPublishedRecordIds)
+        assertEquals(HostOpeningResidualDispositionV2.PUBLISHED_LOCKED,
+            reviewed.decisions.single { it.decisionId == originalRecord.decisionId }.disposition)
+        // A changed observation record is not overwritten with an AI choice;
+        // the only output is the original record ID.
+        assertTrue(reviewed.decisions.none {
+            it.disposition == HostOpeningResidualDispositionV2.PUBLISHED_LOCKED &&
+                it.legalMatchingCandidateIds.isNotEmpty() })
+    }
+
     @Test fun librarianZeroOutsidersIsHostDeterminedNotMissingInformation() {
         val actual = make(listOf("washerwoman", "librarian",
             "investigator", "chef", "scarletwoman", "imp"), false)
