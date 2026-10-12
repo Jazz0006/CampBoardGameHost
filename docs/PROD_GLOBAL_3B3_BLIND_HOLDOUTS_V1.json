@@ -1,0 +1,311 @@
+{
+  "schemaId": "botc.prod-global-3b3-sealed-blind-holdouts",
+  "version": 1,
+  "status": "FROZEN_BEFORE_V2_PAID_EXPERIMENT",
+  "notes": "Only input may reach the model. No expected answer, gold strategy or model output is included. N02/N05 are identical state with different experience.",
+  "fixtures": [
+    {
+      "id": "N01",
+      "kind": "BLIND_HOLDOUT",
+      "input": {
+        "schemaVersion": 1,
+        "script": "Trouble Brewing",
+        "phase": "SHOWN_ROSTER_LOCKED",
+        "asOfRevision": 1,
+        "hasDrunk": false,
+        "drunkAssignment": "NOT_APPLICABLE",
+        "circleSeats": [
+          {
+            "seat": 1,
+            "shownRole": "Washerwoman",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 2,
+            "shownRole": "Chef",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 3,
+            "shownRole": "Empath",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 4,
+            "shownRole": "Saint",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 5,
+            "shownRole": "Fortune Teller",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 6,
+            "shownRole": "Monk",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 7,
+            "shownRole": "Poisoner",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 8,
+            "shownRole": "Imp",
+            "experience": "BEGINNER"
+          }
+        ],
+        "confirmedEvents": [],
+        "unknownEvents": [
+          "poisoner.target",
+          "fortune_teller.targets"
+        ],
+        "recentGames": []
+      }
+    },
+    {
+      "id": "N02",
+      "kind": "BLIND_HOLDOUT",
+      "input": {
+        "schemaVersion": 1,
+        "script": "Trouble Brewing",
+        "phase": "SHOWN_ROSTER_LOCKED",
+        "asOfRevision": 1,
+        "hasDrunk": true,
+        "drunkAssignment": "UNCOMMITTED",
+        "circleSeats": [
+          {
+            "seat": 1,
+            "shownRole": "Washerwoman",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 2,
+            "shownRole": "Fortune Teller",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 3,
+            "shownRole": "Empath",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 4,
+            "shownRole": "Mayor",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 5,
+            "shownRole": "Saint",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 6,
+            "shownRole": "Recluse",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 7,
+            "shownRole": "Baron",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 8,
+            "shownRole": "Imp",
+            "experience": "BEGINNER"
+          }
+        ],
+        "confirmedEvents": [],
+        "unknownEvents": [
+          "fortune_teller.targets"
+        ],
+        "recentGames": []
+      }
+    },
+    {
+      "id": "N03",
+      "kind": "BLIND_HOLDOUT",
+      "input": {
+        "schemaVersion": 1,
+        "script": "Trouble Brewing",
+        "phase": "SHOWN_ROSTER_LOCKED",
+        "asOfRevision": 1,
+        "hasDrunk": false,
+        "drunkAssignment": "NOT_APPLICABLE",
+        "circleSeats": [
+          {
+            "seat": 1,
+            "shownRole": "Empath",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 2,
+            "shownRole": "Recluse",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 3,
+            "shownRole": "Chef",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 4,
+            "shownRole": "Investigator",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 5,
+            "shownRole": "Ravenkeeper",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 6,
+            "shownRole": "Fortune Teller",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 7,
+            "shownRole": "Spy",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 8,
+            "shownRole": "Imp",
+            "experience": "BEGINNER"
+          }
+        ],
+        "confirmedEvents": [],
+        "unknownEvents": [
+          "fortune_teller.targets",
+          "ravenkeeper.future_death_and_target"
+        ],
+        "recentGames": []
+      }
+    },
+    {
+      "id": "N04",
+      "kind": "BLIND_HOLDOUT",
+      "input": {
+        "schemaVersion": 1,
+        "script": "Trouble Brewing",
+        "phase": "SHOWN_ROSTER_LOCKED",
+        "asOfRevision": 1,
+        "hasDrunk": true,
+        "drunkAssignment": "UNCOMMITTED",
+        "circleSeats": [
+          {
+            "seat": 1,
+            "shownRole": "Investigator",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 2,
+            "shownRole": "Librarian",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 3,
+            "shownRole": "Empath",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 4,
+            "shownRole": "Fortune Teller",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 5,
+            "shownRole": "Butler",
+            "experience": "BEGINNER"
+          },
+          {
+            "seat": 6,
+            "shownRole": "Saint",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 7,
+            "shownRole": "Baron",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 8,
+            "shownRole": "Imp",
+            "experience": "VETERAN"
+          }
+        ],
+        "confirmedEvents": [],
+        "unknownEvents": [
+          "fortune_teller.targets",
+          "butler.master"
+        ],
+        "recentGames": [
+          {
+            "summary": "两局内多次利用相似玩家视角制造配对角色之间的矛盾；避免机械重复，非硬约束",
+            "weight": "LIGHT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "N05",
+      "kind": "BLIND_HOLDOUT",
+      "input": {
+        "schemaVersion": 1,
+        "script": "Trouble Brewing",
+        "phase": "SHOWN_ROSTER_LOCKED",
+        "asOfRevision": 1,
+        "hasDrunk": true,
+        "drunkAssignment": "UNCOMMITTED",
+        "circleSeats": [
+          {
+            "seat": 1,
+            "shownRole": "Washerwoman",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 2,
+            "shownRole": "Fortune Teller",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 3,
+            "shownRole": "Empath",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 4,
+            "shownRole": "Mayor",
+            "experience": "REGULAR"
+          },
+          {
+            "seat": 5,
+            "shownRole": "Saint",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 6,
+            "shownRole": "Recluse",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 7,
+            "shownRole": "Baron",
+            "experience": "VETERAN"
+          },
+          {
+            "seat": 8,
+            "shownRole": "Imp",
+            "experience": "VETERAN"
+          }
+        ],
+        "confirmedEvents": [],
+        "unknownEvents": [
+          "fortune_teller.targets"
+        ],
+        "recentGames": []
+      }
+    }
+  ]
+}

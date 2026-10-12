@@ -2,6 +2,10 @@
 
 > **ACTIVE / PRODUCT-OWNER CONFIRMED.** Authoritative NEXT for TB AI_ASSISTED personal-direct Android experiment. Replaces old standalone Drunk-model request followed by post-Drunk first-night model request, long strategy essay UI, and multi-model comparison proposals. Historical documents are evidence, not active execution orders. **Design accepted; implementation/phone acceptance NOT completed.**
 
+## 2026-10-12 NEXT ROUTE — PROD-GLOBAL-3B3 semantic/quality convergence
+
+3B2 actual Luna 4-case run is now observed; V1 JSON shape annotations reveal structural issues. **New active route:** [PROD-GLOBAL-3B3](PROD_GLOBAL_3B3_SEMANTIC_V2_AND_EXPERT_QUALITY_ROUTE_2026-10-12.md). Current production one-shot remains postcommit/candidate-centric until independent Host semantic adapter + whole-bundle acceptance are proven. Experimental V2 and prompt are not a cutover. Read previous 3B2 NEXT below as historical, and do not infer that green 3B2 CI means Host correctness.
+
 ## 2026-10-12 PRODUCT-OWNER CORRECTION — Expert Storyteller first (current authority)
 
 **Supersedes older 3B2 pre-enumerated-candidate input instructions and the former "NEXT" section below.** Read [EXPERT-STORYTELLER principle & 3B2 test route](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md) before making any 3B2 provider/input changes.
