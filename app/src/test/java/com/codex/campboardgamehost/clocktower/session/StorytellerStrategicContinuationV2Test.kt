@@ -9,6 +9,9 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
@@ -230,7 +233,10 @@ class StorytellerStrategicContinuationV2Test {
             StorytellerProviderCandidateV1("no", StorytellerProviderCandidatePayloadV1.ScalarResult("false")),
         )
         val domains = listOf(
-            StorytellerStrategicContinuationV2.OpenDecision("a", 1, "NIGHT_INFORMATION", candidatesA, "Chef"),
+            StorytellerStrategicContinuationV2.OpenDecision("a", 1, "NIGHT_INFORMATION", candidatesA, "Chef",
+                StorytellerProviderDecisionContextV1.ScalarInformation(
+                    1, RoleId("Chef"), ReliabilityState.RELIABLE,
+                    StorytellerProviderScalarKindV1.NUMBER, "ADJACENT_EVIL_PAIRS", emptyList())),
             StorytellerStrategicContinuationV2.OpenDecision("b", 2, "NIGHT_INFORMATION", candidatesB, "Empath"),
         )
         val host = JSONObject(StorytellerStrategicContinuationV2.encode(session().state, prior(), domains))
@@ -241,6 +247,10 @@ class StorytellerStrategicContinuationV2Test {
             .put(JSONObject().put("decisionId", "b").put("candidateId", "no")))
         val accepted = StorytellerStrategicContinuationV2.decode(host.toString(), response.toString())
         assertEquals(mapOf("a" to "n1", "b" to "no"), accepted.remainingChoices)
+        assertEquals("ADJACENT_EVIL_PAIRS", host.getJSONArray("openDecisions")
+            .getJSONObject(0).getJSONObject("decisionContext").getString("metric"))
+        assertEquals("RELIABLE", host.getJSONArray("openDecisions")
+            .getJSONObject(0).getJSONObject("decisionContext").getString("reliability"))
         assertEquals("SCALAR_RESULT", host.getJSONArray("openDecisions").getJSONObject(0)
             .getJSONArray("legalCandidates").getJSONObject(0)
             .getJSONObject("meaning").getString("kind"))

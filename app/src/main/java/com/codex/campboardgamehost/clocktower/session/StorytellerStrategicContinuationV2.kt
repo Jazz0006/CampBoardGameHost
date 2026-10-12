@@ -7,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryE
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -27,6 +28,7 @@ internal object StorytellerStrategicContinuationV2 {
         // Supplied ONLY by a fresh Host pending producer, not inferred from a role list.
         val legalCandidates: List<StorytellerProviderCandidateV1> = emptyList(),
         val abilityRoleId: String? = null,
+        val currentDecisionContext: StorytellerProviderDecisionContextV1? = null,
     ) {
         init {
             require(decisionId.isNotBlank() && family.isNotBlank())
@@ -214,6 +216,7 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
                         .put("family", decision.family)
                         .put("sourceSeat", decision.sourceSeat ?: JSONObject.NULL)
                         .put("abilityRoleId", decision.abilityRoleId ?: JSONObject.NULL)
+                        .put("decisionContext", contextMeaning(decision.currentDecisionContext))
                         .put("legalCandidates", JSONArray().also { options ->
                             decision.legalCandidates.forEach { candidate ->
                                 options.put(JSONObject()
@@ -412,6 +415,43 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
             "Host state changed during whole-game continuation; discard obsolete response."
         }
         return outcome
+    }
+
+    /** Semantics of the CURRENT confirmed pending question, not an inferred player action. */
+    private fun contextMeaning(context: StorytellerProviderDecisionContextV1?): Any = when (context) {
+        null -> JSONObject.NULL
+        is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> JSONObject()
+            .put("kind", context.decisionTypeId)
+            .put("reliability", context.reliability.name)
+            .put("abilityRoleId", context.abilityRole.value)
+            .put("sourceSeat", context.sourceSeat)
+        is StorytellerProviderDecisionContextV1.ScalarInformation -> JSONObject()
+            .put("kind", context.decisionTypeId)
+            .put("reliability", context.reliability.name)
+            .put("abilityRoleId", context.abilityRole.value)
+            .put("sourceSeat", context.sourceSeat)
+            .put("resultKind", context.kind.name)
+            .put("metric", context.metric)
+            .put("subjectSeats", JSONArray(context.subjectSeats))
+        is StorytellerProviderDecisionContextV1.RegistrationResolution -> JSONObject()
+            .put("kind", context.decisionTypeId)
+            .put("interactionId", context.interactionId)
+            .put("observationRecordId", context.observationRecordId)
+            .put("sourceSeat", context.sourceSeat)
+            .put("subjectSeat", context.subjectSeat)
+            .put("question", context.question.toString())
+        is StorytellerProviderDecisionContextV1.DayAbilityRegistration -> JSONObject()
+            .put("kind", context.decisionTypeId)
+            .put("interactionId", context.interactionId)
+            .put("abilityRoleId", context.abilityRole.value)
+            .put("actorSeat", context.actorSeat)
+            .put("subjectSeat", context.subjectSeat)
+            .put("question", context.question.toString())
+        is StorytellerProviderDecisionContextV1.MayorRedirect -> JSONObject()
+            .put("kind", context.decisionTypeId)
+            .put("mayorSeat", context.mayorSeat)
+        StorytellerProviderDecisionContextV1.DrunkAssignment ->
+            error("Committed whole-game continuation cannot re-open Drunk selection")
     }
 
     private fun candidateMeaning(payload: StorytellerProviderCandidatePayloadV1): JSONObject = when (payload) {
