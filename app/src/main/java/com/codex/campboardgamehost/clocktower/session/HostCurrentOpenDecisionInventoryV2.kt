@@ -19,7 +19,7 @@ internal object HostCurrentOpenDecisionInventoryV2 {
     ): List<StorytellerStrategicContinuationV2.OpenDecision> {
         require(round >= 1)
         require(requests.map { it.identity.decisionId }.distinct().size == requests.size)
-        return requests.map { request ->
+        val open = requests.map { request ->
             val identity = request.identity
             require(identity.gameId == frozen.gameId &&
                 identity.scriptId == frozen.gameState.script.value &&
@@ -66,5 +66,13 @@ internal object HostCurrentOpenDecisionInventoryV2 {
                 },
             )
         }
+        // One recipient cannot have two independent unreceived information
+        // observations for this same phase/round merely via different opaque IDs.
+        val informationSeats = open.filter { it.family == "NIGHT_INFORMATION" }
+            .map { it.sourceSeat }
+        require(informationSeats.size == informationSeats.distinct().size) {
+            "Host must not expose multiple conflicting information scopes for one wake."
+        }
+        return open
     }
 }

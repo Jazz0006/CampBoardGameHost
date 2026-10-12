@@ -235,6 +235,7 @@ class StorytellerStrategicContinuationV2Test {
         )
         val host = JSONObject(StorytellerStrategicContinuationV2.encode(session().state, prior(), domains))
         val response = result(host)
+        response.put("affectedOpenDecisionIds", JSONArray(listOf("a", "b")))
         response.put("remainingChoices", JSONArray().put(JSONObject()
             .put("decisionId", "a").put("candidateId", "n1"))
             .put(JSONObject().put("decisionId", "b").put("candidateId", "no")))

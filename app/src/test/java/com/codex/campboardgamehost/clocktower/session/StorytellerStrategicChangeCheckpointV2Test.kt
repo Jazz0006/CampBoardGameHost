@@ -241,6 +241,8 @@ class StorytellerStrategicChangeCheckpointV2Test {
         val first = scalarRequest(host)
         val second = first.copy(
             identity = first.identity.copy(decisionId = "second-current-choice"),
+            decisionContext = (first.decisionContext as
+                StorytellerProviderDecisionContextV1.ScalarInformation).copy(sourceSeat = 2),
             legalCandidates = listOf(StorytellerProviderCandidateV1(
                 "number-1", StorytellerProviderCandidatePayloadV1.ScalarResult("1"))),
         )
@@ -260,6 +262,11 @@ class StorytellerStrategicChangeCheckpointV2Test {
         val accepted = StorytellerResidualPackageGateV2.verify(
             host.state, StorytellerPhase.FIRST_NIGHT, 1, original, requests, reply, cursor())
         assertEquals(2, accepted.choices.size)
+        assertTrue(runCatching {
+            val sameSource = second.copy(decisionContext = first.decisionContext)
+            HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
+                host.state, StorytellerPhase.FIRST_NIGHT, 1, listOf(first, sameSource))
+        }.isFailure) // distinct IDs cannot give one seat two concurrent observations
         assertTrue(runCatching {
             StorytellerResidualPackageGateV2.verify(host.state, StorytellerPhase.FIRST_NIGHT, 1,
                 original, requests.dropLast(1), reply, cursor())
