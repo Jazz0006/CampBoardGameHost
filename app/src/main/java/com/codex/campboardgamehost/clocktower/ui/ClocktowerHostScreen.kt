@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.codex.campboardgamehost.ClocktowerResidualDisplayMatcherV2
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -100,7 +101,10 @@ internal fun ClocktowerJudgeScreen(
     globalAiAdviceText: String? = null,
     globalAiAdviceBusy: Boolean = false,
     globalAiAdviceError: String? = null,
-    onRequestGlobalAiAdvice: (ClocktowerNightStepUi, Int) -> Unit = { _, _ -> },
+    globalResidualAdoptedChoices: Map<String, String> = emptyMap(),
+    globalResidualProposalAvailable: Boolean = false,
+    onAdoptGlobalResidual: () -> Unit = {},
+    onRequestGlobalAiAdvice: (List<ClocktowerNightStepUi>, Int) -> Unit = { _, _ -> },
     firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
     firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
     phase: ClocktowerPhase,
@@ -2579,7 +2583,18 @@ internal fun ClocktowerJudgeScreen(
             // stale initial candidate ID from the accepted bundle.
             options.singleOrNull { clocktowerOneShotCandidateId(it) == id }
         }
-        val approvedOpeningOption = oldApprovedOpeningOption ?: preplannedSeat?.let { seat ->
+        val residualApprovedOption = when {
+            globalAiPending != null -> ClocktowerResidualDisplayMatcherV2.matchPair(
+                globalAiPending,
+                globalResidualAdoptedChoices[globalAiPending.requestIdentity.requestId],
+                currentStep.manualInformationCandidates)
+            globalAiScalarPending != null -> ClocktowerResidualDisplayMatcherV2.matchScalar(
+                globalAiScalarPending,
+                globalResidualAdoptedChoices[globalAiScalarPending.requestIdentity.requestId],
+                currentStep.manualInformationCandidates)
+            else -> null
+        }
+        val approvedOpeningOption = residualApprovedOption ?: oldApprovedOpeningOption ?: preplannedSeat?.let { seat ->
             jointOpeningSemantics[seat]?.let { planned ->
                 ClocktowerJointOpeningDisplayMatcherV2.match(
                     plan = planned,
@@ -2590,11 +2605,11 @@ internal fun ClocktowerJudgeScreen(
         }
         LaunchedEffect(globalAiCurrentKey, globalAiAssisted, approvedOpeningOption,
             jointOpeningAdopted, phase) {
-            if (globalAiAssisted && !(jointOpeningAdopted && phase == ClocktowerPhase.FirstNight) &&
+            if (globalAiAssisted &&
                 globalAiCurrentKey != null &&
                 globalAiAdviceKey != globalAiCurrentKey && approvedOpeningOption == null
             ) {
-                onRequestGlobalAiAdvice(currentStep, currentStepIndex)
+                onRequestGlobalAiAdvice(nightSteps, currentStepIndex)
             }
         }
         val currentSurfacePlan = clocktowerNightSurfacePlan(currentStep, phase)
@@ -2745,7 +2760,7 @@ internal fun ClocktowerJudgeScreen(
                     globalAiCurrentKey != null
                 ) {
                     OutlinedButton(
-                        onClick = { onRequestGlobalAiAdvice(currentStep, currentStepIndex) },
+                        onClick = { onRequestGlobalAiAdvice(nightSteps, currentStepIndex) },
                         enabled = !globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey,
                     ) {
                         Text(text("AI 全局局势与当前合法裁量", "Global AI advice"))
@@ -2756,6 +2771,12 @@ internal fun ClocktowerJudgeScreen(
                         )
                         globalAiAdviceError?.let { error -> Text(text = error) }
                         globalAiAdviceText?.let { advice -> Text(text = advice) }
+                        if (globalResidualProposalAvailable && !globalAiAdviceBusy) {
+                            Button(onClick = onAdoptGlobalResidual) {
+                                Text(text("一键采纳剩余方案（逐步确认后公布）",
+                                    "Adopt remaining plan (confirm each step before release)"))
+                            }
+                        }
                     }
                 }
                 ClocktowerNightStepCardLocalized(
