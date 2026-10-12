@@ -2,7 +2,17 @@
 
 > Updated: **2026-10-11 Australia/Sydney**. **唯一当前执行优先级权威。** Historical PROD-GLOBAL-1D/2B instructions are NOT current NEXT; see [PROD-GLOBAL-3 unified opening plan](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md) and [handoff](NEXT_DEVELOPMENT_HANDOFF.md). Previous checkpoint detail remains in original route documents and [archive](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md).
 
-## Latest live checkpoint — 2026-10-12 (supersedes stale PR status below)
+## NEW CURRENT PRIORITY — 2026-10-12 / expert Storyteller first
+
+**Product-owner-confirmed correction; supersedes old "3B2 produce all Host-legal candidates for the model" instructions below.** See the authoritative [3B2 Expert Storyteller Principle / Experimental Route](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md).
+
+- **Value proposition:** approximate a skilled, creative, lawful human Storyteller. The AI knows rules and chooses a coherent whole-game plan independently, with current setup (including whether Drunk exists), actual recorded per-player experience, confirmed events, and *optional recent-game summaries* to mildly avoid predictable repetition. Do not treat AI as merely selecting opaque Host candidate IDs from exhaustive precomputed menus.
+- **Host remains independent authoritative validator** and keeper of game state, deterministic facts, publication timing, recovery and offline Manual. It may compute legal domains internally or offer specific rules when needed; it must **not** enumerate every Drunk/first-night combination into the default Luna input. Fail closed or request bounded full-plan correction for invalid model output.
+- PR #297 (**3B1**) merged: `d720a845a113af0889360ed73717cdc9621f8abc`, CI #4103 / R2 #3727 GREEN; Oracle local `main` synchronized and clean at completion. Keep 3B1 typed scope/validator as an internal safety tool, **not** the required model I/O format.
+- **NEXT = 3B2-EXPERT-PROBE:** Luna-only controlled experiments without enumerated legal candidates, compare legality/quality/coverage/cost on diverse legitimate setups; *then* choose minimal production semantic schema / Host adapter, 3C/3D single joint request, 3E global continuity, 3F Android acceptance. No model training or Sol comparison now.
+- Previous QA caveat remains: a later phone smoke no longer reproduced the recommendation show crash, but root cause was never proved; keep real-device verification in 3F. Mini MCP generalized experiment directory development is a separate parallel project.
+
+## Historical checkpoint — 2026-10-12 (supersedes stale PR status below)
 
 - Verified live `main = 2288d58f4bbc212e1e6d8cdd60f6ced539f32312`, local `main` clean and remote-equal, **zero open PRs**; PR #292/#293/#294/#295 **merged**. The stacked Draft/status text below is historical, not the current authority.
 - User re-tested first-night AI recommendation **display successfully** on Android; previously observed crash is not currently reproducible. No fatal stack/root fix has been established; final crash/double-publication regression remains in 3F.
@@ -37,7 +47,7 @@
 | 次序 | 工作 | 当前状态 / 退出标准 |
 | --- | --- | --- |
 | **P0 / 3A** | 推荐信息点击展示崩溃 | 取得精确安全的 Android FATAL EXCEPTION、修复已证实故障、Host 不部分/重复发布、回归测试与真机成功 |
-| **3B** | 初始 Host 条件合法域 | SHOWN_ROSTER_LOCKED/SETUP_PRECOMMIT 可以供给所有合法酒鬼及其假设结果、确定性事实、恶魔 bluff、红鲱鱼、熟练度，不提交酒鬼 |
+| **3B** | 3B1 Host 内部合法性协议已合并；3B2-EXPERT-PROBE 当前 NEXT | 用完整魔典+规则知识+玩家熟练度（可选近期经验）让专家 LLM 自主规划，Host 事后独立校验；不默认预枚举全部酒鬼假设和合法信息给模型 |
 | **3C** | 身份展示与**同一初始请求**并行 | 发身份不等待 LLM，结束后一次采纳联合方案，Host 才绑定酒鬼并验证后续裁量 |
 | **3D** | Luna prompt + strict single response + strategyMemory | 模型只回一套完整配置与私有可延续战略摘要，唯一合法结果由 Host 直接确定；无长篇分析 |
 | **3E** | 全局剩余计划事件续航 | 玩家动作/Host确认/覆盖驱动条件校验及**整包剩余部分**修订，事实和已发信息不回写 |

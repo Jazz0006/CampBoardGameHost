@@ -2,6 +2,16 @@
 
 > **ACTIVE / PRODUCT-OWNER CONFIRMED.** Authoritative NEXT for TB AI_ASSISTED personal-direct Android experiment. Replaces old standalone Drunk-model request followed by post-Drunk first-night model request, long strategy essay UI, and multi-model comparison proposals. Historical documents are evidence, not active execution orders. **Design accepted; implementation/phone acceptance NOT completed.**
 
+## 2026-10-12 PRODUCT-OWNER CORRECTION — Expert Storyteller first (current authority)
+
+**Supersedes older 3B2 pre-enumerated-candidate input instructions and the former "NEXT" section below.** Read [EXPERT-STORYTELLER principle & 3B2 test route](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md) before making any 3B2 provider/input changes.
+
+- Goal: AI independently plans as an expert human Storyteller, not as a ranker of Host-enumerated possible outputs. Normal initial model input is the full game-world roster, whether Drunk exists and its uncommitted state, player proficiency (UNKNOWN when not recorded), confirmed facts, concise script/rules knowledge if needed, and optionally recent-game experience. **Do not by default enumerate every Drunk hypothesis and every first-night candidate in the prompt.**
+- AI judges what is legal and strategically good; Host independently **validates** semantic decisions against its authoritative rules/revisions and commits them only at the lawful game step. Invalid output is refused, with specific bounded whole-bundle correction or manual fallback. Host legal-domain code remains essential **internally**.
+- PR #297 completed **3B1** pure precommit conditional scope/validator and merged into `main` at `d720a845a113af0889360ed73717cdc9621f8abc`. Retain it for Host's safety boundary; no need to expose its entire branch/candidate enumeration to the model.
+- **NEW NEXT: 3B2-EXPERT-PROBE first**, Luna-only real-model experiments on several TB setups *without supplied candidate menus*, separately scoring legal correctness, strategy quality, dependency completeness and cost/latency. After evidence, decide minimal Host/model adapter and proceed with 3C/3D one background joint call; do not prematurely implement the prior exhaustive 3B2 producer.
+- Current relative role of older 3B/3D descriptions below: historical engineering option, **not current instruction** to build/enumerate a provider-facing menu. Original single-joint opening planning, deferred unknown actions, `strategyMemory` and Host authoritative validation remain in force.
+
 ## Invariant: one initial jointly optimized plan
 
 Once Host fixes the visible roster, seating and **all shown identities** (SHOWN_ROSTER_LOCKED), start **one paid Luna whole-opening planning request** immediately while the foreground deals shown-role cards to players. Drunk actual seat remains UNCOMMITTED. A single model planning action must jointly choose Drunk when present, every *currently decidable discretionary* first-night clue, Good red herring as applicable, and three unique off-board Demon bluffs when TB rules require. Host's unique deterministic information must be supplied as strategy context, not a model choice. Unknown player-driven Poisoner target and Fortune Teller query seats are dependencies, not invented actions. Model returns **one proposed opening package** and **compact private strategic memory**, not multiple alternatives or analysis essays.
@@ -21,7 +31,11 @@ Once Host fixes the visible roster, seating and **all shown identities** (SHOWN_
 
 Reproduce one-tap acceptance → show a recommended Investigator/Empath information result on a real legal TB fixture. Collect bounded AndroidRuntime fatal stack and safe BotcAiTrace events, no secrets. Inspect current-candidate/revision matching, onShowPlayerDisplay and Host publication/history/reveal handoff; fix **proven** exception and non-atomic/double-publication risks. Add regression. Never silence all exceptions, relax Host validation or leak private facts.
 
-## 3B — Single Host precommit conditional legal scope
+## 3B — Host precommit safety / expert-model interface (UPDATED 2026-10-12)
+
+**3B1 is already merged (PR #297).** Its multi-hypothesis and legal candidate contract is an **internal pure Host validation foundation**, not a mandate to send a candidate list to Luna. 3B2 is now the **expert autonomous planning experiment** defined in the [current route](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md). Hold off adding production enumeration/projection/adapters until that experiment compares legal accuracy and strategic quality. The following paragraph documents the prior 3B2 proposal, which is **superseded for the model input boundary**.
+
+### Superseded 3B2 candidate-enumeration proposal (reference only)
 
 Create neutral InitialGlobalPlanRequest / response contract based on SHOWN_ROSTER_LOCKED / SETUP_PRECOMMIT, **before Drunk selection**. Include actual fixed non-Townsfolk, shown roles, seat adjacency, hasDrunk, and legal Drunk candidate domain. For each Drunk candidate, expose Host-derived **hypothetical** downstream legal information consequences without committing any actual role, plus no-Drunk case. Support compact lossless conditional domains without enumerating a prohibitive cartesian product. Include all applicable discretionary first-night information/registration results, distinct legal off-board bluff IDs, Good red-herring candidates. Distinguish unique Host-determined numeric/boolean result as **context** rather than discretionary candidate. Include actual per-seat experience where entered, claims/pressure if known, trusted causal/game history, and prior strategy when relevant. Preserve result-first Spy/Recluse witness ambiguity; never turn a possible explanation into an asserted registration.
 
@@ -30,6 +44,8 @@ Create neutral InitialGlobalPlanRequest / response contract based on SHOWN_ROSTE
 SHOWN_ROSTER_LOCKED launches **exactly one initial LLM call**, foreground begins **shown-only** identity dealing without network barrier. Neither cards nor player screen can expose grimoire or unbound actual Drunk. After reveal, Host-only page offers one valid opening and one-tap adopt, with clear pending/error/offline manual fallback. Verify source game/roster fingerprint/revisions and whole selected conditional-domain coverage; bind actual Drunk via Host, then verify other pending entries under confirmed legal domains. Only publish each player-facing observation at its true night step; do not precommit info, registrations or future player actions. No extra mandatory post-Drunk initial request.
 
 ## 3D — Luna prompt, output and advisory memory
+
+**Updated interface principle:** one semantic `openingPlan` plus private `strategyMemory`; seat/role/info decisions are concrete structured semantic choices, **not necessarily opaque Host candidate IDs supplied in advance**. Host translates and independently validates legal choices, fails closed if invalid, and does not silently substitute candidates. Keep model output short while its prompt explicitly demands internally comparing whole-game alternatives. Exact transport/schema is determined by the 3B2-EXPERT-PROBE results, not assumed complete now.
 
 **Keep the same experimental Luna model (currently gpt-5.6-luna); no cross-model comparisons or model training now.** Improve the whole-board input and task instructions: identify interacting Good-information pressure, evil-player proficiency and positioning, alternative plausible worlds, legitimate Recluse/Spy ambiguity, cross-Drunk information consequences, bluffs/red-herring opportunity cost, conditional future intentions. Optimize for a fair, interesting, solvable game, never automatic Good/Evil victory. Jointly choose one legal package; return **only** strict structured IDs, version/coverage/dependency markers, no public essay or alternatives.
 
@@ -51,7 +67,14 @@ Use the discussed TB 8-seat regression (Chef, Fortune Teller, Ravenkeeper, Butle
 - **3B1 feature branch, not main yet**: a pure SETUP_PRECOMMIT scoped contract contains all legal Drunk hypotheses or only a no-Drunk hypothesis, per-hypothesis discretionary/determined/deferred decisions, source fingerprints and validation. It is **not** a legal-result producer. 3B2 must wire real Host legal results for all branches before enabling a provider call.
 - At audit `main` is `2288d58`, #292–#295 merged, no open PRs, previous Draft references above/below historical. User's Android retest showed recommended information display without crash; root cause remains unproven and final safety acceptance remains 3F.
 
-## Next session exact sequence
+## Next session exact sequence (UPDATED 2026-10-12 — replaces historical sequence below)
+
+1. Check live GitHub and Mini MCP `clocktower` Git state and current docs; verify docs-only principle PR/merge state before source edits.
+2. Design and perform **3B2-EXPERT-PROBE** Luna tests with game-world inputs and no pre-enumerated choices, including the existing eight-player anchor plus diverse Drunk/no-Drunk and dependency/registration cases. Independent legality and whole-game quality scoring; preserve raw results.
+3. Based on measured model competence choose minimal production 3B2 semantic result adapter and bounded rules context. Preserve Host independent validation and 3B1 internals without making candidate enumeration the model's default input.
+4. Continue 3C/3D single background initial request while identities are revealed, 3E global residual replanning and 3F real-phone/CI/R2 acceptance and old code retirement. Manual/offline authority stays intact.
+
+### Historical 2026-10-11 handoff (superseded)
 
 1. Check live GitHub main, both Draft PRs, local branch/HEAD/worktree, CI, AGENTS, roadmap and handoff.
 2. Begin 3A by capturing bounded fatal stack and reproducing the show crash; fix and test only the verified cause.

@@ -2,7 +2,19 @@
 
 > Updated **2026-10-11 Australia/Sydney**. **唯一活动交接。** 进入新会话必须重新查开发机 live state / GitHub main、PR、CI，不能假设下述 commit 仍是最新。当前单一执行路线是 [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)；此文件只记录状态及下一步。旧 PROD-GLOBAL-1D/2B/analysis-first NEXT 作为历史，不得再次触发独立酒鬼模型规划。
 
-## 2026-10-12 PROD-GLOBAL-3P/3B1 current handoff (overrides historical sections below)
+## CURRENT HANDOFF — 2026-10-12 Expert Storyteller principle / next experiment
+
+**Latest product-owner correction is authoritative, overriding older 3B2 candidate-enumeration NEXT below.** Required read: [PROD-GLOBAL-3B2 Expert Storyteller Principle](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md); [main PROD-GLOBAL-3 route](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md); [3P A/B/B2 evidence](PROD_GLOBAL_3P_PROMPT_DESIGN_AND_EXTERNAL_PROJECT_REVIEW_2026-10-12.md); root AGENTS and testing strategy.
+
+- Verified before this docs PR: Oracle `clocktower/main` and GitHub main both `d720a845a113af0889360ed73717cdc9621f8abc`, worktree clean and zero open PRs; **must re-check actual live heads in next conversation**.
+- PR #297 (3B1 conditional precommit Host scope + validators and prompt-study notes) **MERGED**, CI #4103 / R2 #3727 GREEN. 3B1 remains in code for internal Host legality/safety; neither a production Luna request nor complete 3B2/3C/3D.
+- **NEW NEXT: 3B2-EXPERT-PROBE**. Test Luna expert Storyteller using game facts (full shown setup, `hasDrunk`/uncommitted state, accurate player expertise, concise script rules, optional recent-game summaries), **without pre-enumerating all legal candidate outcomes/Drunk branches**. Evaluate legality separately from strategic quality and request completeness; compare with B2 on multiple lawful TB cases, using actual outputs rather than predetermined 'optimal' answer.
+- Expert AI should know and apply rules; it must not routinely disclaim trivial legality or delegate rule understanding to Host. Still, LLM competence is not guaranteed: Host independently validates semantic choices, enforces revision/secrecy/timing and rejects invalid/incomplete choices or requests a bounded **whole-bundle** repair; no silent first-candidate replacement.
+- Keep one joint initial plan (Drunk when present + every applicable discretionary opening choice + bluffs/red herring), concise strategyMemory, then global event-driven residual updates. The existing two separate initial Drunk/postcommit calls **must be retired only after the new product passes validation**.
+- Retain safe offline Manual, AI_ASSISTED and AI_AUTOMATIC policy; recent-game experience anti-repeat is optional with moderate influence, not a blocking history/recovery project. Mini MCP general experiment directory enhancement proceeds independently; do not modify it in Host docs/code.
+- Android recommended-display retry reportedly succeeded; no confirmed exception root fix. Keep bounded final 3F real-device and duplicate/partial publication checks. This docs-only checkpoint changes no runtime code.
+
+## Historical 2026-10-12 PROD-GLOBAL-3P/3B1 handoff (overrides historical sections below)
 
 - GitHub `main` and Oracle Mini MCP `clocktower/main`: `2288d58f4bbc212e1e6d8cdd60f6ced539f32312`, clean/equal at audit; zero open PRs; #292–#295 **all merged**. The old stacked-Draft directions below are superseded.
 - Android real-phone follow-up: AI recommendation display succeeded without earlier app exit. Earlier root cause remains undetermined, so keep E2E and double-publication check in 3F, do not invent a fix.
