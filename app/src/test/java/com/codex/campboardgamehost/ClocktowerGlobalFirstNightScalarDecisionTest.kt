@@ -116,7 +116,7 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
             NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 1))
         val later = requireNotNull(build(empath, phase = ClocktowerPhase.Night))
         assertEquals(setOf("1"), values(later))
-        assertTrue(later.requestIdentity.requestId.contains("night-scalar:NIGHT"))
+        assertTrue(later.requestIdentity.requestId.contains("night-scalar:Night"))
         assertEquals(2, later.sourceSeat)
     }
 
