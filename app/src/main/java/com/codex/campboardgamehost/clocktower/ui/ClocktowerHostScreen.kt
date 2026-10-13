@@ -2907,6 +2907,9 @@ internal fun ClocktowerJudgeScreen(
                     )
                 },
                 onShowPlayerDisplay = { displayStep ->
+                    try {
+                    com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
+                        .revealStage("CLICKED", phase.toStorytellerPhase().name, round)
                     val spyChoice = registrationState.explicitChoice(
                         ClocktowerRegistrationSubject.SPY, currentStep.spyRegistrationKey,
                     )
@@ -2954,6 +2957,8 @@ internal fun ClocktowerJudgeScreen(
                             ),
                             Toast.LENGTH_LONG,
                         ).show()
+                        com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
+                            .revealStage("BLOCKED", phase.toStorytellerPhase().name, round)
                     } else {
                         val ready = plan as? ClocktowerResultRegistrationPlanV1.Ready
                         val actor = displayStep.actor
@@ -2994,9 +2999,16 @@ internal fun ClocktowerJudgeScreen(
                                     (ready == null || (publication != null &&
                                         onPreflightConfirmedRegistrationResult(publication)))
                             },
-                            publishFirstNight = { publishFirstNightInformation(displayStep) },
+                            publishFirstNight = {
+                                publishFirstNightInformation(displayStep).also { published ->
+                                    if (published) com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
+                                        .revealStage("FIRST_NIGHT_RECORDED", phase.toStorytellerPhase().name, round)
+                                }
+                            },
                             recordPrivateInformation = {
                                 recordReliablePrivateInformation(displayStep)
+                                com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
+                                    .revealStage("OBSERVATION_RECORDED", phase.toStorytellerPhase().name, round)
                                 commitVerifiedRegistration()
                             },
                             recordHistory = {
@@ -3013,8 +3025,14 @@ internal fun ClocktowerJudgeScreen(
                                     payload.detail,
                                     payload.playerNames,
                                 )
+                                com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
+                                    .revealStage("HISTORY_RECORDED", phase.toStorytellerPhase().name, round)
                             },
-                            openReveal = { playerDisplayStep = displayStep },
+                            openReveal = {
+                                playerDisplayStep = displayStep
+                                com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
+                                    .revealStage("REVEAL_OPENED", phase.toStorytellerPhase().name, round)
+                            },
                         )
                         // Re-opening an unchanged confirmed result can correct an explicitly
                         // adjudicated witness without publishing a duplicate player observation.
@@ -3022,6 +3040,16 @@ internal fun ClocktowerJudgeScreen(
                         if (handoff.openReveal && !handoff.recordPublication) {
                             commitVerifiedRegistration()
                         }
+                    }
+                    } catch (failure: Exception) {
+                        // A Host write may already have succeeded. Never retry or
+                        // continue the reveal silently after a partial failure.
+                        com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
+                            .revealFailure(failure)
+                        Toast.makeText(context, text(
+                            "展示失败；部分游戏记录可能已经保存。请先查看调试日志，不要重复点击。",
+                            "Reveal failed; some Host records may already be saved. Check debug logs before retrying."
+                        ), Toast.LENGTH_LONG).show()
                     }
                 },
                 canGoPrevious = currentStepIndex > 0,

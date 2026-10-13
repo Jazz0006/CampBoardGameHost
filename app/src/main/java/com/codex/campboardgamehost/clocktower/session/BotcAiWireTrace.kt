@@ -90,6 +90,23 @@ internal object BotcAiWireTrace {
             round.coerceAtLeast(1))
     }
 
+    /** Host-side reveal lifecycle. No player names or observed clue text. */
+    fun revealStage(event: String, phase: String, round: Int) {
+        if (!enabled()) return
+        require(event in setOf("CLICKED", "PREFLIGHT_OK", "FIRST_NIGHT_RECORDED",
+            "OBSERVATION_RECORDED", "HISTORY_RECORDED", "REVEAL_OPENED", "BLOCKED"))
+        Log.v(TAG, "stage=PLAYER_REVEAL event=$event phase=" +
+            phase.takeIf { it in setOf("FIRST_NIGHT", "DAWN", "DAY", "NIGHT") }
+                .orEmpty() + " round=" + round.coerceAtLeast(1))
+    }
+
+    /** Debug-only error location; player-facing text never includes the exception. */
+    fun revealFailure(error: Exception) {
+        if (BuildConfig.DEBUG) {
+            Log.e(TAG, "stage=PLAYER_REVEAL event=FAILED; check Host game history before retry", error)
+        }
+    }
+
     fun hostAdoption(drunkSeat: Int?, recommendedCount: Int) {
         if (!enabled()) return
         Log.v(TAG, "stage=HOST_ADOPTED kind=JOINT_OPENING drunkSeat=" +

@@ -51,6 +51,10 @@ One expert Storyteller plans the whole game across roles and nights from bounded
 - Emit `RESIDUAL` lifecycle stages only at the actual 3E3 Host boundaries, with numeric decision counts, memory version, phase and round; include final `HOST_PUBLISHED` after durable player observation commit. `PRIVATE_ADOPTED` must not be mistaken for publication. Validate `request` JSON, `response` JSON and Host decision traces on the phone instead of manually exporting ZIP.
 - Do not cherry-pick the diverged #305 branch wholesale or revive retired 3E2-only routes. CI/R2 is an independent contract check, **not** a substitute for a real DEBUG phone + actual Luna responses and an Android Studio/ADB multi-night semantic acceptance.
 
+## FIELD-1 real device failure (2026-10-13)
+
+A DEBUG phone reportedly received demon bluff identities, displayed Chef recommended **0** and legal alternative **1**, then unexpectedly quit after choosing Show 0. User confirmed Recluse next to Imp, so **both results are legal**; neither AI 0 nor an alternative 1 should be deleted or hardcoded. The AndroidRuntime FATAL stack is still required before claiming root cause. New generic revelation diagnostics mark click, first-night migration, typed observation, historical recording and reveal open; unexpected Exception gets a DEBUG stack trace and a visible fail-stop warning that partial Host writes may already exist. This is **not a transaction**, rollback or proof of a completed fix. Regression checks that both legal outcomes preserve candidate semantics, first-night publication and uncommitted registration explanations. Once stack is provided, fix the earliest failing boundary as a general invariant, not as a Chef/Recluse exception.
+
 ## Still required for actual 3E3 completion
 
 1. Expand authoritative complete multi-night/current-phase legal-domain coverage beyond current first-night pair, any-night typed number/boolean/role-result and active Mayor redirect, without guessing actions; prove same-causal-segment completeness and support independent downstream choices when dependencies allow.
