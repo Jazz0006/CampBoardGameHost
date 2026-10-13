@@ -231,6 +231,9 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
             "A personal OpenAI API key is required."
         }
         val wire = buildRequest(hostPayload, model)
+        // Debug-only opt-in: records request/answer bytes, NEVER Authorization.
+        val traceCall = BotcAiWireTrace.begin(hostPayload, wire)
+        val traceStart = System.nanoTime()
         onStage("CONNECTING")
         val connection = URL(ENDPOINT).openConnection() as HttpsURLConnection
         connection.apply {
@@ -246,6 +249,7 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
             connection.outputStream.use { it.write(wire.toByteArray(Charsets.UTF_8)) }
             onStage("AWAITING_MODEL")
             val status = connection.responseCode
+            BotcAiWireTrace.event(traceCall, "HTTP", "code=$status")
             onStage("HTTP_RESPONSE")
             if (status != 200) {
                 throw IllegalStateException("OpenAI HTTP $status (credential, model, quota or network).")
@@ -263,7 +267,17 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
                 }
             }
             onStage("PARSING_RESPONSE")
-            return adaptResponse(hostPayload, raw.toString("UTF-8"))
+            val upstream = raw.toString("UTF-8")
+            BotcAiWireTrace.payload(traceCall, "RAW_PROVIDER_RESPONSE", upstream)
+            val adapted = adaptResponse(hostPayload, upstream)
+            BotcAiWireTrace.payload(traceCall, "PARSED_MODEL_OUTPUT", adapted)
+            val elapsed = (System.nanoTime() - traceStart) / 1_000_000
+            BotcAiWireTrace.event(traceCall, "DONE", "elapsedMs=$elapsed")
+            return adapted
+        } catch (error: Throwable) {
+            // Upstream exception text must NOT reach Logcat without review.
+            BotcAiWireTrace.event(traceCall, "FAILURE", "transport_or_response")
+            throw error
         } finally {
             connection.disconnect()
         }

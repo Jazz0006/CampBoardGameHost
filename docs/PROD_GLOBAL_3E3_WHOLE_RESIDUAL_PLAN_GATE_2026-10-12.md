@@ -1,7 +1,7 @@
 # PROD-GLOBAL-3E3 — Coupled current residual scope and whole-package gate
 
 > 2026-10-12, first implementation checkpoint (not end-to-end production acceptance).
-> Based on #306 (which is stacked on #304). #305 ADB diagnostics is a PARALLEL child of #304 and is not accidentally incorporated into #306 / 3E3.
+> Based on #306 (which is stacked on #304). #305 ADB diagnostics remains a PARALLEL Draft child of #304; its selected logging capability was intentionally transplanted to #307 on 2026-10-13, without merging branch histories.
 
 ## Product invariant
 
@@ -44,6 +44,12 @@ One expert Storyteller plans the whole game across roles and nights from bounded
 - Added a single common cache-key builder for App and UI, including operation mode. Switching Assisted ↔ Automatic invalidates previous cached approval even if all Host revisions remain equal. Adopted packages are stamped with their mode so a previously operator-adopted assisted package cannot silently acquire automatic authority. Tests check this and invalidation on Host candidate or chronology changes.
 - Initial joint opening suggestions/one-shot IDs are confined to **first night**. Later-night wakeups must rely on fresh Host decision results and an appropriate whole-game replan; an unchanged role/seat or similar numeric value does not authorize replaying the opening's observation.
 - Real `GLOBAL_V1` Host test covers a player-received first-night private observation being excluded from reopening while the same role's second-night legal information becomes newly available. Phone/ADB multi-night acceptance is still pending.
+
+## Selective AI-DIAG-1 instrumentation integration (2026-10-13)
+
+- Port the independently-green #305 `BotcAiWireTrace`, pure UTF-8/secret-redaction codec and DEBUG-only ADB toggle into #307, plus the current real personal-direct transport and V2 opening/continuation boundary (no API-key or header logs). Existing ZIP recorder untouched.
+- Emit `RESIDUAL` lifecycle stages only at the actual 3E3 Host boundaries, with numeric decision counts, memory version, phase and round; include final `HOST_PUBLISHED` after durable player observation commit. `PRIVATE_ADOPTED` must not be mistaken for publication. Validate `request` JSON, `response` JSON and Host decision traces on the phone instead of manually exporting ZIP.
+- Do not cherry-pick the diverged #305 branch wholesale or revive retired 3E2-only routes. CI/R2 is an independent contract check, **not** a substitute for a real DEBUG phone + actual Luna responses and an Android Studio/ADB multi-night semantic acceptance.
 
 ## Still required for actual 3E3 completion
 

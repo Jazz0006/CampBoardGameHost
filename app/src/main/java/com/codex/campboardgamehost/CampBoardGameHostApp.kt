@@ -88,6 +88,7 @@ import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotRequestV1
 import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotScopeV1
 import com.codex.campboardgamehost.clocktower.session.FirstNightOneShotPlanV1
 import com.codex.campboardgamehost.clocktower.session.InitialJointOpeningDirectV2
+import com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
 import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicChangeCheckpointV2
 import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2
 import com.codex.campboardgamehost.clocktower.session.StorytellerResidualPackageGateV2
@@ -985,6 +986,11 @@ internal fun CampBoardGameHostApp() {
                 publishClocktowerSessionView()
                 invalidateA4RevisionScope()
                 a4ObservationDurabilityGate.markPending(committed.recordId)
+                if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
+                    BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
+                        strategicPolicyCursor?.version ?: 0,
+                        draft.phase.name, draft.round)
+                }
             }
         }
     }
@@ -1001,6 +1007,11 @@ internal fun CampBoardGameHostApp() {
         publishClocktowerSessionView()
         invalidateA4RevisionScope()
         a4ObservationDurabilityGate.markPending(committed.recordId)
+        if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
+            BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
+                strategicPolicyCursor?.version ?: 0,
+                confirmed.draft.phase.name, confirmed.draft.round)
+        }
     }
 
     /**
@@ -2011,6 +2022,8 @@ internal fun CampBoardGameHostApp() {
             residualProposedKey = null
             liveAiAdviceError = "Current Host legal decisions changed; regenerate the whole plan."
             DebugFlightRecorder.record("RESIDUAL_WHOLE_ADOPTION_STALE")
+            BotcAiWireTrace.residualGate("STALE", proposal.choices.size,
+                strategicPolicyCursor?.version ?: 0, position.phase.name, position.round)
             return
         }
         // Adopting is a private preselection for still-open steps, not a
@@ -2019,6 +2032,8 @@ internal fun CampBoardGameHostApp() {
         residualAdoptedOperationMode = storytellerOperationMode
         DebugFlightRecorder.record("RESIDUAL_WHOLE_ADOPTED", mapOf(
             "choiceCount" to proposal.choices.size.toString()))
+        BotcAiWireTrace.residualGate("PRIVATE_ADOPTED", proposal.choices.size,
+            strategicPolicyCursor?.version ?: 0, position.phase.name, position.round)
     }
 
     fun requestLiveGlobalAdvice(steps: List<ClocktowerNightStepUi>, stepIndex: Int) {
@@ -2177,6 +2192,8 @@ internal fun CampBoardGameHostApp() {
                 DebugFlightRecorder.record("RESIDUAL_MODEL_SKIP", mapOf(
                     "readiness" to review.readiness.name,
                     "barrier" to (remainingScope.barrierReason ?: "NONE")))
+                BotcAiWireTrace.residualGate("SKIPPED", legalOpen.size,
+                    wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                 // Initial adopted joint opening already covers the unchanged state.
                 liveAiAdviceText = if (review.readiness ==
                     StorytellerStrategicChangeCheckpointV2.Readiness.NO_MATERIAL_CHANGE
@@ -2191,6 +2208,8 @@ internal fun CampBoardGameHostApp() {
                 "openDecisions" to legalOpen.size.toString(),
                 "barrier" to (remainingScope.barrierReason ?: "NONE"),
                 "memoryVersion" to wholeCursor.version.toString()))
+            BotcAiWireTrace.residualGate("REQUEST", legalOpen.size,
+                wholeCursor.version, phasePosition.phase.name, phasePosition.round)
             drunkAiScope.launch {
                 // Coalesce rapid related Host updates before paying for a new
                 // whole-game request. A newer state/key cancels this pending call.
@@ -2235,6 +2254,8 @@ internal fun CampBoardGameHostApp() {
                             residualAdoptedPackage = null
                             residualAdoptedOperationMode = null
                             DebugFlightRecorder.record("RESIDUAL_AUTO_UNPRESENTABLE")
+                            BotcAiWireTrace.residualGate("AUTO_PAUSED", verified.choices.size,
+                                wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                             return@acceptedResidual
                         }
                         residualProposedPackage = verified
@@ -2252,11 +2273,15 @@ internal fun CampBoardGameHostApp() {
                                 residualAdoptedOperationMode = null
                                 liveAiAdviceError = "Automatic plan became stale; manual takeover required."
                                 DebugFlightRecorder.record("RESIDUAL_AUTO_PAUSED")
+                                BotcAiWireTrace.residualGate("AUTO_PAUSED", verified.choices.size,
+                                    wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                                 return@acceptedResidual
                             }
                         }
                         strategicPolicyCursor = advanced
                         strategicLastReviewedHost = currentHost
+                        BotcAiWireTrace.residualGate("MEMORY_ADVANCED", verified.choices.size,
+                            advanced.version, phasePosition.phase.name, phasePosition.round)
                         liveAiAdviceText = buildString {
                             append("本次整局续规划：")
                             append(verified.choices.size)
@@ -2291,11 +2316,15 @@ internal fun CampBoardGameHostApp() {
                         liveAiAdviceError =
                             "Whole residual proposal is stale or illegal; continue manually."
                         DebugFlightRecorder.record("RESIDUAL_WHOLE_REJECTED")
+                        BotcAiWireTrace.residualGate("HOST_REJECTED", legalOpen.size,
+                            wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                     }
                 }.onFailure { error ->
                     liveAiAdviceError = "Whole-game continuation unavailable (" +
                         PersonalDirectOpenAiV1.safeFailure(error) + "). Continue manually."
                     DebugFlightRecorder.record("RESIDUAL_WHOLE_UNAVAILABLE")
+                    BotcAiWireTrace.residualGate("MODEL_UNAVAILABLE", legalOpen.size,
+                        wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                 }
             }
             return
@@ -2672,6 +2701,7 @@ internal fun CampBoardGameHostApp() {
         firstNightOneShotAccepted = true  // Suppress the *second* initial LLM call.
         firstNightOneShotPlan = null
         firstNightAdoptedChoices = emptyMap() // V2 semantics are NOT the V1 opaque IDs.
+        BotcAiWireTrace.hostAdoption(selectedDrunk, adoptedJointInformation.size)
         screen = Screen.ClocktowerJudge
     }
 
