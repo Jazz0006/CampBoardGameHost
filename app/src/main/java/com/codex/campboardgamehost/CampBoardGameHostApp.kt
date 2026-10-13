@@ -2558,12 +2558,9 @@ internal fun CampBoardGameHostApp() {
                 committedSetup = committedSetup.committedSetup,
                 characterRegistry = characterRegistry,
             )
-        // The V2 precommit plan is already a full-board proposal.
-        // NEVER pay for a second mandatory initial setup analysis after binding Drunk.
-        if (!jointOpeningApplied && !(storytellerOperationMode == StorytellerOperationMode.AI_ASSISTED &&
-                personalDirectEnabled)) {
-            committedAiSnapshot?.let(::requestCommittedGlobalAdvice)
-        }
+        // The accepted V2 plan already covers the whole opening. Never invoke
+        // the retired post-Drunk initial analysis from setup commit. A manual
+        // takeover stays manual; future material Host changes use 3E3 instead.
         currentTroubleBrewingFirstNightPairDecisionContext()?.let { request ->
             troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
                 request = request,
@@ -2829,6 +2826,13 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun startTroubleBrewingGame() {
+        // Both AI modes must enter the one-request shown-role-first joint path.
+        // A legacy Gateway configuration must NOT fall through into the paid
+        // Drunk-only request followed by a second global analysis.
+        if (storytellerOperationMode != StorytellerOperationMode.MANUAL &&
+            (!personalDirectEnabled || !personalDirectLoaded || aiToken.isBlank() ||
+                aiDirectModel.isNullOrBlank())
+        ) return
         firstNightOneShotRequestSerial += 1
         firstNightOneShotBusy = false
         firstNightOneShotPlan = null
@@ -2969,7 +2973,8 @@ internal fun CampBoardGameHostApp() {
                 )
                 pendingTroubleBrewingDrunkSelection = pending
                 screen = Screen.ClocktowerDrunkSelection
-                requestGlobalDrunkAdvice(pending)
+                // Only the manual operator reaches this local picker. AI paid
+                // Drunk-only planning was replaced by the joint-opening request.
             }
         }
     }

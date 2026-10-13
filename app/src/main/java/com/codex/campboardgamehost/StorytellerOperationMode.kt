@@ -33,8 +33,12 @@ internal fun storytellerNewGameConfigurationReady(
     gatewayToken: String,
 ): Boolean = when {
     mode == StorytellerOperationMode.MANUAL -> true
-    directEnabled -> directLoaded && directModel.isNotBlank() && directKey.isNotBlank()
-    else -> gatewayLoaded && gatewayEndpoint.startsWith("https://") && gatewayToken.isNotBlank()
+    // AI-assisted and AI-automatic share the ONE joint opening protocol.
+    // The historical gateway cannot carry that protocol and previously
+    // triggered paid Drunk-only + post-commit analysis calls instead.
+    // Fail at game setup rather than silently starting the retired flow.
+    !directEnabled -> false
+    else -> directLoaded && directModel.isNotBlank() && directKey.isNotBlank()
 }
 
 /**

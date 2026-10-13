@@ -40,7 +40,7 @@ class StorytellerNewGameConfigurationTest {
     }
 
     @Test
-    fun `assisted and automatic modes require the chosen transport to be ready`() {
+    fun `both AI modes require joint opening direct transport and never select retired Gateway flow`() {
         for (mode in listOf(StorytellerOperationMode.AI_ASSISTED, StorytellerOperationMode.AI_AUTOMATIC)) {
             assertFalse(ready(mode))
             assertFalse(ready(mode, directEnabled = true, directLoaded = false, directKey = "key"))
@@ -50,7 +50,11 @@ class StorytellerNewGameConfigurationTest {
             assertFalse(ready(mode, gatewayLoaded = false, gatewayEndpoint = "https://host.test", gatewayToken = "token"))
             assertFalse(ready(mode, gatewayLoaded = true, gatewayEndpoint = "http://host.test", gatewayToken = "token"))
             assertFalse(ready(mode, gatewayLoaded = true, gatewayEndpoint = "https://host.test"))
-            assertTrue(ready(mode, gatewayLoaded = true, gatewayEndpoint = "https://host.test", gatewayToken = "token"))
+            // Even a healthy legacy gateway is NOT a joint-opening provider.
+            assertFalse(ready(mode, gatewayLoaded = true, gatewayEndpoint = "https://host.test", gatewayToken = "token"))
+            assertTrue(ready(mode, directEnabled = true, directLoaded = true,
+                directKey = "key", gatewayLoaded = true,
+                gatewayEndpoint = "https://host.test", gatewayToken = "token"))
         }
     }
 
