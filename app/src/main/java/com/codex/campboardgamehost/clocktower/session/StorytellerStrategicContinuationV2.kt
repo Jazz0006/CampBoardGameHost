@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevision
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -200,7 +201,7 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
                             .put("actualRoleId", player.actualRole.value)
                             .put("shownRoleId", (player.shownRole ?: player.actualRole).value)
                             .put("alive", player.alive).put("poisoned", player.poisoned)
-                            .put("experience", context?.experienceLevel?.name ?: "UNKNOWN")
+                            .put("experience", (context ?: StorytellerPlayerContextInputV1.DEFAULT).experienceLevel.name)
                             .put("claimedRoleIds", JSONArray(context?.claimedRoleIds?.map { it.value }
                                 ?: emptyList<String>())))
                     }

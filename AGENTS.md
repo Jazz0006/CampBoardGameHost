@@ -163,6 +163,8 @@ The repository uses **risk-based test-first development**, not “a new RED test
 
 The objective is to protect stable behavior, regressions, invariants, and architectural boundaries with the cheapest reliable evidence. A production change does **not** automatically require a newly created failing test.
 
+**Small default/configuration/enum adjustments:** first inspect the full producer/consumer fan-out, directly edit the authoritative defaults, and update only existing tests whose assertions intentionally depended on the old default. Do **not** add one test per field/phase/adapter or run ceremonial RED for a simple default change. Add a fresh test only when an uncovered, durable cross-component contract or demonstrated regression risk warrants its ongoing maintenance. Independent CI/compile and existing regression suites are still required at the normal checkpoint. Measure test value, not test count.
+
 Before choosing tests, first classify both the **change type** and the **ownership boundary**. Test strategy follows architecture; it must not be chosen independently of it.
 
 Use this implementation pre-flight:

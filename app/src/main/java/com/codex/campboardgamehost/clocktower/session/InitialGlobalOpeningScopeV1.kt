@@ -238,7 +238,7 @@ internal class InitialGlobalOpeningScopeV1 private constructor(
             return InitialGlobalOpeningScopeV1(
                 snapshot, hasDrunk, hypotheses.sortedBy { it.drunkSeat ?: 0 },
                 legalDemonBluffs?.sorted(), (1..seats.size).associateWith { seat ->
-                    playerExperience[seat] ?: OpeningPlayerExperienceV1.UNKNOWN
+                    playerExperience[seat] ?: OpeningPlayerExperienceV1.BEGINNER
                 }, gameStateRevision, playerInputRevision, sha256(rosterKey),
             )
         }

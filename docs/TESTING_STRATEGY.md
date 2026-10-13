@@ -23,6 +23,8 @@ The repository uses **risk-based test-first development**:
 - tests should protect behavior, regression risk, or stable architecture boundaries rather than temporary local implementation shape;
 - source-string tests are exceptional evidence and follow the stricter policy in `AGENTS.md`.
 
+For a small default-value, enum selection, or settings-flag change with existing contract coverage, do not mechanically demand a freshly failing test. Audit the impacted producers/consumers, adjust any stale existing expectations, review the exact diff and use the normal independent CI. A new test is justified by previously uncovered durable behavior, not by the number of edited branches or call sites.
+
 Before adding a test, prefer the highest-value stable seam that remains fast enough for the intended feedback loop. A test should ideally survive substantial internal refactoring while the protected behavior remains correct.
 
 ## 2. Measured baseline

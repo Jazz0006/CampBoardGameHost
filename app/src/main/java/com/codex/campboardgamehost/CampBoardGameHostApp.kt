@@ -27,6 +27,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,6 +42,9 @@ import kotlinx.coroutines.delay
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
+import com.codex.campboardgamehost.clocktower.session.OpeningPlayerExperienceV1
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
@@ -554,6 +558,26 @@ internal fun CampBoardGameHostApp() {
     var newCommonPlayerName by remember { mutableStateOf("") }
     val commonPlayers = remember {
         mutableStateListOf<String>().apply { addAll(appPreferencesStore.loadCommonPlayers()) }
+    }
+    // A persistent player profile keyed by the current unique player name.
+    // Moving a person to a different seat must never change their experience.
+    val playerExperienceByName = remember {
+        mutableStateMapOf<String, PlayerExperienceLevelV1>().apply {
+            putAll(appPreferencesStore.loadPlayerExperienceByName())
+        }
+    }
+    fun playerExperience(name: String): PlayerExperienceLevelV1 =
+        playerExperienceByName[name] ?: PlayerExperienceLevelV1.BEGINNER
+    fun openingExperience(name: String): OpeningPlayerExperienceV1 = when (playerExperience(name)) {
+        PlayerExperienceLevelV1.BEGINNER -> OpeningPlayerExperienceV1.BEGINNER
+        PlayerExperienceLevelV1.NORMAL -> OpeningPlayerExperienceV1.REGULAR
+        PlayerExperienceLevelV1.EXPERT -> OpeningPlayerExperienceV1.VETERAN
+    }
+    fun setPlayerExperience(name: String, level: PlayerExperienceLevelV1) {
+        require(name.isNotBlank())
+        if (level == PlayerExperienceLevelV1.BEGINNER) playerExperienceByName.remove(name)
+        else playerExperienceByName[name] = level
+        appPreferencesStore.savePlayerExperienceByName(playerExperienceByName)
     }
     val playerNames = remember { mutableStateListOf<String>() }
     var hostSeatingSetupFlow by remember { mutableStateOf(HostSeatingSetupFlow()) }
@@ -1632,6 +1656,11 @@ internal fun CampBoardGameHostApp() {
                 gameSeed = gameSeed,
                 initialState = initialGameState,
                 semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+                initialPlayerContextBySeat = cards.mapIndexedNotNull { index, card ->
+                    val level = playerExperience(card.name)
+                    if (level == PlayerExperienceLevelV1.BEGINNER) null
+                    else (index + 1) to StorytellerPlayerContextInputV1(experienceLevel = level)
+                }.toMap(),
             )
             publishClocktowerSessionView()
             if (clocktowerScript == ClocktowerScript.TroubleBrewing) {
@@ -2900,6 +2929,9 @@ internal fun CampBoardGameHostApp() {
             val domain = HostOpeningRulesDomainV2.fromHostSnapshot(
                 snapshot, characterRegistry,
                 clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
+                playerExperience = playerNames.mapIndexed { index, name ->
+                    (index + 1) to openingExperience(name)
+                }.toMap(),
             )
             val visibleCards = preparedSetup.intermediateSetup.shownSeatAssignments.map { assignment ->
                 val role = requireNotNull(completeTroubleBrewingRoles.singleOrNull { available ->
@@ -3306,6 +3338,8 @@ internal fun CampBoardGameHostApp() {
                     Screen.Setup -> SeatingFirstSetupScreen(
                     savedGamePreview = savedGamePreview,
                     commonPlayers = commonPlayers,
+                    playerExperienceByName = playerExperienceByName,
+                    onPlayerExperienceChange = ::setPlayerExperience,
                     playerNames = playerNames,
                     onAddCurrentPlayer = ::addCurrentPlayer,
                     onRemoveCurrentPlayer = ::removeCurrentPlayer,
@@ -3521,6 +3555,8 @@ internal fun CampBoardGameHostApp() {
                     Screen.Settings -> SettingsScreen(
                         languageMode = languageMode,
                         commonPlayers = commonPlayers,
+                        playerExperienceByName = playerExperienceByName,
+                        onPlayerExperienceChange = ::setPlayerExperience,
                         newCommonPlayerName = newCommonPlayerName,
                         onLanguageModeChange = { nextMode ->
                             languageMode = nextMode
@@ -5315,6 +5351,8 @@ internal fun CampBoardGameHostApp() {
                             SettingsContent(
                                 languageMode = languageMode,
                                 commonPlayers = commonPlayers,
+                                playerExperienceByName = playerExperienceByName,
+                                onPlayerExperienceChange = ::setPlayerExperience,
                                 newCommonPlayerName = newCommonPlayerName,
                                 onLanguageModeChange = { nextMode ->
                                     languageMode = nextMode

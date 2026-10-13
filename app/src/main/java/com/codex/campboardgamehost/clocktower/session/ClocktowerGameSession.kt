@@ -529,6 +529,7 @@ internal class ClocktowerGameSession private constructor(
             gameSeed: Long,
             initialState: GameState,
             semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
+            initialPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1> = emptyMap(),
         ): ClocktowerGameSession = ClocktowerGameSession(
             initialState = ClocktowerSessionState(
                 gameId = gameId,
@@ -537,6 +538,10 @@ internal class ClocktowerGameSession private constructor(
                 gameSeed = gameSeed,
                 gameState = initialState,
                 semanticHistoryMode = semanticHistoryMode,
+                // Immutable initial seat snapshot of persistent player profiles.
+                // Later night requests reuse this Host state, not mutable app settings.
+                storytellerPlayerContextBySeat = initialPlayerContextBySeat
+                    .filterValues { !it.isDefault },
             ),
             defaultRulesetRef = null,
         )

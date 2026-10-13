@@ -181,7 +181,7 @@ class StorytellerProviderRequestFactoryV1Test {
         )
 
         assertEquals(snapshot.grimoireSeats.map { it.seat }, context.players.map { it.seat })
-        assertEquals(PlayerExperienceLevelV1.NORMAL, context.players[0].experienceLevel)
+        assertEquals(PlayerExperienceLevelV1.BEGINNER, context.players[0].experienceLevel)
         assertEquals(PlayerExperienceLevelV1.BEGINNER, context.players[1].experienceLevel)
         assertEquals(listOf(RoleId("Saint")), context.players[1].claimedRoleIds)
         assertEquals(StorytellerDeclaredPressureLevelV1.HIGH, context.players[1].pressureLevel)

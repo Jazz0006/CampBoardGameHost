@@ -99,7 +99,7 @@ class InitialGlobalOpeningScopeV1Test {
         assertEquals("SETUP_PRECOMMIT", payload.getString("stage"))
         assertEquals("UNCOMMITTED", payload.getJSONArray("seats")
             .getJSONObject(0).getString("actualRoleId"))
-        assertEquals("UNKNOWN", payload.getJSONArray("seats")
+        assertEquals("BEGINNER", payload.getJSONArray("seats")
             .getJSONObject(0).getString("experience"))
         assertEquals("BEGINNER", payload.getJSONArray("seats")
             .getJSONObject(3).getString("experience"))
