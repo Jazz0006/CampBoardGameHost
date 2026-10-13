@@ -26,7 +26,7 @@ internal object BotcAiTrace {
     private val safeCategories = setOf(
         "TLS certificate", "DNS", "timeout", "network connection",
         "JSON response shape", "incomplete model response", "missing structured output",
-        "strategy contract validation", "response or configuration validation",
+        "Host/model contract validation", "response or configuration validation",
     )
     private fun write(message: String) {
         if (BuildConfig.DEBUG) Log.i(TAG, message)

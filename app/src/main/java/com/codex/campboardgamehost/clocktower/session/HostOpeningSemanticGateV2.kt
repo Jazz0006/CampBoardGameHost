@@ -116,7 +116,9 @@ internal data class HostOpeningStrategicIntentionV2(
     val risk: String,
 ) {
     init {
-        require(listOf(trigger, approach, risk).all { it.isNotBlank() && it.length <= 300 })
+        require(listOf(trigger, approach, risk).all { it.isNotBlank() && it.length <= 300 }) {
+            "Opening strategic intention exceeded its bounded text contract."
+        }
     }
 }
 
@@ -126,8 +128,12 @@ internal data class HostOpeningStrategyMemoryV2(
     val uncertainties: List<String>,
 ) {
     init {
-        require(tensions.size <= 3 && intentions.size <= 3 && uncertainties.size <= 3)
-        require((tensions + uncertainties).all { it.isNotBlank() && it.length <= 300 })
+        require(tensions.size <= 3 && intentions.size <= 3 && uncertainties.size <= 3) {
+            "Opening strategy memory exceeded three entries per section."
+        }
+        require((tensions + uncertainties).all { it.isNotBlank() && it.length <= 300 }) {
+            "Opening strategy memory contains blank or oversized text."
+        }
     }
 }
 
@@ -184,18 +190,22 @@ internal object HostOpeningSemanticGateV2 {
         val shown = requireNotNull(projection.scope.snapshot.grimoireSeats
             .singleOrNull { it.seat == value.sourceSeat })
         val seenRole = (shown.shownRoleId as? SnapshotField.Known<*>)?.value
-        require(value.abilityRoleId == seenRole && value.abilityRoleId in projection.knownRoleIds)
+        require(value.abilityRoleId == seenRole && value.abilityRoleId in projection.knownRoleIds) {
+            "Opening information source role disagrees with Host shown roster."
+        }
         require(value.subjectSeats.all { seat ->
             projection.scope.snapshot.grimoireSeats.any { it.seat == seat }
-        })
-        require(value.roleId == null || value.roleId in projection.knownRoleIds)
+        }) { "Opening information includes a non-existent subject seat." }
+        require(value.roleId == null || value.roleId in projection.knownRoleIds) {
+            "Opening observation contains an unknown role ID."
+        }
         require(if (value.sourceSeat == projection.drunkSeat) {
             value.effectiveAbilityRoleId == null && value.basis in
                 setOf("DRUNK_MISINFORMATION", "STATUS_DEPENDENT")
         } else {
             value.effectiveAbilityRoleId == value.abilityRoleId &&
                 value.basis != "DRUNK_MISINFORMATION"
-        })
+        }) { "Opening effective ability or Drunk status disagrees with Host branch." }
         return value
     }
 
@@ -239,7 +249,9 @@ internal object HostOpeningSemanticGateV2 {
             intentions = strategicIntentions,
             uncertainties = strategy.getJSONArray("uncertainties").strings(),
         )
-        require(raw.getString("tradeoffSummary").length <= 1200)
+        require(raw.getString("tradeoffSummary").length <= 1200) {
+            "Opening tradeoff summary exceeded its bounded text contract."
+        }
 
         val plan = raw.getJSONObject("openingPlan")
         plan.exact("drunkSeat", "redHerringSeat", "demonBluffRoleIds",
@@ -273,7 +285,11 @@ internal object HostOpeningSemanticGateV2 {
             val id = item.getString("decisionId")
             require(usedDecisionIds.add(id)) { "Duplicate semantic decision ID." }
             require(id !in picked && id !in pending)
-            val value = parseValue(item, projection)
+            val value = try {
+                parseValue(item, projection)
+            } catch (error: IllegalArgumentException) {
+                throw IllegalArgumentException("Opening information $id: ${error.message}", error)
+            }
             val waiting = item.getJSONArray("waitingForEvents").strings()
             require(waiting.size == waiting.distinct().size)
             if (value.sourceSeat == projection.drunkSeat &&
@@ -288,7 +304,7 @@ internal object HostOpeningSemanticGateV2 {
                     }
                     val matches = candidates.entries.filter { it.value == value }
                         .map { it.key }.toSortedSet()
-                    require(matches.isNotEmpty()) { "No authoritative Host semantic match." }
+                    require(matches.isNotEmpty()) { "No authoritative Host semantic match for $id." }
                     // Deterministic representative for existing V1 selection validation ONLY.
                     // Do not publish it as a unique registration witness.
                     picked[id] = matches.first()

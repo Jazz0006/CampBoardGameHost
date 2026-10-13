@@ -109,7 +109,17 @@ internal object InitialJointOpeningDirectV2 {
 当前全部玩家展示身份已经确定，但酒鬼（若有）尚未绑定。酒鬼必须与首夜其他信息、红鲱鱼和恶魔掩饰身份
 在同一次请求中共同选择；不得要求 Host 先推荐酒鬼后再调用模型。
 完整复制 requestIdentity 与 asOfRevision。每条首夜 information / deferredActions 必须使用
-decisionInventory 中的 decisionId；不可编造未发生的玩家行动或已公布的线索。
+conditionalDecisionContracts 里所选酒鬼分支的 decisionId、resolution、basis、waitingForEvents 及 actorSeat；
+不可编造未发生的玩家行动或已公布的线索。该清单只是 Host 结构约束，不表示逐角色独立规划。
+先联合评估整局，再填唯一完整结果；不得混用不同酒鬼假设的数据。
+选择一个分支后，information 必须逐项完整覆盖该分支的全部 information；deferredActions 必须
+逐项完整复制该分支的 deferredActions。HOST_DETERMINED 必须使用 NONE 观察类型，
+DEFERRED 也不允许预先填入未发生的结果；只有 DECISION 才输出当前具体观察值。
+FIXED_NEIGHBORS 的 subject.seats 必须为空（Host 自行定位邻居）；
+EVIDENCE_PAIR 的 subject.seats 才填两名目标；NONE / PLAYER_QUERY_PENDING 不填目标。
+observation 中没有使用的 number / roleId / boolean 必须为 null。
+strategyMemory 的 tensions、intentions、uncertainties 各最多 3 项；每条字符串以及
+trigger / approach / risk 均非空、不超过 300 字；tradeoffSummary 最多 1200 字。
 真实且唯一由规则决定的结果使用 HOST_DETERMINED / RULE_DETERMINED / NONE，由 Host 计算。
 现在可以选择的合法信息使用 DECISION，填具体可见观察值；显示为酒鬼的能力要明确失效。
 图书管理员的「没有外来者」为 ZERO_OUTSIDERS，不能写成 NONE。
@@ -171,6 +181,70 @@ intentions 用 trigger / approach / risk 表述重要的跨夜信息连续性目
             }
         }
         val pendingEvents = eventMap.values.toSet().sorted()
+        // Share only conditional structural requirements, not witness IDs,
+        // candidate menus or a Cartesian product of complete opening plans.
+        // The Host resolution status depends on the proposed Drunk branch.
+        val conditionalContracts = JSONArray().also { branches ->
+            domain.projections.forEach { (drunkSeat, projection) ->
+                val discretionary = projection.branch.discretionary.associateBy { it.decisionId }
+                val determined = projection.branch.determined.associateBy { it.decisionId }
+                val deferred = projection.branch.deferred.associateBy { it.decisionId }
+                val information = JSONArray()
+                for (i in 0 until info.length()) {
+                    val source = info.getJSONObject(i)
+                    val id = source.getString("decisionId")
+                    val sourceSeat = source.getInt("sourceSeat")
+                    val shownRole = source.getString("shownRoleId")
+                    val choice = discretionary[id]
+                    val fixed = determined[id]
+                    val waiting = deferred[id]
+                    require(listOfNotNull(choice, fixed, waiting).size == 1) {
+                        "Host conditional information inventory is not complete."
+                    }
+                    val resolution = when {
+                        choice != null -> "DECISION"
+                        fixed != null -> "HOST_DETERMINED"
+                        else -> "DEFERRED"
+                    }
+                    val basis = when (resolution) {
+                        "DEFERRED" -> "STATUS_DEPENDENT"
+                        "HOST_DETERMINED" -> "RULE_DETERMINED"
+                        else -> if (sourceSeat == drunkSeat) "DRUNK_MISINFORMATION"
+                                else "FUNCTIONING"
+                    }
+                    val publicShapes = projection.candidatesByDecision[id]?.values.orEmpty()
+                    val modes = if (choice != null) publicShapes.map { it.subjectMode }
+                        .distinct().sorted() else listOf("NONE")
+                    val kinds = if (choice != null) publicShapes.map { it.observationKind }
+                        .distinct().sorted() else listOf("NONE")
+                    require(modes.isNotEmpty() && kinds.isNotEmpty())
+                    information.put(JSONObject()
+                        .put("decisionId", id)
+                        .put("sourceSeat", sourceSeat)
+                        .put("abilityRoleId", shownRole)
+                        .put("effectiveAbilityRoleId",
+                            if (sourceSeat == drunkSeat) JSONObject.NULL else shownRole)
+                        .put("resolution", resolution)
+                        .put("basis", basis)
+                        .put("subjectModes", JSONArray(modes))
+                        .put("observationKinds", JSONArray(kinds))
+                        .put("waitingForEvents", JSONArray(waiting?.waitingForEvents.orEmpty())))
+                }
+                val actions = JSONArray().also { out ->
+                    projection.deferredActions.toSortedMap().forEach { (id, action) ->
+                        out.put(JSONObject().put("decisionId", id)
+                            .put("event", action.first)
+                            .put("actorSeat", action.second ?: JSONObject.NULL))
+                    }
+                }
+                branches.put(JSONObject()
+                    .put("drunkSeat", drunkSeat ?: JSONObject.NULL)
+                    .put("redHerringAllowedSeats", JSONArray(
+                        projection.redHerringCandidatesBySeat.keys.sorted()))
+                    .put("information", information)
+                    .put("deferredActions", actions))
+            }
+        }
         return JSONObject()
             .put("schemaId", REQUEST_SCHEMA)
             .put("schemaVersion", 2)
@@ -201,6 +275,9 @@ intentions 用 trigger / approach / risk 表述重要的跨夜信息连续性目
                         arr.put(JSONObject().put("decisionId", id).put("event", event))
                     }
                 }))
+            .put("conditionalDecisionContracts", conditionalContracts)
+            .put("legalDemonBluffRoleIds",
+                scope.legalDemonBluffs?.let(::JSONArray) ?: JSONObject.NULL)
             .put("state", JSONObject()
                 .put("asOfRevision", scope.gameStateRevision)
                 .put("phase", "SETUP_PRECOMMIT")

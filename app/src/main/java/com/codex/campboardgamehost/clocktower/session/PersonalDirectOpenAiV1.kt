@@ -213,7 +213,7 @@ cross-seat issue to a conditional future implication. Do not invent facts or hid
                     "incomplete model response"
                 error.message?.contains("structured text", ignoreCase = true) == true ->
                     "missing structured output"
-                error is IllegalArgumentException -> "strategy contract validation"
+                error is IllegalArgumentException -> "Host/model contract validation"
                 else -> "response or configuration validation"
             }
         }
