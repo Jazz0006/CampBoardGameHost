@@ -94,10 +94,12 @@ internal fun shouldAutoAdvanceRedHerring(
     isRedHerringStep: Boolean,
     isRealAction: Boolean,
     hasSelectedRedHerring: Boolean,
+    acceptedJointOpening: Boolean = false,
 ): Boolean = allowRuleDeterminedAutoUi &&
     isRedHerringStep &&
-    // Never auto-advance a genuine choice merely because the UI has some selection.
-    !isRealAction
+    // A real choice is skippable only when the Host already accepted and applied
+    // the single joint opening; an arbitrary manual/legacy selection is not enough.
+    (!isRealAction || (acceptedJointOpening && hasSelectedRedHerring))
 
 internal fun automaticRedHerringSelectionAtBarrier(
     allowRuleDeterminedAutoUi: Boolean,

@@ -2230,8 +2230,20 @@ internal fun CampBoardGameHostApp() {
                     "当前没有可联合更新的合法未执行决定；后续行动发生后再评估。"
                 return
             }
-            // A single model call covers EVERY currently Host-open decision in
-            // this causal segment. The next player interaction remains unknown.
+            // Host owns any already-determined result across ALL information
+            // roles/nights. A different candidate ID or registration witness
+            // does not create an AI decision when the public result is identical.
+            if (!StorytellerStrategicChangeCheckpointV2.pendingNeedsJudgment(legalOpen)) {
+                DebugFlightRecorder.record("RESIDUAL_MODEL_SKIP", mapOf(
+                    "readiness" to "HOST_DETERMINED",
+                    "openDecisions" to legalOpen.size.toString()))
+                BotcAiWireTrace.residualGate("HOST_DETERMINED", legalOpen.size,
+                    wholeCursor.version, phasePosition.phase.name, phasePosition.round)
+                liveAiAdviceText = "当前未公布的信息结果由 Host 规则确定；无需调用 AI，沿用已有整局战略。"
+                return
+            }
+            // A single model call covers EVERY genuinely open discretionary
+            // decision in this causal segment. Later player action is unknown.
             liveAiAdviceBusy = true
             DebugFlightRecorder.record("RESIDUAL_WHOLE_REQUEST", mapOf(
                 "openDecisions" to legalOpen.size.toString(),
@@ -2390,6 +2402,20 @@ internal fun CampBoardGameHostApp() {
             }.onFailure {
                 DebugFlightRecorder.record("STRATEGIC_HOST_CHECKPOINT_REJECTED")
             }
+        }
+        // Generic fallback: do not pay to select an already-determined Host
+        // information outcome, regardless of role, night, or duplicate witness IDs.
+        if ((providerRequest.decisionContext is
+                com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.ScalarInformation ||
+                providerRequest.decisionContext is
+                com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.FirstNightPairInformation) &&
+            !StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(
+                providerRequest.legalCandidates)
+        ) {
+            liveAiAdviceText = "当前信息结果由 Host 规则确定；无需调用 AI。"
+            DebugFlightRecorder.record("RESIDUAL_MODEL_SKIP", mapOf(
+                "readiness" to "HOST_DETERMINED"))
+            return
         }
         val prior = committedAiStrategy
         liveAiAdviceBusy = true
@@ -3880,8 +3906,14 @@ internal fun CampBoardGameHostApp() {
                             clocktowerRavenkeeperTarget = it
                         },
                         onSelectRedHerring = {
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerRedHerring = it
+                            // An accepted joint choice belongs to Host in AI auto.
+                            // Assisted hosting may override the private preselection.
+                            if (storytellerOperationMode != StorytellerOperationMode.AI_AUTOMATIC ||
+                                !jointOpeningApplied
+                            ) {
+                                advanceClocktowerPlayerInputRevision()
+                                clocktowerRedHerring = it
+                            }
                         },
                         onCommitDemonBluffs = { roleNames ->
                             if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {

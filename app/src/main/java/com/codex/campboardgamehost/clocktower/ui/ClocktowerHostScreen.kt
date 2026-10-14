@@ -2745,6 +2745,8 @@ internal fun ClocktowerJudgeScreen(
             currentStep.action,
             currentStep.isRealAction,
             redHerring,
+            jointOpeningAdopted,
+            globalAiAutomatic,
         ) {
             if (
                 shouldAutoAdvanceRedHerring(
@@ -2752,6 +2754,7 @@ internal fun ClocktowerJudgeScreen(
                     isRedHerringStep = currentStep.action == ClocktowerNightAction.RedHerring,
                     isRealAction = currentStep.isRealAction,
                     hasSelectedRedHerring = redHerring != null,
+                    acceptedJointOpening = jointOpeningAdopted && globalAiAutomatic,
                 )
             ) {
                 advanceNightStep()

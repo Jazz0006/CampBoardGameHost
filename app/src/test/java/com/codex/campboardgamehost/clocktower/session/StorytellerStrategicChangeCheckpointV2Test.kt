@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
@@ -37,6 +38,35 @@ import org.junit.Test
 
 /** All actions use the SAME generic transition gate. No role-specific planner. */
 class StorytellerStrategicChangeCheckpointV2Test {
+    @Test fun modelCostGateUsesActualPublicResultsAcrossInformationTypes() {
+        fun scalar(id: String, value: String) = StorytellerProviderCandidateV1(
+            id, StorytellerProviderCandidatePayloadV1.ScalarResult(value))
+        val sameNumber = listOf(scalar("witness-a", "1"), scalar("witness-b", "1"))
+        assertFalse(StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(sameNumber))
+        assertFalse(StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(
+            listOf(scalar("role-one", "washerwoman"))))
+        assertTrue(StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(
+            listOf(scalar("no", "false"), scalar("yes", "true"))))
+        assertTrue(StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(
+            listOf(scalar("role-one", "washerwoman"), scalar("role-two", "imp"))))
+        fun pair(id: String) = StorytellerProviderCandidateV1(id,
+            StorytellerProviderCandidatePayloadV1.PairInformation(
+                "imp", listOf(5, 7), SemanticTruth.TRUE, emptyList()))
+        assertFalse(StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(
+            listOf(pair("witness-a"), pair("witness-b"))))
+        val determined = StorytellerStrategicContinuationV2.OpenDecision(
+            "det", 1, "NIGHT_INFORMATION", sameNumber)
+        val discretionary = StorytellerStrategicContinuationV2.OpenDecision(
+            "disc", 2, "NIGHT_INFORMATION",
+            listOf(scalar("no", "false"), scalar("yes", "true")))
+        assertFalse(StorytellerStrategicChangeCheckpointV2.pendingNeedsJudgment(listOf(determined)))
+        assertTrue(StorytellerStrategicChangeCheckpointV2.pendingNeedsJudgment(
+            listOf(determined, discretionary)))
+        assertTrue(StorytellerStrategicChangeCheckpointV2.pendingNeedsJudgment(listOf(
+            StorytellerStrategicContinuationV2.OpenDecision(
+                "mayor", 3, "STORYTELLER_DISCRETION", sameNumber))))
+    }
+
     private val position = StorytellerStrategicChangeCheckpointV2.Position(
         StorytellerPhase.FIRST_NIGHT, 1)
     private val memory = HostOpeningStrategyMemoryV2(
