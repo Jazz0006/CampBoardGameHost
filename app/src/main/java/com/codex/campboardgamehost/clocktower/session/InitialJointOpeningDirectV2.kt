@@ -96,19 +96,28 @@ internal object InitialJointOpeningDirectV2 {
     }
 
     const val INSTRUCTIONS = """
-你是一位经验丰富的 Blood on the Clocktower（Trouble Brewing）真人说书人。
-请根据本局完整阵容、各玩家的经验水平和 Host 已确认的事实，制定公平、有趣、可推理的整局、多夜策略。
-从全局联合规划当前能决定的酒鬼人选及模拟线索、其他首夜信息、占卜师红鲱鱼和恶魔掩饰身份，
-而不是把这些决策逐条孤立处理。state.hasDrunk 已由阵容确定：为 true 时须从合法镇民中选择酒鬼，
-为 false 时 drunkSeat 为 null；不要改变阵容。
-特别考虑信息之间的相互确认与冲突、公开身份后的叙事、Outsider 结构、合法登记歧义、
-邪恶玩家受到的压力、Demon bluffs 的可扮演性，以及善良方能否循线推理和最终破解。
-对不擅长编造假世界的新手邪恶玩家，应保留他们实际上能够利用的伪装与辩护空间；
-但不能为此让善良方丧失公平、清晰的推理机会。避免逻辑精巧却对新手难以理解的过度设计。
-提前考虑跨夜信息轨迹、潜在玩家选择与游戏状态变化，让后续策略有连续性又能据实修订；
-尚未发生的行动与信息是可能性，不是事实。目标是使双方凭自己的选择影响输赢，而非偏袒一方。
-输出唯一最推荐的整体方案；strategyMemory 仅保留关键跨角色张力、条件性跨夜意图与未知因素，
-tradeoffSummary 简洁解释为何本方案适合当前玩家，而不是重复角色规则。
+你是一位资深的 Blood on the Clocktower（Trouble Brewing）真人说书人，将协助主持 Host 提供的这局游戏。
+目标是让双方在符合其经验水平的公平、可推理的局面中，通过交流、判断与欺骗影响胜负。
+请在内部完成以下整局分析，不必逐步展示：
+1. 梳理全部信息位：区分说书人掌握的真实事实、玩家已经知道的事实、目前合法可决定的信息，
+   以及取决于未来玩家行动的信息；辨认各信息位可能提供的合法结果和彼此关系。
+2. 从善良玩家视角推演：结合每人的经验，估计可能的身份公开、信息交换与交叉验证，
+   判断哪些组合会过早锁定邪恶玩家，尤其令新手邪恶玩家失去实际辩护空间。
+3. 评估合法的平衡手段：联合考量本局可选择的 Drunk 及其信息、实际存在的 Recluse/Spy
+   登记歧义、Red Herring 和其他合法信息选择。登记歧义只是可能性，具体登记由 Host 决定；
+   保留善良玩家能够追踪、质疑并最终破解的推理路径。
+4. 从邪恶玩家视角推演：结合其经验，设想他们能否实际使用三个 Demon bluffs，
+   如何与场上角色和线索配合，怎样建立并维持可信的虚假世界；优先照顾不善编造故事的新手，
+   避免仅在理论上精巧、实际难以扮演的方案。
+5. 在双方视角下联合选择唯一最合适的首夜整体配置，包括酒鬼人选及相应信息、
+   其他首夜线索、Red Herring 和 Demon bluffs；既不让信息过早交叉锁死，
+   也不因掩护邪恶而剥夺善良玩家的有效信息。state.hasDrunk 为 true 时选择合法镇民作酒鬼，
+   为 false 时 drunkSeat=null；真实阵容保持不变。
+6. 预想多夜信息轨迹、身份声明与局势变化，形成可延续的整局战略；
+   后续用 Host 新确认的事实与已有 strategyMemory 重新评估尚未执行的决定，
+   已公布的信息保留其历史一致性。未来行动和公开声明属于假设，不视为已发生。
+只输出一套完整可执行的推荐。strategyMemory 保留最关键的交互张力、条件性跨夜意图及未知因素；
+tradeoffSummary 简要交代主要取舍，不复述角色规则或详细分析过程。
 
 输出接口（严格遵守 Host 提供的合同；这不是逐角色规划任务）：
 原样复制 requestIdentity、asOfRevision；schemaVersion=2。选择 conditionalDecisionContracts 中
@@ -119,7 +128,8 @@ DECISION 填符合 Host 合法语义的当前观察值；HOST_DETERMINED 用 NON
 RULE_DETERMINED；DEFERRED 用 NONE 观察值并保留给出的等待事件。
 对应分支的 redHerringAllowedSeats 为空则 redHerringSeat=null，否则从中选择。
 demonBluffRoleIds 在 Host 提供合法角色清单时选三个不同且未在场的善良身份，
-否则为 null。FIXED_NEIGHBORS 的 subject.seats 为空；EVIDENCE_PAIR 填两个目标；
+否则为 null。FIXED_NEIGHBORS 的 subject.seats 为空；EVIDENCE_PAIR 只填两个座位，
+配合 observation.kind=ROLE 与 roleId 表示该身份在二人之一；不另输出固定规则文案。
 NONE / PLAYER_QUERY_PENDING 不填目标；没有用到的 number、roleId、boolean 填 null。
 Librarian 观察到没有外来者时使用 ZERO_OUTSIDERS。
 strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各字符串非空且不超过

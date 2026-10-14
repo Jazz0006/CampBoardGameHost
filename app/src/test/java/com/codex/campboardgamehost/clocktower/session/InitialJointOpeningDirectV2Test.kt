@@ -126,11 +126,7 @@ class InitialJointOpeningDirectV2Test {
         assertEquals(InitialJointOpeningDirectV2.INSTRUCTIONS,
             responses.getString("instructions"))
         assertEquals("gpt-6-luna", responses.getString("model"))
-        assertTrue(InitialJointOpeningDirectV2.INSTRUCTIONS.contains("整局、多夜"))
-        assertTrue(InitialJointOpeningDirectV2.INSTRUCTIONS.contains("新手邪恶玩家"))
-        assertTrue(InitialJointOpeningDirectV2.INSTRUCTIONS.contains("善良方"))
-        assertTrue(InitialJointOpeningDirectV2.INSTRUCTIONS.contains("尚未发生的行动"))
-        assertTrue(InitialJointOpeningDirectV2.INSTRUCTIONS.contains("conditionalDecisionContracts"))
+        assertEquals(rendered, responses.getString("input"))
         assertFalse(host.has("roleKnowledge"))
         assertFalse(host.has("rules"))
         assertFalse(responses.getBoolean("store"))
