@@ -101,7 +101,7 @@ class PersonalDirectOpenAiV1Test {
             request.getJSONObject("text").getJSONObject("format").getString("name"))
         assertFalse(request.getBoolean("store"))
         assertTrue(request.getString("instructions").contains("酒鬼"))
-        assertTrue(request.getString("instructions").contains("同一次请求"))
+        assertEquals(host.toString(), request.getString("input"))
         val schema = request.getJSONObject("text").getJSONObject("format")
             .getJSONObject("schema")
         assertEquals(6, schema.getJSONArray("required").length())
