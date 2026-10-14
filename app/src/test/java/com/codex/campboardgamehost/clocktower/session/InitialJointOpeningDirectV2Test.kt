@@ -122,18 +122,17 @@ class InitialJointOpeningDirectV2Test {
         assertFalse(rendered.contains("conditionalLegalScope"))
         assertFalse(rendered.contains("candidateId"))
         val responses = JSONObject(PersonalDirectOpenAiV1.buildRequest(
-            rendered, "gpt-5.6-luna"))
+            rendered, PersonalDirectOpenAiV1.DEFAULT_MODEL))
         assertEquals(InitialJointOpeningDirectV2.INSTRUCTIONS,
             responses.getString("instructions"))
-        assertTrue("Strategy must look across nights rather than first-night only",
-            InitialJointOpeningDirectV2.INSTRUCTIONS.contains("整局、多夜"))
-        assertTrue("Strategy must generalize beyond special Drunk roles",
-            InitialJointOpeningDirectV2.INSTRUCTIONS.contains("适用于所有角色和角色组合"))
-        assertTrue("Future information cannot be precommitted as fabricated fact",
-            InitialJointOpeningDirectV2.INSTRUCTIONS.contains("不能虚构将来的目标"))
-        assertTrue("Prior intentions must be revisable rather than fixed",
-            InitialJointOpeningDirectV2.INSTRUCTIONS.contains("KEEP / REVISE / RETIRE"))
-        assertTrue(host.getJSONArray("rules").toString().contains("across nights"))
+        assertEquals("gpt-6-luna", responses.getString("model"))
+        assertTrue(InitialJointOpeningDirectV2.INSTRUCTIONS.contains("整局、多夜"))
+        assertTrue(InitialJointOpeningDirectV2.INSTRUCTIONS.contains("新手邪恶玩家"))
+        assertTrue(InitialJointOpeningDirectV2.INSTRUCTIONS.contains("善良方"))
+        assertTrue(InitialJointOpeningDirectV2.INSTRUCTIONS.contains("尚未发生的行动"))
+        assertTrue(InitialJointOpeningDirectV2.INSTRUCTIONS.contains("conditionalDecisionContracts"))
+        assertFalse(host.has("roleKnowledge"))
+        assertFalse(host.has("rules"))
         assertFalse(responses.getBoolean("store"))
         assertTrue(responses.getJSONObject("text").getJSONObject("format")
             .getBoolean("strict"))

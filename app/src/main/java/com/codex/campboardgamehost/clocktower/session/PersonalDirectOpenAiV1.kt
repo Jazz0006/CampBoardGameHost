@@ -13,7 +13,7 @@ import javax.net.ssl.HttpsURLConnection
  */
 internal object PersonalDirectOpenAiV1 {
     const val ENDPOINT = "https://api.openai.com/v1/responses"
-    const val DEFAULT_MODEL = "gpt-5.6-luna"
+    const val DEFAULT_MODEL = "gpt-6-luna"
     private const val MAX_RESPONSE_BYTES = 256_000
     private val modelPattern = Regex("[a-zA-Z0-9][a-zA-Z0-9._-]{2,79}")
 
