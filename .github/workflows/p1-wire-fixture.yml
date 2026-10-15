@@ -47,6 +47,9 @@ jobs:
           cat "$fixture"
           echo
           echo "BOTC_15_APP_WIRE_END"
+      - name: Kotlin Host semantic acceptance of actual P15 Luna Standard output
+        run: |
+          ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.p15StoredRealLunaModelOutputPassesKotlinHostGate' --no-daemon --build-cache
       - name: Verify actual P1 opening through Kotlin Host semantic acceptance
         run: |
           ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.p1StoredSyntheticOpeningMustPassActualHostSemanticGate' --no-daemon --build-cache
