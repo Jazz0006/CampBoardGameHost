@@ -1,5 +1,7 @@
 # CampBoardGameHost Testing Strategy
 
+> **Current policy (2026-10-15): Evidence-first, not mandatory test-first.** RED/GREEN is an optional technique chosen when it adds value; existing safeguards, CI tiers, exact-head merge acceptance, rules, security and persistence contracts are unchanged. See root `AGENTS.md`.
+
 > Role: **LONG-LIVED TEST EXECUTION / VALIDATION STRATEGY**
 > Baseline: S1.1/S1.2 measured at `d52f53b4a1821cc000368c393721d1d5a073aafc`
 > Date: 2026-08-30
@@ -15,9 +17,9 @@ The suite is also not append-only. A low-value test may be deliberately retired 
 
 ### 1.1 Evidence-driven test design
 
-The repository uses **risk-based test-first development**:
+The repository uses **risk-based, evidence-first development**:
 
-- new or changed stable behavior, bug fixes, and uncovered invariants normally require a meaningful RED before production implementation;
+- new or changed behavior and bug fixes require convincing acceptance evidence, but do not automatically require a new test or failing RED before production implementation;
 - existing tests count as test-first evidence when they already protect the intended behavior;
 - behavior-preserving refactors, file/function movement, mechanical edits, visibility adjustments, and intermediate wiring steps do not require a newly invented RED solely because source code changes;
 - tests should protect behavior, regression risk, or stable architecture boundaries rather than temporary local implementation shape;
@@ -68,7 +70,7 @@ The figures above are historical. On 2026-09-27 at `1299fba4`, FAST executed 1,5
 
 The smallest directly relevant validation for the change under development. T0 may be an exact test method/class/small class set, or for a behavior-preserving mechanical/refactor change an existing characterization/contract test plus the necessary compile/static check.
 
-For a genuine uncovered behavior change, T0 is the normal RED/GREEN feedback loop. **T0 does not imply that every production edit requires a newly created test or a manufactured RED.**
+For an uncovered deterministic contract, T0 may use RED/GREEN if it improves feedback. UI/device, controlled API, logs, compile/static or other independent evidence may be more appropriate. T0 never implies mandatory new tests or manufactured RED.
 
 ### T1 — FAST
 
@@ -191,20 +193,21 @@ The mapping is semantic rather than a giant fragile file-path list.
 
 ## 8. Developer workflow
 
-### 8.1 New/changed stable behavior or bug fix
+### 8.1 New/changed stable behavior or bug fix — evidence first
 
 ```text
-define observable behavior / invariant
--> confirm a real coverage gap
--> RED: T0 confirms the missing behavior or reproduces the defect
--> GREEN: production change + T0 focused tests pass
+define observable acceptance and the owning contract
+-> classify risk and examine existing evidence
+-> choose a reliable proof (existing tests / focused new tests / Android device + ADB / controlled API / compile + diff)
+-> implement and verify with the selected proof
+-> write/maintain durable regression tests for uncovered high-value repeatable invariants
 -> ordinary PR iteration: T1 FAST + any selected semantic/external gate
 -> logical checkpoint: T1 + T2 affected validation
 -> T4 acceptance checkpoint: [full-ci] -> full selected gates
 -> merge/main: full gate
 ```
 
-A separate RED checkpoint is valuable when it proves a real missing behavior. It is not a goal by itself.
+RED/GREEN may be chosen for deterministic defects, legality, security, identity or concurrency contracts when early executable failure evidence is useful. Neither a new RED nor a new test file is a prerequisite for a change. For UI, human interaction and AI strategy quality, favor real device, observable workflows, explicit Host verdicts and controlled API experiments. All existing independent release/merge gates still apply.
 
 ### 8.2 Behavior-preserving refactor / mechanical / intermediate implementation step
 
