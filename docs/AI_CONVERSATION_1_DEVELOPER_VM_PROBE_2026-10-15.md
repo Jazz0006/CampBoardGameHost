@@ -60,3 +60,11 @@ strategic memory, not a made-up persisted reasoning feature.
 
 This script tests Responses **transport feasibility**, not Android interoperability
 or Kotlin Host semantic validation. The real app stays unchanged pending P1 results.
+
+## 2026-10-15 execution gate finding (no billable requests made)
+
+- Kotlin synthetic eight-seat opening **really serialized** by production `InitialJointOpeningDirectV2.encode` + `PersonalDirectOpenAiV1.buildRequest`: isolated GitHub Actions fixture job #38666521668 completed GREEN. Its output is synthetic, not user gameplay, and was not checked into the repository.
+- The existing Mini MCP `app-responses` paid experiment validator rejects the essential `store:true` modification with `APP Responses wire envelope is not approved` **before any network request**. Therefore the old `store:false` APP-parity runner cannot verify `previous_response_id` or persisted reasoning.
+- Do **not** spend authorized calls on the old independent `store:false` route merely to make a request count. A safe P1 runner must take the locally generated exact Kotlin request as a private artifact; enforce the explicit model/call-count/budget scope; allow `store:true` only for a scoped trial; preserve exact strict JSON Schema and instructions; and support conditional `previous_response_id` chaining only after successful Host acceptance. No blind retries.
+- Private `/home/opc/private-botc-p1` contains no source captures yet. CI-exposed synthetic wire cannot be treated as a private developer-VM capture merely because it exists in GitHub logs. Any new artifact handoff must be permission-scoped and avoid copying credentials or raw game payloads into Git history.
+- **Paid usage recorded for this attempt: 0 of approved maximum 3 calls; $0 incurred by P1 API experiment.** No `response.id` anchor, model support verdict, Host semantic verdict or latency/token comparison exists yet. #308 stays Draft. 
