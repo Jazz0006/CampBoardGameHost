@@ -2,7 +2,7 @@
 
 > 状态：**进行中；清理优先，AI-EVENT-JIT 暂停**。本文件记录已经由调用链审计证明的事实与本次实际改动，不等于整局历史完整性已经通过验收。
 >
-> 开发分支：`cleanup/arch-cleanup-1-20261015`；[Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 叠加在 #308（后者在 #307 → #306 → #304 之上）。**不得直接合并到当前 main**。主线 #309 的 evidence-first `AGENTS.md`/`TESTING_STRATEGY.md` 已同步。#310–#314 已经逐一审阅并全部关闭且**未合并**（过时的模型候选 ID、虚假的空历史增量和过滤提名/投票，以及审计文档迁移）。1E 实验分支仍待核对，以上均不视为生产契约。
+> 开发分支：`cleanup/arch-cleanup-1-20261015`；**[唯一开放的整合候选 Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 已直接改以 live `main` 为 base，GitHub mergeable/clean**，但尚未合并或完成真机端验收。原 P1 #304→#306→#307→#308 的全部 HEAD 均是 #315 的 Git 祖先，四个 PR 已关闭未合并，远端分支保留以供追溯；#310–#314 已先前逐一关闭未合并。#309 evidence-first 的关键规范在清理分支同步，后续所有源码与文档以 #315 为单一审阅入口。1E 是不直接合并的独立实验分支。
 
 ## 1. 目标和保留边界
 
@@ -71,13 +71,27 @@
 
 ## 3. 审计结论：尚未清理的生产调用链
 
-P1 PR 依赖核对：#304（首轮联合推荐/Host 验证）、#306（变更检查点）、#307（人工/自动采纳与旧 V1 移除、仍活跃的 whole-`remainingChoices`）、#308（已采纳响应作为 Responses continuation anchor）都有现存真实生产调用。故先保证这条联合作业功能健全，不能直接把 #315 merge into main，不能按文件名删除整个 P1；旧 whole-`remainingChoices` 只能在未来新语义合同完成替换之后退休，而不是被误判为无调用死代码。
+原 P1 #304/#306/#307/#308（联合开局、Host 审核、会话续接和暂存 whole-`remainingChoices`）仍有真实运行时使用者；现已按 Git 祖先关系全部纳入统一的 Draft #315，**候选可以面向 `main` 审阅，但合并必须等待完整验收**。旧 `remainingChoices` 不能误作无调用死代码，只能由后续已通过验收的语义结果合同替换。
 
 逐个审计了 `toClocktowerGameState()` 的全部生产调用：Session 创建前、Recovery 重建、夜晚/破晓裁决、首夜信息请求及 Day table 的 UI 卡牌输入都是实际消费者；**现阶段没有证据确保 Session 中的 GameState 比实时传入的 PlayerCard 更新**。因此绝不通过机械地替换为 `session.state.gameState` 来减少调用，而冒险引用旧角色或存活状态。Day table 同一轮渲染中 6 处重复卡牌转换可考虑在同一作用域内只计算一次，但不得跨 Compose 输入变化缓存。整个系统要真正单状态，需要先界定 UI 临时编辑与 Session 确认事实的写入边界。
 
 Recovery 与 Game Archive 具有不同合同：前者供继续游戏，后者供复盘，两者已经复用 `AppGameStateJsonCodec` 的低层卡牌/事件/结果映射。**不应把不同用途的归档结构硬合并**。
 
 部分名字含 `sde`、`candidate`、`scoring`、`shadow` 的模块可能仅供历史实验，也可能提供仍活跃的规则候选/手动展示或因果重放。应先做 **生产消费者闭包** 审计，再成组删除，不能按文件名批量删除。
+
+
+## 3.1 PR 依赖正式收敛（2026-10-15）
+
+本轮确认原 P1 四个 Draft 的 HEAD 严格在 #315 祖先链内：#304 `df058ee5`、#306 `d0e704c9`、#307 `df0f701d`、#308 `486f2734`。GitHub 对 #315 改 base 为 `main` 后给出 `mergeable: true` 与 `merge state: clean`，**没有发生 main 合并**；#304/#306/#307/#308 都关闭为未合并，保留分支与审计证据。开放 PR 仅 #315。
+
+统一候选中的真实 P1 功能不能混作本次删除的死代码：同次联合酒鬼/信息/红鲱鱼/掩饰规划、Host 确认、会话 `store:true` / 采纳后 `previous_response_id` 续接都仍运行。现有后续 `remainingChoices` 虽不符合未来事件式单项合同，但**仍有生产调用**，只有后续新版语义输出替换且在真机验收后才能退休。
+
+**统一候选进入 main 的验收条件**：
+
+- 证明精确最后代码 HEAD 的 Android 构建/单测、Host 合法性、规则验证、R2 和跨项目 TBGS/Recovery 相关合同无失败。第七批代码 HEAD `f4c9468643e7` 的 GitHub CI #4194（Android 与 Real Clingo SUCCESS，ASP SKIPPED）和 R2 #3810 已通过；之后仅变更文档须分别记录 Android 被跳过的事实。
+- 校验合并前 PR 的 base/head、diff、未解决审阅和 conflict；尤其检查 `main` 后续是否变化。不能将旧 stacked PR 全关闭等同于运行时验收。
+- **真机未完成**：8 人 TB setup 手动无 AI 路径；AI_ASSISTED 联合酒鬼/红鲱鱼/掩饰一键采纳；AI_AUTOMATIC 仅在 Host 合法后私有预采纳；Chef 点击信息后不退出（FIELD-1）、首夜战略 schema 合法（FIELD-2）、首夜/次夜至少一个真实事件与人工覆盖、因果记录、恢复流程。实机请求须用户单独批准真实付费 API 预算；不在清理过程中擅自收费。
+- 真机验证前仍是 Draft，不宣称全自动说书人已经达成，也不启动 P2 新功能。即使完成源码结构收口，任何无法通过 CI 覆盖的实机风险继续独立列出。
 
 ## 4. 未收口 / 待验证
 
