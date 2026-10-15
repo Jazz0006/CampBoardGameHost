@@ -92,6 +92,45 @@ internal object HostCurrentSingleDecisionJitV2 {
             else -> null
         }
 
+    /**
+     * A cached UNPUBLISHED choice survives exclusively routine actions only
+     * when the Host can prove no other change. This never promotes an old
+     * provider response ID, stale proposal or unaccepted strategy memory.
+     *
+     * Revisions, candidate domain, visible meaning, GameState, player context,
+     * decision archive, memory and phase must be unchanged. Additionally the
+     * action/observation suffix must account for EVERY consumed global slot.
+     * If any condition is uncertain, require new strategic review.
+     */
+    private fun onlyProvenRoutineHistoryChanged(previous: Scope, current: Scope): Boolean {
+        if (previous.phase != current.phase || previous.round != current.round ||
+            previous.decision != current.decision ||
+            previous.memoryVersion != current.memoryVersion) return false
+        val old = previous.frozen
+        val now = current.frozen
+        if (old.gameId != now.gameId || old.gameSeed != now.gameSeed ||
+            old.gameStateRevision != now.gameStateRevision ||
+            old.playerInputRevision != now.playerInputRevision ||
+            old.gameState != now.gameState ||
+            old.decisionHistory != now.decisionHistory ||
+            old.storytellerPlayerContextBySeat != now.storytellerPlayerContextBySeat ||
+            old.crossGameHistory != now.crossGameHistory ||
+            now.nextTimelineGlobalSequence <= old.nextTimelineGlobalSequence) return false
+
+        val delta = runCatching { HostCausalEventDeltaV2.since(old, now) }.getOrNull()
+            ?: return false
+        if (!delta.noDetectedSnapshotFallback || delta.newlyLoggedFacts.isEmpty() ||
+            delta.newlyAppendedDecisions.isNotEmpty() ||
+            delta.newlyAppendedCorrections.isNotEmpty()) return false
+        // Do not silently ignore allocated but unrecorded global cursor positions.
+        if (delta.newlyLoggedFacts.size.toLong() !=
+            now.nextTimelineGlobalSequence - old.nextTimelineGlobalSequence) return false
+        if (delta.newlyLoggedFacts.withIndex().any { (index, item) ->
+                item.point.globalSequence != old.nextTimelineGlobalSequence + index
+            }) return false
+        return HostAiDecisionRelevantFactsV2.project(delta).isEmpty()
+    }
+
     fun route(current: Scope, cache: PrivateCache?): Route {
         if (current.decision.family == "NIGHT_INFORMATION") {
             val meanings = current.decision.legalCandidates.map {
@@ -101,11 +140,12 @@ internal object HostCurrentSingleDecisionJitV2 {
                 return Route.HostDetermined(requireNotNull(meanings.first()))
             }
         }
-        // Conservative first slice: any Host fact, input, candidate meaning,
-        // cursor, position or strategy-version change invalidates private cache.
-        // Later unrelated-event retention needs a proved dependency certificate.
-        if (cache != null && cache.scope == current &&
-            current.decision.legalCandidates.any { it.candidateId == cache.candidateId }) {
+        // Exact replay or PROVEN routine, unrelated Host history only.
+        // This does not bypass the fresh legal-candidate/meaning check.
+        if (cache != null &&
+            current.decision.legalCandidates.any { it.candidateId == cache.candidateId } &&
+            (cache.scope == current ||
+                onlyProvenRoutineHistoryChanged(cache.scope, current))) {
             return Route.CacheHit(cache.candidateId)
         }
         return Route.ModelRequired
