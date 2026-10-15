@@ -192,6 +192,41 @@ class InitialJointOpeningDirectV2Test {
         }.isFailure)
     }
     /**
+     * P15: exactly the normal Kotlin Host precommit scope and Android V2
+     * buildRequest for the synthetic 15-seat Baron + Drunk scenario.
+     * No mock model response, API key, paid call or production change.
+     */
+    @Test fun exportFifteenSeatOpeningWireWhenOptedIn() {
+        if (System.getenv("BOTC_15_WIRE_EXPORT") != "1") return
+        val shown = listOf(
+            "chef", "fortuneteller", "recluse", "investigator", "poisoner",
+            "monk", "washerwoman", "baron", "butler", "undertaker",
+            "imp", "librarian", "saint", "empath", "scarletwoman",
+        )
+        val domain = build(true, shown)
+        val hostPayload = InitialJointOpeningDirectV2.encode(
+            domain, ruleset.characterRegistry,
+        )
+        val host = JSONObject(hostPayload)
+        assertEquals(15, host.getJSONObject("state").getJSONArray("seats").length())
+        assertEquals(8, host.getJSONArray("conditionalDecisionContracts").length())
+        assertEquals("SETUP_PRECOMMIT",
+            host.getJSONObject("state").getString("phase"))
+        assertEquals(6, host.getJSONObject("decisionInventory")
+            .getJSONArray("information").length())
+        val wire = PersonalDirectOpenAiV1.buildRequest(
+            hostPayload, PersonalDirectOpenAiV1.DEFAULT_MODEL,
+        )
+        val request = JSONObject(wire)
+        assertEquals("gpt-6-luna", request.getString("model"))
+        assertFalse(request.getBoolean("store"))
+        assertFalse(request.has("service_tier"))
+        val output = File("build/p15/opening-app-request.json")
+        output.parentFile.mkdirs()
+        output.writeText(wire, Charsets.UTF_8)
+    }
+
+    /**
      * P1 nonsecret, opt-in fixture. This is an ACTUAL Kotlin V2 encoder +
      * PersonalDirectOpenAiV1.buildRequest output, not a hand-built wire request.
      * The fixture is synthetic and cannot itself certify model Host acceptance.
