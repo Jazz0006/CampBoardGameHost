@@ -260,6 +260,15 @@ class InitialJointOpeningDirectV2Test {
         val continuationHostPayload = StorytellerStrategicContinuationV2.encode(
             session.state, accepted, emptyList(),
         )
+        // Actual second-call Luna output against this exact Kotlin V2 payload,
+        // extracted from the private synthetic P1 receipt (no provider metadata).
+        val continuedPlan = """{"schemaVersion":2,"updatedStrategyMemory":{"tensions":["1号实际是 Drunk；Chef 的 0 是误导信息，不能当作真实邻座邪恶配对数。","5号 Investigator 的 6/7线索包含真实 Baron，但 Recluse 的登记歧义仍不应被忽略。","没有新的行动、声明或观察记录；2号 Fortune Teller 的目标和结果仍未知。"],"intentions":[{"risk":"不要把 Investigator 线索与后续信息过早合并成唯一结论。","trigger":"2号提交 Fortune Teller 目标后","approach":"根据实际目标与红鲱鱼状态处理信息，并保留可交叉验证的解释路径。"},{"risk":"新手邪恶玩家可能难以维持复杂伪造信息。","trigger":"邪恶方选择公开身份或形成故事时","approach":"保留简明 bluffs 作为可用战略假说；根据实际行动和公开信息再评估。"}],"uncertainties":["当前没有因果历史条目或公开声明；未记录的行动、登记和观察仍未知。","Recluse 可能登记为邪恶角色，但没有已确认的具体登记裁定。","尚无 Fortune Teller 目标、后续夜晚或玩家反应记录。"]},"strategicDirection":"保持既有开局战略，不把尚未发生的行动或信息当作事实；等待实际目标、声明和行动记录后再联合评估多种局势。","revisions":[{"reason":"没有新的目标提交或结果记录，原有条件策略仍适用。","priorIndex":0,"verdict":"KEEP"},{"reason":"没有公开声明或邪恶方行动记录，尚无依据改变针对新手玩家的简明伪装策略。","priorIndex":1,"verdict":"KEEP"}],"source":{"gameId":"new-game-before-drunk","gameStateRevision":0,"playerInputRevision":0,"memoryVersion":0,"exclusiveGlobalSequence":0},"affectedOpenDecisionIds":[],"remainingChoices":[]}"""
+        val checked = StorytellerStrategicContinuationV2.decode(
+            continuationHostPayload, continuedPlan,
+        )
+        assertEquals("new-game-before-drunk", checked.gameId)
+        assertEquals(listOf("KEEP", "KEEP"), checked.revisions.map { it.verdict })
+        assertTrue(checked.remainingChoices.isEmpty())
         val outputWire = PersonalDirectOpenAiV1.buildRequest(
             continuationHostPayload, "gpt-6-luna",
         )
