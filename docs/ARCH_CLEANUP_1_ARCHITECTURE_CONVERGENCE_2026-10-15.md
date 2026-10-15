@@ -71,11 +71,11 @@
 
 ### 第八批：旧 SDE 评分 / 特征 / 一致性推荐框架完全退役（2026-10-16）
 
-按照用户最新明确的范围，沿真实 **production entrypoint → SDE module → tests** 依赖闭包审计，确认没有生产调用者使用旧 SDE 分值、NormalizedStrategicDiagnostics、效用、信息锁定/一致性特征或 Shadow 来挑选推荐。由此删除旧 SDE **26 个主源码文件**，包括 `RecommendationDecisionExportV1`、`StorytellerDecisionEngine`、`DecisionFeatures` / `DecisionFeatureEvaluation`、`DrunkAssignmentFeatures`、`NormalizedStrategicDiagnostics`、`HealthyInformationUtilityFeatures`、全部相关历史 feature projector、Drunk/Structured Shadow 适配器和旧候选计划引用；同步删除这些旧链路的独立单元测试以及试验性 SDE-2D5 标准/B4F SILVER 校准。撤销已无类可运行的两个 Gradle 专用任务 `sde2D5Calibration`、`sde2D5FB4FSilverGeneralization`，修订现行 `TESTING_STRATEGY.md`。
+按照用户最新明确的范围，沿真实 **production entrypoint → SDE module → tests** 依赖闭包审计，确认没有生产调用者使用旧 SDE 分值、NormalizedStrategicDiagnostics、效用、信息锁定/一致性特征或 Shadow 来挑选推荐。由此删除旧 SDE **29 个主源码文件**，包括 `RecommendationDecisionExportV1`、`StorytellerDecisionEngine`、`DecisionFeatures` / `DecisionFeatureEvaluation`、`DrunkAssignmentFeatures`、`NormalizedStrategicDiagnostics`、`HealthyInformationUtilityFeatures`、全部相关历史 feature projector、Drunk/Structured Shadow 适配器和旧候选计划引用；同步删除这些旧链路的独立单元测试以及试验性 SDE-2D5 标准/B4F SILVER 校准。撤销已无类可运行的两个 Gradle 专用任务 `sde2D5Calibration`、`sde2D5FB4FSilverGeneralization`，修订现行 `TESTING_STRATEGY.md`。
 
 此外确认旧 providerPayload 不在生产实际请求路径，单独删除并保留真实 Host 内部合法域哈希与校验。
 
-**不删除** 仍被 App 捕捉/Recovery 读写的 `SdeHistoricalReplayInput.kt`、`SdeHistoricalReplayInputJsonCodec.kt`；不删除使用真实设置合法域的 `RedHerringSetupPrecommitAdapter.kt`、`RedHerringCommittedInputBindingAdapter.kt`、其共享时间/输入身份类型 `SdeDecisionCandidate.kt`。这是该 SDE 目录保留的仅有 5 个生产源码。其他 Host 合法域、真实登记见证、Epistemic 世界与因果时序一致性不是旧评分算法，必须保持。这一批须通过后续精确 HEAD Android CI/R2 才算通过验证；不能只因代码搜索归零就宣称编译成功。
+**不删除** 仍被 App 捕捉/Recovery 读写的 `SdeHistoricalReplayInput.kt`、`SdeHistoricalReplayInputJsonCodec.kt`。首轮 CI #4197 揭示了三个只供旧 SDE 实验使用的红鲱鱼类型适配器的残留依赖；进一步审计确认无应用生产调用者，已经一并删除 `RedHerringSetupPrecommitAdapter.kt`、`RedHerringCommittedInputBindingAdapter.kt`、`SdeDecisionCandidate.kt` 及其专属测试。真正的 Host 红鲱鱼合法域仍在 `HostOpeningRulesDomainV2` 等规则入口，不受影响。该 SDE 目录现仅保留 2 个 Recovery 历史重放文件。其他 Host 合法域、真实登记见证、Epistemic 世界与因果时序一致性不是旧评分算法，必须保持。这一批须通过后续精确 HEAD Android CI/R2 才算通过验证；不能只因代码搜索归零就宣称编译成功。
 
 ### 最新产品目标实况（审计，不是完工声明）
 

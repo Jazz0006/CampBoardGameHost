@@ -319,7 +319,7 @@ No regression test may disappear from full validation **accidentally**. Moving a
 
 ARCH-CLEANUP-1 removed the old recommendation/feature/normalized-consistency/utility projectors, SDE Shadow decision adapters, role-specific Drunk whole-bundle evaluators, experiment-only export contracts and their dedicated tests. They no longer define a production policy or mandatory independent validation track. Historical measurement documents are retained as archival evidence, not current test requirements.
 
-**Retained contracts**: Host legality and registration/witness rules, canonical ActionFactTimeline and EpistemicObservationLog, production SdeHistoricalReplayInput/JSON Recovery codec, exact topology/epistemic correctness, and setup timing/input binding adapters. Validate these through their active owning tests, not the retired preference/score projections.
+**Retained contracts**: Host legality and registration/witness rules, canonical ActionFactTimeline and EpistemicObservationLog, production SdeHistoricalReplayInput/JSON Recovery codec, exact topology/epistemic correctness, while the former test-only SDE setup/binding adapters have been retired. Production Host setup and Red Herring legality contracts remain in their own active rules modules. Validate these through their active owning tests, not the retired preference/score projections.
 
 Do not use win/loss as a direct expected value for a Storyteller recommendation test.
 
