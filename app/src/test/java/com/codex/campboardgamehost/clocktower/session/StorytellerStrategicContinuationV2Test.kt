@@ -117,7 +117,7 @@ class StorytellerStrategicContinuationV2Test {
 
     private fun response(host: JSONObject, value: JSONObject = semantic()) =
         JSONObject()
-            .put("schemaVersion", 2)
+            .put("schemaVersion", 3)
             .put("source", JSONObject(host.getJSONObject("source").toString()))
             .put("revisions", JSONArray().also {
                 it.put(JSONObject().put("priorIndex", 0).put("verdict", "REVISE")

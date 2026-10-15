@@ -19,7 +19,7 @@ import org.json.JSONObject
  * It cannot submit an observation, register a witness or commit a game action.
  */
 internal object StorytellerStrategicContinuationV2 {
-    const val REQUEST_SCHEMA = "botc.whole-game-strategy-continuation-v2"
+    const val REQUEST_SCHEMA = "botc.whole-game-strategy-continuation-v3"
 
     internal data class OpenDecision(
         val decisionId: String,
@@ -198,7 +198,7 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         val cutoff = requireNotNull(prefix.exclusiveGlobalSequence)
         return JSONObject()
             .put("schemaId", REQUEST_SCHEMA)
-            .put("schemaVersion", 2)
+            .put("schemaVersion", 3)
             .put("source", JSONObject()
                 .put("gameId", session.gameId)
                 .put("gameStateRevision", session.gameStateRevision)
@@ -328,7 +328,7 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         require(raw.keys().asSequence().toSet() == setOf("schemaVersion", "source",
             "revisions", "affectedOpenDecisionIds", "currentResult",
             "updatedStrategyMemory", "strategicDirection"))
-        require(raw.getInt("schemaVersion") == 2)
+        require(raw.getInt("schemaVersion") == 3)
         val expected = input.getJSONObject("source")
         val observed = raw.getJSONObject("source")
         require(observed.keys().asSequence().toSet() ==

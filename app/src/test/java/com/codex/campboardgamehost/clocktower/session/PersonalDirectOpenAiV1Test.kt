@@ -42,7 +42,7 @@ class PersonalDirectOpenAiV1Test {
         val req = JSONObject(PersonalDirectOpenAiV1.buildRequest(
             host(StorytellerStrategicContinuationV2.REQUEST_SCHEMA).toString(), "gpt-6-luna"))
         val format = req.getJSONObject("text").getJSONObject("format")
-        assertEquals("botc_whole_game_strategic_continuation_v2", format.getString("name"))
+        assertEquals("botc_whole_game_strategic_continuation_v3", format.getString("name"))
         assertTrue(format.getBoolean("strict"))
         assertFalse(req.getBoolean("store"))
     }
