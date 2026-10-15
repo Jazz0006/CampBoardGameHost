@@ -15,26 +15,6 @@ import org.junit.Test
 
 class ClocktowerPlayerDisplayResolutionTest {
     @Test
-    fun `same resolved pair option produces identical player display for manual and recommendation paths`() {
-        val option = pairOption("Chef", 2, 5)
-        val manualResolved = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(listOf(option)))
-            .selectRole("Chef")
-            .selectSeat(2)
-            .selectSeat(5)
-            .resolvedOption
-        val recommendationResolved = clocktowerRecommendationPresentation(listOf(option)).primary
-
-        val baseStep = unresolvedStep(option)
-
-        assertEquals(option, manualResolved)
-        assertEquals(option, recommendationResolved)
-        assertEquals(
-            resolveClocktowerPlayerDisplay(baseStep, requireNotNull(manualResolved)),
-            resolveClocktowerPlayerDisplay(baseStep, requireNotNull(recommendationResolved)),
-        )
-    }
-
-    @Test
     fun `resolved player display copies exact visible payload and strips storyteller choices`() {
         val proposition = InformationProposition.AnyOf(
             listOf(

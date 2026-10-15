@@ -133,17 +133,8 @@ internal fun ClocktowerNightStepCardLocalized(
             step.automaticInformationCandidates.ifEmpty { step.legacyInformationCandidates }
         },
     ).distinctBy(::clocktowerInformationCandidateId)
-    // Display the same legal information domain regardless of whether Host can auto-resolve a singleton.
+    // Display legal alternatives, but never mistake deterministic list order for an AI recommendation.
     val displayedInformationOptions = assistedInformationOptions
-    val recommendationPresentation = clocktowerRecommendationPresentation(displayedInformationOptions)
-    val recommendedOptionIds = recommendationPresentation.recommendations
-        .mapTo(linkedSetOf(), ::optionId)
-    val recommendedNumericValues = recommendationPresentation.recommendations
-        .mapNotNull { option ->
-            (option.proposition as? InformationProposition.NumericResult)?.value
-                ?: option.displayPrimary?.toIntOrNull()
-        }
-        .toSet()
     val pairInformationCandidates = if (
         phase == ClocktowerPhase.FirstNight &&
         presentationRoleEnName in setOf("Washerwoman", "Librarian", "Investigator")
@@ -253,15 +244,19 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         step
     }
-    val effectiveRecommendedOptionIds = if (manualInformationFallback) {
-        setOf("__manual_required__")
-    } else {
-        recommendedOptionIds
+    val effectiveRecommendedOptionIds = when {
+        manualInformationFallback -> setOf("__manual_required__")
+        effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
+            .mapTo(linkedSetOf(), ::optionId)
+        else -> emptySet()
     }
-    val effectiveRecommendedNumericValues = if (manualInformationFallback) {
-        setOf(Int.MIN_VALUE)
-    } else {
-        recommendedNumericValues
+    val effectiveRecommendedNumericValues = when {
+        manualInformationFallback -> setOf(Int.MIN_VALUE)
+        effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption).mapNotNull { option ->
+            (option.proposition as? InformationProposition.NumericResult)?.value
+                ?: option.displayPrimary?.toIntOrNull()
+        }.toSet()
+        else -> emptySet()
     }
     val informationIdentity = ClocktowerInformationDecisionIdentity(
         gameId, phase, round, sequence, InformationDecisionRevision(gameStateRevision, playerInputRevision),
@@ -925,7 +920,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 val recommendedResultOptions = when {
                     manualInformationFallback -> emptyList()
                     effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-                    else -> recommendationPresentation.recommendations
+                    else -> emptyList()
                 }
                 ClocktowerChambermaidSquareTableDialog(
                     seats = nightActionSeats,
@@ -1005,7 +1000,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         recommendedOptions = when {
                             manualInformationFallback -> emptyList()
                             effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-                            else -> recommendationPresentation.recommendations
+                            else -> emptyList()
                         },
                         seats = nightActionSeats,
                         actorSeat = actionActorSeat,
