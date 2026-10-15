@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
@@ -40,12 +41,21 @@ internal fun pendingGlobalNightScalarDecision(
     revision: StorytellerDecisionRevision,
     fortuneTellerSelectedNames: List<String> = emptyList(),
     coordinator: ClocktowerRecommendationCoordinator = ClocktowerRecommendationCoordinator(),
+    canonicalGameState: GameState? = null,
 ): PendingGlobalScalarInformationDecision? {
     if (phase !in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) ||
         !step.isRealAction) return null
     val actor = step.actor ?: return null
-    val actorSeat = cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
-        ?: return null
+    // Once a game is committed, the Session owns seat identities. Cards are
+    // only the UI's current question and display options, not a second roster.
+    if (canonicalGameState != null) {
+        require(canonicalGameState.players.sortedBy { it.seat }.map { it.name } ==
+            cards.map { it.name }) { "UI card order diverged from canonical Host seats." }
+    }
+    fun canonicalSeat(name: String): Int? =
+        canonicalGameState?.players?.singleOrNull { it.name == name }?.seat
+            ?: cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+    val actorSeat = canonicalSeat(actor.name) ?: return null
     fun typedRoleResult(option: ClocktowerDisplayOption): Pair<Int, String>? {
         if (option.displayKind != ClocktowerDisplayKind.RoleReveal) return null
         (option.proposition as? InformationProposition.RoleAt)?.let {
@@ -69,9 +79,7 @@ internal fun pendingGlobalNightScalarDecision(
     val metric: String
     val subjects: List<Int>
     val legalValues: List<Pair<String, String>>
-    val selectedSeats = fortuneTellerSelectedNames.mapNotNull { name ->
-        cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
-    }
+    val selectedSeats = fortuneTellerSelectedNames.mapNotNull(::canonicalSeat)
     when (proposition) {
         is InformationProposition.NumericResult -> {
             if (proposition.sourceSeat != actorSeat) return null

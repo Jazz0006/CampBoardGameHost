@@ -1,5 +1,11 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
@@ -55,6 +61,36 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
         decision.legalCandidates.map {
             (it.payload as StorytellerProviderCandidatePayloadV1.ScalarResult).value
         }.toSet()
+
+    @Test
+    fun `confirmed scalar question uses canonical session seat identity and rejects UI drift`() {
+        val canonical = GameState(
+            ScriptId("trouble_brewing"),
+            (1..8).map { seat -> PlayerState(
+                seat = seat, name = "P" + seat,
+                actualRole = RoleId("Chef"), shownRole = RoleId("Chef"),
+                actualAlignment = Alignment.GOOD, actualType = CharacterType.TOWNSFOLK,
+            ) },
+            seed = 101L,
+        )
+        val chef = step(1, "Chef", InformationProposition.NumericResult(
+            NumericMetric.ADJACENT_EVIL_PAIRS, 1, (1..8).toList(), 1,
+        ))
+        val decision = pendingGlobalNightScalarDecision(
+            chef, ClocktowerPhase.FirstNight, 1, 4,
+            cards, "game-810", revision, canonicalGameState = canonical,
+        )
+        assertEquals(1, requireNotNull(decision).sourceSeat)
+        val altered = canonical.copy(players = canonical.players.map { state ->
+            if (state.seat == 2) state.copy(name = "No longer P2") else state
+        })
+        assertTrue(runCatching {
+            pendingGlobalNightScalarDecision(
+                chef, ClocktowerPhase.FirstNight, 1, 4,
+                cards, "game-810", revision, canonicalGameState = altered,
+            )
+        }.isFailure)
+    }
 
     @Test
     fun `reliable numeric without registration offers only Foundation legal truth`() {

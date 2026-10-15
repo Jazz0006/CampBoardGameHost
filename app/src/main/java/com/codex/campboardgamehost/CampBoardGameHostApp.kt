@@ -1812,6 +1812,7 @@ internal fun CampBoardGameHostApp() {
                 session.state.gameStateRevision, session.state.playerInputRevision,
             ),
             listOfNotNull(clocktowerFortuneTellerFirst, clocktowerFortuneTellerSecond),
+            canonicalGameState = session.state.gameState,
         ) else null
         // The Host supplies a currently legal decision. The LLM uses the same
         // global strategy for pair, numeric/Boolean and later-night target decisions.

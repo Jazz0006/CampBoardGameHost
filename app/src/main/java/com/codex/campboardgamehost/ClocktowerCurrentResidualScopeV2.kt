@@ -95,7 +95,8 @@ internal object ClocktowerCurrentResidualScopeV2 {
                         step, if (phase == StorytellerPhase.FIRST_NIGHT)
                             ClocktowerPhase.FirstNight else ClocktowerPhase.Night,
                         round, i, cards,
-                        state.gameId, revision, fortuneTellerSelectedNames)
+                        state.gameId, revision, fortuneTellerSelectedNames,
+                        canonicalGameState = state.gameState)
                     if (current != null) {
                         produced += StorytellerProviderRequestFactoryV1.fromScalarInformation(
                             current.requestIdentity, current.revision, current.sourceSeat,
@@ -121,7 +122,8 @@ internal object ClocktowerCurrentResidualScopeV2 {
                 step, if (phase == StorytellerPhase.FIRST_NIGHT)
                     ClocktowerPhase.FirstNight else ClocktowerPhase.Night,
                 round, i, cards, state.gameId,
-                revision, fortuneTellerSelectedNames)
+                revision, fortuneTellerSelectedNames,
+                canonicalGameState = state.gameState)
             if (scalar != null) {
                 produced += StorytellerProviderRequestFactoryV1.fromScalarInformation(
                     scalar.requestIdentity, scalar.revision, scalar.sourceSeat,
