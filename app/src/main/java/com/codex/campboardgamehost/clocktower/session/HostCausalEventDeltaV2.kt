@@ -38,11 +38,16 @@ internal object HostCausalEventDeltaV2 {
         val noDetectedSnapshotFallback: Boolean get() = snapshotReasons.isEmpty()
 
         /**
-         * Explicitly false until ALL real decisions, including UI-owned choices,
-         * have a durable sequenced Host writer and an acknowledged provider
-         * event anchor. Never claim complete event coverage from two log streams.
+         * Intentionally false until the REQUIRED strategic facts (actual
+         * Storyteller choices, published information, state-changing actions
+         * and critical mechanical outcomes) are provably captured from Host
+         * and bound to an acknowledged provider anchor.
+         *
+         * This does NOT require recording every vote, ordinary nomination,
+         * player statement, or UI operation. It also cannot be inferred merely
+         * from the current action/observation streams.
          */
-        val allGameEventsProvenComplete: Boolean get() = false
+        val allRequiredStrategicFactsProvenComplete: Boolean get() = false
     }
 
     /**
