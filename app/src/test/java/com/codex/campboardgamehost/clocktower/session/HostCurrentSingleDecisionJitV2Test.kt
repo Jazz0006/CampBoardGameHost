@@ -11,6 +11,7 @@ import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
@@ -45,8 +46,10 @@ class HostCurrentSingleDecisionJitV2Test {
         state: ClocktowerSessionState,
         candidates: List<StorytellerProviderCandidateV1>,
         memoryVersion: Int = 0,
+        phase: StorytellerPhase = StorytellerPhase.FIRST_NIGHT,
+        round: Int = 1,
     ) = HostCurrentSingleDecisionJitV2.Scope(
-        state, StorytellerPhase.FIRST_NIGHT, 1,
+        state, phase, round,
         StorytellerStrategicContinuationV2.OpenDecision(
             "seat-1-information", 1, "NIGHT_INFORMATION", candidates, "Chef"),
         memoryVersion,
@@ -124,5 +127,69 @@ class HostCurrentSingleDecisionJitV2Test {
         assertTrue(runCatching {
             scope(session.state, listOf(scalar("number-0", "0")))
         }.isFailure)
+    }
+
+    @Test fun routineVotesAndOrdinaryNominationsDoNotInvalidatePrivateCache() {
+        val game = session()
+        val candidates = listOf(scalar("zero", "0"), scalar("one", "1"))
+        val before = scope(game.state, candidates, phase = StorytellerPhase.NIGHT, round = 2)
+        val cached = HostCurrentSingleDecisionJitV2.PrivateCache(before, "one")
+        game.commitGlobalActionFact(ActionFactDraft.Nomination(
+            "ordinary-nomination", StorytellerPhase.DAY, 1, 0, 1, 2, false))
+        game.commitGlobalActionFact(ActionFactDraft.Vote(
+            "ordinary-vote", StorytellerPhase.DAY, 1, 1, 1, 2,
+            listOf(1, 2), emptyList()))
+        val after = scope(game.state, candidates, phase = StorytellerPhase.NIGHT, round = 2)
+        val delta = HostCausalEventDeltaV2.since(before.frozen, game.state)
+        assertTrue(delta.noDetectedSnapshotFallback)
+        assertEquals(2, delta.newlyLoggedFacts.size)
+        assertTrue(HostAiDecisionRelevantFactsV2.project(delta).isEmpty())
+        assertEquals(HostCurrentSingleDecisionJitV2.Route.CacheHit("one"),
+            HostCurrentSingleDecisionJitV2.route(after, cached))
+    }
+
+    @Test fun virginTriggerAndPoisonStillInvalidateCachedStrategy() {
+        val candidates = listOf(scalar("zero", "0"), scalar("one", "1"))
+        val virginGame = session()
+        val virginBefore = scope(virginGame.state, candidates,
+            phase = StorytellerPhase.NIGHT, round = 2)
+        virginGame.commitGlobalActionFact(ActionFactDraft.Nomination(
+            "virgin-nomination", StorytellerPhase.DAY, 1, 0, 1, 2, true))
+        val virginDelta = HostCausalEventDeltaV2.since(virginBefore.frozen, virginGame.state)
+        assertEquals(listOf("virgin-nomination"),
+            HostAiDecisionRelevantFactsV2.project(virginDelta).map { it.entryId })
+        assertEquals(HostCurrentSingleDecisionJitV2.Route.ModelRequired,
+            HostCurrentSingleDecisionJitV2.route(
+                scope(virginGame.state, candidates, phase = StorytellerPhase.NIGHT, round = 2),
+                HostCurrentSingleDecisionJitV2.PrivateCache(virginBefore, "one")))
+
+        val poisonGame = session()
+        val poisonBefore = scope(poisonGame.state, candidates,
+            phase = StorytellerPhase.NIGHT, round = 2)
+        poisonGame.commitGlobalActionFact(ActionFactDraft.Poison(
+            "poison-choice", StorytellerPhase.NIGHT, 2, 0, 2))
+        val poisonDelta = HostCausalEventDeltaV2.since(poisonBefore.frozen, poisonGame.state)
+        assertEquals(listOf("poison-choice"),
+            HostAiDecisionRelevantFactsV2.project(poisonDelta).map { it.entryId })
+        assertEquals(HostCurrentSingleDecisionJitV2.Route.ModelRequired,
+            HostCurrentSingleDecisionJitV2.route(
+                scope(poisonGame.state, candidates, phase = StorytellerPhase.NIGHT, round = 2),
+                HostCurrentSingleDecisionJitV2.PrivateCache(poisonBefore, "one")))
+    }
+
+    @Test fun unexplainedGlobalCursorOrMechanicalChangeNeverReusesCache() {
+        val game = session()
+        val candidates = listOf(scalar("zero", "0"), scalar("one", "1"))
+        val before = scope(game.state, candidates)
+        val cached = HostCurrentSingleDecisionJitV2.PrivateCache(before, "one")
+        game.allocateTimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 0)
+        assertEquals(HostCurrentSingleDecisionJitV2.Route.ModelRequired,
+            HostCurrentSingleDecisionJitV2.route(scope(game.state, candidates), cached))
+        val altered = before.frozen.copy(gameState = before.frozen.gameState.copy(
+            players = before.frozen.gameState.players.map {
+                if (it.seat == 2) it.copy(alive = false) else it
+            }))
+        assertEquals(HostCurrentSingleDecisionJitV2.Route.ModelRequired,
+            HostCurrentSingleDecisionJitV2.route(scope(altered, candidates), cached))
     }
 }
