@@ -73,12 +73,14 @@
 
 按照用户最新明确的范围，沿真实 **production entrypoint → SDE module → tests** 依赖闭包审计，确认没有生产调用者使用旧 SDE 分值、NormalizedStrategicDiagnostics、效用、信息锁定/一致性特征或 Shadow 来挑选推荐。由此删除旧 SDE **26 个主源码文件**，包括 `RecommendationDecisionExportV1`、`StorytellerDecisionEngine`、`DecisionFeatures` / `DecisionFeatureEvaluation`、`DrunkAssignmentFeatures`、`NormalizedStrategicDiagnostics`、`HealthyInformationUtilityFeatures`、全部相关历史 feature projector、Drunk/Structured Shadow 适配器和旧候选计划引用；同步删除这些旧链路的独立单元测试以及试验性 SDE-2D5 标准/B4F SILVER 校准。撤销已无类可运行的两个 Gradle 专用任务 `sde2D5Calibration`、`sde2D5FB4FSilverGeneralization`，修订现行 `TESTING_STRATEGY.md`。
 
+此外确认旧 providerPayload 不在生产实际请求路径，单独删除并保留真实 Host 内部合法域哈希与校验。
+
 **不删除** 仍被 App 捕捉/Recovery 读写的 `SdeHistoricalReplayInput.kt`、`SdeHistoricalReplayInputJsonCodec.kt`；不删除使用真实设置合法域的 `RedHerringSetupPrecommitAdapter.kt`、`RedHerringCommittedInputBindingAdapter.kt`、其共享时间/输入身份类型 `SdeDecisionCandidate.kt`。这是该 SDE 目录保留的仅有 5 个生产源码。其他 Host 合法域、真实登记见证、Epistemic 世界与因果时序一致性不是旧评分算法，必须保持。这一批须通过后续精确 HEAD Android CI/R2 才算通过验证；不能只因代码搜索归零就宣称编译成功。
 
 ### 最新产品目标实况（审计，不是完工声明）
 
 1. **游戏对象唯一可写权威：未达成**。Session 的 `GameState` 和 Compose 的 `PlayerCard` 仍分别可以写入，游戏动作有多处从实时 cards 生成 `GameState`。TBGS/GameSnapshot 本身是只读投影，保留合理，但写入所有权尚未完全统一。
-2. **模型请求不附合法备选：未达成**。`InitialJointOpeningDirectV2.encode` 不再发送穷举候选全集，但仍发送 `conditionalDecisionContracts` 各 Drunk 分支约束、`redHerringAllowedSeats` 和 `legalDemonBluffRoleIds`；`StorytellerStrategicContinuationV2.encode` 仍明确发送 `openDecisions[].legalCandidates[]` 的 `candidateId` 和解释并要求整包 `remainingChoices`，属于生产调用。Host 验证可以保留，但这些输入协议还需要替换。旧 `InitialGlobalOpeningScopeV1.providerPayload` 还可序列化更丰富的旧 `conditionalLegalScope`，须在删除前确认其直接消费者。
+2. **模型请求不附合法备选：未达成**。`InitialJointOpeningDirectV2.encode` 不再发送穷举候选全集，但仍发送 `conditionalDecisionContracts` 各 Drunk 分支约束、`redHerringAllowedSeats` 和 `legalDemonBluffRoleIds`；`StorytellerStrategicContinuationV2.encode` 仍明确发送 `openDecisions[].legalCandidates[]` 的 `candidateId` 和解释并要求整包 `remainingChoices`，属于生产调用。Host 验证可以保留，但这些输入协议还需要替换。审计发现旧 `InitialGlobalOpeningScopeV1.providerPayload()` 仅由自身测试调用，现已删除该无人使用、包含更丰富合法备选的旧请求序列化入口，并将相关测试改为直接验证内部 setup 状态与可用分支。用于 Host 校验 stale proposal 的 `scopeFingerprint` / 内部 `legalScopeJson()` 仍保留。
 3. **旧评分 / 一致性启发式推荐代码：SDE 子模块已按调用图清除**；任何剩余的世界一致性/合法性/注册见证及实际历史校验仍属 Host 正确性，不能为了满足命名字面要求删除。
 4. **返回结果的 Host 后验合法性校验：保留**。不因停止发送合法备选而取消 Host 拒绝非法/过时/歧义结果的能力。
 
