@@ -77,10 +77,18 @@
 
 **不删除** 仍被 App 捕捉/Recovery 读写的 `SdeHistoricalReplayInput.kt`、`SdeHistoricalReplayInputJsonCodec.kt`。首轮 CI #4197 揭示了三个只供旧 SDE 实验使用的红鲱鱼类型适配器的残留依赖；进一步审计确认无应用生产调用者，已经一并删除 `RedHerringSetupPrecommitAdapter.kt`、`RedHerringCommittedInputBindingAdapter.kt`、`SdeDecisionCandidate.kt` 及其专属测试。真正的 Host 红鲱鱼合法域仍在 `HostOpeningRulesDomainV2` 等规则入口，不受影响。该 SDE 目录现仅保留 2 个 Recovery 历史重放文件。其他 Host 合法域、真实登记见证、Epistemic 世界与因果时序一致性不是旧评分算法，必须保持。这一批须通过后续精确 HEAD Android CI/R2 才算通过验证；不能只因代码搜索归零就宣称编译成功。
 
+### 第九批：对外候选菜单退役及单项语义请求（2026-10-16）
+
+- `InitialJointOpeningDirectV2` 的模型请求删除 `redHerringAllowedSeats`、`legalDemonBluffRoleIds`、`subjectModes`、`observationKinds`，Host 原本的完整合法分支、候选、红鲱鱼/恶魔掩饰和登记见证仍在内存中供**响应后** `HostOpeningSemanticGateV2` 严格验证。保留条件首夜依赖/等待事件和 Drunk 分支结构，避免提前编造未来玩家行动。提交 `268bc128`。
+- `StorytellerStrategicContinuationV2` 在提供给模型的 JSON 中只发送真实当前 `currentDecision`，不发送 `openDecisions[].legalCandidates`。响应只包含 `currentResult.semantic`，模型不返回 `candidateId` 或整包 `remainingChoices`；Host 使用完整私有候选集合匹配语义，匹配不到则拒绝。内部单项 `remainingChoices` 只是现有 UI/采纳代码过渡展示句柄，**不是**外发 JSON；多登记见证同一公开结果时仍由 Host 的 witness-free 展示门槛把关。提交 `eac18827`。
+- 非兼容 wire contract 已升级为 `botc.whole-game-strategy-continuation-v3`，OpenAI Responses strict format 为 `botc_whole_game_strategic_continuation_v3`；真实旧 V2 model JSON 不再接受。提交 `63b5d111`，其 Android CI #4202 / R2 #3818 SUCCESS；以上三项均无付费 API 实测，真机尚未通过。
+- Session 单状态工作采取实证式增量收口：现役标量信息的 `pendingGlobalNightScalarDecision` 通过当前 Session `gameState` 获取角色座位、占卜师已确认查询的目标座位，并对照 UI 卡牌名单/顺序，发生漂移时 fail-closed；不引入新 GameState，不误把 UI 草稿当作事实。提交 `ef3438c`，最终 Android CI/R2 需另验。
+- 当前事实历史与因果回放是否覆盖**全部提名、逐人投票、每个已公布线索**，仍需再验，不把“目前已转发存在的事件”当作全量性证明。
+
 ### 最新产品目标实况（审计，不是完工声明）
 
 1. **游戏对象唯一可写权威：未达成**。Session 的 `GameState` 和 Compose 的 `PlayerCard` 仍分别可以写入，游戏动作有多处从实时 cards 生成 `GameState`。TBGS/GameSnapshot 本身是只读投影，保留合理，但写入所有权尚未完全统一。
-2. **模型请求不附合法备选：未达成**。`InitialJointOpeningDirectV2.encode` 不再发送穷举候选全集，但仍发送 `conditionalDecisionContracts` 各 Drunk 分支约束、`redHerringAllowedSeats` 和 `legalDemonBluffRoleIds`；`StorytellerStrategicContinuationV2.encode` 仍明确发送 `openDecisions[].legalCandidates[]` 的 `candidateId` 和解释并要求整包 `remainingChoices`，属于生产调用。Host 验证可以保留，但这些输入协议还需要替换。审计发现旧 `InitialGlobalOpeningScopeV1.providerPayload()` 仅由自身测试调用，现已删除该无人使用、包含更丰富合法备选的旧请求序列化入口，并将相关测试改为直接验证内部 setup 状态与可用分支。用于 Host 校验 stale proposal 的 `scopeFingerprint` / 内部 `legalScopeJson()` 仍保留。
+2. **活跃个人直连模型请求不再附合法候选菜单：源码已达成、真实 API 未验收**。首夜保留结构性 `conditionalDecisionContracts` 以防提前决定未来事件，但不发送详细合法座位、身份或信息结果列表；续接 V3 仅当前单项语义请求和单项语义响应。Host 用内部完整合法域与当前游标后验校验，内部候选句柄不外发；原 `InitialGlobalOpeningScopeV1.providerPayload` 已删除。
 3. **旧评分 / 一致性启发式推荐代码：SDE 子模块已按调用图清除**；任何剩余的世界一致性/合法性/注册见证及实际历史校验仍属 Host 正确性，不能为了满足命名字面要求删除。
 4. **返回结果的 Host 后验合法性校验：保留**。不因停止发送合法备选而取消 Host 拒绝非法/过时/歧义结果的能力。
 
@@ -88,7 +96,7 @@
 
 ## 3. 审计结论：尚未清理的生产调用链
 
-原 P1 #304/#306/#307/#308（联合开局、Host 审核、会话续接和暂存 whole-`remainingChoices`）仍有真实运行时使用者；现已按 Git 祖先关系全部纳入统一的 Draft #315，**候选可以面向 `main` 审阅，但合并必须等待完整验收**。旧 `remainingChoices` 不能误作无调用死代码，只能由后续已通过验收的语义结果合同替换。
+原 P1 #304/#306/#307/#308 的联合开局、Host 审核和 Responses 续接仍有生产消费者，均已纳入 Draft #315。**模型外发整包 `remainingChoices` 已被 V3 唯一语义结果替换**；但 Host 内部因旧展示/采纳代码保留同名 Map 句柄，必须在实际 UI 验收后再选择是否进一步重命名或删除。
 
 逐个审计了 `toClocktowerGameState()` 的全部生产调用：Session 创建前、Recovery 重建、夜晚/破晓裁决、首夜信息请求及 Day table 的 UI 卡牌输入都是实际消费者；**现阶段没有证据确保 Session 中的 GameState 比实时传入的 PlayerCard 更新**。因此绝不通过机械地替换为 `session.state.gameState` 来减少调用，而冒险引用旧角色或存活状态。Day table 同一轮渲染中 6 处重复卡牌转换可考虑在同一作用域内只计算一次，但不得跨 Compose 输入变化缓存。整个系统要真正单状态，需要先界定 UI 临时编辑与 Session 确认事实的写入边界。
 
@@ -101,7 +109,7 @@ Recovery 与 Game Archive 具有不同合同：前者供继续游戏，后者供
 
 本轮确认原 P1 四个 Draft 的 HEAD 严格在 #315 祖先链内：#304 `df058ee5`、#306 `d0e704c9`、#307 `df0f701d`、#308 `486f2734`。GitHub 对 #315 改 base 为 `main` 后给出 `mergeable: true` 与 `merge state: clean`，**没有发生 main 合并**；#304/#306/#307/#308 都关闭为未合并，保留分支与审计证据。开放 PR 仅 #315。
 
-统一候选中的真实 P1 功能不能混作本次删除的死代码：同次联合酒鬼/信息/红鲱鱼/掩饰规划、Host 确认、会话 `store:true` / 采纳后 `previous_response_id` 续接都仍运行。现有后续 `remainingChoices` 虽不符合未来事件式单项合同，但**仍有生产调用**，只有后续新版语义输出替换且在真机验收后才能退休。
+统一候选中的真实 P1 功能必须保留：同次联合酒鬼/信息/红鲱鱼/掩饰规划、Host 确认、`store:true` 与已采纳响应的 `previous_response_id` 续接仍有调用。续接模型输出已按 V3 更改为当前唯一语义；内部 `remainingChoices` 映射暂时用于当前 Host UI，而非模型端协议。
 
 **统一候选进入 main 的验收条件**：
 
@@ -112,7 +120,7 @@ Recovery 与 Game Archive 具有不同合同：前者供继续游戏，后者供
 
 ## 4. 未收口 / 待验证
 
-1. #315 七批源码至 `f4c9468643e7` 的 Android CI、Real Clingo、R2 已通过；但仅覆盖自动化证据，不代表手动 Host/Recovery 的真实设备端验收。最终归并 HEAD 再跑相应检查；本地构建机 SSH 故障单独处理，不把构建机故障记作应用错误。
+1. #315 的旧算法清理 HEAD `0e563911` Android CI #4199 / R2 #3815 SUCCESS；V3 wire HEAD `63b5d111` Android CI #4202 / R2 #3818 SUCCESS；最新 Session 座位收口 HEAD `ef3438c` 仍待 CI/R2。自动化不能代替真实 Android Host/Recovery 的设备端验收。最终归并 HEAD 再跑相应检查；本地构建机 SSH 故障单独处理，不把构建机故障记作应用错误。
 2. 第八批旧 SDE 分值/特征/Shadow 与实验校准已按实际无外部生产调用者删除；需 Android CI/R2 验证，仍保留 Recovery replay 与 Host 合法域。另需核查非 SDE 的历史实验与模型请求旧序列化路径。
 3. 逐项核实当前权威状态转换点、Recovery 和 Archive 的真实边界与跨项目 TBGS 语义。
 4. **已关闭 #310–#314（全部未合并）**：#310 的 Host 单项门控值得复用，但现有代码让模型输出 candidateId；#311 的事件增量使用已废弃的 `ClocktowerSessionState.decisionHistory`、`StorytellerDecisionEvent` 与 `DecisionCorrectionEvent`，当前 #315 已移除这套空档案，不能直接 cherry-pick。#312 的模型合同过时；#313 筛掉合法提名/逐人投票与完整历史不符；#314 的原始审计文档已引入本清理分支。可迁移的是 Host 单项合法性、前缀单调性和私有缓存原则，不是旧接口。已核对 1E 分支：独立 `StorytellerJitDirectResultV2` 对结果数字/真假/Pair/角色/座位执行严格结构化 JSON 解码、模型不接收 candidate ID 且明确 Host 验证为后置；`HostAiDecisionRelevantFactsV2` 对所有合法提名、逐人投票和阶段变化均保留。**但它们尚未接入实际 API/UI**，后者调用的 `HostCausalEventDeltaV2` 仍依赖 #311 已删除的空档案，故**绝不整体合并 1E**；仅标记两项可单独复用的设计/测试素材。关闭的 PR 远端分支暂不删除，以防依赖无法追踪。

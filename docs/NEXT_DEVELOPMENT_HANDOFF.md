@@ -4,9 +4,9 @@
 
 ## 已完成与保留证据
 
-- ARCH-CLEANUP-1 七批源码清理：去掉从未被写入的重复历史档案/Session 空字段、旧评分与审阅、闲置 role-specific whole-bundle 算法、FN-BUNDLE-3 耗时实验、旧 rollout 和未消费的 UI 文案推断；移除仅供测试的整包 wrapper，但相关测试改用真正精确评估器。每批提交与保留边界详见 [审计文档](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md)。
-- 最后源码提交 `f4c9468643e7` 对应 GitHub CI #4194：Android tests SUCCESS、Real Clingo SUCCESS、R2 #3810 SUCCESS，ASP 检查按分类 SKIPPED。仅文档 HEAD 的 CI/R2 通过不代表 Android 重新执行。
-- P1 实际现存功能：确定阵容即尝试 `InitialJointOpeningDirectV2` 联合首夜计划；Host 合法性检查并确认 Drunk/红鲱鱼/掩饰身份与可选信息；在确认采纳后使用 `store:true` / `previous_response_id` 保存同局上下文。生产现仍使用 `StorytellerStrategicContinuationV2.remainingChoices`；未实现替代它的 P2 语义直出 JIT。玩家熟练度默认 BEGINNER。
+- ARCH-CLEANUP-1 多批源码清理：删除重复历史档案/Session 空字段、整个旧 SDE 评分/一致性偏好/Shadow 推荐实验族（仅保留真实 Recovery replay 两个文件）、角色独立 whole-bundle、FN-BUNDLE-3 耗时实验、旧 rollout、无消费的 UI 文案推断和旧 V1 模型合法域外发序列化；移除仅供测试的整包 wrapper，但相关测试改用真正精确评估器。每批提交与保留边界详见 [审计文档](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md)。
+- 已确认源码 HEAD `0e563911` 的 Android CI #4199 / R2 #3815 SUCCESS，以及 V3 语义输出 HEAD `63b5d111` 的 Android CI #4202 / R2 #3818 SUCCESS（Real Clingo、ASP 按 CI 分类 SKIPPED）。最新 Session-seat 调整 HEAD `ef3438c` 的检查仍需确认；不得把旧 GREEN 当新 HEAD 的检查。
+- P1 实际现存功能：确定阵容即尝试 `InitialJointOpeningDirectV2` 联合首夜计划；Host 合法性检查并确认 Drunk/红鲱鱼/掩饰身份与可选信息；在确认采纳后使用 `store:true` / `previous_response_id` 保存同局上下文。**已实现 V3 外发当前唯一 `currentDecision` / 直接 `currentResult.semantic`**，请求不包含 `legalCandidates` / `candidateId`；Host 用本地完整合法域验证后，将唯一结果转换成仅供旧 UI 采纳的私有 `remainingChoices` 键值。P2 全量因果增量、有效缓存和真实设备 JIT 验收仍未完成；模型还没有进行这份 V3 付费实验。玩家熟练度默认 BEGINNER。
 - 已审核独立 1E 实验分支：`StorytellerJitDirectResultV2` 的直接语义 JSON 设计值得 P2 单独参考；其余增量代码仍依赖已退役的 #311 决策档案，**不能整支合并**。关闭的 PR 和远端分支均保留供追溯。
 
 ## 本轮收口的必做工作
@@ -19,7 +19,7 @@
 
 ## 待恢复的 P2 准确产品合同（当前禁止开始新生产实现）
 
-首夜整局联合规划只有一次；后续只在有必要时让资深 AI 考虑全局并返回**当前唯一一条语义信息**，数字/真假/角色/Pair 等由模型直接给出，而**不是让模型选择 Host 枚举的 candidateId**。Host 自主校验结果、登记多解、时序与合法性。真实事实包括投毒、死亡、角色变化、信息公布、所有确认提名和逐人投票、手工覆盖及玩家声明；用 `ActionFactTimeline` / `EpistemicObservationLog` / `StorytellerCausalDecisionJournalV1`，不能再使用已删除的 `DecisionHistoryArchive`。同局确认过的 Responses 锚点、合法缓存和可错战略记忆均要安全延续；没有完整增量证据时重送事实快照。已公布结果不可改写，未采纳的模型响应不能推进锚点。先实现这一合同，再退役活跃的旧 `remainingChoices`，不能为了清理立刻把它删掉。
+首夜整局联合规划只有一次；后续只在有必要时让资深 AI 考虑全局并返回**当前唯一一条语义信息**，数字/真假/角色/Pair 等由模型直接给出，而**不是让模型选择 Host 枚举的 candidateId**。Host 自主校验结果、登记多解、时序与合法性。真实事实包括投毒、死亡、角色变化、信息公布、所有确认提名和逐人投票、手工覆盖及玩家声明；用 `ActionFactTimeline` / `EpistemicObservationLog` / `StorytellerCausalDecisionJournalV1`，不能再使用已删除的 `DecisionHistoryArchive`。同局确认过的 Responses 锚点、合法缓存和可错战略记忆均要安全延续；没有完整增量证据时重送事实快照。已公布结果不可改写，未采纳的模型响应不能推进锚点。其中当前单项语义输出 V3 已实施，旧模型外发整包被废止；剩余真实历史全量性、事件增量、缓存与恢复锚点需继续审计。Host 内部为现役采纳 UI 暂存的 `remainingChoices` 映射不是模型输出格式，不能按名称机械删掉。
 
 ## 来源与历史
 
