@@ -39,7 +39,8 @@ class HostCausalEventDeltaV2Test {
         val game = session()
         val confirmed = game.state
         val unchanged = HostCausalEventDeltaV2.since(confirmed, confirmed)
-        assertTrue(unchanged.maySendAsCompleteIncrement)
+        assertTrue(unchanged.noDetectedSnapshotFallback)
+        assertFalse(unchanged.allGameEventsProvenComplete)
         assertTrue(unchanged.newlyLoggedFacts.isEmpty())
         assertEquals(0L, unchanged.fromExclusiveGlobalSequence)
 
@@ -55,7 +56,8 @@ class HostCausalEventDeltaV2Test {
                 NumericMetric.ADJACENT_EVIL_PAIRS, 1, value = 0),
         ))
         val suffix = HostCausalEventDeltaV2.since(confirmed, game.state)
-        assertTrue(suffix.maySendAsCompleteIncrement)
+        assertTrue(suffix.noDetectedSnapshotFallback)
+        assertFalse(suffix.allGameEventsProvenComplete)
         assertEquals(listOf(0L, 1L),
             suffix.newlyLoggedFacts.map { it.point.globalSequence })
         assertEquals(2L, suffix.toExclusiveGlobalSequence)
@@ -72,7 +74,7 @@ class HostCausalEventDeltaV2Test {
         game.updateStorytellerPlayerContext(2, StorytellerPlayerContextInputV1(
             claimedRoleIds = listOf(RoleId("Mayor"))))
         val result = HostCausalEventDeltaV2.since(lastConfirmed, game.state)
-        assertFalse(result.maySendAsCompleteIncrement)
+        assertFalse(result.noDetectedSnapshotFallback)
         assertTrue(HostCausalEventDeltaV2.SnapshotReason.PLAYER_CONTEXT_CHANGED in
             result.snapshotReasons)
     }
@@ -84,7 +86,7 @@ class HostCausalEventDeltaV2Test {
                 if (it.seat == 1) it.copy(alive = false) else it
             }))
         val result = HostCausalEventDeltaV2.since(frozen, modified)
-        assertFalse(result.maySendAsCompleteIncrement)
+        assertFalse(result.noDetectedSnapshotFallback)
         assertTrue(HostCausalEventDeltaV2.SnapshotReason.MECHANICAL_STATE_CHANGED in
             result.snapshotReasons)
         assertTrue(result.newlyLoggedFacts.isEmpty())
