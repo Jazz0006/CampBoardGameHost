@@ -95,6 +95,17 @@ internal data class ClocktowerSessionState(
         require(storytellerPlayerContextBySeat.keys.all { it in currentSeats }) {
             "Storyteller player-context overrides must reference current GameState seats."
         }
+        redHerringSeat?.let { seat ->
+            require(gameState.playerAt(seat)?.actualAlignment == Alignment.GOOD) {
+                "Committed Red Herring must be an actual Good Session seat."
+            }
+        }
+        require(demonBluffRoleIds.distinct() == demonBluffRoleIds) {
+            "Committed Demon bluff roles must be distinct."
+        }
+        require(demonBluffRoleIds.none { role -> gameState.players.any { it.actualRole == role } }) {
+            "Committed Demon bluffs must not be actual in-play roles."
+        }
         semanticHistoryMode.requireCompatible(
             actionTimeline = actionTimeline,
             observationLog = epistemicObservationLog,
