@@ -3,6 +3,13 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCatalogTeam
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
@@ -205,12 +212,68 @@ class InitialJointOpeningDirectV2Test {
         assertFalse(JSONObject(wire).getBoolean("store"))
     }
     /** Actual Luna P1 response from a synthetic eight-seat game: no provider metadata or API credentials. */
+    /** Synthetic P1 model-generated plan, NO API key, raw provider body or personal records. */
+    private val p1StoredSyntheticModelPlan = """{"openingPlan":{"redHerringSeat":6,"drunkSeat":1,"deferredActions":[{"actorSeat":2,"decisionId":"event:fortune_teller.targets:seat-2","event":"fortune_teller.targets:seat-2"}],"information":[{"sourceSeat":1,"subject":{"mode":"NONE","seats":[]},"observation":{"number":0,"boolean":null,"kind":"NUMBER","roleId":null},"waitingForEvents":[],"decisionId":"first-night:seat-1","abilityRoleId":"chef","basis":"DRUNK_MISINFORMATION","resolution":"DECISION","effectiveAbilityRoleId":null},{"sourceSeat":2,"subject":{"mode":"NONE","seats":[]},"observation":{"number":null,"boolean":null,"kind":"NONE","roleId":null},"waitingForEvents":["fortune_teller.targets:seat-2"],"decisionId":"first-night:seat-2","abilityRoleId":"fortuneteller","basis":"STATUS_DEPENDENT","resolution":"DEFERRED","effectiveAbilityRoleId":"fortuneteller"},{"sourceSeat":5,"subject":{"mode":"EVIDENCE_PAIR","seats":[6,7]},"observation":{"number":null,"boolean":null,"kind":"ROLE","roleId":"baron"},"waitingForEvents":[],"decisionId":"first-night:seat-5","abilityRoleId":"investigator","basis":"FUNCTIONING","resolution":"DECISION","effectiveAbilityRoleId":"investigator"}],"demonBluffRoleIds":["empath","slayer","soldier"]},"schemaVersion":2,"requestIdentity":{"gameId":"new-game-before-drunk","gameStateRevision":0,"playerInputRevision":0,"rosterFingerprint":"931910b5df1400a33b5ed3fd84e3530dc02c2ffcea9707bab3215ea1d9807c19"},"strategyMemory":{"tensions":["调查员的 Baron 线索指向 6/7；真实 Baron 在 7，但 Recluse 可能造成登记歧义，避免把它当作无条件定罪。","1号 Chef 是酒鬼，其 0 不代表真实邻座邪恶配对数；其他玩家仍应能利用实际可验证线索。","2号 Fortune Teller 的首夜目标尚未提供，红鲱鱼设在 6号 Recluse；不要把未来选择或结果视为已发生。"],"intentions":[{"risk":"避免 Investigator 线索与后续信息过早合并成唯一结论，尤其考虑新手邪恶玩家的辩护空间。","trigger":"2号提交 Fortune Teller 目标后","approach":"按实际目标与红鲱鱼状态处理结果，并保留可由玩家质疑、交叉验证的解释路径。"},{"risk":"新手邪恶玩家可能难以维持复杂伪造信息。","trigger":"邪恶方选择公开身份或形成故事时","approach":"提供 Empath、Slayer、Soldier 作为简明可扮演的 bluffs；后续仍以实际行动和公开信息重新评估。"}],"uncertainties":["玩家未来会否公开 Chef 的 0、Investigator 的二人线索或 Fortune Teller 目标，尚未知。","尚无玩家行动、死亡或后续夜晚信息；不得将任何假设当作已发生事实。","Recluse 的登记可能性不等于已发生的特定登记；具体登记仍由说书人依情境决定。"]},"tradeoffSummary":"将 1号设为酒鬼以保留功能正常的 Investigator 与待选目标的 Fortune Teller，同时让 Chef 的 0 成为可被质疑但不具决定性的噪声。Investigat​​or 得到包含真实 Baron 与 Recluse 的二人线索，既提供可追踪的善方信息，也保留登记歧义带来的合理讨论空间；红鲱鱼设在 Recluse。选择易于新手邪恶玩家扮演的 bluffs，后续依据真实行动再调整。","asOfRevision":0}"""
+
     @Test fun p1StoredSyntheticOpeningMustPassActualHostSemanticGate() {
         val domain = build(true, eight)
-        val responseJson = """{"openingPlan":{"redHerringSeat":6,"drunkSeat":1,"deferredActions":[{"actorSeat":2,"decisionId":"event:fortune_teller.targets:seat-2","event":"fortune_teller.targets:seat-2"}],"information":[{"sourceSeat":1,"subject":{"mode":"NONE","seats":[]},"observation":{"number":0,"boolean":null,"kind":"NUMBER","roleId":null},"waitingForEvents":[],"decisionId":"first-night:seat-1","abilityRoleId":"chef","basis":"DRUNK_MISINFORMATION","resolution":"DECISION","effectiveAbilityRoleId":null},{"sourceSeat":2,"subject":{"mode":"NONE","seats":[]},"observation":{"number":null,"boolean":null,"kind":"NONE","roleId":null},"waitingForEvents":["fortune_teller.targets:seat-2"],"decisionId":"first-night:seat-2","abilityRoleId":"fortuneteller","basis":"STATUS_DEPENDENT","resolution":"DEFERRED","effectiveAbilityRoleId":"fortuneteller"},{"sourceSeat":5,"subject":{"mode":"EVIDENCE_PAIR","seats":[6,7]},"observation":{"number":null,"boolean":null,"kind":"ROLE","roleId":"baron"},"waitingForEvents":[],"decisionId":"first-night:seat-5","abilityRoleId":"investigator","basis":"FUNCTIONING","resolution":"DECISION","effectiveAbilityRoleId":"investigator"}],"demonBluffRoleIds":["empath","slayer","soldier"]},"schemaVersion":2,"requestIdentity":{"gameId":"new-game-before-drunk","gameStateRevision":0,"playerInputRevision":0,"rosterFingerprint":"931910b5df1400a33b5ed3fd84e3530dc02c2ffcea9707bab3215ea1d9807c19"},"strategyMemory":{"tensions":["调查员的 Baron 线索指向 6/7；真实 Baron 在 7，但 Recluse 可能造成登记歧义，避免把它当作无条件定罪。","1号 Chef 是酒鬼，其 0 不代表真实邻座邪恶配对数；其他玩家仍应能利用实际可验证线索。","2号 Fortune Teller 的首夜目标尚未提供，红鲱鱼设在 6号 Recluse；不要把未来选择或结果视为已发生。"],"intentions":[{"risk":"避免 Investigator 线索与后续信息过早合并成唯一结论，尤其考虑新手邪恶玩家的辩护空间。","trigger":"2号提交 Fortune Teller 目标后","approach":"按实际目标与红鲱鱼状态处理结果，并保留可由玩家质疑、交叉验证的解释路径。"},{"risk":"新手邪恶玩家可能难以维持复杂伪造信息。","trigger":"邪恶方选择公开身份或形成故事时","approach":"提供 Empath、Slayer、Soldier 作为简明可扮演的 bluffs；后续仍以实际行动和公开信息重新评估。"}],"uncertainties":["玩家未来会否公开 Chef 的 0、Investigator 的二人线索或 Fortune Teller 目标，尚未知。","尚无玩家行动、死亡或后续夜晚信息；不得将任何假设当作已发生事实。","Recluse 的登记可能性不等于已发生的特定登记；具体登记仍由说书人依情境决定。"]},"tradeoffSummary":"将 1号设为酒鬼以保留功能正常的 Investigator 与待选目标的 Fortune Teller，同时让 Chef 的 0 成为可被质疑但不具决定性的噪声。Investigat​​or 得到包含真实 Baron 与 Recluse 的二人线索，既提供可追踪的善方信息，也保留登记歧义带来的合理讨论空间；红鲱鱼设在 Recluse。选择易于新手邪恶玩家扮演的 bluffs，后续依据真实行动再调整。","asOfRevision":0}"""
+        val responseJson = p1StoredSyntheticModelPlan
         val accepted = InitialJointOpeningDirectV2.decode(responseJson, domain)
         assertEquals(1, accepted.selection.drunkSeat)
         assertTrue(accepted.selection.choices.isNotEmpty())
         assertTrue(accepted.strategyMemory?.intentions?.isNotEmpty() == true)
+    }
+
+    /** Exact Kotlin continuation wire for the same synthetic committed Host roster.
+     *  No fabricated open legal decisions: this P1 checkpoint tests strategic
+     *  memory continuity only, not later-night legal candidate quality.
+     */
+    @Test fun exportP1KotlinContinuationFromAcceptedSyntheticOpening() {
+        if (System.getenv("BOTC_P1_WIRE_EXPORT") != "1") return
+        val accepted = InitialJointOpeningDirectV2.decode(
+            p1StoredSyntheticModelPlan, build(true, eight),
+        )
+        val players = eight.mapIndexed { index, shown ->
+            val seat = index + 1
+            val actual = if (seat == accepted.selection.drunkSeat) "drunk" else shown
+            val type = when (actual) {
+                "drunk", "butler", "recluse" -> CharacterType.OUTSIDER
+                "baron" -> CharacterType.MINION
+                "imp" -> CharacterType.DEMON
+                else -> CharacterType.TOWNSFOLK
+            }
+            PlayerState(
+                seat = seat,
+                name = "Seat $seat",
+                actualRole = RoleId(actual),
+                shownRole = RoleId(shown),
+                actualAlignment = if (type == CharacterType.MINION ||
+                    type == CharacterType.DEMON) Alignment.EVIL else Alignment.GOOD,
+                actualType = type,
+            )
+        }
+        val session = ClocktowerGameSession.createProduction(
+            "new-game-before-drunk", 425,
+            GameState(ScriptId("trouble_brewing"), players, 425),
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        val continuationHostPayload = StorytellerStrategicContinuationV2.encode(
+            session.state, accepted, emptyList(),
+        )
+        val outputWire = PersonalDirectOpenAiV1.buildRequest(
+            continuationHostPayload, "gpt-6-luna",
+        )
+        val decoded = JSONObject(outputWire)
+        assertEquals("gpt-6-luna", decoded.getString("model"))
+        assertFalse(decoded.getBoolean("store"))
+        assertEquals("botc.whole-game-strategy-continuation-v2",
+            JSONObject(decoded.getString("input")).getString("schemaId"))
+        assertEquals("new-game-before-drunk",
+            JSONObject(decoded.getString("input")).getJSONObject("source").getString("gameId"))
+        assertEquals(0, JSONObject(decoded.getString("input"))
+            .getJSONArray("openDecisions").length())
+        val output = File("build/p1/continuation-app-request.json")
+        output.parentFile.mkdirs()
+        output.writeText(outputWire, Charsets.UTF_8)
     }
 }
