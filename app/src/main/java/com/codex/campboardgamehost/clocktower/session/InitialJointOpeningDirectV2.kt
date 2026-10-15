@@ -308,7 +308,7 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
         }
         onStage("BUILDING_JOINT_OPENING_CONTEXT")
         val payload = encode(domain, registry, recentGames)
-        val response = ProductionDrunkAiGatewayV1.post(
+        val response = AuthenticatedModelTransportV1.post(
             endpoint, accessToken, payload, model, onStage,
         )
         onStage("VALIDATING_COMPLETE_HOST_OPENING")

@@ -408,7 +408,7 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
         val frozen = session.state
         onStage("FROZEN_WHOLE_GAME_PREFIX")
         val input = encode(frozen, prior, openDecisions, cursor)
-        val raw = ProductionDrunkAiGatewayV1.post(
+        val raw = AuthenticatedModelTransportV1.post(
             endpoint, accessToken, input, model, onStage)
         onStage("VALIDATING_STRATEGIC_CONTINUATION")
         return try {

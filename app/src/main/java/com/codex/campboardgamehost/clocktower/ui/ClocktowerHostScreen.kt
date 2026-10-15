@@ -87,17 +87,8 @@ internal fun ClocktowerJudgeScreen(
     globalAiAssisted: Boolean = false,
     /** The same joint planner is used, but verified plans are privately adopted by Host. */
     globalAiAutomatic: Boolean = false,
-    oneShotEnabled: Boolean = false,
-    oneShotPlan: com.codex.campboardgamehost.clocktower.session.FirstNightOneShotPlanV1? = null,
-    oneShotBusy: Boolean = false,
-    oneShotError: String? = null,
-    oneShotAccepted: Boolean = false,
-    adoptedOneShotChoices: Map<String, String> = emptyMap(),
     jointOpeningAdopted: Boolean = false,
     jointOpeningSemantics: Map<Int, com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2> = emptyMap(),
-    onRequestOneShot: (com.codex.campboardgamehost.clocktower.session.FirstNightOneShotScopeV1) -> Unit = {},
-    onAdoptOneShot: (com.codex.campboardgamehost.clocktower.session.FirstNightOneShotPlanV1,
-        com.codex.campboardgamehost.clocktower.session.FirstNightOneShotScopeV1) -> Unit = { _, _ -> },
     globalNightPendingDecision: PendingMayorRedirectDecision? = null,
     globalAiAdviceKey: String? = null,
     globalAiAdviceText: String? = null,
@@ -2386,24 +2377,6 @@ internal fun ClocktowerJudgeScreen(
     }
 
     if (phase == ClocktowerPhase.FirstNight && !nightStarted) {
-        val oneShotScope = if (oneShotEnabled && globalAiAssisted &&
-            script == ClocktowerScript.TroubleBrewing
-        ) runCatching {
-            clocktowerFirstNightOneShotScope(
-                gameId, gameStateRevision, playerInputRevision,
-                script, cards, nightSteps,
-            )
-        }.getOrNull() else null
-        // Load the ONE entire legal opening while the Storyteller is at
-        // private preflight, rather than waiting for an isolated role step.
-        LaunchedEffect(oneShotScope, oneShotAccepted, oneShotBusy, oneShotError) {
-            if (oneShotScope != null && !oneShotAccepted && !oneShotBusy &&
-                oneShotError == null && oneShotPlan?.validFor(oneShotScope) != true
-            ) onRequestOneShot(oneShotScope)
-        }
-        val legalOneShotPlan = oneShotScope?.let { scope ->
-            oneShotPlan?.takeIf { it.validFor(scope) }
-        }
         ClocktowerStorytellerRecommendationScreen(
             title = text("身份展示完成", "IDENTITY DISPLAY COMPLETE"),
             subtitle = text("准备进入首夜", "Prepare for the first night"),
@@ -2428,68 +2401,7 @@ internal fun ClocktowerJudgeScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ClocktowerNightReadyCard()
-                if (oneShotEnabled && oneShotScope == null && !oneShotAccepted) {
-                    Text(
-                        text("完整首夜候选尚未准备就绪，可以手动主持。",
-                            "Full first-night legal domain is unavailable; use Manual hosting."),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (oneShotScope != null && !oneShotAccepted) {
-                    if (oneShotBusy) {
-                        Text(text("AI 正在联合配置完整首夜…", "AI planning all first-night information…"))
-                    }
-                    oneShotError?.let { failure ->
-                        Text(
-                            text("AI 推荐未完成，可继续手动主持。", "AI plan unavailable; Manual hosting remains available."),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                        OutlinedButton(onClick = { onRequestOneShot(oneShotScope) }) {
-                            Text(text("重新生成完整首夜配置", "Retry one full opening plan"))
-                        }
-                    }
-                    if (legalOneShotPlan != null) {
-                        Text(
-                            text("唯一推荐首夜配置", "One recommended first-night configuration"),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        legalOneShotPlan.demonBluffRoleIds?.let { roles ->
-                            Text(text("恶魔掩饰身份：", "Demon bluffs: ") + roles.joinToString(" · "))
-                        }
-                        oneShotScope.availableDecisions.forEach { decision ->
-                            val id = legalOneShotPlan.candidateByDecisionId[decision.decisionId]
-                            Text(
-                                "${decision.family} · ${decision.sourceSeat ?: "—"}："+
-                                    (id?.let(decision.candidateDescriptions::get) ?: id.orEmpty()),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                        if (oneShotScope.deferredDecisionIds.isNotEmpty()) {
-                            Text(
-                                text("等待玩家行动：", "Waiting for player actions: ") +
-                                    oneShotScope.deferredDecisionIds.joinToString(" · "),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                        Button(
-                            onClick = { onAdoptOneShot(legalOneShotPlan, oneShotScope) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(text("一键采纳推荐配置", "Adopt recommended configuration"))
-                        }
-                    }
-                } else if (oneShotAccepted) {
-                    Text(
-                        text("已采纳整套推荐。各信息仍在对应夜间步骤由 Host 核验后展示。",
-                            "Full proposal adopted. Host validates each disclosure when the night reaches it."),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-                if (manualDemonBluffsRequired && !oneShotAccepted) {
+                if (manualDemonBluffsRequired) {
                     ClocktowerDemonBluffManualPicker(
                         legalRoles = legalDemonBluffs,
                         selectedRoleNames = manualDemonBluffDraft,
@@ -2574,25 +2486,6 @@ internal fun ClocktowerJudgeScreen(
         }
         // An opening information choice is NEVER a valid default for a later
         // night, even when the same role wakes again and the number matches.
-        val preplannedChoice = preplannedSeat?.takeIf {
-            phase == ClocktowerPhase.FirstNight
-        }?.let { seat ->
-            adoptedOneShotChoices["first-night:${currentStep.roleEnName}:seat-$seat"]
-        }
-        val oldApprovedOpeningOption = preplannedChoice?.let { id ->
-            val options = currentStep.manualInformationCandidates.ifEmpty {
-                currentStep.legacyInformationCandidates.takeIf { legacy ->
-                    currentStep.roleEnName in setOf("Chef", "Empath") &&
-                        currentStep.displayPrimary != null &&
-                        legacy.size == 1 &&
-                        legacy.single().displayPrimary == currentStep.displayPrimary
-                }.orEmpty()
-            }
-            // A genuine player action may have changed the legal domain.
-            // Re-match against CURRENT Host-produced choices, never just the
-            // stale initial candidate ID from the accepted bundle.
-            options.singleOrNull { clocktowerOneShotCandidateId(it) == id }
-        }
         val residualApprovedOption = when {
             globalAiPending != null -> ClocktowerResidualDisplayMatcherV2.matchPair(
                 globalAiPending,
@@ -2612,7 +2505,7 @@ internal fun ClocktowerJudgeScreen(
             (globalAiAdviceBusy || globalAiAdviceError != null ||
                 (jointOpeningAdopted && globalAiCurrentKey != null &&
                     globalAiAdviceKey != globalAiCurrentKey))) null else
-            residualApprovedOption ?: oldApprovedOpeningOption ?: preplannedSeat?.takeIf {
+            residualApprovedOption ?: preplannedSeat?.takeIf {
                 phase == ClocktowerPhase.FirstNight
             }?.let { seat ->
             jointOpeningSemantics[seat]?.let { planned ->
