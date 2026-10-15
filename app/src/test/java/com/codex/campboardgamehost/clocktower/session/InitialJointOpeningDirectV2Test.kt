@@ -227,6 +227,209 @@ class InitialJointOpeningDirectV2Test {
     }
 
     /**
+     * One actual authorized 2026-10-15 Standard Luna synthetic 15-seat output.
+     * No raw provider response, encrypted reasoning, PII, or API key.
+     * This tests the same decode/Host legal gate used by the production V2 path.
+     */
+    @Test fun p15StoredRealLunaModelOutputPassesKotlinHostGate() {
+        val shown = listOf(
+            "chef", "fortuneteller", "recluse", "investigator", "poisoner",
+            "monk", "washerwoman", "baron", "butler", "undertaker",
+            "imp", "librarian", "saint", "empath", "scarletwoman",
+        )
+        val domain = build(true, shown)
+        val modelOutput = """{
+  "openingPlan": {
+    "redHerringSeat": 10,
+    "drunkSeat": 4,
+    "deferredActions": [
+      {
+        "actorSeat": 2,
+        "decisionId": "event:fortune_teller.targets:seat-2",
+        "event": "fortune_teller.targets:seat-2"
+      },
+      {
+        "actorSeat": 5,
+        "decisionId": "event:poisoner.target",
+        "event": "poisoner.target"
+      }
+    ],
+    "information": [
+      {
+        "sourceSeat": 1,
+        "subject": {
+          "mode": "NONE",
+          "seats": []
+        },
+        "observation": {
+          "number": null,
+          "boolean": null,
+          "kind": "NONE",
+          "roleId": null
+        },
+        "waitingForEvents": [
+          "poisoner.target"
+        ],
+        "decisionId": "first-night:seat-1",
+        "abilityRoleId": "chef",
+        "basis": "STATUS_DEPENDENT",
+        "resolution": "DEFERRED",
+        "effectiveAbilityRoleId": "chef"
+      },
+      {
+        "sourceSeat": 2,
+        "subject": {
+          "mode": "NONE",
+          "seats": []
+        },
+        "observation": {
+          "number": null,
+          "boolean": null,
+          "kind": "NONE",
+          "roleId": null
+        },
+        "waitingForEvents": [
+          "poisoner.target",
+          "fortune_teller.targets:seat-2"
+        ],
+        "decisionId": "first-night:seat-2",
+        "abilityRoleId": "fortuneteller",
+        "basis": "STATUS_DEPENDENT",
+        "resolution": "DEFERRED",
+        "effectiveAbilityRoleId": "fortuneteller"
+      },
+      {
+        "sourceSeat": 4,
+        "subject": {
+          "mode": "NONE",
+          "seats": []
+        },
+        "observation": {
+          "number": null,
+          "boolean": null,
+          "kind": "NONE",
+          "roleId": null
+        },
+        "waitingForEvents": [
+          "poisoner.target"
+        ],
+        "decisionId": "first-night:seat-4",
+        "abilityRoleId": "investigator",
+        "basis": "STATUS_DEPENDENT",
+        "resolution": "DEFERRED",
+        "effectiveAbilityRoleId": null
+      },
+      {
+        "sourceSeat": 7,
+        "subject": {
+          "mode": "NONE",
+          "seats": []
+        },
+        "observation": {
+          "number": null,
+          "boolean": null,
+          "kind": "NONE",
+          "roleId": null
+        },
+        "waitingForEvents": [
+          "poisoner.target"
+        ],
+        "decisionId": "first-night:seat-7",
+        "abilityRoleId": "washerwoman",
+        "basis": "STATUS_DEPENDENT",
+        "resolution": "DEFERRED",
+        "effectiveAbilityRoleId": "washerwoman"
+      },
+      {
+        "sourceSeat": 12,
+        "subject": {
+          "mode": "NONE",
+          "seats": []
+        },
+        "observation": {
+          "number": null,
+          "boolean": null,
+          "kind": "NONE",
+          "roleId": null
+        },
+        "waitingForEvents": [
+          "poisoner.target"
+        ],
+        "decisionId": "first-night:seat-12",
+        "abilityRoleId": "librarian",
+        "basis": "STATUS_DEPENDENT",
+        "resolution": "DEFERRED",
+        "effectiveAbilityRoleId": "librarian"
+      },
+      {
+        "sourceSeat": 14,
+        "subject": {
+          "mode": "NONE",
+          "seats": []
+        },
+        "observation": {
+          "number": null,
+          "boolean": null,
+          "kind": "NONE",
+          "roleId": null
+        },
+        "waitingForEvents": [
+          "poisoner.target"
+        ],
+        "decisionId": "first-night:seat-14",
+        "abilityRoleId": "empath",
+        "basis": "STATUS_DEPENDENT",
+        "resolution": "DEFERRED",
+        "effectiveAbilityRoleId": "empath"
+      }
+    ],
+    "demonBluffRoleIds": [
+      "soldier",
+      "slayer",
+      "mayor"
+    ]
+  },
+  "schemaVersion": 2,
+  "requestIdentity": {
+    "gameId": "new-game-before-drunk",
+    "gameStateRevision": 0,
+    "playerInputRevision": 0,
+    "rosterFingerprint": "76f97603eb59ada11465766b60c6dad7450747b963054597f4878ea9a1ef4309"
+  },
+  "strategyMemory": {
+    "tensions": [
+      "Drunk Investigator的线索可给新手邪恶玩家留下辩护空间；若后续与其他信息吻合，再评估其可信度，不预先视为已发生。",
+      "Recluse的登记歧义可能影响信息核验，但其具体登记尚未决定。",
+      "首夜多个信息角色可能形成交叉验证；Poisoner目标未确定，需结合实际状态判断信息可靠性。"
+    ],
+    "intentions": [
+      {
+        "risk": "避免把可疑线索过早当作锁定邪恶的证据。",
+        "trigger": "首夜信息与公开声明开始交叉验证时",
+        "approach": "区分酒鬼误导、投毒影响及Recluse登记可能性，并保留可追踪的验证路径。"
+      },
+      {
+        "risk": "初学者邪恶玩家可能难以维持复杂伪装。",
+        "trigger": "邪恶方选择公开身份或解释信息时",
+        "approach": "优先检验简单、连贯且能随夜晚延续的说法，不把假设行动当作既成事实。"
+      }
+    ],
+    "uncertainties": [
+      "Poisoner的目标尚未决定。",
+      "Fortune Teller的首夜目标尚未决定。",
+      "未来玩家会如何公开身份、交换信息及投票尚未知。"
+    ]
+  },
+  "tradeoffSummary": "将座位4设为Drunk，削弱最可能直接指向邪恶阵营的调查线索，同时保留其余首夜信息供善良阵营推理；座位10作为Red Herring提供可追踪但非决定性的后续信号。邪恶伪装选用较易扮演的善良身份。首夜观察均待Poisoner及相关目标行动确认后再决定。"
+,
+  "asOfRevision": 0
+}"""
+        val accepted = InitialJointOpeningDirectV2.decode(modelOutput, domain)
+        assertEquals(4, accepted.selection.drunkSeat)
+        assertTrue(accepted.strategyMemory?.tensions?.isNotEmpty() == true)
+    }
+
+    /**
      * P1 nonsecret, opt-in fixture. This is an ACTUAL Kotlin V2 encoder +
      * PersonalDirectOpenAiV1.buildRequest output, not a hand-built wire request.
      * The fixture is synthetic and cannot itself certify model Host acceptance.
