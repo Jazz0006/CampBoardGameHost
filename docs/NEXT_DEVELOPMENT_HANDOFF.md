@@ -2,6 +2,12 @@
 
 > Updated **2026-10-11 Australia/Sydney**. **唯一活动交接。** 进入新会话必须重新查开发机 live state / GitHub main、PR、CI，不能假设下述 commit 仍是最新。当前单一执行路线是 [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)；此文件只记录状态及下一步。旧 PROD-GLOBAL-1D/2B/analysis-first NEXT 作为历史，不得再次触发独立酒鬼模型规划。
 
+## LATEST HANDOFF — PROD-GLOBAL-3B3D-2A real rules integration (2026-10-12)
+
+PR #301 latest confirmed HEAD `9056b6b0560bb85764668b5c8b49eefbe7b50f29`, CI #4116 / R2 #3738 GREEN and clean; stacked on Draft #300 -> #299. New branch `experiment/prod-global-3b3d2-rules-projection-20261012` contains experimental pure `HostOpeningRulesDomainV2` which materializes Host TB legal pair/numeric/setup domains per uncommitted Drunk branch, pending actions as barriers, with matching Kotlin real-rules scenarios. AI output V2 adds ZERO_OUTSIDERS; multi-witness semantics permitted without asserting a unique registration. New tests not yet independently run at this checkpoint. [Active 3B3D route](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md). NEXT: audit exact new PR CI/R2, repair real-domain test failures if any, then event-confirmation revalidation and 3C/3D single initial background Luna call. No production API/UI change, no paid EXPT, no full strategic/model or phone acceptance.
+
+### Previous 3B3D-1 handoff
+
 ## LATEST HANDOFF — PROD-GLOBAL-3B3D-1 Host semantic matching boundary (2026-10-12)
 
 From confirmed PR #300 head `6c2286b7b9ee4c4c6baa960c200f83edf59b7056` (CI #4114 + R2 #3736 GREEN), use new branch `experiment/prod-global-3b3d-host-semantic-gate-20261012`, stacked on #300 (which stacks on #299). [3B3D implementation/remaining-work route](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md). EXPERIMENT ONLY: Kotlin `HostOpeningSemanticGateV2` uses exact typed public semantics and Host-supplied candidate domain, refuses stale/incomplete/unknown/duplicate/mismatched plans and retains event-dependent proposals uncommitted; Python V2 input/output now carries requestIdentity, logical decision IDs and nullable bluffs. **No production wiring, no real Host candidate projector, no independent TB rule verdict**: current Android tests are synthetic projection contracts, not semantic or strategic acceptance. Still only offline/mock EXPT and no paid API call. NEXT = exact CI/R2 for this branch, followed by 3B3D-2 actual rules-owned projection/coverage and sample parity, then controlled Luna blind study if paid EXPT is genuinely enabled.

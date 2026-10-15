@@ -21,6 +21,22 @@ The original V2 experimental schema/input have been extended with request identi
 
 Tests under `session/HostOpeningSemanticGateV2Test.kt` use fabricated, explicitly labeled Host candidate maps. They prove **interface boundary logic**, not whether any actual TB clue, registration or potential drunk assignment is rules legal.
 
+## 3. 3B3D-2A real TB rules-owned precommit projector — IMPLEMENTED EXPERIMENTALLY (CI pending)
+
+- `HostOpeningRulesDomainV2.fromHostSnapshot` takes the real authoritative precommit snapshot, registry, TB role definitions and revisions, projects every Host-legal Drunk position into separate **immutable** actual-state hypotheses, reuses rules-owned `PairInformationLegalDomain`, `FirstNightNumericLegalDomain`, `SetupCandidateGenerator.generateRedHerringCandidates`, and existing 3B1 complete-branch selection validation. The AI gets only logical ID inventory; all concrete candidate maps stay private in Host.
+- Unknown Poisoner target creates a timing barrier for all potentially affected information; Fortune Teller target queries are always real pending player actions. No invented target, no premature publish, no second independent Drunk request. `CONDITIONAL_INTENT` remains uncommitted advisory data and is not yet validated against a resolved event.
+- `ZERO_OUTSIDERS` is a distinct valid Librarian observation, not the `NONE` used by `HOST_DETERMINED` and `DEFERRED`. Real script metadata rather than frozen benchmark gold defines allowed role IDs. Status/actual/shown identity must never be concatenated into a single role ID.
+- Corrected 3B3D-1 acceptance seam: multiple Host legal candidate witnesses can map to the same visible observation. All matching IDs are retained; any canonical representative in the legacy 3B1 selection is merely a validation token, **not a chosen registration witness**. Do not publish a registration from it. Exact unique registration is not required to show a legal visible result.
+- Android tests cover actual rules-owned branching, truthful Spy/Recluse pair registration possibilities, numeric ambiguity, original Good-seated red herring, no-Outsider Librarian, Poisoner and Fortune Teller deferred actions, fabricated result rejection. No gold strategic answer is assumed. Exact Android CI/R2 still required.
+
+## 3B3D-2B pending before production: event-time residual full semantic validation
+
+1. Reconstruct Host's current rules domain once the real Poisoner target / Fortune Teller choice / other actions are confirmed, recalculate affected information, reject invalid old conditional intentions, and never revise already published facts.
+2. Feed the live complete V2 logical inventory with revisions and precise actual state into the AI request; ensure shared Host projection owns ALL legal decisions (not subset) at each timing phase and that no unknown action is implicitly committed. Continue to audit larger player counts.
+3. Independently score new actual Luna samples against Host legal domains, followed by 3C background single call, one-tap adoption, recovery and 3F phone UI smoke.
+
+## Historical 3B3D-2 objectives
+
 ## 3. 3B3D-2: mandatory independent Host rules integration — NOT YET DONE
 
 Before claiming `HOST_SEMANTIC: PASS` for real plans:

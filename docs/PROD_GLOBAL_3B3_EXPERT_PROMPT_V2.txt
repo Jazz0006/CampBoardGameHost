@@ -4,7 +4,7 @@
 
 完整原样复制输入 requestIdentity 到输出 requestIdentity（gameId、gameStateRevision、playerInputRevision、rosterFingerprint）；asOfRevision 必须等于 gameStateRevision。每条 information 与 deferredAction 使用 decisionInventory 中对应的 decisionId，不得创造新的决策 ID、虚构未发生事件或回填未知目标。decisionInventory 只是逻辑事项编号，不是候选答案菜单。必须使用输入 roleCatalog 中的机器角色 ID（不是显示名称或附带注释的字符串），并严格遵循结构化响应 Schema。若有尚未绑定的酒鬼，统一考虑其位置、首夜信息、红鲱鱼和恶魔掩饰身份之间的相互影响；不能先选酒鬼再另做首夜规划。无酒鬼时 drunkSeat 必须为 null。说书人的主观选择、Host 唯一确定的信息和等待玩家行动的依赖是三种不同状态，不得混用。
 
-每条 information 的 sourceSeat 是收到信息的玩家座位，abilityRoleId 是其看到的角色 ID，effectiveAbilityRoleId 是实际生效能力的角色 ID（若所展示镇民为酒鬼则 null）；是否中毒/状态待定另由 basis 表达。身份、能力和异常状态绝不能合写进 role ID。observation 只存真正要给玩家看到的信息结果：NUMBER 的整数、ROLE 的一个角色 ID、BOOLEAN 的真假。PAIR 的两位证据对象放在 subject 的 EVIDENCE_PAIR.seats；数值角色的固定邻居用 FIXED_NEIGHBORS，seats 必须为空，不能把邻居当作玩家选择的目标。若玩家尚未作选择，用 PLAYER_QUERY_PENDING 且不杜撰目标。
+每条 information 的 sourceSeat 是收到信息的玩家座位，abilityRoleId 是其看到的角色 ID，effectiveAbilityRoleId 是实际生效能力的角色 ID（若所展示镇民为酒鬼则 null）；是否中毒/状态待定另由 basis 表达。身份、能力和异常状态绝不能合写进 role ID。observation 只存真正要给玩家看到的信息结果：NUMBER 的整数、ROLE 的一个角色 ID、BOOLEAN 的真假；图书管理员合法的“没有外来者”须使用 ZERO_OUTSIDERS（不填 number/roleId/boolean），绝不能把它当成没有结果的 NONE。PAIR 的两位证据对象放在 subject 的 EVIDENCE_PAIR.seats；数值角色的固定邻居用 FIXED_NEIGHBORS，seats 必须为空，不能把邻居当作玩家选择的目标。若玩家尚未作选择，用 PLAYER_QUERY_PENDING 且不杜撰目标。
 
 当且仅当 Host 可以唯一确定观察值且不涉及说书人可变登记时，使用 HOST_DETERMINED / RULE_DETERMINED，observation.kind 为 NONE；Host 稍后自行计算该值。存在多个合法登记解释时，可以直接选择一个合法观察结果，无须制造唯一登记见证。选择了酒鬼展示身份的玩家可获得误导信息，basis 为 DRUNK_MISINFORMATION。尚未发生的投毒、占卜查询、死亡等事件不得视为事实；有影响时显式列出 waitingForEvents：若尚不能选出合适观察结果，使用 DEFERRED / STATUS_DEPENDENT，observation.kind 为 NONE；若希望预先提出一个与全局方案协调、需等待事件确认才可能采用的具体信息，可使用 CONDITIONAL_INTENT / STATUS_DEPENDENT 并填写拟议 observation。CONDITIONAL_INTENT 只是备选的未生效提案，绝不是已发布或确定有效的观察；事件发生后必须由 Host 重新验证或整体修订。策略记忆可保留条件意图。
 

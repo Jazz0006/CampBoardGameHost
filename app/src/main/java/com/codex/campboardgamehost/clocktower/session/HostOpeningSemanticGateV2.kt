@@ -40,6 +40,8 @@ internal data class HostOpeningSemanticValueV2(
         })
         require(when (observationKind) {
             "NUMBER" -> number != null && roleId == null && boolean == null
+            "ZERO_OUTSIDERS" -> number == null && roleId == null && boolean == null &&
+                subjectMode == "NONE"
             "ROLE" -> roleId != null && number == null && boolean == null &&
                 subjectMode in setOf("EVIDENCE_PAIR", "PLAYER_SELECTED_TARGETS")
             "BOOLEAN" -> boolean != null && number == null && roleId == null
@@ -76,10 +78,10 @@ internal data class HostOpeningSemanticProjectionV2(
         }
         branch.discretionary.filter { it.decisionId != redHerringDecisionId }.forEach { decision ->
             val mapping = requireNotNull(candidatesByDecision[decision.decisionId])
-            require(mapping.keys == decision.legalCandidates.keys &&
-                mapping.values.distinct().size == mapping.size) {
-                "Semantic mapping must cover the entire authoritative legal domain without ambiguity."
+            require(mapping.keys == decision.legalCandidates.keys) {
+                "Semantic mapping must cover the entire authoritative legal domain."
             }
+            // Distinct legal witnesses may describe one identical public observation.
             require(mapping.values.all { it.sourceSeat == decision.sourceSeat })
         }
         require(redHerringDecisionId == null || branch.discretionary.any {
@@ -107,6 +109,8 @@ internal data class HostOpeningConditionalIntentV2(
 internal data class HostOpeningSemanticAcceptanceV2(
     val selection: InitialGlobalOpeningSelectionV1,
     val conditional: List<HostOpeningConditionalIntentV2>,
+    /** All matching Host candidates; representative selection IDs never settle registration. */
+    val matchingCandidateIds: Map<String, Set<String>> = emptyMap(),
 )
 
 internal object HostOpeningSemanticGateV2 {
@@ -158,7 +162,8 @@ internal object HostOpeningSemanticGateV2 {
         })
         require(value.roleId == null || value.roleId in projection.knownRoleIds)
         require(if (value.sourceSeat == projection.drunkSeat) {
-            value.effectiveAbilityRoleId == null && value.basis == "DRUNK_MISINFORMATION"
+            value.effectiveAbilityRoleId == null && value.basis in
+                setOf("DRUNK_MISINFORMATION", "STATUS_DEPENDENT")
         } else {
             value.effectiveAbilityRoleId == value.abilityRoleId &&
                 value.basis != "DRUNK_MISINFORMATION"
@@ -212,6 +217,7 @@ internal object HostOpeningSemanticGateV2 {
             else plan.getJSONArray("demonBluffRoleIds").strings()
         val redSeat = plan.nullableInt("redHerringSeat")
         val picked = linkedMapOf<String, String>()
+        val matchingCandidateIds = linkedMapOf<String, Set<String>>()
         if (projection.redHerringDecisionId == null) {
             require(redSeat == null)
         } else {
@@ -237,15 +243,23 @@ internal object HostOpeningSemanticGateV2 {
             val value = parseValue(item, projection)
             val waiting = item.getJSONArray("waitingForEvents").strings()
             require(waiting.size == waiting.distinct().size)
+            if (value.sourceSeat == projection.drunkSeat &&
+                item.getString("resolution") == "DECISION") {
+                require(value.basis == "DRUNK_MISINFORMATION")
+            }
             when (item.getString("resolution")) {
                 "DECISION" -> {
                     require(waiting.isEmpty() && value.observationKind != "NONE")
                     val candidates = requireNotNull(projection.candidatesByDecision[id]) {
                         "Information is not a current Host discretion."
                     }
-                    val match = candidates.entries.singleOrNull { it.value == value }
-                        ?: error("No unique authoritative Host semantic match.")
-                    picked[id] = match.key
+                    val matches = candidates.entries.filter { it.value == value }
+                        .map { it.key }.toSortedSet()
+                    require(matches.isNotEmpty()) { "No authoritative Host semantic match." }
+                    // Deterministic representative for existing V1 selection validation ONLY.
+                    // Do not publish it as a unique registration witness.
+                    picked[id] = matches.first()
+                    matchingCandidateIds[id] = matches
                 }
                 "HOST_DETERMINED" -> {
                     require(id in hostDetermined && id in projection.determinedInformationIds && waiting.isEmpty() &&
@@ -283,6 +297,9 @@ internal object HostOpeningSemanticGateV2 {
         }
 
         val discretionary = projection.branch.discretionary.map { it.decisionId }.toSet()
+        require(usedDecisionIds.intersect(hostDetermined.keys) == projection.determinedInformationIds) {
+            "Incomplete Host-determined information inventory."
+        }
         require(picked.keys == discretionary) { "Incomplete discretionary opening bundle." }
         require(pending.keys == hostDeferred.keys) { "Incomplete deferred opening bundle." }
         // Non-information deterministic setup facts are owned by Host; no model
@@ -298,6 +315,6 @@ internal object HostOpeningSemanticGateV2 {
             demonBluffs = bluffs,
             deferredDecisionIds = projection.branch.deferred.map { it.decisionId },
         ).also { it.validate(scope) }
-        return HostOpeningSemanticAcceptanceV2(selection, pending.values.toList())
+        return HostOpeningSemanticAcceptanceV2(selection, pending.values.toList(), matchingCandidateIds)
     }
 }
