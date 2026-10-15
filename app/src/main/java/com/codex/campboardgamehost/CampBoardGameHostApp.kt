@@ -195,7 +195,6 @@ private enum class Screen {
     ClocktowerJointPass,
     ClocktowerJointReveal,
     ClocktowerJointReview,
-    ClocktowerAiOverview,
     ClocktowerAutoPause,
     Settings,
     PassPhone,
@@ -255,7 +254,6 @@ private fun Context.localized(languageMode: LanguageMode): Context {
 private fun Screen.isActiveGameScreen(): Boolean = when (this) {
     Screen.PassPhone,
     Screen.RevealCard,
-    Screen.ClocktowerAiOverview,
     Screen.ClocktowerAutoPause,
     Screen.ClocktowerJudge,
     Screen.Game -> true
@@ -3060,10 +3058,6 @@ internal fun CampBoardGameHostApp() {
                             screen = Screen.ClocktowerJudge
                         },
                     )
-
-                    Screen.ClocktowerAiOverview -> {
-                        LaunchedEffect(screen) { screen = Screen.ClocktowerJudge }
-                    }
 
                     Screen.ClocktowerJudge -> ClocktowerJudgeScreen(
                         allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,

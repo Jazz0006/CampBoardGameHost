@@ -4,10 +4,10 @@
 
 ## 当前核实状态
 
-- 开发机 repo alias `clocktower`；本轮开始时本地 `feature/prod-global-3e3-whole-residual-20261012 @ 7910e1be3d7924a1f5bb2f43a86499b92e3110ee`（clean）。GitHub [Draft #307](https://github.com/Jazz0006/CampBoardGameHost/pull/307) stacked 在 #306 → #304 上，#305 为并行诊断分支；每次开始重新审计 HEAD、main、PR、CI/R2。
+- 开发机 repo alias `clocktower`；活动分支 `feature/prod-global-3e3-whole-residual-20261012`，截至 P0 实现已含 `56bc97e` / `409665d`，本地与 GitHub 曾同步且 clean。GitHub [Draft #307](https://github.com/Jazz0006/CampBoardGameHost/pull/307) stacked 在 #306 → #304 上，#305 已关闭为 superseded；每次开始仍需重新核对 HEAD、main、PR、CI/R2。
 - **已在代码中**：V2 同次初始整局联合规划；Host 严格合法候选/全包校验；V2 当前剩余规划及辅助/自动的安全私有预采纳；逐玩家 BEGINNER 默认经验；部分真实 ADB 诊断。尚未证明所有决策域的真正全自动公布或多夜手机验收。
 - **尚未在生产完成**：响应续接（当前 API 请求 `store:false` 且互相独立）、增量对话/内部推理复用、玩家长按声明、跨局 AI 战略多样性。
-- **V1-RETIRE-NOW 仅在隔离工作树**：Mini MCP session `a8e87ce2-334f-47ca-8ea0-06d7180a4fde` 已生成清理旧单点、独立酒鬼、旧分析和 one-shot 的补丁，状态 REVIEW_REQUIRED。静态 diff 检查通过；Gradle 编译被环境阻断、CI 和设备测试未进行；当前开发分支还未应用该补丁。产品决定是**立即退役**，不等新引擎覆盖完，但绝不能写成已经上线。
+- **V1-RETIRE-NOW — 代码及 CI/R2 GREEN，真机待验**：2026-10-15 在活动 #307 分支以 `56bc97e`（8 文件修改、16 文件删除）和 `409665d`（修复手动酒鬼选择残留的 `primary` 引用）实现旧 Drunk-only、postcommit analysis、one-shot、逐项付费回退的退役。旧分析 UI 已移除；V2 唯一两条付费请求使用独立安全 HTTPS 传输，旧响应 schema 拒绝进入 adapter。GitHub CI #4159（含 Android unit/build）与 R2 #3776 于 `409665d` GREEN；本地 `test:fast` 因构建主机 `photoprismsv` SSH 超时未执行。原 Mini MCP 隔离 session `a8e87ce2-334f-47ca-8ea0-06d7180a4fde` 仅为**被新实现取代的历史候选**，不得重复覆盖当前分支或新版文档；后续源码微调需要重新 CI。真机 ADB / FIELD-1、FIELD-2 / 多夜游戏未获验收。
 - FIELD-1 Chef 点击展示退出与 FIELD-2 首夜合同校验故障仍须依赖实际 ADB/Host 证据闭环。真实 Luna 输出/基础检查、单个 CI GREEN 不等于多夜质量验收。
 
 ## 不可违背的产品原则
@@ -24,7 +24,7 @@
 
 | 优先 | 任务 | 最小可验收交付 |
 | --- | --- | --- |
-| **P0** | **V1-RETIRE-NOW** | 审查隔离清理补丁，完全移除旧有付费单点路径及无用 UI；仅 V2 整体开局/续规划或安全人工接管。需 Android 编译、焦点回归、GitHub CI/R2/差异审查 |
+| **P0** | **V1-RETIRE-NOW · 代码/CI 已完成** | 旧付费单点路径与过时 UI 已退役；仅 V2 整体开局/续规划或安全人工接管。GitHub Android CI/R2 已通过；仍待真机 ADB 和 FIELD-1/2 多夜体验验收，不得写成正式发布 |
 | **P1** | **AI-CONVERSATION-1** | 真实 `gpt-6-luna` 首夜→白天→第二夜同局续接实验；`previous_response_id`、响应锚点、隐性推理 effective 支持、tokens/延时/战略质量，和无续接基线对比 |
 | **P2** | **AI-DELTA-1** | Host 增量因果事件、当前合法完整剩余决策包、并发/失效/人工覆盖管理、补偿/恢复；有真实模型裁量才发付费请求 |
 | **P3** | **PLAYER-CLAIMS-1** | 长按玩家、公开角色声明/私下掩饰意向/更改撤回，带时间来源与范围，接入下一次因果增量 |
