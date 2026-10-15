@@ -8,6 +8,14 @@
 2. **P0 已落地源代码并通过 GitHub Android CI/R2**：`56bc97e` 移除旧 per-step、Drunk-only、postcommit、one-shot 模型分支和 UI，抽离安全传输并保留 V2 Responses 测试；`409665d` 根据首轮 CI 日志修复手动 Drunk 页 `primary` 引用，第二轮 CI #4159、R2 #3776 全 GREEN。原 Mini MCP 隔离会话 `a8e87ce2-334f-47ca-8ea0-06d7180a4fde` 仍是过时未推广候选，**不可覆盖新分支**。本地 Android 构建主机 `photoprismsv` SSH timeout，属于运行基础设施问题，不应伪称应用测试失败。保留 V2 需要的 V1 后缀 Host 合法候选类型。
 3. 对 #307 的原有 V2 首夜/剩余联合决策，不能把“已存在 Kotlin 类型/通过部分单元测试”说成完全支持多夜、已发布或无人工说书人的产品。之前 FIELD-1 Chef show 后退出、FIELD-2 首夜合同验证失败需以真实 ADB trace / Host 验证具体报错实证闭环。
 
+## P2 当前切片交接（2026-10-15，后续开发前请核实 live）
+
+已在 Draft stacked PR 中提交 1A [#310](https://github.com/Jazz0006/CampBoardGameHost/pull/310) 当前单项合法结果/缓存门控、1B [#311](https://github.com/Jazz0006/CampBoardGameHost/pull/311) Host 顺序记录增量与不完整 fallback、1C [#312](https://github.com/Jazz0006/CampBoardGameHost/pull/312) 一项 candidateId 的严格 schema/Host 校验；最近已确认的 CI/R2 分别为 #4177/#3793、#4180/#3796、#4181/#3797 GREEN。1D [#313](https://github.com/Jazz0006/CampBoardGameHost/pull/313) 在其上只提取现有记录中的**四类战略必要事实**，不把普通投票/提名传给 AI；复用建议仅允许 Host 能证明其余所有事实、版本、候选和记忆未变化的普通事件。#313 的 CI/R2 以 live audit 为准，不预设结果。
+
+用户已明确要求停止全事件账本扩张：只保证（1）实际采纳的说书人决定，（2）已公布线索，（3）影响状态/行动结果的行动，（4）处决、死亡和特殊触发等关键结果。普通投票及非能力触发的提名是 Host 可保留但 AI P2 不需逐条的细节；玩家声明/掩饰意向放 P3，UI 动作不记录为战略事实。现有统一顺序 action/observation 日志可以复用；实际 Drunk、red herring、Demon bluffs 等 UI-owned 选择的事实/来源并未全都落地，故纯增量 completeness flag 仍为 false，**不启动未经证明的纯增量生产路径**。
+
+**下一实际任务**：沿现有 Host 确认/发布接口梳理四类真实决定的最小事实落点，并将单项 JIT schema 接至生产 Responses 与 current-step UI，支持 Host 独一结果无需 API、合法缓存复用、未采纳 proposal 不推进锚点、覆盖后按需一次请求；缺口保持完整 Host 快照。优先打通 E02 的真实多夜流程再考虑额外事件/声明。不要另写全游戏 journal 或顺手扩展投票/玩家声明收集。任何付费真 API 试验都需新授权。
+
 ## 本次新确定的产品路线（按顺序）
 
 **P0 — V1-RETIRE-NOW（代码及 CI/R2 完成；真机待验）：** #307 已删除旧独立模型路线，生产保留 `InitialJointOpeningDirectV2`（开局全局规划）及 `StorytellerStrategicContinuationV2`（现有后续整包规划；**即将按新产品决策重构为按需当前单项**）。绝不能因为后续只输出一项就复活 V1 角色孤立分析/旧单项付费 fallback。当前出错安全人工接管，手机 FIELD-1/FIELD-2 与多夜自动流程仍待验。
@@ -29,7 +37,7 @@
 - 玩家经验按人持久、局内冻结，默认 BEGINNER；无额外真人说书人经验开关。MANUAL、AI_ASSISTED、AI_AUTOMATIC 共用一个 legality/strategy 机制，只有提交权限不同。
 - 继续保留当前同版本/≤4 小时的“异常关闭恢复”产品范围，无旧版本迁移、历史档案回放扩张；跨局战略记录属于独立的小型历史索引。
 - 文档与协议按**事实账本 / 可错战略假说 / 未执行建议 / 已确认采纳 / 玩家已知信息**隔离，避免模型建议被误记成已实际执行。不要修改用户已看过的信息或猜测 Spy/Recluse 唯一登记。
-- 开发治理：本次**只更新产品设计、roadmap 与 handoff，不修改生产代码、不付费调用、不合并 PR**；下一对话进入 P2 实施。按 AGENTS evidence-first 风险测试、GitHub diff 审计和 Android CI/R2；#307/#308 保留 Draft 直到真实多夜/ADB 验收。
+- 开发治理：上一轮原设计只修改文档；当前已通过 Draft #310–#313 推进 P2 纯 Host 切片，但**尚未修改生产 Responses/Android UI 调用路径，也未付费调用或合并 PR**。按 AGENTS evidence-first 风险测试、GitHub diff 审计和 Android CI/R2；#307/#308 保留 Draft 直到真实多夜/ADB 验收。
 
 ## 历史证据和清理原则
 
