@@ -31,6 +31,22 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.exportP1OpeningWireWhenOptedIn' --no-daemon --build-cache
+      - name: Kotlin 15-seat production-equivalent Standard opening wire export
+        env:
+          BOTC_15_WIRE_EXPORT: "1"
+        run: |
+          ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.exportFifteenSeatOpeningWireWhenOptedIn' --no-daemon --build-cache
+      - name: Show synthetic 15-seat exact Kotlin request
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture=app/build/p15/opening-app-request.json
+          test -s "$fixture"
+          sha256sum "$fixture"
+          echo "BOTC_15_APP_WIRE_START"
+          cat "$fixture"
+          echo
+          echo "BOTC_15_APP_WIRE_END"
       - name: Verify actual P1 opening through Kotlin Host semantic acceptance
         run: |
           ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.p1StoredSyntheticOpeningMustPassActualHostSemanticGate' --no-daemon --build-cache
