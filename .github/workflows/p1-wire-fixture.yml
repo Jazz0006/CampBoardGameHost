@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - experiment/ai-conversation-1-probe-20261015
+  pull_request:
+    branches:
+      - feature/prod-global-3e3-whole-residual-20261012
 
 permissions:
   contents: read
