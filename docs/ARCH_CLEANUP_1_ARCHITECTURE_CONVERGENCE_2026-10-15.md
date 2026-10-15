@@ -19,6 +19,7 @@
 - **已接入**：根 Compose 不再以独立 `Map<gameId, Journal>` 管理说书人因果日志；`ClocktowerGameSession.causalDecisionJournal` 是该局唯一日志持有者，Recovery 在同一 Session 的验证边界恢复它。保留已公开的规则验证/因果顺序语义。
 - **已接入**：首夜 Host 确认的 Red Herring 座位和 Demon bluffs 身份存储于 `ClocktowerSessionState`，Compose 只读投影；AI 联合开局采纳、人工改选和 Recovery 同源。实际确认时将状态变更与新的 `ActionFact.RedHerringChoice` / `ActionFact.DemonBluffChoice` 在 Session 一次性提交，加入已有全局时间线（含重复/错误输入保护）；结构化 JSON、历史只读投影、角色私密可见性、Recovery 验证以及增量 AI 状态随之更新。不新建 Game Object。
 - **已接入**：正式身份变化的 `PlayerCard` 更新前验证 Session 真实角色；四个死亡/处决 UI 更新入口由统一 `reflectCommittedClocktowerDeath` 防护，禁止卡片独立写入未经 Session 确认的死亡。不要误把仅属 Undercover 的 `Screen.Game` 淘汰视为 Clocktower 独立写入。
+- **一次性能力状态去重复**：`clocktowerVirginUsed` 由 Session 动作时间线中 `ActionFact.Nomination.firstVirginNomination` 唯一推导；`clocktowerSlayerUsed` 和 `clocktowerSlayerClaimedNames` 由 `ActionFact.SlayerShot` 的已确认消耗和公开行动推导。移除根 Compose 对应可写变量和单独 Recovery 还原赋值；主持规则仍先记录动作，再根据 Session 已确认的事实渲染。
 - **严格 A=PARTIAL，仍不能 CLOSE**：尚未完成每一个 `PlayerCard` 机械读写投影迁移、所有角色与能力状态（Virgin/Slayer/夜间动作等）都由同一 Session 原子事务处理、所有已展示的不可靠信息的类型化持久记录、开局 Drunk 决策来源及任意历史时间点的权威重建。现有 Recovery/Archive 仍保存专门的投影格式，不能反向作为第二个权威。
 - 本批需要最新代码 HEAD 的独立 Android FAST/FULL、R2 结果及按类别可用的规则测试证明；没有 Android Studio/ADB 真机证据时不得称真机已验收。严格不合并 #315，不进行付费模型 API 实验。
 

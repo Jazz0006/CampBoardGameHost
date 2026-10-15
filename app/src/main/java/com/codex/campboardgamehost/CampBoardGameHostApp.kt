@@ -493,9 +493,6 @@ internal fun CampBoardGameHostApp() {
     fun clearConfirmedDemonSuccessorTarget() {
         clocktowerConfirmedDemonSuccessorTarget = null
     }
-    var clocktowerVirginUsed by remember { mutableStateOf(false) }
-    var clocktowerSlayerUsed by remember { mutableStateOf(false) }
-    var clocktowerSlayerClaimedNames by remember { mutableStateOf<List<String>>(emptyList()) }
     var clocktowerArtistUsed by remember { mutableStateOf(false) }
     var clocktowerArtistClaimedNames by remember { mutableStateOf<List<String>>(emptyList()) }
     var clocktowerLastExecutedName by remember { mutableStateOf<String?>(null) }
@@ -519,6 +516,15 @@ internal fun CampBoardGameHostApp() {
     val clocktowerNextTimelineGlobalSequence =
         clocktowerSessionView?.nextTimelineGlobalSequence ?: 0L
     val clocktowerActionTimeline = clocktowerSessionView?.actionTimeline ?: ActionFactTimeline()
+    // One-shot consumptions belong to the committed action timeline, not Compose mutable flags.
+    val clocktowerVirginUsed = clocktowerActionTimeline.entries.any { entry ->
+        (entry.fact as? com.codex.campboardgamehost.clocktower.domain.ActionFact.Nomination)
+            ?.firstVirginNomination == true
+    }
+    val clocktowerSlayerUsed = clocktowerActionTimeline.entries.any { entry ->
+        (entry.fact as? com.codex.campboardgamehost.clocktower.domain.ActionFact.SlayerShot)
+            ?.abilityConsumed == true
+    }
     val clocktowerEpistemicObservations =
         clocktowerSessionView?.epistemicObservationLog?.records.orEmpty()
     var committedClocktowerSetup by remember { mutableStateOf<CommittedClocktowerSetup?>(null) }
@@ -557,6 +563,11 @@ internal fun CampBoardGameHostApp() {
     // Retain the setup step when the user visits app-wide AI settings and returns.
     var clocktowerSetupStep by remember { mutableStateOf(0) }
     val cards = remember { mutableStateListOf<PlayerCard>() }
+    val clocktowerSlayerClaimedNames = clocktowerActionTimeline.entries
+        .mapNotNull { entry ->
+            (entry.fact as? com.codex.campboardgamehost.clocktower.domain.ActionFact.SlayerShot)
+                ?.claimantSeat?.let { seat -> cards.getOrNull(seat - 1)?.name }
+        }.distinct()
     // Accepted setup choices come from Session, not separate writable Compose state.
     val clocktowerRedHerring = clocktowerSessionView?.redHerringSeat
         ?.let { seat -> cards.getOrNull(seat - 1)?.name }
@@ -1402,9 +1413,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerPendingNightNewDemonIdentityName = null
         clocktowerDemonSuccessorTarget = null
         clocktowerConfirmedDemonSuccessorTarget = null
-        clocktowerVirginUsed = false
-        clocktowerSlayerUsed = false
-        clocktowerSlayerClaimedNames = emptyList()
         clocktowerArtistUsed = false
         clocktowerArtistClaimedNames = emptyList()
         clocktowerLastExecutedName = null
@@ -1475,9 +1483,6 @@ internal fun CampBoardGameHostApp() {
                 clocktowerPendingNightNewDemonIdentityName = mechanics.pendingNightNewDemonIdentityName
                 clocktowerConfirmedDemonSuccessorTarget = mechanics.confirmedDemonSuccessorTarget
                 clocktowerButlerMaster = mechanics.butlerMaster
-                clocktowerVirginUsed = mechanics.virginUsed
-                clocktowerSlayerUsed = mechanics.slayerUsed
-                clocktowerSlayerClaimedNames = mechanics.slayerClaimedNames
                 clocktowerArtistUsed = mechanics.artistUsed
                 clocktowerArtistClaimedNames = mechanics.artistClaimedNames
                 clocktowerLastExecutedName = mechanics.lastExecutedName
@@ -1678,9 +1683,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerPendingNightNewDemonIdentityName = null
         clocktowerDemonSuccessorTarget = null
         clearConfirmedDemonSuccessorTarget()
-        clocktowerVirginUsed = false
-        clocktowerSlayerUsed = false
-        clocktowerSlayerClaimedNames = emptyList()
         clocktowerArtistUsed = false
         clocktowerArtistClaimedNames = emptyList()
         clocktowerLastExecutedName = null
@@ -3801,9 +3803,6 @@ internal fun CampBoardGameHostApp() {
                                 role = "Slayer",
                                 alreadyUsed = clocktowerSlayerUsed,
                             )
-                            if (claimantName !in clocktowerSlayerClaimedNames) {
-                                clocktowerSlayerClaimedNames = clocktowerSlayerClaimedNames + claimantName
-                            }
                             val targetRegistersAsDemon = targetCard?.clocktowerTeam == ClocktowerTeam.Demon ||
                                 (targetCard?.clocktowerRole?.enName == "Recluse" &&
                                     targetCard.name != clocktowerConfirmedPoisonTarget &&
@@ -3880,7 +3879,7 @@ internal fun CampBoardGameHostApp() {
                             }
                             var shotOutcome: GameOutcome? = null
                             if (slayerDecision.consumesUse) {
-                                clocktowerSlayerUsed = true
+                                // SlayerShot is already the Session's accepted consumption fact.
                                 advanceClocktowerGameStateRevision()
                             }
                             if (shotWillHit && targetIndex >= 0 && targetCard != null) {
@@ -4062,7 +4061,7 @@ internal fun CampBoardGameHostApp() {
                                     )
                                 }
                             }
-                            clocktowerVirginUsed = true
+                            // The confirmed Nomination records first-Virgin consumption.
                             advanceClocktowerGameStateRevision()
                             if (executeNominator) {
                                 val index = cards.indexOfFirst { it.name == nominatorName }
