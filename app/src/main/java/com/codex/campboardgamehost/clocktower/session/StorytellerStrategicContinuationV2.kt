@@ -397,20 +397,6 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
     /** Receipt is provisional until the UI confirms this entire Host package. */
     data class ValidatedResponse(val proposal: Result, val responseId: String)
 
-    suspend fun recommend(
-        endpoint: String,
-        accessToken: String,
-        model: String,
-        session: ClocktowerGameSession,
-        prior: HostOpeningSemanticAcceptanceV2,
-        openDecisions: List<OpenDecision>,
-        cursor: MemoryCursor = MemoryCursor.initial(prior),
-        onStage: (String) -> Unit = {},
-    ): Result = recommendWithReceipt(
-        endpoint, accessToken, model, session, prior, openDecisions,
-        cursor, null, onStage,
-    ).proposal
-
     suspend fun recommendWithReceipt(
         endpoint: String,
         accessToken: String,

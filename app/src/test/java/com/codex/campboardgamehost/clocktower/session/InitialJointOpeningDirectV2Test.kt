@@ -192,9 +192,10 @@ class InitialJointOpeningDirectV2Test {
         }.isFailure)
     }
     /**
-     * P15: exactly the normal Kotlin Host precommit scope and Android V2
-     * buildRequest for the synthetic 15-seat Baron + Drunk scenario.
-     * No mock model response, API key, paid call or production change.
+     * P15: Kotlin Host precommit scope for the synthetic 15-seat Baron + Drunk.
+     * Historical store:false request is retained byte-for-byte as the exact
+     * paid P15 fixture; a separate store:true fixture now covers current
+     * P1 production chaining. Neither fixture performs network calls.
      */
     @Test fun exportFifteenSeatOpeningWireWhenOptedIn() {
         if (System.getenv("BOTC_15_WIRE_EXPORT") != "1") return
@@ -224,6 +225,15 @@ class InitialJointOpeningDirectV2Test {
         val output = File("build/p15/opening-app-request.json")
         output.parentFile.mkdirs()
         output.writeText(wire, Charsets.UTF_8)
+
+        val retained = PersonalDirectOpenAiV1.buildRequest(hostPayload,
+            PersonalDirectOpenAiV1.DEFAULT_MODEL, retainForContinuation = true)
+        val liveRequest = JSONObject(retained)
+        assertTrue(liveRequest.getBoolean("store"))
+        assertFalse(liveRequest.has("previous_response_id"))
+        assertEquals(request.getString("input"), liveRequest.getString("input"))
+        File("build/p15/opening-app-retained-request.json").writeText(
+            retained, Charsets.UTF_8)
     }
 
     /**

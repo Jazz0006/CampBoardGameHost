@@ -6,7 +6,7 @@
 
 - 开发机 repo alias `clocktower`；活动分支 `feature/prod-global-3e3-whole-residual-20261012`，截至 P0 实现已含 `56bc97e` / `409665d`，本地与 GitHub 曾同步且 clean。GitHub [Draft #307](https://github.com/Jazz0006/CampBoardGameHost/pull/307) stacked 在 #306 → #304 上，#305 已关闭为 superseded；每次开始仍需重新核对 HEAD、main、PR、CI/R2。
 - **已在代码中**：V2 同次初始整局联合规划；Host 严格合法候选/全包校验；V2 当前剩余规划及辅助/自动的安全私有预采纳；逐玩家 BEGINNER 默认经验；部分真实 ADB 诊断。尚未证明所有决策域的真正全自动公布或多夜手机验收。
-- **尚未在生产完成**：响应续接（当前 API 请求 `store:false` 且互相独立）、增量对话/内部推理复用、玩家长按声明、跨局 AI 战略多样性。
+- **P1 续接首个源码切片已在 Draft #308 实验分支实施，CI/R2 待本轮最终确认**：开局 Host 验证且人类/自动模式真正采纳后持有 Responses anchor，后续同局请求带 `previous_response_id`、`store:true` 并持续发送完整 Host 状态与严格 schema；仅通过整包复验的自动私有预采纳可推进续接头。辅助模式仅展示而未采纳时，不能推进响应头或策略记忆。恢复/新局/人工接管/模型切换时安全断链。**仍未完成**：事件增量输入、恢复可继续链的持久游标、完整的真人覆盖对话分叉、内部推理复用有效模式、玩家长按声明、跨局 AI 战略多样性。此阶段服务商留存行为不同于旧 `store:false`。
 - **V1-RETIRE-NOW — 代码及 CI/R2 GREEN，真机待验**：2026-10-15 在活动 #307 分支以 `56bc97e`（8 文件修改、16 文件删除）和 `409665d`（修复手动酒鬼选择残留的 `primary` 引用）实现旧 Drunk-only、postcommit analysis、one-shot、逐项付费回退的退役。旧分析 UI 已移除；V2 唯一两条付费请求使用独立安全 HTTPS 传输，旧响应 schema 拒绝进入 adapter。GitHub CI #4159（含 Android unit/build）与 R2 #3776 于 `409665d` GREEN；本地 `test:fast` 因构建主机 `photoprismsv` SSH 超时未执行。原 Mini MCP 隔离 session `a8e87ce2-334f-47ca-8ea0-06d7180a4fde` 仅为**被新实现取代的历史候选**，不得重复覆盖当前分支或新版文档；后续源码微调需要重新 CI。真机 ADB / FIELD-1、FIELD-2 / 多夜游戏未获验收。
 - FIELD-1 Chef 点击展示退出与 FIELD-2 首夜合同校验故障仍须依赖实际 ADB/Host 证据闭环。真实 Luna 输出/基础检查、单个 CI GREEN 不等于多夜质量验收。
 
@@ -25,7 +25,7 @@
 | 优先 | 任务 | 最小可验收交付 |
 | --- | --- | --- |
 | **P0** | **V1-RETIRE-NOW · 代码/CI 已完成** | 旧付费单点路径与过时 UI 已退役；仅 V2 整体开局/续规划或安全人工接管。GitHub Android CI/R2 已通过；仍待真机 ADB 和 FIELD-1/2 多夜体验验收，不得写成正式发布 |
-| **P1** | **AI-CONVERSATION-1** | 真实 `gpt-6-luna` 首夜→白天→第二夜同局续接实验；`previous_response_id`、响应锚点、隐性推理 effective 支持、tokens/延时/战略质量，和无续接基线对比 |
+| **P1** | **AI-CONVERSATION-1 · 首个 Kotlin 生产切片已提交，验收中** | 先完成开局已采纳锚点和后续自动整包 `previous_response_id`、每轮严格 schema + 全量 Host 真相；此前开发机两次真实 Luna 链接实验已可行，但仍欠真人多夜和 Android ADB；增量事实待 P2，provider 内部推理有效模式仍待验证 |
 | **P2** | **AI-DELTA-1** | Host 增量因果事件、当前合法完整剩余决策包、并发/失效/人工覆盖管理、补偿/恢复；有真实模型裁量才发付费请求 |
 | **P3** | **PLAYER-CLAIMS-1** | 长按玩家、公开角色声明/私下掩饰意向/更改撤回，带时间来源与范围，接入下一次因果增量 |
 | **P4** | **CROSS-GAME-STRATEGY-1** | 基于 Host 真实已执行历史生成战略签名，选 3–5 条相关历史初夜注入，AI 执行非强制结构去重 |

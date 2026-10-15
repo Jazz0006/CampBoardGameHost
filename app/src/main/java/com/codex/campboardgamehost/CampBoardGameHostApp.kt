@@ -2052,18 +2052,21 @@ internal fun CampBoardGameHostApp() {
                                 return@acceptedResidual
                             }
                         }
-                        strategicPolicyCursor = advanced
-                        strategicLastReviewedHost = currentHost
-                        // An assisted suggestion is not an adoption: it MUST NOT
-                        // advance the provider chain. Automatic mode promotes
-                        // only after the complete private Host preselection gate.
+                        // Legal, unadopted AI_ASSISTED recommendations must not
+                        // advance either the advisory strategy or provider head.
+                        // The next Host-confirmed observation remains authoritative.
                         if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC &&
                             residualAdoptedPackage == verified) {
+                            strategicPolicyCursor = advanced
+                            strategicLastReviewedHost = currentHost
                             canonicalConversationResponseId = receipt.responseId
                             canonicalConversationModel = requestedModel
+                            BotcAiWireTrace.residualGate("MEMORY_ADVANCED", verified.choices.size,
+                                advanced.version, phasePosition.phase.name, phasePosition.round)
+                        } else {
+                            BotcAiWireTrace.residualGate("PROPOSAL_ONLY", verified.choices.size,
+                                wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                         }
-                        BotcAiWireTrace.residualGate("MEMORY_ADVANCED", verified.choices.size,
-                            advanced.version, phasePosition.phase.name, phasePosition.round)
                         liveAiAdviceText = buildString {
                             append("本次整局续规划：")
                             append(verified.choices.size)

@@ -302,18 +302,6 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
         val responseId: String,
     )
 
-    suspend fun recommend(
-        endpoint: String,
-        accessToken: String,
-        domain: HostOpeningRulesDomainV2,
-        registry: ClocktowerCharacterRegistry,
-        model: String,
-        recentGames: List<String> = emptyList(),
-        onStage: (String) -> Unit = {},
-    ): HostOpeningSemanticAcceptanceV2 = recommendWithReceipt(
-        endpoint, accessToken, domain, registry, model, recentGames, onStage,
-    ).accepted
-
     suspend fun recommendWithReceipt(
         endpoint: String,
         accessToken: String,

@@ -31,7 +31,7 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.exportP1OpeningWireWhenOptedIn' --no-daemon --build-cache
-      - name: Kotlin 15-seat production-equivalent Standard opening wire export
+      - name: Kotlin 15-seat historical and retained Standard opening wires
         env:
           BOTC_15_WIRE_EXPORT: "1"
         run: |
@@ -43,6 +43,9 @@ jobs:
           fixture=app/build/p15/opening-app-request.json
           test -s "$fixture"
           sha256sum "$fixture"
+          retained=app/build/p15/opening-app-retained-request.json
+          test -s "$retained"
+          sha256sum "$retained"
           echo "BOTC_15_APP_WIRE_START"
           cat "$fixture"
           echo

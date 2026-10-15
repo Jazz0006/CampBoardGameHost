@@ -71,7 +71,7 @@ class PersonalDirectOpenAiV1Test {
         val h = host(InitialJointOpeningDirectV2.REQUEST_SCHEMA).toString()
         val model = JSONObject().put("schemaVersion", 2)
         val upstream = JSONObject(upstream("completed", model))
-            .put("id", "resp_0123456789abcdef").toString()
+            .put("id", "resp_0123456789abcdef").put("store", true).toString()
         val parsed = PersonalDirectOpenAiV1.adaptRetainedResponse(h, upstream)
         assertEquals("resp_0123456789abcdef", parsed.responseId)
         assertEquals(2, JSONObject(parsed.text).getInt("schemaVersion"))
@@ -81,6 +81,10 @@ class PersonalDirectOpenAiV1Test {
         assertTrue(runCatching {
             PersonalDirectOpenAiV1.adaptRetainedResponse(h, JSONObject(upstream)
                 .put("id", "untrusted-string").toString())
+        }.isFailure)
+        assertTrue(runCatching {
+            PersonalDirectOpenAiV1.adaptRetainedResponse(h, JSONObject(upstream)
+                .put("store", false).toString())
         }.isFailure)
         assertTrue(runCatching {
             PersonalDirectOpenAiV1.adaptRetainedResponse(h, JSONObject(upstream)

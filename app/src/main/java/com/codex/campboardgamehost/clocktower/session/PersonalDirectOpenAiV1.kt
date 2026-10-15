@@ -78,6 +78,9 @@ internal object PersonalDirectOpenAiV1 {
 
     internal fun adaptRetainedResponse(hostPayload: String, upstreamBody: String): ResponseReceipt {
         val upstream = JSONObject(upstreamBody)
+        require(upstream.optBoolean("store", false)) {
+            "Provider did not retain the Responses conversation anchor."
+        }
         val responseId = upstream.getString("id")
         require(responseIdPattern.matches(responseId)) { "Invalid Responses anchor ID." }
         return ResponseReceipt(adaptResponse(hostPayload, upstreamBody), responseId)
@@ -177,6 +180,17 @@ internal object PersonalDirectOpenAiV1 {
             onStage("PARSING_RESPONSE")
             val upstream = raw.toString("UTF-8")
             BotcAiWireTrace.payload(traceCall, "RAW_PROVIDER_RESPONSE", upstream)
+            // Usage is factual provider telemetry; no token, game fact, ID or
+            // response body is copied into this compact diagnostic event.
+            JSONObject(upstream).optJSONObject("usage")?.let { usage ->
+                val details = usage.optJSONObject("output_tokens_details")
+                val inputDetails = usage.optJSONObject("input_tokens_details")
+                BotcAiWireTrace.event(traceCall, "USAGE",
+                    "input=${usage.optLong("input_tokens", 0)} " +
+                    "output=${usage.optLong("output_tokens", 0)} " +
+                    "reasoning=${details?.optLong("reasoning_tokens", 0) ?: 0L} " +
+                    "cached=${inputDetails?.optLong("cached_tokens", 0) ?: 0L}")
+            }
             val parsed = if (retainForContinuation) {
                 adaptRetainedResponse(hostPayload, upstream)
             } else null
