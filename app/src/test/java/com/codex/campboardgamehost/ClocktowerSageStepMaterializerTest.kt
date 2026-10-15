@@ -56,7 +56,6 @@ class ClocktowerSageStepMaterializerTest {
             roleMissingReason = { "missing" },
             abilityStateFor = { _, _ -> null },
             actorIsUnreliable = { _, _ -> false },
-            recentMisinformationStreak = { 0 },
         )
 
         val entry = clocktowerSageStepMaterializer(

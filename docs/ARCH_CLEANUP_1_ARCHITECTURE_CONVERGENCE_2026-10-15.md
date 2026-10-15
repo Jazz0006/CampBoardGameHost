@@ -56,11 +56,17 @@
 
 继续按生产引用做闭包审计：`FirstNightBundleHealthyHarness`、FN-BUNDLE-3 初学者 corpus、低信息量校准和 Fortune Teller pilot 没有生产调用者；只用于自己生成历史报告的测试类。删除 1 个生产 source 文件和 6 个 test source 文件，连同 `FirstNightBundleHealthyHarnessAcceptanceTest`、`FirstNightBundleBeginnerCorpusExperiment`、其独立报告构造与校准类，保留 `FirstNightBundleCandidateSpaceAudit` 等确有其他 SDE 消费者的生产代码。
 
-从 `app/build.gradle.kts` 删除已退役的 `fnBundle3Calibration` 专用任务、FAST/FULL 排除配置和耗时实验清单中的孤儿项，保留真实 `Sde2D4TopologyBundlePerformanceTest`、`sde2D5Calibration` 和其他仍存在的校准任务。同步 `docs/TESTING_STRATEGY.md` 中当前测试任务矩阵与过时类别清单；历史归档不改写。**本批提交后需要最新 HEAD 的 CI/R2 验证。**
+从 `app/build.gradle.kts` 删除已退役的 `fnBundle3Calibration` 专用任务、FAST/FULL 排除配置和耗时实验清单中的孤儿项，保留真实 `Sde2D4TopologyBundlePerformanceTest`、`sde2D5Calibration` 和其他仍存在的校准任务。同步 `docs/TESTING_STRATEGY.md` 中当前测试任务矩阵与过时类别清单；历史归档不改写。第五批提交 `88a51a5c8bc2`，GitHub Android CI #4191 与 R2 #3807 GREEN。
+
+### 第六批：移除以界面文案反解析历史的死代码
+
+`ClocktowerHostScreen.recentMisinformationStreak` 从 `ClocktowerEvent.title` 中寻找中文“误导”或英文 `misleading`，推断信息误导连击数；该值在 `ClocktowerInformationStepBuilder` 中仅赋值给 `ClocktowerNightStepUi.recentMisinformationStreak`，源码全局搜索证明**没有任何读取者**。因此删除解析函数、传参回调、Ui 模型字段及五个单元测试中不再需要的虚拟参数。保留其余结构化信息测试。这个切片既删除无效维护点，也杜绝未来把文案反向当作权威事件事实使用。须经最新 HEAD CI/R2 验收。
 
 ## 3. 审计结论：尚未清理的生产调用链
 
-`toClocktowerGameState()` 在 `CampBoardGameHostApp`、`ClocktowerHostScreen`、`ClocktowerNightHostProjection`、`ClocktowerDemonAttackProductionAdapter`、首夜信息请求与 `RecoveryRestorePlanner` 等多处仍真实调用。不能把它与空历史档案归为同一“安全删除”范围；应在一个受控里程碑逐个将可迁移的调用者改读 Session 权威状态，保留必要的初始化/Recovery 边界。
+逐个审计了 `toClocktowerGameState()` 的全部生产调用：Session 创建前、Recovery 重建、夜晚/破晓裁决、首夜信息请求及 Day table 的 UI 卡牌输入都是实际消费者；**现阶段没有证据确保 Session 中的 GameState 比实时传入的 PlayerCard 更新**。因此绝不通过机械地替换为 `session.state.gameState` 来减少调用，而冒险引用旧角色或存活状态。Day table 同一轮渲染中 6 处重复卡牌转换可考虑在同一作用域内只计算一次，但不得跨 Compose 输入变化缓存。整个系统要真正单状态，需要先界定 UI 临时编辑与 Session 确认事实的写入边界。
+
+Recovery 与 Game Archive 具有不同合同：前者供继续游戏，后者供复盘，两者已经复用 `AppGameStateJsonCodec` 的低层卡牌/事件/结果映射。**不应把不同用途的归档结构硬合并**。
 
 部分名字含 `sde`、`candidate`、`scoring`、`shadow` 的模块可能仅供历史实验，也可能提供仍活跃的规则候选/手动展示或因果重放。应先做 **生产消费者闭包** 审计，再成组删除，不能按文件名批量删除。
 

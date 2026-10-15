@@ -740,19 +740,6 @@ internal fun ClocktowerJudgeScreen(
     fun seatNumberFor(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
     fun seatNumbersText(pair: Pair<PlayerCard, PlayerCard>?): String? =
         pair?.let { "${seatNumberFor(it.first)}   ${seatNumberFor(it.second)}" }
-    fun recentMisinformationStreak(card: PlayerCard?): Int {
-        if (card == null) return 0
-        return events.asReversed()
-            .filter { event ->
-                event.type in setOf(ClocktowerEventType.Information, ClocktowerEventType.UnreliableInformation) &&
-                    event.playerNames.firstOrNull() == card.name
-            }
-            .takeWhile { event ->
-                event.title.contains("misleading", ignoreCase = true) || event.title.contains("误导")
-            }
-            .count()
-    }
-
     fun legalPairInformationOptions(
         ability: ClocktowerPairInformationAbility,
         actor: PlayerCard,
@@ -794,7 +781,6 @@ internal fun ClocktowerJudgeScreen(
             }
         },
         actorIsUnreliable = ::actorIsUnreliable,
-        recentMisinformationStreak = ::recentMisinformationStreak,
     )
 
     val washerwomanActor = roleActor("Washerwoman")

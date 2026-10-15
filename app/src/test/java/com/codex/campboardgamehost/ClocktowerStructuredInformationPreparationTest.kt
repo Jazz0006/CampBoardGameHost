@@ -201,7 +201,6 @@ class ClocktowerStructuredInformationPreparationTest {
             roleMissingReason = { "" },
             abilityStateFor = { _, _ -> AbilityFunctioningState.FUNCTIONING },
             actorIsUnreliable = { _, _ -> false },
-            recentMisinformationStreak = { 0 },
         )
 
         val built = builder.build(
