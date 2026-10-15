@@ -1,5 +1,7 @@
 # PROD-GLOBAL-3E2 — Generic committed Host change checkpoint / current decision evidence
 
+> **HISTORICAL CHECKPOINT, not current NEXT (2026-10-15).** The earlier instruction to keep V1 until parity is superseded by immediate safe retirement; continuation is now designed as one per-game conversation with Host-proven delta events. See [roadmap](CURRENT_DEVELOPMENT_ROADMAP.md) / [continuity design](AI_STORYTELLER_CONTINUOUS_CONVERSATION_AND_CROSS_GAME_MEMORY_2026-10-15.md).
+
 > 2026-10-12; stacked on 3E/3C Draft #304. Current implementation branch `feature/prod-global-3e-generic-host-checkpoint-20261012`. Not a production AI replan yet.
 
 ## Product invariant

@@ -1,5 +1,7 @@
 # PROD-GLOBAL-3E3 — Coupled current residual scope and whole-package gate
 
+> **HISTORICAL IMPLEMENTATION CHECKPOINT (2026-10-12/13), not current NEXT.** 2026-10-15 product policy changed: retire V1 pointwise requests immediately (a deletion patch exists only in a review-pending isolated worktree); prefer one continuous AI conversation, Host event deltas, human override, player claims and cross-game strategic diversity. See [current roadmap](CURRENT_DEVELOPMENT_ROADMAP.md) and [current design](AI_STORYTELLER_CONTINUOUS_CONVERSATION_AND_CROSS_GAME_MEMORY_2026-10-15.md). Earlier "retire after feature parity" language below is superseded but retained as checkpoint evidence.
+
 > 2026-10-12, first implementation checkpoint (not end-to-end production acceptance).
 > Based on #306 (which is stacked on #304). #305 ADB diagnostics remains a PARALLEL Draft child of #304; its selected logging capability was intentionally transplanted to #307 on 2026-10-13, without merging branch histories.
 

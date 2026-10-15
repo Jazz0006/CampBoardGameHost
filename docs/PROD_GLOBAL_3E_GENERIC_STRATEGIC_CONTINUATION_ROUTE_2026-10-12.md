@@ -1,5 +1,7 @@
 # PROD-GLOBAL-3E — Generic Whole-Game Strategic Continuation
 
+> **HISTORICAL CHECKPOINT, not current NEXT (2026-10-15).** The prior `store:false` strategy-memory-only continuation remains an implementation baseline, but the approved target is same-game Responses conversation continuity, Host delta events, human override, player claims and cross-game memory; V1 pointwise calls must retire now. See [roadmap](CURRENT_DEVELOPMENT_ROADMAP.md) / [continuity design](AI_STORYTELLER_CONTINUOUS_CONVERSATION_AND_CROSS_GAME_MEMORY_2026-10-15.md).
+
 > 2026-10-12 — experimental first acceptance seam, NOT yet a live AI recommendation or automatic action/observation publisher. Stacked Draft PR #304. The product-owner's latest policy is **all roles / all consequential events / all future nights**. The earlier first-night Poisoner/FT gate only verifies a limited legal observation domain and is not the strategic planning controller.
 
 ## What is implemented

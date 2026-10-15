@@ -1,5 +1,7 @@
 # PROD-GLOBAL-3 — Unified Opening Plan & Strategic Continuity (2026-10-11)
 
+> **HISTORICAL PRODUCT ROUTE; its "ACTIVE" marker below is superseded as of 2026-10-15.** See the [current roadmap](CURRENT_DEVELOPMENT_ROADMAP.md) and [continuous conversation architecture](AI_STORYTELLER_CONTINUOUS_CONVERSATION_AND_CROSS_GAME_MEMORY_2026-10-15.md). Keep the one-joint-opening decision, but do not follow old per-request memory or V1 retirement sequencing.
+
 > **ACTIVE / PRODUCT-OWNER CONFIRMED.** Authoritative NEXT for TB AI_ASSISTED personal-direct Android experiment. Replaces old standalone Drunk-model request followed by post-Drunk first-night model request, long strategy essay UI, and multi-model comparison proposals. Historical documents are evidence, not active execution orders. **Design accepted; implementation/phone acceptance NOT completed.**
 
 ## 2026-10-12 PRODUCT OWNER DESIGN UPDATE — any role, any material event, multi-night first
