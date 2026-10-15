@@ -14,7 +14,7 @@
 - `SdeHistoricalReplayInput`、`DynamicActionReducer`、`TroubleBrewingGameSnapshotProjector`、Recovery、Game Archive、规则合法域/Host 裁决/合法性检查继续保留。**不开发新通用时间点重放**。
 - 不保留旧 APK/旧存档/过时策略的行为兼容；但任何正在消费的手动规则路径必须保持可用。EvidenceLab/TBGS 既有共享协议不随意更改。
 
-## 2. 已实施：源代码第一与第二批
+## 2. 已实施的源码清理批次
 
 ### 第一批：死的推荐决策事件存储和评分
 
@@ -34,11 +34,23 @@
 - Provider `priorDecisions` 保留实际因果日志注入的接口，而非使用旧空档案生成“历史”；
 - 保留当前结构化动作/观察记录、投票、版本绑定及 Host 合法性检查。
 
-第二批提交 `ef8c86223c45`，需要以当前 PR HEAD 的 CI/R2 完成独立验证，不能提前宣称全局验收通过。
+第二批提交 `ef8c86223c45`，GitHub Android CI #4187 与 R2 #3803 GREEN；整个架构重构仍未完成。
 
 ### 第三批：废弃的 rollout 切换门槛
 
-生产引用搜索证明 `SelectionRolloutGate`、`SelectionRolloutStage` 与对应旧 `SelectionRolloutGateTest` 没有生产消费者，仍描述 `LEGACY_ONLY/SHADOW_COMPARE/LIMITED_AUTO` 旧推荐发布阶梯。本轮删除该独立旧策略门槛及专属测试，不触及当前 `StorytellerOperationMode`（MANUAL/AI_ASSISTED/AI_AUTOMATIC）与 Host 真实模式实现。该批还需以提交 HEAD 的 CI 验证。
+生产引用搜索证明 `SelectionRolloutGate`、`SelectionRolloutStage` 与对应旧 `SelectionRolloutGateTest` 没有生产消费者，仍描述 `LEGACY_ONLY/SHADOW_COMPARE/LIMITED_AUTO` 旧推荐发布阶梯。本轮删除该独立旧策略门槛及专属测试，不触及当前 `StorytellerOperationMode`（MANUAL/AI_ASSISTED/AI_AUTOMATIC）与 Host 真实模式实现。第三批提交 `ea8f471`，GitHub Android CI #4189 与 R2 #3805 GREEN。
+
+### 第四批：旧首夜角色独立整包评估与 D5 校准
+
+经 `app/src/main/java` 全生产调用链和 `app/src/test` 闭包审计，以下不再具有任何运行时消费者，都是此前已经退役的基于 Drunk 角色和 Demon Bluff 的离线实验分析（不是规则或 Host 信息合法域）：
+
+- 删除 `FirstNightDrunkWholeBundleExactEvaluator`、`FirstNightDrunkPairWholeBundleEvaluator`、`FirstNightDrunkNumericWholeBundleEvaluator`、`FirstNightDrunkFortuneTellerWholeBundleEvaluator`；
+- 删除 `DemonBluffJointOutputEvaluator`（其中的 `SetupDemonBluffJointOutputAdapter` 亦无独立生产调用者；真正的 setup bluff 规则候选生成和 Host 合法性校验不在此文件）；
+- 删除上述离线评估器的直接单元测试及只为它们服务的 D5 Drunk/Demon Bluff 校准辅助类与测试；
+- 在 `Sde2D5CalibrationExperiment` 中移除这两个已弃用的实验场景与 lazy 构造，**保留**该文件其余的跨玩家人数基本拓扑验证与真人案例测试；`sde2D5Calibration` Gradle 任务因仍服务剩余真实测试而保留；
+- 保留共用的 `FirstNightBundleExperimentContract`、`FirstNightBundleHealthyHarness`、`FirstNightBundleCandidateSpaceAudit`、规则拥有者和 `ExactHistoricalHypotheticalObservationBundleEvaluator`，因为这些还有其他消费者，不能在未迁移调用方前顺手删除。
+
+本批需要精确 HEAD CI/R2 验证。尚未证明全部旧实验无用；后续仍需检查余下测试专属实验模块与 Gradle task。未触碰实际夜晚信息、登记、语义时间线或 Recovery。
 
 ## 3. 审计结论：尚未清理的生产调用链
 
