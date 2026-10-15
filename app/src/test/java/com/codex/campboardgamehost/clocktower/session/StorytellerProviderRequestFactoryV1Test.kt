@@ -2,17 +2,11 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
-import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CandidateAuditSummary
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.DecisionEventStatus
-import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
-import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
-import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
@@ -21,7 +15,6 @@ import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDeclaredPressureLevelV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionEvent
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
@@ -32,7 +25,6 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosit
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSeat
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSetupState
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
-import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import java.io.File
 import org.junit.Assert.assertEquals
@@ -155,7 +147,7 @@ class StorytellerProviderRequestFactoryV1Test {
     }
 
     @Test
-    fun `game context is rebuilt from Host inputs and effective committed history prefix`() {
+    fun `game context is rebuilt from Host player inputs without uncommitted synthetic archive`() {
         val snapshot = runtimeSnapshot(
             phase = StorytellerPhase.NIGHT,
             gameRevision = 8,
@@ -171,13 +163,6 @@ class StorytellerProviderRequestFactoryV1Test {
                     pressureLevel = StorytellerDeclaredPressureLevelV1.HIGH,
                 ),
             ),
-            decisionHistory = DecisionHistoryArchive(
-                events = listOf(
-                    event("past", 7, 4, DecisionEventStatus.APPLIED),
-                    event("future", 9, 4, DecisionEventStatus.APPLIED),
-                    event("proposal", 6, 3, DecisionEventStatus.PROPOSED),
-                ),
-            ),
         )
 
         assertEquals(snapshot.grimoireSeats.map { it.seat }, context.players.map { it.seat })
@@ -185,8 +170,7 @@ class StorytellerProviderRequestFactoryV1Test {
         assertEquals(PlayerExperienceLevelV1.BEGINNER, context.players[1].experienceLevel)
         assertEquals(listOf(RoleId("Saint")), context.players[1].claimedRoleIds)
         assertEquals(StorytellerDeclaredPressureLevelV1.HIGH, context.players[1].pressureLevel)
-        assertEquals(listOf("past"), context.priorDecisions.map { it.eventId })
-        assertEquals("candidate:past", context.priorDecisions.single().selectedCandidateId)
+        assertTrue(context.priorDecisions.isEmpty())
     }
 
     @Test
@@ -330,56 +314,4 @@ class StorytellerProviderRequestFactoryV1Test {
         poisoned = SnapshotField.Known(false),
     )
 
-    private fun event(
-        id: String,
-        gameRevision: Long,
-        playerRevision: Long,
-        status: DecisionEventStatus,
-    ): StorytellerDecisionEvent {
-        val candidateId = "candidate:$id"
-        return StorytellerDecisionEvent(
-            eventId = id,
-            requestId = "request:$id",
-            idempotencyKey = "idem:$id",
-            gameStateRevision = gameRevision,
-            playerInputRevision = playerRevision,
-            rulesetRef = RulesetRef(
-                scriptId = ScriptId("trouble_brewing"),
-                scriptContentHash = "00000000000000000000000000000000",
-                rulesetVersion = "test",
-                sourceRevision = "test",
-                coverage = RuleCoverage.VERIFIED,
-            ),
-            algorithmConfigVersion = "historical",
-            selectorVersion = "historical",
-            decisionSeed = 1L,
-            stateDigest = "state:$id",
-            historyDigest = "history:$id",
-            selectedCandidateId = candidateId,
-            selectedOutcomeSnapshot = DecisionOutcomeSnapshot(
-                decisionType = "test-decision",
-                canonicalFields = sortedMapOf("seat" to "1"),
-            ),
-            abilityState = AbilityState.FUNCTIONING,
-            truthRelation = TruthRelation.NOT_APPLICABLE,
-            registrations = emptyList(),
-            qualityTier = QualityTier.RECOMMENDED,
-            totalScore = 0,
-            finalProbabilityFixedPoint = 0L,
-            pressureDelta = emptyMap(),
-            candidatePoolFingerprint = "pool:$id",
-            candidateAudit = listOf(
-                CandidateAuditSummary(
-                    candidateId = candidateId,
-                    candidateFamilyId = "family",
-                    qualityTier = QualityTier.RECOMMENDED,
-                    totalScore = 0,
-                    finalProbabilityFixedPoint = 0L,
-                    explanationCodes = emptyList(),
-                ),
-            ),
-            explanationCodes = emptyList(),
-            status = status,
-        )
-    }
 }

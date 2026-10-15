@@ -9,7 +9,7 @@ import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.YesNoAnswer
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
-import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
+import com.codex.campboardgamehost.clocktower.history.InformationReferenceExtractor
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationCandidate
@@ -51,7 +51,7 @@ internal fun clocktowerFirstNightInformationRequest(
             shownRole = primary?.takeIf { option.displayKind == ClocktowerDisplayKind.EitherOne }
                 ?.let { shown -> clocktowerRolesForScript(script).firstOrNull { it.nameFor(language) == shown }?.enName ?: shown }
                 ?.let(::RoleId),
-            candidateSeats = DecisionHistoryRepository.extractSeatNumbers(
+            candidateSeats = InformationReferenceExtractor.extractSeatNumbers(
                 listOf(option.displaySecondary, option.displayFooter), cards.size,
             ).toList(),
             shownNumber = primary?.toIntOrNull(),

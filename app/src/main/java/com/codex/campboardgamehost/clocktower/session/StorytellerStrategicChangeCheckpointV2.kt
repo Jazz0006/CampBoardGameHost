@@ -66,7 +66,6 @@ internal object StorytellerStrategicChangeCheckpointV2 {
         CONFIRMED_ACTION,
         PLAYER_RECEIVED_OBSERVATION,
         PLAYER_CONTEXT_OR_CLAIMS,
-        STORYTELLER_DECISION_HISTORY,
         GAME_POSITION,
     }
 
@@ -127,14 +126,6 @@ internal object StorytellerStrategicChangeCheckpointV2 {
             before.epistemicObservationLog.records) {
             "Cannot rewrite already received Host observations."
         }
-        // A corrected Storyteller decision must use the canonical correction
-        // mechanism, not silently replace an already confirmed event.
-        require(after.decisionHistory.events.take(before.decisionHistory.events.size) ==
-            before.decisionHistory.events)
-        require(after.decisionHistory.corrections.take(
-            before.decisionHistory.corrections.size) ==
-            before.decisionHistory.corrections)
-
         require(openDecisions.map { it.decisionId }.distinct().size == openDecisions.size)
         val legalSeats = after.gameState.players.mapTo(mutableSetOf<Int>()) { it.seat }
         require(openDecisions.all { it.sourceSeat == null || it.sourceSeat in legalSeats })
@@ -157,8 +148,6 @@ internal object StorytellerStrategicChangeCheckpointV2 {
                 add(ChangeKind.PLAYER_RECEIVED_OBSERVATION)
             if (before.storytellerPlayerContextBySeat != after.storytellerPlayerContextBySeat)
                 add(ChangeKind.PLAYER_CONTEXT_OR_CLAIMS)
-            if (before.decisionHistory != after.decisionHistory)
-                add(ChangeKind.STORYTELLER_DECISION_HISTORY)
             if (previouslyReviewed.position != current.position)
                 add(ChangeKind.GAME_POSITION)
         }

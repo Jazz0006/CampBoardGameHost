@@ -1,6 +1,6 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
+import com.codex.campboardgamehost.clocktower.history.InformationReferenceExtractor
 
 /** The history fields for one already-authorized player information reveal. */
 internal data class ClocktowerInformationHistoryPayload(
@@ -35,7 +35,7 @@ internal fun clocktowerInformationHistoryPayload(
         ClocktowerDisplayKind.Grimoire -> text("间谍查看了魔典", "Spy viewed the grimoire")
         else -> primary.orEmpty()
     }
-    val referencedPlayerNames = DecisionHistoryRepository.extractSeatNumbers(
+    val referencedPlayerNames = InformationReferenceExtractor.extractSeatNumbers(
         values = listOf(displayStep.displaySecondary, displayStep.displayFooter),
         maximumSeat = orderedPlayerNames.size,
     ).mapNotNull { seat -> orderedPlayerNames.getOrNull(seat - 1) }

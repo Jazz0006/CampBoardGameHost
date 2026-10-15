@@ -2,7 +2,6 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.KlutzDeathTriggerEvidenceV1
-import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
@@ -70,7 +69,6 @@ internal data class ClocktowerSessionState(
     val playerInputRevision: Long,
     val gameSeed: Long,
     val gameState: GameState,
-    val decisionHistory: DecisionHistoryArchive = DecisionHistoryArchive(),
     val crossGameHistory: CrossGameHistory = CrossGameHistory(),
     val actionTimeline: ActionFactTimeline = ActionFactTimeline(),
     val epistemicObservationLog: EpistemicObservationLog = EpistemicObservationLog(),
@@ -142,7 +140,6 @@ internal class ClocktowerGameSession private constructor(
         gameSeed = state.gameSeed,
         rulesetRef = rulesetRef,
         gameState = state.gameState,
-        decisionHistory = state.decisionHistory,
         crossGameHistory = state.crossGameHistory,
         actionTimeline = state.actionTimeline,
         epistemicObservationLog = state.epistemicObservationLog,
@@ -563,7 +560,6 @@ internal class ClocktowerGameSession private constructor(
             playerInputRevision = playerInputRevision,
             gameSeed = gameSeed,
             gameState = gameState,
-            decisionHistory = decisionHistory,
             crossGameHistory = crossGameHistory,
             actionTimeline = actionTimeline,
             epistemicObservationLog = epistemicObservationLog,

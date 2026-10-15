@@ -11,7 +11,6 @@ data class GameSnapshot(
     val gameSeed: Long,
     val rulesetRef: RulesetRef,
     val gameState: GameState,
-    val decisionHistory: DecisionHistoryArchive = DecisionHistoryArchive(),
     val crossGameHistory: CrossGameHistory = CrossGameHistory(),
     /** Mechanical facts committed to the same game-wide timeline as epistemic observations. */
     val actionTimeline: ActionFactTimeline = ActionFactTimeline(),
