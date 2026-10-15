@@ -36,6 +36,10 @@
 
 第二批提交 `ef8c86223c45`，需要以当前 PR HEAD 的 CI/R2 完成独立验证，不能提前宣称全局验收通过。
 
+### 第三批：废弃的 rollout 切换门槛
+
+生产引用搜索证明 `SelectionRolloutGate`、`SelectionRolloutStage` 与对应旧 `SelectionRolloutGateTest` 没有生产消费者，仍描述 `LEGACY_ONLY/SHADOW_COMPARE/LIMITED_AUTO` 旧推荐发布阶梯。本轮删除该独立旧策略门槛及专属测试，不触及当前 `StorytellerOperationMode`（MANUAL/AI_ASSISTED/AI_AUTOMATIC）与 Host 真实模式实现。该批还需以提交 HEAD 的 CI 验证。
+
 ## 3. 审计结论：尚未清理的生产调用链
 
 `toClocktowerGameState()` 在 `CampBoardGameHostApp`、`ClocktowerHostScreen`、`ClocktowerNightHostProjection`、`ClocktowerDemonAttackProductionAdapter`、首夜信息请求与 `RecoveryRestorePlanner` 等多处仍真实调用。不能把它与空历史档案归为同一“安全删除”范围；应在一个受控里程碑逐个将可迁移的调用者改读 Session 权威状态，保留必要的初始化/Recovery 边界。
