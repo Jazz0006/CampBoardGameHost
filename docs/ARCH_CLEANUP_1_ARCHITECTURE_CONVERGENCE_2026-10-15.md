@@ -67,7 +67,7 @@
 - `ClocktowerSemanticHistoryMode.requireCompatible(observationLog, cursor)` 是旧版忽略 `ActionFactTimeline` 的兼容重载。所有生产调用方已传入 action timeline；删除此无人调用的重载，保留 `GLOBAL_V1` 的三参数真实校验，防止未来误从空动作记录验证。
 - `FirstNightBundleExperimentEvaluator` 只被两个实验性测试调用，是对现存 `ExactHistoricalHypotheticalObservationBundleEvaluator` 的单层包装。删除 `FirstNightExperimentProfile`、诊断/响应 wrapper 与这层无生产使用的评估器；把原有两项测试改为直接调用底层精确评估器，保留善良公开线索投影、醉酒可信世界、双接收者排序、原始 bundle 不变等证据。
 - 不删除 `FirstNightPublicGoodInfoProjection` 和 `FirstNightBundleProfileExposure`：虽然属于旧的实验语义，但其他仍保留的实验/影子模块有消费者；不影响 Host 当前联合法律裁量。
-- 此批代码变更后需新 HEAD CI/R2 通过，再宣布成功。
+- 第七批源码提交 `f4c9468643e7`，GitHub CI #4194（含 Android tests、Real Clingo）与 R2 #3810 均 GREEN。
 
 ## 3. 审计结论：尚未清理的生产调用链
 
@@ -81,10 +81,10 @@ Recovery 与 Game Archive 具有不同合同：前者供继续游戏，后者供
 
 ## 4. 未收口 / 待验证
 
-1. 当前 #315 整体的 Android CI、R2、规则/Recovery/Provider 历史测试与安全基线；本地构建机 SSH 故障单独处理，不把构建机故障记作应用错误。
+1. #315 七批源码至 `f4c9468643e7` 的 Android CI、Real Clingo、R2 已通过；但仅覆盖自动化证据，不代表手动 Host/Recovery 的真实设备端验收。最终归并 HEAD 再跑相应检查；本地构建机 SSH 故障单独处理，不把构建机故障记作应用错误。
 2. 清理其余没有生产入口的旧推荐评分/概率与历史实验类族（只删除真实死亡依赖图）。
 3. 逐项核实当前权威状态转换点、Recovery 和 Archive 的真实边界与跨项目 TBGS 语义。
-4. **已关闭 #310–#314（全部未合并）**：#310 的 Host 单项门控值得复用，但现有代码让模型输出 candidateId；#311 的事件增量使用已废弃的 `ClocktowerSessionState.decisionHistory`、`StorytellerDecisionEvent` 与 `DecisionCorrectionEvent`，当前 #315 已移除这套空档案，不能直接 cherry-pick。#312 的模型合同过时；#313 筛掉合法提名/逐人投票与完整历史不符；#314 的原始审计文档已引入本清理分支。可迁移的是 Host 单项合法性、前缀单调性和私有缓存原则，不是旧接口。1E 仍待依赖审查，关闭的 PR 远端分支暂不删除，以防依赖无法追踪。
+4. **已关闭 #310–#314（全部未合并）**：#310 的 Host 单项门控值得复用，但现有代码让模型输出 candidateId；#311 的事件增量使用已废弃的 `ClocktowerSessionState.decisionHistory`、`StorytellerDecisionEvent` 与 `DecisionCorrectionEvent`，当前 #315 已移除这套空档案，不能直接 cherry-pick。#312 的模型合同过时；#313 筛掉合法提名/逐人投票与完整历史不符；#314 的原始审计文档已引入本清理分支。可迁移的是 Host 单项合法性、前缀单调性和私有缓存原则，不是旧接口。已核对 1E 分支：独立 `StorytellerJitDirectResultV2` 对结果数字/真假/Pair/角色/座位执行严格结构化 JSON 解码、模型不接收 candidate ID 且明确 Host 验证为后置；`HostAiDecisionRelevantFactsV2` 对所有合法提名、逐人投票和阶段变化均保留。**但它们尚未接入实际 API/UI**，后者调用的 `HostCausalEventDeltaV2` 仍依赖 #311 已删除的空档案，故**绝不整体合并 1E**；仅标记两项可单独复用的设计/测试素材。关闭的 PR 远端分支暂不删除，以防依赖无法追踪。
 5. 适度整合活动路线与交接文档，保留必要历史审计，但不再将旧项目计划列为当下 NEXT。
 
 ## 5. AI-EVENT-JIT 恢复门槛（本轮结束后）

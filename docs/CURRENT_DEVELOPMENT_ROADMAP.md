@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> **ARCH-CLEANUP-1 阶段进展**：Draft #315 已提交六批去冗余源码清理；最新代码 HEAD `0a3a7976cece`，六批均已获 Android CI/R2 GREEN。过时 AI-EVENT-JIT Draft #312/#313 已关闭而未合并；#314 只读审计已复制到 #315 并关闭。#310/#311 保留待因果边界复审，#304/#306/#307/#308 是仍未合并的 P1 叠加依赖。
+> **ARCH-CLEANUP-1 最新（2026-10-15）**：Draft #315 已完成七批清理，代码 HEAD `f4c9468643e7`；七批 Android CI/R2 GREEN，最新代码 CI #4194、Real Clingo 与 R2 #3810 均成功。#310–#314 已关闭且未合并；当前只剩 #304/#306/#307/#308/#315 五个开放 PR。P1 上游四项仍有真实生产调用，#315 继续叠加其上，不得直接合并 main。1E 实验分支只用于后续参考语义直出合同，不整体合并。
 
 
 > **当前执行优先级（2026-10-15）：ARCH-CLEANUP-1 进行中。** 先完成架构收敛、死代码清理、实证验收与 PR 收口；**暂时停止 AI-EVENT-JIT 提示词开发、新功能和付费 API 实验**。以 [ARCH-CLEANUP-1 审计/进展](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md) 和 [PR #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 为活动工作。下文原 AI 续接 P2 计划仅为恢复开发时的背景，不代表当前 NEXT。

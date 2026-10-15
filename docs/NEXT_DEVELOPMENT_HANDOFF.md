@@ -1,9 +1,9 @@
 # CampBoardGameHost — Next Development Handoff
 
-> **本轮执行结果更新**：Draft #315 的六批源代码清理已推送；当前 `cleanup/arch-cleanup-1-20261015` HEAD `0a3a7976cece`。六批 Android CI/R2 均 GREEN；归并前仍须检查最新合并候选 HEAD 和受影响的规则、Recovery 契约。#312/#313/#314 已关闭且未合并，#314 的审计已纳入本清理分支；剩余 #310/#311、#304–#308 与 1E 实验分支按实际依赖进一步复审。不要将这条记录理解为整轮 ARCH-CLEANUP-1 已结束。
+> **本轮继续执行（2026-10-15）**：Draft #315 七批清理已提交；代码 HEAD `f4c9468643e7`，七批 Android CI/R2 GREEN；最新代码 CI #4194、Real Clingo 和 R2 #3810 均成功。#310–#314 全部关闭且未合并，当前只剩 #304/#306/#307/#308/#315 开放。1E 实验分支的语义直出 JSON decoder 可供未来选取，但另一个增量组件依赖已废弃的 #311 历史类型，不得整支合并。ARCH-CLEANUP-1 仍未完成主线归并与真机验收。
 
 
-> **当前唯一 NEXT（2026-10-15）：完成 ARCH-CLEANUP-1 并在 CI/R2 与依赖收口后恢复 AI-EVENT-JIT。** 不要按以下旧段落启动任何提示词实验、真实 API 调用或新功能。先读 [架构清理进展与保留边界](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md)、[Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315)、[TBGS/UGSM 审计](TBGS_UGSM_DECISION_TIME_AND_AI_EVENT_INPUT_AUDIT_2026-10-15.md)。确保 #304/#306/#307/#308/#310-#314 与当前 main 的实际 live 依赖，不合并已过时的候选 ID 模型合同或过滤投票语义。
+> **当前唯一 NEXT（2026-10-15）：完成 ARCH-CLEANUP-1 并在 CI/R2 与依赖收口后恢复 AI-EVENT-JIT。** 不要按以下旧段落启动任何提示词实验、真实 API 调用或新功能。先读 [架构清理进展与保留边界](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md)、[Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315)、[TBGS/UGSM 审计](TBGS_UGSM_DECISION_TIME_AND_AI_EVENT_INPUT_AUDIT_2026-10-15.md)。核对 #304/#306/#307/#308 与当前 main 的依赖并确定是否拆分旧 remainingChoices；#310–#314 均已关闭且未合并，禁止复活候选 ID 模型合同或过滤投票的实现。
 
 
 > **2026-10-15（Australia/Sydney），唯一活动交接。** 不根据旧快照推断当前分支或 “NEXT”；每次先读 [AGENTS.md](../AGENTS.md)、[current roadmap](CURRENT_DEVELOPMENT_ROADMAP.md) 和 [AI 连续对话专项](AI_STORYTELLER_CONTINUOUS_CONVERSATION_AND_CROSS_GAME_MEMORY_2026-10-15.md)。被压缩的旧交接全文见 [2026-10-15 同步前交接快照](archive/checkpoints/NEXT_DEVELOPMENT_HANDOFF_PRE_CONTINUITY_SYNC_2026-10-15.md)。
