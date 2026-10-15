@@ -481,8 +481,6 @@ internal fun CampBoardGameHostApp() {
     var clocktowerChambermaidFirst by remember { mutableStateOf<String?>(null) }
     var clocktowerChambermaidSecond by remember { mutableStateOf<String?>(null) }
     var clocktowerRavenkeeperTarget by remember { mutableStateOf<String?>(null) }
-    var clocktowerRedHerring by remember { mutableStateOf<String?>(null) }
-    var clocktowerRecommendedDemonBluffRoleNames by remember { mutableStateOf<List<String>>(emptyList()) }
     var clocktowerButlerMaster by remember { mutableStateOf<String?>(null) }
     var clocktowerMonkProtectedTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerConfirmedMonkProtectedTarget by remember { mutableStateOf<String?>(null) }
@@ -507,8 +505,6 @@ internal fun CampBoardGameHostApp() {
     var selectedClocktowerScript by remember { mutableStateOf<ClocktowerScript?>(null) }
     var clocktowerGameSession by remember { mutableStateOf<ClocktowerGameSession?>(null) }
     var clocktowerSessionView by remember { mutableStateOf<ClocktowerSessionView?>(null) }
-    // Host-owned, current-session causal event store; Recovery restores only validated typed entries.
-    val clocktowerCausalJournals = remember { mutableMapOf<String, StorytellerCausalDecisionJournalV1>() }
     val currentClocktowerScript = clocktowerSessionView?.scriptId
         ?.let { scriptId ->
             ClocktowerScript.entries.singleOrNull { script -> script.toRecommendationScriptId() == scriptId }
@@ -561,6 +557,11 @@ internal fun CampBoardGameHostApp() {
     // Retain the setup step when the user visits app-wide AI settings and returns.
     var clocktowerSetupStep by remember { mutableStateOf(0) }
     val cards = remember { mutableStateListOf<PlayerCard>() }
+    // Accepted setup choices come from Session, not separate writable Compose state.
+    val clocktowerRedHerring = clocktowerSessionView?.redHerringSeat
+        ?.let { seat -> cards.getOrNull(seat - 1)?.name }
+    val clocktowerRecommendedDemonBluffRoleNames =
+        clocktowerSessionView?.demonBluffRoleIds?.map(RoleId::value).orEmpty()
     val records = remember { mutableStateListOf<EliminationRecord>() }
     val recoveryWriteGate = remember { RecoveryWriteGate() }
     val clocktowerEvents = remember { mutableStateListOf<ClocktowerEvent>() }
@@ -612,12 +613,8 @@ internal fun CampBoardGameHostApp() {
             "Clocktower session authority is unavailable."
         }
 
-    fun currentClocktowerCausalJournal(): StorytellerCausalDecisionJournalV1 {
-        val session = requireClocktowerGameSession()
-        return clocktowerCausalJournals.getOrPut(session.state.gameId) {
-            StorytellerCausalDecisionJournalV1(session.state.gameId)
-        }
-    }
+    fun currentClocktowerCausalJournal(): StorytellerCausalDecisionJournalV1 =
+        requireClocktowerGameSession().causalDecisionJournal
 
     fun currentTroubleBrewingFirstNightPairDecisionContext(): TroubleBrewingFirstNightPairDecisionContext? {
         if (
@@ -1396,8 +1393,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerChambermaidFirst = null
         clocktowerChambermaidSecond = null
         clocktowerRavenkeeperTarget = null
-        clocktowerRedHerring = null
-        clocktowerRecommendedDemonBluffRoleNames = emptyList()
         clocktowerButlerMaster = null
         clocktowerMonkProtectedTarget = null
         clocktowerConfirmedMonkProtectedTarget = null
@@ -1452,13 +1447,15 @@ internal fun CampBoardGameHostApp() {
                         epistemicObservationLog = EpistemicObservationLog(history.epistemicObservations),
                         semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
                         nextTimelineGlobalSequence = history.nextTimelineGlobalSequence,
+                        redHerringSeat = mechanics.redHerring?.let { name ->
+                            restoredCards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+                                ?: error("Recovered Red Herring is absent from the canonical seats.")
+                        },
+                        demonBluffRoleIds = mechanics.demonBluffRoleNames.map(::RoleId),
                     ),
+                    causalDecisionArchive = history.causalDecisionJournal,
                 )
                 publishClocktowerSessionView()
-                clocktowerCausalJournals[game.identity.gameId] =
-                    history.causalDecisionJournal?.let { archive ->
-                        StorytellerCausalDecisionJournalV1.restore(archive, requireClocktowerGameSession().state)
-                    } ?: StorytellerCausalDecisionJournalV1(game.identity.gameId)
                 clocktowerRulesetRef = runtime?.rulesetRef
                 committedClocktowerSetup =
                     runtime?.sdeReplayMaterialization?.input?.toCommittedSetup()
@@ -1477,8 +1474,6 @@ internal fun CampBoardGameHostApp() {
                 clocktowerPendingNewDemonName = mechanics.pendingNewDemonName
                 clocktowerPendingNightNewDemonIdentityName = mechanics.pendingNightNewDemonIdentityName
                 clocktowerConfirmedDemonSuccessorTarget = mechanics.confirmedDemonSuccessorTarget
-                clocktowerRedHerring = mechanics.redHerring
-                clocktowerRecommendedDemonBluffRoleNames = mechanics.demonBluffRoleNames
                 clocktowerButlerMaster = mechanics.butlerMaster
                 clocktowerVirginUsed = mechanics.virginUsed
                 clocktowerSlayerUsed = mechanics.slayerUsed
@@ -1674,8 +1669,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerChambermaidFirst = null
         clocktowerChambermaidSecond = null
         clocktowerRavenkeeperTarget = null
-        clocktowerRedHerring = null
-        clocktowerRecommendedDemonBluffRoleNames = emptyList()
         clocktowerButlerMaster = null
         clocktowerMonkProtectedTarget = null
         clocktowerConfirmedMonkProtectedTarget = null
@@ -2327,15 +2320,23 @@ internal fun CampBoardGameHostApp() {
         val registry = activeGameClocktowerRulesetCatalog
             .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
         accepted.selection.demonBluffs?.let { externalIds ->
-            clocktowerRecommendedDemonBluffRoleNames = externalIds.map { role ->
-                requireNotNull(registry.findByExternalId(role)).id.value
-            }
+            requireClocktowerGameSession().commitDemonBluffs(
+                roles = externalIds.map { role ->
+                    requireNotNull(registry.findByExternalId(role)).id
+                },
+                phase = storytellerPhaseFor(), round = round, sequence = clocktowerEventCounter + 1,
+            )
+            publishClocktowerSessionView()
         }
         val redId = accepted.selection.choices["setup.red-herring"]
         val redSeat = pending.domain.forDrunkSeat(selectedDrunk)
             .redHerringCandidatesBySeat.entries.singleOrNull { it.value == redId }?.key
         redSeat?.let { seat ->
-            clocktowerRedHerring = cards[seat - 1].name
+            requireClocktowerGameSession().commitRedHerringSeat(
+                seat = seat,
+                phase = storytellerPhaseFor(), round = round, sequence = clocktowerEventCounter + 1,
+            )
+            publishClocktowerSessionView()
         }
         BotcAiWireTrace.hostAdoption(selectedDrunk, adoptedJointInformation.size)
         screen = Screen.ClocktowerJudge
@@ -2695,6 +2696,28 @@ internal fun CampBoardGameHostApp() {
         ))
     }
 
+    /**
+     * Project an already-accepted Session death into Compose rendering. PlayerCard may
+     * retain a display round, but it cannot independently establish that a seat died.
+     */
+    fun reflectCommittedClocktowerDeath(seat: Int, deathRound: Int = round) {
+        val confirmed = requireNotNull(requireClocktowerGameSession().state.gameState.playerAt(seat)) {
+            "Cannot render a death for an unknown Session seat $seat."
+        }
+        check(!confirmed.alive) { "Death must be committed to Session before updating PlayerCard." }
+        val index = seat - 1
+        val card = requireNotNull(cards.getOrNull(index)) {
+            "Cannot render death for a missing PlayerCard seat $seat."
+        }
+        check(card.name == confirmed.name) {
+            "PlayerCard seat $seat is not the confirmed Session player."
+        }
+        check(card.eliminatedRound == null || card.eliminatedRound == deathRound) {
+            "Cannot overwrite an earlier confirmed death round for seat $seat."
+        }
+        cards[index] = card.copy(eliminatedRound = card.eliminatedRound ?: deathRound)
+    }
+
     fun setClocktowerActualRole(
         playerName: String,
         nextRole: ClocktowerRole,
@@ -2730,6 +2753,10 @@ internal fun CampBoardGameHostApp() {
             )
             publishClocktowerSessionView()
             invalidateA4RevisionScope()
+            val committedRole = requireNotNull(requireClocktowerGameSession().state.gameState.playerAt(targetSeat))
+            check(committedRole.name == playerName && committedRole.actualRole == RoleId(nextRole.enName)) {
+                "Session role commit must precede the PlayerCard presentation update."
+            }
             cards[index] = cards[index].copy(
                 actualRoleLabel = nextRole.nameFor(language),
                 clocktowerTeam = nextRole.team,
@@ -3328,14 +3355,29 @@ internal fun CampBoardGameHostApp() {
                             if (storytellerOperationMode != StorytellerOperationMode.AI_AUTOMATIC ||
                                 !jointOpeningApplied
                             ) {
-                                advanceClocktowerPlayerInputRevision()
-                                clocktowerRedHerring = it
+                                val seat = it?.let { name ->
+                                    cards.indexOfFirst { card -> card.name == name }
+                                        .takeIf { index -> index >= 0 }?.plus(1)
+                                        ?: error("Cannot select Red Herring outside the Session seats.")
+                                }
+                                requireClocktowerGameSession().commitRedHerringSeat(
+                                    seat = seat,
+                                    phase = storytellerPhaseFor(), round = round,
+                                    sequence = clocktowerEventCounter + 1,
+                                )
+                                publishClocktowerSessionView()
+                                invalidateA4RevisionScope()
                             }
                         },
                         onCommitDemonBluffs = { roleNames ->
                             if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {
-                                advanceClocktowerPlayerInputRevision()
-                                clocktowerRecommendedDemonBluffRoleNames = roleNames
+                                requireClocktowerGameSession().commitDemonBluffs(
+                                    roles = roleNames.map(::RoleId),
+                                    phase = storytellerPhaseFor(), round = round,
+                                    sequence = clocktowerEventCounter + 1,
+                                )
+                                publishClocktowerSessionView()
+                                invalidateA4RevisionScope()
                             }
                         },
                         onSelectButlerMaster = {
@@ -3863,7 +3905,7 @@ internal fun CampBoardGameHostApp() {
                                     targetSeat = targetSeat,
                                 )
                                 publishClocktowerSessionView()
-                                cards[targetIndex] = targetCard.copy(eliminatedRound = round)
+                                reflectCommittedClocktowerDeath(targetSeat)
                                 recordEpistemicObservation(EpistemicObservationDraft(
                                     recordId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat",
                                     phase = storytellerPhaseFor(),
@@ -4030,7 +4072,7 @@ internal fun CampBoardGameHostApp() {
                                         targetSeat = index + 1,
                                     )
                                     publishClocktowerSessionView()
-                                    cards[index] = nominatorCard.copy(eliminatedRound = round)
+                                    reflectCommittedClocktowerDeath(index + 1)
                                     records.add(
                                         EliminationRecord(
                                             round,
@@ -4176,7 +4218,7 @@ internal fun CampBoardGameHostApp() {
                                         targetSeat = index + 1,
                                     )
                                     publishClocktowerSessionView()
-                                    cards[index] = executedCard.copy(eliminatedRound = round)
+                                    reflectCommittedClocktowerDeath(index + 1)
                                     records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
                                     addClocktowerEvent(
                                         ClocktowerEventType.Execution,
@@ -4457,7 +4499,7 @@ internal fun CampBoardGameHostApp() {
                                             targetSeat = dawnDeathMaterialization.intent.targetSeat,
                                         )
                                         publishClocktowerSessionView()
-                                        cards[index] = nightDeathCard.copy(eliminatedRound = round)
+                                        reflectCommittedClocktowerDeath(index + 1)
                                         records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
                                         addClocktowerEvent(
                                             ClocktowerEventType.Death,

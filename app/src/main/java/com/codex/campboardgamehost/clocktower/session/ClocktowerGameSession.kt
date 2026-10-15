@@ -5,6 +5,8 @@ import com.codex.campboardgamehost.clocktower.domain.KlutzDeathTriggerEvidenceV1
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
@@ -55,6 +57,8 @@ internal data class ClocktowerSessionView(
     val epistemicObservationLog: EpistemicObservationLog,
     val semanticHistoryMode: ClocktowerSemanticHistoryMode,
     val nextTimelineGlobalSequence: Long,
+    val redHerringSeat: Int?,
+    val demonBluffRoleIds: List<RoleId>,
 )
 
 /**
@@ -75,6 +79,9 @@ internal data class ClocktowerSessionState(
     val semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
     val nextTimelineGlobalSequence: Long = 0L,
     val storytellerPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1> = emptyMap(),
+    /** Accepted setup decisions are stored once here, not in Compose draft state. */
+    val redHerringSeat: Int? = null,
+    val demonBluffRoleIds: List<RoleId> = emptyList(),
 ) {
     init {
         require(gameId.isNotBlank()) { "gameId cannot be blank." }
@@ -106,6 +113,15 @@ internal class ClocktowerGameSession private constructor(
 
     private var snapshotCache: GameSnapshot? = initialSnapshotCache
 
+    /**
+     * One causal decision journal belongs to this game session, not to the root Compose
+     * screen. Recovery restores this exact journal against the recovered Session history.
+     * Decision producers still use its existing validated append/correct interface.
+     */
+    var causalDecisionJournal: StorytellerCausalDecisionJournalV1 =
+        StorytellerCausalDecisionJournalV1(initialState.gameId)
+        private set
+
     /** Read-only cutover projection suitable for publishing through an observable UI boundary. */
     val view: ClocktowerSessionView
         get() = ClocktowerSessionView(
@@ -118,6 +134,8 @@ internal class ClocktowerGameSession private constructor(
             epistemicObservationLog = state.epistemicObservationLog,
             semanticHistoryMode = state.semanticHistoryMode,
             nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
+            redHerringSeat = state.redHerringSeat,
+            demonBluffRoleIds = state.demonBluffRoleIds,
         )
 
     /**
@@ -207,6 +225,80 @@ internal class ClocktowerGameSession private constructor(
     fun recordPlayerInput(): ClocktowerSessionState = updateState(
         state.copy(playerInputRevision = state.playerInputRevision + 1),
     )
+
+    /**
+     * Commit a confirmed Host setup choice and the globally sequenced fact in the SAME
+     * Session state transition. The UI only projects the accepted result.
+     */
+    fun commitRedHerringSeat(
+        seat: Int?,
+        phase: StorytellerPhase,
+        round: Int,
+        sequence: Int,
+    ): ClocktowerSessionState {
+        require(phase == StorytellerPhase.FIRST_NIGHT && round == 1) {
+            "Red Herring may only be set during the first-night setup."
+        }
+        if (seat != null) {
+            val player = requireNotNull(state.gameState.playerAt(seat)) {
+                "Unknown Red Herring seat $seat."
+            }
+            require(player.actualAlignment == Alignment.GOOD) {
+                "Red Herring must be an actually good player."
+            }
+        }
+        if (state.redHerringSeat == seat) return state
+        check(state.playerInputRevision != Long.MAX_VALUE)
+        val committed = commitGlobalActionFact(
+            semanticHistoryMode = state.semanticHistoryMode,
+            actionTimeline = state.actionTimeline,
+            observationLog = state.epistemicObservationLog,
+            nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
+            draft = ActionFactDraft.RedHerringChoice(
+                actionId = "red-herring-${state.gameId}-${state.nextTimelineGlobalSequence}",
+                phase = phase, round = round, sequence = sequence, selectedSeat = seat,
+            ),
+        )
+        return updateState(state.copy(
+            redHerringSeat = seat,
+            playerInputRevision = state.playerInputRevision + 1,
+            actionTimeline = committed.actionTimeline,
+            nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+        ))
+    }
+
+    fun commitDemonBluffs(
+        roles: List<RoleId>,
+        phase: StorytellerPhase,
+        round: Int,
+        sequence: Int,
+    ): ClocktowerSessionState {
+        require(phase == StorytellerPhase.FIRST_NIGHT && round == 1) {
+            "Demon bluffs may only be set during the first-night setup."
+        }
+        require(roles.distinct().size == roles.size) { "Demon bluff roles must be distinct." }
+        require(roles.none { role -> state.gameState.players.any {
+            it.actualRole == role
+        } }) { "Demon bluffs cannot contain an actual in-play role." }
+        if (state.demonBluffRoleIds == roles) return state
+        check(state.playerInputRevision != Long.MAX_VALUE)
+        val committed = commitGlobalActionFact(
+            semanticHistoryMode = state.semanticHistoryMode,
+            actionTimeline = state.actionTimeline,
+            observationLog = state.epistemicObservationLog,
+            nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
+            draft = ActionFactDraft.DemonBluffChoice(
+                actionId = "demon-bluffs-${state.gameId}-${state.nextTimelineGlobalSequence}",
+                phase = phase, round = round, sequence = sequence, roles = roles.toList(),
+            ),
+        )
+        return updateState(state.copy(
+            demonBluffRoleIds = roles.toList(),
+            playerInputRevision = state.playerInputRevision + 1,
+            actionTimeline = committed.actionTimeline,
+            nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+        ))
+    }
 
     fun storytellerPlayerContext(seat: Int): StorytellerPlayerContextInputV1 {
         require(state.gameState.playerAt(seat) != null) {
@@ -549,10 +641,18 @@ internal class ClocktowerGameSession private constructor(
             initialSnapshotCache = snapshot,
         )
 
-        fun restoreProduction(state: ClocktowerSessionState): ClocktowerGameSession = ClocktowerGameSession(
+        fun restoreProduction(
+            state: ClocktowerSessionState,
+            causalDecisionArchive: StorytellerCausalJournalArchiveV1? = null,
+        ): ClocktowerGameSession = ClocktowerGameSession(
             initialState = state,
             defaultRulesetRef = null,
-        )
+        ).also { session ->
+            if (causalDecisionArchive != null) {
+                session.causalDecisionJournal =
+                    StorytellerCausalDecisionJournalV1.restore(causalDecisionArchive, session.state)
+            }
+        }
 
         private fun GameSnapshot.toSessionState(): ClocktowerSessionState = ClocktowerSessionState(
             gameId = gameId,

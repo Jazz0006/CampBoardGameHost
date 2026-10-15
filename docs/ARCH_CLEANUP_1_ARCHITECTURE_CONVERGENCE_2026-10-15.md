@@ -14,6 +14,14 @@
 - 历史事实外发由 `ActionFact.toString()` / `InformationProposition.toString()` 改为复用 `ClocktowerSemanticHistoryPersistence.encodeActionFact` 与 `EpistemicSemanticJson.encode` 的稳定结构化 JSON，避免让 Kotlin 调试字符串成为跨层历史协议。仍需补齐真正缺失的生产事实事件源。
 - 本轮针对旧 Shadow 的测试改为首夜已选语义发布、候选有效性、重开幂等；保留角色合法性和 Recluse 登记见证测试。进一步查出仅供旧候选策略特征的 `Sde2D5FExpertObservedPolicyFeatures.kt`、`Sde2D5FExpertObservedPolicyFeatureReport.kt`，删除两者及同一实验类的专属 policy-features 测试；保留有独立价值的真人观察实证、注册见证与精确世界拓扑实验，其本质不是旧效用/评分推荐。代码 HEAD `7ffe236d` CI #4207（Android FAST / verify-boundary）与 R2 #3823 均 SUCCESS；完整 Android 构建、ASP、Real Clingo 当次 SKIPPED。同时清除 `app/build.gradle.kts` 指向已不存在 `PairInformationShadowReplayBridgeG10FullDomainTest` 的悬空测试过滤配置；保留仍有真实世界枚举/真人证据消费的限时实验 task。此处再删除特征后须复验新 HEAD。真机 MANUAL/AI 辅助/自动、Recovery 的验收状态以最新 SHA 实证为准。**严禁将本批标记 CLOSED，直至 A、B、C 全部真正通过**。
 
+## 第十一批：2026-10-16 — 只处理 A：Session 单一事实写入收敛
+
+- **已接入**：根 Compose 不再以独立 `Map<gameId, Journal>` 管理说书人因果日志；`ClocktowerGameSession.causalDecisionJournal` 是该局唯一日志持有者，Recovery 在同一 Session 的验证边界恢复它。保留已公开的规则验证/因果顺序语义。
+- **已接入**：首夜 Host 确认的 Red Herring 座位和 Demon bluffs 身份存储于 `ClocktowerSessionState`，Compose 只读投影；AI 联合开局采纳、人工改选和 Recovery 同源。实际确认时将状态变更与新的 `ActionFact.RedHerringChoice` / `ActionFact.DemonBluffChoice` 在 Session 一次性提交，加入已有全局时间线（含重复/错误输入保护）；结构化 JSON、历史只读投影、角色私密可见性、Recovery 验证以及增量 AI 状态随之更新。不新建 Game Object。
+- **已接入**：正式身份变化的 `PlayerCard` 更新前验证 Session 真实角色；四个死亡/处决 UI 更新入口由统一 `reflectCommittedClocktowerDeath` 防护，禁止卡片独立写入未经 Session 确认的死亡。不要误把仅属 Undercover 的 `Screen.Game` 淘汰视为 Clocktower 独立写入。
+- **严格 A=PARTIAL，仍不能 CLOSE**：尚未完成每一个 `PlayerCard` 机械读写投影迁移、所有角色与能力状态（Virgin/Slayer/夜间动作等）都由同一 Session 原子事务处理、所有已展示的不可靠信息的类型化持久记录、开局 Drunk 决策来源及任意历史时间点的权威重建。现有 Recovery/Archive 仍保存专门的投影格式，不能反向作为第二个权威。
+- 本批需要最新代码 HEAD 的独立 Android FAST/FULL、R2 结果及按类别可用的规则测试证明；没有 Android Studio/ADB 真机证据时不得称真机已验收。严格不合并 #315，不进行付费模型 API 实验。
+
 ## 1. 目标和保留边界
 
 停止独立的模型提示词设计、付费 API 调用、AI-EVENT-JIT 新功能；只做架构/冗余清理与相应验证，直至 PR/文档/CI 收口。

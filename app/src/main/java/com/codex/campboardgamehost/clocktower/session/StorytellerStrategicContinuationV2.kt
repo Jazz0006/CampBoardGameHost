@@ -3,6 +3,7 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryCutoffSourceV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryEntryV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
@@ -210,6 +211,8 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
             .put("state", JSONObject()
                 .put("scriptId", session.gameState.script.value)
                 .put("gameSeed", session.gameSeed)
+                .put("redHerringSeat", session.redHerringSeat ?: JSONObject.NULL)
+                .put("demonBluffRoleIds", JSONArray(session.demonBluffRoleIds.map(RoleId::value)))
                 .put("seats", JSONArray().also { array ->
                     seats.forEach { player ->
                         val context = session.storytellerPlayerContextBySeat[player.seat]

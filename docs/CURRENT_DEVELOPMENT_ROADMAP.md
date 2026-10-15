@@ -4,6 +4,8 @@
 
 > 2026-10-16 复审更新：基线 HEAD `50a1c05f` 的 CI #4206 / R2 #3822 均 SUCCESS，Real Clingo / ASP SKIPPED。已进一步清理首夜旧 Shadow 候选双轨、旧合法值回退及冗余 UI 观察镜像，并用标准类型化 JSON 输出续接历史；以新代码 HEAD CI/R2 结果为准。**A 权威写入与完整结构化历史仍 PARTIAL；B 模型外发无候选源码合同 YES；C 旧评分/推荐/Shadow 算法已无生产推荐路线，但保留正常 Host 规则、setup diversity、epistemic 正确性。ARCH-CLEANUP-1 NOT CLOSED，#315 继续 Draft，不合并。**
 
+> 2026-10-16 A 专项实施：Session 已持有因果日志、已确认的 Red Herring/Demon bluffs 与对应有序类型化动作；正式身份/死亡 UI 镜像执行 Session 事实前置核验，AI V3 续接使用 Session 的真实首夜设定。**A 仍 PARTIAL**：并非全部根 Compose 事实、信息公布或历史时点重建已收敛。最新 CI/R2 要按实际源码 HEAD 独立验证。仅推进 A，不开启 B/C 清理、P2 新功能或合并 #315。
+
 ## 当前唯一任务：完成架构收口和 P1 验收
 
 - **已完成**：多批真实消费链收敛，清除未写入的 DecisionHistory、所有旧 SDE 评分/一致性启发式/Shadow 推荐、角色独立整包评估和 FN-BUNDLE-3 穷举、旧 rollout、UI 文本反解析及无调用的旧模型序列化接口；清理细节见 [ARCH_CLEANUP_1 审计](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md)。

@@ -223,6 +223,8 @@ internal fun ActionFact.b4CanonicalPayload(): String = when (this) {
     is ActionFact.KlutzLearnedDeath -> "klutz-learn:$actionId:$sequence:$klutzSeat:$deathActionId:$functioningWhenLearned"
     is ActionFact.KlutzChoice -> "klutz-choice:$actionId:$sequence:$klutzSeat:$chosenSeat:$learnedActionId"
     is ActionFact.RoleChange -> "role-change:$actionId:$sequence:$targetSeat:${role.value}:${alignment.name}:${type.name}"
+    is ActionFact.RedHerringChoice -> "red-herring-choice:$actionId:$sequence:${selectedSeat ?: "none"}"
+    is ActionFact.DemonBluffChoice -> "demon-bluff-choice:$actionId:$sequence:${roles.joinToString(",") { it.value }}"
     is ActionFact.PhaseAdvance -> "phase:$actionId:$sequence:${phase.name}:$round"
 }
 

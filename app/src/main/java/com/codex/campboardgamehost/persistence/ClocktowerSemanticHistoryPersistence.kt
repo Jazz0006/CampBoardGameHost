@@ -150,6 +150,14 @@ internal object ClocktowerSemanticHistoryPersistence {
                 put("alignment", fact.alignment.name)
                 put("type", fact.type.name)
             }
+            is ActionFact.RedHerringChoice -> {
+                put("kind", "red-herring-choice")
+                put("selectedSeat", fact.selectedSeat ?: JSONObject.NULL)
+            }
+            is ActionFact.DemonBluffChoice -> {
+                put("kind", "demon-bluff-choice")
+                put("roleIds", JSONArray(fact.roles.map(RoleId::value)))
+            }
             is ActionFact.PhaseAdvance -> {
                 put("kind", "phase-advance")
                 put("phase", fact.phase.name)
@@ -213,6 +221,16 @@ internal object ClocktowerSemanticHistoryPersistence {
                 role = RoleId(stringValue(json, "role")),
                 alignment = enumValue(json, "alignment"),
                 type = enumValue(json, "type"),
+            )
+            "red-herring-choice" -> ActionFact.RedHerringChoice(
+                actionId, sequence, nullablePositiveSeat(json, "selectedSeat"),
+            )
+            "demon-bluff-choice" -> ActionFact.DemonBluffChoice(
+                actionId, sequence, json.getJSONArray("roleIds").let { array ->
+                    (0 until array.length()).map { index -> RoleId(array.getString(index)) }
+                }.also { roles ->
+                    require(roles.distinct() == roles) { "Demon bluff roles must be unique." }
+                },
             )
             "phase-advance" -> ActionFact.PhaseAdvance(
                 actionId = actionId,

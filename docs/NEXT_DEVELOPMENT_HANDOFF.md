@@ -4,6 +4,8 @@
 
 > 2026-10-16 最终复审：起点 HEAD `50a1c05f` CI #4206 / R2 #3822 SUCCESS（ASP/Real Clingo SKIPPED）。新清理删除首夜迁移 Shadow 候选对比、旧展示回退、私有 parity 统计以及 UI 保存的冗余观察值；续接 `causalHistory` 现在序列化类型化 JSON 事实/观察，而不是 Kotlin `toString()`。A=PARTIAL（仍有 Compose PlayerCard 独立可写状态、部分确定事实记录不全、任意时间点重放缺口），B=YES 源码合同，C=YES 已清理的历史策略路径；本轮源码精确 HEAD/CI 尚需重新验证。**仍保留 Draft #315，ARCH-CLEANUP-1 不关闭、不合并 main。**
 
+> 2026-10-16 A 专项：根 UI 独立 `clocktowerCausalJournals` 已删除；同局因果日志归 Session。确认的 Red Herring / Demon bluffs 及其按全局因果游标排序的类型化提交，由 Session 原子承接且按源调用写入；Recovery、模型延续和只读 UI 投影同源。已确认身份/死亡写入卡片的回调增加 Session 前置事实校验。**A 尚 PARTIAL，不能宣布闭环**：继续收敛完整 UI 写入口、夜间能力/公开信息的记录源、Recovery 跨状态一致性、任意时点重建。当前清理 PR #315 Draft，不合并 main；最新代码须精确 CI/R2 验收。
+
 ## 已完成与保留证据
 
 - ARCH-CLEANUP-1 多批源码清理：删除重复历史档案/Session 空字段、整个旧 SDE 评分/一致性偏好/Shadow 推荐实验族（仅保留真实 Recovery replay 两个文件）、角色独立 whole-bundle、FN-BUNDLE-3 耗时实验、旧 rollout、无消费的 UI 文案推断和旧 V1 模型合法域外发序列化；移除仅供测试的整包 wrapper，但相关测试改用真正精确评估器。每批提交与保留边界详见 [审计文档](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md)。

@@ -126,6 +126,20 @@ sealed interface ActionFact {
         val type: CharacterType,
     ) : ActionFact
 
+    /** Accepted private Fortune Teller setup/override, including explicit clearing. */
+    data class RedHerringChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val selectedSeat: Int?,
+    ) : ActionFact
+
+    /** Accepted private Demon bluff role set/override, distinct from UI drafts. */
+    data class DemonBluffChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val roles: List<RoleId>,
+    ) : ActionFact
+
     data class PhaseAdvance(
         override val actionId: String,
         override val sequence: Long,
@@ -141,6 +155,8 @@ data class ReducedDynamicGameState(
     val protectedSeats: Set<Int>,
     val pendingAttackSeat: Int?,
     val actionFacts: List<ActionFact>,
+    val redHerringSeat: Int? = null,
+    val demonBluffRoleIds: List<RoleId> = emptyList(),
 )
 
 /** Pure ordered reducer used both online and after restore. */
@@ -160,6 +176,8 @@ object DynamicActionReducer {
         var round = initialRound
         var protected = emptySet<Int>()
         var attack: Int? = null
+        var redHerringSeat: Int? = null
+        var demonBluffRoles = emptyList<RoleId>()
 
         fun requireSeat(seat: Int) {
             require(game.playerAt(seat) != null) { "Action references unknown seat $seat." }
@@ -218,6 +236,14 @@ object DynamicActionReducer {
                 is ActionFact.RoleChange -> updatePlayer(fact.targetSeat) {
                     it.copy(actualRole = fact.role, actualAlignment = fact.alignment, actualType = fact.type)
                 }
+                is ActionFact.RedHerringChoice -> {
+                    fact.selectedSeat?.let(::requireSeat)
+                    redHerringSeat = fact.selectedSeat
+                }
+                is ActionFact.DemonBluffChoice -> {
+                    require(fact.roles.distinct() == fact.roles)
+                    demonBluffRoles = fact.roles.toList()
+                }
                 is ActionFact.PhaseAdvance -> {
                     require(fact.round > 0)
                     phase = fact.phase
@@ -237,6 +263,8 @@ object DynamicActionReducer {
             protectedSeats = protected,
             pendingAttackSeat = attack,
             actionFacts = ordered,
+            redHerringSeat = redHerringSeat,
+            demonBluffRoleIds = demonBluffRoles,
         )
     }
 }

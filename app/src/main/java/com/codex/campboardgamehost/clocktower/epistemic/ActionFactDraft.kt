@@ -202,6 +202,32 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class RedHerringChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val selectedSeat: Int?,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            selectedSeat?.let(::requireSeat)
+        }
+    }
+
+    data class DemonBluffChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val roles: List<RoleId>,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            require(roles.distinct() == roles)
+        }
+    }
+
     data class PhaseAdvance(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -274,6 +300,12 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
         role = role,
         alignment = alignment,
         type = type,
+    )
+    is ActionFactDraft.RedHerringChoice -> ActionFact.RedHerringChoice(
+        actionId, globalSequence, selectedSeat,
+    )
+    is ActionFactDraft.DemonBluffChoice -> ActionFact.DemonBluffChoice(
+        actionId, globalSequence, roles.toList(),
     )
     is ActionFactDraft.PhaseAdvance -> ActionFact.PhaseAdvance(
         actionId = actionId,

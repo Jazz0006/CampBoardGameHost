@@ -467,11 +467,41 @@ internal object RecoveryRestorePlanner {
                     require(game.identity.script == ClocktowerScript.NoGreaterJoy)
                 }
                 is ActionFact.RoleChange -> requireKnownSeat(fact.targetSeat, playerCount)
+                is ActionFact.RedHerringChoice -> {
+                    fact.selectedSeat?.let { requireKnownSeat(it, playerCount) }
+                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT) {
+                        "Red Herring choice belongs to first-night setup."
+                    }
+                }
+                is ActionFact.DemonBluffChoice -> {
+                    require(fact.roles.distinct() == fact.roles)
+                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT) {
+                        "Demon bluffs belong to first-night setup."
+                    }
+                }
                 is ActionFact.PhaseAdvance -> require(fact.round in 1..game.round) {
                     "Phase-advance fact is outside the recovered game round."
                 }
             }
         }
+
+        // Accepted setup decisions must agree with their last typed event. Recovery never
+        // substitutes an independently mutable UI choice for an established Session fact.
+        history.actionTimeline.entries.map { it.fact }
+            .filterIsInstance<ActionFact.RedHerringChoice>()
+            .lastOrNull()?.let { fact ->
+                val expected = fact.selectedSeat?.let { game.cards[it - 1].name }
+                require(game.mechanics.redHerring == expected) {
+                    "Recovered Red Herring diverges from the canonical action timeline."
+                }
+            }
+        history.actionTimeline.entries.map { it.fact }
+            .filterIsInstance<ActionFact.DemonBluffChoice>()
+            .lastOrNull()?.let { fact ->
+                require(game.mechanics.demonBluffRoleNames == fact.roles.map { it.value }) {
+                    "Recovered Demon bluffs diverge from the canonical action timeline."
+                }
+            }
 
         // Newly typed player-action events must retain their actual causal order in Recovery.
         // This does not infer a Storyteller ruling from a shot, nomination or voting result.
