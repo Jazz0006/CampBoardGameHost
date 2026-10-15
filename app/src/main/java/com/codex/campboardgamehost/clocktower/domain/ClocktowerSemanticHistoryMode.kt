@@ -51,12 +51,3 @@ internal fun ClocktowerSemanticHistoryMode.requireCompatible(
     }
 }
 
-/** Compatibility overload for adapters that have not yet been wired to durable action capture. */
-internal fun ClocktowerSemanticHistoryMode.requireCompatible(
-    observationLog: EpistemicObservationLog,
-    nextTimelineGlobalSequence: Long,
-) = requireCompatible(
-    actionTimeline = ActionFactTimeline(),
-    observationLog = observationLog,
-    nextTimelineGlobalSequence = nextTimelineGlobalSequence,
-)

@@ -2,7 +2,7 @@
 
 > 状态：**进行中；清理优先，AI-EVENT-JIT 暂停**。本文件记录已经由调用链审计证明的事实与本次实际改动，不等于整局历史完整性已经通过验收。
 >
-> 开发分支：`cleanup/arch-cleanup-1-20261015`；[Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 叠加在 #308（后者在 #307 → #306 → #304 之上）。**不得直接合并到当前 main**。主线 #309 的 evidence-first `AGENTS.md`/`TESTING_STRATEGY.md` 已同步。#310/#311 仍是独立的未合并 JIT Draft 候选；#312/#313/#314 于本次清理中因产品方向冲突或已转存审计而关闭（均未合并）。1E 实验分支仍待核对，以上均不视为生产契约。
+> 开发分支：`cleanup/arch-cleanup-1-20261015`；[Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 叠加在 #308（后者在 #307 → #306 → #304 之上）。**不得直接合并到当前 main**。主线 #309 的 evidence-first `AGENTS.md`/`TESTING_STRATEGY.md` 已同步。#310–#314 已经逐一审阅并全部关闭且**未合并**（过时的模型候选 ID、虚假的空历史增量和过滤提名/投票，以及审计文档迁移）。1E 实验分支仍待核对，以上均不视为生产契约。
 
 ## 1. 目标和保留边界
 
@@ -62,7 +62,16 @@
 
 `ClocktowerHostScreen.recentMisinformationStreak` 从 `ClocktowerEvent.title` 中寻找中文“误导”或英文 `misleading`，推断信息误导连击数；该值在 `ClocktowerInformationStepBuilder` 中仅赋值给 `ClocktowerNightStepUi.recentMisinformationStreak`，源码全局搜索证明**没有任何读取者**。因此删除解析函数、传参回调、Ui 模型字段及五个单元测试中不再需要的虚拟参数。保留其余结构化信息测试。这个切片既删除无效维护点，也杜绝未来把文案反向当作权威事件事实使用。第六批提交 `0a3a7976cece`，GitHub Android CI #4192 与 R2 #3808 GREEN。
 
+### 第七批：时间线旧重载与首夜实验包评估薄包装器
+
+- `ClocktowerSemanticHistoryMode.requireCompatible(observationLog, cursor)` 是旧版忽略 `ActionFactTimeline` 的兼容重载。所有生产调用方已传入 action timeline；删除此无人调用的重载，保留 `GLOBAL_V1` 的三参数真实校验，防止未来误从空动作记录验证。
+- `FirstNightBundleExperimentEvaluator` 只被两个实验性测试调用，是对现存 `ExactHistoricalHypotheticalObservationBundleEvaluator` 的单层包装。删除 `FirstNightExperimentProfile`、诊断/响应 wrapper 与这层无生产使用的评估器；把原有两项测试改为直接调用底层精确评估器，保留善良公开线索投影、醉酒可信世界、双接收者排序、原始 bundle 不变等证据。
+- 不删除 `FirstNightPublicGoodInfoProjection` 和 `FirstNightBundleProfileExposure`：虽然属于旧的实验语义，但其他仍保留的实验/影子模块有消费者；不影响 Host 当前联合法律裁量。
+- 此批代码变更后需新 HEAD CI/R2 通过，再宣布成功。
+
 ## 3. 审计结论：尚未清理的生产调用链
+
+P1 PR 依赖核对：#304（首轮联合推荐/Host 验证）、#306（变更检查点）、#307（人工/自动采纳与旧 V1 移除、仍活跃的 whole-`remainingChoices`）、#308（已采纳响应作为 Responses continuation anchor）都有现存真实生产调用。故先保证这条联合作业功能健全，不能直接把 #315 merge into main，不能按文件名删除整个 P1；旧 whole-`remainingChoices` 只能在未来新语义合同完成替换之后退休，而不是被误判为无调用死代码。
 
 逐个审计了 `toClocktowerGameState()` 的全部生产调用：Session 创建前、Recovery 重建、夜晚/破晓裁决、首夜信息请求及 Day table 的 UI 卡牌输入都是实际消费者；**现阶段没有证据确保 Session 中的 GameState 比实时传入的 PlayerCard 更新**。因此绝不通过机械地替换为 `session.state.gameState` 来减少调用，而冒险引用旧角色或存活状态。Day table 同一轮渲染中 6 处重复卡牌转换可考虑在同一作用域内只计算一次，但不得跨 Compose 输入变化缓存。整个系统要真正单状态，需要先界定 UI 临时编辑与 Session 确认事实的写入边界。
 
@@ -75,7 +84,7 @@ Recovery 与 Game Archive 具有不同合同：前者供继续游戏，后者供
 1. 当前 #315 整体的 Android CI、R2、规则/Recovery/Provider 历史测试与安全基线；本地构建机 SSH 故障单独处理，不把构建机故障记作应用错误。
 2. 清理其余没有生产入口的旧推荐评分/概率与历史实验类族（只删除真实死亡依赖图）。
 3. 逐项核实当前权威状态转换点、Recovery 和 Archive 的真实边界与跨项目 TBGS 语义。
-4. **已关闭 #312、#313、#314（未合并）**：#312 仅有被推翻的候选 ID 模型输出合同；#313 过滤普通提名/逐人投票与完整历史要求相冲突；#314 只读审计已经迁入本清理分支。保留 #310/#311 供因果验证与单项 Host 门控复审；1E 分支仍待依赖审查。已关闭 PR 对应远端分支暂不删除，以免影响残存叠加分支的可审计性。
+4. **已关闭 #310–#314（全部未合并）**：#310 的 Host 单项门控值得复用，但现有代码让模型输出 candidateId；#311 的事件增量使用已废弃的 `ClocktowerSessionState.decisionHistory`、`StorytellerDecisionEvent` 与 `DecisionCorrectionEvent`，当前 #315 已移除这套空档案，不能直接 cherry-pick。#312 的模型合同过时；#313 筛掉合法提名/逐人投票与完整历史不符；#314 的原始审计文档已引入本清理分支。可迁移的是 Host 单项合法性、前缀单调性和私有缓存原则，不是旧接口。1E 仍待依赖审查，关闭的 PR 远端分支暂不删除，以防依赖无法追踪。
 5. 适度整合活动路线与交接文档，保留必要历史审计，但不再将旧项目计划列为当下 NEXT。
 
 ## 5. AI-EVENT-JIT 恢复门槛（本轮结束后）
