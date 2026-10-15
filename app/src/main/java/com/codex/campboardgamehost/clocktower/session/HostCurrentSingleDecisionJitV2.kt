@@ -98,7 +98,7 @@ internal object HostCurrentSingleDecisionJitV2 {
                 visibleMeaning(it.payload)
             }
             if (meanings.all { it != null } && meanings.distinct().size == 1) {
-                return Route.HostDetermined(requireNotNull(meanings.singleOrNull()))
+                return Route.HostDetermined(requireNotNull(meanings.first()))
             }
         }
         // Conservative first slice: any Host fact, input, candidate meaning,
