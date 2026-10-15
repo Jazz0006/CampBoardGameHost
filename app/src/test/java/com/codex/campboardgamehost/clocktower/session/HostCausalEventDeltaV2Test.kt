@@ -40,7 +40,7 @@ class HostCausalEventDeltaV2Test {
         val confirmed = game.state
         val unchanged = HostCausalEventDeltaV2.since(confirmed, confirmed)
         assertTrue(unchanged.noDetectedSnapshotFallback)
-        assertFalse(unchanged.allGameEventsProvenComplete)
+        assertFalse(unchanged.allRequiredStrategicFactsProvenComplete)
         assertTrue(unchanged.newlyLoggedFacts.isEmpty())
         assertEquals(0L, unchanged.fromExclusiveGlobalSequence)
 
@@ -57,7 +57,7 @@ class HostCausalEventDeltaV2Test {
         ))
         val suffix = HostCausalEventDeltaV2.since(confirmed, game.state)
         assertTrue(suffix.noDetectedSnapshotFallback)
-        assertFalse(suffix.allGameEventsProvenComplete)
+        assertFalse(suffix.allRequiredStrategicFactsProvenComplete)
         assertEquals(listOf(0L, 1L),
             suffix.newlyLoggedFacts.map { it.point.globalSequence })
         assertEquals(2L, suffix.toExclusiveGlobalSequence)
