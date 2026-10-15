@@ -31,6 +31,9 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.exportP1OpeningWireWhenOptedIn' --no-daemon --build-cache
+      - name: Verify actual P1 opening through Kotlin Host semantic acceptance
+        run: |
+          ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.p1StoredSyntheticOpeningMustPassActualHostSemanticGate' --no-daemon --build-cache
       - name: Show nonsecret synthetic wire fixture for P1 experiment
         shell: bash
         run: |
