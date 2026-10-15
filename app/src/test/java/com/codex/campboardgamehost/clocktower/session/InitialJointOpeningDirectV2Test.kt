@@ -90,6 +90,7 @@ class InitialJointOpeningDirectV2Test {
         // complete post-response verification.
         assertEquals(4, domain.projections.size)
         assertFalse(host.has("conditionalDecisionContracts"))
+        assertFalse(host.has("roleCatalog"))
         assertFalse(host.toString().contains("drunkSeat"))
         assertTrue(host.getJSONObject("state").getJSONArray("unknownEvents").length() > 0)
         assertFalse(host.has("legalDemonBluffRoleIds"))

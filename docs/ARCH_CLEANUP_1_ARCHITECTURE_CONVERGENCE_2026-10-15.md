@@ -83,12 +83,13 @@
 - `StorytellerStrategicContinuationV2` 在提供给模型的 JSON 中只发送真实当前 `currentDecision`，不发送 `openDecisions[].legalCandidates`。响应只包含 `currentResult.semantic`，模型不返回 `candidateId` 或整包 `remainingChoices`；Host 使用完整私有候选集合匹配语义，匹配不到则拒绝。内部单项 `remainingChoices` 只是现有 UI/采纳代码过渡展示句柄，**不是**外发 JSON；多登记见证同一公开结果时仍由 Host 的 witness-free 展示门槛把关。提交 `eac18827`。
 - 非兼容 wire contract 已升级为 `botc.whole-game-strategy-continuation-v3`，OpenAI Responses strict format 为 `botc_whole_game_strategic_continuation_v3`；真实旧 V2 model JSON 不再接受。提交 `63b5d111`，其 Android CI #4202 / R2 #3818 SUCCESS；以上三项均无付费 API 实测，真机尚未通过。
 - Session 单状态工作采取实证式增量收口：现役标量信息的 `pendingGlobalNightScalarDecision` 通过当前 Session `gameState` 获取角色座位、占卜师已确认查询的目标座位，并对照 UI 卡牌名单/顺序，发生漂移时 fail-closed；不引入新 GameState，不误把 UI 草稿当作事实。提交 `ef3438c`，最终 Android CI/R2 需另验。
+- **第十批（`4cb657e`）**：移除首夜模型输入的 `conditionalDecisionContracts` 完整合法酒鬼座位分支枚举。保留 `decisionInventory.information`、`decisionInventory.events`、`state.unknownEvents`，让模型联合选择当前 Drunk / 红鲱鱼 / bluffs / 信息；原始 `HostOpeningRulesDomainV2` 仍对每个分支保留 Host 独立规则验证，错误分支/未来行动信息 fail-closed。源测试确认输入不再出现 `drunkSeat` 或 `conditionalDecisionContracts` 之类候选菜单，Host 原内部合法分支数保持不变。Android CI #4205 / R2 #3821 需要新 HEAD 结果；无真实付费 API 策略质量证明。
 - 当前事实历史与因果回放是否覆盖**全部提名、逐人投票、每个已公布线索**，仍需再验，不把“目前已转发存在的事件”当作全量性证明。
 
 ### 最新产品目标实况（审计，不是完工声明）
 
 1. **游戏对象唯一可写权威：未达成**。Session 的 `GameState` 和 Compose 的 `PlayerCard` 仍分别可以写入，游戏动作有多处从实时 cards 生成 `GameState`。TBGS/GameSnapshot 本身是只读投影，保留合理，但写入所有权尚未完全统一。
-2. **活跃个人直连模型请求不再附合法候选菜单：源码已达成、真实 API 未验收**。首夜保留结构性 `conditionalDecisionContracts` 以防提前决定未来事件，但不发送详细合法座位、身份或信息结果列表；续接 V3 仅当前单项语义请求和单项语义响应。Host 用内部完整合法域与当前游标后验校验，内部候选句柄不外发；原 `InitialGlobalOpeningScopeV1.providerPayload` 已删除。
+2. **活跃个人直连模型请求不再附合法候选菜单：源码已达成、真实 API 未验收**。首夜不再发送任何合法座位、身份、合法信息类型或酒鬼分支菜单；只发送展示阵容、逐项待决信息和实际未知事件标识，由模型一次性联合规划。续接 V3 只发送当前一项决策的语义请求和响应。Host 用内部完整合法域与当前游标后验校验，内部候选句柄不外发；原 `InitialGlobalOpeningScopeV1.providerPayload` 已删除。
 3. **旧评分 / 一致性启发式推荐代码：SDE 子模块已按调用图清除**；任何剩余的世界一致性/合法性/注册见证及实际历史校验仍属 Host 正确性，不能为了满足命名字面要求删除。
 4. **返回结果的 Host 后验合法性校验：保留**。不因停止发送合法备选而取消 Host 拒绝非法/过时/歧义结果的能力。
 

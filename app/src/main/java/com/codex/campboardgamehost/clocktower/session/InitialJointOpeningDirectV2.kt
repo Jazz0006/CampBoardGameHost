@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCatalogTeam
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
@@ -13,7 +12,7 @@ import kotlinx.coroutines.withContext
 /**
  * 3C/3D — ONE expert precommit planning request, before any actual Drunk is bound.
  *
- * The provider sees player-visible identities + the rule book, NOT exhaustive Host
+ * The provider sees actual/shown roster facts and decision needs, NOT exhaustive Host
  * candidate domains, witness registrations or hypothetical cartesian products.
  * Any returned decision is validated as an entire conditional opening against
  * HostOpeningRulesDomainV2, and a subsequent Host commit remains separate.
@@ -154,12 +153,12 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
         require(recentGames.size <= 4 && recentGames.all { it.length <= 250 })
         val infoRoles = setOf("washerwoman", "librarian", "investigator",
             "chef", "empath", "fortuneteller")
-        val roles = registry.definitions
-        val groups = JSONObject()
-        for (team in ClocktowerCatalogTeam.entries) {
-            groups.put(team.name, JSONArray(roles.filter { it.team == team }
-                .map { it.externalId }))
-        }
+        // Script role knowledge is part of the expert's task, not a menu of
+        // model-facing legal candidate roles. Host alone validates all roles.
+        require(snapshot.grimoireSeats.all { seat ->
+            registry.findByExternalId(
+                (seat.shownRoleId as SnapshotField.Known<String>).value) != null
+        }) { "Host opening roster contains an unknown script role." }
         val info = JSONArray()
         snapshot.grimoireSeats.sortedBy { it.seat }.forEach { seat ->
             val shown = (seat.shownRoleId as SnapshotField.Known<String>).value
@@ -187,7 +186,6 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
                 .put("gameStateRevision", scope.gameStateRevision)
                 .put("playerInputRevision", scope.playerInputRevision)
                 .put("rosterFingerprint", scope.rosterFingerprint))
-            .put("roleCatalog", groups)
             .put("decisionInventory", JSONObject()
                 .put("information", info)
                 .put("events", JSONArray().also { arr ->
