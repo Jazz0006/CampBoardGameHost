@@ -69,6 +69,21 @@
 - 不删除 `FirstNightPublicGoodInfoProjection` 和 `FirstNightBundleProfileExposure`：虽然属于旧的实验语义，但其他仍保留的实验/影子模块有消费者；不影响 Host 当前联合法律裁量。
 - 第七批源码提交 `f4c9468643e7`，GitHub CI #4194（含 Android tests、Real Clingo）与 R2 #3810 均 GREEN。
 
+### 第八批：旧 SDE 评分 / 特征 / 一致性推荐框架完全退役（2026-10-16）
+
+按照用户最新明确的范围，沿真实 **production entrypoint → SDE module → tests** 依赖闭包审计，确认没有生产调用者使用旧 SDE 分值、NormalizedStrategicDiagnostics、效用、信息锁定/一致性特征或 Shadow 来挑选推荐。由此删除旧 SDE **26 个主源码文件**，包括 `RecommendationDecisionExportV1`、`StorytellerDecisionEngine`、`DecisionFeatures` / `DecisionFeatureEvaluation`、`DrunkAssignmentFeatures`、`NormalizedStrategicDiagnostics`、`HealthyInformationUtilityFeatures`、全部相关历史 feature projector、Drunk/Structured Shadow 适配器和旧候选计划引用；同步删除这些旧链路的独立单元测试以及试验性 SDE-2D5 标准/B4F SILVER 校准。撤销已无类可运行的两个 Gradle 专用任务 `sde2D5Calibration`、`sde2D5FB4FSilverGeneralization`，修订现行 `TESTING_STRATEGY.md`。
+
+**不删除** 仍被 App 捕捉/Recovery 读写的 `SdeHistoricalReplayInput.kt`、`SdeHistoricalReplayInputJsonCodec.kt`；不删除使用真实设置合法域的 `RedHerringSetupPrecommitAdapter.kt`、`RedHerringCommittedInputBindingAdapter.kt`、其共享时间/输入身份类型 `SdeDecisionCandidate.kt`。这是该 SDE 目录保留的仅有 5 个生产源码。其他 Host 合法域、真实登记见证、Epistemic 世界与因果时序一致性不是旧评分算法，必须保持。这一批须通过后续精确 HEAD Android CI/R2 才算通过验证；不能只因代码搜索归零就宣称编译成功。
+
+### 最新产品目标实况（审计，不是完工声明）
+
+1. **游戏对象唯一可写权威：未达成**。Session 的 `GameState` 和 Compose 的 `PlayerCard` 仍分别可以写入，游戏动作有多处从实时 cards 生成 `GameState`。TBGS/GameSnapshot 本身是只读投影，保留合理，但写入所有权尚未完全统一。
+2. **模型请求不附合法备选：未达成**。`InitialJointOpeningDirectV2.encode` 不再发送穷举候选全集，但仍发送 `conditionalDecisionContracts` 各 Drunk 分支约束、`redHerringAllowedSeats` 和 `legalDemonBluffRoleIds`；`StorytellerStrategicContinuationV2.encode` 仍明确发送 `openDecisions[].legalCandidates[]` 的 `candidateId` 和解释并要求整包 `remainingChoices`，属于生产调用。Host 验证可以保留，但这些输入协议还需要替换。旧 `InitialGlobalOpeningScopeV1.providerPayload` 还可序列化更丰富的旧 `conditionalLegalScope`，须在删除前确认其直接消费者。
+3. **旧评分 / 一致性启发式推荐代码：SDE 子模块已按调用图清除**；任何剩余的世界一致性/合法性/注册见证及实际历史校验仍属 Host 正确性，不能为了满足命名字面要求删除。
+4. **返回结果的 Host 后验合法性校验：保留**。不因停止发送合法备选而取消 Host 拒绝非法/过时/歧义结果的能力。
+
+最终验收必须由以上真实消费者的生产重构、回归证明及独立 CI/R2 完成，不以“删除了大量文件”替代。
+
 ## 3. 审计结论：尚未清理的生产调用链
 
 原 P1 #304/#306/#307/#308（联合开局、Host 审核、会话续接和暂存 whole-`remainingChoices`）仍有真实运行时使用者；现已按 Git 祖先关系全部纳入统一的 Draft #315，**候选可以面向 `main` 审阅，但合并必须等待完整验收**。旧 `remainingChoices` 不能误作无调用死代码，只能由后续已通过验收的语义结果合同替换。
@@ -96,7 +111,7 @@ Recovery 与 Game Archive 具有不同合同：前者供继续游戏，后者供
 ## 4. 未收口 / 待验证
 
 1. #315 七批源码至 `f4c9468643e7` 的 Android CI、Real Clingo、R2 已通过；但仅覆盖自动化证据，不代表手动 Host/Recovery 的真实设备端验收。最终归并 HEAD 再跑相应检查；本地构建机 SSH 故障单独处理，不把构建机故障记作应用错误。
-2. 清理其余没有生产入口的旧推荐评分/概率与历史实验类族（只删除真实死亡依赖图）。
+2. 第八批旧 SDE 分值/特征/Shadow 与实验校准已按实际无外部生产调用者删除；需 Android CI/R2 验证，仍保留 Recovery replay 与 Host 合法域。另需核查非 SDE 的历史实验与模型请求旧序列化路径。
 3. 逐项核实当前权威状态转换点、Recovery 和 Archive 的真实边界与跨项目 TBGS 语义。
 4. **已关闭 #310–#314（全部未合并）**：#310 的 Host 单项门控值得复用，但现有代码让模型输出 candidateId；#311 的事件增量使用已废弃的 `ClocktowerSessionState.decisionHistory`、`StorytellerDecisionEvent` 与 `DecisionCorrectionEvent`，当前 #315 已移除这套空档案，不能直接 cherry-pick。#312 的模型合同过时；#313 筛掉合法提名/逐人投票与完整历史不符；#314 的原始审计文档已引入本清理分支。可迁移的是 Host 单项合法性、前缀单调性和私有缓存原则，不是旧接口。已核对 1E 分支：独立 `StorytellerJitDirectResultV2` 对结果数字/真假/Pair/角色/座位执行严格结构化 JSON 解码、模型不接收 candidate ID 且明确 Host 验证为后置；`HostAiDecisionRelevantFactsV2` 对所有合法提名、逐人投票和阶段变化均保留。**但它们尚未接入实际 API/UI**，后者调用的 `HostCausalEventDeltaV2` 仍依赖 #311 已删除的空档案，故**绝不整体合并 1E**；仅标记两项可单独复用的设计/测试素材。关闭的 PR 远端分支暂不删除，以防依赖无法追踪。
 5. 适度整合活动路线与交接文档，保留必要历史审计，但不再将旧项目计划列为当下 NEXT。
