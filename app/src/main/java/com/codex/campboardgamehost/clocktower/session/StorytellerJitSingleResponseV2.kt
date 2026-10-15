@@ -52,7 +52,7 @@ internal object StorytellerJitSingleResponseV2 {
     }
 
     private fun JSONObject.exact(vararg keys: String) {
-        require(keys().asSequence().toSet() == keys.toSet()) {
+        require(this.keys().asSequence().toSet() == keys.toSet()) {
             "Missing, extra or legacy bulk-response field."
         }
     }
@@ -98,8 +98,17 @@ internal object StorytellerJitSingleResponseV2 {
         val observed = raw.getJSONObject("source")
         observed.exact("gameId", "gameStateRevision", "playerInputRevision",
             "exclusiveGlobalSequence", "phase", "round", "decisionId", "memoryVersion")
-        val expected = sourceJson(requested.source)
-        require(observed.similar(expected)) { "Response source does not match frozen Host request." }
+        val expected = requested.source
+        require(observed.getString("gameId") == expected.gameId &&
+            observed.getLong("gameStateRevision") == expected.gameStateRevision &&
+            observed.getLong("playerInputRevision") == expected.playerInputRevision &&
+            observed.getLong("exclusiveGlobalSequence") == expected.exclusiveGlobalSequence &&
+            observed.getString("phase") == expected.phase.name &&
+            observed.getInt("round") == expected.round &&
+            observed.getString("decisionId") == expected.decisionId &&
+            observed.getInt("memoryVersion") == expected.memoryVersion) {
+            "Response source does not match frozen Host request."
+        }
         val candidate = raw.getString("candidateId")
         HostCurrentSingleDecisionJitV2.verifyProposal(
             requested, fresh, HostCurrentSingleDecisionJitV2.Proposal(requested.source, candidate))
