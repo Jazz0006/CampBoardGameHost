@@ -122,12 +122,17 @@ internal object InitialJointOpeningDirectV2 {
 tradeoffSummary 简要交代主要取舍，不复述角色规则或详细分析过程。
 
 输出接口（严格遵守 Host 提供的合同；这不是逐角色规划任务）：
-原样复制 requestIdentity、asOfRevision；schemaVersion=2。选择 conditionalDecisionContracts 中
-与 openingPlan.drunkSeat 一致的一个分支；information 必须完整覆盖该分支的信息项，
-逐项使用相同的 decisionId、sourceSeat、abilityRoleId、effectiveAbilityRoleId、resolution、
-basis、waitingForEvents。deferredActions 完整复制该分支的 decisionId、event、actorSeat。
-DECISION 填符合 Host 合法语义的当前观察值；HOST_DETERMINED 用 NONE 观察值及
-RULE_DETERMINED；DEFERRED 用 NONE 观察值并保留给出的等待事件。
+原样复制 requestIdentity、asOfRevision；schemaVersion=2。根据 state.seats 的展示阵容、
+有无 Drunk 和 decisionInventory 中本轮实际的首夜信息项/待确认事件，自行联合选择酒鬼与首夜方案。
+information 必须完整覆盖 decisionInventory.information，逐项使用相同的 decisionId、
+sourceSeat、abilityRoleId。选定的酒鬼 effectiveAbilityRoleId=null，其他角色按展示身份；
+resolution、basis、waitingForEvents 必须符合已知状态与尚未确认的真实玩家行动。
+当前可裁量信息用 DECISION 与合法观察值；Host 已确定信息用 HOST_DETERMINED /
+RULE_DETERMINED、NONE 观察；依赖未发生行动的信息用 DEFERRED / STATUS_DEPENDENT、
+NONE 观察及真实 waitingForEvents，不猜测未来目标或结果。
+deferredActions 必须只对应 decisionInventory.events 中本局已知待确认事件，
+decisionId、event、actorSeat 与实际身份一致；不得编造事件。
+Host 在收到结果后依据自身完整合法域独立校验所有选择、登记见证与待决状态。
 需要 Red Herring 时，按本局实际阵容选择座位；Host 将后验校验合法性。
 demonBluffRoleIds 根据剧本角色目录选三个不同且未在场的善良身份，
 否则为 null。FIXED_NEIGHBORS 的 subject.seats 为空；EVIDENCE_PAIR 只填两个座位，
@@ -173,60 +178,6 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
             }
         }
         val pendingEvents = eventMap.values.toSet().sorted()
-        // Share only conditional structural requirements, not witness IDs,
-        // candidate menus or a Cartesian product of complete opening plans.
-        // The Host resolution status depends on the proposed Drunk branch.
-        val conditionalContracts = JSONArray().also { branches ->
-            domain.projections.forEach { (drunkSeat, projection) ->
-                val discretionary = projection.branch.discretionary.associateBy { it.decisionId }
-                val determined = projection.branch.determined.associateBy { it.decisionId }
-                val deferred = projection.branch.deferred.associateBy { it.decisionId }
-                val information = JSONArray()
-                for (i in 0 until info.length()) {
-                    val source = info.getJSONObject(i)
-                    val id = source.getString("decisionId")
-                    val sourceSeat = source.getInt("sourceSeat")
-                    val shownRole = source.getString("shownRoleId")
-                    val choice = discretionary[id]
-                    val fixed = determined[id]
-                    val waiting = deferred[id]
-                    require(listOfNotNull(choice, fixed, waiting).size == 1) {
-                        "Host conditional information inventory is not complete."
-                    }
-                    val resolution = when {
-                        choice != null -> "DECISION"
-                        fixed != null -> "HOST_DETERMINED"
-                        else -> "DEFERRED"
-                    }
-                    val basis = when (resolution) {
-                        "DEFERRED" -> "STATUS_DEPENDENT"
-                        "HOST_DETERMINED" -> "RULE_DETERMINED"
-                        else -> if (sourceSeat == drunkSeat) "DRUNK_MISINFORMATION"
-                                else "FUNCTIONING"
-                    }
-                    information.put(JSONObject()
-                        .put("decisionId", id)
-                        .put("sourceSeat", sourceSeat)
-                        .put("abilityRoleId", shownRole)
-                        .put("effectiveAbilityRoleId",
-                            if (sourceSeat == drunkSeat) JSONObject.NULL else shownRole)
-                        .put("resolution", resolution)
-                        .put("basis", basis)
-                        .put("waitingForEvents", JSONArray(waiting?.waitingForEvents.orEmpty())))
-                }
-                val actions = JSONArray().also { out ->
-                    projection.deferredActions.toSortedMap().forEach { (id, action) ->
-                        out.put(JSONObject().put("decisionId", id)
-                            .put("event", action.first)
-                            .put("actorSeat", action.second ?: JSONObject.NULL))
-                    }
-                }
-                branches.put(JSONObject()
-                    .put("drunkSeat", drunkSeat ?: JSONObject.NULL)
-                    .put("information", information)
-                    .put("deferredActions", actions))
-            }
-        }
         return JSONObject()
             .put("schemaId", REQUEST_SCHEMA)
             .put("schemaVersion", 2)
@@ -244,7 +195,6 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
                         arr.put(JSONObject().put("decisionId", id).put("event", event))
                     }
                 }))
-            .put("conditionalDecisionContracts", conditionalContracts)
             .put("state", JSONObject()
                 .put("asOfRevision", scope.gameStateRevision)
                 .put("phase", "SETUP_PRECOMMIT")

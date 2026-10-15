@@ -85,42 +85,13 @@ class InitialJointOpeningDirectV2Test {
         assertEquals("BEGINNER", seats.getJSONObject(6).getString("experience"))
         assertEquals(3, host.getJSONObject("decisionInventory")
             .getJSONArray("information").length())
-        // The model sees the Host's branch-dependent protocol obligations,
-        // without exhaustive legal candidate IDs or registration witnesses.
-        val contracts = host.getJSONArray("conditionalDecisionContracts")
-        assertEquals(domain.projections.size, contracts.length())
-        for (index in 0 until contracts.length()) {
-            val contract = contracts.getJSONObject(index)
-            val drunkSeat = if (contract.isNull("drunkSeat")) null
-                else contract.getInt("drunkSeat")
-            val branch = domain.forDrunkSeat(drunkSeat)
-            val expectedStatus = buildMap<String, String> {
-                branch.branch.discretionary.filter { it.decisionId != "setup.red-herring" }
-                    .forEach { put(it.decisionId, "DECISION") }
-                branch.branch.determined.filter { it.decisionId in branch.determinedInformationIds }
-                    .forEach { put(it.decisionId, "HOST_DETERMINED") }
-                branch.branch.deferred.filter { it.decisionId.startsWith("first-night:") }
-                    .forEach { put(it.decisionId, "DEFERRED") }
-            }
-            val information = contract.getJSONArray("information")
-            assertEquals(expectedStatus.size, information.length())
-            for (i in 0 until information.length()) {
-                val entry = information.getJSONObject(i)
-                assertEquals(expectedStatus[entry.getString("decisionId")],
-                    entry.getString("resolution"))
-                assertEquals(entry.getInt("sourceSeat") == drunkSeat,
-                    entry.isNull("effectiveAbilityRoleId"))
-                val deferred = branch.branch.deferred.singleOrNull {
-                    it.decisionId == entry.getString("decisionId")
-                }
-                assertEquals(deferred?.waitingForEvents.orEmpty(),
-                    (0 until entry.getJSONArray("waitingForEvents").length()).map { j ->
-                        entry.getJSONArray("waitingForEvents").getString(j)
-                    })
-            }
-            val actions = contract.getJSONArray("deferredActions")
-            assertEquals(branch.deferredActions.size, actions.length())
-        }
+        // No legal Drunk options or branch menus are exported to the model.
+        // All four Host-internal candidate branches are still available for
+        // complete post-response verification.
+        assertEquals(4, domain.projections.size)
+        assertFalse(host.has("conditionalDecisionContracts"))
+        assertFalse(host.toString().contains("drunkSeat"))
+        assertTrue(host.getJSONObject("state").getJSONArray("unknownEvents").length() > 0)
         assertFalse(host.has("legalDemonBluffRoleIds"))
         assertFalse(host.toString().contains("redHerringAllowedSeats"))
         assertFalse(host.toString().contains("subjectModes"))
@@ -211,7 +182,7 @@ class InitialJointOpeningDirectV2Test {
         )
         val host = JSONObject(hostPayload)
         assertEquals(15, host.getJSONObject("state").getJSONArray("seats").length())
-        assertEquals(8, host.getJSONArray("conditionalDecisionContracts").length())
+        assertFalse(host.has("conditionalDecisionContracts"))
         assertEquals("SETUP_PRECOMMIT",
             host.getJSONObject("state").getString("phase"))
         assertEquals(6, host.getJSONObject("decisionInventory")
