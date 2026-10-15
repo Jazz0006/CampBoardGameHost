@@ -10,8 +10,22 @@ internal object PersonalDirectOpenAiV1 {
     const val DEFAULT_MODEL = "gpt-6-luna"
     private const val MAX_RESPONSE_BYTES = 256_000
     private val modelPattern = Regex("[a-zA-Z0-9][a-zA-Z0-9._-]{2,79}")
+    private val responseIdPattern = Regex("resp_[a-zA-Z0-9_-]{8,160}")
 
-    fun buildRequest(hostPayload: String, model: String): String {
+    internal data class ResponseReceipt(val text: String, val responseId: String)
+
+    // Legacy default remains store:false for callers that do not explicitly
+    // opt into same-game provider retention. Chain IDs are opaque, never logged.
+    fun buildRequest(
+        hostPayload: String,
+        model: String,
+        previousResponseId: String? = null,
+        retainForContinuation: Boolean = false,
+    ): String {
+        require(previousResponseId == null || (retainForContinuation &&
+            responseIdPattern.matches(previousResponseId))) {
+            "Invalid or nonretained Responses continuation anchor."
+        }
         require(modelPattern.matches(model)) { "Invalid OpenAI model ID." }
         val host = JSONObject(hostPayload)
         val opening = host.optString("schemaId") == InitialJointOpeningDirectV2.REQUEST_SCHEMA
@@ -25,13 +39,16 @@ internal object PersonalDirectOpenAiV1 {
             else "botc_whole_game_strategic_continuation_v2"
         return JSONObject()
             .put("model", model)
+            // Top-level instructions and strict schema MUST be sent on every
+            // chained call; previous_response_id never carries instructions.
             .put("instructions", instructions)
             .put("input", host.toString())
-            .put("store", false)
+            .put("store", retainForContinuation)
             .put("text", JSONObject().put("format", JSONObject()
                 .put("type", "json_schema")
                 .put("name", name)
                 .put("strict", true).put("schema", schema)))
+            .apply { previousResponseId?.let { put("previous_response_id", it) } }
             .toString()
     }
 
@@ -57,6 +74,13 @@ internal object PersonalDirectOpenAiV1 {
         require(text.isNotEmpty()) { "OpenAI returned no structured text." }
         // Strictly pass through untrusted V2 data. Host verifies all choices, no autofix.
         return JSONObject(text.toString()).toString()
+    }
+
+    internal fun adaptRetainedResponse(hostPayload: String, upstreamBody: String): ResponseReceipt {
+        val upstream = JSONObject(upstreamBody)
+        val responseId = upstream.getString("id")
+        require(responseIdPattern.matches(responseId)) { "Invalid Responses anchor ID." }
+        return ResponseReceipt(adaptResponse(hostPayload, upstreamBody), responseId)
     }
 
     /** Show only a safe network/error category; never expose payloads, tokens or responses. */
@@ -87,12 +111,34 @@ internal object PersonalDirectOpenAiV1 {
         hostPayload: String,
         model: String,
         onStage: (String) -> Unit = {},
-    ): String {
+    ): String = postImpl(apiKey, hostPayload, model, onStage, null, false).first
+
+    /** Opt-in stored Responses chain, still subject to the caller's Host gate. */
+    fun postRetained(
+        apiKey: String,
+        hostPayload: String,
+        model: String,
+        previousResponseId: String? = null,
+        onStage: (String) -> Unit = {},
+    ): ResponseReceipt {
+        val (text, id) = postImpl(apiKey, hostPayload, model, onStage,
+            previousResponseId, true)
+        return ResponseReceipt(text, requireNotNull(id))
+    }
+
+    private fun postImpl(
+        apiKey: String,
+        hostPayload: String,
+        model: String,
+        onStage: (String) -> Unit,
+        previousResponseId: String?,
+        retainForContinuation: Boolean,
+    ): Pair<String, String?> {
         onStage("PREPARING")
         require(apiKey.startsWith("sk-") && apiKey.length >= 12) {
             "A personal OpenAI API key is required."
         }
-        val wire = buildRequest(hostPayload, model)
+        val wire = buildRequest(hostPayload, model, previousResponseId, retainForContinuation)
         // Debug-only opt-in: records request/answer bytes, NEVER Authorization.
         val traceCall = BotcAiWireTrace.begin(hostPayload, wire)
         val traceStart = System.nanoTime()
@@ -131,11 +177,14 @@ internal object PersonalDirectOpenAiV1 {
             onStage("PARSING_RESPONSE")
             val upstream = raw.toString("UTF-8")
             BotcAiWireTrace.payload(traceCall, "RAW_PROVIDER_RESPONSE", upstream)
-            val adapted = adaptResponse(hostPayload, upstream)
+            val parsed = if (retainForContinuation) {
+                adaptRetainedResponse(hostPayload, upstream)
+            } else null
+            val adapted = parsed?.text ?: adaptResponse(hostPayload, upstream)
             BotcAiWireTrace.payload(traceCall, "PARSED_MODEL_OUTPUT", adapted)
             val elapsed = (System.nanoTime() - traceStart) / 1_000_000
             BotcAiWireTrace.event(traceCall, "DONE", "elapsedMs=$elapsed")
-            return adapted
+            return adapted to parsed?.responseId
         } catch (error: Throwable) {
             // Upstream exception text must NOT reach Logcat without review.
             BotcAiWireTrace.event(traceCall, "FAILURE", "transport_or_response")

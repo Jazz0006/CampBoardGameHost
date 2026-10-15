@@ -7,6 +7,8 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 3C/3D — ONE expert precommit planning request, before any actual Drunk is bound.
@@ -294,6 +296,12 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
         return HostOpeningSemanticGateV2.accept(raw, domain.forDrunkSeat(drunk))
     }
 
+    /** Provider ID is provisional: only the caller's actual Host adoption may promote it. */
+    data class AcceptedResponse(
+        val accepted: HostOpeningSemanticAcceptanceV2,
+        val responseId: String,
+    )
+
     suspend fun recommend(
         endpoint: String,
         accessToken: String,
@@ -302,21 +310,34 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
         model: String,
         recentGames: List<String> = emptyList(),
         onStage: (String) -> Unit = {},
-    ): HostOpeningSemanticAcceptanceV2 {
+    ): HostOpeningSemanticAcceptanceV2 = recommendWithReceipt(
+        endpoint, accessToken, domain, registry, model, recentGames, onStage,
+    ).accepted
+
+    suspend fun recommendWithReceipt(
+        endpoint: String,
+        accessToken: String,
+        domain: HostOpeningRulesDomainV2,
+        registry: ClocktowerCharacterRegistry,
+        model: String,
+        recentGames: List<String> = emptyList(),
+        onStage: (String) -> Unit = {},
+    ): AcceptedResponse {
         require(endpoint == PersonalDirectOpenAiV1.ENDPOINT) {
             "Unified opening requires personal-direct Responses support."
         }
         onStage("BUILDING_JOINT_OPENING_CONTEXT")
         val payload = encode(domain, registry, recentGames)
-        val response = AuthenticatedModelTransportV1.post(
-            endpoint, accessToken, payload, model, onStage,
-        )
+        val receipt = withContext(Dispatchers.IO) {
+            PersonalDirectOpenAiV1.postRetained(accessToken, payload, model,
+                onStage = onStage)
+        }
         onStage("VALIDATING_COMPLETE_HOST_OPENING")
         return try {
-            decode(response, domain).also { accepted ->
-                BotcAiWireTrace.hostValidation(
-                    "JOINT_OPENING", true, accepted.selection.choices.size)
-            }
+            val accepted = decode(receipt.text, domain)
+            BotcAiWireTrace.hostValidation(
+                "JOINT_OPENING", true, accepted.selection.choices.size)
+            AcceptedResponse(accepted, receipt.responseId)
         } catch (error: Throwable) {
             BotcAiWireTrace.hostValidation("JOINT_OPENING", false, 0,
                 error.message ?: error.javaClass.simpleName)

@@ -47,6 +47,59 @@ class PersonalDirectOpenAiV1Test {
         assertFalse(req.getBoolean("store"))
     }
 
+    @Test fun retainedOpeningAndChainedContinuationKeepHostContracts() {
+        val opening = host(InitialJointOpeningDirectV2.REQUEST_SCHEMA).toString()
+        val first = JSONObject(PersonalDirectOpenAiV1.buildRequest(
+            opening, "gpt-6-luna", retainForContinuation = true))
+        assertTrue(first.getBoolean("store"))
+        assertFalse(first.has("previous_response_id"))
+        assertFalse(first.has("service_tier"))
+        assertEquals(opening, first.getString("input"))
+        val priorId = "resp_0123456789abcdef"
+        val nextPayload = host(StorytellerStrategicContinuationV2.REQUEST_SCHEMA).toString()
+        val next = JSONObject(PersonalDirectOpenAiV1.buildRequest(
+            nextPayload, "gpt-6-luna", priorId, retainForContinuation = true))
+        assertTrue(next.getBoolean("store"))
+        assertEquals(priorId, next.getString("previous_response_id"))
+        assertEquals(StorytellerStrategicContinuationV2.INSTRUCTIONS,
+            next.getString("instructions"))
+        assertTrue(next.getJSONObject("text").getJSONObject("format").getBoolean("strict"))
+        assertEquals(nextPayload, next.getString("input"))
+    }
+
+    @Test fun retainedReceiptRequiresCompletedModelAndProviderAnchor() {
+        val h = host(InitialJointOpeningDirectV2.REQUEST_SCHEMA).toString()
+        val model = JSONObject().put("schemaVersion", 2)
+        val upstream = JSONObject(upstream("completed", model))
+            .put("id", "resp_0123456789abcdef").toString()
+        val parsed = PersonalDirectOpenAiV1.adaptRetainedResponse(h, upstream)
+        assertEquals("resp_0123456789abcdef", parsed.responseId)
+        assertEquals(2, JSONObject(parsed.text).getInt("schemaVersion"))
+        assertTrue(runCatching {
+            PersonalDirectOpenAiV1.adaptRetainedResponse(h, upstream("completed", model))
+        }.isFailure)
+        assertTrue(runCatching {
+            PersonalDirectOpenAiV1.adaptRetainedResponse(h, JSONObject(upstream)
+                .put("id", "untrusted-string").toString())
+        }.isFailure)
+        assertTrue(runCatching {
+            PersonalDirectOpenAiV1.adaptRetainedResponse(h, JSONObject(upstream)
+                .put("status", "incomplete").toString())
+        }.isFailure)
+    }
+
+    @Test fun unretainedOrForgedContinuationFailsClosed() {
+        val h = host(StorytellerStrategicContinuationV2.REQUEST_SCHEMA).toString()
+        assertTrue(runCatching {
+            PersonalDirectOpenAiV1.buildRequest(h, "gpt-6-luna",
+                "resp_0123456789abcdef", retainForContinuation = false)
+        }.isFailure)
+        assertTrue(runCatching {
+            PersonalDirectOpenAiV1.buildRequest(h, "gpt-6-luna",
+                "resp_bad\\nmalicious", retainForContinuation = true)
+        }.isFailure)
+    }
+
     @Test fun retiredRequestsAndInvalidModelCannotBeSent() {
         for (id in listOf("botc.storyteller-provider-request",
                 "botc.storyteller-global-analysis-request",

@@ -12,7 +12,7 @@
 
 **P0 — V1-RETIRE-NOW（代码及 CI/R2 完成；真机待验）：** 旧独立模型路线已经从 #307 源码中删除，生产只保留 `InitialJointOpeningDirectV2`（同次首夜全局）及 `StorytellerStrategicContinuationV2`（当前合法剩余整包）。V2 无法覆盖或结果过期时必须安全人工接管，不可回退逐点付费 AI。2026-10-15 CI #4159 / R2 #3776 GREEN；真正手机 FIELD-1/FIELD-2 与多夜自动流程仍单独验收。
 
-**P1 — AI-CONVERSATION-1：** 首夜建立**同局连续 Responses 对话**。首轮全局状态 + 联合配置 + 可错战略摘要；后续仅增量事件 + 当前 phase/round + 全部当前 Host-open legal domains。优先试 `previous_response_id` 和可确认 response_id 锚点；每轮继续发送核心顶层指令与严格输出 Schema。必须用真正 `gpt-6-luna` 实验 `reasoning.context` 的 effective 支持；官方对别的模型支持 `all_turns` 不可直接推断本模型支持。当前 `store:false` 独立请求没有这样的连续记忆。跟踪完整 usage、延时、数据留存风险/费用及 context 累积。
+**P1 — AI-CONVERSATION-1（2026-10-15 实验分支实施中）：** 单局连续 Responses 分阶段交付。已获真实 Luna `store:true` + `previous_response_id` 的 Python/Mini MCP 两次调用证据（约 26.0s→7.8s，但第二次无新增行动，不证明多夜质量）。本轮在 #308 后继实验分支加入 Android 生产**原样完整 Host 输入 + 模型响应锚点**：只在 Host 验证后保留待采纳首夜锚点、在实际采纳后启用链；自动整包私人预选并通过复验后推进锚点，辅助模式未采纳推荐不推进 provider 链；过期/404/400 的链失败不自动付费重试、下一明确请求可从完整事实独立起步；换模型/新局/人工接管/恢复不能沿用旧锚点。顶层指令及 Schema 每轮重送。**当前并未改成事件差量**，仍是完整 Host 状态；事件差量和人工覆盖/持久链游标属于下一阶段。生产调用明确 `store:true`，响应由服务商留存（通常 30 日），与原先 `store:false` 不同，需用户了解留存与成本。当前只做源码/离线验证，须以 CI/R2/真机实证作为完成条件；不宣称生产多夜已验收。
 
 **P2 — AI-DELTA-1 / HUMAN-OVERRIDE：** Host 持久化因果序号、真实动作/观察、原方案与最终采纳的区别；人工可以拒绝推荐 Drunk，也可确认 Drunk 后改掉第一条推荐信息。记录已确认约束后，一次重新规划**全部仍开放且受影响的联动决定**；已公布内容永不撤销。禁止无权限模型响应推进 canonical 对话头；并发/陈旧回答不得写事实或战略游标。事件只入账；真正有当前模型裁量时才调用，一夜多项改动可合并。
 

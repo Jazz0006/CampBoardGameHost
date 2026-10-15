@@ -155,7 +155,7 @@ Host 决定哪些行动已真正发生；未来尚不可决定的项目不属于
 不能修改既有玩家收到的线索，也不能假造未登记的意图，不能自行断定含糊的间谍/隐士登记。
 如果说书人改变了选择，只能根据被记录的决定推断其后果，不得把未明说的人类动机当成事实。
 updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要，不能冒充 Host 事实。
-只返回严格结构化 JSON，不输出新线索或候选 ID、不下达游戏执行命令，不写长篇分析。
+只返回严格结构化 JSON；不得输出 Host 合法候选之外的新线索或候选 ID，不下达游戏执行命令，不写长篇分析。
 """
 
     /** Caller must pass decisions from Host's CURRENT legal decision inventory, not model text. */
@@ -394,6 +394,9 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
         )
     }
 
+    /** Receipt is provisional until the UI confirms this entire Host package. */
+    data class ValidatedResponse(val proposal: Result, val responseId: String)
+
     suspend fun recommend(
         endpoint: String,
         accessToken: String,
@@ -403,22 +406,39 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
         openDecisions: List<OpenDecision>,
         cursor: MemoryCursor = MemoryCursor.initial(prior),
         onStage: (String) -> Unit = {},
-    ): Result {
+    ): Result = recommendWithReceipt(
+        endpoint, accessToken, model, session, prior, openDecisions,
+        cursor, null, onStage,
+    ).proposal
+
+    suspend fun recommendWithReceipt(
+        endpoint: String,
+        accessToken: String,
+        model: String,
+        session: ClocktowerGameSession,
+        prior: HostOpeningSemanticAcceptanceV2,
+        openDecisions: List<OpenDecision>,
+        cursor: MemoryCursor = MemoryCursor.initial(prior),
+        previousResponseId: String? = null,
+        onStage: (String) -> Unit = {},
+    ): ValidatedResponse {
         require(endpoint == PersonalDirectOpenAiV1.ENDPOINT)
         val frozen = session.state
         onStage("FROZEN_WHOLE_GAME_PREFIX")
         val input = encode(frozen, prior, openDecisions, cursor)
-        val raw = AuthenticatedModelTransportV1.post(
-            endpoint, accessToken, input, model, onStage)
+        val receipt = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            PersonalDirectOpenAiV1.postRetained(
+                accessToken, input, model, previousResponseId, onStage)
+        }
         onStage("VALIDATING_STRATEGIC_CONTINUATION")
         return try {
-            decode(input, raw).also { decoded ->
-                require(session.state === frozen) {
-                    "Host state changed during whole-game continuation; discard obsolete response."
-                }
-                BotcAiWireTrace.hostValidation(
-                    "STRATEGIC_CONTINUATION", true, decoded.remainingChoices.size)
+            val decoded = decode(input, receipt.text)
+            require(session.state === frozen) {
+                "Host state changed during whole-game continuation; discard obsolete response."
             }
+            BotcAiWireTrace.hostValidation(
+                "STRATEGIC_CONTINUATION", true, decoded.remainingChoices.size)
+            ValidatedResponse(decoded, receipt.responseId)
         } catch (error: Throwable) {
             BotcAiWireTrace.hostValidation("STRATEGIC_CONTINUATION", false, 0,
                 error.message ?: error.javaClass.simpleName)

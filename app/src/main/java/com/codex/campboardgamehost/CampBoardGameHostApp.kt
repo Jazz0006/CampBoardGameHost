@@ -413,6 +413,12 @@ internal fun CampBoardGameHostApp() {
     }
     var pendingJointOpening by remember { mutableStateOf<PendingTroubleBrewingJointOpening?>(null) }
     var jointOpeningResult by remember { mutableStateOf<HostOpeningSemanticAcceptanceV2?>(null) }
+    // Opaque provider IDs are provisional until Host accepts the opening. Never
+    // persist them to game facts, logs or player's visible information.
+    var pendingOpeningResponseId by remember { mutableStateOf<String?>(null) }
+    var pendingOpeningModel by remember { mutableStateOf<String?>(null) }
+    var canonicalConversationResponseId by remember { mutableStateOf<String?>(null) }
+    var canonicalConversationModel by remember { mutableStateOf<String?>(null) }
     var jointOpeningBusy by remember { mutableStateOf(false) }
     var jointOpeningError by remember { mutableStateOf<String?>(null) }
     var jointOpeningSerial by remember { mutableStateOf(0) }
@@ -1503,6 +1509,12 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun restoreSavedGame() {
+        // Recovery has Host facts but no verified provider cursor. Fall back to
+        // complete Host snapshot rather than attaching to an untrusted old ID.
+        canonicalConversationResponseId = null
+        canonicalConversationModel = null
+        pendingOpeningResponseId = null
+        pendingOpeningModel = null
         RecoveryApplicationCoordinator.apply(
             raw = baseContext.loadActiveGameStateJson(),
             prepare = { raw -> baseContext.prepareCurrentRecoveryPlan(raw) },
@@ -1593,6 +1605,8 @@ internal fun CampBoardGameHostApp() {
         committedClocktowerSetup = null
         committedTroubleBrewingSetupRotationRecord = null
         currentGameKind = nextGameKind
+        canonicalConversationResponseId = null
+        canonicalConversationModel = null
         records.clear()
         clocktowerEvents.clear()
         clocktowerGameSession = null
@@ -1960,6 +1974,13 @@ internal fun CampBoardGameHostApp() {
                 "memoryVersion" to wholeCursor.version.toString()))
             BotcAiWireTrace.residualGate("REQUEST", legalOpen.size,
                 wholeCursor.version, phasePosition.phase.name, phasePosition.round)
+            // This is only a provider context hint; the Host frozen snapshot
+            // remains complete and authoritative even when a chain is usable.
+            val requestedModel = requireNotNull(aiDirectModel)
+            val requestedToken = aiToken
+            val previousResponseId = canonicalConversationResponseId?.takeIf {
+                canonicalConversationModel == requestedModel
+            }
             drunkAiScope.launch {
                 // Coalesce rapid related Host updates before paying for a new
                 // whole-game request. A newer state/key cancels this pending call.
@@ -1968,11 +1989,12 @@ internal fun CampBoardGameHostApp() {
                     session.state !== currentHost.state ||
                     strategicPolicyCursor != wholeCursor ||
                     storytellerOperationMode != requestedOperationMode ||
+                    aiDirectModel != requestedModel || aiToken != requestedToken ||
                     clocktowerNightStepIndexState.value != stepIndex) return@launch
                 val result = runCatching {
-                    StorytellerStrategicContinuationV2.recommend(
-                        aiEndpoint, aiToken, requireNotNull(aiDirectModel), session, wholeOpening,
-                        legalOpen, wholeCursor,
+                    StorytellerStrategicContinuationV2.recommendWithReceipt(
+                        PersonalDirectOpenAiV1.ENDPOINT, requestedToken, requestedModel,
+                        session, wholeOpening, legalOpen, wholeCursor, previousResponseId,
                     )
                 }
                 if (liveAiAdviceKey != key || clocktowerGameSession !== session ||
@@ -1981,10 +2003,12 @@ internal fun CampBoardGameHostApp() {
                     clocktowerPhase.toStorytellerPhase() != phasePosition.phase ||
                     round != phasePosition.round ||
                     strategicPolicyCursor != wholeCursor ||
-                    storytellerOperationMode != requestedOperationMode
+                    storytellerOperationMode != requestedOperationMode ||
+                    aiDirectModel != requestedModel || aiToken != requestedToken
                 ) return@launch
                 liveAiAdviceBusy = false
-                result.onSuccess { proposal ->
+                result.onSuccess { receipt ->
+                    val proposal = receipt.proposal
                     runCatching {
                         val verified = StorytellerResidualPackageGateV2.verify(
                                 session.state, phasePosition.phase, phasePosition.round,
@@ -2030,6 +2054,14 @@ internal fun CampBoardGameHostApp() {
                         }
                         strategicPolicyCursor = advanced
                         strategicLastReviewedHost = currentHost
+                        // An assisted suggestion is not an adoption: it MUST NOT
+                        // advance the provider chain. Automatic mode promotes
+                        // only after the complete private Host preselection gate.
+                        if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC &&
+                            residualAdoptedPackage == verified) {
+                            canonicalConversationResponseId = receipt.responseId
+                            canonicalConversationModel = requestedModel
+                        }
                         BotcAiWireTrace.residualGate("MEMORY_ADVANCED", verified.choices.size,
                             advanced.version, phasePosition.phase.name, phasePosition.round)
                         liveAiAdviceText = buildString {
@@ -2070,6 +2102,15 @@ internal fun CampBoardGameHostApp() {
                             wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                     }
                 }.onFailure { error ->
+                    // No retry on a paid call. An expired/missing provider chain
+                    // can recover only on the NEXT explicit Host review using
+                    // its complete snapshot; never advance a failed anchor.
+                    val chainLost = previousResponseId != null &&
+                        Regex("OpenAI HTTP (400|404)").containsMatchIn(error.message.orEmpty())
+                    if (chainLost && canonicalConversationResponseId == previousResponseId) {
+                        canonicalConversationResponseId = null
+                        canonicalConversationModel = null
+                    }
                     liveAiAdviceError = "Whole-game continuation unavailable (" +
                         PersonalDirectOpenAiV1.safeFailure(error) + "). Continue manually."
                     DebugFlightRecorder.record("RESIDUAL_WHOLE_UNAVAILABLE")
@@ -2172,6 +2213,8 @@ internal fun CampBoardGameHostApp() {
         val requestedMode = storytellerOperationMode
         val requestedKey = aiToken
         val requestedModel = aiDirectModel ?: PersonalDirectOpenAiV1.DEFAULT_MODEL
+        pendingOpeningResponseId = null
+        pendingOpeningModel = null
         jointOpeningSerial += 1
         val serial = jointOpeningSerial
         jointOpeningBusy = true
@@ -2182,7 +2225,7 @@ internal fun CampBoardGameHostApp() {
         BotcAiTrace.firstNightEvent(serial, "JOINT_PRECOMMIT_START")
         drunkAiScope.launch {
             val result = runCatching {
-                InitialJointOpeningDirectV2.recommend(
+                InitialJointOpeningDirectV2.recommendWithReceipt(
                     endpoint = PersonalDirectOpenAiV1.ENDPOINT,
                     accessToken = requestedKey,
                     domain = pending.domain,
@@ -2198,9 +2241,11 @@ internal fun CampBoardGameHostApp() {
                 screen !in setOf(Screen.ClocktowerJointPass,
                     Screen.ClocktowerJointReveal, Screen.ClocktowerJointReview)
             ) return@launch
-            result.onSuccess { accepted ->
-                if (accepted.selection.validFor(pending.domain.scope)) {
-                    jointOpeningResult = accepted
+            result.onSuccess { receipt ->
+                if (receipt.accepted.selection.validFor(pending.domain.scope)) {
+                    jointOpeningResult = receipt.accepted
+                    pendingOpeningResponseId = receipt.responseId
+                    pendingOpeningModel = requestedModel
                     jointOpeningError = null
                     BotcAiTrace.firstNightEvent(serial, "JOINT_PRECOMMIT_READY")
                 } else {
@@ -2208,6 +2253,8 @@ internal fun CampBoardGameHostApp() {
                 }
             }.onFailure { error ->
                 jointOpeningResult = null
+                pendingOpeningResponseId = null
+                pendingOpeningModel = null
                 jointOpeningError = "Whole-game AI plan failed (" +
                     PersonalDirectOpenAiV1.safeFailure(error) + "). Manual takeover is available."
                 BotcAiTrace.firstNightEvent(serial, "JOINT_PRECOMMIT_FAILED")
@@ -2263,6 +2310,11 @@ internal fun CampBoardGameHostApp() {
             preparedSetup = pending.preparedSetup,
             confirmedDrunkCandidate = candidate,
         )
+        // Adopt only the Host-accepted opening as this game's chain head.
+        canonicalConversationResponseId = pendingOpeningResponseId
+        canonicalConversationModel = pendingOpeningModel
+        pendingOpeningResponseId = null
+        pendingOpeningModel = null
         strategicLastReviewedHost = clocktowerGameSession?.let { committedSession ->
             StorytellerStrategicChangeCheckpointV2.capture(committedSession,
                 StorytellerStrategicChangeCheckpointV2.Position(
@@ -2292,6 +2344,10 @@ internal fun CampBoardGameHostApp() {
         jointOpeningSerial += 1
         jointOpeningBusy = false
         jointOpeningResult = null
+        pendingOpeningResponseId = null
+        pendingOpeningModel = null
+        canonicalConversationResponseId = null
+        canonicalConversationModel = null
         jointOpeningError = null
         pendingJointOpening = null
         storytellerOperationMode = StorytellerOperationMode.MANUAL
@@ -2340,6 +2396,10 @@ internal fun CampBoardGameHostApp() {
         jointOpeningSerial += 1
         jointOpeningApplied = false
         adoptedJointOpening = null
+        pendingOpeningResponseId = null
+        pendingOpeningModel = null
+        canonicalConversationResponseId = null
+        canonicalConversationModel = null
         strategicPolicyCursor = null
         strategicLastReviewedHost = null
         adoptedJointInformation = emptyMap()
