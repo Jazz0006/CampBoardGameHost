@@ -3,6 +3,8 @@
 > 2026-10-12 · EXPERIMENTAL / NO PRODUCTION CUTOVER · GPT-6 Luna only.
 > Baseline: 3B2 Draft PR #299 on `experiment/prod-global-3b2-expert-probe-20261012`.
 > This document supersedes the 3B2 V1 output proposal for **future experiments**, not the running Android API.
+>
+> **2026-10-12 3B3D update:** typed V2 response now copies complete Host requestIdentity (gameId, gameStateRevision, playerInputRevision, rosterFingerprint), and each information/deferred-action record carries a declared logical decisionId. Offline fixture IDs are not authoritative Host fingerprints. Kotlin experimental [Host semantic gate](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md) validates only against a caller-supplied Host candidate projection and does not prove real rules until 3B3D-2 constructs that projection from the existing rule owners. Smaller-than-seven-player games may have null demon bluffs.
 
 ## Verified state and critical boundaries
 
