@@ -2,6 +2,16 @@
 
 > Updated **2026-10-11 Australia/Sydney**. **唯一活动交接。** 进入新会话必须重新查开发机 live state / GitHub main、PR、CI，不能假设下述 commit 仍是最新。当前单一执行路线是 [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)；此文件只记录状态及下一步。旧 PROD-GLOBAL-1D/2B/analysis-first NEXT 作为历史，不得再次触发独立酒鬼模型规划。
 
+## LATEST HANDOFF — PROD-GLOBAL-3B3 semantic V2 / expert quality (2026-10-12)
+
+At audit live main/local main = `10e5da8f165cbae0288b42d33c50bd0344b116d8`; active 3B2 Draft #299 at `3f87a397c542c64532623bb62694d0b3467a1c87` with CI #4112 and R2 #3734 GREEN, clean. 3B3 stacked Draft [PR #300](https://github.com/Jazz0006/CampBoardGameHost/pull/300), branch `experiment/prod-global-3b3-semantic-v2-20261012`, initial commit `1b5db290c093e4bda821745cca98b4f34b480b5e` based on #299; initial CI #4113/R2 #3735 GREEN **only for that initial commit**, later amendments require a new check. Check live SHA/PR/CI again on return. 3B2 paid Luna tests E05/E02/E03/E04 did actually run in private directories; 3B2 `NOT RUN` text below was historical. Structural E03/E04 warnings are not proof of illegal content, and **no sample has independent Host semantic acceptance**.
+
+**Active design/read:** [3B3 semantic V2 and independent acceptance](PROD_GLOBAL_3B3_SEMANTIC_V2_AND_EXPERT_QUALITY_ROUTE_2026-10-12.md); [V2 prompt](PROD_GLOBAL_3B3_EXPERT_PROMPT_V2.txt); [sealed new holdouts](PROD_GLOBAL_3B3_BLIND_HOLDOUTS_V1.json); [main PROD-GLOBAL-3 route](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md). 3B3 experimental Python schema/screening is **not** Android Host rules validation and production is unchanged. Mini MCP EXPT-2A mock completed; exposed `experiment_run` still forbids paid requests. Do not launch paid EXPT or relabel old basic checks as semantic acceptance.
+
+**NEXT:** confirm newest CI/R2 for PR #300; four frozen E02/E03/E04/E05 original model plans were read from Project file library for **read-only V1 diagnostics** (summary in 3B3 route, originals never public). The E02 conditional Poisoner-dependent whole-board proposal motivated general V2 `CONDITIONAL_INTENT` (never a committed observation). Then wire an independently typed Host-native semantic adapter and real legality/revision/coverage validation; run Luna-only fresh paid holdouts with explicit cost bound **only** once a paid Mini MCP experimental interface actually exists. 3C/3F and true phone acceptance still follow. Old Drunk/postcommit production forks are not retired.
+
+### Previous handoff (historical checkpoint)
+
 ## CURRENT HANDOFF — 2026-10-12 Expert Storyteller principle / next experiment
 
 **Latest product-owner correction is authoritative, overriding older 3B2 candidate-enumeration NEXT below.** Required read: [PROD-GLOBAL-3B2 Expert Storyteller Principle](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md); [main PROD-GLOBAL-3 route](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md); [3P A/B/B2 evidence](PROD_GLOBAL_3P_PROMPT_DESIGN_AND_EXTERNAL_PROJECT_REVIEW_2026-10-12.md); root AGENTS and testing strategy.

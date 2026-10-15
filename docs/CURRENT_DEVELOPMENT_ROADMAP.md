@@ -2,6 +2,12 @@
 
 > Updated: **2026-10-11 Australia/Sydney**. **唯一当前执行优先级权威。** Historical PROD-GLOBAL-1D/2B instructions are NOT current NEXT; see [PROD-GLOBAL-3 unified opening plan](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md) and [handoff](NEXT_DEVELOPMENT_HANDOFF.md). Previous checkpoint detail remains in original route documents and [archive](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_MEM0_CONVERGENCE_2026-10-09.md).
 
+## CURRENT DEVELOPMENT — PROD-GLOBAL-3B3 / expert semantic interface and quality (2026-10-12)
+
+3B2 real `gpt-6-luna` E05/E02/E03/E04 paid samples were executed externally (26–43s; format warnings in E03/E04). Previous 3B2 design-only and `NOT RUN` lines below refer to the **time of document creation**, not the current observed run. None of those raw outputs has passed independent Host semantic acceptance. See [3B3 active experimental V2 route](PROD_GLOBAL_3B3_SEMANTIC_V2_AND_EXPERT_QUALITY_ROUTE_2026-10-12.md), [V2 expert prompt](PROD_GLOBAL_3B3_EXPERT_PROMPT_V2.txt), and sealed [new blind holdouts](PROD_GLOBAL_3B3_BLIND_HOLDOUTS_V1.json). V2 semantics/structure currently reside in offline Python experimental tooling only: **do not replace the postcommit production API**, do not describe V2 screening as Host legality, and do not use EXPT mock as paid-experiment authorization. NEXT: offline test/diff validation, private frozen-result diagnostics when an authorized reader is available, then independent Host-native semantic adapter, small paid holdout only after real bounded paid interface, and ultimately Android 3C/3F acceptance.
+
+### Historical 3B2 priority at its original checkpoint
+
 ## NEW CURRENT PRIORITY — 2026-10-12 / expert Storyteller first
 
 **Product-owner-confirmed correction; supersedes old "3B2 produce all Host-legal candidates for the model" instructions below.** See the authoritative [3B2 Expert Storyteller Principle / Experimental Route](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md).

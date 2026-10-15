@@ -1,6 +1,7 @@
 # PROD-GLOBAL-3B2-EXPERT-PROBE — 自主专家说书人提示词与测试设计 V1
 
-> 2026-10-12 · **EXPERIMENT DESIGN / NOT RUN / NO PRODUCTION CUTOVER**  
+> 2026-10-12 · **V1 EXPERIMENT DESIGN (historical status at creation) / NO PRODUCTION CUTOVER**  
+> Subsequent E05/E02/E03/E04 real Luna runs were reported on 2026-10-12 with structural anomalies; the original inputs, prompt and output schema are frozen. See [3B3 follow-up](PROD_GLOBAL_3B3_SEMANTIC_V2_AND_EXPERT_QUALITY_ROUTE_2026-10-12.md) for live evidence boundaries. No independent Host semantic pass has been established.  
 > 唯一规则权威：[`PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md`](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md)。基线 `main@10e5da8f165cbae0288b42d33c50bd0344b116d8`（写入时的核对值，执行时必须复查）。  
 > 机器输入固定见 [`PROD_GLOBAL_3B2_EXPERT_PROBE_FIXTURES_V1.json`](PROD_GLOBAL_3B2_EXPERT_PROBE_FIXTURES_V1.json)，包含四个冻结基线配置 E01–E04，及额外可选、全员新手的 E05 同局对照。禁止将 `graderOnly` 送入模型。
 
