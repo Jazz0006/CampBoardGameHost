@@ -94,3 +94,14 @@ Host 角色/状态/行动/信息公布/玩家声明/人工覆盖
 **待实验决定**：当前部署模型的 persisted reasoning 有效模式、server conversation 保存/恢复策略、摘要压缩阈值、跨局保留长度和玩家身份长期 ID。不能因为 API 有能力就宣称该型号和 Android 产品已经有能力。
 
 **不在本轮**：训练模型、旧加权排序器、强制 5 秒延迟承诺、任意多年未完局存档、跨版本迁移或不受限地储存/外传玩家私聊。
+
+## 10. P15 首夜真实 API 实验（2026-10-15，独立实验分支）
+
+- 实验 `botc-p15-standard-opening-20261015`，immutable plan SHA-256 `7c392fcb73d0a5697b4493fc14996be9257c94ab892bf34c52c0c2dce557efb6`，只授权并执行 **一次** `gpt-6-luna` Standard（`service_tier` 不指定）API 调用，无重试。Mini MCP 确认 HTTP 200、completed、原始响应已完整保存，用户估算授权上限 US$0.10，实际成本需按账单核对。
+- 实际观测：约 34.5 秒；输入 6,344 tokens、输出 2,651 tokens（含 reasoning 1,140），按实验保守单价估算 US$0.00325705，**并非实际账单**。Mini MCP summary 的 `hostSemanticValidation: NOT_RUN` 仅描述其内部机械结果，**生产 Kotlin Host gate 在独立 GitHub CI 验证**，勿混淆。
+- Kotlin 生产请求来自真实 `InitialJointOpeningDirectV2.encode` + `PersonalDirectOpenAiV1.buildRequest`，15 人、8 个合法 Drunk 分支、6 个首夜信息位，15 人经验均 BEGINNER；请求维持 `store:false`、无 Fast 参数。模型选 Drunk=4 Investigator；red herring=10 Undertaker；Demon bluffs=`soldier` / `slayer` / `mayor`。六个首夜信息位全部 `DEFERRED`（等待 Poisoner target，Fortune Teller 还等待双目标），无即时观察值。
+- Host 逐字段的该 Drunk 分支合同比对无差异；真实输出另经 Kotlin `InitialJointOpeningDirectV2.decode` 的独立回归测试通过（`p15StoredRealLunaModelOutputPassesKotlinHostGate`，CI workflow `p1-wire-fixture.yml`）。没有修改生产源码、没有把模型提议当成已提交事实。
+- **产品风险：语义合法不代表达到“首次全局联合规划完整信息预选”体验。** 因现有 Host 合同对状态可能受 Poisoner 影响的信息一律标记 `DEFERRED`，模型按合同无法给出其余 6 项的提前建议。这是模型输入/输出合同与预规划时机之间的系统性缺口，不要做“Poisoner 特例”或重新拆成 Drunk-only 调用。后续设计应通用地区分可撤回的**私有条件性预规划**、Host 事件落地后的最终合法选择、已对玩家公布的不可逆事实；所有未决因素用同一事件→事实→战略→剩余整包推荐流程处理。
+- **策略质量待提高：** 酒鬼调查员有助于降低新手爪牙暴露压力，但当前战略摘要没有具体论及 14 号 Empath 邻接 13 号 Saint 与 15 号 Scarlet Woman、后续若清醒将取得对 15 号有压力的线索；亦未提前组合 Chef / Washerwoman / Librarian / Fortune Teller 的可能线索。不要误把合约允许的“全部 deferred”当作整局策略已经达到高质量。
+- 该测试**不检验**投毒行动后重新规划速度、信息实际值、Android 实机采纳或多夜一致性；这些需要单独证据。不要从 P15 推断已经完成自动说书人。
+
