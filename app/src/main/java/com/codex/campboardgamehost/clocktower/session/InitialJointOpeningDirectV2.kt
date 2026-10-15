@@ -128,8 +128,8 @@ tradeoffSummary 简要交代主要取舍，不复述角色规则或详细分析�
 basis、waitingForEvents。deferredActions 完整复制该分支的 decisionId、event、actorSeat。
 DECISION 填符合 Host 合法语义的当前观察值；HOST_DETERMINED 用 NONE 观察值及
 RULE_DETERMINED；DEFERRED 用 NONE 观察值并保留给出的等待事件。
-对应分支的 redHerringAllowedSeats 为空则 redHerringSeat=null，否则从中选择。
-demonBluffRoleIds 在 Host 提供合法角色清单时选三个不同且未在场的善良身份，
+需要 Red Herring 时，按本局实际阵容选择座位；Host 将后验校验合法性。
+demonBluffRoleIds 根据剧本角色目录选三个不同且未在场的善良身份，
 否则为 null。FIXED_NEIGHBORS 的 subject.seats 为空；EVIDENCE_PAIR 只填两个座位，
 配合 observation.kind=ROLE 与 roleId 表示该身份在二人之一；不另输出固定规则文案。
 NONE / PLAYER_QUERY_PENDING 不填目标；没有用到的 number、roleId、boolean 填 null。
@@ -204,12 +204,6 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
                         else -> if (sourceSeat == drunkSeat) "DRUNK_MISINFORMATION"
                                 else "FUNCTIONING"
                     }
-                    val publicShapes = projection.candidatesByDecision[id]?.values.orEmpty()
-                    val modes = if (choice != null) publicShapes.map { it.subjectMode }
-                        .distinct().sorted() else listOf("NONE")
-                    val kinds = if (choice != null) publicShapes.map { it.observationKind }
-                        .distinct().sorted() else listOf("NONE")
-                    require(modes.isNotEmpty() && kinds.isNotEmpty())
                     information.put(JSONObject()
                         .put("decisionId", id)
                         .put("sourceSeat", sourceSeat)
@@ -218,8 +212,6 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
                             if (sourceSeat == drunkSeat) JSONObject.NULL else shownRole)
                         .put("resolution", resolution)
                         .put("basis", basis)
-                        .put("subjectModes", JSONArray(modes))
-                        .put("observationKinds", JSONArray(kinds))
                         .put("waitingForEvents", JSONArray(waiting?.waitingForEvents.orEmpty())))
                 }
                 val actions = JSONArray().also { out ->
@@ -231,8 +223,6 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
                 }
                 branches.put(JSONObject()
                     .put("drunkSeat", drunkSeat ?: JSONObject.NULL)
-                    .put("redHerringAllowedSeats", JSONArray(
-                        projection.redHerringCandidatesBySeat.keys.sorted()))
                     .put("information", information)
                     .put("deferredActions", actions))
             }
@@ -255,8 +245,6 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
                     }
                 }))
             .put("conditionalDecisionContracts", conditionalContracts)
-            .put("legalDemonBluffRoleIds",
-                scope.legalDemonBluffs?.let(::JSONArray) ?: JSONObject.NULL)
             .put("state", JSONObject()
                 .put("asOfRevision", scope.gameStateRevision)
                 .put("phase", "SETUP_PRECOMMIT")

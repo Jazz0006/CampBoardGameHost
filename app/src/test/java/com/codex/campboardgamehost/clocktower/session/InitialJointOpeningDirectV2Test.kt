@@ -121,9 +121,10 @@ class InitialJointOpeningDirectV2Test {
             val actions = contract.getJSONArray("deferredActions")
             assertEquals(branch.deferredActions.size, actions.length())
         }
-        assertEquals(domain.scope.legalDemonBluffs,
-            (0 until host.getJSONArray("legalDemonBluffRoleIds").length())
-                .map { host.getJSONArray("legalDemonBluffRoleIds").getString(it) })
+        assertFalse(host.has("legalDemonBluffRoleIds"))
+        assertFalse(host.toString().contains("redHerringAllowedSeats"))
+        assertFalse(host.toString().contains("subjectModes"))
+        assertFalse(host.toString().contains("observationKinds"))
         val rendered = host.toString()
         assertFalse(rendered.contains("legalCandidates"))
         assertFalse(rendered.contains("conditionalLegalScope"))
