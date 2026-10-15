@@ -102,6 +102,7 @@ internal object StorytellerStrategicContinuationV2 {
 
     private fun str() = JSONObject().put("type", "string")
     private fun integer() = JSONObject().put("type", "integer")
+    private fun nullable(type: String) = JSONObject().put("type", JSONArray(listOf(type, "null")))
     private fun arr(item: JSONObject) = JSONObject().put("type", "array").put("items", item)
     private fun obj(vararg members: Pair<String, JSONObject>): JSONObject = JSONObject()
         .put("type", "object")
@@ -126,7 +127,19 @@ internal object StorytellerStrategicContinuationV2 {
                 "reason" to str(),
             )),
             "affectedOpenDecisionIds" to arr(str()),
-            "remainingChoices" to arr(obj("decisionId" to str(), "candidateId" to str())),
+            "currentResult" to obj(
+                "decisionId" to str(),
+                "semantic" to obj(
+                    "kind" to str().put("enum", JSONArray(listOf(
+                        "SCALAR_RESULT", "PAIR_RESULT", "SEAT_TARGET", "REGISTRATION_CHOICE"))),
+                    "scalarValue" to nullable("string"),
+                    "pairRoleId" to nullable("string"),
+                    "pairSeats" to arr(integer()),
+                    "seat" to nullable("integer"),
+                    "registrationStatus" to nullable("string"),
+                    "registrationRoleId" to nullable("string"),
+                ),
+            ),
             "updatedStrategyMemory" to obj(
                 "tensions" to arr(str()),
                 "intentions" to arr(intention),
@@ -146,14 +159,14 @@ priorStrategyMemory 仅为以前的可错战略假说，优先相信已确认 Ho
 逐一对 priorStrategyMemory.intentions 作 KEEP / REVISE / RETIRE，并简述真实的变化理由。
 目标是继续形成多夜合理可解释的线索轨迹，不预言或承诺未来信息重复同一个数字/真假。
 事件类型和角色仅决定 Host 合法性；AI 不得创建独立的投毒者、酒鬼、占卜师或其他角色推荐器。
-这是一次联合剩余规划：先评估所有 Host 当前开放的决定彼此如何影响，再返回一整包 remainingChoices，不能逐项独立评分。
-对 openDecisions 中具有 legalCandidates 的每个决定恰好选择一个候选 ID；不得漏掉、增添、选择非法 ID，也不要凭空选择未来玩家行动。
-没有 legalCandidates 的记录仅供战略诊断，不得生成选择。affectedOpenDecisionIds 只是战略影响范围，不能代替 remainingChoices。
+从整局战略评估当前唯一待裁量的决定，直接返回一条语义结果，不生成未来决定或整包线索。
+输入 currentDecision 仅描述当前问题及其实际状态。不要索要、猜测或输出 Host 的候选 ID；也不要虚构未发生的玩家行动。
+currentResult.decisionId 必须等于 currentDecision.decisionId；semantic 直接填写当前一条数字、真假、配对、座位或登记语义。Host 收到后独立验证。
 Host 决定哪些行动已真正发生；未来尚不可决定的项目不属于本次可采纳包，仍以条件战略记忆表达。
 不能修改既有玩家收到的线索，也不能假造未登记的意图，不能自行断定含糊的间谍/隐士登记。
 如果说书人改变了选择，只能根据被记录的决定推断其后果，不得把未明说的人类动机当成事实。
 updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要，不能冒充 Host 事实。
-只返回严格结构化 JSON；不得输出 Host 合法候选之外的新线索或候选 ID，不下达游戏执行命令，不写长篇分析。
+semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOICE 之一。对应填写 scalarValue（数字或真假用字符串）、pairRoleId 与两个 pairSeats、seat、或 registrationStatus 与 registrationRoleId；其他可空字段填 null、无关 pairSeats 为 []。只返回严格 JSON，不输出候选 ID、未来线索或执行命令。
 """
 
     /** Caller must pass decisions from Host's CURRENT legal decision inventory, not model text. */
@@ -171,9 +184,13 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
             session.nextTimelineGlobalSequence >= cursor.exclusiveGlobalSequence)
         val seats = session.gameState.players.sortedBy { it.seat }
         require(seats.map { it.seat } == (1..seats.size).toList())
-        require(openDecisions.map { it.decisionId }.distinct().size == openDecisions.size)
-        require(openDecisions.all { it.sourceSeat == null ||
-            it.sourceSeat in 1..seats.size })
+        require(openDecisions.size == 1) {
+            "Only the current actual Host decision may be submitted for continuation."
+        }
+        val currentDecision = openDecisions.single()
+        require(currentDecision.legalCandidates.isNotEmpty())
+        require(currentDecision.sourceSeat == null ||
+            currentDecision.sourceSeat in 1..seats.size)
         val prefix = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(
             session, StorytellerProviderRevisionV1(
                 session.gameStateRevision, session.playerInputRevision))
@@ -208,23 +225,12 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
             .put("priorOpening", JSONObject()
                 .put("drunkSeat", prior.selection.drunkSeat ?: JSONObject.NULL)
                 .put("adoptedOpeningCandidateCount", prior.selection.choices.size))
-            .put("openDecisions", JSONArray().also { array ->
-                openDecisions.forEach { decision ->
-                    array.put(JSONObject()
-                        .put("decisionId", decision.decisionId)
-                        .put("family", decision.family)
-                        .put("sourceSeat", decision.sourceSeat ?: JSONObject.NULL)
-                        .put("abilityRoleId", decision.abilityRoleId ?: JSONObject.NULL)
-                        .put("decisionContext", contextMeaning(decision.currentDecisionContext))
-                        .put("legalCandidates", JSONArray().also { options ->
-                            decision.legalCandidates.forEach { candidate ->
-                                options.put(JSONObject()
-                                    .put("candidateId", candidate.candidateId)
-                                    .put("meaning", candidateMeaning(candidate.payload)))
-                            }
-                        }))
-                }
-            })
+            .put("currentDecision", JSONObject()
+                .put("decisionId", currentDecision.decisionId)
+                .put("family", currentDecision.family)
+                .put("sourceSeat", currentDecision.sourceSeat ?: JSONObject.NULL)
+                .put("abilityRoleId", currentDecision.abilityRoleId ?: JSONObject.NULL)
+                .put("decisionContext", contextMeaning(currentDecision.currentDecisionContext)))
             .put("causalHistory", JSONObject()
                 .put("coverage", JSONObject().also { coverage ->
                     prefix.coverage.forEach { (dimension, state) ->
@@ -262,12 +268,65 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
             .toString()
     }
 
-    fun decode(hostPayload: String, modelResponse: String): Result {
+    /**
+     * Player-visible semantic output. Candidate IDs and registration witnesses stay
+     * exclusively inside the Host's freshly regenerated legal domain.
+     */
+    private data class SemanticResult(
+        val kind: String,
+        val scalarValue: String? = null,
+        val pairRoleId: String? = null,
+        val pairSeats: List<Int> = emptyList(),
+        val seat: Int? = null,
+        val registrationStatus: String? = null,
+        val registrationRoleId: String? = null,
+    ) {
+        companion object {
+            fun fromModel(raw: JSONObject): SemanticResult {
+                require(raw.keys().asSequence().toSet() == setOf(
+                    "kind", "scalarValue", "pairRoleId", "pairSeats", "seat",
+                    "registrationStatus", "registrationRoleId"))
+                fun optionalString(key: String) = if (raw.isNull(key)) null else raw.getString(key)
+                val pair = raw.getJSONArray("pairSeats").let { arr ->
+                    (0 until arr.length()).map(arr::getInt)
+                }
+                require(pair.distinct().size == pair.size && pair.all { it > 0 })
+                return SemanticResult(
+                    raw.getString("kind"), optionalString("scalarValue"),
+                    optionalString("pairRoleId"), pair.sorted(),
+                    if (raw.isNull("seat")) null else raw.getInt("seat"),
+                    optionalString("registrationStatus"), optionalString("registrationRoleId"),
+                )
+            }
+
+            fun fromHost(payload: StorytellerProviderCandidatePayloadV1): SemanticResult =
+                when (payload) {
+                    is StorytellerProviderCandidatePayloadV1.PairInformation -> SemanticResult(
+                        kind = "PAIR_RESULT", pairRoleId = payload.shownRoleId,
+                        pairSeats = payload.candidateSeats.sorted())
+                    is StorytellerProviderCandidatePayloadV1.ScalarResult -> SemanticResult(
+                        kind = "SCALAR_RESULT", scalarValue = payload.value)
+                    is StorytellerProviderCandidatePayloadV1.SeatTarget -> SemanticResult(
+                        kind = "SEAT_TARGET", seat = payload.seat)
+                    is StorytellerProviderCandidatePayloadV1.RegistrationChoice -> SemanticResult(
+                        kind = "REGISTRATION_CHOICE", registrationStatus = payload.status.name,
+                        registrationRoleId = payload.selectedRoleId?.value)
+                    is StorytellerProviderCandidatePayloadV1.DrunkAssignment ->
+                        error("Initial Drunk assignment cannot be reopened by continuation")
+                }
+        }
+    }
+
+    fun decode(
+        hostPayload: String,
+        modelResponse: String,
+        openDecisions: List<OpenDecision>,
+    ): Result {
         val input = JSONObject(hostPayload)
         require(input.getString("schemaId") == REQUEST_SCHEMA)
         val raw = JSONObject(modelResponse)
         require(raw.keys().asSequence().toSet() == setOf("schemaVersion", "source",
-            "revisions", "affectedOpenDecisionIds", "remainingChoices",
+            "revisions", "affectedOpenDecisionIds", "currentResult",
             "updatedStrategyMemory", "strategicDirection"))
         require(raw.getInt("schemaVersion") == 2)
         val expected = input.getJSONObject("source")
@@ -300,34 +359,34 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
         val affected = raw.getJSONArray("affectedOpenDecisionIds")
         val changed = (0 until affected.length()).map { affected.getString(it) }
         require(changed.distinct().size == changed.size)
-        val known = input.getJSONArray("openDecisions").let { array ->
-            (0 until array.length()).map { array.getJSONObject(it).getString("decisionId") }.toSet()
+        require(openDecisions.size == 1)
+        val pending = openDecisions.single()
+        require(pending.legalCandidates.isNotEmpty())
+        val current = input.getJSONObject("currentDecision")
+        require(current.getString("decisionId") == pending.decisionId &&
+            current.getString("family") == pending.family &&
+            (if (pending.sourceSeat == null) current.isNull("sourceSeat")
+                else current.getInt("sourceSeat") == pending.sourceSeat) &&
+            (if (pending.abilityRoleId == null) current.isNull("abilityRoleId")
+                else current.getString("abilityRoleId") == pending.abilityRoleId)) {
+            "Host pending identity changed."
         }
-        require(changed.all { it in known }) { "AI cannot change a closed or invented decision." }
-        val legal = input.getJSONArray("openDecisions").let { array ->
-            (0 until array.length()).associate { index ->
-                val decision = array.getJSONObject(index)
-                val options = decision.getJSONArray("legalCandidates")
-                decision.getString("decisionId") to (0 until options.length())
-                    .map { options.getJSONObject(it).getString("candidateId") }.toSet()
-            }.filterValues { it.isNotEmpty() }
+        require(changed.all { it == pending.decisionId }) {
+            "AI cannot change a closed or invented decision."
         }
-        val choiceArray = raw.getJSONArray("remainingChoices")
-        require(choiceArray.length() == legal.size && choiceArray.length() <= 64) {
-            "One coordinated remaining choice is required for each current Host legal domain."
+        val selected = raw.getJSONObject("currentResult")
+        require(selected.keys().asSequence().toSet() == setOf("decisionId", "semantic"))
+        require(selected.getString("decisionId") == pending.decisionId)
+        val semantic = SemanticResult.fromModel(selected.getJSONObject("semantic"))
+        val matches = pending.legalCandidates.filter { candidate ->
+            SemanticResult.fromHost(candidate.payload) == semantic
         }
-        val choices = linkedMapOf<String, String>()
-        for (i in 0 until choiceArray.length()) {
-            val item = choiceArray.getJSONObject(i)
-            require(item.keys().asSequence().toSet() == setOf("decisionId", "candidateId"))
-            val id = item.getString("decisionId")
-            val candidate = item.getString("candidateId")
-            require(id in legal && candidate in requireNotNull(legal[id])) {
-                "Residual selection is not in the current Host legal domain."
-            }
-            require(choices.put(id, candidate) == null) { "Repeated residual decision" }
+        require(matches.isNotEmpty()) {
+            "Returned semantic result is not in the fresh Host legal domain."
         }
-        require(choices.keys == legal.keys) { "Incomplete coupled residual selection" }
+        // Distinct registration witnesses can produce identical visible results.
+        // This stable internal ID is only a private Host presentation handle.
+        val choices = mapOf(pending.decisionId to matches.minBy { it.candidateId }.candidateId)
         val memory = raw.getJSONObject("updatedStrategyMemory")
         require(memory.keys().asSequence().toSet() == setOf("tensions", "intentions", "uncertainties"))
         fun strings(key: String): List<String> {
@@ -385,7 +444,7 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
         }
         onStage("VALIDATING_STRATEGIC_CONTINUATION")
         return try {
-            val decoded = decode(input, receipt.text)
+            val decoded = decode(input, receipt.text, openDecisions)
             require(session.state === frozen) {
                 "Host state changed during whole-game continuation; discard obsolete response."
             }
@@ -434,24 +493,6 @@ updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要�
             .put("mayorSeat", context.mayorSeat)
         StorytellerProviderDecisionContextV1.DrunkAssignment ->
             error("Committed whole-game continuation cannot re-open Drunk selection")
-    }
-
-    private fun candidateMeaning(payload: StorytellerProviderCandidatePayloadV1): JSONObject = when (payload) {
-        is StorytellerProviderCandidatePayloadV1.PairInformation -> JSONObject()
-            .put("kind", "PAIR_RESULT")
-            .put("shownRoleId", payload.shownRoleId ?: JSONObject.NULL)
-            .put("candidateSeats", JSONArray(payload.candidateSeats))
-            .put("semanticTruth", payload.semanticTruth.name)
-            .put("registrationWitness", "AMBIGUOUS_NOT_COMMITTED")
-        is StorytellerProviderCandidatePayloadV1.ScalarResult -> JSONObject()
-            .put("kind", "SCALAR_RESULT").put("value", payload.value)
-        is StorytellerProviderCandidatePayloadV1.SeatTarget -> JSONObject()
-            .put("kind", "SEAT_TARGET").put("seat", payload.seat)
-        is StorytellerProviderCandidatePayloadV1.RegistrationChoice -> JSONObject()
-            .put("kind", "REGISTRATION_CHOICE").put("status", payload.status.name)
-            .put("selectedRoleId", payload.selectedRoleId?.value ?: JSONObject.NULL)
-        is StorytellerProviderCandidatePayloadV1.DrunkAssignment ->
-            error("Initial Drunk assignment cannot be reopened by continuation")
     }
 
     private fun HostOpeningStrategyMemoryV2.toJson() = JSONObject()

@@ -1763,11 +1763,11 @@ internal fun CampBoardGameHostApp() {
                 listOfNotNull(clocktowerFortuneTellerFirst, clocktowerFortuneTellerSecond),
                 mayor, redHerringAlreadyChosen = clocktowerRedHerring != null)
             val open = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
-                latest, position.phase, position.round, scope.requests)
+                latest, position.phase, position.round, scope.requests.take(1))
             open == residualProposedOpen &&
                 (storytellerOperationMode != StorytellerOperationMode.AI_AUTOMATIC ||
                     ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
-                        scope.requests, proposal.choices, steps, cards))
+                        scope.requests.take(1), proposal.choices, steps, cards))
         }.getOrDefault(false)
         if (!sameScope) {
             residualProposedPackage = null
@@ -1928,7 +1928,7 @@ internal fun CampBoardGameHostApp() {
             }
             val legalOpen = runCatching {
                 HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
-                    session.state, phasePosition.phase, round, remainingScope.requests)
+                    session.state, phasePosition.phase, round, remainingScope.requests.take(1))
             }.getOrElse {
                 liveAiAdviceError = "Host rejected pending residual decisions."
                 return
@@ -1965,8 +1965,8 @@ internal fun CampBoardGameHostApp() {
                 liveAiAdviceText = "当前未公布的信息结果由 Host 规则确定；无需调用 AI，沿用已有整局战略。"
                 return
             }
-            // A single model call covers EVERY genuinely open discretionary
-            // decision in this causal segment. Later player action is unknown.
+            // The model returns the current semantic decision only; later
+            // still-unexecuted steps remain dependent on real Host actions.
             liveAiAdviceBusy = true
             DebugFlightRecorder.record("RESIDUAL_WHOLE_REQUEST", mapOf(
                 "openDecisions" to legalOpen.size.toString(),
@@ -2012,14 +2012,14 @@ internal fun CampBoardGameHostApp() {
                     runCatching {
                         val verified = StorytellerResidualPackageGateV2.verify(
                                 session.state, phasePosition.phase, phasePosition.round,
-                                legalOpen, remainingScope.requests, proposal, wholeCursor)
+                                legalOpen, remainingScope.requests.take(1), proposal, wholeCursor)
                         val advanced = StorytellerStrategicChangeCheckpointV2.accept(
                             review, currentHost, proposal, wholeCursor)
                         verified to advanced
                     }.onSuccess acceptedResidual@{ (verified, advanced) ->
                         if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC &&
                             !ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
-                                remainingScope.requests, verified.choices, steps, cards)
+                                remainingScope.requests.take(1), verified.choices, steps, cards)
                         ) {
                             // The model decision is legal but not safely executable by
                             // the current Host presentation. NEVER advance memory or
