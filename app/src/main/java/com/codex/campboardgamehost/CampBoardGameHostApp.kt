@@ -2934,7 +2934,7 @@ internal fun CampBoardGameHostApp() {
                             .ruleset(ClocktowerScript.TroubleBrewing)
                             .characterRegistry
                         ClocktowerDrunkSelectionScreen(
-                            request = pending.request.copy(recommendedCandidate = primary),
+                            request = pending.request,
                             language = language,
                             roleNameForExternalId = { externalId ->
                                 val definition = requireNotNull(
