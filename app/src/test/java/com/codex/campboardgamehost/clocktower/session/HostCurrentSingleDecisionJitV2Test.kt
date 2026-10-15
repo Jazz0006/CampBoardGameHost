@@ -129,7 +129,7 @@ class HostCurrentSingleDecisionJitV2Test {
         }.isFailure)
     }
 
-    @Test fun routineVotesAndOrdinaryNominationsDoNotInvalidatePrivateCache() {
+    @Test fun confirmedVotesAndNominationsReachStrategyAndInvalidateOldCache() {
         val game = session()
         val candidates = listOf(scalar("zero", "0"), scalar("one", "1"))
         val before = scope(game.state, candidates, phase = StorytellerPhase.NIGHT, round = 2)
@@ -143,8 +143,9 @@ class HostCurrentSingleDecisionJitV2Test {
         val delta = HostCausalEventDeltaV2.since(before.frozen, game.state)
         assertTrue(delta.noDetectedSnapshotFallback)
         assertEquals(2, delta.newlyLoggedFacts.size)
-        assertTrue(HostAiDecisionRelevantFactsV2.project(delta).isEmpty())
-        assertEquals(HostCurrentSingleDecisionJitV2.Route.CacheHit("one"),
+        assertEquals(listOf("ordinary-nomination", "ordinary-vote"),
+            HostAiDecisionRelevantFactsV2.project(delta).map { it.entryId })
+        assertEquals(HostCurrentSingleDecisionJitV2.Route.ModelRequired,
             HostCurrentSingleDecisionJitV2.route(after, cached))
     }
 
