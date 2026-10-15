@@ -83,7 +83,8 @@ internal object ClocktowerSemanticHistoryPersistence {
         globalSequence = longValue(json, "globalSequence"),
     )
 
-    private fun encodeActionFact(fact: ActionFact): JSONObject = JSONObject().apply {
+    /** Reuse the durable typed action schema for decision-time AI history projections. */
+    internal fun encodeActionFact(fact: ActionFact): JSONObject = JSONObject().apply {
         put("actionId", fact.actionId)
         put("sequence", fact.sequence)
         when (fact) {

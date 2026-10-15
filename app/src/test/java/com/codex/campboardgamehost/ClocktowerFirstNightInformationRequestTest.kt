@@ -61,20 +61,19 @@ class ClocktowerFirstNightInformationRequestTest {
             informationReliability = InformationReliability.POISONED, selectedInformationTruthful = false,
         )))
         assertEquals("first-night:FirstNight:3:CHEF:1", result.decisionId)
-        val candidate = result.migratedCandidates.single()
+        val candidate = result.candidates.single()
         assertEquals(result.selectedCandidateId, candidate.id)
-        assertEquals(result.legacyCandidates, result.migratedCandidates)
         assertEquals(2, candidate.observation.shownNumber)
         assertEquals(ReliabilityState.POISONED, candidate.observation.reliability)
         assertEquals(SemanticTruth.FALSE, candidate.observation.semanticTruth)
     }
 
-    @Test fun `legacy duplicate preserves neutral candidate identity without ranking metadata`() {
+    @Test fun `obsolete legacy shortlist does not affect the selected publication`() {
         val option = ClocktowerDisplayOption("template", ClocktowerDisplayKind.Number, "information",
             "2", null, null, isDefaultRecommendation = true, reasonCodes = listOf("reason"))
         val result = requireNotNull(request(step().copy(legacyInformationCandidates = listOf(option, option))))
-        assertEquals(1, result.legacyCandidates.size)
-        assertTrue(result.legacyCandidates.single().reasonCodes.isEmpty())
+        assertEquals(1, result.candidates.size)
+        assertEquals(result.selectedCandidateId, result.candidates.single().id)
     }
 
     @Test fun `pair request resolves structured legal observation independently of display seats`() {
@@ -92,15 +91,14 @@ class ClocktowerFirstNightInformationRequestTest {
             round = 1,
             pairContext = pairContext(),
         ))
-        assertEquals(listOf(2, 4), result.migratedCandidates.single().observation.candidateSeats)
-        assertEquals(RoleId("Poisoner"), result.migratedCandidates.single().observation.shownRole)
-        assertEquals(SemanticTruth.TRUE, result.migratedCandidates.single().observation.semanticTruth)
+        assertEquals(listOf(2, 4), result.candidates.single().observation.candidateSeats)
+        assertEquals(RoleId("Poisoner"), result.candidates.single().observation.shownRole)
+        assertEquals(SemanticTruth.TRUE, result.candidates.single().observation.semanticTruth)
         assertEquals(
             "pair-information-ability-v1|Investigator|Poisoner|2,4",
-            result.migratedCandidates.single().id,
+            result.candidates.single().id,
         )
-        assertEquals(result.migratedCandidates.single().id, result.selectedCandidateId)
-        assertEquals(listOf(1, 3), result.legacyCandidates.single().observation.candidateSeats)
+        assertEquals(result.candidates.single().id, result.selectedCandidateId)
     }
 
     @Test fun `trouble brewing pair request fails closed without snapshot context`() {
@@ -123,7 +121,7 @@ class ClocktowerFirstNightInformationRequestTest {
         assertTrue(failure.message.orEmpty().contains("snapshot-backed first-night context"))
     }
 
-    @Test fun `no greater joy investigator preserves legacy pair publication compatibility`() {
+    @Test fun `no greater joy investigator uses Host selected pair publication`() {
         val ngjCards = listOf("Investigator", "Clockmaker", "Baron", "Imp", "Empath").mapIndexed { index, name ->
             val role = clocktowerRolesForScript(ClocktowerScript.NoGreaterJoy).single { it.enName == name }
             PlayerCard("N${index + 1}", Role.Civilian, "", clocktowerRole = role, clocktowerTeam = role.team)
@@ -155,9 +153,9 @@ class ClocktowerFirstNightInformationRequestTest {
             language = "en",
         ))
 
-        assertEquals(listOf(2, 3), result.migratedCandidates.single().observation.candidateSeats)
-        assertEquals(RoleId("Baron"), result.migratedCandidates.single().observation.shownRole)
-        assertEquals(SemanticTruth.TRUE, result.migratedCandidates.single().observation.semanticTruth)
+        assertEquals(listOf(2, 3), result.candidates.single().observation.candidateSeats)
+        assertEquals(RoleId("Baron"), result.candidates.single().observation.shownRole)
+        assertEquals(SemanticTruth.TRUE, result.candidates.single().observation.semanticTruth)
     }
 
     private fun pairContext(): TroubleBrewingFirstNightPairDecisionContext {

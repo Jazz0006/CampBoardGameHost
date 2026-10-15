@@ -4,6 +4,15 @@
 >
 > 开发分支：`cleanup/arch-cleanup-1-20261015`；**[唯一开放的整合候选 Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 已直接改以 live `main` 为 base，GitHub mergeable/clean**，但尚未合并或完成真机端验收。原 P1 #304→#306→#307→#308 的全部 HEAD 均是 #315 的 Git 祖先，四个 PR 已关闭未合并，远端分支保留以供追溯；#310–#314 已先前逐一关闭未合并。#309 evidence-first 的关键规范在清理分支同步，后续所有源码与文档以 #315 为单一审阅入口。1E 是不直接合并的独立实验分支。
 
+## 第十批：2026-10-16 最终复审新增清理（尚待本批精确 HEAD CI/R2）
+
+- 复核 live `main=770ed32f446d03cf81f226901afa78cbdcf287bf`、开发机 clean 起点 `50a1c05fcb2df01d5869729b229f412dd934272a`；该起点 CI #4206 / R2 #3822 均 SUCCESS；ASP 和 Real Clingo 两项按分类 SKIPPED。PR #315 仍 Draft，不合并。
+- **A = PARTIAL / NOT CLOSED**：`ClocktowerGameSession.state.gameState` 是已确认机械事实的预期权威；Compose `PlayerCard` 仍可被实际游戏操作修改且多处投影独立重建 `GameState`；不要用可能过时的 Session 机械替换。信息公布、具体 Drunk/Red Herring/bluffs 采纳、人工覆盖、Claim 来源及任意时间点完整回放不能宣称完整。首夜 UI 临时门禁不再保存第二份 `AbilityObservation` 内容，但发布与 Session durable observation 是先后两道动作，必须审计中途失败和恢复。需完整单写入接入后方可给 A=YES。
+- **B = YES（当前外发源码合同）**：首夜 `InitialJointOpeningDirectV2` 不带合法候选菜单；后续 `StorytellerStrategicContinuationV2` 只外发 `currentDecision` 并收 `currentResult.semantic`。内部 `legalCandidates` 和单项 `remainingChoices` 保留用于 Host 验证及现役 UI 采纳，均非模型端菜单。真实付费 API 调用/设备行为未验收。
+- **C = YES（确认已退役的旧策略推荐）**：原 SDE 评分/归一化一致性/Shadow 规划不存在生产策略调用。进一步清除首夜 `FirstNightInformationMigration` 的旧/新候选池 Shadow 比对、旧路线回退和专属 `SelectionPoolParityRecorder`/统计，保留单一合法发布、已展示不可覆盖和 Session 独立持久观察；`UnifiedSelectionPool` 的合法性/用户可选状态是手动展示机制，不是模型评分。Recovery 的两个 `SdeHistoricalReplayInput` 文件与 epistemic 世界检验、setup diversity 不能按文件名误删。
+- 历史事实外发由 `ActionFact.toString()` / `InformationProposition.toString()` 改为复用 `ClocktowerSemanticHistoryPersistence.encodeActionFact` 与 `EpistemicSemanticJson.encode` 的稳定结构化 JSON，避免让 Kotlin 调试字符串成为跨层历史协议。仍需补齐真正缺失的生产事实事件源。
+- 本轮针对旧 Shadow 的测试改为首夜已选语义发布、候选有效性、重开幂等；保留角色合法性和 Recluse 登记见证测试。完整 CI/R2、真机 MANUAL/AI 辅助/自动、Recovery 的验收状态以最新 SHA 实证为准。**严禁将本批标记 CLOSED，直至 A、B、C 全部真正通过**。
+
 ## 1. 目标和保留边界
 
 停止独立的模型提示词设计、付费 API 调用、AI-EVENT-JIT 新功能；只做架构/冗余清理与相应验证，直至 PR/文档/CI 收口。

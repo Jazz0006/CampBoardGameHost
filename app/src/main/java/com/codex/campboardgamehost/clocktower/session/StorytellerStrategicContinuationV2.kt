@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryCutoffSourceV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryEntryV1
@@ -248,8 +250,7 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
                             .put("kind", entry.kind)
                         when (entry) {
                             is StorytellerProviderHistoryEntryV1.Action -> {
-                                data.put("typedFact", entry.fact.toString())
-                                    .put("factClass", entry.fact.javaClass.simpleName)
+                                data.put("typedFact", ClocktowerSemanticHistoryPersistence.encodeActionFact(entry.fact))
                             }
                             is StorytellerProviderHistoryEntryV1.Observation -> {
                                 data.put("sourceSeat", entry.sourceSeat ?: JSONObject.NULL)
@@ -257,8 +258,7 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
                                     .put("visibility", entry.visibility.name)
                                     .put("recipientSeats", JSONArray(entry.recipientSeats.sorted()))
                                     .put("reliability", entry.reliability.name)
-                                    .put("typedProposition", entry.proposition.toString())
-                                    .put("propositionClass", entry.proposition.javaClass.simpleName)
+                                    .put("typedProposition", JSONObject(EpistemicSemanticJson.encode(entry.proposition)))
                             }
                         }
                         array.put(data)

@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
-import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
@@ -21,7 +20,7 @@ import com.codex.campboardgamehost.clocktower.session.PairInformationDecisionBou
 import com.codex.campboardgamehost.clocktower.session.PairInformationDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.usesAuthoritativePairDomain
 
-/** Host-to-migration adapter. Preserves legacy parity templates; pair legality stays upstream. */
+/** Host publication adapter: no old candidate parity/Shadow or model-facing candidate menu. */
 internal fun clocktowerFirstNightInformationRequest(
     displayStep: ClocktowerNightStepUi,
     phase: ClocktowerPhase,
@@ -65,9 +64,6 @@ internal fun clocktowerFirstNightInformationRequest(
             reliability = reliability,
             semanticTruth = if (option.isTruthful) SemanticTruth.TRUE else SemanticTruth.FALSE,
         ),
-            qualityTier = QualityTier.RECOMMENDED,
-            reasonCodes = emptyList(),
-            warningCodes = option.warningCodes,
         )
     }
     val selectedOption = ClocktowerDisplayOption(
@@ -80,10 +76,6 @@ internal fun clocktowerFirstNightInformationRequest(
         proposition = displayStep.displayProposition,
         isTruthful = displayStep.selectedInformationTruthful != false,
     )
-    // Keep the old presentation set solely for parity telemetry and non-pair fallback.
-    val legacyOptions = (displayStep.legacyInformationCandidates + selectedOption)
-        .distinctBy(::clocktowerInformationCandidateId)
-    val legacyCandidates = legacyOptions.map(::legacyCandidate)
     val migrated = if (family.usesAuthoritativePairDomain()) {
         val pairContext = if (script == ClocktowerScript.TroubleBrewing) {
             requireNotNull(firstNightPairDecisionContext) {
@@ -153,14 +145,11 @@ internal fun clocktowerFirstNightInformationRequest(
                             selectedOption = option,
                         )
                     },
-                    qualityTier = QualityTier.RECOMMENDED,
-                    reasonCodes = emptyList(),
-                    warningCodes = option.warningCodes,
                 )
             }
             .let { candidates -> candidates to candidateIdFor(selectedOption) }
     } else {
-        legacyOptions.map(::legacyCandidate) to clocktowerInformationCandidateId(selectedOption)
+        listOf(legacyCandidate(selectedOption)) to clocktowerInformationCandidateId(selectedOption)
     }
     return FirstNightInformationRequest(
         decisionId = decisionId,
@@ -168,7 +157,6 @@ internal fun clocktowerFirstNightInformationRequest(
         sourceSeat = sourceSeat,
         reliability = reliability,
         selectedCandidateId = migrated.second,
-        legacyCandidates = legacyCandidates,
-        migratedCandidates = migrated.first,
+        candidates = migrated.first,
     )
 }

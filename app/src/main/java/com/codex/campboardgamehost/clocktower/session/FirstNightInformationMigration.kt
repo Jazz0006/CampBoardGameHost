@@ -3,20 +3,8 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.QualityTier
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLegality
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
 
-/**
- * Batch 4's common boundary for first-night information.
- *
- * The legacy UI can continue to build candidates role-by-role while this
- * coordinator verifies that the new candidate set is identical before a
- * decision becomes available.  It intentionally stores only the selected
- * observation after display: generated candidates are never game facts.
- */
+/** Supported first-night information publication families, not recommendation policies. */
 internal enum class FirstNightInformationFamily(val role: RoleId) {
     WASHERWOMAN(RoleId("Washerwoman")),
     LIBRARIAN(RoleId("Librarian")),
@@ -38,165 +26,59 @@ internal fun FirstNightInformationFamily.usesAuthoritativePairDomain(): Boolean 
 internal data class FirstNightInformationCandidate(
     val id: String,
     val observation: AbilityObservation,
-    val qualityTier: QualityTier = QualityTier.RECOMMENDED,
-    val legality: UnifiedCandidateLegality = UnifiedCandidateLegality.LEGAL,
-    val epistemicStatus: UnifiedEpistemicStatus = UnifiedEpistemicStatus.VERIFIED,
-    val reasonCodes: List<String> = emptyList(),
-    val warningCodes: List<String> = emptyList(),
 ) {
-    init {
-        require(id.isNotBlank())
-    }
+    init { require(id.isNotBlank()) }
 }
 
-private fun FirstNightInformationCandidate.toUnified(family: FirstNightInformationFamily) = UnifiedSelectionCandidate(
-    candidateId = id,
-    familyId = family.name.lowercase(),
-    legality = legality,
-    epistemicStatus = epistemicStatus,
-    qualityTier = qualityTier,
-    reasonCodes = reasonCodes,
-    warningCodes = warningCodes,
-    payload = observation,
-)
-
+/**
+ * One selected public result and its Host-verified publication domain.
+ * No parallel legacy/Shadow candidate pool, quality score or recommendation preference.
+ */
 internal data class FirstNightInformationRequest(
     val decisionId: String,
     val family: FirstNightInformationFamily,
     val sourceSeat: Int,
     val reliability: ReliabilityState,
     val selectedCandidateId: String,
-    val legacyCandidates: List<FirstNightInformationCandidate>,
-    val migratedCandidates: List<FirstNightInformationCandidate>,
+    val candidates: List<FirstNightInformationCandidate>,
 ) {
     init {
         require(decisionId.isNotBlank() && sourceSeat > 0 && selectedCandidateId.isNotBlank())
-        require(legacyCandidates.map(FirstNightInformationCandidate::id).distinct().size == legacyCandidates.size)
-        require(migratedCandidates.map(FirstNightInformationCandidate::id).distinct().size == migratedCandidates.size)
-        require((legacyCandidates + migratedCandidates).all {
-            it.observation.sourceSeat == sourceSeat && it.observation.perceivedRole == family.role &&
+        require(candidates.map(FirstNightInformationCandidate::id).distinct().size == candidates.size)
+        require(candidates.any { it.id == selectedCandidateId }) {
+            "Selected first-night information must belong to the current Host publication domain."
+        }
+        require(candidates.all {
+            it.observation.sourceSeat == sourceSeat &&
+                it.observation.perceivedRole == family.role &&
                 it.observation.reliability == reliability
         })
-        require(selectedCandidateId in migratedCandidates.map(FirstNightInformationCandidate::id))
     }
 }
 
-internal sealed interface FirstNightShadowResult {
-    data class Ready(val candidateIds: Set<String>) : FirstNightShadowResult
-    data class Mismatch(
-        val legacyOnly: Set<String>,
-        val migratedOnly: Set<String>,
-    ) : FirstNightShadowResult
-}
-
-/** One coordinator is shared by all first-night information families. */
+/**
+ * Ephemeral UI reveal gate only; it retains decision identifiers, never a second copy
+ * of actual observations, roles, or choices. Session remains the factual history owner.
+ */
 internal data class FirstNightInformationMigration(
     private val lifecycle: FirstNightInformationLifecycle = FirstNightInformationLifecycle(),
-    private val candidatesByDecisionId: Map<String, Map<String, FirstNightInformationCandidate>> = emptyMap(),
-    private val displayedObservations: Map<String, AbilityObservation> = emptyMap(),
 ) {
-    fun shadow(request: FirstNightInformationRequest): FirstNightShadowResult {
-        val legacyPool = UnifiedSelectionPool(request.legacyCandidates.map { it.toUnified(request.family) })
-        val migratedPool = UnifiedSelectionPool(request.migratedCandidates.map { it.toUnified(request.family) })
-        val legacyParity = legacyPool.paritySignature()
-        val migratedParity = migratedPool.paritySignature()
-        val legacy = legacyParity.mapTo(sortedSetOf()) { it.candidateId }
-        val migrated = migratedParity.mapTo(sortedSetOf()) { it.candidateId }
-        val matches = if (request.family.usesAuthoritativePairDomain()) {
-            request.legacyCandidates.semanticPairParity() == request.migratedCandidates.semanticPairParity()
-        } else {
-            legacyParity == migratedParity
-        }
-        return if (matches) FirstNightShadowResult.Ready(migrated)
-        else FirstNightShadowResult.Mismatch(legacy - migrated, migrated - legacy)
+    fun resolvePublication(request: FirstNightInformationRequest): FirstNightPublicationResolution {
+        if (isDisplayed(request.decisionId)) return FirstNightPublicationResolution.AlreadyDisplayed
+        val nextLifecycle = lifecycle.publish(request.decisionId).display(request.decisionId)
+        return FirstNightPublicationResolution.Published(copy(lifecycle = nextLifecycle))
     }
 
-    /** A mismatch deliberately leaves the decision unavailable; callers must retain the legacy path. */
-    fun publishIfShadowMatches(request: FirstNightInformationRequest): FirstNightInformationMigration = when (shadow(request)) {
-        is FirstNightShadowResult.Mismatch -> this
-        is FirstNightShadowResult.Ready -> publish(request)
-    }
+    /** Invalidates only transient unshown decisions and never rewrites revealed decisions. */
+    fun invalidateUnshown(): FirstNightInformationMigration =
+        copy(lifecycle = lifecycle.invalidateUnshown())
 
-    /**
-     * UX-R2B cutover for pair-information families whose shared legal domain is now authoritative.
-     *
-     * Legacy candidates remain available to [shadow] for telemetry, but parity is no longer a
-     * publication gate because the complete legal Manual domain is intentionally broader than the
-     * historical curated presentation pool. Non-pair families must keep using
-     * [publishIfShadowMatches].
-     */
-    fun publishAuthoritativePairDomain(request: FirstNightInformationRequest): FirstNightInformationMigration {
-        require(request.family.usesAuthoritativePairDomain()) {
-            "Authoritative pair-domain publication is limited to Washerwoman/Librarian/Investigator."
-        }
-        return publish(request)
-    }
-
-    private fun publish(request: FirstNightInformationRequest): FirstNightInformationMigration = copy(
-        lifecycle = lifecycle.publish(request.decisionId),
-        candidatesByDecisionId = candidatesByDecisionId + (
-            request.decisionId to request.migratedCandidates.associateBy(FirstNightInformationCandidate::id)
-        ),
-    )
-
-    /** Complete a reveal attempt after the caller has recorded this state's shadow telemetry. */
-    fun resolvePublication(
-        request: FirstNightInformationRequest,
-        shadow: FirstNightShadowResult,
-    ): FirstNightPublicationResolution {
-        val authoritativePairDomain = request.family.usesAuthoritativePairDomain()
-        val prepared = if (authoritativePairDomain) {
-            publishAuthoritativePairDomain(request)
-        } else {
-            publishIfShadowMatches(request)
-        }
-        if (prepared.isDisplayed(request.decisionId)) return FirstNightPublicationResolution.AlreadyDisplayed
-        return if (authoritativePairDomain || shadow is FirstNightShadowResult.Ready) {
-            FirstNightPublicationResolution.Published(prepared.display(request.decisionId, request.selectedCandidateId))
-        } else {
-            FirstNightPublicationResolution.LegacyFallback
-        }
-    }
-
-    /** Display is the sole commit boundary: it creates exactly one typed observation. */
-    fun display(decisionId: String, candidateId: String): FirstNightInformationMigration {
-        if (decisionId in displayedObservations) return this
-        val candidate = candidatesByDecisionId[decisionId]?.get(candidateId)
-            ?: throw IllegalArgumentException("Candidate $candidateId is not ready for $decisionId.")
-        return copy(
-            lifecycle = lifecycle.display(decisionId),
-            displayedObservations = displayedObservations + (decisionId to candidate.observation),
-        )
-    }
-
-    /** Poison target changes (draft or confirmed) retain displayed facts and discard all drafts. */
-    fun invalidateUnshown(): FirstNightInformationMigration = copy(
-        lifecycle = lifecycle.invalidateUnshown(),
-        candidatesByDecisionId = candidatesByDecisionId.filterKeys { it in lifecycle.displayedDecisionIds },
-    )
-
-    fun displayedObservation(decisionId: String): AbilityObservation? = displayedObservations[decisionId]
-    fun isDisplayed(decisionId: String): Boolean = decisionId in displayedObservations
+    fun isDisplayed(decisionId: String): Boolean = decisionId in lifecycle.displayedDecisionIds
     fun isReady(decisionId: String): Boolean = decisionId in lifecycle.readyDecisionIds
     fun generation(): Long = lifecycle.generation
 }
 
-/** A fallback is permission to retain the legacy reveal, not a newly committed migration fact. */
 internal sealed interface FirstNightPublicationResolution {
     data class Published(val migration: FirstNightInformationMigration) : FirstNightPublicationResolution
     data object AlreadyDisplayed : FirstNightPublicationResolution
-    data object LegacyFallback : FirstNightPublicationResolution
 }
-
-private data class PairSemanticParity(
-    val observation: AbilityObservation,
-    val qualityTier: QualityTier,
-)
-
-private fun List<FirstNightInformationCandidate>.semanticPairParity(): Map<PairSemanticParity, Int> =
-    groupingBy { candidate ->
-        PairSemanticParity(
-            observation = candidate.observation,
-            qualityTier = candidate.qualityTier,
-        )
-    }.eachCount()

@@ -2,6 +2,8 @@
 
 > **唯一当前目标（2026-10-15）：把 ARCH-CLEANUP-1 的统一 [Draft PR #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 完成独立验收，再决定合并 `main`，之后才恢复 P2。** 开发机仓库别名 `clocktower`；活动分支 `cleanup/arch-cleanup-1-20261015`，PR 现以 `main` 为 base、mergeable/clean，尚未合并。#304/#306/#307/#308 全部代码已随 Git 祖先关系纳入 #315，原四个 Draft 现均 CLOSED UNMERGED；#310–#314 同样 CLOSED UNMERGED。只剩 #315 一个开放 PR。不要继续按老交接的五层堆叠执行合并，也不要为旧事件式 candidateId 合同写功能。
 
+> 2026-10-16 最终复审：起点 HEAD `50a1c05f` CI #4206 / R2 #3822 SUCCESS（ASP/Real Clingo SKIPPED）。新清理删除首夜迁移 Shadow 候选对比、旧展示回退、私有 parity 统计以及 UI 保存的冗余观察值；续接 `causalHistory` 现在序列化类型化 JSON 事实/观察，而不是 Kotlin `toString()`。A=PARTIAL（仍有 Compose PlayerCard 独立可写状态、部分确定事实记录不全、任意时间点重放缺口），B=YES 源码合同，C=YES 已清理的历史策略路径；本轮源码精确 HEAD/CI 尚需重新验证。**仍保留 Draft #315，ARCH-CLEANUP-1 不关闭、不合并 main。**
+
 ## 已完成与保留证据
 
 - ARCH-CLEANUP-1 多批源码清理：删除重复历史档案/Session 空字段、整个旧 SDE 评分/一致性偏好/Shadow 推荐实验族（仅保留真实 Recovery replay 两个文件）、角色独立 whole-bundle、FN-BUNDLE-3 耗时实验、旧 rollout、无消费的 UI 文案推断和旧 V1 模型合法域外发序列化；移除仅供测试的整包 wrapper，但相关测试改用真正精确评估器。每批提交与保留边界详见 [审计文档](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md)。

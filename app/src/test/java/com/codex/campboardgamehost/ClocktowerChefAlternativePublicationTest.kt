@@ -53,11 +53,11 @@ class ClocktowerChefAlternativePublicationTest {
                 ClocktowerScript.TroubleBrewing, 42L, null, "en",
             ))
             val migration = FirstNightInformationMigration()
-            val publication = migration.resolvePublication(request, migration.shadow(request))
+            val publication = migration.resolvePublication(request)
             assertTrue(publication is FirstNightPublicationResolution.Published)
-            val stored = (publication as FirstNightPublicationResolution.Published)
-                .migration.displayedObservation(request.decisionId)
-            assertEquals(choice.displayPrimary?.toInt(), stored?.shownNumber)
+            val gate = (publication as FirstNightPublicationResolution.Published).migration
+            assertTrue(gate.isDisplayed(request.decisionId))
+            assertEquals(choice.displayPrimary?.toInt(), request.candidates.single { it.id == request.selectedCandidateId }.observation.shownNumber)
             val plan = clocktowerPlanConfirmedResultRegistrations(
                 shownProposition = displayed.displayProposition,
                 shownKind = displayed.displayKind, shownPrimary = displayed.displayPrimary,

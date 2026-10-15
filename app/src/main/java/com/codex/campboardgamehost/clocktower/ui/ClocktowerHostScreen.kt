@@ -51,7 +51,6 @@ import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDo
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionPoolParityRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
@@ -61,7 +60,6 @@ import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformatio
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
-import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
 import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
@@ -184,8 +182,6 @@ internal fun ClocktowerJudgeScreen(
     val pendingNightNewDemonIdentityName = nightCheckpoint.pendingNightNewDemonIdentityName
     val demonSuccessorTarget = nightCheckpoint.demonSuccessorDraftTarget
     val recommendationCoordinator = remember(gameSeed) { ClocktowerRecommendationCoordinator() }
-    // B7.2 shadow telemetry stores only parity totals; candidate IDs and game facts stay local.
-    val firstNightPoolParity = remember(gameId) { SelectionPoolParityRecorder() }
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val publicAliveCards = cards.filter { it.eliminatedRound == null }
     // The UI still owns rendering, but first-night information now crosses one
@@ -216,18 +212,12 @@ internal fun ClocktowerJudgeScreen(
             language,
             firstNightPairDecisionContext,
         ) ?: return true
-        val shadow = firstNightInformationMigration.shadow(request)
-        firstNightPoolParity.recordResult(
-            familyId = request.family.name.lowercase(),
-            matches = shadow is FirstNightShadowResult.Ready,
-        )
-        return when (val result = firstNightInformationMigration.resolvePublication(request, shadow)) {
+        return when (val result = firstNightInformationMigration.resolvePublication(request)) {
             is FirstNightPublicationResolution.Published -> {
                 firstNightInformationMigration = result.migration
                 true
             }
             FirstNightPublicationResolution.AlreadyDisplayed -> false
-            FirstNightPublicationResolution.LegacyFallback -> true
         }
     }
     val spyCard = cards.firstOrNull { it.clocktowerRole?.enName == "Spy" }

@@ -2,6 +2,8 @@
 
 > **活动入口（2026-10-15）：[ARCH-CLEANUP-1 整合 Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315)**。开发机分支 `cleanup/arch-cleanup-1-20261015`；PR 已直接指向 `main` 且 GitHub 判定 mergeable/clean，但**未合并、未通过真机端到端验收**。此前 P1 #304/#306/#307/#308 的全部提交均属于 #315 祖先链，这四个以及过时的 #310–#314 已全部关闭、未合并。当前唯一开放 PR 是 #315。旧算法归零 HEAD `0e563911` Android CI #4199、R2 #3815 GREEN；单项语义 V3 HEAD `63b5d111` Android CI #4202、R2 #3818 GREEN。Session-seat 边界 HEAD `ef3438c` Android CI #4203 仍待确认（R2 #3819 GREEN）；最新首夜去酒鬼分支菜单 HEAD `4cb657e` 的 Android CI #4205 / R2 #3821 需独立验收；不把上个提交的 GREEN 冒充最新。
 
+> 2026-10-16 复审更新：基线 HEAD `50a1c05f` 的 CI #4206 / R2 #3822 均 SUCCESS，Real Clingo / ASP SKIPPED。已进一步清理首夜旧 Shadow 候选双轨、旧合法值回退及冗余 UI 观察镜像，并用标准类型化 JSON 输出续接历史；以新代码 HEAD CI/R2 结果为准。**A 权威写入与完整结构化历史仍 PARTIAL；B 模型外发无候选源码合同 YES；C 旧评分/推荐/Shadow 算法已无生产推荐路线，但保留正常 Host 规则、setup diversity、epistemic 正确性。ARCH-CLEANUP-1 NOT CLOSED，#315 继续 Draft，不合并。**
+
 ## 当前唯一任务：完成架构收口和 P1 验收
 
 - **已完成**：多批真实消费链收敛，清除未写入的 DecisionHistory、所有旧 SDE 评分/一致性启发式/Shadow 推荐、角色独立整包评估和 FN-BUNDLE-3 穷举、旧 rollout、UI 文本反解析及无调用的旧模型序列化接口；清理细节见 [ARCH_CLEANUP_1 审计](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md)。
