@@ -48,9 +48,15 @@
 - 删除 `DemonBluffJointOutputEvaluator`（其中的 `SetupDemonBluffJointOutputAdapter` 亦无独立生产调用者；真正的 setup bluff 规则候选生成和 Host 合法性校验不在此文件）；
 - 删除上述离线评估器的直接单元测试及只为它们服务的 D5 Drunk/Demon Bluff 校准辅助类与测试；
 - 在 `Sde2D5CalibrationExperiment` 中移除这两个已弃用的实验场景与 lazy 构造，**保留**该文件其余的跨玩家人数基本拓扑验证与真人案例测试；`sde2D5Calibration` Gradle 任务因仍服务剩余真实测试而保留；
-- 保留共用的 `FirstNightBundleExperimentContract`、`FirstNightBundleHealthyHarness`、`FirstNightBundleCandidateSpaceAudit`、规则拥有者和 `ExactHistoricalHypotheticalObservationBundleEvaluator`，因为这些还有其他消费者，不能在未迁移调用方前顺手删除。
+- 保留共享的 `FirstNightBundleExperimentContract`、`FirstNightBundleCandidateSpaceAudit`、规则拥有者和 `ExactHistoricalHypotheticalObservationBundleEvaluator`；当时先保留了仅由测试消费的 `FirstNightBundleHealthyHarness`，其后在第五批独立确认并清理。
 
-本批需要精确 HEAD CI/R2 验证。尚未证明全部旧实验无用；后续仍需检查余下测试专属实验模块与 Gradle task。未触碰实际夜晚信息、登记、语义时间线或 Recovery。
+第四批已在 `3dbb175ec9fa` 提交，经 GitHub CI #4190 与 R2 #3806 验证 GREEN。尚未证明全部旧实验无用；未触碰实际夜晚信息、登记、语义时间线或 Recovery。
+
+### 第五批：FN-BUNDLE-3 离线穷举报告管线
+
+继续按生产引用做闭包审计：`FirstNightBundleHealthyHarness`、FN-BUNDLE-3 初学者 corpus、低信息量校准和 Fortune Teller pilot 没有生产调用者；只用于自己生成历史报告的测试类。删除 1 个生产 source 文件和 6 个 test source 文件，连同 `FirstNightBundleHealthyHarnessAcceptanceTest`、`FirstNightBundleBeginnerCorpusExperiment`、其独立报告构造与校准类，保留 `FirstNightBundleCandidateSpaceAudit` 等确有其他 SDE 消费者的生产代码。
+
+从 `app/build.gradle.kts` 删除已退役的 `fnBundle3Calibration` 专用任务、FAST/FULL 排除配置和耗时实验清单中的孤儿项，保留真实 `Sde2D4TopologyBundlePerformanceTest`、`sde2D5Calibration` 和其他仍存在的校准任务。同步 `docs/TESTING_STRATEGY.md` 中当前测试任务矩阵与过时类别清单；历史归档不改写。**本批提交后需要最新 HEAD 的 CI/R2 验证。**
 
 ## 3. 审计结论：尚未清理的生产调用链
 

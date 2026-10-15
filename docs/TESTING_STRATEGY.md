@@ -128,19 +128,17 @@ The implemented `:app:testFast` task uses default inclusion plus a small explici
 The current FAST exclusions are exactly:
 
 - `ZddPlayerWorldSetTest` (retained in FULL; affected representation correctness)
-- `FirstNightBundleHealthyHarnessAcceptanceTest`
 - `Sde2D4TopologyBundlePerformanceTest`
-- `FirstNightBundleBeginnerCorpusExperiment`
 - `Sde2D4ScaleBenchmarkTest`
 - `Sde2D5CalibrationExperiment`
 - `Sde2D5FExpertObservedCalibrationExperiment`
 - `Sde2D5FB4FSilverGeneralizationExperiment`
 
-All entries except `ZddPlayerWorldSetTest` are also excluded from `testDebugUnitTest` / `testFull` as explicit evidence experiments. The healthy-bundle and topology performance experiments run via `:app:testCostExperiments` (an exact `--tests` filter may select either). The other five keep their existing dedicated tasks: `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`.
+All entries except `ZddPlayerWorldSetTest` are also excluded from `testDebugUnitTest` / `testFull` as explicit evidence experiments. The topology performance experiment runs via `:app:testCostExperiments`. The four remaining dedicated tasks are `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`. The old FN-BUNDLE-3 corpus and role-specific Drunk/Demon Bluff bundle evaluators were retired by ARCH-CLEANUP-1.
 
 The three bounded Drunk adapter classes, expert legality/determinism, and small-sample setup simulation now default to FAST. `A4ZddBenchmarkTest` is deleted: repeated measurements are not an independent correctness oracle; `ZddPlayerWorldSetTest` retains representation parity, filtering and checkpoint proof.
 
-The 2026-09-27 audit restored `SetupMigrationTest`, `DemonBluffJointOutputEvaluatorTest`, and the three `TroubleBrewingTopology*DifferentialTest` classes to FAST: their current bounded fixtures consumed only 0.797s together in FULL. Their historical exclusion costs no longer describe the current tests. They remain mandatory affected contracts.
+The 2026-09-27 audit restored `SetupMigrationTest` and the three `TroubleBrewingTopology*DifferentialTest` classes to FAST. `DemonBluffJointOutputEvaluatorTest` was subsequently retired with the obsolete D5 experiment during ARCH-CLEANUP-1; production setup and legal-domain contracts remain independently protected.
 
 `A3EnumerationSmokeTest` keeps one exact enumeration per 8/10/12/15-player fixture, without repeated timing or a hardware-dependent deadline. `TopologyBundleBoundaryTest` retains feasibility/size bounds for 5/8/12/15 players. `A4DeviceBenchmarkHarnessTest` verifies report values directly without running world enumeration.
 
@@ -154,7 +152,6 @@ These classifications are not permanent measurements. Re-measure them when the t
 | `ZddPlayerWorldSetTest` | 10–11s | repeated enumeration, ZDD conversion, filtering and representation parity | affected T2 / T3 execution | ZDD, epistemic worlds, filtering, registration, checkpoint/restore |
 | `ExpertRecommendationReviewTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | all 24 scenarios remain legal/nonempty; stable decisions ignore display names; historical score superiority removed | T1 / affected T2 | recommendation legality and determinism |
 | `StorytellerV4BaselineSimulationTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | 25-sample legality, accounting and determinism; no thousand-game report | T1 / affected T2 | setup/selection semantics |
-| `DemonBluffJointOutputEvaluatorTest` | 0.722s local, 2026-09-27 | current bounded bluff-domain/parity and production integration contracts | restored T1 / affected T2 | Demon bluff joint output, exact shown-role fanout, setup/SDE shadow integration |
 | `Sde2D4ScaleBenchmarkTest` | >900s in isolated CI diagnostic | source-derived scale matrix plus raw-enumerator bounded-prefix measurement; no regression latency threshold | explicit T3 evidence harness, dedicated task only | SDE-2D4 raw enumerator scale investigation |
 | `Sde2D4TopologyBundlePerformanceTest` | 1.057s before follow-up | full 5–15 performance report; four-regime correctness smoke retained separately | explicit manual `testCostExperiments` | performance investigation |
 | `Sde2D5CalibrationExperiment` | 5m53s observed when 8 cross-regime topology points were temporarily placed in FAST; historical workflow runs have reached multi-hour duration | deterministic 5–15 STANDARD/BARON calibration evidence generation | explicit T3 evidence harness, dedicated task only | D5 calibration / policy evidence |
@@ -164,12 +161,8 @@ These classifications are not permanent measurements. Re-measure them when the t
 | `TroubleBrewingTopologyObservationDifferentialTest` | 0.008s local, 2026-09-27 | bounded observation parity | restored T1 / affected T2 | topology observation semantics |
 | `TroubleBrewingTopologyBundleDifferentialTest` | 0.011s local, 2026-09-27 | bounded same-world whole-bundle shared-witness parity | restored T1 / affected T2 | topology whole-bundle semantics |
 | `A3EnumerationSmokeTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | four single-run exact/nonempty fixtures | T1 / affected T2 | world enumeration |
-| `FirstNightBundleHealthyHarnessAcceptanceTest` | 62.635s before follow-up | 110,000 combinations / 100 public signatures, experimental quotient accounting | explicit manual `testCostExperiments` | historical experiment maintenance |
-| `FirstNightDrunkPairWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk Pair adapter / shared exact semantics |
-| `FirstNightDrunkNumericWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk Numeric adapter / shared exact semantics |
-| `FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk FortuneTeller adapter / shared exact semantics |
 
-T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `testCostExperiments`, `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
+T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `testCostExperiments`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
 
 ## 7. Dependency-aware escalation matrix
 
@@ -302,7 +295,6 @@ Current Android JVM commands:
 
 `testFull` is a verification/lifecycle task that depends on `:app:testDebugUnitTest`. The underlying debug-unit-test task excludes only explicit non-regression evidence harnesses:
 
-- `FirstNightBundleBeginnerCorpusExperiment` → dedicated `:app:fnBundle3Calibration`;
 - `Sde2D4ScaleBenchmarkTest` → dedicated `:app:sde2D4ScaleBenchmark`;
 - `Sde2D5CalibrationExperiment` → dedicated `:app:sde2D5Calibration`;
 - `Sde2D5FExpertObservedCalibrationExperiment` → dedicated `:app:sde2D5FExpertObservedCalibration`;

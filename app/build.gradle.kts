@@ -59,8 +59,6 @@ dependencies {
 
 afterEvaluate {
     val debugUnitTest = tasks.named<Test>("testDebugUnitTest")
-    val fnBundle3CalibrationExperiment =
-        "com.codex.campboardgamehost.clocktower.review.FirstNightBundleBeginnerCorpusExperiment"
     val sde2D4ScaleBenchmark =
         "com.codex.campboardgamehost.clocktower.epistemic.Sde2D4ScaleBenchmarkTest"
     val sde2D5CalibrationExperiment =
@@ -73,17 +71,14 @@ afterEvaluate {
         "com.codex.campboardgamehost.clocktower.recommendation.sde.PairInformationShadowReplayBridgeG10FullDomainTest"
 
     val manualCostExperiments = listOf(
-        "com.codex.campboardgamehost.clocktower.recommendation.FirstNightBundleHealthyHarnessAcceptanceTest",
         "com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest",
     )
 
-    // Corpus generation and raw-enumerator scale measurement are explicit T3 evidence harnesses,
-    // not regression tests. Keep them out of the default Android unit-test task so FULL remains
-    // bounded while each harness stays directly runnable through its dedicated task below.
+    // Remaining explicit scale, calibration and topology evidence harnesses are not
+    // ordinary regression tests. Keep FULL bounded; run these through dedicated tasks.
     debugUnitTest.configure {
         filter {
             manualCostExperiments.forEach { excludeTestsMatching(it) }
-            excludeTestsMatching(fnBundle3CalibrationExperiment)
             excludeTestsMatching(sde2D4ScaleBenchmark)
             excludeTestsMatching(sde2D5CalibrationExperiment)
             excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
@@ -107,7 +102,6 @@ afterEvaluate {
         filter {
             // testFast is a separate Test task and does not inherit debugUnitTest's filter.
             manualCostExperiments.forEach { excludeTestsMatching(it) }
-            excludeTestsMatching(fnBundle3CalibrationExperiment)
             excludeTestsMatching(sde2D5CalibrationExperiment)
             excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
             excludeTestsMatching(sde2D5FB4FSilverGeneralizationExperiment)
@@ -119,7 +113,7 @@ afterEvaluate {
 
     tasks.register<Test>("testCostExperiments") {
         group = "verification"
-        description = "Runs historical healthy-bundle and topology performance experiments explicitly."
+        description = "Runs historical topology performance experiments explicitly."
         val sourceTask = debugUnitTest.get()
         testClassesDirs = sourceTask.testClassesDirs
         classpath = sourceTask.classpath
@@ -183,17 +177,4 @@ afterEvaluate {
         outputs.upToDateWhen { false }
     }
 
-    tasks.register<Test>("fnBundle3Calibration") {
-        group = "verification"
-        description = "Runs the explicit FN-BUNDLE-3 calibration corpus experiment."
-        val sourceTask = debugUnitTest.get()
-        testClassesDirs = sourceTask.testClassesDirs
-        classpath = sourceTask.classpath
-
-        filter {
-            includeTestsMatching(fnBundle3CalibrationExperiment)
-        }
-
-        outputs.upToDateWhen { false }
-    }
 }
