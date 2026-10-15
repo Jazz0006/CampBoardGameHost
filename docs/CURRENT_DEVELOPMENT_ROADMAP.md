@@ -10,6 +10,15 @@
 - **V1-RETIRE-NOW — 代码及 CI/R2 GREEN，真机待验**：2026-10-15 在活动 #307 分支以 `56bc97e`（8 文件修改、16 文件删除）和 `409665d`（修复手动酒鬼选择残留的 `primary` 引用）实现旧 Drunk-only、postcommit analysis、one-shot、逐项付费回退的退役。旧分析 UI 已移除；V2 唯一两条付费请求使用独立安全 HTTPS 传输，旧响应 schema 拒绝进入 adapter。GitHub CI #4159（含 Android unit/build）与 R2 #3776 于 `409665d` GREEN；本地 `test:fast` 因构建主机 `photoprismsv` SSH 超时未执行。原 Mini MCP 隔离 session `a8e87ce2-334f-47ca-8ea0-06d7180a4fde` 仅为**被新实现取代的历史候选**，不得重复覆盖当前分支或新版文档；后续源码微调需要重新 CI。真机 ADB / FIELD-1、FIELD-2 / 多夜游戏未获验收。
 - FIELD-1 Chef 点击展示退出与 FIELD-2 首夜合同校验故障仍须依赖实际 ADB/Host 证据闭环。真实 Luna 输出/基础检查、单个 CI GREEN 不等于多夜质量验收。
 
+## 2026-10-15 P2 最新切片实施记录（Draft，不能视为生产完成）
+
+- [#310](https://github.com/Jazz0006/CampBoardGameHost/pull/310)：当前单项 Host 合法候选/私有缓存纯门控；初版 CI #4177 / R2 #3793 GREEN。
+- [#311](https://github.com/Jazz0006/CampBoardGameHost/pull/311)：从最后确认 Host 快照对比现有 Global actions/observations、版本和旧决策档案；CI #4180 / R2 #3796 GREEN。缺少实际 UI choice 的完整可证明顺序，不能假定纯增量安全。
+- [#312](https://github.com/Jazz0006/CampBoardGameHost/pull/312)：只接受当前一个合法 candidateId 的严格输出解码；CI #4181 / R2 #3797 GREEN。
+- [#313](https://github.com/Jazz0006/CampBoardGameHost/pull/313)：遵照用户确认**收窄 P2 记录范围**。不新建全事件日志；基于现有 Host 记录只选实际选择、公布信息、关键行动及结果，普通提名/投票不逐项提供给模型；已经证明仅新增普通记录时可保持未发布建议缓存。其 CI/R2 以实际 latest HEAD 查验，不能推断 GREEN。
+
+**这些都是 P2 纯 Host 合同/测试切片；生产 `CampBoardGameHostApp.kt` 仍使用 V2 整包续规划，未接入新单项 wire、事件 anchor、采用/覆盖持久记录或 Recovery，Android 实机尚未验收。** 下一步聚焦现有 UI 的实际决定→Host 事实落地缺口，以及 Responses 当前单项接入；只证明四组战略事实足够，不追求“记录一切”。所有 Draft 保留，真付费调用需新授权。
+
 ## 不可违背的产品原则
 
 1. **Host 为唯一 Game State、事实、规则、合法候选和发布权威**；AI 只是会修订假设的整体战略说书人。无 AI/联网时 MANUAL 独立可玩；多义/非法/过期自动结果暂停并人工接管。
