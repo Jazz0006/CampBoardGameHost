@@ -11,7 +11,7 @@
 - **B = YES（当前外发源码合同）**：首夜 `InitialJointOpeningDirectV2` 不带合法候选菜单；后续 `StorytellerStrategicContinuationV2` 只外发 `currentDecision` 并收 `currentResult.semantic`。内部 `legalCandidates` 和单项 `remainingChoices` 保留用于 Host 验证及现役 UI 采纳，均非模型端菜单。真实付费 API 调用/设备行为未验收。
 - **C = YES（确认已退役的旧策略推荐）**：原 SDE 评分/归一化一致性/Shadow 规划不存在生产策略调用。进一步清除首夜 `FirstNightInformationMigration` 的旧/新候选池 Shadow 比对、旧路线回退和专属 `SelectionPoolParityRecorder`/统计，保留单一合法发布、已展示不可覆盖和 Session 独立持久观察；`UnifiedSelectionPool` 的合法性/用户可选状态是手动展示机制，不是模型评分。Recovery 的两个 `SdeHistoricalReplayInput` 文件与 epistemic 世界检验、setup diversity 不能按文件名误删。
 - 历史事实外发由 `ActionFact.toString()` / `InformationProposition.toString()` 改为复用 `ClocktowerSemanticHistoryPersistence.encodeActionFact` 与 `EpistemicSemanticJson.encode` 的稳定结构化 JSON，避免让 Kotlin 调试字符串成为跨层历史协议。仍需补齐真正缺失的生产事实事件源。
-- 本轮针对旧 Shadow 的测试改为首夜已选语义发布、候选有效性、重开幂等；保留角色合法性和 Recluse 登记见证测试。完整 CI/R2、真机 MANUAL/AI 辅助/自动、Recovery 的验收状态以最新 SHA 实证为准。**严禁将本批标记 CLOSED，直至 A、B、C 全部真正通过**。
+- 本轮针对旧 Shadow 的测试改为首夜已选语义发布、候选有效性、重开幂等；保留角色合法性和 Recluse 登记见证测试。进一步查出仅供旧候选策略特征的 `Sde2D5FExpertObservedPolicyFeatures.kt`、`Sde2D5FExpertObservedPolicyFeatureReport.kt`，删除两者及同一实验类的专属 policy-features 测试；保留有独立价值的真人观察实证、注册见证与精确世界拓扑实验，其本质不是旧效用/评分推荐。代码 HEAD `7ffe236d` CI #4207（Android FAST / verify-boundary）与 R2 #3823 均 SUCCESS；完整 Android 构建、ASP、Real Clingo 当次 SKIPPED。此处再删除特征后须复验新 HEAD。真机 MANUAL/AI 辅助/自动、Recovery 的验收状态以最新 SHA 实证为准。**严禁将本批标记 CLOSED，直至 A、B、C 全部真正通过**。
 
 ## 1. 目标和保留边界
 
