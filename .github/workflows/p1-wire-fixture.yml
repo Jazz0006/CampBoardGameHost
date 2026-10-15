@@ -1,0 +1,41 @@
+name: P1 exact synthetic opening wire fixture
+
+on:
+  push:
+    branches:
+      - experiment/ai-conversation-1-probe-20261015
+
+permissions:
+  contents: read
+
+jobs:
+  export-fixture:
+    name: Kotlin APP wire parity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Kotlin V2 serializer export
+        env:
+          BOTC_P1_WIRE_EXPORT: "1"
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.exportP1OpeningWireWhenOptedIn' --no-daemon --build-cache
+      - name: Show nonsecret synthetic wire fixture for P1 experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture=app/build/p1/opening-app-request.json
+          test -s "$fixture"
+          sha256sum "$fixture"
+          echo "BOTC_P1_APP_WIRE_START"
+          cat "$fixture"
+          echo
+          echo "BOTC_P1_APP_WIRE_END"

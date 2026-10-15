@@ -184,4 +184,24 @@ class InitialJointOpeningDirectV2Test {
             InitialJointOpeningDirectV2.decode(stale.toString(), domain)
         }.isFailure)
     }
+    /**
+     * P1 nonsecret, opt-in fixture. This is an ACTUAL Kotlin V2 encoder +
+     * PersonalDirectOpenAiV1.buildRequest output, not a hand-built wire request.
+     * The fixture is synthetic and cannot itself certify model Host acceptance.
+     */
+    @Test fun exportP1OpeningWireWhenOptedIn() {
+        if (System.getenv("BOTC_P1_WIRE_EXPORT") != "1") return
+        val domain = build(true, eight)
+        val hostPayload = InitialJointOpeningDirectV2.encode(
+            domain, ruleset.characterRegistry,
+        )
+        val wire = PersonalDirectOpenAiV1.buildRequest(
+            hostPayload, PersonalDirectOpenAiV1.DEFAULT_MODEL,
+        )
+        val output = File("build/p1/opening-app-request.json")
+        output.parentFile.mkdirs()
+        output.writeText(wire, Charsets.UTF_8)
+        assertEquals("gpt-6-luna", JSONObject(wire).getString("model"))
+        assertFalse(JSONObject(wire).getBoolean("store"))
+    }
 }
