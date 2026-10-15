@@ -34,6 +34,22 @@ jobs:
       - name: Verify actual P1 opening through Kotlin Host semantic acceptance
         run: |
           ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.p1StoredSyntheticOpeningMustPassActualHostSemanticGate' --no-daemon --build-cache
+      - name: Export actual Kotlin V2 continuation after accepted opening
+        env:
+          BOTC_P1_WIRE_EXPORT: "1"
+        run: |
+          ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.exportP1KotlinContinuationFromAcceptedSyntheticOpening' --no-daemon --build-cache
+      - name: Show nonsecret synthetic continuation wire
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture=app/build/p1/continuation-app-request.json
+          test -s "$fixture"
+          sha256sum "$fixture"
+          echo "BOTC_P1_CONTINUATION_WIRE_START"
+          cat "$fixture"
+          echo
+          echo "BOTC_P1_CONTINUATION_WIRE_END"
       - name: Show nonsecret synthetic wire fixture for P1 experiment
         shell: bash
         run: |
