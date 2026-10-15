@@ -34,7 +34,15 @@ internal object HostCausalEventDeltaV2 {
         val newlyAppendedCorrections: List<DecisionCorrectionEvent>,
         val snapshotReasons: Set<SnapshotReason>,
     ) {
-        val maySendAsCompleteIncrement: Boolean get() = snapshotReasons.isEmpty()
+        /** All currently represented streams are consistent; not a proof of full Game facts. */
+        val noDetectedSnapshotFallback: Boolean get() = snapshotReasons.isEmpty()
+
+        /**
+         * Explicitly false until ALL real decisions, including UI-owned choices,
+         * have a durable sequenced Host writer and an acknowledged provider
+         * event anchor. Never claim complete event coverage from two log streams.
+         */
+        val allGameEventsProvenComplete: Boolean get() = false
     }
 
     /**
