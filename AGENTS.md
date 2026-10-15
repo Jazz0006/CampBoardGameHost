@@ -1,5 +1,15 @@
 # CampBoardGameHost AI Development Instructions
 
+## Evidence-first validation policy (2026-10-15; current authority)
+
+- **Default to evidence-first delivery, not mandatory TDD.** Before changing code, define the user-observable acceptance criterion, risk, owning boundary, and cheapest independent proof. Do **not** require a new test file, artificial RED, or RED/GREEN trace for each new feature, bug fix, source edit, or intermediate wiring step.
+- Choose evidence by risk: existing regression tests, focused deterministic assertions, integration tests, Android Studio/ADB real-device flows, inspected API request/response and Host verdict, logs, compile/static checks, or reviewed diff. AI-authored tests alone do not prove a feature works; compare against independently defined requirements and real observations.
+- Write and retain durable automated tests when they efficiently protect a stable, meaningful invariant or demonstrated recurring defect. Test-first remains **optional and encouraged when useful** for deterministic rules, authorization, identity, persistence, concurrency, security, and Host legitimacy; never an unconditional sequence requirement.
+- For UI, Storyteller prompt/strategy quality, model timing, interaction and multi-night flow, prefer representative end-to-end/device and controlled real-model evidence. Do not encode one speculative model answer as a golden result. Real paid calls need explicit separate budget approval and cannot run implicitly in CI.
+- Do not weaken Host legality/fact authority, safety, security, user-data integrity, privacy, or necessary automated regression coverage to avoid testing. Retire obsolete/duplicated tests only after checking remaining contract coverage. Existing CI/R2, independent diff review, exact-head and merge gates remain in force.
+- This section supersedes any older mandatory 'new behavior -> RED -> GREEN' wording in this file or ancillary documentation; `docs/TESTING_STRATEGY.md` supplies evidence tiers and execution cadence, not an obligation to manufacture RED.
+
+
 > Role: **NORMATIVE / PROJECT-LEVEL AI WORKING AGREEMENT**  
 > Effective: 2026-09-23  
 > Applies to: ChatGPT, Codex/Luna, and other AI development agents working on this repository.
@@ -159,7 +169,7 @@ Detailed capture/retrieval rules are authoritative in:
 
 ### 3.1 Core rule: evidence first, not RED ceremony
 
-The repository uses **risk-based test-first development**, not “a new RED test for every production edit.”
+The repository uses **evidence-first, risk-based validation**, not mandatory RED/GREEN or “a new RED test for every production edit.”
 
 The objective is to protect stable behavior, regressions, invariants, and architectural boundaries with the cheapest reliable evidence. A production change does **not** automatically require a newly created failing test.
 
@@ -196,10 +206,10 @@ The default evidence mapping is:
 
 ```text
 bug fix / new stable behavior / changed stable behavior
-  -> smallest durable typed test first
-  -> meaningful RED when executable
-  -> implementation
-  -> GREEN
+  -> define independent acceptance evidence and inspect existing coverage
+  -> choose the cheapest reliable verification (typed/integration, real device/API, or other proof)
+  -> implementation + appropriate validation
+  -> add a durable regression test when its ongoing value justifies it
 
 behavior-preserving refactor / ownership extraction
   -> identify existing owning tests
@@ -222,7 +232,7 @@ new architectural seam that becomes a durable contract
   -> do not require every intermediate extraction step to have an independent RED
 ```
 
-A new test should normally be added before production implementation when the change introduces or modifies a stable contract, including:
+A durable automated test is warranted when new or changed behavior leaves an important repeatable contract unprotected; write it before or after implementation as useful, not to satisfy a mandatory RED sequence. Typical high-value candidates include:
 
 - a bug fix that can be reproduced deterministically;
 - new or changed gameplay/rules behavior;
@@ -230,7 +240,7 @@ A new test should normally be added before production implementation when the ch
 - an algorithm, persistence, transaction, history, identity, concurrency, or recommendation invariant that is not already covered;
 - a regression gap where existing tests would have allowed the defect.
 
-For these cases the normal cycle remains:
+When early deterministic tests materially help, an optional test-first cycle is:
 
 ```text
 define stable behavior / invariant
@@ -272,9 +282,9 @@ Prefer a higher-value typed behavior/integration test, an explicit architecture 
 
 A seam introduced for architectural reasons may become a useful test boundary. In that case, test the resulting stable contract once it exists; do not redesign production code around an artificial test seam that has no ownership value.
 
-### 3.3 Existing coverage can be test-first evidence
+### 3.3 Existing coverage is valid validation evidence
 
-“Test first” does not mean “new test first.” If an existing test already protects the intended behavior, that test predates the production change and is valid test-first evidence.
+Existing tests already protect intended behavior and are valid independent evidence. New tests need a distinct ongoing value; no test chronology is required.
 
 For a behavior-preserving refactor the preferred cycle is:
 
@@ -311,7 +321,7 @@ Do not retain a test merely because it already exists, because historical test c
 
 ### 3.5 Broad-test and CI cadence
 
-- T0 is the smallest directly relevant evidence. For genuine behavior gaps it is normally the RED/GREEN loop; for refactors it may be an existing characterization/contract test or compile/static check.
+- T0 is the smallest directly relevant evidence; choose test-first only where it helps prove a deterministic gap. For UI/model interactions it may instead be device/API evidence, and for refactors existing characterization/contract tests or compile/static checks.
 - `:app:testFast` is T1 and belongs at a logical checkpoint, not automatically after every small commit.
 - At logical checkpoints, run T1 plus triggered T2/T3 validation as defined by `docs/TESTING_STRATEGY.md`.
 - Related micro-slices may continue after focused GREEN/evidence + remote diff audit; **do not wait for old-head GitHub CI after every small push**.

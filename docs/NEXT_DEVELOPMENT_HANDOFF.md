@@ -1,5 +1,8 @@
 # CampBoardGameHost — Next Development Handoff
 
+> **当前唯一 NEXT（2026-10-15）：完成 ARCH-CLEANUP-1 并在 CI/R2 与依赖收口后恢复 AI-EVENT-JIT。** 不要按以下旧段落启动任何提示词实验、真实 API 调用或新功能。先读 [架构清理进展与保留边界](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md)、[Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315)、[TBGS/UGSM 审计](TBGS_UGSM_DECISION_TIME_AND_AI_EVENT_INPUT_AUDIT_2026-10-15.md)。确保 #304/#306/#307/#308/#310-#314 与当前 main 的实际 live 依赖，不合并已过时的候选 ID 模型合同或过滤投票语义。
+
+
 > **2026-10-15（Australia/Sydney），唯一活动交接。** 不根据旧快照推断当前分支或 “NEXT”；每次先读 [AGENTS.md](../AGENTS.md)、[current roadmap](CURRENT_DEVELOPMENT_ROADMAP.md) 和 [AI 连续对话专项](AI_STORYTELLER_CONTINUOUS_CONVERSATION_AND_CROSS_GAME_MEMORY_2026-10-15.md)。被压缩的旧交接全文见 [2026-10-15 同步前交接快照](archive/checkpoints/NEXT_DEVELOPMENT_HANDOFF_PRE_CONTINUITY_SYNC_2026-10-15.md)。
 
 ## 下一会话应首先核实

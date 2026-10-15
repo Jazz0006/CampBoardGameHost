@@ -1,5 +1,8 @@
 # CampBoardGameHost — Current Development Roadmap
 
+> **当前执行优先级（2026-10-15）：ARCH-CLEANUP-1 进行中。** 先完成架构收敛、死代码清理、实证验收与 PR 收口；**暂时停止 AI-EVENT-JIT 提示词开发、新功能和付费 API 实验**。以 [ARCH-CLEANUP-1 审计/进展](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md) 和 [PR #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 为活动工作。下文原 AI 续接 P2 计划仅为恢复开发时的背景，不代表当前 NEXT。
+
+
 > **2026-10-15（Australia/Sydney）当前唯一优先级权威。** 详细架构：[AI-STORYTELLER-CONTINUITY-1](AI_STORYTELLER_CONTINUOUS_CONVERSATION_AND_CROSS_GAME_MEMORY_2026-10-15.md)；下一步执行：[handoff](NEXT_DEVELOPMENT_HANDOFF.md)。原有逐 PR 长篇历史已完整归档至 [同步前 roadmap 快照](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_CONTINUITY_SYNC_2026-10-15.md)，不再执行其中的旧“CURRENT/NEXT”。
 
 ## 当前核实状态
