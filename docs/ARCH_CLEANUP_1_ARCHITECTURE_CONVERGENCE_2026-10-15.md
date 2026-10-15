@@ -2,7 +2,7 @@
 
 > 状态：**进行中；清理优先，AI-EVENT-JIT 暂停**。本文件记录已经由调用链审计证明的事实与本次实际改动，不等于整局历史完整性已经通过验收。
 >
-> 开发分支：`cleanup/arch-cleanup-1-20261015`；[Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 叠加在 #308（后者在 #307 → #306 → #304 之上）。**不得直接合并到当前 main**。主线 #309 的 evidence-first `AGENTS.md`/`TESTING_STRATEGY.md` 已同步。#310–#314 和 1E 实验分支是独立未并入的候选/审计，不视为生产契约。
+> 开发分支：`cleanup/arch-cleanup-1-20261015`；[Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 叠加在 #308（后者在 #307 → #306 → #304 之上）。**不得直接合并到当前 main**。主线 #309 的 evidence-first `AGENTS.md`/`TESTING_STRATEGY.md` 已同步。#310/#311 仍是独立的未合并 JIT Draft 候选；#312/#313/#314 于本次清理中因产品方向冲突或已转存审计而关闭（均未合并）。1E 实验分支仍待核对，以上均不视为生产契约。
 
 ## 1. 目标和保留边界
 
@@ -60,7 +60,7 @@
 
 ### 第六批：移除以界面文案反解析历史的死代码
 
-`ClocktowerHostScreen.recentMisinformationStreak` 从 `ClocktowerEvent.title` 中寻找中文“误导”或英文 `misleading`，推断信息误导连击数；该值在 `ClocktowerInformationStepBuilder` 中仅赋值给 `ClocktowerNightStepUi.recentMisinformationStreak`，源码全局搜索证明**没有任何读取者**。因此删除解析函数、传参回调、Ui 模型字段及五个单元测试中不再需要的虚拟参数。保留其余结构化信息测试。这个切片既删除无效维护点，也杜绝未来把文案反向当作权威事件事实使用。须经最新 HEAD CI/R2 验收。
+`ClocktowerHostScreen.recentMisinformationStreak` 从 `ClocktowerEvent.title` 中寻找中文“误导”或英文 `misleading`，推断信息误导连击数；该值在 `ClocktowerInformationStepBuilder` 中仅赋值给 `ClocktowerNightStepUi.recentMisinformationStreak`，源码全局搜索证明**没有任何读取者**。因此删除解析函数、传参回调、Ui 模型字段及五个单元测试中不再需要的虚拟参数。保留其余结构化信息测试。这个切片既删除无效维护点，也杜绝未来把文案反向当作权威事件事实使用。第六批提交 `0a3a7976cece`，GitHub Android CI #4192 与 R2 #3808 GREEN。
 
 ## 3. 审计结论：尚未清理的生产调用链
 
@@ -75,7 +75,7 @@ Recovery 与 Game Archive 具有不同合同：前者供继续游戏，后者供
 1. 当前 #315 整体的 Android CI、R2、规则/Recovery/Provider 历史测试与安全基线；本地构建机 SSH 故障单独处理，不把构建机故障记作应用错误。
 2. 清理其余没有生产入口的旧推荐评分/概率与历史实验类族（只删除真实死亡依赖图）。
 3. 逐项核实当前权威状态转换点、Recovery 和 Archive 的真实边界与跨项目 TBGS 语义。
-4. 对 #310–#314、1E 分支做逐变更保留/替代/关闭，特别不能继承已淘汰的候选 ID 模型输出合同和过滤全量投票的设计；#314 的原始审计文件已引入本分支作为只读依据。
+4. **已关闭 #312、#313、#314（未合并）**：#312 仅有被推翻的候选 ID 模型输出合同；#313 过滤普通提名/逐人投票与完整历史要求相冲突；#314 只读审计已经迁入本清理分支。保留 #310/#311 供因果验证与单项 Host 门控复审；1E 分支仍待依赖审查。已关闭 PR 对应远端分支暂不删除，以免影响残存叠加分支的可审计性。
 5. 适度整合活动路线与交接文档，保留必要历史审计，但不再将旧项目计划列为当下 NEXT。
 
 ## 5. AI-EVENT-JIT 恢复门槛（本轮结束后）

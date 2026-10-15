@@ -1,5 +1,8 @@
 # CampBoardGameHost — Next Development Handoff
 
+> **本轮执行结果更新**：Draft #315 的六批源代码清理已推送；当前 `cleanup/arch-cleanup-1-20261015` HEAD `0a3a7976cece`。六批 Android CI/R2 均 GREEN；归并前仍须检查最新合并候选 HEAD 和受影响的规则、Recovery 契约。#312/#313/#314 已关闭且未合并，#314 的审计已纳入本清理分支；剩余 #310/#311、#304–#308 与 1E 实验分支按实际依赖进一步复审。不要将这条记录理解为整轮 ARCH-CLEANUP-1 已结束。
+
+
 > **当前唯一 NEXT（2026-10-15）：完成 ARCH-CLEANUP-1 并在 CI/R2 与依赖收口后恢复 AI-EVENT-JIT。** 不要按以下旧段落启动任何提示词实验、真实 API 调用或新功能。先读 [架构清理进展与保留边界](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md)、[Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315)、[TBGS/UGSM 审计](TBGS_UGSM_DECISION_TIME_AND_AI_EVENT_INPUT_AUDIT_2026-10-15.md)。确保 #304/#306/#307/#308/#310-#314 与当前 main 的实际 live 依赖，不合并已过时的候选 ID 模型合同或过滤投票语义。
 
 
