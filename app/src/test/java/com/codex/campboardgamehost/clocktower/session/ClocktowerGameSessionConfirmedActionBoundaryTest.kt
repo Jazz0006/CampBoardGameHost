@@ -102,6 +102,49 @@ class ClocktowerGameSessionConfirmedActionBoundaryTest {
         assertEquals(accepted, session.state)
     }
 
+    @Test
+    fun `published unreliable information uses observation cursor without mechanical revision`() {
+        val session = create("a1-unreliable-publication")
+        val shown = com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft(
+            recordId = "first-night-chef-shown-zero",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 2,
+            sourceSeat = 1,
+            sourceAbility = com.codex.campboardgamehost.clocktower.domain.RoleId("Chef"),
+            visibility = com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(1),
+            reliability = com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability.KNOWN_MALFUNCTIONING,
+            proposition = com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.NumericResult(
+                metric = com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS,
+                sourceSeat = 1,
+                subjectSeats = (1..8).toList(),
+                value = 0,
+            ),
+        )
+        val recorded = session.commitGlobalEpistemicObservation(shown)
+        assertEquals(0L, session.state.gameStateRevision)
+        assertEquals(1L, session.state.playerInputRevision)
+        assertEquals(1L, session.state.nextTimelineGlobalSequence)
+        assertEquals(shown.proposition, recorded.proposition)
+
+        val afterPublication = session.state
+        assertEquals(recorded, session.commitGlobalEpistemicObservation(shown))
+        assertEquals(afterPublication, session.state)
+
+        confirm(session, ActionFactDraft.Attack(
+            actionId = "first-night-independent-attack",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 3,
+            targetSeat = 3,
+        ))
+        assertEquals(1L, session.state.gameStateRevision)
+        assertEquals(1L, session.state.playerInputRevision)
+        assertEquals(2L, session.state.nextTimelineGlobalSequence)
+        assertEquals(1L, session.state.actionTimeline.entries.single().point.globalSequence)
+    }
+
     private fun confirm(session: ClocktowerGameSession, draft: ActionFactDraft) =
         session.commitConfirmedGameAction(
             draft = draft,

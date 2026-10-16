@@ -1005,7 +1005,9 @@ internal fun CampBoardGameHostApp() {
                 a4ObservationDurabilityGate.markPending(draft.recordId)
             }
             ClocktowerSemanticHistoryMode.GLOBAL_V1 -> {
-                val beforeRevision = clocktowerPlayerInputRevision
+                // A callback may have already published another observation since the Compose
+                // snapshot was captured. Deduplicate against the live Session revision.
+                val beforeRevision = session.state.playerInputRevision
                 val committed = session.commitGlobalEpistemicObservation(draft)
                 if (session.view.playerInputRevision == beforeRevision) return
                 publishClocktowerSessionView()
@@ -3183,12 +3185,18 @@ internal fun CampBoardGameHostApp() {
                         highestVoteCountState = clocktowerHighestVoteCountState,
                         gameOutcome = gameOutcome,
                         onRecordEvent = { type, title, detail, names ->
-                            // Confirmed nomination/vote facts already own their Session revision.
-                            // Unmigrated registration and information callbacks still invalidate here.
-                            if (
-                                clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1 ||
-                                type !in setOf(ClocktowerEventType.Nomination, ClocktowerEventType.Vote)
-                            ) {
+                            // The confirmed public Nomination/Vote action already owns a revision.
+                            // Private information publication owns playerInputRevision/observation
+                            // chronology, not a second mechanical revision for its display text.
+                            // Unmigrated registration and other Host actions retain invalidation.
+                            val typedPublicActionAlreadyCommitted =
+                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1 &&
+                                    type in setOf(ClocktowerEventType.Nomination, ClocktowerEventType.Vote)
+                            val isInformationNarration = type in setOf(
+                                ClocktowerEventType.Information,
+                                ClocktowerEventType.UnreliableInformation,
+                            )
+                            if (!typedPublicActionAlreadyCommitted && !isInformationNarration) {
                                 advanceClocktowerGameStateRevision()
                             }
                             addClocktowerEvent(type, title, detail, names)
@@ -4280,10 +4288,10 @@ internal fun CampBoardGameHostApp() {
                             clocktowerSelectedExecution = null
                         },
                         onConfirmNight = {
-                            // Dawn resolution commits deaths, role changes and the next phase as
-                            // one timeline boundary. Earlier action confirmations have already
-                            // revisioned their own facts; this closes the night as a whole.
-                            advanceClocktowerGameStateRevision()
+                            // Actual confirmed deaths, role changes, poison carry and phase progress
+                            // each own their Session transition. A night-close without any newly
+                            // accepted typed action still needs one revision invalidation.
+                            val nightCloseStartingRevision = requireClocktowerGameSession().state.gameStateRevision
                             clocktowerPendingNightNewDemonIdentityName = null
                             val demonPoisonedTonight = clocktowerConfirmedPoisonTarget?.let { name ->
                                 cards.firstOrNull { it.name == name && it.eliminatedRound == null }?.clocktowerTeam == ClocktowerTeam.Demon
@@ -4739,6 +4747,11 @@ internal fun CampBoardGameHostApp() {
                             if (clocktowerPendingNewDemonName == null) {
                                 clocktowerDemonSuccessorTarget = null
                                 clearConfirmedDemonSuccessorTarget()
+                            }
+                            if (requireClocktowerGameSession().state.gameStateRevision == nightCloseStartingRevision) {
+                                // No death, poison, role or phase fact was committed. Preserve
+                                // invalidation for a genuinely accepted no-change night close.
+                                advanceClocktowerGameStateRevision()
                             }
                         },
                     )

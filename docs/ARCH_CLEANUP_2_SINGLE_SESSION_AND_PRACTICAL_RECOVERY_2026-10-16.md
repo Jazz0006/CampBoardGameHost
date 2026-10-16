@@ -93,6 +93,17 @@
 - 新增 `ClocktowerGameSessionConfirmedActionBoundaryTest`：Attack/Protect 共同保护与攻击、Nomination/Vote/Slayer miss/NoExecution 的版本及事实精确一致，重复 ID 幂等、冲突/过期拒绝。**源码与测试已修改，但未执行 Android/JUnit/CI/R2**，不声称运行验收。现存 `ClocktowerGameSession.commitGlobalActionFact` 的 instance 方法已无生产消费者，但仍被多个历史/恢复/战略种子测试调用；待 A1 完成后按真实测试保留价值清理，避免误删造成测试失编。
 - **A1 仍 PARTIAL**：夜间结算前置 revision、部分登记/信息公布回调、PlayerCard 可写状态、阶段进度的 UI 投影、Recovery 历史双轨等仍需后续步骤。继续 A1，不提前 A2、不合并 main、不进行付费模型调用。
 
+### A1 第七批：夜晚结算 revision 与已公布信息的时间线所有权（2026-10-16；待独立验收）
+
+- 本批起点 `d83655f17c1c462a21c3c09d5776b7cd02acad60`，本地/远端一致且工作树 clean；PR #315 仍 Draft/dirty，未合并 main。
+- **删去 `onConfirmNight` 入口无条件的 `advanceClocktowerGameStateRevision()`。** 夜晚结算中确认死亡、角色变化、毒药 carry、PhaseAdvance 已经各自通过 Session 事务拥有事实+revision；在 callback 入口先记实时 Session revision，完成结算后，仅当此次没有任何 Session 版本变更时才进行一次兜底失效，覆盖没有死亡/阶段结果、等待进一步交互等安全场景。不得把“每段 UI 回调”误作一个独立 Host 行动而提前推进版本。
+- **实际信息公布与 UI 文案分工：** `ClocktowerHostScreen` 的 `Information`/`UnreliableInformation` narrative event 不再额外推进机械 gameStateRevision；玩家实际收到的 `EpistemicObservationDraft` 通过 `commitGlobalEpistemicObservation` 写入观察记录、同一全局序号及 playerInputRevision。Nomination/Vote 的现有免重复 revision 继续有效；其他尚未迁移的注册/角色动作仍在原确认回调保留失效通知。
+- 修复 `recordEpistemicObservation` 在同一 Compose 回调连续公布/重试时读取旧捕获 `clocktowerPlayerInputRevision` 的判重问题：改在提交前直接读取当前 `session.state.playerInputRevision`，只给真正新增的公布记录触发 pending 及后续依赖通知。与 `commitConfirmedInformationDecision` 的实时 Session 判重保持一致。
+- 增加针对性 Session 合同测试：已实际展示的不可靠 Chef 数字（示例 0）以 **KNOWN_MALFUNCTIONING + 私有接收席位 + 精确 NumericResult** 保存；只增加 playerInputRevision/globalSequence、不伪造 gameStateRevision；同 ID 重复不更新；下一合法确认 Attack 使用连续的全局顺序。这是写入所有权验证，不代表 UI 的所有 Drunk/Poisoned 情况已被完整采集。
+- **仍待 A1/A4 消除的真实缺口：** `ClocktowerHostScreen.recordReliablePrivateInformation` 当前对缺少 `displayProposition` 的不可靠展示会直接返回，无法证明记录了真正展示内容；`performClocktowerPlayerRevealHandoff` 依次 first-night publication → observation → narrative → reveal，而不是整体事务，存在中途失败的状态差异；`ClocktowerConfirmedRegistrationHostWriterV1` 的 journal 写入与 observation Session 写入也尚分离。下一批必须沿**实际显示的 proposition/接收者/可靠性**修正，不能用本应显示的真值回填或把日志当权威观察事实。
+- **独立验证阻塞（真实检查）**：使用 Mini MCP `execution_session_start` 只读检查精确起点 HEAD：Java 21 / Gradle 9.5.0 存在，`:app:testFast` 已配置；开发机找不到 Android SDK 35，且 `ANDROID_HOME`、`ANDROID_SDK_ROOT` 均未设置。未执行 Gradle/JUnit/Android 编译；Mini MCP `run_task(:app:testFast)` 也因仓库未列入 task allow-list 被拒。没有源码改动由 Codex 产生。必须经能用 SDK 的构建机或 GitHub 精确 HEAD CI/R2 执行才可称 GREEN。
+- **A1 仍 PARTIAL，A2–A6 未开始。** 不新增通用 EventStore、平行状态或兼容桥；PR #315 保持 Draft，尚有 main 合并冲突，禁止未经许可付费模型测试或合并 main。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。
