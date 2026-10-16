@@ -2558,7 +2558,8 @@ internal fun ClocktowerJudgeScreen(
             if (globalAiAssisted &&
                 globalAiCurrentKey != null &&
                 globalAiAdviceKey != globalAiCurrentKey &&
-                approvedOpeningOption == null
+                approvedOpeningOption == null &&
+                globalAiLegalIds?.size != 1
             ) {
                 onRequestGlobalAiAdvice(nightSteps, currentStepIndex)
             }
@@ -2791,7 +2792,11 @@ internal fun ClocktowerJudgeScreen(
                     phase = phase,
                     round = round,
                     actorSeat = preplannedSeat,
-                    hasValidatedAiChoice = approvedOpeningOption != null,
+                    hasCurrentLegalResult = approvedOpeningOption != null ||
+                        globalAiLegalIds?.size == 1,
+                    playerQueryResolved = fortuneTellerFirst != null &&
+                        fortuneTellerSecond != null &&
+                        fortuneTellerFirst != fortuneTellerSecond,
                     confirmedObservations = actualInformationHistory,
                 ),
                 step = currentStep,

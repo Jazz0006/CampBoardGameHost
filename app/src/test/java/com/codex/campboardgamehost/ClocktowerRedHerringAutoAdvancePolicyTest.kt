@@ -177,7 +177,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
             phase = ClocktowerPhase.FirstNight,
             round = 1,
             actorSeat = 1,
-            hasValidatedAiChoice = hasChoice,
+            hasCurrentLegalResult = hasChoice,
             confirmedObservations = records,
         )
         assertTrue(eligible())
@@ -200,5 +200,48 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         assertTrue(eligible(records = listOf(received.copy(round = 2))))
         assertTrue(eligible(records = listOf(received.copy(sourceSeat = 2,
             recipientSeats = setOf(2)))))
+    }
+
+    @Test
+    fun `player query auto result requires actual targets and a current legal decision`() {
+        val step = ClocktowerNightStepUi(
+            title = "Fortune Teller", actor = PlayerCard("P2", Role.Civilian, ""),
+            isRealAction = true, reason = "", storytellerAction = "",
+            tellPlayer = null, explanation = "", roleEnName = "Fortune Teller",
+            action = ClocktowerNightAction.FortuneTeller,
+        )
+        fun eligible(
+            inputReady: Boolean,
+            legalResultReady: Boolean,
+            mode: Boolean = true,
+            observations: List<RecordedEpistemicObservation> = emptyList(),
+        ) = clocktowerShouldAutoPresentCurrentInformation(
+            automaticMode = mode,
+            step = step,
+            phase = ClocktowerPhase.Night,
+            round = 2,
+            actorSeat = 2,
+            hasCurrentLegalResult = legalResultReady,
+            playerQueryResolved = inputReady,
+            confirmedObservations = observations,
+        )
+        assertFalse(eligible(inputReady = false, legalResultReady = true))
+        assertFalse(eligible(inputReady = true, legalResultReady = false))
+        assertFalse(eligible(inputReady = true, legalResultReady = true, mode = false))
+        assertTrue(eligible(inputReady = true, legalResultReady = true))
+        val published = RecordedEpistemicObservation(
+            recordId = "night-2-fortune-teller", phase = StorytellerPhase.NIGHT,
+            round = 2, sequence = 2, sourceSeat = 2,
+            sourceAbility = RoleId("Fortune Teller"),
+            visibility = ObservationVisibility.PRIVATE, recipientSeats = setOf(2),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.BooleanResult(
+                com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                2, listOf(1, 3), true),
+        )
+        assertFalse(eligible(inputReady = true, legalResultReady = true,
+            observations = listOf(published)))
+        assertTrue(eligible(inputReady = true, legalResultReady = true,
+            observations = listOf(published.copy(round = 1))))
     }
 }

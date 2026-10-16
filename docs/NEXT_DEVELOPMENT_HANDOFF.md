@@ -47,6 +47,14 @@
 - A pure current-step gate checks current operating mode, real action, resolved actor/ability, validated AI candidate, and that this actor/ability/phase/round has not already received confirmed information. Session/observation history prevents re-opening the display when the host returns from the player reveal. A targeted regression test protects automatic/assisted boundaries and reentry.
 - This slice deliberately does not advance the night until the player's display/handoff is dismissed, and does not make all interactive player-choice steps autonomous. **A2 PARTIAL** pending CI/R2 and broader automated-flow correctness. Device validation is deferred by user.
 
+## A2 seventh slice — player query then Host-current result (2026-10-17; CI pending)
+
+- Starting branch `cleanup/arch-cleanup-1-20261015`, clean local/origin `b0cddde6feb08482801c5d7b01f0b07e9490e204`; PR #315 remains Draft/conflicted. User deferred physical Android/ADB testing; continue source/CI before device. No paid API calls or A3–A6.
+- First target-qualified extension: after Fortune Teller *actually chooses two distinct players*, the same current-step automatic-publication boundary accepts a current Host-determined unique Boolean result, or a verified current request-scoped AI recommendation if the Host domain has multiple answers. Never infer/query future subjects or bypass the existing player information publication and display callback; returning from confirmed display cannot re-open it.
+- The auto request effect avoids entering live provider evaluation at all when the Host current legal decision has only one candidate; a current rule-singleton also uses the same step-local automatic reveal for ordinary information roles, without requiring a fake AI response; other multichoice decisions continue through the required strategic review. This preserves the generic Host-determined no-AI rule across phases rather than a model-use exception for Fortune Teller.
+- No AI recommendation is stored as a game fact; no new Session state, cache, special registration ruling, or parallel reveal UI. The same one-slot recommendation applies; three alternatives remain future. Targeted regression covers missing/complete query selection, mode, current answer and confirmed observation, while complete full-night Android/ADB acceptance remains deferred.
+- Continue A2 after CI: assess other target-dependent result surfaces, generic stale advice errors, and when to safely advance only after player reveal.
+
 ## Starting repository state (recheck live)
 
 - Repository Jazz0006/CampBoardGameHost; developer machine via Mini MCP alias **clocktower**.

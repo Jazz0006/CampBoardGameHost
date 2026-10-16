@@ -92,10 +92,11 @@ internal fun resolveChambermaidSelection(
 }
 
 /**
- * Only a genuinely current, validated, player-independent information result
- * may enter the Host's ordinary reveal flow without a human selection click.
- * Player-selected targets and already published answers never auto-reveal.
- * No parallel execution state is introduced: the Session history is authority.
+ * Only a genuinely current, Host-resolved information result may enter the
+ * normal reveal flow without a human information-choice click. For player-query
+ * steps, the player-selected subjects MUST exist first; choosing those subjects
+ * is never an AI decision. Already published results never auto-reveal again.
+ * No parallel execution state: the Session history is authority.
  */
 internal fun clocktowerShouldAutoPresentCurrentInformation(
     automaticMode: Boolean,
@@ -103,15 +104,17 @@ internal fun clocktowerShouldAutoPresentCurrentInformation(
     phase: ClocktowerPhase,
     round: Int,
     actorSeat: Int?,
-    hasValidatedAiChoice: Boolean,
+    hasCurrentLegalResult: Boolean,
+    playerQueryResolved: Boolean = false,
     confirmedObservations: List<RecordedEpistemicObservation>,
 ): Boolean = automaticMode &&
     step.isRealAction &&
-    step.action == ClocktowerNightAction.None &&
+    (step.action == ClocktowerNightAction.None ||
+        (step.action == ClocktowerNightAction.FortuneTeller && playerQueryResolved)) &&
     step.actor != null &&
     actorSeat != null &&
     step.roleEnName != null &&
-    hasValidatedAiChoice &&
+    hasCurrentLegalResult &&
     confirmedObservations.none { received ->
         received.phase == phase.toStorytellerPhase() &&
             received.round == round &&

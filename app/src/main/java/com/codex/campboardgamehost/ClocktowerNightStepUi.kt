@@ -438,11 +438,15 @@ internal fun ClocktowerNightStepCardLocalized(
 
     // Automatic mode uses the same reveal callback as the manual confirmation
     // button. The Host owns exact-once Session publication, not this composable.
-    // An actual player-query/target step never reaches this gate.
-    val automaticCurrentChoice = automaticDisplayOption?.takeIf {
-        autoPresentAiInformation && currentAiSuggestedOption != null &&
-            clocktowerInformationCandidateId(it) ==
-                clocktowerInformationCandidateId(currentAiSuggestedOption)
+    // A Host-singleton result also needs no LLM: this is the same legal
+    // confirmation path, not a model-specific shortcut. Interactive player
+    // queries use their own post-selection result surface.
+    val automaticCurrentChoice = automaticDisplayOption?.takeIf { chosen ->
+        autoPresentAiInformation && step.action == ClocktowerNightAction.None &&
+            (currentAiSuggestedOption?.let { suggestion ->
+                clocktowerInformationCandidateId(chosen) ==
+                    clocktowerInformationCandidateId(suggestion)
+            } ?: (automaticAuthorityDomain.size == 1))
     }
     LaunchedEffect(
         gameId, phase, round, sequence, step.roleEnName,
@@ -629,6 +633,31 @@ internal fun ClocktowerNightStepCardLocalized(
             expectedSnapshot = model.contextSnapshot,
         )
         onShowPlayerDisplay(displayStep)
+    }
+
+    // After players have selected their query subjects, a Host-unique result is
+    // rule-determined. Otherwise only a verified current AI result may be used.
+    // The ordinary result callback still validates and publishes the actual
+    // observation before opening the player handoff.
+    val automaticQueriedResult = if (
+        autoPresentAiInformation &&
+        step.action == ClocktowerNightAction.FortuneTeller &&
+        structuredFortuneTellerSelectedSeats != null
+    ) {
+        val aiResult = (currentAiSuggestedOption?.proposition as?
+            InformationProposition.BooleanResult)?.takeIf { proposition ->
+                proposition.sourceSeat == structuredActorSeat &&
+                    proposition.subjectSeats == structuredFortuneTellerSelectedSeats &&
+                    proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT
+            }?.value
+        (aiResult ?: fortuneTellerLegalResults.singleOrNull())
+            ?.takeIf { it in fortuneTellerLegalResults }
+    } else null
+    LaunchedEffect(
+        gameId, phase, round, sequence, step.roleEnName,
+        informationDecisionKey, autoPresentAiInformation, automaticQueriedResult,
+    ) {
+        automaticQueriedResult?.let(::showStructuredFortuneTellerResult)
     }
 
     LaunchedEffect(allowRuleDeterminedAutoUi, step.title, automaticDecisionTargetName) {
