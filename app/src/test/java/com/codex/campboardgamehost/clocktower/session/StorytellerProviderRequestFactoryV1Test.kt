@@ -188,8 +188,8 @@ class StorytellerProviderRequestFactoryV1Test {
             ),
         )
         val context = StorytellerProviderGameContextBuilderV1.build(
-            snapshot = runtimeSnapshot(StorytellerPhase.FIRST_NIGHT, 0L, 0L),
-            sourceRevision = StorytellerProviderRevisionV1(0L, 0L),
+            snapshot = runtimeSnapshot(StorytellerPhase.FIRST_NIGHT, 1L, 0L),
+            sourceRevision = StorytellerProviderRevisionV1(1L, 0L),
             sessionState = session.state,
         )
         assertEquals("provider-direct", context.historyPrefix?.gameId)

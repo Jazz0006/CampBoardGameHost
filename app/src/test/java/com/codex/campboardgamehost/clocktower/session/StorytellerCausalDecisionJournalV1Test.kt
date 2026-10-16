@@ -198,7 +198,7 @@ class StorytellerCausalDecisionJournalV1Test {
     }
 
     @Test
-    fun `same revision different global cursors and later correction preserve both old prefixes`() {
+    fun `accepted revision changes preserve both previously frozen prefixes and corrections`() {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         val aReq = request("A", session, journal)
@@ -211,7 +211,7 @@ class StorytellerCausalDecisionJournalV1Test {
         ))
         val bReq = request("B", session, journal)
         val b = journal.captureBeforeDecision(bReq, session.state)
-        assertEquals(a.revision, b.revision)
+        assertTrue(a.revision != b.revision)
         assertEquals(1L, b.exclusiveGlobalSequence)
         assertEquals(listOf("event-A"), journal.effectiveAt("B").map { it.eventId })
         assertEquals(listOf("event-A"), bReq.gameContext.priorDecisions.map { it.eventId })
