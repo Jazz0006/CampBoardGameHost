@@ -150,6 +150,11 @@ internal object ClocktowerSemanticHistoryPersistence {
                 put("alignment", fact.alignment.name)
                 put("type", fact.type.name)
             }
+            is ActionFact.ButlerMasterChoice -> {
+                put("kind", "butler-master")
+                put("butlerSeat", fact.butlerSeat)
+                put("masterSeat", fact.masterSeat)
+            }
             is ActionFact.RedHerringChoice -> {
                 put("kind", "red-herring-choice")
                 put("selectedSeat", fact.selectedSeat ?: JSONObject.NULL)
@@ -227,6 +232,10 @@ internal object ClocktowerSemanticHistoryPersistence {
                 alignment = enumValue(json, "alignment"),
                 type = enumValue(json, "type"),
             )
+            "butler-master" -> ActionFact.ButlerMasterChoice(
+                actionId, sequence, positiveSeat(json, "butlerSeat"),
+                positiveSeat(json, "masterSeat"),
+            ).also { require(it.butlerSeat != it.masterSeat) }
             "red-herring-choice" -> ActionFact.RedHerringChoice(
                 actionId, sequence, nullablePositiveSeat(json, "selectedSeat"),
             )

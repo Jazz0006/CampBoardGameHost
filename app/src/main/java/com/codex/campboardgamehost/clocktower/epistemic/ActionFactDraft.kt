@@ -202,6 +202,23 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class ButlerMasterChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val butlerSeat: Int,
+        val masterSeat: Int,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(butlerSeat)
+            requireSeat(masterSeat)
+            require(butlerSeat != masterSeat)
+            require(phase in setOf(StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT))
+        }
+    }
+
     data class RedHerringChoice(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -315,6 +332,9 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
         role = role,
         alignment = alignment,
         type = type,
+    )
+    is ActionFactDraft.ButlerMasterChoice -> ActionFact.ButlerMasterChoice(
+        actionId, globalSequence, butlerSeat, masterSeat,
     )
     is ActionFactDraft.RedHerringChoice -> ActionFact.RedHerringChoice(
         actionId, globalSequence, selectedSeat,

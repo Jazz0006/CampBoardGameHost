@@ -182,6 +182,14 @@
 - Updated the existing checkpoint transaction and Host integration regression assertions. This is an A1 cleanup slice, **not** Butler-master event migration, fully unified Archive, A3 or A4 completion. No new event, second authority or alternate recovery system.
 - The preceding exact HEAD `3d5423b8` passed CI #4227 and R2 #3837; this new source requires fresh independent checks. PR #315 remains Draft/conflicted/unmerged.
 
+## 2026-10-16 A1 Butler master accepted-step migration
+
+- Real consumer audit: `ClocktowerJudgeScreen.recordNightStep` previously used `clocktowerEvents` as the only confirmed Butler choice, while the selection input lived in `clocktowerButlerMaster` and advanced `playerInputRevision` on every edit. The old `RoleAction` narration also advanced a disconnected `gameStateRevision` on Next. This was an actual confirmed player action missing from Session/AI history.
+- Migrated the Butler Next acceptance boundary to a single `ActionFactDraft.ButlerMasterChoice` → `ClocktowerGameSession.commitConfirmedGameAction`, with authoritative recipient/target seats and distinct-seat rule, including Drunk shown as Butler. The Host callback accepts the step **before** writing temporary UI narration, so failure cannot leave a false narrated confirmation. Repeated Next is guarded by existing night-step deduplication. Pending seat edits remain reversible input only.
+- Added only one required factual action kind, not a new event store. Integrated it with the pre-existing Session timeline serializer/decoder, timeline identity payload, reducer/recovery seat checks, private player historical filtering and compact AI delta as `butler_master`. Round-trip and atomic idempotence assertions are added to existing focused tests.
+- `clocktowerEvents` still contains the Butler's UI/Archive display narration until A4 migrates that real review consumer to the same Session-derived compact history. For the migrated Global action it now **does not** increment the Session revision twice. LEGACY_LOCAL retains its pre-existing invalidation. Full historical display cleanup is therefore not yet finished, by design.
+- Remaining A1 final audit: independent revision callbacks (Artist legacy behavior explicitly deferred as future functionality), fact-only test API, residual untyped actions and exact-head CI. A3 still owns the Compose PlayerCard second truth; A4 owns final historical review migration. Never claim A1/A4 completed from this isolated code slice.
+
 ## Historical first implementation brief: A1
 
 1. Read AGENTS.md, [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md), [ARCH-CLEANUP-1 evidence](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md), this handoff, roadmap and testing policy. Verify live SHA / worktree / #315 / main / checks.

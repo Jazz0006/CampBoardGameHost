@@ -117,6 +117,8 @@ internal object StorytellerGlobalEventProjectionV1 {
             .put("seat", fact.klutzSeat).put("target", fact.chosenSeat)
         is ActionFact.RoleChange -> JSONObject().put("type", "role_change")
             .put("seat", fact.targetSeat).put("role", fact.role.value)
+        is ActionFact.ButlerMasterChoice -> JSONObject().put("type", "butler_master")
+            .put("seat", fact.butlerSeat).put("target", fact.masterSeat)
         // Choosing the Mayor himself is an accepted *no-bounce* ruling,
         // not an actual redirection event.
         is ActionFact.MayorRedirectChoice -> fact.targetSeat

@@ -126,6 +126,14 @@ sealed interface ActionFact {
         val type: CharacterType,
     ) : ActionFact
 
+    /** The Butler's actually confirmed nightly master, not a UI draft. */
+    data class ButlerMasterChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val butlerSeat: Int,
+        val masterSeat: Int,
+    ) : ActionFact
+
     /** Accepted private Fortune Teller setup/override, including explicit clearing. */
     data class RedHerringChoice(
         override val actionId: String,
@@ -247,6 +255,11 @@ object DynamicActionReducer {
                 }
                 is ActionFact.RoleChange -> updatePlayer(fact.targetSeat) {
                     it.copy(actualRole = fact.role, actualAlignment = fact.alignment, actualType = fact.type)
+                }
+                is ActionFact.ButlerMasterChoice -> {
+                    requireSeat(fact.butlerSeat)
+                    requireSeat(fact.masterSeat)
+                    require(fact.butlerSeat != fact.masterSeat)
                 }
                 is ActionFact.RedHerringChoice -> {
                     fact.selectedSeat?.let(::requireSeat)

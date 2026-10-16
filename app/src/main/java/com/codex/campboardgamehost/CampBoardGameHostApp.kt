@@ -3312,6 +3312,35 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerButlerMaster = it
                         },
+                        onConfirmButlerMaster = { actorName, masterName ->
+                            if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) {
+                                false
+                            } else {
+                                val session = requireClocktowerGameSession()
+                                val actorSeat = clocktowerSeatFor(actorName)
+                                val masterSeat = clocktowerSeatFor(masterName)
+                                require(actorSeat != masterSeat) { "Butler cannot choose themself." }
+                                val actor = requireNotNull(session.state.gameState.playerAt(actorSeat))
+                                require(actor.alive &&
+                                    (actor.actualRole.value == "Butler" || actor.shownRole?.value == "Butler")) {
+                                    "Confirmed Butler master requires an active Butler (or Drunk shown Butler)."
+                                }
+                                val localSequence = clocktowerEventCounter + 1
+                                commitClocktowerConfirmedAction(ActionFactDraft.ButlerMasterChoice(
+                                    actionId = clocktowerActionId(
+                                        kind = "butler-master",
+                                        localSequence = localSequence,
+                                        targetSeat = masterSeat,
+                                    ),
+                                    phase = storytellerPhaseFor(),
+                                    round = round,
+                                    sequence = localSequence,
+                                    butlerSeat = actorSeat,
+                                    masterSeat = masterSeat,
+                                ))
+                                true
+                            }
+                        },
                         onSelectMonkProtectedTarget = { selectedTarget ->
                             advanceClocktowerPlayerInputRevision()
                             val reducedCheckpoint = NightCheckpointReducer.reduce(

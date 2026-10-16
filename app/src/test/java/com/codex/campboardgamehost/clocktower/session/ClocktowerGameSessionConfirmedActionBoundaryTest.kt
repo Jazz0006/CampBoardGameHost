@@ -55,6 +55,41 @@ class ClocktowerGameSessionConfirmedActionBoundaryTest {
     }
 
     @Test
+    fun `confirmed Butler master is an ordered action and not a duplicate on retry`() {
+        val session = create("a1-butler-master")
+        val initial = session.state.gameState
+        val choice = ActionFactDraft.ButlerMasterChoice(
+            actionId = "night-two-butler-four-master-one",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 1,
+            butlerSeat = 4,
+            masterSeat = 1,
+        )
+        val entry = confirm(session, choice)
+        assertEquals(ActionFact.ButlerMasterChoice(
+            actionId = choice.actionId, sequence = 0L,
+            butlerSeat = 4, masterSeat = 1,
+        ), entry.fact)
+        assertEquals(initial, session.state.gameState)
+        assertEquals(1L, session.state.gameStateRevision)
+        assertEquals(1L, session.state.nextTimelineGlobalSequence)
+        val accepted = session.state
+        assertEquals(entry, session.commitConfirmedGameAction(choice, initial, 0L))
+        assertEquals(accepted, session.state)
+        assertNotNull(runCatching {
+            session.commitConfirmedGameAction(choice.copy(masterSeat = 2), initial, 1L)
+        }.exceptionOrNull())
+        assertEquals(accepted, session.state)
+        assertNotNull(runCatching {
+            ActionFactDraft.ButlerMasterChoice(
+                actionId = "illegal-butler-self", phase = StorytellerPhase.NIGHT,
+                round = 2, sequence = 2, butlerSeat = 4, masterSeat = 4,
+            )
+        }.exceptionOrNull())
+    }
+
+    @Test
     fun `nomination vote slayer miss and no execution commit as four actual steps`() {
         val session = create("a1-public-actions")
         val facts = listOf(

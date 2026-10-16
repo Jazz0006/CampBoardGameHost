@@ -415,6 +415,15 @@ internal object RecoveryRestorePlanner {
                     require(game.identity.script == ClocktowerScript.NoGreaterJoy)
                 }
                 is ActionFact.RoleChange -> requireKnownSeat(fact.targetSeat, playerCount)
+                is ActionFact.ButlerMasterChoice -> {
+                    requireKnownSeat(fact.butlerSeat, playerCount)
+                    requireKnownSeat(fact.masterSeat, playerCount)
+                    require(fact.butlerSeat != fact.masterSeat)
+                    require(entry.point.phase in setOf(
+                        com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT,
+                        com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
+                    ))
+                }
                 is ActionFact.RedHerringChoice -> {
                     fact.selectedSeat?.let { requireKnownSeat(it, playerCount) }
                     require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT) {

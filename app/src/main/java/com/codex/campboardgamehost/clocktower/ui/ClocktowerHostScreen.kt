@@ -151,6 +151,7 @@ internal fun ClocktowerJudgeScreen(
     onSelectRedHerring: (String?) -> Unit,
     onCommitDemonBluffs: (List<String>) -> Unit,
     onSelectButlerMaster: (String?) -> Unit,
+    onConfirmButlerMaster: (String, String) -> Boolean,
     onSelectMonkProtectedTarget: (String?) -> Unit,
     onConfirmMonkProtectedTarget: () -> Unit,
     onSelectMayorRedirectTarget: (String?) -> Unit,
@@ -523,6 +524,12 @@ internal fun ClocktowerJudgeScreen(
             recordedNightSteps[recordKey] = true
             return
         }
+        val confirmedButlerFact = if (step.action == ClocktowerNightAction.ButlerMaster) {
+            val actor = requireNotNull(step.actor) { "Butler step requires a real acting player." }
+            val master = requireNotNull(butlerMaster) { "Butler must choose a master before proceeding." }
+            require(actor.name != master) { "Butler cannot choose themself as master." }
+            onConfirmButlerMaster(actor.name, master)
+        } else false
         val names = when (step.action) {
             ClocktowerNightAction.RedHerring -> listOfNotNull(redHerring)
             ClocktowerNightAction.Poison -> listOfNotNull(step.actor?.name, poisonTarget)
@@ -565,13 +572,13 @@ internal fun ClocktowerJudgeScreen(
                 text("查验：${playerSeatLabel(cards, ravenkeeperTarget)}", "Checked: ${playerSeatLabel(cards, ravenkeeperTarget)}")
             else -> step.tellPlayer ?: step.storytellerAction
         }
-        val alreadyConfirmedNightFact = step.action in setOf(
+        val alreadyConfirmedNightFact = confirmedButlerFact || step.action in setOf(
             ClocktowerNightAction.RedHerring,
             ClocktowerNightAction.Poison,
             ClocktowerNightAction.MonkProtect,
         )
-        // Not every night RoleAction has a typed owner yet (e.g. Butler master).
-        // Preserve the old revision for those until their confirmed action migrates.
+        // Non-Global role actions without confirmed typed facts retain legacy
+        // revision invalidation until their actual production owners migrate.
         onRecordEvent(ClocktowerEventType.RoleAction, step.title, detail, names, alreadyConfirmedNightFact)
         recordedNightSteps[recordKey] = true
     }
