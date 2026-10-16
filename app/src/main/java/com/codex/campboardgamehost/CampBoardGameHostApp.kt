@@ -570,6 +570,20 @@ internal fun CampBoardGameHostApp() {
         ?.let { seat -> cards.getOrNull(seat - 1)?.name }
     val clocktowerRecommendedDemonBluffRoleNames =
         clocktowerSessionView?.demonBluffRoleIds?.map(RoleId::value).orEmpty()
+    // This is a derived validity check, not a second mutable truth or stale-plan cache.
+    // A confirmed Host action or an overridden published clue can invalidate
+    // the whole linked opening proposal while leaving actual Session facts intact.
+    val openingHintsUsable = openingPlanRecommendation?.let { opening ->
+        clocktowerGameSession?.state?.let { actual ->
+            ClocktowerJointOpeningDisplayMatcherV2.stillUsable(
+                session = actual,
+                plannedDrunkSeat = opening.selection.drunkSeat,
+                plannedInformation = openingRecommendedInformation,
+                plannedRedHerringSeat = openingRecommendedRedHerringSeat,
+                plannedBluffRoleNames = openingRecommendedBluffRoleNames,
+            )
+        }
+    } == true
     val records = remember { mutableStateListOf<EliminationRecord>() }
     val recoveryWriteGate = remember { RecoveryWriteGate() }
     val clocktowerEvents = remember { mutableStateListOf<ClocktowerEvent>() }
@@ -3106,8 +3120,10 @@ internal fun CampBoardGameHostApp() {
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         globalAiAssisted = storytellerOperationMode != StorytellerOperationMode.MANUAL,
                         globalAiAutomatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC,
-                        jointOpeningAvailable = openingPlanRecommendation != null,
-                        jointOpeningSemantics = openingRecommendedInformation,
+                        jointOpeningAvailable = openingHintsUsable,
+                        jointOpeningSemantics = openingRecommendedInformation.takeIf {
+                            openingHintsUsable
+                        }.orEmpty(),
                         globalNightPendingDecision = if (
                             storytellerOperationMode != StorytellerOperationMode.MANUAL &&
                             clocktowerPhase == ClocktowerPhase.Night
@@ -3150,10 +3166,13 @@ internal fun CampBoardGameHostApp() {
                         ravenkeeperTarget = clocktowerRavenkeeperTarget,
                         redHerring = redHerringDraftName ?: clocktowerRedHerring,
                         openingRecommendedRedHerring = openingRecommendedRedHerringSeat
+                            ?.takeIf { openingHintsUsable }
                             ?.let { cards.getOrNull(it - 1)?.name },
                         recommendedDemonBluffRoleNames =
                             clocktowerRecommendedDemonBluffRoleNames.ifEmpty {
-                                openingRecommendedBluffRoleNames
+                                openingRecommendedBluffRoleNames.takeIf {
+                                    openingHintsUsable
+                                }.orEmpty()
                             },
                         butlerMaster = clocktowerButlerMaster,
                         virginUsed = clocktowerVirginUsed,

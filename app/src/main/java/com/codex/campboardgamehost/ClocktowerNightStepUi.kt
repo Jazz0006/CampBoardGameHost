@@ -52,8 +52,8 @@ internal fun ClocktowerNightStepCardLocalized(
     mayorRedirectTargetCards: List<PlayerCard>,
     demonSuccessorTargetCards: List<PlayerCard>,
     step: ClocktowerNightStepUi,
-    /** Already validated joint-plan choice; does not replace the full Host domain. */
-    approvedAiInformationOption: ClocktowerDisplayOption? = null,
+    /** Suggested current-step option only. Never narrows the Host's legal domain. */
+    aiSuggestedInformationOption: ClocktowerDisplayOption? = null,
     surfacePlan: ClocktowerNightSurfacePlan,
     spyCard: PlayerCard?,
     spyRegistrationResolution: TroubleBrewingRegistrationResolution?,
@@ -133,6 +133,13 @@ internal fun ClocktowerNightStepCardLocalized(
             step.automaticInformationCandidates.ifEmpty { step.legacyInformationCandidates }
         },
     ).distinctBy(::clocktowerInformationCandidateId)
+    // Rebind the AI's structured suggestion to the CURRENT unmodified Host domain.
+    // A stale value must not be used even as an assisted default.
+    val currentAiSuggestedOption = aiSuggestedInformationOption?.let { suggested ->
+        automaticAuthorityDomain.singleOrNull {
+            clocktowerInformationCandidateId(it) == clocktowerInformationCandidateId(suggested)
+        }
+    }
     // Display legal alternatives, but never mistake deterministic list order for an AI recommendation.
     val displayedInformationOptions = assistedInformationOptions
     val pairInformationCandidates = if (
@@ -229,7 +236,7 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val automaticDisplayOption = clocktowerAutomaticInformationOption(
         currentOptions = automaticAuthorityDomain,
-        approvedOption = approvedAiInformationOption.takeIf { allowRuleDeterminedAutoUi },
+        approvedOption = currentAiSuggestedOption.takeIf { allowRuleDeterminedAutoUi },
     )
     val manualInformationFallback = allowRuleDeterminedAutoUi &&
         step.isRealAction &&
@@ -248,6 +255,7 @@ internal fun ClocktowerNightStepCardLocalized(
         manualInformationFallback -> setOf("__manual_required__")
         effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
             .mapTo(linkedSetOf(), ::optionId)
+        currentAiSuggestedOption != null -> setOf(optionId(currentAiSuggestedOption))
         else -> emptySet()
     }
     val effectiveRecommendedNumericValues = when {
@@ -256,6 +264,10 @@ internal fun ClocktowerNightStepCardLocalized(
             (option.proposition as? InformationProposition.NumericResult)?.value
                 ?: option.displayPrimary?.toIntOrNull()
         }.toSet()
+        currentAiSuggestedOption != null -> listOfNotNull(
+            (currentAiSuggestedOption.proposition as? InformationProposition.NumericResult)?.value
+                ?: currentAiSuggestedOption.displayPrimary?.toIntOrNull()
+        ).toSet()
         else -> emptySet()
     }
     val informationIdentity = ClocktowerInformationDecisionIdentity(
@@ -263,7 +275,9 @@ internal fun ClocktowerNightStepCardLocalized(
     )
     val structuredActorSeat = step.actor
         ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
-    val structuredRecommendedOption = clocktowerStructuredRecommendedOption(
+    val structuredRecommendedOption = currentAiSuggestedOption.takeUnless {
+        manualInformationFallback
+    } ?: clocktowerStructuredRecommendedOption(
         automatic = effectiveAutomaticInformation,
         automaticOption = automaticDisplayOption,
         displayedOptions = if (manualInformationFallback) emptyList() else displayedInformationOptions,
@@ -996,7 +1010,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         recommendedOptions = when {
                             manualInformationFallback -> emptyList()
                             effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-                            else -> emptyList()
+                            else -> listOfNotNull(currentAiSuggestedOption)
                         },
                         seats = nightActionSeats,
                         actorSeat = actionActorSeat,

@@ -2704,7 +2704,9 @@ internal fun ClocktowerJudgeScreen(
                     isRedHerringStep = currentStep.action == ClocktowerNightAction.RedHerring,
                     isRealAction = currentStep.isRealAction,
                     hasSelectedRedHerring = redHerring != null,
-                    acceptedJointOpening = jointOpeningAvailable && globalAiAutomatic,
+                    acceptedJointOpening = jointOpeningAvailable && globalAiAutomatic &&
+                        openingRecommendedRedHerring != null &&
+                        redHerring == openingRecommendedRedHerring,
                 )
             ) {
                 advanceNightStep()
@@ -2773,18 +2775,13 @@ internal fun ClocktowerJudgeScreen(
                 chambermaidTargetCards = chambermaidTargetCards,
                 mayorRedirectTargetCards = mayorRedirectTargetCards,
                 demonSuccessorTargetCards = demonSuccessorTargetCards,
-                approvedAiInformationOption = approvedOpeningOption.takeIf {
-                    globalAiAutomatic && globalAiAdviceError == null && !globalAiAdviceBusy
+                // One optional current-step suggestion for both AI modes.
+                // The card retains the complete Host legal domain for manual edits.
+                // Automatic mode can use the same verified choice at this step only.
+                aiSuggestedInformationOption = approvedOpeningOption.takeIf {
+                    globalAiAdviceError == null && !globalAiAdviceBusy
                 },
-                // In AI auto the preselection is provided separately. Never
-                // shrink Host legal/automatic domains to a one-choice model list.
-                step = if (globalAiAutomatic) currentStep else approvedOpeningOption?.let { chosen ->
-                    currentStep.copy(
-                        legacyInformationCandidates = listOf(chosen),
-                        automaticInformationCandidates = listOf(chosen),
-                        recommendedDisplayOptions = listOf(chosen),
-                    )
-                } ?: currentStep,
+                step = currentStep,
                 surfacePlan = currentSurfacePlan,
                 spyCard = spyCard,
                 spyRegistrationResolution = currentSpyRegistrationResolution,
