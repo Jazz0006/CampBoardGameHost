@@ -71,6 +71,40 @@ internal object StorytellerStrategicContinuationV2 {
                 accepted.exclusiveGlobalSequence, version + 1, accepted.updatedMemory)
         }
 
+        /**
+         * Promote a provisional reply ONLY after a genuinely new confirmed player
+         * observation. Retain the pre-publication history cursor so the actual
+         * observed fact is sent to the next model call rather than assumed known.
+         * The updated memory is advisory; it never overwrites Session truth.
+         */
+        fun afterConfirmedPublication(
+            proposal: Result,
+            before: ClocktowerSessionState,
+            after: ClocktowerSessionState,
+        ): MemoryCursor {
+            require(proposal.gameId == gameId && before.gameId == gameId &&
+                after.gameId == gameId && proposal.memoryVersion == version)
+            require(proposal.gameStateRevision == before.gameStateRevision &&
+                proposal.playerInputRevision == before.playerInputRevision &&
+                proposal.exclusiveGlobalSequence == before.nextTimelineGlobalSequence)
+            require(before.gameStateRevision >= gameStateRevision &&
+                before.playerInputRevision >= playerInputRevision &&
+                before.nextTimelineGlobalSequence >= exclusiveGlobalSequence)
+            require(after.gameStateRevision >= before.gameStateRevision &&
+                after.playerInputRevision > before.playerInputRevision &&
+                after.nextTimelineGlobalSequence > before.nextTimelineGlobalSequence)
+            require(after.epistemicObservationLog.records.size >
+                before.epistemicObservationLog.records.size &&
+                after.epistemicObservationLog.records.take(
+                    before.epistemicObservationLog.records.size) ==
+                    before.epistemicObservationLog.records)
+            // This is the request's frozen history prefix, not the later published
+            // fact; the next continuation will read the actual Session delta.
+            return MemoryCursor(
+                gameId, before.gameStateRevision, before.playerInputRevision,
+                before.nextTimelineGlobalSequence, version + 1, proposal.updatedMemory)
+        }
+
         companion object {
             fun initial(accepted: HostOpeningSemanticAcceptanceV2): MemoryCursor =
                 MemoryCursor(

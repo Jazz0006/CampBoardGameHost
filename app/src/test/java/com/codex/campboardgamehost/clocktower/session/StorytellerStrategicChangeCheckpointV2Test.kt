@@ -297,6 +297,29 @@ class StorytellerStrategicChangeCheckpointV2Test {
         )
     }
 
+    @Test fun onlyExactlyPublishedCurrentHostSemanticsCanConfirmModelMemory() {
+        val request = scalarRequest(session())
+        fun publication(value: Int, seat: Int = 1, role: String = "Chef") =
+            EpistemicObservationDraft(
+                recordId = "actually-published", phase = StorytellerPhase.FIRST_NIGHT,
+                round = 1, sequence = 1, sourceSeat = seat,
+                sourceAbility = RoleId(role), visibility = ObservationVisibility.PRIVATE,
+                recipientSeats = setOf(seat),
+                reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+                proposition = InformationProposition.NumericResult(
+                    NumericMetric.ADJACENT_EVIL_PAIRS, seat, value = value),
+            )
+        val matcher = com.codex.campboardgamehost.ClocktowerResidualDisplayMatcherV2
+        assertTrue(matcher.matchesConfirmedPublication(request, "number-0", publication(0)))
+        assertFalse(matcher.matchesConfirmedPublication(request, "number-0", publication(1)))
+        assertFalse(matcher.matchesConfirmedPublication(request, "number-0", publication(0, 2)))
+        assertFalse(matcher.matchesConfirmedPublication(request, "number-0",
+            publication(0, role = "Empath")))
+        assertFalse(matcher.matchesConfirmedPublication(request, "missing", publication(0)))
+        assertFalse(matcher.matchesConfirmedPublication(request, "number-0",
+            publication(0).copy(visibility = ObservationVisibility.PUBLIC, recipientSeats = emptySet())))
+    }
+
     @Test fun residualPackageGateRequiresCurrentWholeHostDomainBeforeAnyAdoption() {
         val host = session()
         val first = scalarRequest(host)

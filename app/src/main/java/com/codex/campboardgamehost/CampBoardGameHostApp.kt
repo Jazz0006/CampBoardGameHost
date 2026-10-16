@@ -198,6 +198,20 @@ private enum class Screen {
     Game,
 }
 
+/**
+ * One unconfirmed current-step AI suggestion. It is neither a Session fact
+ * nor a second history. The payload/receipt exist only to validate actual
+ * player publication and promote advisory strategy at that moment.
+ */
+private data class PendingCurrentStepAdvice(
+    val recommendation: StorytellerResidualPackageGateV2.Accepted,
+    val requestKey: String,
+    val request: StorytellerProviderRequestV1,
+    val proposal: StorytellerStrategicContinuationV2.Result,
+    val receiptId: String,
+    val model: String,
+)
+
 private data class PendingTroubleBrewingDrunkSelection(
     val preparedGameId: String,
     val preparedSetup: TroubleBrewingPreparedSetup,
@@ -428,10 +442,7 @@ internal fun CampBoardGameHostApp() {
         mutableStateOf<StorytellerStrategicChangeCheckpointV2.Baseline?>(null)
     }
     // Current-step recommendation only: never a separate adoption or game-state fact.
-    var residualCurrentRecommendation by remember {
-        mutableStateOf<StorytellerResidualPackageGateV2.Accepted?>(null)
-    }
-    var residualCurrentRecommendationKey by remember { mutableStateOf<String?>(null) }
+    var pendingCurrentStepAdvice by remember { mutableStateOf<PendingCurrentStepAdvice?>(null) }
     var openingRecommendedInformation by remember { mutableStateOf<Map<Int,
         com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2>>(emptyMap()) }
     var openingRecommendedBluffRoleNames by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -983,6 +994,51 @@ internal fun CampBoardGameHostApp() {
         invalidateA4RevisionScope()
     }
 
+    /**
+     * React ONLY to an actual newly committed Session observation. A verified
+     * current-step model answer is not automatically an accepted Host ruling.
+     * If the Storyteller chose a different answer, Session truth wins and the
+     * next model call reconsiders it from the retained history prefix.
+     */
+    fun reviewConfirmedCurrentStepAdvice(
+        before: ClocktowerSessionState,
+        draft: EpistemicObservationDraft,
+    ) {
+        val pending = pendingCurrentStepAdvice ?: return
+        pendingCurrentStepAdvice = null
+        val session = clocktowerGameSession ?: return
+        if (storytellerOperationMode == StorytellerOperationMode.MANUAL ||
+            before.gameId != pending.recommendation.gameId ||
+            before.gameStateRevision != pending.recommendation.gameStateRevision ||
+            before.playerInputRevision != pending.recommendation.playerInputRevision ||
+            before.nextTimelineGlobalSequence != pending.recommendation.exclusiveGlobalSequence ||
+            pending.requestKey != liveAiAdviceKey
+        ) return
+        val selectedId = pending.recommendation.choices[
+            pending.request.identity.decisionId] ?: return
+        val published = session.state.epistemicObservationLog.records.lastOrNull {
+            it.recordId == draft.recordId
+        } ?: return
+        if (!draft.matches(published) ||
+            !ClocktowerResidualDisplayMatcherV2.matchesConfirmedPublication(
+                pending.request, selectedId, draft)
+        ) {
+            // Human overrides remain confirmed facts, not approved AI policy.
+            DebugFlightRecorder.record("RESIDUAL_CONFIRMED_DIFFERENT_RESULT")
+            return
+        }
+        val prior = strategicPolicyCursor ?: return
+        val promoted = runCatching {
+            prior.afterConfirmedPublication(pending.proposal, before, session.state)
+        }.getOrNull() ?: return
+        strategicPolicyCursor = promoted
+        strategicLastReviewedHost = StorytellerStrategicChangeCheckpointV2.Baseline(
+            before, StorytellerStrategicChangeCheckpointV2.Position(draft.phase, draft.round))
+        canonicalConversationResponseId = pending.receiptId
+        canonicalConversationModel = pending.model
+        DebugFlightRecorder.record("RESIDUAL_CONFIRMED_PROMOTED")
+    }
+
     fun recordEpistemicObservation(draft: EpistemicObservationDraft) {
         val session = requireClocktowerGameSession()
         when (clocktowerSemanticHistoryMode) {
@@ -996,9 +1052,10 @@ internal fun CampBoardGameHostApp() {
             ClocktowerSemanticHistoryMode.GLOBAL_V1 -> {
                 // A callback may have already published another observation since the Compose
                 // snapshot was captured. Deduplicate against the live Session revision.
-                val beforeRevision = session.state.playerInputRevision
+                val before = session.state
                 val committed = session.commitGlobalEpistemicObservation(draft)
-                if (session.view.playerInputRevision == beforeRevision) return
+                if (session.view.playerInputRevision == before.playerInputRevision) return
+                reviewConfirmedCurrentStepAdvice(before, draft)
                 publishClocktowerSessionView()
                 invalidateA4RevisionScope()
                 a4ObservationDurabilityGate.markPending(committed.recordId)
@@ -1031,7 +1088,7 @@ internal fun CampBoardGameHostApp() {
                     .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry,
             )
         }
-        val beforeRevision = session.state.playerInputRevision
+        val before = session.state
         val committed = session.commitConfirmedPrivateInformationPublication(
             draft = draft,
             registration = registration,
@@ -1039,7 +1096,8 @@ internal fun CampBoardGameHostApp() {
             legalRoles = if (registration == null) emptyList()
                 else clocktowerRoleDefinitionsForScript(currentClocktowerScript),
         )
-        if (session.state.playerInputRevision == beforeRevision) return
+        if (session.state.playerInputRevision == before.playerInputRevision) return
+        reviewConfirmedCurrentStepAdvice(before, draft)
         publishClocktowerSessionView()
         invalidateA4RevisionScope()
         a4ObservationDurabilityGate.markPending(committed.recordId)
@@ -1536,6 +1594,7 @@ internal fun CampBoardGameHostApp() {
         invalidateA4SessionBoundary()
         clearSavedGameState()
         pendingTroubleBrewingDrunkSelection = null
+        pendingCurrentStepAdvice = null
         committedTroubleBrewingSetupRotationRecord = null
         currentGameKind = nextGameKind
         canonicalConversationResponseId = null
@@ -1703,8 +1762,7 @@ internal fun CampBoardGameHostApp() {
         )
         if (liveAiAdviceKey == key && (liveAiAdviceBusy || liveAiAdviceText != null)) return
         liveAiAdviceKey = key
-        residualCurrentRecommendation = null
-        residualCurrentRecommendationKey = null
+        pendingCurrentStepAdvice = null
         liveAiAdviceText = null
         liveAiAdviceError = null
         // An older in-flight response belongs to a different key and cannot own this state.
@@ -1898,8 +1956,7 @@ internal fun CampBoardGameHostApp() {
                                 remainingScope.requests.take(1), verified.choices, steps, cards)
                         ) {
                             // Never turn an unpresentable recommendation into game truth.
-                            residualCurrentRecommendation = null
-                            residualCurrentRecommendationKey = null
+                            pendingCurrentStepAdvice = null
                             liveAiAdviceError = "Current Host decision cannot be presented automatically; choose manually."
                             DebugFlightRecorder.record("RESIDUAL_AUTO_UNPRESENTABLE")
                             BotcAiWireTrace.residualGate("AUTO_PAUSED", verified.choices.size,
@@ -1908,8 +1965,14 @@ internal fun CampBoardGameHostApp() {
                         }
                         // One current-step preselection; the Host re-matches it against
                         // the live legal display domain before player publication.
-                        residualCurrentRecommendation = verified
-                        residualCurrentRecommendationKey = key
+                        pendingCurrentStepAdvice = PendingCurrentStepAdvice(
+                            recommendation = verified,
+                            requestKey = key,
+                            request = remainingScope.requests.first(),
+                            proposal = proposal,
+                            receiptId = receipt.responseId,
+                            model = requestedModel,
+                        )
                         BotcAiWireTrace.residualGate("PROPOSAL_ONLY", verified.choices.size,
                             wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                         liveAiAdviceText = buildString {
@@ -2298,6 +2361,7 @@ internal fun CampBoardGameHostApp() {
         strategicPolicyCursor = null
         strategicLastReviewedHost = null
         openingRecommendedInformation = emptyMap()
+        pendingCurrentStepAdvice = null
         shownOnlyDealCompleted = false
         pendingJointOpening = null
         jointOpeningResult = null
@@ -3053,14 +3117,15 @@ internal fun CampBoardGameHostApp() {
                         globalAiAdviceText = liveAiAdviceText,
                         globalAiAdviceBusy = liveAiAdviceBusy,
                         globalAiAdviceError = liveAiAdviceError,
-                        globalResidualRecommendedChoices = residualCurrentRecommendation?.takeIf { plan ->
+                        globalResidualRecommendedChoices = pendingCurrentStepAdvice?.takeIf { pending ->
                             val latest = clocktowerGameSession?.state
-                            residualCurrentRecommendationKey == liveAiAdviceKey &&
+                            val plan = pending.recommendation
+                            pending.requestKey == liveAiAdviceKey &&
                                 latest?.gameId == plan.gameId &&
                                 latest.gameStateRevision == plan.gameStateRevision &&
                                 latest.playerInputRevision == plan.playerInputRevision &&
                                 latest.nextTimelineGlobalSequence == plan.exclusiveGlobalSequence
-                        }?.choices.orEmpty(),
+                        }?.recommendation?.choices.orEmpty(),
                         onRequestGlobalAiAdvice = ::requestLiveGlobalAdvice,
                         firstNightNaturalPairReadyProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {

@@ -4,6 +4,8 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidat
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
 
 /**
@@ -14,6 +16,73 @@ import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDeci
 internal object ClocktowerResidualDisplayMatcherV2 {
     private fun normalize(value: String): String =
         value.filter(Char::isLetterOrDigit).lowercase()
+
+    /**
+     * An API choice can update strategic memory only after the player actually
+     * receives that exact semantic answer. This checks the same Host-owned
+     * decision context as the live display matcher, not a UI label or model ID.
+     * Registration witnesses and non-information actions cannot pass.
+     */
+    fun matchesConfirmedPublication(
+        request: StorytellerProviderRequestV1,
+        selectedCandidateId: String,
+        publication: EpistemicObservationDraft,
+    ): Boolean {
+        val candidate = request.legalCandidates.singleOrNull {
+            it.candidateId == selectedCandidateId
+        } ?: return false
+        val context = request.decisionContext
+        val seat = when (context) {
+            is StorytellerProviderDecisionContextV1.ScalarInformation -> context.sourceSeat
+            is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> context.sourceSeat
+            else -> return false
+        }
+        val role = when (context) {
+            is StorytellerProviderDecisionContextV1.ScalarInformation -> context.abilityRole.value
+            is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> context.abilityRole.value
+            else -> return false
+        }
+        if (publication.sourceSeat != seat ||
+            publication.sourceAbility?.value != role ||
+            publication.visibility != ObservationVisibility.PRIVATE ||
+            publication.recipientSeats != setOf(seat)
+        ) return false
+        return when (val payload = candidate.payload) {
+            is StorytellerProviderCandidatePayloadV1.ScalarResult -> {
+                if (context !is StorytellerProviderDecisionContextV1.ScalarInformation) false
+                else when (val actual = publication.proposition) {
+                    is InformationProposition.NumericResult ->
+                        context.metric == actual.metric.name &&
+                            context.subjectSeats == actual.subjectSeats &&
+                            actual.sourceSeat == seat &&
+                            actual.value.toString() == payload.value
+                    is InformationProposition.BooleanResult ->
+                        context.metric == actual.metric.name &&
+                            context.subjectSeats == actual.subjectSeats &&
+                            actual.sourceSeat == seat &&
+                            actual.value.toString() == payload.value
+                    is InformationProposition.RoleAt ->
+                        context.metric == "REVEALED_CHARACTER" &&
+                            context.subjectSeats == listOf(actual.seat) &&
+                            normalize(actual.role.value) == normalize(payload.value)
+                    else -> false
+                }
+            }
+            is StorytellerProviderCandidatePayloadV1.PairInformation -> {
+                if (context !is StorytellerProviderDecisionContextV1.FirstNightPairInformation ||
+                    payload.shownRoleId == null) false
+                else {
+                    val actual = publication.proposition as? InformationProposition.AnyOf
+                    val parts = actual?.alternatives?.filterIsInstance<InformationProposition.RoleAt>()
+                        .orEmpty()
+                    actual?.alternatives?.size == 2 && parts.size == 2 &&
+                        parts.map { it.seat }.sorted() == payload.candidateSeats.sorted() &&
+                        parts.all { normalize(it.role.value) == normalize(payload.shownRoleId) }
+                }
+            }
+            else -> false
+        }
+    }
 
     /**
      * Whole-package automatic safety gate. A legal model choice must also have

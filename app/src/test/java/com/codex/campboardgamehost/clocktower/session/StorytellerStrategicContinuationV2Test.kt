@@ -251,6 +251,40 @@ class StorytellerStrategicContinuationV2Test {
         assertFalse(request.has("priorOpening"))
     }
 
+    @Test fun provisionalMemoryCanAdvanceOnlyAfterRealPublicationAndKeepsThatFactInNextDelta() {
+        val game = session()
+        val initial = StorytellerStrategicContinuationV2.MemoryCursor.initial(prior())
+        val before = game.state
+        val request = JSONObject(StorytellerStrategicContinuationV2.encode(
+            before, prior(), open, initial))
+        val proposed = StorytellerStrategicContinuationV2.decode(
+            request.toString(), response(request).toString(), open)
+        assertTrue(runCatching {
+            initial.afterConfirmedPublication(proposed, before, before)
+        }.isFailure)
+        game.commitGlobalEpistemicObservation(EpistemicObservationDraft(
+            recordId = "confirmed-empath", phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1, sequence = 1, sourceSeat = 2, sourceAbility = RoleId("Empath"),
+            visibility = ObservationVisibility.PRIVATE, recipientSeats = setOf(2),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.NumericResult(
+                NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), value = 1),
+        ))
+        val promoted = initial.afterConfirmedPublication(proposed, before, game.state)
+        assertEquals(1, promoted.version)
+        assertEquals(before.nextTimelineGlobalSequence, promoted.exclusiveGlobalSequence)
+        assertEquals(before.playerInputRevision, promoted.playerInputRevision)
+        val after = JSONObject(StorytellerStrategicContinuationV2.encode(
+            game.state, prior(), open, promoted))
+        val delta = after.getJSONArray("gameLogDelta")
+        assertEquals(1, delta.length())
+        assertEquals("information", delta.getJSONObject(0).getString("type"))
+        assertEquals(1, delta.getJSONObject(0).getInt("value"))
+        assertTrue(runCatching {
+            promoted.afterConfirmedPublication(proposed, before, game.state)
+        }.isFailure)
+    }
+
     @Test fun latestAcceptedMemoryContinuesAcrossMultipleActualRevisions() {
         val game = session()
         game.advanceGameStateRevision()

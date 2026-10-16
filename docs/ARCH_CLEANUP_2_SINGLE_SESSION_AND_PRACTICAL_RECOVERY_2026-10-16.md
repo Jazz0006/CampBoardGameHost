@@ -194,6 +194,14 @@
 - `validateProposal` 承担未执行建议的合法性/响应检查；不再通过会要求推进 chronology 的 `accept` 来校验草稿。旧 `accept` 保持为真正可推进 cursor 的严格 API，新增稳定合同测试证明 zero-change 的矛盾建议可重新裁量、但不能仅因模型答复推进策略记忆。
 - **仍未完成 A2 的最后契约**：需在实际步骤正式确认后检查新事实是否与推荐语义一致、再提升模型记忆/response anchor；其他人工覆盖对依赖缓存的失效与自动模式的完整当前步骤推进仍待确认。本批没有付费模型调用或真机验收。
 
+### A2 第四批：实际公布结果确认后才更新 AI 战略（2026-10-17；待 CI）
+
+- 第二/三批代码已通过真实 GitHub Android/ASP/Clingo CI #4238/#4239 与对应 R2 #3843/#3844。第四批审计发现旧 `residualCurrentRecommendation` 仅留候选 ID，实际 Session 公布后无法证明推荐被采用，也不能安全推进 `strategicPolicyCursor`。
+- 删除旧的 recommendation+key 双轨状态，改为一个 **临时当前步骤推荐对象**，只用于读取当次 Host 合法候选、应公布的语义、验证过的建议战略、会话 receipt。不变更正式 Session/ActionFact/EpistemicObservationLog，不发起额外模型请求。
+- 统一在两种正式 PRIVATE 信息公布写入路径之后，从最新已确认 Session 观测核对观察事实与当前推荐：实际玩家、能力、类型、目标、数值/真假/角色配对、可见范围均必须一致，且请求对应的 Host revision、global sequence 和当前 UI 请求 key 未过期；否则不接受 AI 的新战略，也不接受新 response anchor。玩家人工选择的不同结果仍通过已有 Session 写入历史，下一次请求读取实际事实。
+- 若一致，才使用正式 Session 已发布的新记录提升策略版本与 response anchor。续规划截断仍保持在该次公布**之前**，下一次模型会读到该次实际公布的信息，绝不因接受策略而漏掉它。新增针对性测试检查零事件不得更新战略、接纳后仍包含真实已公布信息、精确语义匹配和人工覆盖拒绝。
+- **仍属于 A2 PARTIAL**：接下来应处理所有实质 Host 变化对初始条件推荐缓存的影响，以及自动模式当前步骤合法推进；测试通过前不得声称设备验收或整体 A2 完成。
+
 ### A3 — 移除 Clocktower PlayerCard 第二写入源
 
 - Session 对游戏中的真实角色/展示身份/存活/投毒/阶段/确认选择和必要能力状态提供只读 view；PlayerCard 只保留 UI 名称/视觉元素等非权威展示属性。

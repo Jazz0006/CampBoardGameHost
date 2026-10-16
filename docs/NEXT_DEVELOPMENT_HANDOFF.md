@@ -21,6 +21,13 @@
 - Fix current-step continuation after manual initial Drunk override: compare unaccepted opening suggestion with actual Session truth; permit a requested correction without inventing a PhaseAdvance/Drunk fact or revision, while keeping Host-open and unique-answer gates. Add preliminary response validation distinct from `accept` cursor advancement. Deterministic regression protects this conflict-versus-no-progress boundary.
 - **Still A2, not A3:** anchor updated strategic memory only after actual confirmed answer (including human override) and ensure no cursor skips a yet-unseen actual event; audit generic dependency-invalidated opening recommendations and current-step auto progression; check CI/R2, then appropriate real-device A6 evidence. No paid API calls or PR merge.
 
+## A2 fourth batch — confirmed player-observation strategy promotion (2026-10-17; CI pending)
+
+- Starting clean/equal local/origin HEAD `47a4581eed08ec1c3d6fcf02cad873965b3b8037`, PR #315 Draft conflicted. [CI #4239](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38900072371) and [R2 #3844](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38900072333) both successful for that exact source.
+- Replace the split `residualCurrentRecommendation` + key with one **ephemeral** `PendingCurrentStepAdvice` containing its Host-verified choice, current request ID/domain, proposed strategy, provider receipt/model and request key. It is NOT a second game fact or permanent event stream. Clear on new key/game.
+- Both GLOBAL_V1 private observation writers now inspect **actually newly confirmed** Session records and check complete typed public semantics against the prior Host-current candidate (seat, role, metric, subjects, scalar/pair, privacy). Only an exactly matching published result can promote strategy version and retained API response anchor; human overrides remain actual Session facts, never automatically install speculative AI memory. The continuation cursor stays at the pre-publication history cutoff so the next model call receives the actual published result delta. No model calls added.
+- Focused tests protect exact/mismatched published semantics, prohibition on promotion without a new observation, and next-request gameLogDelta. **A2 still PARTIAL** until generic stale opening-plan dependency evaluation, robust current-step AI_AUTOMATIC execution, cleanup of any redundant old state, and Android device/ADB representative flows are verified. Do not start A3/A4/A5/A6 by accident.
+
 ## Starting repository state (recheck live)
 
 - Repository Jazz0006/CampBoardGameHost; developer machine via Mini MCP alias **clocktower**.
