@@ -1,5 +1,7 @@
 # ARCH-CLEANUP-1 — 架构收敛与冗余清理（2026-10-15）
 
+> **2026-10-16 SUPERSEDED ACCEPTANCE NOTE:** 此文件记录截至 HEAD ec6596a56 的真实清理成果及此前审计，不再作为 A 后续产品验收的最高权威。新批准 [ARCH-CLEANUP-2 — 单一 Session + 完整实际信息记录 + 实用恢复](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md) 取代旧任意历史时间点完整重建、整包一键采纳、精确 UI 恢复要求。依旧 A=PARTIAL，不允许仅改文档就宣称完成；旧审计时间截面的事实保留为历史，后续实施须按 A1–A6 每批替换并删除旧链路。
+
 > 状态：**进行中；清理优先，AI-EVENT-JIT 暂停**。本文件记录已经由调用链审计证明的事实与本次实际改动，不等于整局历史完整性已经通过验收。
 >
 > 开发分支：`cleanup/arch-cleanup-1-20261015`；**[唯一开放的整合候选 Draft #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) 已直接改以 live `main` 为 base，GitHub mergeable/clean**，但尚未合并或完成真机端验收。原 P1 #304→#306→#307→#308 的全部 HEAD 均是 #315 的 Git 祖先，四个 PR 已关闭未合并，远端分支保留以供追溯；#310–#314 已先前逐一关闭未合并。#309 evidence-first 的关键规范在清理分支同步，后续所有源码与文档以 #315 为单一审阅入口。1E 是不直接合并的独立实验分支。
@@ -20,7 +22,7 @@
 - **已接入**：首夜 Host 确认的 Red Herring 座位和 Demon bluffs 身份存储于 `ClocktowerSessionState`，Compose 只读投影；AI 联合开局采纳、人工改选和 Recovery 同源。实际确认时将状态变更与新的 `ActionFact.RedHerringChoice` / `ActionFact.DemonBluffChoice` 在 Session 一次性提交，加入已有全局时间线（含重复/错误输入保护）；结构化 JSON、历史只读投影、角色私密可见性、Recovery 验证以及增量 AI 状态随之更新。不新建 Game Object。
 - **已接入**：正式身份变化的 `PlayerCard` 更新前验证 Session 真实角色；四个死亡/处决 UI 更新入口由统一 `reflectCommittedClocktowerDeath` 防护，禁止卡片独立写入未经 Session 确认的死亡。不要误把仅属 Undercover 的 `Screen.Game` 淘汰视为 Clocktower 独立写入。
 - **一次性能力状态去重复**：`clocktowerVirginUsed` 由 Session 动作时间线中 `ActionFact.Nomination.firstVirginNomination` 唯一推导；`clocktowerSlayerUsed` 和 `clocktowerSlayerClaimedNames` 由 `ActionFact.SlayerShot` 的已确认消耗和公开行动推导。移除根 Compose 对应可写变量和单独 Recovery 还原赋值；主持规则仍先记录动作，再根据 Session 已确认的事实渲染。
-- **严格 A=PARTIAL，仍不能 CLOSE**：尚未完成每一个 `PlayerCard` 机械读写投影迁移、所有角色与能力状态（Virgin/Slayer/夜间动作等）都由同一 Session 原子事务处理、所有已展示的不可靠信息的类型化持久记录、开局 Drunk 决策来源及任意历史时间点的权威重建。现有 Recovery/Archive 仍保存专门的投影格式，不能反向作为第二个权威。
+- **严格 A=PARTIAL，仍不能 CLOSE**：尚未完成每一个 `PlayerCard` 机械读写投影迁移、所有角色与能力状态（Virgin/Slayer/夜间动作等）都由同一 Session 原子事务处理、所有已展示的不可靠信息的类型化持久记录、开局 Drunk 决策来源。**原任意历史时间点权威重建属于已取消的旧验收要求，不再阻塞 A；按 ARCH-CLEANUP-2 只需当前权威事实+有序真实历史与安全继续恢复。**现有 Recovery/Archive 仍保存专门的投影格式，不能反向作为第二个权威。
 - 本批需要最新代码 HEAD 的独立 Android FAST/FULL、R2 结果及按类别可用的规则测试证明；没有 Android Studio/ADB 真机证据时不得称真机已验收。严格不合并 #315，不进行付费模型 API 实验。
 
 ## 1. 目标和保留边界
@@ -30,7 +32,7 @@
 - 权威当前 GameState 仍由 `ClocktowerGameSession` / `ClocktowerSessionState` 持有；`GameSnapshot`、TBGS V1 与历史前缀是只读投影，不新增第二套可写游戏对象。
 - `ActionFactTimeline` + `EpistemicObservationLog` 在 `GLOBAL_V1` 下表示真实结构化机械动作及玩家收到的信息。保留全部提名和逐人投票；时间次序不得伪造。
 - `StorytellerCausalDecisionJournalV1` 有真实生产写入与 Recovery 消费，保留；其中 `StorytellerProviderPriorDecisionV1` 与 `DecisionOutcomeSnapshot` 是实际使用的因果决策数据。
-- `SdeHistoricalReplayInput`、`DynamicActionReducer`、`TroubleBrewingGameSnapshotProjector`、Recovery、Game Archive、规则合法域/Host 裁决/合法性检查继续保留。**不开发新通用时间点重放**。
+- **此项为历史保留决策，已被新范围细化**：`SdeHistoricalReplayInput`、`DynamicActionReducer` 必须在 A5 按真实规则/AI/恢复使用者重新审计，凡仅为退役的任意时点重放/严格 UI 恢复服务者，在迁移完成后连同孤儿测试删除；保留实际合法性、因果事实提取及必要只读投影。Recovery/Archive/`TroubleBrewingGameSnapshotProjector` 的必要功能保留但不是第二权威；**不开发新通用时间点重放**。
 - 不保留旧 APK/旧存档/过时策略的行为兼容；但任何正在消费的手动规则路径必须保持可用。EvidenceLab/TBGS 既有共享协议不随意更改。
 
 ## 2. 已实施的源码清理批次

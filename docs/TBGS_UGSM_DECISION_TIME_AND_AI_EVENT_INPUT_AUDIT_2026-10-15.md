@@ -1,5 +1,7 @@
 # TBGS / UGSM decision-time state and AI event-input completeness audit — 2026-10-15
 
+> **HISTORICAL AUDIT ONLY, NOT LIVE IMPLEMENTATION INSTRUCTIONS (2026-10-16):** The current [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md) supersedes historical requirements for arbitrary-time complete GameState reconstruction. Current contract: one Session authoritative state plus sufficient ordered typed factual/received-information history for AI and safe crash continuation (correct grimoire, preserved revelations, resume from a safe step). Red Herring/bluffs and journal ownership were partially consolidated after this audit; check live HEAD, not the older source fields below. Do not rewrite this dated evidence as if it described today's code.
+
 > Scope: **read-only, code-verified cross-project audit; no production rewiring, no paid API calls, no schema migration**.
 >
 > Host: `Jazz0006/CampBoardGameHost` current P2 stack through [Draft #313](https://github.com/Jazz0006/CampBoardGameHost/pull/313). Independent remote 1E prototype branch `feature/ai-event-jit-1e-real-history-audit-20261015` exists, but has not been reviewed/merged or accepted as a production contract.

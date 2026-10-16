@@ -1,6 +1,6 @@
 # CampBoardGameHost Testing Strategy
 
-> **Current policy (2026-10-15): Evidence-first, not mandatory test-first.** RED/GREEN is an optional technique chosen when it adds value; existing safeguards, CI tiers, exact-head merge acceptance, rules, security and persistence contracts are unchanged. See root `AGENTS.md`.
+> **Current policy (2026-10-16): Evidence-first + replace-and-retire + practical recovery.** RED/GREEN is optional. ARCH-CLEANUP-2 acceptance requires correct one-Session game facts, globally ordered actual player-publication history, removal of superseded old implementations, and safe post-crash continuation; **not** arbitrary-time GameState replay, exact pre-crash UI or general Undo. See root AGENTS.md and [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). Existing Host legal/safety, CI, exact-head and real-device acceptance safeguards remain unchanged.
 
 > Role: **LONG-LIVED TEST EXECUTION / VALIDATION STRATEGY**
 > Baseline: S1.1/S1.2 measured at `d52f53b4a1821cc000368c393721d1d5a073aafc`
@@ -14,6 +14,8 @@ The purpose of this strategy is to maximize confidence per unit of engineering a
 Frequent developer feedback and complete regression validation are separate concerns. Tests must not be deleted merely because they are expensive, broad, or old. Expensive tests remain mandatory coverage when they protect a real contract; their execution frequency is governed by the affected semantic area and acceptance checkpoint cadence.
 
 The suite is also not append-only. A low-value test may be deliberately retired when it protects only obsolete implementation shape, duplicates stronger evidence, or has been superseded by a more stable typed/integration contract. Test retirement must be reviewed as a coverage decision, not treated as ordinary cleanup.
+
+**ARCH-CLEANUP-2 proof focus:** for each A1–A6 slice, audit all replacement/retirement call sites and deleted duplicate state, protect meaningful atomic commit + idempotency + actual published misinformation + safe recovery contracts, then use normal CI/R2 and representative Android Studio/ADB MANUAL/AI_ASSISTED/AI_AUTOMATIC gameplay. Do not manufacture tests to protect deliberately retired whole-plan adoption, perfect UI restoration, unused replay adapters or discarded formats. A documentation-only CI success is not proof of changed gameplay.
 
 ### 1.1 Evidence-driven test design
 
