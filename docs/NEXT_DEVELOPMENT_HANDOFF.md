@@ -1,6 +1,6 @@
 # CampBoardGameHost — Next Development Handoff
 
-> **Implementation handoff 2026-10-16; A1 first three slices implemented, exact-head verification required.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
+> **Implementation handoff 2026-10-16; A1 first four slices implemented, exact-head verification required.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
 
 ## Starting repository state (recheck live)
 
@@ -41,6 +41,14 @@
 - Migrated both to `commitConfirmedActualRoleChange` using existing Session accepted-step atomic transition and stable Dawn planner action IDs. Reflected UI card role only after Session confirmation. No separate `recordSemanticHistory=false` switch. Reject the obsolete state/history half-repair state instead of silently accepting a second truth.
 - **Delete inventory**: `recordClocktowerRoleChangeAction`, `commitActualRoleBoundary`, unused `commitShownRoleBoundary`, `commitGameStateBoundary` and obsolete generic self-test; prior targeted role test now checks actual role + typed fact + global sequence + no-op duplicate/stale rejection. The shown-role helper had no production consumer.
 - **Continue A1, not A2**: prioritize poison carry / dusk expiry and Dawn materialization fact+mechanics paths, then phase/attack and vote/no-execution sequencing. `addClocktowerEvent` still increments revision for narrative events after some authoritative role/death commits; audit and retire redundant increments once remaining event consumers are migrated (do not confuse one Session transaction with exactly one revision for an entire UI callback). Check remaining `NightDawnDurableMaterializationPlanner` state/fact split retry branches and their tests, delete when truly superseded. A3 PlayerCard mechanical authority removal, A4 information completeness, A5 Recovery reduction remain separate later slices. Obtain exact HEAD independent Android CI/R2; PR #315 stays Draft, no main merge or paid calls.
+
+## A1 fourth implementation checkpoint (2026-10-16; PARTIAL)
+
+- Starting clean and equal origin: `094c3337a0553b4af3c19820f32beef14c453781`. Production Dusk expiry and two Dawn poison carry sites still wrote a `Poison` timeline fact first, then synchronized Session poison mechanics without incrementing a revision.
+- These three paths now join the existing night confirmation under `commitConfirmedPoisonTransition`, which delegates to the single Session `commitConfirmedGameAction`. Outgoing DAY can only expire the effect (null target); NIGHT/FIRST_NIGHT support confirmed target and carry. Real Dusk expiry after an earlier death still adds its chronological fact even if the mechanical poison flags are already clear. A committed stable action ID is idempotent. Half-state/half-history repair is rejected rather than persisted as two independent operations.
+- Removed `synchronizePoisonTargetWithinCurrentRevision` (all production and test callers) and therefore `synchronizeGameStateWithinCurrentRevision` (no remaining consumer). Updated poison contract tests to verify Dusk expiry, Dawn carry, stale rejection, global sequence and idempotence. Existing pure NightDawn/Dusk stable-ID planners still supply real inputs; retire their old dual-repair modeling only when all other consumers/Recovery reach A5.
+- **Continue A1, not A2:** prioritize phase advancing (the fact-only `recordClocktowerPhaseAdvance` and event-driven revision) and formal action producers for attack/vote/no-execution, then on-publication atomic records. In particular `addClocktowerEvent` has independent revision increments even following new Session-owned commits. Do not broaden to A3 PlayerCard or A5 recovery until A1 source ownership and independent CI/R2 are accepted.
+- Pending: exact HEAD CI/R2 and Android Studio/ADB sample game; PR #315 remains Draft and dirty against main. No paid calls, no main merge.
 
 ## Historical first implementation brief: A1
 

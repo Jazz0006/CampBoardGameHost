@@ -64,6 +64,15 @@
 - **已删除** `recordClocktowerRoleChangeAction`、`commitActualRoleBoundary`、`recordSemanticHistory=false` 双轨参数；同时经全量调用搜索证实 `commitShownRoleBoundary` 只有自身测试、`commitGameStateBoundary` 只有前者与自测消费，已直接删除两者和 `ClocktowerGameSessionGameStateBoundaryTest`（纯旧 API 形状测试）。真正角色变更幂等、原子性、状态保持及拒绝测试已替换旧角色测试；不删除合法性检查或 TBGS/EvidenceLab 读接口。
 - **A1 仍 PARTIAL**：破晓毒药 carry、phase advance、攻击、投票/无处决、实际信息公布仍有分散事实/状态/版本链。现场编译/CI/R2、玩家操作、恢复还待精确提交验收；A2–A6 未提前执行。
 
+### A1 第四批：黄昏清毒与破晓投毒延续（2026-10-16；待新 HEAD 验证）
+
+- 起点已核对：`094c3337a0553b4af3c19820f32beef14c453781`，开发机 clean 且与 origin 一致；Draft PR #315 仍 dirty，无精确 HEAD CI/R2 证明。
+- 原三条真实生产链：`materializeClocktowerPoisonExpiryAtDusk`、恶魔继承后的 `NightDawnDurableMaterializationPlanner.poison`、普通 `DawnCommitIntent.poisonCarry`，都可能先 `recordClocktowerAction(Poison)`、再 `synchronizePoisonTargetWithinCurrentRevision`。现在同样与首夜确认共用 `commitConfirmedPoisonTransition` → Session `commitConfirmedGameAction`，在一个受 expected revision 保护的 Session 转移中存储投毒机械状态、行动事实、统一序号和 revision。
+- 黄昏仅允许 `StorytellerPhase.DAY + targetSeat=null` 清除，夜间仍允许确认/延续；当受毒者已经死亡，机械旗标已清，仍可记录真正发生的黄昏失效行动（不可误删历史），且幂等重试不重复写入。已接受的完整稳定 ID 不重复执行；旧时态/历史只一侧已提交的情况显式拒绝，而非另开一个补丁式同步写入口。
+- **删除/替代** `commitConfirmedPoisonTarget` 旧独立名称、`synchronizePoisonTargetWithinCurrentRevision`、无其余消费者的 `synchronizeGameStateWithinCurrentRevision` 与仅检查同步辅助函数的测试。新高价值测试覆盖夜间选择、破晓延续、黄昏在死亡后机械空变化仍写入真实失效事实、全局顺序、幂等与冲突拒绝。
+- 保留现有 Dusk/Dawn 纯物化规划的稳定事件身份与当前消费，但 `stateMutationRequired` 与 `actionIdToCommit` 不能再被当作允许独立写状态或补写历史的许可证。其过去的 state-first/history-first 测试数据可用于定位旧半持久化风险，未来 A5 在移除旧式 Recovery repair 逻辑时再压缩。
+- **A1 仍 PARTIAL**：PhaseAdvance、叙事 UI 事件产生的额外 revision、其他行动、信息公布及投票/无处决等生产接口仍需迁移；A3 的 PlayerCard 第二事实来源与 A5 恢复简化尚未开始。禁止将此前旧 green 冒充本批运行证据。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。

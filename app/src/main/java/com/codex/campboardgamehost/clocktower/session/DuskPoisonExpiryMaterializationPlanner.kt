@@ -3,8 +3,9 @@ package com.codex.campboardgamehost.clocktower.session
 /**
  * Durable projection relevant to one end-of-day poison expiry retry.
  *
- * The caller supplies the semantic previous poison target separately from the current mechanical
- * state because either side may already have been persisted when a retry begins.
+ * The caller supplies the semantic previous poison target separately from the current
+ * projection so a stable event ID can be derived. Divergent state/fact signals are diagnostic:
+ * accepted steps now commit action and mechanics in one Session transaction, never by repair.
  */
 internal data class DuskPoisonExpiryMaterializationState(
     val currentPoisonTargetSeat: Int?,
@@ -31,8 +32,8 @@ internal data class DuskPoisonExpiryMaterializationPlan(
  *
  * The stable action identity depends only on game, outgoing round, and semantic poison transition.
  * It deliberately excludes mutable event/revision counters and timeline cursors. The caller must
- * materialize this plan before making the following Night phase durable so a partial retry still
- * has the outgoing Day transition as its owner.
+ * materialize this plan before making the following Night phase durable so the outgoing
+ * Day retains ownership. Half-applied retries must be rejected, not silently repaired.
  */
 internal object DuskPoisonExpiryMaterializationPlanner {
     fun plan(

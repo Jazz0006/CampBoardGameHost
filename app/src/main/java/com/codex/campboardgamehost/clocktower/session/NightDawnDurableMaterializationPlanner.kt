@@ -6,9 +6,9 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 /**
  * Current durable projection relevant to one Dawn commit retry.
  *
- * Mechanical state and durable history are intentionally tracked independently: a retry may find
- * that a state mutation already happened while its stable action/observation record is still
- * missing, or vice versa.
+ * Existing state and stable history IDs are both inspected to identify no-op retries and
+ * invariant violations. New confirmed steps must commit their mechanical and typed facts in one
+ * Session transaction; divergent old partial writes must not be independently repaired.
  */
 internal data class DawnDurableMaterializationState(
     val aliveSeats: Set<Int>,
@@ -66,9 +66,9 @@ internal data class DawnDurableMaterializationPlan(
 /**
  * Pure exactly-once planner for materializing an already-resolved [DawnCommitIntent].
  *
- * IDs depend only on durable game/round/effect identity. They deliberately do not include mutable
- * game-state revisions, event counters, callback counts, or timeline cursor values, so replaying
- * the same Dawn intent can repair partial persistence without creating duplicate history.
+ * IDs depend only on durable game/round/effect identity, never on mutable revisions,
+ * counters or callbacks. They make a completed Session transition idempotent; any detected
+ * half-persisted state/history divergence is a rejected invariant, not permission to dual-write.
  */
 internal object NightDawnDurableMaterializationPlanner {
     fun plan(

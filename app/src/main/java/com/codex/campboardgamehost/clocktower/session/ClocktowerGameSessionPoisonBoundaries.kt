@@ -20,15 +20,19 @@ private fun ClocktowerGameSession.gameStateWithPoisonTarget(targetSeat: Int?): G
 }
 
 /**
- * Confirmed poison choice: Host's accepted target, mechanical poison flags, revision and
- * globally sequenced ActionFact.Poison are committed together. No UI/fact-first write.
+ * One confirmed Host poison transition: explicit night choice, Dawn carry/expiry or outgoing
+ * Day expiry. Mechanical flags, revision and globally sequenced fact commit together.
+ * A semantic expiry can be a fact even if the poisoned seat was already killed.
  */
-internal fun ClocktowerGameSession.commitConfirmedPoisonTarget(
+internal fun ClocktowerGameSession.commitConfirmedPoisonTransition(
     draft: ActionFactDraft.Poison,
     expectedGameStateRevision: Long,
 ): TimelineBoundActionFact {
-    require(draft.phase == StorytellerPhase.FIRST_NIGHT || draft.phase == StorytellerPhase.NIGHT) {
-        "Poison target confirmation is a night action."
+    require(draft.phase in setOf(StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT, StorytellerPhase.DAY)) {
+        "Poison transition must be confirmed at night or at outgoing Day expiry."
+    }
+    require(draft.phase != StorytellerPhase.DAY || draft.targetSeat == null) {
+        "Outgoing Day poison expiry can only clear a poison effect."
     }
     return commitConfirmedGameAction(
         draft = draft,
@@ -36,10 +40,3 @@ internal fun ClocktowerGameSession.commitConfirmedPoisonTarget(
         expectedGameStateRevision = expectedGameStateRevision,
     )
 }
-
-/** Synchronizes poison projection inside a boundary whose game-state revision already exists. */
-internal fun ClocktowerGameSession.synchronizePoisonTargetWithinCurrentRevision(
-    targetSeat: Int?,
-): ClocktowerSessionState = synchronizeGameStateWithinCurrentRevision(
-    gameStateWithPoisonTarget(targetSeat),
-)

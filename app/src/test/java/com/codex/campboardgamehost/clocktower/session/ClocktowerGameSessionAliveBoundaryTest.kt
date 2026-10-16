@@ -19,8 +19,15 @@ class ClocktowerGameSessionAliveBoundaryTest {
     @Test
     fun `confirmed death preserves other seats and atomically appends public observation`() {
         val targetSeat = 2
-        val session = newSession("a1-death")
-        session.synchronizePoisonTargetWithinCurrentRevision(targetSeat)
+        val seeded = initialState.copy(players = initialState.players.map { player ->
+            if (player.seat == targetSeat) player.copy(poisoned = true) else player
+        })
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "a1-death",
+            gameSeed = seeded.seed,
+            initialState = seeded,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
         val before = session.state.gameState
         val draft = ActionFactDraft.Death("night-death", StorytellerPhase.DAWN, 2, 1, targetSeat)
 
