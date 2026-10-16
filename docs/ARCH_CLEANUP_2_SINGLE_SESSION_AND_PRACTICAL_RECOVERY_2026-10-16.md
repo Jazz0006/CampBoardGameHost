@@ -177,6 +177,15 @@
 - `AI_ASSISTED` 使用 Host 匹配的当前候选预选，不再点击整包采纳。自动模式保持 Host 当前可展示决策校验；未匹配 live key 的旧建议不能执行。临时响应不再在私有“adopt”时推进 `strategicPolicyCursor` / `canonicalConversationResponseId`，防止未执行结果获得已确认的会话权威。由当前真实信息公布既有 Session 边界确认事实。
 - **A2 仍 PARTIAL**：首夜 `ClocktowerJointOpeningReviewScreen`、`adoptJointOpeningAfterReveal`、`jointOpeningApplied`、`adoptedJointOpening`、提前确认 Drunk/掩饰/红鲱鱼仍须迁移；已确认后模型战略锚点的正确更新和三模式逐步自动执行仍须验证。本批可执行提交 `8aa44b2f9c4c2bce9c48d3c906380e301a086fd0` 的 [CI #4236](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38895896066) Android tests/Debug APK、ASP、Real Clingo、CI Gate 均 SUCCESS；同 SHA [R2 #3842](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38895895928) SUCCESS。之后继续首夜拆包接线并做高价值功能回归。不可把本批当真机或完整 A2 验收。
 
+### A2 第二批：首夜联合方案拆成当前步骤确认（2026-10-16；待独立 CI）
+
+- 起点经 Mini MCP/GitHub 验证的开发分支与 origin 均为 clean `904f9fd8f01b8d21b1ed8016d339ea4a05dedc23`；PR #315 Draft/冲突，仍不合并。
+- 删除 `adoptJointOpeningAfterReveal`、`jointOpeningApplied`、`adoptedJointOpening`、`adoptedJointInformation`、首夜整包按钮及废弃 `BotcAiWireTrace.hostAdoption`；首夜 AI 联合请求与 Host 验证仍只执行一次。新私密复核页仅允许**进入酒鬼步骤**；辅助模式使用已有合法酒鬼候选 UI 并预选 AI 推荐；自动模式在身份展示完成且合法后直接确认当前酒鬼。无酒鬼或规则唯一酒鬼也经同一确认边界初始化 Session。
+- 真实 Drunk 由 `commitAndStartTroubleBrewingGame` 创建正式 Session；原始整局计划只保留为游戏内未执行推荐和战略背景，不再批量写入恶魔掩饰/红鲱鱼。若人工覆盖 Drunk，第一夜原定信息、掩饰身份、红鲱鱼预选全部清空，且不使用旧 provider response anchor；后续全局战略对该人工覆盖进行即时重规划仍需修复/验证（不能默默使用旧首夜计划）。
+- 恶魔掩饰 UI 的前三次角色点击只修改草稿；`onStartNight` 在已满足 Host 合法数量/角色域时才正式提交 Session。自动模式在初始合法推荐已就绪且预计算可继续时才执行本**当前**首夜准备步骤，不提前显示任何后续角色信息。
+- 红鲱鱼 UI 选择只暂存草稿；第一夜真实 RedHerring 夜间步骤点击下一步（或自动模式当前步骤的安全自动推进）才调用既有 Session `commitRedHerringSeat` 规则验证与正式提交。不能在生成首夜联合方案时写入。其他角色实际收到的信息仍走现有 A1 正式公布入口。
+- **A2 仍 PARTIAL**：验证人工酒鬼覆盖后的及时重规划、自动模式各角色当前步骤的执行/展示隔离、过时建议失效与续回合战略记忆确认提升；需本批精确源码 Android CI/R2 及后续真机/ADB，再决定 A2 退出。不要冒称已完成 A2/A6。
+
 ### A3 — 移除 Clocktower PlayerCard 第二写入源
 
 - Session 对游戏中的真实角色/展示身份/存活/投毒/阶段/确认选择和必要能力状态提供只读 view；PlayerCard 只保留 UI 名称/视觉元素等非权威展示属性。

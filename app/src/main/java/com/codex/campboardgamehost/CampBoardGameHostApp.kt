@@ -417,8 +417,10 @@ internal fun CampBoardGameHostApp() {
     var jointOpeningError by remember { mutableStateOf<String?>(null) }
     var jointOpeningSerial by remember { mutableStateOf(0) }
     var jointRevealIndex by remember { mutableStateOf(0) }
-    var jointOpeningApplied by remember { mutableStateOf(false) }
-    var adoptedJointOpening by remember { mutableStateOf<HostOpeningSemanticAcceptanceV2?>(null) }
+    // An advisory opening plan is never a committed package of future facts.
+    var openingPlanRecommendation by remember {
+        mutableStateOf<HostOpeningSemanticAcceptanceV2?>(null)
+    }
     var strategicPolicyCursor by remember {
         mutableStateOf<StorytellerStrategicContinuationV2.MemoryCursor?>(null)
     }
@@ -430,8 +432,10 @@ internal fun CampBoardGameHostApp() {
         mutableStateOf<StorytellerResidualPackageGateV2.Accepted?>(null)
     }
     var residualCurrentRecommendationKey by remember { mutableStateOf<String?>(null) }
-    var adoptedJointInformation by remember { mutableStateOf<Map<Int,
+    var openingRecommendedInformation by remember { mutableStateOf<Map<Int,
         com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2>>(emptyMap()) }
+    var openingRecommendedBluffRoleNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    var openingRecommendedRedHerringSeat by remember { mutableStateOf<Int?>(null) }
     var shownOnlyDealCompleted by remember { mutableStateOf(false) }
     var liveAiAdviceKey by remember { mutableStateOf<String?>(null) }
     var liveAiAdviceText by remember { mutableStateOf<String?>(null) }
@@ -559,6 +563,8 @@ internal fun CampBoardGameHostApp() {
     val recoveryWriteGate = remember { RecoveryWriteGate() }
     val clocktowerEvents = remember { mutableStateListOf<ClocktowerEvent>() }
     var clocktowerEventCounter by remember { mutableStateOf(0) }
+    // UI-only selection; the Red Herring enters Session at its first-night Next step.
+    var redHerringDraftName by remember { mutableStateOf<String?>(null) }
     val clocktowerNightStartedState = remember { mutableStateOf(false) }
     val clocktowerNightStepIndexState = remember { mutableStateOf(0) }
     val clocktowerDayModeState = remember { mutableStateOf(ClocktowerDayMode.Overview) }
@@ -1749,7 +1755,7 @@ internal fun CampBoardGameHostApp() {
         }
         // 3E3: only the one accepted full-game opening may seed dynamic policy.
         // No single-step recommender is permitted to masquerade as a joint plan.
-        val wholeOpening = adoptedJointOpening
+        val wholeOpening = openingPlanRecommendation
         val wholeCursor = strategicPolicyCursor
         val wholeBaseline = strategicLastReviewedHost
         if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC &&
@@ -2096,86 +2102,124 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun adoptJointOpeningAfterReveal() {
-        val pending = pendingJointOpening ?: return
+    /**
+     * The first actual choice after shown-only role handoff is the Drunk.
+     * The opening response is only an advisory joint plan, never a bundle commit.
+     */
+    fun confirmJointOpeningDrunk(
+        pending: PendingTroubleBrewingJointOpening,
+        candidate: TroubleBrewingDrunkCandidate?,
+    ) {
         val accepted = jointOpeningResult ?: return
-        if (screen != Screen.ClocktowerJointReview ||
-            storytellerOperationMode == StorytellerOperationMode.MANUAL ||
-            !accepted.selection.validFor(pending.domain.scope)
-        ) return
-        val selectedDrunk = accepted.selection.drunkSeat
-        val route = TroubleBrewingDrunkSelectionRouter.route(
-            preparedSetup = pending.preparedSetup,
-            recommendedCandidate = null,
-        )
-        val candidate = when (route) {
-            TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded -> {
-                require(selectedDrunk == null)
-                null
-            }
-            is TroubleBrewingDrunkSelectionRoute.RuleDetermined -> {
-                require(selectedDrunk == route.candidate.seat)
-                route.candidate
-            }
+        if (pendingJointOpening !== pending ||
+            !accepted.selection.validFor(pending.domain.scope) ||
+            storytellerOperationMode == StorytellerOperationMode.MANUAL) return
+        val legalRoute = TroubleBrewingDrunkSelectionRouter.route(pending.preparedSetup, null)
+        when (legalRoute) {
+            TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded -> require(candidate == null)
+            is TroubleBrewingDrunkSelectionRoute.RuleDetermined ->
+                require(candidate == legalRoute.candidate)
             is TroubleBrewingDrunkSelectionRoute.ManualSelection ->
-                requireNotNull(route.request.candidates.singleOrNull {
-                    it.seat == selectedDrunk
-                }) { "AI Drunk is not in current Host legal domain." }
+                require(candidate in legalRoute.request.candidates)
         }
-        // The full model proposal is already Host-validated. Commit the
-        // actual Drunk only NOW, after all shown roles were revealed.
+        val selectedSeat = candidate?.seat
+        val recommendationMatchesActualDrunk = selectedSeat == accepted.selection.drunkSeat
         jointOpeningSerial += 1
         jointOpeningBusy = false
         pendingJointOpening = null
-        jointOpeningApplied = true
-        adoptedJointOpening = accepted
-        strategicPolicyCursor = accepted.strategyMemory?.let {
-            StorytellerStrategicContinuationV2.MemoryCursor.initial(accepted)
-        }
-        val projection = pending.domain.forDrunkSeat(selectedDrunk)
-        adoptedJointInformation = accepted.selection.choices.mapNotNull { (id, option) ->
-            projection.candidatesByDecision[id]?.get(option)?.let { meaning ->
-                meaning.sourceSeat to meaning
-            }
-        }.toMap()
+        pendingTroubleBrewingDrunkSelection = null
+        shownOnlyDealCompleted = false
+        // Drunk becomes true only after this explicit current-step confirmation.
         commitAndStartTroubleBrewingGame(
             preparedGameId = pending.preparedGameId,
             preparedSetup = pending.preparedSetup,
             confirmedDrunkCandidate = candidate,
         )
-        // Adopt only the Host-accepted opening as this game's chain head.
-        canonicalConversationResponseId = pendingOpeningResponseId
-        canonicalConversationModel = pendingOpeningModel
+        // The recommendation is advice about this game, not a committed plan.
+        // An overridden Drunk must invalidate all dependent opening display hints.
+        openingPlanRecommendation = accepted
+        openingRecommendedInformation = if (recommendationMatchesActualDrunk) {
+            val projection = pending.domain.forDrunkSeat(selectedSeat)
+            accepted.selection.choices.mapNotNull { (id, option) ->
+                projection.candidatesByDecision[id]?.get(option)?.let { meaning ->
+                    meaning.sourceSeat to meaning
+                }
+            }.toMap()
+        } else emptyMap()
+        openingRecommendedBluffRoleNames = if (recommendationMatchesActualDrunk) {
+            val registry = activeGameClocktowerRulesetCatalog
+                .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+            accepted.selection.demonBluffs.orEmpty().map { externalId ->
+                requireNotNull(registry.findByExternalId(externalId)).id.value
+            }
+        } else emptyList()
+        openingRecommendedRedHerringSeat = if (recommendationMatchesActualDrunk) {
+            val redId = accepted.selection.choices["setup.red-herring"]
+            pending.domain.forDrunkSeat(selectedSeat).redHerringCandidatesBySeat
+                .entries.singleOrNull { it.value == redId }?.key
+        } else null
+        strategicPolicyCursor = accepted.strategyMemory?.let {
+            StorytellerStrategicContinuationV2.MemoryCursor.initial(accepted)
+        }
+        canonicalConversationResponseId =
+            pendingOpeningResponseId.takeIf { recommendationMatchesActualDrunk }
+        canonicalConversationModel =
+            pendingOpeningModel.takeIf { recommendationMatchesActualDrunk }
         pendingOpeningResponseId = null
         pendingOpeningModel = null
+        jointOpeningResult = null
         strategicLastReviewedHost = clocktowerGameSession?.let { committedSession ->
             StorytellerStrategicChangeCheckpointV2.capture(committedSession,
                 StorytellerStrategicChangeCheckpointV2.Position(
                     clocktowerPhase.toStorytellerPhase(), round))
         }
+        screen = Screen.ClocktowerJudge
+    }
+
+    fun beginJointOpeningAtDrunkStep() {
+        val pending = pendingJointOpening ?: return
+        val accepted = jointOpeningResult ?: return
+        if (screen != Screen.ClocktowerJointReview || jointOpeningBusy ||
+            storytellerOperationMode == StorytellerOperationMode.MANUAL ||
+            !accepted.selection.validFor(pending.domain.scope)) return
+        val legal = TroubleBrewingDrunkSelectionRouter.route(pending.preparedSetup, null)
+        val recommended = when (legal) {
+            TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded -> {
+                require(accepted.selection.drunkSeat == null)
+                null
+            }
+            is TroubleBrewingDrunkSelectionRoute.RuleDetermined -> {
+                require(accepted.selection.drunkSeat == legal.candidate.seat)
+                legal.candidate
+            }
+            is TroubleBrewingDrunkSelectionRoute.ManualSelection ->
+                requireNotNull(legal.request.candidates.singleOrNull {
+                    it.seat == accepted.selection.drunkSeat
+                }) { "Joint Drunk recommendation no longer belongs to the Host legal domain." }
+        }
+        if (legal !is TroubleBrewingDrunkSelectionRoute.ManualSelection ||
+            storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC
+        ) {
+            confirmJointOpeningDrunk(pending, recommended)
+            return
+        }
         val registry = activeGameClocktowerRulesetCatalog
             .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
-        accepted.selection.demonBluffs?.let { externalIds ->
-            requireClocktowerGameSession().commitDemonBluffs(
-                roles = externalIds.map { role ->
-                    requireNotNull(registry.findByExternalId(role)).id
-                },
-                phase = storytellerPhaseFor(), round = round, sequence = clocktowerEventCounter + 1,
-            )
-            publishClocktowerSessionView()
-        }
-        val redId = accepted.selection.choices["setup.red-herring"]
-        val redSeat = pending.domain.forDrunkSeat(selectedDrunk)
-            .redHerringCandidatesBySeat.entries.singleOrNull { it.value == redId }?.key
-        redSeat?.let { seat ->
-            requireClocktowerGameSession().commitRedHerringSeat(
-                seat = seat,
-                phase = storytellerPhaseFor(), round = round, sequence = clocktowerEventCounter + 1,
-            )
-            publishClocktowerSessionView()
-        }
-        BotcAiWireTrace.hostAdoption(selectedDrunk, adoptedJointInformation.size)
-        screen = Screen.ClocktowerJudge
+        val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
+            pending.preparedGameId, pending.preparedSetup.intermediateSetup)
+        val decision = DrunkAssignmentDecisionBoundary.create(
+            snapshot, registry, StorytellerDecisionRevision(0, 0))
+        require(legal.request.candidates.map { it.seat to it.shownRoleId } ==
+            decision.legalCandidates.map { it.payload.seat to it.payload.shownRoleId })
+        pendingTroubleBrewingDrunkSelection = PendingTroubleBrewingDrunkSelection(
+            pending.preparedGameId, pending.preparedSetup,
+            legal.request.copy(recommendedCandidate = recommended),
+            decision,
+            StorytellerProviderRequestFactoryV1.fromDrunkAssignment(
+                decision, snapshot, StorytellerProviderGameContextBuilderV1.build(
+                    snapshot, StorytellerProviderRevisionV1(0, 0))),
+        )
+        screen = Screen.ClocktowerDrunkSelection
     }
 
     fun takeOverJointOpeningManually() {
@@ -2235,15 +2279,17 @@ internal fun CampBoardGameHostApp() {
         ) return
         // Invalidate any prior asynchronous callback before preparing the next setup.
         jointOpeningSerial += 1
-        jointOpeningApplied = false
-        adoptedJointOpening = null
+        openingPlanRecommendation = null
+        openingRecommendedBluffRoleNames = emptyList()
+        openingRecommendedRedHerringSeat = null
+        redHerringDraftName = null
         pendingOpeningResponseId = null
         pendingOpeningModel = null
         canonicalConversationResponseId = null
         canonicalConversationModel = null
         strategicPolicyCursor = null
         strategicLastReviewedHost = null
-        adoptedJointInformation = emptyMap()
+        openingRecommendedInformation = emptyMap()
         shownOnlyDealCompleted = false
         pendingJointOpening = null
         jointOpeningResult = null
@@ -2821,7 +2867,8 @@ internal fun CampBoardGameHostApp() {
                             },
                             busy = jointOpeningBusy,
                             error = jointOpeningError,
-                            onAdopt = ::adoptJointOpeningAfterReveal,
+                            onContinue = ::beginJointOpeningAtDrunkStep,
+                            autoContinue = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC,
                             onRetry = { requestJointOpening(pending) },
                             onManual = ::takeOverJointOpeningManually,
                         )
@@ -2836,6 +2883,7 @@ internal fun CampBoardGameHostApp() {
                             .characterRegistry
                         ClocktowerDrunkSelectionScreen(
                             request = pending.request,
+                            operationMode = storytellerOperationMode,
                             language = language,
                             roleNameForExternalId = { externalId ->
                                 val definition = requireNotNull(
@@ -2850,7 +2898,9 @@ internal fun CampBoardGameHostApp() {
                             },
                             onBack = {
                                 pendingTroubleBrewingDrunkSelection = null
-                                screen = Screen.ClocktowerSettings
+                                screen = if (pendingJointOpening != null) {
+                                    Screen.ClocktowerJointReview
+                                } else Screen.ClocktowerSettings
                             },
                             onConfirm = { candidate ->
                                 require(candidate in pending.request.candidates) {
@@ -2869,12 +2919,20 @@ internal fun CampBoardGameHostApp() {
                                     DebugFlightRecorder.record("MANUAL_DRUNK_SELECTION_STALE")
                                     return@ClocktowerDrunkSelectionScreen
                                 }
-                                commitAndStartTroubleBrewingGame(
-                                    preparedGameId = pending.preparedGameId,
-                                    preparedSetup = pending.preparedSetup,
-                                    confirmedDrunkCandidate = candidate,
-                                )
-                                if (shownOnlyDealCompleted) {
+                                val opening = pendingJointOpening?.takeIf {
+                                    it.preparedGameId == pending.preparedGameId &&
+                                        storytellerOperationMode != StorytellerOperationMode.MANUAL
+                                }
+                                if (opening != null) {
+                                    confirmJointOpeningDrunk(opening, candidate)
+                                } else {
+                                    commitAndStartTroubleBrewingGame(
+                                        preparedGameId = pending.preparedGameId,
+                                        preparedSetup = pending.preparedSetup,
+                                        confirmedDrunkCandidate = candidate,
+                                    )
+                                }
+                                if (opening == null && shownOnlyDealCompleted) {
                                     shownOnlyDealCompleted = false
                                     screen = Screen.ClocktowerJudge
                                 }
@@ -2954,7 +3012,7 @@ internal fun CampBoardGameHostApp() {
                     )
 
                     Screen.ClocktowerAutoPause -> StorytellerAutoPauseScreen(
-                        hasGlobalPlan = jointOpeningApplied,
+                        hasGlobalPlan = openingPlanRecommendation != null,
                         language = language,
                         onTakeOverManually = {
                             storytellerOperationMode = StorytellerOperationMode.MANUAL
@@ -2976,8 +3034,8 @@ internal fun CampBoardGameHostApp() {
                         firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         globalAiAssisted = storytellerOperationMode != StorytellerOperationMode.MANUAL,
                         globalAiAutomatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC,
-                        jointOpeningAdopted = jointOpeningApplied,
-                        jointOpeningSemantics = adoptedJointInformation,
+                        jointOpeningAvailable = openingPlanRecommendation != null,
+                        jointOpeningSemantics = openingRecommendedInformation,
                         globalNightPendingDecision = if (
                             storytellerOperationMode != StorytellerOperationMode.MANUAL &&
                             clocktowerPhase == ClocktowerPhase.Night
@@ -3017,8 +3075,13 @@ internal fun CampBoardGameHostApp() {
                         chambermaidFirst = clocktowerChambermaidFirst,
                         chambermaidSecond = clocktowerChambermaidSecond,
                         ravenkeeperTarget = clocktowerRavenkeeperTarget,
-                        redHerring = clocktowerRedHerring,
-                        recommendedDemonBluffRoleNames = clocktowerRecommendedDemonBluffRoleNames,
+                        redHerring = redHerringDraftName ?: clocktowerRedHerring,
+                        openingRecommendedRedHerring = openingRecommendedRedHerringSeat
+                            ?.let { cards.getOrNull(it - 1)?.name },
+                        recommendedDemonBluffRoleNames =
+                            clocktowerRecommendedDemonBluffRoleNames.ifEmpty {
+                                openingRecommendedBluffRoleNames
+                            },
                         butlerMaster = clocktowerButlerMaster,
                         virginUsed = clocktowerVirginUsed,
                         slayerUsed = clocktowerSlayerUsed,
@@ -3164,25 +3227,27 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerRavenkeeperTarget = it
                         },
-                        onSelectRedHerring = {
-                            // An accepted joint choice belongs to Host in AI auto.
-                            // Assisted hosting may override the private preselection.
-                            if (storytellerOperationMode != StorytellerOperationMode.AI_AUTOMATIC ||
-                                !jointOpeningApplied
-                            ) {
-                                val seat = it?.let { name ->
-                                    cards.indexOfFirst { card -> card.name == name }
-                                        .takeIf { index -> index >= 0 }?.plus(1)
-                                        ?: error("Cannot select Red Herring outside the Session seats.")
+                        onSelectRedHerring = { name ->
+                            // A preview is never an actual accepted Red Herring choice.
+                            if (name != null) {
+                                require(cards.any { it.name == name }) {
+                                    "Red Herring draft must refer to a current seat."
                                 }
-                                requireClocktowerGameSession().commitRedHerringSeat(
-                                    seat = seat,
-                                    phase = storytellerPhaseFor(), round = round,
-                                    sequence = clocktowerEventCounter + 1,
-                                )
-                                publishClocktowerSessionView()
-                                invalidateA4RevisionScope()
                             }
+                            redHerringDraftName = name
+                        },
+                        onConfirmRedHerring = { name ->
+                            val seat = cards.indexOfFirst { it.name == name }
+                                .takeIf { it >= 0 }?.plus(1)
+                                ?: error("Cannot confirm Red Herring outside the Session seats.")
+                            requireClocktowerGameSession().commitRedHerringSeat(
+                                seat = seat,
+                                phase = storytellerPhaseFor(), round = round,
+                                sequence = clocktowerEventCounter + 1,
+                            )
+                            publishClocktowerSessionView()
+                            invalidateA4RevisionScope()
+                            redHerringDraftName = null
                         },
                         onCommitDemonBluffs = { roleNames ->
                             if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {

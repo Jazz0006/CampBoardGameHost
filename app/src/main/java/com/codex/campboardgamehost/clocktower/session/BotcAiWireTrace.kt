@@ -133,13 +133,6 @@ internal object BotcAiWireTrace {
         }
     }
 
-    fun hostAdoption(drunkSeat: Int?, recommendedCount: Int) {
-        bestEffort {
-            Log.v(TAG, "stage=HOST_ADOPTED kind=JOINT_OPENING drunkSeat=" +
-                (drunkSeat ?: "none") + " recommendationCount=" +
-                recommendedCount.coerceIn(0, 256))
-        }
-    }
 }
 
 /** Pure chunking/redaction. No impact on the actual model request or answer. */

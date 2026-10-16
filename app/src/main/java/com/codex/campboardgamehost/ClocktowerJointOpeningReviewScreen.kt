@@ -13,6 +13,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,10 +26,14 @@ internal fun ClocktowerJointOpeningReviewScreen(
     acceptance: HostOpeningSemanticAcceptanceV2?,
     busy: Boolean,
     error: String?,
-    onAdopt: () -> Unit,
+    onContinue: () -> Unit,
+    autoContinue: Boolean,
     onRetry: () -> Unit,
     onManual: () -> Unit,
 ) {
+    LaunchedEffect(autoContinue, acceptance, busy) {
+        if (autoContinue && acceptance != null && !busy) onContinue()
+    }
     ClocktowerDarkTheme {
         Column(
             modifier = Modifier
@@ -68,14 +73,16 @@ internal fun ClocktowerJointOpeningReviewScreen(
                     Text("恶魔掩饰身份：" + bluffs.joinToString(" · "),
                         color = MaterialTheme.colorScheme.onSurface)
                 }
-                Text("整包通过 Host 初始规则域验证；已确定信息 " +
+                Text("联合推荐已经通过 Host 初始规则域验证；包含信息 " +
                     acceptance.matchingCandidateIds.size + " 项，待真实行动 " +
                     acceptance.conditional.size + " 项。",
                     color = MaterialTheme.colorScheme.onSurface)
-                Text("信息只在对应夜间步骤并经重新验证后才能展示。",
+                Text("以上均为未执行推荐。酒鬼会在下一步确认；掩饰身份和线索只在相应步骤确认、展示。",
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Button(onClick = onAdopt, modifier = Modifier.fillMaxWidth()) {
-                    Text("一键采纳完整首夜方案")
+                if (!autoContinue) {
+                    Button(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
+                        Text("进入首夜逐步确认")
+                    }
                 }
             }
             if (!busy) {

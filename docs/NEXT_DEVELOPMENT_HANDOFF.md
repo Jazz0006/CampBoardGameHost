@@ -9,6 +9,12 @@
 - **Next work is still A2:** replace `ClocktowerJointOpeningReviewScreen`'s `onAdopt` and `adoptJointOpeningAfterReveal` path with the first-night sequential flow, especially Drunk decision before binding actual identity, bluffs/red-herring at own confirmation and future info only on publication; retire `jointOpeningApplied/adoptedJointOpening` once all consumers migrate. Audit tests and lifecycle/Recovery consumers; verify MANUAL/AI_ASSISTED/AI_AUTOMATIC, check CI/R2 on actual implementation SHA. Do not start A3–A6 early.
 - **Exact executable A2 batch 1**: `8aa44b2f9c4c2bce9c48d3c906380e301a086fd0`, [CI #4236](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38895896066) SUCCESS (Android full build/JVM, ASP, Clingo and aggregate gate), [R2 #3842](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38895895928) SUCCESS. This is independent CI evidence, **not** Android Studio/ADB or complete A2 gameplay verification.
 
+## A2 second source batch underway (2026-10-16; CI pending; A2 remains PARTIAL)
+
+- Confirmed clean start `904f9fd8f01b8d21b1ed8016d339ea4a05dedc23`; #315 still Draft, main conflict intentionally untouched. Retired opening `adoptJointOpeningAfterReveal` and its adopted flags plus obsolete adoption debug hook. Kept **one joint planning call**, but actual Drunk now confirms on Drunk step, Demon bluffs at Start Night, Red Herring at its own Next/auto step. Host/session owns actual facts.
+- Preselection comes from verified opening recommendations and remains editable in assisted mode. Automatic Drunk/first-night preparation must not publish future player information. If Drunk is manually overridden, dependent opening info/bluff/herring hints and provider response anchor are invalidated; immediate strategic replan and later confirmation-based model memory still need follow-through.
+- Check exact-source Kotlin build + affected Host rules tests via GitHub CI/R2, fix any compile/runtime failures. **Do not mark A2 done** until no wrong automatic progression, stale AI suggestion, or premature Session commit remains. Do not enter A3–A6 or pay for live API without separate approval.
+
 ## Starting repository state (recheck live)
 
 - Repository Jazz0006/CampBoardGameHost; developer machine via Mini MCP alias **clocktower**.

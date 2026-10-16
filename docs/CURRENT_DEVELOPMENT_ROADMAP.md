@@ -14,6 +14,8 @@
 
 - **A2 FIRST SLICE IN PROGRESS (2026-10-16):** residual-night one-click adoption retired in production: removed the sole `adoptWholeResidualProposal` caller/button, its separate proposed/adopted state machines, and automatic early conversation-memory advancement; Host-verified current-step recommendation now preselects through the existing UI matcher with live request/session identity gating. **A2 remains PARTIAL**: opening whole-package acceptance, early Drunk/bluffs/red-herring commitment and properly advancing post-confirmation AI memory remain to migrate; exact source `8aa44b2f9c4c2bce9c48d3c906380e301a086fd0` passed [CI #4236](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38895896066) (Android build/tests, ASP, Clingo, gate) and [R2 #3842](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38895895928); real-device acceptance remains pending.
 
+- **A2 SECOND SLICE CODE CHANGED (2026-10-16; CI pending):** retire opening whole-plan adoption and flags, retain one joint precommit plan as advice; first-night legal Drunk confirmation now follows shown-only reveal (AI-assisted manual preselect, AI-auto current-step confirm). Demon bluff picks remain drafts until Start Night; Red Herring remains a draft until its actual step Next/automatic confirmation. Manual Drunk override invalidates dependent opening hints and provider chain anchor. **Still outstanding before A2 DONE:** force appropriate replan after overridden Drunk, fully safe AI auto current-step flow, confirmed continuation memory promotion and end-to-end real device evidence.
+
 ## The only active implementation: A1 → A6
 
 | Order | Slice | Required completed behavior / deletion |

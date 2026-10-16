@@ -86,9 +86,9 @@ internal fun ClocktowerJudgeScreen(
     gameSeed: Long,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
     globalAiAssisted: Boolean = false,
-    /** The same joint planner is used, but verified plans are privately adopted by Host. */
+    /** A verified joint plan is advisory; only confirmed current steps affect Session. */
     globalAiAutomatic: Boolean = false,
-    jointOpeningAdopted: Boolean = false,
+    jointOpeningAvailable: Boolean = false,
     jointOpeningSemantics: Map<Int, com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2> = emptyMap(),
     globalNightPendingDecision: PendingMayorRedirectDecision? = null,
     globalAiAdviceKey: String? = null,
@@ -109,6 +109,7 @@ internal fun ClocktowerJudgeScreen(
     chambermaidSecond: String?,
     ravenkeeperTarget: String?,
     redHerring: String?,
+    openingRecommendedRedHerring: String? = null,
     recommendedDemonBluffRoleNames: List<String>,
     butlerMaster: String?,
     virginUsed: Boolean,
@@ -147,6 +148,7 @@ internal fun ClocktowerJudgeScreen(
     onSelectChambermaidSecond: (String?) -> Unit,
     onSelectRavenkeeperTarget: (String?) -> Unit,
     onSelectRedHerring: (String?) -> Unit,
+    onConfirmRedHerring: (String) -> Unit,
     onCommitDemonBluffs: (List<String>) -> Unit,
     onSelectButlerMaster: (String?) -> Unit,
     onConfirmButlerMaster: (String, String) -> Boolean,
@@ -2403,6 +2405,19 @@ internal fun ClocktowerJudgeScreen(
     }
 
     if (phase == ClocktowerPhase.FirstNight && !nightStarted) {
+        // Automatic mode confirms ONLY this currently executable setup step.
+        // Do not fast-forward any unshown player information.
+        LaunchedEffect(
+            globalAiAutomatic, jointOpeningAvailable, manualDemonBluffsReady,
+            firstNightNaturalPairPrecomputeReady, manualDemonBluffDraft,
+        ) {
+            if (globalAiAutomatic && jointOpeningAvailable && manualDemonBluffsReady &&
+                firstNightNaturalPairPrecomputeReady && !nightStarted
+            ) {
+                if (manualDemonBluffsRequired) onCommitDemonBluffs(manualDemonBluffDraft)
+                nightStarted = true
+            }
+        }
         ClocktowerStorytellerRecommendationScreen(
             title = text("身份展示完成", "IDENTITY DISPLAY COMPLETE"),
             subtitle = text("准备进入首夜", "Prepare for the first night"),
@@ -2410,11 +2425,14 @@ internal fun ClocktowerJudgeScreen(
                 "这是说书人私密页面。可返回最后一位玩家重新展示身份，或确认首夜裁定后开始夜晚。",
                 "This is a private Storyteller screen. You may return to the final player to show the role again, or confirm the first-night rulings and begin the night.",
             ),
-            buttonLabel = text("确认裁定，开始首夜", "Confirm plan and begin first night"),
+            buttonLabel = text("确认首夜设置，开始夜晚", "Confirm first-night setup and begin"),
             onHostTools = onHostTools,
             onPrevious = onPreviousFromFirstNightReady,
             startEnabled = manualDemonBluffsReady,
             onStartNight = {
+                if (manualDemonBluffsRequired && manualDemonBluffsReady) {
+                    onCommitDemonBluffs(manualDemonBluffDraft)
+                }
                 if (firstNightNaturalPairPrecomputeReady) {
                     nightStarted = true
                 } else {
@@ -2433,15 +2451,8 @@ internal fun ClocktowerJudgeScreen(
                         selectedRoleNames = manualDemonBluffDraft,
                         language = language,
                         onSelectionChange = { nextSelection ->
+                            // This is an editable preview; only Start Night confirms.
                             manualDemonBluffDraft = nextSelection
-                            if (
-                                manualDemonBluffSelectionReady(
-                                    selectedRoleNames = nextSelection,
-                                    legalRoles = legalDemonBluffs,
-                                )
-                            ) {
-                                onCommitDemonBluffs(nextSelection)
-                            }
                         },
                     )
                 }
@@ -2530,9 +2541,7 @@ internal fun ClocktowerJudgeScreen(
             else -> null
         } else null
         val approvedOpeningOption = if (globalAiAutomatic &&
-            (globalAiAdviceBusy || globalAiAdviceError != null ||
-                (jointOpeningAdopted && globalAiCurrentKey != null &&
-                    globalAiAdviceKey != globalAiCurrentKey))) null else
+            (globalAiAdviceBusy || globalAiAdviceError != null)) null else
             residualRecommendedOption ?: preplannedSeat?.takeIf {
                 phase == ClocktowerPhase.FirstNight
             }?.let { seat ->
@@ -2545,11 +2554,11 @@ internal fun ClocktowerJudgeScreen(
             }
         }
         LaunchedEffect(globalAiCurrentKey, globalAiAssisted, approvedOpeningOption,
-            jointOpeningAdopted, phase) {
+            jointOpeningAvailable, phase) {
             if (globalAiAssisted &&
                 globalAiCurrentKey != null &&
                 globalAiAdviceKey != globalAiCurrentKey &&
-                (approvedOpeningOption == null || jointOpeningAdopted)
+                approvedOpeningOption == null
             ) {
                 onRequestGlobalAiAdvice(nightSteps, currentStepIndex)
             }
@@ -2600,6 +2609,13 @@ internal fun ClocktowerJudgeScreen(
             else -> null
         }
         val advanceNightStep = {
+            if (currentStep.action == ClocktowerNightAction.RedHerring &&
+                currentStep.isRealAction
+            ) {
+                onConfirmRedHerring(requireNotNull(redHerring) {
+                    "Red Herring requires a selected rules-legal player."
+                })
+            }
             if (currentStep.action == ClocktowerNightAction.Poison) {
                 onConfirmPoisonTarget()
             }
@@ -2661,12 +2677,25 @@ internal fun ClocktowerJudgeScreen(
         }
 
         LaunchedEffect(
+            phase, currentStepIndex, currentStep.action,
+            redHerring, openingRecommendedRedHerring, globalAiAssisted,
+        ) {
+            if (globalAiAssisted && phase == ClocktowerPhase.FirstNight &&
+                currentStep.action == ClocktowerNightAction.RedHerring &&
+                currentStep.isRealAction && redHerring == null &&
+                openingRecommendedRedHerring != null &&
+                publicAliveCards.any { it.name == openingRecommendedRedHerring }
+            ) {
+                onSelectRedHerring(openingRecommendedRedHerring)
+            }
+        }
+        LaunchedEffect(
             allowRuleDeterminedAutoUi,
             currentStepIndex,
             currentStep.action,
             currentStep.isRealAction,
             redHerring,
-            jointOpeningAdopted,
+            jointOpeningAvailable,
             globalAiAutomatic,
         ) {
             if (
@@ -2675,7 +2704,7 @@ internal fun ClocktowerJudgeScreen(
                     isRedHerringStep = currentStep.action == ClocktowerNightAction.RedHerring,
                     isRealAction = currentStep.isRealAction,
                     hasSelectedRedHerring = redHerring != null,
-                    acceptedJointOpening = jointOpeningAdopted && globalAiAutomatic,
+                    acceptedJointOpening = jointOpeningAvailable && globalAiAutomatic,
                 )
             ) {
                 advanceNightStep()
@@ -2691,10 +2720,12 @@ internal fun ClocktowerJudgeScreen(
             subtitle = text("当前阶段：${currentStep.title}", "Current: ${currentStep.title}"),
             progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
             canGoPrevious = currentStepIndex > 0,
-            nextEnabled = currentStep.action !in setOf(
+            nextEnabled = (currentStep.action !in setOf(
                 ClocktowerNightAction.MayorRedirect,
                 ClocktowerNightAction.DemonSuccessor,
-            ) || selectedNightName != null,
+            ) || selectedNightName != null) &&
+                (currentStep.action != ClocktowerNightAction.RedHerring ||
+                    !currentStep.isRealAction || redHerring != null),
             onPrevious = onMovePreviousNightStep,
             onHostTools = onHostTools,
             onNext = advanceNightStep,
