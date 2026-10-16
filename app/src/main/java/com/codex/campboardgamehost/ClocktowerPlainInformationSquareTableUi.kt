@@ -38,7 +38,9 @@ internal fun clocktowerPlainInformationSquareTablePresentation(
         actorSeat = actorSeat,
         wakeInstruction = wakeInstruction,
         displayStep = step,
-        showPlayerDisplayAction = true,
+        showPlayerDisplayAction = step.displayKind != ClocktowerDisplayKind.Grimoire ||
+            (step.tellPlayer != null &&
+                step.displayProposition is com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.GrimoireState),
     )
 }
 
@@ -54,7 +56,8 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
     onShowPlayerDisplay: () -> Unit,
 ) {
     val step = presentation.displayStep
-    if (clocktowerUsesBeginnerCompactNightGuidance(presentation.wakeInstruction)) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(presentation.wakeInstruction) &&
+        presentation.showPlayerDisplayAction) {
         ClocktowerBeginnerReadOnlyRevealDialog(
             seats = seats,
             actorSeat = presentation.actorSeat,
@@ -65,6 +68,9 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
             onHostTools = onHostTools,
             onNext = onNext,
             onShow = onShowPlayerDisplay,
+            buttonLabel = if (step.displayKind == ClocktowerDisplayKind.Grimoire) {
+                if (language == "en") "Show Grimoire" else "展示魔典"
+            } else null,
         )
         return
     }
@@ -100,7 +106,9 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                 )
-                (step.displayPrimary ?: step.tellPlayer)?.takeIf { it.isNotBlank() }?.let { primary ->
+                (step.displayPrimary ?: step.tellPlayer)
+                    ?.takeIf { it.isNotBlank() && step.displayKind != ClocktowerDisplayKind.Grimoire }
+                    ?.let { primary ->
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = primary,
@@ -125,7 +133,11 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
                 if (presentation.showPlayerDisplayAction) {
                     Spacer(Modifier.height(10.dp))
                     OutlinedButton(onClick = onShowPlayerDisplay, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (language == "en") "Show to player" else "展示给玩家")
+                        Text(
+                            if (step.displayKind == ClocktowerDisplayKind.Grimoire) {
+                                if (language == "en") "Show Grimoire" else "展示魔典"
+                            } else if (language == "en") "Show to player" else "展示给玩家",
+                        )
                     }
                 }
             }

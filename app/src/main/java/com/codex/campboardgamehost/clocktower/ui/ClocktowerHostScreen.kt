@@ -79,6 +79,8 @@ internal fun ClocktowerJudgeScreen(
     cards: List<PlayerCard>,
     events: List<ClocktowerEvent>,
     actualInformationHistory: List<RecordedEpistemicObservation>,
+    confirmedGrimoireSeats: List<HostSeatPresentation>,
+    confirmedRedHerringSeat: Int?,
     script: ClocktowerScript,
     gameId: String,
     gameSeed: Long,
@@ -1523,15 +1525,15 @@ internal fun ClocktowerJudgeScreen(
                 informationStepBuilder.build(
                                 roleName = "间谍",
                                 enName = "Spy",
-                                tellPlayer = if (poisonTarget == spyCard?.name) null else {
-                                    cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
-                                },
+                                tellPlayer = if (poisonTarget == spyCard?.name) null else text("查看魔典", "View the Grimoire"),
                                 explanation = if (poisonTarget == spyCard?.name) text("间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。", "The Spy is poisoned: wake them normally, but do not show the real grimoire or alter registration.") else text("存活间谍每晚可以查看所有玩家的真实身份。", "A living Spy may view every player's true identity each night."),
                                 displayKind = ClocktowerDisplayKind.Grimoire,
                                 displayTitle = text("魔典", "Grimoire"),
                                 displayFooter = text("这些是所有玩家的真实身份。只给间谍短暂查看。", "These are every player's true identities. Show this only briefly to the Spy."),
                                 displayProposition = if (poisonTarget == spyCard?.name) null else InformationProposition.GrimoireState(
-                                    cards.mapIndexed { index, card -> GrimoireSeatView(index + 1, RoleId(requireNotNull(card.clocktowerRole).enName), card.eliminatedRound == null) },
+                                    confirmedGrimoireSeats.map { seat -> GrimoireSeatView(
+                                        seat.seatId.number, RoleId(requireNotNull(seat.actualRole).roleId), seat.isAlive,
+                                    ) },
                                 ),
                                 hostInstruction = if (poisonTarget == spyCard?.name) text("照常轻拍间谍示意睁眼，但不要展示真实魔典；停顿后示意闭眼。", "Wake the Spy normally, but do not show the real grimoire. Pause, then signal them to close their eyes.") else text("轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。", "Tap the Spy to wake them. Briefly show the Storyteller overview, then take the phone back and signal them to close their eyes."),
                             )
@@ -1853,15 +1855,15 @@ internal fun ClocktowerJudgeScreen(
                 informationStepBuilder.build(
                     roleName = "间谍",
                     enName = "Spy",
-                    tellPlayer = if (effectivePoisonForRole("Spy") == spyCard?.name) null else {
-                        cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
-                    },
+                    tellPlayer = if (effectivePoisonForRole("Spy") == spyCard?.name) null else text("查看魔典", "View the Grimoire"),
                     explanation = if (effectivePoisonForRole("Spy") == spyCard?.name) text("间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。", "The Spy is poisoned: wake them normally, but do not show the real grimoire or alter registration.") else text("存活间谍每晚查看真实魔典。", "A living Spy views the true grimoire each night."),
                     displayKind = ClocktowerDisplayKind.Grimoire,
                     displayTitle = text("魔典", "Grimoire"),
                     displayFooter = text("这些是所有玩家的真实身份。只给间谍短暂查看。", "These are every player's true identities. Show this only briefly to the Spy."),
                     displayProposition = if (effectivePoisonForRole("Spy") == spyCard?.name) null else InformationProposition.GrimoireState(
-                        cards.mapIndexed { index, card -> GrimoireSeatView(index + 1, RoleId(requireNotNull(card.clocktowerRole).enName), card.eliminatedRound == null) },
+                        confirmedGrimoireSeats.map { seat -> GrimoireSeatView(
+                            seat.seatId.number, RoleId(requireNotNull(seat.actualRole).roleId), seat.isAlive,
+                        ) },
                     ),
                     hostInstruction = if (effectivePoisonForRole("Spy") == spyCard?.name) text("照常唤醒间谍，但不要展示真实魔典。", "Wake the Spy normally, but do not show the real grimoire.") else text("轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。", "Tap the Spy to wake them. Briefly show the Storyteller overview, then take the phone back and signal them to close their eyes."),
                 )
@@ -1877,6 +1879,11 @@ internal fun ClocktowerJudgeScreen(
             step = displayStep,
             cards = cards,
             onDismiss = { playerDisplayStep = null },
+            confirmedGrimoireSeats = confirmedGrimoireSeats,
+            redHerringSeat = confirmedRedHerringSeat,
+            protectedSeat = nightCheckpoint.confirmedMonkTarget
+                ?.let { target -> cards.indexOfFirst { it.name == target } }
+                ?.takeIf { it >= 0 }?.plus(1),
         )
         return
     }

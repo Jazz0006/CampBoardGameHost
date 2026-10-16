@@ -3070,6 +3070,9 @@ internal fun CampBoardGameHostApp() {
                         cards = cards,
                         events = clocktowerEvents,
                         actualInformationHistory = clocktowerEpistemicObservations,
+                        confirmedGrimoireSeats = requireClocktowerGameSession().state.gameState
+                            .toHostSeatPresentations { roleId -> clocktowerRoleLabel(roleId, language) },
+                        confirmedRedHerringSeat = requireClocktowerGameSession().state.redHerringSeat,
                         script = currentClocktowerScript,
                         gameId = clocktowerGameId,
                         gameSeed = clocktowerGameSeed,

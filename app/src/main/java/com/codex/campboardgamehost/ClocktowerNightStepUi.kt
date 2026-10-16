@@ -321,11 +321,6 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val usesUndertakerSquareTable =
         plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Undertaker && undertakerResultChoices.isNotEmpty()
-    val spySquareTablePresentation = if (plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Spy) {
-        clocktowerSpySquareTablePresentation(step)
-    } else {
-        null
-    }
     val clockmakerResultChoices = clocktowerClockmakerResultChoices(
         step = manualFallbackStep,
         allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
@@ -774,7 +769,7 @@ internal fun ClocktowerNightStepCardLocalized(
             ClocktowerNightFullScreenSurface.Chef -> !usesChefSquareTable
             ClocktowerNightFullScreenSurface.Empath -> !usesEmpathSquareTable
             ClocktowerNightFullScreenSurface.Undertaker -> !usesUndertakerSquareTable
-            ClocktowerNightFullScreenSurface.Spy -> spySquareTablePresentation == null
+            ClocktowerNightFullScreenSurface.Spy -> false
             ClocktowerNightFullScreenSurface.Clockmaker -> !usesClockmakerSquareTable
             ClocktowerNightFullScreenSurface.Sage -> !usesSageSquareTable
             else -> false
@@ -784,6 +779,7 @@ internal fun ClocktowerNightStepCardLocalized(
             ?: step
         val plainInformationSquareTablePresentation = if (
             plannedFullScreenSurface == ClocktowerNightFullScreenSurface.PlainInformation ||
+            plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Spy ||
             plannedSpecialistUnavailable
         ) {
             clocktowerPlainInformationSquareTablePresentation(
@@ -1078,23 +1074,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
-            ClocktowerNightFullScreenSurface.Spy -> {
-                val presentation = spySquareTablePresentation
-                if (presentation == null) {
-                    renderPlainInformationFallback()
-                } else ClocktowerSpySquareTableDialog(
-                    seats = nightActionSeats,
-                    actorSeat = actionActorSeat,
-                    wakeInstruction = command,
-                    presentation = presentation,
-                    language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
-                    onHostTools = onHostTools,
-                    onNext = onNext,
-                    onShowLegacyReveal = { onShowPlayerDisplay(step) },
-                )
-            }
+            ClocktowerNightFullScreenSurface.Spy -> renderPlainInformationFallback()
 
             ClocktowerNightFullScreenSurface.Clockmaker -> {
                 if (!usesClockmakerSquareTable) {

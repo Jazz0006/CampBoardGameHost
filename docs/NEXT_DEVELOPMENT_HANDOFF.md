@@ -166,6 +166,14 @@
 - The independent `clocktowerEvents` stream still supplies Dawn Host review, in-game/archived review, the recovery snapshot, and night-step display deduplication. Do **not** physically retire it while those readers remain, and do not consider the current compact AI projection complete until real Butler-master and other confirmed-but-untyped actions have a single durable fact owner.
 - Most recent green baseline prior to this slice: `15d20e5f9e5485abe6511febb5bc057c5cb65651` (CI #4225, R2 #3835).
 
+## 2026-10-16 Spy Grimoire shares the actual read-only Storyteller table
+
+- User requirement: when the Spy views the Grimoire, show the **same current physical seat table** instead of a separate Spy text list or specialist Spy reveal screen. The viewer is explicitly read-only, with NO player actions, Host tools, AI advice or hidden event history. Leave the normal host publication/confirmation path in charge of the single received-information record.
+- Source of truth: `ClocktowerGameSession.state.gameState.toHostSeatPresentations` (actual vs shown role, seat, death, poisoned flags); the accepted Session red-herring seat and confirmed Monk checkpoint target appear as display-only seat badges. The shared `HostTableShell` now displays the same poisoned marker already shown by other Host table scaffolds. Both first and subsequent Spy Grimoire observations derive their roster from those same confirmed seats, not by re-parsing cards/text.
+- Deleted `ClocktowerSpySquareTableUi.kt`, its orphan tests and the old `ClocktowerPlayerGrimoireDisplay` row-list implementation. A normal plain-information handoff now hosts the Spy show action; malfunctioning Spy has NO show action unless a confirmed true `GrimoireState` and actual display text exist. The player reveal reuses `HostTableShell` with `ReadOnly`, no seat click/drag, and only a dismiss button. No new persisted model, second Grimoire or event log.
+- Remaining scope is **not** an exhaustive official reminder-token projection. Current `GrimoireState` observation contract represents seat/actual-role/alive, while red-herring/poison/protection visual badges are read from confirmed Session or committed checkpoint. Rule-specific reminder placements beyond these need a separately justified source audit, not speculative parallel state.
+- Keep PR #315 Draft until the exact-head Android CI/R2 and real device presentation pass; CI compilation alone is not device layout evidence.
+
 ## Historical first implementation brief: A1
 
 1. Read AGENTS.md, [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md), [ARCH-CLEANUP-1 evidence](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md), this handoff, roadmap and testing policy. Verify live SHA / worktree / #315 / main / checks.
