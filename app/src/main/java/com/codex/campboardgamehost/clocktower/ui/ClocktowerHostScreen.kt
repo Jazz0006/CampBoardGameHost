@@ -899,6 +899,12 @@ internal fun ClocktowerJudgeScreen(
         else -> null
     }
     val empathNumber = empathValue.toString()
+    // Capture query seats before the information-publication callbacks that record the
+    // actual Fortune Teller result; the materializer below reuses this same seat list.
+    val fortuneTellerSelectedNames = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+    val fortuneTellerSubjectSeats = fortuneTellerSelectedNames.mapNotNull { name ->
+        cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+    }
     fun informationDecisionPublicationAllowed(displayStep: ClocktowerNightStepUi): Boolean =
         clocktowerInformationPublicationAllowed(
             confirmation = displayStep.informationDecisionConfirmation,
@@ -1297,10 +1303,6 @@ internal fun ClocktowerJudgeScreen(
         legalSelectionOptions = empathLegalSelectionOptions,
     )
 
-    val fortuneTellerSelectedNames = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-    val fortuneTellerSubjectSeats = fortuneTellerSelectedNames.mapNotNull { name ->
-        cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
-    }
     val fortuneTellerSecondary = fortuneTellerSelectedNames
         .mapNotNull { name -> cards.firstOrNull { it.name == name } }
         .joinToString("   ") { seatNumberText(it) }
