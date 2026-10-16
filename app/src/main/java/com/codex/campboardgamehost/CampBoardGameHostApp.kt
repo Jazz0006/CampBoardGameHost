@@ -114,7 +114,7 @@ import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequest
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPoisonTarget
-import com.codex.campboardgamehost.clocktower.session.synchronizePlayerDeathWithinCurrentRevision
+import com.codex.campboardgamehost.clocktower.session.commitConfirmedPlayerDeath
 import com.codex.campboardgamehost.clocktower.session.synchronizePoisonTargetWithinCurrentRevision
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointHostTransaction
@@ -1103,7 +1103,6 @@ internal fun CampBoardGameHostApp() {
         playerNames: List<String> = emptyList(),
         eventPhase: ClocktowerPhase = clocktowerPhase,
         eventRound: Int = round,
-        projectSemanticHistory: Boolean = true,
     ) {
         advanceClocktowerGameStateRevision()
         clocktowerEventCounter += 1
@@ -1118,59 +1117,6 @@ internal fun CampBoardGameHostApp() {
                 round = eventRound,
             ),
         )
-        if (!projectSemanticHistory) return
-        if (type !in setOf(ClocktowerEventType.Death, ClocktowerEventType.Execution)) return
-        val eliminatedSeats = playerNames.mapNotNull { playerName ->
-            cards.indexOfFirst { it.name == playerName }
-                .takeIf { index -> index >= 0 && cards[index].eliminatedRound != null }
-                ?.plus(1)
-        }.distinct()
-        if (eliminatedSeats.isEmpty()) return
-        val epistemicPhase = storytellerPhaseFor(eventPhase)
-        eliminatedSeats.forEach { seat ->
-            when (type) {
-                ClocktowerEventType.Execution -> recordClocktowerAction(ActionFactDraft.Execution(
-                    actionId = clocktowerActionId(
-                        kind = "execution",
-                        actionRound = eventRound,
-                        localSequence = clocktowerEventCounter,
-                        targetSeat = seat,
-                    ),
-                    phase = epistemicPhase,
-                    round = eventRound,
-                    sequence = clocktowerEventCounter,
-                    targetSeat = seat,
-                ))
-                ClocktowerEventType.Death -> recordClocktowerAction(ActionFactDraft.Death(
-                    actionId = clocktowerActionId(
-                        kind = "death",
-                        actionRound = eventRound,
-                        localSequence = clocktowerEventCounter,
-                        targetSeat = seat,
-                    ),
-                    phase = epistemicPhase,
-                    round = eventRound,
-                    sequence = clocktowerEventCounter,
-                    targetSeat = seat,
-                ))
-                else -> Unit
-            }
-        }
-        eliminatedSeats.forEach { seat ->
-            val observationId = "public-alive-${clocktowerGameId}-${clocktowerEventCounter}-$seat"
-            recordEpistemicObservation(EpistemicObservationDraft(
-                recordId = observationId,
-                phase = epistemicPhase,
-                round = eventRound,
-                sequence = clocktowerEventCounter,
-                sourceSeat = null,
-                sourceAbility = null,
-                visibility = ObservationVisibility.PUBLIC,
-                recipientSeats = emptySet(),
-                reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
-                proposition = InformationProposition.AliveAt(seat, false),
-            ))
-        }
     }
 
     fun localizedText(zh: String, en: String): String = if (language == "en") en else zh
@@ -3880,8 +3826,8 @@ internal fun CampBoardGameHostApp() {
                                 )
                             }
                             var shotOutcome: GameOutcome? = null
-                            if (slayerDecision.consumesUse) {
-                                // SlayerShot is already the Session's accepted consumption fact.
+                            if (slayerDecision.consumesUse && !shotWillHit) {
+                                // A hit's confirmed death supplies the one mechanical revision.
                                 advanceClocktowerGameStateRevision()
                             }
                             if (shotWillHit && targetIndex >= 0 && targetCard != null) {
@@ -3891,34 +3837,25 @@ internal fun CampBoardGameHostApp() {
                                     playerName = targetName,
                                     eventSequence = localSequence,
                                 )
-                                recordClocktowerAction(ActionFactDraft.Death(
-                                    actionId = clocktowerActionId(
-                                        kind = "slayer-death",
-                                        localSequence = localSequence,
+                                requireClocktowerGameSession().commitConfirmedPlayerDeath(
+                                    draft = ActionFactDraft.Death(
+                                        actionId = clocktowerActionId(
+                                            kind = "slayer-death",
+                                            localSequence = localSequence,
+                                            targetSeat = targetSeat,
+                                        ),
+                                        phase = storytellerPhaseFor(),
+                                        round = round,
+                                        sequence = localSequence,
                                         targetSeat = targetSeat,
                                     ),
-                                    phase = storytellerPhaseFor(),
-                                    round = round,
-                                    sequence = localSequence,
-                                    targetSeat = targetSeat,
-                                ))
-                                requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-                                    targetSeat = targetSeat,
+                                    expectedGameStateRevision = clocktowerGameStateRevision,
+                                    publishedObservationId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat",
                                 )
                                 publishClocktowerSessionView()
+                                invalidateA4RevisionScope()
+                                a4ObservationDurabilityGate.markPending("public-alive-${clocktowerGameId}-${localSequence}-$targetSeat")
                                 reflectCommittedClocktowerDeath(targetSeat)
-                                recordEpistemicObservation(EpistemicObservationDraft(
-                                    recordId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat",
-                                    phase = storytellerPhaseFor(),
-                                    round = round,
-                                    sequence = localSequence,
-                                    sourceSeat = null,
-                                    sourceAbility = null,
-                                    visibility = ObservationVisibility.PUBLIC,
-                                    recipientSeats = emptySet(),
-                                    reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
-                                    proposition = InformationProposition.AliveAt(targetSeat, false),
-                                ))
                                 records.add(
                                     EliminationRecord(
                                         round,
@@ -4063,16 +4000,34 @@ internal fun CampBoardGameHostApp() {
                                     )
                                 }
                             }
-                            // The confirmed Nomination records first-Virgin consumption.
-                            advanceClocktowerGameStateRevision()
+                            // A confirmed Virgin execution owns its revision through Session.
+                            // A nomination without death still advances the accepted game step.
+                            if (!executeNominator || cards.none { it.name == nominatorName && it.eliminatedRound == null }) {
+                                advanceClocktowerGameStateRevision()
+                            }
                             if (executeNominator) {
                                 val index = cards.indexOfFirst { it.name == nominatorName }
                                 val nominatorCard = cards.getOrNull(index)
                                 if (index >= 0 && nominatorCard != null && nominatorCard.eliminatedRound == null) {
-                                    requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-                                        targetSeat = index + 1,
+                                    val actionSequence = clocktowerEventCounter + 1
+                                    requireClocktowerGameSession().commitConfirmedPlayerDeath(
+                                        draft = ActionFactDraft.Execution(
+                                            actionId = clocktowerActionId(
+                                                kind = "virgin-execution",
+                                                localSequence = actionSequence,
+                                                targetSeat = index + 1,
+                                            ),
+                                            phase = storytellerPhaseFor(),
+                                            round = round,
+                                            sequence = actionSequence,
+                                            targetSeat = index + 1,
+                                        ),
+                                        expectedGameStateRevision = clocktowerGameStateRevision,
+                                        publishedObservationId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}",
                                     )
                                     publishClocktowerSessionView()
+                                    invalidateA4RevisionScope()
+                                    a4ObservationDurabilityGate.markPending("public-alive-${clocktowerGameId}-$actionSequence-${index + 1}")
                                     reflectCommittedClocktowerDeath(index + 1)
                                     records.add(
                                         EliminationRecord(
@@ -4186,9 +4141,11 @@ internal fun CampBoardGameHostApp() {
                                     eventSequence = proposedSequence,
                                 )
                             }
-                            // Confirming the day commits its execution/no-execution result and
-                            // closes the day decision window, including when no one dies.
-                            advanceClocktowerGameStateRevision()
+                            // Only a no-execution day needs the existing standalone revision.
+                            // An actual execution increments revision atomically with its fact.
+                            if (preflightIndex < 0 || preflightCard?.eliminatedRound != null) {
+                                advanceClocktowerGameStateRevision()
+                            }
                             val aliveBeforeExecution = cards.filter { it.eliminatedRound == null }
                             val executionName = clocktowerSelectedExecution
                             var executionOutcome: GameOutcome? = null
@@ -4196,13 +4153,10 @@ internal fun CampBoardGameHostApp() {
                                 val index = cards.indexOfFirst { it.name == executionName }
                                 val executedCard = cards.getOrNull(index)
                                 if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
-                                    val isKlutzDeathCapture = executedCard.clocktowerRole?.enName == "Klutz" &&
-                                        clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
-                                    if (isKlutzDeathCapture) {
-                                        // Commit the exact execution before death clears Klutz.poisoned.
-                                        // The canonical session (not the UI) stamps ability-state evidence.
-                                        val actionSequence = clocktowerEventCounter + 1
-                                        recordClocktowerAction(ActionFactDraft.Execution(
+                                    // Session binds death-time Klutz evidence before clearing poison.
+                                    val actionSequence = clocktowerEventCounter + 1
+                                    requireClocktowerGameSession().commitConfirmedPlayerDeath(
+                                        draft = ActionFactDraft.Execution(
                                             actionId = clocktowerActionId(
                                                 kind = "execution",
                                                 actionRound = round,
@@ -4213,12 +4167,13 @@ internal fun CampBoardGameHostApp() {
                                             round = round,
                                             sequence = actionSequence,
                                             targetSeat = index + 1,
-                                        ))
-                                    }
-                                    requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-                                        targetSeat = index + 1,
+                                        ),
+                                        expectedGameStateRevision = clocktowerGameStateRevision,
+                                        publishedObservationId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}",
                                     )
                                     publishClocktowerSessionView()
+                                    invalidateA4RevisionScope()
+                                    a4ObservationDurabilityGate.markPending("public-alive-${clocktowerGameId}-$actionSequence-${index + 1}")
                                     reflectCommittedClocktowerDeath(index + 1)
                                     records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
                                     addClocktowerEvent(
@@ -4226,7 +4181,6 @@ internal fun CampBoardGameHostApp() {
                                         localizedText("处决", "Execution"),
                                         playerSeatLabel(cards, executionName),
                                         listOf(executionName),
-                                        projectSemanticHistory = !isKlutzDeathCapture,
                                     )
                                     clocktowerLastExecutedName = executionName
                                     if (executedCard.clocktowerRole?.enName == "Saint") {
@@ -4486,20 +4440,24 @@ internal fun CampBoardGameHostApp() {
                                     val demonDied = nightDeathCard.clocktowerTeam == ClocktowerTeam.Demon
                                     val impSelfChosen = demonDied && originalDeathName == deathName
                                     val deathLocalSequence = clocktowerEventCounter + 1
-                                    dawnDeathMaterialization.actionIdToCommit?.let { actionId ->
-                                        recordClocktowerAction(ActionFactDraft.Death(
-                                            actionId = actionId,
-                                            phase = storytellerPhaseFor(),
-                                            round = round,
-                                            sequence = deathLocalSequence,
-                                            targetSeat = dawnDeathMaterialization.intent.targetSeat,
-                                        ))
-                                    }
                                     if (dawnDeathMaterialization.stateMutationRequired) {
-                                        requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-                                            targetSeat = dawnDeathMaterialization.intent.targetSeat,
+                                        val actionId = requireNotNull(dawnDeathMaterialization.actionIdToCommit) {
+                                            "A new committed death must have one durable action identity."
+                                        }
+                                        requireClocktowerGameSession().commitConfirmedPlayerDeath(
+                                            draft = ActionFactDraft.Death(
+                                                actionId = actionId,
+                                                phase = storytellerPhaseFor(),
+                                                round = round,
+                                                sequence = deathLocalSequence,
+                                                targetSeat = dawnDeathMaterialization.intent.targetSeat,
+                                            ),
+                                            expectedGameStateRevision = clocktowerGameStateRevision,
+                                            publishedObservationId = dawnDeathMaterialization.publicAliveObservationIdToCommit,
                                         )
                                         publishClocktowerSessionView()
+                                        invalidateA4RevisionScope()
+                                        dawnDeathMaterialization.publicAliveObservationIdToCommit?.let(a4ObservationDurabilityGate::markPending)
                                         reflectCommittedClocktowerDeath(index + 1)
                                         records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
                                         addClocktowerEvent(
@@ -4510,25 +4468,27 @@ internal fun CampBoardGameHostApp() {
                                                 "${playerSeatLabel(cards, deathName)} · killed",
                                             ),
                                             listOf(deathName),
-                                            projectSemanticHistory = false,
                                         )
-                                    }
-                                    if (dawnDeathMaterialization.publicAliveObservationIdToCommit != null) {
-                                        recordEpistemicObservation(EpistemicObservationDraft(
-                                            recordId = dawnDeathMaterialization.publicAliveObservationIdToCommit,
-                                            phase = storytellerPhaseFor(),
-                                            round = round,
-                                            sequence = deathLocalSequence,
-                                            sourceSeat = null,
-                                            sourceAbility = null,
-                                            visibility = ObservationVisibility.PUBLIC,
-                                            recipientSeats = emptySet(),
-                                            reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
-                                            proposition = InformationProposition.AliveAt(
-                                                dawnDeathMaterialization.intent.targetSeat,
-                                                false,
-                                            ),
-                                        ))
+                                    } else {
+                                        check(dawnDeathMaterialization.actionIdToCommit == null) {
+                                            "A materialized death cannot append an action without its state transition."
+                                        }
+                                        dawnDeathMaterialization.publicAliveObservationIdToCommit?.let { recordId ->
+                                            recordEpistemicObservation(EpistemicObservationDraft(
+                                                recordId = recordId,
+                                                phase = storytellerPhaseFor(),
+                                                round = round,
+                                                sequence = deathLocalSequence,
+                                                sourceSeat = null,
+                                                sourceAbility = null,
+                                                visibility = ObservationVisibility.PUBLIC,
+                                                recipientSeats = emptySet(),
+                                                reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+                                                proposition = InformationProposition.AliveAt(
+                                                    dawnDeathMaterialization.intent.targetSeat, false,
+                                                ),
+                                            ))
+                                        }
                                     }
                                     if (demonDied) {
                                         if (impSelfChosen) {

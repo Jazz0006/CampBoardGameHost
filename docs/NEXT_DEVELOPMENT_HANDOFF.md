@@ -1,6 +1,6 @@
 # CampBoardGameHost — Next Development Handoff
 
-> **Implementation handoff 2026-10-16; A1 first slice underway.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
+> **Implementation handoff 2026-10-16; A1 first two slices implemented, exact-head verification required.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
 
 ## Starting repository state (recheck live)
 
@@ -25,8 +25,15 @@
 
 - Live baseline before first source edits: `470b5dbe4a48d4788646cc7d2313e6131ed2470a`, development worktree clean and equal origin. See ARCH-CLEANUP-2 implementation log for exact modified call site and retirement inventory.
 - `NightCheckpointHostTransaction.confirmPoison` accepted confirmation is now the mechanical+action+revision atomic Session boundary. `commitPoisonTargetBoundary` removed, corresponding tests updated for global chronology and rejection/idempotency. No claim yet that the remaining role/death/day/phase/observation call sites share this boundary.
-- **Next A1 work, not A2**: migrate and retire the split death/execution, actual-role change, night materialization, phase advancement and information publication writers at their real Host confirmation boundaries. Preserve Klutz pre-death ability proof and observation availability for actual player reveals. Verify with latest exact source CI/R2; keep #315 Draft, do not merge main.
+- **Next A1 work, not A2** (updated by second checkpoint below): migrate and retire remaining actual-role change, poison/night materialization, phase advancement and information publication writers at their real Host confirmation boundaries. Preserve Klutz pre-death ability proof and observation availability for actual player reveals. Verify with latest exact source CI/R2; keep #315 Draft, do not merge main.
 - Do not claim A1 done until all confirmed-step mechanical+typed history transitions and remaining consumers are audited and migrated.
+
+## A1 second implementation checkpoint (2026-10-16; PARTIAL)
+
+- On `550ed797044d1864f45068566e45ae960dbe464d` (first poison migration), migrated confirmed Slayer hit, Virgin auto-execution, ordinary day execution and Dawn death into a single Session `commitConfirmedPlayerDeath` call. The Session snapshots Klutz alive/poison evidence **before** mutation and atomically stores death/execution + optional actual public AliveAt observation + revision and shared global cursor. UI only reflects confirmed state.
+- **Actually deleted** the old `synchronizePlayerDeathWithinCurrentRevision` production helper and its test references, and the `addClocktowerEvent` narrative-based mechanical fact/observation projection and `projectSemanticHistory` parameter. Existing tests for real NGJ Klutz and synthetic archival provenance were migrated to the confirmed Session boundary, not removed wholesale.
+- **Next A1 work, not A2:** actual-role change and Dawn role materialization; poison at Dusk/Dawn and attack/phase steps; vote/no-execution/revision ownership; actual information publication preflight and durable fact commit. Audit NightDawnDurableMaterializationPlanner's remaining state/action/observation repair branches, especially those made obsolete by atomic Session commits. Do not erase Host legal evidence or lose an already-public result. Root UI/PlayerCard second state is deliberately A3.
+- Check exact new source HEAD CI/R2 and GitHub conflict before any acceptance claim; #315 remains Draft and main unmerged. No paid model calls approved.
 
 ## Historical first implementation brief: A1
 

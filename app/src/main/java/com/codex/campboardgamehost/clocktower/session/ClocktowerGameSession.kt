@@ -442,6 +442,7 @@ internal class ClocktowerGameSession private constructor(
         draft: ActionFactDraft,
         nextGameState: GameState,
         expectedGameStateRevision: Long,
+        publishedObservation: EpistemicObservationDraft? = null,
     ): TimelineBoundActionFact {
         require(nextGameState.seed == state.gameSeed && nextGameState.script == state.gameState.script) {
             "A confirmed step cannot change the session seed or script."
@@ -454,8 +455,22 @@ internal class ClocktowerGameSession private constructor(
             nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
             draft = prepared,
         )
+        val observationCommit = publishedObservation?.let { observation ->
+            commitGlobalEpistemicObservation(
+                semanticHistoryMode = state.semanticHistoryMode,
+                observationLog = state.epistemicObservationLog,
+                nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+                playerInputRevision = state.playerInputRevision,
+                draft = observation,
+                actionTimeline = committed.actionTimeline,
+            )
+        }
         if (committed.actionTimeline === state.actionTimeline) {
-            // The pure writer has already checked the exact action ID and semantic contents.
+            // Replaying an accepted action must not silently append a missing publication.
+            check(observationCommit == null ||
+                observationCommit.observationLog === state.epistemicObservationLog) {
+                "Previously committed action has no matching published observation."
+            }
             return committed.entry
         }
         check(state.gameStateRevision == expectedGameStateRevision) {
@@ -467,7 +482,10 @@ internal class ClocktowerGameSession private constructor(
             gameStateRevision = state.gameStateRevision + 1,
             gameState = nextGameState,
             actionTimeline = committed.actionTimeline,
-            nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+            epistemicObservationLog = observationCommit?.observationLog ?: state.epistemicObservationLog,
+            playerInputRevision = observationCommit?.playerInputRevision ?: state.playerInputRevision,
+            nextTimelineGlobalSequence = observationCommit?.nextTimelineGlobalSequence
+                ?: committed.nextTimelineGlobalSequence,
         ))
         return committed.entry
     }

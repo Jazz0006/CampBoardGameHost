@@ -46,6 +46,15 @@
 - **替代且删除** `commitPoisonTargetBoundary` 的生产实现及全部引用；旧测试迁到确认行为、幂等、拒绝、游标的确定性证据，仍被夜间/破晓调用的同步路径暂保留，不能当已完成冗余清理。
 - **A1 仍 PARTIAL**：`advanceGameStateRevision`、`commitGameStateBoundary`、`synchronizeGameStateWithinCurrentRevision`、`commitGlobalActionFact`、`commitGlobalEpistemicObservation` 及其真实夜晚/死亡/处决/身份/信息公布使用者仍须逐项收敛并删除失去消费者的旧入口。A2–A6 未开始。以该实现提交的准确 HEAD 独立 CI/R2 为准，不拿起点 GREEN 代替。
 
+### A1 第二批：死亡／处决确认收敛（2026-10-16；待新 HEAD CI/R2）
+
+- 从此前确认的精确分支 HEAD `550ed797044d1864f45068566e45ae960dbe464d` 继续实施，不合并 main。生产入口逐项迁移：Slayer 命中死亡、Virgin 自动处决、白天正式处决、夜间破晓已裁决死亡；保留 Slayer 消耗、Nomination、Klutz learn-time 以及已有 Host 法律和行动规则。
+- `ClocktowerGameSession.commitConfirmedGameAction` 在无副作用的纯事实预检后，允许同时预检一个实际公开 `EpistemicObservationDraft`；一次 Session `updateState` 写入 `GameState`、`gameStateRevision`、行动记录、观察记录、`playerInputRevision` 与统一 global sequence。重复相同动作和同一观察不新增记录；冲突/过时请求不能半写入。
+- 新的窄边界 `commitConfirmedPlayerDeath` 在 **变更 alive/poisoned 前** 由 Session 捕获 Klutz 死亡证据；死亡和处决均由该真实规则确认入口持久化，UI `PlayerCard` 仅反映已经确认死亡的结果。公开存活状态 `AliveAt(seat,false)` 对应的 typed observation 与 action 同事务提交，并继续在 Session 成功后向 `A4ObservationDurabilityGate` 提交 pending 记录，保证保存后观察缓存可重新构建（明确已有观察记录的无变更恢复分支暂保留）。
+- **迁移并删除** `synchronizePlayerDeathWithinCurrentRevision`（所有生产和测试消费者均已迁移）及 `addClocktowerEvent` 通过 PlayerCard、标题/事件类型反向生成死亡行动事实和公开观察的旧逻辑，移除其 `projectSemanticHistory` 形参。删除 Slayer 命中、Virgin 处决、正式白天处决中被 Session 单次提交替代的独立 revision 前置推进；无处决/未命中的独立步骤继续存在。
+- 保留现役静态规则、Klutz/Spy 因果取证、真实 NGJ 流程与必要归档合同测试；死亡测试迁到一次确认、事实+公开观察 chronology、重复安全、被拒绝状态不变以及 Klutz 中毒前证据。Dawn planner 原来可补写历史的独立状态/事实标志尚有角色变化和 Recovery 消费，留待 A1 后续和 A5 精简，不声称已消除全局恢复双轨。
+- **A1 仍 PARTIAL**：真实角色变更、Dawn 毒延续、阶段推进、无处决/票数以及各能力展示的事实和 revision 写入仍分散；UI/PlayerCard 第二权威属 A3，未开始 A2。不拿旧 HEAD CI/R2 当新批验收证据。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。
