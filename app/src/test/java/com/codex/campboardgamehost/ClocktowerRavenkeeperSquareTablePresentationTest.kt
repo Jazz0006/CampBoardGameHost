@@ -72,6 +72,33 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
     }
 
     @Test
+    fun `unresolved Spy or Recluse registration keeps all typed Ravenkeeper role choices`() {
+        val legal = listOf(option(seat = 5, role = "Spy"),
+            option(seat = 5, role = "Washerwoman"))
+        val pending = ravenkeeperStep().copy(displayProposition = null,
+            displayPrimary = null)
+        val choices = clocktowerRavenkeeperResultChoices(
+            step = pending, selectedSeat = 5, seatCount = 7,
+            allowRuleDeterminedAutoUi = false,
+            automaticDisplayOption = null,
+            resultFirstRegistrationCandidates = legal,
+        )
+        assertEquals(setOf("Spy", "Washerwoman"), choices.map { it.roleId?.value }.toSet())
+        assertTrue(choices.all { it.targetSeat == 5 && it.sourceKind ==
+            ClocktowerRavenkeeperResultSourceKind.DisplayOption })
+        assertTrue(clocktowerRavenkeeperResultChoices(
+            step = pending, selectedSeat = 5, seatCount = 7,
+            allowRuleDeterminedAutoUi = false, automaticDisplayOption = null,
+            resultFirstRegistrationCandidates = emptyList(),
+        ).isEmpty())
+        assertTrue(clocktowerRavenkeeperResultChoices(
+            step = pending, selectedSeat = 5, seatCount = 7,
+            allowRuleDeterminedAutoUi = false, automaticDisplayOption = null,
+            resultFirstRegistrationCandidates = legal + option(seat = 6, role = "Imp"),
+        ).isEmpty())
+    }
+
+    @Test
     fun `candidate for a different target fails closed instead of changing target ownership`() {
         val choices = clocktowerRavenkeeperResultChoices(
             step = ravenkeeperStep(),

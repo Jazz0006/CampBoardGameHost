@@ -1894,25 +1894,9 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerPlayerDisplayCardLocalized(
             step = displayStep,
             cards = cards,
-            onDismiss = {
-                playerDisplayStep = null
-                val current = nightSteps.getOrNull(nightStepIndex)
-                val actorSeat = displayStep.actor?.let { actor ->
-                    cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
-                }
-                if (globalAiAutomatic && phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
-                    current?.isRealAction == true && current.actor?.name == displayStep.actor?.name &&
-                    current.roleEnName != null && current.roleEnName == displayStep.roleEnName &&
-                    actorSeat != null && actualInformationHistory.any { observed ->
-                        observed.phase == phase.toStorytellerPhase() && observed.round == round &&
-                            observed.sourceSeat == actorSeat &&
-                            observed.sourceAbility?.value == current.roleEnName &&
-                            observed.visibility == com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PRIVATE
-                    }
-                ) {
-                    pendingAutoAdvanceAfterDisplay = nightStepIndex to current.interactionId.toString()
-                }
-            },
+            // The current reveal's publication callback owns the one-shot
+            // advance token. Dismissing an older/reopened reveal cannot create it.
+            onDismiss = { playerDisplayStep = null },
             confirmedGrimoireSeats = confirmedGrimoireSeats,
             redHerringSeat = confirmedRedHerringSeat,
             protectedSeat = nightCheckpoint.confirmedMonkTarget
@@ -2684,8 +2668,11 @@ internal fun ClocktowerJudgeScreen(
             }
         }
 
-        LaunchedEffect(pendingAutoAdvanceAfterDisplay, currentStepIndex, currentStep.interactionId) {
+        LaunchedEffect(pendingAutoAdvanceAfterDisplay, playerDisplayStep,
+            currentStepIndex, currentStep.interactionId) {
             val pending = pendingAutoAdvanceAfterDisplay ?: return@LaunchedEffect
+            // Never advance while the player is still viewing private information.
+            if (playerDisplayStep != null) return@LaunchedEffect
             if (pending.first != currentStepIndex || pending.second != currentStep.interactionId.toString()) {
                 pendingAutoAdvanceAfterDisplay = null
                 return@LaunchedEffect
@@ -2911,6 +2898,20 @@ internal fun ClocktowerJudgeScreen(
                     )
                 },
                 onShowPlayerDisplay = { displayStep ->
+                    // UI handoff token is fresh only for newly confirmed
+                    // information; a prior displayed observation is not a new turn.
+                    pendingAutoAdvanceAfterDisplay = null
+                    val displayActorSeat = displayStep.actor?.let { actor ->
+                        cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
+                    }
+                    val alreadyPublishedForThisActor = displayActorSeat != null &&
+                        actualInformationHistory.any { observation ->
+                            observation.phase == phase.toStorytellerPhase() &&
+                                observation.round == round &&
+                                observation.sourceSeat == displayActorSeat &&
+                                observation.sourceAbility?.value == displayStep.roleEnName &&
+                                observation.visibility == ObservationVisibility.PRIVATE
+                        }
                     try {
                     com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
                         .revealStage("CLICKED", phase.toStorytellerPhase().name, round)
@@ -3046,6 +3047,18 @@ internal fun ClocktowerJudgeScreen(
                         // The Host still requires the exact already-stored most recent observation.
                         if (handoff.openReveal && !handoff.recordPublication) {
                             commitVerifiedRegistration()
+                        }
+                        if (clocktowerShouldAutoAdvanceAfterFreshReveal(
+                                automaticMode = globalAiAutomatic,
+                                phase = phase,
+                                currentStep = currentStep,
+                                revealedStep = displayStep,
+                                actorSeat = displayActorSeat,
+                                alreadyPublished = alreadyPublishedForThisActor,
+                                handoff = handoff,
+                            )) {
+                            pendingAutoAdvanceAfterDisplay =
+                                currentStepIndex to currentStep.interactionId.toString()
                         }
                         if (!handoff.openReveal && !unreliableInformationCanBeRecorded(displayStep)) {
                             Toast.makeText(

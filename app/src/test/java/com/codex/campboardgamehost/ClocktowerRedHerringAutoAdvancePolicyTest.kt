@@ -265,6 +265,36 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
     }
 
     @Test
+    fun `automatic night advance requires a newly committed current player reveal`() {
+        val actor = PlayerCard("P2", Role.Civilian, "")
+        val step = ClocktowerNightStepUi(
+            title = "Ravenkeeper", actor = actor, isRealAction = true,
+            reason = "", storytellerAction = "", tellPlayer = null,
+            explanation = "", roleEnName = "Ravenkeeper",
+            action = ClocktowerNightAction.Ravenkeeper,
+        )
+        fun allowed(
+            mode: Boolean = true,
+            current: ClocktowerNightStepUi = step,
+            shown: ClocktowerNightStepUi = step,
+            alreadyPublished: Boolean = false,
+            handoff: ClocktowerPlayerRevealHandoff = ClocktowerPlayerRevealHandoff(true, true),
+        ) = clocktowerShouldAutoAdvanceAfterFreshReveal(
+            automaticMode = mode, phase = ClocktowerPhase.Night,
+            currentStep = current, revealedStep = shown, actorSeat = 2,
+            alreadyPublished = alreadyPublished, handoff = handoff,
+        )
+        assertTrue(allowed())
+        assertFalse(allowed(mode = false))
+        assertFalse(allowed(alreadyPublished = true))
+        assertFalse(allowed(handoff = ClocktowerPlayerRevealHandoff(true, false)))
+        assertFalse(allowed(handoff = ClocktowerPlayerRevealHandoff(false, false)))
+        assertFalse(allowed(current = step.copy(actor = PlayerCard("P3", Role.Civilian, ""))))
+        assertFalse(allowed(current = step.copy(roleEnName = "Undertaker")))
+        assertFalse(allowed(current = step.copy(isRealAction = false)))
+    }
+
+    @Test
     fun `stale prior step AI error or busy never blocks a current Host-determined result`() {
         assertFalse(clocktowerCurrentAiRequestBlocked(
             currentKey = "round2-ft-1-3", adviceKey = "round1-chef",
