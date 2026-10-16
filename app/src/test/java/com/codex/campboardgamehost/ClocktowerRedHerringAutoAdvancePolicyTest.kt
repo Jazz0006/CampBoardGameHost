@@ -257,10 +257,10 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         assertTrue(eligible(inputReady = true, legalResultReady = true,
             observations = listOf(published.copy(round = 1))))
         for (action in listOf(ClocktowerNightAction.Chambermaid, ClocktowerNightAction.Ravenkeeper)) {
-            assertFalse(eligible(inputReady = true, legalResultReady = true, action = action,
-                observations = listOf(published.copy(
-                    sourceAbility = RoleId(if (action == ClocktowerNightAction.Chambermaid)
-                        "Chambermaid" else "Ravenkeeper"))))
+            val roleName = if (action == ClocktowerNightAction.Chambermaid) "Chambermaid" else "Ravenkeeper"
+            val alreadyReceived = listOf(published.copy(sourceAbility = RoleId(roleName)))
+            assertFalse(eligible(inputReady = true, legalResultReady = true,
+                action = action, observations = alreadyReceived))
         }
     }
 
