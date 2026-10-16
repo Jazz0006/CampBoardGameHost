@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryEntryV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryPrefixV1
@@ -20,6 +21,7 @@ internal object StorytellerGlobalEventProjectionV1 {
     fun encode(
         prefix: StorytellerProviderHistoryPrefixV1,
         fromGlobalSequence: Long = 0L,
+        confirmedGameState: GameState? = null,
     ): JSONArray {
         require(fromGlobalSequence >= 0L &&
             fromGlobalSequence <= requireNotNull(prefix.exclusiveGlobalSequence))
@@ -34,6 +36,19 @@ internal object StorytellerGlobalEventProjectionV1 {
             }
 
         return JSONArray().also { result ->
+            // Drunk is selected only when the Host accepts the setup, not when AI
+            // recommends a candidate. The accepted Session role is the authority.
+            // A first-night log event is derived from that confirmed truth instead
+            // of persisting the same role a second time.
+            if (fromGlobalSequence == 0L) {
+                confirmedGameState?.players?.singleOrNull {
+                    it.actualRole.value.equals("drunk", ignoreCase = true)
+                }?.let { player ->
+                    result.put(JSONObject().put("type", "drunk_selected")
+                        .put("period", "N1").put("seat", player.seat)
+                        .put("shownRole", (player.shownRole ?: player.actualRole).value))
+                }
+            }
             all.asSequence()
                 .filter { it.point.globalSequence >= fromGlobalSequence }
                 .forEach { entry ->

@@ -209,7 +209,7 @@ class StorytellerStrategicContinuationV2Test {
         game.commitGlobalEpistemicObservation(EpistemicObservationDraft(
             recordId = "public-death", phase = StorytellerPhase.DAY, round = 1, sequence = 6,
             sourceSeat = null, sourceAbility = null,
-            visibility = ObservationVisibility.PUBLIC, recipientSeats = (1..8).toSet(),
+            visibility = ObservationVisibility.PUBLIC, recipientSeats = emptySet(),
             reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
             proposition = InformationProposition.AliveAt(7, false)))
 
@@ -226,6 +226,29 @@ class StorytellerStrategicContinuationV2Test {
         assertFalse(request.toString().contains("death-from-execution"))
         assertFalse(request.toString().contains("entryId"))
         assertFalse(request.toString().contains("localSequence"))
+    }
+
+    @Test fun drunkSelectionIsLoggedFromConfirmedHostRoleNotProposedOpening() {
+        val game = session()
+        game.updateGameState(game.state.gameState.copy(players =
+            game.state.gameState.players.map { player ->
+                if (player.seat == 2) {
+                    player.copy(actualRole = RoleId("Drunk"),
+                        actualType = CharacterType.OUTSIDER,
+                        shownRole = RoleId("Empath"))
+                } else player
+            }))
+        // The model's prior opening did NOT select seat 2 as Drunk;
+        // only the Host-confirmed Session determines the actual log entry.
+        val request = JSONObject(StorytellerStrategicContinuationV2.encode(
+            game.state, prior(), open))
+        val log = request.getJSONArray("gameLogDelta")
+        assertEquals(1, log.length())
+        assertEquals("drunk_selected", log.getJSONObject(0).getString("type"))
+        assertEquals(2, log.getJSONObject(0).getInt("seat"))
+        assertEquals("Empath", log.getJSONObject(0).getString("shownRole"))
+        assertEquals("N1", log.getJSONObject(0).getString("period"))
+        assertFalse(request.has("priorOpening"))
     }
 
     @Test fun latestAcceptedMemoryContinuesAcrossMultipleActualRevisions() {

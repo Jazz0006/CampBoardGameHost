@@ -153,7 +153,7 @@ internal object StorytellerStrategicContinuationV2 {
 你是同一局血染钟楼的资深 AI 说书人，现在继续先前整局、多夜的战略，而不是重新从零挑一条线索。
 首先阅读最新实际/展示角色、状态、玩家水平、已记录声明及 gameLogDelta 精简游戏记录。连续会话中它是自上次接受回复后的新增事实；当没有保留的上次会话时，它包含本局全部精简记录以避免遗漏。
 历史覆盖是局部的：没有记录的行动、声明、登记或观测必须视为未知。声明不等于事实。
-gameLogDelta 按夜/天标记，仅包含有意义的正式动作及实际玩家获得的信息；没有出现的内部阶段、清毒延续或重复死亡记录不是新的线索。不要从缺失记录推断未发生的行动，也不能把登记歧义升级成唯一真实登记。
+gameLogDelta 按夜/天标记，仅包含有意义的正式动作及实际玩家获得的信息；酒鬼选定来自 Host 最终确认的角色而不是 AI 推荐。玩家公开声明仅是玩家发言，不代表真实身份。没有出现的内部阶段、清毒延续或重复死亡记录不是新的线索。不要从缺失记录推断未发生的行动，也不能把登记歧义升级成唯一真实登记。
 priorStrategyMemory 仅为以前的可错战略假说，优先相信已确认 Host 事实。
 从跨角色关系、善恶压力、可推理的多个世界、各夜可能的发展与玩家水平看整局；适用于所有角色。
 逐一对 priorStrategyMemory.intentions 作 KEEP / REVISE / RETIRE，并简述真实的变化理由。
@@ -225,9 +225,6 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
                     }
                 }))
             .put("priorStrategyMemory", memory.toJson())
-            .put("priorOpening", JSONObject()
-                .put("drunkSeat", prior.selection.drunkSeat ?: JSONObject.NULL)
-                .put("adoptedOpeningCandidateCount", prior.selection.choices.size))
             .put("currentDecision", JSONObject()
                 .put("decisionId", currentDecision.decisionId)
                 .put("family", currentDecision.family)
@@ -235,7 +232,7 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
                 .put("abilityRoleId", currentDecision.abilityRoleId ?: JSONObject.NULL)
                 .put("decisionContext", contextMeaning(currentDecision.currentDecisionContext)))
             .put("gameLogDelta", StorytellerGlobalEventProjectionV1.encode(
-                prefix, historyFromGlobalSequence))
+                prefix, historyFromGlobalSequence, session.gameState))
             .put("noUnobservedFutureFactMayBeAssumed", true)
             .toString()
     }

@@ -129,6 +129,13 @@
 - Demon succession: final actual new Demon role is what AI should know; draft/confirmation are workflow until applied, not distinct permanent strategy facts. Artist AI free-form question/answer is a later feature with user input and Host controls; it must not keep A1 open. Keep existing manual behavior until replaced. Close A1 after genuine ownerless revision/interface cleanup, then A2→A6 as approved.
 - This section is an updated product decision overriding older handoff paragraphs that say Artist is required to finish A1. Historical implementation notes remain factual records, not active scope.
 
+## 2026-10-16 minimal log correction — confirmed Drunk and public claims, not recommendation provenance
+
+- Product requirement: game history means **what actually happened**, not the AI recommendation source. A manual override that produces Empath information 1 must be logged identically to an automatically accepted Empath 1. The game log has no AI-vs-human provenance field.
+- A first-night Drunk choice is a **confirmed event** even if proposed earlier by AI; the model cannot assume its original Drunk suggestion was accepted. In the current production start flow the final Drunk seat is part of the committed GameState. Build the log entry from that accepted Session truth, never from `prior.selection.drunkSeat` and never by duplicating role authority.
+- The Storyteller can manually enter a player's **publicly claimed role**, such as "seat 3 publicly claimed Fortune Teller" on Day 2. This belongs in the chronological game log as a *claim*, never a role change or true alignment. A4 must connect a minimum confirmed entry UI and AI/archive projection; later P3 can add richer claim-management logic.
+- First compact AI delta slice `4d04aac8767122659addb1052798791dc96e19cc` was **not CI green**: CI #4221 Android test failed only in new `sendsOnlyDeltaAndOmitsTechnicalCarryPhaseAndDuplicateDeath` test, because a PUBLIC observation draft incorrectly supplied 1..8 recipientSeats; the existing contract requires the empty recipient set for PUBLIC. Correct the test, verify exact SHA again, and do not claim this failure is resolved until new CI. PR #315 stays Draft/conflicted. Next A1 cleanup remains successor/revision work; do not confuse this interim A4 delta fix with completion of A1 or A4.
+
 ## Historical first implementation brief: A1
 
 1. Read AGENTS.md, [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md), [ARCH-CLEANUP-1 evidence](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md), this handoff, roadmap and testing policy. Verify live SHA / worktree / #315 / main / checks.
