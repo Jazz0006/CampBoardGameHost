@@ -330,6 +330,39 @@ class StorytellerRegistrationRulingProducerV1Test {
     }
 
     @Test
+    fun `runtime external spy and recluse IDs validate explicit special registrations atomically`() {
+        val game = session()
+        val special = chefPublication(
+            RegistrationResolutionStatusV1.EXPLICIT_SPECIAL,
+            RegistrationResolutionStatusV1.EXPLICIT_SPECIAL,
+        )
+        val record = game.commitConfirmedPrivateInformationPublication(
+            draft = chefUncommittedDraft(),
+            registration = special,
+            registrationSnapshot = externalIdSnapshot(game),
+            legalRoles = roles,
+        )
+        assertEquals("chef-one", record.recordId)
+        val registrations = game.causalDecisionJournal.effectiveNow()
+            .flatMap { it.registrations }
+        assertEquals(2, registrations.size)
+        assertEquals(
+            mapOf(2 to Alignment.GOOD, 4 to Alignment.EVIL),
+            registrations.associate { it.subjectSeat to it.registeredAlignment },
+        )
+        assertEquals(1L, game.state.playerInputRevision)
+        assertEquals(1L, game.state.nextTimelineGlobalSequence)
+        val acceptedJournal = game.causalDecisionJournal.archive()
+        assertEquals(record, game.commitConfirmedPrivateInformationPublication(
+            draft = chefUncommittedDraft(),
+            registration = special,
+            registrationSnapshot = externalIdSnapshot(game),
+            legalRoles = roles,
+        ))
+        assertEquals(acceptedJournal, game.causalDecisionJournal.archive())
+    }
+
+    @Test
     fun `real Host writer idempotently confirms and corrects same observed result then recovers`() {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)

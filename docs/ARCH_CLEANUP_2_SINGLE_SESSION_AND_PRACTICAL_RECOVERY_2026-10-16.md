@@ -123,6 +123,7 @@
 - **贤者的两座位线索**：候选/直接展示现在附带 `AnyOf(RoleAt(seatA, 当前恶魔角色 ID), RoleAt(seatB, 同角色 ID))` 的准确玩家所见命题；可靠与不可靠的不同配对按同一真实展示语义记录，不以“是否真实”替代“告诉玩家什么”。
 - 合同测试：新增 Session 首次观察+两项登记合法确认、重复幂等、非法完整 witness 导致全部拒绝；角色选项显示身份覆盖真实锚点、冲突座位失败；修正贤者原来要求“不许有结构化命题”的过时测试，并采用真正的 Imp 测试阵容。
 - **纠正真实 APP 与测试快照之间的集成差异**：TB runtime projector 的 `position.playerInputRevision` 是公布前版本，且 `grimoireSeats` 使用注册表合法的 external role ID（如 `chef`、`fortuneteller`）；Session 在临时裁定预演中生成*同一观察提交后 revision* 的快照，不改变原外部角色 ID；既有 `StorytellerDecisionPrefixCaptureV1` 的角色一致性校验现支持该 external ID 与 Session `RoleId`（如 `Chef`、`Fortune Teller`）的大小写/分隔符规范等价，同时仍拒绝不同角色。新测试从真实 external-ID 格式的公布前快照出发验证成功、重复与拒绝，不能依赖仅使用内部命名的夹具通过。
+- **独立只读审阅后修正**：对 `cc1ee7d1135760bb09b02e8fc47352b2d971c2fb` 的源码审阅发现，`StorytellerRegistrationRulingProducerV1.validateCommitted` 对注册主体仅匹配 `"Spy"`/`"Recluse"`，而合法 TB 快照是 `"spy"`/`"recluse"`；原先只有 `UNRESOLVED` 测试没有触发。已在注册事实验证阶段使用与 frozen role 校验一致的正规化 ID 判定，并加入 **Spy 和 Recluse 同时显式特殊登记、外部 ID、重复提交无改写** 的实义回归。只读审阅未发现确定 Kotlin 编译错误，但无 SDK 仍不能声称编译通过。
 - **边界/剩余工作**：事务是一次同步 Session 接受操作，不是磁盘持久化原子事务；未被选为结构化 role/pair 的遗留无元数据展示仍应 fail-closed；NGJ 其他非数字线索/公开信息、旧 callback 的独立 revision、完整 Recovery 双轨尚待最后 A1/A4 审计。原 `ClocktowerConfirmedRegistrationHostWriterV1` 仍服务于**已经公布后的显式更正**，不得盲删。尚未运行 Android 构建/JUnit：开发机无 SDK35，GitHub 新 HEAD CI/R2 未提供独立证据。A1 仍 PARTIAL，A2–A6 未开始；不合并 main、不执行付费模型请求。
 
 ### A2 — 取消所有整包采纳
