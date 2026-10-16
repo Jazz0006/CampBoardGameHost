@@ -133,6 +133,25 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
     }
 
     @Test
+    fun `poisoned Chambermaid keeps exact Host legal numbers for selected targets`() {
+        val metric = NumericMetric.PLAYERS_WAKING_FOR_ABILITY
+        val subjects = listOf(1, 8)
+        val options = (0..2).map { value ->
+            candidate(value, metric, 4, subjects, "host-$value")
+        }
+        val chambermaid = step(4, "Chambermaid", InformationProposition.NumericResult(
+            metric, 4, subjects, 1,
+        ), reliability = InformationReliability.POISONED).copy(
+            action = ClocktowerNightAction.Chambermaid,
+            automaticInformationCandidates = options,
+        )
+        val pending = requireNotNull(build(chambermaid, phase = ClocktowerPhase.Night))
+        assertEquals(setOf("0", "1", "2"), values(pending))
+        assertEquals(subjects, pending.subjectSeats)
+        assertEquals(3, pending.legalCandidates.size)
+    }
+
+    @Test
     fun `Fortune Teller requires completed exact player pair before exposing truth domain`() {
         val ft = step(3, "Fortune Teller", InformationProposition.BooleanResult(
             BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, 3, listOf(1, 8), true,

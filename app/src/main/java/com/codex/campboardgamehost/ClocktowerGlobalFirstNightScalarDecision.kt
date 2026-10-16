@@ -88,7 +88,14 @@ internal fun pendingGlobalNightScalarDecision(
             subjects = proposition.subjectSeats
             // The Host's result-first domain expresses legal observable results without
             // committing a particular Spy/Recluse registration witness.
-            val manual = step.manualInformationCandidates
+            // Reuse the Host's complete typed domain before constructing a
+            // synthetic scalar foundation pool. This matters for unreliable
+            // target-dependent numbers (for example Chambermaid): the true
+            // value alone is not the full legal result set.
+            val hostOptions = step.manualInformationCandidates.ifEmpty {
+                step.automaticInformationCandidates
+            }
+            val manual = hostOptions
                 .mapNotNull { option ->
                     val value = option.proposition as? InformationProposition.NumericResult
                     value?.takeIf {
