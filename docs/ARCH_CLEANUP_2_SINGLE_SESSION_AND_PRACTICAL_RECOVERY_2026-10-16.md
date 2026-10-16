@@ -136,6 +136,13 @@
 - `ClocktowerGameSession.commitGlobalActionFact(draft)` 实例 fact-only 生产入口无正式生产消费者，但仍被多个真实历史/恢复合同测试直接使用。删除前应把这些测试迁到具有明确 Session 接受语义的测试 fixture/新接口（并保留因果/历史合同），不能在缺 Android 构建时批量把测试改成会自动推进游戏版本的不同语义。静态 companion 函数仍是 `commitConfirmedGameAction` 等 Session 事务内部的纯转换器，**不是同一类废弃接口**。
 - 增加定向策略测试覆盖 Global“已有接受事实只记一次”、未迁移 RoleAction 仍有 revision 及 Legacy 语义；保留原 NightCheckpointHostTransaction 行为测试。开发机无 Android SDK 35，且 `:app:testFast` 不在 Mini MCP 允许列表，尚无实际 Android/JUnit 编译/测试结果。A1 仍 PARTIAL；接下来应先取得具 SDK 的独立编译证据并针对现有九/十批累计改动修复，再决定是否转入 A1 余下真实决策提交。不得提前宣称 A1 完成。
 
+### A1 GitHub CI 全量编译/测试验收证据（2026-10-16）
+
+- PR #315 为 Draft 且存在对 main 的 merge conflict；已有 `pull_request` CI 因而未产生新的执行。当前 `.github/workflows/ci.yml` 与 `r2-write-probe.yml` 对 `cleanup/**` 分支启用 push 检查，不需合并 main 或调用付费 API。
+- [CI #4214](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38852123720) 运行于 `322be05b700a1427ca67baa9f43ed5d8137deb80`：ASP、Clingo、R2 成功，Android `compileDebugKotlin` 失败：`ClocktowerHostScreen.kt` 第 922、942 行在局部变量 `fortuneTellerSubjectSeats` 声明前引用。已把**原有唯一的座位列表声明**提前至实际公布回调之前，不另造数据源。
+- 经修复的准确**可执行代码**提交 `16f2413f33e2151e5676298162aae850bae52b10`：[CI #4215](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38852526023) Android `assembleDebug`、`testDebugUnitTest`、`testFull` 及 CI gate 全部 SUCCESS（`BUILD SUCCESSFUL`），ASP 合同和 Real Clingo 也 SUCCESS；[R2](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38852526096) SUCCESS。同一 source SHA 验证前十批 A1 的累计应用改动；不把后续纯文档 SHA 伪称再次编译过，也不把 CI 当作真机交互验收。
+- A1 仍 PARTIAL：市长转移、恶魔后继者、艺术家及剩余事实确认路径还需后续精简；A3/A4/A5 分别负责多份 UI 机械状态、全部信息补全和安全恢复，不扩大 A1 范围。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。

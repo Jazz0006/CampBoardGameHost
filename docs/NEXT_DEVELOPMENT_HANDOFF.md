@@ -1,6 +1,6 @@
 # CampBoardGameHost — Next Development Handoff
 
-> **Implementation handoff 2026-10-16; A1 first ten slices implemented, exact-head verification required.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
+> **Implementation handoff 2026-10-16; A1 first ten slices implemented, exact source HEAD Android GitHub CI/R2 GREEN.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
 
 ## Starting repository state (recheck live)
 
@@ -105,6 +105,14 @@
 - `ClocktowerEventRevisionPolicyTest` checks Global typed-fact narration doesn't double-count, Global unmigrated role actions still invalidate and LEGACY_LOCAL retains its behavior. No device/Gradle/JUnit run: developer machine missing Android SDK35; Mini MCP `:app:testFast` task not allow-listed.
 - **Remaining A1 writer hotspots**: actual Mayor redirect journal + mechanical revision, confirmed DemonSuccessor target revision, Artist substantive decision and less-common script/NGJ result paths. Legacy invalid-input/empty-action/quiet-night version fallbacks are intentionally kept pending next owner. Instance `ClocktowerGameSession.commitGlobalActionFact` is unused in production but still referenced by 30+ historical/Recovery tests, which encode fact-only revision semantics; do not delete or turn these fixture tests into mechanically different commits without migration and runnable Android coverage. Companion pure writer still participates in Session transactions. A3 owns PlayerCard/UI dual state, A5 owns recovery slim-down.
 - **Priority for next turn:** halt accumulating uncompiled broad patches; arrange N3150 or other SDK35-equipped exact-HEAD build and run targeted tests, fix real compile/behavior issues, then finish remaining A1 accepted-step owners. Keep PR #315 Draft, resolve main conflicts only with a clean integration plan later.
+
+## Exact-source GitHub CI verification and first failure repair (2026-10-16)
+
+- Trigger problem: PR #315 is Draft and `mergeable=false / dirty`, so `pull_request` workflows had **zero runs** for ten cumulative A1 batches. The connected GitHub tool has workflow-read/re-run but no workflow_dispatch ability. Existing `.github/workflows/ci.yml` and `r2-write-probe.yml` push branches now include `cleanup/**`, allowing actual HEAD validation without changing main, changing the Draft PR state or publishing the field-test APK.
+- Initial branch-trigger commit `322be05b700a1427ca67baa9f43ed5d8137deb80`: [full CI #4214](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38852123720) FAILED `:app:compileDebugKotlin`, exact errors `ClocktowerHostScreen.kt:922` and `:942` unresolved `fortuneTellerSubjectSeats`. R2, ASP, Real Clingo succeeded.
+- Fixed the real compile error **in place** at `16f2413f33e2151e5676298162aae850bae52b10`: moved the *existing* `fortuneTellerSelectedNames` and `fortuneTellerSubjectSeats` declarations above actual unreliable information preflight/record callbacks, rather than creating duplicate derivations, bypassing rules or changing shown values.
+- [GitHub CI #4215](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38852526023) for **exact source SHA `16f2413f33e2151e5676298162aae850bae52b10`**: Android tests SUCCESS including `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:testFull`, `BUILD SUCCESSFUL in 2m44s`; ASP contracts SUCCESS; Real Clingo SUCCESS; CI gate SUCCESS. [R2 run](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38852526096) SUCCESS for the same source SHA. No Android physical device scenario has been executed, do not overstate full-game acceptance.
+- This documentation-only follow-up must not be used as a substitute Android test SHA. Next task can continue remaining A1 confirmed-step ownership (Mayor, successor, Artist) with `16f2413f...` as the most recent **Android-verified executable code**. On later source changes require **new** exact-source CI. PR #315 remains Draft/unmerged/conflicted; no paid model API.
 
 ## Historical first implementation brief: A1
 
