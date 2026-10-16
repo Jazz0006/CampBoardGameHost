@@ -1,5 +1,9 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.ClocktowerConfirmedRegistrationPublicationV1
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
+import com.codex.campboardgamehost.clocktower.domain.SnapshotField
+import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.KlutzDeathTriggerEvidenceV1
@@ -16,6 +20,8 @@ import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
@@ -523,6 +529,71 @@ internal class ClocktowerGameSession private constructor(
             ),
         )
         return committed.record
+    }
+
+    /**
+     * Accept one actual private information publication, with every accompanying registration
+     * ruling, as one Session-owned synchronous boundary. Validate and apply to a throwaway
+     * Session/journal first; publish neither history nor rulings if any choice is illegal.
+     * This does not store a second GameState, and later explicit corrections remain separate.
+     */
+    fun commitConfirmedPrivateInformationPublication(
+        draft: EpistemicObservationDraft,
+        registration: ClocktowerConfirmedRegistrationPublicationV1? = null,
+        registrationSnapshot: TroubleBrewingGameSnapshotV1? = null,
+        legalRoles: List<RoleDefinition> = emptyList(),
+    ): RecordedEpistemicObservation {
+        val prepared = preflightGlobalEpistemicObservation(draft)
+        if (registration != null) {
+            require(draft.visibility == ObservationVisibility.PRIVATE &&
+                draft.reliability == ObservationReliability.RECEIVED_AS_FUNCTIONING &&
+                draft.sourceAbility != null
+            ) { "A confirmed registration requires a functioning private ability observation." }
+            require(registration.observationRecordId == draft.recordId &&
+                registration.shownProposition == draft.proposition &&
+                registration.sourceSeat == draft.sourceSeat
+            ) { "Registration must reference exactly the private result actually being published." }
+        }
+        val stagedState = state.copy(
+            playerInputRevision = prepared.playerInputRevision,
+            epistemicObservationLog = prepared.observationLog,
+            nextTimelineGlobalSequence = prepared.nextTimelineGlobalSequence,
+        )
+        val stagedJournal = if (registration == null) null else {
+            val snapshot = requireNotNull(registrationSnapshot) {
+                "Registration publication requires the rules-projected current snapshot."
+            }
+            // A restored journal is local to this transaction. The live journal is never
+            // mutated before every registration decision has passed Host legality.
+            val trial = ClocktowerGameSession(stagedState, defaultRulesetRef)
+            val trialJournal = StorytellerCausalDecisionJournalV1.restore(
+                causalDecisionJournal.archive(), stagedState,
+            )
+            trial.causalDecisionJournal = trialJournal
+            // The original runtime snapshot was taken before this very observation.
+            // The frozen ruling must refer to the newly accepted player-input revision.
+            val trialSnapshot = TroubleBrewingGameSnapshotV1(
+                gameId = snapshot.gameId,
+                gameSeed = snapshot.gameSeed,
+                position = snapshot.position.copy(
+                    gameStateRevision = SnapshotField.Known(stagedState.gameStateRevision),
+                    playerInputRevision = SnapshotField.Known(stagedState.playerInputRevision),
+                ),
+                grimoireSeats = snapshot.grimoireSeats,
+                setupState = snapshot.setupState,
+            )
+            ClocktowerConfirmedRegistrationHostWriterV1.commit(
+                publication = registration,
+                session = trial,
+                journal = trialJournal,
+                snapshot = trialSnapshot,
+                legalRoles = legalRoles,
+            )
+            trialJournal
+        }
+        updateState(stagedState)
+        if (stagedJournal != null) causalDecisionJournal = stagedJournal
+        return prepared.record
     }
 
     /** Records pre-cutover LegacyLocal information only; Global producers must use the draft API. */

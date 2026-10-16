@@ -73,7 +73,6 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.NoGreaterJoyKlutzHistoryProducerV1
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
-import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionBoundary
 import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfirmation
@@ -1022,22 +1021,42 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun commitConfirmedInformationDecision(confirmed: ConfirmedInformationDecision) {
+    fun commitClocktowerPrivateInformationPublication(
+        draft: EpistemicObservationDraft,
+        registration: ClocktowerConfirmedRegistrationPublicationV1?,
+    ) {
         if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) {
-            recordEpistemicObservation(confirmed.draft)
+            recordEpistemicObservation(draft)
             return
         }
         val session = requireClocktowerGameSession()
-        val beforeRevision = session.view.playerInputRevision
-        val committed = session.commitGlobalEpistemicObservation(confirmed.draft)
-        if (session.view.playerInputRevision == beforeRevision) return
+        val rulesetRef = clocktowerRulesetRef
+        val registrationSnapshot = registration?.let {
+            check(currentClocktowerScript == ClocktowerScript.TroubleBrewing)
+            TroubleBrewingGameSnapshotProjector.fromRuntime(
+                gameSnapshot = session.toGameSnapshot(requireNotNull(rulesetRef)),
+                phase = storytellerPhaseFor(clocktowerPhase),
+                round = round,
+                characterRegistry = activeGameClocktowerRulesetCatalog
+                    .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry,
+            )
+        }
+        val beforeRevision = session.state.playerInputRevision
+        val committed = session.commitConfirmedPrivateInformationPublication(
+            draft = draft,
+            registration = registration,
+            registrationSnapshot = registrationSnapshot,
+            legalRoles = if (registration == null) emptyList()
+                else clocktowerRoleDefinitionsForScript(currentClocktowerScript),
+        )
+        if (session.state.playerInputRevision == beforeRevision) return
         publishClocktowerSessionView()
         invalidateA4RevisionScope()
         a4ObservationDurabilityGate.markPending(committed.recordId)
         if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
             BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
                 strategicPolicyCursor?.version ?: 0,
-                confirmed.draft.phase.name, confirmed.draft.round)
+                draft.phase.name, draft.round)
         }
     }
 
@@ -3201,8 +3220,7 @@ internal fun CampBoardGameHostApp() {
                             }
                             addClocktowerEvent(type, title, detail, names)
                         },
-                        onRecordEpistemicObservation = ::recordEpistemicObservation,
-                        onCommitConfirmedInformationDecision = ::commitConfirmedInformationDecision,
+                        onCommitConfirmedPrivateInformationPublication = ::commitClocktowerPrivateInformationPublication,
                         onCommitConfirmedRegistrationResult = ::commitConfirmedRegistrationResult,
                         onPreflightConfirmedRegistrationResult = ::canCommitConfirmedRegistrationResult,
                         onHostTools = {

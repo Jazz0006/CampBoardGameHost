@@ -55,7 +55,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.Information
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
-import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
@@ -127,8 +126,9 @@ internal fun ClocktowerJudgeScreen(
     gameOutcome: GameOutcome?,
     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
-    onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
-    onCommitConfirmedInformationDecision: (ConfirmedInformationDecision) -> Unit,
+    onCommitConfirmedPrivateInformationPublication: (
+        EpistemicObservationDraft, ClocktowerConfirmedRegistrationPublicationV1?,
+    ) -> Unit,
     onCommitConfirmedRegistrationResult: (ClocktowerConfirmedRegistrationPublicationV1) -> Unit,
     onPreflightConfirmedRegistrationResult: (ClocktowerConfirmedRegistrationPublicationV1) -> Boolean,
     onHostTools: () -> Unit,
@@ -913,12 +913,15 @@ internal fun ClocktowerJudgeScreen(
             fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
         ) != null
     }
-    fun recordReliablePrivateInformation(displayStep: ClocktowerNightStepUi) {
+    fun recordReliablePrivateInformation(
+        displayStep: ClocktowerNightStepUi,
+        publication: ClocktowerConfirmedRegistrationPublicationV1?,
+    ) {
         val actor = displayStep.actor ?: return
         val actorSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return
         if (!informationDecisionPublicationAllowed(displayStep)) return
         displayStep.informationDecisionConfirmation?.let { confirmation ->
-            onCommitConfirmedInformationDecision(confirmation)
+            onCommitConfirmedPrivateInformationPublication(confirmation.draft, publication)
             return
         }
         val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
@@ -981,7 +984,7 @@ internal fun ClocktowerJudgeScreen(
             }
             else -> return
         }
-        onRecordEpistemicObservation(EpistemicObservationDraft(
+        onCommitConfirmedPrivateInformationPublication(EpistemicObservationDraft(
             recordId = clocktowerPrivateObservationRecordId(
                 gameId = gameId,
                 phase = phase,
@@ -1000,7 +1003,7 @@ internal fun ClocktowerJudgeScreen(
                 ObservationReliability.RECEIVED_AS_FUNCTIONING
             },
             proposition = proposition,
-        ))
+        ), publication)
     }
     val undertakerTarget = lastExecutedName?.let { name -> cards.firstOrNull { it.name == name } }
     val undertakerRegistrationKey = undertakerTarget?.takeIf { it.name == spyCard?.name }?.let { registrationKey("Undertaker", it.name) }
@@ -2914,10 +2917,9 @@ internal fun ClocktowerJudgeScreen(
                             },
                             publicationNeeded = { firstNightPublicationNeeded(displayStep) },
                             recordPrivateInformation = {
-                                recordReliablePrivateInformation(displayStep)
+                                recordReliablePrivateInformation(displayStep, publication)
                                 com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
                                     .revealStage("OBSERVATION_RECORDED", phase.toStorytellerPhase().name, round)
-                                commitVerifiedRegistration()
                             },
                             markFirstNightPublished = {
                                 check(publishFirstNightInformation(displayStep)) {

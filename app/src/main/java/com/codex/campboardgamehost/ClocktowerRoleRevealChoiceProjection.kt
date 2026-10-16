@@ -30,9 +30,9 @@ internal fun clocktowerRoleRevealAnchor(
 }
 
 /**
- * Preserve an existing display option as an opaque choice. A typed RoleAt, when present, must agree
- * with the anchored target; a null proposition is valid for unreliable information and is never
- * reconstructed from localized display text.
+ * A typed RoleAt, when present, must agree with the anchored target. A missing proposition
+ * may use the exact role ID deliberately attached to the selected option as presentation
+ * metadata; a bare localized label is never enough to invent an observed role.
  */
 internal fun clocktowerRoleRevealChoiceProjection(
     option: ClocktowerDisplayOption,
@@ -46,10 +46,12 @@ internal fun clocktowerRoleRevealChoiceProjection(
         else -> return null
     }
     if (roleAt != null && (roleAt.seat != targetSeat || roleAt.seat !in 1..seatCount)) return null
+    val metadataRole = option.presentationRoleId?.let(::RoleId)
+    if (roleAt != null && metadataRole != null && roleAt.role != metadataRole) return null
     val displayLabel = option.displayPrimary?.takeIf { it.isNotBlank() } ?: return null
     return ClocktowerRoleRevealChoiceProjection(
         targetSeat = targetSeat,
-        roleId = roleAt?.role,
+        roleId = roleAt?.role ?: metadataRole,
         displayLabel = displayLabel,
     )
 }

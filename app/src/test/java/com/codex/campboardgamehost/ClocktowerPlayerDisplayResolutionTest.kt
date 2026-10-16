@@ -58,6 +58,36 @@ class ClocktowerPlayerDisplayResolutionTest {
     }
 
     @Test
+    fun `selected unreliable role metadata overrides the truthful step anchor`() {
+        val selected = ClocktowerDisplayOption(
+            label = "alternate appearance",
+            displayKind = ClocktowerDisplayKind.RoleReveal,
+            displayTitle = "Ravenkeeper",
+            displayPrimary = "小恶魔",
+            displaySecondary = null,
+            displayFooter = null,
+            presentationSubjectSeats = listOf(5),
+            presentationRoleId = "Imp",
+            proposition = null,
+        )
+        val truthful = InformationProposition.RoleAt(5, RoleId("Chef"))
+        val resolved = resolveClocktowerLegacyUnreliablePlayerDisplay(
+            unresolvedStep(selected).copy(
+                roleEnName = "Ravenkeeper",
+                displayProposition = truthful,
+            ),
+            selected,
+        )
+        assertEquals("小恶魔", resolved.displayPrimary)
+        assertEquals(InformationProposition.RoleAt(5, RoleId("Imp")), resolved.displayProposition)
+        // A conflicting explicitly selected target never silently inherits the truthful anchor.
+        assertNull(resolveClocktowerLegacyUnreliablePlayerDisplay(
+            unresolvedStep(selected).copy(displayProposition = truthful),
+            selected.copy(presentationSubjectSeats = listOf(4)),
+        ).displayProposition)
+    }
+
+    @Test
     fun `numeric result uses confirmed value and authority instead of template semantics`() {
         val model = numericModel()
         val choice = model.choices.single { it.value == 2 }

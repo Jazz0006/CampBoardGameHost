@@ -114,6 +114,17 @@
 - **仍有真实边界**：当前 `FirstNightInformationMigration` 是易失的 UI displayed-ID gate，而非 Session 单步事务；`ClocktowerConfirmedRegistrationHostWriterV1` 仍追加 Session-owned journal 但与观察不是同一个事务；历史 `recordHistory` 仍是显示投影；未列举的可靠/NGJ 非数值信息的缺命题情况仍需审计。此次改变的是失败发生时的写入顺序和失效保护，**不宣称整个观察+裁定+UI 展示已实现数据库级原子性**。A1 仍 PARTIAL、PR 不合并，A2–A6 未开始。
 - Android SDK 35 在开发机缺失，`:app:testFast` 不是 Mini MCP allowlisted task；后续必须由 SDK 可用的安卓构建机或精确 HEAD GitHub CI/R2 证明编译和实际流程。
 
+### A1 第九批：首次观察 + 登记裁定的 Session 确认及角色信息命题（2026-10-16；待独立编译验收）
+
+- 本批从经 Mini MCP 核实的 `e235ac75818b66b7cde5ccc43b39420adeea0421` 开始，开发机工作树 clean、origin 相同；PR #315 Draft，对 main 仍有冲突、没有当前源码的 Android CI/R2。
+- **正式首次信息公布单一写入入口**：原 `ClocktowerHostScreen` 同时持有 `onRecordEpistemicObservation` 和 `onCommitConfirmedInformationDecision`，再另调用 `onCommitConfirmedRegistrationResult` 写特殊登记；现用统一的 `onCommitConfirmedPrivateInformationPublication(draft, publication?)`。删除原两个 UI 参数、旧 `commitConfirmedInformationDecision` 生产函数和原先“先写观察、后另行提交登记”的首次公布调用链。已公布后再次主动修改特殊登记仍是合法的**独立纠正动作**，继续使用现有 Host writer。
+- **Session 接受前整体预演**：新增 `ClocktowerGameSession.commitConfirmedPrivateInformationPublication`，对实际观察先进行不变式 preflight，检查登记引用的观察 ID、来源、内容、私有及能力可靠性；在仅用于检验的临时 Session 状态及从现有因果记录恢复的临时 journal 上调用**既有** `ClocktowerConfirmedRegistrationHostWriterV1` 的完整合法候选/witness 与规则检查。只有完整成功后，才一次性更新正式 Session 观察、playerInputRevision、全局游标和 Session-owned journal；任何登记裁定冲突都不会留下半条正式观察或不完整裁定。未引入持续存在的并行 GameState、第二 EventStore 或新的注册裁定算法。
+- **角色信息按玩家实际看到的身份写入**：`ClocktowerPlayerDisplayResolution.withDisplayOption` 对已明确选中的角色揭示，使用该候选元数据 `presentationRoleId` 和目标座位构造 `RoleAt`；座位与之前锚点冲突时拒绝，不把原本真实身份偷偷写成展示身份。更新 Ravenkeeper/Undertaker 选项投影与送葬者展示结果：保留已选 `RoleId`，不解析本地化角色文本，不把空命题视为已记录。
+- **贤者的两座位线索**：候选/直接展示现在附带 `AnyOf(RoleAt(seatA, 当前恶魔角色 ID), RoleAt(seatB, 同角色 ID))` 的准确玩家所见命题；可靠与不可靠的不同配对按同一真实展示语义记录，不以“是否真实”替代“告诉玩家什么”。
+- 合同测试：新增 Session 首次观察+两项登记合法确认、重复幂等、非法完整 witness 导致全部拒绝；角色选项显示身份覆盖真实锚点、冲突座位失败；修正贤者原来要求“不许有结构化命题”的过时测试，并采用真正的 Imp 测试阵容。
+- **纠正真实 APP 与测试快照之间的集成差异**：TB runtime projector 的 `position.playerInputRevision` 是公布前版本，且 `grimoireSeats` 使用注册表合法的 external role ID（如 `chef`、`fortuneteller`）；Session 在临时裁定预演中生成*同一观察提交后 revision* 的快照，不改变原外部角色 ID；既有 `StorytellerDecisionPrefixCaptureV1` 的角色一致性校验现支持该 external ID 与 Session `RoleId`（如 `Chef`、`Fortune Teller`）的大小写/分隔符规范等价，同时仍拒绝不同角色。新测试从真实 external-ID 格式的公布前快照出发验证成功、重复与拒绝，不能依赖仅使用内部命名的夹具通过。
+- **边界/剩余工作**：事务是一次同步 Session 接受操作，不是磁盘持久化原子事务；未被选为结构化 role/pair 的遗留无元数据展示仍应 fail-closed；NGJ 其他非数字线索/公开信息、旧 callback 的独立 revision、完整 Recovery 双轨尚待最后 A1/A4 审计。原 `ClocktowerConfirmedRegistrationHostWriterV1` 仍服务于**已经公布后的显式更正**，不得盲删。尚未运行 Android 构建/JUnit：开发机无 SDK35，GitHub 新 HEAD CI/R2 未提供独立证据。A1 仍 PARTIAL，A2–A6 未开始；不合并 main、不执行付费模型请求。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。

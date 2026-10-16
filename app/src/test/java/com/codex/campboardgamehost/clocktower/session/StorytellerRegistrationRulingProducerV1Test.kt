@@ -245,6 +245,90 @@ class StorytellerRegistrationRulingProducerV1Test {
         ),
     )
 
+    private fun externalIdSnapshot(session: ClocktowerGameSession): TroubleBrewingGameSnapshotV1 {
+        val original = snapshot(session)
+        return TroubleBrewingGameSnapshotV1(
+            gameId = original.gameId,
+            gameSeed = original.gameSeed,
+            position = original.position,
+            grimoireSeats = original.grimoireSeats.map { seat ->
+                seat.copy(
+                    actualRoleId = SnapshotField.Known(
+                        (seat.actualRoleId as SnapshotField.Known<String>).value.lowercase(),
+                    ),
+                    shownRoleId = SnapshotField.Known(
+                        (seat.shownRoleId as SnapshotField.Known<String>).value.lowercase(),
+                    ),
+                )
+            },
+            setupState = original.setupState,
+        )
+    }
+
+    private fun chefUncommittedDraft() = EpistemicObservationDraft(
+        recordId = "chef-one",
+        phase = StorytellerPhase.FIRST_NIGHT,
+        round = 1,
+        sequence = 1,
+        sourceSeat = 1,
+        sourceAbility = RoleId("Chef"),
+        visibility = ObservationVisibility.PRIVATE,
+        recipientSeats = setOf(1),
+        reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+        proposition = InformationProposition.NumericResult(
+            NumericMetric.ADJACENT_EVIL_PAIRS, 1, (1..5).toList(), 1,
+        ),
+    )
+
+    @Test
+    fun `one session publication commits observation with all verified registrations or neither`() {
+        val accepted = session()
+        val published = chefPublication(
+            RegistrationResolutionStatusV1.UNRESOLVED_NOT_REQUIRED,
+            RegistrationResolutionStatusV1.UNRESOLVED_NOT_REQUIRED,
+        )
+        val record = accepted.commitConfirmedPrivateInformationPublication(
+            draft = chefUncommittedDraft(),
+            registration = published,
+            registrationSnapshot = externalIdSnapshot(accepted),
+            legalRoles = roles,
+        )
+        assertEquals("chef-one", record.recordId)
+        assertEquals(1L, accepted.state.playerInputRevision)
+        assertEquals(1L, accepted.state.nextTimelineGlobalSequence)
+        assertEquals(1, accepted.state.epistemicObservationLog.records.size)
+        assertEquals(2, accepted.causalDecisionJournal.effectiveNow().size)
+
+        val stateAfter = accepted.state
+        val journalAfter = accepted.causalDecisionJournal.archive()
+        assertEquals(record, accepted.commitConfirmedPrivateInformationPublication(
+            draft = chefUncommittedDraft(),
+            registration = published,
+            registrationSnapshot = externalIdSnapshot(accepted),
+            legalRoles = roles,
+        ))
+        assertEquals(stateAfter, accepted.state)
+        assertEquals(journalAfter, accepted.causalDecisionJournal.archive())
+
+        val rejected = session()
+        val wrongJointWitness = chefPublication(
+            RegistrationResolutionStatusV1.EXPLICIT_SPECIAL,
+            RegistrationResolutionStatusV1.EXPLICIT_ACTUAL,
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            rejected.commitConfirmedPrivateInformationPublication(
+                draft = chefUncommittedDraft(),
+                registration = wrongJointWitness,
+                registrationSnapshot = externalIdSnapshot(rejected),
+                legalRoles = roles,
+            )
+        }
+        assertEquals(0L, rejected.state.nextTimelineGlobalSequence)
+        assertEquals(0L, rejected.state.playerInputRevision)
+        assertTrue(rejected.state.epistemicObservationLog.records.isEmpty())
+        assertTrue(rejected.causalDecisionJournal.archive().records.isEmpty())
+    }
+
     @Test
     fun `real Host writer idempotently confirms and corrects same observed result then recovers`() {
         val session = session()
