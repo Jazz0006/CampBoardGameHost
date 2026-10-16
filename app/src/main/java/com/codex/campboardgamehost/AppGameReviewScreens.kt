@@ -419,7 +419,6 @@ private fun HostRecordsList(
     val language = context.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val visibleEvents = events
-        .filterNot { it.type == ClocktowerEventType.System }
         .filter { it.phase != ClocktowerPhase.Dawn }
         .sortedByDescending { it.sequence }
     LazyColumn(
@@ -573,7 +572,7 @@ private fun ArchivedGameReviewContent(
         }
         item { Text(text("操作记录", "Game log"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) }
         if (review.gameKind == GameKind.Clocktower) {
-            items(review.events.filterNot { it.type == ClocktowerEventType.System }) { event ->
+            items(review.events) { event ->
                 GameRecordRow(event.title, event.detail, text("第 ${event.round} 轮", "Round ${event.round}"))
             }
         } else {

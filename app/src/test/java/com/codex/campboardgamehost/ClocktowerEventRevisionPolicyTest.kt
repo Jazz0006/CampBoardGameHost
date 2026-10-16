@@ -25,7 +25,6 @@ class ClocktowerEventRevisionPolicyTest {
             ClocktowerEventType.RoleAction, global, confirmedRoleNarrationOnly = false,
         ))
         listOf(
-            ClocktowerEventType.Phase,
             ClocktowerEventType.Execution,
             ClocktowerEventType.Death,
             ClocktowerEventType.RoleChange,

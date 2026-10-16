@@ -62,11 +62,13 @@ internal object AppGameStateJsonCodec {
         for (index in 0 until json.length()) {
             val eventJson = json.optJSONObject(index) ?: continue
             val title = eventJson.optString("title").takeIf { it.isNotBlank() } ?: continue
+            // Unknown/retired event categories have no role in the active game log.
+            val type = enumByName<ClocktowerEventType>(
+                eventJson.optNullableString("type")) ?: continue
             add(
                 ClocktowerEvent(
                     sequence = eventJson.optInt("sequence", 0),
-                    type = enumByName<ClocktowerEventType>(eventJson.optNullableString("type"))
-                        ?: ClocktowerEventType.System,
+                    type = type,
                     title = title,
                     detail = eventJson.optString("detail"),
                     playerNames = eventJson.optJSONArray("playerNames")?.toStringList().orEmpty(),

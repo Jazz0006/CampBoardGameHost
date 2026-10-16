@@ -3,8 +3,6 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 
 internal enum class ClocktowerEventType {
-    System,
-    Phase,
     RoleAction,
     Information,
     UnreliableInformation,
@@ -13,7 +11,6 @@ internal enum class ClocktowerEventType {
     Execution,
     Death,
     RoleChange,
-    GameEnd,
 }
 
 /**

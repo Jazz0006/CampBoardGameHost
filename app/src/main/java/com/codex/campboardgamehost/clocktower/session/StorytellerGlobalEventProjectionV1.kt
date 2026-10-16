@@ -111,8 +111,8 @@ internal object StorytellerGlobalEventProjectionV1 {
         is ActionFact.Vote -> JSONObject().put("type", "vote")
             .put("seat", fact.nominatorSeat).put("target", fact.nomineeSeat)
             .put("voters", JSONArray(fact.voterSeats))
-        is ActionFact.KlutzLearnedDeath -> JSONObject().put("type", "klutz_learned")
-            .put("seat", fact.klutzSeat).put("functioning", fact.functioningWhenLearned)
+        // Private ability-trigger bookkeeping is not a second public/player event.
+        is ActionFact.KlutzLearnedDeath -> null
         is ActionFact.KlutzChoice -> JSONObject().put("type", "klutz_choice")
             .put("seat", fact.klutzSeat).put("target", fact.chosenSeat)
         is ActionFact.RoleChange -> JSONObject().put("type", "role_change")

@@ -1158,15 +1158,6 @@ internal fun CampBoardGameHostApp() {
 
     fun localizedText(zh: String, en: String): String = if (language == "en") en else zh
 
-    fun addOutcomeEvent(outcome: GameOutcome?) {
-        if (outcome == null || clocktowerEvents.lastOrNull()?.type == ClocktowerEventType.GameEnd) return
-        addClocktowerEvent(
-            type = ClocktowerEventType.GameEnd,
-            title = outcome.title,
-            detail = listOf(outcome.summary, outcome.reason).filter { it.isNotBlank() }.joinToString(" · "),
-        )
-    }
-
     fun resetClocktowerNightFlow() {
         clocktowerNightStartedState.value = false
         clocktowerNightStepIndexState.value = 0
@@ -3711,7 +3702,6 @@ internal fun CampBoardGameHostApp() {
                                         reason = localizedText("${playerSeatLabel(cards, clocktowerPendingKlutzName)} 选择了 ${playerSeatLabel(cards, choice)}。", "${playerSeatLabel(cards, clocktowerPendingKlutzName)} chose ${playerSeatLabel(cards, choice)}."),
                                     )
                                     showResults = true
-                                    addOutcomeEvent(gameOutcome)
                                 } else {
                                     clocktowerPendingKlutzName = null
                                     clocktowerKlutzChoiceName = null
@@ -3914,7 +3904,6 @@ internal fun CampBoardGameHostApp() {
                             gameOutcome = shotOutcome
                             if (shotOutcome != null) {
                                 showResults = true
-                                addOutcomeEvent(shotOutcome)
                             }
                         },
                         onPreflightVirginExecution = { nominatorName, spyRegistrationWillRecord ->
@@ -4067,7 +4056,6 @@ internal fun CampBoardGameHostApp() {
                                 gameOutcome = outcome
                                 if (outcome != null) {
                                     showResults = true
-                                    addOutcomeEvent(outcome)
                                 } else {
                                     val nextRound = round + 1
                                     materializeClocktowerPoisonExpiryAtDusk()
@@ -4265,7 +4253,6 @@ internal fun CampBoardGameHostApp() {
                             gameOutcome = executionOutcome
                             if (executionOutcome != null) {
                                 showResults = true
-                                addOutcomeEvent(executionOutcome)
                             } else if (clocktowerPendingKlutzName == null) {
                                 val nextRound = round + 1
                                 materializeClocktowerPoisonExpiryAtDusk()
@@ -4681,7 +4668,6 @@ internal fun CampBoardGameHostApp() {
                             gameOutcome = nightOutcome
                             if (nightOutcome != null) {
                                 showResults = true
-                                addOutcomeEvent(nightOutcome)
                             } else if (nightKlutzName == null && newDemonName != null) {
                                 clocktowerPendingNewDemonName = newDemonName
                             } else if (nightKlutzName == null && !unresolvedDemonSuccessor) {

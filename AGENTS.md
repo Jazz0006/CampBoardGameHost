@@ -9,6 +9,12 @@
 - Do not weaken Host legality/fact authority, safety, security, user-data integrity, privacy, or necessary automated regression coverage to avoid testing. Retire obsolete/duplicated tests only after checking remaining contract coverage. Existing CI/R2, independent diff review, exact-head and merge gates remain in force.
 - This section supersedes any older mandatory 'new behavior -> RED -> GREEN' wording in this file or ancillary documentation; `docs/TESTING_STRATEGY.md` supplies evidence tiers and execution cadence, not an obligation to manufacture RED.
 
+## Purpose-before-implementation / anti-overengineering (2026-10-16; permanent rule)
+
+- **Clarify the real purpose before implementing.** For every feature or data model first state who consumes it, what concrete user outcome it enables, and the *smallest sufficient* acceptance example. If a field/event/API/test does not directly support that outcome or a demonstrably required rule/recovery invariant, do not add it. Do not infer a need for exhaustive technical logging, exact event sourcing, speculative extensibility or perfect reconstruction from a request for a simple AI-readable game record.
+- **Audit and delete instead of accumulating.** First examine existing data and consumers. Prefer deriving one concise record from confirmed Session truth rather than creating separate durable audit/event sources. Delete obsolete writers/types and redundant entries together with their legacy consumers when safe. For required mechanical internals, identify their rule/recovery owner and keep them **out of the player/AI log**; retire them after a verified Session-state replacement, not via blind removal.
+- **Learned failure mode:** A1 history expansion implemented extra technical facts before confirming the actual goal: *one minimal confirmed game log for incremental AI advice and final player recap*. Never repeat purpose-blind feature expansion.
+
 ## Single-authority / replace-and-retire / practical recovery policy (2026-10-16; current authority)
 
 - **One reliable current Session object + one logically ordered typed game history.** For Clocktower, the Session is the sole authority for all accepted roles, status, phase/progress and rulings; typed action and actual player-observation logs share global chronology. UI/PlayerCard, AI plans and strategic memories, snapshots, archive and Recovery are views, drafts or consumers, never independently mutable facts.
