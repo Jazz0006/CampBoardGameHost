@@ -99,6 +99,9 @@ internal object StorytellerStrategicChangeCheckpointV2 {
         current: Baseline,
         cursor: StorytellerStrategicContinuationV2.MemoryCursor,
         openDecisions: List<StorytellerStrategicContinuationV2.OpenDecision>,
+        // A fresh confirmed setup may contradict the *advisory* initial plan
+        // even before any later timeline action. This is not a fabricated fact.
+        advisoryPlanContradictsConfirmedState: Boolean = false,
     ): Review {
         val before = previouslyReviewed.state
         val after = current.state
@@ -155,6 +158,8 @@ internal object StorytellerStrategicChangeCheckpointV2 {
             after.playerInputRevision > before.playerInputRevision ||
             after.nextTimelineGlobalSequence > before.nextTimelineGlobalSequence
         val readiness = when {
+            advisoryPlanContradictsConfirmedState && openDecisions.isNotEmpty() ->
+                Readiness.READY_FOR_WHOLE_GAME_REVIEW
             changes.isEmpty() -> Readiness.NO_MATERIAL_CHANGE
             !progressed -> Readiness.HOST_REVISION_REQUIRED
             openDecisions.isEmpty() -> Readiness.NO_CURRENT_HOST_OPEN_DECISION
@@ -169,12 +174,13 @@ internal object StorytellerStrategicChangeCheckpointV2 {
      * A model response generated against an earlier gate can never commit an
      * updated policy after another Host transition or same-game intervention.
      */
-    fun accept(
+    /** A verified recommendation remains provisional until a real Host step completes. */
+    fun validateProposal(
         reviewed: Review,
         current: Baseline,
         response: StorytellerStrategicContinuationV2.Result,
         cursor: StorytellerStrategicContinuationV2.MemoryCursor,
-    ): StorytellerStrategicContinuationV2.MemoryCursor {
+    ) {
         require(reviewed.needsReview)
         val now = current.state
         require(now.gameId == reviewed.gameId &&
@@ -196,6 +202,17 @@ internal object StorytellerStrategicChangeCheckpointV2 {
             response.gameStateRevision == reviewed.gameStateRevision &&
             response.playerInputRevision == reviewed.playerInputRevision &&
             response.exclusiveGlobalSequence == reviewed.exclusiveGlobalSequence)
+        require(response.memoryVersion == cursor.version)
+    }
+
+    /** Historical strict advancing contract; never call it merely to display advice. */
+    fun accept(
+        reviewed: Review,
+        current: Baseline,
+        response: StorytellerStrategicContinuationV2.Result,
+        cursor: StorytellerStrategicContinuationV2.MemoryCursor,
+    ): StorytellerStrategicContinuationV2.MemoryCursor {
+        validateProposal(reviewed, current, response, cursor)
         return cursor.advance(response)
     }
 }

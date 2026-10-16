@@ -16,6 +16,8 @@
 
 - **A2 SECOND SLICE CODE CHANGED (2026-10-16; CI pending):** retire opening whole-plan adoption and flags, retain one joint precommit plan as advice; first-night legal Drunk confirmation now follows shown-only reveal (AI-assisted manual preselect, AI-auto current-step confirm). Demon bluff picks remain drafts until Start Night; Red Herring remains a draft until its actual step Next/automatic confirmation. Manual Drunk override invalidates dependent opening hints and provider chain anchor. **Still outstanding before A2 DONE:** force appropriate replan after overridden Drunk, fully safe AI auto current-step flow, confirmed continuation memory promotion and end-to-end real device evidence.
 
+- **A2 third source slice (2026-10-16; CI pending):** original Drunk recommendation vs confirmed Session Drunk disagreement is now an explicit reason for current-step model review even when precommit Session revision begins at zero; no forged facts or version bumps. Provisional response validity is separated from advancing authoritative strategy memory. A targeted contract test protects "can request but cannot silently advance". **A2 remains PARTIAL** pending confirmed-only memory promotion, cache dependency overrides and complete AI automatic flow/device evidence.
+
 ## The only active implementation: A1 → A6
 
 | Order | Slice | Required completed behavior / deletion |

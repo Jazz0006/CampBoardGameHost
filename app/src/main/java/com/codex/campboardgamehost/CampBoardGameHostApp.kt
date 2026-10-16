@@ -1799,9 +1799,17 @@ internal fun CampBoardGameHostApp() {
                 liveAiAdviceError = "Host rejected pending residual decisions."
                 return
             }
+            val confirmedDrunkSeat = session.state.gameState.players.singleOrNull {
+                it.actualRole.value == "Drunk"
+            }?.seat
+            val openingPlanConflictsWithHost =
+                wholeCursor.version == 0 &&
+                    phasePosition.phase == StorytellerPhase.FIRST_NIGHT &&
+                    wholeOpening.selection.drunkSeat != confirmedDrunkSeat
             val review = runCatching {
                 StorytellerStrategicChangeCheckpointV2.review(
-                    wholeBaseline, currentHost, wholeCursor, legalOpen)
+                    wholeBaseline, currentHost, wholeCursor, legalOpen,
+                    advisoryPlanContradictsConfirmedState = openingPlanConflictsWithHost)
             }.getOrElse {
                 liveAiAdviceError = "Host chronology changed; cannot continue older strategy."
                 return
@@ -1812,7 +1820,7 @@ internal fun CampBoardGameHostApp() {
                     "barrier" to (remainingScope.barrierReason ?: "NONE")))
                 BotcAiWireTrace.residualGate("SKIPPED", legalOpen.size,
                     wholeCursor.version, phasePosition.phase.name, phasePosition.round)
-                // Initial adopted joint opening already covers the unchanged state.
+                // A still-valid opening recommendation may cover the unchanged state.
                 liveAiAdviceText = if (review.readiness ==
                     StorytellerStrategicChangeCheckpointV2.Readiness.NO_MATERIAL_CHANGE
                 ) "沿用首次整局配置；尚无新的重要 Host 变化。" else
@@ -1881,7 +1889,7 @@ internal fun CampBoardGameHostApp() {
                             legalOpen, remainingScope.requests.take(1), proposal, wholeCursor)
                         // Validate the proposed memory transition, but do not install
                         // it or its provider response anchor before a real Host step.
-                        StorytellerStrategicChangeCheckpointV2.accept(
+                        StorytellerStrategicChangeCheckpointV2.validateProposal(
                             review, currentHost, proposal, wholeCursor)
                         verified
                     }.onSuccess acceptedResidual@{ verified ->

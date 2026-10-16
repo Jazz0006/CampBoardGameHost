@@ -111,6 +111,37 @@ class StorytellerStrategicChangeCheckpointV2Test {
         StorytellerStrategicContinuationV2.OpenDecision(
             "host-current-open-" + seat, seat, "NIGHT_INFORMATION"))
 
+    @Test fun confirmedSetupContradictingAdvisoryOpeningCanRequestWithoutInventingAHostEvent() {
+        val host = session()
+        val current = baseline(host)
+        val review = StorytellerStrategicChangeCheckpointV2.review(
+            current, current, cursor(), open(),
+            advisoryPlanContradictsConfirmedState = true,
+        )
+        assertEquals(
+            StorytellerStrategicChangeCheckpointV2.Readiness.READY_FOR_WHOLE_GAME_REVIEW,
+            review.readiness)
+        assertTrue(review.changeKinds.isEmpty())
+        val reply = StorytellerStrategicContinuationV2.Result(
+            gameId = review.gameId,
+            gameStateRevision = review.gameStateRevision,
+            playerInputRevision = review.playerInputRevision,
+            exclusiveGlobalSequence = review.exclusiveGlobalSequence,
+            memoryVersion = 0,
+            revisions = emptyList(),
+            affectedOpenDecisionIds = emptySet(),
+            updatedMemory = memory,
+            strategicDirection = "Reevaluate against actual confirmed setup.",
+        )
+        StorytellerStrategicChangeCheckpointV2.validateProposal(
+            review, current, reply, cursor())
+        assertTrue(runCatching {
+            StorytellerStrategicChangeCheckpointV2.accept(
+                review, current, reply, cursor())
+        }.isFailure) // Unconfirmed advice cannot advance the model memory cursor.
+        assertEquals(0L, host.state.gameStateRevision)
+    }
+
     @Test fun chronologyWithoutNewFactsDoesNotStartAnotherPaidModelCall() {
         val host = session()
         val before = baseline(host)

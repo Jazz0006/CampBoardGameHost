@@ -186,6 +186,14 @@
 - 红鲱鱼 UI 选择只暂存草稿；第一夜真实 RedHerring 夜间步骤点击下一步（或自动模式当前步骤的安全自动推进）才调用既有 Session `commitRedHerringSeat` 规则验证与正式提交。不能在生成首夜联合方案时写入。其他角色实际收到的信息仍走现有 A1 正式公布入口。
 - **A2 仍 PARTIAL**：验证人工酒鬼覆盖后的及时重规划、自动模式各角色当前步骤的执行/展示隔离、过时建议失效与续回合战略记忆确认提升；需本批精确源码 Android CI/R2 及后续真机/ADB，再决定 A2 退出。不要冒称已完成 A2/A6。
 
+### A2 第三批：人工覆盖初始酒鬼后的即时续规划门禁（2026-10-16；待 CI）
+
+- 开发起点：第二批可执行源码 `1e3169030e375c108195211c28f6433a013e5ee9` [CI #4238](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38899137580) Android build/tests、ASP、Clingo、gate 全部 SUCCESS；[R2 #3843](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38899137934) SUCCESS。
+- 发现若人工选定 Drunk 与首轮计划不同，新 Session 初始化的 revision 仍为零、基线也来自该 Session；原通用 `review` 因新旧 Host baseline 相同会返回 `NO_MATERIAL_CHANGE`，导致旧计划已失效而 AI 不重规划。
+- 当前在发起**当前步骤**续规划时比较首轮建议 Drunk 与真实 Session Drunk；通用 `StorytellerStrategicChangeCheckpointV2.review` 新增只供“确认事实与尚未接受的建议互相矛盾”使用的显式输入，产生可请求的 `READY_FOR_WHOLE_GAME_REVIEW`，不伪造 Host 行动或 revision。无实际当前 Host 合法决定、Host 规则已唯一确定、或先前记录已发表时仍由原门禁约束。
+- `validateProposal` 承担未执行建议的合法性/响应检查；不再通过会要求推进 chronology 的 `accept` 来校验草稿。旧 `accept` 保持为真正可推进 cursor 的严格 API，新增稳定合同测试证明 zero-change 的矛盾建议可重新裁量、但不能仅因模型答复推进策略记忆。
+- **仍未完成 A2 的最后契约**：需在实际步骤正式确认后检查新事实是否与推荐语义一致、再提升模型记忆/response anchor；其他人工覆盖对依赖缓存的失效与自动模式的完整当前步骤推进仍待确认。本批没有付费模型调用或真机验收。
+
 ### A3 — 移除 Clocktower PlayerCard 第二写入源
 
 - Session 对游戏中的真实角色/展示身份/存活/投毒/阶段/确认选择和必要能力状态提供只读 view；PlayerCard 只保留 UI 名称/视觉元素等非权威展示属性。

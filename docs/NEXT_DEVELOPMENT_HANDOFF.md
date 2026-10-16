@@ -15,6 +15,12 @@
 - Preselection comes from verified opening recommendations and remains editable in assisted mode. Automatic Drunk/first-night preparation must not publish future player information. If Drunk is manually overridden, dependent opening info/bluff/herring hints and provider response anchor are invalidated; immediate strategic replan and later confirmation-based model memory still need follow-through.
 - Check exact-source Kotlin build + affected Host rules tests via GitHub CI/R2, fix any compile/runtime failures. **Do not mark A2 done** until no wrong automatic progression, stale AI suggestion, or premature Session commit remains. Do not enter A3–A6 or pay for live API without separate approval.
 
+## A2 third source batch (2026-10-16; CI pending)
+
+- Second executable commit `1e3169030e375c108195211c28f6433a013e5ee9` passed exact [CI #4238](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38899137580) and [R2 #3843](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38899137934), not device E2E.
+- Fix current-step continuation after manual initial Drunk override: compare unaccepted opening suggestion with actual Session truth; permit a requested correction without inventing a PhaseAdvance/Drunk fact or revision, while keeping Host-open and unique-answer gates. Add preliminary response validation distinct from `accept` cursor advancement. Deterministic regression protects this conflict-versus-no-progress boundary.
+- **Still A2, not A3:** anchor updated strategic memory only after actual confirmed answer (including human override) and ensure no cursor skips a yet-unseen actual event; audit generic dependency-invalidated opening recommendations and current-step auto progression; check CI/R2, then appropriate real-device A6 evidence. No paid API calls or PR merge.
+
 ## Starting repository state (recheck live)
 
 - Repository Jazz0006/CampBoardGameHost; developer machine via Mini MCP alias **clocktower**.
