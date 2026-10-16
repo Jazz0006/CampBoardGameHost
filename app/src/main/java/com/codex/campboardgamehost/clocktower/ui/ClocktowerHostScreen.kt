@@ -2540,8 +2540,13 @@ internal fun ClocktowerJudgeScreen(
                 } else currentStep.manualInformationCandidates)
             else -> null
         } else null
+        // Busy/error belong to their exact Host-current request. A stale
+        // failed/in-flight earlier step must not block a new deterministic step.
+        val currentAiRequestBlocked = clocktowerCurrentAiRequestBlocked(
+            globalAiCurrentKey, globalAiAdviceKey, globalAiAdviceBusy, globalAiAdviceError,
+        )
         val approvedOpeningOption = if (globalAiAutomatic &&
-            (globalAiAdviceBusy || globalAiAdviceError != null)) null else
+            currentAiRequestBlocked) null else
             residualRecommendedOption ?: preplannedSeat?.takeIf {
                 phase == ClocktowerPhase.FirstNight
             }?.let { seat ->
@@ -2779,15 +2784,15 @@ internal fun ClocktowerJudgeScreen(
                 // One optional current-step suggestion for both AI modes.
                 // The card retains the complete Host legal domain for manual edits.
                 // Automatic mode can use the same verified choice at this step only.
-                aiSuggestedInformationOption = approvedOpeningOption.takeIf {
-                    globalAiAdviceError == null && !globalAiAdviceBusy
+                aiSuggestedInformationOption = approvedOpeningOption.takeUnless {
+                    currentAiRequestBlocked
                 },
                 // Only a player-independent current information step may automatically
                 // enter the SAME confirmation/publication/reveal handoff as a manual tap.
                 // Returning from player display must not re-publish/re-open it.
                 autoPresentAiInformation = clocktowerShouldAutoPresentCurrentInformation(
                     automaticMode = globalAiAutomatic && allowRuleDeterminedAutoUi &&
-                        !globalAiAdviceBusy && globalAiAdviceError == null,
+                        !currentAiRequestBlocked,
                     step = currentStep,
                     phase = phase,
                     round = round,

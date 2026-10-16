@@ -244,4 +244,23 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         assertTrue(eligible(inputReady = true, legalResultReady = true,
             observations = listOf(published.copy(round = 1))))
     }
+
+    @Test
+    fun `stale prior step AI error or busy never blocks a current Host-determined result`() {
+        assertFalse(clocktowerCurrentAiRequestBlocked(
+            currentKey = "round2-ft-1-3", adviceKey = "round1-chef",
+            busy = true, error = "old error"))
+        assertFalse(clocktowerCurrentAiRequestBlocked(
+            currentKey = "round2-ft-1-3", adviceKey = null,
+            busy = true, error = null))
+        assertFalse(clocktowerCurrentAiRequestBlocked(
+            currentKey = null, adviceKey = null,
+            busy = true, error = "old error"))
+        assertTrue(clocktowerCurrentAiRequestBlocked(
+            currentKey = "round2-ft-1-3", adviceKey = "round2-ft-1-3",
+            busy = true, error = null))
+        assertTrue(clocktowerCurrentAiRequestBlocked(
+            currentKey = "round2-ft-1-3", adviceKey = "round2-ft-1-3",
+            busy = false, error = "current error"))
+    }
 }

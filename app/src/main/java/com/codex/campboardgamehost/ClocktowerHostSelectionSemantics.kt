@@ -123,6 +123,15 @@ internal fun clocktowerShouldAutoPresentCurrentInformation(
             received.sourceAbility?.value == step.roleEnName
     }
 
+/** Advice status may suppress only its own exact current Host decision. */
+internal fun clocktowerCurrentAiRequestBlocked(
+    currentKey: String?,
+    adviceKey: String?,
+    busy: Boolean,
+    error: String?,
+): Boolean = currentKey != null && adviceKey == currentKey &&
+    (busy || error != null)
+
 internal fun shouldAutoAdvanceRedHerring(
     allowRuleDeterminedAutoUi: Boolean,
     isRedHerringStep: Boolean,
