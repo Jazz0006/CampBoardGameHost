@@ -170,12 +170,12 @@
 - 沿用现有合法性/时序/真实条件防护；迁移实际使用者后删除整包 adoption 状态机和专属测试。不能把首夜一次联合规划拆成多次规划。
 - 验收：AI_ASSISTED 逐步预选/覆盖，AI_AUTOMATIC 按合法当前步骤自动确认；已公布信息不可重新写入。
 
-### A2 第一批：后续步骤整包采纳退役（2026-10-16；代码已修改，独立 CI 待验收）
+### A2 第一批：后续步骤整包采纳退役（2026-10-16；独立 CI/R2 已通过）
 
 - 开始前重新验证开发机和 origin 均为 `8ae273c278bb551de6c23bf10c2e269ea88308af`，clean；GitHub #315 仍 Draft、mergeable=false，不合并 main。此次只推进 A2。
 - 已审计 `adoptWholeResidualProposal` 唯一生产调用链（`ClocktowerHostScreen.onAdoptGlobalResidual`）、`residualProposed*` / `residualAdopted*` 的读写和当前步骤 `ClocktowerResidualDisplayMatcherV2`；没有发现测试直接依赖这些整包采纳符号。旧 UI button、callback、整包 scope 重查/采纳函数及六个 proposal/adopted 状态删除，换成按请求身份与 Session revision/sequence 保护的**一个当前步骤未执行推荐缓存**。
 - `AI_ASSISTED` 使用 Host 匹配的当前候选预选，不再点击整包采纳。自动模式保持 Host 当前可展示决策校验；未匹配 live key 的旧建议不能执行。临时响应不再在私有“adopt”时推进 `strategicPolicyCursor` / `canonicalConversationResponseId`，防止未执行结果获得已确认的会话权威。由当前真实信息公布既有 Session 边界确认事实。
-- **A2 仍 PARTIAL**：首夜 `ClocktowerJointOpeningReviewScreen`、`adoptJointOpeningAfterReveal`、`jointOpeningApplied`、`adoptedJointOpening`、提前确认 Drunk/掩饰/红鲱鱼仍须迁移；已确认后模型战略锚点的正确更新和三模式逐步自动执行仍须验证。需本批精确 HEAD CI/R2，之后继续首夜拆包接线并做高价值功能回归。不可把本批当真机或完整 A2 验收。
+- **A2 仍 PARTIAL**：首夜 `ClocktowerJointOpeningReviewScreen`、`adoptJointOpeningAfterReveal`、`jointOpeningApplied`、`adoptedJointOpening`、提前确认 Drunk/掩饰/红鲱鱼仍须迁移；已确认后模型战略锚点的正确更新和三模式逐步自动执行仍须验证。本批可执行提交 `8aa44b2f9c4c2bce9c48d3c906380e301a086fd0` 的 [CI #4236](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38895896066) Android tests/Debug APK、ASP、Real Clingo、CI Gate 均 SUCCESS；同 SHA [R2 #3842](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38895895928) SUCCESS。之后继续首夜拆包接线并做高价值功能回归。不可把本批当真机或完整 A2 验收。
 
 ### A3 — 移除 Clocktower PlayerCard 第二写入源
 
