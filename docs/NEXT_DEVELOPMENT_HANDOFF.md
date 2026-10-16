@@ -2,6 +2,13 @@
 
 > **Implementation handoff 2026-10-16; A1 DONE after final source audit and exact-head CI/R2.** Final executable code `ef1d02e5614f961ca534b09c0c2fb713d91a8381` passed CI #4233 (Android unit tests/debug build, ASP, Clingo, gate) and R2 #3841; prior CI #4232 failed Kotlin compile and is NOT green. Advance to **A2** (do not restart A1 without a demonstrated regression). Continue from [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
 
+## A2 first production slice underway (2026-10-16; NOT A2 DONE)
+
+- Starting verified local/origin clean HEAD: `8ae273c278bb551de6c23bf10c2e269ea88308af`; #315 remains Draft and merge-conflicted, do not merge. The user's older handoff SHA `8de980a` is superseded.
+- Production residual one-click adoption has been retired: `adoptWholeResidualProposal`, its UI callback/button, `residualProposed*` and `residualAdopted*` states removed; replaced with one ephemeral verified current-step recommendation, matched again to current Host legal UI options and a live mode/request/session key. No unconfirmed response advances strategic memory/provider anchor. Still pending: confirm-safe promotion of memory after actual Host observation.
+- **Next work is still A2:** replace `ClocktowerJointOpeningReviewScreen`'s `onAdopt` and `adoptJointOpeningAfterReveal` path with the first-night sequential flow, especially Drunk decision before binding actual identity, bluffs/red-herring at own confirmation and future info only on publication; retire `jointOpeningApplied/adoptedJointOpening` once all consumers migrate. Audit tests and lifecycle/Recovery consumers; verify MANUAL/AI_ASSISTED/AI_AUTOMATIC, check CI/R2 on actual implementation SHA. Do not start A3–A6 early.
+- New residual code is not yet claimed to have passed Kotlin/Android tests or device ADB; use exact-head GitHub CI and fix failures.
+
 ## Starting repository state (recheck live)
 
 - Repository Jazz0006/CampBoardGameHost; developer machine via Mini MCP alias **clocktower**.

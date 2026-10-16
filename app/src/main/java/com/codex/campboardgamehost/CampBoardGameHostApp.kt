@@ -425,22 +425,11 @@ internal fun CampBoardGameHostApp() {
     var strategicLastReviewedHost by remember {
         mutableStateOf<StorytellerStrategicChangeCheckpointV2.Baseline?>(null)
     }
-    var residualProposedPackage by remember {
+    // Current-step recommendation only: never a separate adoption or game-state fact.
+    var residualCurrentRecommendation by remember {
         mutableStateOf<StorytellerResidualPackageGateV2.Accepted?>(null)
     }
-    var residualProposedKey by remember { mutableStateOf<String?>(null) }
-    var residualProposedOpen by remember {
-        mutableStateOf<List<StorytellerStrategicContinuationV2.OpenDecision>>(emptyList())
-    }
-    var residualProposedPosition by remember {
-        mutableStateOf<StorytellerStrategicChangeCheckpointV2.Position?>(null)
-    }
-    var residualAdoptedPackage by remember {
-        mutableStateOf<StorytellerResidualPackageGateV2.Accepted?>(null)
-    }
-    var residualAdoptedOperationMode by remember {
-        mutableStateOf<StorytellerOperationMode?>(null)
-    }
+    var residualCurrentRecommendationKey by remember { mutableStateOf<String?>(null) }
     var adoptedJointInformation by remember { mutableStateOf<Map<Int,
         com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2>>(emptyMap()) }
     var shownOnlyDealCompleted by remember { mutableStateOf(false) }
@@ -1659,67 +1648,6 @@ internal fun CampBoardGameHostApp() {
         resetDealState(GameKind.Undercover)
     }
 
-    fun adoptWholeResidualProposal(steps: List<ClocktowerNightStepUi>, stepIndex: Int) {
-        if (storytellerOperationMode == StorytellerOperationMode.MANUAL ||
-            residualProposedKey != liveAiAdviceKey) return
-        val proposal = residualProposedPackage ?: return
-        val latest = clocktowerGameSession?.state ?: return
-        val position = residualProposedPosition ?: return
-        if (proposal.gameId != latest.gameId ||
-            proposal.gameStateRevision != latest.gameStateRevision ||
-            proposal.playerInputRevision != latest.playerInputRevision ||
-            proposal.exclusiveGlobalSequence != latest.nextTimelineGlobalSequence ||
-            position.phase != clocktowerPhase.toStorytellerPhase() ||
-            position.round != round ||
-            clocktowerNightStepIndexState.value != stepIndex) return
-        // Regenerate the ENTIRE pending domain against the latest Host and UI
-        // action inputs. Revision equality alone cannot authorize a changed
-        // registration explanation or manually altered current candidate pool.
-        val sameScope = runCatching {
-            val session = requireClocktowerGameSession()
-            val rulesetRef = requireNotNull(clocktowerRulesetRef)
-            val registry = activeGameClocktowerRulesetCatalog
-                .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
-            val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
-                session.toGameSnapshot(rulesetRef), position.phase, position.round, registry)
-            val revision = StorytellerProviderRevisionV1(
-                latest.gameStateRevision, latest.playerInputRevision)
-            val context = StorytellerProviderGameContextBuilderV1.build(
-                snapshot, revision, latest)
-            val step = steps[stepIndex]
-            val mayor = if (position.phase == StorytellerPhase.NIGHT &&
-                step.action == ClocktowerNightAction.MayorRedirect)
-                currentTroubleBrewingMayorRedirectPendingDecision() else null
-            val scope = ClocktowerCurrentResidualScopeV2.collect(
-                latest, position.phase, position.round, steps, stepIndex, cards,
-                snapshot, context, currentTroubleBrewingFirstNightPairDecisionContext(),
-                listOfNotNull(clocktowerFortuneTellerFirst, clocktowerFortuneTellerSecond),
-                mayor, redHerringAlreadyChosen = clocktowerRedHerring != null)
-            val open = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
-                latest, position.phase, position.round, scope.requests.take(1))
-            open == residualProposedOpen &&
-                (storytellerOperationMode != StorytellerOperationMode.AI_AUTOMATIC ||
-                    ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
-                        scope.requests.take(1), proposal.choices, steps, cards))
-        }.getOrDefault(false)
-        if (!sameScope) {
-            residualProposedPackage = null
-            residualProposedKey = null
-            liveAiAdviceError = "Current Host legal decisions changed; regenerate the whole plan."
-            DebugFlightRecorder.record("RESIDUAL_WHOLE_ADOPTION_STALE")
-            BotcAiWireTrace.residualGate("STALE", proposal.choices.size,
-                strategicPolicyCursor?.version ?: 0, position.phase.name, position.round)
-            return
-        }
-        // Adopting is a private preselection for still-open steps, not a
-        // publication. Every step must re-match its current Host-legal option.
-        residualAdoptedPackage = proposal
-        residualAdoptedOperationMode = storytellerOperationMode
-        DebugFlightRecorder.record("RESIDUAL_WHOLE_ADOPTED", mapOf(
-            "choiceCount" to proposal.choices.size.toString()))
-        BotcAiWireTrace.residualGate("PRIVATE_ADOPTED", proposal.choices.size,
-            strategicPolicyCursor?.version ?: 0, position.phase.name, position.round)
-    }
 
     fun requestLiveGlobalAdvice(steps: List<ClocktowerNightStepUi>, stepIndex: Int) {
         val step = steps.getOrNull(stepIndex) ?: return
@@ -1769,10 +1697,8 @@ internal fun CampBoardGameHostApp() {
         )
         if (liveAiAdviceKey == key && (liveAiAdviceBusy || liveAiAdviceText != null)) return
         liveAiAdviceKey = key
-        residualProposedPackage = null
-        residualProposedKey = null
-        residualProposedOpen = emptyList()
-        residualProposedPosition = null
+        residualCurrentRecommendation = null
+        residualCurrentRecommendationKey = null
         liveAiAdviceText = null
         liveAiAdviceError = null
         // An older in-flight response belongs to a different key and cannot own this state.
@@ -1945,62 +1871,33 @@ internal fun CampBoardGameHostApp() {
                     val proposal = receipt.proposal
                     runCatching {
                         val verified = StorytellerResidualPackageGateV2.verify(
-                                session.state, phasePosition.phase, phasePosition.round,
-                                legalOpen, remainingScope.requests.take(1), proposal, wholeCursor)
-                        val advanced = StorytellerStrategicChangeCheckpointV2.accept(
+                            session.state, phasePosition.phase, phasePosition.round,
+                            legalOpen, remainingScope.requests.take(1), proposal, wholeCursor)
+                        // Validate the proposed memory transition, but do not install
+                        // it or its provider response anchor before a real Host step.
+                        StorytellerStrategicChangeCheckpointV2.accept(
                             review, currentHost, proposal, wholeCursor)
-                        verified to advanced
-                    }.onSuccess acceptedResidual@{ (verified, advanced) ->
+                        verified
+                    }.onSuccess acceptedResidual@{ verified ->
                         if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC &&
                             !ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
                                 remainingScope.requests.take(1), verified.choices, steps, cards)
                         ) {
-                            // The model decision is legal but not safely executable by
-                            // the current Host presentation. NEVER advance memory or
-                            // publish a partial automatic package.
-                            liveAiAdviceError = "Whole plan has an unresolved Host decision; manual takeover required."
-                            residualAdoptedPackage = null
-                            residualAdoptedOperationMode = null
+                            // Never turn an unpresentable recommendation into game truth.
+                            residualCurrentRecommendation = null
+                            residualCurrentRecommendationKey = null
+                            liveAiAdviceError = "Current Host decision cannot be presented automatically; choose manually."
                             DebugFlightRecorder.record("RESIDUAL_AUTO_UNPRESENTABLE")
                             BotcAiWireTrace.residualGate("AUTO_PAUSED", verified.choices.size,
                                 wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                             return@acceptedResidual
                         }
-                        residualProposedPackage = verified
-                        residualProposedKey = key
-                        residualProposedOpen = legalOpen
-                        residualProposedPosition = phasePosition
-                        if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC) {
-                            // Recompute the current Host domain at the actual adoption
-                            // boundary, before accepting the model's memory revision.
-                            adoptWholeResidualProposal(steps, stepIndex)
-                            if (residualAdoptedPackage != verified) {
-                                residualProposedPackage = null
-                                residualProposedKey = null
-                                residualAdoptedPackage = null
-                                residualAdoptedOperationMode = null
-                                liveAiAdviceError = "Automatic plan became stale; manual takeover required."
-                                DebugFlightRecorder.record("RESIDUAL_AUTO_PAUSED")
-                                BotcAiWireTrace.residualGate("AUTO_PAUSED", verified.choices.size,
-                                    wholeCursor.version, phasePosition.phase.name, phasePosition.round)
-                                return@acceptedResidual
-                            }
-                        }
-                        // Legal, unadopted AI_ASSISTED recommendations must not
-                        // advance either the advisory strategy or provider head.
-                        // The next Host-confirmed observation remains authoritative.
-                        if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC &&
-                            residualAdoptedPackage == verified) {
-                            strategicPolicyCursor = advanced
-                            strategicLastReviewedHost = currentHost
-                            canonicalConversationResponseId = receipt.responseId
-                            canonicalConversationModel = requestedModel
-                            BotcAiWireTrace.residualGate("MEMORY_ADVANCED", verified.choices.size,
-                                advanced.version, phasePosition.phase.name, phasePosition.round)
-                        } else {
-                            BotcAiWireTrace.residualGate("PROPOSAL_ONLY", verified.choices.size,
-                                wholeCursor.version, phasePosition.phase.name, phasePosition.round)
-                        }
+                        // One current-step preselection; the Host re-matches it against
+                        // the live legal display domain before player publication.
+                        residualCurrentRecommendation = verified
+                        residualCurrentRecommendationKey = key
+                        BotcAiWireTrace.residualGate("PROPOSAL_ONLY", verified.choices.size,
+                            wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                         liveAiAdviceText = buildString {
                             append("本次整局续规划：")
                             append(verified.choices.size)
@@ -2024,9 +1921,9 @@ internal fun CampBoardGameHostApp() {
                             }
                         }
                         liveAiAdviceError = null
-                        DebugFlightRecorder.record("RESIDUAL_WHOLE_ACCEPTED", mapOf(
+                        DebugFlightRecorder.record("RESIDUAL_CURRENT_RECOMMENDED", mapOf(
                             "choiceCount" to verified.choices.size.toString(),
-                            "memoryVersion" to advanced.version.toString()))
+                            "memoryVersion" to wholeCursor.version.toString()))
                         if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC) {
                             DebugFlightRecorder.record("RESIDUAL_AUTO_PRESELECTED", mapOf(
                                 "choiceCount" to verified.choices.size.toString()))
@@ -3090,24 +2987,14 @@ internal fun CampBoardGameHostApp() {
                         globalAiAdviceText = liveAiAdviceText,
                         globalAiAdviceBusy = liveAiAdviceBusy,
                         globalAiAdviceError = liveAiAdviceError,
-                        globalResidualAdoptedChoices = residualAdoptedPackage?.takeIf { plan ->
+                        globalResidualRecommendedChoices = residualCurrentRecommendation?.takeIf { plan ->
                             val latest = clocktowerGameSession?.state
-                            if (residualAdoptedOperationMode != storytellerOperationMode) return@takeIf false
-                            latest?.gameId == plan.gameId &&
+                            residualCurrentRecommendationKey == liveAiAdviceKey &&
+                                latest?.gameId == plan.gameId &&
                                 latest.gameStateRevision == plan.gameStateRevision &&
                                 latest.playerInputRevision == plan.playerInputRevision &&
                                 latest.nextTimelineGlobalSequence == plan.exclusiveGlobalSequence
                         }?.choices.orEmpty(),
-                        globalResidualProposalAvailable = residualProposedPackage?.let { plan ->
-                            val latest = clocktowerGameSession?.state
-                            residualProposedKey == liveAiAdviceKey &&
-                                latest?.gameId == plan.gameId &&
-                                latest.gameStateRevision == plan.gameStateRevision &&
-                                latest.playerInputRevision == plan.playerInputRevision &&
-                                latest.nextTimelineGlobalSequence == plan.exclusiveGlobalSequence &&
-                                residualAdoptedPackage != plan
-                        } == true,
-                        onAdoptGlobalResidual = ::adoptWholeResidualProposal,
                         onRequestGlobalAiAdvice = ::requestLiveGlobalAdvice,
                         firstNightNaturalPairReadyProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {

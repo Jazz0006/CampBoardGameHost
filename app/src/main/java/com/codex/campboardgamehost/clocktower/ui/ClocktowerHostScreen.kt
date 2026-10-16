@@ -95,9 +95,7 @@ internal fun ClocktowerJudgeScreen(
     globalAiAdviceText: String? = null,
     globalAiAdviceBusy: Boolean = false,
     globalAiAdviceError: String? = null,
-    globalResidualAdoptedChoices: Map<String, String> = emptyMap(),
-    globalResidualProposalAvailable: Boolean = false,
-    onAdoptGlobalResidual: (List<ClocktowerNightStepUi>, Int) -> Unit = { _, _ -> },
+    globalResidualRecommendedChoices: Map<String, String> = emptyMap(),
     onRequestGlobalAiAdvice: (List<ClocktowerNightStepUi>, Int) -> Unit = { _, _ -> },
     firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
     firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
@@ -2507,33 +2505,35 @@ internal fun ClocktowerJudgeScreen(
                 else StorytellerOperationMode.AI_ASSISTED,
             )
         }
-        // Revalidate any adopted proposed option against the CURRENT Host
-        // legal choices after each real player action (especially Poisoner).
+        // Host revalidates each currently recommended option against the live
+        // legal display domain; no package-level confirmation grants authority.
         val preplannedSeat = currentStep.actor?.let { actor ->
             cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
         }
         // An opening information choice is NEVER a valid default for a later
         // night, even when the same role wakes again and the number matches.
-        val residualApprovedOption = when {
+        val residualRecommendedOption = if (globalAiCurrentKey != null &&
+            globalAiAdviceKey == globalAiCurrentKey
+        ) when {
             globalAiPending != null -> ClocktowerResidualDisplayMatcherV2.matchPair(
                 globalAiPending,
-                globalResidualAdoptedChoices[globalAiPending.requestIdentity.requestId],
+                globalResidualRecommendedChoices[globalAiPending.requestIdentity.requestId],
                 currentStep.manualInformationCandidates)
             globalAiScalarPending != null -> ClocktowerResidualDisplayMatcherV2.matchScalar(
                 globalAiScalarPending,
-                globalResidualAdoptedChoices[globalAiScalarPending.requestIdentity.requestId],
+                globalResidualRecommendedChoices[globalAiScalarPending.requestIdentity.requestId],
                 if (globalAiScalarPending.kind ==
                     com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1.ROLE
                 ) currentStep.manualInformationCandidates.ifEmpty {
                     currentStep.automaticInformationCandidates
                 } else currentStep.manualInformationCandidates)
             else -> null
-        }
+        } else null
         val approvedOpeningOption = if (globalAiAutomatic &&
             (globalAiAdviceBusy || globalAiAdviceError != null ||
                 (jointOpeningAdopted && globalAiCurrentKey != null &&
                     globalAiAdviceKey != globalAiCurrentKey))) null else
-            residualApprovedOption ?: preplannedSeat?.takeIf {
+            residualRecommendedOption ?: preplannedSeat?.takeIf {
                 phase == ClocktowerPhase.FirstNight
             }?.let { seat ->
             jointOpeningSemantics[seat]?.let { planned ->
@@ -2722,15 +2722,6 @@ internal fun ClocktowerJudgeScreen(
                                 text("AI 已更新整局规划，合法结果将在相应夜晚步骤使用。",
                                     "Whole-game strategy updated; legal results are used in their night steps.")
                             else advice)
-                        }
-                        if (globalResidualProposalAvailable && !globalAiAdviceBusy &&
-                            !globalAiAutomatic) {
-                            Button(onClick = {
-                                onAdoptGlobalResidual(nightSteps, currentStepIndex)
-                            }) {
-                                Text(text("一键采纳剩余方案（逐步确认后公布）",
-                                    "Adopt remaining plan (confirm each step before release)"))
-                            }
                         }
                     }
                 }
