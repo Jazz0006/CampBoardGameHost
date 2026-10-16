@@ -4084,7 +4084,7 @@ internal fun CampBoardGameHostApp() {
                             resetClocktowerNightFlow()
                             resetClocktowerDayFlow()
                         },
-                        onConfirmDay = {
+                        onConfirmDay = onConfirmDay@{
                             val preflightExecutionName = clocktowerSelectedExecution
                             val preflightIndex = preflightExecutionName
                                 ?.let { selectedName -> cards.indexOfFirst { it.name == selectedName } }
