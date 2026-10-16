@@ -4090,6 +4090,20 @@ internal fun CampBoardGameHostApp() {
                                 ?.let { selectedName -> cards.indexOfFirst { it.name == selectedName } }
                                 ?: -1
                             val preflightCard = cards.getOrNull(preflightIndex)
+                            // A stale or dead selection is not a confirmed execution. Drop the
+                            // draft and remain in the day instead of advancing Session's revision
+                            // without a corresponding accepted action fact.
+                            if (preflightExecutionName != null && (
+                                    preflightCard == null ||
+                                        preflightCard.eliminatedRound != null ||
+                                        requireClocktowerGameSession().state.gameState
+                                            .playerAt(preflightIndex + 1)?.alive != true
+                                )
+                            ) {
+                                clocktowerSelectedExecution = null
+                                advanceClocktowerPlayerInputRevision()
+                                return@onConfirmDay
+                            }
                             val proposedSequence = clocktowerEventCounter + 1
                             val proposedObservationId = if (preflightIndex >= 0) {
                                 "public-alive-${clocktowerGameId}-${proposedSequence}-${preflightIndex + 1}"
@@ -4143,10 +4157,6 @@ internal fun CampBoardGameHostApp() {
                             if (executionName != null) {
                                 val index = cards.indexOfFirst { it.name == executionName }
                                 val executedCard = cards.getOrNull(index)
-                                if (index < 0 || executedCard == null || executedCard.eliminatedRound != null) {
-                                    // No death/action fact was accepted; preserve the prior invalidation behavior.
-                                    advanceClocktowerGameStateRevision()
-                                }
                                 if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
                                     // Session binds death-time Klutz evidence before clearing poison.
                                     val actionSequence = clocktowerEventCounter + 1

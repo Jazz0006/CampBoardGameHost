@@ -1,10 +1,10 @@
 # ARCH-CLEANUP-2 — 单一权威 Session、逐步确认与实用恢复（2026-10-16）
 
-> **CURRENT APPROVED IMPLEMENTATION CONTRACT / A1 首批实施中，其余尚未完成。** 此文件替代 ARCH-CLEANUP-1 中与本路线冲突的未来验收要求；ARCH-CLEANUP-1 是已完成批次与历史审计记录，不删除已发生事实。全局开发原则见根目录 AGENTS.md。
+> **CURRENT APPROVED IMPLEMENTATION CONTRACT / A1 完成源码退出审计，精确 HEAD CI 验收待确认；A2–A6 仍未完成。** 此文件替代 ARCH-CLEANUP-1 中与本路线冲突的未来验收要求；ARCH-CLEANUP-1 是已完成批次与历史审计记录，不删除已发生事实。全局开发原则见根目录 AGENTS.md。
 >
 > 唯一活动实施分支：cleanup/arch-cleanup-1-20261015；唯一集成入口：Draft PR #315（base main，未合并）。起点代码 HEAD ec6596a56cd23981acdc3e30b2cfcf6b23820ca0，Android CI #4213 与 R2 #3829 SUCCESS，仅为起点证据。新实施必须重新确认 live HEAD / worktree / PR / CI。
 >
-> 优先 ARCH-CLEANUP-2 A1→A6；暂停 AI-EVENT-JIT/P2 新功能、付费模型实验和 main 合并。文档批准 ≠ 生产已实现，A 目前 PARTIAL。
+> 优先 ARCH-CLEANUP-2 A1→A6；暂停 AI-EVENT-JIT/P2 新功能、付费模型实验和 main 合并。文档批准 ≠ 生产已实现，整体目标 A 仍 PARTIAL（A2–A6 未完成）。
 
 ## 1. 产品决策和根本原则
 
@@ -154,6 +154,14 @@
 - 针对性的 `StorytellerCausalDecisionJournalV1Test` 验证提交后事实/版本/序号、重复确认、非法恶魔目标拒绝无半写、同夜正式更正后有效因果记录、Mayor 自身合法目标与历史 JSON 编解码一致；不机械扩增 UI 字符串测试。
 - 源码批次 `dd7392cdba097509130e3641b8b7830752c8adc5` [CI #4217](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38854159448) SUCCESS（Android tests、ASP、Real Clingo、CI Gate），同一 SHA [R2 #3832](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38854159617) SUCCESS。随后 Mayor 同席规则和持久化回归修复的**最新可执行源码 SHA** `f010720493e3f79a5db145f3b1da4fb655276b30` [CI #4218](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38854537664) 完成，Android tests、ASP、Real Clingo、CI Gate 均 SUCCESS。R2 的 push 路径仅监控主屏等 UI 文件，后一提交只有 domain/epistemic/persistence/test 修改，因此 **R2 在 f0107204 SHA 未单独触发**；不把前一 SHA 的 R2 假称是后一 SHA 验收。
 - **A1 仍 PARTIAL，但收尾范围应收缩**：DemonSuccessor 的草稿只属 UI 输入，最终的继承结果/实际 RoleChange 只需成为一项有效的说书人历史事实；如 Host 在 Dawn 前需要已确认候选来继续规则流程，可将其作为待处理状态而非额外永久 AI 事件。审计其重复 revision 与事实写入口后删除。Artist AI 问答界面与问题文本采集尚未开发，作为**后续独立功能**，不能阻塞 A1；现有手动答复路径保留到功能替换。剩余 `advanceClocktowerGameStateRevision` 只移除无真正状态意义的调用；实例 `commitGlobalActionFact` 的测试消费者先迁移再删除。A2/A3/A4/A5/A6 均未开始，PR 保持 Draft/dirty，不合并 main、不调用付费 API。
+
+### A1 最终退出审计（2026-10-16；源码完成、等待本次精确 HEAD CI）
+
+- 从开发机 clean `60a410616bd12384465a37395780dfa401b3a020`、GitHub PR #315 Draft/dirty 和 CI #4231 GREEN 开始，逐项重查 `ClocktowerGameSession` 的写入口及 `CampBoardGameHostApp` 现役独立 revision 回调。此处是 **A1 的源码退出判断，不代表 A2–A6 或真机完成**。
+- 现有正式 Host 确认通过 `commitConfirmedGameAction` 及窄入口一次提交所需机械状态、ActionFact、globalSequence、revision；必要公开死亡观察同事务，其他真实信息按实际公布时刻进行 Session 预检／提交。投毒（包括黄昏/破晓）、真实死亡/处决、实际角色更替、阶段推进、攻击/保护、提名/投票、无处决、杀手、管家主人和市长裁量已有单一正式入口。已删除旧 `commitPoisonTargetBoundary`、`commitActualRoleBoundary`、`synchronizeGameStateWithinCurrentRevision`、`recordClocktowerAction`、`recordClocktowerPhaseAdvance` 和有危险的历史单写实例 `ClocktowerGameSession.commitGlobalActionFact(draft)`。正式事务内部的同名 companion 纯函数不删除。
+- 退出审计查到两个漏项并在本批修复：`recordNightStep(MayorRedirect)` 的旧 RoleAction 叙事还会在已经提交 `MayorRedirectChoice` 后独立推进第二次 Session revision；现在标记为已有正式确认的叙述，与 TB Session/非 TB 现有合法确认回调共用一个 revision owner。白天执行死亡已失效/不存在的选中席位，旧 `onConfirmDay` 仍推进机械 revision 并转入下一夜；现在先核对当前 Session/卡片存活，撤销失效的 UI 选项，只更新可编辑的 input revision 并留在白天，**不产生执行事实或技术假确认**。
+- `advanceClocktowerGameStateRevision()` 剩余用途均已按消费者界定：当前艺术家手动问答（未来功能单独迁移）、非 GLOBAL/非 TB 分支、空击杀/空保护确认和无事实的夜晚收尾失效标记。后者属于尚未实现 Session 权威流程快照时的保守缓存失效，并非已发生动作的额外叙事写入；A3/A5 接管完整当前进程后再审计移除。不得把未完成的艺术家自然语言问题收集硬塞回 A1。
+- **A1 源码退出准则可在本批精确 CI GREEN 后视为满足（已审计的真实确认边界）；整体 A 仍 PARTIAL。** A2 删除整包采纳，A3 消除 UI 第二机械状态，A4 收口醉酒/中毒的实际信息、公开身份声称、玩家复盘及退役 `clocktowerEvents`，A5 恢复瘦身，A6 真机三模式验收。PR #315 暂不解决 main 冲突或合并。此批不发付费 API 请求。
 
 ### A2 — 取消所有整包采纳
 

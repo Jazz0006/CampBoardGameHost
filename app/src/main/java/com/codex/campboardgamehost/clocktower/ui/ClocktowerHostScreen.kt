@@ -576,6 +576,9 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerNightAction.RedHerring,
             ClocktowerNightAction.Poison,
             ClocktowerNightAction.MonkProtect,
+            // The Mayor callback above already confirms the Session fact (TB), or
+            // explicitly invalidates the legacy non-TB step. Narration must not do it twice.
+            ClocktowerNightAction.MayorRedirect,
         )
         // Non-Global role actions without confirmed typed facts retain legacy
         // revision invalidation until their actual production owners migrate.
