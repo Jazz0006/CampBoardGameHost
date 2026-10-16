@@ -888,10 +888,17 @@ internal fun CampBoardGameHostApp() {
         targetSeat?.let { add(it.toString()) }
     }.joinToString("-")
 
-    fun recordClocktowerAction(draft: ActionFactDraft) {
+    /** Host-accepted action: one Session step for typed chronology and revision. */
+    fun commitClocktowerConfirmedAction(draft: ActionFactDraft) {
         if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) return
-        requireClocktowerGameSession().commitGlobalActionFact(draft)
+        val session = requireClocktowerGameSession()
+        session.commitConfirmedGameAction(
+            draft = draft,
+            nextGameState = session.state.gameState,
+            expectedGameStateRevision = session.state.gameStateRevision,
+        )
         publishClocktowerSessionView()
+        invalidateA4RevisionScope()
     }
 
     /** An announced death is learned at the real Host transition into the Klutz public choice.
@@ -906,7 +913,7 @@ internal fun CampBoardGameHostApp() {
             source.state, seat,
             clocktowerActionId(kind = "klutz-learned", targetSeat = seat),
             round, clocktowerEventCounter + 1,
-        )?.let(::recordClocktowerAction)
+        )?.let(::commitClocktowerConfirmedAction)
     }
 
     fun materializeClocktowerPoisonExpiryAtDusk() {
@@ -3176,9 +3183,14 @@ internal fun CampBoardGameHostApp() {
                         highestVoteCountState = clocktowerHighestVoteCountState,
                         gameOutcome = gameOutcome,
                         onRecordEvent = { type, title, detail, names ->
-                            // Host-screen registration, vote and publication callbacks still
-                            // own accepted-step invalidation until their typed A1/A4 migration.
-                            advanceClocktowerGameStateRevision()
+                            // Confirmed nomination/vote facts already own their Session revision.
+                            // Unmigrated registration and information callbacks still invalidate here.
+                            if (
+                                clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1 ||
+                                type !in setOf(ClocktowerEventType.Nomination, ClocktowerEventType.Vote)
+                            ) {
+                                advanceClocktowerGameStateRevision()
+                            }
                             addClocktowerEvent(type, title, detail, names)
                         },
                         onRecordEpistemicObservation = ::recordEpistemicObservation,
@@ -3210,7 +3222,7 @@ internal fun CampBoardGameHostApp() {
                                 if (targetName != null) {
                                     val targetSeat = clocktowerSeatFor(targetName)
                                     val localSequence = clocktowerEventCounter + 1
-                                    recordClocktowerAction(ActionFactDraft.Attack(
+                                    commitClocktowerConfirmedAction(ActionFactDraft.Attack(
                                         actionId = clocktowerActionId(
                                             kind = "attack",
                                             localSequence = localSequence,
@@ -3225,7 +3237,10 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerPendingNightDeath = transaction.checkpoint.confirmedAttackTarget
                                 clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
                                 clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
-                                advanceClocktowerGameStateRevision()
+                                if (targetName == null || clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) {
+                                    // No typed Attack was committed: the explicit confirmation still invalidates drafts.
+                                    advanceClocktowerGameStateRevision()
+                                }
                             }
                         },
                         onSelectExecution = {
@@ -3340,7 +3355,7 @@ internal fun CampBoardGameHostApp() {
                                 if (targetName != null) {
                                     val targetSeat = clocktowerSeatFor(targetName)
                                     val localSequence = clocktowerEventCounter + 1
-                                    recordClocktowerAction(ActionFactDraft.Protect(
+                                    commitClocktowerConfirmedAction(ActionFactDraft.Protect(
                                         actionId = clocktowerActionId(
                                             kind = "protect",
                                             localSequence = localSequence,
@@ -3355,7 +3370,9 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerConfirmedMonkProtectedTarget = transaction.checkpoint.confirmedMonkTarget
                                 clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
                                 clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
-                                advanceClocktowerGameStateRevision()
+                                if (targetName == null || clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) {
+                                    advanceClocktowerGameStateRevision()
+                                }
                             }
                         },
                         onSelectMayorRedirectTarget = { selectedTarget ->
@@ -3681,9 +3698,7 @@ internal fun CampBoardGameHostApp() {
                                     session.state, klutzSeat, choiceResult.chosenSeat,
                                     clocktowerActionId(kind = "klutz-choice", targetSeat = choiceResult.chosenSeat),
                                     round, clocktowerEventCounter + 1,
-                                )?.let(::recordClocktowerAction)
-                                // Klutz choice is confirmed here; the following event is only narration.
-                                advanceClocktowerGameStateRevision()
+                                )?.let(::commitClocktowerConfirmedAction)
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
                                     localizedText("呆瓜选择", "Klutz choice"),
@@ -3762,7 +3777,7 @@ internal fun CampBoardGameHostApp() {
                             ) {
                                 // Player's confirmed public shot precedes the optional Storyteller
                                 // registration ruling; misses and non-functioning claims remain facts.
-                                recordClocktowerAction(ActionFactDraft.SlayerShot(
+                                commitClocktowerConfirmedAction(ActionFactDraft.SlayerShot(
                                     actionId = clocktowerActionId("slayer-shot", targetSeat = targetIndex + 1),
                                     phase = storytellerPhaseFor(),
                                     round = round,
@@ -3824,8 +3839,10 @@ internal fun CampBoardGameHostApp() {
                                 )
                             }
                             var shotOutcome: GameOutcome? = null
-                            if (slayerDecision.consumesUse && !shotWillHit) {
-                                // A hit's confirmed death supplies the one mechanical revision.
+                            if (slayerDecision.consumesUse && !shotWillHit &&
+                                clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
+                            ) {
+                                // A Global SlayerShot fact now owns the accepted-shot revision even on a miss.
                                 advanceClocktowerGameStateRevision()
                             }
                             if (shotWillHit && targetIndex >= 0 && targetCard != null) {
@@ -3847,7 +3864,7 @@ internal fun CampBoardGameHostApp() {
                                         sequence = localSequence,
                                         targetSeat = targetSeat,
                                     ),
-                                    expectedGameStateRevision = clocktowerGameStateRevision,
+                                    expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
                                     publishedObservationId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat",
                                 )
                                 publishClocktowerSessionView()
@@ -3926,7 +3943,7 @@ internal fun CampBoardGameHostApp() {
                                     )
                                 } == true && !clocktowerVirginUsed &&
                                     currentClocktowerScript == ClocktowerScript.TroubleBrewing
-                                recordClocktowerAction(ActionFactDraft.Nomination(
+                                commitClocktowerConfirmedAction(ActionFactDraft.Nomination(
                                     actionId = clocktowerActionId("nomination", targetSeat = clocktowerSeatFor(nomineeName)),
                                     phase = storytellerPhaseFor(),
                                     round = round,
@@ -3943,7 +3960,7 @@ internal fun CampBoardGameHostApp() {
                                 ) && clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
                             ) {
                                 val voterSeats = voteRecord.voters.map { clocktowerSeatFor(it.playerName) }
-                                recordClocktowerAction(ActionFactDraft.Vote(
+                                commitClocktowerConfirmedAction(ActionFactDraft.Vote(
                                     actionId = clocktowerActionId("vote", targetSeat = clocktowerSeatFor(nomineeName)),
                                     phase = storytellerPhaseFor(),
                                     round = round,
@@ -4000,7 +4017,10 @@ internal fun CampBoardGameHostApp() {
                             }
                             // A confirmed Virgin execution owns its revision through Session.
                             // A nomination without death still advances the accepted game step.
-                            if (!executeNominator || cards.none { it.name == nominatorName && it.eliminatedRound == null }) {
+                            if ((!executeNominator || cards.none { it.name == nominatorName && it.eliminatedRound == null }) &&
+                                clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
+                            ) {
+                                // The confirmed nomination already advanced a Global Session revision.
                                 advanceClocktowerGameStateRevision()
                             }
                             if (executeNominator) {
@@ -4020,7 +4040,7 @@ internal fun CampBoardGameHostApp() {
                                             sequence = actionSequence,
                                             targetSeat = index + 1,
                                         ),
-                                        expectedGameStateRevision = clocktowerGameStateRevision,
+                                        expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
                                         publishedObservationId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}",
                                     )
                                     publishClocktowerSessionView()
@@ -4138,17 +4158,18 @@ internal fun CampBoardGameHostApp() {
                                     eventSequence = proposedSequence,
                                 )
                             }
-                            // Only a no-execution day needs the existing standalone revision.
-                            // An actual execution increments revision atomically with its fact.
-                            if (preflightIndex < 0 || preflightCard?.eliminatedRound != null) {
-                                advanceClocktowerGameStateRevision()
-                            }
+                            // An execution and a GLOBAL_V1 NoExecution each own their revision
+                            // with their fact. Non-Global fallback still advances below.
                             val aliveBeforeExecution = cards.filter { it.eliminatedRound == null }
                             val executionName = clocktowerSelectedExecution
                             var executionOutcome: GameOutcome? = null
                             if (executionName != null) {
                                 val index = cards.indexOfFirst { it.name == executionName }
                                 val executedCard = cards.getOrNull(index)
+                                if (index < 0 || executedCard == null || executedCard.eliminatedRound != null) {
+                                    // No death/action fact was accepted; preserve the prior invalidation behavior.
+                                    advanceClocktowerGameStateRevision()
+                                }
                                 if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
                                     // Session binds death-time Klutz evidence before clearing poison.
                                     val actionSequence = clocktowerEventCounter + 1
@@ -4165,7 +4186,7 @@ internal fun CampBoardGameHostApp() {
                                             sequence = actionSequence,
                                             targetSeat = index + 1,
                                         ),
-                                        expectedGameStateRevision = clocktowerGameStateRevision,
+                                        expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
                                         publishedObservationId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}",
                                     )
                                     publishClocktowerSessionView()
@@ -4218,12 +4239,14 @@ internal fun CampBoardGameHostApp() {
                                     // A confirmed no-execution is positive public chronology,
                                     // NOT absence of a death fact and NOT a Storyteller recommendation.
                                     // Commit before possible Mayor win and day/phase changes.
-                                    recordClocktowerAction(ActionFactDraft.NoExecution(
+                                    commitClocktowerConfirmedAction(ActionFactDraft.NoExecution(
                                         actionId = clocktowerActionId("no-execution"),
                                         phase = storytellerPhaseFor(),
                                         round = round,
                                         sequence = clocktowerEventCounter + 1,
                                     ))
+                                } else {
+                                    advanceClocktowerGameStateRevision()
                                 }
                                 addClocktowerEvent(
                                     ClocktowerEventType.Execution,

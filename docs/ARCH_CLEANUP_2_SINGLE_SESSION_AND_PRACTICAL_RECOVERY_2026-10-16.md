@@ -82,6 +82,17 @@
 - 新增 Session 阶段有序提交测试，覆盖 FIRST_NIGHT→DAY→NIGHT→DAWN、黄昏 Poison 失效后同回调立即转 Night、重复 ID、非法越级/跳轮、历史阶段不匹配和过时版本。**发现并修正复合回调的 stale revision 风险**：Compose 的 `clocktowerGameStateRevision` 是回调开始的快照；Dusk 清毒后转 Night、死亡后 Dawn 继续物化、继承角色后 poison 等连续已确认动作必须使用各自提交时的实时 `ClocktowerGameSession.state.gameStateRevision`，不能继续把旧快照传给下一次提交。Host 的实际步骤合法性与 Action ID 幂等仍不变。阶段进程证据是已有的 `ActionFact.PhaseAdvance`，尚未新增第二权威阶段状态；UI 层 `clocktowerPhase/round` 仍待 A3/恢复阶段完全收敛。
 - **A1 仍 PARTIAL**：Night 结算前置 revision、部分 UI callback 的 version/typed fact 分离、NoExecution/Slayer/Nomination/Vote 等行动、实际信息公布的原子性未完成；主线继续 A1，暂不开始 A2–A6。Android 构建和设备观察没有运行证据，不得声称验收通过。
 
+### A1 第六批：行动确认事实与版本同一提交（2026-10-16；待新 HEAD 独立验证）
+
+- 起点经 Mini MCP 与 GitHub 对证：`05b292ebabde8b1dbe940f67ed8604e39a64a152`，本地 clean、远端相同，Draft PR #315 对 `main` 仍 `dirty` 且没有该新 HEAD 的 CI/R2。
+- 真实生产引用审计：`recordClocktowerAction` 是 Attack、Protect、SlayerShot、Nomination、Vote、NoExecution 和 NGJ Klutz Learned/Choice 的共同事实写入口，原本调用 `session.commitGlobalActionFact` **只追加事实**，而真正确认回调在另处 `advanceClocktowerGameStateRevision`；因此语义记录与接受步骤可能分离。
+- 将旧入口**直接替换并删除旧名字**：`commitClocktowerConfirmedAction` 统一通过现有 `ClocktowerGameSession.commitConfirmedGameAction(draft, session.state.gameState, session.state.gameStateRevision)`，一次 Session 转移写入确认的行动事实、全局序号和 gameStateRevision。只有已被 Host 正式接受的行动进入该函数；Attack/Protect 的确认目标仍由现役 `NightCheckpointHostTransaction` 合法检查，Vote 仍使用真实逐席投票、ghost 子集及 Virgin 首次提名标志，SlayerShot 保留命中/未命中和能力消耗语义。没有新增攻击/保护专属并行状态。
+- 删除 Attack/Protect **有目标且 Global 模式**后的第二次版本推进；无目标或非 Global 模式仍沿用明确的 revision 失效通知。SlayerShot 未命中不再把版本推进交给额外 callback；命中后公开死亡仍是另一个独立实际事件，一次死亡加公开 alive 观察的原子提交。NGJ Klutz choice 此前由“事实+手动 revision”组合，已删除重复 revision。
+- `ClocktowerHostScreen.onRecordEvent` 仅当 Nomination/Vote 已由 Global 正式行动提交时，不再为了同一条叙事文字增加第二次 revision；Spy/Recluse 登记、私有线索公布及未迁移回调暂继续显式版本通知，留待后续 A1/A4。Virgin 未执行且 Global 已确认提名时，不再推进多余版本。NoExecution 现在在 `onConfirmDay` 通过确认的结构化事实一并推进 revision，非 Global 或无真实动作的旧行为有受控回退；保持 Mayor 胜负检查之前完成明确的无处决记录。
+- 重要并发顺序：SlayerShot → 命中 Death、Nomination → Virgin Execution、Vote/其他确认 → Day Execution 可能在同一 Compose 回调发生。后续死亡使用实时 `ClocktowerGameSession.state.gameStateRevision`，而非回调开始捕获的旧 `clocktowerGameStateRevision`，以免被错误判断为 stale。
+- 新增 `ClocktowerGameSessionConfirmedActionBoundaryTest`：Attack/Protect 共同保护与攻击、Nomination/Vote/Slayer miss/NoExecution 的版本及事实精确一致，重复 ID 幂等、冲突/过期拒绝。**源码与测试已修改，但未执行 Android/JUnit/CI/R2**，不声称运行验收。现存 `ClocktowerGameSession.commitGlobalActionFact` 的 instance 方法已无生产消费者，但仍被多个历史/恢复/战略种子测试调用；待 A1 完成后按真实测试保留价值清理，避免误删造成测试失编。
+- **A1 仍 PARTIAL**：夜间结算前置 revision、部分登记/信息公布回调、PlayerCard 可写状态、阶段进度的 UI 投影、Recovery 历史双轨等仍需后续步骤。继续 A1，不提前 A2、不合并 main、不进行付费模型调用。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。
