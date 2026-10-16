@@ -112,7 +112,7 @@ import com.codex.campboardgamehost.clocktower.session.ConfirmedRegistrationResol
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
-import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
+import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleChange
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPoisonTarget
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPlayerDeath
 import com.codex.campboardgamehost.clocktower.session.synchronizePoisonTargetWithinCurrentRevision
@@ -2618,32 +2618,6 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun recordClocktowerRoleChangeAction(
-        targetSeat: Int,
-        nextRole: ClocktowerRole,
-        actionId: String,
-    ) {
-        val localSequence = clocktowerEventCounter + 1
-        recordClocktowerAction(ActionFactDraft.RoleChange(
-            actionId = actionId,
-            phase = storytellerPhaseFor(),
-            round = round,
-            sequence = localSequence,
-            targetSeat = targetSeat,
-            role = RoleId(nextRole.enName),
-            alignment = when (nextRole.team) {
-                ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider -> ClocktowerAlignment.GOOD
-                ClocktowerTeam.Minion, ClocktowerTeam.Demon -> ClocktowerAlignment.EVIL
-            },
-            type = when (nextRole.team) {
-                ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
-                ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
-                ClocktowerTeam.Minion -> CharacterType.MINION
-                ClocktowerTeam.Demon -> CharacterType.DEMON
-            },
-        ))
-    }
-
     /**
      * Project an already-accepted Session death into Compose rendering. PlayerCard may
      * retain a display round, but it cannot independently establish that a seat died.
@@ -2666,38 +2640,41 @@ internal fun CampBoardGameHostApp() {
         cards[index] = card.copy(eliminatedRound = card.eliminatedRound ?: deathRound)
     }
 
+    /** Confirm a real successor, then reflect the authoritative Session role for Compose. */
     fun setClocktowerActualRole(
         playerName: String,
         nextRole: ClocktowerRole,
-        recordSemanticHistory: Boolean = true,
+        actionId: String? = null,
     ) {
         val index = cards.indexOfFirst { it.name == playerName }
         if (index >= 0) {
             val targetSeat = index + 1
-            if (recordSemanticHistory) {
-                recordClocktowerRoleChangeAction(
+            val localSequence = clocktowerEventCounter + 1
+            val draft = ActionFactDraft.RoleChange(
+                actionId = actionId ?: clocktowerActionId(
+                    kind = "role-change-${nextRole.enName.lowercase().replace(' ', '-')}",
+                    localSequence = localSequence,
                     targetSeat = targetSeat,
-                    nextRole = nextRole,
-                    actionId = clocktowerActionId(
-                        kind = "role-change-${nextRole.enName.lowercase().replace(' ', '-')}",
-                        localSequence = clocktowerEventCounter + 1,
-                        targetSeat = targetSeat,
-                    ),
-                )
-            }
-            requireClocktowerGameSession().commitActualRoleBoundary(
-                seat = targetSeat,
-                actualRole = RoleId(nextRole.enName),
-                actualAlignment = when (nextRole.team) {
+                ),
+                phase = storytellerPhaseFor(),
+                round = round,
+                sequence = localSequence,
+                targetSeat = targetSeat,
+                role = RoleId(nextRole.enName),
+                alignment = when (nextRole.team) {
                     ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider -> ClocktowerAlignment.GOOD
                     ClocktowerTeam.Minion, ClocktowerTeam.Demon -> ClocktowerAlignment.EVIL
                 },
-                actualType = when (nextRole.team) {
+                type = when (nextRole.team) {
                     ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
                     ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
                     ClocktowerTeam.Minion -> CharacterType.MINION
                     ClocktowerTeam.Demon -> CharacterType.DEMON
                 },
+            )
+            requireClocktowerGameSession().commitConfirmedActualRoleChange(
+                draft = draft,
+                expectedGameStateRevision = clocktowerGameStateRevision,
             )
             publishClocktowerSessionView()
             invalidateA4RevisionScope()
@@ -3572,36 +3549,40 @@ internal fun CampBoardGameHostApp() {
                                             val targetName = cards.getOrNull(roleChange.targetSeat - 1)?.name
                                             val nextRole = clocktowerRolesForScript(currentClocktowerScript)
                                                 .firstOrNull { role -> RoleId(role.enName) == roleChange.roleId }
-                                            if (targetName != null && nextRole != null) {
-                                                roleChangeMaterialization.actionIdToCommit?.let { actionId ->
-                                                    recordClocktowerRoleChangeAction(
-                                                        targetSeat = roleChange.targetSeat,
-                                                        nextRole = nextRole,
-                                                        actionId = actionId,
-                                                    )
+                                            check(targetName != null && nextRole != null) {
+                                                "Confirmed Dawn role change target/role is missing from Host roster."
+                                            }
+                                            if (roleChangeMaterialization.stateMutationRequired) {
+                                                // A new role transition and its timeline fact are one Session commit.
+                                                // Partial historical fact-only repairs are not new legal steps.
+                                                val actionId = requireNotNull(roleChangeMaterialization.actionIdToCommit) {
+                                                    "Unrecorded Dawn role change must have a stable action ID."
                                                 }
-                                                if (roleChangeMaterialization.stateMutationRequired) {
-                                                    setClocktowerActualRole(
+                                                setClocktowerActualRole(
+                                                    playerName = targetName,
+                                                    nextRole = nextRole,
+                                                    actionId = actionId,
+                                                )
+                                                records.add(
+                                                    EliminationRecord(
+                                                        round,
                                                         targetName,
-                                                        nextRole,
-                                                        recordSemanticHistory = false,
-                                                    )
-                                                    records.add(
-                                                        EliminationRecord(
-                                                            round,
-                                                            targetName,
-                                                            context.getString(R.string.clocktower_record_imp_passed),
-                                                        ),
-                                                    )
-                                                    addClocktowerEvent(
-                                                        ClocktowerEventType.RoleChange,
-                                                        localizedText("角色变化", "Role changed"),
-                                                        localizedText(
-                                                            "${playerSeatLabel(cards, targetName)} 成为新的小恶魔。",
-                                                            "${playerSeatLabel(cards, targetName)} became the new Imp.",
-                                                        ),
-                                                        listOf(targetName),
-                                                    )
+                                                        context.getString(R.string.clocktower_record_imp_passed),
+                                                    ),
+                                                )
+                                                addClocktowerEvent(
+                                                    ClocktowerEventType.RoleChange,
+                                                    localizedText("角色变化", "Role changed"),
+                                                    localizedText(
+                                                        "${playerSeatLabel(cards, targetName)} 成为新的小恶魔。",
+                                                        "${playerSeatLabel(cards, targetName)} became the new Imp.",
+                                                    ),
+                                                    listOf(targetName),
+                                                )
+                                            } else {
+                                                // With atomic commits, an unchanged role cannot have an orphan fact.
+                                                check(roleChangeMaterialization.actionIdToCommit == null) {
+                                                    "Dawn role fact is missing although the role is already applied."
                                                 }
                                             }
                                         }

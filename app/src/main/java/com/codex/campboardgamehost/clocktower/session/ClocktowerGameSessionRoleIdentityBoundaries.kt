@@ -1,59 +1,39 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
+import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 
 /**
- * Commits one accepted actual-role identity boundary without synchronizing unrelated live mechanics.
- * Alive/poisoned/shown identity and every other seat remain session-owned and unchanged.
+ * Confirm one Host-accepted actual role transition. Unlike the old role-only boundary,
+ * actual identity, globally ordered RoleChange fact, and revision publish together.
+ * No shown identity, alive/poison status or other seat is changed by this transition.
  */
-internal fun ClocktowerGameSession.commitActualRoleBoundary(
-    seat: Int,
-    actualRole: RoleId,
-    actualAlignment: Alignment,
-    actualType: CharacterType,
-): ClocktowerSessionState {
-    val currentGameState = state.gameState
-    require(currentGameState.playerAt(seat) != null) {
-        "Unknown Clocktower seat $seat."
+internal fun ClocktowerGameSession.commitConfirmedActualRoleChange(
+    draft: ActionFactDraft.RoleChange,
+    expectedGameStateRevision: Long,
+): TimelineBoundActionFact {
+    val previous = requireNotNull(state.gameState.playerAt(draft.targetSeat)) {
+        "Unknown Clocktower seat ${draft.targetSeat}."
     }
-    val nextGameState = currentGameState.copy(
-        players = currentGameState.players.map { player ->
-            if (player.seat != seat) {
-                player
-            } else {
-                player.copy(
-                    actualRole = actualRole,
-                    actualAlignment = actualAlignment,
-                    actualType = actualType,
-                )
-            }
+    check(
+        previous.actualRole != draft.role ||
+            previous.actualAlignment != draft.alignment ||
+            previous.actualType != draft.type ||
+            state.actionTimeline.entries.any { it.fact.actionId == draft.actionId }
+    ) { "An unchanged actual role cannot generate a new RoleChange fact." }
+    val nextGameState = state.gameState.copy(
+        players = state.gameState.players.map { player ->
+            if (player.seat != draft.targetSeat) player else player.copy(
+                actualRole = draft.role,
+                actualAlignment = draft.alignment,
+                actualType = draft.type,
+            )
         },
     )
-    return commitGameStateBoundary(nextGameState)
+    return commitConfirmedGameAction(
+        draft = draft,
+        nextGameState = nextGameState,
+        expectedGameStateRevision = expectedGameStateRevision,
+    )
 }
 
-/**
- * Commits one accepted shown-role identity boundary without synchronizing unrelated live mechanics.
- * Actual identity/alive/poisoned and every other seat remain session-owned and unchanged.
- */
-internal fun ClocktowerGameSession.commitShownRoleBoundary(
-    seat: Int,
-    shownRole: RoleId,
-): ClocktowerSessionState {
-    val currentGameState = state.gameState
-    require(currentGameState.playerAt(seat) != null) {
-        "Unknown Clocktower seat $seat."
-    }
-    val nextGameState = currentGameState.copy(
-        players = currentGameState.players.map { player ->
-            if (player.seat != seat) {
-                player
-            } else {
-                player.copy(shownRole = shownRole)
-            }
-        },
-    )
-    return commitGameStateBoundary(nextGameState)
-}

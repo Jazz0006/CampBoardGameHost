@@ -55,6 +55,15 @@
 - 保留现役静态规则、Klutz/Spy 因果取证、真实 NGJ 流程与必要归档合同测试；死亡测试迁到一次确认、事实+公开观察 chronology、重复安全、被拒绝状态不变以及 Klutz 中毒前证据。Dawn planner 原来可补写历史的独立状态/事实标志尚有角色变化和 Recovery 消费，留待 A1 后续和 A5 精简，不声称已消除全局恢复双轨。
 - **A1 仍 PARTIAL**：真实角色变更、Dawn 毒延续、阶段推进、无处决/票数以及各能力展示的事实和 revision 写入仍分散；UI/PlayerCard 第二权威属 A3，未开始 A2。不拿旧 HEAD CI/R2 当新批验收证据。
 
+### A1 第三批：正式角色改变与旧机械边界删除（2026-10-16，待精确 HEAD 验证）
+
+- 实际起点：`d6742aca56e164d9459be7d9a67591a3f45e883d`（本地/远端一致，clean）；Draft #315 仍 `mergeable=false / dirty`；尚无上一批新 HEAD 的 CI/R2 证明。
+- 真正消费链：`promoteScarletWomanIfNeeded` → `setClocktowerActualRole` 以及 `NightDawnResolutionPlanner.confirmNewDemonIdentity` → `NightDawnDurableMaterializationPlanner.roleChanges` → `setClocktowerActualRole`。原链是 `recordClocktowerRoleChangeAction` 独立提交事实、`commitActualRoleBoundary` 独立改变机械状态与 revision，产生半提交窗口。
+- 迁移成 `commitConfirmedActualRoleChange(ActionFactDraft.RoleChange, expectedGameStateRevision)` → 已有 `ClocktowerGameSession.commitConfirmedGameAction`；一次 Session 状态跃迁提交真实角色、阵营、类型、`ActionFactTimeline`、`gameStateRevision` 和 global sequence。校验未知座位、已无变化的角色、过期 revision；相同已确认 action ID 幂等。保留其他座位、alive/poisoned、shownRole 原样；UI PlayerCard 在确认后才投影更新。
+- 破晓角色变化改由单个 action ID 执行；`NightDawnDurableMaterializationPlan` 如果出现状态/历史仅一侧已更新的旧式半提交恢复情形，现在明确拒绝，不继续生成第三份修复事实；该 planner 其他毒药/阶段/死亡恢复消费仍须在 A1/A5 继续收敛。
+- **已删除** `recordClocktowerRoleChangeAction`、`commitActualRoleBoundary`、`recordSemanticHistory=false` 双轨参数；同时经全量调用搜索证实 `commitShownRoleBoundary` 只有自身测试、`commitGameStateBoundary` 只有前者与自测消费，已直接删除两者和 `ClocktowerGameSessionGameStateBoundaryTest`（纯旧 API 形状测试）。真正角色变更幂等、原子性、状态保持及拒绝测试已替换旧角色测试；不删除合法性检查或 TBGS/EvidenceLab 读接口。
+- **A1 仍 PARTIAL**：破晓毒药 carry、phase advance、攻击、投票/无处决、实际信息公布仍有分散事实/状态/版本链。现场编译/CI/R2、玩家操作、恢复还待精确提交验收；A2–A6 未提前执行。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。

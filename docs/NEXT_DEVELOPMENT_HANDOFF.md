@@ -1,6 +1,6 @@
 # CampBoardGameHost — Next Development Handoff
 
-> **Implementation handoff 2026-10-16; A1 first two slices implemented, exact-head verification required.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
+> **Implementation handoff 2026-10-16; A1 first three slices implemented, exact-head verification required.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
 
 ## Starting repository state (recheck live)
 
@@ -34,6 +34,13 @@
 - **Actually deleted** the old `synchronizePlayerDeathWithinCurrentRevision` production helper and its test references, and the `addClocktowerEvent` narrative-based mechanical fact/observation projection and `projectSemanticHistory` parameter. Existing tests for real NGJ Klutz and synthetic archival provenance were migrated to the confirmed Session boundary, not removed wholesale.
 - **Next A1 work, not A2:** actual-role change and Dawn role materialization; poison at Dusk/Dawn and attack/phase steps; vote/no-execution/revision ownership; actual information publication preflight and durable fact commit. Audit NightDawnDurableMaterializationPlanner's remaining state/action/observation repair branches, especially those made obsolete by atomic Session commits. Do not erase Host legal evidence or lose an already-public result. Root UI/PlayerCard second state is deliberately A3.
 - Check exact new source HEAD CI/R2 and GitHub conflict before any acceptance claim; #315 remains Draft and main unmerged. No paid model calls approved.
+
+## A1 third implementation checkpoint (2026-10-16; PARTIAL)
+
+- Starting HEAD before this batch: `d6742aca56e164d9459be7d9a67591a3f45e883d`, local == remote and clean. The real Scarlet Woman and Dawn Imp succession writers used independent `recordClocktowerRoleChangeAction` then `commitActualRoleBoundary`, leaving a partial state/fact window.
+- Migrated both to `commitConfirmedActualRoleChange` using existing Session accepted-step atomic transition and stable Dawn planner action IDs. Reflected UI card role only after Session confirmation. No separate `recordSemanticHistory=false` switch. Reject the obsolete state/history half-repair state instead of silently accepting a second truth.
+- **Delete inventory**: `recordClocktowerRoleChangeAction`, `commitActualRoleBoundary`, unused `commitShownRoleBoundary`, `commitGameStateBoundary` and obsolete generic self-test; prior targeted role test now checks actual role + typed fact + global sequence + no-op duplicate/stale rejection. The shown-role helper had no production consumer.
+- **Continue A1, not A2**: prioritize poison carry / dusk expiry and Dawn materialization fact+mechanics paths, then phase/attack and vote/no-execution sequencing. `addClocktowerEvent` still increments revision for narrative events after some authoritative role/death commits; audit and retire redundant increments once remaining event consumers are migrated (do not confuse one Session transaction with exactly one revision for an entire UI callback). Check remaining `NightDawnDurableMaterializationPlanner` state/fact split retry branches and their tests, delete when truly superseded. A3 PlayerCard mechanical authority removal, A4 information completeness, A5 Recovery reduction remain separate later slices. Obtain exact HEAD independent Android CI/R2; PR #315 stays Draft, no main merge or paid calls.
 
 ## Historical first implementation brief: A1
 
