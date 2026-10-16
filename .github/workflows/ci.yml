@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      # Draft cleanup PRs can have merge conflicts; validate the branch's actual HEAD.
+      - 'cleanup/**'
   # Stacked feature PRs need the same independent gate as main-targeted PRs.
   pull_request:
   workflow_dispatch:
