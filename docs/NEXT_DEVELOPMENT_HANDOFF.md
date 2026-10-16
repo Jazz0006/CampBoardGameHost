@@ -1,6 +1,6 @@
 # CampBoardGameHost — Next Development Handoff
 
-> **Implementation handoff 2026-10-16; A1 first four slices implemented, exact-head verification required.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
+> **Implementation handoff 2026-10-16; A1 first five slices implemented, exact-head verification required.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
 
 ## Starting repository state (recheck live)
 
@@ -49,6 +49,14 @@
 - Removed `synchronizePoisonTargetWithinCurrentRevision` (all production and test callers) and therefore `synchronizeGameStateWithinCurrentRevision` (no remaining consumer). Updated poison contract tests to verify Dusk expiry, Dawn carry, stale rejection, global sequence and idempotence. Existing pure NightDawn/Dusk stable-ID planners still supply real inputs; retire their old dual-repair modeling only when all other consumers/Recovery reach A5.
 - **Continue A1, not A2:** prioritize phase advancing (the fact-only `recordClocktowerPhaseAdvance` and event-driven revision) and formal action producers for attack/vote/no-execution, then on-publication atomic records. In particular `addClocktowerEvent` has independent revision increments even following new Session-owned commits. Do not broaden to A3 PlayerCard or A5 recovery until A1 source ownership and independent CI/R2 are accepted.
 - Pending: exact HEAD CI/R2 and Android Studio/ADB sample game; PR #315 remains Draft and dirty against main. No paid calls, no main merge.
+
+## A1 fifth implementation checkpoint (2026-10-16; PARTIAL)
+
+- Starting clean/equal source HEAD `20e5a99dfcf64caa37519e235c6faeb9c2a424a3`. PhaseAdvance had fact-only writers separate from UI phase/revision in up to eight real pathways; `addClocktowerEvent` unconditionally advanced mechanical revisions even for already-committed death/role/execution narration.
+- New `ClocktowerGameSession.commitConfirmedPhaseAdvance` delegates to existing atomically guarded `commitConfirmedGameAction`: legal phase/round transitions, previous accepted PhaseAdvance chronology, idempotent accepted ID and stale rejection. Replaced `recordClocktowerPhaseAdvance` with `commitClocktowerPhaseAdvance` across all real phase progression entries, including stable Dawn materialization and NGJ Klutz interruption/return. Explicit duplicate revision removed at first-night/day return and confirmed Dawn; no new independent phase state object created.
+- `addClocktowerEvent` now only records display events and display counter. Existing Host Screen registration/vote/information-history callback explicitly advances revision at its actual callback until its typed A1/A4 owner can replace it; likewise Artist and NGJ Klutz choice. Other already accepted death/role events no longer double-revision the Session merely for localized prose.
+- Meaningful Session contract tests now cover normal FIRST_NIGHT→DAY→NIGHT→DAWN, interleaved Dusk Poison then immediate DAY→NIGHT, exact global cursor, no partial write on stale/wrong previous phase/skipped round, and idempotent accepted event identity. Composite callbacks must read the live Session revision **after each previous confirmed step**, not reuse a Compose value captured before Dusk poison, role succession or Dawn death. Updated the confirmed phase/role/poison/death call sites that share one callback and are sequentially dependent; retained Host legality and typed Action ID dedup. These are source/tests edited, **not executed Android/CI proof**.
+- **Continue A1**, not A2: inspect confirmed attack/protect/night-step producers, nomination/vote/no-execution, unreviewed `advanceClocktowerGameStateRevision` paths (especially night-close), and actual publication/registration fact/observation atomicity. Do not pretend fully authoritative phase/round until A3 removes Compose `clocktowerPhase/round` second progress writer and Recovery uses the accepted Session chronology. Draft PR #315 and main conflict stay unmerged. No paid API.
 
 ## Historical first implementation brief: A1
 

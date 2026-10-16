@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.KlutzDeathTriggerEvidenceV1
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
@@ -452,6 +453,45 @@ internal class ClocktowerGameSession private constructor(
                 ?: committed.nextTimelineGlobalSequence,
         ))
         return committed.entry
+    }
+
+    /**
+     * Confirm a real phase/round progression in the same Session state transition as its
+     * globally ordered PhaseAdvance fact. The mechanical player roster is unchanged; the
+     * accepted progress is carried by the typed history until UI progress projection converges.
+     */
+    fun commitConfirmedPhaseAdvance(
+        draft: ActionFactDraft.PhaseAdvance,
+        expectedGameStateRevision: Long,
+    ): TimelineBoundActionFact {
+        val legal = when (draft.phase) {
+            StorytellerPhase.FIRST_NIGHT ->
+                draft.nextPhase == StorytellerPhase.DAY && draft.nextRound == draft.round
+            StorytellerPhase.NIGHT ->
+                draft.nextPhase in setOf(StorytellerPhase.DAWN, StorytellerPhase.DAY) &&
+                    draft.nextRound == draft.round
+            StorytellerPhase.DAWN ->
+                draft.nextPhase == StorytellerPhase.DAY && draft.nextRound == draft.round
+            StorytellerPhase.DAY ->
+                (draft.nextPhase == StorytellerPhase.NIGHT && draft.nextRound == draft.round + 1) ||
+                    (draft.nextPhase == StorytellerPhase.DAWN && draft.nextRound == draft.round)
+        }
+        require(legal) {
+            "Illegal confirmed Clocktower phase progression: ${draft.phase}/${draft.round} " +
+                "to ${draft.nextPhase}/${draft.nextRound}."
+        }
+        val previouslyAcceptedPhase = state.actionTimeline.entries.asReversed()
+            .firstNotNullOfOrNull { it.fact as? ActionFact.PhaseAdvance }
+        val alreadyAccepted = state.actionTimeline.entries.any { it.fact.actionId == draft.actionId }
+        check(alreadyAccepted || previouslyAcceptedPhase == null ||
+            (previouslyAcceptedPhase.phase == draft.phase && previouslyAcceptedPhase.round == draft.round)) {
+            "Phase transition must start from the last accepted PhaseAdvance in Session history."
+        }
+        return commitConfirmedGameAction(
+            draft = draft,
+            nextGameState = state.gameState,
+            expectedGameStateRevision = expectedGameStateRevision,
+        )
     }
 
     /** Non-mutating validation/projection for production flows that must persist before commit. */

@@ -946,7 +946,7 @@ internal fun CampBoardGameHostApp() {
                     sequence = localSequence,
                     targetSeat = null,
                 ),
-                expectedGameStateRevision = clocktowerGameStateRevision,
+                expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
             )
             publishClocktowerSessionView()
             invalidateA4RevisionScope()
@@ -960,24 +960,31 @@ internal fun CampBoardGameHostApp() {
         clocktowerConfirmedPoisonTarget = null
     }
 
-    fun recordClocktowerPhaseAdvance(
+    fun commitClocktowerPhaseAdvance(
         nextPhase: ClocktowerPhase,
         nextRound: Int = round,
+        stableActionId: String? = null,
     ) {
         if (nextPhase == clocktowerPhase && nextRound == round) return
         val localSequence = clocktowerEventCounter + 1
-        recordClocktowerAction(ActionFactDraft.PhaseAdvance(
-            actionId = clocktowerActionId(
-                kind = "phase-${nextPhase.name.lowercase()}-$nextRound",
-                actionRound = round,
-                localSequence = localSequence,
+        requireClocktowerGameSession().commitConfirmedPhaseAdvance(
+            draft = ActionFactDraft.PhaseAdvance(
+                actionId = stableActionId ?: clocktowerActionId(
+                    kind = "phase-${nextPhase.name.lowercase()}-$nextRound",
+                    actionRound = round,
+                    localSequence = localSequence,
+                ),
+                phase = storytellerPhaseFor(clocktowerPhase),
+                round = round,
+                sequence = localSequence,
+                nextPhase = storytellerPhaseFor(nextPhase),
+                nextRound = nextRound,
             ),
-            phase = storytellerPhaseFor(clocktowerPhase),
-            round = round,
-            sequence = localSequence,
-            nextPhase = storytellerPhaseFor(nextPhase),
-            nextRound = nextRound,
-        ))
+            // Dusk expiry or another accepted step may have advanced Session in this callback.
+            expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
+        )
+        publishClocktowerSessionView()
+        invalidateA4RevisionScope()
     }
 
     fun recordEpistemicObservation(draft: EpistemicObservationDraft) {
@@ -1098,6 +1105,7 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
+    /** Narrative display only. A validated Host step owns any needed Session revision. */
     fun addClocktowerEvent(
         type: ClocktowerEventType,
         title: String,
@@ -1106,7 +1114,6 @@ internal fun CampBoardGameHostApp() {
         eventPhase: ClocktowerPhase = clocktowerPhase,
         eventRound: Int = round,
     ) {
-        advanceClocktowerGameStateRevision()
         clocktowerEventCounter += 1
         clocktowerEvents.add(
             ClocktowerEvent(
@@ -2676,7 +2683,7 @@ internal fun CampBoardGameHostApp() {
             )
             requireClocktowerGameSession().commitConfirmedActualRoleChange(
                 draft = draft,
-                expectedGameStateRevision = clocktowerGameStateRevision,
+                expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
             )
             publishClocktowerSessionView()
             invalidateA4RevisionScope()
@@ -3169,6 +3176,9 @@ internal fun CampBoardGameHostApp() {
                         highestVoteCountState = clocktowerHighestVoteCountState,
                         gameOutcome = gameOutcome,
                         onRecordEvent = { type, title, detail, names ->
+                            // Host-screen registration, vote and publication callbacks still
+                            // own accepted-step invalidation until their typed A1/A4 migration.
+                            advanceClocktowerGameStateRevision()
                             addClocktowerEvent(type, title, detail, names)
                         },
                         onRecordEpistemicObservation = ::recordEpistemicObservation,
@@ -3599,7 +3609,7 @@ internal fun CampBoardGameHostApp() {
                                                         sequence = localSequence,
                                                         targetSeat = materialization.intent.targetSeat,
                                                     ),
-                                                    expectedGameStateRevision = clocktowerGameStateRevision,
+                                                    expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
                                                 )
                                                 publishClocktowerSessionView()
                                                 invalidateA4RevisionScope()
@@ -3630,20 +3640,21 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerPendingNewDemonName = null
                                 clocktowerDemonSuccessorTarget = null
                                 clearConfirmedDemonSuccessorTarget()
-                                dawnPhaseActionIdToCommit?.let { actionId ->
-                                    val localSequence = clocktowerEventCounter + 1
-                                    recordClocktowerAction(ActionFactDraft.PhaseAdvance(
-                                        actionId = actionId,
-                                        phase = storytellerPhaseFor(),
-                                        round = round,
-                                        sequence = localSequence,
-                                        nextPhase = StorytellerPhase.DAWN,
-                                        nextRound = round,
-                                    ))
+                                if (dawnPhaseActionIdToCommit != null) {
+                                    check(dawnPhaseStateMutationRequired) {
+                                        "Dawn phase fact is missing although UI phase has already advanced."
+                                    }
+                                    commitClocktowerPhaseAdvance(
+                                        nextPhase = ClocktowerPhase.Dawn,
+                                        stableActionId = dawnPhaseActionIdToCommit,
+                                    )
+                                } else {
+                                    check(!dawnPhaseStateMutationRequired) {
+                                        "Dawn phase already has a fact but the phase is not advanced."
+                                    }
                                 }
                                 if (dawnPhaseStateMutationRequired) {
                                     clocktowerPhase = ClocktowerPhase.Dawn
-                                    advanceClocktowerGameStateRevision()
                                 }
                                 resetClocktowerNightFlow()
                             }
@@ -3671,6 +3682,8 @@ internal fun CampBoardGameHostApp() {
                                     clocktowerActionId(kind = "klutz-choice", targetSeat = choiceResult.chosenSeat),
                                     round, clocktowerEventCounter + 1,
                                 )?.let(::recordClocktowerAction)
+                                // Klutz choice is confirmed here; the following event is only narration.
+                                advanceClocktowerGameStateRevision()
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
                                     localizedText("呆瓜选择", "Klutz choice"),
@@ -3689,19 +3702,18 @@ internal fun CampBoardGameHostApp() {
                                     clocktowerPendingKlutzName = null
                                     clocktowerKlutzChoiceName = null
                                     if (clocktowerKlutzReturnToDawn) {
-                                        recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
+                                        commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
                                         clocktowerPhase = ClocktowerPhase.Dawn
                                         clocktowerKlutzReturnToDawn = false
                                     } else {
                                         val nextRound = round + 1
                                         materializeClocktowerPoisonExpiryAtDusk()
-                                        recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
+                                        commitClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
                                         round = nextRound
                                         clocktowerPhase = ClocktowerPhase.Night
                                     }
                                     resetClocktowerDayFlow()
                                     resetClocktowerNightFlow()
-                                    advanceClocktowerGameStateRevision()
                                 }
                             }
                         },
@@ -3714,6 +3726,8 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerArtistUsed = true
                             }
                             records.add(EliminationRecord(round, claimantName, localizedText("艺术家提问已处理", "Artist question resolved")))
+                            // The confirmed answer consumes the Artist's day decision, not its log text.
+                            advanceClocktowerGameStateRevision()
                             addClocktowerEvent(
                                 ClocktowerEventType.RoleAction,
                                 localizedText("艺术家提问", "Artist question"),
@@ -4039,7 +4053,7 @@ internal fun CampBoardGameHostApp() {
                                 } else {
                                     val nextRound = round + 1
                                     materializeClocktowerPoisonExpiryAtDusk()
-                                    recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
+                                    commitClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
                                     round = nextRound
                                     clocktowerPhase = ClocktowerPhase.Night
                                     resetClocktowerDayFlow()
@@ -4066,9 +4080,8 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onAdvanceFromFirstNight = {
-                            recordClocktowerPhaseAdvance(ClocktowerPhase.Day)
+                            commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
                             clocktowerPhase = ClocktowerPhase.Day
-                            advanceClocktowerGameStateRevision()
                             clocktowerPendingNightDeath = null
                             clocktowerDemonAttackDraftTarget = null
                             resetClocktowerNightFlow()
@@ -4235,7 +4248,7 @@ internal fun CampBoardGameHostApp() {
                             } else if (clocktowerPendingKlutzName == null) {
                                 val nextRound = round + 1
                                 materializeClocktowerPoisonExpiryAtDusk()
-                                recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
+                                commitClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
                                 round = nextRound
                                 clocktowerPhase = ClocktowerPhase.Night
                                 resetClocktowerDayFlow()
@@ -4436,7 +4449,7 @@ internal fun CampBoardGameHostApp() {
                                                 sequence = deathLocalSequence,
                                                 targetSeat = dawnDeathMaterialization.intent.targetSeat,
                                             ),
-                                            expectedGameStateRevision = clocktowerGameStateRevision,
+                                            expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
                                             publishedObservationId = dawnDeathMaterialization.publicAliveObservationIdToCommit,
                                         )
                                         publishClocktowerSessionView()
@@ -4610,7 +4623,7 @@ internal fun CampBoardGameHostApp() {
                                             sequence = localSequence,
                                             targetSeat = poisonMaterialization.intent.targetSeat,
                                         ),
-                                        expectedGameStateRevision = clocktowerGameStateRevision,
+                                        expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
                                     )
                                     publishClocktowerSessionView()
                                     invalidateA4RevisionScope()
@@ -4629,7 +4642,7 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerPendingKlutzName = nightKlutzName
                                 clocktowerKlutzChoiceName = null
                                 clocktowerKlutzReturnToDawn = true
-                                recordClocktowerPhaseAdvance(ClocktowerPhase.Day)
+                                commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
                                 clocktowerPhase = ClocktowerPhase.Day
                                 clocktowerDayModeState.value = ClocktowerDayMode.Klutz
                                 captureKlutzLearnedDeathOnPublicAnnouncement(nightKlutzName)
@@ -4673,16 +4686,18 @@ internal fun CampBoardGameHostApp() {
                                     advanceToDawn = true,
                                 )
                                 val phaseAdvance = requireNotNull(dawnPhasePlan.phaseAdvance)
-                                phaseAdvance.actionIdToCommit?.let { actionId ->
-                                    val localSequence = clocktowerEventCounter + 1
-                                    recordClocktowerAction(ActionFactDraft.PhaseAdvance(
-                                        actionId = actionId,
-                                        phase = storytellerPhaseFor(),
-                                        round = round,
-                                        sequence = localSequence,
-                                        nextPhase = phaseAdvance.targetPhase,
-                                        nextRound = round,
-                                    ))
+                                if (phaseAdvance.actionIdToCommit != null) {
+                                    check(phaseAdvance.stateMutationRequired) {
+                                        "Dawn phase already advanced without its durable action."
+                                    }
+                                    commitClocktowerPhaseAdvance(
+                                        nextPhase = ClocktowerPhase.Dawn,
+                                        stableActionId = phaseAdvance.actionIdToCommit,
+                                    )
+                                } else {
+                                    check(!phaseAdvance.stateMutationRequired) {
+                                        "Dawn phase action exists but the UI phase has not advanced."
+                                    }
                                 }
                                 if (phaseAdvance.stateMutationRequired) {
                                     clocktowerPhase = ClocktowerPhase.Dawn

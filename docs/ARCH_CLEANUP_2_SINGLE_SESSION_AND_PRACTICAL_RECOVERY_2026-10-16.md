@@ -73,6 +73,15 @@
 - 保留现有 Dusk/Dawn 纯物化规划的稳定事件身份与当前消费，但 `stateMutationRequired` 与 `actionIdToCommit` 不能再被当作允许独立写状态或补写历史的许可证。其过去的 state-first/history-first 测试数据可用于定位旧半持久化风险，未来 A5 在移除旧式 Recovery repair 逻辑时再压缩。
 - **A1 仍 PARTIAL**：PhaseAdvance、叙事 UI 事件产生的额外 revision、其他行动、信息公布及投票/无处决等生产接口仍需迁移；A3 的 PlayerCard 第二事实来源与 A5 恢复简化尚未开始。禁止将此前旧 green 冒充本批运行证据。
 
+### A1 第五批：阶段确认与叙事事件隔离（2026-10-16；待新 HEAD CI/R2）
+
+- 起点确认为 `20e5a99dfcf64caa37519e235c6faeb9c2a424a3`、工作树 clean 且与远端一致；PR #315 保持 Draft/dirty，对当前实现尚无精确 Android CI/R2 实证。
+- 旧 `recordClocktowerPhaseAdvance` 仅写 `ActionFact.PhaseAdvance`，调用者有时另调 `advanceClocktowerGameStateRevision`；普通/继承破晓仍分别写历史、更新 Compose phase 和 advance revision，存在事实与版本的间隙。已替换为 Session `commitConfirmedPhaseAdvance` → `commitConfirmedGameAction`，把结构化 PhaseAdvance、globalSequence 与机械版本作为**一个接受步骤**保存。检查合法阶段相邻、轮次增进、历史最后确认阶段以及过期请求与重复 ID。
+- `CampBoardGameHostApp.commitClocktowerPhaseAdvance` 为唯一 Host 阶段入口：首夜→白天、白天→下一夜、Klutz 临时白天→破晓、夜晚→破晓（包括恶魔继承后的稳定 action ID）和 NGJ Klutz 白天流程均迁入。删除所有 `recordClocktowerPhaseAdvance` 调用和在首夜→白天、Klutz 返回、继承破晓处被此单次提交替代的单独 revision，拒绝 Dawn 事实和已更新 UI 阶段一侧缺失的历史修复分支。
+- **叙事写入不再隐式修改 Session：** `addClocktowerEvent` 仅追加 UI 文案事件和事件显示序号，不再自动 `advanceClocktowerGameStateRevision`。已确认角色变化、死亡、处决和胜负结果的文字展示不会再重复推进机械版本。当前未完成 typed A1/A4 迁移的 `ClocktowerHostScreen.onRecordEvent`（登记、投票、信息历史等）在实际回调点明确保留版本变更；Artist 与 Klutz Choice 的确认入口也显式保留必要的版本推进，等待对应正式逐步提交路径收敛。
+- 新增 Session 阶段有序提交测试，覆盖 FIRST_NIGHT→DAY→NIGHT→DAWN、黄昏 Poison 失效后同回调立即转 Night、重复 ID、非法越级/跳轮、历史阶段不匹配和过时版本。**发现并修正复合回调的 stale revision 风险**：Compose 的 `clocktowerGameStateRevision` 是回调开始的快照；Dusk 清毒后转 Night、死亡后 Dawn 继续物化、继承角色后 poison 等连续已确认动作必须使用各自提交时的实时 `ClocktowerGameSession.state.gameStateRevision`，不能继续把旧快照传给下一次提交。Host 的实际步骤合法性与 Action ID 幂等仍不变。阶段进程证据是已有的 `ActionFact.PhaseAdvance`，尚未新增第二权威阶段状态；UI 层 `clocktowerPhase/round` 仍待 A3/恢复阶段完全收敛。
+- **A1 仍 PARTIAL**：Night 结算前置 revision、部分 UI callback 的 version/typed fact 分离、NoExecution/Slayer/Nomination/Vote 等行动、实际信息公布的原子性未完成；主线继续 A1，暂不开始 A2–A6。Android 构建和设备观察没有运行证据，不得声称验收通过。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。
