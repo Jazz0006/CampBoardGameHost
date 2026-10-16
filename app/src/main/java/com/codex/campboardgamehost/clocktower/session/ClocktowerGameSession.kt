@@ -362,8 +362,8 @@ internal class ClocktowerGameSession private constructor(
         return point
     }
 
-    /** Atomic instance authority for newly produced Global actions. */
-    fun commitGlobalActionFact(draft: ActionFactDraft): TimelineBoundActionFact {
+    /** Shared Host preflight: capture pre-death evidence before any Session mechanics change. */
+    private fun prepareGlobalActionDraft(draft: ActionFactDraft): ActionFactDraft {
         val deathSeat = when (draft) {
             is ActionFactDraft.Death -> draft.targetSeat
             is ActionFactDraft.Execution -> draft.targetSeat
@@ -404,6 +404,12 @@ internal class ClocktowerGameSession private constructor(
             }
             else -> draft
         }
+        return prepared
+    }
+
+    /** Existing fact-only writer: callers that change mechanics must use commitConfirmedGameAction. */
+    fun commitGlobalActionFact(draft: ActionFactDraft): TimelineBoundActionFact {
+        val prepared = prepareGlobalActionDraft(draft)
         val committed = commitGlobalActionFact(
             semanticHistoryMode = state.semanticHistoryMode,
             actionTimeline = state.actionTimeline,
@@ -423,6 +429,46 @@ internal class ClocktowerGameSession private constructor(
                 nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
             ),
         )
+        return committed.entry
+    }
+
+    /**
+     * One confirmed Host mechanical step: preflight the action and state, then publish exactly
+     * one Session transition carrying both the mechanical projection and global action fact.
+     * An already accepted action ID is an idempotent no-op, even after the revision advances.
+     * The Host caller remains responsible for the role/phase-specific legal decision.
+     */
+    fun commitConfirmedGameAction(
+        draft: ActionFactDraft,
+        nextGameState: GameState,
+        expectedGameStateRevision: Long,
+    ): TimelineBoundActionFact {
+        require(nextGameState.seed == state.gameSeed && nextGameState.script == state.gameState.script) {
+            "A confirmed step cannot change the session seed or script."
+        }
+        val prepared = prepareGlobalActionDraft(draft)
+        val committed = commitGlobalActionFact(
+            semanticHistoryMode = state.semanticHistoryMode,
+            actionTimeline = state.actionTimeline,
+            observationLog = state.epistemicObservationLog,
+            nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
+            draft = prepared,
+        )
+        if (committed.actionTimeline === state.actionTimeline) {
+            // The pure writer has already checked the exact action ID and semantic contents.
+            return committed.entry
+        }
+        check(state.gameStateRevision == expectedGameStateRevision) {
+            "Stale confirmed step: expected game-state revision $expectedGameStateRevision, " +
+                "actual ${state.gameStateRevision}."
+        }
+        check(state.gameStateRevision != Long.MAX_VALUE) { "Game-state revision exhausted." }
+        updateState(state.copy(
+            gameStateRevision = state.gameStateRevision + 1,
+            gameState = nextGameState,
+            actionTimeline = committed.actionTimeline,
+            nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+        ))
         return committed.entry
     }
 

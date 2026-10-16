@@ -1,6 +1,6 @@
 # ARCH-CLEANUP-2 — 单一权威 Session、逐步确认与实用恢复（2026-10-16）
 
-> **CURRENT APPROVED IMPLEMENTATION CONTRACT / 尚未实施。** 此文件替代 ARCH-CLEANUP-1 中与本路线冲突的未来验收要求；ARCH-CLEANUP-1 是已完成批次与历史审计记录，不删除已发生事实。全局开发原则见根目录 AGENTS.md。
+> **CURRENT APPROVED IMPLEMENTATION CONTRACT / A1 首批实施中，其余尚未完成。** 此文件替代 ARCH-CLEANUP-1 中与本路线冲突的未来验收要求；ARCH-CLEANUP-1 是已完成批次与历史审计记录，不删除已发生事实。全局开发原则见根目录 AGENTS.md。
 >
 > 唯一活动实施分支：cleanup/arch-cleanup-1-20261015；唯一集成入口：Draft PR #315（base main，未合并）。起点代码 HEAD ec6596a56cd23981acdc3e30b2cfcf6b23820ca0，Android CI #4213 与 R2 #3829 SUCCESS，仅为起点证据。新实施必须重新确认 live HEAD / worktree / PR / CI。
 >
@@ -37,6 +37,14 @@
 - 机械事实+对应行动记录和 revision / globalSequence 在一个已验证的 Session 状态跃迁中提交；信息实际公布边界需预检并保证可持久记录；任何重复确认幂等。
 - 列表式注销所替代的分散写入口、冗余版本更新和跨 UI 同步路径；只保留规则引擎必需的纯函数与验证。
 - 验收：正式确认后 Session 与记录无半提交，重复点不会多一条事实；异常/拒绝不会写入局内真相。
+
+### A1 首批实施记录（2026-10-16；持续收敛，不代表 A1 完成）
+
+- 起点真实本地/remote HEAD 为 `470b5dbe4a48d4788646cc7d2313e6131ed2470a`，worktree clean；`main=770ed32f446d03cf81f226901afa78cbdcf287bf`，Draft #315 仍由 GitHub 报告 `mergeable=false / dirty`。比较结果确认 main 额外修改 `AGENTS.md` 和 `docs/TESTING_STRATEGY.md`，不能将本地 clean 或旧文档里的 clean 声明当作 PR 冲突解除证明；不在 A1 阶段合并 main。
+- 已审计 `ClocktowerGameSession` 的 revision / action / observation 写入口、Compose 的投毒确认、死亡/处决、身份变化、夜间/破晓 materialization、信息公布与 `PlayerCard` 衍生路径。初批选择正式投毒目标确认：原 `recordClocktowerAction(Poison)` 与 `commitPoisonTargetBoundary` 两次 Session 写入存在半提交窗口。
+- 初批将 Host `NightCheckpointHostTransaction.confirmPoison` 审核后的提交改为 `commitConfirmedPoisonTarget` → `ClocktowerGameSession.commitConfirmedGameAction`，先无副作用地检查全局动作及预期 revision，再一次 `updateState` 更新机械投毒状态、`ActionFactTimeline`、`gameStateRevision`、`nextTimelineGlobalSequence`；同一 action ID 不重复提交，冲突 ID/过时 revision 拒绝且保持状态不变。保留 Klutz 死亡前状态取证共用准备逻辑。
+- **替代且删除** `commitPoisonTargetBoundary` 的生产实现及全部引用；旧测试迁到确认行为、幂等、拒绝、游标的确定性证据，仍被夜间/破晓调用的同步路径暂保留，不能当已完成冗余清理。
+- **A1 仍 PARTIAL**：`advanceGameStateRevision`、`commitGameStateBoundary`、`synchronizeGameStateWithinCurrentRevision`、`commitGlobalActionFact`、`commitGlobalEpistemicObservation` 及其真实夜晚/死亡/处决/身份/信息公布使用者仍须逐项收敛并删除失去消费者的旧入口。A2–A6 未开始。以该实现提交的准确 HEAD 独立 CI/R2 为准，不拿起点 GREEN 代替。
 
 ### A2 — 取消所有整包采纳
 

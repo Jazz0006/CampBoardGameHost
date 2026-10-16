@@ -1,7 +1,11 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 class ClocktowerGameSessionPoisonBoundaryTest {
@@ -24,23 +28,51 @@ class ClocktowerGameSessionPoisonBoundaryTest {
     }
 
     @Test
-    fun `poison boundary changes only poison projection and advances revision once`() {
-        val session = newSession("d6-1d-poison-boundary")
+    fun `confirmed poison writes mechanical state and fact at one revision and cursor`() {
+        val session = newSession("a1-poison-confirm")
         val beforePlayers = session.state.gameState.players
+        val draft = poison("poison-choice", targetSeat = 2)
 
-        session.commitPoisonTargetBoundary(targetSeat = 2)
+        val committed = session.commitConfirmedPoisonTarget(draft, expectedGameStateRevision = 0L)
 
         assertEquals(
             beforePlayers.map { player -> player.copy(poisoned = player.alive && player.seat == 2) },
             session.state.gameState.players,
         )
         assertEquals(1L, session.state.gameStateRevision)
+        assertEquals(1L, session.state.nextTimelineGlobalSequence)
+        assertEquals(1, session.state.actionTimeline.entries.size)
+        assertEquals(0L, committed.point.globalSequence)
+        assertEquals(committed, session.state.actionTimeline.entries.single())
+        assertEquals("poison-choice", committed.fact.actionId)
+
+        val acceptedState = session.state
+        val duplicate = session.commitConfirmedPoisonTarget(draft, expectedGameStateRevision = 0L)
+        assertEquals(committed, duplicate)
+        assertEquals(acceptedState, session.state)
     }
 
     @Test
-    fun `poison synchronization inside current boundary switches target without another revision`() {
+    fun `stale or conflicting confirmation never partially writes state or history`() {
+        val session = newSession("a1-poison-reject")
+        session.commitConfirmedPoisonTarget(poison("first", 2), expectedGameStateRevision = 0L)
+        val accepted = session.state
+
+        assertNotNull(runCatching {
+            session.commitConfirmedPoisonTarget(poison("different", 3), expectedGameStateRevision = 0L)
+        }.exceptionOrNull())
+        assertEquals(accepted, session.state)
+
+        assertNotNull(runCatching {
+            session.commitConfirmedPoisonTarget(poison("first", 3), expectedGameStateRevision = 1L)
+        }.exceptionOrNull())
+        assertEquals(accepted, session.state)
+    }
+
+    @Test
+    fun `poison synchronization inside an existing boundary changes target without another revision`() {
         val session = newSession("d6-1d-poison-in-boundary")
-        session.commitPoisonTargetBoundary(targetSeat = 2)
+        session.synchronizePoisonTargetWithinCurrentRevision(targetSeat = 2)
         val beforePlayers = session.state.gameState.players
         val beforeRevision = session.state.gameStateRevision
 
@@ -62,21 +94,32 @@ class ClocktowerGameSessionPoisonBoundaryTest {
             },
         )
         val session = ClocktowerGameSession.createProduction(
-            gameId = "d6-1d-dead-poison-target",
+            gameId = "a1-dead-poison",
             gameSeed = seeded.seed,
             initialState = seeded,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
 
-        session.commitPoisonTargetBoundary(targetSeat = deadSeat)
+        session.commitConfirmedPoisonTarget(poison("dead-target", deadSeat), expectedGameStateRevision = 0L)
 
         assertEquals(false, requireNotNull(session.state.gameState.playerAt(deadSeat)).poisoned)
         assertEquals(emptyList<Int>(), session.state.gameState.players.filter { it.poisoned }.map { it.seat })
         assertEquals(1L, session.state.gameStateRevision)
+        assertEquals(1, session.state.actionTimeline.entries.size)
     }
+
+    private fun poison(actionId: String, targetSeat: Int?) = ActionFactDraft.Poison(
+        actionId = actionId,
+        phase = StorytellerPhase.FIRST_NIGHT,
+        round = 1,
+        sequence = 1,
+        targetSeat = targetSeat,
+    )
 
     private fun newSession(gameId: String): ClocktowerGameSession = ClocktowerGameSession.createProduction(
         gameId = gameId,
         gameSeed = initialState.seed,
         initialState = initialState,
+        semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
     )
 }

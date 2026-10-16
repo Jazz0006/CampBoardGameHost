@@ -113,7 +113,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBindi
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
-import com.codex.campboardgamehost.clocktower.session.commitPoisonTargetBoundary
+import com.codex.campboardgamehost.clocktower.session.commitConfirmedPoisonTarget
 import com.codex.campboardgamehost.clocktower.session.synchronizePlayerDeathWithinCurrentRevision
 import com.codex.campboardgamehost.clocktower.session.synchronizePoisonTargetWithinCurrentRevision
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
@@ -3312,18 +3312,20 @@ internal fun CampBoardGameHostApp() {
                             if (transaction.revisionIntent == NightCheckpointRevisionIntent.GAME_STATE) {
                                 val targetSeat = transaction.checkpoint.confirmedPoisonTarget?.let(::clocktowerSeatFor)
                                 val localSequence = clocktowerEventCounter + 1
-                                recordClocktowerAction(ActionFactDraft.Poison(
-                                    actionId = clocktowerActionId(
-                                        kind = "poison",
-                                        localSequence = localSequence,
+                                requireClocktowerGameSession().commitConfirmedPoisonTarget(
+                                    draft = ActionFactDraft.Poison(
+                                        actionId = clocktowerActionId(
+                                            kind = "poison",
+                                            localSequence = localSequence,
+                                            targetSeat = targetSeat,
+                                        ),
+                                        phase = storytellerPhaseFor(),
+                                        round = round,
+                                        sequence = localSequence,
                                         targetSeat = targetSeat,
                                     ),
-                                    phase = storytellerPhaseFor(),
-                                    round = round,
-                                    sequence = localSequence,
-                                    targetSeat = targetSeat,
-                                ))
-                                requireClocktowerGameSession().commitPoisonTargetBoundary(targetSeat)
+                                    expectedGameStateRevision = clocktowerGameStateRevision,
+                                )
                                 publishClocktowerSessionView()
                                 invalidateA4RevisionScope()
                                 clocktowerConfirmedPoisonTarget = transaction.checkpoint.confirmedPoisonTarget

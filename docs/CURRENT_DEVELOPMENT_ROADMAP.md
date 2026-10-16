@@ -7,7 +7,8 @@
 - Repository: Jazz0006/CampBoardGameHost; developer machine Mini MCP alias: clocktower; branch: cleanup/arch-cleanup-1-20261015; one open [Draft PR #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315) targeting main, **unmerged**.
 - 2026-10-16 starting production SHA: ec6596a56cd23981acdc3e30b2cfcf6b23820ca0; Android CI #4213 and R2 #3829 SUCCESS. These checks **do not** validate subsequent source edits or Android real-device flows.
 - ARCH-CLEANUP-1 previous cleanup: old scoring / consistency / Shadow recommendation paths removed; B = YES for existing no-candidate model wire contract, C = YES for retired scoring paths, **A = PARTIAL** (second Compose PlayerCard state, non-atomic confirmed facts, incomplete observed-information logging, duplicate recovery/replay). Historical evidence: [ARCH-CLEANUP-1 audit](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md).
-- No live code for the newly approved ARCH-CLEANUP-2 A1–A6 is claimed complete yet. Do not merge main or run paid API tests implicitly.
+- ARCH-CLEANUP-2 **A1 first slice is in implementation/verification**: confirmed poison target now atomically commits mechanic + globally ordered action fact + revision via Session, with the old poison-only boundary removed. Remaining mechanical and observation writers have not migrated; **A1–A6 none is complete**. Do not merge main or run paid API tests implicitly.
+- Draft PR #315 currently reports **mergeable=false / dirty** against main; both branches touched AGENTS.md and TESTING_STRATEGY.md. This must be resolved separately before eventual merge, without assuming a clean developer worktree proves mergeability.
 
 ## The only active implementation: A1 → A6
 

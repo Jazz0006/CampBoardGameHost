@@ -1,12 +1,12 @@
 # CampBoardGameHost — Next Development Handoff
 
-> **Implementation handoff 2026-10-16.** Next conversation **START A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md)**. The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
+> **Implementation handoff 2026-10-16; A1 first slice underway.** Continue A1 of [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md). The user approved A1→A6 implementation, replacing old arbitrary-time replay / exact UI restore / one-click whole-plan adoption requirements. Do not spend the new conversation re-debating the accepted architecture or work on P2 before A.
 
 ## Starting repository state (recheck live)
 
 - Repository Jazz0006/CampBoardGameHost; developer machine via Mini MCP alias **clocktower**.
 - Branch **cleanup/arch-cleanup-1-20261015**, starting SHA **ec6596a56cd23981acdc3e30b2cfcf6b23820ca0**, clean and equal origin on last check. Actual live state may change: first query Mini MCP git_state and GitHub PR/CI.
-- Single open [Draft PR #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315), base main (last known SHA 770ed32f446d03cf81f226901afa78cbdcf287bf), **not merged**, mergeable/clean at check. P1 old #304/#306/#307/#308 and #310–#314 were closed unmerged; commits already embedded in #315 branch. Never resurrect old PR stack.
+- Single open [Draft PR #315](https://github.com/Jazz0006/CampBoardGameHost/pull/315), base main SHA 770ed32f446d03cf81f226901afa78cbdcf287bf, **not merged**; 2026-10-16 recheck reports **mergeable=false / dirty**, not clean. Main has changed AGENTS.md and TESTING_STRATEGY.md relative to common ancestor. Exact conflict resolution remains pending. P1 old #304/#306/#307/#308 and #310–#314 were closed unmerged; commits already embedded in #315 branch. Never resurrect old PR stack.
 - Baseline code SHA Android CI #4213 SUCCESS and R2 #3829 SUCCESS; ASP/Real Clingo skipped at that exact run. This is evidence for existing code only. A = PARTIAL; B/C old cleanups have source-level evidence but real gameplay acceptance is pending.
 - No paid API call or main merge authorized. Root AGENTS.md requires evidence-first, reviewed exact diff/CI/R2, and permanent **replace-and-retire** rule.
 
@@ -21,7 +21,14 @@
 - Recovery **only** needs correct grimoire, confirmed published information and safe continuation after crash; unconfirmed current interaction may be redone. No exact UI restoration, arbitrary historical re-materialization, old save migration, or general Undo/Redo. Last-step correction is optional later and never allowed to contradict player knowledge or AI confirmed history.
 - **Critical permanent lesson:** each newly unified seam must enumerate and delete replaced old interfaces/fields/call paths/recovery data/tests. No indefinite dual-write, double-source reconciliation or compatibility stacks. Do not delete still-live Host legality, registration witnesses, EvidenceLab/TBGS verified interfaces.
 
-## First implementation action: A1
+## A1 first implementation checkpoint (2026-10-16; PARTIAL)
+
+- Live baseline before first source edits: `470b5dbe4a48d4788646cc7d2313e6131ed2470a`, development worktree clean and equal origin. See ARCH-CLEANUP-2 implementation log for exact modified call site and retirement inventory.
+- `NightCheckpointHostTransaction.confirmPoison` accepted confirmation is now the mechanical+action+revision atomic Session boundary. `commitPoisonTargetBoundary` removed, corresponding tests updated for global chronology and rejection/idempotency. No claim yet that the remaining role/death/day/phase/observation call sites share this boundary.
+- **Next A1 work, not A2**: migrate and retire the split death/execution, actual-role change, night materialization, phase advancement and information publication writers at their real Host confirmation boundaries. Preserve Klutz pre-death ability proof and observation availability for actual player reveals. Verify with latest exact source CI/R2; keep #315 Draft, do not merge main.
+- Do not claim A1 done until all confirmed-step mechanical+typed history transitions and remaining consumers are audited and migrated.
+
+## Historical first implementation brief: A1
 
 1. Read AGENTS.md, [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md), [ARCH-CLEANUP-1 evidence](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md), this handoff, roadmap and testing policy. Verify live SHA / worktree / #315 / main / checks.
 2. Make an exact caller/writer map from real code: ClocktowerGameSession.commitGameStateBoundary / synchronizeGameStateWithinCurrentRevision / advanceGameStateRevision / commitGlobalActionFact / commitGlobalEpistemicObservation; UI PlayerCard mutations and information-reveal handoff; recovery snapshot producer/consumer. Identify *the confirmed step boundary* and which old paths will be retired by this A1 edit.

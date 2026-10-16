@@ -15,7 +15,7 @@ class ClocktowerGameSessionAliveBoundaryTest {
             gameSeed = initialState.seed,
             initialState = initialState,
         )
-        session.commitPoisonTargetBoundary(targetSeat = targetSeat)
+        session.synchronizePoisonTargetWithinCurrentRevision(targetSeat = targetSeat)
         val beforeState = session.state.gameState
         val beforeTarget = requireNotNull(beforeState.playerAt(targetSeat))
         val beforeOtherPlayers = beforeState.players.filterNot { it.seat == targetSeat }
