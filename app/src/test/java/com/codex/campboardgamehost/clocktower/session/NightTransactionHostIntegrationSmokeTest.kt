@@ -35,7 +35,7 @@ class NightTransactionHostIntegrationSmokeTest {
         assertEquals(NightCheckpointRevisionIntent.PLAYER_INPUT, edited.revisionIntent)
 
         val confirmed = NightCheckpointHostTransaction.confirmDemonSuccessor(edited.checkpoint)
-        assertEquals(NightCheckpointRevisionIntent.GAME_STATE, confirmed.revisionIntent)
+        assertEquals(NightCheckpointRevisionIntent.PLAYER_INPUT, confirmed.revisionIntent)
         assertEquals("Poisoner", confirmed.checkpoint.confirmedDemonSuccessorTarget)
 
         val previous = NightCheckpointHostTransaction.movePrevious(confirmed.checkpoint)

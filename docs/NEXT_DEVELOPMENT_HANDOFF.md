@@ -174,6 +174,14 @@
 - Remaining scope is **not** an exhaustive official reminder-token projection. Current `GrimoireState` observation contract represents seat/actual-role/alive, while red-herring/poison/protection visual badges are read from confirmed Session or committed checkpoint. Rule-specific reminder placements beyond these need a separately justified source audit, not speculative parallel state.
 - Keep PR #315 Draft until the exact-head Android CI/R2 and real device presentation pass; CI compilation alone is not device layout evidence.
 
+## 2026-10-16 A1 narrow successor confirmation cleanup
+
+- Confirmed real callers: `NightCheckpointHostTransaction.confirmDemonSuccessor` feeds a checkpoint pending successor choice; `NightDawnResolutionPlanner` uses the confirmation to proceed to `AWAIT_NEW_DEMON_IDENTITY`, and the **actual** change to the `Imp` role is already committed separately as Session-owned `RoleChange`. The candidate confirmation must not be misclassified as a completed mechanical role change.
+- Changed the pending successor confirmation's revision intent from `GAME_STATE` to `PLAYER_INPUT`, preserving the confirmed checkpoint value, retry `NONE` behavior, cache invalidation, recovery inputs and Host legal-target check. Deleted the App callback's old independent game-state-revision branch: only player input is invalidated at candidate confirmation. The actual later `RoleChange` still commits Session mechanics + action fact + revision atomically.
+- Retired two redundant old `recordNightStep` narration writes: `DemonSuccessor` before it takes effect and `NewDemonIdentity` after actual role change. No draft/confirm narrative gets into the AI/game-review record as a second role-change event. The original player-information reveal continues through its actual observation publication path.
+- Updated the existing checkpoint transaction and Host integration regression assertions. This is an A1 cleanup slice, **not** Butler-master event migration, fully unified Archive, A3 or A4 completion. No new event, second authority or alternate recovery system.
+- The preceding exact HEAD `3d5423b8` passed CI #4227 and R2 #3837; this new source requires fresh independent checks. PR #315 remains Draft/conflicted/unmerged.
+
 ## Historical first implementation brief: A1
 
 1. Read AGENTS.md, [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md), [ARCH-CLEANUP-1 evidence](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md), this handoff, roadmap and testing policy. Verify live SHA / worktree / #315 / main / checks.

@@ -21,7 +21,7 @@ class NightCheckpointHostTransactionTest {
     }
 
     @Test
-    fun `successor confirm commits current draft and requests game state revision only when changed`() {
+    fun `successor confirm preserves candidate but changes only player input until actual role change`() {
         val changed = NightCheckpointHostTransaction.confirmDemonSuccessor(
             checkpoint = checkpoint(
                 demonSuccessorDraftTarget = "Scarlet Woman",
@@ -33,7 +33,7 @@ class NightCheckpointHostTransactionTest {
         )
 
         assertEquals("Scarlet Woman", changed.checkpoint.confirmedDemonSuccessorTarget)
-        assertEquals(NightCheckpointRevisionIntent.GAME_STATE, changed.revisionIntent)
+        assertEquals(NightCheckpointRevisionIntent.PLAYER_INPUT, changed.revisionIntent)
         assertEquals(NightCheckpointRevisionIntent.NONE, unchanged.revisionIntent)
     }
 

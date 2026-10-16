@@ -3445,16 +3445,12 @@ internal fun CampBoardGameHostApp() {
                             val transaction = NightCheckpointHostTransaction.confirmDemonSuccessor(
                                 checkpoint = currentClocktowerNightCheckpoint(),
                             )
-                            when (transaction.revisionIntent) {
-                                NightCheckpointRevisionIntent.NONE -> Unit
-                                NightCheckpointRevisionIntent.PLAYER_INPUT -> {
-                                    clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
-                                    advanceClocktowerPlayerInputRevision()
-                                }
-                                NightCheckpointRevisionIntent.GAME_STATE -> {
-                                    clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
-                                    advanceClocktowerGameStateRevision()
-                                }
+                            // A confirmed successor is pending night-flow input, not a role
+                            // change. Session commits the actual change at the New Demon step.
+                            check(transaction.revisionIntent != NightCheckpointRevisionIntent.GAME_STATE)
+                            if (transaction.revisionIntent == NightCheckpointRevisionIntent.PLAYER_INPUT) {
+                                clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
+                                advanceClocktowerPlayerInputRevision()
                             }
                         },
                         onConfirmNewDemon = {

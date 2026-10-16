@@ -489,7 +489,13 @@ internal fun ClocktowerJudgeScreen(
         selection = chambermaidResolution.selection,
     )
     fun recordNightStep(step: ClocktowerNightStepUi) {
-        if (!step.isRealAction || step.action == ClocktowerNightAction.DemonKill) return
+        // Successor selection is pending input; the confirmed RoleChange and New Demon
+        // observation are recorded at the real identity step, not as another night event.
+        if (!step.isRealAction || step.action in setOf(
+                ClocktowerNightAction.DemonKill,
+                ClocktowerNightAction.DemonSuccessor,
+                ClocktowerNightAction.NewDemonIdentity,
+            )) return
         // Information shown to a player is recorded by onShowPlayerDisplay with the
         // final displayed result. Unreliable roles (including the Drunk) keep
         // displayKind=None until an option is chosen, so also identify them by
@@ -524,12 +530,10 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerNightAction.MonkProtect -> listOfNotNull(step.actor?.name, monkProtectedTarget)
             ClocktowerNightAction.FortuneTeller -> listOfNotNull(step.actor?.name, fortuneTellerFirst, fortuneTellerSecond)
             ClocktowerNightAction.Chambermaid -> listOfNotNull(step.actor?.name, chambermaidResolution.selection.first, chambermaidResolution.selection.second)
-            ClocktowerNightAction.NewDemonIdentity -> listOfNotNull(step.actor?.name)
             ClocktowerNightAction.DemonKill -> listOfNotNull(step.actor?.name, pendingNightDeath)
             ClocktowerNightAction.MayorRedirect -> listOfNotNull(mayorRedirectTarget)
-            ClocktowerNightAction.DemonSuccessor -> listOfNotNull(demonSuccessorTarget)
             ClocktowerNightAction.Ravenkeeper -> listOfNotNull(step.actor?.name, ravenkeeperTarget)
-            ClocktowerNightAction.None -> listOfNotNull(step.actor?.name)
+            else -> listOfNotNull(step.actor?.name)
         }
         val detail = when (step.action) {
             ClocktowerNightAction.RedHerring ->
@@ -548,7 +552,6 @@ internal fun ClocktowerJudgeScreen(
                 val targets = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second).joinToString(" + ") { playerSeatLabel(cards, it) }
                 text("查验 $targets：$chambermaidResult 人今晚醒来", "Checked $targets: $chambermaidResult woke tonight")
             }
-            ClocktowerNightAction.NewDemonIdentity -> step.tellPlayer ?: step.storytellerAction
             ClocktowerNightAction.DemonKill ->
                 text("击杀目标：${playerSeatLabel(cards, pendingNightDeath)}", "Kill target: ${playerSeatLabel(cards, pendingNightDeath)}")
             ClocktowerNightAction.MayorRedirect -> mayorRedirectTarget?.let { target ->
@@ -558,11 +561,9 @@ internal fun ClocktowerJudgeScreen(
                 else
                     text("死亡转移给 ${playerSeatLabel(cards, target)}", "Death redirected to ${playerSeatLabel(cards, target)}")
             }.orEmpty()
-            ClocktowerNightAction.DemonSuccessor ->
-                text("新恶魔：${playerSeatLabel(cards, demonSuccessorTarget)}", "New Demon: ${playerSeatLabel(cards, demonSuccessorTarget)}")
             ClocktowerNightAction.Ravenkeeper ->
                 text("查验：${playerSeatLabel(cards, ravenkeeperTarget)}", "Checked: ${playerSeatLabel(cards, ravenkeeperTarget)}")
-            ClocktowerNightAction.None -> step.tellPlayer ?: step.storytellerAction
+            else -> step.tellPlayer ?: step.storytellerAction
         }
         val alreadyConfirmedNightFact = step.action in setOf(
             ClocktowerNightAction.RedHerring,
