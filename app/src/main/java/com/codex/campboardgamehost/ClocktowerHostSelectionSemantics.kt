@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
@@ -88,6 +90,35 @@ internal fun resolveChambermaidSelection(
         wokeCount = wokeCount,
     )
 }
+
+/**
+ * Only a genuinely current, validated, player-independent information result
+ * may enter the Host's ordinary reveal flow without a human selection click.
+ * Player-selected targets and already published answers never auto-reveal.
+ * No parallel execution state is introduced: the Session history is authority.
+ */
+internal fun clocktowerShouldAutoPresentCurrentInformation(
+    automaticMode: Boolean,
+    step: ClocktowerNightStepUi,
+    phase: ClocktowerPhase,
+    round: Int,
+    actorSeat: Int?,
+    hasValidatedAiChoice: Boolean,
+    confirmedObservations: List<RecordedEpistemicObservation>,
+): Boolean = automaticMode &&
+    step.isRealAction &&
+    step.action == ClocktowerNightAction.None &&
+    step.actor != null &&
+    actorSeat != null &&
+    step.roleEnName != null &&
+    hasValidatedAiChoice &&
+    confirmedObservations.none { received ->
+        received.phase == phase.toStorytellerPhase() &&
+            received.round == round &&
+            received.visibility == ObservationVisibility.PRIVATE &&
+            received.sourceSeat == actorSeat &&
+            received.sourceAbility?.value == step.roleEnName
+    }
 
 internal fun shouldAutoAdvanceRedHerring(
     allowRuleDeterminedAutoUi: Boolean,

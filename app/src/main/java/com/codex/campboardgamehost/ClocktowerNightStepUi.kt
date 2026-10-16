@@ -54,6 +54,8 @@ internal fun ClocktowerNightStepCardLocalized(
     step: ClocktowerNightStepUi,
     /** Suggested current-step option only. Never narrows the Host's legal domain. */
     aiSuggestedInformationOption: ClocktowerDisplayOption? = null,
+    /** True only for a not-yet-published, player-independent, live Host step. */
+    autoPresentAiInformation: Boolean = false,
     surfacePlan: ClocktowerNightSurfacePlan,
     spyCard: PlayerCard?,
     spyRegistrationResolution: TroubleBrewingRegistrationResolution?,
@@ -432,6 +434,22 @@ internal fun ClocktowerNightStepCardLocalized(
             return
         }
         onShowPlayerDisplay(transformDisplayStep(resolveClocktowerPlayerDisplay(step, option)))
+    }
+
+    // Automatic mode uses the same reveal callback as the manual confirmation
+    // button. The Host owns exact-once Session publication, not this composable.
+    // An actual player-query/target step never reaches this gate.
+    val automaticCurrentChoice = automaticDisplayOption?.takeIf {
+        autoPresentAiInformation && currentAiSuggestedOption != null &&
+            clocktowerInformationCandidateId(it) ==
+                clocktowerInformationCandidateId(currentAiSuggestedOption)
+    }
+    LaunchedEffect(
+        gameId, phase, round, sequence, step.roleEnName,
+        autoPresentAiInformation,
+        automaticCurrentChoice?.let(::clocktowerInformationCandidateId),
+    ) {
+        automaticCurrentChoice?.let { chosen -> showRecommendedDisplayOption(chosen) }
     }
 
     fun showChefChoice(choice: ClocktowerChefResultChoice) {

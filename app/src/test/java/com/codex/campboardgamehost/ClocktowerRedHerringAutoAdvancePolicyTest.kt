@@ -1,5 +1,12 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -149,5 +156,49 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
                 legalSelections = setOf("Alice", "Bob"),
             ),
         )
+    }
+
+    @Test
+    fun `automatic information reveal requires current independent clue and no prior publication`() {
+        val chef = PlayerCard("P1", Role.Civilian, "")
+        val step = ClocktowerNightStepUi(
+            title = "Chef", actor = chef, isRealAction = true,
+            reason = "", storytellerAction = "", tellPlayer = null,
+            explanation = "", roleEnName = "Chef",
+        )
+        fun eligible(
+            current: ClocktowerNightStepUi = step,
+            mode: Boolean = true,
+            hasChoice: Boolean = true,
+            records: List<RecordedEpistemicObservation> = emptyList(),
+        ) = clocktowerShouldAutoPresentCurrentInformation(
+            automaticMode = mode,
+            step = current,
+            phase = ClocktowerPhase.FirstNight,
+            round = 1,
+            actorSeat = 1,
+            hasValidatedAiChoice = hasChoice,
+            confirmedObservations = records,
+        )
+        assertTrue(eligible())
+        assertFalse(eligible(mode = false))
+        assertFalse(eligible(hasChoice = false))
+        assertFalse(eligible(current = step.copy(isRealAction = false)))
+        assertFalse(eligible(current = step.copy(action = ClocktowerNightAction.FortuneTeller)))
+        assertFalse(eligible(current = step.copy(action = ClocktowerNightAction.Ravenkeeper)))
+        assertFalse(eligible(current = step.copy(actor = null)))
+        val received = RecordedEpistemicObservation(
+            recordId = "confirmed-chef-1", phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1, sequence = 1, sourceSeat = 1,
+            sourceAbility = RoleId("Chef"),
+            visibility = ObservationVisibility.PRIVATE, recipientSeats = setOf(1),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.NumericResult(
+                NumericMetric.ADJACENT_EVIL_PAIRS, 1, value = 0),
+        )
+        assertFalse(eligible(records = listOf(received)))
+        assertTrue(eligible(records = listOf(received.copy(round = 2))))
+        assertTrue(eligible(records = listOf(received.copy(sourceSeat = 2,
+            recipientSeats = setOf(2)))))
     }
 }

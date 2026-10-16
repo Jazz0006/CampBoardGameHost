@@ -2781,6 +2781,19 @@ internal fun ClocktowerJudgeScreen(
                 aiSuggestedInformationOption = approvedOpeningOption.takeIf {
                     globalAiAdviceError == null && !globalAiAdviceBusy
                 },
+                // Only a player-independent current information step may automatically
+                // enter the SAME confirmation/publication/reveal handoff as a manual tap.
+                // Returning from player display must not re-publish/re-open it.
+                autoPresentAiInformation = clocktowerShouldAutoPresentCurrentInformation(
+                    automaticMode = globalAiAutomatic && allowRuleDeterminedAutoUi &&
+                        !globalAiAdviceBusy && globalAiAdviceError == null,
+                    step = currentStep,
+                    phase = phase,
+                    round = round,
+                    actorSeat = preplannedSeat,
+                    hasValidatedAiChoice = approvedOpeningOption != null,
+                    confirmedObservations = actualInformationHistory,
+                ),
                 step = currentStep,
                 surfacePlan = currentSurfacePlan,
                 spyCard = spyCard,
