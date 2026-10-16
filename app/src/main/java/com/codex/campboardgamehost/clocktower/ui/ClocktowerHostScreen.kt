@@ -67,6 +67,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -77,6 +78,7 @@ internal fun ClocktowerJudgeScreen(
     allowRuleDeterminedAutoUi: Boolean,
     cards: List<PlayerCard>,
     events: List<ClocktowerEvent>,
+    actualInformationHistory: List<RecordedEpistemicObservation>,
     script: ClocktowerScript,
     gameId: String,
     gameSeed: Long,
@@ -1292,8 +1294,13 @@ internal fun ClocktowerJudgeScreen(
             result = empathNumber,
             registrationHint = empathRegistrationHint,
             previousShownNumber = empathActor?.let { actor ->
-                previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
-                    ?.takeIf { it in 0..2 }
+                val seat = cards.indexOf(actor) + 1
+                previousClocktowerUnreliableNumber(
+                    observations = actualInformationHistory,
+                    actorSeat = seat,
+                    roleId = RoleId("Empath"),
+                    metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                )?.takeIf { it in 0..2 }
             },
             spyRegistrationKey = empathRegistrationKey,
             recluseRegistrationKey = empathRecluseRegistrationKey,

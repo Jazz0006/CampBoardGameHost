@@ -117,8 +117,13 @@ internal object StorytellerGlobalEventProjectionV1 {
             .put("seat", fact.klutzSeat).put("target", fact.chosenSeat)
         is ActionFact.RoleChange -> JSONObject().put("type", "role_change")
             .put("seat", fact.targetSeat).put("role", fact.role.value)
-        is ActionFact.MayorRedirectChoice -> JSONObject().put("type", "mayor_redirect")
-            .put("seat", fact.mayorSeat).put("target", fact.targetSeat)
+        // Choosing the Mayor himself is an accepted *no-bounce* ruling,
+        // not an actual redirection event.
+        is ActionFact.MayorRedirectChoice -> fact.targetSeat
+            .takeIf { it != fact.mayorSeat }?.let { target ->
+                JSONObject().put("type", "mayor_redirect")
+                    .put("seat", fact.mayorSeat).put("target", target)
+            }
         // Setup choices already exist in the current game state. The cursor does not need
         // them again; phase changes and confirmed-button details have no strategic value.
         is ActionFact.RedHerringChoice, is ActionFact.DemonBluffChoice,

@@ -151,6 +151,14 @@
 - This does **not** implement a complete unified AI + finished-game archive log. Current `clocktowerEvents` narration/Archive remains a separate writable representation; it requires consumer migration before deletion. `PhaseAdvance`, poison carry/expiry and Klutz trigger facts still have rule/recovery readers. Do not conflate deleted redundant recovery export with removal of these necessary transitions.
 - Previous verified source `a952f37921cee7038706d4b020f456f24ca0c36c` passed CI #4223 and R2 #3833; new source requires its own exact-head CI validation.
 
+## 2026-10-16 continuation — migrate a real UI reader away from duplicate narration
+
+- The Empath multi-night misinformation UI used `previousClocktowerUnreliableNumber(events, localizedTitle, actorName)` to scan translated `ClocktowerEvent.detail` strings with a regex. This depended on the second writable narration log and could confuse numbers, languages and actors despite Session already holding the actual numeric proposition.
+- Migrate that one active production reader to confirmed `ClocktowerSessionView.epistemicObservationLog.records` supplied by the app, matching source seat, Empath ability, numeric metric and KNOWN_MALFUNCTIONING; delete the old title/detail regex reader and replace its stale tests with typed observation contract checks. No new durable event store or manual-vs-AI marker.
+- The compact AI event projection must omit `MayorRedirectChoice` when target is the Mayor (no bounce). A no-bounce Host ruling remains internally accepted but no physical redirection happened. Keep an actual redirect event only when another seat is hit.
+- This is a **reader migration and filtering slice**, not wholesale retirement of `clocktowerEvents`. Remaining consumers include live narration/Spy delta, in-game review, archive, recovery and other numeric reliability history. Full archive migration and writer retirement still require separate source-backed changes.
+- Previous source `de516e8f9941f982e1de40ee496de28025bef8a3` was verified by GitHub CI #4224 and R2 #3834; the changed source requires its own CI proof.
+
 ## Historical first implementation brief: A1
 
 1. Read AGENTS.md, [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md), [ARCH-CLEANUP-1 evidence](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md), this handoff, roadmap and testing policy. Verify live SHA / worktree / #315 / main / checks.

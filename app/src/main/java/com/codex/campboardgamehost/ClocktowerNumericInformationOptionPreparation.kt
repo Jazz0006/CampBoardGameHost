@@ -1,23 +1,29 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 
+/**
+ * Actual previously shown misinformation comes from the single Session observation history.
+ * Never parse translated legacy ClocktowerEvent titles/details as a second source of truth.
+ * Callers supply the confirmed actor seat and the ability metric being displayed.
+ */
 internal fun previousClocktowerUnreliableNumber(
-    events: List<ClocktowerEvent>,
-    title: String,
-    actorName: String,
-): Int? = events
-    .asReversed()
-    .firstOrNull { event ->
-        event.type == ClocktowerEventType.UnreliableInformation &&
-            actorName in event.playerNames &&
-            event.title.startsWith(title)
-    }
-    ?.detail
-    ?.let { detail ->
-        val payload = when {
-            "：" in detail -> detail.substringAfter("：")
-            ": " in detail -> detail.substringAfter(": ")
-            else -> detail
+    observations: List<RecordedEpistemicObservation>,
+    actorSeat: Int,
+    roleId: RoleId,
+    metric: NumericMetric,
+): Int? = observations.asReversed()
+    .firstNotNullOfOrNull { observation ->
+        val value = observation.proposition as? InformationProposition.NumericResult
+        value?.value?.takeIf {
+            observation.sourceSeat == actorSeat &&
+                observation.sourceAbility == roleId &&
+                observation.reliability == ObservationReliability.KNOWN_MALFUNCTIONING &&
+                value.sourceSeat == actorSeat &&
+                value.metric == metric
         }
-        Regex("\\d+").find(payload)?.value?.toIntOrNull()
     }

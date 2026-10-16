@@ -278,6 +278,24 @@ class StorytellerStrategicContinuationV2Test {
         }.isFailure)
     }
 
+    @Test fun mayorNoBounceIsNotARealRedirectInGameLog() {
+        val game = session()
+        game.commitGlobalActionFact(ActionFactDraft.MayorRedirectChoice(
+            "mayor-no-bounce", StorytellerPhase.NIGHT, 2, 1, 4, 4))
+        val noBounce = JSONObject(StorytellerStrategicContinuationV2.encode(
+            game.state, prior(), open))
+        assertEquals(0, noBounce.getJSONArray("gameLogDelta").length())
+
+        game.commitGlobalActionFact(ActionFactDraft.MayorRedirectChoice(
+            "mayor-real-redirect", StorytellerPhase.NIGHT, 2, 2, 4, 3))
+        val afterRedirect = JSONObject(StorytellerStrategicContinuationV2.encode(
+            game.state, prior(), open))
+        val log = afterRedirect.getJSONArray("gameLogDelta")
+        assertEquals(1, log.length())
+        assertEquals("mayor_redirect", log.getJSONObject(0).getString("type"))
+        assertEquals(3, log.getJSONObject(0).getInt("target"))
+    }
+
     @Test fun directSemanticResultMustMatchFreshHostLegalMeaning() {
         val host = JSONObject(StorytellerStrategicContinuationV2.encode(
             session().state, prior(), open))

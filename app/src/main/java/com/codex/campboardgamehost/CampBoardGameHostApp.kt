@@ -3069,6 +3069,7 @@ internal fun CampBoardGameHostApp() {
                         allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                         cards = cards,
                         events = clocktowerEvents,
+                        actualInformationHistory = clocktowerEpistemicObservations,
                         script = currentClocktowerScript,
                         gameId = clocktowerGameId,
                         gameSeed = clocktowerGameSeed,
