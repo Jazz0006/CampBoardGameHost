@@ -235,7 +235,7 @@
 - 审计现有 `ClocktowerHostSelectionSemantics`、`ClocktowerNightStepUi`、`ClocktowerHostScreen`、通用 `pendingGlobalNightScalarDecision` 与 `ClocktowerCurrentResidualScopeV2`。后两者已覆盖侍女 NumericResult（两名现场对象）与守鸦人 RoleAt（现场单目标）及现时 request identity；不另造角色 AI 请求格式或推荐状态。
 - 将自动公布的统一守卫拓展到守鸦人、侍女：目标完整且目前 Host 存在唯一合法答案／精确绑定的合法 AI 裁量，才从**原有方桌确认入口**正式公布，沿用现有登记预检、Session typed observation 和玩家展示。侍女只在不同的两名合法目标确认后继续；守鸦人只在目标确定后继续。缺少合法裁量时保持原 Host 手动选择／阻塞，不猜测，不重复公布。
 - 玩家展示界面未关闭之前不跳步骤；自动模式只在关闭刚刚确实公布的当前角色展示、Session 已有对应私密已确认信息时，暂存一次 UI 交接推进令牌，再对照当前步骤身份执行原来的 `advanceNightStep`。未公布、步骤变化、人工/辅助模式均不得自动跳过；不建立第二个 Session 或持久历史源。
-- 复审数字裁量发现通用适配器在缺乏 manual 列表时，曾可能仅按真实数字构造 fallback，而漏掉醉酒/中毒等情况下 Host 已给出的其他结构化合法数字。现优先从同一个当前步骤 `automaticInformationCandidates` 读取并筛选完整类型化 Host 候选，仅当确实没有匹配类型化选项时才回退 Foundation 域；新增侍女中毒数字候选回归，不编写侍女专用推荐算法。
+- 复审数字裁量发现通用适配器在缺乏 manual 列表时，曾可能仅按真实数字构造 fallback，而漏掉醉酒/中毒等情况下 Host 已给出的其他结构化合法数字。现优先从同一个当前步骤 `automaticInformationCandidates` 读取并筛选完整类型化 Host 候选，仅当确实没有匹配类型化选项时才回退 Foundation 域；新增侍女中毒数字候选回归，不编写侍女专用推荐算法。辅助模式侍女原方桌也改为单条当前匹配建议高亮，保留完整合法人工选择，不缩减结果列表。
 - 保留其他玩家现场选择步骤的原规则语义与操作入口。未添加三方案模式、付费请求或 Android 真机验收；A2 仍 PARTIAL，后续核对全夜关键角色与断线/回退流程的真实设备行为。
 
 ### A3 — 移除 Clocktower PlayerCard 第二写入源

@@ -1002,7 +1002,9 @@ internal fun ClocktowerNightStepCardLocalized(
                 val recommendedResultOptions = when {
                     manualInformationFallback -> emptyList()
                     effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-                    else -> emptyList()
+                    // Assisted mode highlights the one current, Host-rebound AI
+                    // suggestion but retains every legal manual result option.
+                    else -> listOfNotNull(currentAiSuggestedOption)
                 }
                 ClocktowerChambermaidSquareTableDialog(
                     seats = nightActionSeats,
