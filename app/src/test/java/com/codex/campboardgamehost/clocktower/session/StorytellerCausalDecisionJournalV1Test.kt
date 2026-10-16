@@ -112,6 +112,73 @@ class StorytellerCausalDecisionJournalV1Test {
         )
 
     @Test
+    fun `confirmed Mayor decision commits typed fact and causal journal without half writes`() {
+        val game = session()
+        fun mayorRequest(id: String): StorytellerProviderRequestV1 =
+            request(id, game, game.causalDecisionJournal).copy(
+                legalCandidates = listOf(2, 4).map { seat ->
+                    StorytellerProviderCandidateV1(
+                        MayorRedirectDecisionBoundary.candidateIdForSeat(seat),
+                        StorytellerProviderCandidatePayloadV1.SeatTarget(seat),
+                    )
+                },
+            )
+        val firstRequest = mayorRequest("night:2:mayor-redirect:first")
+        val choice = ActionFactDraft.MayorRedirectChoice(
+            actionId = "mayor-night-two-first",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 1,
+            mayorSeat = 1,
+            targetSeat = 2,
+        )
+        val candidate = MayorRedirectDecisionBoundary.candidateIdForSeat(2)
+        val accepted = game.commitConfirmedMayorRedirect(choice, firstRequest, candidate, 0L)
+        assertEquals(0L, accepted.point.globalSequence)
+        assertEquals(1L, game.state.gameStateRevision)
+        assertEquals(1L, game.state.nextTimelineGlobalSequence)
+        assertEquals(choice.targetSeat, (game.state.actionTimeline.entries.single().fact as
+            com.codex.campboardgamehost.clocktower.domain.ActionFact.MayorRedirectChoice).targetSeat)
+        assertEquals(1, game.causalDecisionJournal.effectiveNow().size)
+        assertEquals(candidate, game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+
+        // Re-tapping the same stable confirmation is truly a no-op, including the journal.
+        val afterFirst = game.state
+        val journalAfterFirst = game.causalDecisionJournal.archive()
+        assertEquals(accepted, game.commitConfirmedMayorRedirect(choice, firstRequest, candidate, 0L))
+        assertEquals(afterFirst, game.state)
+        assertEquals(journalAfterFirst, game.causalDecisionJournal.archive())
+
+        val bad = choice.copy(actionId = "mayor-invalid", targetSeat = 3, sequence = 2)
+        assertThrows(IllegalArgumentException::class.java) {
+            game.commitConfirmedMayorRedirect(
+                bad, mayorRequest("night:2:mayor-redirect:invalid"),
+                MayorRedirectDecisionBoundary.candidateIdForSeat(3), 1L,
+            )
+        }
+        assertEquals(afterFirst, game.state)
+        assertEquals(journalAfterFirst, game.causalDecisionJournal.archive())
+
+        val secondRequest = mayorRequest("night:2:mayor-redirect:revised")
+        game.commitConfirmedMayorRedirect(
+            choice.copy(actionId = "mayor-night-two-revised", targetSeat = 4, sequence = 2),
+            secondRequest, MayorRedirectDecisionBoundary.candidateIdForSeat(4), 1L,
+        )
+        assertEquals(2L, game.state.gameStateRevision)
+        assertEquals(2L, game.state.nextTimelineGlobalSequence)
+        assertEquals(listOf(0L, 1L), game.state.actionTimeline.entries.map { it.point.globalSequence })
+        assertEquals(1, game.causalDecisionJournal.effectiveNow().size)
+        assertEquals(MayorRedirectDecisionBoundary.candidateIdForSeat(4),
+            game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+        assertEquals(2, game.causalDecisionJournal.archive().records.count {
+            it is StorytellerCausalJournalRecordV1.Captured
+        })
+        assertEquals(1, game.causalDecisionJournal.archive().records.count {
+            it is StorytellerCausalJournalRecordV1.Corrected
+        })
+    }
+
+    @Test
     fun `same revision different global cursors and later correction preserve both old prefixes`() {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)

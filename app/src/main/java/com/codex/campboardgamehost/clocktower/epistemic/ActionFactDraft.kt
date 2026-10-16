@@ -215,6 +215,22 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class MayorRedirectChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val mayorSeat: Int,
+        val targetSeat: Int,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(mayorSeat)
+            requireSeat(targetSeat)
+            require(mayorSeat != targetSeat)
+        }
+    }
+
     data class DemonBluffChoice(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -303,6 +319,9 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     )
     is ActionFactDraft.RedHerringChoice -> ActionFact.RedHerringChoice(
         actionId, globalSequence, selectedSeat,
+    )
+    is ActionFactDraft.MayorRedirectChoice -> ActionFact.MayorRedirectChoice(
+        actionId, globalSequence, mayorSeat, targetSeat,
     )
     is ActionFactDraft.DemonBluffChoice -> ActionFact.DemonBluffChoice(
         actionId, globalSequence, roles.toList(),

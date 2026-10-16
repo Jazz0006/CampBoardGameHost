@@ -154,6 +154,11 @@ internal object ClocktowerSemanticHistoryPersistence {
                 put("kind", "red-herring-choice")
                 put("selectedSeat", fact.selectedSeat ?: JSONObject.NULL)
             }
+            is ActionFact.MayorRedirectChoice -> {
+                put("kind", "mayor-redirect")
+                put("mayorSeat", fact.mayorSeat)
+                put("targetSeat", fact.targetSeat)
+            }
             is ActionFact.DemonBluffChoice -> {
                 put("kind", "demon-bluff-choice")
                 put("roleIds", JSONArray(fact.roles.map(RoleId::value)))
@@ -225,6 +230,10 @@ internal object ClocktowerSemanticHistoryPersistence {
             "red-herring-choice" -> ActionFact.RedHerringChoice(
                 actionId, sequence, nullablePositiveSeat(json, "selectedSeat"),
             )
+            "mayor-redirect" -> ActionFact.MayorRedirectChoice(
+                actionId, sequence, positiveSeat(json, "mayorSeat"),
+                positiveSeat(json, "targetSeat"),
+            ).also { require(it.mayorSeat != it.targetSeat) }
             "demon-bluff-choice" -> ActionFact.DemonBluffChoice(
                 actionId, sequence, json.getJSONArray("roleIds").let { array ->
                     (0 until array.length()).map { index -> RoleId(array.getString(index)) }

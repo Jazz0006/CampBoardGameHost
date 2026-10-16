@@ -111,6 +111,10 @@ object EpistemicSemanticJson {
             "actionId" to value.actionId, "kind" to "red-herring-choice",
             "sequence" to value.sequence, "selectedSeat" to value.selectedSeat,
         )
+        is ActionFact.MayorRedirectChoice -> mapOf(
+            "actionId" to value.actionId, "kind" to "mayor-redirect",
+            "sequence" to value.sequence, "mayorSeat" to value.mayorSeat, "targetSeat" to value.targetSeat,
+        )
         is ActionFact.DemonBluffChoice -> mapOf(
             "actionId" to value.actionId, "kind" to "demon-bluff-choice",
             "sequence" to value.sequence, "roleIds" to value.roles.map { it.value },

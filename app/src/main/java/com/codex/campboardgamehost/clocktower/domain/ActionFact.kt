@@ -133,6 +133,14 @@ sealed interface ActionFact {
         val selectedSeat: Int?,
     ) : ActionFact
 
+    /** Host-confirmed Mayor bounce; both seats are private mechanical facts, not player observations. */
+    data class MayorRedirectChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val mayorSeat: Int,
+        val targetSeat: Int,
+    ) : ActionFact
+
     /** Accepted private Demon bluff role set/override, distinct from UI drafts. */
     data class DemonBluffChoice(
         override val actionId: String,
@@ -204,6 +212,11 @@ object DynamicActionReducer {
                 }
                 is ActionFact.Execution -> updatePlayer(fact.targetSeat) { it.copy(alive = false, poisoned = false) }
                 is ActionFact.Death -> updatePlayer(fact.targetSeat) { it.copy(alive = false, poisoned = false) }
+                is ActionFact.MayorRedirectChoice -> {
+                    requireSeat(fact.mayorSeat)
+                    requireSeat(fact.targetSeat)
+                    require(fact.mayorSeat != fact.targetSeat)
+                }
                 is ActionFact.NoExecution -> Unit
                 is ActionFact.SlayerShot -> {
                     requireSeat(fact.claimantSeat)

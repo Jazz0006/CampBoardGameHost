@@ -3427,9 +3427,6 @@ internal fun CampBoardGameHostApp() {
                                             "Mayor redirect confirmation changed the selected target."
                                         }
                                         if (checkpoint.confirmedMayorRedirectTarget != selectedTarget) {
-                                            // Rules-owned confirmation has passed, but no mechanical
-                                            // mutation/observation has been published yet. Capture the
-                                            // exact global prefix BEFORE updating the game revision.
                                             val session = requireClocktowerGameSession()
                                             val rulesetRef = requireNotNull(clocktowerRulesetRef)
                                             val registry = activeGameClocktowerRulesetCatalog
@@ -3440,40 +3437,26 @@ internal fun CampBoardGameHostApp() {
                                                 round = round,
                                                 characterRegistry = registry,
                                             )
-                                            val journal = currentClocktowerCausalJournal()
                                             val request = StorytellerProviderRequestFactoryV1.fromMayorRedirect(
                                                 decision = pendingDecision,
                                                 snapshot = snapshot,
-                                                gameContext = journal.contextForRequest(snapshot, session.state),
+                                                gameContext = currentClocktowerCausalJournal().contextForRequest(snapshot, session.state),
                                             )
-                                            val previousConfirmed = journal.effectiveNow().lastOrNull { earlier ->
-                                                earlier.eventId.startsWith("confirmed:night:${round}:mayor-redirect:")
-                                            }
-                                            val frozen = journal.captureBeforeDecision(request, session.state)
-                                            val newEventId = "confirmed:${request.identity.decisionId}"
-                                            journal.commit(request.identity.decisionId, StorytellerProviderPriorDecisionV1(
-                                                eventId = newEventId,
-                                                gameStateRevision = frozen.revision.gameStateRevision,
-                                                playerInputRevision = frozen.revision.playerInputRevision,
-                                                selectedCandidateId = candidateId,
-                                                selectedOutcome = DecisionOutcomeSnapshot(
-                                                    decisionType = "mayor-redirect",
-                                                    canonicalFields = sortedMapOf("targetSeat" to targetSeat.toString()),
+                                            session.commitConfirmedMayorRedirect(
+                                                draft = ActionFactDraft.MayorRedirectChoice(
+                                                    actionId = clocktowerActionId("mayor-redirect", targetSeat = targetSeat),
+                                                    phase = StorytellerPhase.NIGHT,
+                                                    round = round,
+                                                    sequence = clocktowerEventCounter + 1,
+                                                    mayorSeat = pendingDecision.mayorSeat,
+                                                    targetSeat = targetSeat,
                                                 ),
-                                                abilityState = AbilityState.FUNCTIONING,
-                                                truthRelation = TruthRelation.NOT_APPLICABLE,
-                                                registrations = emptyList(),
-                                            ))
-                                            // Reconfirmation is a *later correction*, not two
-                                            // simultaneously effective Mayor decisions. Earlier
-                                            // frozen inputs still observe the old confirmation.
-                                            previousConfirmed?.let { prior ->
-                                                journal.correct(
-                                                    correctionId = "revised:${newEventId}",
-                                                    replacedEventId = prior.eventId,
-                                                    replacementEventId = newEventId,
-                                                )
-                                            }
+                                                request = request,
+                                                candidateId = candidateId,
+                                                expectedGameStateRevision = session.state.gameStateRevision,
+                                            )
+                                            publishClocktowerSessionView()
+                                            invalidateA4RevisionScope()
                                         }
                                     }
                                     is MayorRedirectDecisionConfirmation.Blocked -> {
@@ -3487,7 +3470,9 @@ internal fun CampBoardGameHostApp() {
                             )
                             if (reducedCheckpoint.confirmedMayorRedirectTarget != checkpoint.confirmedMayorRedirectTarget) {
                                 clocktowerConfirmedMayorRedirectTarget = reducedCheckpoint.confirmedMayorRedirectTarget
-                                advanceClocktowerGameStateRevision()
+                                if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) {
+                                    advanceClocktowerGameStateRevision()
+                                }
                             }
                         },
                         onSelectDemonSuccessor = { selectedTarget ->

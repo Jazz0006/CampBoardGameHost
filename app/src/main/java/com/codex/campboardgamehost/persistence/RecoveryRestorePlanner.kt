@@ -473,6 +473,12 @@ internal object RecoveryRestorePlanner {
                         "Red Herring choice belongs to first-night setup."
                     }
                 }
+                is ActionFact.MayorRedirectChoice -> {
+                    requireKnownSeat(fact.mayorSeat, playerCount)
+                    requireKnownSeat(fact.targetSeat, playerCount)
+                    require(fact.mayorSeat != fact.targetSeat)
+                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT)
+                }
                 is ActionFact.DemonBluffChoice -> {
                     require(fact.roles.distinct() == fact.roles)
                     require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT) {
