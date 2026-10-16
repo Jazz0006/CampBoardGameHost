@@ -43,12 +43,13 @@ class ClocktowerFirstNightPlayerRevealHandoffTest {
         val events = mutableListOf<String>()
         val result = performClocktowerPlayerRevealHandoff(
             authorize = { events += "authorize"; true },
-            publishFirstNight = { events += "publish"; true },
+            publicationNeeded = { events += "needed"; true },
             recordPrivateInformation = { events += "private" },
+            markFirstNightPublished = { events += "mark" },
             recordHistory = { events += "history" },
             openReveal = { events += "reveal" },
         )
-        assertEquals(listOf("authorize", "publish", "private", "history", "reveal"), events)
+        assertEquals(listOf("authorize", "needed", "private", "mark", "history", "reveal"), events)
         assertEquals(ClocktowerPlayerRevealHandoff(true, true), result)
     }
 
@@ -58,8 +59,9 @@ class ClocktowerFirstNightPlayerRevealHandoffTest {
         repeat(2) {
             performClocktowerPlayerRevealHandoff(
                 authorize = { true },
-                publishFirstNight = { (!published).also { published = true } },
+                publicationNeeded = { !published },
                 recordPrivateInformation = { events += "private" },
+                markFirstNightPublished = { published = true },
                 recordHistory = { events += "history" },
                 openReveal = { events += "reveal" },
             )
@@ -70,8 +72,9 @@ class ClocktowerFirstNightPlayerRevealHandoffTest {
     @Test fun `authorization denial does not invoke any downstream effect`() {
         val result = performClocktowerPlayerRevealHandoff(
             authorize = { false },
-            publishFirstNight = { error("must not publish") },
+            publicationNeeded = { error("must not prepare") },
             recordPrivateInformation = { error("must not record private") },
+            markFirstNightPublished = { error("must not mark") },
             recordHistory = { error("must not record history") },
             openReveal = { error("must not reveal") },
         )
@@ -79,7 +82,7 @@ class ClocktowerFirstNightPlayerRevealHandoffTest {
     }
 
     @Test fun `effect failures propagate without later effects or invented rollback`() {
-        val stages = listOf("authorize", "publish", "private", "history", "reveal")
+        val stages = listOf("authorize", "needed", "private", "mark", "history", "reveal")
         for (failedStage in stages) {
             val events = mutableListOf<String>()
             val failure = IllegalStateException(failedStage)
@@ -90,8 +93,9 @@ class ClocktowerFirstNightPlayerRevealHandoffTest {
             try {
                 performClocktowerPlayerRevealHandoff(
                     authorize = { effect("authorize"); true },
-                    publishFirstNight = { effect("publish"); true },
+                    publicationNeeded = { effect("needed"); true },
                     recordPrivateInformation = { effect("private") },
+                    markFirstNightPublished = { effect("mark") },
                     recordHistory = { effect("history") },
                     openReveal = { effect("reveal") },
                 )
@@ -101,6 +105,37 @@ class ClocktowerFirstNightPlayerRevealHandoffTest {
             }
             assertEquals(stages.take(stages.indexOf(failedStage) + 1), events)
         }
+    }
+
+    @Test fun `failed observation does not consume first-night marker and same decision may retry`() {
+        var marked = false
+        var observationAttempts = 0
+        val events = mutableListOf<String>()
+        repeat(2) { attempt ->
+            try {
+                performClocktowerPlayerRevealHandoff(
+                    authorize = { true },
+                    publicationNeeded = { !marked },
+                    recordPrivateInformation = {
+                        observationAttempts++
+                        if (attempt == 0) error("observation did not persist")
+                        events += "observed"
+                    },
+                    markFirstNightPublished = { marked = true; events += "marked" },
+                    recordHistory = { events += "narrated" },
+                    openReveal = { events += "revealed" },
+                )
+            } catch (failure: IllegalStateException) {
+                assertEquals("observation did not persist", failure.message)
+            }
+            if (attempt == 0) {
+                assertFalse(marked)
+                assertTrue(events.isEmpty())
+            }
+        }
+        assertTrue(marked)
+        assertEquals(2, observationAttempts)
+        assertEquals(listOf("observed", "marked", "narrated", "revealed"), events)
     }
 
     @Test fun `legacy publication remains allowed without structured confirmation`() {
@@ -129,8 +164,9 @@ class ClocktowerFirstNightPlayerRevealHandoffTest {
         for ((snapshot, currentRevision) in rejected) {
             val result = performClocktowerPlayerRevealHandoff(
                 authorize = { clocktowerInformationPublicationAllowed(confirmed, snapshot, currentRevision) },
-                publishFirstNight = { error("stale publication") },
+                publicationNeeded = { error("stale publication") },
                 recordPrivateInformation = { error("stale observation") },
+                markFirstNightPublished = { error("stale mark") },
                 recordHistory = { error("stale history") },
                 openReveal = { error("stale reveal") },
             )

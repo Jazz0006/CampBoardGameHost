@@ -200,6 +200,13 @@ internal fun ClocktowerJudgeScreen(
         hasObservedFirstNightPoisonTarget = true
     }
 
+    fun firstNightPublicationNeeded(displayStep: ClocktowerNightStepUi): Boolean {
+        val request = clocktowerFirstNightInformationRequest(
+            displayStep, phase, round, cards, script, gameSeed, poisonTarget, language,
+            firstNightPairDecisionContext,
+        ) ?: return true
+        return !firstNightInformationMigration.isDisplayed(request.decisionId)
+    }
     fun publishFirstNightInformation(displayStep: ClocktowerNightStepUi): Boolean {
         val request = clocktowerFirstNightInformationRequest(
             displayStep,
@@ -889,6 +896,23 @@ internal fun ClocktowerJudgeScreen(
             expectedSnapshot = displayStep.informationDecisionExpectedSnapshot,
             currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
         )
+    fun unreliableInformationCanBeRecorded(displayStep: ClocktowerNightStepUi): Boolean {
+        if (!clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)) return true
+        if (displayStep.displayKind !in setOf(
+                ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo,
+                ClocktowerDisplayKind.EitherOne, ClocktowerDisplayKind.RoleReveal,
+                ClocktowerDisplayKind.Grimoire,
+            )) return true
+        val actorSeat = displayStep.actor?.let { cards.indexOf(it) + 1 }
+            ?.takeIf { it > 0 } ?: return false
+        return clocktowerShownUnreliableProposition(
+            step = displayStep,
+            actorSeat = actorSeat,
+            allSeats = cards.indices.map { it + 1 },
+            empathNeighborSeats = empathNeighbors.map { cards.indexOf(it) + 1 },
+            fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
+        ) != null
+    }
     fun recordReliablePrivateInformation(displayStep: ClocktowerNightStepUi) {
         val actor = displayStep.actor ?: return
         val actorSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return
@@ -897,9 +921,25 @@ internal fun ClocktowerJudgeScreen(
             onCommitConfirmedInformationDecision(confirmation)
             return
         }
-        if (displayStep.displayProposition == null &&
-            actorIsUnreliable(displayStep.roleEnName ?: return, actor)) return
-        val proposition = displayStep.displayProposition ?: when (displayStep.roleEnName) {
+        val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
+        val shownUnreliable = if (unreliable) clocktowerShownUnreliableProposition(
+            step = displayStep,
+            actorSeat = actorSeat,
+            allSeats = cards.indices.map { it + 1 },
+            empathNeighborSeats = empathNeighbors.map { cards.indexOf(it) + 1 },
+            fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
+        ) else null
+        // Never silently omit misinformation after the first-night marker was accepted.
+        // In particular, these fallbacks are TRUE answers and may only serve reliable abilities.
+        if (unreliable) {
+            if (displayStep.displayKind !in setOf(
+                    ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo,
+                    ClocktowerDisplayKind.EitherOne, ClocktowerDisplayKind.RoleReveal,
+                    ClocktowerDisplayKind.Grimoire,
+                )) return
+            requireNotNull(shownUnreliable) { "Actual unreliable displayed information lacks a typed proposition." }
+        }
+        val proposition = shownUnreliable ?: displayStep.displayProposition ?: when (displayStep.roleEnName) {
             "Chef" -> InformationProposition.NumericResult(
                 NumericMetric.ADJACENT_EVIL_PAIRS, actorSeat, cards.indices.map { it + 1 }, chefReferenceValue,
             )
@@ -2868,20 +2908,23 @@ internal fun ClocktowerJudgeScreen(
                         val handoff = performClocktowerPlayerRevealHandoff(
                             authorize = {
                                 informationDecisionPublicationAllowed(displayStep) &&
+                                    unreliableInformationCanBeRecorded(displayStep) &&
                                     (ready == null || (publication != null &&
                                         onPreflightConfirmedRegistrationResult(publication)))
                             },
-                            publishFirstNight = {
-                                publishFirstNightInformation(displayStep).also { published ->
-                                    if (published) com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
-                                        .revealStage("FIRST_NIGHT_RECORDED", phase.toStorytellerPhase().name, round)
-                                }
-                            },
+                            publicationNeeded = { firstNightPublicationNeeded(displayStep) },
                             recordPrivateInformation = {
                                 recordReliablePrivateInformation(displayStep)
                                 com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
                                     .revealStage("OBSERVATION_RECORDED", phase.toStorytellerPhase().name, round)
                                 commitVerifiedRegistration()
+                            },
+                            markFirstNightPublished = {
+                                check(publishFirstNightInformation(displayStep)) {
+                                    "First-night decision became displayed before its confirmed observation."
+                                }
+                                com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
+                                    .revealStage("FIRST_NIGHT_RECORDED", phase.toStorytellerPhase().name, round)
                             },
                             recordHistory = {
                                 val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
@@ -2911,6 +2954,16 @@ internal fun ClocktowerJudgeScreen(
                         // The Host still requires the exact already-stored most recent observation.
                         if (handoff.openReveal && !handoff.recordPublication) {
                             commitVerifiedRegistration()
+                        }
+                        if (!handoff.openReveal && !unreliableInformationCanBeRecorded(displayStep)) {
+                            Toast.makeText(
+                                context,
+                                text(
+                                    "当前信息缺少准确的结构化展示值，不能公布。请重新选择具体显示结果。",
+                                    "The chosen display has no exact structured result. Select a concrete result before revealing.",
+                                ),
+                                Toast.LENGTH_LONG,
+                            ).show()
                         }
                     }
                     } catch (failure: Exception) {

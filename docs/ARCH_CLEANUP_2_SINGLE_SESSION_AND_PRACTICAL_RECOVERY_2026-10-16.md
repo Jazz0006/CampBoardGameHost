@@ -104,6 +104,16 @@
 - **独立验证阻塞（真实检查）**：使用 Mini MCP `execution_session_start` 只读检查精确起点 HEAD：Java 21 / Gradle 9.5.0 存在，`:app:testFast` 已配置；开发机找不到 Android SDK 35，且 `ANDROID_HOME`、`ANDROID_SDK_ROOT` 均未设置。未执行 Gradle/JUnit/Android 编译；Mini MCP `run_task(:app:testFast)` 也因仓库未列入 task allow-list 被拒。没有源码改动由 Codex 产生。必须经能用 SDK 的构建机或 GitHub 精确 HEAD CI/R2 执行才可称 GREEN。
 - **A1 仍 PARTIAL，A2–A6 未开始。** 不新增通用 EventStore、平行状态或兼容桥；PR #315 保持 Draft，尚有 main 合并冲突，禁止未经许可付费模型测试或合并 main。
 
+### A1 第八批：实际展示信息与首夜观察先提交（2026-10-16；等待 Android 验证）
+
+- 起始仓库经 Mini MCP 检查为 `796b6d38263d4b032bc16c1de1f00b0e4d588f5c`，本地工作树 clean 且等于远端，PR #315 仍 Draft/dirty/无当前 HEAD 检查。
+- **不可靠信息不得被漏记或用真值补写：** 新增 `clocktowerShownUnreliableProposition`，优先使用确定的 `ConfirmedInformationDecision.draft.proposition` 或当前被选中的 `displayProposition`；若遗留数字展示无命题，只在可从**玩家实际看到的数字**加上既有显式角色/查询席位准确确定语义时解析为 NumericResult（Chef、Empath、Clockmaker、Chambermaid）；Fortune Teller 的 YesNo 仅在已确认两名查询席位和屏幕显示的“有/没有、DEMON/NO DEMON、Yes/No”等确定字面值可识别时补全 BooleanResult。已有 NumericResult/BooleanResult 与屏幕值冲突时均拒绝，而非假装所见等于真值。角色/配对/魔典信息不尝试解析本地化文字；必须携带确定的结构化命题。
+- `ClocktowerHostScreen.onShowPlayerDisplay` 在首夜展示标记/观察写入之前加 `unreliableInformationCanBeRecorded` 前置检查。对需要私有语义观察的不可靠 Number/YesNo/EitherOne/RoleReveal/Grimoire，缺少合法 typed evidence 时拒绝打开展示并提示重新选择；`recordReliablePrivateInformation` 不再对缺少 proposition 的醉酒/中毒结果静默 return，使用真正展示数值写入 `EpistemicObservationDraft`，可靠性仍标为 `KNOWN_MALFUNCTIONING`，且不使用原本的真实信息 fallback。
+- **删除旧“首夜显示标记先提交，观察后提交”的顺序。** `performClocktowerPlayerRevealHandoff` 同一现役入口改为纯检查是否首次公布 → 持久化实际私有观察及已确认登记 → 写入临时 first-night displayed marker → 可读的叙事事件 → 玩家展示页面。若观察或登记失败，不会提前消耗已展示标记；重试依靠 Session 已有观察 recordId 幂等。保留同一决定再次打开展示、不重复公布的语义，替换旧的 `publishFirstNight` 回调，不增加第二条写入链。
+- 针对旧 handoff 合同测试更新阶段顺序、拒绝/异常传播和重复公布，并新增“首次观察失败不消耗标记、下一次成功”的覆盖；新增纯语义测试确认 Chef=0（虽可不是实情）、Empath 数字/查询邻座、Chambermaid 查询席位、Fortune Teller 明确显示的 Yes/No 和真假冲突、旧角色/配对无结构化命题时不许伪造、真值数字与屏幕不同必须拒绝。尚未取得 Android 编译或 JVM 测试执行证据。
+- **仍有真实边界**：当前 `FirstNightInformationMigration` 是易失的 UI displayed-ID gate，而非 Session 单步事务；`ClocktowerConfirmedRegistrationHostWriterV1` 仍追加 Session-owned journal 但与观察不是同一个事务；历史 `recordHistory` 仍是显示投影；未列举的可靠/NGJ 非数值信息的缺命题情况仍需审计。此次改变的是失败发生时的写入顺序和失效保护，**不宣称整个观察+裁定+UI 展示已实现数据库级原子性**。A1 仍 PARTIAL、PR 不合并，A2–A6 未开始。
+- Android SDK 35 在开发机缺失，`:app:testFast` 不是 Mini MCP allowlisted task；后续必须由 SDK 可用的安卓构建机或精确 HEAD GitHub CI/R2 证明编译和实际流程。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。
