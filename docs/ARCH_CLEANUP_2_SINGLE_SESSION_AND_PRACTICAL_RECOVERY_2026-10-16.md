@@ -143,6 +143,16 @@
 - 经修复的准确**可执行代码**提交 `16f2413f33e2151e5676298162aae850bae52b10`：[CI #4215](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38852526023) Android `assembleDebug`、`testDebugUnitTest`、`testFull` 及 CI gate 全部 SUCCESS（`BUILD SUCCESSFUL`），ASP 合同和 Real Clingo 也 SUCCESS；[R2](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38852526096) SUCCESS。同一 source SHA 验证前十批 A1 的累计应用改动；不把后续纯文档 SHA 伪称再次编译过，也不把 CI 当作真机交互验收。
 - A1 仍 PARTIAL：市长转移、恶魔后继者、艺术家及剩余事实确认路径还需后续精简；A3/A4/A5 分别负责多份 UI 机械状态、全部信息补全和安全恢复，不扩大 A1 范围。
 
+### A1 第十一批：市长转移正式确认收敛与真实 Android 回归（2026-10-16；本批完成）
+
+- 开始前经 Mini MCP / GitHub 重新确认 `cleanup/arch-cleanup-1-20261015` 为本地/远端一致且 clean 的 `c8a7f530924bf9f0ba69b633ba6b2aa4b9c2d8df`，`main=770ed32f446d03cf81f226901afa78cbdcf287bf`；唯一 PR #315 仍 Draft、dirty、未合并。全部五份权威文档已读取。
+- **替换原 Mayor 双轨写入口**：原 `CampBoardGameHostApp.onConfirmMayorRedirectTarget` 在已验证合法候选后，直接先写 `causalDecisionJournal.captureBeforeDecision/commit/correct`，后向 Compose `clocktowerConfirmedMayorRedirectTarget` 写入，再独立执行 `advanceClocktowerGameStateRevision()`，留下日志与 Session 事实不一致窗口。现移除该 callback 中的直接 journal 三次写入及 Trouble Brewing 的独立 mechanical revision 调用，将合法确认委托给 `ClocktowerGameSession.commitConfirmedMayorRedirect`，使用 `ActionFactDraft.MayorRedirectChoice`。
+- 新路径在正式 Session 更新前校验当前版本、请求来源、规则域以及目标席位，离线暂存已有 Session-owned causal journal 的前缀、决定和必要的更正，再调用现役 `commitConfirmedGameAction` 一次写入 `MayorRedirectChoice(mayorSeat, targetSeat)`、`gameStateRevision`、`ActionFactTimeline`、`nextTimelineGlobalSequence`，成功后才替换 journal。若接受前任何检查失败，不改变权威 Session 事实/正式因果日志；重复相同 Action ID 幂等，冲突禁止。当前 UI 夜间未完成步骤的 `confirmedMayorRedirectTarget` 仍承担临时流程投影，尚不是已清理的 A3 PlayerCard/Recovery 阶段。
+- 新增事实沿用**既有**行动事实、序列及存档模型，没有创建第二 GameState、并行事件仓库或替代规则算法；补齐 `ActionFactDraft` 绑定、纯状态 reducer、持久化 codec、Recovery 的合法席位检验、全局 AI 事件投影及不泄漏身份的玩家可见历史视图。特别保留既有规则域允许的 `mayorSeat == targetSeat`（市长未转移、死亡照常处理），不能凭个人推测禁止。
+- 针对性的 `StorytellerCausalDecisionJournalV1Test` 验证提交后事实/版本/序号、重复确认、非法恶魔目标拒绝无半写、同夜正式更正后有效因果记录、Mayor 自身合法目标与历史 JSON 编解码一致；不机械扩增 UI 字符串测试。
+- 源码批次 `dd7392cdba097509130e3641b8b7830752c8adc5` [CI #4217](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38854159448) SUCCESS（Android tests、ASP、Real Clingo、CI Gate），同一 SHA [R2 #3832](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38854159617) SUCCESS。随后 Mayor 同席规则和持久化回归修复的**最新可执行源码 SHA** `f010720493e3f79a5db145f3b1da4fb655276b30` [CI #4218](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38854537664) 完成，Android tests、ASP、Real Clingo、CI Gate 均 SUCCESS。R2 的 push 路径仅监控主屏等 UI 文件，后一提交只有 domain/epistemic/persistence/test 修改，因此 **R2 在 f0107204 SHA 未单独触发**；不把前一 SHA 的 R2 假称是后一 SHA 验收。
+- **A1 仍 PARTIAL**：下一批应独立收敛 DemonSuccessor 的“输入草稿 → 已确认继承决定 → Dawn 实际角色变化”的不同事件；Artist 现有 UI 未收集问题文本，只有 truthful/shown Boolean 与叙事历史，必须在采集真实问题后设计结构化非 FortuneTeller 专属合同；剩余 `advanceClocktowerGameStateRevision` 的合法兜底逐项确认，实例 `commitGlobalActionFact` 的测试消费者先迁移再删除。A2/A3/A4/A5/A6 均未开始，PR 保持 Draft/dirty，不合并 main、不调用付费 API。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。
