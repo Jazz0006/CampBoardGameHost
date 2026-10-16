@@ -137,7 +137,7 @@ class StorytellerStrategicContinuationV2Test {
         val game = session()
         game.updateStorytellerPlayerContext(2,
             StorytellerPlayerContextInputV1(claimedRoleIds = listOf(RoleId("Mayor"))))
-        game.commitGlobalActionFact(ActionFactDraft.Poison(
+        game.commitAcceptedTestAction(ActionFactDraft.Poison(
             "confirmed-poison", StorytellerPhase.FIRST_NIGHT, 1, 0, 2))
         game.commitGlobalEpistemicObservation(EpistemicObservationDraft(
             recordId = "chef-info-received",
@@ -187,7 +187,7 @@ class StorytellerStrategicContinuationV2Test {
 
     @Test fun sendsOnlyDeltaAndOmitsTechnicalCarryPhaseAndDuplicateDeath() {
         val game = session()
-        game.commitGlobalActionFact(ActionFactDraft.Poison(
+        game.commitAcceptedTestAction(ActionFactDraft.Poison(
             "confirmed-night1", StorytellerPhase.NIGHT, 1, 0, 5))
         val priorCutoff = game.state.nextTimelineGlobalSequence
         val cursor = StorytellerStrategicContinuationV2.MemoryCursor(
@@ -195,16 +195,16 @@ class StorytellerStrategicContinuationV2Test {
             game.state.playerInputRevision, priorCutoff, 1, memory)
 
         // These facts are valid Host mechanics but have no new AI decision content.
-        game.commitGlobalActionFact(ActionFactDraft.Poison(
+        game.commitAcceptedTestAction(ActionFactDraft.Poison(
             "dawn-strategic-continuation-game-1-poison-seat-5-to-none",
             StorytellerPhase.DAWN, 1, 1, null))
-        game.commitGlobalActionFact(ActionFactDraft.PhaseAdvance(
+        game.commitAcceptedTestAction(ActionFactDraft.PhaseAdvance(
             "phase-day1", StorytellerPhase.DAWN, 1, 2, StorytellerPhase.DAY, 1))
-        game.commitGlobalActionFact(ActionFactDraft.Nomination(
+        game.commitAcceptedTestAction(ActionFactDraft.Nomination(
             "nominate", StorytellerPhase.DAY, 1, 3, 3, 7, false))
-        game.commitGlobalActionFact(ActionFactDraft.Execution(
+        game.commitAcceptedTestAction(ActionFactDraft.Execution(
             "execute", StorytellerPhase.DAY, 1, 4, 7))
-        game.commitGlobalActionFact(ActionFactDraft.Death(
+        game.commitAcceptedTestAction(ActionFactDraft.Death(
             "death-from-execution", StorytellerPhase.DAY, 1, 5, 7))
         game.commitGlobalEpistemicObservation(EpistemicObservationDraft(
             recordId = "public-death", phase = StorytellerPhase.DAY, round = 1, sequence = 6,
@@ -280,13 +280,13 @@ class StorytellerStrategicContinuationV2Test {
 
     @Test fun mayorNoBounceIsNotARealRedirectInGameLog() {
         val game = session()
-        game.commitGlobalActionFact(ActionFactDraft.MayorRedirectChoice(
+        game.commitAcceptedTestAction(ActionFactDraft.MayorRedirectChoice(
             "mayor-no-bounce", StorytellerPhase.NIGHT, 2, 1, 4, 4))
         val noBounce = JSONObject(StorytellerStrategicContinuationV2.encode(
             game.state, prior(), open))
         assertEquals(0, noBounce.getJSONArray("gameLogDelta").length())
 
-        game.commitGlobalActionFact(ActionFactDraft.MayorRedirectChoice(
+        game.commitAcceptedTestAction(ActionFactDraft.MayorRedirectChoice(
             "mayor-real-redirect", StorytellerPhase.NIGHT, 2, 2, 4, 3))
         val afterRedirect = JSONObject(StorytellerStrategicContinuationV2.encode(
             game.state, prior(), open))

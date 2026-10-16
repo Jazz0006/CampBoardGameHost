@@ -68,11 +68,11 @@ class LegacyKlutzSpyArchiveRecoveryCompatibilityTest {
         withKnownPoison: Boolean = true,
     ) {
         if (withKnownPoison) {
-            s.commitGlobalActionFact(ActionFactDraft.Poison(
+            s.commitAcceptedTestAction(ActionFactDraft.Poison(
                 "known-poison", StorytellerPhase.NIGHT, 1, 1, if (poisonedAtDeath) 1 else 4,
             ))
         }
-        s.commitGlobalActionFact(ActionFactDraft.Death(
+        s.commitAcceptedTestAction(ActionFactDraft.Death(
             "death-klutz", StorytellerPhase.DAWN, 2, 2, 1,
         ))
     }

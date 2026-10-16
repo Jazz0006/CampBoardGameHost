@@ -206,7 +206,7 @@ class StorytellerCausalDecisionJournalV1Test {
         assertEquals(0L, a.exclusiveGlobalSequence)
         journal.commit("A", event("A", revision = a.revision))
 
-        session.commitGlobalActionFact(ActionFactDraft.Poison(
+        session.commitAcceptedTestAction(ActionFactDraft.Poison(
             "poison", StorytellerPhase.FIRST_NIGHT, 1, 1, 5,
         ))
         val bReq = request("B", session, journal)
@@ -228,7 +228,7 @@ class StorytellerCausalDecisionJournalV1Test {
         assertEquals(b, journal.frozenAt("B"))
         assertEquals(listOf("poison"), journal.frozenAt("B").historyPrefix.entries.map { it.entryId })
 
-        session.commitGlobalActionFact(ActionFactDraft.Attack(
+        session.commitAcceptedTestAction(ActionFactDraft.Attack(
             "future-attack", StorytellerPhase.NIGHT, 2, 2, 5,
         ))
         assertEquals(b, journal.frozenAt("B"))
@@ -279,7 +279,7 @@ class StorytellerCausalDecisionJournalV1Test {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         val stale = request("stale", session, journal)
-        session.commitGlobalActionFact(ActionFactDraft.Death(
+        session.commitAcceptedTestAction(ActionFactDraft.Death(
             "new-action-same-revision", StorytellerPhase.DAWN, 1, 0, 2,
         ))
         assertThrows(IllegalArgumentException::class.java) {

@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.session.commitAcceptedTestAction
+
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
@@ -241,7 +243,7 @@ class RecoveryRestorePlannerTest {
             semanticHistoryMode =
                 com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Poison(
                 "first-poison", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT,
                 1, 0, 2,
@@ -264,7 +266,7 @@ class RecoveryRestorePlannerTest {
                 ),
             ),
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Execution(
                 "day-execution", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY,
                 1, 0, 3,
@@ -284,7 +286,7 @@ class RecoveryRestorePlannerTest {
                 proposition = com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AliveAt(3, false),
             ),
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Protect(
                 "night-protect", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
                 2, 2, 4,
@@ -336,7 +338,7 @@ class RecoveryRestorePlannerTest {
                 com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryDimensionV1.REGISTRATION_RULINGS
             ).state,
         )
-        restored.commitGlobalActionFact(
+        restored.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Attack(
                 "night-attack-after-restore",
                 com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
@@ -439,7 +441,7 @@ class RecoveryRestorePlannerTest {
             ))
         }
         commit("first", "event-first", "seat-2")
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Poison(
                 "poison-between", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
                 2, 0, 2,

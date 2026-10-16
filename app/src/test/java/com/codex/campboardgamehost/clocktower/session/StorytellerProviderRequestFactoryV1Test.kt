@@ -182,7 +182,7 @@ class StorytellerProviderRequestFactoryV1Test {
             initialState = game,
             semanticHistoryMode = com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Poison(
                 "first-poison", StorytellerPhase.FIRST_NIGHT, 1, 2, 2,
             ),

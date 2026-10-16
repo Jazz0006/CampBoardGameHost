@@ -43,7 +43,7 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
     @Test
     fun `typed mixed events retain global order and exclude future same-revision action`() {
         val session = newSession()
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Poison("poison", StorytellerPhase.FIRST_NIGHT, 1, 8, 2),
         )
         session.commitGlobalEpistemicObservation(
@@ -65,7 +65,7 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
         val priorState = session.state
         val priorRevision = revision(session)
         val before = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(priorState, priorRevision)
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Death("death", StorytellerPhase.DAWN, 1, 10, 3),
         )
         val after = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(session.state, revision(session))
@@ -145,7 +145,7 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
     fun `unfrozen historical cutoff refuses later same-revision facts and corrections`() {
         val session = newSession()
         val oldRevision = revision(session)
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Attack("after-unrecorded-decision", StorytellerPhase.NIGHT, 2, 5, 3),
         )
         val unavailable = StorytellerProviderHistoryPrefixMaterializerV1.withoutFrozenHistoricalCutoff(

@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.session.commitAcceptedTestAction
+
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.rules.NoGreaterJoyKlutzChoiceRuleV1
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
@@ -140,7 +142,7 @@ class LiveKlutzScriptReachabilityTest {
         ))
         assertEquals("night-death", learn.deathActionId)
         assertTrue(learn.functioningWhenLearned)
-        session.commitGlobalActionFact(learn)
+        session.commitAcceptedTestAction(learn)
         assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.learned(
             session.state, 1, "duplicate-learn", 2, 3,
         ))
@@ -148,7 +150,7 @@ class LiveKlutzScriptReachabilityTest {
             session.state, 1, 2, "public-choice", 2, 3,
         ))
         assertEquals("learn-public", chosen.learnedActionId)
-        session.commitGlobalActionFact(chosen)
+        session.commitAcceptedTestAction(chosen)
         assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.choice(
             session.state, 1, 3, "duplicate-choice", 2, 4,
         ))
@@ -184,7 +186,7 @@ class LiveKlutzScriptReachabilityTest {
             gameId = "ngj-legacy-unknown", gameSeed = 75L, initialState = game,
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        session.commitGlobalActionFact(ActionFactDraft.Death(
+        session.commitAcceptedTestAction(ActionFactDraft.Death(
             "legacy-no-proof", StorytellerPhase.DAWN, 2, 1, 1,
         ))
         assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.learned(
@@ -204,7 +206,7 @@ class LiveKlutzScriptReachabilityTest {
         session.commitConfirmedPlayerDeath(ActionFactDraft.Death(
             "klutz-night", StorytellerPhase.DAWN, 2, 1, 1,
         ), 0L)
-        session.commitGlobalActionFact(requireNotNull(NoGreaterJoyKlutzHistoryProducerV1.learned(
+        session.commitAcceptedTestAction(requireNotNull(NoGreaterJoyKlutzHistoryProducerV1.learned(
             session.state, 1, "learn", 2, 2,
         )))
         assertThrows(IllegalArgumentException::class.java) {

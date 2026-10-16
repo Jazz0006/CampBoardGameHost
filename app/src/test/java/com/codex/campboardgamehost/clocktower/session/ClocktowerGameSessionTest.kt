@@ -210,7 +210,7 @@ class ClocktowerGameSessionTest {
         original.advanceGameStateRevision()
         original.advanceGameStateRevision()
         original.recordPlayerInput()
-        original.commitGlobalActionFact(
+        original.commitAcceptedTestAction(
             ActionFactDraft.Poison(
                 actionId = "night-one-poison-seat-two",
                 phase = StorytellerPhase.FIRST_NIGHT,
@@ -225,7 +225,7 @@ class ClocktowerGameSessionTest {
         val restored = ClocktowerGameSession.restoreProduction(persisted)
 
         assertEquals(persisted, restored.state)
-        assertEquals(2L, restored.state.gameStateRevision)
+        assertEquals(3L, restored.state.gameStateRevision)
         assertEquals(2L, restored.state.playerInputRevision)
         assertEquals(2L, restored.state.nextTimelineGlobalSequence)
         assertEquals(
@@ -367,7 +367,7 @@ class ClocktowerGameSessionTest {
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
         session.advanceGameStateRevision()
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Poison(
                 actionId = "view-poison",
                 phase = StorytellerPhase.FIRST_NIGHT,
@@ -383,7 +383,7 @@ class ClocktowerGameSessionTest {
         assertEquals("observable-view", view.gameId)
         assertEquals(initialState.script, view.scriptId)
         assertEquals(initialState.seed, view.gameSeed)
-        assertEquals(1L, view.gameStateRevision)
+        assertEquals(2L, view.gameStateRevision)
         assertEquals(1L, view.playerInputRevision)
         assertEquals(ClocktowerSemanticHistoryMode.GLOBAL_V1, view.semanticHistoryMode)
         assertEquals(listOf("view-poison"), view.actionTimeline.reducerFacts().map { it.actionId })

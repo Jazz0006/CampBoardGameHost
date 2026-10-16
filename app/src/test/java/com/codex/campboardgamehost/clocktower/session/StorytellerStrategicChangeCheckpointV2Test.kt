@@ -136,7 +136,7 @@ class StorytellerStrategicChangeCheckpointV2Test {
         val host = session()
         var last = baseline(host)
         val evidence = mutableSetOf<StorytellerStrategicChangeCheckpointV2.ChangeKind>()
-        host.commitGlobalActionFact(ActionFactDraft.Protect(
+        host.commitAcceptedTestAction(ActionFactDraft.Protect(
             "protect-1", StorytellerPhase.FIRST_NIGHT, 1, 0, 2))
         var verdict = StorytellerStrategicChangeCheckpointV2.review(
             last, baseline(host), cursor(), open())
@@ -196,7 +196,7 @@ class StorytellerStrategicChangeCheckpointV2Test {
     @Test fun newestChronologyOnlyCanAdvanceStrategyCursorOnce() {
         val host = session()
         val before = baseline(host)
-        host.commitGlobalActionFact(ActionFactDraft.Protect(
+        host.commitAcceptedTestAction(ActionFactDraft.Protect(
             "protect-2", StorytellerPhase.FIRST_NIGHT, 1, 0, 2))
         val current = baseline(host)
         val gate = StorytellerStrategicChangeCheckpointV2.review(

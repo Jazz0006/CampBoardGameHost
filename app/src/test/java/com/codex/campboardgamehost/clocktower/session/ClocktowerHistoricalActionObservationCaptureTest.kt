@@ -30,7 +30,7 @@ class ClocktowerHistoricalActionObservationCaptureTest {
     fun `action then observation share one session-owned global timeline and survive restore`() {
         val session = newGlobalSession()
 
-        val action = session.commitGlobalActionFact(
+        val action = session.commitAcceptedTestAction(
             ActionFactDraft.Poison(
                 actionId = "night-one-poison-seat-two",
                 phase = StorytellerPhase.FIRST_NIGHT,
@@ -82,7 +82,7 @@ class ClocktowerHistoricalActionObservationCaptureTest {
                 proposition = InformationProposition.AliveAt(2, false),
             ),
         )
-        val action = session.commitGlobalActionFact(
+        val action = session.commitAcceptedTestAction(
             ActionFactDraft.Execution(
                 actionId = "day-one-execution-seat-two",
                 phase = StorytellerPhase.DAY,
@@ -108,15 +108,15 @@ class ClocktowerHistoricalActionObservationCaptureTest {
             targetSeat = 3,
         )
 
-        val first = session.commitGlobalActionFact(draft)
-        val duplicate = session.commitGlobalActionFact(draft)
+        val first = session.commitAcceptedTestAction(draft)
+        val duplicate = session.commitAcceptedTestAction(draft)
 
         assertEquals(first, duplicate)
         assertEquals(1, session.snapshot.actionTimeline.entries.size)
         assertEquals(1L, session.snapshot.nextTimelineGlobalSequence)
 
         assertThrows(IllegalArgumentException::class.java) {
-            session.commitGlobalActionFact(draft.copy(targetSeat = 4))
+            session.commitAcceptedTestAction(draft.copy(targetSeat = 4))
         }
         assertEquals(1L, session.snapshot.nextTimelineGlobalSequence)
     }
@@ -132,7 +132,7 @@ class ClocktowerHistoricalActionObservationCaptureTest {
         )
 
         assertThrows(IllegalArgumentException::class.java) {
-            legacy.commitGlobalActionFact(
+            legacy.commitAcceptedTestAction(
                 ActionFactDraft.PhaseAdvance(
                     actionId = "legacy-phase-advance",
                     phase = StorytellerPhase.DAY,

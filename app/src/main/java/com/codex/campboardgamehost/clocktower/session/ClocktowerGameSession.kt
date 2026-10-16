@@ -385,31 +385,6 @@ internal class ClocktowerGameSession private constructor(
         return prepared
     }
 
-    /** Existing fact-only writer: callers that change mechanics must use commitConfirmedGameAction. */
-    fun commitGlobalActionFact(draft: ActionFactDraft): TimelineBoundActionFact {
-        val prepared = prepareGlobalActionDraft(draft)
-        val committed = commitGlobalActionFact(
-            semanticHistoryMode = state.semanticHistoryMode,
-            actionTimeline = state.actionTimeline,
-            observationLog = state.epistemicObservationLog,
-            nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
-            draft = prepared,
-        )
-        if (
-            committed.actionTimeline === state.actionTimeline &&
-            committed.nextTimelineGlobalSequence == state.nextTimelineGlobalSequence
-        ) {
-            return committed.entry
-        }
-        updateState(
-            state.copy(
-                actionTimeline = committed.actionTimeline,
-                nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
-            ),
-        )
-        return committed.entry
-    }
-
     /**
      * One confirmed Host mechanical step: preflight the action and state, then publish exactly
      * one Session transition carrying both the mechanical projection and global action fact.
