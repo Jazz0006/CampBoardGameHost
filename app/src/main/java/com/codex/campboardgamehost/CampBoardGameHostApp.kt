@@ -3187,14 +3187,11 @@ internal fun CampBoardGameHostApp() {
                         nightStartedState = clocktowerNightStartedState,
                         nightStepIndexState = clocktowerNightStepIndexState,
                         onMovePreviousNightStep = {
+                            // Navigation only: movePrevious always has revisionIntent NONE.
+                            // Do not create a mechanical or player-input fact for a back click.
                             val transaction = NightCheckpointHostTransaction.movePrevious(
                                 checkpoint = currentClocktowerNightCheckpoint(),
                             )
-                            when (transaction.revisionIntent) {
-                                NightCheckpointRevisionIntent.NONE -> Unit
-                                NightCheckpointRevisionIntent.PLAYER_INPUT -> advanceClocktowerPlayerInputRevision()
-                                NightCheckpointRevisionIntent.GAME_STATE -> advanceClocktowerGameStateRevision()
-                            }
                             clocktowerNightStepIndexState.value = transaction.checkpoint.nightStepIndex
                         },
                         dayModeState = clocktowerDayModeState,
@@ -3203,19 +3200,13 @@ internal fun CampBoardGameHostApp() {
                         highestVoteNameState = clocktowerHighestVoteNameState,
                         highestVoteCountState = clocktowerHighestVoteCountState,
                         gameOutcome = gameOutcome,
-                        onRecordEvent = { type, title, detail, names ->
-                            // The confirmed public Nomination/Vote action already owns a revision.
-                            // Private information publication owns playerInputRevision/observation
-                            // chronology, not a second mechanical revision for its display text.
-                            // Unmigrated registration and other Host actions retain invalidation.
-                            val typedPublicActionAlreadyCommitted =
-                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1 &&
-                                    type in setOf(ClocktowerEventType.Nomination, ClocktowerEventType.Vote)
-                            val isInformationNarration = type in setOf(
-                                ClocktowerEventType.Information,
-                                ClocktowerEventType.UnreliableInformation,
-                            )
-                            if (!typedPublicActionAlreadyCommitted && !isInformationNarration) {
+                        onRecordEvent = { type, title, detail, names, confirmedRoleNarrationOnly ->
+                            // Only skip a RoleAction revision when the source explicitly
+                            // identifies the entry as a projection of an accepted Host step.
+                            // Unmigrated confirmations (e.g. Butler master) still invalidate.
+                            if (clocktowerNarrationNeedsGameRevision(
+                                    type, clocktowerSemanticHistoryMode, confirmedRoleNarrationOnly,
+                                )) {
                                 advanceClocktowerGameStateRevision()
                             }
                             addClocktowerEvent(type, title, detail, names)
@@ -3504,11 +3495,8 @@ internal fun CampBoardGameHostApp() {
                                 checkpoint = currentClocktowerNightCheckpoint(),
                                 selectedTarget = selectedTarget,
                             )
-                            when (transaction.revisionIntent) {
-                                NightCheckpointRevisionIntent.NONE -> Unit
-                                NightCheckpointRevisionIntent.PLAYER_INPUT -> advanceClocktowerPlayerInputRevision()
-                                NightCheckpointRevisionIntent.GAME_STATE -> advanceClocktowerGameStateRevision()
-                            }
+                            // Editing a draft is always PLAYER_INPUT, never a confirmed game fact.
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerDemonSuccessorTarget = transaction.checkpoint.demonSuccessorDraftTarget
                         },
                         onConfirmDemonSuccessorTarget = { _ ->
@@ -3779,7 +3767,6 @@ internal fun CampBoardGameHostApp() {
                                 listOf(claimantName),
                             )
                             clocktowerDayModeState.value = ClocktowerDayMode.Overview
-                            advanceClocktowerGameStateRevision()
                         },
                         onSlayerShot = { claimantName, targetName, recluseRegistersAsDemon ->
                             val claimantCard = cards.firstOrNull { it.name == claimantName }

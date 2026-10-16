@@ -125,7 +125,7 @@ internal fun ClocktowerJudgeScreen(
     highestVoteCountState: MutableState<Int>,
     gameOutcome: GameOutcome?,
     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
-    onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
+    onRecordEvent: (ClocktowerEventType, String, String, List<String>, Boolean) -> Unit,
     onCommitConfirmedPrivateInformationPublication: (
         EpistemicObservationDraft, ClocktowerConfirmedRegistrationPublicationV1?,
     ) -> Unit,
@@ -334,6 +334,7 @@ internal fun ClocktowerJudgeScreen(
             text("间谍登记裁定", "Spy registration"),
             "${spyCard.seatLabel(cards)} · $registrationDetail",
             listOf(spyCard.name),
+            true, // Registration description, not another Host-confirmed ruling.
         )
     }
     fun recluseCanRegister(queryingRoleEnName: String): Boolean = recluseCard
@@ -358,6 +359,7 @@ internal fun ClocktowerJudgeScreen(
                 text("${recluseCard.seatLabel(cards)} → 邪恶", "${recluseCard.seatLabel(cards)} → evil")
             },
             listOf(recluseCard.name),
+            true, // Registered ability facts have a separate Session-owned confirmation.
         )
     }
     val nightHostProjection = ClocktowerNightHostProjectionFactory.project(
@@ -558,7 +560,14 @@ internal fun ClocktowerJudgeScreen(
                 text("查验：${playerSeatLabel(cards, ravenkeeperTarget)}", "Checked: ${playerSeatLabel(cards, ravenkeeperTarget)}")
             ClocktowerNightAction.None -> step.tellPlayer ?: step.storytellerAction
         }
-        onRecordEvent(ClocktowerEventType.RoleAction, step.title, detail, names)
+        val alreadyConfirmedNightFact = step.action in setOf(
+            ClocktowerNightAction.RedHerring,
+            ClocktowerNightAction.Poison,
+            ClocktowerNightAction.MonkProtect,
+        )
+        // Not every night RoleAction has a typed owner yet (e.g. Butler master).
+        // Preserve the old revision for those until their confirmed action migrates.
+        onRecordEvent(ClocktowerEventType.RoleAction, step.title, detail, names, alreadyConfirmedNightFact)
         recordedNightSteps[recordKey] = true
     }
     var nightStarted by nightStartedState
@@ -2073,6 +2082,7 @@ internal fun ClocktowerJudgeScreen(
                         text("提名", "Nomination"),
                         "${playerSeatLabel(cards, chosenNominator)} → ${playerSeatLabel(cards, chosenNominee)}",
                         listOf(chosenNominator, chosenNominee),
+                        true,
                     )
                 }
                 if (!virginExecutes) {
@@ -2124,6 +2134,7 @@ internal fun ClocktowerJudgeScreen(
                 text("提名与投票", "Nomination and vote"),
                 "${playerSeatLabel(cards, nominatorName)} → ${playerSeatLabel(cards, nomineeName)} · ${voteRecord.voteCount}/$executionThreshold · ${text("投票人：", "Voters: ")}$voterDetail",
                 listOfNotNull(nominatorName, nomineeName) + voteRecord.voters.map { voter -> voter.playerName },
+                true,
             )
         }
         ClocktowerVoteTableScreen(
@@ -2941,6 +2952,7 @@ internal fun ClocktowerJudgeScreen(
                                     payload.title,
                                     payload.detail,
                                     payload.playerNames,
+                                    true,
                                 )
                                 com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
                                     .revealStage("HISTORY_RECORDED", phase.toStorytellerPhase().name, round)

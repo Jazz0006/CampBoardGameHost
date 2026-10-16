@@ -126,6 +126,16 @@
 - **独立只读审阅后修正**：对 `cc1ee7d1135760bb09b02e8fc47352b2d971c2fb` 的源码审阅发现，`StorytellerRegistrationRulingProducerV1.validateCommitted` 对注册主体仅匹配 `"Spy"`/`"Recluse"`，而合法 TB 快照是 `"spy"`/`"recluse"`；原先只有 `UNRESOLVED` 测试没有触发。已在注册事实验证阶段使用与 frozen role 校验一致的正规化 ID 判定，并加入 **Spy 和 Recluse 同时显式特殊登记、外部 ID、重复提交无改写** 的实义回归。只读审阅未发现确定 Kotlin 编译错误，但无 SDK 仍不能声称编译通过。
 - **边界/剩余工作**：事务是一次同步 Session 接受操作，不是磁盘持久化原子事务；未被选为结构化 role/pair 的遗留无元数据展示仍应 fail-closed；NGJ 其他非数字线索/公开信息、旧 callback 的独立 revision、完整 Recovery 双轨尚待最后 A1/A4 审计。原 `ClocktowerConfirmedRegistrationHostWriterV1` 仍服务于**已经公布后的显式更正**，不得盲删。尚未运行 Android 构建/JUnit：开发机无 SDK35，GitHub 新 HEAD CI/R2 未提供独立证据。A1 仍 PARTIAL，A2–A6 未开始；不合并 main、不执行付费模型请求。
 
+### A1 第十批：逐入口版本所有权审计、叙事去重与死分支清理（2026-10-16；仍待构建）
+
+- 起点经核对的本地/远端共同 clean HEAD `f1d2c471a444fcad2224564ee642a530b1b59a5e`；PR #315 Draft、与 `main` 冲突、无当前 HEAD CI/R2。此批专注 A1，不进入 A2/A3/A5。
+- **只对确定有权威写入的 UI 叙事去重**：`ClocktowerJudgeScreen.onRecordEvent` 的现有同一个回调增加显式 `confirmedRoleNarrationOnly` 参数，配合 `clocktowerNarrationNeedsGameRevision`。Global 情况下，提名/投票早已有 Session fact，信息早已有 observation，不应靠另记 UI 文案再次推进机械版本；Spy/Recluse UI 登记文字纯展示也不增加机械版本。夜晚 `recordNightStep` 只有在 RedHerring / Poison / MonkProtect 这几类已经有现役独立 Host Session 提交的动作才标为文字投影。**ButlerMaster 等尚未迁移的确认，继续推进原来的 revision**，防止把“无结构化 fact”的旧操作静默消掉。LEGACY_LOCAL 的 RoleAction/提名/投票仍维持旧失效语义。
+- **删除艺术家问答的重复版本**：同一次 `onConfirmArtistQuestion` 原先在明确确认答复后以及 UI 回到总览时连续调用两次 `advanceClocktowerGameStateRevision()`；第二次没有新确认事实，直接删除。第一次暂留作为唯一已确认日间决定的版本通知；其真值/展示值目前只有文字事件，尚缺准确结构化的完整问答，应在 A4 迁移，不得把无问题文本的 Yes/No 硬套 Fortune Teller 的 BooleanResult。
+- **移除不可能的 Host revision 分支**：`NightCheckpointHostTransaction.movePrevious` 在当前 reducer 永远返回 `NONE`，上一夜步骤导航只更新 index，不再无意义地提供 GAME_STATE/PLAYER_INPUT 分流；`editDemonSuccessor` 永远属于 PLAYER_INPUT，正式选择仍按原路径单独确认，删除其编辑回调中的不可能 GAME_STATE 分支。这两处不删除正确的真实输入版本推进。
+- 逐点审计 `advanceClocktowerGameStateRevision` 余项：空攻击、空保护、非法/空处决、无 typed night-close 仍属明确兜底；Slayer miss、Virgin/NoExecution 在 Legacy 模式仍需旧回调；**真实尚未收敛**的是 Mayor redirect（已有 causal journal 与单独机械 revision）、DemonSuccessor confirmed draft（先玩家选择、后确定接班）及 Artist question（未有 typed fact）等；它们不能凭删 revision 模拟已经完成 Session 事务。夜晚回退及后继者草稿中两条不可达 GAME_STATE 分支已清理。
+- `ClocktowerGameSession.commitGlobalActionFact(draft)` 实例 fact-only 生产入口无正式生产消费者，但仍被多个真实历史/恢复合同测试直接使用。删除前应把这些测试迁到具有明确 Session 接受语义的测试 fixture/新接口（并保留因果/历史合同），不能在缺 Android 构建时批量把测试改成会自动推进游戏版本的不同语义。静态 companion 函数仍是 `commitConfirmedGameAction` 等 Session 事务内部的纯转换器，**不是同一类废弃接口**。
+- 增加定向策略测试覆盖 Global“已有接受事实只记一次”、未迁移 RoleAction 仍有 revision 及 Legacy 语义；保留原 NightCheckpointHostTransaction 行为测试。开发机无 Android SDK 35，且 `:app:testFast` 不在 Mini MCP 允许列表，尚无实际 Android/JUnit 编译/测试结果。A1 仍 PARTIAL；接下来应先取得具 SDK 的独立编译证据并针对现有九/十批累计改动修复，再决定是否转入 A1 余下真实决策提交。不得提前宣称 A1 完成。
+
 ### A2 — 取消所有整包采纳
 
 - 删除两处按钮及 ClocktowerJointOpeningReviewScreen 的人工整包采纳门禁；把 Host 已验证的联合方案放入未执行推荐缓存，不提前写入 Drunk、red herring、bluffs 或将来信息（只有实际步骤确认后才写入）。
