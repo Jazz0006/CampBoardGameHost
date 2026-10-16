@@ -1,11 +1,8 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryCutoffSourceV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryEntryV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
@@ -154,9 +151,9 @@ internal object StorytellerStrategicContinuationV2 {
 
     const val INSTRUCTIONS = """
 你是同一局血染钟楼的资深 AI 说书人，现在继续先前整局、多夜的战略，而不是重新从零挑一条线索。
-首先阅读最新完整实际/展示角色、状态、玩家水平与已记录的声明，以及 Host 有来源和先后顺序的事实记录。
+首先阅读最新实际/展示角色、状态、玩家水平、已记录声明及 gameLogDelta 精简游戏记录。连续会话中它是自上次接受回复后的新增事实；当没有保留的上次会话时，它包含本局全部精简记录以避免遗漏。
 历史覆盖是局部的：没有记录的行动、声明、登记或观测必须视为未知。声明不等于事实。
-旧版未按全局时间排序的决策档案不属于本次输入；不要从缺失记录推断已发生的说书人决定，也不能把登记歧义升级成唯一真实登记。
+gameLogDelta 按夜/天标记，仅包含有意义的正式动作及实际玩家获得的信息；没有出现的内部阶段、清毒延续或重复死亡记录不是新的线索。不要从缺失记录推断未发生的行动，也不能把登记歧义升级成唯一真实登记。
 priorStrategyMemory 仅为以前的可错战略假说，优先相信已确认 Host 事实。
 从跨角色关系、善恶压力、可推理的多个世界、各夜可能的发展与玩家水平看整局；适用于所有角色。
 逐一对 priorStrategyMemory.intentions 作 KEEP / REVISE / RETIRE，并简述真实的变化理由。
@@ -178,6 +175,7 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         prior: HostOpeningSemanticAcceptanceV2,
         openDecisions: List<OpenDecision>,
         cursor: MemoryCursor = MemoryCursor.initial(prior),
+        historyFromGlobalSequence: Long = cursor.exclusiveGlobalSequence,
     ): String {
         require(prior.selection.gameId == session.gameId && cursor.gameId == session.gameId)
         val memory = cursor.memory
@@ -236,37 +234,8 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
                 .put("sourceSeat", currentDecision.sourceSeat ?: JSONObject.NULL)
                 .put("abilityRoleId", currentDecision.abilityRoleId ?: JSONObject.NULL)
                 .put("decisionContext", contextMeaning(currentDecision.currentDecisionContext)))
-            .put("causalHistory", JSONObject()
-                .put("coverage", JSONObject().also { coverage ->
-                    prefix.coverage.forEach { (dimension, state) ->
-                        coverage.put(dimension.name, JSONObject()
-                            .put("state", state.state.name).put("reasonCode", state.reasonCode))
-                    }
-                })
-                .put("entries", JSONArray().also { array ->
-                    prefix.entries.forEach { entry ->
-                        val data = JSONObject()
-                            .put("globalSequence", entry.point.globalSequence)
-                            .put("phase", entry.point.phase.name)
-                            .put("round", entry.point.round)
-                            .put("entryId", entry.entryId)
-                            .put("kind", entry.kind)
-                        when (entry) {
-                            is StorytellerProviderHistoryEntryV1.Action -> {
-                                data.put("typedFact", ClocktowerSemanticHistoryPersistence.encodeActionFact(entry.fact))
-                            }
-                            is StorytellerProviderHistoryEntryV1.Observation -> {
-                                data.put("sourceSeat", entry.sourceSeat ?: JSONObject.NULL)
-                                    .put("sourceAbility", entry.sourceAbility?.value ?: JSONObject.NULL)
-                                    .put("visibility", entry.visibility.name)
-                                    .put("recipientSeats", JSONArray(entry.recipientSeats.sorted()))
-                                    .put("reliability", entry.reliability.name)
-                                    .put("typedProposition", JSONObject(EpistemicSemanticJson.encode(entry.proposition)))
-                            }
-                        }
-                        array.put(data)
-                    }
-                }))
+            .put("gameLogDelta", StorytellerGlobalEventProjectionV1.encode(
+                prefix, historyFromGlobalSequence))
             .put("noUnobservedFutureFactMayBeAssumed", true)
             .toString()
     }
@@ -440,7 +409,11 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         require(endpoint == PersonalDirectOpenAiV1.ENDPOINT)
         val frozen = session.state
         onStage("FROZEN_WHOLE_GAME_PREFIX")
-        val input = encode(frozen, prior, openDecisions, cursor)
+        // A missing/invalidated provider anchor has no earlier conversation to remember.
+        // Resend the compact complete game log then; never silently lose accepted facts.
+        val input = encode(frozen, prior, openDecisions, cursor,
+            historyFromGlobalSequence = if (previousResponseId == null) 0L
+                else cursor.exclusiveGlobalSequence)
         val receipt = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             PersonalDirectOpenAiV1.postRetained(
                 accessToken, input, model, previousResponseId, onStage)

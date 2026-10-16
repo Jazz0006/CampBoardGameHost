@@ -151,21 +151,19 @@ class StorytellerStrategicContinuationV2Test {
         ))
         val host = JSONObject(StorytellerStrategicContinuationV2.encode(
             game.state, prior(), open))
-        val history = host.getJSONObject("causalHistory").getJSONArray("entries")
+        val history = host.getJSONArray("gameLogDelta")
         assertEquals(2, history.length())
-        assertEquals("action", history.getJSONObject(0).getString("kind"))
-        assertEquals("poison", history.getJSONObject(0)
-            .getJSONObject("typedFact").getString("kind"))
-        assertEquals(2, history.getJSONObject(0)
-            .getJSONObject("typedFact").getInt("targetSeat"))
-        assertEquals("observation", history.getJSONObject(1).getString("kind"))
-        assertEquals(1, history.getJSONObject(1)
-            .getJSONObject("typedProposition").getInt("value"))
-        assertEquals("PRIVATE", history.getJSONObject(1).getString("visibility"))
+        assertEquals("poison", history.getJSONObject(0).getString("type"))
+        assertEquals(2, history.getJSONObject(0).getInt("target"))
+        assertEquals("N1", history.getJSONObject(0).getString("period"))
+        assertEquals("information", history.getJSONObject(1).getString("type"))
+        assertEquals(1, history.getJSONObject(1).getInt("value"))
+        assertEquals("Chef", history.getJSONObject(1).getString("role"))
+        assertFalse(host.has("causalHistory"))
+        assertFalse(host.toString().contains("typedFact"))
+        assertFalse(host.toString().contains("globalSequence\"") && host.toString().contains("entryId"))
         assertEquals("Mayor", host.getJSONObject("state").getJSONArray("seats")
             .getJSONObject(1).getJSONArray("claimedRoleIds").getString(0))
-        assertEquals("UNKNOWN", host.getJSONObject("causalHistory")
-            .getJSONObject("coverage").getJSONObject("PRIOR_DECISIONS").getString("state"))
         assertEquals("Empath", host.getJSONObject("currentDecision").getString("abilityRoleId"))
         assertEquals("LIVING_EVIL_NEIGHBOURS",
             host.getJSONObject("currentDecision").getJSONObject("decisionContext")
@@ -185,6 +183,49 @@ class StorytellerStrategicContinuationV2Test {
         assertEquals(mapOf("current:seat-2" to "empath-one"), accepted.remainingChoices)
         assertEquals(memory, accepted.updatedMemory)
         assertEquals(game.state.nextTimelineGlobalSequence, accepted.exclusiveGlobalSequence)
+    }
+
+    @Test fun sendsOnlyDeltaAndOmitsTechnicalCarryPhaseAndDuplicateDeath() {
+        val game = session()
+        game.commitGlobalActionFact(ActionFactDraft.Poison(
+            "confirmed-night1", StorytellerPhase.NIGHT, 1, 0, 5))
+        val priorCutoff = game.state.nextTimelineGlobalSequence
+        val cursor = StorytellerStrategicContinuationV2.MemoryCursor(
+            game.state.gameId, game.state.gameStateRevision,
+            game.state.playerInputRevision, priorCutoff, 1, memory)
+
+        // These facts are valid Host mechanics but have no new AI decision content.
+        game.commitGlobalActionFact(ActionFactDraft.Poison(
+            "dawn-strategic-continuation-game-1-poison-seat-5-to-none",
+            StorytellerPhase.DAWN, 1, 1, null))
+        game.commitGlobalActionFact(ActionFactDraft.PhaseAdvance(
+            "phase-day1", StorytellerPhase.DAWN, 1, 2, StorytellerPhase.DAY, 1))
+        game.commitGlobalActionFact(ActionFactDraft.Nomination(
+            "nominate", StorytellerPhase.DAY, 1, 3, 3, 7, false))
+        game.commitGlobalActionFact(ActionFactDraft.Execution(
+            "execute", StorytellerPhase.DAY, 1, 4, 7))
+        game.commitGlobalActionFact(ActionFactDraft.Death(
+            "death-from-execution", StorytellerPhase.DAY, 1, 5, 7))
+        game.commitGlobalEpistemicObservation(EpistemicObservationDraft(
+            recordId = "public-death", phase = StorytellerPhase.DAY, round = 1, sequence = 6,
+            sourceSeat = null, sourceAbility = null,
+            visibility = ObservationVisibility.PUBLIC, recipientSeats = (1..8).toSet(),
+            reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+            proposition = InformationProposition.AliveAt(7, false)))
+
+        val request = JSONObject(StorytellerStrategicContinuationV2.encode(
+            game.state, prior(), open, cursor))
+        val delta = request.getJSONArray("gameLogDelta")
+        assertEquals(2, delta.length())
+        assertEquals("nomination", delta.getJSONObject(0).getString("type"))
+        assertEquals("execution", delta.getJSONObject(1).getString("type"))
+        assertEquals("D1", delta.getJSONObject(1).getString("period"))
+        assertFalse(request.toString().contains("confirmed-night1"))
+        assertFalse(request.toString().contains("dawn-strategic"))
+        assertFalse(request.toString().contains("public-death"))
+        assertFalse(request.toString().contains("death-from-execution"))
+        assertFalse(request.toString().contains("entryId"))
+        assertFalse(request.toString().contains("localSequence"))
     }
 
     @Test fun latestAcceptedMemoryContinuesAcrossMultipleActualRevisions() {
