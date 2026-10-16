@@ -144,6 +144,13 @@
 - **Required mechanical internals still live, not game log:** ActionFact.PhaseAdvance is consumed by ClocktowerGameSession.commitConfirmedPhaseAdvance, RecoveryRestorePlanner and historical-rule projection; poison carry/expiry facts are read by DuskPoisonExpiryRecoveryAuthority and NightDawnPoisonRecoveryAuthority; KlutzLearnedDeath by NoGreaterJoyKlutzHistoryProducerV1, choice validation and recovery. Do not physically delete until their rule/recovery consumers are migrated into authoritative Session state. A3/A5 must re-audit then retire.
 - **Remaining duplication:** clocktowerEvents is still a separate UI narration log consumed by completed-game Archive; A4 must replace it with the same concise structured record used for AI, then delete obsolete writable narration/event paths. Public identity-claim entry UI is also not yet implemented. PR #315 stays Draft; no paid API calls.
 
+## 2026-10-16 follow-up cleanup — remove duplicated SDE historical replay from recovery
+
+- Reviewed every production consumer of the optional `clocktowerSdeHistoricalReplayInput` snapshot blob. It contained a second serialized copy of confirmed setup, roles, action timeline, observation log and cursor on every game save. On restore, its only use was repopulating `committedClocktowerSetup`, whose only later use was regenerating this same blob; AI continuation, real rules and actual saved player information do not depend on it.
+- Deleted snapshot writer/reader/decoder/validator, the Compose-only `committedClocktowerSetup` cache and SDE replay capture log constant, and retired the now-orphaned input/factory/JSON codec along with tests dedicated to that removed export. Retained existing authoritative Session history, Recovery cards/mechanics/observations, ruleset resolution and game setup rotation history.
+- This does **not** implement a complete unified AI + finished-game archive log. Current `clocktowerEvents` narration/Archive remains a separate writable representation; it requires consumer migration before deletion. `PhaseAdvance`, poison carry/expiry and Klutz trigger facts still have rule/recovery readers. Do not conflate deleted redundant recovery export with removal of these necessary transitions.
+- Previous verified source `a952f37921cee7038706d4b020f456f24ca0c36c` passed CI #4223 and R2 #3833; new source requires its own exact-head CI validation.
+
 ## Historical first implementation brief: A1
 
 1. Read AGENTS.md, [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md), [ARCH-CLEANUP-1 evidence](ARCH_CLEANUP_1_ARCHITECTURE_CONVERGENCE_2026-10-15.md), this handoff, roadmap and testing policy. Verify live SHA / worktree / #315 / main / checks.

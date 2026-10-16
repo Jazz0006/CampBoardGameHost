@@ -181,8 +181,10 @@
 
 ### A5 — 恢复瘦身和冗余代码删除
 
+- **2026-10-16 已识别并实施的删除：** 旧 `clocktowerSdeHistoricalReplayInput` 曾在每次 Recovery 写盘时把既有 Session 动作、观察、初始角色与游标重新打包；恢复后只用于重建下一次再导出该包的 `committedClocktowerSetup` 缓存，没有当前规则、AI 或真实游戏复盘读取用途。已删除整条生成/写入/解码/比对/缓存链及两份专用实现文件和对应冗余测试，不再存第二份历史.
+
 - 基于当前 Session 的状态、结构化历史、最小安全进度，简化 Recovery 数据布局和恢复验证。中断时放弃未确认输入，落到当前/前一个安全主持步骤。
-- 审计 SdeHistoricalReplayInput、DynamicActionReducer、RecoveryMechanics 与重复卡片投影等完整引用关系：不被规则/AI/必要 Archive 消费、且仅服务已经放弃的任意历史重建或严格 UI 重放的，连同孤儿测试和配置删除；仍具有真实信息判定/规则价值的纯函数保留。
+- SdeHistoricalReplayInput 重复恢复出口已完成消费者审计并删除；继续审计 DynamicActionReducer、RecoveryMechanics 与重复卡片投影等完整引用关系：不被规则/AI/必要 Archive 消费、且仅服务已放弃的任意历史重建或严格 UI 重放的，连同孤儿测试和配置删除；仍具有真实信息判定/规则价值的纯函数保留。
 - 不无限扩大恢复范围，不追求恢复暂态对话推理、UI 页索引或动画；失去模型会话时以正式事实 + 简短可复核战略重建。
 - 验收：强制终止→重启→正确魔典/已公布信息→从安全步骤继续；不出现双事实来源。
 

@@ -104,14 +104,6 @@ internal object RecoverySnapshotStrictDecoder {
                 gameSeed = json.requiredLong("clocktowerGameSeed"),
             ),
             troubleBrewingSetupRotationRecord = setupRotationRecord,
-            sdeHistoricalReplayInputJson =
-                if (!json.has("clocktowerSdeHistoricalReplayInput") ||
-                    json.isNull("clocktowerSdeHistoricalReplayInput")
-                ) {
-                    null
-                } else {
-                    json.requiredNonBlankString("clocktowerSdeHistoricalReplayInput")
-                },
             position = ClocktowerRecoveryPosition(
                 phase = phase,
                 nightStarted = json.requiredBoolean("clocktowerNightStarted"),

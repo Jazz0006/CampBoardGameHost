@@ -286,7 +286,6 @@ class RecoverySnapshotJsonCodecTest {
                     gameId = "game-1",
                     gameSeed = 99L,
                 ),
-                sdeHistoricalReplayInputJson = "{\"schemaVersion\":1,\"gameId\":\"game-1\"}",
                 position = ClocktowerRecoveryPosition(
                     phase = ClocktowerPhase.Night,
                     nightStarted = true,
@@ -329,10 +328,7 @@ class RecoverySnapshotJsonCodecTest {
         val json = RecoverySnapshotJsonCodec.encode(snapshot)
 
         assertEquals("Alice", json.getString("clocktowerPendingNightDeath"))
-        assertEquals(
-            "{\"schemaVersion\":1,\"gameId\":\"game-1\"}",
-            json.getString("clocktowerSdeHistoricalReplayInput"),
-        )
+        assertFalse(json.has("clocktowerSdeHistoricalReplayInput"))
         assertEquals("Bob", json.getString("clocktowerConfirmedPoisonTarget"))
         assertEquals("Carol", json.getString("clocktowerConfirmedMonkProtectedTarget"))
         assertEquals("Demon 2", json.getString("clocktowerPendingNightNewDemonIdentityName"))

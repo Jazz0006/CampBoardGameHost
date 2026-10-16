@@ -55,7 +55,6 @@ import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderPriorDecisionV1
 import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
@@ -164,8 +163,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputFactory
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputJsonCodec
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
@@ -236,7 +233,6 @@ private const val PREFS_NAME = "camp_board_game_host"
 private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
 internal const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
 internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdate"
-internal const val SDE_HISTORICAL_REPLAY_CAPTURE_LOG_TAG = "SdeHistoricalReplayCapture"
 internal const val MIN_PLAYERS = 3
 internal const val MIN_CLOCKTOWER_PLAYERS = 5
 internal const val MAX_PLAYERS = 15
@@ -525,7 +521,6 @@ internal fun CampBoardGameHostApp() {
     }
     val clocktowerEpistemicObservations =
         clocktowerSessionView?.epistemicObservationLog?.records.orEmpty()
-    var committedClocktowerSetup by remember { mutableStateOf<CommittedClocktowerSetup?>(null) }
     var committedTroubleBrewingSetupRotationRecord by remember {
         mutableStateOf<TroubleBrewingSetupRotationRecord?>(null)
     }
@@ -1215,32 +1210,6 @@ internal fun CampBoardGameHostApp() {
         val recoveryDealIndex = if (entryPoint == RecoveryEntryPoint.Stable) 0 else currentDealIndex
         val commonCards = cards.toList()
         val commonRecords = records.toList()
-        val sdeHistoricalReplayInputJson = if (currentGameKind == GameKind.Clocktower) {
-            val setup = committedClocktowerSetup
-            val session = clocktowerGameSession
-            val rulesetRef = clocktowerRulesetRef
-            if (setup != null && session != null && rulesetRef != null &&
-                session.view.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
-            ) {
-                runCatching {
-                    SdeHistoricalReplayInputJsonCodec.encode(
-                        SdeHistoricalReplayInputFactory.captureFresh(
-                            committedSetup = setup,
-                            currentSnapshot = session.toGameSnapshot(rulesetRef),
-                        ).input,
-                    )
-                }.onFailure { failure ->
-                    Log.w(
-                        SDE_HISTORICAL_REPLAY_CAPTURE_LOG_TAG,
-                        "recovery_replay_capture_failed:${failure::class.java.simpleName}",
-                    )
-                }.getOrNull()
-            } else {
-                null
-            }
-        } else {
-            null
-        }
         val recoveryGame: RecoveryGame = when (currentGameKind) {
             GameKind.Undercover -> UndercoverRecovery(
                 entryPoint = entryPoint,
@@ -1263,7 +1232,6 @@ internal fun CampBoardGameHostApp() {
                     gameSeed = clocktowerGameSeed,
                 ),
                 troubleBrewingSetupRotationRecord = committedTroubleBrewingSetupRotationRecord,
-                sdeHistoricalReplayInputJson = sdeHistoricalReplayInputJson,
                 position = ClocktowerRecoveryPosition(
                     phase = clocktowerPhase,
                     nightStarted = clocktowerNightStartedState.value,
@@ -1358,7 +1326,6 @@ internal fun CampBoardGameHostApp() {
         selectedClocktowerScript = null
         clocktowerGameSession = null
         publishClocktowerSessionView()
-        committedClocktowerSetup = null
         committedTroubleBrewingSetupRotationRecord = null
         clocktowerRulesetRef = null
         clocktowerPhase = ClocktowerPhase.FirstNight
@@ -1439,8 +1406,6 @@ internal fun CampBoardGameHostApp() {
                 )
                 publishClocktowerSessionView()
                 clocktowerRulesetRef = runtime?.rulesetRef
-                committedClocktowerSetup =
-                    runtime?.sdeReplayMaterialization?.input?.toCommittedSetup()
                 clocktowerPhase = safeClocktower?.phase ?: game.position.phase
                 clocktowerNightStartedState.value = game.position.nightStarted
                 clocktowerNightStepIndexState.value =
@@ -1576,7 +1541,6 @@ internal fun CampBoardGameHostApp() {
         invalidateA4SessionBoundary()
         clearSavedGameState()
         pendingTroubleBrewingDrunkSelection = null
-        committedClocktowerSetup = null
         committedTroubleBrewingSetupRotationRecord = null
         currentGameKind = nextGameKind
         canonicalConversationResponseId = null
@@ -2159,7 +2123,6 @@ internal fun CampBoardGameHostApp() {
                 committedSetup = committedSetup,
                 characterRegistry = characterRegistry,
             )
-        committedClocktowerSetup = committedSetup.committedSetup
         persistActiveGameStateIfNeeded()
         currentTroubleBrewingFirstNightPairDecisionContext()?.let { request ->
             troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
@@ -2575,7 +2538,6 @@ internal fun CampBoardGameHostApp() {
         cards.clear()
         cards.addAll(committedCards)
         resetDealState(GameKind.Clocktower, script, preparedSeed)
-        committedClocktowerSetup = preparedSetup
         persistActiveGameStateIfNeeded()
     }
 

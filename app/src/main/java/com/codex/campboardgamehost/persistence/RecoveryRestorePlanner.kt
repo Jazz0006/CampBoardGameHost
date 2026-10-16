@@ -14,9 +14,6 @@ import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInput
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputJsonCodec
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayMaterialization
 import org.json.JSONObject
 
 internal enum class RecoveryRejectionReason {
@@ -51,7 +48,6 @@ internal sealed interface RecoverySafeReentry {
 internal data class ValidatedClocktowerRecoveryRuntime(
     val rulesetBasis: ClocktowerRulesetPersistenceBasis,
     val rulesetRef: RulesetRef?,
-    val sdeReplayMaterialization: SdeHistoricalReplayMaterialization? = null,
 )
 
 internal data class ValidatedRecoveryPlan(
@@ -340,58 +336,10 @@ internal object RecoveryRestorePlanner {
                 "Resolved Clocktower ruleset belongs to a different script."
             }
         }
-        val sdeReplayMaterialization = game.sdeHistoricalReplayInputJson?.let { raw ->
-            val materialization = SdeHistoricalReplayInputJsonCodec.decodeStrict(raw)
-            validateSdeReplayExport(
-                game = game,
-                input = materialization.input,
-                resolvedRuleset = requireNotNull(resolvedRuleset) {
-                    "Durable SDE replay requires a resolved current ruleset."
-                },
-            )
-            materialization
-        }
-
         return ValidatedClocktowerRecoveryRuntime(
             rulesetBasis = basis,
             rulesetRef = resolvedRuleset,
-            sdeReplayMaterialization = sdeReplayMaterialization,
         )
-    }
-
-    private fun validateSdeReplayExport(
-        game: ClocktowerRecovery,
-        input: SdeHistoricalReplayInput,
-        resolvedRuleset: RulesetRef,
-    ) {
-        require(input.gameId == game.identity.gameId) {
-            "Durable SDE replay belongs to a different game."
-        }
-        require(input.gameStateRevision == game.history.gameStateRevision &&
-            input.playerInputRevision == game.history.playerInputRevision
-        ) {
-            "Durable SDE replay revisions disagree with recovery."
-        }
-        require(input.rulesetRef == resolvedRuleset) {
-            "Durable SDE replay ruleset disagrees with current recovery rules."
-        }
-        require(input.committedSetup.script == game.identity.script.toRecommendationScriptId() &&
-            input.committedSetup.setupSeed == game.identity.gameSeed
-        ) {
-            "Durable SDE replay setup identity disagrees with recovery."
-        }
-        require(input.committedSetup.playerCount == game.cards.size) {
-            "Durable SDE replay setup player count disagrees with recovery."
-        }
-        require(input.playerNamesBySeat == game.cards.map(PlayerCard::name)) {
-            "Durable SDE replay player identities disagree with recovered cards."
-        }
-        require(input.actionTimeline == game.history.actionTimeline &&
-            input.observationLog == EpistemicObservationLog(game.history.epistemicObservations) &&
-            input.nextTimelineGlobalSequence == game.history.nextTimelineGlobalSequence
-        ) {
-            "Durable SDE replay semantic history disagrees with recovery."
-        }
     }
 
     private fun validateSemanticHistory(game: ClocktowerRecovery) {
