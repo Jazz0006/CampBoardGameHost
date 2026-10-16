@@ -20,7 +20,21 @@ internal object BotcAiWireTrace {
     private val nextId = AtomicInteger(0)
 
     private fun enabled(): Boolean =
-        BuildConfig.DEBUG && Log.isLoggable(TAG, Log.VERBOSE)
+        BuildConfig.DEBUG && try {
+            Log.isLoggable(TAG, Log.VERBOSE)
+        } catch (_: Exception) {
+            false
+        }
+
+    // Diagnostic logging is best-effort. It must never abort a model response or Host step.
+    private inline fun bestEffort(block: () -> Unit) {
+        if (!enabled()) return
+        try {
+            block()
+        } catch (_: Exception) {
+            // A broken diagnostic must not alter normal gameplay.
+        }
+    }
 
     fun begin(hostPayload: String, modelRequest: String): Int {
         if (!enabled()) return 0
@@ -32,25 +46,29 @@ internal object BotcAiWireTrace {
     }
 
     fun payload(id: Int, stage: String, body: String) {
-        if (id <= 0 || !enabled()) return
-        require(stage in setOf(
-            "HOST_INPUT", "MODEL_REQUEST", "RAW_PROVIDER_RESPONSE",
-            "PARSED_MODEL_OUTPUT", "HOST_VALIDATION",
-        ))
-        val safe = BotcAiWireTraceCodec.redactSecrets(body)
-        val parts = BotcAiWireTraceCodec.split(safe)
-        parts.forEachIndexed { index, chunk ->
-            Log.v(TAG, "call=" + id + " stage=" + stage +
-                " part=" + (index + 1) + "/" + parts.size + " data=" + chunk)
+        if (id <= 0) return
+        bestEffort {
+            if (stage !in setOf(
+                    "HOST_INPUT", "MODEL_REQUEST", "RAW_PROVIDER_RESPONSE",
+                    "PARSED_MODEL_OUTPUT", "HOST_VALIDATION",
+                )) return@bestEffort
+            val safe = BotcAiWireTraceCodec.redactSecrets(body)
+            val parts = BotcAiWireTraceCodec.split(safe)
+            parts.forEachIndexed { index, chunk ->
+                Log.v(TAG, "call=" + id + " stage=" + stage +
+                    " part=" + (index + 1) + "/" + parts.size + " data=" + chunk)
+            }
         }
     }
 
     fun event(id: Int, stage: String, detail: String) {
-        if (id <= 0 || !enabled()) return
-        require(stage in setOf("SEND", "HTTP", "DONE", "FAILURE"))
-        // Do not permit arbitrary upstream exception strings in diagnostics.
-        require(detail.matches(Regex("[a-zA-Z0-9_.:/= -]{1,100}")))
-        Log.v(TAG, "call=" + id + " stage=" + stage + " detail=" + detail)
+        if (id <= 0) return
+        bestEffort {
+            if (stage !in setOf("SEND", "HTTP", "USAGE", "DONE", "FAILURE")) return@bestEffort
+            // Do not permit arbitrary upstream exception strings in diagnostics.
+            if (!detail.matches(Regex("[a-zA-Z0-9_.:/= -]{1,100}"))) return@bestEffort
+            Log.v(TAG, "call=" + id + " stage=" + stage + " detail=" + detail)
+        }
     }
 
     /** A game-level Host verdict can be correlated by the adjacent call event. */
@@ -60,14 +78,15 @@ internal object BotcAiWireTrace {
         decisionCount: Int,
         rejection: String? = null,
     ) {
-        if (!enabled()) return
-        require(kind in setOf("JOINT_OPENING", "STRATEGIC_CONTINUATION"))
-        val reason = rejection?.let {
-            " rejection=" + BotcAiWireTraceCodec.redactSecrets(it).take(600)
-                .replace("\n", " ").replace("\r", " ")
-        }.orEmpty()
-        Log.v(TAG, "stage=HOST_VALIDATION kind=" + kind + " accepted=" +
-            valid + " decisions=" + decisionCount.coerceIn(0, 256) + reason)
+        bestEffort {
+            if (kind !in setOf("JOINT_OPENING", "STRATEGIC_CONTINUATION")) return@bestEffort
+            val reason = rejection?.let {
+                " rejection=" + BotcAiWireTraceCodec.redactSecrets(it).take(600)
+                    .replace("\n", " ").replace("\r", " ")
+            }.orEmpty()
+            Log.v(TAG, "stage=HOST_VALIDATION kind=" + kind + " accepted=" +
+                valid + " decisions=" + decisionCount.coerceIn(0, 256) + reason)
+        }
     }
 
     /** Safe 3E3 Host gate summary; never contains player-visible clues or secret role data. */
@@ -78,40 +97,48 @@ internal object BotcAiWireTrace {
         phase: String,
         round: Int,
     ) {
-        if (!enabled()) return
-        require(event in setOf(
-            "REQUEST", "MODEL_ACCEPTED", "HOST_REJECTED", "AUTO_PAUSED",
-            "PRIVATE_ADOPTED", "MEMORY_ADVANCED", "HOST_PUBLISHED",
-            "MODEL_UNAVAILABLE", "SKIPPED", "STALE"))
-        require(phase in setOf("FIRST_NIGHT", "DAWN", "DAY", "NIGHT"))
-        Log.v(TAG, "stage=RESIDUAL event=$event decisions=" +
-            decisionCount.coerceIn(0, 256) + " memoryVersion=" +
-            memoryVersion.coerceAtLeast(0) + " phase=$phase round=" +
-            round.coerceAtLeast(1))
+        bestEffort {
+            if (event !in setOf(
+                    "REQUEST", "MODEL_ACCEPTED", "HOST_REJECTED", "AUTO_PAUSED",
+                    "PRIVATE_ADOPTED", "MEMORY_ADVANCED", "HOST_PUBLISHED",
+                    "MODEL_UNAVAILABLE", "SKIPPED", "STALE")) return@bestEffort
+            if (phase !in setOf("FIRST_NIGHT", "DAWN", "DAY", "NIGHT")) return@bestEffort
+            Log.v(TAG, "stage=RESIDUAL event=$event decisions=" +
+                decisionCount.coerceIn(0, 256) + " memoryVersion=" +
+                memoryVersion.coerceAtLeast(0) + " phase=$phase round=" +
+                round.coerceAtLeast(1))
+        }
     }
 
     /** Host-side reveal lifecycle. No player names or observed clue text. */
     fun revealStage(event: String, phase: String, round: Int) {
-        if (!enabled()) return
-        require(event in setOf("CLICKED", "PREFLIGHT_OK", "FIRST_NIGHT_RECORDED",
-            "OBSERVATION_RECORDED", "HISTORY_RECORDED", "REVEAL_OPENED", "BLOCKED"))
-        Log.v(TAG, "stage=PLAYER_REVEAL event=$event phase=" +
-            phase.takeIf { it in setOf("FIRST_NIGHT", "DAWN", "DAY", "NIGHT") }
-                .orEmpty() + " round=" + round.coerceAtLeast(1))
+        bestEffort {
+            if (event !in setOf("CLICKED", "PREFLIGHT_OK", "FIRST_NIGHT_RECORDED",
+                    "OBSERVATION_RECORDED", "HISTORY_RECORDED", "REVEAL_OPENED", "BLOCKED"))
+                return@bestEffort
+            Log.v(TAG, "stage=PLAYER_REVEAL event=$event phase=" +
+                phase.takeIf { it in setOf("FIRST_NIGHT", "DAWN", "DAY", "NIGHT") }
+                    .orEmpty() + " round=" + round.coerceAtLeast(1))
+        }
     }
 
     /** Debug-only error location; player-facing text never includes the exception. */
     fun revealFailure(error: Exception) {
         if (BuildConfig.DEBUG) {
-            Log.e(TAG, "stage=PLAYER_REVEAL event=FAILED; check Host game history before retry", error)
+            try {
+                Log.e(TAG, "stage=PLAYER_REVEAL event=FAILED; check Host game history before retry", error)
+            } catch (_: Exception) {
+                // Reporting the failure must not cause another failure.
+            }
         }
     }
 
     fun hostAdoption(drunkSeat: Int?, recommendedCount: Int) {
-        if (!enabled()) return
-        Log.v(TAG, "stage=HOST_ADOPTED kind=JOINT_OPENING drunkSeat=" +
-            (drunkSeat ?: "none") + " recommendationCount=" +
-            recommendedCount.coerceIn(0, 256))
+        bestEffort {
+            Log.v(TAG, "stage=HOST_ADOPTED kind=JOINT_OPENING drunkSeat=" +
+                (drunkSeat ?: "none") + " recommendationCount=" +
+                recommendedCount.coerceIn(0, 256))
+        }
     }
 }
 
