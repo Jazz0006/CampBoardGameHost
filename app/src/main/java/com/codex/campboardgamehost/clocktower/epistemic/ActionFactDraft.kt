@@ -227,7 +227,6 @@ sealed interface ActionFactDraft {
             requireIdentity(actionId, round, sequence)
             requireSeat(mayorSeat)
             requireSeat(targetSeat)
-            require(mayorSeat != targetSeat)
         }
     }
 

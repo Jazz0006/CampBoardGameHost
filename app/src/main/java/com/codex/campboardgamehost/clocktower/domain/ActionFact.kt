@@ -215,7 +215,6 @@ object DynamicActionReducer {
                 is ActionFact.MayorRedirectChoice -> {
                     requireSeat(fact.mayorSeat)
                     requireSeat(fact.targetSeat)
-                    require(fact.mayorSeat != fact.targetSeat)
                 }
                 is ActionFact.NoExecution -> Unit
                 is ActionFact.SlayerShot -> {

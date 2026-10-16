@@ -233,7 +233,7 @@ internal object ClocktowerSemanticHistoryPersistence {
             "mayor-redirect" -> ActionFact.MayorRedirectChoice(
                 actionId, sequence, positiveSeat(json, "mayorSeat"),
                 positiveSeat(json, "targetSeat"),
-            ).also { require(it.mayorSeat != it.targetSeat) }
+            )
             "demon-bluff-choice" -> ActionFact.DemonBluffChoice(
                 actionId, sequence, json.getJSONArray("roleIds").let { array ->
                     (0 until array.length()).map { index -> RoleId(array.getString(index)) }

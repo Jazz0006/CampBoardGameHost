@@ -116,7 +116,7 @@ class StorytellerCausalDecisionJournalV1Test {
         val game = session()
         fun mayorRequest(id: String): StorytellerProviderRequestV1 =
             request(id, game, game.causalDecisionJournal).copy(
-                legalCandidates = listOf(2, 4).map { seat ->
+                legalCandidates = listOf(1, 2, 4).map { seat ->
                     StorytellerProviderCandidateV1(
                         MayorRedirectDecisionBoundary.candidateIdForSeat(seat),
                         StorytellerProviderCandidatePayloadV1.SeatTarget(seat),
@@ -176,6 +176,25 @@ class StorytellerCausalDecisionJournalV1Test {
         assertEquals(1, game.causalDecisionJournal.archive().records.count {
             it is StorytellerCausalJournalRecordV1.Corrected
         })
+
+        // The legal domain also permits letting the Mayor die: target == Mayor seat.
+        game.commitConfirmedMayorRedirect(
+            choice.copy(actionId = "mayor-night-two-no-redirect", targetSeat = 1, sequence = 3),
+            mayorRequest("night:2:mayor-redirect:no-redirect"),
+            MayorRedirectDecisionBoundary.candidateIdForSeat(1), 2L,
+        )
+        assertEquals(3L, game.state.gameStateRevision)
+        assertEquals(3L, game.state.nextTimelineGlobalSequence)
+        assertEquals(MayorRedirectDecisionBoundary.candidateIdForSeat(1),
+            game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+        val historyJson = com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
+            .encodeActionTimeline(game.state.actionTimeline)
+        val restoredHistory = com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
+            .decodeActionTimeline(org.json.JSONObject().put(
+                com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
+                historyJson,
+            ))
+        assertEquals(game.state.actionTimeline, restoredHistory)
     }
 
     @Test

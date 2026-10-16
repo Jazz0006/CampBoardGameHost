@@ -476,7 +476,6 @@ internal object RecoveryRestorePlanner {
                 is ActionFact.MayorRedirectChoice -> {
                     requireKnownSeat(fact.mayorSeat, playerCount)
                     requireKnownSeat(fact.targetSeat, playerCount)
-                    require(fact.mayorSeat != fact.targetSeat)
                     require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT)
                 }
                 is ActionFact.DemonBluffChoice -> {
