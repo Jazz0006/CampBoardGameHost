@@ -156,8 +156,15 @@
 - The Empath multi-night misinformation UI used `previousClocktowerUnreliableNumber(events, localizedTitle, actorName)` to scan translated `ClocktowerEvent.detail` strings with a regex. This depended on the second writable narration log and could confuse numbers, languages and actors despite Session already holding the actual numeric proposition.
 - Migrate that one active production reader to confirmed `ClocktowerSessionView.epistemicObservationLog.records` supplied by the app, matching source seat, Empath ability, numeric metric and KNOWN_MALFUNCTIONING; delete the old title/detail regex reader and replace its stale tests with typed observation contract checks. No new durable event store or manual-vs-AI marker.
 - The compact AI event projection must omit `MayorRedirectChoice` when target is the Mayor (no bounce). A no-bounce Host ruling remains internally accepted but no physical redirection happened. Keep an actual redirect event only when another seat is hit.
-- This is a **reader migration and filtering slice**, not wholesale retirement of `clocktowerEvents`. Remaining consumers include live narration/Spy delta, in-game review, archive, recovery and other numeric reliability history. Full archive migration and writer retirement still require separate source-backed changes.
+- This is a **reader migration and filtering slice**, not wholesale retirement of `clocktowerEvents`. Remaining consumers include live narration, step-deduplication, dawn summary, in-game review, archive and recovery. Full archive migration and writer retirement still require separate source-backed changes.
 - Previous source `de516e8f9941f982e1de40ee496de28025bef8a3` was verified by GitHub CI #4224 and R2 #3834; the changed source requires its own CI proof.
+
+## 2026-10-16 Spy over-disclosure and redundant history removal
+
+- Official Spy ability is to **see the Grimoire each night**, not to receive an extra annotated list of other players' private actions and observations. The old `spyDelta` scanned the separately maintained `clocktowerEvents` list using localized title exclusions and displayed it *alongside* the grimoire; this was not a legitimate requirement for game-state history or Spy information.
+- Removed the entire `spyDelta` assembly and both first/other-night presentation concatenations. Retain the already existing Grimoire display and `GrimoireState` confirmed observation. No extra private event history needs to be rendered to Spy. This eliminates one direct production reader of the redundant string event stream without introducing replacement code.
+- The independent `clocktowerEvents` stream still supplies Dawn Host review, in-game/archived review, the recovery snapshot, and night-step display deduplication. Do **not** physically retire it while those readers remain, and do not consider the current compact AI projection complete until real Butler-master and other confirmed-but-untyped actions have a single durable fact owner.
+- Most recent green baseline prior to this slice: `15d20e5f9e5485abe6511febb5bc057c5cb65651` (CI #4225, R2 #3835).
 
 ## Historical first implementation brief: A1
 
@@ -174,7 +181,7 @@
 - Opening one-click screen: ClocktowerJointOpeningReviewScreen.kt (button “一键采纳完整首夜方案”), CampBoardGameHostApp.adoptJointOpeningAfterReveal. Later one-click: ClocktowerHostScreen.kt (“一键采纳剩余方案”), CampBoardGameHostApp.adoptWholeResidualProposal, residualProposed*/residualAdopted*.
 - Actual info gap: ClocktowerHostScreen.recordReliablePrivateInformation exits for unreliable step without displayProposition; this can drop actual fabricated Drunk/poison information.
 - Session contains accepted red herring/bluff fields + sequenced choice facts, causalDecisionJournal now Session-owned; Virgin/Slayer derived from canonical action facts. These are genuine prior A work: **retain** while deleting redundant UI/recovery writers.
-- RecoverySnapshot still carries cards and overlapping mechanical fields and optional SdeHistoricalReplayInput JSON. Audit all consumers before deleting; preserve safe restoration without depending on arbitrary historical replay.
+- RecoverySnapshot still carries cards and overlapping mechanical fields, but the duplicate SdeHistoricalReplayInput JSON export was removed in `de516e8f`. Audit remaining consumers before deleting redundant fields; preserve safe restoration without depending on arbitrary historical replay.
 - Note: Undercover Screen.Game elimination path is not a Clocktower redundant writer.
 
 ## Acceptance/governance

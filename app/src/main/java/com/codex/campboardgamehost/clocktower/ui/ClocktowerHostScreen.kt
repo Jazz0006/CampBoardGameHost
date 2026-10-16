@@ -1031,33 +1031,6 @@ internal fun ClocktowerJudgeScreen(
     // Evil-team introductions always use true identities. Registration choices
     // for the Spy/Recluse only affect abilities that explicitly allow them.
     val sagePair = demonCard?.let { storytellerPairHint(it, cards) }
-    val spyDelta: String? = run {
-        if (spyCard == null || phase == ClocktowerPhase.FirstNight) return@run null
-        val prevRound = round - 1
-        val excludedTitles = setOf(
-            text("间谍登记裁定", "Spy registration"),
-            text("今日主人", "Master"),
-            text("红鲱鱼", "Red herring"),
-            text("魔典", "Grimoire"),
-            text("爪牙信息", "Minion info"),
-            text("恶魔信息", "Demon info"),
-            text("杀手行动", "Slayer claim"),
-            text("杀手命中", "Slayer hit"),
-        )
-        val deltaEvents = events.filter { e ->
-            e.type in setOf(
-                ClocktowerEventType.RoleAction,
-                ClocktowerEventType.Information,
-                ClocktowerEventType.UnreliableInformation,
-            ) &&
-                e.title !in excludedTitles &&
-                ((e.phase == ClocktowerPhase.Night && e.round == prevRound) ||
-                    (e.phase == ClocktowerPhase.FirstNight && e.round == prevRound) ||
-                    (e.phase == ClocktowerPhase.Day && e.round == prevRound))
-        }
-        if (deltaEvents.isEmpty()) null
-        else deltaEvents.joinToString("\n") { "• ${it.title}：${it.detail}" }
-    }
     val minionCards = cards.filter { it.clocktowerRole?.team == ClocktowerTeam.Minion }
     fun seatNumberText(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
     val shouldGiveFirstNightEvilInfo = cards.size >= 7
@@ -1551,8 +1524,7 @@ internal fun ClocktowerJudgeScreen(
                                 roleName = "间谍",
                                 enName = "Spy",
                                 tellPlayer = if (poisonTarget == spyCard?.name) null else {
-                                    val grimoire = cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
-                                    listOfNotNull(spyDelta, grimoire).joinToString("\n\n")
+                                    cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
                                 },
                                 explanation = if (poisonTarget == spyCard?.name) text("间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。", "The Spy is poisoned: wake them normally, but do not show the real grimoire or alter registration.") else text("存活间谍每晚可以查看所有玩家的真实身份。", "A living Spy may view every player's true identity each night."),
                                 displayKind = ClocktowerDisplayKind.Grimoire,
@@ -1882,8 +1854,7 @@ internal fun ClocktowerJudgeScreen(
                     roleName = "间谍",
                     enName = "Spy",
                     tellPlayer = if (effectivePoisonForRole("Spy") == spyCard?.name) null else {
-                        val grimoire = cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
-                        listOfNotNull(spyDelta, grimoire).joinToString("\n\n")
+                        cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
                     },
                     explanation = if (effectivePoisonForRole("Spy") == spyCard?.name) text("间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。", "The Spy is poisoned: wake them normally, but do not show the real grimoire or alter registration.") else text("存活间谍每晚查看真实魔典。", "A living Spy views the true grimoire each night."),
                     displayKind = ClocktowerDisplayKind.Grimoire,
