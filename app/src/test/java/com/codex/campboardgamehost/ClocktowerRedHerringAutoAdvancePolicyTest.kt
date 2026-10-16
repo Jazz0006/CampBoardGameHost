@@ -215,9 +215,14 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
             legalResultReady: Boolean,
             mode: Boolean = true,
             observations: List<RecordedEpistemicObservation> = emptyList(),
+            action: ClocktowerNightAction = ClocktowerNightAction.FortuneTeller,
         ) = clocktowerShouldAutoPresentCurrentInformation(
             automaticMode = mode,
-            step = step,
+            step = step.copy(action = action, roleEnName = when (action) {
+                ClocktowerNightAction.Chambermaid -> "Chambermaid"
+                ClocktowerNightAction.Ravenkeeper -> "Ravenkeeper"
+                else -> "Fortune Teller"
+            }),
             phase = ClocktowerPhase.Night,
             round = 2,
             actorSeat = 2,
@@ -229,6 +234,14 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         assertFalse(eligible(inputReady = true, legalResultReady = false))
         assertFalse(eligible(inputReady = true, legalResultReady = true, mode = false))
         assertTrue(eligible(inputReady = true, legalResultReady = true))
+        for (action in listOf(ClocktowerNightAction.Chambermaid, ClocktowerNightAction.Ravenkeeper)) {
+            assertFalse(eligible(inputReady = false, legalResultReady = true, action = action))
+            assertFalse(eligible(inputReady = true, legalResultReady = false, action = action))
+            assertTrue(eligible(inputReady = true, legalResultReady = true, action = action))
+        }
+        // Non-information night actions can never use the query auto-reveal path.
+        assertFalse(eligible(inputReady = true, legalResultReady = true,
+            action = ClocktowerNightAction.DemonKill))
         val published = RecordedEpistemicObservation(
             recordId = "night-2-fortune-teller", phase = StorytellerPhase.NIGHT,
             round = 2, sequence = 2, sourceSeat = 2,
@@ -243,6 +256,12 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
             observations = listOf(published)))
         assertTrue(eligible(inputReady = true, legalResultReady = true,
             observations = listOf(published.copy(round = 1))))
+        for (action in listOf(ClocktowerNightAction.Chambermaid, ClocktowerNightAction.Ravenkeeper)) {
+            assertFalse(eligible(inputReady = true, legalResultReady = true, action = action,
+                observations = listOf(published.copy(
+                    sourceAbility = RoleId(if (action == ClocktowerNightAction.Chambermaid)
+                        "Chambermaid" else "Ravenkeeper"))))
+        }
     }
 
     @Test

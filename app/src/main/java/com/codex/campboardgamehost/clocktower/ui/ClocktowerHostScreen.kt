@@ -620,6 +620,11 @@ internal fun ClocktowerJudgeScreen(
         selectArtistClaimant(null)
     }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
+    // Transient UI handoff only; Session publication is the lasting fact.
+    // Advancing from a confirmed player display must wait for its dismissal.
+    var pendingAutoAdvanceAfterDisplay by remember(gameId, phase, round) {
+        mutableStateOf<Pair<Int, String>?>(null)
+    }
     var slayerRecluseRegistersDemon by remember { mutableStateOf<Boolean?>(null) }
     val firstNightNaturalPairPrecomputeRequest = if (
         script == ClocktowerScript.TroubleBrewing &&
@@ -1889,7 +1894,25 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerPlayerDisplayCardLocalized(
             step = displayStep,
             cards = cards,
-            onDismiss = { playerDisplayStep = null },
+            onDismiss = {
+                playerDisplayStep = null
+                val current = nightSteps.getOrNull(nightStepIndex)
+                val actorSeat = displayStep.actor?.let { actor ->
+                    cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
+                }
+                if (globalAiAutomatic && phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
+                    current?.isRealAction == true && current.actor?.name == displayStep.actor?.name &&
+                    current.roleEnName != null && current.roleEnName == displayStep.roleEnName &&
+                    actorSeat != null && actualInformationHistory.any { observed ->
+                        observed.phase == phase.toStorytellerPhase() && observed.round == round &&
+                            observed.sourceSeat == actorSeat &&
+                            observed.sourceAbility?.value == current.roleEnName &&
+                            observed.visibility == com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PRIVATE
+                    }
+                ) {
+                    pendingAutoAdvanceAfterDisplay = nightStepIndex to current.interactionId.toString()
+                }
+            },
             confirmedGrimoireSeats = confirmedGrimoireSeats,
             redHerringSeat = confirmedRedHerringSeat,
             protectedSeat = nightCheckpoint.confirmedMonkTarget
@@ -2661,6 +2684,16 @@ internal fun ClocktowerJudgeScreen(
             }
         }
 
+        LaunchedEffect(pendingAutoAdvanceAfterDisplay, currentStepIndex, currentStep.interactionId) {
+            val pending = pendingAutoAdvanceAfterDisplay ?: return@LaunchedEffect
+            if (pending.first != currentStepIndex || pending.second != currentStep.interactionId.toString()) {
+                pendingAutoAdvanceAfterDisplay = null
+                return@LaunchedEffect
+            }
+            pendingAutoAdvanceAfterDisplay = null
+            advanceNightStep()
+        }
+
         LaunchedEffect(nightSteps.size, pendingNightAdvance) {
             val pending = pendingNightAdvance ?: return@LaunchedEffect
             when (
@@ -2799,9 +2832,14 @@ internal fun ClocktowerJudgeScreen(
                     actorSeat = preplannedSeat,
                     hasCurrentLegalResult = approvedOpeningOption != null ||
                         globalAiLegalIds?.size == 1,
-                    playerQueryResolved = fortuneTellerFirst != null &&
-                        fortuneTellerSecond != null &&
-                        fortuneTellerFirst != fortuneTellerSecond,
+                    playerQueryResolved = when (currentStep.action) {
+                        ClocktowerNightAction.FortuneTeller -> fortuneTellerFirst != null &&
+                            fortuneTellerSecond != null && fortuneTellerFirst != fortuneTellerSecond
+                        ClocktowerNightAction.Chambermaid -> chambermaidResolution.selection.isComplete
+                        ClocktowerNightAction.Ravenkeeper -> ravenkeeperTarget != null &&
+                            clocktowerRavenkeeperTargetCards(cards).any { it.name == ravenkeeperTarget }
+                        else -> false
+                    },
                     confirmedObservations = actualInformationHistory,
                 ),
                 step = currentStep,

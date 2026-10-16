@@ -57,6 +57,13 @@
 - No AI recommendation is stored as a game fact; no new Session state, cache, special registration ruling, or parallel reveal UI. The same one-slot recommendation applies; three alternatives remain future. Targeted regression covers missing/complete query selection, mode, current answer and confirmed observation, while complete full-night Android/ADB acceptance remains deferred.
 - Continue A2 after CI: assess other target-dependent result surfaces, generic stale advice errors, and when to safely advance only after player reveal.
 
+## A2 eighth slice — live choice queries and safe post-reveal advancement (2026-10-17; awaiting exact-head CI/R2)
+
+- Live start: clean local/origin `e343ff4d3693b55e9487ee0eef2f16812286b4e0` on `cleanup/arch-cleanup-1-20261015`. PR #315 remains Draft and merge-conflicted, main untouched.
+- The existing generic scalar Host request already supports current Chambermaid numeric and Ravenkeeper role-reveal propositions when the players' actual targets have been entered. Extend the single current auto-presentation gate and same square-table Host publication callbacks to these target-dependent steps; no automatic guessing of future player actions, no new AI-specific role policy.
+- After current confirmed Session private information has been shown and the player dismisses their reveal, an ephemeral UI-only per-step latch asks the original night-step advancement function to move ahead. Prior-step replies, missing result, changed step, or still-open display cannot authorize advancement. Already-observed information cannot be auto-presented twice. Manual/assisted continues to require ordinary Host navigation.
+- New focused regression extends the current information gate assertions for the two player-query roles, missing subjects, illegitimate action, prior publication and multi-choice decision without current resolution. No paid API, device/ADB or A3–A6 actions. Reconfirm new source commit/CI/R2 before treating this as verified; A2 remains PARTIAL. Next: actual Android/ADB late acceptance and further current-step audit, without reopening old plan-adoption APIs.
+
 ## Starting repository state (recheck live)
 
 - Repository Jazz0006/CampBoardGameHost; developer machine via Mini MCP alias **clocktower**.

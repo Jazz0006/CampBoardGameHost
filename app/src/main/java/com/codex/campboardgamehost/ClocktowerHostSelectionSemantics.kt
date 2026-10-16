@@ -110,7 +110,11 @@ internal fun clocktowerShouldAutoPresentCurrentInformation(
 ): Boolean = automaticMode &&
     step.isRealAction &&
     (step.action == ClocktowerNightAction.None ||
-        (step.action == ClocktowerNightAction.FortuneTeller && playerQueryResolved)) &&
+        (step.action in setOf(
+            ClocktowerNightAction.FortuneTeller,
+            ClocktowerNightAction.Chambermaid,
+            ClocktowerNightAction.Ravenkeeper,
+        ) && playerQueryResolved)) &&
     step.actor != null &&
     actorSeat != null &&
     step.roleEnName != null &&

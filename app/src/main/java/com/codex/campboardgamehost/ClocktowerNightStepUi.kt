@@ -660,6 +660,31 @@ internal fun ClocktowerNightStepCardLocalized(
         automaticQueriedResult?.let(::showStructuredFortuneTellerResult)
     }
 
+    // Target-dependent role and numeric information follows the same Host
+    // publication callback as a manual result tap. Neither query targets nor
+    // registration witnesses are chosen here. Missing current legal advice
+    // leaves multi-choice decisions at their existing manual/AI barrier.
+    val automaticQueriedDisplayOption = if (
+        autoPresentAiInformation &&
+        step.action == ClocktowerNightAction.Chambermaid &&
+        listOfNotNull(chambermaidFirst, chambermaidSecond).let {
+            it.size == 2 && it.distinct().size == 2
+        }
+    ) automaticDisplayOption else null
+    val automaticRavenkeeperChoice = if (
+        autoPresentAiInformation &&
+        step.action == ClocktowerNightAction.Ravenkeeper &&
+        ravenkeeperSelectedSeat != null
+    ) ravenkeeperResultChoices.singleOrNull() else null
+    LaunchedEffect(
+        informationDecisionKey, autoPresentAiInformation,
+        automaticQueriedDisplayOption?.let(::clocktowerInformationCandidateId),
+        automaticRavenkeeperChoice?.key,
+    ) {
+        automaticQueriedDisplayOption?.let(::showRecommendedDisplayOption)
+        automaticRavenkeeperChoice?.let(::showRavenkeeperChoice)
+    }
+
     LaunchedEffect(allowRuleDeterminedAutoUi, step.title, automaticDecisionTargetName) {
         if (allowRuleDeterminedAutoUi && automaticDecisionTargetName != null && selectedName != automaticDecisionTargetName) {
             onSelectName(automaticDecisionTargetName)
