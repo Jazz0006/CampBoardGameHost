@@ -164,7 +164,6 @@ private enum class Screen {
     PassPhone,
     RevealCard,
     ClocktowerJudge,
-    Game,
 }
 
 /**
@@ -371,11 +370,7 @@ internal fun CampBoardGameHostApp() {
     var showHostTools by remember { mutableStateOf(false) }
     var hostToolTab by remember { mutableStateOf(HostToolTab.Roles) }
     var showNewGameConfirmation by remember { mutableStateOf(false) }
-    var undercoverCount by remember { mutableStateOf(1) }
-    var includeBlank by remember { mutableStateOf(false) }
     var currentDealIndex by remember { mutableStateOf(0) }
-    var undercoverRound by remember { mutableStateOf(1) }
-    var selectedElimination by remember { mutableStateOf<String?>(null) }
     // The Demon may revise this while awake. Only the confirmed attack may
     // reach protection, Mayor redirection, death, or succession resolution.
     var clocktowerDemonAttackDraftTarget by remember { mutableStateOf<String?>(null) }
@@ -413,12 +408,7 @@ internal fun CampBoardGameHostApp() {
             }
         }
     }
-    val round by remember {
-        derivedStateOf {
-            if (currentGameKind == GameKind.Clocktower) clocktowerSessionView?.round ?: 1
-            else undercoverRound
-        }
-    }
+    val round by remember { derivedStateOf { clocktowerSessionView?.round ?: 1 } }
     val currentClocktowerScript = clocktowerSessionView?.scriptId
         ?.let { scriptId ->
             ClocktowerScript.entries.singleOrNull { script -> script.toRecommendationScriptId() == scriptId }
@@ -478,7 +468,7 @@ internal fun CampBoardGameHostApp() {
     var clocktowerSetupStep by remember { mutableStateOf(0) }
     val setupCards = remember { mutableStateListOf<PlayerCard>() }
     // The live game has a read-only card presentation of Session facts.
-    // Only setup and Undercover keep writable cards.
+    // Only setup cards are mutable.
     val cards: List<PlayerCard> = remember(setupCards, language) {
         ClocktowerSessionPlayerCards(
             setupCards = setupCards,
@@ -512,7 +502,6 @@ internal fun CampBoardGameHostApp() {
             )
         }
     } == true
-    val records = remember { mutableStateListOf<EliminationRecord>() }
     // UI-only selection; the Red Herring enters Session at its first-night Next step.
     var redHerringDraftName by remember { mutableStateOf<String?>(null) }
     val clocktowerNightStartedState = remember { mutableStateOf(false) }
@@ -1089,26 +1078,16 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun maxUndercoverFor(count: Int): Int {
-        return ((if (includeBlank) count - 2 else count - 1).coerceAtLeast(1))
-    }
-
-    fun clampUndercoverCount() {
-        undercoverCount = undercoverCount.coerceIn(1, maxUndercoverFor(playerNames.size))
-    }
-
     fun addCurrentPlayer(name: String) {
         val trimmedName = name.trim()
         if (trimmedName.isNotEmpty() && playerNames.size < MAX_PLAYERS && trimmedName !in playerNames) {
             playerNames.add(trimmedName)
-            clampUndercoverCount()
         }
     }
 
     fun removeCurrentPlayer(index: Int) {
         if (index in playerNames.indices) {
             playerNames.removeAt(index)
-            clampUndercoverCount()
         }
     }
 
@@ -1152,14 +1131,11 @@ internal fun CampBoardGameHostApp() {
         currentGameKind = nextGameKind
         canonicalConversationResponseId = null
         canonicalConversationModel = null
-        records.clear()
         clocktowerGameSession = null
         publishClocktowerSessionView()
         currentDealIndex = 0
-        undercoverRound = 1
         showResults = false
         gameOutcome = null
-        selectedElimination = null
 
         if (nextGameKind == GameKind.Clocktower) {
             val gameId = preparedClocktowerGameId ?: UUID.randomUUID().toString()
@@ -1229,30 +1205,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerKlutzReturnToDawn = false
         resetClocktowerFlow()
         screen = Screen.PassPhone
-    }
-
-    fun startUndercoverGame() {
-        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Undercover)
-        if (playerNames.size < MIN_PLAYERS) return
-        val pair = wordPairsFor(language).random()
-        val blankCount = if (includeBlank) 1 else 0
-        val roles = buildList {
-            repeat(undercoverCount) { add(Role.Undercover) }
-            repeat(blankCount) { add(Role.Blank) }
-            repeat(playerNames.size - undercoverCount - blankCount) { add(Role.Civilian) }
-        }.shuffled()
-
-        setupCards.clear()
-        setupCards.addAll(playerNames.mapIndexed { index, name ->
-            val role = roles[index]
-            val word = when (role) {
-                Role.Civilian -> pair.civilianWord
-                Role.Undercover -> pair.undercoverWord
-                Role.Blank -> context.getString(R.string.blank_word)
-            }
-            PlayerCard(name = name.ifBlank { context.playerName(index + 1) }, role = role, word = word)
-        })
-        resetDealState(GameKind.Undercover)
     }
 
     fun requestLiveGlobalAdvice(steps: List<ClocktowerNightStepUi>, stepIndex: Int) {
@@ -2106,7 +2058,6 @@ internal fun CampBoardGameHostApp() {
     fun returnToPlayerManagement() {
         if (!finishCurrentGameForRestart()) return
         setupCards.clear()
-        records.clear()
         gameOutcome = null
         currentDealIndex = 0
         resetClocktowerFlow()
@@ -2123,14 +2074,9 @@ internal fun CampBoardGameHostApp() {
             return
         }
         if (!finishCurrentGameForRestart()) return
-        when (currentGameKind) {
-            GameKind.Undercover -> startUndercoverGame()
-            GameKind.Clocktower -> {
-                // A five/six-player quick restart must not silently switch scripts.
-                selectedClocktowerScript = restartScript
-                startClocktowerGame()
-            }
-        }
+        // A five/six-player quick restart must not silently switch scripts.
+        selectedClocktowerScript = restartScript
+        startClocktowerGame()
     }
 
     /** Confirm real role changes once; card presentation reads Session. */
@@ -2521,17 +2467,7 @@ internal fun CampBoardGameHostApp() {
                         current = currentDealIndex + 1,
                         total = cards.size,
                         onHide = {
-                            when (currentGameKind) {
-                                GameKind.Clocktower -> screen = Screen.PassPhone
-                                GameKind.Undercover -> {
-                                    if (currentDealIndex == cards.lastIndex) {
-                                        screen = Screen.Game
-                                    } else {
-                                        currentDealIndex += 1
-                                        screen = Screen.PassPhone
-                                    }
-                                }
-                            }
+                            screen = Screen.PassPhone
                         },
                     )
 
@@ -3563,64 +3499,17 @@ internal fun CampBoardGameHostApp() {
                         },
                     )
 
-                    Screen.Game -> GameScreen(
-                    gameKind = currentGameKind,
-                    onHostTools = {
-                        hostToolTab = HostToolTab.Roles
-                        showHostTools = true
-                    },
-                    cards = cards,
-                    records = records,
-                    round = round,
-                    gameOutcome = gameOutcome,
-                    selectedElimination = selectedElimination,
-                    onSelectElimination = { selectedElimination = it },
-                    onConfirmElimination = {
-                        val name = selectedElimination
-                        if (name != null) {
-                            val index = cards.indexOfFirst { it.name == name }
-                            if (index >= 0) {
-                                setupCards[index] = setupCards[index].copy(eliminatedRound = round)
-                                records.add(EliminationRecord(round, name))
-                                selectedElimination = null
-                                gameOutcome = evaluateGameOutcome(context, cards, currentGameKind)
-                                if (gameOutcome != null) {
-                                    showResults = true
-                                }
-                                undercoverRound += 1
-                            }
-                        }
-                    },
-                    onShowResults = {
-                        gameOutcome = gameOutcome ?: GameOutcome(
-                            title = context.getString(R.string.outcome_manual_title),
-                            summary = context.getString(R.string.outcome_manual_summary),
-                            reason = context.getString(R.string.outcome_manual_reason),
-                        )
-                        showResults = true
-                    },
-                )
                         }
                     }
                 }
 
                 if (showResults) {
-                    if (currentGameKind == GameKind.Clocktower) {
-                        ClocktowerResultsDialog(
-                            cards = cards,
-                            outcome = gameOutcome,
-                            onDismiss = { showResults = false },
-                            onNewGame = { showNewGameConfirmation = true },
-                        )
-                    } else {
-                        ResultsDialog(
-                            gameKind = currentGameKind,
-                            cards = cards,
-                            outcome = gameOutcome,
-                            onDismiss = { showResults = false },
-                            onNewGame = { showNewGameConfirmation = true },
-                        )
-                    }
+                    ClocktowerResultsDialog(
+                        cards = cards,
+                        outcome = gameOutcome,
+                        onDismiss = { showResults = false },
+                        onNewGame = { showNewGameConfirmation = true },
+                    )
                 }
 
                 if (showHostTools) {
@@ -3668,48 +3557,18 @@ internal fun CampBoardGameHostApp() {
 
 private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>, gameKind: GameKind): GameOutcome? {
     val activeCards = cards.filter { it.eliminatedRound == null }
-    if (gameKind == GameKind.Clocktower) {
-        val activeDemons = activeCards.count { it.clocktowerTeam == ClocktowerTeam.Demon }
-        return when {
-            activeDemons == 0 -> GameOutcome(
-                title = context.getString(R.string.outcome_clocktower_good_title),
-                summary = context.getString(R.string.outcome_clocktower_good_summary),
-                reason = context.getString(R.string.outcome_clocktower_good_reason),
-            )
-
-            activeCards.size <= 2 -> GameOutcome(
-                title = context.getString(R.string.outcome_clocktower_evil_title),
-                summary = context.getString(R.string.outcome_clocktower_evil_summary),
-                reason = context.getString(R.string.outcome_clocktower_evil_reason, activeCards.size, activeDemons),
-            )
-
-            else -> null
-        }
-    }
-
-    val activeCivilians = activeCards.count { it.role == Role.Civilian }
-    val activeUndercovers = activeCards.count { it.role == Role.Undercover }
-    val activeBlanks = activeCards.count { it.role == Role.Blank }
-
+    val activeDemons = activeCards.count { it.clocktowerTeam == ClocktowerTeam.Demon }
     return when {
-        activeUndercovers == 0 && activeBlanks == 0 -> GameOutcome(
-            title = context.getString(R.string.outcome_civilian_title),
-            summary = context.getString(R.string.outcome_civilian_summary),
-            reason = context.getString(R.string.outcome_civilian_reason, activeCivilians),
+        activeDemons == 0 -> GameOutcome(
+            title = context.getString(R.string.outcome_clocktower_good_title),
+            summary = context.getString(R.string.outcome_clocktower_good_summary),
+            reason = context.getString(R.string.outcome_clocktower_good_reason),
         )
-
-        activeUndercovers > 0 && activeUndercovers >= activeCivilians -> GameOutcome(
-            title = context.getString(R.string.outcome_undercover_title),
-            summary = context.getString(R.string.outcome_undercover_summary),
-            reason = context.getString(R.string.outcome_undercover_reason, activeUndercovers, activeCivilians),
+        activeCards.size <= 2 -> GameOutcome(
+            title = context.getString(R.string.outcome_clocktower_evil_title),
+            summary = context.getString(R.string.outcome_clocktower_evil_summary),
+            reason = context.getString(R.string.outcome_clocktower_evil_reason, activeCards.size, activeDemons),
         )
-
-        activeCivilians == 0 && activeUndercovers == 0 && activeBlanks > 0 -> GameOutcome(
-            title = context.getString(R.string.outcome_blank_title),
-            summary = context.getString(R.string.outcome_blank_summary),
-            reason = context.getString(R.string.outcome_blank_reason, activeBlanks),
-        )
-
         else -> null
     }
 }
