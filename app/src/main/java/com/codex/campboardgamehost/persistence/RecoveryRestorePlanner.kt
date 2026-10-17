@@ -6,8 +6,8 @@ import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
+import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
-import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.requireCompatible
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
@@ -48,6 +48,8 @@ internal sealed interface RecoverySafeReentry {
 internal data class ValidatedClocktowerRecoveryRuntime(
     val rulesetBasis: ClocktowerRulesetPersistenceBasis,
     val rulesetRef: RulesetRef?,
+    /** The fully verified Session is applied directly; UI never rebuilds it from recovered cards. */
+    val session: ClocktowerGameSession,
 )
 
 internal data class ValidatedRecoveryPlan(
@@ -288,32 +290,51 @@ internal object RecoveryRestorePlanner {
         }
 
         validateSemanticHistory(game)
-        // Validate the entire optional causal journal BEFORE creating a Ready restore plan.
-        // Invalid corrections or old-prefix chronology must never fail halfway through UI apply.
         game.history.causalDecisionJournal?.let { archive ->
             require(game.identity.script == ClocktowerScript.TroubleBrewing || archive.records.isEmpty()) {
                 "Only the current Trouble Brewing typed snapshot can own a causal decision journal."
             }
-            StorytellerCausalDecisionJournalV1.restore(
-                archive = archive,
-                currentSession = ClocktowerSessionState(
-                    gameId = game.identity.gameId,
-                    gameStateRevision = game.history.gameStateRevision,
-                    playerInputRevision = game.history.playerInputRevision,
-                    gameSeed = game.identity.gameSeed,
-                    gameState = game.cards.toClocktowerGameState(
-                        script = game.identity.script,
-                        seed = game.identity.gameSeed,
-                        poisonedPlayerName = mechanics.confirmedPoisonTarget,
-                    ),
-                    storytellerPlayerContextBySeat = game.history.storytellerPlayerContextBySeat,
-                    actionTimeline = game.history.actionTimeline,
-                    epistemicObservationLog = EpistemicObservationLog(game.history.epistemicObservations),
-                    semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
-                    nextTimelineGlobalSequence = game.history.nextTimelineGlobalSequence,
-                ),
-            )
         }
+        // Legacy v3 cards are a one-time recovery input. Construct and validate the *actual*
+        // Session before returning Ready, including the causal journal and accepted setup.
+        // The same instance is then applied without a second cards -> GameState conversion.
+        val restoredState = ClocktowerSessionState(
+            gameId = game.identity.gameId,
+            gameStateRevision = game.history.gameStateRevision,
+            playerInputRevision = game.history.playerInputRevision,
+            gameSeed = game.identity.gameSeed,
+            gameState = game.cards.toClocktowerGameState(
+                script = game.identity.script,
+                seed = game.identity.gameSeed,
+                poisonedPlayerName = mechanics.confirmedPoisonTarget,
+            ),
+            storytellerPlayerContextBySeat = game.history.storytellerPlayerContextBySeat,
+            actionTimeline = game.history.actionTimeline,
+            epistemicObservationLog = EpistemicObservationLog(game.history.epistemicObservations),
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+            nextTimelineGlobalSequence = game.history.nextTimelineGlobalSequence,
+            redHerringSeat = mechanics.redHerring?.let { name ->
+                game.cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+                    ?: error("Recovered Red Herring is absent from the canonical seats.")
+            },
+            demonBluffRoleIds = mechanics.demonBluffRoleNames.map(::RoleId),
+        )
+        // The read-only Host card projection needs a confirmed death/execute point for
+        // every dead Session seat. Fail closed *before* modifying Compose state.
+        val recordedDeathSeats = restoredState.actionTimeline.entries.mapNotNull { entry ->
+            when (val fact = entry.fact) {
+                is ActionFact.Death -> fact.targetSeat
+                is ActionFact.Execution -> fact.targetSeat
+                else -> null
+            }
+        }.toSet()
+        require(restoredState.gameState.players.all { it.alive || it.seat in recordedDeathSeats }) {
+            "Dead recovered Clocktower seats require an accepted death or execution fact."
+        }
+        val restoredSession = ClocktowerGameSession.restoreProduction(
+            state = restoredState,
+            causalDecisionArchive = game.history.causalDecisionJournal,
+        )
 
         val basis = ClocktowerRulesetPersistenceBasis(
             actualRoles.mapTo(linkedSetOf()) { role -> RoleId(role.enName) },
@@ -339,6 +360,7 @@ internal object RecoveryRestorePlanner {
         return ValidatedClocktowerRecoveryRuntime(
             rulesetBasis = basis,
             rulesetRef = resolvedRuleset,
+            session = restoredSession,
         )
     }
 

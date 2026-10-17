@@ -70,7 +70,6 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCo
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.NoGreaterJoyKlutzHistoryProducerV1
-import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionBoundary
@@ -1433,40 +1432,18 @@ internal fun CampBoardGameHostApp() {
                 includeBlank = game.cards.any { it.role == Role.Blank }
             }
             is ClocktowerRecovery -> {
-                val runtime = plan.clocktowerRuntime
+                val runtime = requireNotNull(plan.clocktowerRuntime)
                 val safeClocktower = plan.safeReentry as? RecoverySafeReentry.ClocktowerJudge
                 val mechanics = game.mechanics
                 val history = game.history
 
                 committedTroubleBrewingSetupRotationRecord =
                     game.troubleBrewingSetupRotationRecord
-                val recoveredGameState = restoredCards.toClocktowerGameState(
-                    script = game.identity.script,
-                    seed = game.identity.gameSeed,
-                    poisonedPlayerName = mechanics.confirmedPoisonTarget,
-                )
-                clocktowerGameSession = ClocktowerGameSession.restoreProduction(
-                    ClocktowerSessionState(
-                        gameId = game.identity.gameId,
-                        gameStateRevision = history.gameStateRevision,
-                        playerInputRevision = history.playerInputRevision,
-                        gameSeed = game.identity.gameSeed,
-                        gameState = recoveredGameState,
-                        storytellerPlayerContextBySeat = history.storytellerPlayerContextBySeat,
-                        actionTimeline = history.actionTimeline,
-                        epistemicObservationLog = EpistemicObservationLog(history.epistemicObservations),
-                        semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
-                        nextTimelineGlobalSequence = history.nextTimelineGlobalSequence,
-                        redHerringSeat = mechanics.redHerring?.let { name ->
-                            restoredCards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
-                                ?: error("Recovered Red Herring is absent from the canonical seats.")
-                        },
-                        demonBluffRoleIds = mechanics.demonBluffRoleNames.map(::RoleId),
-                    ),
-                    causalDecisionArchive = history.causalDecisionJournal,
-                )
+                // Validation created this exact Session, including its accepted choices
+                // and causal journal. Never reconstruct another state from localized UI cards.
+                clocktowerGameSession = runtime.session
                 publishClocktowerSessionView()
-                clocktowerRulesetRef = runtime?.rulesetRef
+                clocktowerRulesetRef = runtime.rulesetRef
                 clocktowerPhase = safeClocktower?.phase ?: game.position.phase
                 clocktowerNightStartedState.value = game.position.nightStarted
                 clocktowerNightStepIndexState.value =

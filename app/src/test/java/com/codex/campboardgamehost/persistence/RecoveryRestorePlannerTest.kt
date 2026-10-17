@@ -171,6 +171,31 @@ class RecoveryRestorePlannerTest {
         assertNotNull(runtime)
         assertEquals(TEST_RULESET_REF, runtime?.rulesetRef)
         assertEquals(TEST_ROLE_IDS, runtime?.rulesetBasis?.roleIds)
+        val recovered = requireNotNull(runtime).session.state
+        assertEquals("game-1", recovered.gameId)
+        assertEquals(10L, recovered.gameStateRevision)
+        assertEquals(11L, recovered.playerInputRevision)
+        assertEquals(2, recovered.redHerringSeat)
+        assertEquals(listOf(RoleId("Mayor"), RoleId("Butler"), RoleId("Soldier")), recovered.demonBluffRoleIds)
+        assertEquals(RoleId("Imp"), recovered.gameState.playerAt(5)?.actualRole)
+        assertTrue(recovered.gameState.playerAt(2)?.poisoned == true)
+    }
+
+    @Test
+    fun missingConfirmedDeathInRecoveryFailsBeforeMutatingAppState() {
+        val original = clocktowerSnapshot()
+        val game = original.game as ClocktowerRecovery
+        val malformed = game.copy(
+            cards = game.cards.mapIndexed { index, card ->
+                if (index == 0) card.copy(eliminatedRound = 2) else card
+            },
+        )
+        // The historical v3 card says Alice is dead, but there is no canonical
+        // ActionFact.Death or ActionFact.Execution to drive the live Session view.
+        assertRejected(
+            prepare(RecoverySnapshotJsonCodec.encode(original.copy(game = malformed))),
+            RecoveryRejectionReason.InvalidGameState,
+        )
     }
 
     @Test
@@ -495,7 +520,12 @@ class RecoveryRestorePlannerTest {
             ),
         )
         val raw = RecoverySnapshotJsonCodec.encode(original.copy(game = savedGame))
-        assertTrue(prepare(raw) is RecoveryPlanPreparation.Ready)
+        val prepared = prepare(raw) as RecoveryPlanPreparation.Ready
+        val acceptedSession = requireNotNull(prepared.plan.clocktowerRuntime).session
+        assertEquals(journal.frozenAt("second"),
+            acceptedSession.causalDecisionJournal.frozenAt("second"))
+        assertEquals(listOf("event-second"),
+            acceptedSession.causalDecisionJournal.effectiveNow().map { it.eventId })
         val decoded = RecoverySnapshotJsonCodec.decodeStrict(raw, ::testRoleByName)
         val history = (decoded.game as ClocktowerRecovery).history
         val restored = com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1.restore(
