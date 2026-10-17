@@ -21,7 +21,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -31,7 +30,6 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -39,8 +37,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
@@ -148,7 +144,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.A4IdentityRevealPrewarmC
 import com.codex.campboardgamehost.clocktower.epistemic.A4IdentityRevealPrewarmRequest
 import com.codex.campboardgamehost.clocktower.epistemic.A4MainThreadFrameTelemetry
 import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildExecutor
-import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationDurabilityGate
 import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildRequest
 import com.codex.campboardgamehost.clocktower.epistemic.A4PlayerKnowledgeFactory
 import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowWorldSetCache
@@ -176,7 +171,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
 import java.util.Locale
 import java.util.UUID
 
@@ -243,8 +237,6 @@ internal fun PlayerCard.abilitySubject(poisonTarget: String?): AbilitySubject = 
 
 private fun Context.playerName(number: Int): String = getString(R.string.default_player_name_format, number)
 
-private const val PREFS_NAME = "camp_board_game_host"
-private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
 internal const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
 internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdate"
 internal const val MIN_PLAYERS = 3
@@ -258,51 +250,6 @@ private fun Context.localized(languageMode: LanguageMode): Context {
     config.setLocale(locale)
     return createConfigurationContext(config)
 }
-
-private fun Screen.isActiveGameScreen(): Boolean = when (this) {
-    Screen.PassPhone,
-    Screen.RevealCard,
-    Screen.ClocktowerAutoPause,
-    Screen.ClocktowerJudge,
-    Screen.Game -> true
-    Screen.Landing,
-    Screen.Setup,
-    Screen.GameSelection,
-    Screen.UndercoverSettings,
-    Screen.ClocktowerSettings,
-    Screen.ClocktowerDrunkSelection,
-    Screen.ClocktowerJointPass,
-    Screen.ClocktowerJointReveal,
-    Screen.ClocktowerJointReview,
-    Screen.Settings -> false
-}
-
-private fun Context.saveActiveGameState(snapshot: JSONObject): Boolean =
-    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        .edit()
-        .putString(ACTIVE_GAME_STATE_KEY, snapshot.toString())
-        .commit()
-
-private fun Context.loadActiveGameStateJson(): JSONObject? {
-    val raw = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        .getString(ACTIVE_GAME_STATE_KEY, null)
-        ?: return null
-    return runCatching { JSONObject(raw) }.getOrNull()
-}
-
-private fun Context.clearActiveGameState() {
-    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        .edit()
-        .remove(ACTIVE_GAME_STATE_KEY)
-        .commit()
-}
-
-private fun Context.loadSavedGamePreview(localizedContext: Context): SavedGamePreview? =
-    RecoveryPreviewLoader.load(
-        raw = loadActiveGameStateJson(),
-        prepare = { raw -> prepareCurrentRecoveryPlan(raw) },
-        clearRejected = { clearActiveGameState() },
-    )?.toSavedGamePreview(localizedContext)
 
 internal fun Role.labelResId(): Int = when (this) {
     Role.Civilian -> R.string.role_civilian
@@ -341,7 +288,6 @@ internal fun CampBoardGameHostApp() {
     val activeGameClocktowerRulesetCatalog = remember(baseContext) {
         BuiltInClocktowerRulesetCatalog.fromContext(baseContext)
     }
-    val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(appPreferencesStore.loadLanguageMode()) }
     val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
@@ -454,7 +400,6 @@ internal fun CampBoardGameHostApp() {
     var liveAiAdviceError by remember { mutableStateOf<String?>(null) }
     val drunkAiScope = rememberCoroutineScope()
     var currentGameKind by remember { mutableStateOf(GameKind.Undercover) }
-    var savedGamePreview by remember(context) { mutableStateOf(baseContext.loadSavedGamePreview(context)) }
     var gameHistory by remember { mutableStateOf(gameArchivePreferencesStore.loadGameHistory()) }
     var showHostTools by remember { mutableStateOf(false) }
     var hostToolTab by remember { mutableStateOf(HostToolTab.Roles) }
@@ -595,7 +540,6 @@ internal fun CampBoardGameHostApp() {
         }
     } == true
     val records = remember { mutableStateListOf<EliminationRecord>() }
-    val recoveryWriteGate = remember { RecoveryWriteGate() }
     val clocktowerEvents = remember { mutableStateListOf<ClocktowerEvent>() }
     var clocktowerEventCounter by remember { mutableStateOf(0) }
     // UI-only selection; the Red Herring enters Session at its first-night Next step.
@@ -620,12 +564,12 @@ internal fun CampBoardGameHostApp() {
     val a4ObservationCacheRebuildExecutor = remember(a4ShadowWorldSetCache) {
         A4ObservationCacheRebuildExecutor(a4ShadowWorldSetCache)
     }
-    val a4ObservationDurabilityGate = remember(clocktowerGameId) { A4ObservationDurabilityGate() }
+    var pendingA4ObservationRecordId by remember(clocktowerGameId) { mutableStateOf<String?>(null) }
     var a4ObservationCacheRebuildRequest by remember { mutableStateOf<A4ObservationCacheRebuildRequest?>(null) }
-    val a4ShadowLifecycleInvalidator = remember(a4ShadowWorldSetCache, a4ObservationDurabilityGate) {
+    val a4ShadowLifecycleInvalidator = remember(a4ShadowWorldSetCache, clocktowerGameId) {
         A4ShadowLifecycleInvalidator(
             invalidateGame = a4ShadowWorldSetCache::invalidateGame,
-            clearPendingObservation = a4ObservationDurabilityGate::clear,
+            clearPendingObservation = { pendingA4ObservationRecordId = null },
             cancelObservationRebuild = { a4ObservationCacheRebuildRequest = null },
         )
     }
@@ -1059,7 +1003,7 @@ internal fun CampBoardGameHostApp() {
                 session.recordEpistemicObservation(draft.bindLegacyLocal())
                 publishClocktowerSessionView()
                 invalidateA4RevisionScope()
-                a4ObservationDurabilityGate.markPending(draft.recordId)
+                pendingA4ObservationRecordId = draft.recordId
             }
             ClocktowerSemanticHistoryMode.GLOBAL_V1 -> {
                 // A callback may have already published another observation since the Compose
@@ -1070,7 +1014,7 @@ internal fun CampBoardGameHostApp() {
                 reviewConfirmedCurrentStepAdvice(before, draft)
                 publishClocktowerSessionView()
                 invalidateA4RevisionScope()
-                a4ObservationDurabilityGate.markPending(committed.recordId)
+                pendingA4ObservationRecordId = committed.recordId
                 if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
                     BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
                         strategicPolicyCursor?.version ?: 0,
@@ -1112,7 +1056,7 @@ internal fun CampBoardGameHostApp() {
         reviewConfirmedCurrentStepAdvice(before, draft)
         publishClocktowerSessionView()
         invalidateA4RevisionScope()
-        a4ObservationDurabilityGate.markPending(committed.recordId)
+        pendingA4ObservationRecordId = committed.recordId
         if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
             BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
                 strategicPolicyCursor?.version ?: 0,
@@ -1234,277 +1178,11 @@ internal fun CampBoardGameHostApp() {
         resetClocktowerDayFlow()
     }
 
-    fun clearSavedGameState() {
-        baseContext.clearActiveGameState()
-        recoveryWriteGate.clear()
-        savedGamePreview = null
-    }
-
-    fun localizedRestoredCard(card: PlayerCard): PlayerCard {
-        if (card.clocktowerRole == null || card.clocktowerShownRole == null) return card
-        return card.copy(
-            roleLabel = card.clocktowerShownRole.nameFor(language),
-            actualRoleLabel = card.clocktowerRole.nameFor(language),
-            word = context.getString(
-                R.string.clocktower_card_desc_format,
-                card.clocktowerShownRole.team.label(context),
-                card.clocktowerShownRole.descriptionFor(language),
-            ),
-        )
-    }
-
-    fun activeGameRecoverySnapshot(): RecoverySnapshot {
-        // Live Session already owns accepted roles; Recovery is a current-game snapshot,
-        // not a second script-legalization pass on every Compose persistence attempt.
-        val entryPoint = when (screen) {
-            Screen.PassPhone -> RecoveryEntryPoint.PassPhone
-            Screen.RevealCard -> RecoveryEntryPoint.RevealCard
-            else -> RecoveryEntryPoint.Stable
-        }
-        val recoveryDealIndex = if (entryPoint == RecoveryEntryPoint.Stable) 0 else currentDealIndex
-        val commonCards = cards.toList()
-        val commonRecords = records.toList()
-        val recoveryGame: RecoveryGame = when (currentGameKind) {
-            GameKind.Undercover -> UndercoverRecovery(
-                entryPoint = entryPoint,
-                currentDealIndex = recoveryDealIndex,
-                round = round,
-                cards = commonCards,
-                records = commonRecords,
-                outcome = gameOutcome,
-            )
-            GameKind.Clocktower -> ClocktowerRecovery(
-                entryPoint = entryPoint,
-                currentDealIndex = recoveryDealIndex,
-                round = round,
-                cards = commonCards,
-                records = commonRecords,
-                outcome = gameOutcome,
-                identity = ClocktowerRecoveryIdentity(
-                    script = currentClocktowerScript,
-                    gameId = clocktowerGameId,
-                    gameSeed = clocktowerGameSeed,
-                ),
-                troubleBrewingSetupRotationRecord = committedTroubleBrewingSetupRotationRecord,
-                position = ClocktowerRecoveryPosition(
-                    phase = clocktowerPhase,
-                    nightStarted = clocktowerNightStartedState.value,
-                    nightStepIndex = clocktowerNightStepIndexState.value,
-                ),
-                mechanics = ClocktowerRecoveryMechanics(
-                    confirmedAttackTarget = clocktowerPendingNightDeath,
-                    confirmedMonkProtectedTarget = clocktowerConfirmedMonkProtectedTarget,
-                    confirmedMayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
-                    pendingNewDemonName = clocktowerPendingNewDemonName,
-                    pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
-                    confirmedDemonSuccessorTarget = clocktowerConfirmedDemonSuccessorTarget,
-                    redHerring = clocktowerRedHerring,
-                    demonBluffRoleNames = clocktowerRecommendedDemonBluffRoleNames.toList(),
-                    butlerMaster = clocktowerButlerMaster,
-                    artistUsed = clocktowerArtistUsed,
-                    artistClaimedNames = clocktowerArtistClaimedNames.toList(),
-                    lastExecutedName = clocktowerLastExecutedName,
-                    pendingKlutzName = clocktowerPendingKlutzName,
-                    klutzReturnToDawn = clocktowerKlutzReturnToDawn,
-                    ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
-                    highestVoteName = clocktowerHighestVoteNameState.value,
-                    highestVoteCount = clocktowerHighestVoteCountState.value,
-                ),
-                history = ClocktowerRecoveryHistory(
-                    gameStateRevision = clocktowerGameStateRevision,
-                    playerInputRevision = clocktowerPlayerInputRevision,
-                    storytellerPlayerContextBySeat =
-                        requireClocktowerGameSession().state.storytellerPlayerContextBySeat,
-                    actionTimeline = clocktowerActionTimeline,
-                    nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
-                    events = clocktowerEvents.toList(),
-                    epistemicObservations = clocktowerEpistemicObservations.toList(),
-                    causalDecisionJournal = currentClocktowerCausalJournal().archive(),
-                ),
-            )
-        }
-        return RecoverySnapshot(
-            compatibilityToken = RecoveryCompatibilityToken.currentFor(currentGameKind),
-            savedAtMillis = System.currentTimeMillis(),
-            game = recoveryGame,
-        )
-    }
-
-    fun persistActiveGameStateIfNeeded(force: Boolean = false): Boolean {
-        if (!screen.isActiveGameScreen() || cards.isEmpty()) return false
-        val snapshot = activeGameRecoverySnapshot()
-        return recoveryWriteGate.persist(snapshot, force = force) { durableSnapshot ->
-            baseContext.saveActiveGameState(RecoverySnapshotJsonCodec.encode(durableSnapshot))
-        }
-    }
-
-    fun persistAndReleaseA4ObservationRebuildIfDurable(force: Boolean = false) {
-        val persisted = persistActiveGameStateIfNeeded(force = force)
-        val recordId = a4ObservationDurabilityGate.releaseAfterPersistence(persisted) ?: return
-        a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(recordId)
-    }
-
-    fun applyValidatedRecoveryPlan(plan: ValidatedRecoveryPlan) {
-        val game = plan.snapshot.game
-        val restoredCards = game.cards.map(::localizedRestoredCard)
-        val restoredPlayerNames = restoredCards.map(PlayerCard::name)
-
-        playerNames.clear()
-        playerNames.addAll(restoredPlayerNames)
-        hostSeatingSetupFlow = HostSeatingSetupFlow.recoveredActiveGame(
-            playerNames = restoredPlayerNames,
-            game = game.gameKind,
-        )
-        setupCards.clear()
-        setupCards.addAll(restoredCards)
-        records.clear()
-        records.addAll(game.records)
-
-        currentGameKind = game.gameKind
-        currentDealIndex = game.currentDealIndex
-        round = game.round
-        gameOutcome = game.outcome
-        showResults = plan.presentResults
-        savedGamePreview = null
-        showHostTools = false
-        showNewGameConfirmation = false
-
-        undercoverCount = 1
-        includeBlank = false
-        selectedElimination = null
-
-        selectedClocktowerScript = null
-        clocktowerGameSession = null
-        publishClocktowerSessionView()
-        committedTroubleBrewingSetupRotationRecord = null
-        clocktowerRulesetRef = null
-        clocktowerPhase = ClocktowerPhase.FirstNight
-        clocktowerNightStartedState.value = false
-        clocktowerNightStepIndexState.value = 0
-
-        clocktowerEvents.clear()
-        clocktowerEventCounter = 0
-
-        clocktowerPendingNightDeath = null
-        clocktowerDemonAttackDraftTarget = null
-        clocktowerSelectedExecution = null
-        clocktowerPoisonTarget = null
-        clocktowerFortuneTellerFirst = null
-        clocktowerFortuneTellerSecond = null
-        clocktowerChambermaidFirst = null
-        clocktowerChambermaidSecond = null
-        clocktowerRavenkeeperTarget = null
-        clocktowerButlerMaster = null
-        clocktowerMonkProtectedTarget = null
-        clocktowerConfirmedMonkProtectedTarget = null
-        clocktowerMayorRedirectTarget = null
-        clocktowerConfirmedMayorRedirectTarget = null
-        clocktowerPendingNewDemonName = null
-        clocktowerPendingNightNewDemonIdentityName = null
-        clocktowerDemonSuccessorTarget = null
-        clocktowerConfirmedDemonSuccessorTarget = null
-        clocktowerArtistUsed = false
-        clocktowerArtistClaimedNames = emptyList()
-        clocktowerLastExecutedName = null
-        clocktowerPendingKlutzName = null
-        clocktowerKlutzChoiceName = null
-        clocktowerKlutzReturnToDawn = false
-
-        clocktowerDayModeState.value = ClocktowerDayMode.Overview
-        clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
-        clocktowerHighestVoteNameState.value = null
-        clocktowerHighestVoteCountState.value = 0
-
-        when (game) {
-            is UndercoverRecovery -> {
-                undercoverCount = game.cards.count { it.role == Role.Undercover }
-                includeBlank = game.cards.any { it.role == Role.Blank }
-            }
-            is ClocktowerRecovery -> {
-                val runtime = requireNotNull(plan.clocktowerRuntime)
-                val safeClocktower = plan.safeReentry as? RecoverySafeReentry.ClocktowerJudge
-                val mechanics = game.mechanics
-                val history = game.history
-
-                committedTroubleBrewingSetupRotationRecord =
-                    game.troubleBrewingSetupRotationRecord
-                // Validation created this exact Session, including its accepted choices
-                // and causal journal. Never reconstruct another state from localized UI cards.
-                clocktowerGameSession = runtime.session
-                publishClocktowerSessionView()
-                clocktowerRulesetRef = runtime.rulesetRef
-                clocktowerPhase = safeClocktower?.phase ?: game.position.phase
-                clocktowerNightStartedState.value = game.position.nightStarted
-                clocktowerNightStepIndexState.value =
-                    safeClocktower?.nightStepIndex ?: game.position.nightStepIndex
-
-                clocktowerEvents.addAll(history.events)
-                clocktowerEventCounter = history.events.maxOfOrNull(ClocktowerEvent::sequence) ?: 0
-
-                clocktowerPendingNightDeath = mechanics.confirmedAttackTarget
-                clocktowerConfirmedMonkProtectedTarget = mechanics.confirmedMonkProtectedTarget
-                clocktowerConfirmedMayorRedirectTarget = mechanics.confirmedMayorRedirectTarget
-                clocktowerPendingNewDemonName = mechanics.pendingNewDemonName
-                clocktowerPendingNightNewDemonIdentityName = mechanics.pendingNightNewDemonIdentityName
-                clocktowerConfirmedDemonSuccessorTarget = mechanics.confirmedDemonSuccessorTarget
-                clocktowerButlerMaster = mechanics.butlerMaster
-                clocktowerArtistUsed = mechanics.artistUsed
-                clocktowerArtistClaimedNames = mechanics.artistClaimedNames
-                clocktowerLastExecutedName = mechanics.lastExecutedName
-                clocktowerPendingKlutzName = mechanics.pendingKlutzName
-                clocktowerKlutzReturnToDawn = mechanics.klutzReturnToDawn
-                clocktowerGhostVoteAuthorityState.value = mechanics.ghostVoteAuthority
-                clocktowerHighestVoteNameState.value = mechanics.highestVoteName
-                clocktowerHighestVoteCountState.value = mechanics.highestVoteCount
-                clocktowerDayModeState.value =
-                    if (safeClocktower?.continuation == ClocktowerRecoveryContinuation.Klutz) {
-                        ClocktowerDayMode.Klutz
-                    } else {
-                        ClocktowerDayMode.Overview
-                    }
-            }
-        }
-
-        screen = when (plan.safeReentry) {
-            RecoverySafeReentry.UndercoverGame -> Screen.Game
-            is RecoverySafeReentry.PassPhone -> Screen.PassPhone
-            is RecoverySafeReentry.RevealCard -> Screen.RevealCard
-            is RecoverySafeReentry.ClocktowerJudge -> Screen.ClocktowerJudge
-        }
-    }
-
-    fun restoreSavedGame() {
-        // Recovery has Host facts but no verified provider cursor. Fall back to
-        // complete Host snapshot rather than attaching to an untrusted old ID.
-        canonicalConversationResponseId = null
-        canonicalConversationModel = null
-        pendingOpeningResponseId = null
-        pendingOpeningModel = null
-        RecoveryApplicationCoordinator.apply(
-            raw = baseContext.loadActiveGameStateJson(),
-            prepare = { raw -> baseContext.prepareCurrentRecoveryPlan(raw) },
-            clearRejected = ::clearSavedGameState,
-            crossSessionBoundary = ::invalidateA4SessionBoundary,
-            applyValidated = ::applyValidatedRecoveryPlan,
-        )
-    }
-
-    val latestPersistActiveGameState by rememberUpdatedState { force: Boolean ->
-        persistAndReleaseA4ObservationRebuildIfDurable(force = force)
-    }
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            persistRecoveryForLifecycleEvent(event, latestPersistActiveGameState)
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
     SideEffect {
-        persistAndReleaseA4ObservationRebuildIfDurable()
+        pendingA4ObservationRecordId?.let { recordId ->
+            pendingA4ObservationRecordId = null
+            a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(recordId)
+        }
     }
 
     fun maxUndercoverFor(count: Int): Int {
@@ -1562,10 +1240,8 @@ internal fun CampBoardGameHostApp() {
         preparedClocktowerSeed: Long? = null,
         preparedClocktowerInitialState: GameState? = null,
         preparedClocktowerGameId: String? = null,
-        persistInitialState: Boolean = true,
     ) {
         invalidateA4SessionBoundary()
-        clearSavedGameState()
         pendingTroubleBrewingDrunkSelection = null
         pendingCurrentStepAdvice = null
         committedTroubleBrewingSetupRotationRecord = null
@@ -1656,9 +1332,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
         resetClocktowerFlow()
         screen = Screen.PassPhone
-        if (persistInitialState) {
-            persistActiveGameStateIfNeeded()
-        }
     }
 
     fun startUndercoverGame() {
@@ -2061,7 +1734,6 @@ internal fun CampBoardGameHostApp() {
             preparedClocktowerSeed = preparedSeed,
             preparedClocktowerInitialState = committedSetup.gameState,
             preparedClocktowerGameId = preparedGameId,
-            persistInitialState = false,
         )
         committedTroubleBrewingSetupRotationRecord =
             TroubleBrewingSetupRotationRecordFactory.fromCommittedSetup(
@@ -2069,7 +1741,6 @@ internal fun CampBoardGameHostApp() {
                 committedSetup = committedSetup,
                 characterRegistry = characterRegistry,
             )
-        persistActiveGameStateIfNeeded()
         currentTroubleBrewingFirstNightPairDecisionContext()?.let { request ->
             troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
                 request = request,
@@ -2525,7 +2196,6 @@ internal fun CampBoardGameHostApp() {
         setupCards.clear()
         setupCards.addAll(committedCards)
         resetDealState(GameKind.Clocktower, script, preparedSeed)
-        persistActiveGameStateIfNeeded()
     }
 
     fun persistCompletedTroubleBrewingSetupIfNeeded(): Boolean {
@@ -2554,7 +2224,6 @@ internal fun CampBoardGameHostApp() {
                 outcome = gameOutcome,
             ),
         )
-        clearSavedGameState()
         clocktowerGameSession = null
         publishClocktowerSessionView()
         showNewGameConfirmation = false
@@ -2749,16 +2418,13 @@ internal fun CampBoardGameHostApp() {
                     Box(modifier = Modifier.weight(1f)) {
                         when (screen) {
                     Screen.Landing -> ClocktowerLandingScreen(
-                        hasSavedGame = savedGamePreview != null,
                         onStartGame = {
                             hostSeatingSetupFlow = HostSeatingSetupFlow()
                             screen = Screen.Setup
                         },
-                        onContinueGame = ::restoreSavedGame,
                     )
 
                     Screen.Setup -> SeatingFirstSetupScreen(
-                    savedGamePreview = savedGamePreview,
                     commonPlayers = commonPlayers,
                     playerExperienceByName = playerExperienceByName,
                     onPlayerExperienceChange = ::setPlayerExperience,
@@ -2766,8 +2432,6 @@ internal fun CampBoardGameHostApp() {
                     onAddCurrentPlayer = ::addCurrentPlayer,
                     onRemoveCurrentPlayer = ::removeCurrentPlayer,
                     onMoveCurrentPlayerTo = ::moveCurrentPlayerTo,
-                    onResumeSavedGame = ::restoreSavedGame,
-                    onDiscardSavedGame = ::clearSavedGameState,
                     onOpenSettings = {
                         settingsReturnScreen = Screen.Setup
                         screen = Screen.Settings
@@ -3801,7 +3465,7 @@ internal fun CampBoardGameHostApp() {
                                 )
                                 publishClocktowerSessionView()
                                 invalidateA4RevisionScope()
-                                a4ObservationDurabilityGate.markPending("public-alive-${clocktowerGameId}-${localSequence}-$targetSeat")
+                                pendingA4ObservationRecordId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat"
                                 records.add(
                                     EliminationRecord(
                                         round,
@@ -3975,7 +3639,7 @@ internal fun CampBoardGameHostApp() {
                                     )
                                     publishClocktowerSessionView()
                                     invalidateA4RevisionScope()
-                                    a4ObservationDurabilityGate.markPending("public-alive-${clocktowerGameId}-$actionSequence-${index + 1}")
+                                    pendingA4ObservationRecordId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}"
                                     records.add(
                                         EliminationRecord(
                                             round,
@@ -4129,7 +3793,7 @@ internal fun CampBoardGameHostApp() {
                                     )
                                     publishClocktowerSessionView()
                                     invalidateA4RevisionScope()
-                                    a4ObservationDurabilityGate.markPending("public-alive-${clocktowerGameId}-$actionSequence-${index + 1}")
+                                    pendingA4ObservationRecordId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}"
                                     records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
                                     addClocktowerEvent(
                                         ClocktowerEventType.Execution,
@@ -4396,7 +4060,7 @@ internal fun CampBoardGameHostApp() {
                                         )
                                         publishClocktowerSessionView()
                                         invalidateA4RevisionScope()
-                                        dawnDeathMaterialization.publicAliveObservationIdToCommit?.let(a4ObservationDurabilityGate::markPending)
+                                        dawnDeathMaterialization.publicAliveObservationIdToCommit?.let { pendingA4ObservationRecordId = it }
                                         records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
                                         addClocktowerEvent(
                                             ClocktowerEventType.Death,

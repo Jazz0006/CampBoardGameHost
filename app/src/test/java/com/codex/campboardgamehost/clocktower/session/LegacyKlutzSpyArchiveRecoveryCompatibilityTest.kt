@@ -1,7 +1,5 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
-import com.codex.campboardgamehost.ClocktowerCausalJournalPersistence
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import org.junit.Assert.assertEquals
@@ -80,13 +78,7 @@ class LegacyKlutzSpyArchiveRecoveryCompatibilityTest {
         s: ClocktowerGameSession,
         journal: StorytellerCausalDecisionJournalV1,
     ): StorytellerCausalDecisionJournalV1 {
-        val archive = ClocktowerCausalJournalPersistence.decode(
-            ClocktowerCausalJournalPersistence.encode(journal.archive()),
-            expectedGameId = s.state.gameId,
-            actions = s.state.actionTimeline,
-            observations = s.state.epistemicObservationLog.records,
-            recoveredCursor = s.state.nextTimelineGlobalSequence,
-        )
+        val archive = journal.archive()
         return StorytellerCausalDecisionJournalV1.restore(archive, s.state)
     }
 
@@ -222,11 +214,6 @@ class LegacyKlutzSpyArchiveRecoveryCompatibilityTest {
         assertEquals("true-death-klutz", proof.deathActionId)
         assertTrue(proof.isVerifiedDeathSnapshot)
         assertEquals(null, proof.lastPoisonActionId)
-        val archive = ClocktowerSemanticHistoryPersistence.encodeActionTimeline(s.state.actionTimeline)
-        val timeline = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(org.json.JSONObject().put(
-            ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, archive,
-        ))
-        assertEquals(s.state.actionTimeline, timeline)
         val journal = StorytellerCausalDecisionJournalV1(s.state.gameId)
         val event = KlutzSpyDayRegistrationProducerV1.confirm(
             s, journal, snapshot(s), roles,
@@ -264,25 +251,6 @@ class LegacyKlutzSpyArchiveRecoveryCompatibilityTest {
         assertTrue(journal.archive().records.isEmpty())
     }
 
-    @Test fun `serialized death evidence rejects missing boolean or made up role`() {
-        val s = captureCanonicalDeath()
-        val array = ClocktowerSemanticHistoryPersistence.encodeActionTimeline(s.state.actionTimeline)
-        val factJson = array.getJSONObject(0).getJSONObject("fact")
-        factJson.getJSONObject("klutzDeathTrigger").put("role", "Chef")
-        assertThrows(IllegalArgumentException::class.java) {
-            ClocktowerSemanticHistoryPersistence.decodeActionTimeline(org.json.JSONObject().put(
-                ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, array,
-            ))
-        }
-        factJson.getJSONObject("klutzDeathTrigger").put("role", "Klutz")
-        factJson.getJSONObject("klutzDeathTrigger").remove("poisonedBeforeDeath")
-        assertThrows(IllegalArgumentException::class.java) {
-            ClocktowerSemanticHistoryPersistence.decodeActionTimeline(org.json.JSONObject().put(
-                ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, array,
-            ))
-        }
-    }
-
     @Test fun `recovered Klutz death action and registered alignment cannot be forged`() {
         val s = session()
         death(s)
@@ -290,13 +258,14 @@ class LegacyKlutzSpyArchiveRecoveryCompatibilityTest {
         KlutzSpyDayRegistrationProducerV1.confirm(
             s, journal, snapshot(s), roles, input(true),
         )
-        val json = ClocktowerCausalJournalPersistence.encode(journal.archive())
-        json.getJSONArray("records").getJSONObject(1)
-            .getJSONObject("outcomeFields").put("deathActionId", "forged-death")
-        val decoded = ClocktowerCausalJournalPersistence.decode(
-            json, s.state.gameId, s.state.actionTimeline,
-            s.state.epistemicObservationLog.records, s.state.nextTimelineGlobalSequence,
-        )
+        val archive = journal.archive()
+        val decoded = archive.copy(records = archive.records.map { entry ->
+            if (entry is StorytellerCausalJournalRecordV1.Committed) {
+                entry.copy(value = entry.value.copy(selectedOutcome = entry.value.selectedOutcome.copy(
+                    canonicalFields = (entry.value.selectedOutcome.canonicalFields + ("deathActionId" to "forged-death")).toSortedMap(),
+                )))
+            } else entry
+        })
         assertThrows(IllegalArgumentException::class.java) {
             StorytellerCausalDecisionJournalV1.restore(decoded, s.state)
         }

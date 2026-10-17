@@ -187,14 +187,7 @@ class StorytellerCausalDecisionJournalV1Test {
         assertEquals(3L, game.state.nextTimelineGlobalSequence)
         assertEquals(MayorRedirectDecisionBoundary.candidateIdForSeat(1),
             game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
-        val historyJson = com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
-            .encodeActionTimeline(game.state.actionTimeline)
-        val restoredHistory = com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
-            .decodeActionTimeline(org.json.JSONObject().put(
-                com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
-                historyJson,
-            ))
-        assertEquals(game.state.actionTimeline, restoredHistory)
+
     }
 
     @Test

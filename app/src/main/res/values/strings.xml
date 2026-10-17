@@ -1,10 +1,5 @@
 <resources>
     <string name="app_name">露营桌游助手</string>
-    <string name="resume_saved_game">发现未完成的一局</string>
-    <string name="saved_game_summary_format">%1$s · %2$s · %3$d 人</string>
-    <string name="saved_game_stage_dealing">发牌中</string>
-    <string name="saved_game_stage_dawn">天亮</string>
-    <string name="saved_game_stage_results">结果页</string>
     <string name="no_common_players_settings">还没有常用玩家。添加经常一起玩的朋友后，主界面就可以一键加入。</string>
     <string name="common_players_management">常用玩家管理</string>
     <string name="player_name_input_label">玩家名字</string>

@@ -3,9 +3,8 @@ package com.codex.campboardgamehost.clocktower.session
 /**
  * Typed same-night transaction checkpoint.
  *
- * The values deliberately distinguish player drafts from confirmed mechanical facts. Active
- * Recovery persists only the current durable subset through its own typed codec; this model itself
- * is not a persistence wire contract.
+ * The values deliberately distinguish player drafts from confirmed mechanical facts. This
+ * model is an input to live night transactions, not a persistence wire contract.
  */
 internal data class ClocktowerNightCheckpoint(
     val phaseName: String,

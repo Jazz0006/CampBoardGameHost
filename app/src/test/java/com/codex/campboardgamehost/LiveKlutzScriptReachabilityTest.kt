@@ -106,7 +106,7 @@ class LiveKlutzScriptReachabilityTest {
         }
     }
 
-    @Test fun `canonical NGJ death provenance persists and does not substitute for learning time`() {
+    @Test fun `canonical NGJ death provenance is recorded and does not substitute for learning time`() {
         val alive = state(klutzAlive = true)
         val session = ClocktowerGameSession.createProduction(
             gameId = "real-ngj-klutz", gameSeed = 75L, initialState = alive,
@@ -118,17 +118,12 @@ class LiveKlutzScriptReachabilityTest {
         val deathProof = (death.fact as ActionFact.Death).klutzDeathTrigger
         assertEquals(RoleId("Klutz"), deathProof?.actualRole)
         assertEquals(false, deathProof?.wasPoisoned)
-        val archive = ClocktowerSemanticHistoryPersistence.encodeActionTimeline(session.state.actionTimeline)
-        val restored = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(
-            org.json.JSONObject().put(ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, archive),
-        )
-        assertEquals(session.state.actionTimeline, restored)
         // The independently rule-owned choice occurs when the dead Klutz learns of death.
         assertTrue(NoGreaterJoyKlutzChoiceRuleV1.resolve(
             session.state.gameState, 1, 2, definitions,
         ).evilWins)
     }
-    @Test fun `actual NGJ announcement then public choice is globally ordered and persisted`() {
+    @Test fun `actual NGJ announcement then public choice is globally ordered`() {
         val session = ClocktowerGameSession.createProduction(
             gameId = "ngj-learn-real", gameSeed = 75L,
             initialState = state(klutzAlive = true),
@@ -157,13 +152,8 @@ class LiveKlutzScriptReachabilityTest {
         val timeline = session.state.actionTimeline
         assertEquals(listOf("night-death", "learn-public", "public-choice"),
             timeline.entries.map { it.fact.actionId })
-        val archive = ClocktowerSemanticHistoryPersistence.encodeActionTimeline(timeline)
-        val recovered = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(
-            org.json.JSONObject().put(ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, archive),
-        )
-        assertEquals(timeline, recovered)
         val public = com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
-            recipientSeat = 3, actionTimeline = recovered,
+            recipientSeat = 3, actionTimeline = timeline,
             observationLog = com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog(),
         )
         assertTrue(public.none { it.actionIdOrNull() == "learn-public" })

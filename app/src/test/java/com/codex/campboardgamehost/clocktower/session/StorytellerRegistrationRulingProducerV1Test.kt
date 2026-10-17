@@ -3,7 +3,6 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.ClocktowerConfirmedRegistrationChoiceV1
 import com.codex.campboardgamehost.ClocktowerConfirmedRegistrationPublicationV1
 import com.codex.campboardgamehost.ClocktowerRegistrationWitness
-import com.codex.campboardgamehost.ClocktowerCausalJournalPersistence
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.epistemic.*
 import org.junit.Assert.assertEquals
@@ -114,14 +113,7 @@ class StorytellerRegistrationRulingProducerV1Test {
 
     private fun recover(session: ClocktowerGameSession, journal: StorytellerCausalDecisionJournalV1):
         StorytellerCausalDecisionJournalV1 {
-        val encoded = ClocktowerCausalJournalPersistence.encode(journal.archive())
-        val decoded = ClocktowerCausalJournalPersistence.decode(
-            encoded,
-            expectedGameId = session.state.gameId,
-            actions = session.state.actionTimeline,
-            observations = session.state.epistemicObservationLog.records,
-            recoveredCursor = session.state.nextTimelineGlobalSequence,
-        )
+        val decoded = journal.archive()
         return StorytellerCausalDecisionJournalV1.restore(decoded, session.state)
     }
 
@@ -197,22 +189,20 @@ class StorytellerRegistrationRulingProducerV1Test {
     }
 
     @Test
-    fun `malformed registration subject and unobserved output fail strict Recovery`() {
+    fun `malformed registration subject and unobserved output fail journal validation`() {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         show(session, "empath-one", sourceSeat = 5)
         select(session, journal, "r", "empath-one", 5, 4,
             RegistrationResolutionStatusV1.EXPLICIT_SPECIAL, RoleId("Imp"))
-        val encoded = ClocktowerCausalJournalPersistence.encode(journal.archive())
-        encoded.getJSONArray("records").getJSONObject(1).getJSONArray("registrations")
-            .getJSONObject(0).put("subjectSeat", 2)
-        val broken = ClocktowerCausalJournalPersistence.decode(
-            encoded,
-            expectedGameId = session.state.gameId,
-            actions = session.state.actionTimeline,
-            observations = session.state.epistemicObservationLog.records,
-            recoveredCursor = session.state.nextTimelineGlobalSequence,
-        )
+        val archive = journal.archive()
+        val broken = archive.copy(records = archive.records.map { entry ->
+            if (entry is StorytellerCausalJournalRecordV1.Committed) {
+                entry.copy(value = entry.value.copy(
+                    registrations = entry.value.registrations.map { it.copy(subjectSeat = 2) },
+                ))
+            } else entry
+        })
         assertThrows(IllegalArgumentException::class.java) {
             StorytellerCausalDecisionJournalV1.restore(broken, session.state)
         }

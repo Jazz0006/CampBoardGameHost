@@ -78,7 +78,7 @@ internal data class ClocktowerSessionView(
 /**
  * Ruleset-independent canonical state owned by one production Clocktower session.
  *
- * Recovery and scripts without an advanced ruleset still need one identity/revision/history owner.
+ * Scripts without an advanced ruleset still need one identity/revision/history owner.
  * [GameSnapshot] remains the stricter projection for consumers that have a resolved [RulesetRef].
  */
 internal data class ClocktowerSessionState(
@@ -140,7 +140,7 @@ internal class ClocktowerGameSession private constructor(
 
     /**
      * One causal decision journal belongs to this game session, not to the root Compose
-     * screen. Recovery restores this exact journal against the recovered Session history.
+     * screen. Atomic commits validate this journal against the Session history.
      * Decision producers still use its existing validated append/correct interface.
      */
     var causalDecisionJournal: StorytellerCausalDecisionJournalV1 =
@@ -839,19 +839,6 @@ internal class ClocktowerGameSession private constructor(
             defaultRulesetRef = snapshot.rulesetRef,
             initialSnapshotCache = snapshot,
         )
-
-        fun restoreProduction(
-            state: ClocktowerSessionState,
-            causalDecisionArchive: StorytellerCausalJournalArchiveV1? = null,
-        ): ClocktowerGameSession = ClocktowerGameSession(
-            initialState = state,
-            defaultRulesetRef = null,
-        ).also { session ->
-            if (causalDecisionArchive != null) {
-                session.causalDecisionJournal =
-                    StorytellerCausalDecisionJournalV1.restore(causalDecisionArchive, session.state)
-            }
-        }
 
         private fun GameSnapshot.toSessionState(): ClocktowerSessionState = ClocktowerSessionState(
             gameId = gameId,

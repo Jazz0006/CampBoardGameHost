@@ -1,10 +1,5 @@
 <resources>
     <string name="app_name">Camp Board Game Host</string>
-    <string name="resume_saved_game">Unfinished game found</string>
-    <string name="saved_game_summary_format">%1$s · %2$s · %3$d players</string>
-    <string name="saved_game_stage_dealing">Dealing</string>
-    <string name="saved_game_stage_dawn">Dawn</string>
-    <string name="saved_game_stage_results">Results</string>
     <string name="no_common_players_settings">No frequent players yet. Add friends here so they can join from the main screen with one tap.</string>
     <string name="common_players_management">Frequent Player Management</string>
     <string name="player_name_input_label">Player name</string>

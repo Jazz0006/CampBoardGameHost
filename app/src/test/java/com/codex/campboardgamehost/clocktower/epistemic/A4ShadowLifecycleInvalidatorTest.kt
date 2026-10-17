@@ -5,7 +5,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class A4ShadowLifecycleInvalidatorTest {
-    @Test fun `revision supersede invalidates game and cancels rebuild without clearing pending durability`() {
+    @Test fun `revision supersede invalidates game and cancels rebuild without clearing pending observation`() {
         val events = mutableListOf<String>()
         val invalidator = A4ShadowLifecycleInvalidator(
             invalidateGame = { events += "invalidate:$it" },

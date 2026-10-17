@@ -13,8 +13,7 @@ import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 /**
  * Pure reconstruction composition for an unfinished Clocktower night.
  *
- * Authority remains [ClocktowerNightCheckpoint] plus [GameState]. Recovery is decoded by the
- * current typed Recovery boundary before this layer; this seam only derives same-night mechanical
+ * Authority remains [ClocktowerNightCheckpoint] plus [GameState]. This seam derives same-night mechanical
  * state without mutating its inputs.
  */
 

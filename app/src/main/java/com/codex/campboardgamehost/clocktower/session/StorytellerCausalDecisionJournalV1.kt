@@ -150,7 +150,7 @@ internal object StorytellerDecisionPrefixCaptureV1 {
 }
 
 /**
- * Exact ordered journal entries used by the current-format Recovery codec. Unlike a final
+ * Exact ordered journal entries used by atomic commit validation. Unlike a final
  * DecisionHistoryProjection, corrections retain their original position in the chronology.
  */
 internal sealed interface StorytellerCausalJournalRecordV1 {
@@ -177,8 +177,8 @@ internal data class StorytellerCausalJournalArchiveV1(
  * Session-owned, append-only decision/correction chronology, distinct from mechanical facts.
  * Two rulings may share one game/input revision and cursor; later corrections preserve the old
  * prefix. Production first-publication rulings are staged and accepted with the observation,
- * while later explicit corrections append new journal events. Typed Recovery already serializes
- * this journal, but it is not an independent game-state authority.
+ * while later explicit corrections append new journal events. The journal is validated during
+ * atomic commits and is not an independent game-state authority.
  */
 internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
     private sealed interface Entry {
@@ -211,7 +211,7 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
 
     companion object {
         /**
-         * Restore from typed Recovery, validating every historical capture against the *actual*
+         * Rebuild a typed journal, validating every historical capture against the *actual*
          * recovered append-only global facts. No future event or amended correction is admitted.
          */
         fun restore(

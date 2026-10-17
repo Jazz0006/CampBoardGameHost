@@ -22,7 +22,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
-import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -200,43 +199,7 @@ class ClocktowerGameSessionTest {
     }
 
     @Test
-    fun `production session restore preserves identity revisions and global history exactly`() {
-        val original = ClocktowerGameSession.createProduction(
-            gameId = "production-restore",
-            gameSeed = initialState.seed,
-            initialState = initialState,
-            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
-        )
-        original.advanceGameStateRevision()
-        original.advanceGameStateRevision()
-        original.recordPlayerInput()
-        original.commitAcceptedTestAction(
-            ActionFactDraft.Poison(
-                actionId = "night-one-poison-seat-two",
-                phase = StorytellerPhase.FIRST_NIGHT,
-                round = 1,
-                sequence = 0,
-                targetSeat = 2,
-            ),
-        )
-        original.commitGlobalEpistemicObservation(globalPublicDraft("public-death"))
-        val persisted = original.state
-
-        val restored = ClocktowerGameSession.restoreProduction(persisted)
-
-        assertEquals(persisted, restored.state)
-        assertEquals(3L, restored.state.gameStateRevision)
-        assertEquals(2L, restored.state.playerInputRevision)
-        assertEquals(2L, restored.state.nextTimelineGlobalSequence)
-        assertEquals(
-            listOf("night-one-poison-seat-two"),
-            restored.state.actionTimeline.reducerFacts().map { it.actionId },
-        )
-        assertEquals(listOf("public-death"), restored.state.epistemicObservationLog.records.map { it.recordId })
-    }
-
-    @Test
-    fun `causal journal belongs to the live Session and restores as its single validated owner`() {
+    fun `causal journal belongs to the live Session as its single owner`() {
         val session = ClocktowerGameSession.createProduction(
             gameId = "journal-session",
             gameSeed = initialState.seed,
@@ -247,19 +210,10 @@ class ClocktowerGameSessionTest {
         assertSame(owned, session.causalDecisionJournal)
         val archive = owned.archive()
         assertEquals("journal-session", archive.gameId)
-
-        val restored = ClocktowerGameSession.restoreProduction(session.state, archive)
-        assertNotSame(owned, restored.causalDecisionJournal)
-        assertEquals(archive, restored.causalDecisionJournal.archive())
-        assertThrows(IllegalArgumentException::class.java) {
-            ClocktowerGameSession.restoreProduction(
-                session.state, archive.copy(gameId = "other-game"),
-            )
-        }
     }
 
     @Test
-    fun `accepted setup choices are Session owned and survive exact Recovery`() {
+    fun `accepted setup choices are Session owned and appear in canonical history`() {
         val session = ClocktowerGameSession.createProduction(
             gameId = "single-writer-setup",
             gameSeed = initialState.seed,
@@ -303,11 +257,6 @@ class ClocktowerGameSessionTest {
         )
         assertEquals(4, replay.redHerringSeat)
         assertEquals(bluffRoles, replay.demonBluffRoleIds)
-
-        val recovered = ClocktowerGameSession.restoreProduction(session.state)
-        assertEquals(session.state, recovered.state)
-        assertEquals(bluffRoles, recovered.view.demonBluffRoleIds)
-        assertEquals(4, recovered.view.redHerringSeat)
 
         assertThrows(IllegalArgumentException::class.java) {
             session.commitRedHerringSeat(8, StorytellerPhase.FIRST_NIGHT, 1, 3) // Imp is Evil.

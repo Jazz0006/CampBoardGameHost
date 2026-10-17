@@ -8,7 +8,7 @@ import org.json.JSONObject
 /**
  * Preferences owned by the application shell rather than an active game session.
  *
- * Recovery and archived-game persistence deliberately live behind separate owners.
+ * Archived-game persistence lives behind a separate owner.
  */
 internal class AppPreferencesStore(
     private val context: Context,

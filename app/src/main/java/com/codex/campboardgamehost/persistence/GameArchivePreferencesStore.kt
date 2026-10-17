@@ -6,7 +6,7 @@ import org.json.JSONArray
 /**
  * Archived completed-game preference I/O.
  *
- * This store does not own active-game Recovery and delegates archive wire semantics to
+ * This store delegates archive wire semantics to
  * [GameArchiveJsonCodec].
  */
 internal class GameArchivePreferencesStore(

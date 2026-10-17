@@ -39,7 +39,6 @@ import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SeatingFirstSetupScreen(
-    savedGamePreview: SavedGamePreview?,
     commonPlayers: List<String>,
     playerExperienceByName: Map<String, PlayerExperienceLevelV1>,
     onPlayerExperienceChange: (String, PlayerExperienceLevelV1) -> Unit,
@@ -47,8 +46,6 @@ internal fun SeatingFirstSetupScreen(
     onAddCurrentPlayer: (String) -> Unit,
     onRemoveCurrentPlayer: (Int) -> Unit,
     onMoveCurrentPlayerTo: (Int, Int) -> Unit,
-    onResumeSavedGame: () -> Unit,
-    onDiscardSavedGame: () -> Unit,
     onOpenSettings: () -> Unit,
     onConfirmSeats: () -> Unit,
 ) {
@@ -112,26 +109,6 @@ internal fun SeatingFirstSetupScreen(
                     }
                     TextButton(onClick = onOpenSettings) {
                         Text("⚙")
-                    }
-                }
-
-                savedGamePreview?.let { preview ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = preview.title,
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        TextButton(onClick = onResumeSavedGame) {
-                            Text(text("继续", "Resume"))
-                        }
-                        TextButton(onClick = onDiscardSavedGame) {
-                            Text(text("放弃", "Discard"))
-                        }
                     }
                 }
 

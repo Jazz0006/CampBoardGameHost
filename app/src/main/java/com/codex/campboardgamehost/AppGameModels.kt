@@ -35,12 +35,6 @@ internal data class GameOutcome(
     val reason: String,
 )
 
-internal data class SavedGamePreview(
-    val title: String,
-    val subtitle: String,
-    val savedAtLabel: String?,
-)
-
 internal data class ArchivedGameReview(
     val id: Long,
     val archivedAtMillis: Long,

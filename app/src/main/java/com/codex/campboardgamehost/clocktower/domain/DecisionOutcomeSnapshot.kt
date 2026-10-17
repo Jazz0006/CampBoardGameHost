@@ -1,6 +1,6 @@
 package com.codex.campboardgamehost.clocktower.domain
 
-/** Canonical typed outcome retained for actual Host causal journal and Recovery. */
+/** Canonical typed outcome retained for actual Host causal journal. */
 data class DecisionOutcomeSnapshot(
     val decisionType: String,
     val canonicalFields: Map<String, String>,
