@@ -243,11 +243,7 @@ internal object RecoveryRestorePlanner {
             mechanics.pendingKlutzName,
             mechanics.highestVoteName,
         ).forEach { name -> requireKnownName(name, knownNames) }
-        mechanics.slayerClaimedNames.forEach { requireKnownName(it, knownNames) }
         mechanics.artistClaimedNames.forEach { requireKnownName(it, knownNames) }
-        require(mechanics.slayerClaimedNames.distinct().size == mechanics.slayerClaimedNames.size) {
-            "Slayer claim history cannot contain duplicates."
-        }
         require(mechanics.artistClaimedNames.distinct().size == mechanics.artistClaimedNames.size) {
             "Artist claim history cannot contain duplicates."
         }
