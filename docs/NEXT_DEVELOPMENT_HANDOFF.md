@@ -10,11 +10,11 @@ C1 #318 `fb663d6a` 已完成幽灵票、phase/round 单源投影及 journal 请�
 
 C2 分支 `codex/converge-night-vote-state`（#319，`9769f8a4`）基于 #318。C2 将已确认攻击/保护/市长转移/待生效继任人和当日最高票/平票归 Session；删除 App/Host 写副本及旧 checkpoint reducer/transaction、UI vote transaction。具体证据和测试退休映射见 [C2 实施](NIGHT_VOTE_OWNERSHIP_IMPLEMENTATION_2026-10-17.md)。远端检查和合并状态以当前 PR 实时状态为准。
 
-第四阶段当前分支：`codex/remove-app-legacy-paths`，包含 D1 文档审计与 D2 实施，基于 C2。
+第四阶段 D1/D2：#320 `b3c0f248`，完整 CI/R2 已通过，未合并。当前 D3a 分支 `codex/converge-poison-settlement` 基于该检查点。
 
-## 当前第四阶段 D2 / 下一检查点 D3
+## 当前第四阶段 D3a / 下一检查点 D3b
 
-D1 审计见 [第四阶段审计](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)。D2 已删除手动酒鬼未消费请求字段/工厂及 App 旧模式分支，见 [实施记录](APP_LEGACY_PATH_REMOVAL_D2_2026-10-17.md)。下一步 D3 收缩黎明/日末 materialization，固定 Session 窄提交边界；后续才拆白天/夜间和 AI 生命周期。App 4,006 行 / 229,866 bytes，Host 3,022 行 / 179,448 bytes；大文件治理尚未完成。
+D1 审计见 [第四阶段审计](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)。D2 已删除手动酒鬼未消费请求字段/工厂及 App 旧模式分支，见 [实施记录](APP_LEGACY_PATH_REMOVAL_D2_2026-10-17.md)。D3a 已统一三条中毒结算入口并删除重复恢复查询与中间计划，见 [实施记录](POISON_SETTLEMENT_D3A_2026-10-17.md)。下一步 D3b 继续收缩死亡、身份和阶段结算；后续才拆白天/夜间和 AI 生命周期。App 3,887 行 / 221,785 bytes，Host 3,022 行 / 179,448 bytes；大文件治理尚未完成。
 
 仍保留的夜间 checkpoint 仅是规则 planner 的临时输入，未存入 Session 或磁盘。夜间空目标确认、依赖失效和投票时门槛尚未全部进入事件记录，不能用最后一条动作冒充完整有效状态。后续补事件覆盖和最小继续游戏时明确处理这些缺口，不复活旧存档框架。
 

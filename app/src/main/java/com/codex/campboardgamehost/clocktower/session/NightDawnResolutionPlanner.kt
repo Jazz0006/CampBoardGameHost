@@ -32,9 +32,9 @@ internal data class DawnDeathIntent(
 /**
  * Canonical poison outcome for a Dawn transaction.
  *
- * [previousTargetSeat] preserves the semantic transition identity independently of the current
- * mechanical poison state. This lets durable materialization repair either side of a partial
- * commit. A null [targetSeat] is therefore an explicit poison clear, not absence of responsibility.
+ * [previousTargetSeat] identifies the confirmed choice on which this decision depends, including
+ * a target whose mechanical poison flag cleared at death. A null [targetSeat] is an explicit
+ * expiry; Session rejects a changed choice instead of repairing partial history.
  */
 internal data class DawnPoisonCarryIntent(
     val targetSeat: Int?,
@@ -149,11 +149,7 @@ internal object NightDawnResolutionPlanner {
         checkpoint: ClocktowerNightCheckpoint,
         demonRoleId: RoleId,
         poisonResolutionInput: NightDawnPoisonResolutionInput? = null,
-        durablePreviousPoisonTargetSeat: Int? = null,
     ): NightDawnResolutionTransition {
-        require(durablePreviousPoisonTargetSeat == null || durablePreviousPoisonTargetSeat > 0) {
-            "Durable previous poison target seat must be positive."
-        }
         val pendingName = checkpoint.pendingNewDemonName
         val pendingSeat = pendingName
             ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
@@ -174,7 +170,7 @@ internal object NightDawnResolutionPlanner {
         val previousPoisonTargetSeat = confirmedPoisonTargetSeat(
             baseGameState = baseGameState,
             checkpoint = checkpoint,
-        ) ?: durablePreviousPoisonTargetSeat
+        )
         val poisonCarry = if (poisonResolutionInput == null) {
             previousPoisonTargetSeat?.let { previousTargetSeat ->
                 DawnPoisonCarryIntent(
@@ -199,7 +195,6 @@ internal object NightDawnResolutionPlanner {
                     baseGameState = baseGameState,
                     checkpoint = checkpoint,
                     input = input,
-                    durablePreviousPoisonTargetSeat = durablePreviousPoisonTargetSeat,
                 )
             }
         }
@@ -275,15 +270,11 @@ internal object NightDawnResolutionPlanner {
         baseGameState: GameState,
         checkpoint: ClocktowerNightCheckpoint,
         input: NightDawnPoisonResolutionInput,
-        durablePreviousPoisonTargetSeat: Int? = null,
     ): DawnPoisonCarryIntent? {
-        require(durablePreviousPoisonTargetSeat == null || durablePreviousPoisonTargetSeat > 0) {
-            "Durable previous poison target seat must be positive."
-        }
         val previousTargetSeat = confirmedPoisonTargetSeat(
             baseGameState = baseGameState,
             checkpoint = checkpoint,
-        ) ?: durablePreviousPoisonTargetSeat
+        )
         val previousTargetName = checkpoint.confirmedPoisonTarget
             ?: previousTargetSeat?.let { targetSeat -> baseGameState.playerAt(targetSeat)?.name }
         val sourceStillOwnsPoisonerAbility =

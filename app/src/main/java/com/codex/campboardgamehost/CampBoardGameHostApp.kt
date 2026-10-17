@@ -91,6 +91,9 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerConfirmedRegistr
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleChange
+import com.codex.campboardgamehost.clocktower.session.commitDawnPoisonCarry
+import com.codex.campboardgamehost.clocktower.session.expirePoisonAtDusk
+import com.codex.campboardgamehost.clocktower.session.DawnPoisonCarryIntent
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPoisonTransition
 import com.codex.campboardgamehost.clocktower.session.confirmedPoisonTargetName
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPlayerDeath
@@ -98,10 +101,6 @@ import com.codex.campboardgamehost.clocktower.session.DawnCommitIntent
 import com.codex.campboardgamehost.clocktower.session.DawnDurableMaterializationState
 import com.codex.campboardgamehost.clocktower.session.NightDawnDurableMaterializationPlanner
 import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonResolutionInput
-import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonRecoveryAuthority
-import com.codex.campboardgamehost.clocktower.session.DuskPoisonExpiryMaterializationPlanner
-import com.codex.campboardgamehost.clocktower.session.DuskPoisonExpiryMaterializationState
-import com.codex.campboardgamehost.clocktower.session.DuskPoisonExpiryRecoveryAuthority
 import com.codex.campboardgamehost.clocktower.session.NightDawnDeathResolutionInput
 import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
 import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuation
@@ -861,54 +860,21 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun materializeClocktowerPoisonExpiryAtDusk() {
-        check(clocktowerPhase == ClocktowerPhase.Day) {
-            "Clocktower poison expiry must materialize from the outgoing Day."
-        }
-
-        val currentPoisonTargetSeat =
-            confirmedClocktowerPoisonTarget()?.let(::clocktowerSeatFor)
-
-        val durablePreviousPoisonTargetSeat =
-            currentPoisonTargetSeat
-                ?: DuskPoisonExpiryRecoveryAuthority.latestTargetSeatForRound(
-                    actionTimeline = clocktowerActionTimeline,
-                    round = round,
-                )
-
-        val materialization = DuskPoisonExpiryMaterializationPlanner.plan(
-            gameId = clocktowerGameId,
-            round = round,
-            previousTargetSeat = durablePreviousPoisonTargetSeat,
-            state = DuskPoisonExpiryMaterializationState(
-                currentPoisonTargetSeat = currentPoisonTargetSeat,
-                committedActionIds = clocktowerActionTimeline.entries
-                    .map { it.fact.actionId }
-                    .toSet(),
-            ),
-        ) ?: return
-
-        if (materialization.actionIdToCommit != null) {
-            val localSequence = requireClocktowerGameSession().nextInputSequence
-            requireClocktowerGameSession().commitConfirmedPoisonTransition(
-                preserveNightChoices = true,
-                draft = ActionFactDraft.Poison(
-                    actionId = materialization.actionIdToCommit,
-                    phase = storytellerPhaseFor(),
-                    round = round,
-                    sequence = localSequence,
-                    targetSeat = null,
-                ),
-                expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
-            )
+        val session = requireClocktowerGameSession()
+        if (session.expirePoisonAtDusk(session.state.gameStateRevision)) {
             publishClocktowerSessionView()
             invalidateA4RevisionScope()
-        } else {
-            // State/history split-repair is retired: an already accepted expiry is a no-op.
-            check(!materialization.stateMutationRequired) {
-                "Dusk poison expiry has a durable fact but an unapplied mechanical state."
-            }
         }
         clocktowerPoisonTarget = null
+    }
+
+    fun commitClocktowerDawnPoison(intent: DawnPoisonCarryIntent) {
+        val session = requireClocktowerGameSession()
+        if (session.commitDawnPoisonCarry(intent, session.state.gameStateRevision)) {
+            publishClocktowerSessionView()
+            invalidateA4RevisionScope()
+        }
+        clocktowerPoisonTarget = session.state.confirmedPoisonTargetName(round)
     }
 
     fun commitClocktowerPhaseAdvance(
@@ -2936,11 +2902,6 @@ internal fun CampBoardGameHostApp() {
                                                 effectiveNightState = effectiveNightState,
                                             )
                                         },
-                                        durablePreviousPoisonTargetSeat = NightDawnPoisonRecoveryAuthority
-                                            .latestTargetSeatForRound(
-                                                actionTimeline = clocktowerActionTimeline,
-                                                round = round,
-                                            ),
                                     )
                                     val dawnCommitIntent = transition.dawnCommitIntent
                                     if (transition.continuation == NightResolutionContinuation.DAWN && dawnCommitIntent != null) {
@@ -2952,8 +2913,6 @@ internal fun CampBoardGameHostApp() {
                                                 aliveSeats = effectiveNightState.effectiveAliveSeats,
                                                 roleIdsBySeat = effectiveNightState.effectiveRoleIdsBySeat,
                                                 currentPhase = storytellerPhaseFor(),
-                                                currentPoisonTargetSeat =
-                                                    confirmedClocktowerPoisonTarget()?.let(::clocktowerSeatFor),
                                                 committedActionIds = clocktowerActionTimeline.entries
                                                     .map { it.fact.actionId }
                                                     .toSet(),
@@ -2964,7 +2923,6 @@ internal fun CampBoardGameHostApp() {
                                             advanceToDawn = true,
                                         )
                                         val phaseAdvance = durableMaterializationPlan.phaseAdvance
-                                        val poisonMaterialization = durableMaterializationPlan.poison
                                         durableMaterializationPlan.roleChanges.forEach { roleChangeMaterialization ->
                                             val roleChange = roleChangeMaterialization.intent
                                             val targetName = cards.getOrNull(roleChange.targetSeat - 1)?.name
@@ -2991,31 +2949,7 @@ internal fun CampBoardGameHostApp() {
                                                 }
                                             }
                                         }
-                                        poisonMaterialization?.let { materialization ->
-                                            if (materialization.actionIdToCommit != null) {
-                                                val localSequence = requireClocktowerGameSession().nextInputSequence
-                                                requireClocktowerGameSession().commitConfirmedPoisonTransition(
-                                                    preserveNightChoices = true,
-                                                    draft = ActionFactDraft.Poison(
-                                                        actionId = materialization.actionIdToCommit,
-                                                        phase = storytellerPhaseFor(),
-                                                        round = round,
-                                                        sequence = localSequence,
-                                                        targetSeat = materialization.intent.targetSeat,
-                                                    ),
-                                                    expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
-                                                )
-                                                publishClocktowerSessionView()
-                                                invalidateA4RevisionScope()
-                                            } else {
-                                                check(!materialization.stateMutationRequired) {
-                                                    "Dawn poison carry requires a mechanical repair without a new action."
-                                                }
-                                            }
-                                            val poisonTargetName = materialization.intent.targetSeat
-                                                ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
-                                            clocktowerPoisonTarget = poisonTargetName
-                                        }
+                                        dawnCommitIntent.poisonCarry?.let(::commitClocktowerDawnPoison)
                                         clocktowerPendingNewDemonName = transition.checkpoint.pendingNewDemonName
                                         clocktowerPendingNightNewDemonIdentityName = transition.checkpoint.pendingNightNewDemonIdentityName
                                         clocktowerDemonSuccessorTarget = transition.checkpoint.demonSuccessorDraftTarget
@@ -3676,12 +3610,6 @@ internal fun CampBoardGameHostApp() {
                             }
                             val postDeathEffectiveNightState = postDeathGameState.toBaseEffectiveNightState()
 
-                            val durablePreviousPoisonTargetSeat =
-                                NightDawnPoisonRecoveryAuthority.latestTargetSeatForRound(
-                                    actionTimeline = clocktowerActionTimeline,
-                                    round = round,
-                                )
-
                             val ordinaryDawnPoisonIntent = dawnPoisoner?.let { source ->
                                 NightDawnResolutionPlanner.planPoisonCarry(
                                     baseGameState = baseGameState,
@@ -3691,57 +3619,10 @@ internal fun CampBoardGameHostApp() {
                                         poisonerRoleId = source.actualRole,
                                         effectiveNightState = postDeathEffectiveNightState,
                                     ),
-                                    durablePreviousPoisonTargetSeat = durablePreviousPoisonTargetSeat,
                                 )
                             }
 
-                            ordinaryDawnPoisonIntent?.let { poisonIntent ->
-                                val poisonMaterialization = requireNotNull(
-                                    NightDawnDurableMaterializationPlanner.plan(
-                                        gameId = clocktowerGameId,
-                                        round = round,
-                                        intent = DawnCommitIntent(poisonCarry = poisonIntent),
-                                        state = DawnDurableMaterializationState(
-                                            aliveSeats = postDeathEffectiveNightState.effectiveAliveSeats,
-                                            roleIdsBySeat = postDeathEffectiveNightState.effectiveRoleIdsBySeat,
-                                            currentPhase = storytellerPhaseFor(),
-                                            currentPoisonTargetSeat =
-                                                confirmedClocktowerPoisonTarget()?.let(::clocktowerSeatFor),
-                                            committedActionIds = clocktowerActionTimeline.entries
-                                                .map { it.fact.actionId }
-                                                .toSet(),
-                                            committedObservationRecordIds = clocktowerEpistemicObservations
-                                                .map { it.recordId }
-                                                .toSet(),
-                                        ),
-                                        advanceToDawn = false,
-                                    ).poison,
-                                )
-
-                                if (poisonMaterialization.actionIdToCommit != null) {
-                                    val localSequence = requireClocktowerGameSession().nextInputSequence
-                                    requireClocktowerGameSession().commitConfirmedPoisonTransition(
-                                        preserveNightChoices = true,
-                                        draft = ActionFactDraft.Poison(
-                                            actionId = poisonMaterialization.actionIdToCommit,
-                                            phase = storytellerPhaseFor(),
-                                            round = round,
-                                            sequence = localSequence,
-                                            targetSeat = poisonMaterialization.intent.targetSeat,
-                                        ),
-                                        expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
-                                    )
-                                    publishClocktowerSessionView()
-                                    invalidateA4RevisionScope()
-                                } else {
-                                    check(!poisonMaterialization.stateMutationRequired) {
-                                        "Dawn poison carry requires a mechanical repair without a new action."
-                                    }
-                                }
-                                val poisonTargetName = poisonMaterialization.intent.targetSeat
-                                    ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
-                                clocktowerPoisonTarget = poisonTargetName
-                            }
+                            ordinaryDawnPoisonIntent?.let(::commitClocktowerDawnPoison)
 
                             if (nightKlutzName != null) {
                                 clocktowerPendingKlutzName = nightKlutzName

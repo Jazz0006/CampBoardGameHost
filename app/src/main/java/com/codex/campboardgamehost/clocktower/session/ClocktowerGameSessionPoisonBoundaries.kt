@@ -11,18 +11,60 @@ import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
  * mechanical poisoned flag has already cleared. The last same-round expiry (null) wins.
  * No obsolete snapshot compatibility fallback: current games commit their choices as facts.
  */
-internal fun ClocktowerSessionState.confirmedPoisonTargetName(round: Int): String? {
+internal fun ClocktowerSessionState.confirmedPoisonTargetSeat(round: Int): Int? {
     require(round > 0)
-    val last = actionTimeline.entries.asReversed().firstOrNull { entry ->
-        entry.point.round == round && entry.fact is ActionFact.Poison
-    }
-    if (last != null) {
-        val targetSeat = (last.fact as ActionFact.Poison).targetSeat ?: return null
-        return requireNotNull(gameState.playerAt(targetSeat)) {
-            "Confirmed Session poison references unknown seat $targetSeat."
+    return (actionTimeline.entries.asReversed().firstOrNull {
+        it.point.round == round && it.fact is ActionFact.Poison
+    }?.fact as? ActionFact.Poison)?.targetSeat
+}
+
+internal fun ClocktowerSessionState.confirmedPoisonTargetName(round: Int): String? =
+    confirmedPoisonTargetSeat(round)?.let { seat ->
+        requireNotNull(gameState.playerAt(seat)) {
+            "Confirmed Session poison references unknown seat $seat."
         }.name
     }
-    return null
+
+/** Commit the rules planner's carry/expiry; it cannot choose a different poison victim. */
+internal fun ClocktowerGameSession.commitDawnPoisonCarry(
+    intent: DawnPoisonCarryIntent,
+    expectedGameStateRevision: Long,
+): Boolean {
+    check(state.phase == StorytellerPhase.NIGHT) { "Dawn poison settles from Night." }
+    require(intent.targetSeat == null || intent.targetSeat == intent.previousTargetSeat)
+    return settlePoison(intent.targetSeat, intent.previousTargetSeat, expectedGameStateRevision)
+}
+
+/** The outgoing Day owns expiry, before the next Night phase is committed. */
+internal fun ClocktowerGameSession.expirePoisonAtDusk(expectedGameStateRevision: Long): Boolean {
+    check(state.phase == StorytellerPhase.DAY) { "Dusk poison settles from Day." }
+    return settlePoison(null, state.confirmedPoisonTargetSeat(state.round), expectedGameStateRevision)
+}
+
+private fun ClocktowerGameSession.settlePoison(
+    targetSeat: Int?,
+    previousTargetSeat: Int?,
+    expectedGameStateRevision: Long,
+): Boolean {
+    check(state.gameStateRevision == expectedGameStateRevision) { "Stale poison settlement." }
+    val current = state.confirmedPoisonTargetSeat(state.round)
+    check(state.gameState == gameStateWithPoisonTarget(current)) {
+        "Confirmed poison and mechanical state disagree."
+    }
+    if (current == targetSeat) return false
+    check(current == previousTargetSeat) { "Poison settlement no longer matches the confirmed choice." }
+    commitConfirmedPoisonTransition(
+        draft = ActionFactDraft.Poison(
+            actionId = "poison-settlement-${state.gameId}-${state.round}-${state.phase}-$nextInputSequence",
+            phase = state.phase,
+            round = state.round,
+            sequence = nextInputSequence,
+            targetSeat = targetSeat,
+        ),
+        expectedGameStateRevision = expectedGameStateRevision,
+        preserveNightChoices = true,
+    )
+    return true
 }
 
 private fun ClocktowerGameSession.gameStateWithPoisonTarget(targetSeat: Int?): GameState {
