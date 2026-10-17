@@ -295,6 +295,14 @@
 - `ClocktowerFirstNightInformationRequestTest` 增加 NGJ stale-card vs accepted GameState 回归：卡片显示 Baron 在 3，但 Session 已确认 Baron 在 5 时，旧 2/3 真配对不能继续作为合法信息发布。保留并更新原 Chef/TB 与 NGJ 回归。源码提交 `f2e166e3c39c43f068d8ebfd4991d0dbb3f54462` 已推送；[R2 #3860](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38999981491) SUCCESS；同一源码 [CI #4271](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38999981475) Android 全量单测/Debug APK、ASP、Real Clingo 与 CI Gate 全部 SUCCESS。未调用付费 API，未作真机测试。
 - **余下仅两条生产 cards→GameState：** `CampBoardGameHostApp.resetDealState` 在尚无 Session 时创建初始状态，这条是合法边界，不能机械删除；`RecoveryRestorePlanner` 恢复验证仍从存档卡片重构，App 恢复也从恢复后的卡片创建 Session。下一批需要连同存档可写角色/存活重复字段一起审计迁移，不能让验证与恢复信任不同来源；同批或随后检查 Compose phase/round/confirmed checkpoint 是否仍有双轨。A3 NOT DONE，A4/A5/A6 未开始。
 
+#### A3 第五批：恢复校验与实际 Session 采用同一个预验证对象（2026-10-17；A3 PARTIAL）
+
+- 从 `7f32d196a9f1dfcbcffbfc156ea128bc31f27358` clean、origin-equal 开始，PR #315 仍 Draft/dirty，对 main 未合并。恢复审计发现原 `RecoveryRestorePlanner` 仅在存在因果记录时临时拼装 `ClocktowerSessionState` 做验证；`CampBoardGameHostApp.applyValidatedRecoveryPlan` 随后又从 *localizedRestoredCard* 构造另一份 `GameState` 和 Session。两套转换虽取同一组卡片，却会把恢复合法性与最终应用隔成两次独立事实重建；后者发生在 UI 已开始被清空之后。
+- 保留 v3 恢复卡片作为兼容输入，但现在只在 `RecoveryRestorePlanner.validateClocktower` 内发生**一次** `cards.toClocktowerGameState`；随即构造完整 `ClocktowerSessionState`（游戏 ID/seed、已确认真实/展示角色、毒效、revisions、action timeline、观察历史、红鲱鱼、恶魔伪装、玩家经验）并执行 `ClocktowerGameSession.restoreProduction` 与因果记录归档校验。预验证的 Session 放入**一次性** `ValidatedClocktowerRecoveryRuntime.session`，直接由 App 在 apply 时采用，不另建长期影子状态、缓存或 cards→GameState 转换。恢复采用过程仍保留 Undercover 原流程。
+- 因 `ClocktowerSessionPlayerCards` 在 Session 死亡座位上必须能找到正式的 `ActionFact.Death/Execution` 才可显示死亡回合，校验阶段现在对这种必要事实进行 preflight，避免 `Ready` 后重建 UI 时才失败；不伪造历史和死亡事实。测试验证恢复方案携带的同一 Session 含修订、红鲱鱼、恶魔伪装、毒效与角色；含因果更正历史的恢复对象具备经校验的 journal；历史卡片记录死亡但缺正式事件的恢复被提前拒绝。
+- 首批源码提交 `5a9d7f1e062b0e5838cf4da432a6717c15d70528` 已推送；[CI #4273](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39000674575) 因遗漏仍由 AI 确认逻辑使用的 `ClocktowerSessionState` import 发生 Kotlin 编译失败，**不得宣称该 SHA 全绿**。修复源码 `5ca71c77a3b4eda7faeee95ff76745f06aebb410` 已推送，同一源码 [CI #4274](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39000857230) Android 全量单测/Debug APK、ASP、Real Clingo 与 CI Gate 全部 SUCCESS；[R2 #3862](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39000857252) SUCCESS。不作付费模型调用/Android 真机验收。
+- **A3 尚未完成：** v3 恢复 JSON 仍保存角色/阵营/死亡回合等 PlayerCard 机械字段，本批未变更现役 Recovery schema，以免中途破坏四小时窗口存档；它们仅用于唯一一次恢复转换而非游戏期间的第二写入源。剩余 A3 应审计并收敛 Compose 阶段、回合和已确认夜晚选择归属，以及恢复数据与 Session 的重复持久化字段。若需全面更换 v3 存档 schema 与兼容策略，归入 A5 统一恢复瘦身，勿私自宣称 A3/A5 DONE。
+
 - Session 对游戏中的真实角色/展示身份/存活/投毒/阶段/确认选择和必要能力状态提供只读 view；PlayerCard 只保留 UI 名称/视觉元素等非权威展示属性。
 - 消除游戏进行中的 cards.toClocktowerGameState() 读取和由 UI 卡片反向覆盖 Session 的写入；仅允许开局初始化及必要的旧边界适配（迁移完成即移除不必要适配）。
 - 逐项统一攻击、保护、处决、死亡、角色变化、夜间动作，保留 Undercover 原行为。
