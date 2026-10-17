@@ -116,11 +116,7 @@ internal fun ClocktowerJudgeScreen(
     highestVoteName: String?,
     highestVoteCount: Int,
     gameOutcome: GameOutcome?,
-    onCommitConfirmedPrivateInformationPublication: (
-        EpistemicObservationDraft, ClocktowerConfirmedRegistrationPublicationV1?,
-    ) -> Unit,
-    onCommitConfirmedRegistrationResult: (ClocktowerConfirmedRegistrationPublicationV1) -> Unit,
-    onPreflightConfirmedRegistrationResult: (ClocktowerConfirmedRegistrationPublicationV1) -> Boolean,
+    onCommitConfirmedPrivateInformationPublication: (EpistemicObservationDraft) -> Unit,
     onHostTools: () -> Unit,
     onPreviousFromFirstNightReady: () -> Unit,
     onMovePreviousNightStep: () -> Unit,
@@ -971,15 +967,12 @@ internal fun ClocktowerJudgeScreen(
             fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
         ) != null
     }
-    fun recordReliablePrivateInformation(
-        displayStep: ClocktowerNightStepUi,
-        publication: ClocktowerConfirmedRegistrationPublicationV1?,
-    ) {
+    fun recordReliablePrivateInformation(displayStep: ClocktowerNightStepUi) {
         val actor = displayStep.actor ?: return
         val actorSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return
         if (!informationDecisionPublicationAllowed(displayStep)) return
         displayStep.informationDecisionConfirmation?.let { confirmation ->
-            onCommitConfirmedPrivateInformationPublication(confirmation.draft, publication)
+            onCommitConfirmedPrivateInformationPublication(confirmation.draft)
             return
         }
         val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
@@ -1061,7 +1054,7 @@ internal fun ClocktowerJudgeScreen(
                 ObservationReliability.RECEIVED_AS_FUNCTIONING
             },
             proposition = proposition,
-        ), publication)
+        ))
     }
     val undertakerTarget = lastExecutedName?.let { name -> cards.firstOrNull { it.name == name } }
     val undertakerRegistrationKey = undertakerTarget?.takeIf { it.name == spyCard?.name }?.let { registrationKey("Undertaker", it.name) }
@@ -1992,31 +1985,6 @@ internal fun ClocktowerJudgeScreen(
             }
         }
         val currentSurfacePlan = clocktowerNightSurfacePlan(currentStep, phase)
-        val currentSpyRegistrationResolution = currentStep.roleEnName?.let { roleEnName ->
-            registration.registrationResolution(
-                currentStep.spyRegistrationKey,
-                roleEnName,
-                spyCard,
-                currentStep.spyRegistrationTeams,
-                currentStep.spyRegistrationDetail,
-            )
-        }
-        val currentRecluseRegistrationResolution = currentStep.roleEnName?.let { roleEnName ->
-            // Numeric/Boolean alignment questions do not name a specific Evil role; an empty
-            // role filter means ALIGNMENT_ONLY, not that the Recluse is irrelevant.
-            val filteredTeams = currentStep.recluseRegistrationTeams.ifEmpty {
-                listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon)
-            }
-            registration.registrationResolution(
-                currentStep.recluseRegistrationKey,
-                roleEnName,
-                recluseCard,
-                filteredTeams,
-                detail = if (currentStep.recluseRegistrationTeams.isEmpty()) {
-                    ClocktowerRegistrationDetail.AlignmentOnly
-                } else ClocktowerRegistrationDetail.Role,
-            )
-        }
         val selectedNightName = when (currentStep.action) {
             ClocktowerNightAction.RedHerring -> redHerring
             ClocktowerNightAction.Poison -> poisonDraftTarget
@@ -2320,29 +2288,6 @@ internal fun ClocktowerJudgeScreen(
                 ),
                 step = currentStep,
                 surfacePlan = currentSurfacePlan,
-                spyCard = spyCard,
-                spyRegistrationResolution = currentSpyRegistrationResolution,
-                onSpyRegistrationGoodChange = { good ->
-                    currentStep.spyRegistrationKey?.let { key ->
-                        registrationState.chooseSpy(key, good)
-                        if (!good && redHerring == spyCard?.name && currentStep.action == ClocktowerNightAction.RedHerring) {
-                            onSelectRedHerring(null)
-                        }
-                    }
-                },
-                onSpyRegistrationRoleChange = { roleName ->
-                    currentStep.spyRegistrationKey?.let { registrationState.chooseSpyRole(it, roleName) }
-                },
-                recluseCard = recluseCard,
-                recluseRegistrationResolution = currentRecluseRegistrationResolution,
-                onRecluseRegistrationEvilChange = { evil ->
-                    currentStep.recluseRegistrationKey?.let { key ->
-                        registrationState.chooseRecluse(key, evil)
-                    }
-                },
-                onRecluseRegistrationRoleChange = { roleName ->
-                    currentStep.recluseRegistrationKey?.let { registrationState.chooseRecluseRole(it, roleName) }
-                },
                 selectedName = selectedNightName,
                 fortuneTellerFirst = fortuneTellerFirst,
                 fortuneTellerSecond = fortuneTellerSecond,
@@ -2390,14 +2335,6 @@ internal fun ClocktowerJudgeScreen(
                 onSelectChambermaidSecond = {
                     onSelectChambermaidSecond(if (chambermaidSecond == it) null else it)
                 },
-                onApplyRecommendedDisplayOption = { option ->
-                    // Preview never writes an observed result or a registration ruling.
-                    registrationState.manualChoicesMatchResult(
-                        currentStep.spyRegistrationKey,
-                        currentStep.recluseRegistrationKey,
-                        option,
-                    )
-                },
                 onShowPlayerDisplay = { displayStep ->
                     // UI handoff token is fresh only for newly confirmed
                     // information; a prior displayed observation is not a new turn.
@@ -2439,103 +2376,18 @@ internal fun ClocktowerJudgeScreen(
                     try {
                     com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
                         .revealStage("CLICKED", phase.toStorytellerPhase().name, round)
-                    val spyChoice = registrationState.explicitChoice(
-                        ClocktowerRegistrationSubject.SPY, currentStep.spyRegistrationKey,
-                    )
-                    val recluseChoice = registrationState.explicitChoice(
-                        ClocktowerRegistrationSubject.RECLUSE, currentStep.recluseRegistrationKey,
-                    )
-                    val plan = if (clocktowerDisplayedInformationIsUnreliable(
-                            displayStep, ::actorIsUnreliable,
-                        )
-                    ) {
-                        // Drunk/poisoned results are arbitrary: a matching truthful witness is
-                        // not a historical explanation. Do not turn it into a canonical ruling.
-                        if (spyChoice != null || recluseChoice != null) {
-                            ClocktowerResultRegistrationPlanV1.ConflictingManualChoice
-                        } else {
-                            ClocktowerResultRegistrationPlanV1.NoVerifiedWitness
-                        }
-                    } else clocktowerPlanConfirmedResultRegistrations(
-                        shownProposition = displayStep.informationDecisionConfirmation?.draft?.proposition
-                            ?: displayStep.displayProposition,
-                        shownKind = displayStep.displayKind,
-                        shownPrimary = displayStep.displayPrimary,
-                        legalCandidates = currentStep.manualInformationCandidates,
-                        spy = spyChoice,
-                        spySeat = spyCard?.let { cards.indexOf(it).takeIf { index -> index >= 0 }?.plus(1) }
-                            ?.takeIf { currentStep.spyRegistrationKey != null &&
-                                currentSpyRegistrationResolution?.canUseSpecialAbility == true },
-                        spyQuestion = if (currentStep.spyRegistrationDetail == ClocktowerRegistrationDetail.AlignmentOnly) {
-                            RegistrationQuestion.ALIGNMENT
-                        } else RegistrationQuestion.ROLE,
-                        recluse = recluseChoice,
-                        recluseSeat = recluseCard?.let { cards.indexOf(it).takeIf { index -> index >= 0 }?.plus(1) }
-                            ?.takeIf { currentStep.recluseRegistrationKey != null &&
-                                currentRecluseRegistrationResolution?.canUseSpecialAbility == true },
-                        recluseQuestion = if (currentStep.recluseRegistrationTeams.isEmpty()) {
-                            RegistrationQuestion.ALIGNMENT
-                        } else RegistrationQuestion.ROLE,
-                    )
-                    if (plan is ClocktowerResultRegistrationPlanV1.ConflictingManualChoice) {
-                        Toast.makeText(
-                            context,
-                            text(
-                                "当前显示结果与已选择的登记裁定冲突，或缺乏可验证的登记证据。",
-                                "The result conflicts with the selected registration or lacks verified witnesses.",
-                            ),
-                            Toast.LENGTH_LONG,
-                        ).show()
-                        com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
-                            .revealStage("BLOCKED", phase.toStorytellerPhase().name, round)
-                    } else {
-                        val ready = plan as? ClocktowerResultRegistrationPlanV1.Ready
-                        val actor = displayStep.actor
-                        val shown = displayStep.informationDecisionConfirmation?.draft?.proposition
-                            ?: displayStep.displayProposition
-                        val publication = if (ready != null && actor != null &&
-                            shown != null && displayStep.roleEnName != null &&
-                            displayStep.interactionId != null
-                        ) {
-                            val actorSeat = cards.indexOfFirst { it.name == actor.name }
-                                .takeIf { it >= 0 }?.plus(1)
-                            actorSeat?.let { seat ->
-                                val recordId = displayStep.informationDecisionConfirmation?.draft?.recordId
-                                    ?: clocktowerPrivateObservationRecordId(
-                                        gameId = gameId,
-                                        phase = phase,
-                                        round = round,
-                                        roleEnName = requireNotNull(displayStep.roleEnName),
-                                        actorSeat = seat,
-                                        proposition = shown,
-                                    )
-                                ClocktowerConfirmedRegistrationPublicationV1(
-                                    interactionId = "${phase.name}:$round:${displayStep.interactionId.value}",
-                                    observationRecordId = recordId,
-                                    sourceSeat = seat,
-                                    shownProposition = shown,
-                                    choices = ready.choices,
-                                    legalResultWitnesses = ready.legalResultWitnesses,
-                                )
-                            }
-                        } else null
-                        val commitVerifiedRegistration: () -> Unit = {
-                            publication?.let(onCommitConfirmedRegistrationResult)
-                        }
                         val handoff = performClocktowerPlayerRevealHandoff(
                             authorize = {
                                 queryRevealDisposition != ClocktowerLiveQueryRevealDisposition.CONFLICT &&
                                     informationDecisionPublicationAllowed(displayStep) &&
-                                    unreliableInformationCanBeRecorded(displayStep) &&
-                                    (ready == null || (publication != null &&
-                                        onPreflightConfirmedRegistrationResult(publication)))
+                                    unreliableInformationCanBeRecorded(displayStep)
                             },
                             publicationNeeded = {
                                 queryRevealDisposition != ClocktowerLiveQueryRevealDisposition.REOPEN &&
                                     firstNightPublicationNeeded(displayStep)
                             },
                             recordPrivateInformation = {
-                                recordReliablePrivateInformation(displayStep, publication)
+                                recordReliablePrivateInformation(displayStep)
                                 com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
                                     .revealStage("OBSERVATION_RECORDED", phase.toStorytellerPhase().name, round)
                             },
@@ -2552,12 +2404,6 @@ internal fun ClocktowerJudgeScreen(
                                     .revealStage("REVEAL_OPENED", phase.toStorytellerPhase().name, round)
                             },
                         )
-                        // Re-opening an unchanged confirmed result can correct an explicitly
-                        // adjudicated witness without publishing a duplicate player observation.
-                        // The Host still requires the exact already-stored most recent observation.
-                        if (handoff.openReveal && !handoff.recordPublication) {
-                            commitVerifiedRegistration()
-                        }
                         if (clocktowerShouldAutoAdvanceAfterFreshReveal(
                                 automaticMode = globalAiAutomatic,
                                 phase = phase,
@@ -2592,7 +2438,6 @@ internal fun ClocktowerJudgeScreen(
                                 Toast.LENGTH_LONG,
                             ).show()
                         }
-                    }
                     } catch (failure: Exception) {
                         // A Host write may already have succeeded. Never retry or
                         // continue the reveal silently after a partial failure.
