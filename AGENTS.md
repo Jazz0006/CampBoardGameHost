@@ -33,6 +33,10 @@ obsolete architecture guards rather than retaining deleted product behavior to s
 Older recovery/architecture documents below are historical where they conflict with this section.
 Local Codex work reads and writes the local project directly; Mini MCP is not required.
 
+## Manual information staged decision (2026-10-18)
+
+**Current cleanup phase: implement unrestricted manual confirmed-result entry first. Do not build a new rules engine or dynamic legal-result suggestions during M1–M5.** Storytellers may confirm any structurally valid number, yes/no, role, or two-seat information statement in MANUAL/AI_ASSISTED; checks remain for seat identity, typed result structure, atomic confirmed facts, duplicates, stale AI, privacy and session integrity. AI_AUTOMATIC does not inherit unrestricted write permission. After cleanup, the owner may separately commission phase two: pair seat-first role list narrowing (with Spy/Recluse or drunk/poisoned alternatives), Chef initial numeric range UI guidance, and Empath dynamic neighbour/status suggestions. Full authority and acceptance: `docs/MANUAL_INFORMATION_TWO_STAGE_PLAN_2026-10-18.md`. This overrides all previous mandates to preserve old legal candidates or implement new partial Host legal computation during cleanup.
+
 ## Evidence-first validation policy (2026-10-15; current authority)
 
 - **Default to evidence-first delivery, not mandatory TDD.** Before changing code, define the user-observable acceptance criterion, risk, owning boundary, and cheapest independent proof. Do **not** require a new test file, artificial RED, or RED/GREEN trace for each new feature, bug fix, source edit, or intermediate wiring step.

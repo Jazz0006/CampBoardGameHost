@@ -35,6 +35,12 @@ Draft PR #332 基于 #331、代码分支 `codex/minimal-host-m1b-session-2026101
 3. 删除仍存在于 `ClocktowerGameSession.commitConfirmedPrivateInformationPublication` 中的可选 registration/witness 事务、`ClocktowerConfirmedRegistrationHostWriterV1`、`ClocktowerConfirmedRegistrationPublicationV1` 及纯旧规则测试；区分真实行动事实与自动推导登记，不复活第二权威状态。
 4. 后续 M2–M5 清理 AI 旧候选协议和规则结算链。避免把多条旧接口长期并存。
 
+## 2026-10-18 新指令（覆盖前文旧合法性方案）
+
+用户要求严格按两阶段：**当前所有清理工作先实现完全自由的人工信息输入**，等旧 Host 规则、候选及辅助实现全部删除并验收后，才独立启动新状态感知建议 UX。后期第二阶段分别为 pair 先选两个座位再按真实座位/间谍/隐士/醉酒中毒状态缩减角色下拉列表、Chef 在阵容确定时准备数字范围并按状态显示、Empath 每次展示前动态查状态和左右邻居并显示候选按钮。本阶段以上三项均不写新计算，不作为 M1 验收要求。参见 `docs/MANUAL_INFORMATION_TWO_STAGE_PLAN_2026-10-18.md`。
+
+立即推进剩余第一阶段：pair 角色及座位声明、角色展示、Chambermaid 数字等自由操作；只校验结果类型/座位/角色/会话结构，不按已知真相过滤；确认展示和值入统一记录；迁移完成后删掉旧代码/测试。不要利用这个方向为新版本重新建立规则域。已通过的 #330–#333 均暂保留 Draft 堆叠关系；后续 PR 单独 CI/R2，禁止声称通过未执行验收。
+
 ## M1c 下一步交接（2026-10-18）
 
 堆叠 Draft PR #333 `codex/minimal-host-m1c-direct-number-20261018`，基于已完成 Session 双轨清理的 #332。代码新增 `ClocktowerDirectNumericResultUi.kt`、`ClocktowerDirectBooleanResult.kt` 及两项关键行为测试，并修改 `ClocktowerNightStepUi.kt` 与首夜历史语义适配。Manual/AI_ASSISTED 的数字及占卜师真假不再受 Host 的合法候选过滤。使用严格的输入类型与查询座位身份，只记录说书人决定展示的实际结果，未做规则真假核定不自动写 TRUE/FALSE。请先核对 #333 最后代码 CI、R2，必要时读 Android job log 直接修复。
