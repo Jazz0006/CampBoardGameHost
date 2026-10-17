@@ -49,7 +49,6 @@ jobs:
           recommendation_ui=app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt
           player_display_ui=app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt
           registration_controls=app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationDecisionControls.kt
-          automatic_registration=app/src/main/java/com/codex/campboardgamehost/ClocktowerAutomaticRegistrationEffect.kt
           legacy_registration_ui=app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt
           night_step_ui=app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
           main=app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
@@ -257,7 +256,6 @@ jobs:
           done
           grep -q "internal fun ClocktowerSpyRegistrationDecisionControls" "$registration_controls"
           grep -q "internal fun ClocktowerRecluseRegistrationDecisionControls" "$registration_controls"
-          grep -q "internal fun ClocktowerAutomaticRegistrationEffect" "$automatic_registration"
           # TB Virgin retains Spy-as-Townsfolk TYPE registration in its interaction owner.
           nomination=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNominationInteraction.kt
           grep -q "ClocktowerNominationInteraction(" "$host"
@@ -274,7 +272,6 @@ jobs:
           grep -q "ClocktowerSlayerInteraction(" "$host"
           grep -q "internal fun ClocktowerSlayerInteraction" "$slayer"
           grep -q "ClocktowerRecluseRegistrationDecisionControls(" "$slayer"
-          grep -q "ClocktowerAutomaticRegistrationEffect(" "$night_step_ui"
 
           for name in ClocktowerResultsDialog; do
             if grep -q "fun ${name}(" "$root"; then
