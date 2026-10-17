@@ -303,6 +303,15 @@
 - 首批源码提交 `5a9d7f1e062b0e5838cf4da432a6717c15d70528` 已推送；[CI #4273](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39000674575) 因遗漏仍由 AI 确认逻辑使用的 `ClocktowerSessionState` import 发生 Kotlin 编译失败，**不得宣称该 SHA 全绿**。修复源码 `5ca71c77a3b4eda7faeee95ff76745f06aebb410` 已推送，同一源码 [CI #4274](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39000857230) Android 全量单测/Debug APK、ASP、Real Clingo 与 CI Gate 全部 SUCCESS；[R2 #3862](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39000857252) SUCCESS。不作付费模型调用/Android 真机验收。
 - **A3 尚未完成：** v3 恢复 JSON 仍保存角色/阵营/死亡回合等 PlayerCard 机械字段，本批未变更现役 Recovery schema，以免中途破坏四小时窗口存档；它们仅用于唯一一次恢复转换而非游戏期间的第二写入源。剩余 A3 应审计并收敛 Compose 阶段、回合和已确认夜晚选择归属，以及恢复数据与 Session 的重复持久化字段。若需全面更换 v3 存档 schema 与兼容策略，归入 A5 统一恢复瘦身，勿私自宣称 A3/A5 DONE。
 
+#### A3 第六批：删除已确认投毒选择的 Compose 可写镜像（2026-10-17；A3 PARTIAL）
+
+- 起点 `bce4e9dc7671fc00a1b509b6d6ae766c2eccae84`、origin-equal、working tree clean；PR #315 仍 Draft、相对 main conflicted，未合并；此前 A3 第五批 CI #4274、R2 #3862 全部 SUCCESS。
+- 实际审计 `clocktowerPhase`、`round`、`ClocktowerNightCheckpoint` 与确认目标读写后，选出一个明确的第二份可写正式事实：`CampBoardGameHostApp.clocktowerConfirmedPoisonTarget`。它曾在玩家确认、暮夜清毒、黎明 carry、恢复以及游戏重置中被独立更新，与 Session 已提交的 `ActionFact.Poison` 与 `GameState.poisoned` 形成可不一致的双轨。
+- 直接删除该 Compose mutable state 与所有镜像写入；夜晚 checkpoint、规则裁定（Slayer、Virgin、Mayor、Recluse、Soldier、Monk、Ravenkeeper、恶魔毒效）、清毒与黎明 carry、恢复存档仍保留原输入合同，但现在统一用 `confirmedClocktowerPoisonTarget()` **按调用时 Session 状态即时求值**，无需同帧重组或可写缓存。纯 `ClocktowerSessionState.confirmedPoisonTargetName(round)` 从当前回合最后一个正式 Poison 事件提取确认目标（即使该玩家后来死亡，其身份仍可从原事件找回）；本回合最后一个清毒 Poison(null) 将其取消。只在**整份历史完全没有 typed Poison 事件**的恢复 v3 兼容边界，才从 Session 的 `GameState.poisoned` 读取；已经出现过正式 Poison、只是当前回合没有新选择时，不得将上一夜残留的机械毒效作为本回合的确认选择。尚未确认的 `clocktowerPoisonTarget` 仍仅是 UI 选择草稿，非正式事实。
+- 更新 `ClocktowerGameSessionPoisonBoundaryTest`：活人确认、被投毒者死亡后事实仍可读、跨回合不会凭空继承旧 Poison 选择、同回合清毒覆盖、无 typed Poison 的旧机械恢复兼容。未改变现役恢复 v3 JSON schema 或 Undercover，未添加特殊角色捷径/同步层、未调用付费 API。
+- 第一源码提交 `2915cf42277f26c6faa5b2c150573dd3bcb730b9` 已推送，[R2 #3863](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39002141395) SUCCESS，但 [CI #4276](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39002141539) Android full 在新增跨回合测试发现原兜底将上一回合机械标志误认为当前回合已确认目标，1475 tests/1 failed，故该 SHA **不是 CI 绿**。已依据失败修复，仅无任何 typed Poison 时才兼容退回机械标志；修复源码 `7fe6c9701fc5308f6fa5854fa58862cb6ca19400` 已推送；修复 SHA 的 [CI #4277](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39002439617) 全部 SUCCESS，包括 Android 全量单测/Debug APK、ASP、Real Clingo 与 CI Gate。R2 #3863 是**首次源码 SHA** 的 SUCCESS；只改动 Session 投毒读取兜底的修复 SHA 未单独触发 R2，不能误写为该 SHA 的 R2。未作付费 API 或 Android 真机验收。
+- **后续 A3：** `clocktowerPhase`/`round` 的正式推进已经以 Session PhaseAdvance 实际提交，但 Compose 仍维护主持页面进度并在恢复 v3 wire 中储存；夜间攻击/保护/重定向/恶魔继承等确认选择也仍有已写入 Session 与 Compose 的混合消费者。逐项核对业务语义，再去掉第二份正式可写状态；不要机械删除 UI 草稿、未完结规则继续点或旧存档恢复必要字段。A3 仍 PARTIAL，A4–A6 未实施。
+
 - Session 对游戏中的真实角色/展示身份/存活/投毒/阶段/确认选择和必要能力状态提供只读 view；PlayerCard 只保留 UI 名称/视觉元素等非权威展示属性。
 - 消除游戏进行中的 cards.toClocktowerGameState() 读取和由 UI 卡片反向覆盖 Session 的写入；仅允许开局初始化及必要的旧边界适配（迁移完成即移除不必要适配）。
 - 逐项统一攻击、保护、处决、死亡、角色变化、夜间动作，保留 Undercover 原行为。
