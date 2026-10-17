@@ -61,7 +61,12 @@ internal fun clocktowerFirstNightInformationRequest(
                 }
             },
             reliability = reliability,
-            semanticTruth = if (option.isTruthful) SemanticTruth.TRUE else SemanticTruth.FALSE,
+            // The confirmed display is an observation; Manual input does not certify truth.
+            semanticTruth = when (displayStep.selectedInformationTruthful) {
+                true -> SemanticTruth.TRUE
+                false -> SemanticTruth.FALSE
+                null -> SemanticTruth.NOT_APPLICABLE
+            },
         ),
         )
     }

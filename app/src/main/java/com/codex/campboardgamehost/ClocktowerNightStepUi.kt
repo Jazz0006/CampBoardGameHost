@@ -81,6 +81,30 @@ internal fun ClocktowerNightStepCardLocalized(
         stepRoleEnName = step.roleEnName,
         actor = step.actor,
     )
+    val directNumericActorSeat = step.actor?.let { actor ->
+        cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
+    }
+    if (!allowRuleDeterminedAutoUi && step.isRealAction &&
+        step.action == ClocktowerNightAction.None &&
+        directNumericActorSeat != null &&
+        clocktowerHasDirectNumericInput(step, directNumericActorSeat)
+    ) {
+        ClocktowerDirectNumericResultUi(
+            title = step.displayTitle,
+            actorLabel = step.actor.seatLabel(cards),
+            wakeInstruction = step.storytellerAction,
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            onConfirm = { value ->
+                clocktowerDirectNumericResult(step, directNumericActorSeat, value)
+                    ?.let(onShowPlayerDisplay)
+            },
+        )
+        return
+    }
     fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
     // B7.3's first production slice: a single complete first-night pool is
     // projected differently by execution policy. Later-night families retain
