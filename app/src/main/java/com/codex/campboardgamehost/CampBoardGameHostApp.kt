@@ -3109,6 +3109,7 @@ internal fun CampBoardGameHostApp() {
                     Screen.ClocktowerJudge -> ClocktowerJudgeScreen(
                         allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                         cards = cards,
+                        sessionGameState = requireClocktowerGameSession().state.gameState,
                         events = clocktowerEvents,
                         actualInformationHistory = clocktowerEpistemicObservations,
                         confirmedGrimoireSeats = requireClocktowerGameSession().state.gameState

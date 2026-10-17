@@ -34,13 +34,13 @@ import com.codex.campboardgamehost.ClocktowerResidualDisplayMatcherV2
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.kind
-import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNightFlow
@@ -77,6 +77,8 @@ import kotlinx.coroutines.withContext
 internal fun ClocktowerJudgeScreen(
     allowRuleDeterminedAutoUi: Boolean,
     cards: List<PlayerCard>,
+    // Confirmed mechanical facts come from the one Session, never rebuilt from UI cards.
+    sessionGameState: GameState,
     events: List<ClocktowerEvent>,
     actualInformationHistory: List<RecordedEpistemicObservation>,
     confirmedGrimoireSeats: List<HostSeatPresentation>,
@@ -785,7 +787,7 @@ internal fun ClocktowerJudgeScreen(
             cards = cards,
             scriptRoles = clocktowerRolesForScript(script),
             phase = phase,
-            game = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
+            game = sessionGameState,
             roleDefinitions = clocktowerRoleDefinitionsForScript(script),
             firstNightContext = firstNightPairDecisionContext,
             requireFirstNightContext =
@@ -1957,11 +1959,7 @@ internal fun ClocktowerJudgeScreen(
             else -> text("最高票 · 无", "Highest · none")
         }
         val dayTableState = clocktowerDayOverviewTableState(
-            cards.toClocktowerGameState(
-                script = script,
-                seed = gameSeed,
-                poisonedPlayerName = poisonTarget,
-            ),
+            sessionGameState,
             roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
             ghostVoteAuthority = ghostVoteAuthority,
         )
@@ -2040,11 +2038,7 @@ internal fun ClocktowerJudgeScreen(
             compact = false,
             cards = cards,
             tableState = clocktowerDayOverviewTableState(
-                cards.toClocktowerGameState(
-                    script = script,
-                    seed = gameSeed,
-                    poisonedPlayerName = poisonTarget,
-                ),
+                sessionGameState,
                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
                 ghostVoteAuthority = ghostVoteAuthority,
             ),
@@ -2147,11 +2141,7 @@ internal fun ClocktowerJudgeScreen(
             cards = cards,
             ghostVoteAuthority = ghostVoteAuthority,
             tableState = clocktowerDayOverviewTableState(
-                cards.toClocktowerGameState(
-                    script = script,
-                    seed = gameSeed,
-                    poisonedPlayerName = poisonTarget,
-                ),
+                sessionGameState,
                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
                 ghostVoteAuthority = ghostVoteAuthority,
             ),
@@ -2204,11 +2194,7 @@ internal fun ClocktowerJudgeScreen(
         val slayerTargetCard = cards.firstOrNull { it.name == slayerTargetName }
         val slayerTableState = clocktowerSlayerTableState(
             seats = clocktowerDayOverviewTableState(
-                cards.toClocktowerGameState(
-                    script = script,
-                    seed = gameSeed,
-                    poisonedPlayerName = poisonTarget,
-                ),
+                sessionGameState,
                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
                 ghostVoteAuthority = ghostVoteAuthority,
             ).seats,
@@ -2306,11 +2292,7 @@ internal fun ClocktowerJudgeScreen(
         }
         val artistTableState = clocktowerArtistTableState(
             seats = clocktowerDayOverviewTableState(
-                cards.toClocktowerGameState(
-                    script = script,
-                    seed = gameSeed,
-                    poisonedPlayerName = poisonTarget,
-                ),
+                sessionGameState,
                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
                 ghostVoteAuthority = ghostVoteAuthority,
             ).seats,
@@ -2385,11 +2367,7 @@ internal fun ClocktowerJudgeScreen(
     if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Klutz) {
         val klutzTableState = clocktowerKlutzTableState(
             seats = clocktowerDayOverviewTableState(
-                cards.toClocktowerGameState(
-                    script = script,
-                    seed = gameSeed,
-                    poisonedPlayerName = poisonTarget,
-                ),
+                sessionGameState,
                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
                 ghostVoteAuthority = ghostVoteAuthority,
             ).seats,
