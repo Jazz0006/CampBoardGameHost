@@ -21,3 +21,5 @@ Host 减少 62 行，2,834 → 2,772 行，169,852 → 166,290 bytes。生产总
 两个 NominationDraft typed 回归验证成功时原样转发投票与双方、失败保留草稿/缺失双方拒绝；既有 Virgin、投票、幽灵票、登记规则回归保留。没有真机导航验证，不能据 JVM 宣称取消/来回切换已完成设备验收。D4 剩余 Slayer 交互与白天/黎明早分流仍待实施。
 
 验证：`:app:testFull :app:testFast :app:assembleDebug --offline` 通过，完整 1,339 / 快速 1,332，失败、错误、跳过均为 0；`git diff --check` 通过。远端 CI/R2 以当前 PR head 为准，保持 Draft，合并须另行确认。
+
+R2 后续修复：远端旧断言要求 SpyTownsfolk 控件直接位于 Host，提取后失败。改为检查 Host→NominationInteraction→控件的实际归属，并在两处防止不可达的 Klutz/Spy 控件回归。未删除能力覆盖。完整 R2 shell 本地其余断言通过；macOS grep 不支持的既有多行 -P 检查用等价 Python 正则确认，Ubuntu 远端仍执行原检查。无需重复 JVM 测试（仅 CI 守卫/文档变化）。

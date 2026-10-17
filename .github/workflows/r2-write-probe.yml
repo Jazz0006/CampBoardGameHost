@@ -24,6 +24,7 @@ on:
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerResultsScreen.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNominationInteraction.kt
       - .github/workflows/r2-write-probe.yml
   workflow_dispatch:
 
@@ -256,11 +257,14 @@ jobs:
           grep -q "internal fun ClocktowerSpyRegistrationDecisionControls" "$registration_controls"
           grep -q "internal fun ClocktowerRecluseRegistrationDecisionControls" "$registration_controls"
           grep -q "internal fun ClocktowerAutomaticRegistrationEffect" "$automatic_registration"
-          # TB Virgin genuinely allows Spy-as-Townsfolk TYPE registration.
-          grep -q "ClocktowerSpyTownsfolkTypeDecisionControls(" "$host"
+          # TB Virgin retains Spy-as-Townsfolk TYPE registration in its interaction owner.
+          nomination=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNominationInteraction.kt
+          grep -q "ClocktowerNominationInteraction(" "$host"
+          grep -q "internal fun ClocktowerNominationInteraction" "$nomination"
+          grep -q "ClocktowerSpyTownsfolkTypeDecisionControls(" "$nomination"
           # No supported script has both Klutz and Spy. Guard against restoring
           # the unreachable special-good UI or invented prechoice ruling.
-          if grep -q "ClocktowerSpyGoodAlignmentDecisionControls(" "$host"; then
+          if grep -q "ClocktowerSpyGoodAlignmentDecisionControls(" "$host" "$nomination"; then
             echo "Unreachable Klutz/Spy alignment picker resurfaced in production Host" >&2
             exit 1
           fi
