@@ -27,14 +27,12 @@ internal data class ClocktowerManualRegistrationChoice(
     }
 }
 
-/** UI-local Spy/Recluse selections and per-interaction recording markers. */
+/** UI-local Spy/Recluse selections. */
 internal class ClocktowerRegistrationInteractionState {
     private val spyRegistersGood = mutableStateMapOf<String, Boolean>()
     private val spyRoles = mutableStateMapOf<String, String>()
-    private val recordedSpy = mutableStateMapOf<String, Boolean>()
     private val recluseRegistersEvil = mutableStateMapOf<String, Boolean>()
     private val recluseRoles = mutableStateMapOf<String, String>()
-    private val recordedRecluse = mutableStateMapOf<String, Boolean>()
 
     /**
      * Explicit-only, interaction-local snapshot for later semantic Host validation. In
@@ -79,15 +77,6 @@ internal class ClocktowerRegistrationInteractionState {
     /** Only an explicit manual choice can be committed as a registration ruling. */
     fun spyHasExplicitChoice(key: String?): Boolean = key != null && spyRegistersGood.containsKey(key)
 
-    fun spyWillRecord(key: String?): Boolean =
-        spyHasExplicitChoice(key) && recordedSpy[key] != true
-
-    fun markSpyRecorded(key: String): Boolean {
-        if (!spyHasExplicitChoice(key) || recordedSpy[key] == true) return false
-        recordedSpy[key] = true
-        return true
-    }
-
     fun recluseIsEvil(key: String?): Boolean = key != null && recluseRegistersEvil[key] == true
 
     fun recluseHasExplicitChoice(key: String?): Boolean =
@@ -102,12 +91,6 @@ internal class ClocktowerRegistrationInteractionState {
 
     fun chooseRecluseRole(key: String, role: String) {
         recluseRoles[key] = role
-    }
-
-    fun markRecluseRecorded(key: String): Boolean {
-        if (!recluseHasExplicitChoice(key) || recordedRecluse[key] == true) return false
-        recordedRecluse[key] = true
-        return true
     }
 
     /**

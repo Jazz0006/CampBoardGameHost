@@ -42,19 +42,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-internal fun clocktowerEventPhaseLabel(event: ClocktowerEvent, language: String): String = when (event.phase) {
-    ClocktowerPhase.FirstNight -> if (language == "en") "Night 1" else "第 1 夜"
-    ClocktowerPhase.Dawn -> if (language == "en") "Day ${event.round}" else "第 ${event.round} 天"
-    ClocktowerPhase.Day -> if (language == "en") "Day ${event.round}" else "第 ${event.round} 天"
-    ClocktowerPhase.Night -> if (language == "en") "Night ${event.round}" else "第 ${event.round} 夜"
-}
-
 @Composable
 internal fun ClocktowerResultsDialog(
     cards: List<PlayerCard>,
     outcome: GameOutcome?,
     onDismiss: () -> Unit,
-    onReview: () -> Unit,
     onNewGame: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -205,9 +197,6 @@ internal fun ClocktowerResultsDialog(
                                 TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                                     Text(text("暂不揭晓", "Not yet"))
                                 }
-                                TextButton(onClick = onReview, modifier = Modifier.fillMaxWidth()) {
-                                    Text(text("复盘操作记录", "Review game log"))
-                                }
                             }
                         }
                     } else {
@@ -261,15 +250,6 @@ internal fun ClocktowerResultsDialog(
                                     .padding(horizontal = 16.dp, vertical = 10.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                OutlinedButton(
-                                    onClick = onReview,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(50.dp),
-                                    shape = RoundedCornerShape(14.dp),
-                                ) {
-                                    Text(text("复盘本局记录", "Review this game"))
-                                }
                                 OutlinedButton(
                                     onClick = onNewGame,
                                     modifier = Modifier

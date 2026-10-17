@@ -2,22 +2,22 @@
 
 更新：2026-10-17（Australia/Sydney）。
 
-## 当前基线
+## 当前检查点
 
-准备分支已整合 #315 `06dbb954` 与 main `770ed32f`，并保留本会话的最小状态清理规格。生产代码与 #315 原 head 完全相同；本轮只处理分支、归档和文档，不执行新的生产删除。
+准备基线 #315 `704f7b29`；第一阶段 #316 `ef076287` 已移除独立 Recovery，完整 CI/R2 通过。两个 PR 仍未合并，不把后续重构混入其 diff。
 
-#315 已有：实际 Session 确认边界、逐步 AI 建议采纳、PlayerCard 只读投影及若干消费者迁移、SDE 历史重建支架删除、Recovery 部分瘦身。详细历史在 [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md)。独立 Recovery、文字记录及部分 App 状态镜像仍存在；不可将它们误写成已删除。
+第二阶段分支 `codex/remove-duplicate-game-history` 基于 `ef076287`。已删除 ClocktowerEvent、文字计数器、独立整局归档、复盘/历史入口、夜间文字摘要及专属协议。正式序号读取实时 Session 全局游标；管家同夜确认去重归 Session；玩家揭示保留正式观察提交顺序。完整范围见 [实施记录](TEXT_HISTORY_REMOVAL_IMPLEMENTATION_2026-10-17.md)。
 
-## 当前实施检查点
+本地完整 JVM 1,383 项、FAST 1,376 项和 debug APK 构建通过。新 head 远端 CI/R2 须实时核验。没有真机或真实模型验收声明。
 
-`codex/remove-independent-recovery` 从准备基线 `704f7b29` 实施第一阶段删除，范围和验证见 [实施记录](RECOVERY_REMOVAL_IMPLEMENTATION_2026-10-17.md)。已删除独立 Recovery、两个入口、快照读写和专属协议；A4 诊断刷新不再依赖存档。正常昼夜规则读取和 Session 裁定仍保留。当前有意不支持异常退出后的游戏恢复，也不迁移或擦除旧存档。
+## 明确缺口与保留
 
-本地完整 JVM 回归与 debug APK 构建通过。远端新 head CI/R2 状态须实时核验；没有真机或真实模型验收声明。#315 仍是准备基线 Draft，不把本阶段叠入其长 diff。
+当前无异常退出恢复、整局文字复盘或跨局完整游戏归档，不读取、迁移或擦除设备旧存档。事件覆盖仍不完整，不能宣称 AI wire JSON 可用于重建。现有结构化动作、实际观察和已确认裁定保留；Undercover 淘汰记录仍供其正常游戏界面使用。开局轮换历史只服务多样性，不是整局副本。
 
-## 下一步
+## 下一阶段
 
-第二阶段先解除文字计数器与动作 ID、Host 夜间确认去重的耦合，再删除独立文字列表、重复归档和专属界面。其后收敛状态与历史请求副本，再审计 App/Host。不要以补齐恢复为删除前提。
+按真实生产调用图收敛重复可写状态和精确历史请求副本。特别检查 App confirmed night fields / phase / round / ghost vote 与 Session 的归属，以及 causal journal 冻结请求与实际裁定的边界；不要因名称含 restore/snapshot 就整类删除。`ClocktowerGameSession.restore(GameSnapshot)` 仅用于现有测试，需迁移必要测试语义后退休；journal typed restore 仍服务原子提交。
 
-旧 main 清单仅是历史：[最小状态清理规格](MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md) 中目标仍有效，但旧 `addClocktowerEvent` 推进事实、从文字解析历史数字等描述已不适用于准备基线。当前 typed 事实与投影应保留。
+App 目前约 241 KB，Host 约 180 KB，仍须在继续减法后按职责审计，不能认为大文件问题已解决。实现最小中断恢复在减法之后，不新增替代快照体系。
 
-分支归档与恢复入口见 [分支清理报告](BRANCH_CLEANUP_RESULT_2026-10-17.md)。
+旧 main 清单仅是历史：[最小状态清理规格](MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md) 中产品目标有效，具体残留以当前源码为准。分支归档见 [清理报告](BRANCH_CLEANUP_RESULT_2026-10-17.md)。

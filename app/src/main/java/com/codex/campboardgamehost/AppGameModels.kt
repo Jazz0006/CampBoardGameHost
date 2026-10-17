@@ -26,22 +26,10 @@ internal data class PlayerCard(
 internal data class EliminationRecord(
     val round: Int,
     val playerName: String,
-    val note: String? = null,
 )
 
 internal data class GameOutcome(
     val title: String,
     val summary: String,
     val reason: String,
-)
-
-internal data class ArchivedGameReview(
-    val id: Long,
-    val archivedAtMillis: Long,
-    val gameKind: GameKind,
-    val round: Int,
-    val cards: List<PlayerCard>,
-    val records: List<EliminationRecord>,
-    val events: List<ClocktowerEvent>,
-    val outcome: GameOutcome?,
 )

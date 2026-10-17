@@ -8,7 +8,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObserva
 
 /**
  * Actual previously shown misinformation comes from the single Session observation history.
- * Never parse translated legacy ClocktowerEvent titles/details as a second source of truth.
+ * Presentation prose is never a second source of truth.
  * Callers supply the confirmed actor seat and the ability metric being displayed.
  */
 internal fun previousClocktowerUnreliableNumber(

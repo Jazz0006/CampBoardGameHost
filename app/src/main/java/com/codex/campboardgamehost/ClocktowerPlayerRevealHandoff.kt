@@ -46,14 +46,12 @@ internal fun clocktowerInformationPublicationAllowed(
  * Authoritative observation (and its confirmed registration rulings) must commit BEFORE
  * the transient first-night displayed marker. If the durable write fails, the marker
  * remains unconsumed so a retry can safely use Session's idempotent observation identity.
- * Narrative history is display-only; no second game fact is inferred from it.
  */
 internal fun performClocktowerPlayerRevealHandoff(
     authorize: () -> Boolean,
     publicationNeeded: () -> Boolean,
     recordPrivateInformation: () -> Unit,
     markFirstNightPublished: () -> Unit,
-    recordHistory: () -> Unit,
     openReveal: () -> Unit,
 ): ClocktowerPlayerRevealHandoff {
     if (!authorize()) return ClocktowerPlayerRevealHandoff(false, false)
@@ -64,7 +62,6 @@ internal fun performClocktowerPlayerRevealHandoff(
     if (handoff.recordPublication) {
         recordPrivateInformation()
         markFirstNightPublished()
-        recordHistory()
     }
     openReveal()
     return handoff

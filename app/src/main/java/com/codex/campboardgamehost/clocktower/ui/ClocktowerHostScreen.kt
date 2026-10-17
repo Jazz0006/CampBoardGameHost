@@ -21,7 +21,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,7 +37,6 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
-import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
@@ -51,11 +49,9 @@ import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDo
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
-import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
@@ -79,7 +75,6 @@ internal fun ClocktowerJudgeScreen(
     cards: List<PlayerCard>,
     // Confirmed mechanical facts come from the one Session, never rebuilt from UI cards.
     sessionGameState: GameState,
-    events: List<ClocktowerEvent>,
     actualInformationHistory: List<RecordedEpistemicObservation>,
     confirmedGrimoireSeats: List<HostSeatPresentation>,
     confirmedRedHerringSeat: Int?,
@@ -130,7 +125,6 @@ internal fun ClocktowerJudgeScreen(
     highestVoteCountState: MutableState<Int>,
     gameOutcome: GameOutcome?,
     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
-    onRecordEvent: (ClocktowerEventType, String, String, List<String>, Boolean) -> Unit,
     onCommitConfirmedPrivateInformationPublication: (
         EpistemicObservationDraft, ClocktowerConfirmedRegistrationPublicationV1?,
     ) -> Unit,
@@ -153,7 +147,7 @@ internal fun ClocktowerJudgeScreen(
     onConfirmRedHerring: (String) -> Unit,
     onCommitDemonBluffs: (List<String>) -> Unit,
     onSelectButlerMaster: (String?) -> Unit,
-    onConfirmButlerMaster: (String, String) -> Boolean,
+    onConfirmButlerMaster: (String, String) -> Unit,
     onSelectMonkProtectedTarget: (String?) -> Unit,
     onConfirmMonkProtectedTarget: () -> Unit,
     onSelectMayorRedirectTarget: (String?) -> Unit,
@@ -163,9 +157,9 @@ internal fun ClocktowerJudgeScreen(
     onConfirmNewDemon: () -> Unit,
     onSelectKlutzChoice: (String?) -> Unit,
     onConfirmKlutzChoice: () -> Unit,
-    onConfirmArtistQuestion: (String, Boolean, Boolean) -> Unit,
+    onConfirmArtistQuestion: (String) -> Unit,
     onSlayerShot: (String, String, Boolean?) -> Unit,
-    onPreflightVirginExecution: (String, Boolean) -> Unit,
+    onPreflightVirginExecution: (String) -> Unit,
     onVirginNomination: (String, String, Boolean, Boolean?) -> Unit,
     onConfirmedNomination: (String, String) -> Unit,
     onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord) -> Unit,
@@ -236,7 +230,6 @@ internal fun ClocktowerJudgeScreen(
     val spyCard = cards.firstOrNull { it.clocktowerRole?.enName == "Spy" }
     val recluseCard = cards.firstOrNull { it.clocktowerRole?.enName == "Recluse" }
     val registrationState = remember { ClocktowerRegistrationInteractionState() }
-    val recordedNightSteps = remember { mutableStateMapOf<String, Boolean>() }
     var effectivePoisonForRole: (String) -> String? = { poisonTarget }
     var effectiveRoleForRegistration: (String, PlayerCard) -> RoleId? = { _, card ->
         card.clocktowerRole?.enName?.let(::RoleId)
@@ -318,31 +311,6 @@ internal fun ClocktowerJudgeScreen(
         val allowed = legalRegistrationRoles(key, queryingRoleEnName, spyCard, teams)
         return allowed.firstOrNull { it.enName == registrationState.spyRole(key) }
     }
-    fun spyRegistrationWillRecord(key: String?): Boolean =
-        registrationState.spyWillRecord(key) && spyCard != null
-    fun recordSpyRegistration(
-        key: String?,
-        teams: List<ClocktowerTeam>,
-        queryingRoleEnName: String,
-        detail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
-    ) {
-        if (key == null || spyCard == null || !registrationState.markSpyRecorded(key)) return
-        val registrationDetail = when {
-            !spyCanRegister(queryingRoleEnName) -> text("中毒，按真实邪恶身份登记", "poisoned; registered as actual evil identity")
-            !spyRegistersGood(key, queryingRoleEnName) -> text("按真实邪恶身份登记", "registered as actual evil identity")
-            detail == ClocktowerRegistrationDetail.AlignmentOnly -> text("登记为善良", "registered as good")
-            else -> registeredRole(key, teams, queryingRoleEnName)?.let { selected ->
-                text("登记为${selected.nameFor(language)}", "registered as ${selected.nameFor(language)}")
-            } ?: text("登记为善良，未指定具体角色", "registered as good, with no specific role selected")
-        }
-        onRecordEvent(
-            ClocktowerEventType.RoleAction,
-            text("间谍登记裁定", "Spy registration"),
-            "${spyCard.seatLabel(cards)} · $registrationDetail",
-            listOf(spyCard.name),
-            true, // Registration description, not another Host-confirmed ruling.
-        )
-    }
     fun recluseCanRegister(queryingRoleEnName: String): Boolean = recluseCard
         ?.let { registrationSubject(queryingRoleEnName, it) }
         ?.let(TroubleBrewingRegistrationDomain::specialReason) == RegistrationReason.RECLUSE_ABILITY
@@ -352,21 +320,6 @@ internal fun ClocktowerJudgeScreen(
         if (!recluseRegistersEvil(key, queryingRoleEnName)) return recluseCard?.clocktowerRole
         val allowed = legalRegistrationRoles(key, queryingRoleEnName, recluseCard, teams)
         return allowed.firstOrNull { it.enName == registrationState.recluseRole(key) }
-    }
-    fun recordRecluseRegistration(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String) {
-        if (key == null || !recluseRegistersEvil(key, queryingRoleEnName) || recluseCard == null || !registrationState.markRecluseRecorded(key)) return
-        val registeredAs = recluseRegisteredRole(key, teams, queryingRoleEnName)
-        onRecordEvent(
-            ClocktowerEventType.RoleAction,
-            text("隐士登记裁定", "Recluse registration"),
-            if (registeredAs != null && teams.isNotEmpty()) {
-                "${recluseCard.seatLabel(cards)} → ${registeredAs.nameFor(language)}"
-            } else {
-                text("${recluseCard.seatLabel(cards)} → 邪恶", "${recluseCard.seatLabel(cards)} → evil")
-            },
-            listOf(recluseCard.name),
-            true, // Registered ability facts have a separate Session-owned confirmation.
-        )
     }
     val nightHostProjection = ClocktowerNightHostProjectionFactory.project(
         cards = cards,
@@ -489,102 +442,6 @@ internal fun ClocktowerJudgeScreen(
         cards = cards,
         selection = chambermaidResolution.selection,
     )
-    fun recordNightStep(step: ClocktowerNightStepUi) {
-        // Successor selection is pending input; the confirmed RoleChange and New Demon
-        // observation are recorded at the real identity step, not as another night event.
-        if (!step.isRealAction || step.action in setOf(
-                ClocktowerNightAction.DemonKill,
-                ClocktowerNightAction.DemonSuccessor,
-                ClocktowerNightAction.NewDemonIdentity,
-            )) return
-        // Information shown to a player is recorded by onShowPlayerDisplay with the
-        // final displayed result. Unreliable roles (including the Drunk) keep
-        // displayKind=None until an option is chosen, so also identify them by
-        // their information action/options.
-        if (
-            step.action == ClocktowerNightAction.None ||
-            step.action in setOf(
-                ClocktowerNightAction.FortuneTeller,
-                ClocktowerNightAction.Chambermaid,
-                ClocktowerNightAction.Ravenkeeper,
-            ) ||
-            step.displayKind != ClocktowerDisplayKind.None ||
-            step.displayOptions.isNotEmpty() ||
-            step.recommendedDisplayOptions.isNotEmpty()
-        ) return
-        val recordKey = "${phase.name}:$round:${step.action.name}:${step.actor?.name.orEmpty()}:${step.title}"
-        val alreadyRecorded = recordedNightSteps[recordKey] == true || events.any { event ->
-            event.type == ClocktowerEventType.RoleAction &&
-                event.phase == phase &&
-                event.round == round &&
-                event.title == step.title &&
-                (step.actor == null || step.actor.name in event.playerNames)
-        }
-        if (alreadyRecorded) {
-            recordedNightSteps[recordKey] = true
-            return
-        }
-        val confirmedButlerFact = if (step.action == ClocktowerNightAction.ButlerMaster) {
-            val actor = requireNotNull(step.actor) { "Butler step requires a real acting player." }
-            val master = requireNotNull(butlerMaster) { "Butler must choose a master before proceeding." }
-            require(actor.name != master) { "Butler cannot choose themself as master." }
-            onConfirmButlerMaster(actor.name, master)
-        } else false
-        val names = when (step.action) {
-            ClocktowerNightAction.RedHerring -> listOfNotNull(redHerring)
-            ClocktowerNightAction.Poison -> listOfNotNull(step.actor?.name, poisonTarget)
-            ClocktowerNightAction.ButlerMaster -> listOfNotNull(step.actor?.name, butlerMaster)
-            ClocktowerNightAction.MonkProtect -> listOfNotNull(step.actor?.name, monkProtectedTarget)
-            ClocktowerNightAction.FortuneTeller -> listOfNotNull(step.actor?.name, fortuneTellerFirst, fortuneTellerSecond)
-            ClocktowerNightAction.Chambermaid -> listOfNotNull(step.actor?.name, chambermaidResolution.selection.first, chambermaidResolution.selection.second)
-            ClocktowerNightAction.DemonKill -> listOfNotNull(step.actor?.name, pendingNightDeath)
-            ClocktowerNightAction.MayorRedirect -> listOfNotNull(mayorRedirectTarget)
-            ClocktowerNightAction.Ravenkeeper -> listOfNotNull(step.actor?.name, ravenkeeperTarget)
-            else -> listOfNotNull(step.actor?.name)
-        }
-        val detail = when (step.action) {
-            ClocktowerNightAction.RedHerring ->
-                text("红鲱鱼：${playerSeatLabel(cards, redHerring)}", "Red herring: ${playerSeatLabel(cards, redHerring)}")
-            ClocktowerNightAction.Poison ->
-                text("中毒目标：${playerSeatLabel(cards, poisonTarget)}", "Poisoned: ${playerSeatLabel(cards, poisonTarget)}")
-            ClocktowerNightAction.ButlerMaster ->
-                text("今日主人：${playerSeatLabel(cards, butlerMaster)}", "Master: ${playerSeatLabel(cards, butlerMaster)}")
-            ClocktowerNightAction.MonkProtect ->
-                text("保护目标：${playerSeatLabel(cards, monkProtectedTarget)}", "Protected: ${playerSeatLabel(cards, monkProtectedTarget)}")
-            ClocktowerNightAction.FortuneTeller -> {
-                val targets = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).joinToString(" + ") { playerSeatLabel(cards, it) }
-                text("查验 $targets：$fortuneTellerResult", "Checked $targets: $fortuneTellerResult")
-            }
-            ClocktowerNightAction.Chambermaid -> {
-                val targets = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second).joinToString(" + ") { playerSeatLabel(cards, it) }
-                text("查验 $targets：$chambermaidResult 人今晚醒来", "Checked $targets: $chambermaidResult woke tonight")
-            }
-            ClocktowerNightAction.DemonKill ->
-                text("击杀目标：${playerSeatLabel(cards, pendingNightDeath)}", "Kill target: ${playerSeatLabel(cards, pendingNightDeath)}")
-            ClocktowerNightAction.MayorRedirect -> mayorRedirectTarget?.let { target ->
-                val mayor = cards.firstOrNull { it.clocktowerRole?.enName == "Mayor" }
-                if (target == mayor?.name)
-                    text("市长死亡", "Mayor dies")
-                else
-                    text("死亡转移给 ${playerSeatLabel(cards, target)}", "Death redirected to ${playerSeatLabel(cards, target)}")
-            }.orEmpty()
-            ClocktowerNightAction.Ravenkeeper ->
-                text("查验：${playerSeatLabel(cards, ravenkeeperTarget)}", "Checked: ${playerSeatLabel(cards, ravenkeeperTarget)}")
-            else -> step.tellPlayer ?: step.storytellerAction
-        }
-        val alreadyConfirmedNightFact = confirmedButlerFact || step.action in setOf(
-            ClocktowerNightAction.RedHerring,
-            ClocktowerNightAction.Poison,
-            ClocktowerNightAction.MonkProtect,
-            // The Mayor callback above already confirms the Session fact (TB), or
-            // explicitly invalidates the legacy non-TB step. Narration must not do it twice.
-            ClocktowerNightAction.MayorRedirect,
-        )
-        // Non-Global role actions without confirmed typed facts retain legacy
-        // revision invalidation until their actual production owners migrate.
-        onRecordEvent(ClocktowerEventType.RoleAction, step.title, detail, names, alreadyConfirmedNightFact)
-        recordedNightSteps[recordKey] = true
-    }
     var nightStarted by nightStartedState
     var nightStepIndex by nightStepIndexState
     var dayMode by dayModeState
@@ -614,9 +471,9 @@ internal fun ClocktowerJudgeScreen(
     }
     val confirmArtistQuestion = {
         val claimantName = requireNotNull(artistClaimantName) { "Artist confirmation requires a claimant." }
-        val truthfulAnswer = requireNotNull(artistTruthfulAnswer) { "Artist confirmation requires a truthful answer." }
-        val shownAnswer = requireNotNull(artistShownAnswer) { "Artist confirmation requires a shown answer." }
-        onConfirmArtistQuestion(claimantName, truthfulAnswer, shownAnswer)
+        requireNotNull(artistTruthfulAnswer) { "Artist confirmation requires a truthful answer." }
+        requireNotNull(artistShownAnswer) { "Artist confirmation requires a shown answer." }
+        onConfirmArtistQuestion(claimantName)
         selectArtistClaimant(null)
     }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
@@ -1936,7 +1793,6 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerDawnSummaryScreen(
             round = round,
             cards = cards,
-            events = events,
             pendingNightDeath = pendingNightDeath,
             onHostTools = onHostTools,
             onEnterDay = onAdvanceFromFirstNight,
@@ -2058,7 +1914,6 @@ internal fun ClocktowerJudgeScreen(
                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination && virginExecutes) {
                     onPreflightVirginExecution(
                         chosenNominator,
-                        false, // Day ruling is causal, not a fake preceding localized event.
                     )
                 }
                 if (chosenNominator != null && chosenNominee != null) {
@@ -2071,15 +1926,6 @@ internal fun ClocktowerJudgeScreen(
                     onVirginNomination(
                         chosenNominator, chosenNominee, virginExecutes,
                         explicitSpyRuling?.usesSpecialRegistration,
-                    )
-                }
-                if (chosenNominator != null && chosenNominee != null && virginExecutes) {
-                    onRecordEvent(
-                        ClocktowerEventType.Nomination,
-                        text("提名", "Nomination"),
-                        "${playerSeatLabel(cards, chosenNominator)} → ${playerSeatLabel(cards, chosenNominee)}",
-                        listOf(chosenNominator, chosenNominee),
-                        true,
                     )
                 }
                 if (!virginExecutes) {
@@ -2120,20 +1966,6 @@ internal fun ClocktowerJudgeScreen(
             )
             else -> text("当前还没有达到门槛的最高票。", "No qualifying high vote has been recorded yet.")
         }
-        val recordVoteEvent: (ClocktowerConfirmedVoteRecord) -> Unit = { voteRecord ->
-            val voterDetail = voteRecord.voterDetail(
-                playerLabel = { playerName -> playerSeatLabel(cards, playerName) },
-                ghostVoteSuffix = text("（幽灵票）", " (ghost vote)"),
-                noVotesLabel = text("无人投票", "No votes"),
-            )
-            onRecordEvent(
-                ClocktowerEventType.Vote,
-                text("提名与投票", "Nomination and vote"),
-                "${playerSeatLabel(cards, nominatorName)} → ${playerSeatLabel(cards, nomineeName)} · ${voteRecord.voteCount}/$executionThreshold · ${text("投票人：", "Voters: ")}$voterDetail",
-                listOfNotNull(nominatorName, nomineeName) + voteRecord.voters.map { voter -> voter.playerName },
-                true,
-            )
-        }
         ClocktowerVoteTableScreen(
             round = round,
             cards = cards,
@@ -2161,7 +1993,6 @@ internal fun ClocktowerJudgeScreen(
                 highestVoteName = voteTransaction.highestVoteName
                 highestVoteCount = voteTransaction.highestVoteCount
                 onConfirmedVote(requireNotNull(nominatorName), requireNotNull(nomineeName), voteTransaction.voteRecord)
-                recordVoteEvent(voteTransaction.voteRecord)
                 nominatorName = null
                 nomineeName = null
                 dayMode = ClocktowerDayMode.Overview
@@ -2589,10 +2420,6 @@ internal fun ClocktowerJudgeScreen(
                 currentStep.spyRegistrationDetail,
             )
         }
-        val currentSpyLegalSpecialRoleEnNames = currentSpyRegistrationResolution
-            ?.special
-            ?.map { it.registeredRole.value }
-            .orEmpty()
         val currentRecluseRegistrationResolution = currentStep.roleEnName?.let { roleEnName ->
             // Numeric/Boolean alignment questions do not name a specific Evil role; an empty
             // role filter means ALIGNMENT_ONLY, not that the Recluse is irrelevant.
@@ -2609,10 +2436,6 @@ internal fun ClocktowerJudgeScreen(
                 } else ClocktowerRegistrationDetail.Role,
             )
         }
-        val currentRecluseLegalSpecialRoleEnNames = currentRecluseRegistrationResolution
-            ?.special
-            ?.map { it.registeredRole.value }
-            .orEmpty()
         val selectedNightName = when (currentStep.action) {
             ClocktowerNightAction.RedHerring -> redHerring
             ClocktowerNightAction.Poison -> poisonDraftTarget
@@ -2683,7 +2506,12 @@ internal fun ClocktowerJudgeScreen(
                 }
                 onConfirmDemonSuccessorTarget(selectedTarget)
             }
-            recordNightStep(currentStep)
+            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.ButlerMaster) {
+                onConfirmButlerMaster(
+                    requireNotNull(currentStep.actor).name,
+                    requireNotNull(butlerMaster) { "Butler must choose a master before proceeding." },
+                )
+            }
             val flowMayExpandAfterConfirmation = currentStep.action in setOf(
                 ClocktowerNightAction.DemonKill,
                 ClocktowerNightAction.MayorRedirect,
@@ -3136,24 +2964,6 @@ internal fun ClocktowerJudgeScreen(
                                 }
                                 com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
                                     .revealStage("FIRST_NIGHT_RECORDED", phase.toStorytellerPhase().name, round)
-                            },
-                            recordHistory = {
-                                val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
-                                val payload = clocktowerInformationHistoryPayload(
-                                    displayStep = displayStep,
-                                    orderedPlayerNames = cards.map { it.name },
-                                    unreliable = unreliable,
-                                    text = ::text,
-                                )
-                                onRecordEvent(
-                                    payload.type,
-                                    payload.title,
-                                    payload.detail,
-                                    payload.playerNames,
-                                    true,
-                                )
-                                com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
-                                    .revealStage("HISTORY_RECORDED", phase.toStorytellerPhase().name, round)
                             },
                             openReveal = {
                                 playerDisplayStep = displayStep

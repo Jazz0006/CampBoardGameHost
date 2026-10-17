@@ -14,6 +14,50 @@ class ClocktowerGameSessionConfirmedActionBoundaryTest {
     private val base = TroubleBrewingFixtures.eightPlayerExample()
 
     @Test
+    fun `successive confirmations read the live shared cursor without a narration counter`() {
+        val session = create("live-input-sequence")
+        assertEquals(1, session.nextInputSequence)
+        repeat(2) {
+            val sequence = session.nextInputSequence
+            confirm(session, ActionFactDraft.Attack(
+                actionId = "attack-$sequence", phase = StorytellerPhase.NIGHT,
+                round = 2, sequence = sequence, targetSeat = 8,
+            ))
+        }
+        assertEquals(listOf("attack-1", "attack-2"), session.state.actionTimeline.entries.map { it.fact.actionId })
+        assertEquals(listOf(1, 2), session.state.actionTimeline.entries.map { it.point.sequence })
+        assertEquals(3, session.nextInputSequence)
+        session.recordPlayerInput()
+        assertEquals(3, session.nextInputSequence)
+    }
+
+    @Test
+    fun `revisiting a confirmed Butler step keeps its first master and a new night can choose again`() {
+        val roster = base.copy(players = base.players.map { player ->
+            if (player.seat == 4) player.copy(
+                actualRole = com.codex.campboardgamehost.clocktower.domain.RoleId("Butler"),
+                shownRole = com.codex.campboardgamehost.clocktower.domain.RoleId("Butler"),
+            ) else player
+        })
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "butler-revisit", gameSeed = roster.seed, initialState = roster,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        assertNotNull(runCatching {
+            session.confirmButlerMaster(StorytellerPhase.NIGHT, 2, 4, 4)
+        }.exceptionOrNull())
+        assertEquals(0L, session.state.nextTimelineGlobalSequence)
+        val first = session.confirmButlerMaster(StorytellerPhase.NIGHT, 2, 4, 1)
+        val accepted = session.state
+        assertEquals(first, session.confirmButlerMaster(StorytellerPhase.NIGHT, 2, 4, 1))
+        assertEquals(first, session.confirmButlerMaster(StorytellerPhase.NIGHT, 2, 4, 2))
+        assertEquals(accepted, session.state)
+        val next = session.confirmButlerMaster(StorytellerPhase.NIGHT, 3, 4, 2)
+        assertEquals(2, (next.fact as ActionFact.ButlerMasterChoice).masterSeat)
+        assertEquals(2L, session.state.nextTimelineGlobalSequence)
+    }
+
+    @Test
     fun `attack and protection confirmations are ordered without duplicating mechanical state`() {
         val session = create("a1-night-actions")
         val original = session.state.gameState

@@ -138,6 +138,13 @@ internal class ClocktowerGameSession private constructor(
 
     private var snapshotCache: GameSnapshot? = initialSnapshotCache
 
+    /** Read live at each confirmation, including multiple commits before UI recomposition. */
+    val nextInputSequence: Int
+        get() {
+            check(state.nextTimelineGlobalSequence < Int.MAX_VALUE) { "Input sequence exhausted." }
+            return state.nextTimelineGlobalSequence.toInt() + 1
+        }
+
     /**
      * One causal decision journal belongs to this game session, not to the root Compose
      * screen. Atomic commits validate this journal against the Session history.
@@ -383,6 +390,36 @@ internal class ClocktowerGameSession private constructor(
             else -> draft
         }
         return prepared
+    }
+
+    /** A completed Butler step cannot be recorded twice by revisiting the night screen. */
+    fun confirmButlerMaster(
+        phase: StorytellerPhase,
+        round: Int,
+        butlerSeat: Int,
+        masterSeat: Int,
+    ): TimelineBoundActionFact {
+        state.actionTimeline.entries.firstOrNull { entry ->
+            entry.point.phase == phase && entry.point.round == round &&
+                (entry.fact as? ActionFact.ButlerMasterChoice)?.butlerSeat == butlerSeat
+        }?.let { return it }
+        require(phase == StorytellerPhase.FIRST_NIGHT || phase == StorytellerPhase.NIGHT)
+        require(butlerSeat != masterSeat) { "Butler cannot choose themself." }
+        val actor = requireNotNull(state.gameState.playerAt(butlerSeat))
+        requireNotNull(state.gameState.playerAt(masterSeat))
+        require(actor.alive &&
+            (actor.actualRole.value == "Butler" || actor.shownRole?.value == "Butler")) {
+            "Confirmed Butler master requires an active Butler (or Drunk shown Butler)."
+        }
+        return commitConfirmedGameAction(
+            draft = ActionFactDraft.ButlerMasterChoice(
+                actionId = "butler-master-${state.gameId}-${phase.name}-$round-$butlerSeat",
+                phase = phase, round = round, sequence = nextInputSequence,
+                butlerSeat = butlerSeat, masterSeat = masterSeat,
+            ),
+            nextGameState = state.gameState,
+            expectedGameStateRevision = state.gameStateRevision,
+        )
     }
 
     /**

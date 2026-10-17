@@ -23,7 +23,7 @@ on:
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerResultsScreen.kt
       - .github/workflows/r2-write-probe.yml
   workflow_dispatch:
 
@@ -56,9 +56,9 @@ jobs:
           day_overview=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt
           night=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
           host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-          history=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
+          results=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerResultsScreen.kt
 
-          for file in "$root" "$core" "$selection" "$presentation" "$recommendation_ui" "$player_display_ui" "$registration_controls" "$automatic_registration" "$night_step_ui" "$main" "$setup" "$day" "$day_overview" "$night" "$host" "$history"; do
+          for file in "$root" "$core" "$selection" "$presentation" "$recommendation_ui" "$player_display_ui" "$registration_controls" "$automatic_registration" "$night_step_ui" "$main" "$setup" "$day" "$day_overview" "$night" "$host" "$results"; do
             test -f "$file"
           done
           test ! -e "$legacy_registration_ui"
@@ -273,10 +273,9 @@ jobs:
               echo "${name} still lives in CampBoardGameHostApp.kt" >&2
               exit 1
             fi
-            grep -q "internal fun ${name}" "$history"
+            grep -q "internal fun ${name}" "$results"
           done
-          grep -q "internal fun clocktowerEventPhaseLabel" "$history"
-          grep -q "private fun ClocktowerResultPlayerRow" "$history"
+          grep -q "private fun ClocktowerResultPlayerRow" "$results"
 
           main_lines="$(wc -l < "$main")"
           main_bytes="$(wc -c < "$main")"

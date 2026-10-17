@@ -1,46 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
-
-internal enum class ClocktowerEventType {
-    RoleAction,
-    Information,
-    UnreliableInformation,
-    Nomination,
-    Vote,
-    Execution,
-    Death,
-    RoleChange,
-}
-
-/**
- * UI narration is not a second Host confirmation. In GLOBAL_V1, mechanical/public actions
- * already have their own accepted Session fact, and private information has its observation.
- * LEGACY_LOCAL still uses revision invalidation for old role-action callbacks.
- */
-internal fun clocktowerNarrationNeedsGameRevision(
-    type: ClocktowerEventType,
-    historyMode: ClocktowerSemanticHistoryMode,
-    confirmedRoleNarrationOnly: Boolean = false,
-): Boolean = when (type) {
-    ClocktowerEventType.Information, ClocktowerEventType.UnreliableInformation -> false
-    ClocktowerEventType.Nomination, ClocktowerEventType.Vote ->
-        historyMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
-    ClocktowerEventType.RoleAction ->
-        historyMode != ClocktowerSemanticHistoryMode.GLOBAL_V1 || !confirmedRoleNarrationOnly
-    else -> true
-}
-
-internal data class ClocktowerEvent(
-    val sequence: Int,
-    val type: ClocktowerEventType,
-    val title: String,
-    val detail: String,
-    val playerNames: List<String>,
-    val phase: ClocktowerPhase,
-    val round: Int,
-)
-
 internal enum class ClocktowerTeam {
     Townsfolk,
     Outsider,

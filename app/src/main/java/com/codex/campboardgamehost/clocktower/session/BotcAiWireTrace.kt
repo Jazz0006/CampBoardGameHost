@@ -114,7 +114,7 @@ internal object BotcAiWireTrace {
     fun revealStage(event: String, phase: String, round: Int) {
         bestEffort {
             if (event !in setOf("CLICKED", "PREFLIGHT_OK", "FIRST_NIGHT_RECORDED",
-                    "OBSERVATION_RECORDED", "HISTORY_RECORDED", "REVEAL_OPENED", "BLOCKED"))
+                    "OBSERVATION_RECORDED", "REVEAL_OPENED", "BLOCKED"))
                 return@bestEffort
             Log.v(TAG, "stage=PLAYER_REVEAL event=$event phase=" +
                 phase.takeIf { it in setOf("FIRST_NIGHT", "DAWN", "DAY", "NIGHT") }

@@ -11,9 +11,8 @@ introduce compatibility scaffolding, or manufacture a new precise-state reconstr
 Preserve normal game rules, confirmed facts, and the single game-truth authority. Future recovery,
 AI input and textual display must consume the same authoritative game record; this still requires
 local durability, not an independent save-state copy. Existing instructions to retain Recovery or
-its exact reconstruction contracts are superseded within this cleanup scope. The independent
-Recovery removal has not started; prior #315 Session convergence and partial cleanup remain
-part of the baseline.
+its exact reconstruction contracts are superseded within this cleanup scope. Independent Recovery was removed in #316; the current stage removes duplicate text history
+and archives. Prior #315 Session convergence remains part of the baseline.
 
 ## Evidence-first validation policy (2026-10-15; current authority)
 
