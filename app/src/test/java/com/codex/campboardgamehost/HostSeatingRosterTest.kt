@@ -80,23 +80,11 @@ class HostSeatingRosterTest {
     }
 
     @Test
-    fun `settings navigation retains confirmed seats and allows explicit editing`() {
+    fun `single game settings use the confirmed roster and can reopen seating`() {
         val confirmed = HostSeatingSetupFlow()
             .confirmSeats(listOf("Alice", "Bob", "Casey", "Dana", "Evan"))
-        assertEquals(confirmed.confirmedSeating, confirmed.returnToGameSelection().confirmedSeating)
-        val transition = hostSeatingBackTransition(confirmed, HostSeatingBackOrigin.GameSettings)
-        assertEquals(HostSeatingSetupDestination.GameSelection, transition.destination)
-        assertEquals(confirmed.confirmedSeating, transition.flow.confirmedSeating)
+        assertEquals(listOf("Alice", "Bob", "Casey", "Dana", "Evan"), confirmed.playerNamesFor())
         assertNull(confirmed.reopenSeating().confirmedSeating)
-    }
-
-    @Test
-    fun `game selection back reopens seating`() {
-        val confirmed = HostSeatingSetupFlow()
-            .confirmSeats(listOf("Alice", "Bob", "Casey", "Dana", "Evan"))
-        val transition = hostSeatingBackTransition(confirmed, HostSeatingBackOrigin.GameSelection)
-        assertEquals(HostSeatingSetupDestination.Seating, transition.destination)
-        assertNull(transition.flow.confirmedSeating)
     }
 
     @Test

@@ -153,7 +153,6 @@ import java.util.UUID
 private enum class Screen {
     Landing,
     Setup,
-    GameSelection,
     ClocktowerSettings,
     ClocktowerDrunkSelection,
     ClocktowerJointPass,
@@ -212,7 +211,6 @@ private fun Context.playerName(number: Int): String = getString(R.string.default
 
 internal const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
 internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdate"
-internal const val MIN_PLAYERS = 3
 internal const val MIN_CLOCKTOWER_PLAYERS = 5
 internal const val MAX_PLAYERS = 15
 
@@ -2127,25 +2125,13 @@ internal fun CampBoardGameHostApp() {
         return promoteScarletWomanIfNeeded()
     }
 
-    fun applyHostSeatingBack(origin: HostSeatingBackOrigin) {
-        val transition = hostSeatingBackTransition(
-            flow = hostSeatingSetupFlow,
-            origin = origin,
-        )
-        hostSeatingSetupFlow = transition.flow
-        screen = when (transition.destination) {
-            HostSeatingSetupDestination.Seating -> Screen.Setup
-            HostSeatingSetupDestination.GameSelection -> Screen.GameSelection
-        }
+    fun reopenSeatingSetup() {
+        hostSeatingSetupFlow = hostSeatingSetupFlow.reopenSeating()
+        screen = Screen.Setup
     }
 
-    val hostSeatingBackOrigin = when (screen) {
-        Screen.GameSelection -> HostSeatingBackOrigin.GameSelection
-        Screen.ClocktowerSettings -> HostSeatingBackOrigin.GameSettings
-        else -> null
-    }
-    BackHandler(enabled = hostSeatingBackOrigin != null) {
-        applyHostSeatingBack(requireNotNull(hostSeatingBackOrigin))
+    BackHandler(enabled = screen == Screen.ClocktowerSettings) {
+        reopenSeatingSetup()
     }
 
     val aiSettingsSection: @Composable () -> Unit = {
@@ -2216,18 +2202,6 @@ internal fun CampBoardGameHostApp() {
                     },
                     onConfirmSeats = {
                         hostSeatingSetupFlow = hostSeatingSetupFlow.confirmSeats(playerNames)
-                        screen = Screen.GameSelection
-                    },
-                )
-
-                    Screen.GameSelection -> SeatingFirstGameSelectionScreen(
-                    seating = requireNotNull(hostSeatingSetupFlow.confirmedSeating) {
-                        "Game selection requires confirmed seating"
-                    },
-                    onBackToSeating = {
-                        applyHostSeatingBack(HostSeatingBackOrigin.GameSelection)
-                    },
-                    onOpenClocktowerSettings = {
                         clocktowerSetupStep = 0
                         screen = Screen.ClocktowerSettings
                     },
@@ -2253,7 +2227,7 @@ internal fun CampBoardGameHostApp() {
                         },
                         onScriptChange = { selectedClocktowerScript = it },
                         onBack = {
-                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
+                            reopenSeatingSetup()
                         },
                         onStart = ::startClocktowerGame,
                     )
