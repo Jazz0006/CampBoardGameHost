@@ -154,7 +154,6 @@ private enum class Screen {
     Landing,
     Setup,
     GameSelection,
-    UndercoverSettings,
     ClocktowerSettings,
     ClocktowerDrunkSelection,
     ClocktowerJointPass,
@@ -368,7 +367,7 @@ internal fun CampBoardGameHostApp() {
     var liveAiAdviceBusy by remember { mutableStateOf(false) }
     var liveAiAdviceError by remember { mutableStateOf<String?>(null) }
     val drunkAiScope = rememberCoroutineScope()
-    var currentGameKind by remember { mutableStateOf(GameKind.Undercover) }
+    var currentGameKind by remember { mutableStateOf(GameKind.Clocktower) }
     var showHostTools by remember { mutableStateOf(false) }
     var hostToolTab by remember { mutableStateOf(HostToolTab.Roles) }
     var showNewGameConfirmation by remember { mutableStateOf(false) }
@@ -2230,7 +2229,6 @@ internal fun CampBoardGameHostApp() {
 
     val hostSeatingBackOrigin = when (screen) {
         Screen.GameSelection -> HostSeatingBackOrigin.GameSelection
-        Screen.UndercoverSettings,
         Screen.ClocktowerSettings -> HostSeatingBackOrigin.GameSettings
         else -> null
     }
@@ -2317,31 +2315,12 @@ internal fun CampBoardGameHostApp() {
                     onBackToSeating = {
                         applyHostSeatingBack(HostSeatingBackOrigin.GameSelection)
                     },
-                    onOpenUndercoverSettings = {
-                        hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Undercover)
-                        screen = Screen.UndercoverSettings
-                    },
                     onOpenClocktowerSettings = {
                         hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Clocktower)
                         clocktowerSetupStep = 0
                         screen = Screen.ClocktowerSettings
                     },
                 )
-
-                    Screen.UndercoverSettings -> UndercoverSettingsScreen(
-                        playerCount = playerCount,
-                        undercoverCount = undercoverCount,
-                        includeBlank = includeBlank,
-                        onUndercoverCountChange = { undercoverCount = it },
-                        onIncludeBlankChange = { checked ->
-                            includeBlank = checked
-                            clampUndercoverCount()
-                        },
-                        onBack = {
-                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
-                        },
-                        onStart = ::startUndercoverGame,
-                    )
 
                     Screen.ClocktowerSettings -> ClocktowerSettingsScreen(
                         playerCount = playerCount,

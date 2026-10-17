@@ -16,6 +16,10 @@
 
 旧实施证据见 [本轮清理规格](MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md)、[D 阶段历史审计](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)、[D5a 检查点](REGISTRATION_OPTIONS_D5A_2026-10-17.md)。历史文档中的未来任务和规则保留要求由新合同覆盖。
 
+## 2026-10-18 实施更新：Undercover 退役
+
+项目所有者已明确要求彻底删除 Undercover（谁是卧底）；不再保留其玩法或回归测试。M0a 已在 `codex/minimal-host-reset` 从首页游戏选择中移除 Undercover 入口与相应导航、默认游戏改为 Clocktower。**尚未完成完整删除：Undercover 发牌、结算、数据模型、资源及其他内部代码仍有残留；M0b 必须整链清理，不能将 M0a 当作结束。** M1–M5 最小 Host 清理顺序保持，M0b 是紧急前置删除检查点。隔离工作树中的完整删除草案暂未通过 Gradle/CI，也未整合到分支，不算完成。
+
 ## 下一轮顺序
 
 1. 在同步主线的新分支/独立工作区做最小 Host 删除边界审计，尚不继续旧方案提取。

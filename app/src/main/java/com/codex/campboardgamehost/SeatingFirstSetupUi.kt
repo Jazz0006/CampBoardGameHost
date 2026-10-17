@@ -229,7 +229,6 @@ internal fun SeatingFirstSetupScreen(
 internal fun SeatingFirstGameSelectionScreen(
     seating: ConfirmedHostSeating,
     onBackToSeating: () -> Unit,
-    onOpenUndercoverSettings: () -> Unit,
     onOpenClocktowerSettings: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
@@ -275,13 +274,6 @@ internal fun SeatingFirstGameSelectionScreen(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(text("血染钟楼", "Blood on the Clocktower"))
-                        }
-                        OutlinedButton(
-                            onClick = onOpenUndercoverSettings,
-                            enabled = playerCount >= MIN_PLAYERS,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(text("谁是卧底", "Who is Undercover"))
                         }
                     }
                 }
