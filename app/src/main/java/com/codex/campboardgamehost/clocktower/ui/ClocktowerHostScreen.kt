@@ -2621,7 +2621,35 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerNightAction.Ravenkeeper -> ravenkeeperTarget
             else -> null
         }
-        val advanceNightStep = {
+        // Reuse exactly the current square-table's Host target domain. Player
+        // actions remain player choices, never AI-selected defaults.
+        val legalPlayerTargetNames = when (currentStep.action) {
+            ClocktowerNightAction.Poison, ClocktowerNightAction.DemonKill ->
+                publicAliveCards.mapTo(mutableSetOf()) { it.name }
+            ClocktowerNightAction.ButlerMaster ->
+                cards.filter { it.name != currentStep.actor?.name }.mapTo(mutableSetOf()) { it.name }
+            ClocktowerNightAction.MonkProtect ->
+                clocktowerMonkTargetCards(cards, currentStep.actor?.name)
+                    .mapTo(mutableSetOf()) { it.name }
+            else -> emptySet()
+        }
+        val playerTargetReady = clocktowerLivePlayerTargetReady(
+            currentStep.action, currentStep.isRealAction,
+            selectedNightName, legalPlayerTargetNames,
+        )
+        // UI-only token: only a FRESH seat tap during this exact step may auto-confirm.
+        // Re-entering a step with a retained draft must not commit it silently.
+        var freshAutomaticPlayerTarget by remember(
+            gameId, phase, round, currentStepIndex, currentStep.interactionId,
+        ) { mutableStateOf<String?>(null) }
+        val advanceNightStep = advance@{
+            if (!playerTargetReady) {
+                Toast.makeText(context, text(
+                    "请先选择当前行动的合法目标，不能跳过真实玩家行动。",
+                    "Select a legal target before continuing this player action.",
+                ), Toast.LENGTH_LONG).show()
+                return@advance
+            }
             if (currentStep.action == ClocktowerNightAction.RedHerring &&
                 currentStep.isRealAction
             ) {
@@ -2665,6 +2693,27 @@ internal fun ClocktowerJudgeScreen(
                 is ClocktowerNightAdvanceDirective.MoveTo -> nightStepIndex = directive.stepIndex
                 is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow -> pendingNightAdvance = directive
                 ClocktowerNightAdvanceDirective.CompleteNight -> onConfirmNight()
+            }
+        }
+
+        LaunchedEffect(
+            freshAutomaticPlayerTarget, selectedNightName, currentStepIndex,
+            currentStep.interactionId, playerTargetReady, globalAiAutomatic,
+            allowRuleDeterminedAutoUi, playerDisplayStep,
+        ) {
+            val freshlySelected = freshAutomaticPlayerTarget ?: return@LaunchedEffect
+            if (clocktowerShouldAutoConfirmFreshPlayerTarget(
+                    automaticMode = globalAiAutomatic && allowRuleDeterminedAutoUi,
+                    action = currentStep.action,
+                    isRealAction = currentStep.isRealAction,
+                    freshTarget = freshlySelected,
+                    selectedName = selectedNightName,
+                    legalNames = legalPlayerTargetNames,
+                    playerDisplayOpen = playerDisplayStep != null,
+                )
+            ) {
+                freshAutomaticPlayerTarget = null
+                advanceNightStep()
             }
         }
 
@@ -2748,7 +2797,7 @@ internal fun ClocktowerJudgeScreen(
             subtitle = text("当前阶段：${currentStep.title}", "Current: ${currentStep.title}"),
             progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
             canGoPrevious = currentStepIndex > 0,
-            nextEnabled = (currentStep.action !in setOf(
+            nextEnabled = playerTargetReady && (currentStep.action !in setOf(
                 ClocktowerNightAction.MayorRedirect,
                 ClocktowerNightAction.DemonSuccessor,
             ) || selectedNightName != null) &&
@@ -2875,6 +2924,18 @@ internal fun ClocktowerJudgeScreen(
                         ClocktowerNightAction.DemonSuccessor -> onSelectDemonSuccessor(nextSelection)
                         ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(nextSelection)
                         else -> Unit
+                    }
+                    // Selection updates the actual Host-owned draft first;
+                    // confirmation waits for the freshly selected target to render.
+                    freshAutomaticPlayerTarget = nextSelection?.takeIf { target ->
+                        globalAiAutomatic && allowRuleDeterminedAutoUi &&
+                            currentStep.isRealAction &&
+                            currentStep.action in setOf(
+                                ClocktowerNightAction.Poison,
+                                ClocktowerNightAction.ButlerMaster,
+                                ClocktowerNightAction.MonkProtect,
+                                ClocktowerNightAction.DemonKill,
+                            ) && target in legalPlayerTargetNames
                     }
                 },
                 onSelectFortuneTellerFirst = {

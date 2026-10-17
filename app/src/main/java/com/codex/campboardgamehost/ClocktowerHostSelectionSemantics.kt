@@ -25,6 +25,43 @@ internal enum class TwoPlayerSelectionAction {
     RejectLimit,
 }
 
+/**
+ * A real player target action is not confirmable until the live Host-legal
+ * target is explicitly selected. The same gate protects manual Next and the
+ * automatic mode's fresh selection continuation; absence is never a no-op.
+ * Inactive/illustrative night steps can still be skipped normally.
+ */
+internal fun clocktowerLivePlayerTargetReady(
+    action: ClocktowerNightAction,
+    isRealAction: Boolean,
+    selectedName: String?,
+    legalNames: Set<String>,
+): Boolean = !isRealAction || action !in setOf(
+    ClocktowerNightAction.Poison,
+    ClocktowerNightAction.ButlerMaster,
+    ClocktowerNightAction.MonkProtect,
+    ClocktowerNightAction.DemonKill,
+) || (selectedName != null && selectedName in legalNames)
+
+/** A retained draft, or a previously visited step, must never trigger automatic confirmation. */
+internal fun clocktowerShouldAutoConfirmFreshPlayerTarget(
+    automaticMode: Boolean,
+    action: ClocktowerNightAction,
+    isRealAction: Boolean,
+    freshTarget: String?,
+    selectedName: String?,
+    legalNames: Set<String>,
+    playerDisplayOpen: Boolean,
+): Boolean = automaticMode && isRealAction && !playerDisplayOpen &&
+    action in setOf(
+        ClocktowerNightAction.Poison,
+        ClocktowerNightAction.ButlerMaster,
+        ClocktowerNightAction.MonkProtect,
+        ClocktowerNightAction.DemonKill,
+    ) &&
+    freshTarget != null && selectedName == freshTarget &&
+    clocktowerLivePlayerTargetReady(action, isRealAction, selectedName, legalNames)
+
 internal fun clocktowerToggledSingleTargetSelection(
     currentSelection: String?,
     tappedSelection: String,

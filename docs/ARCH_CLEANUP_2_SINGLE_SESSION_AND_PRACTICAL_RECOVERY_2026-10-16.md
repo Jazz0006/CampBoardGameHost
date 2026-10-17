@@ -252,6 +252,12 @@
 - **验证：** 可执行源码 `469b530a5d421cd531cbe4cf6d209aeab89b557f`，测试编译括号修复 `523de06a3d48fb8a2df995bcacd21ace32945e5f`。前者 [CI #4256](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38989745640) 因测试代码语法失败（生产代码 Kotlin 编译已通过），后者完整 [CI #4257](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38990048858) Android 全量测试/Debug APK、ASP、Clingo 和 CI Gate 均 SUCCESS；R2 #3853 在生产修改提交成功。
 - 不新增事件、状态、历史副本或自动请求；已公布结果依然属于单一 Session。聚焦回归覆盖三个现场查询角色、相同重看、结果/目标改变、跨夜、不同角色及普通非查询动作。真机/付费 API 暂缓，A2 **仍 PARTIAL**。
 
+### A2 收尾批次：真人现场目标的全自动确认与统一合法性门禁（2026-10-17；待独立 CI/R2）
+
+- **实证缺口：** AI_AUTOMATIC 已自动展示当前合法信息并安全关闭展示后推进，但 Poison / ButlerMaster / MonkProtect / DemonKill 仍需点“下一步”。UI 的单目标方桌已经禁用了未选座位的下一步，顶层 `advanceNightStep` 却未独立验证上述真人目标，存在经其他入口跳过真实行动的可能。
+- **本批修复：** 复用现有单目标方桌的合法座位域，在当前 Host 原有推进入口严格要求真实行动有合法目标，错误/未选定时停留并提示；非真实步骤允许正常跳过。AI_AUTOMATIC 只在当前步骤玩家**新点击合法座位**、确认最新 Host 草稿已反映所选对象时，通过原有 `advanceNightStep` 确认，单个暂存 UI token 按 game/phase/round/step 重置，禁止已有草稿在返回/恢复后自动执行。MANUAL、AI_ASSISTED 继续手工确认。没有让 AI 代替玩家选择，无新事实事件或第二套动作提交。
+- **仍非 A2 总体验收：** 待精确源码独立 CI/R2、旧调用路径退出审计及完整连续夜晚场景确认。按批准决定，ADB 真机由 A6 统一验收；付费 API 不运行。
+
 ### A3 — 移除 Clocktower PlayerCard 第二写入源
 
 - Session 对游戏中的真实角色/展示身份/存活/投毒/阶段/确认选择和必要能力状态提供只读 view；PlayerCard 只保留 UI 名称/视觉元素等非权威展示属性。
