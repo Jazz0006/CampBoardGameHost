@@ -11,92 +11,17 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** SNE-7.9A RED: Mayor redirect confirmation depends on upstream same-night mechanics. */
+/** A changed upstream confirmation must not reuse a stale Mayor redirect at Dawn. */
 class MayorRedirectDependencyInvalidationTest {
     @Test
-    fun `changed Poison confirmation invalidates Mayor redirect but preserves its draft`() {
-        val reduced = NightCheckpointReducer.reduce(
-            checkpoint(
-                confirmedPoisonTarget = "Imp",
-                poisonDraftTarget = "Monk",
-                confirmedMayorRedirectTarget = "Empath",
-                mayorRedirectDraftTarget = "Empath",
-            ),
-            NightResolutionEvent.ConfirmPoison,
-        )
-
-        assertEquals("Monk", reduced.confirmedPoisonTarget)
-        assertNull(reduced.confirmedMayorRedirectTarget)
-        assertEquals("Empath", reduced.mayorRedirectDraftTarget)
-    }
-
-    @Test
-    fun `changed Monk confirmation invalidates Mayor redirect but preserves its draft`() {
-        val reduced = NightCheckpointReducer.reduce(
-            checkpoint(
-                confirmedMonkTarget = "Empath",
-                monkDraftTarget = "Mayor",
-                confirmedMayorRedirectTarget = "Empath",
-                mayorRedirectDraftTarget = "Empath",
-            ),
-            NightResolutionEvent.ConfirmMonkProtection,
-        )
-
-        assertEquals("Mayor", reduced.confirmedMonkTarget)
-        assertNull(reduced.confirmedMayorRedirectTarget)
-        assertEquals("Empath", reduced.mayorRedirectDraftTarget)
-    }
-
-    @Test
-    fun `changed Demon attack confirmation invalidates Mayor redirect but preserves its draft`() {
-        val reduced = NightCheckpointReducer.reduce(
-            checkpoint(
-                confirmedAttackTarget = "Mayor",
-                attackDraftTarget = "Empath",
-                confirmedMayorRedirectTarget = "Empath",
-                mayorRedirectDraftTarget = "Empath",
-            ),
-            NightResolutionEvent.ConfirmDemonAttack,
-        )
-
-        assertEquals("Empath", reduced.confirmedAttackTarget)
-        assertNull(reduced.confirmedMayorRedirectTarget)
-        assertEquals("Empath", reduced.mayorRedirectDraftTarget)
-    }
-
-    @Test
-    fun `idempotent upstream reconfirmations preserve Mayor redirect confirmation`() {
-        val original = checkpoint(
-            confirmedAttackTarget = "Mayor",
-            attackDraftTarget = "Mayor",
-            confirmedPoisonTarget = "Empath",
-            poisonDraftTarget = "Empath",
-            confirmedMonkTarget = "Monk",
-            monkDraftTarget = "Monk",
-            confirmedMayorRedirectTarget = "Empath",
-            mayorRedirectDraftTarget = "Empath",
-        )
-
-        val afterAttack = NightCheckpointReducer.reduce(original, NightResolutionEvent.ConfirmDemonAttack)
-        val afterPoison = NightCheckpointReducer.reduce(afterAttack, NightResolutionEvent.ConfirmPoison)
-        val afterMonk = NightCheckpointReducer.reduce(afterPoison, NightResolutionEvent.ConfirmMonkProtection)
-
-        assertEquals("Empath", afterMonk.confirmedMayorRedirectTarget)
-        assertEquals("Empath", afterMonk.mayorRedirectDraftTarget)
-    }
-
-    @Test
     fun `changing Monk protection to Mayor prevents stale redirect from moving Dawn death to old target`() {
-        val reduced = NightCheckpointReducer.reduce(
-            checkpoint(
-                confirmedAttackTarget = "Mayor",
-                attackDraftTarget = "Mayor",
-                confirmedMonkTarget = "Empath",
-                monkDraftTarget = "Mayor",
-                confirmedMayorRedirectTarget = "Empath",
-                mayorRedirectDraftTarget = "Empath",
-            ),
-            NightResolutionEvent.ConfirmMonkProtection,
+        val targets = ClocktowerNightTargets(attackSeat = 2, monkSeat = 3, mayorRedirectSeat = 3)
+            .withProtection(2)
+        val reduced = checkpoint(
+            confirmedAttackTarget = "Mayor",
+            confirmedMonkTarget = targets.monkSeat?.let { gameState().playerAt(it)?.name },
+            confirmedMayorRedirectTarget = targets.mayorRedirectSeat?.let { gameState().playerAt(it)?.name },
+            mayorRedirectDraftTarget = "Empath",
         )
 
         val transition = NightDawnResolutionPlanner.planValidatedNightDeath(

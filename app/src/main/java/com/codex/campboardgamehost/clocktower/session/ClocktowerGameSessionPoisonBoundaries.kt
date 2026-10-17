@@ -47,6 +47,8 @@ private fun ClocktowerGameSession.gameStateWithPoisonTarget(targetSeat: Int?): G
 internal fun ClocktowerGameSession.commitConfirmedPoisonTransition(
     draft: ActionFactDraft.Poison,
     expectedGameStateRevision: Long,
+    // Dawn carry/expiry resolves an existing choice; it must not revoke pending succession.
+    preserveNightChoices: Boolean = false,
 ): TimelineBoundActionFact {
     require(draft.phase in setOf(StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT, StorytellerPhase.DAY)) {
         "Poison transition must be confirmed at night or at outgoing Day expiry."
@@ -58,5 +60,6 @@ internal fun ClocktowerGameSession.commitConfirmedPoisonTransition(
         draft = draft,
         nextGameState = gameStateWithPoisonTarget(draft.targetSeat),
         expectedGameStateRevision = expectedGameStateRevision,
+        preserveNightChoices = preserveNightChoices,
     )
 }

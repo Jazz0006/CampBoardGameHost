@@ -13,13 +13,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * SNE-7.6 high-value JVM integration smokes across the real typed Host/session seams.
- *
- * These tests deliberately stop before App-owned durable side effects. They prove that the
- * production Host transaction adapter, typed checkpoint reconstruction, and Dawn planner agree on
- * the same confirmed mechanics without introducing a second coordinator/state owner.
- */
+/** Session successor selection, live night projection and Dawn planning share accepted mechanics. */
 class NightTransactionHostIntegrationSmokeTest {
     private val impInteraction = ClocktowerInteractionId("other_night:role:Imp")
     private val successorInteraction = ClocktowerInteractionId("other_night:event:imp:demon_successor")
@@ -31,21 +25,17 @@ class NightTransactionHostIntegrationSmokeTest {
         val baseGameState = gameState()
         val initial = checkpoint(nightStepIndex = 2)
 
-        val edited = NightCheckpointHostTransaction.editDemonSuccessor(initial, "Poisoner")
-        assertEquals(NightCheckpointRevisionIntent.PLAYER_INPUT, edited.revisionIntent)
-
-        val confirmed = NightCheckpointHostTransaction.confirmDemonSuccessor(edited.checkpoint)
-        assertEquals(NightCheckpointRevisionIntent.PLAYER_INPUT, confirmed.revisionIntent)
-        assertEquals("Poisoner", confirmed.checkpoint.confirmedDemonSuccessorTarget)
-
-        val previous = NightCheckpointHostTransaction.movePrevious(confirmed.checkpoint)
-        assertEquals(NightCheckpointRevisionIntent.NONE, previous.revisionIntent)
-        assertEquals(1, previous.checkpoint.nightStepIndex)
-        assertEquals("Poisoner", previous.checkpoint.confirmedDemonSuccessorTarget)
+        val session = ClocktowerGameSession.createProduction("successor", baseGameState.seed, baseGameState)
+        session.confirmDemonSuccessor(2)
+        val confirmed = initial.copy(confirmedDemonSuccessorTarget =
+            session.state.nightTargets.successorSeat?.let { baseGameState.playerAt(it)?.name })
+        val previous = confirmed.copy(nightStepIndex = confirmed.nightStepIndex - 1)
+        assertEquals(1, previous.nightStepIndex)
+        assertEquals("Poisoner", previous.confirmedDemonSuccessorTarget)
 
         val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = baseGameState,
-            checkpoint = previous.checkpoint,
+            checkpoint = previous,
             canonicalInteractionIds = canonicalPlan,
             demonSuccessorInteractionId = successorInteraction,
             demonRoleId = RoleId("Imp"),
@@ -65,12 +55,13 @@ class NightTransactionHostIntegrationSmokeTest {
             nightStepIndex = 2,
             confirmedPoisonTarget = "Empath",
         )
-        val confirmed = NightCheckpointHostTransaction.confirmDemonSuccessor(
-            NightCheckpointHostTransaction.editDemonSuccessor(initial, "Poisoner").checkpoint,
-        )
+        val session = ClocktowerGameSession.createProduction("successor-poison", baseGameState.seed, baseGameState)
+        session.confirmDemonSuccessor(2)
+        val confirmed = initial.copy(confirmedDemonSuccessorTarget =
+            session.state.nightTargets.successorSeat?.let { baseGameState.playerAt(it)?.name })
         val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = baseGameState,
-            checkpoint = confirmed.checkpoint,
+            checkpoint = confirmed,
             canonicalInteractionIds = canonicalPlan,
             demonSuccessorInteractionId = successorInteraction,
             demonRoleId = RoleId("Imp"),
@@ -78,7 +69,7 @@ class NightTransactionHostIntegrationSmokeTest {
 
         val succession = NightDawnResolutionPlanner.planDemonSuccession(
             baseGameState = baseGameState,
-            checkpoint = confirmed.checkpoint,
+            checkpoint = confirmed,
             successionResolution = DemonSuccessionResolution.Choice(setOf(2)),
             demonRoleId = RoleId("Imp"),
         )

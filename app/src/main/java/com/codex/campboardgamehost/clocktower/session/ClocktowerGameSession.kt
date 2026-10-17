@@ -71,6 +71,8 @@ internal data class ClocktowerSessionView(
     val nextTimelineGlobalSequence: Long,
     val phase: StorytellerPhase,
     val round: Int,
+    val nightTargets: ClocktowerNightTargets,
+    val voteStanding: ClocktowerVoteStanding,
     val redHerringSeat: Int?,
     val demonBluffRoleIds: List<RoleId>,
 )
@@ -92,7 +94,9 @@ internal data class ClocktowerSessionState(
     val semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
     val nextTimelineGlobalSequence: Long = 0L,
     val storytellerPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1> = emptyMap(),
-    /** Accepted setup decisions are stored once here, not in Compose draft state. */
+    /** Accepted current choices are stored once here, not in Compose draft state. */
+    val nightTargets: ClocktowerNightTargets = ClocktowerNightTargets(),
+    val voteStanding: ClocktowerVoteStanding = ClocktowerVoteStanding(),
     val redHerringSeat: Int? = null,
     val demonBluffRoleIds: List<RoleId> = emptyList(),
 ) {
@@ -169,6 +173,8 @@ internal class ClocktowerGameSession private constructor(
             nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
             phase = state.phase,
             round = state.round,
+            nightTargets = state.nightTargets,
+            voteStanding = state.voteStanding,
             redHerringSeat = state.redHerringSeat,
             demonBluffRoleIds = state.demonBluffRoleIds,
         )
@@ -415,6 +421,7 @@ internal class ClocktowerGameSession private constructor(
         nextGameState: GameState,
         expectedGameStateRevision: Long,
         publishedObservation: EpistemicObservationDraft? = null,
+        preserveNightChoices: Boolean = false,
     ): TimelineBoundActionFact {
         require(nextGameState.seed == state.gameSeed && nextGameState.script == state.gameState.script) {
             "A confirmed step cannot change the session seed or script."
@@ -453,6 +460,22 @@ internal class ClocktowerGameSession private constructor(
         updateState(state.copy(
             gameStateRevision = state.gameStateRevision + 1,
             gameState = nextGameState,
+            nightTargets = state.nightTargets.after(
+                committed.entry,
+                priorPoisonSeat = if (committed.entry.fact is ActionFact.Poison)
+                    (state.actionTimeline.entries.asReversed().firstOrNull {
+                        it.point.round == committed.entry.point.round && it.fact is ActionFact.Poison
+                    }?.fact as? ActionFact.Poison)?.targetSeat else null,
+                preserveNightChoices = preserveNightChoices,
+            ),
+            voteStanding = when (val fact = committed.entry.fact) {
+                is ActionFact.Vote -> state.voteStanding.confirm(fact.nomineeSeat,
+                    fact.voterSeats.size, (state.gameState.players.count { it.alive } + 1) / 2)
+                is ActionFact.PhaseAdvance -> if (fact.phase == StorytellerPhase.NIGHT ||
+                    (fact.phase == StorytellerPhase.DAY && draft.phase != StorytellerPhase.DAY))
+                    ClocktowerVoteStanding() else state.voteStanding
+                else -> state.voteStanding
+            },
             actionTimeline = committed.actionTimeline,
             epistemicObservationLog = observationCommit?.observationLog ?: state.epistemicObservationLog,
             playerInputRevision = observationCommit?.playerInputRevision ?: state.playerInputRevision,
@@ -678,6 +701,42 @@ internal class ClocktowerGameSession private constructor(
                 epistemicObservationLog = state.epistemicObservationLog.append(record),
             ),
         )
+    }
+
+    /** Explicit empty confirmations have no positive Attack/Protect fact in the current schema. */
+    fun clearConfirmedNightAttack(expectedRevision: Long) =
+        confirmNightTargets(state.nightTargets.withAttack(null), expectedRevision)
+
+    fun clearConfirmedNightProtection(expectedRevision: Long) =
+        confirmNightTargets(state.nightTargets.withProtection(null), expectedRevision)
+
+    private fun confirmNightTargets(next: ClocktowerNightTargets, expectedRevision: Long) {
+        check(state.gameStateRevision == expectedRevision) { "Stale night confirmation." }
+        if (next == state.nightTargets) return
+        check(state.gameStateRevision != Long.MAX_VALUE)
+        updateState(state.copy(nightTargets = next, gameStateRevision = state.gameStateRevision + 1))
+    }
+
+    /** Pending selection only; the existing New Demon boundary owns the actual role change. */
+    fun confirmDemonSuccessor(seat: Int?) {
+        require(seat == null || state.gameState.playerAt(seat)?.alive == true)
+        if (seat == state.nightTargets.successorSeat) return
+        check(state.playerInputRevision != Long.MAX_VALUE)
+        updateState(state.copy(nightTargets = state.nightTargets.copy(successorSeat = seat),
+            playerInputRevision = state.playerInputRevision + 1))
+    }
+
+    fun clearPendingDemonSuccessor() {
+        updateState(state.copy(nightTargets = state.nightTargets.copy(successorSeat = null)))
+    }
+
+    /** The rules planner has resolved no death; this is not another player action. */
+    fun clearResolvedNightDeath() {
+        updateState(state.copy(nightTargets = state.nightTargets.copy(attackSeat = null)))
+    }
+
+    fun finishNightResolution() {
+        updateState(state.copy(nightTargets = state.nightTargets.copy(monkSeat = null, mayorRedirectSeat = null)))
     }
 
     private fun updateState(nextState: ClocktowerSessionState): ClocktowerSessionState {

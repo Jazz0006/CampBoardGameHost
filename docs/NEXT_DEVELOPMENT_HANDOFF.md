@@ -6,13 +6,15 @@
 
 准备基线 #315 `704f7b29`；独立 Recovery 删除 #316 `ef076287`；文字/整局归档删除 #317 `60f61c3b`。#316/#317 完整 CI/R2 已通过，三个 PR 仍未合并。
 
-当前分支 `codex/reduce-runtime-state-copies` 基于 #317。第三阶段 C1 已完成幽灵票、Clocktower phase/round 单源投影；删除 journal 全量历史/玩家/setup 等请求副本、旧 Klutz 存档兼容、Session restore/游标分配/cache 和无消费者 CrossGameHistory。完整 JVM 1,362 项与 APK 构建通过；最终 FAST/远端状态以当前 PR 为准，不据此声称已合并或真机验证。
+C1 #318 `fb663d6a` 已完成幽灵票、phase/round 单源投影及 journal 请求副本/旧恢复支架删除，完整 CI/R2 通过，仍未合并。
 
-## 下一检查点 C2
+当前分支 `codex/converge-night-vote-state` 基于 #318。C2 将已确认攻击/保护/市长转移/待生效继任人和当日最高票/平票归 Session；删除 App/Host 写副本及旧 checkpoint reducer/transaction、UI vote transaction。具体证据和测试退休映射见 [C2 实施](NIGHT_VOTE_OWNERSHIP_IMPLEMENTATION_2026-10-17.md)。远端检查和合并状态以当前 PR 实时状态为准。
 
-[第三阶段实施与残留审计](STATE_COPY_REMOVAL_IMPLEMENTATION_2026-10-17.md) 列明下一步：App confirmed Monk/Mayor/attack 的有效值和失效语义、尚未生效的新恶魔选择、当日最高票/平票归属。不能仅取最后一条事件替代，因为现有记录未表达全部取消/失效/当时门槛。把必要规则责任归 Session，再删除 App 可写入口；不把整个 checkpoint 装入 Session，不添加兼容存档。
+## 下一检查点 D
 
-此后执行 D：按真实职责与理解半径审计 App/Host。二者仍约 240 KB/180 KB，大文件治理尚未完成。
+重新按职责与理解半径审计 App/Host，优先继续删除无用支架，再确定自然拆分边界。App 4,065 行 / 234,187 bytes，Host 3,022 行 / 179,448 bytes；大文件治理尚未完成。不能通过搬运巨型回调或新增 God Context 宣称完成。
+
+仍保留的夜间 checkpoint 仅是规则 planner 的临时输入，未存入 Session 或磁盘。夜间空目标确认、依赖失效和投票时门槛尚未全部进入事件记录，不能用最后一条动作冒充完整有效状态。后续补事件覆盖和最小继续游戏时明确处理这些缺口，不复活旧存档框架。
 
 ## 缺口
 

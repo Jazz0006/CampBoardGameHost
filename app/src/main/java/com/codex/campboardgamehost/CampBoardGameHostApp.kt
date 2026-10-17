@@ -94,10 +94,6 @@ import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleC
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPoisonTransition
 import com.codex.campboardgamehost.clocktower.session.confirmedPoisonTargetName
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPlayerDeath
-import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
-import com.codex.campboardgamehost.clocktower.session.NightCheckpointHostTransaction
-import com.codex.campboardgamehost.clocktower.session.NightCheckpointRevisionIntent
-import com.codex.campboardgamehost.clocktower.session.NightResolutionEvent
 import com.codex.campboardgamehost.clocktower.session.DawnCommitIntent
 import com.codex.campboardgamehost.clocktower.session.DawnDurableMaterializationState
 import com.codex.campboardgamehost.clocktower.session.NightDawnDurableMaterializationPlanner
@@ -388,7 +384,6 @@ internal fun CampBoardGameHostApp() {
     // The Demon may revise this while awake. Only the confirmed attack may
     // reach protection, Mayor redirection, death, or succession resolution.
     var clocktowerDemonAttackDraftTarget by remember { mutableStateOf<String?>(null) }
-    var clocktowerPendingNightDeath by remember { mutableStateOf<String?>(null) }
     var clocktowerSelectedExecution by remember { mutableStateOf<String?>(null) }
     var clocktowerPoisonTarget by remember { mutableStateOf<String?>(null) }
     // A target is provisional while the Poisoner is still awake. It becomes a
@@ -400,16 +395,10 @@ internal fun CampBoardGameHostApp() {
     var clocktowerRavenkeeperTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerButlerMaster by remember { mutableStateOf<String?>(null) }
     var clocktowerMonkProtectedTarget by remember { mutableStateOf<String?>(null) }
-    var clocktowerConfirmedMonkProtectedTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerMayorRedirectTarget by remember { mutableStateOf<String?>(null) }
-    var clocktowerConfirmedMayorRedirectTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerPendingNewDemonName by remember { mutableStateOf<String?>(null) }
     var clocktowerPendingNightNewDemonIdentityName by remember { mutableStateOf<String?>(null) }
     var clocktowerDemonSuccessorTarget by remember { mutableStateOf<String?>(null) }
-    var clocktowerConfirmedDemonSuccessorTarget by remember { mutableStateOf<String?>(null) }
-    fun clearConfirmedDemonSuccessorTarget() {
-        clocktowerConfirmedDemonSuccessorTarget = null
-    }
     var clocktowerArtistUsed by remember { mutableStateOf(false) }
     var clocktowerArtistClaimedNames by remember { mutableStateOf<List<String>>(emptyList()) }
     var clocktowerLastExecutedName by remember { mutableStateOf<String?>(null) }
@@ -537,8 +526,6 @@ internal fun CampBoardGameHostApp() {
     val clocktowerNightStepIndexState = remember { mutableStateOf(0) }
     val clocktowerDayModeState = remember { mutableStateOf(ClocktowerDayMode.Overview) }
     val clocktowerGhostVoteAuthority = ClocktowerGhostVoteAuthority.from(clocktowerActionTimeline)
-    val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }
-    val clocktowerHighestVoteCountState = remember { mutableStateOf(0) }
     val troubleBrewingFirstNightPrecomputeScope = rememberCoroutineScope()
     val troubleBrewingFirstNightPrecomputeCoordinator = remember {
         val recommendationCoordinator = ClocktowerRecommendationCoordinator()
@@ -580,8 +567,24 @@ internal fun CampBoardGameHostApp() {
             "Clocktower session authority is unavailable."
         }
 
-    // Accepted poison is derived on each read from Session history/mechanics, including
-    // same-callback confirmations and poison choices targeting players who later died.
+    // Read live Session targets, including changes made earlier in the same callback.
+    fun confirmedNightAttackName(): String? = clocktowerGameSession?.state?.let {
+        it.nightTargets.attackSeat?.let(it.gameState::playerAt)?.name
+    }
+    fun confirmedNightMonkName(): String? = clocktowerGameSession?.state?.let {
+        it.nightTargets.monkSeat?.let(it.gameState::playerAt)?.name
+    }
+    fun confirmedNightMayorName(): String? = clocktowerGameSession?.state?.let {
+        it.nightTargets.mayorRedirectSeat?.let(it.gameState::playerAt)?.name
+    }
+    fun confirmedNightSuccessorName(): String? = clocktowerGameSession?.state?.let {
+        it.nightTargets.successorSeat?.let(it.gameState::playerAt)?.name
+    }
+    fun clearConfirmedDemonSuccessorTarget() {
+        requireClocktowerGameSession().clearPendingDemonSuccessor()
+        publishClocktowerSessionView()
+    }
+
     fun confirmedClocktowerPoisonTarget(): String? =
         clocktowerGameSession?.state?.confirmedPoisonTargetName(round)
 
@@ -805,18 +808,18 @@ internal fun CampBoardGameHostApp() {
         playerInputRevision = clocktowerPlayerInputRevision,
         nightStarted = clocktowerNightStartedState.value,
         nightStepIndex = clocktowerNightStepIndexState.value,
-        confirmedAttackTarget = clocktowerPendingNightDeath,
+        confirmedAttackTarget = confirmedNightAttackName(),
         attackDraftTarget = clocktowerDemonAttackDraftTarget,
         confirmedPoisonTarget = confirmedClocktowerPoisonTarget(),
         poisonDraftTarget = clocktowerPoisonTarget,
-        confirmedMonkTarget = clocktowerConfirmedMonkProtectedTarget,
+        confirmedMonkTarget = confirmedNightMonkName(),
         monkDraftTarget = clocktowerMonkProtectedTarget,
-        confirmedMayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
+        confirmedMayorRedirectTarget = confirmedNightMayorName(),
         mayorRedirectDraftTarget = clocktowerMayorRedirectTarget,
         pendingNewDemonName = clocktowerPendingNewDemonName,
         pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
         demonSuccessorDraftTarget = clocktowerDemonSuccessorTarget,
-        confirmedDemonSuccessorTarget = clocktowerConfirmedDemonSuccessorTarget,
+        confirmedDemonSuccessorTarget = confirmedNightSuccessorName(),
         nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
     )
 
@@ -892,6 +895,7 @@ internal fun CampBoardGameHostApp() {
         if (materialization.actionIdToCommit != null) {
             val localSequence = requireClocktowerGameSession().nextInputSequence
             requireClocktowerGameSession().commitConfirmedPoisonTransition(
+                preserveNightChoices = true,
                 draft = ActionFactDraft.Poison(
                     actionId = materialization.actionIdToCommit,
                     phase = storytellerPhaseFor(),
@@ -1135,8 +1139,6 @@ internal fun CampBoardGameHostApp() {
 
     fun resetClocktowerDayFlow() {
         clocktowerDayModeState.value = ClocktowerDayMode.Overview
-        clocktowerHighestVoteNameState.value = null
-        clocktowerHighestVoteCountState.value = 0
     }
 
     fun resetClocktowerFlow() {
@@ -1269,7 +1271,6 @@ internal fun CampBoardGameHostApp() {
         } else {
             clocktowerRulesetRef = null
         }
-        clocktowerPendingNightDeath = null
         clocktowerDemonAttackDraftTarget = null
         clocktowerSelectedExecution = null
         clocktowerPoisonTarget = null
@@ -1280,13 +1281,10 @@ internal fun CampBoardGameHostApp() {
         clocktowerRavenkeeperTarget = null
         clocktowerButlerMaster = null
         clocktowerMonkProtectedTarget = null
-        clocktowerConfirmedMonkProtectedTarget = null
         clocktowerMayorRedirectTarget = null
-        clocktowerConfirmedMayorRedirectTarget = null
         clocktowerPendingNewDemonName = null
         clocktowerPendingNightNewDemonIdentityName = null
         clocktowerDemonSuccessorTarget = null
-        clearConfirmedDemonSuccessorTarget()
         clocktowerArtistUsed = false
         clocktowerArtistClaimedNames = emptyList()
         clocktowerLastExecutedName = null
@@ -2719,17 +2717,13 @@ internal fun CampBoardGameHostApp() {
                         nightStartedState = clocktowerNightStartedState,
                         nightStepIndexState = clocktowerNightStepIndexState,
                         onMovePreviousNightStep = {
-                            // Navigation only: movePrevious always has revisionIntent NONE.
-                            // Do not create a mechanical or player-input fact for a back click.
-                            val transaction = NightCheckpointHostTransaction.movePrevious(
-                                checkpoint = currentClocktowerNightCheckpoint(),
-                            )
-                            clocktowerNightStepIndexState.value = transaction.checkpoint.nightStepIndex
+                            clocktowerNightStepIndexState.value = (clocktowerNightStepIndexState.value - 1).coerceAtLeast(0)
                         },
                         dayModeState = clocktowerDayModeState,
                         ghostVoteAuthority = clocktowerGhostVoteAuthority,
-                        highestVoteNameState = clocktowerHighestVoteNameState,
-                        highestVoteCountState = clocktowerHighestVoteCountState,
+                        highestVoteName = clocktowerSessionView?.voteStanding?.nomineeSeat
+                            ?.let { requireClocktowerGameSession().state.gameState.playerAt(it)?.name },
+                        highestVoteCount = clocktowerSessionView?.voteStanding?.count ?: 0,
                         gameOutcome = gameOutcome,
                         onCommitConfirmedPrivateInformationPublication = ::commitClocktowerPrivateInformationPublication,
                         onCommitConfirmedRegistrationResult = ::commitConfirmedRegistrationResult,
@@ -2744,39 +2738,23 @@ internal fun CampBoardGameHostApp() {
                         },
                         onSelectNightDeath = { selected ->
                             advanceClocktowerPlayerInputRevision()
-                            val reducedCheckpoint = NightCheckpointReducer.reduce(
-                                checkpoint = currentClocktowerNightCheckpoint(),
-                                event = NightResolutionEvent.EditDemonAttackDraft(selected),
-                            )
-                            clocktowerDemonAttackDraftTarget = reducedCheckpoint.attackDraftTarget
+                            clocktowerDemonAttackDraftTarget = selected
                         },
                         onConfirmDemonAttack = {
-                            val transaction = NightCheckpointHostTransaction.confirmDemonAttack(
-                                checkpoint = currentClocktowerNightCheckpoint(),
-                            )
-                            if (transaction.revisionIntent == NightCheckpointRevisionIntent.GAME_STATE) {
-                                val targetName = transaction.checkpoint.confirmedAttackTarget
-                                if (targetName != null) {
+                            val targetName = clocktowerDemonAttackDraftTarget
+                            if (targetName != confirmedNightAttackName()) {
+                                val session = requireClocktowerGameSession()
+                                if (targetName == null) {
+                                    session.clearConfirmedNightAttack(session.state.gameStateRevision)
+                                    publishClocktowerSessionView()
+                                    invalidateA4RevisionScope()
+                                } else {
                                     val targetSeat = clocktowerSeatFor(targetName)
-                                    val localSequence = requireClocktowerGameSession().nextInputSequence
                                     commitClocktowerConfirmedAction(ActionFactDraft.Attack(
-                                        actionId = clocktowerActionId(
-                                            kind = "attack",
-                                            localSequence = localSequence,
-                                            targetSeat = targetSeat,
-                                        ),
-                                        phase = storytellerPhaseFor(),
-                                        round = round,
-                                        sequence = localSequence,
-                                        targetSeat = targetSeat,
+                                        actionId = clocktowerActionId("attack", targetSeat = targetSeat),
+                                        phase = storytellerPhaseFor(), round = round,
+                                        sequence = session.nextInputSequence, targetSeat = targetSeat,
                                     ))
-                                }
-                                clocktowerPendingNightDeath = transaction.checkpoint.confirmedAttackTarget
-                                clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
-                                clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
-                                if (targetName == null || clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) {
-                                    // No typed Attack was committed: the explicit confirmation still invalidates drafts.
-                                    advanceClocktowerGameStateRevision()
                                 }
                             }
                         },
@@ -2784,39 +2762,24 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerSelectedExecution = it
                         },
-                        onSelectPoisonTarget = { selectedTarget ->
+                        onSelectPoisonTarget = { selected ->
                             advanceClocktowerPlayerInputRevision()
-                            val reducedCheckpoint = NightCheckpointReducer.reduce(
-                                checkpoint = currentClocktowerNightCheckpoint(),
-                                event = NightResolutionEvent.EditPoisonDraft(selectedTarget),
-                            )
-                            clocktowerPoisonTarget = reducedCheckpoint.poisonDraftTarget
+                            clocktowerPoisonTarget = selected
                         },
                         onConfirmPoisonTarget = {
-                            val transaction = NightCheckpointHostTransaction.confirmPoison(
-                                checkpoint = currentClocktowerNightCheckpoint(),
-                            )
-                            if (transaction.revisionIntent == NightCheckpointRevisionIntent.GAME_STATE) {
-                                val targetSeat = transaction.checkpoint.confirmedPoisonTarget?.let(::clocktowerSeatFor)
-                                val localSequence = requireClocktowerGameSession().nextInputSequence
-                                requireClocktowerGameSession().commitConfirmedPoisonTransition(
+                            if (clocktowerPoisonTarget != confirmedClocktowerPoisonTarget()) {
+                                val session = requireClocktowerGameSession()
+                                val targetSeat = clocktowerPoisonTarget?.let(::clocktowerSeatFor)
+                                session.commitConfirmedPoisonTransition(
                                     draft = ActionFactDraft.Poison(
-                                        actionId = clocktowerActionId(
-                                            kind = "poison",
-                                            localSequence = localSequence,
-                                            targetSeat = targetSeat,
-                                        ),
-                                        phase = storytellerPhaseFor(),
-                                        round = round,
-                                        sequence = localSequence,
-                                        targetSeat = targetSeat,
+                                        actionId = clocktowerActionId("poison", targetSeat = targetSeat),
+                                        phase = storytellerPhaseFor(), round = round,
+                                        sequence = session.nextInputSequence, targetSeat = targetSeat,
                                     ),
-                                    expectedGameStateRevision = clocktowerGameStateRevision,
+                                    expectedGameStateRevision = session.state.gameStateRevision,
                                 )
                                 publishClocktowerSessionView()
                                 invalidateA4RevisionScope()
-                                clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
-                                clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
                             }
                         },
                         onSelectFortuneTellerFirst = {
@@ -2885,50 +2848,31 @@ internal fun CampBoardGameHostApp() {
                             publishClocktowerSessionView()
                             invalidateA4RevisionScope()
                         },
-                        onSelectMonkProtectedTarget = { selectedTarget ->
+                        onSelectMonkProtectedTarget = { selected ->
                             advanceClocktowerPlayerInputRevision()
-                            val reducedCheckpoint = NightCheckpointReducer.reduce(
-                                checkpoint = currentClocktowerNightCheckpoint(),
-                                event = NightResolutionEvent.EditMonkProtectionDraft(selectedTarget),
-                            )
-                            clocktowerMonkProtectedTarget = reducedCheckpoint.monkDraftTarget
+                            clocktowerMonkProtectedTarget = selected
                         },
                         onConfirmMonkProtectedTarget = {
-                            val transaction = NightCheckpointHostTransaction.confirmMonkProtection(
-                                checkpoint = currentClocktowerNightCheckpoint(),
-                            )
-                            if (transaction.revisionIntent == NightCheckpointRevisionIntent.GAME_STATE) {
-                                val targetName = transaction.checkpoint.confirmedMonkTarget
-                                if (targetName != null) {
+                            val targetName = clocktowerMonkProtectedTarget
+                            if (targetName != confirmedNightMonkName()) {
+                                val session = requireClocktowerGameSession()
+                                if (targetName == null) {
+                                    session.clearConfirmedNightProtection(session.state.gameStateRevision)
+                                    publishClocktowerSessionView()
+                                    invalidateA4RevisionScope()
+                                } else {
                                     val targetSeat = clocktowerSeatFor(targetName)
-                                    val localSequence = requireClocktowerGameSession().nextInputSequence
                                     commitClocktowerConfirmedAction(ActionFactDraft.Protect(
-                                        actionId = clocktowerActionId(
-                                            kind = "protect",
-                                            localSequence = localSequence,
-                                            targetSeat = targetSeat,
-                                        ),
-                                        phase = storytellerPhaseFor(),
-                                        round = round,
-                                        sequence = localSequence,
-                                        targetSeat = targetSeat,
+                                        actionId = clocktowerActionId("protect", targetSeat = targetSeat),
+                                        phase = storytellerPhaseFor(), round = round,
+                                        sequence = session.nextInputSequence, targetSeat = targetSeat,
                                     ))
-                                }
-                                clocktowerConfirmedMonkProtectedTarget = transaction.checkpoint.confirmedMonkTarget
-                                clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
-                                clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
-                                if (targetName == null || clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) {
-                                    advanceClocktowerGameStateRevision()
                                 }
                             }
                         },
-                        onSelectMayorRedirectTarget = { selectedTarget ->
+                        onSelectMayorRedirectTarget = { selected ->
                             advanceClocktowerPlayerInputRevision()
-                            val reducedCheckpoint = NightCheckpointReducer.reduce(
-                                checkpoint = currentClocktowerNightCheckpoint(),
-                                event = NightResolutionEvent.EditMayorRedirectDraft(selectedTarget),
-                            )
-                            clocktowerMayorRedirectTarget = reducedCheckpoint.mayorRedirectDraftTarget
+                            clocktowerMayorRedirectTarget = selected
                         },
                         onConfirmMayorRedirectTarget = {
                             val checkpoint = currentClocktowerNightCheckpoint()
@@ -2994,37 +2938,17 @@ internal fun CampBoardGameHostApp() {
                                     }
                                 }
                             }
-                            val reducedCheckpoint = NightCheckpointReducer.reduce(
-                                checkpoint = checkpoint,
-                                event = NightResolutionEvent.ConfirmMayorRedirect,
-                            )
-                            if (reducedCheckpoint.confirmedMayorRedirectTarget != checkpoint.confirmedMayorRedirectTarget) {
-                                clocktowerConfirmedMayorRedirectTarget = reducedCheckpoint.confirmedMayorRedirectTarget
-                                if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) {
-                                    advanceClocktowerGameStateRevision()
-                                }
-                            }
                         },
-                        onSelectDemonSuccessor = { selectedTarget ->
-                            val transaction = NightCheckpointHostTransaction.editDemonSuccessor(
-                                checkpoint = currentClocktowerNightCheckpoint(),
-                                selectedTarget = selectedTarget,
-                            )
-                            // Editing a draft is always PLAYER_INPUT, never a confirmed game fact.
+                        onSelectDemonSuccessor = { selected ->
                             advanceClocktowerPlayerInputRevision()
-                            clocktowerDemonSuccessorTarget = transaction.checkpoint.demonSuccessorDraftTarget
+                            clocktowerDemonSuccessorTarget = selected
                         },
                         onConfirmDemonSuccessorTarget = { _ ->
-                            val transaction = NightCheckpointHostTransaction.confirmDemonSuccessor(
-                                checkpoint = currentClocktowerNightCheckpoint(),
-                            )
-                            // A confirmed successor is pending night-flow input, not a role
-                            // change. Session commits the actual change at the New Demon step.
-                            check(transaction.revisionIntent != NightCheckpointRevisionIntent.GAME_STATE)
-                            if (transaction.revisionIntent == NightCheckpointRevisionIntent.PLAYER_INPUT) {
-                                clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
-                                advanceClocktowerPlayerInputRevision()
-                            }
+                            val session = requireClocktowerGameSession()
+                            val previousRevision = session.state.playerInputRevision
+                            session.confirmDemonSuccessor(clocktowerDemonSuccessorTarget?.let(::clocktowerSeatFor))
+                            publishClocktowerSessionView()
+                            if (session.state.playerInputRevision != previousRevision) invalidateA4RevisionScope()
                         },
                         onConfirmNewDemon = {
                             val pendingName = clocktowerPendingNewDemonName
@@ -3111,6 +3035,7 @@ internal fun CampBoardGameHostApp() {
                                             if (materialization.actionIdToCommit != null) {
                                                 val localSequence = requireClocktowerGameSession().nextInputSequence
                                                 requireClocktowerGameSession().commitConfirmedPoisonTransition(
+                                                    preserveNightChoices = true,
                                                     draft = ActionFactDraft.Poison(
                                                         actionId = materialization.actionIdToCommit,
                                                         phase = storytellerPhaseFor(),
@@ -3134,7 +3059,7 @@ internal fun CampBoardGameHostApp() {
                                         clocktowerPendingNewDemonName = transition.checkpoint.pendingNewDemonName
                                         clocktowerPendingNightNewDemonIdentityName = transition.checkpoint.pendingNightNewDemonIdentityName
                                         clocktowerDemonSuccessorTarget = transition.checkpoint.demonSuccessorDraftTarget
-                                        clocktowerConfirmedDemonSuccessorTarget = transition.checkpoint.confirmedDemonSuccessorTarget
+                                        if (transition.checkpoint.confirmedDemonSuccessorTarget == null) clearConfirmedDemonSuccessorTarget()
                                         dawnPhaseActionIdToCommit = phaseAdvance?.actionIdToCommit
                                         dawnPhaseStateMutationRequired = phaseAdvance?.stateMutationRequired == true
                                         true
@@ -3485,7 +3410,8 @@ internal fun CampBoardGameHostApp() {
                         },
                         onAdvanceFromFirstNight = {
                             commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                            clocktowerPendingNightDeath = null
+                            requireClocktowerGameSession().clearResolvedNightDeath()
+                            publishClocktowerSessionView()
                             clocktowerDemonAttackDraftTarget = null
                             resetClocktowerNightFlow()
                             resetClocktowerDayFlow()
@@ -3663,12 +3589,12 @@ internal fun CampBoardGameHostApp() {
                             var nightKlutzName: String? = null
                             var newDemonName: String? = null
                             var unresolvedDemonSuccessor = false
-                            val originalDeathName = clocktowerPendingNightDeath
+                            val originalDeathName = confirmedNightAttackName()
                             val dawnDeathFacts = resolveTroubleBrewingDawnDeathFacts(
                                 cards = cards,
                                 targetName = originalDeathName,
                                 poisonedPlayerName = confirmedClocktowerPoisonTarget(),
-                                monkProtectedTargetName = clocktowerConfirmedMonkProtectedTarget,
+                                monkProtectedTargetName = confirmedNightMonkName(),
                             )
                             val mayorCanRedirect = dawnDeathFacts.mayorSeat != null
                             val baseGameState = requireClocktowerGameSession().state.gameState
@@ -3720,7 +3646,6 @@ internal fun CampBoardGameHostApp() {
                                 )
                             }
                             if (deathName != null) {
-                                clocktowerPendingNightDeath = deathName
                                 val index = cards.indexOfFirst { it.name == deathName }
                                 val nightDeathCard = cards.getOrNull(index)
                                 if (index >= 0 && nightDeathCard != null && dawnDeathMaterialization != null) {
@@ -3782,7 +3707,7 @@ internal fun CampBoardGameHostApp() {
                                             )
                                             clocktowerPendingNewDemonName = successionTransition.checkpoint.pendingNewDemonName
                                             clocktowerDemonSuccessorTarget = successionTransition.checkpoint.demonSuccessorDraftTarget
-                                            clocktowerConfirmedDemonSuccessorTarget = successionTransition.checkpoint.confirmedDemonSuccessorTarget
+                                            if (successionTransition.checkpoint.confirmedDemonSuccessorTarget == null) clearConfirmedDemonSuccessorTarget()
                                             newDemonName = successionTransition.checkpoint.pendingNewDemonName
                                             unresolvedDemonSuccessor =
                                                 successionTransition.continuation == NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR
@@ -3796,11 +3721,13 @@ internal fun CampBoardGameHostApp() {
                                         nightKlutzName = deathName
                                     }
                                 } else {
-                                    clocktowerPendingNightDeath = null
+                                    requireClocktowerGameSession().clearResolvedNightDeath()
+                                    publishClocktowerSessionView()
                                 }
                             } else {
                                 // The validated night resolution owns the outcome, including no death.
-                                clocktowerPendingNightDeath = null
+                                requireClocktowerGameSession().clearResolvedNightDeath()
+                                publishClocktowerSessionView()
                             }
                             val postDeathGameState = requireClocktowerGameSession().state.gameState
                             val dawnPoisoner = postDeathGameState.players.firstOrNull {
@@ -3853,6 +3780,7 @@ internal fun CampBoardGameHostApp() {
                                 if (poisonMaterialization.actionIdToCommit != null) {
                                     val localSequence = requireClocktowerGameSession().nextInputSequence
                                     requireClocktowerGameSession().commitConfirmedPoisonTransition(
+                                        preserveNightChoices = true,
                                         draft = ActionFactDraft.Poison(
                                             actionId = poisonMaterialization.actionIdToCommit,
                                             phase = storytellerPhaseFor(),
@@ -3938,9 +3866,9 @@ internal fun CampBoardGameHostApp() {
                             clocktowerChambermaidSecond = null
                             clocktowerRavenkeeperTarget = null
                             clocktowerMonkProtectedTarget = null
-                            clocktowerConfirmedMonkProtectedTarget = null
+                            requireClocktowerGameSession().finishNightResolution()
+                            publishClocktowerSessionView()
                             clocktowerMayorRedirectTarget = null
-                            clocktowerConfirmedMayorRedirectTarget = null
                             if (clocktowerPendingNewDemonName == null) {
                                 clocktowerDemonSuccessorTarget = null
                                 clearConfirmedDemonSuccessorTarget()

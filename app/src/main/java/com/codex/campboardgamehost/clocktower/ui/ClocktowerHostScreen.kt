@@ -121,8 +121,8 @@ internal fun ClocktowerJudgeScreen(
     nightStepIndexState: MutableState<Int>,
     dayModeState: MutableState<ClocktowerDayMode>,
     ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-    highestVoteNameState: MutableState<String?>,
-    highestVoteCountState: MutableState<Int>,
+    highestVoteName: String?,
+    highestVoteCount: Int,
     gameOutcome: GameOutcome?,
     onCommitConfirmedPrivateInformationPublication: (
         EpistemicObservationDraft, ClocktowerConfirmedRegistrationPublicationV1?,
@@ -449,8 +449,6 @@ internal fun ClocktowerJudgeScreen(
     }
     var nominatorName by remember(gameId, round) { mutableStateOf<String?>(null) }
     var nomineeName by remember(gameId, round) { mutableStateOf<String?>(null) }
-    var highestVoteName by highestVoteNameState
-    var highestVoteCount by highestVoteCountState
     var slayerClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
     var slayerTargetName by remember(gameId) { mutableStateOf<String?>(null) }
     var artistClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
@@ -1981,16 +1979,7 @@ internal fun ClocktowerJudgeScreen(
             actionsEnabled = gameOutcome == null,
             onHostTools = onHostTools,
             onConfirm = { voteState ->
-                val voteTransaction = commitClocktowerVoteTransaction(
-                    voteState = voteState,
-                    nomineeName = requireNotNull(nomineeName) { "Confirmed vote requires nominee" },
-                    executionThreshold = executionThreshold,
-                    highestVoteName = highestVoteName,
-                    highestVoteCount = highestVoteCount,
-                )
-                onConfirmedVote(requireNotNull(nominatorName), requireNotNull(nomineeName), voteTransaction.voteRecord)
-                highestVoteName = voteTransaction.highestVoteName
-                highestVoteCount = voteTransaction.highestVoteCount
+                onConfirmedVote(requireNotNull(nominatorName), requireNotNull(nomineeName), voteState.confirmedVoteRecord())
                 nominatorName = null
                 nomineeName = null
                 dayMode = ClocktowerDayMode.Overview
