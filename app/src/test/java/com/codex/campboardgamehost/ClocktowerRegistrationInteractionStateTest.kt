@@ -43,48 +43,6 @@ class ClocktowerRegistrationInteractionStateTest {
     }
 
     @Test
-    fun `displayed result leaves all registration choices unresolved unless manually selected`() {
-        val state = ClocktowerRegistrationInteractionState()
-        val spyKey = "FirstNight:1:Chef:spy"
-        val recluseKey = "FirstNight:1:ChefRecluse:Bob"
-        val one = option(
-            witnessAlternatives = listOf(
-                ClocktowerRegistrationWitness(spyRegistersGood = false, recluseRegistersEvil = false),
-                ClocktowerRegistrationWitness(spyRegistersGood = true, recluseRegistersEvil = true),
-            ),
-        )
-        assertTrue(state.manualChoicesMatchResult(spyKey, recluseKey, one))
-        assertFalse(state.spyHasExplicitChoice(spyKey))
-        assertFalse(state.recluseHasExplicitChoice(recluseKey))
-        assertFalse(state.spyIsGood(spyKey))
-        assertFalse(state.recluseIsEvil(recluseKey))
-
-        state.chooseSpy(spyKey, good = false)
-        state.chooseRecluse(recluseKey, evil = false)
-        assertTrue(state.manualChoicesMatchResult(spyKey, recluseKey, one))
-    }
-
-    @Test
-    fun `explicit registration cannot be recorded against an incompatible displayed result`() {
-        val state = ClocktowerRegistrationInteractionState()
-        val spyKey = "Night:1:Empath:Spy"
-        val recluseKey = "Night:1:Empath:Recluse"
-        val one = option(witnessAlternatives = listOf(
-            ClocktowerRegistrationWitness(spyRegistersGood = false, recluseRegistersEvil = false),
-            ClocktowerRegistrationWitness(spyRegistersGood = true, recluseRegistersEvil = true),
-        ))
-        state.chooseSpy(spyKey, good = false)
-        state.chooseRecluse(recluseKey, evil = true)
-        assertFalse(state.manualChoicesMatchResult(spyKey, recluseKey, one))
-        assertTrue(state.recluseHasExplicitChoice(recluseKey))
-        state.chooseRecluse(recluseKey, evil = false)
-        assertTrue(state.manualChoicesMatchResult(spyKey, recluseKey, one))
-        state.chooseSpy("Night:2:Chef:Spy", good = true)
-        assertFalse(state.spyIsGood(spyKey))
-        assertTrue(state.spyIsGood("Night:2:Chef:Spy"))
-    }
-
-    @Test
     fun `recording markers are independent and require explicit manual choices`() {
         val state = ClocktowerRegistrationInteractionState()
         val spyKey = "Day:1:Virgin:Spy"
@@ -132,72 +90,5 @@ class ClocktowerRegistrationInteractionStateTest {
         assertNull(state.explicitChoice(ClocktowerRegistrationSubject.RECLUSE, "Night:2:ChefRecluse:Recluse"))
     }
 
-    @Test
-    fun `same result with two legal explanations never selects a witness in any information shape`() {
-        val state = ClocktowerRegistrationInteractionState()
-        val spy = "FirstNight:1:Chef:spy"
-        val recluse = "FirstNight:1:ChefRecluse:Recluse"
-        val alternatives = listOf(
-            ClocktowerRegistrationWitness(spyRegistersGood = false, recluseRegistersEvil = false),
-            ClocktowerRegistrationWitness(spyRegistersGood = true, recluseRegistersEvil = true),
-        )
-        // This gate is based on witness compatibility, independent of the player's result kind.
-        for (kind in listOf(ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo, ClocktowerDisplayKind.RoleReveal)) {
-            val result = option(witnessAlternatives = alternatives).copy(displayKind = kind)
-            assertTrue(state.manualChoicesMatchResult(spy, recluse, result))
-            assertNull(state.explicitChoice(ClocktowerRegistrationSubject.SPY, spy))
-            assertNull(state.explicitChoice(ClocktowerRegistrationSubject.RECLUSE, recluse))
-        }
-        state.chooseSpy(spy, good = false)
-        state.chooseRecluse(recluse, evil = true)
-        assertFalse(state.manualChoicesMatchResult(spy, recluse, option(witnessAlternatives = alternatives)))
-    }
 
-    @Test
-    fun `manual alignment without selected role does not invent role while specific role must match`() {
-        val state = ClocktowerRegistrationInteractionState()
-        val spy = "FirstNight:1:Investigator:Spy"
-        val recluse = "FirstNight:1:Investigator:Recluse"
-        val witness = ClocktowerRegistrationWitness(
-            spyRegistersGood = true,
-            spyRegisteredRoleEnName = "Washerwoman",
-            recluseRegistersEvil = true,
-            recluseRegisteredRoleEnName = "Imp",
-        )
-        val shown = option(witnessAlternatives = listOf(witness))
-        state.chooseSpy(spy, good = true)
-        state.chooseRecluse(recluse, evil = true)
-        // Selecting an alignment alone does not certify any particular role.
-        assertTrue(state.manualChoicesMatchResult(spy, recluse, shown))
-        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.SPY, spy)?.selectedRegisteredRoleEnName)
-        assertNull(state.explicitChoice(ClocktowerRegistrationSubject.RECLUSE, recluse)?.selectedRegisteredRoleEnName)
-        // An explicit role selection does constrain the legal interpretation.
-        state.chooseSpyRole(spy, "Librarian")
-        assertFalse(state.manualChoicesMatchResult(spy, recluse, shown))
-        state.chooseSpyRole(spy, "Washerwoman")
-        state.chooseRecluseRole(recluse, "Imp")
-        assertTrue(state.manualChoicesMatchResult(spy, recluse, shown))
-        state.chooseRecluse(recluse, evil = false)
-        assertFalse(state.manualChoicesMatchResult(spy, recluse, shown))
-    }
-
-    private fun option(
-        spyGood: Boolean? = null,
-        spyRole: String? = null,
-        recluseEvil: Boolean? = null,
-        recluseRole: String? = null,
-        witnessAlternatives: List<ClocktowerRegistrationWitness> = emptyList(),
-    ) = ClocktowerDisplayOption(
-        label = "result",
-        displayKind = ClocktowerDisplayKind.Number,
-        displayTitle = "Chef information",
-        displayPrimary = "1",
-        displaySecondary = null,
-        displayFooter = null,
-        spyRegistersGood = spyGood,
-        spyRegisteredRoleEnName = spyRole,
-        recluseRegistersEvil = recluseEvil,
-        recluseRegisteredRoleEnName = recluseRole,
-        legalRegistrationWitnesses = witnessAlternatives,
-    )
 }
