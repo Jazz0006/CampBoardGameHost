@@ -22,6 +22,9 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalContext
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalObservationBundleEvaluator
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleEvaluation
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
 import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
@@ -110,17 +113,22 @@ class FirstNightBundleExperimentExactFixtureTest {
             roleDefinitions = roles,
         )
 
-        val evaluation = FirstNightBundleExperimentEvaluator.evaluateBeginnerPublicGoodInfo(
+        val projected = FirstNightPublicGoodInfoProjection.project(bundle)
+        assertEquals(2, projected.size)
+        val evaluation = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
             validatedRuleset = validatedRuleset,
             context = context,
-            bundle = bundle,
-            evaluationRecipientSeats = setOf(1),
+            queries = listOf(
+                ExactHypotheticalObservationBundleQuery(
+                    bundleId = bundle.bundleId,
+                    recipientSeat = 1,
+                    observations = projected,
+                ),
+            ),
         )
-
-        assertTrue(evaluation is FirstNightBundleExperimentEvaluation.Ready)
-        val ready = evaluation as FirstNightBundleExperimentEvaluation.Ready
-        assertEquals(2, ready.publicObservationCount)
-        val diagnostic = ready.recipientDiagnostics.single()
+        assertTrue(evaluation is ExactHypotheticalObservationBundleEvaluation.Ready)
+        val diagnostic = (evaluation as ExactHypotheticalObservationBundleEvaluation.Ready)
+            .diagnostics.single()
         val baseline = baselineWorlds(
             validatedRuleset = validatedRuleset,
             formal = formal,
@@ -128,7 +136,6 @@ class FirstNightBundleExperimentExactFixtureTest {
             timeline = timeline,
             observationLog = observationLog,
         )
-        val projected = FirstNightPublicGoodInfoProjection.project(bundle)
         assertTrue(projected.all { it.proposition is InformationProposition.AnyOf })
         assertTrue(projected.none { it.proposition is InformationProposition.ShownRoleAt })
         assertTrue(projected.all { it.reliability == ObservationReliability.NOT_ABILITY_INFORMATION })

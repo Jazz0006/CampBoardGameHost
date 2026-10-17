@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -73,10 +74,23 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
     step: ClocktowerNightStepUi,
     cards: List<PlayerCard>,
     onDismiss: () -> Unit,
+    confirmedGrimoireSeats: List<HostSeatPresentation> = emptyList(),
+    redHerringSeat: Int? = null,
+    protectedSeat: Int? = null,
 ) {
     val displayStep = clocktowerPlayerDisplayStep(step)
     if (displayStep.displayKind == ClocktowerDisplayKind.Grimoire) {
-        ClocktowerPlayerGrimoireDisplay(step = displayStep, onDismiss = onDismiss)
+        require(displayStep.tellPlayer != null &&
+            displayStep.displayProposition is com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.GrimoireState &&
+            confirmedGrimoireSeats.isNotEmpty()) {
+            "The real Grimoire must never be shown to a malfunctioning Spy."
+        }
+        ClocktowerPlayerGrimoireDisplay(
+            seats = confirmedGrimoireSeats,
+            redHerringSeat = redHerringSeat,
+            protectedSeat = protectedSeat,
+            onDismiss = onDismiss,
+        )
         return
     }
 
@@ -347,89 +361,46 @@ private fun ClocktowerPlayerDisplayCenterContent(
 
 @Composable
 private fun ClocktowerPlayerGrimoireDisplay(
-    step: ClocktowerNightStepUi,
+    seats: List<HostSeatPresentation>,
+    redHerringSeat: Int?,
+    protectedSeat: Int?,
     onDismiss: () -> Unit,
 ) {
-    val primary = step.displayPrimary ?: step.tellPlayer.orEmpty()
-    val footer = step.displayFooter ?: step.explanation
-    val lines = primary.lines().filter { it.isNotBlank() }
-    val rowFontSize = if (lines.size >= 10) 14.sp else 16.sp
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF0B0D10),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(
-                step.displayTitle,
-                color = Color(0xFFF1EADC),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(5.dp),
-            ) {
-                lines.forEach { line ->
-                    val parts = line.split(Regex("[：:]"), limit = 2)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFF1B1F25), RoundedCornerShape(10.dp))
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    // Only the confirmed physical table is projected. No event history or Host controls
+    // are exposed; the same shared table renders actual/shown roles and poison markers.
+    BackHandler(onBack = {})
+    ClocktowerDarkTheme {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            HostTableShell(
+                seats = seats,
+                modifier = Modifier.fillMaxSize(),
+                interaction = HostTableInteractionState(mode = HostTableInteractionMode.ReadOnly),
+                seatBadge = { seat ->
+                    listOfNotNull(
+                        (if (language == "en") "RH" else "红鲱鱼")
+                            .takeIf { seat.seatId.number == redHerringSeat },
+                        (if (language == "en") "Protected" else "受保护")
+                            .takeIf { seat.seatId.number == protectedSeat },
+                    ).joinToString(" ").takeIf { it.isNotBlank() }
+                },
+                centerContent = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Text(
-                            parts.firstOrNull().orEmpty(),
-                            color = Color(0xFFF1EADC),
-                            fontSize = rowFontSize,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.weight(1.35f),
-                        )
-                        Text(
-                            parts.getOrNull(1).orEmpty(),
-                            color = Color(0xFFC5A56A),
-                            fontSize = rowFontSize,
+                            if (language == "en") "GRIMOIRE" else "魔典",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.End,
-                            modifier = Modifier.weight(0.85f),
                         )
+                        OutlinedButton(onClick = onDismiss) {
+                            Text(if (language == "en") "Return phone to Storyteller" else "收回手机")
+                        }
                     }
-                }
-                if (footer.isNotBlank()) {
-                    Text(
-                        footer,
-                        color = Color(0xFFAAA397),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                    )
-                }
-            }
-            OutlinedButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC5A56A)),
-            ) {
-                Text(stringResource(R.string.clocktower_display_close))
-            }
+                },
+            )
         }
     }
 }

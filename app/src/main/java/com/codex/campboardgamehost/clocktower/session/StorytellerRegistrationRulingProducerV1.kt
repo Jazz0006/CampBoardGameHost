@@ -244,9 +244,11 @@ internal object StorytellerRegistrationRulingProducerV1 {
         val subject = frozen.snapshotIdentity.seats.single { it.seat == subjectSeat }
         val subjectRole = (subject.actualRoleId as? SnapshotField.Known<String>)?.value
             ?: error("A confirmed registration requires a known frozen subject role.")
-        val reason = when (subjectRole) {
-            "Spy" -> RegistrationReason.SPY_ABILITY
-            "Recluse" -> RegistrationReason.RECLUSE_ABILITY
+        // Frozen TB runtime snapshots use registry external IDs ("spy"/"recluse");
+        // test/runtime Session RoleIds may use title case. Both denote the same character.
+        val reason = when (subjectRole.filter { it.isLetterOrDigit() }.lowercase()) {
+            "spy" -> RegistrationReason.SPY_ABILITY
+            "recluse" -> RegistrationReason.RECLUSE_ABILITY
             else -> null
         }
         val expectedAlignment = when (reason) {

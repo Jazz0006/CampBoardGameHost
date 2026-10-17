@@ -68,11 +68,11 @@ class LegacyKlutzSpyArchiveRecoveryCompatibilityTest {
         withKnownPoison: Boolean = true,
     ) {
         if (withKnownPoison) {
-            s.commitGlobalActionFact(ActionFactDraft.Poison(
+            s.commitAcceptedTestAction(ActionFactDraft.Poison(
                 "known-poison", StorytellerPhase.NIGHT, 1, 1, if (poisonedAtDeath) 1 else 4,
             ))
         }
-        s.commitGlobalActionFact(ActionFactDraft.Death(
+        s.commitAcceptedTestAction(ActionFactDraft.Death(
             "death-klutz", StorytellerPhase.DAWN, 2, 2, 1,
         ))
     }
@@ -200,7 +200,7 @@ class LegacyKlutzSpyArchiveRecoveryCompatibilityTest {
         ) else ActionFactDraft.Death(
             "true-death-klutz", StorytellerPhase.DAWN, 2, 0, 1,
         )
-        val committed = s.commitGlobalActionFact(draft)
+        val committed = s.commitConfirmedPlayerDeath(draft, expectedGameStateRevision = 0L)
         val evidence = when (val fact = committed.fact) {
             is ActionFact.Death -> fact.klutzDeathTrigger
             is ActionFact.Execution -> fact.klutzDeathTrigger
@@ -209,7 +209,6 @@ class LegacyKlutzSpyArchiveRecoveryCompatibilityTest {
         assertEquals(RoleId("Klutz"), evidence?.actualRole)
         assertEquals(true, evidence?.wasAlive)
         assertEquals(poisonedAtDeath, evidence?.wasPoisoned)
-        s.synchronizePlayerDeathWithinCurrentRevision(1)
         assertEquals(false, s.state.gameState.playerAt(1)?.alive)
         assertEquals(false, s.state.gameState.playerAt(1)?.poisoned)
         return s

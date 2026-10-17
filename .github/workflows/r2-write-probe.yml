@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - codex/storyteller-algorithm-v4
+      - 'cleanup/**'
     paths:
       - app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt

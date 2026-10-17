@@ -126,6 +126,36 @@ sealed interface ActionFact {
         val type: CharacterType,
     ) : ActionFact
 
+    /** The Butler's actually confirmed nightly master, not a UI draft. */
+    data class ButlerMasterChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val butlerSeat: Int,
+        val masterSeat: Int,
+    ) : ActionFact
+
+    /** Accepted private Fortune Teller setup/override, including explicit clearing. */
+    data class RedHerringChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val selectedSeat: Int?,
+    ) : ActionFact
+
+    /** Host-confirmed Mayor bounce; both seats are private mechanical facts, not player observations. */
+    data class MayorRedirectChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val mayorSeat: Int,
+        val targetSeat: Int,
+    ) : ActionFact
+
+    /** Accepted private Demon bluff role set/override, distinct from UI drafts. */
+    data class DemonBluffChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val roles: List<RoleId>,
+    ) : ActionFact
+
     data class PhaseAdvance(
         override val actionId: String,
         override val sequence: Long,
@@ -141,6 +171,8 @@ data class ReducedDynamicGameState(
     val protectedSeats: Set<Int>,
     val pendingAttackSeat: Int?,
     val actionFacts: List<ActionFact>,
+    val redHerringSeat: Int? = null,
+    val demonBluffRoleIds: List<RoleId> = emptyList(),
 )
 
 /** Pure ordered reducer used both online and after restore. */
@@ -160,6 +192,8 @@ object DynamicActionReducer {
         var round = initialRound
         var protected = emptySet<Int>()
         var attack: Int? = null
+        var redHerringSeat: Int? = null
+        var demonBluffRoles = emptyList<RoleId>()
 
         fun requireSeat(seat: Int) {
             require(game.playerAt(seat) != null) { "Action references unknown seat $seat." }
@@ -186,6 +220,10 @@ object DynamicActionReducer {
                 }
                 is ActionFact.Execution -> updatePlayer(fact.targetSeat) { it.copy(alive = false, poisoned = false) }
                 is ActionFact.Death -> updatePlayer(fact.targetSeat) { it.copy(alive = false, poisoned = false) }
+                is ActionFact.MayorRedirectChoice -> {
+                    requireSeat(fact.mayorSeat)
+                    requireSeat(fact.targetSeat)
+                }
                 is ActionFact.NoExecution -> Unit
                 is ActionFact.SlayerShot -> {
                     requireSeat(fact.claimantSeat)
@@ -218,6 +256,19 @@ object DynamicActionReducer {
                 is ActionFact.RoleChange -> updatePlayer(fact.targetSeat) {
                     it.copy(actualRole = fact.role, actualAlignment = fact.alignment, actualType = fact.type)
                 }
+                is ActionFact.ButlerMasterChoice -> {
+                    requireSeat(fact.butlerSeat)
+                    requireSeat(fact.masterSeat)
+                    require(fact.butlerSeat != fact.masterSeat)
+                }
+                is ActionFact.RedHerringChoice -> {
+                    fact.selectedSeat?.let(::requireSeat)
+                    redHerringSeat = fact.selectedSeat
+                }
+                is ActionFact.DemonBluffChoice -> {
+                    require(fact.roles.distinct() == fact.roles)
+                    demonBluffRoles = fact.roles.toList()
+                }
                 is ActionFact.PhaseAdvance -> {
                     require(fact.round > 0)
                     phase = fact.phase
@@ -237,6 +288,8 @@ object DynamicActionReducer {
             protectedSeats = protected,
             pendingAttackSeat = attack,
             actionFacts = ordered,
+            redHerringSeat = redHerringSeat,
+            demonBluffRoleIds = demonBluffRoles,
         )
     }
 }

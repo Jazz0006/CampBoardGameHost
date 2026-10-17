@@ -283,11 +283,18 @@ internal fun ClocktowerSettingsScreen(
                             )
                             if (effectiveOperationMode != StorytellerOperationMode.MANUAL && !aiConfigurationReady) {
                                 Text(
-                                    text("AI 连接尚未配置完成。请在应用设置中填写有效凭据后开始。",
-                                        "AI connection is not ready. Configure valid credentials in app settings before starting."),
+                                    text("AI 联合开局需要在应用设置中开启「个人 OpenAI 直连」并配置模型与 API Key。旧 Gateway 暂不支持整局联合规划，已停用旧的两次查询流程。",
+                                        "Joint AI opening requires Personal OpenAI Direct, model and API key. The old Gateway's two-request opening is retired."),
                                     color = MaterialTheme.colorScheme.error,
                                 )
-                            } else if (effectiveOperationMode == StorytellerOperationMode.AI_AUTOMATIC) {
+                            } else if (effectiveOperationMode != StorytellerOperationMode.MANUAL) {
+                                Text(
+                                    text("开局立即在后台进行一次整局联合规划；可以同时逐人展示身份。展示完成后采纳完整开局配置，不再重新分析一次。",
+                                        "One whole-game AI plan starts while you deal shown identities. Adopt after dealing; no second setup request."),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (effectiveOperationMode == StorytellerOperationMode.AI_AUTOMATIC) {
                                 Text(
                                     text("实验性自动说书人尚未覆盖全部裁量；未支持的决策需要人工接管。",
                                         "Automatic Storyteller is experimental and may require manual takeover."),

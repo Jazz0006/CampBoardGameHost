@@ -202,6 +202,64 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class ButlerMasterChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val butlerSeat: Int,
+        val masterSeat: Int,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(butlerSeat)
+            requireSeat(masterSeat)
+            require(butlerSeat != masterSeat)
+            require(phase in setOf(StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT))
+        }
+    }
+
+    data class RedHerringChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val selectedSeat: Int?,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            selectedSeat?.let(::requireSeat)
+        }
+    }
+
+    data class MayorRedirectChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val mayorSeat: Int,
+        val targetSeat: Int,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(mayorSeat)
+            requireSeat(targetSeat)
+        }
+    }
+
+    data class DemonBluffChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val roles: List<RoleId>,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            require(roles.distinct() == roles)
+        }
+    }
+
     data class PhaseAdvance(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -274,6 +332,18 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
         role = role,
         alignment = alignment,
         type = type,
+    )
+    is ActionFactDraft.ButlerMasterChoice -> ActionFact.ButlerMasterChoice(
+        actionId, globalSequence, butlerSeat, masterSeat,
+    )
+    is ActionFactDraft.RedHerringChoice -> ActionFact.RedHerringChoice(
+        actionId, globalSequence, selectedSeat,
+    )
+    is ActionFactDraft.MayorRedirectChoice -> ActionFact.MayorRedirectChoice(
+        actionId, globalSequence, mayorSeat, targetSeat,
+    )
+    is ActionFactDraft.DemonBluffChoice -> ActionFact.DemonBluffChoice(
+        actionId, globalSequence, roles.toList(),
     )
     is ActionFactDraft.PhaseAdvance -> ActionFact.PhaseAdvance(
         actionId = actionId,

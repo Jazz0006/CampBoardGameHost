@@ -50,17 +50,4 @@ class BuiltInClocktowerRulesetCatalogTest {
         )
     }
 
-    @Test
-    fun `recovery save validation consumes the shared catalog directly`() {
-        val source = File(
-            "src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
-        ).readText(Charsets.UTF_8)
-
-        assertTrue(source.contains("BuiltInClocktowerRulesetCatalog.fromContext(baseContext)"))
-        assertTrue(
-            source.contains(
-                "activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript).script",
-            ),
-        )
-    }
 }

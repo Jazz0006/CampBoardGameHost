@@ -48,7 +48,7 @@ class ClocktowerB4HistoricalShadowCoordinatorTest {
             initialState = setupSnapshot.gameState,
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Protect(
                 actionId = "session-protect",
                 phase = StorytellerPhase.FIRST_NIGHT,
@@ -57,7 +57,7 @@ class ClocktowerB4HistoricalShadowCoordinatorTest {
                 targetSeat = 1,
             ),
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Attack(
                 actionId = "session-attack",
                 phase = StorytellerPhase.FIRST_NIGHT,
@@ -66,7 +66,7 @@ class ClocktowerB4HistoricalShadowCoordinatorTest {
                 targetSeat = 2,
             ),
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.RoleChange(
                 actionId = "session-role-change",
                 phase = StorytellerPhase.FIRST_NIGHT,

@@ -1,158 +1,161 @@
 package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryEntryV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryPrefixV1
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * A pure, non-authoritative LLM view of the existing session-owned chronological prefix.
- * No new event store or duplicate writer: mechanical actions and player observations retain
- * their separate meaning, exact global order, and explicit incomplete-coverage markers.
+ * One compact, read-only game record derived from Session facts.
+ * This is the AI delta and the source for future completed-game review, NOT a second event store.
+ * Technical sequence is used only as a cursor; no IDs, revisions, or internal transitions reach AI.
  */
 internal object StorytellerGlobalEventProjectionV1 {
-    fun encode(prefix: StorytellerProviderHistoryPrefixV1?): JSONObject {
-        if (prefix == null) {
-            return JSONObject().put("cutoffSource", "UNAVAILABLE")
-                .put("coverage", "UNKNOWN").put("events", JSONArray())
-        }
-        val coverage = JSONObject()
-        prefix.coverage.forEach { (dimension, status) ->
-            coverage.put(dimension.name, JSONObject()
-                .put("state", status.state.name).put("reasonCode", status.reasonCode))
-        }
-        return JSONObject()
-            .put("cutoffSource", prefix.cutoffSource.name)
-            .put("historyMode", prefix.historyMode.name)
-            .put("exclusiveGlobalSequence", prefix.exclusiveGlobalSequence ?: JSONObject.NULL)
-            .put("coverage", coverage)
-            .put("events", JSONArray().also { array ->
-                prefix.entries.forEach { entry ->
-                    val event = JSONObject()
-                        .put("eventId", entry.entryId)
-                        .put("kind", entry.kind)
-                        .put("phase", entry.point.phase.name)
-                        .put("round", entry.point.round)
-                        .put("localSequence", entry.point.sequence)
-                        .put("globalSequence", entry.point.globalSequence)
-                    when (entry) {
+    fun encode(
+        prefix: StorytellerProviderHistoryPrefixV1,
+        fromGlobalSequence: Long = 0L,
+        confirmedGameState: GameState? = null,
+    ): JSONArray {
+        require(fromGlobalSequence >= 0L &&
+            fromGlobalSequence <= requireNotNull(prefix.exclusiveGlobalSequence))
+        val all = prefix.entries
+        val executions = all.filterIsInstance<StorytellerProviderHistoryEntryV1.Action>()
+            .filter { it.fact is ActionFact.Execution }
+        fun isExecuted(seat: Int, phase: StorytellerPhase, round: Int): Boolean =
+            executions.any { action ->
+                (action.fact as ActionFact.Execution).targetSeat == seat &&
+                    action.point.round == round &&
+                    dayOrNight(action.point.phase) == dayOrNight(phase)
+            }
+
+        return JSONArray().also { result ->
+            // Drunk is selected only when the Host accepts the setup, not when AI
+            // recommends a candidate. The accepted Session role is the authority.
+            // A first-night log event is derived from that confirmed truth instead
+            // of persisting the same role a second time.
+            if (fromGlobalSequence == 0L) {
+                confirmedGameState?.players?.singleOrNull {
+                    it.actualRole.value.equals("drunk", ignoreCase = true)
+                }?.let { player ->
+                    result.put(JSONObject().put("type", "drunk_selected")
+                        .put("period", "N1").put("seat", player.seat)
+                        .put("shownRole", (player.shownRole ?: player.actualRole).value))
+                }
+            }
+            all.asSequence()
+                .filter { it.point.globalSequence >= fromGlobalSequence }
+                .forEach { entry ->
+                    val event = when (entry) {
                         is StorytellerProviderHistoryEntryV1.Action -> {
-                            event.put("epistemicClass", "HOST_CONFIRMED_ACTION")
-                                .put("action", action(entry.fact))
+                            val fact = entry.fact
+                            when {
+                                fact is ActionFact.Death &&
+                                    isExecuted(fact.targetSeat, entry.point.phase, entry.point.round) -> null
+                                // Dawn poison materialization is a rule transition, never a new
+                                // Poisoner selection. Keep the durable fact for recovery only.
+                                fact is ActionFact.Poison &&
+                                    fact.actionId.startsWith("dawn-") &&
+                                    "-poison-" in fact.actionId -> null
+                                else -> action(fact)
+                            }
                         }
                         is StorytellerProviderHistoryEntryV1.Observation -> {
-                            event.put("epistemicClass", "PLAYER_RECEIVED_OR_PUBLIC_INFORMATION")
-                                .put("sourceSeat", entry.sourceSeat ?: JSONObject.NULL)
-                                .put("sourceAbility", entry.sourceAbility?.value ?: JSONObject.NULL)
-                                .put("visibility", entry.visibility.name)
-                                .put("recipientSeats", JSONArray(entry.recipientSeats.sorted()))
-                                .put("receivedReliabilityLabel", entry.reliability.name)
-                                .put("proposition", proposition(entry.proposition))
+                            val proposition = entry.proposition
+                            if (proposition is InformationProposition.AliveAt && !proposition.alive &&
+                                (all.any { item ->
+                                    item is StorytellerProviderHistoryEntryV1.Action &&
+                                        item.fact is ActionFact.Death &&
+                                        item.fact.targetSeat == proposition.seat &&
+                                        item.point.round == entry.point.round &&
+                                        dayOrNight(item.point.phase) == dayOrNight(entry.point.phase)
+                                } || isExecuted(proposition.seat, entry.point.phase, entry.point.round))) {
+                                null
+                            } else observation(entry)
                         }
                     }
-                    array.put(event)
+                    if (event != null) {
+                        event.put("period", "${dayOrNight(entry.point.phase)}${entry.point.round}")
+                        result.put(event)
+                    }
                 }
-            })
-    }
-
-    /** These are typed *confirmed* actions, not the model's guessed social interpretation. */
-    private fun action(fact: ActionFact): JSONObject {
-        val out = JSONObject()
-        fun seat(value: Int?) = value ?: JSONObject.NULL
-        return when (fact) {
-            is ActionFact.Poison -> out.put("type", "POISON")
-                .put("targetSeat", seat(fact.targetSeat))
-                .put("visibility", "HOST_PRIVATE")
-            is ActionFact.Protect -> out.put("type", "PROTECT")
-                .put("targetSeat", fact.targetSeat).put("visibility", "HOST_PRIVATE")
-            is ActionFact.Attack -> out.put("type", "ATTACK")
-                .put("targetSeat", fact.targetSeat).put("visibility", "HOST_PRIVATE")
-            is ActionFact.Execution -> out.put("type", "EXECUTION")
-                .put("targetSeat", fact.targetSeat).put("visibility", "PUBLIC")
-            is ActionFact.Death -> out.put("type", "DEATH")
-                .put("targetSeat", fact.targetSeat).put("visibility", "PUBLIC")
-            is ActionFact.NoExecution -> out.put("type", "NO_EXECUTION")
-                .put("visibility", "PUBLIC")
-            is ActionFact.SlayerShot -> out.put("type", "SLAYER_SHOT")
-                .put("claimantSeat", fact.claimantSeat)
-                .put("targetSeat", fact.targetSeat)
-                .put("abilityConsumed", fact.abilityConsumed)
-                .put("hit", fact.hit).put("visibility", "PUBLIC")
-            is ActionFact.Nomination -> out.put("type", "NOMINATION")
-                .put("nominatorSeat", fact.nominatorSeat)
-                .put("nomineeSeat", fact.nomineeSeat)
-                .put("firstVirginNomination", fact.firstVirginNomination)
-                .put("visibility", "PUBLIC")
-            is ActionFact.Vote -> out.put("type", "VOTE")
-                .put("nominatorSeat", fact.nominatorSeat)
-                .put("nomineeSeat", fact.nomineeSeat)
-                .put("voterSeats", JSONArray(fact.voterSeats))
-                .put("ghostVoterSeats", JSONArray(fact.ghostVoterSeats))
-                .put("visibility", "PUBLIC")
-            is ActionFact.KlutzLearnedDeath -> out.put("type", "KLUTZ_LEARNED_DEATH")
-                .put("seat", fact.klutzSeat).put("visibility", "PLAYER_PRIVATE")
-            is ActionFact.KlutzChoice -> out.put("type", "KLUTZ_CHOICE")
-                .put("seat", fact.klutzSeat).put("chosenSeat", fact.chosenSeat)
-                .put("visibility", "PUBLIC")
-            is ActionFact.RoleChange -> out.put("type", "ROLE_CHANGE")
-                .put("targetSeat", fact.targetSeat).put("actualRoleId", fact.role.value)
-                .put("alignment", fact.alignment.name).put("characterType", fact.type.name)
-                .put("visibility", "HOST_PRIVATE")
-            is ActionFact.PhaseAdvance -> out.put("type", "PHASE_ADVANCE")
-                .put("nextPhase", fact.phase.name).put("nextRound", fact.round)
-                .put("visibility", "PUBLIC")
         }
     }
 
-    /** Encode all currently supported proposition variants without text parsing or witness invention. */
-    private fun proposition(value: InformationProposition): JSONObject = when (value) {
-        is InformationProposition.RoleAt -> JSONObject().put("type", "ROLE_AT")
-            .put("seat", value.seat).put("roleId", value.role.value)
-        is InformationProposition.ShownRoleAt -> JSONObject().put("type", "SHOWN_ROLE_AT")
-            .put("seat", value.seat).put("roleId", value.role.value)
-        is InformationProposition.AlignmentAt -> JSONObject().put("type", "ALIGNMENT_AT")
-            .put("seat", value.seat).put("alignment", value.alignment.name)
-        is InformationProposition.CharacterTypeAt -> JSONObject().put("type", "CHARACTER_TYPE_AT")
-            .put("seat", value.seat).put("characterType", value.characterType.name)
-        is InformationProposition.AliveAt -> JSONObject().put("type", "ALIVE_AT")
-            .put("seat", value.seat).put("alive", value.alive)
-        is InformationProposition.AbilityStateAt -> JSONObject().put("type", "ABILITY_STATE_AT")
-            .put("seat", value.seat).put("abilityRoleId", value.abilityRole.value)
-            .put("abilityState", value.abilityState.name)
-        is InformationProposition.RoleInPlay -> JSONObject().put("type", "ROLE_IN_PLAY")
-            .put("roleId", value.role.value).put("inPlay", value.inPlay)
-        is InformationProposition.PlayerCount -> JSONObject().put("type", "PLAYER_COUNT")
-            .put("value", value.value)
-        is InformationProposition.SetupProfile -> JSONObject().put("type", "SETUP_PROFILE")
-            .put("townsfolk", value.townsfolk).put("outsiders", value.outsiders)
-            .put("minions", value.minions).put("demons", value.demons)
-        is InformationProposition.AnyOf -> JSONObject().put("type", "ANY_OF")
-            .put("alternatives", JSONArray().also { array ->
-                value.alternatives.forEach { array.put(proposition(it)) }
-            })
-        is InformationProposition.AllOf -> JSONObject().put("type", "ALL_OF")
-            .put("propositions", JSONArray().also { array ->
-                value.propositions.forEach { array.put(proposition(it)) }
-            })
-        is InformationProposition.Not -> JSONObject().put("type", "NOT")
-            .put("proposition", proposition(value.proposition))
-        is InformationProposition.NumericResult -> JSONObject().put("type", "NUMERIC_RESULT")
-            .put("metric", value.metric.name).put("sourceSeat", value.sourceSeat)
-            .put("subjectSeats", JSONArray(value.subjectSeats)).put("value", value.value)
-        is InformationProposition.BooleanResult -> JSONObject().put("type", "BOOLEAN_RESULT")
-            .put("metric", value.metric.name).put("sourceSeat", value.sourceSeat)
-            .put("subjectSeats", JSONArray(value.subjectSeats)).put("value", value.value)
-        is InformationProposition.GrimoireState -> JSONObject().put("type", "GRIMOIRE_STATE")
-            .put("truthBinding", value.truthBinding.name)
-            .put("seats", JSONArray().also { array ->
-                value.seats.forEach { seat ->
-                    array.put(JSONObject().put("seat", seat.seat)
-                        .put("displayedRoleId", seat.displayedRole.value)
-                        .put("alive", seat.alive)
-                        .put("reminderTokenRefs", JSONArray(seat.reminderTokens.map { it.toString() })))
+    private fun dayOrNight(phase: StorytellerPhase): String = when (phase) {
+        StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT -> "N"
+        StorytellerPhase.DAY, StorytellerPhase.DAWN -> "D"
+    }
+
+    private fun action(fact: ActionFact): JSONObject? = when (fact) {
+        // Expiry and Dawn carry are Host mechanics, not separate Storyteller history.
+        is ActionFact.Poison -> fact.targetSeat?.let {
+            JSONObject().put("type", "poison").put("target", it)
+        }
+        is ActionFact.Protect -> JSONObject().put("type", "protect").put("target", fact.targetSeat)
+        is ActionFact.Attack -> JSONObject().put("type", "attack").put("target", fact.targetSeat)
+        is ActionFact.Execution -> JSONObject().put("type", "execution").put("seat", fact.targetSeat)
+        is ActionFact.Death -> JSONObject().put("type", "death").put("seat", fact.targetSeat)
+        is ActionFact.NoExecution -> JSONObject().put("type", "no_execution")
+        is ActionFact.SlayerShot -> JSONObject().put("type", "slayer")
+            .put("seat", fact.claimantSeat).put("target", fact.targetSeat)
+            .put("hit", fact.hit)
+        is ActionFact.Nomination -> JSONObject().put("type", "nomination")
+            .put("seat", fact.nominatorSeat).put("target", fact.nomineeSeat)
+        is ActionFact.Vote -> JSONObject().put("type", "vote")
+            .put("seat", fact.nominatorSeat).put("target", fact.nomineeSeat)
+            .put("voters", JSONArray(fact.voterSeats))
+        // Private ability-trigger bookkeeping is not a second public/player event.
+        is ActionFact.KlutzLearnedDeath -> null
+        is ActionFact.KlutzChoice -> JSONObject().put("type", "klutz_choice")
+            .put("seat", fact.klutzSeat).put("target", fact.chosenSeat)
+        is ActionFact.RoleChange -> JSONObject().put("type", "role_change")
+            .put("seat", fact.targetSeat).put("role", fact.role.value)
+        is ActionFact.ButlerMasterChoice -> JSONObject().put("type", "butler_master")
+            .put("seat", fact.butlerSeat).put("target", fact.masterSeat)
+        // Choosing the Mayor himself is an accepted *no-bounce* ruling,
+        // not an actual redirection event.
+        is ActionFact.MayorRedirectChoice -> fact.targetSeat
+            .takeIf { it != fact.mayorSeat }?.let { target ->
+                JSONObject().put("type", "mayor_redirect")
+                    .put("seat", fact.mayorSeat).put("target", target)
+            }
+        // Setup choices already exist in the current game state. The cursor does not need
+        // them again; phase changes and confirmed-button details have no strategic value.
+        is ActionFact.RedHerringChoice, is ActionFact.DemonBluffChoice,
+        is ActionFact.PhaseAdvance -> null
+    }
+
+    private fun observation(entry: StorytellerProviderHistoryEntryV1.Observation): JSONObject {
+        val result = JSONObject().put("type", "information")
+        entry.sourceSeat?.let { result.put("seat", it) }
+        entry.sourceAbility?.let { result.put("role", it.value) }
+        if (entry.visibility == ObservationVisibility.PUBLIC) result.put("public", true)
+        if (entry.recipientSeats != setOfNotNull(entry.sourceSeat)) {
+            result.put("recipients", JSONArray(entry.recipientSeats.sorted()))
+        }
+        if (entry.reliability != ObservationReliability.RECEIVED_AS_FUNCTIONING) {
+            result.put("reliability", entry.reliability.name)
+        }
+        when (val proposition = entry.proposition) {
+            is InformationProposition.NumericResult -> {
+                result.put("value", proposition.value)
+                if (proposition.subjectSeats.isNotEmpty()) {
+                    result.put("subjects", JSONArray(proposition.subjectSeats))
                 }
-            })
+            }
+            is InformationProposition.BooleanResult -> {
+                result.put("value", proposition.value)
+                result.put("subjects", JSONArray(proposition.subjectSeats))
+            }
+            else -> result.put("detail", JSONObject(EpistemicSemanticJson.encode(proposition)))
+        }
+        return result
     }
 }

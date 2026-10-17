@@ -61,7 +61,10 @@ internal fun HostTableShell(
                 motionKey = seatMotionKey(frame.seat),
                 neutralSelectionChrome = neutralSelectionChrome,
                 interactionMode = interaction.mode,
-                badge = seatBadge(frame.seat),
+                badge = listOfNotNull(
+                    "☠".takeIf { frame.seat.isPoisoned },
+                    seatBadge(frame.seat),
+                ).joinToString(" ").takeIf { it.isNotBlank() },
                 hasUnspentGhostVote = seatHasUnspentGhostVote(frame.seat),
                 language = language,
             )

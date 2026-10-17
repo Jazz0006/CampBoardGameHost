@@ -72,6 +72,9 @@ internal data class StorytellerProviderRequestV1(
                             payload.value.toIntOrNull()?.toString() == payload.value
                         StorytellerProviderScalarKindV1.BOOLEAN ->
                             payload.value == "true" || payload.value == "false"
+                        StorytellerProviderScalarKindV1.ROLE ->
+                            context.subjectSeats.size == 1 &&
+                                payload.value.matches(Regex("[A-Za-z][A-Za-z0-9_-]*"))
                     }
                 }) { "Scalar-information candidates must be typed legal results." }
             }
@@ -294,6 +297,8 @@ internal sealed interface StorytellerProviderDecisionContextV1 {
 internal enum class StorytellerProviderScalarKindV1 {
     NUMBER,
     BOOLEAN,
+    /** A character-ID result for an already fixed queried target, not a player action. */
+    ROLE,
 }
 
 internal data class StorytellerProviderCandidateV1(

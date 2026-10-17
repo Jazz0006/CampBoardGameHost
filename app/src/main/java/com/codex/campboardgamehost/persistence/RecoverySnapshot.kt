@@ -27,7 +27,7 @@ internal data class RecoverySnapshot(
     }
 
     companion object {
-        const val CURRENT_FORMAT_VERSION: Int = 3
+        const val CURRENT_FORMAT_VERSION: Int = 4
     }
 }
 
@@ -67,8 +67,6 @@ internal data class ClocktowerRecovery(
     override val outcome: GameOutcome?,
     val identity: ClocktowerRecoveryIdentity,
     val troubleBrewingSetupRotationRecord: TroubleBrewingSetupRotationRecord? = null,
-    /** Read-only SDE replay export; canonical recovery facts remain owned by the fields above/below. */
-    val sdeHistoricalReplayInputJson: String? = null,
     val position: ClocktowerRecoveryPosition,
     val mechanics: ClocktowerRecoveryMechanics,
     val history: ClocktowerRecoveryHistory,
@@ -76,9 +74,6 @@ internal data class ClocktowerRecovery(
     override val gameKind: GameKind = GameKind.Clocktower
 
     init {
-        require(sdeHistoricalReplayInputJson == null || sdeHistoricalReplayInputJson.isNotBlank()) {
-            "SDE historical replay export cannot be blank when present."
-        }
         require(history.storytellerPlayerContextBySeat.keys.all { it in 1..cards.size }) {
             "Recovered Storyteller player-context overrides must reference recovered Clocktower seats."
         }
@@ -109,7 +104,6 @@ internal data class ClocktowerRecoveryPosition(
 /** Durable consequences plus rule-mandated unfinished continuations. */
 internal data class ClocktowerRecoveryMechanics(
     val confirmedAttackTarget: String?,
-    val confirmedPoisonTarget: String?,
     val confirmedMonkProtectedTarget: String?,
     val confirmedMayorRedirectTarget: String?,
     val pendingNewDemonName: String?,
@@ -118,9 +112,6 @@ internal data class ClocktowerRecoveryMechanics(
     val redHerring: String?,
     val demonBluffRoleNames: List<String>,
     val butlerMaster: String?,
-    val virginUsed: Boolean,
-    val slayerUsed: Boolean,
-    val slayerClaimedNames: List<String>,
     val artistUsed: Boolean,
     val artistClaimedNames: List<String>,
     val lastExecutedName: String?,

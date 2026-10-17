@@ -105,12 +105,46 @@ internal data class HostOpeningConditionalIntentV2(
     val waitingForEvents: List<String>,
 )
 
+/**
+ * Bounded editable multi-night *strategic intent*, not a causal fact.
+ * Its conditions apply to ANY role, observed action, intervention or game phase;
+ * neither this type nor its producer chooses a future role-specific outcome.
+ */
+internal data class HostOpeningStrategicIntentionV2(
+    val trigger: String,
+    val approach: String,
+    val risk: String,
+) {
+    init {
+        require(listOf(trigger, approach, risk).all { it.isNotBlank() && it.length <= 300 }) {
+            "Opening strategic intention exceeded its bounded text contract."
+        }
+    }
+}
+
+internal data class HostOpeningStrategyMemoryV2(
+    val tensions: List<String>,
+    val intentions: List<HostOpeningStrategicIntentionV2>,
+    val uncertainties: List<String>,
+) {
+    init {
+        require(tensions.size <= 3 && intentions.size <= 3 && uncertainties.size <= 3) {
+            "Opening strategy memory exceeded three entries per section."
+        }
+        require((tensions + uncertainties).all { it.isNotBlank() && it.length <= 300 }) {
+            "Opening strategy memory contains blank or oversized text."
+        }
+    }
+}
+
 /** A validated *private proposal*, never a committed or published observation. */
 internal data class HostOpeningSemanticAcceptanceV2(
     val selection: InitialGlobalOpeningSelectionV1,
     val conditional: List<HostOpeningConditionalIntentV2>,
     /** All matching Host candidates; representative selection IDs never settle registration. */
     val matchingCandidateIds: Map<String, Set<String>> = emptyMap(),
+    /** Carried into later whole-board revisions; NEVER trust as Host history. */
+    val strategyMemory: HostOpeningStrategyMemoryV2? = null,
 )
 
 internal object HostOpeningSemanticGateV2 {
@@ -156,18 +190,22 @@ internal object HostOpeningSemanticGateV2 {
         val shown = requireNotNull(projection.scope.snapshot.grimoireSeats
             .singleOrNull { it.seat == value.sourceSeat })
         val seenRole = (shown.shownRoleId as? SnapshotField.Known<*>)?.value
-        require(value.abilityRoleId == seenRole && value.abilityRoleId in projection.knownRoleIds)
+        require(value.abilityRoleId == seenRole && value.abilityRoleId in projection.knownRoleIds) {
+            "Opening information source role disagrees with Host shown roster."
+        }
         require(value.subjectSeats.all { seat ->
             projection.scope.snapshot.grimoireSeats.any { it.seat == seat }
-        })
-        require(value.roleId == null || value.roleId in projection.knownRoleIds)
+        }) { "Opening information includes a non-existent subject seat." }
+        require(value.roleId == null || value.roleId in projection.knownRoleIds) {
+            "Opening observation contains an unknown role ID."
+        }
         require(if (value.sourceSeat == projection.drunkSeat) {
             value.effectiveAbilityRoleId == null && value.basis in
                 setOf("DRUNK_MISINFORMATION", "STATUS_DEPENDENT")
         } else {
             value.effectiveAbilityRoleId == value.abilityRoleId &&
                 value.basis != "DRUNK_MISINFORMATION"
-        })
+        }) { "Opening effective ability or Drunk status disagrees with Host branch." }
         return value
     }
 
@@ -197,16 +235,23 @@ internal object HostOpeningSemanticGateV2 {
         // Strategy is advisory. Still bound its shape; never parse it as a fact.
         val strategy = raw.getJSONObject("strategyMemory")
         strategy.exact("tensions", "intentions", "uncertainties")
-        require(strategy.getJSONArray("tensions").length() <= 3 &&
-            strategy.getJSONArray("intentions").length() <= 3 &&
-            strategy.getJSONArray("uncertainties").length() <= 3)
-        strategy.getJSONArray("tensions").strings()
-        strategy.getJSONArray("uncertainties").strings()
-        for (i in 0 until strategy.getJSONArray("intentions").length()) {
-            strategy.getJSONArray("intentions").getJSONObject(i)
-                .exact("trigger", "approach", "risk")
+        val intentions = strategy.getJSONArray("intentions")
+        val strategicIntentions = (0 until intentions.length()).map { i ->
+            intentions.getJSONObject(i).also {
+                it.exact("trigger", "approach", "risk")
+            }.let {
+                HostOpeningStrategicIntentionV2(
+                    it.getString("trigger"), it.getString("approach"), it.getString("risk"))
+            }
         }
-        require(raw.getString("tradeoffSummary").length <= 1200)
+        val strategyMemory = HostOpeningStrategyMemoryV2(
+            tensions = strategy.getJSONArray("tensions").strings(),
+            intentions = strategicIntentions,
+            uncertainties = strategy.getJSONArray("uncertainties").strings(),
+        )
+        require(raw.getString("tradeoffSummary").length <= 1200) {
+            "Opening tradeoff summary exceeded its bounded text contract."
+        }
 
         val plan = raw.getJSONObject("openingPlan")
         plan.exact("drunkSeat", "redHerringSeat", "demonBluffRoleIds",
@@ -240,7 +285,11 @@ internal object HostOpeningSemanticGateV2 {
             val id = item.getString("decisionId")
             require(usedDecisionIds.add(id)) { "Duplicate semantic decision ID." }
             require(id !in picked && id !in pending)
-            val value = parseValue(item, projection)
+            val value = try {
+                parseValue(item, projection)
+            } catch (error: IllegalArgumentException) {
+                throw IllegalArgumentException("Opening information $id: ${error.message}", error)
+            }
             val waiting = item.getJSONArray("waitingForEvents").strings()
             require(waiting.size == waiting.distinct().size)
             if (value.sourceSeat == projection.drunkSeat &&
@@ -255,7 +304,7 @@ internal object HostOpeningSemanticGateV2 {
                     }
                     val matches = candidates.entries.filter { it.value == value }
                         .map { it.key }.toSortedSet()
-                    require(matches.isNotEmpty()) { "No authoritative Host semantic match." }
+                    require(matches.isNotEmpty()) { "No authoritative Host semantic match for $id." }
                     // Deterministic representative for existing V1 selection validation ONLY.
                     // Do not publish it as a unique registration witness.
                     picked[id] = matches.first()
@@ -315,6 +364,7 @@ internal object HostOpeningSemanticGateV2 {
             demonBluffs = bluffs,
             deferredDecisionIds = projection.branch.deferred.map { it.decisionId },
         ).also { it.validate(scope) }
-        return HostOpeningSemanticAcceptanceV2(selection, pending.values.toList(), matchingCandidateIds)
+        return HostOpeningSemanticAcceptanceV2(
+            selection, pending.values.toList(), matchingCandidateIds, strategyMemory)
     }
 }

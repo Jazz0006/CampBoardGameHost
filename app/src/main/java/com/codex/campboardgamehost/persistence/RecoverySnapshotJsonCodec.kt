@@ -60,7 +60,6 @@ internal object RecoverySnapshotJsonCodec {
                 TroubleBrewingSetupCompletionPersistence.encode(record),
             )
         }
-        putNullableString("clocktowerSdeHistoricalReplayInput", game.sdeHistoricalReplayInputJson)
         put("clocktowerGameStateRevision", game.history.gameStateRevision.coerceAtLeast(0L))
         put("clocktowerPlayerInputRevision", game.history.playerInputRevision.coerceAtLeast(0L))
         put(
@@ -75,7 +74,6 @@ internal object RecoverySnapshotJsonCodec {
         put("clocktowerNightStarted", game.position.nightStarted)
         put("clocktowerNightStepIndex", game.position.nightStepIndex.coerceAtLeast(0))
         putNullableString("clocktowerPendingNightDeath", game.mechanics.confirmedAttackTarget)
-        putNullableString("clocktowerConfirmedPoisonTarget", game.mechanics.confirmedPoisonTarget)
         putNullableString("clocktowerConfirmedMonkProtectedTarget", game.mechanics.confirmedMonkProtectedTarget)
         putNullableString("clocktowerConfirmedMayorRedirectTarget", game.mechanics.confirmedMayorRedirectTarget)
         putNullableString("clocktowerPendingNewDemonName", game.mechanics.pendingNewDemonName)
@@ -90,9 +88,6 @@ internal object RecoverySnapshotJsonCodec {
         putNullableString("clocktowerRedHerring", game.mechanics.redHerring)
         put("clocktowerRecommendedDemonBluffRoleNames", stringsToJsonArray(game.mechanics.demonBluffRoleNames))
         putNullableString("clocktowerButlerMaster", game.mechanics.butlerMaster)
-        put("clocktowerVirginUsed", game.mechanics.virginUsed)
-        put("clocktowerSlayerUsed", game.mechanics.slayerUsed)
-        put("clocktowerSlayerClaimedNames", stringsToJsonArray(game.mechanics.slayerClaimedNames))
         put("clocktowerArtistUsed", game.mechanics.artistUsed)
         put("clocktowerArtistClaimedNames", stringsToJsonArray(game.mechanics.artistClaimedNames))
         putNullableString("clocktowerLastExecutedName", game.mechanics.lastExecutedName)

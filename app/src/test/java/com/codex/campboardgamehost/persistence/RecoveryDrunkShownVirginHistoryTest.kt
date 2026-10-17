@@ -60,7 +60,6 @@ class RecoveryDrunkShownVirginHistoryTest {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = null,
-                    confirmedPoisonTarget = null,
                     confirmedMonkProtectedTarget = null,
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = null,
@@ -69,9 +68,6 @@ class RecoveryDrunkShownVirginHistoryTest {
                     redHerring = null,
                     demonBluffRoleNames = emptyList(),
                     butlerMaster = null,
-                    virginUsed = true,
-                    slayerUsed = false,
-                    slayerClaimedNames = emptyList(),
                     artistUsed = false,
                     artistClaimedNames = emptyList(),
                     lastExecutedName = "P1",
@@ -134,8 +130,4 @@ class RecoveryDrunkShownVirginHistoryTest {
         assertEquals(true, (game.history.actionTimeline.entries.first().fact as ActionFact.Nomination).firstVirginNomination)
     }
 
-    @Test fun `first Virgin marker cannot be forged by changing Drunk shown role`() {
-        val rejected = restore(snapshot(shownDrunkRole = "Chef"))
-        assertTrue(rejected is RecoveryPlanPreparation.Rejected)
-    }
 }

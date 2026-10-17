@@ -56,7 +56,6 @@ internal data class ClocktowerNightStepUi(
     val wakeText: String? = null,
     val roleEnName: String? = null,
     val informationReliability: InformationReliability = InformationReliability.RELIABLE,
-    val recentMisinformationStreak: Int = 0,
     val previousShownNumber: Int? = null,
     /** Complete semantic bounds for a numeric information interaction, when applicable. */
     val numericMinimumValue: Int? = null,

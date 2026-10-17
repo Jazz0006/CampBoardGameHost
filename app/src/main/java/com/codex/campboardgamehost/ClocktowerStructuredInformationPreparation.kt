@@ -39,9 +39,16 @@ internal fun clocktowerStructuredRecommendedOption(
  */
 internal fun clocktowerAutomaticInformationOption(
     currentOptions: List<ClocktowerDisplayOption>,
-): ClocktowerDisplayOption? = currentOptions
-    .distinctBy(::clocktowerInformationCandidateId)
-    .singleOrNull()
+    /** Host-validated joint AI choice, bound to the unmodified legal domain. */
+    approvedOption: ClocktowerDisplayOption? = null,
+): ClocktowerDisplayOption? {
+    val legal = currentOptions.distinctBy(::clocktowerInformationCandidateId)
+    val rebound = approvedOption?.let { choice ->
+        val id = clocktowerInformationCandidateId(choice)
+        legal.singleOrNull { clocktowerInformationCandidateId(it) == id }
+    }
+    return rebound ?: legal.singleOrNull()
+}
 
 internal fun clocktowerManualInformationDomain(
     options: List<ClocktowerDisplayOption>,

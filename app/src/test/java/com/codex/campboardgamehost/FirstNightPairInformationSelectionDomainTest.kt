@@ -62,7 +62,6 @@ class FirstNightPairInformationSelectionDomainTest {
         roleMissingReason = { "missing" },
         abilityStateFor = { _, _ -> AbilityFunctioningState.DRUNK },
         actorIsUnreliable = { _, _ -> true },
-        recentMisinformationStreak = { 0 },
     )
 
     private fun displayOption(

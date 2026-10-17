@@ -81,11 +81,28 @@ internal fun clocktowerRavenkeeperResultChoices(
     if (step.action != ClocktowerNightAction.Ravenkeeper || step.roleEnName != "Ravenkeeper") {
         return emptyList()
     }
-    val anchor = clocktowerRoleRevealAnchor(
+    val directAnchor = clocktowerRoleRevealAnchor(
         proposition = step.displayProposition,
         expectedSeat = selectedSeat,
         seatCount = seatCount,
-    ) ?: return emptyList()
+    )
+    // Before a Spy/Recluse registration is chosen, there is no one truthful
+    // RoleAt yet. The Host's typed legal options still prove the real queried
+    // seat; use them to open the existing choice UI, never to assert a role.
+    val registrationTargetSeat = if (directAnchor == null && step.displayProposition == null &&
+        selectedSeat != null && selectedSeat in 1..seatCount &&
+        resultFirstRegistrationCandidates.isNotEmpty()
+    ) {
+        val rolesAtTarget = resultFirstRegistrationCandidates.mapNotNull { option ->
+            (option.proposition as? InformationProposition.RoleAt)?.takeIf {
+                option.displayKind == ClocktowerDisplayKind.RoleReveal && it.seat == selectedSeat
+            }
+        }
+        if (rolesAtTarget.size == resultFirstRegistrationCandidates.size) {
+            selectedSeat
+        } else null
+    } else null
+    val targetSeat = directAnchor?.targetSeat ?: registrationTargetSeat ?: return emptyList()
 
     fun choicesFrom(
         options: List<ClocktowerDisplayOption>,
@@ -95,7 +112,7 @@ internal fun clocktowerRavenkeeperResultChoices(
         return options.map { option ->
             val projected = clocktowerRoleRevealChoiceProjection(
                 option = option,
-                targetSeat = anchor.targetSeat,
+                targetSeat = targetSeat,
                 seatCount = seatCount,
             ) ?: return emptyList()
             ClocktowerRavenkeeperResultChoice(
@@ -133,12 +150,15 @@ internal fun clocktowerRavenkeeperResultChoices(
         }
     }
 
+    // Only a genuine step-level RoleAt may fall back to the direct truthful
+    // display; a provisional registration candidate is not a settled result.
+    if (directAnchor == null) return emptyList()
     val displayLabel = step.displayPrimary?.takeIf { it.isNotBlank() } ?: return emptyList()
     return listOf(
         ClocktowerRavenkeeperResultChoice(
-            key = "direct|${anchor.targetSeat}|${anchor.roleId.value}",
-            targetSeat = anchor.targetSeat,
-            roleId = anchor.roleId,
+            key = "direct|${directAnchor.targetSeat}|${directAnchor.roleId.value}",
+            targetSeat = directAnchor.targetSeat,
+            roleId = directAnchor.roleId,
             displayLabel = displayLabel,
             sourceKind = ClocktowerRavenkeeperResultSourceKind.Direct,
             recommended = true,

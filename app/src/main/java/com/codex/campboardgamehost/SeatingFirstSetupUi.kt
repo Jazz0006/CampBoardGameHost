@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 
 /**
  * Game-independent first screen of the hosted-session flow.
@@ -40,6 +41,8 @@ import androidx.compose.ui.unit.dp
 internal fun SeatingFirstSetupScreen(
     savedGamePreview: SavedGamePreview?,
     commonPlayers: List<String>,
+    playerExperienceByName: Map<String, PlayerExperienceLevelV1>,
+    onPlayerExperienceChange: (String, PlayerExperienceLevelV1) -> Unit,
     playerNames: List<String>,
     onAddCurrentPlayer: (String) -> Unit,
     onRemoveCurrentPlayer: (Int) -> Unit,
@@ -169,6 +172,12 @@ internal fun SeatingFirstSetupScreen(
                                 Text(
                                     text = "${clocktowerSeatNumberLabel(index + 1, language)} · ${playerNames[index]}",
                                     fontWeight = FontWeight.SemiBold,
+                                )
+                                PlayerExperiencePicker(
+                                    playerName = playerNames[index],
+                                    value = playerExperienceByName[playerNames[index]]
+                                        ?: PlayerExperienceLevelV1.BEGINNER,
+                                    onChange = { onPlayerExperienceChange(playerNames[index], it) },
                                 )
                                 OutlinedButton(
                                     onClick = {

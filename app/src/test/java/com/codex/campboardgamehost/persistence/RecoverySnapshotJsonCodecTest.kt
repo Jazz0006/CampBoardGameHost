@@ -116,7 +116,6 @@ class RecoverySnapshotJsonCodecTest {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = null,
-                    confirmedPoisonTarget = null,
                     confirmedMonkProtectedTarget = null,
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = null,
@@ -125,9 +124,6 @@ class RecoverySnapshotJsonCodecTest {
                     redHerring = null,
                     demonBluffRoleNames = emptyList(),
                     butlerMaster = null,
-                    virginUsed = false,
-                    slayerUsed = false,
-                    slayerClaimedNames = emptyList(),
                     artistUsed = false,
                     artistClaimedNames = emptyList(),
                     lastExecutedName = null,
@@ -207,7 +203,6 @@ class RecoverySnapshotJsonCodecTest {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = null,
-                    confirmedPoisonTarget = null,
                     confirmedMonkProtectedTarget = null,
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = null,
@@ -216,9 +211,6 @@ class RecoverySnapshotJsonCodecTest {
                     redHerring = null,
                     demonBluffRoleNames = emptyList(),
                     butlerMaster = null,
-                    virginUsed = false,
-                    slayerUsed = false,
-                    slayerClaimedNames = emptyList(),
                     artistUsed = false,
                     artistClaimedNames = emptyList(),
                     lastExecutedName = null,
@@ -286,7 +278,6 @@ class RecoverySnapshotJsonCodecTest {
                     gameId = "game-1",
                     gameSeed = 99L,
                 ),
-                sdeHistoricalReplayInputJson = "{\"schemaVersion\":1,\"gameId\":\"game-1\"}",
                 position = ClocktowerRecoveryPosition(
                     phase = ClocktowerPhase.Night,
                     nightStarted = true,
@@ -294,7 +285,6 @@ class RecoverySnapshotJsonCodecTest {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = "Alice",
-                    confirmedPoisonTarget = "Bob",
                     confirmedMonkProtectedTarget = "Carol",
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = "Demon 2",
@@ -303,9 +293,6 @@ class RecoverySnapshotJsonCodecTest {
                     redHerring = "Bob",
                     demonBluffRoleNames = listOf("Chef", "Monk", "Mayor"),
                     butlerMaster = "Carol",
-                    virginUsed = true,
-                    slayerUsed = true,
-                    slayerClaimedNames = listOf("Alice"),
                     artistUsed = true,
                     artistClaimedNames = listOf("Bob"),
                     lastExecutedName = "Carol",
@@ -329,11 +316,8 @@ class RecoverySnapshotJsonCodecTest {
         val json = RecoverySnapshotJsonCodec.encode(snapshot)
 
         assertEquals("Alice", json.getString("clocktowerPendingNightDeath"))
-        assertEquals(
-            "{\"schemaVersion\":1,\"gameId\":\"game-1\"}",
-            json.getString("clocktowerSdeHistoricalReplayInput"),
-        )
-        assertEquals("Bob", json.getString("clocktowerConfirmedPoisonTarget"))
+        assertFalse(json.has("clocktowerSdeHistoricalReplayInput"))
+        assertFalse(json.has("clocktowerConfirmedPoisonTarget"))
         assertEquals("Carol", json.getString("clocktowerConfirmedMonkProtectedTarget"))
         assertEquals("Demon 2", json.getString("clocktowerPendingNightNewDemonIdentityName"))
         assertEquals("Demon 2", json.getString("clocktowerConfirmedDemonSuccessorTarget"))

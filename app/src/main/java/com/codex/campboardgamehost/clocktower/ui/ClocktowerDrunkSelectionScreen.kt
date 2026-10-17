@@ -33,23 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkCandidate
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkSelectionRequest
-import com.codex.campboardgamehost.clocktower.session.StorytellerGlobalStrategyV1
-
-internal data class DrunkAiDisplay(
-    val rationale: String,
-    val globalStrategy: StorytellerGlobalStrategyV1,
-    val alternatives: List<Pair<Int, String>>,
-    val uncertainty: List<String>,
-)
-
 @Composable
 internal fun ClocktowerDrunkSelectionScreen(
     request: TroubleBrewingDrunkSelectionRequest,
     operationMode: StorytellerOperationMode = StorytellerOperationMode.MANUAL,
-    aiDisplay: DrunkAiDisplay? = null,
-    aiBusy: Boolean = false,
-    aiError: String? = null,
-    onRequestAi: () -> Unit = {},
     language: String,
     roleNameForExternalId: (String) -> String,
     onBack: () -> Unit,
@@ -101,75 +88,6 @@ internal fun ClocktowerDrunkSelectionScreen(
                         },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                }
-            }
-
-            if (operationMode != StorytellerOperationMode.MANUAL) {
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            text = text("整局局势分析", "Whole-game situation analysis"),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        if (operationMode == StorytellerOperationMode.AI_AUTOMATIC) {
-                            Text(
-                                text("自动主持正在分析并确认合法选择；若失败，请人工接管。",
-                                    "Automatic Host validates and commits; on failure, take over manually."),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Button(onClick = onRequestAi, enabled = !aiBusy) {
-                            Text(if (aiBusy) text("分析中", "Analysing...")
-                                else text("重新分析整局", "Reanalyse whole game"))
-                        }
-                        aiError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                        aiDisplay?.let { advice ->
-                            Text(
-                                text = advice.globalStrategy.situationSummary,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            advice.globalStrategy.issues.forEach { issue ->
-                                Text(
-                                    text = "• " + issue.diagnosis +
-                                        " [座位 " + issue.seats.joinToString("/") + "] " +
-                                        issue.futureEffect,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Text(text("有条件的后续计划", "Conditional strategic plan"), fontWeight = FontWeight.Bold)
-                            advice.globalStrategy.intentions.forEach { intent ->
-                                Text(
-                                    intent.trigger + " → " + intent.approach + " (" + intent.tradeoff + ")",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Text(
-                                text = text("当前酒鬼推荐：", "Current Drunk recommendation: ") +
-                                    advice.rationale,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                            advice.alternatives.forEach { (seat, reason) ->
-                                Text(
-                                    text = text("备选 ", "Alternative ") + seat + ": " + reason,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            if (advice.uncertainty.isNotEmpty()) {
-                                Text(
-                                    text = text("不确定因素：", "Uncertainty: ") +
-                                        advice.uncertainty.joinToString("; "),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                        Text(
-                            text = text("模型分析不是游戏事实。网络不可用时仍可手动选择。",
-                                "AI analysis is not game truth; manual takeover remains possible."),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
                 }
             }
 

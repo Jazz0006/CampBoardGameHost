@@ -52,7 +52,7 @@ class PoisonExecutionDuskTimelineRegressionTest {
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
 
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Poison(
                 actionId = "first-night-poison",
                 phase = StorytellerPhase.FIRST_NIGHT,
@@ -76,7 +76,7 @@ class PoisonExecutionDuskTimelineRegressionTest {
                 },
             ),
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Execution(
                 actionId = "day-1-execution-poisoner",
                 phase = StorytellerPhase.DAY,
@@ -120,7 +120,7 @@ class PoisonExecutionDuskTimelineRegressionTest {
         assertTrue(expiryPlan.stateMutationRequired)
         val clearActionId = requireNotNull(expiryPlan.actionIdToCommit)
 
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Poison(
                 actionId = clearActionId,
                 phase = StorytellerPhase.DAY,
@@ -136,7 +136,7 @@ class PoisonExecutionDuskTimelineRegressionTest {
                 },
             ),
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.PhaseAdvance(
                 actionId = "phase-night-2",
                 phase = StorytellerPhase.DAY,

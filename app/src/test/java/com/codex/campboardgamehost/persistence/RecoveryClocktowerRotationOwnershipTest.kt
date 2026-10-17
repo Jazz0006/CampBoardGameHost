@@ -70,7 +70,6 @@ class RecoveryClocktowerRotationOwnershipTest {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = null,
-                    confirmedPoisonTarget = null,
                     confirmedMonkProtectedTarget = null,
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = null,
@@ -79,9 +78,6 @@ class RecoveryClocktowerRotationOwnershipTest {
                     redHerring = null,
                     demonBluffRoleNames = emptyList(),
                     butlerMaster = null,
-                    virginUsed = false,
-                    slayerUsed = false,
-                    slayerClaimedNames = emptyList(),
                     artistUsed = false,
                     artistClaimedNames = emptyList(),
                     lastExecutedName = null,

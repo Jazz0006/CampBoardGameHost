@@ -10,7 +10,7 @@
 
 执行规格、源码证据、删除风险和大文件基线见 [最小游戏状态与记录清理](MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md)。
 
-实施前先处理 [开放 PR #315 与分支基线](PRE_REFACTOR_BRANCH_AUDIT_2026-10-17.md)：其已包含 main 尚未接收的大量清理；不能从当前 main 直接重复实施。下表“未实施”仅指本会话的新删除计划，不否认 #315 已有成果。
+开发基线已整合 #315 `06dbb954` 与 main `770ed32f`，本次仅解决文档冲突，未改生产代码。#315 原有 Session 收敛、PlayerCard 单源投影、逐步确认和 SDE 删除均保留；独立 Recovery 仍存在。合并 main 前还需当前组合版本的验证与审查。
 
 | 顺序 | 工作 | 当前状态 |
 | --- | --- | --- |
@@ -32,6 +32,8 @@
 
 ## AI 推荐方向保留，当前不扩展
 
-长期目标仍是专家说书人的一次联合开局规划、并行发身份及事件驱动的剩余计划修订。Host 独立校验；无需模型时仍可手动游戏。当前实际代码仍有未贯通的实验接口和旧生产分支，不能声明全自动或手机端到端已验收。
+长期目标仍是专家说书人的一次联合开局规划、并行发身份及事件驱动的剩余计划修订。Host 独立校验；无需模型时仍可手动游戏。已继承 #315 的联合开局、逐步确认与当前步骤 AI 接入；A3 尚有状态归属债务，独立 Recovery 和文字记录仍待删除，手机端到端验收仍未完成。
 
 参考 [专家规划原则](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md)、[Host 语义校验路线](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md) 与 [联合开局路线](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)。这些文档的旧 NEXT 不覆盖当前减法优先级；历史 PR、分支和 CI 状态需另行实时核对。
+
+既有实现详情保留于 [ARCH-CLEANUP-2 历史阶段记录](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md)，其中要求保留/完善独立 Recovery 的旧执行条款已被本轮目标覆盖。

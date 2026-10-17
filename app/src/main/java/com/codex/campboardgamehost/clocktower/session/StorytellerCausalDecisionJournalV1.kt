@@ -70,6 +70,16 @@ internal class FrozenStorytellerDecisionPrefixV1 internal constructor(
  * Must be called with the frozen SessionState that actually produced the request.
  */
 internal object StorytellerDecisionPrefixCaptureV1 {
+    /**
+     * Runtime GameState RoleId uses names such as "Fortune Teller" while the verified TB
+     * projection has canonical external IDs such as "fortuneteller". They refer to the same
+     * identity, not two different characters. Never permit a genuinely different role.
+     */
+    private fun sameCharacterId(snapshotId: String, sessionId: String): Boolean =
+        snapshotId == sessionId ||
+            snapshotId.filter { it.isLetterOrDigit() }.lowercase() ==
+                sessionId.filter { it.isLetterOrDigit() }.lowercase()
+
     fun capture(
         request: StorytellerProviderRequestV1,
         sessionState: ClocktowerSessionState,
@@ -91,10 +101,14 @@ internal object StorytellerDecisionPrefixCaptureV1 {
         require(snapshot.grimoireSeats.map { it.seat } == currentSeats.map { it.seat })
         snapshot.grimoireSeats.zip(currentSeats).forEach { (seat, player) ->
             (seat.actualRoleId as? SnapshotField.Known<String>)?.let {
-                require(it.value == player.actualRole.value) { "Snapshot actual role diverges from frozen Session." }
+                require(sameCharacterId(it.value, player.actualRole.value)) {
+                    "Snapshot actual role diverges from frozen Session."
+                }
             }
             (seat.shownRoleId as? SnapshotField.Known<String>)?.let {
-                require(it.value == (player.shownRole ?: player.actualRole).value) { "Snapshot shown role diverges from frozen Session." }
+                require(sameCharacterId(it.value, (player.shownRole ?: player.actualRole).value)) {
+                    "Snapshot shown role diverges from frozen Session."
+                }
             }
             (seat.alive as? SnapshotField.Known<Boolean>)?.let {
                 require(it.value == player.alive) { "Snapshot life state diverges from frozen Session." }
@@ -160,11 +174,11 @@ internal data class StorytellerCausalJournalArchiveV1(
 }
 
 /**
- * R1C2A in-memory reference implementation of independent decision chronology.
- * Distinct from the mechanical global timeline: two decisions may occur at the same game/input
- * revision and the same mechanical cursor, yet a later correction must not rewrite an old prefix.
- *
- * NO production writer or Recovery codec exists yet. Do not claim this is durable or exhaustive.
+ * Session-owned, append-only decision/correction chronology, distinct from mechanical facts.
+ * Two rulings may share one game/input revision and cursor; later corrections preserve the old
+ * prefix. Production first-publication rulings are staged and accepted with the observation,
+ * while later explicit corrections append new journal events. Typed Recovery already serializes
+ * this journal, but it is not an independent game-state authority.
  */
 internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
     private sealed interface Entry {

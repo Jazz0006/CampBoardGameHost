@@ -1,0 +1,85 @@
+name: P1 exact synthetic opening wire fixture
+
+on:
+  push:
+    branches:
+      - experiment/ai-conversation-1-probe-20261015
+  pull_request:
+    branches:
+      - feature/prod-global-3e3-whole-residual-20261012
+
+permissions:
+  contents: read
+
+jobs:
+  export-fixture:
+    name: Kotlin APP wire parity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Kotlin V2 serializer export
+        env:
+          BOTC_P1_WIRE_EXPORT: "1"
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.exportP1OpeningWireWhenOptedIn' --no-daemon --build-cache
+      - name: Kotlin 15-seat historical and retained Standard opening wires
+        env:
+          BOTC_15_WIRE_EXPORT: "1"
+        run: |
+          ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.exportFifteenSeatOpeningWireWhenOptedIn' --no-daemon --build-cache
+      - name: Show synthetic 15-seat exact Kotlin request
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture=app/build/p15/opening-app-request.json
+          test -s "$fixture"
+          sha256sum "$fixture"
+          retained=app/build/p15/opening-app-retained-request.json
+          test -s "$retained"
+          sha256sum "$retained"
+          echo "BOTC_15_APP_WIRE_START"
+          cat "$fixture"
+          echo
+          echo "BOTC_15_APP_WIRE_END"
+      - name: Kotlin Host semantic acceptance of actual P15 Luna Standard output
+        run: |
+          ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.p15StoredRealLunaModelOutputPassesKotlinHostGate' --no-daemon --build-cache
+      - name: Verify actual P1 opening through Kotlin Host semantic acceptance
+        run: |
+          ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.p1StoredSyntheticOpeningMustPassActualHostSemanticGate' --no-daemon --build-cache
+      - name: Export actual Kotlin V2 continuation after accepted opening
+        env:
+          BOTC_P1_WIRE_EXPORT: "1"
+        run: |
+          ./gradlew :app:testFast --tests '*InitialJointOpeningDirectV2Test.exportP1KotlinContinuationFromAcceptedSyntheticOpening' --no-daemon --build-cache
+      - name: Show nonsecret synthetic continuation wire
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture=app/build/p1/continuation-app-request.json
+          test -s "$fixture"
+          sha256sum "$fixture"
+          echo "BOTC_P1_CONTINUATION_WIRE_START"
+          cat "$fixture"
+          echo
+          echo "BOTC_P1_CONTINUATION_WIRE_END"
+      - name: Show nonsecret synthetic wire fixture for P1 experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture=app/build/p1/opening-app-request.json
+          test -s "$fixture"
+          sha256sum "$fixture"
+          echo "BOTC_P1_APP_WIRE_START"
+          cat "$fixture"
+          echo
+          echo "BOTC_P1_APP_WIRE_END"

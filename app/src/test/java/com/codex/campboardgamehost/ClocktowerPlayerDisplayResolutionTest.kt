@@ -15,26 +15,6 @@ import org.junit.Test
 
 class ClocktowerPlayerDisplayResolutionTest {
     @Test
-    fun `same resolved pair option produces identical player display for manual and recommendation paths`() {
-        val option = pairOption("Chef", 2, 5)
-        val manualResolved = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(listOf(option)))
-            .selectRole("Chef")
-            .selectSeat(2)
-            .selectSeat(5)
-            .resolvedOption
-        val recommendationResolved = clocktowerRecommendationPresentation(listOf(option)).primary
-
-        val baseStep = unresolvedStep(option)
-
-        assertEquals(option, manualResolved)
-        assertEquals(option, recommendationResolved)
-        assertEquals(
-            resolveClocktowerPlayerDisplay(baseStep, requireNotNull(manualResolved)),
-            resolveClocktowerPlayerDisplay(baseStep, requireNotNull(recommendationResolved)),
-        )
-    }
-
-    @Test
     fun `resolved player display copies exact visible payload and strips storyteller choices`() {
         val proposition = InformationProposition.AnyOf(
             listOf(
@@ -75,6 +55,36 @@ class ClocktowerPlayerDisplayResolutionTest {
         assertTrue(resolved.displayOptions.isEmpty())
         assertTrue(resolved.recommendedDisplayOptions.isEmpty())
         assertNull(resolved.informationDecisionConfirmation)
+    }
+
+    @Test
+    fun `selected unreliable role metadata overrides the truthful step anchor`() {
+        val selected = ClocktowerDisplayOption(
+            label = "alternate appearance",
+            displayKind = ClocktowerDisplayKind.RoleReveal,
+            displayTitle = "Ravenkeeper",
+            displayPrimary = "小恶魔",
+            displaySecondary = null,
+            displayFooter = null,
+            presentationSubjectSeats = listOf(5),
+            presentationRoleId = "Imp",
+            proposition = null,
+        )
+        val truthful = InformationProposition.RoleAt(5, RoleId("Chef"))
+        val resolved = resolveClocktowerLegacyUnreliablePlayerDisplay(
+            unresolvedStep(selected).copy(
+                roleEnName = "Ravenkeeper",
+                displayProposition = truthful,
+            ),
+            selected,
+        )
+        assertEquals("小恶魔", resolved.displayPrimary)
+        assertEquals(InformationProposition.RoleAt(5, RoleId("Imp")), resolved.displayProposition)
+        // A conflicting explicitly selected target never silently inherits the truthful anchor.
+        assertNull(resolveClocktowerLegacyUnreliablePlayerDisplay(
+            unresolvedStep(selected).copy(displayProposition = truthful),
+            selected.copy(presentationSubjectSeats = listOf(4)),
+        ).displayProposition)
     }
 
     @Test

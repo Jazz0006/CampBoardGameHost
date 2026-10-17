@@ -55,6 +55,33 @@ class ClocktowerActionTimelinePersistenceTest {
     }
 
     @Test
+    fun `accepted private setup choices and overrides survive typed timeline JSON`() {
+        val timeline = ActionFactTimeline(listOf(
+            entry(ActionFact.RedHerringChoice("red-initial", 0L, 3),
+                StorytellerPhase.FIRST_NIGHT, 1, 1, 0L),
+            entry(ActionFact.DemonBluffChoice("bluffs", 1L,
+                listOf(RoleId("Saint"), RoleId("Monk"), RoleId("Librarian"))),
+                StorytellerPhase.FIRST_NIGHT, 1, 2, 1L),
+            entry(ActionFact.RedHerringChoice("red-overridden", 2L, 4),
+                StorytellerPhase.FIRST_NIGHT, 1, 3, 2L),
+            entry(ActionFact.ButlerMasterChoice("butler-night", 3L, 4, 2),
+                StorytellerPhase.NIGHT, 2, 4, 3L),
+        ))
+        val serialized = ClocktowerSemanticHistoryPersistence.encodeActionTimeline(timeline)
+        assertEquals("red-herring-choice",
+            serialized.getJSONObject(0).getJSONObject("fact").getString("kind"))
+        assertEquals("demon-bluff-choice",
+            serialized.getJSONObject(1).getJSONObject("fact").getString("kind"))
+        assertEquals("butler-master",
+            serialized.getJSONObject(3).getJSONObject("fact").getString("kind"))
+        assertEquals(
+            timeline, ClocktowerSemanticHistoryPersistence.decodeActionTimeline(
+                JSONObject().put(ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, serialized),
+            ),
+        )
+    }
+
+    @Test
     fun `missing current action history fails closed`() {
         assertFails {
             ClocktowerSemanticHistoryPersistence.decodeActionTimeline(JSONObject())

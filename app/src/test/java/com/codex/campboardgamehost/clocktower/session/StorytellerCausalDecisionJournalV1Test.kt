@@ -112,7 +112,93 @@ class StorytellerCausalDecisionJournalV1Test {
         )
 
     @Test
-    fun `same revision different global cursors and later correction preserve both old prefixes`() {
+    fun `confirmed Mayor decision commits typed fact and causal journal without half writes`() {
+        val game = session()
+        fun mayorRequest(id: String): StorytellerProviderRequestV1 =
+            request(id, game, game.causalDecisionJournal).copy(
+                legalCandidates = listOf(1, 2, 4).map { seat ->
+                    StorytellerProviderCandidateV1(
+                        MayorRedirectDecisionBoundary.candidateIdForSeat(seat),
+                        StorytellerProviderCandidatePayloadV1.SeatTarget(seat),
+                    )
+                },
+            )
+        val firstRequest = mayorRequest("night:2:mayor-redirect:first")
+        val choice = ActionFactDraft.MayorRedirectChoice(
+            actionId = "mayor-night-two-first",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 1,
+            mayorSeat = 1,
+            targetSeat = 2,
+        )
+        val candidate = MayorRedirectDecisionBoundary.candidateIdForSeat(2)
+        val accepted = game.commitConfirmedMayorRedirect(choice, firstRequest, candidate, 0L)
+        assertEquals(0L, accepted.point.globalSequence)
+        assertEquals(1L, game.state.gameStateRevision)
+        assertEquals(1L, game.state.nextTimelineGlobalSequence)
+        assertEquals(choice.targetSeat, (game.state.actionTimeline.entries.single().fact as
+            com.codex.campboardgamehost.clocktower.domain.ActionFact.MayorRedirectChoice).targetSeat)
+        assertEquals(1, game.causalDecisionJournal.effectiveNow().size)
+        assertEquals(candidate, game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+
+        // Re-tapping the same stable confirmation is truly a no-op, including the journal.
+        val afterFirst = game.state
+        val journalAfterFirst = game.causalDecisionJournal.archive()
+        assertEquals(accepted, game.commitConfirmedMayorRedirect(choice, firstRequest, candidate, 0L))
+        assertEquals(afterFirst, game.state)
+        assertEquals(journalAfterFirst, game.causalDecisionJournal.archive())
+
+        val bad = choice.copy(actionId = "mayor-invalid", targetSeat = 3, sequence = 2)
+        assertThrows(IllegalArgumentException::class.java) {
+            game.commitConfirmedMayorRedirect(
+                bad, mayorRequest("night:2:mayor-redirect:invalid"),
+                MayorRedirectDecisionBoundary.candidateIdForSeat(3), 1L,
+            )
+        }
+        assertEquals(afterFirst, game.state)
+        assertEquals(journalAfterFirst, game.causalDecisionJournal.archive())
+
+        val secondRequest = mayorRequest("night:2:mayor-redirect:revised")
+        game.commitConfirmedMayorRedirect(
+            choice.copy(actionId = "mayor-night-two-revised", targetSeat = 4, sequence = 2),
+            secondRequest, MayorRedirectDecisionBoundary.candidateIdForSeat(4), 1L,
+        )
+        assertEquals(2L, game.state.gameStateRevision)
+        assertEquals(2L, game.state.nextTimelineGlobalSequence)
+        assertEquals(listOf(0L, 1L), game.state.actionTimeline.entries.map { it.point.globalSequence })
+        assertEquals(1, game.causalDecisionJournal.effectiveNow().size)
+        assertEquals(MayorRedirectDecisionBoundary.candidateIdForSeat(4),
+            game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+        assertEquals(2, game.causalDecisionJournal.archive().records.count {
+            it is StorytellerCausalJournalRecordV1.Captured
+        })
+        assertEquals(1, game.causalDecisionJournal.archive().records.count {
+            it is StorytellerCausalJournalRecordV1.Corrected
+        })
+
+        // The legal domain also permits letting the Mayor die: target == Mayor seat.
+        game.commitConfirmedMayorRedirect(
+            choice.copy(actionId = "mayor-night-two-no-redirect", targetSeat = 1, sequence = 3),
+            mayorRequest("night:2:mayor-redirect:no-redirect"),
+            MayorRedirectDecisionBoundary.candidateIdForSeat(1), 2L,
+        )
+        assertEquals(3L, game.state.gameStateRevision)
+        assertEquals(3L, game.state.nextTimelineGlobalSequence)
+        assertEquals(MayorRedirectDecisionBoundary.candidateIdForSeat(1),
+            game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+        val historyJson = com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
+            .encodeActionTimeline(game.state.actionTimeline)
+        val restoredHistory = com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence
+            .decodeActionTimeline(org.json.JSONObject().put(
+                com.codex.campboardgamehost.ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
+                historyJson,
+            ))
+        assertEquals(game.state.actionTimeline, restoredHistory)
+    }
+
+    @Test
+    fun `accepted revision changes preserve both previously frozen prefixes and corrections`() {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         val aReq = request("A", session, journal)
@@ -120,12 +206,12 @@ class StorytellerCausalDecisionJournalV1Test {
         assertEquals(0L, a.exclusiveGlobalSequence)
         journal.commit("A", event("A", revision = a.revision))
 
-        session.commitGlobalActionFact(ActionFactDraft.Poison(
+        session.commitAcceptedTestAction(ActionFactDraft.Poison(
             "poison", StorytellerPhase.FIRST_NIGHT, 1, 1, 5,
         ))
         val bReq = request("B", session, journal)
         val b = journal.captureBeforeDecision(bReq, session.state)
-        assertEquals(a.revision, b.revision)
+        assertTrue(a.revision != b.revision)
         assertEquals(1L, b.exclusiveGlobalSequence)
         assertEquals(listOf("event-A"), journal.effectiveAt("B").map { it.eventId })
         assertEquals(listOf("event-A"), bReq.gameContext.priorDecisions.map { it.eventId })
@@ -142,7 +228,7 @@ class StorytellerCausalDecisionJournalV1Test {
         assertEquals(b, journal.frozenAt("B"))
         assertEquals(listOf("poison"), journal.frozenAt("B").historyPrefix.entries.map { it.entryId })
 
-        session.commitGlobalActionFact(ActionFactDraft.Attack(
+        session.commitAcceptedTestAction(ActionFactDraft.Attack(
             "future-attack", StorytellerPhase.NIGHT, 2, 2, 5,
         ))
         assertEquals(b, journal.frozenAt("B"))
@@ -193,7 +279,7 @@ class StorytellerCausalDecisionJournalV1Test {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         val stale = request("stale", session, journal)
-        session.commitGlobalActionFact(ActionFactDraft.Death(
+        session.commitAcceptedTestAction(ActionFactDraft.Death(
             "new-action-same-revision", StorytellerPhase.DAWN, 1, 0, 2,
         ))
         assertThrows(IllegalArgumentException::class.java) {

@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
@@ -25,9 +26,8 @@ class ClocktowerNightHostProjectionTest {
         )
         val projection = ClocktowerNightHostProjectionFactory.project(
             cards = cards,
-            script = ClocktowerScript.TroubleBrewing,
+            gameState = cards.toClocktowerGameState(ClocktowerScript.TroubleBrewing, 17L),
             ruleset = builtInRuleset(),
-            gameSeed = 17L,
             phase = ClocktowerPhase.Night,
             poisonTarget = null,
             checkpoint = checkpoint(confirmedAttackTarget = "Ravenkeeper"),
@@ -59,6 +59,43 @@ class ClocktowerNightHostProjectionTest {
                 impInteractionId,
                 ClocktowerInteractionBoundary.AFTER,
             ).isMechanicallyAlive(3),
+        )
+    }
+
+    @Test
+    fun `night base alive and role maps are read from canonical GameState, not stale cards`() {
+        val cards = listOf(
+            card("Imp", "Imp", ClocktowerTeam.Demon),
+            card("Poisoner", "Poisoner", ClocktowerTeam.Minion),
+            card("Ravenkeeper", "Ravenkeeper", ClocktowerTeam.Townsfolk),
+            card("Empath", "Empath", ClocktowerTeam.Townsfolk),
+            card("Chef", "Chef", ClocktowerTeam.Townsfolk),
+        )
+        val accepted = cards.toClocktowerGameState(ClocktowerScript.TroubleBrewing, 17L)
+            .let { game ->
+                game.copy(players = game.players.map { player ->
+                    if (player.seat == 4) player.copy(actualRole = RoleId("Chef"), alive = false) else player
+                })
+            }
+        // The deliberately stale UI cards still show Empath alive in seat 4.
+        val projection = ClocktowerNightHostProjectionFactory.project(
+            cards = cards,
+            gameState = accepted,
+            ruleset = builtInRuleset(),
+            phase = ClocktowerPhase.Night,
+            poisonTarget = null,
+            checkpoint = checkpoint(confirmedAttackTarget = "Ravenkeeper"),
+            pendingNightNewDemonIdentityName = null,
+            lastExecutedName = null,
+        )
+        val impInteraction = ClocktowerProductionNightStepIdentity
+            .role(RoleId("Imp"))
+            .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+        assertEquals(RoleId("Chef"), projection.baseRoleIdsBySeat[4])
+        assertFalse(
+            projection.effectiveNightStateAt(
+                impInteraction, ClocktowerInteractionBoundary.BEFORE,
+            ).isMechanicallyAlive(4),
         )
     }
 

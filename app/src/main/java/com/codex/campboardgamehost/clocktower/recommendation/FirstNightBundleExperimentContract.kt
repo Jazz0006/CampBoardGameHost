@@ -1,19 +1,12 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
-import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicEvaluationCapability
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalContext
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalObservationBundleEvaluator
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleEvaluation
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.SemanticStableId
-import com.codex.campboardgamehost.clocktower.epistemic.WorldCardinality
 import java.util.Collections
 
 /** Which owner determines one member of a complete first-night bundle. */
@@ -103,10 +96,6 @@ internal class FirstNightInformationBundle(
     }
 }
 
-internal enum class FirstNightExperimentProfile {
-    BEGINNER_PUBLIC_GOOD_INFO,
-}
-
 /**
  * Ephemeral PUBLIC_GOOD_INFO projection for the current healthy-stage behavioral experiment.
  *
@@ -192,90 +181,4 @@ internal object FirstNightPublicGoodInfoProjection {
         }
 }
 
-internal data class FirstNightBundleRecipientExactDiagnostics(
-    val recipientSeat: Int,
-    val before: WorldCardinality.Exact,
-    val after: WorldCardinality.Exact,
-)
 
-internal sealed interface FirstNightBundleExperimentEvaluation {
-    val bundleId: String
-    val profile: FirstNightExperimentProfile
-
-    data class Ready(
-        override val bundleId: String,
-        override val profile: FirstNightExperimentProfile,
-        val publicObservationCount: Int,
-        val recipientDiagnostics: List<FirstNightBundleRecipientExactDiagnostics>,
-    ) : FirstNightBundleExperimentEvaluation
-
-    data class Deferred(
-        override val bundleId: String,
-        override val profile: FirstNightExperimentProfile,
-        val missingCapabilities: Set<EpistemicEvaluationCapability>,
-    ) : FirstNightBundleExperimentEvaluation {
-        init {
-            require(missingCapabilities.isNotEmpty()) {
-                "Deferred first-night bundle evaluation must identify missing capabilities."
-            }
-        }
-    }
-}
-
-/**
- * Recommendation-owned adapter from the BEGINNER public-share experiment contract to the neutral
- * exact bundle evaluator. It adds no rules, ranking, Badness thresholds, or durable observations.
- */
-internal object FirstNightBundleExperimentEvaluator {
-    fun evaluateBeginnerPublicGoodInfo(
-        validatedRuleset: ValidatedClocktowerRuleset,
-        context: ExactHistoricalHypotheticalContext,
-        bundle: FirstNightInformationBundle,
-        evaluationRecipientSeats: Set<Int>,
-    ): FirstNightBundleExperimentEvaluation {
-        require(evaluationRecipientSeats.isNotEmpty()) {
-            "BEGINNER PUBLIC_GOOD_INFO evaluation requires at least one recipient perspective."
-        }
-        require(evaluationRecipientSeats.all { it > 0 }) {
-            "BEGINNER PUBLIC_GOOD_INFO recipient seats must be positive."
-        }
-
-        val projected = FirstNightPublicGoodInfoProjection.project(bundle)
-        val evaluation = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
-            validatedRuleset = validatedRuleset,
-            context = context,
-            queries = evaluationRecipientSeats
-                .toSortedSet()
-                .map { recipientSeat ->
-                    ExactHypotheticalObservationBundleQuery(
-                        bundleId = bundle.bundleId,
-                        recipientSeat = recipientSeat,
-                        observations = projected,
-                    )
-                },
-        )
-
-        return when (evaluation) {
-            is ExactHypotheticalObservationBundleEvaluation.Ready ->
-                FirstNightBundleExperimentEvaluation.Ready(
-                    bundleId = bundle.bundleId,
-                    profile = FirstNightExperimentProfile.BEGINNER_PUBLIC_GOOD_INFO,
-                    publicObservationCount = projected.size,
-                    recipientDiagnostics = evaluation.diagnostics.map { diagnostic ->
-                        FirstNightBundleRecipientExactDiagnostics(
-                            recipientSeat = diagnostic.recipientSeat,
-                            before = diagnostic.before,
-                            after = diagnostic.after,
-                        )
-                    },
-                )
-
-            is ExactHypotheticalObservationBundleEvaluation.Deferred ->
-                FirstNightBundleExperimentEvaluation.Deferred(
-                    bundleId = bundle.bundleId,
-                    profile = FirstNightExperimentProfile.BEGINNER_PUBLIC_GOOD_INFO,
-                    missingCapabilities = evaluation.missingCapabilities,
-                )
-        }
-    }
-}

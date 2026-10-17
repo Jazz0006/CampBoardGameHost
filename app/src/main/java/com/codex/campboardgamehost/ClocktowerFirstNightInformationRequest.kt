@@ -1,15 +1,14 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
-import com.codex.campboardgamehost.clocktower.domain.QualityTier
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.YesNoAnswer
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
-import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
-import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
+import com.codex.campboardgamehost.clocktower.history.InformationReferenceExtractor
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationCandidate
@@ -21,15 +20,14 @@ import com.codex.campboardgamehost.clocktower.session.PairInformationDecisionBou
 import com.codex.campboardgamehost.clocktower.session.PairInformationDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.usesAuthoritativePairDomain
 
-/** Host-to-migration adapter. Preserves legacy parity templates; pair legality stays upstream. */
+/** Host publication adapter: no old candidate parity/Shadow or model-facing candidate menu. */
 internal fun clocktowerFirstNightInformationRequest(
     displayStep: ClocktowerNightStepUi,
     phase: ClocktowerPhase,
     round: Int,
     cards: List<PlayerCard>,
+    gameState: GameState,
     script: ClocktowerScript,
-    gameSeed: Long,
-    poisonTarget: String?,
     language: String,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
 ): FirstNightInformationRequest? {
@@ -51,7 +49,7 @@ internal fun clocktowerFirstNightInformationRequest(
             shownRole = primary?.takeIf { option.displayKind == ClocktowerDisplayKind.EitherOne }
                 ?.let { shown -> clocktowerRolesForScript(script).firstOrNull { it.nameFor(language) == shown }?.enName ?: shown }
                 ?.let(::RoleId),
-            candidateSeats = DecisionHistoryRepository.extractSeatNumbers(
+            candidateSeats = InformationReferenceExtractor.extractSeatNumbers(
                 listOf(option.displaySecondary, option.displayFooter), cards.size,
             ).toList(),
             shownNumber = primary?.toIntOrNull(),
@@ -65,9 +63,6 @@ internal fun clocktowerFirstNightInformationRequest(
             reliability = reliability,
             semanticTruth = if (option.isTruthful) SemanticTruth.TRUE else SemanticTruth.FALSE,
         ),
-            qualityTier = QualityTier.RECOMMENDED,
-            reasonCodes = emptyList(),
-            warningCodes = option.warningCodes,
         )
     }
     val selectedOption = ClocktowerDisplayOption(
@@ -80,10 +75,6 @@ internal fun clocktowerFirstNightInformationRequest(
         proposition = displayStep.displayProposition,
         isTruthful = displayStep.selectedInformationTruthful != false,
     )
-    // Keep the old presentation set solely for parity telemetry and non-pair fallback.
-    val legacyOptions = (displayStep.legacyInformationCandidates + selectedOption)
-        .distinctBy(::clocktowerInformationCandidateId)
-    val legacyCandidates = legacyOptions.map(::legacyCandidate)
     val migrated = if (family.usesAuthoritativePairDomain()) {
         val pairContext = if (script == ClocktowerScript.TroubleBrewing) {
             requireNotNull(firstNightPairDecisionContext) {
@@ -92,11 +83,7 @@ internal fun clocktowerFirstNightInformationRequest(
         } else {
             null
         }
-        val legacyGame = if (pairContext == null) {
-            cards.toClocktowerGameState(script, gameSeed, poisonTarget)
-        } else {
-            null
-        }
+        val directGame = gameState.takeIf { pairContext == null }
         val legacyRoleDefinitions = if (pairContext == null) {
             clocktowerRoleDefinitionsForScript(script)
         } else {
@@ -145,7 +132,7 @@ internal fun clocktowerFirstNightInformationRequest(
                         }
                     } else {
                         ClocktowerPairManualAuthority.selectedObservation(
-                            game = requireNotNull(legacyGame),
+                            game = requireNotNull(directGame),
                             roleDefinitions = requireNotNull(legacyRoleDefinitions),
                             sourceSeat = sourceSeat,
                             abilityRole = family.role,
@@ -153,14 +140,11 @@ internal fun clocktowerFirstNightInformationRequest(
                             selectedOption = option,
                         )
                     },
-                    qualityTier = QualityTier.RECOMMENDED,
-                    reasonCodes = emptyList(),
-                    warningCodes = option.warningCodes,
                 )
             }
             .let { candidates -> candidates to candidateIdFor(selectedOption) }
     } else {
-        legacyOptions.map(::legacyCandidate) to clocktowerInformationCandidateId(selectedOption)
+        listOf(legacyCandidate(selectedOption)) to clocktowerInformationCandidateId(selectedOption)
     }
     return FirstNightInformationRequest(
         decisionId = decisionId,
@@ -168,7 +152,6 @@ internal fun clocktowerFirstNightInformationRequest(
         sourceSeat = sourceSeat,
         reliability = reliability,
         selectedCandidateId = migrated.second,
-        legacyCandidates = legacyCandidates,
-        migratedCandidates = migrated.first,
+        candidates = migrated.first,
     )
 }

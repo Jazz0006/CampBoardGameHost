@@ -41,9 +41,9 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
     )
 
     @Test
-    fun `typed mixed events retain global order and exclude future same-revision action`() {
+    fun `typed mixed events retain global order and exclude future accepted action`() {
         val session = newSession()
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Poison("poison", StorytellerPhase.FIRST_NIGHT, 1, 8, 2),
         )
         session.commitGlobalEpistemicObservation(
@@ -65,7 +65,7 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
         val priorState = session.state
         val priorRevision = revision(session)
         val before = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(priorState, priorRevision)
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Death("death", StorytellerPhase.DAWN, 1, 10, 3),
         )
         val after = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(session.state, revision(session))
@@ -76,7 +76,7 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
         assertEquals(StorytellerProviderHistoryCutoffSourceV1.LIVE_CAPTURED, before.cutoffSource)
         assertEquals(listOf(0L, 1L, 2L), after.entries.map { it.point.globalSequence })
         assertEquals(listOf("poison", "empath-one"), before.entries.map { it.entryId })
-        assertEquals(priorRevision, revision(session)) // Mechanical fact capture does not bump game/input revision.
+        assertTrue(priorRevision != revision(session)) // Confirmed actions now advance the Session revision.
         assertEquals(
             StorytellerProviderHistoryCoverageStateV1.UNKNOWN,
             before.coverage.getValue(StorytellerProviderHistoryDimensionV1.REGISTRATION_RULINGS).state,
@@ -142,10 +142,10 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
     }
 
     @Test
-    fun `unfrozen historical cutoff refuses later same-revision facts and corrections`() {
+    fun `unfrozen historical cutoff refuses later actions even across revisions`() {
         val session = newSession()
         val oldRevision = revision(session)
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Attack("after-unrecorded-decision", StorytellerPhase.NIGHT, 2, 5, 3),
         )
         val unavailable = StorytellerProviderHistoryPrefixMaterializerV1.withoutFrozenHistoricalCutoff(
@@ -159,7 +159,7 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
             it.state == StorytellerProviderHistoryCoverageStateV1.UNRECONSTRUCTABLE &&
                 it.reasonCode == "HISTORICAL_CUTOFF_UNAVAILABLE"
         })
-        assertEquals(oldRevision, revision(session)) // Same revisions cannot prove chronology.
+        assertTrue(oldRevision != revision(session)) // Unfrozen past cutoffs remain unavailable.
         assertEquals(1, StorytellerProviderHistoryPrefixMaterializerV1.captureLive(
             session.state, revision(session),
         ).entries.size)

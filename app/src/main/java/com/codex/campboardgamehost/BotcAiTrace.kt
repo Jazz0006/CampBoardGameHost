@@ -14,6 +14,8 @@ internal object BotcAiTrace {
     private val safeStages = setOf(
         "BUILDING_HOST_CONTEXT", "PREPARING", "CONNECTING", "AWAITING_MODEL",
         "HTTP_RESPONSE", "PARSING_RESPONSE", "VALIDATING_HOST_RESPONSE",
+        "BUILDING_JOINT_OPENING_CONTEXT", "VALIDATING_COMPLETE_HOST_OPENING",
+        "FROZEN_WHOLE_GAME_PREFIX", "VALIDATING_STRATEGIC_CONTINUATION",
     )
     private val safeReasons = setOf(
         "GAME_CHANGED", "MANUAL_TAKEOVER", "GAME_KIND_CHANGED", "PHASE_CHANGED",
@@ -24,7 +26,7 @@ internal object BotcAiTrace {
     private val safeCategories = setOf(
         "TLS certificate", "DNS", "timeout", "network connection",
         "JSON response shape", "incomplete model response", "missing structured output",
-        "strategy contract validation", "response or configuration validation",
+        "Host/model contract validation", "response or configuration validation",
     )
     private fun write(message: String) {
         if (BuildConfig.DEBUG) Log.i(TAG, message)
@@ -82,7 +84,9 @@ internal object BotcAiTrace {
         recommendationCount: Int = 0,
     ) {
         val safeEvent = event.takeIf {
-            it in setOf("START", "READY", "FAILED", "STALE", "ADOPTED")
+            it in setOf("START", "READY", "FAILED", "STALE", "ADOPTED",
+                "JOINT_PRECOMMIT_START", "JOINT_PRECOMMIT_READY",
+                "JOINT_PRECOMMIT_FAILED")
         } ?: "OTHER"
         write("oneshot $safeEvent seq=$serial elapsedMs=$elapsedMs " +
             "recommendations=${recommendationCount.coerceIn(0, 64)}")

@@ -83,7 +83,8 @@ internal object ClocktowerSemanticHistoryPersistence {
         globalSequence = longValue(json, "globalSequence"),
     )
 
-    private fun encodeActionFact(fact: ActionFact): JSONObject = JSONObject().apply {
+    /** Reuse the durable typed action schema for decision-time AI history projections. */
+    internal fun encodeActionFact(fact: ActionFact): JSONObject = JSONObject().apply {
         put("actionId", fact.actionId)
         put("sequence", fact.sequence)
         when (fact) {
@@ -149,6 +150,24 @@ internal object ClocktowerSemanticHistoryPersistence {
                 put("alignment", fact.alignment.name)
                 put("type", fact.type.name)
             }
+            is ActionFact.ButlerMasterChoice -> {
+                put("kind", "butler-master")
+                put("butlerSeat", fact.butlerSeat)
+                put("masterSeat", fact.masterSeat)
+            }
+            is ActionFact.RedHerringChoice -> {
+                put("kind", "red-herring-choice")
+                put("selectedSeat", fact.selectedSeat ?: JSONObject.NULL)
+            }
+            is ActionFact.MayorRedirectChoice -> {
+                put("kind", "mayor-redirect")
+                put("mayorSeat", fact.mayorSeat)
+                put("targetSeat", fact.targetSeat)
+            }
+            is ActionFact.DemonBluffChoice -> {
+                put("kind", "demon-bluff-choice")
+                put("roleIds", JSONArray(fact.roles.map(RoleId::value)))
+            }
             is ActionFact.PhaseAdvance -> {
                 put("kind", "phase-advance")
                 put("phase", fact.phase.name)
@@ -212,6 +231,24 @@ internal object ClocktowerSemanticHistoryPersistence {
                 role = RoleId(stringValue(json, "role")),
                 alignment = enumValue(json, "alignment"),
                 type = enumValue(json, "type"),
+            )
+            "butler-master" -> ActionFact.ButlerMasterChoice(
+                actionId, sequence, positiveSeat(json, "butlerSeat"),
+                positiveSeat(json, "masterSeat"),
+            ).also { require(it.butlerSeat != it.masterSeat) }
+            "red-herring-choice" -> ActionFact.RedHerringChoice(
+                actionId, sequence, nullablePositiveSeat(json, "selectedSeat"),
+            )
+            "mayor-redirect" -> ActionFact.MayorRedirectChoice(
+                actionId, sequence, positiveSeat(json, "mayorSeat"),
+                positiveSeat(json, "targetSeat"),
+            )
+            "demon-bluff-choice" -> ActionFact.DemonBluffChoice(
+                actionId, sequence, json.getJSONArray("roleIds").let { array ->
+                    (0 until array.length()).map { index -> RoleId(array.getString(index)) }
+                }.also { roles ->
+                    require(roles.distinct() == roles) { "Demon bluff roles must be unique." }
+                },
             )
             "phase-advance" -> ActionFact.PhaseAdvance(
                 actionId = actionId,

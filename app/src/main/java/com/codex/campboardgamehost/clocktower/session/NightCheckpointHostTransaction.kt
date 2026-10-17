@@ -104,7 +104,9 @@ internal object NightCheckpointHostTransaction {
             revisionIntent = if (
                 reducedCheckpoint.confirmedDemonSuccessorTarget != checkpoint.confirmedDemonSuccessorTarget
             ) {
-                NightCheckpointRevisionIntent.GAME_STATE
+                // The accepted seat is still pending. The real role change is committed
+                // separately at New Demon identity confirmation, not at candidate selection.
+                NightCheckpointRevisionIntent.PLAYER_INPUT
             } else {
                 NightCheckpointRevisionIntent.NONE
             },

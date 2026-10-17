@@ -1,19 +1,14 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
-import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
+import com.codex.campboardgamehost.clocktower.session.commitAcceptedTestAction
+
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
-import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
-import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInput
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputJsonCodec
-import com.codex.campboardgamehost.clocktower.recommendation.sde.SdeHistoricalReplayInputOrigin
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -156,7 +151,7 @@ class RecoveryRestorePlannerTest {
         val game = decoded.game as ClocktowerRecovery
 
         assertEquals("Alice", game.mechanics.confirmedAttackTarget)
-        assertEquals("Bob", game.mechanics.confirmedPoisonTarget)
+        assertFalse(json.has("clocktowerConfirmedPoisonTarget"))
         assertEquals("Carol", game.mechanics.confirmedMonkProtectedTarget)
         assertEquals("Demon 2", game.mechanics.confirmedDemonSuccessorTarget)
         assertEquals(listOf("Mayor", "Butler", "Soldier"), game.mechanics.demonBluffRoleNames)
@@ -175,57 +170,65 @@ class RecoveryRestorePlannerTest {
         val runtime = (result as RecoveryPlanPreparation.Ready).plan.clocktowerRuntime
         assertNotNull(runtime)
         assertEquals(TEST_RULESET_REF, runtime?.rulesetRef)
-        assertEquals(TEST_ROLE_IDS, runtime?.rulesetBasis?.roleIds)
-        assertEquals(null, runtime?.sdeReplayMaterialization)
+        val recovered = requireNotNull(runtime).session.state
+        assertEquals("game-1", recovered.gameId)
+        assertEquals(10L, recovered.gameStateRevision)
+        assertEquals(11L, recovered.playerInputRevision)
+        assertEquals(2, recovered.redHerringSeat)
+        assertEquals(listOf(RoleId("Mayor"), RoleId("Butler"), RoleId("Soldier")), recovered.demonBluffRoleIds)
+        assertEquals(RoleId("Imp"), recovered.gameState.playerAt(5)?.actualRole)
+        // A synthetic fixture without any accepted Poison fact cannot resurrect poison.
+        assertFalse(recovered.gameState.playerAt(2)?.poisoned == true)
     }
 
     @Test
-    fun clocktowerPlanRestoresExactDurableSdeReplayExport() {
-        val base = clocktowerSnapshot()
-        val game = base.game as ClocktowerRecovery
-        val replayRaw = sdeReplayRaw(game)
-        val snapshot = base.copy(
-            game = game.copy(sdeHistoricalReplayInputJson = replayRaw),
+    fun currentEmergencyRecoveryDerivesPoisonFromAcceptedActionsNotADuplicateSavedField() {
+        val snapshot = clocktowerSnapshot()
+        val game = snapshot.game as ClocktowerRecovery
+        val poison = com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact(
+            com.codex.campboardgamehost.clocktower.domain.ActionFact.Poison("night-2-poison", 0L, 2),
+            com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint(
+                com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT, 2, 1, 0L,
+            ),
         )
+        val withPoison = game.copy(history = game.history.copy(
+            actionTimeline = ActionFactTimeline(listOf(poison)),
+            nextTimelineGlobalSequence = 1L,
+        ))
+        val json = RecoverySnapshotJsonCodec.encode(snapshot.copy(game = withPoison))
+        assertFalse(json.has("clocktowerConfirmedPoisonTarget"))
+        val recovered = (prepare(json) as RecoveryPlanPreparation.Ready)
+            .plan.clocktowerRuntime!!.session.state.gameState
+        assertTrue(recovered.playerAt(2)?.poisoned == true)
 
-        val result = prepare(RecoverySnapshotJsonCodec.encode(snapshot))
-
-        assertTrue(result is RecoveryPlanPreparation.Ready)
-        val runtime = requireNotNull((result as RecoveryPlanPreparation.Ready).plan.clocktowerRuntime)
-        val restored = requireNotNull(runtime.sdeReplayMaterialization)
-        assertEquals(SdeHistoricalReplayInputOrigin.DURABLE_EXPORT, restored.origin)
-        assertEquals(SdeHistoricalReplayInputJsonCodec.decodeStrict(replayRaw).input, restored.input)
-        assertEquals(TEST_RULESET_REF, restored.input.rulesetRef)
-        assertEquals("if-d-test", restored.input.committedSetup.provenance.providerId)
+        val expiry = com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact(
+            com.codex.campboardgamehost.clocktower.domain.ActionFact.Poison("dusk-clear", 1L, null),
+            com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint(
+                com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY, 2, 2, 1L,
+            ),
+        )
+        val withExpiry = withPoison.copy(history = withPoison.history.copy(
+            actionTimeline = ActionFactTimeline(listOf(poison, expiry)),
+            nextTimelineGlobalSequence = 2L,
+        ))
+        val afterExpiry = (prepare(RecoverySnapshotJsonCodec.encode(snapshot.copy(game = withExpiry)))
+            as RecoveryPlanPreparation.Ready).plan.clocktowerRuntime!!.session.state.gameState
+        assertFalse(afterExpiry.playerAt(2)?.poisoned == true)
     }
 
     @Test
-    fun mismatchedDurableSdeReplayExportFailsBeforeApplication() {
-        val base = clocktowerSnapshot()
-        val game = base.game as ClocktowerRecovery
-        val mismatched = JSONObject(sdeReplayRaw(game))
-            .put("gameId", "different-game")
-            .toString()
-        val snapshot = base.copy(
-            game = game.copy(sdeHistoricalReplayInputJson = mismatched),
+    fun missingConfirmedDeathInRecoveryFailsBeforeMutatingAppState() {
+        val original = clocktowerSnapshot()
+        val game = original.game as ClocktowerRecovery
+        val malformed = game.copy(
+            cards = game.cards.mapIndexed { index, card ->
+                if (index == 0) card.copy(eliminatedRound = 2) else card
+            },
         )
-
+        // The historical v3 card says Alice is dead, but there is no canonical
+        // ActionFact.Death or ActionFact.Execution to drive the live Session view.
         assertRejected(
-            prepare(RecoverySnapshotJsonCodec.encode(snapshot)),
-            RecoveryRejectionReason.InvalidGameState,
-        )
-    }
-
-    @Test
-    fun malformedDurableSdeReplayExportFailsBeforeApplication() {
-        val base = clocktowerSnapshot()
-        val game = base.game as ClocktowerRecovery
-        val snapshot = base.copy(
-            game = game.copy(sdeHistoricalReplayInputJson = "{broken"),
-        )
-
-        assertRejected(
-            prepare(RecoverySnapshotJsonCodec.encode(snapshot)),
+            prepare(RecoverySnapshotJsonCodec.encode(original.copy(game = malformed))),
             RecoveryRejectionReason.InvalidGameState,
         )
     }
@@ -300,7 +303,7 @@ class RecoveryRestorePlannerTest {
             semanticHistoryMode =
                 com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Poison(
                 "first-poison", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT,
                 1, 0, 2,
@@ -323,7 +326,7 @@ class RecoveryRestorePlannerTest {
                 ),
             ),
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Execution(
                 "day-execution", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY,
                 1, 0, 3,
@@ -343,7 +346,7 @@ class RecoveryRestorePlannerTest {
                 proposition = com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AliveAt(3, false),
             ),
         )
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Protect(
                 "night-protect", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
                 2, 2, 4,
@@ -395,7 +398,7 @@ class RecoveryRestorePlannerTest {
                 com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryDimensionV1.REGISTRATION_RULINGS
             ).state,
         )
-        restored.commitGlobalActionFact(
+        restored.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Attack(
                 "night-attack-after-restore",
                 com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
@@ -411,7 +414,7 @@ class RecoveryRestorePlannerTest {
         val original = clocktowerSnapshot()
         val game = original.game as ClocktowerRecovery
         val initialState = game.cards.toClocktowerGameState(
-            game.identity.script, game.identity.gameSeed, game.mechanics.confirmedPoisonTarget,
+            game.identity.script, game.identity.gameSeed,
         )
         val session = com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession.createProduction(
             gameId = game.identity.gameId,
@@ -498,7 +501,7 @@ class RecoveryRestorePlannerTest {
             ))
         }
         commit("first", "event-first", "seat-2")
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Poison(
                 "poison-between", com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
                 2, 0, 2,
@@ -552,7 +555,12 @@ class RecoveryRestorePlannerTest {
             ),
         )
         val raw = RecoverySnapshotJsonCodec.encode(original.copy(game = savedGame))
-        assertTrue(prepare(raw) is RecoveryPlanPreparation.Ready)
+        val prepared = prepare(raw) as RecoveryPlanPreparation.Ready
+        val acceptedSession = requireNotNull(prepared.plan.clocktowerRuntime).session
+        assertEquals(journal.frozenAt("second"),
+            acceptedSession.causalDecisionJournal.frozenAt("second"))
+        assertEquals(listOf("event-second"),
+            acceptedSession.causalDecisionJournal.effectiveNow().map { it.eventId })
         val decoded = RecoverySnapshotJsonCodec.decodeStrict(raw, ::testRoleByName)
         val history = (decoded.game as ClocktowerRecovery).history
         val restored = com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1.restore(
@@ -670,7 +678,6 @@ class RecoveryRestorePlannerTest {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = "Alice",
-                    confirmedPoisonTarget = "Bob",
                     confirmedMonkProtectedTarget = "Carol",
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = pendingNewDemonName,
@@ -679,9 +686,6 @@ class RecoveryRestorePlannerTest {
                     redHerring = "Bob",
                     demonBluffRoleNames = listOf("Mayor", "Butler", "Soldier"),
                     butlerMaster = "Carol",
-                    virginUsed = true,
-                    slayerUsed = true,
-                    slayerClaimedNames = listOf("Alice"),
                     artistUsed = true,
                     artistClaimedNames = listOf("Bob"),
                     lastExecutedName = "Carol",
@@ -699,38 +703,6 @@ class RecoveryRestorePlannerTest {
                     events = emptyList(),
                     epistemicObservations = emptyList(),
                 ),
-            ),
-        )
-    }
-
-    private fun sdeReplayRaw(game: ClocktowerRecovery): String {
-        val setup = CommittedClocktowerSetup(
-            script = ScriptId("trouble_brewing"),
-            setupSeed = game.identity.gameSeed,
-            assignments = game.cards.mapIndexed { index, card ->
-                CommittedSetupSeat(
-                    seat = index + 1,
-                    actualRole = RoleId(requireNotNull(card.clocktowerRole).enName),
-                    shownRole = RoleId(requireNotNull(card.clocktowerShownRole).enName),
-                )
-            },
-            provenance = SetupProvenance(
-                sourceKind = SetupSourceKind.GENERATED,
-                providerId = "if-d-test",
-                candidateId = "candidate-1",
-            ),
-        )
-        return SdeHistoricalReplayInputJsonCodec.encode(
-            SdeHistoricalReplayInput(
-                gameId = game.identity.gameId,
-                gameStateRevision = game.history.gameStateRevision,
-                playerInputRevision = game.history.playerInputRevision,
-                rulesetRef = TEST_RULESET_REF,
-                committedSetup = setup,
-                playerNamesBySeat = game.cards.map(PlayerCard::name),
-                actionTimeline = game.history.actionTimeline,
-                observationLog = EpistemicObservationLog(game.history.epistemicObservations),
-                nextTimelineGlobalSequence = game.history.nextTimelineGlobalSequence,
             ),
         )
     }

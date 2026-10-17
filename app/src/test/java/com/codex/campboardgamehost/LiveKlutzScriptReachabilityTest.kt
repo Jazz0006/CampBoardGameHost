@@ -1,10 +1,12 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.session.commitAcceptedTestAction
+
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.rules.NoGreaterJoyKlutzChoiceRuleV1
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.NoGreaterJoyKlutzHistoryProducerV1
-import com.codex.campboardgamehost.clocktower.session.synchronizePlayerDeathWithinCurrentRevision
+import com.codex.campboardgamehost.clocktower.session.commitConfirmedPlayerDeath
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -110,13 +112,12 @@ class LiveKlutzScriptReachabilityTest {
             gameId = "real-ngj-klutz", gameSeed = 75L, initialState = alive,
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        val death = session.commitGlobalActionFact(ActionFactDraft.Death(
+        val death = session.commitConfirmedPlayerDeath(ActionFactDraft.Death(
             "death-at-night", StorytellerPhase.DAWN, 2, 1, 1,
-        ))
+        ), 0L)
         val deathProof = (death.fact as ActionFact.Death).klutzDeathTrigger
         assertEquals(RoleId("Klutz"), deathProof?.actualRole)
         assertEquals(false, deathProof?.wasPoisoned)
-        session.synchronizePlayerDeathWithinCurrentRevision(1)
         val archive = ClocktowerSemanticHistoryPersistence.encodeActionTimeline(session.state.actionTimeline)
         val restored = ClocktowerSemanticHistoryPersistence.decodeActionTimeline(
             org.json.JSONObject().put(ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY, archive),
@@ -133,16 +134,15 @@ class LiveKlutzScriptReachabilityTest {
             initialState = state(klutzAlive = true),
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        session.commitGlobalActionFact(ActionFactDraft.Death(
+        session.commitConfirmedPlayerDeath(ActionFactDraft.Death(
             "night-death", StorytellerPhase.DAWN, 2, 1, 1,
-        ))
-        session.synchronizePlayerDeathWithinCurrentRevision(1)
+        ), 0L)
         val learn = requireNotNull(NoGreaterJoyKlutzHistoryProducerV1.learned(
             session.state, 1, "learn-public", 2, 2,
         ))
         assertEquals("night-death", learn.deathActionId)
         assertTrue(learn.functioningWhenLearned)
-        session.commitGlobalActionFact(learn)
+        session.commitAcceptedTestAction(learn)
         assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.learned(
             session.state, 1, "duplicate-learn", 2, 3,
         ))
@@ -150,7 +150,7 @@ class LiveKlutzScriptReachabilityTest {
             session.state, 1, 2, "public-choice", 2, 3,
         ))
         assertEquals("learn-public", chosen.learnedActionId)
-        session.commitGlobalActionFact(chosen)
+        session.commitAcceptedTestAction(chosen)
         assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.choice(
             session.state, 1, 3, "duplicate-choice", 2, 4,
         ))
@@ -186,7 +186,7 @@ class LiveKlutzScriptReachabilityTest {
             gameId = "ngj-legacy-unknown", gameSeed = 75L, initialState = game,
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        session.commitGlobalActionFact(ActionFactDraft.Death(
+        session.commitAcceptedTestAction(ActionFactDraft.Death(
             "legacy-no-proof", StorytellerPhase.DAWN, 2, 1, 1,
         ))
         assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.learned(
@@ -203,11 +203,10 @@ class LiveKlutzScriptReachabilityTest {
             initialState = state(klutzAlive = true, evilAlive = false),
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        session.commitGlobalActionFact(ActionFactDraft.Death(
+        session.commitConfirmedPlayerDeath(ActionFactDraft.Death(
             "klutz-night", StorytellerPhase.DAWN, 2, 1, 1,
-        ))
-        session.synchronizePlayerDeathWithinCurrentRevision(1)
-        session.commitGlobalActionFact(requireNotNull(NoGreaterJoyKlutzHistoryProducerV1.learned(
+        ), 0L)
+        session.commitAcceptedTestAction(requireNotNull(NoGreaterJoyKlutzHistoryProducerV1.learned(
             session.state, 1, "learn", 2, 2,
         )))
         assertThrows(IllegalArgumentException::class.java) {

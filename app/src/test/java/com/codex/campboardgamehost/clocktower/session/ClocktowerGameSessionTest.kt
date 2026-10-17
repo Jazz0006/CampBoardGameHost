@@ -22,6 +22,8 @@ import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -208,7 +210,7 @@ class ClocktowerGameSessionTest {
         original.advanceGameStateRevision()
         original.advanceGameStateRevision()
         original.recordPlayerInput()
-        original.commitGlobalActionFact(
+        original.commitAcceptedTestAction(
             ActionFactDraft.Poison(
                 actionId = "night-one-poison-seat-two",
                 phase = StorytellerPhase.FIRST_NIGHT,
@@ -223,7 +225,7 @@ class ClocktowerGameSessionTest {
         val restored = ClocktowerGameSession.restoreProduction(persisted)
 
         assertEquals(persisted, restored.state)
-        assertEquals(2L, restored.state.gameStateRevision)
+        assertEquals(3L, restored.state.gameStateRevision)
         assertEquals(2L, restored.state.playerInputRevision)
         assertEquals(2L, restored.state.nextTimelineGlobalSequence)
         assertEquals(
@@ -231,6 +233,96 @@ class ClocktowerGameSessionTest {
             restored.state.actionTimeline.reducerFacts().map { it.actionId },
         )
         assertEquals(listOf("public-death"), restored.state.epistemicObservationLog.records.map { it.recordId })
+    }
+
+    @Test
+    fun `causal journal belongs to the live Session and restores as its single validated owner`() {
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "journal-session",
+            gameSeed = initialState.seed,
+            initialState = initialState,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        val owned = session.causalDecisionJournal
+        assertSame(owned, session.causalDecisionJournal)
+        val archive = owned.archive()
+        assertEquals("journal-session", archive.gameId)
+
+        val restored = ClocktowerGameSession.restoreProduction(session.state, archive)
+        assertNotSame(owned, restored.causalDecisionJournal)
+        assertEquals(archive, restored.causalDecisionJournal.archive())
+        assertThrows(IllegalArgumentException::class.java) {
+            ClocktowerGameSession.restoreProduction(
+                session.state, archive.copy(gameId = "other-game"),
+            )
+        }
+    }
+
+    @Test
+    fun `accepted setup choices are Session owned and survive exact Recovery`() {
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "single-writer-setup",
+            gameSeed = initialState.seed,
+            initialState = initialState,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        val bluffRoles = listOf(RoleId("Saint"), RoleId("Librarian"), RoleId("Monk"))
+        session.commitRedHerringSeat(4, StorytellerPhase.FIRST_NIGHT, 1, 1)
+        session.commitDemonBluffs(bluffRoles, StorytellerPhase.FIRST_NIGHT, 1, 2)
+
+        assertEquals(4, session.state.redHerringSeat)
+        assertEquals(bluffRoles, session.state.demonBluffRoleIds)
+        assertEquals(2L, session.state.playerInputRevision)
+        assertEquals(0L, session.state.gameStateRevision)
+        assertEquals(4, session.view.redHerringSeat)
+        assertEquals(bluffRoles, session.view.demonBluffRoleIds)
+        assertSame(session.state, session.commitRedHerringSeat(
+            4, StorytellerPhase.FIRST_NIGHT, 1, 1,
+        ))
+        assertSame(session.state, session.commitDemonBluffs(
+            bluffRoles, StorytellerPhase.FIRST_NIGHT, 1, 2,
+        ))
+        assertEquals(2L, session.state.nextTimelineGlobalSequence)
+        assertEquals(
+            listOf("red-herring-choice", "demon-bluff-choice"),
+            session.state.actionTimeline.reducerFacts().map {
+                when (it) {
+                    is com.codex.campboardgamehost.clocktower.domain.ActionFact.RedHerringChoice ->
+                        "red-herring-choice"
+                    is com.codex.campboardgamehost.clocktower.domain.ActionFact.DemonBluffChoice ->
+                        "demon-bluff-choice"
+                    else -> "other"
+                }
+            },
+        )
+        val replay = com.codex.campboardgamehost.clocktower.domain.DynamicActionReducer.reduce(
+            initialSnapshot = session.toGameSnapshot(rulesetRef),
+            initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1,
+            facts = session.state.actionTimeline.reducerFacts(),
+        )
+        assertEquals(4, replay.redHerringSeat)
+        assertEquals(bluffRoles, replay.demonBluffRoleIds)
+
+        val recovered = ClocktowerGameSession.restoreProduction(session.state)
+        assertEquals(session.state, recovered.state)
+        assertEquals(bluffRoles, recovered.view.demonBluffRoleIds)
+        assertEquals(4, recovered.view.redHerringSeat)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            session.commitRedHerringSeat(8, StorytellerPhase.FIRST_NIGHT, 1, 3) // Imp is Evil.
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            session.commitDemonBluffs(
+                listOf(RoleId("Saint"), RoleId("Saint")), StorytellerPhase.FIRST_NIGHT, 1, 3,
+            )
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            session.commitDemonBluffs(
+                listOf(RoleId("Chef")), StorytellerPhase.FIRST_NIGHT, 1, 3,
+            ) // Already in play.
+        }
+        assertEquals(2L, session.state.playerInputRevision)
     }
 
     @Test
@@ -275,7 +367,7 @@ class ClocktowerGameSessionTest {
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
         session.advanceGameStateRevision()
-        session.commitGlobalActionFact(
+        session.commitAcceptedTestAction(
             ActionFactDraft.Poison(
                 actionId = "view-poison",
                 phase = StorytellerPhase.FIRST_NIGHT,
@@ -291,7 +383,7 @@ class ClocktowerGameSessionTest {
         assertEquals("observable-view", view.gameId)
         assertEquals(initialState.script, view.scriptId)
         assertEquals(initialState.seed, view.gameSeed)
-        assertEquals(1L, view.gameStateRevision)
+        assertEquals(2L, view.gameStateRevision)
         assertEquals(1L, view.playerInputRevision)
         assertEquals(ClocktowerSemanticHistoryMode.GLOBAL_V1, view.semanticHistoryMode)
         assertEquals(listOf("view-poison"), view.actionTimeline.reducerFacts().map { it.actionId })

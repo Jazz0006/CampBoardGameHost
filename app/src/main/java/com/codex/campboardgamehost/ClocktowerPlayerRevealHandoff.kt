@@ -43,25 +43,27 @@ internal fun clocktowerInformationPublicationAllowed(
 }
 
 /**
- * Orders the existing synchronous publication effects without taking ownership of their state.
- * Authorization is evaluated before publication; repeated publication may still reopen the reveal.
- * Exceptions propagate and stop subsequent effects. This is not a rollback-capable transaction.
+ * Authoritative observation (and its confirmed registration rulings) must commit BEFORE
+ * the transient first-night displayed marker. If the durable write fails, the marker
+ * remains unconsumed so a retry can safely use Session's idempotent observation identity.
+ * Narrative history is display-only; no second game fact is inferred from it.
  */
 internal fun performClocktowerPlayerRevealHandoff(
     authorize: () -> Boolean,
-    publishFirstNight: () -> Boolean,
+    publicationNeeded: () -> Boolean,
     recordPrivateInformation: () -> Unit,
+    markFirstNightPublished: () -> Unit,
     recordHistory: () -> Unit,
     openReveal: () -> Unit,
 ): ClocktowerPlayerRevealHandoff {
-    val allowed = authorize()
+    if (!authorize()) return ClocktowerPlayerRevealHandoff(false, false)
     val handoff = resolveClocktowerPlayerRevealHandoff(
-        publicationAllowed = allowed,
-        firstNightPublicationCreated = allowed && publishFirstNight(),
+        publicationAllowed = true,
+        firstNightPublicationCreated = publicationNeeded(),
     )
-    if (!handoff.openReveal) return handoff
     if (handoff.recordPublication) {
         recordPrivateInformation()
+        markFirstNightPublished()
         recordHistory()
     }
     openReveal()

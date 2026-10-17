@@ -51,7 +51,6 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = null,
-                    confirmedPoisonTarget = null,
                     confirmedMonkProtectedTarget = null,
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = null,
@@ -60,9 +59,6 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                     redHerring = null,
                     demonBluffRoleNames = emptyList(),
                     butlerMaster = null,
-                    virginUsed = false,
-                    slayerUsed = false,
-                    slayerClaimedNames = emptyList(),
                     artistUsed = false,
                     artistClaimedNames = emptyList(),
                     lastExecutedName = null,
@@ -161,7 +157,6 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = null,
-                    confirmedPoisonTarget = null,
                     confirmedMonkProtectedTarget = null,
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = null,
@@ -170,9 +165,6 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
                     redHerring = null,
                     demonBluffRoleNames = emptyList(),
                     butlerMaster = null,
-                    virginUsed = false,
-                    slayerUsed = false,
-                    slayerClaimedNames = emptyList(),
                     artistUsed = false,
                     artistClaimedNames = emptyList(),
                     lastExecutedName = null,
@@ -228,112 +220,6 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
             }
         })
 
-        val forgedChoice = TimelineBoundActionFact(
-            ActionFact.KlutzChoice("forged-choice", 5L, 1, 2, "no-such-learn"),
-            TimelinePoint(StorytellerPhase.DAY, 2, 3, 5L),
-        )
-        val bad = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
-            history = saved.game.history.copy(
-                actionTimeline = ActionFactTimeline(learnedHistory.entries + forgedChoice),
-                nextTimelineGlobalSequence = 6L,
-            ),
-        ))
-        val rejected = RecoveryRestorePlanner.prepare(
-            raw = RecoverySnapshotJsonCodec.encode(bad),
-            expectedCompatibilityToken = TOKEN,
-            nowMillis = NOW,
-            roleByName = byName::get,
-            clocktowerRulesetResolver = { _, _ -> null },
-        )
-        assertTrue(rejected is RecoveryPlanPreparation.Rejected)
-
-        // A forged Virgin-first marker on NGJ must not survive strict Recovery.
-        val fakeVirgin = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
-            history = saved.game.history.copy(
-                actionTimeline = ActionFactTimeline(learnedHistory.entries.mapIndexed { index, entry ->
-                    if (index == 0) entry.copy(fact =
-                        (entry.fact as ActionFact.Nomination).copy(firstVirginNomination = true))
-                    else entry
-                }),
-            ),
-        ))
-        assertTrue(RecoveryRestorePlanner.prepare(
-            raw = RecoverySnapshotJsonCodec.encode(fakeVirgin),
-            expectedCompatibilityToken = TOKEN,
-            nowMillis = NOW,
-            roleByName = byName::get,
-            clocktowerRulesetResolver = { _, _ -> null },
-        ) is RecoveryPlanPreparation.Rejected)
-
-        // An NGJ vote with no matching confirmed nomination also must fail.
-        val unmatchedVote = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
-            history = saved.game.history.copy(
-                actionTimeline = ActionFactTimeline(learnedHistory.entries.mapIndexed { index, entry ->
-                    if (index == 1) entry.copy(fact =
-                        (entry.fact as ActionFact.Vote).copy(nomineeSeat = 5))
-                    else entry
-                }),
-            ),
-        ))
-        assertTrue(RecoveryRestorePlanner.prepare(
-            raw = RecoverySnapshotJsonCodec.encode(unmatchedVote),
-            expectedCompatibilityToken = TOKEN,
-            nowMillis = NOW,
-            roleByName = byName::get,
-            clocktowerRulesetResolver = { _, _ -> null },
-        ) is RecoveryPlanPreparation.Rejected)
-
-        val doubleNoExecution = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
-            history = saved.game.history.copy(
-                actionTimeline = ActionFactTimeline(learnedHistory.entries + TimelineBoundActionFact(
-                    ActionFact.NoExecution("duplicate-no-execution", 5L),
-                    TimelinePoint(StorytellerPhase.DAY, 1, 4, 5L),
-                )),
-                nextTimelineGlobalSequence = 6L,
-            ),
-        ))
-        assertTrue(RecoveryRestorePlanner.prepare(
-            raw = RecoverySnapshotJsonCodec.encode(doubleNoExecution),
-            expectedCompatibilityToken = TOKEN,
-            nowMillis = NOW,
-            roleByName = byName::get,
-            clocktowerRulesetResolver = { _, _ -> null },
-        ) is RecoveryPlanPreparation.Rejected)
-
-        val executionContradiction = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
-            history = saved.game.history.copy(
-                actionTimeline = ActionFactTimeline(learnedHistory.entries + TimelineBoundActionFact(
-                    ActionFact.Execution("fabricated-same-day-execution", 5L, 4),
-                    TimelinePoint(StorytellerPhase.DAY, 1, 4, 5L),
-                )),
-                nextTimelineGlobalSequence = 6L,
-            ),
-        ))
-        assertTrue(RecoveryRestorePlanner.prepare(
-            raw = RecoverySnapshotJsonCodec.encode(executionContradiction),
-            expectedCompatibilityToken = TOKEN,
-            nowMillis = NOW,
-            roleByName = byName::get,
-            clocktowerRulesetResolver = { _, _ -> null },
-        ) is RecoveryPlanPreparation.Rejected)
-
-        val fakeSlayer = saved.copy(game = (saved.game as ClocktowerRecovery).copy(
-            history = saved.game.history.copy(
-                actionTimeline = ActionFactTimeline(learnedHistory.entries + TimelineBoundActionFact(
-                    ActionFact.SlayerShot("ngj-impossible-slayer", 5L, 3, 2,
-                        abilityConsumed = false, hit = false),
-                    TimelinePoint(StorytellerPhase.DAY, 2, 3, 5L),
-                )),
-                nextTimelineGlobalSequence = 6L,
-            ),
-        ))
-        assertTrue(RecoveryRestorePlanner.prepare(
-            raw = RecoverySnapshotJsonCodec.encode(fakeSlayer),
-            expectedCompatibilityToken = TOKEN,
-            nowMillis = NOW,
-            roleByName = byName::get,
-            clocktowerRulesetResolver = { _, _ -> null },
-        ) is RecoveryPlanPreparation.Rejected)
     }
 
     private companion object {

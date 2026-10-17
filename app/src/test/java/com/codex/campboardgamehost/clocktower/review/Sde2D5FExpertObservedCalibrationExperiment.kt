@@ -1,7 +1,5 @@
 package com.codex.campboardgamehost.clocktower.review
 
-import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
-import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,9 +24,6 @@ class Sde2D5FExpertObservedCalibrationExperiment {
     }
     private val evin by lazy {
         Sde2D5FEvinFirstPlaythroughConsequenceCalibrationBuilder.build()
-    }
-    private val policyFeatures by lazy {
-        Sde2D5FExpertObservedPolicyFeatureReportBuilder.build()
     }
 
     @Test
@@ -208,113 +203,6 @@ class Sde2D5FExpertObservedCalibrationExperiment {
         assertFalse(report.contains("BAD_TOO_WEAK"))
 
         val reportFile = File("build/reports/sde-2d5f-expert-observed-evin.md")
-        requireNotNull(reportFile.parentFile).mkdirs()
-        reportFile.writeText(report, Charsets.UTF_8)
-    }
-
-    @Test
-    fun `expert cases expose descriptive non-topology policy features without scoring`() {
-        val features = policyFeatures
-
-        val aStudChef = features.aStudChef.associateBy { it.candidateId }
-        assertTrue(aStudChef.getValue("value-1").registration.requiresSpecialRegistration)
-        assertEquals(
-            setOf(RegistrationReason.RECLUSE_ABILITY),
-            aStudChef.getValue("value-1").registration.specialReasons,
-        )
-        assertEquals(setOf(5), aStudChef.getValue("value-1").registration.specialSubjectSeats)
-        assertTrue(aStudChef.getValue("value-0").registration.hasNoSpecialRegistrationWitness)
-
-        val aStudDrunkEmpath = features.aStudDrunkEmpath.associateBy { it.candidateId }
-        assertEquals(setOf("value-0", "value-1", "value-2"), aStudDrunkEmpath.keys)
-        assertTrue(aStudDrunkEmpath.values.all { it.registration.witnessCount > 0 })
-
-        val aStudFt = features.aStudFortuneTeller.associateBy { it.candidateId }
-        assertTrue(aStudFt.getValue("answer-yes").registration.requiresSpecialRegistration)
-        assertTrue(aStudFt.getValue("answer-no").registration.hasNoSpecialRegistrationWitness)
-
-        val liveLibrarian = features.liveLibrarian.single {
-            it.candidateId == "pair-information-ability-v1|Librarian|Recluse|5,8"
-        }
-        assertEquals(SemanticTruth.TRUE, liveLibrarian.semanticTruth)
-        assertFalse(liveLibrarian.shownRoleIsDemonBluff)
-        assertEquals(setOf(8), liveLibrarian.shownRoleActualInPlaySeats)
-        assertEquals(setOf(8), liveLibrarian.shownRoleCandidateMatchSeats)
-        assertEquals(setOf(8), liveLibrarian.specialRegistrationRoleMatchSeats)
-        assertEquals(setOf(8), liveLibrarian.candidateSpecialRegistrationSubjectSeats)
-        assertTrue(liveLibrarian.candidateEvilSeats.isEmpty())
-
-        val liveChef = features.liveChef.associateBy { it.candidateId }
-        assertTrue(liveChef.getValue("value-1").registration.hasNoSpecialRegistrationWitness)
-        assertTrue(liveChef.getValue("value-2").registration.requiresSpecialRegistration)
-        assertEquals(setOf(8), liveChef.getValue("value-2").registration.specialSubjectSeats)
-
-        val liveFt = features.liveFortuneTeller.associateBy { it.candidateId }
-        assertTrue(liveFt.getValue("answer-no").registration.hasNoSpecialRegistrationWitness)
-        assertTrue(liveFt.getValue("answer-yes").registration.requiresSpecialRegistration)
-        assertEquals(setOf(8), liveFt.getValue("answer-yes").registration.specialSubjectSeats)
-
-        val humanObserved = features.humanWasherwoman.single {
-            it.candidateId == "pair-information-ability-v1|Washerwoman|Empath|2,5"
-        }
-        assertEquals(SemanticTruth.FALSE, humanObserved.semanticTruth)
-        assertTrue(humanObserved.registration.hasNoSpecialRegistrationWitness)
-        assertTrue(humanObserved.shownRoleIsDemonBluff)
-        assertTrue(humanObserved.shownRoleActualInPlaySeats.isEmpty())
-        assertTrue(humanObserved.shownRoleCandidateMatchSeats.isEmpty())
-        assertTrue(humanObserved.specialRegistrationRoleMatchSeats.isEmpty())
-        assertEquals(setOf(2, 5), humanObserved.candidateEvilSeats)
-        assertEquals(setOf(5), humanObserved.candidateDemonSeats)
-        assertEquals(setOf(2), humanObserved.candidateMinionSeats)
-
-        val humanSignatures =
-            features.humanWasherwoman.map { it.descriptiveSignature() }.toSet()
-        assertTrue(humanSignatures.size > 1)
-
-        val evinObserved = features.evinWasherwoman.single {
-            it.candidateId == "pair-information-ability-v1|Washerwoman|Undertaker|5,7"
-        }
-        assertEquals(SemanticTruth.TRUE, evinObserved.semanticTruth)
-        assertTrue(evinObserved.registration.hasNoSpecialRegistrationWitness)
-        assertFalse(evinObserved.shownRoleIsDemonBluff)
-        assertEquals(setOf(7), evinObserved.shownRoleActualInPlaySeats)
-        assertEquals(setOf(7), evinObserved.shownRoleCandidateMatchSeats)
-        assertEquals(setOf(5), evinObserved.candidateEvilSeats)
-        assertEquals(setOf(5), evinObserved.candidateDemonSeats)
-        assertTrue(evinObserved.candidateMinionSeats.isEmpty())
-
-        val livePairSummary =
-            Sde2D5FExpertObservedPolicyFeatureProjector.summarizePair(features.liveLibrarian)
-        val humanPairSummary =
-            Sde2D5FExpertObservedPolicyFeatureProjector.summarizePair(features.humanWasherwoman)
-        val evinPairSummary =
-            Sde2D5FExpertObservedPolicyFeatureProjector.summarizePair(features.evinWasherwoman)
-        assertEquals(features.liveLibrarian.size, livePairSummary.candidateCount)
-        assertEquals(features.humanWasherwoman.size, humanPairSummary.candidateCount)
-        assertEquals(features.evinWasherwoman.size, evinPairSummary.candidateCount)
-        assertEquals(
-            humanPairSummary.candidateCount,
-            humanPairSummary.semanticTrueCount + humanPairSummary.semanticFalseCount,
-        )
-        assertTrue(humanPairSummary.semanticFalseCount > 0)
-        assertTrue(humanPairSummary.shownRoleDemonBluffCount > 0)
-        assertTrue(humanPairSummary.containsActualDemonSeatCount > 0)
-        assertTrue(humanPairSummary.containsActualMinionSeatCount > 0)
-        assertTrue(humanPairSummary.allCandidateSeatsActualEvilCount > 0)
-        assertTrue(evinPairSummary.containsActualDemonSeatCount > 0)
-
-        val report = Sde2D5FExpertObservedPolicyFeatureReportBuilder.render(features)
-        assertTrue(report.contains("descriptive candidate facts only"))
-        assertTrue(report.contains("Distinct descriptive feature signatures:"))
-        assertTrue(report.contains("Legal-domain feature prevalence"))
-        assertTrue(report.contains("all candidate seats are actual Evil"))
-        assertTrue(report.contains("Drunk shown Empath"))
-        assertTrue(report.contains("shown role is Demon bluff"))
-        assertTrue(report.contains("Evin 2019 First Full Playthrough"))
-        assertFalse(report.contains("BAD_TOO_STRONG"))
-        assertFalse(report.contains("BAD_TOO_WEAK"))
-
-        val reportFile = File("build/reports/sde-2d5f-expert-observed-policy-features.md")
         requireNotNull(reportFile.parentFile).mkdirs()
         reportFile.writeText(report, Charsets.UTF_8)
     }
