@@ -295,7 +295,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
             verdict(info = null))
         assertEquals(ClocktowerLiveQueryRevealDisposition.CONFLICT,
             verdict(records = listOf(record, record.copy(proposition =
-                InformationProposition.RoleAt(4, RoleId("Spy")))))
+                InformationProposition.RoleAt(4, RoleId("Spy"))))))
         assertEquals(ClocktowerLiveQueryRevealDisposition.NEW,
             verdict(records = listOf(record.copy(round = 1))))
         assertEquals(ClocktowerLiveQueryRevealDisposition.NEW,
