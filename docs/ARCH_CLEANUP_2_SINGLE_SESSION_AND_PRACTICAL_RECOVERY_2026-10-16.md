@@ -329,6 +329,12 @@
 
 ### A5 — 恢复瘦身和冗余代码删除
 
+**2026-10-17 永久收缩指令（优先于此前任何恢复功能扩充计划）：** Recovery 唯一任务是防止 App 意外退出导致当前这场游戏无法继续；不是供用户主动长期保存/加载游戏。仅需当场重进正确魔典、保留已公布信息、从安全步骤继续；退出前未确认的输入可重做。现役 4 小时仅为防陈旧快照的上界，不是提供长期保存的承诺。严禁为旧开发版、下一日续局、精确界面重放、任意历史重建或历史合法性证明增加恢复实现/测试。每个持久字段必须有意外退出时不可从 Session/确认历史推导的真实消费理由；没有即删掉字段与编码、解码、验证及纯形状测试。
+
+**当前清理实施（同批代码须以独立 CI 为准，不将文档编辑等同验收）：** 删除 `ClocktowerRecoveryMechanics` 重复保存的 `virginUsed`、`slayerUsed`、`slayerClaimedNames`（正式 Session 历史实时派生），及 `confirmedPoisonTarget`（恢复时直接从 Session 最后已确认 Poison/清毒事实推导），同步删掉编码/解码与测试样例字段。删除只为旧 v3 快照机械毒效提供的 fallback；升级为 current-only Recovery v4、相应令牌及四小时门禁保留（旧 v3 按既有规则拒绝，无迁移）。删除 `RecoveryRestorePlanner` 中重复回演历史法律与因果顺序的校验及针对伪造历史的相应孤儿测试，只保留实际应急恢复必要的身份/座位/公开信息与 Session 有序性检查。移除瞬态 `ValidatedClocktowerRecoveryRuntime.rulesetBasis` 无生产消费者的副本，恢复验证仍直接将**同一已验证 Session**交给 UI，且不改变 Undercover。另外删除每次存档前重复扫描剧本和已确认角色的 `ClocktowerActiveSessionValidator`、其写盘消费者及孤儿测试；恢复时仍保留必要的当前剧本角色检查。A3/A5 尚未整体完成；`ClocktowerRecoveryMechanics` 其余阶段、夜晚确认和旧格式投影债务须按真实当前局续局消费者继续精简，不为此添加新功能。
+
+- **本轮源码精确验证：** 初版 `6f03fa437e6f35ffdc1a879afadaabcb481633e5` 的 CI #4279 因遗漏两处 `slayerClaimedNames` 旧校验引用出现 Kotlin 编译失败；修复版 `99fec3ee505c901da2bc98ca7cc19068fdf1bac3` 的 [CI #4280](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39004794159) Android 全量单测/Debug APK、ASP、Real Clingo 与 Gate 均 SUCCESS；此前 [R2 #3864](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39004632160) 成功属于首次源码 SHA。额外删除重复写盘校验器的源码 `64fd598332dff7152c20284386223ceb9112dbde` 已推送，[R2 #3865](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39005115596) SUCCESS，但 CI #4281 Android 1471 tests 中一条旧的 `BuiltInClocktowerRulesetCatalogTest` 源码形状断言要求必须调用被退役写盘校验器，因而 FAIL。该断言不验证任何玩家续局行为、属于孤儿测试；仅将该测试从文件中删除，保留共享剧本目录真实功能测试，修复源码 `d3d58ea6fecf18a06c3896b64424d6c308fc505d` 已推送，同一 SHA 的 [CI #4282](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39005403923) Android 全量单测、Debug APK、ASP、Real Clingo 及 CI Gate 全部 SUCCESS。最后实质源码 `64fd5983` 的 R2 #3865 SUCCESS；最终 `d3d58ea6` 仅移除孤儿测试，未单独触发 R2。
+
 - **2026-10-16 已识别并实施的删除：** 旧 `clocktowerSdeHistoricalReplayInput` 曾在每次 Recovery 写盘时把既有 Session 动作、观察、初始角色与游标重新打包；恢复后只用于重建下一次再导出该包的 `committedClocktowerSetup` 缓存，没有当前规则、AI 或真实游戏复盘读取用途。已删除整条生成/写入/解码/比对/缓存链及两份专用实现文件和对应冗余测试，不再存第二份历史.
 
 - 基于当前 Session 的状态、结构化历史、最小安全进度，简化 Recovery 数据布局和恢复验证。中断时放弃未确认输入，落到当前/前一个安全主持步骤。
