@@ -10,11 +10,11 @@ C1 #318 `fb663d6a` 已完成幽灵票、phase/round 单源投影及 journal 请�
 
 C2 分支 `codex/converge-night-vote-state`（#319，`9769f8a4`）基于 #318。C2 将已确认攻击/保护/市长转移/待生效继任人和当日最高票/平票归 Session；删除 App/Host 写副本及旧 checkpoint reducer/transaction、UI vote transaction。具体证据和测试退休映射见 [C2 实施](NIGHT_VOTE_OWNERSHIP_IMPLEMENTATION_2026-10-17.md)。远端检查和合并状态以当前 PR 实时状态为准。
 
-第四阶段 D1/D2：#320 `b3c0f248`，完整 CI/R2 已通过，未合并。D3a #321 `1a3e34c7` 的完整 CI/R2 已通过，未合并。D3b #322 `1b5effe3` 完整 CI/R2 已通过，未合并。D4a #323 `16f32d8e` 已推送，检查以实时 PR 为准。D4b #324 `fda503ef` 已推送，检查以实时 PR 为准。D4c #325 已补 R2 守卫修复 `7e00d5aa`；当前 D4d 分支 `codex/extract-slayer-interaction` 基于该检查点。
+第四阶段 D1/D2：#320 `b3c0f248`，完整 CI/R2 已通过，未合并。D3a #321 `1a3e34c7` 的完整 CI/R2 已通过，未合并。D3b #322 `1b5effe3` 完整 CI/R2 已通过，未合并。D4a #323 `16f32d8e` 已推送，检查以实时 PR 为准。D4b #324 `fda503ef` 已推送，检查以实时 PR 为准。D4c #325 已补 R2 守卫修复 `7e00d5aa`；D4d #326 `351b32c1` 已推送，R2 已通过，CI 以实时状态为准。D4e 分支 `codex/route-day-before-night` 基于 D4d。
 
-## 当前第四阶段 D4d / 继续 D4
+## 当前第四阶段 D4e / 继续 D4
 
-D1 审计见 [第四阶段审计](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)。D2 已删除手动酒鬼未消费请求字段/工厂及 App 旧模式分支，见 [实施记录](APP_LEGACY_PATH_REMOVAL_D2_2026-10-17.md)。D3a 已统一三条中毒结算入口并删除重复恢复查询与中间计划，见 [实施记录](POISON_SETTLEMENT_D3A_2026-10-17.md)。D3b 已删除死亡、身份和阶段中间计划，直接使用现有原子 Session 边界，见 [D3b 记录](DAWN_SETTLEMENT_D3B_2026-10-17.md)。D4a 已独立 Artist 交互与草稿，见 [实施记录](ARTIST_INTERACTION_D4A_2026-10-17.md)。D4b 已独立共用只读登记投影，见 [实施记录](REGISTRATION_PROJECTION_D4B_2026-10-17.md)。D4c 已独立提名交互及共享投票草稿，见 [实施记录](NOMINATION_INTERACTION_D4C_2026-10-17.md)。D4d 已独立 Slayer 交互，见 [记录](SLAYER_INTERACTION_D4D_2026-10-17.md)。继续处理白天/黎明早分流及夜间状态生存期；后续拆夜间和 AI 生命周期。App 3,768 行 / 212,701 bytes，Host 2,708 行 / 162,937 bytes；大文件治理尚未完成。
+D1 审计见 [第四阶段审计](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)。D2 已删除手动酒鬼未消费请求字段/工厂及 App 旧模式分支，见 [实施记录](APP_LEGACY_PATH_REMOVAL_D2_2026-10-17.md)。D3a 已统一三条中毒结算入口并删除重复恢复查询与中间计划，见 [实施记录](POISON_SETTLEMENT_D3A_2026-10-17.md)。D3b 已删除死亡、身份和阶段中间计划，直接使用现有原子 Session 边界，见 [D3b 记录](DAWN_SETTLEMENT_D3B_2026-10-17.md)。D4a 已独立 Artist 交互与草稿，见 [实施记录](ARTIST_INTERACTION_D4A_2026-10-17.md)。D4b 已独立共用只读登记投影，见 [实施记录](REGISTRATION_PROJECTION_D4B_2026-10-17.md)。D4c 已独立提名交互及共享投票草稿，见 [实施记录](NOMINATION_INTERACTION_D4C_2026-10-17.md)。D4d 已独立 Slayer 交互，见 [记录](SLAYER_INTERACTION_D4D_2026-10-17.md)。D4e 已在保留原记忆与效果生命周期的前提下完成白天/黎明早分流，见 [记录](DAY_EARLY_ROUTING_D4E_2026-10-17.md)。下一步审计夜间 materializer 与推荐生命周期，优先删除无消费者准备路径，再确定窄输入拆分边界。App 3,768 行 / 212,701 bytes，Host 2,713 行 / 164,567 bytes；大文件治理尚未完成。
 
 仍保留的夜间 checkpoint 仅是规则 planner 的临时输入，未存入 Session 或磁盘。夜间空目标确认、依赖失效和投票时门槛尚未全部进入事件记录，不能用最后一条动作冒充完整有效状态。后续补事件覆盖和最小继续游戏时明确处理这些缺口，不复活旧存档框架。
 
