@@ -163,7 +163,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
-import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
@@ -3513,36 +3512,23 @@ internal fun CampBoardGameHostApp() {
                             var dawnPhaseStateMutationRequired = false
                             val canEnterDawn =
                                 if (pendingName != null) {
-                                    val baseGameState = cards.toClocktowerGameState(
-                                        currentClocktowerScript,
-                                        clocktowerGameSeed,
-                                        poisonedPlayerName = clocktowerConfirmedPoisonTarget,
-                                    )
+                                    val baseGameState = requireClocktowerGameSession().state.gameState
                                     val checkpoint = currentClocktowerNightCheckpoint()
-                                    val effectiveNightState = ClocktowerEffectiveNightState(
-                                        effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
-                                            (index + 1).takeIf { card.eliminatedRound == null }
-                                        }.toSet(),
-                                        effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-                                            card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-                                        }.toMap(),
-                                    )
-                                    val poisoner = cards.mapIndexedNotNull { index, card ->
-                                        card.clocktowerRole
-                                            ?.takeIf { role -> card.eliminatedRound == null && role.enName == "Poisoner" }
-                                            ?.let { role -> index + 1 to role }
-                                    }.firstOrNull()
-                                    val demonRole = requireNotNull(cards.firstOrNull {
-                                        it.clocktowerTeam == ClocktowerTeam.Demon
-                                    }?.clocktowerRole)
+                                    val effectiveNightState = baseGameState.toBaseEffectiveNightState()
+                                    val poisoner = baseGameState.players.firstOrNull {
+                                        it.alive && it.actualRole == RoleId("Poisoner")
+                                    }
+                                    val demonRole = requireNotNull(baseGameState.players.firstOrNull {
+                                        it.actualType == CharacterType.DEMON
+                                    }?.actualRole)
                                     val transition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
                                         baseGameState = baseGameState,
                                         checkpoint = checkpoint,
-                                        demonRoleId = RoleId(demonRole.enName),
-                                        poisonResolutionInput = poisoner?.let { (poisonerSeat, poisonerRole) ->
+                                        demonRoleId = demonRole,
+                                        poisonResolutionInput = poisoner?.let { source ->
                                             NightDawnPoisonResolutionInput(
-                                                poisonerSeat = poisonerSeat,
-                                                poisonerRoleId = RoleId(poisonerRole.enName),
+                                                poisonerSeat = source.seat,
+                                                poisonerRoleId = source.actualRole,
                                                 effectiveNightState = effectiveNightState,
                                             )
                                         },
@@ -3559,12 +3545,8 @@ internal fun CampBoardGameHostApp() {
                                             round = round,
                                             intent = dawnCommitIntent,
                                             state = DawnDurableMaterializationState(
-                                                aliveSeats = cards.mapIndexedNotNull { index, card ->
-                                                    (index + 1).takeIf { card.eliminatedRound == null }
-                                                }.toSet(),
-                                                roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-                                                    card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-                                                }.toMap(),
+                                                aliveSeats = effectiveNightState.effectiveAliveSeats,
+                                                roleIdsBySeat = effectiveNightState.effectiveRoleIdsBySeat,
                                                 currentPhase = storytellerPhaseFor(),
                                                 currentPoisonTargetSeat =
                                                     clocktowerConfirmedPoisonTarget?.let(::clocktowerSeatFor),
@@ -4307,24 +4289,11 @@ internal fun CampBoardGameHostApp() {
                                 monkProtectedTargetName = clocktowerConfirmedMonkProtectedTarget,
                             )
                             val mayorCanRedirect = dawnDeathFacts.mayorSeat != null
-                            val baseGameState = cards.toClocktowerGameState(
-                                currentClocktowerScript,
-                                clocktowerGameSeed,
-                                poisonedPlayerName = clocktowerConfirmedPoisonTarget,
-                            )
-                            val effectiveNightState = ClocktowerEffectiveNightState(
-                                effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
-                                    (index + 1).takeIf { card.eliminatedRound == null }
-                                }.toSet(),
-                                effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-                                    card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-                                }.toMap(),
-                            )
-                            val demonRoleIds = cards.mapNotNull { card ->
-                                card.clocktowerRole
-                                    ?.takeIf { card.clocktowerTeam == ClocktowerTeam.Demon }
-                                    ?.let { role -> RoleId(role.enName) }
-                            }.toSet()
+                            val baseGameState = requireClocktowerGameSession().state.gameState
+                            val effectiveNightState = baseGameState.toBaseEffectiveNightState()
+                            val demonRoleIds = baseGameState.players
+                                .filter { it.actualType == CharacterType.DEMON }
+                                .mapTo(mutableSetOf()) { it.actualRole }
                             val deathTransition = NightDawnResolutionPlanner.planValidatedNightDeath(
                                 baseGameState = baseGameState,
                                 checkpoint = currentClocktowerNightCheckpoint(),
@@ -4361,12 +4330,8 @@ internal fun CampBoardGameHostApp() {
                                 round = round,
                                 intent = DawnCommitIntent(death = deathTransition.dawnCommitIntent?.death),
                                 state = DawnDurableMaterializationState(
-                                    aliveSeats = cards.mapIndexedNotNull { index, card ->
-                                        (index + 1).takeIf { card.eliminatedRound == null }
-                                    }.toSet(),
-                                    roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-                                        card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-                                    }.toMap(),
+                                    aliveSeats = effectiveNightState.effectiveAliveSeats,
+                                    roleIdsBySeat = effectiveNightState.effectiveRoleIdsBySeat,
                                     currentPhase = storytellerPhaseFor(),
                                     committedActionIds = clocktowerActionTimeline.entries
                                         .map { it.fact.actionId }
@@ -4582,20 +4547,11 @@ internal fun CampBoardGameHostApp() {
                                     "",
                                 )
                             }
-                            val dawnPoisoner = cards.mapIndexedNotNull { index, card ->
-                                card.clocktowerRole
-                                    ?.takeIf { role -> role.enName == "Poisoner" }
-                                    ?.let { role -> index + 1 to role }
-                            }.firstOrNull()
-
-                            val postDeathEffectiveNightState = ClocktowerEffectiveNightState(
-                                effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
-                                    (index + 1).takeIf { card.eliminatedRound == null }
-                                }.toSet(),
-                                effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-                                    card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-                                }.toMap(),
-                            )
+                            val postDeathGameState = requireClocktowerGameSession().state.gameState
+                            val dawnPoisoner = postDeathGameState.players.firstOrNull {
+                                it.actualRole == RoleId("Poisoner")
+                            }
+                            val postDeathEffectiveNightState = postDeathGameState.toBaseEffectiveNightState()
 
                             val durablePreviousPoisonTargetSeat =
                                 NightDawnPoisonRecoveryAuthority.latestTargetSeatForRound(
@@ -4603,13 +4559,13 @@ internal fun CampBoardGameHostApp() {
                                     round = round,
                                 )
 
-                            val ordinaryDawnPoisonIntent = dawnPoisoner?.let { (poisonerSeat, poisonerRole) ->
+                            val ordinaryDawnPoisonIntent = dawnPoisoner?.let { source ->
                                 NightDawnResolutionPlanner.planPoisonCarry(
                                     baseGameState = baseGameState,
                                     checkpoint = currentClocktowerNightCheckpoint(),
                                     input = NightDawnPoisonResolutionInput(
-                                        poisonerSeat = poisonerSeat,
-                                        poisonerRoleId = RoleId(poisonerRole.enName),
+                                        poisonerSeat = source.seat,
+                                        poisonerRoleId = source.actualRole,
                                         effectiveNightState = postDeathEffectiveNightState,
                                     ),
                                     durablePreviousPoisonTargetSeat = durablePreviousPoisonTargetSeat,
@@ -4623,12 +4579,8 @@ internal fun CampBoardGameHostApp() {
                                         round = round,
                                         intent = DawnCommitIntent(poisonCarry = poisonIntent),
                                         state = DawnDurableMaterializationState(
-                                            aliveSeats = cards.mapIndexedNotNull { index, card ->
-                                                (index + 1).takeIf { card.eliminatedRound == null }
-                                            }.toSet(),
-                                            roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-                                                card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-                                            }.toMap(),
+                                            aliveSeats = postDeathEffectiveNightState.effectiveAliveSeats,
+                                            roleIdsBySeat = postDeathEffectiveNightState.effectiveRoleIdsBySeat,
                                             currentPhase = storytellerPhaseFor(),
                                             currentPoisonTargetSeat =
                                                 clocktowerConfirmedPoisonTarget?.let(::clocktowerSeatFor),
@@ -4693,17 +4645,14 @@ internal fun CampBoardGameHostApp() {
                             } else if (nightKlutzName == null && newDemonName != null) {
                                 clocktowerPendingNewDemonName = newDemonName
                             } else if (nightKlutzName == null && !unresolvedDemonSuccessor) {
+                                val phaseBaseState = requireClocktowerGameSession().state.gameState.toBaseEffectiveNightState()
                                 val dawnPhasePlan = NightDawnDurableMaterializationPlanner.plan(
                                     gameId = clocktowerGameId,
                                     round = round,
                                     intent = DawnCommitIntent(),
                                     state = DawnDurableMaterializationState(
-                                        aliveSeats = cards.mapIndexedNotNull { index, card ->
-                                            (index + 1).takeIf { card.eliminatedRound == null }
-                                        }.toSet(),
-                                        roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-                                            card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-                                        }.toMap(),
+                                        aliveSeats = phaseBaseState.effectiveAliveSeats,
+                                        roleIdsBySeat = phaseBaseState.effectiveRoleIdsBySeat,
                                         currentPhase = storytellerPhaseFor(),
                                         committedActionIds = clocktowerActionTimeline.entries
                                             .map { it.fact.actionId }

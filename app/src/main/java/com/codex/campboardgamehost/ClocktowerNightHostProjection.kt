@@ -2,7 +2,7 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerHostInteraction
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
@@ -28,10 +28,11 @@ import com.codex.campboardgamehost.clocktower.session.NightTransactionRestoreCom
 
 /**
  * Immutable, non-Compose projection of the mechanical state consumed by the Clocktower host UI.
- * Durable authority remains the supplied cards and night checkpoint; this type only composes them.
+ * Durable mechanics come from Session GameState; cards contain presentation details only.
  */
 internal class ClocktowerNightHostProjection internal constructor(
     private val cards: List<PlayerCard>,
+    private val gameState: GameState,
     private val phase: ClocktowerPhase,
     private val poisonTarget: String?,
     val canonicalNightDeathResolution: TroubleBrewingDawnDeathResolution,
@@ -78,7 +79,7 @@ internal class ClocktowerNightHostProjection internal constructor(
             val state = effectiveNightStateAt(interactionId, ClocktowerInteractionBoundary.BEFORE)
             cards.filterIndexed { index, _ -> state.isMechanicallyAlive(index + 1) }
         } else {
-            cards.filter { it.eliminatedRound == null }
+            cards.filterIndexed { index, _ -> gameState.playerAt(index + 1)?.alive == true }
         }
     }
 
@@ -94,9 +95,7 @@ internal class ClocktowerNightHostProjection internal constructor(
         interactionId: ClocktowerInteractionId,
         boundary: ClocktowerInteractionBoundary,
     ): ClocktowerEffectiveNightState = ClocktowerEffectiveNightStateProjector.projectAt(
-        baseAliveSeats = cards.mapIndexedNotNull { index, card ->
-            (index + 1).takeIf { card.eliminatedRound == null }
-        }.toSet(),
+        baseAliveSeats = gameState.players.filter { it.alive }.mapTo(mutableSetOf()) { it.seat },
         canonicalInteractionIds = otherNightCanonicalInteractionIds,
         confirmedEvents = resolvedMechanicalEvents,
         cursor = ClocktowerEffectiveNightCursor(interactionId, boundary),
@@ -167,7 +166,10 @@ internal class ClocktowerNightHostProjection internal constructor(
         }
 
     fun effectiveRoleForRegistration(enName: String, card: PlayerCard): RoleId? {
-        if (phase != ClocktowerPhase.Night) return card.clocktowerRole?.enName?.let(::RoleId)
+        if (phase != ClocktowerPhase.Night) {
+            val seat = cards.indexOf(card).plus(1)
+            return gameState.playerAt(seat)?.actualRole
+        }
         val interactionId = ClocktowerProductionNightStepIdentity
             .role(RoleId(enName))
             .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
@@ -210,9 +212,8 @@ internal class ClocktowerNightHostProjection internal constructor(
 internal object ClocktowerNightHostProjectionFactory {
     fun project(
         cards: List<PlayerCard>,
-        script: ClocktowerScript,
+        gameState: GameState,
         ruleset: ValidatedClocktowerRuleset,
-        gameSeed: Long,
         phase: ClocktowerPhase,
         poisonTarget: String?,
         checkpoint: ClocktowerNightCheckpoint,
@@ -221,8 +222,7 @@ internal object ClocktowerNightHostProjectionFactory {
     ): ClocktowerNightHostProjection {
         val canonicalNightDeathResolution = resolveTroubleBrewingDawnDeathResolution(
             cards = cards,
-            script = script,
-            gameSeed = gameSeed,
+            gameState = gameState,
             checkpoint = checkpoint,
         )
         val mayorCanRedirect = canonicalNightDeathResolution.mayorRedirectEligible
@@ -246,7 +246,6 @@ internal object ClocktowerNightHostProjectionFactory {
             cards = cards,
             poisonedPlayerName = checkpoint.confirmedPoisonTarget,
         )
-        val nightBaseGameState = cards.toClocktowerGameState(script, gameSeed, poisonTarget)
         val demonSuccessorRoleId = resolveNightReconstructionDemonRoleId(
             cards = cards,
             currentDemonHostContext = currentDemonHostContext,
@@ -254,7 +253,7 @@ internal object ClocktowerNightHostProjectionFactory {
         )
         val demonSuccessionResolution = if (phase == ClocktowerPhase.Night) {
             resolveNightDemonSuccessionForHost(
-                baseGameState = nightBaseGameState,
+                baseGameState = gameState,
                 checkpoint = checkpoint,
                 currentDemonHostContext = currentDemonHostContext,
                 demonRoleId = demonSuccessorRoleId,
@@ -302,14 +301,12 @@ internal object ClocktowerNightHostProjectionFactory {
             emptyList()
         }
         val otherNightCanonicalInteractionIds = otherNightInteractions.map { it.id }
-        val baseRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-            card.clocktowerRole?.enName?.let { roleName -> index + 1 to RoleId(roleName) }
-        }.toMap()
+        val baseRoleIdsBySeat = gameState.players.associate { it.seat to it.actualRole }
         val demonSuccessorInteractionId = ClocktowerProductionNightStepIdentity.demonSuccessor()
             .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
         val canonicalNightReconstruction = if (phase == ClocktowerPhase.Night) {
             NightTransactionRestoreComposition.compose(
-                baseGameState = nightBaseGameState,
+                baseGameState = gameState,
                 checkpoint = checkpoint,
                 canonicalInteractionIds = otherNightCanonicalInteractionIds,
                 demonSuccessorInteractionId = demonSuccessorInteractionId,
@@ -354,6 +351,7 @@ internal object ClocktowerNightHostProjectionFactory {
 
         return ClocktowerNightHostProjection(
             cards = cards,
+            gameState = gameState,
             phase = phase,
             poisonTarget = poisonTarget,
             canonicalNightDeathResolution = canonicalNightDeathResolution,

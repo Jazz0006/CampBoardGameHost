@@ -371,9 +371,8 @@ internal fun ClocktowerJudgeScreen(
     }
     val nightHostProjection = ClocktowerNightHostProjectionFactory.project(
         cards = cards,
-        script = script,
+        gameState = sessionGameState,
         ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
-        gameSeed = gameSeed,
         phase = phase,
         poisonTarget = poisonTarget,
         checkpoint = nightCheckpoint,
