@@ -4,7 +4,6 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
-import com.codex.campboardgamehost.clocktower.rules.PlanLegalityValidator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -18,7 +17,6 @@ class SetupCandidateGeneratorTest {
         val plans = SetupCandidateGenerator.generatePlans(game, roles).toList()
 
         assertTrue(plans.isNotEmpty())
-        assertTrue(plans.all { PlanLegalityValidator.validate(game, roles, it).isEmpty() })
         assertTrue(plans.all { plan ->
             plan.decisions.none {
                 it is StorytellerDecision.DrunkInvestigatorInfo
