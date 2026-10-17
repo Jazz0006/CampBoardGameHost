@@ -1,5 +1,39 @@
 # CampBoardGameHost AI Development Instructions
 
+## Current product authority: minimal Host (2026-10-17, supersedes prior rules-engine requirements)
+
+The owner has explicitly changed the product boundary: build a minimal Host for current game
+state, one authoritative game record, and basic operations. Remove Host game-rule legality
+validation, clue computation, legal-candidate enumeration, registration-witness inference,
+and manual rule/clue assistance. AI provides recommendations; the Storyteller is responsible
+for game-rule correctness. A confirmed result such as “Empath received 1” is recorded and
+shown as that result, without reconstructing why it is legal.
+
+Read `docs/CURRENT_DEVELOPMENT_ROADMAP.md`, `docs/MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md`,
+and `docs/NEXT_DEVELOPMENT_HANDOFF.md` before continuing. The old behavior-preserving D5
+extraction plan is suspended. Start the next campaign with a deletion-boundary audit, not
+further extraction of rule machinery that is now intended for removal.
+
+Retain data integrity: one game-truth owner, ordered confirmed facts, real player/seat/game
+identity, atomic state/record updates, duplicate prevention, rejection of stale AI responses,
+and private-information protection. These are NOT game-rule legality checks. AI suggestions
+remain proposals until explicitly confirmed or processed through a separately specified
+authorized execution flow; this correction does not authorize arbitrary AI writes.
+
+Delete first; event coverage, crash continuation and recap may remain explicit gaps. Do not
+restore an independent save system, exact UI reconstruction, duplicate textual history,
+compatibility scaffolding, or a new generic AI execution framework. Basic manual entry and
+state editing remain necessary even though rule assistance is removed. Preserve Undercover
+outside the Clocktower refactor unless explicitly scoped otherwise.
+
+This section overrides conflicting older instructions anywhere in this repository to preserve
+Host legality, rules semantics, legal domains, inferred witnesses or rule-specific regression
+coverage. Such production code and tests may be retired together after consumer/dependency
+audit. Security, privacy, data-integrity tests and applicable CI/R2 remain required; update
+obsolete architecture guards rather than retaining deleted product behavior to satisfy them.
+Older recovery/architecture documents below are historical where they conflict with this section.
+Local Codex work reads and writes the local project directly; Mini MCP is not required.
+
 ## Evidence-first validation policy (2026-10-15; current authority)
 
 - **Default to evidence-first delivery, not mandatory TDD.** Before changing code, define the user-observable acceptance criterion, risk, owning boundary, and cheapest independent proof. Do **not** require a new test file, artificial RED, or RED/GREEN trace for each new feature, bug fix, source edit, or intermediate wiring step.
@@ -9,6 +43,22 @@
 - Do not weaken Host legality/fact authority, safety, security, user-data integrity, privacy, or necessary automated regression coverage to avoid testing. Retire obsolete/duplicated tests only after checking remaining contract coverage. Existing CI/R2, independent diff review, exact-head and merge gates remain in force.
 - This section supersedes any older mandatory 'new behavior -> RED -> GREEN' wording in this file or ancillary documentation; `docs/TESTING_STRATEGY.md` supplies evidence tiers and execution cadence, not an obligation to manufacture RED.
 
+## Purpose-before-implementation / anti-overengineering (2026-10-16; permanent rule)
+
+- **Clarify the real purpose before implementing.** For every feature or data model first state who consumes it, what concrete user outcome it enables, and the *smallest sufficient* acceptance example. If a field/event/API/test does not directly support that outcome or a demonstrably required rule/recovery invariant, do not add it. Do not infer a need for exhaustive technical logging, exact event sourcing, speculative extensibility or perfect reconstruction from a request for a simple AI-readable game record.
+- **Audit and delete instead of accumulating.** First examine existing data and consumers. Prefer deriving one concise record from confirmed Session truth rather than creating separate durable audit/event sources. Delete obsolete writers/types and redundant entries together with their legacy consumers when safe. For required mechanical internals, identify their rule/recovery owner and keep them **out of the player/AI log**; retire them after a verified Session-state replacement, not via blind removal.
+- **Learned failure mode:** A1 history expansion implemented extra technical facts before confirming the actual goal: *one minimal confirmed game log for incremental AI advice and final player recap*. Never repeat purpose-blind feature expansion.
+
+## Single-authority / replace-and-retire / practical recovery policy (2026-10-16; current authority)
+
+- **One reliable current Session object + one logically ordered typed game history.** For Clocktower, the Session is the sole authority for all accepted roles, status, phase/progress and rulings; typed action and actual player-observation logs share global chronology. UI/PlayerCard, AI plans and strategic memories, snapshots, archive and Recovery are views, drafts or consumers, never independently mutable facts.
+- **One minimal game log, not a technical history.** Record only confirmed player actions, Host decisions/outcomes, actual player-received information, and Storyteller-entered public identity claims, with necessary night/day context. Never annotate an accepted event by AI recommendation versus human override: `seat 3 Empath received 1` is the same event in every mode. Drunk selection is a confirmed first-night event, NOT merely part of the proposed initial setup; only Host-accepted Drunk truth may be logged or sent to AI. A player's publicly claimed identity is a *claim*, never actual-role truth. No unaccepted proposals, drafts, UI transitions, repeat publications, poison-expiry/carry calculations, internal phase substeps, timestamps or redundant audit trails in the AI/game-review record. Internal cursors/state may remain solely for safety and rules, not as extra user-facing history.
+- **Replace AND retire.** Before creating or migrating to a unified API, inventory every old API, field, writer, reader, projection, recovery field and test that it replaces. Migrate real production consumers, verify behavior, then **delete superseded implementations promptly**. No indefinite old/new dual tracks, shadow compatibility, duplicate state or synchronization layers. Temporary migration bridges must have explicit removal criteria; do not delete still-required Host rules or legal verification based on misleading names.
+- **Commit at the real confirmed step, not at recommendation arrival.** Usually the UI Next action, but explicit confirmation or actual player-information publication is also a commit boundary. Host validates and Session atomically commits accepted state + ordered typed fact; drafts and unaccepted AI plans are not game truth. Reject stale or duplicate commits. Initial joint AI planning is retained, while one-click whole-opening/whole-residual adoption and associated production state machines are retired through a controlled migration. Assisted preselects one step; automatic commits each safe legal current step without adoption UI; manual uses the same pipeline.
+- **Practical crash recovery, not perfect historical replay.** A reopened game must show the correct grimoire, preserve what players were actually told, and resume from a safe game step. It need not restore exact UI inputs, animations, provider hidden reasoning, or arbitrary historical GameState. Uncommitted work may be re-entered; never silently revise already confirmed roles, deaths or revealed information. Keep recovery minimal and derived from the same Session; no old-format compatibility obligations while the app is in development.
+- **Emergency Recovery is strictly an immediate interruption safeguard (permanent owner decision, 2026-10-17).** It exists only so players can continue the **same active game after an accidental app exit/process loss**, not for long-term or deliberate Save/Load. The existing current-format/token and <=4-hour stale-data guard are upper-bound hygiene, not a promised four-hour save feature. Reopen with the correct grimoire, already-shared information and a safe step; abandon incomplete drafts or let the Host re-confirm them. Never develop next-day/archival unfinished-game restore, past-release/legacy format fallback, precise UI re-entry, arbitrary historical replay, comprehensive chronology proof, or duplicate persisted mechanics solely for Recovery. Before adding any Recovery field or validator, identify a currently reachable crash-resume consumer and explain why Session/current confirmed facts cannot supply it. Delete unused fields, codec keys, validators, and tests together instead of building compatibility layers. Do not compromise current-game identity, published-information integrity or safe resumption to achieve smaller code.
+- **Undo is optional:** edit uncommitted drafts freely; do not build a general undo/event-sourcing engine. A bounded last-step correction is a later nonblocking convenience only if it cannot contradict actual player knowledge or existing AI history.
+- **Scope and precedence:** [current ARCH-CLEANUP-2 contract](docs/ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md) supersedes older arbitrary-time replay / exact UI restore / bundle-adoption acceptance requirements; historical audit evidence remains valid. Treat this section as a long-lived engineering rule for future features, not just this cleanup.
 
 > Role: **NORMATIVE / PROJECT-LEVEL AI WORKING AGREEMENT**  
 > Effective: 2026-09-23  
@@ -172,6 +222,8 @@ Detailed capture/retrieval rules are authoritative in:
 The repository uses **evidence-first, risk-based validation**, not mandatory RED/GREEN or “a new RED test for every production edit.”
 
 The objective is to protect stable behavior, regressions, invariants, and architectural boundaries with the cheapest reliable evidence. A production change does **not** automatically require a newly created failing test.
+
+**Small default/configuration/enum adjustments:** first inspect the full producer/consumer fan-out, directly edit the authoritative defaults, and update only existing tests whose assertions intentionally depended on the old default. Do **not** add one test per field/phase/adapter or run ceremonial RED for a simple default change. Add a fresh test only when an uncovered, durable cross-component contract or demonstrated regression risk warrants its ongoing maintenance. Independent CI/compile and existing regression suites are still required at the normal checkpoint. Measure test value, not test count.
 
 Before choosing tests, first classify both the **change type** and the **ownership boundary**. Test strategy follows architecture; it must not be chosen independently of it.
 

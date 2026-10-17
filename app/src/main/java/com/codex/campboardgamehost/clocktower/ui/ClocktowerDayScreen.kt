@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,7 +33,6 @@ import androidx.compose.ui.unit.sp
 internal fun ClocktowerDawnSummaryScreen(
     round: Int,
     cards: List<PlayerCard>,
-    events: List<ClocktowerEvent>,
     pendingNightDeath: String?,
     onHostTools: () -> Unit,
     onEnterDay: () -> Unit,
@@ -42,18 +40,6 @@ internal fun ClocktowerDawnSummaryScreen(
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val deathLabel = pendingNightDeath?.let { playerSeatLabel(cards, it) }
-    val privateEvents = events
-        .filter { event ->
-            event.round == round &&
-                event.phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
-                event.type in setOf(
-                    ClocktowerEventType.RoleAction,
-                    ClocktowerEventType.Death,
-                    ClocktowerEventType.RoleChange,
-                )
-        }
-        .takeLast(8)
-
     ClocktowerDarkTheme {
         Column(
             modifier = Modifier
@@ -93,61 +79,6 @@ internal fun ClocktowerDawnSummaryScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                item {
-                    Card(
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.28f)),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(18.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text("说书人私密复核", "HOST-ONLY REVIEW"),
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Black,
-                                )
-                                Text(
-                                    text("不要展示给玩家", "PRIVATE"),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
-                            }
-                            if (privateEvents.isEmpty()) {
-                                Text(
-                                    text("没有需要额外复核的夜间事件。", "No additional night events need review."),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            } else {
-                                privateEvents.forEachIndexed { index, event ->
-                                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                        Text(event.title, fontWeight = FontWeight.Bold)
-                                        if (event.detail.isNotBlank()) {
-                                            Text(
-                                                event.detail,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                style = MaterialTheme.typography.bodySmall,
-                                            )
-                                        }
-                                    }
-                                    if (index < privateEvents.lastIndex) {
-                                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
                 item {
                     Card(
                         shape = RoundedCornerShape(20.dp),

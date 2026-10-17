@@ -115,7 +115,6 @@ class ClocktowerChambermaidStepMaterializerTest {
             if (unreliable) AbilityFunctioningState.DRUNK else AbilityFunctioningState.FUNCTIONING
         },
         actorIsUnreliable = { _, _ -> unreliable },
-        recentMisinformationStreak = { 0 },
     )
 
     private fun option(label: String) = ClocktowerDisplayOption(

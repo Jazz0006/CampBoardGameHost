@@ -1,102 +1,45 @@
 package com.codex.campboardgamehost
 
-import org.json.JSONObject
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
+import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
+import org.junit.Assert.*
 import org.junit.Test
 
 class ClocktowerGhostVoteAuthorityTest {
     @Test
-    fun `dead player is eligible until confirmed ghost vote spends their stable seat`() {
-        val seats = testSeats(
-            aliveSeatIds = setOf(1, 3),
-            count = 4,
+    fun `only accepted ghost voters become spent across subsequent votes and nights`() {
+        val initial = TroubleBrewingFixtures.eightPlayerExample()
+        val session = ClocktowerGameSession.createProduction(
+            "ghost-votes", initial.seed,
+            initial.copy(players = initial.players.map { if (it.seat in setOf(2, 4)) it.copy(alive = false) else it }),
+            ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        val deadSeat = ClocktowerSeatId(2)
-        val otherDeadSeat = ClocktowerSeatId(4)
-        val authority = ClocktowerGhostVoteAuthority()
-
-        val pending = clocktowerTableVoteState(
-            seats = seats,
-            nomineeSeatId = ClocktowerSeatId(3),
-            ghostVoteAuthority = authority,
-        ).togglePendingVoter(deadSeat)
-
-        assertTrue(deadSeat in pending.selectedVoterSeatIds)
-        assertTrue(authority.spentSeatIds.isEmpty())
-
-        val confirmed = authority.confirmVote(
-            selectedVoterSeatIds = pending.selectedVoterSeatIds,
-            seats = seats,
-        )
-
-        assertEquals(setOf(deadSeat), confirmed.spentSeatIds)
-        assertFalse(confirmed.canVote(deadSeat, seats))
-        assertTrue(confirmed.canVote(otherDeadSeat, seats))
-        assertTrue(confirmed.canVote(ClocktowerSeatId(1), seats))
-
-        val nextVote = clocktowerTableVoteState(
-            seats = seats,
-            nomineeSeatId = ClocktowerSeatId(3),
-            ghostVoteAuthority = confirmed,
-        )
-        assertFalse(deadSeat in nextVote.selectableSeatIds)
-        assertTrue(otherDeadSeat in nextVote.selectableSeatIds)
-    }
-
-    @Test
-    fun `alive votes never consume ghost vote authority and confirm is idempotent`() {
-        val seats = testSeats(
-            aliveSeatIds = setOf(1, 3),
-            count = 4,
-        )
-        val authority = ClocktowerGhostVoteAuthority()
-
-        val afterAliveVote = authority.confirmVote(
-            selectedVoterSeatIds = setOf(ClocktowerSeatId(1), ClocktowerSeatId(3)),
-            seats = seats,
-        )
-        assertTrue(afterAliveVote.spentSeatIds.isEmpty())
-
-        val afterDeadVote = afterAliveVote.confirmVote(
-            selectedVoterSeatIds = setOf(ClocktowerSeatId(2)),
-            seats = seats,
-        )
-        val afterDuplicateConfirm = afterDeadVote.confirmVote(
-            selectedVoterSeatIds = setOf(ClocktowerSeatId(2)),
-            seats = seats,
-        )
-        assertEquals(setOf(ClocktowerSeatId(2)), afterDuplicateConfirm.spentSeatIds)
-    }
-
-    @Test
-    fun `persistence round trip preserves spent seats and missing legacy payload defaults empty`() {
-        val authority = ClocktowerGhostVoteAuthority(
-            spentSeatIds = setOf(ClocktowerSeatId(2), ClocktowerSeatId(5)),
-        )
-        val json = JSONObject().apply {
-            put(
-                ClocktowerGhostVoteAuthorityPersistence.ROOT_KEY,
-                ClocktowerGhostVoteAuthorityPersistence.encode(authority),
-            )
+        val seats = session.state.gameState.players.map {
+            HostSeatPresentation(ClocktowerSeatId(it.seat), it.name, isAlive = it.alive)
         }
-
-        assertEquals(authority, ClocktowerGhostVoteAuthorityPersistence.decode(json))
-        assertEquals(
-            ClocktowerGhostVoteAuthority(),
-            ClocktowerGhostVoteAuthorityPersistence.decode(JSONObject()),
-        )
-    }
-
-    private fun testSeats(
-        aliveSeatIds: Set<Int>,
-        count: Int,
-    ): List<HostSeatPresentation> = (1..count).map { number ->
-        HostSeatPresentation(
-            seatId = ClocktowerSeatId(number),
-            playerName = "Player $number",
-            isAlive = number in aliveSeatIds,
-        )
+        fun authority() = ClocktowerGhostVoteAuthority.from(session.state.actionTimeline)
+        val pending = clocktowerTableVoteState(seats, ClocktowerSeatId(3),
+            ghostVoteAuthority = authority()).togglePendingVoter(ClocktowerSeatId(2))
+        assertTrue(pending.selectedVoterSeatIds.contains(ClocktowerSeatId(2)))
+        assertTrue(authority().spentSeatIds.isEmpty())
+        val vote = ActionFactDraft.Vote("vote-1", StorytellerPhase.DAY, 1, 1,
+            1, 3, listOf(1, 2), listOf(2))
+        assertThrows(IllegalStateException::class.java) {
+            session.commitConfirmedGameAction(vote, session.state.gameState, 99L)
+        }
+        assertTrue(authority().spentSeatIds.isEmpty())
+        session.commitConfirmedGameAction(vote, session.state.gameState, session.state.gameStateRevision)
+        session.commitConfirmedGameAction(vote, session.state.gameState, session.state.gameStateRevision)
+        assertEquals(setOf(ClocktowerSeatId(2)), authority().spentSeatIds)
+        assertFalse(authority().canVote(ClocktowerSeatId(2), seats))
+        assertTrue(authority().canVote(ClocktowerSeatId(4), seats))
+        assertTrue(authority().canVote(ClocktowerSeatId(1), seats))
+        session.commitConfirmedGameAction(
+            ActionFactDraft.Vote("vote-2", StorytellerPhase.DAY, 2, 1, 1, 3,
+                listOf(1, 4), listOf(4)), session.state.gameState, session.state.gameStateRevision)
+        assertEquals(setOf(ClocktowerSeatId(2), ClocktowerSeatId(4)), authority().spentSeatIds)
     }
 }

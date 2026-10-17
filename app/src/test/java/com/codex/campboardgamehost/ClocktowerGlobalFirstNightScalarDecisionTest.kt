@@ -1,5 +1,11 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
@@ -47,7 +53,7 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
     private fun build(
         step: ClocktowerNightStepUi, selected: List<String> = emptyList(),
         phase: ClocktowerPhase = ClocktowerPhase.FirstNight,
-    ) = pendingGlobalFirstNightScalarDecision(
+    ) = pendingGlobalNightScalarDecision(
         step, phase, 1, 4, cards, "game-810", revision, selected,
     )
 
@@ -55,6 +61,36 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
         decision.legalCandidates.map {
             (it.payload as StorytellerProviderCandidatePayloadV1.ScalarResult).value
         }.toSet()
+
+    @Test
+    fun `confirmed scalar question uses canonical session seat identity and rejects UI drift`() {
+        val canonical = GameState(
+            ScriptId("trouble_brewing"),
+            (1..8).map { seat -> PlayerState(
+                seat = seat, name = "P" + seat,
+                actualRole = RoleId("Chef"), shownRole = RoleId("Chef"),
+                actualAlignment = Alignment.GOOD, actualType = CharacterType.TOWNSFOLK,
+            ) },
+            seed = 101L,
+        )
+        val chef = step(1, "Chef", InformationProposition.NumericResult(
+            NumericMetric.ADJACENT_EVIL_PAIRS, 1, (1..8).toList(), 1,
+        ))
+        val decision = pendingGlobalNightScalarDecision(
+            chef, ClocktowerPhase.FirstNight, 1, 4,
+            cards, "game-810", revision, canonicalGameState = canonical,
+        )
+        assertEquals(1, requireNotNull(decision).sourceSeat)
+        val altered = canonical.copy(players = canonical.players.map { state ->
+            if (state.seat == 2) state.copy(name = "No longer P2") else state
+        })
+        assertTrue(runCatching {
+            pendingGlobalNightScalarDecision(
+                chef, ClocktowerPhase.FirstNight, 1, 4,
+                cards, "game-810", revision, canonicalGameState = altered,
+            )
+        }.isFailure)
+    }
 
     @Test
     fun `reliable numeric without registration offers only Foundation legal truth`() {
@@ -97,6 +133,25 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
     }
 
     @Test
+    fun `poisoned Chambermaid keeps exact Host legal numbers for selected targets`() {
+        val metric = NumericMetric.PLAYERS_WAKING_FOR_ABILITY
+        val subjects = listOf(1, 8)
+        val options = (0..2).map { value ->
+            candidate(value, metric, 4, subjects, "host-$value")
+        }
+        val chambermaid = step(4, "Chambermaid", InformationProposition.NumericResult(
+            metric, 4, subjects, 1,
+        ), reliability = InformationReliability.POISONED).copy(
+            action = ClocktowerNightAction.Chambermaid,
+            automaticInformationCandidates = options,
+        )
+        val pending = requireNotNull(build(chambermaid, phase = ClocktowerPhase.Night))
+        assertEquals(setOf("0", "1", "2"), values(pending))
+        assertEquals(subjects, pending.subjectSeats)
+        assertEquals(3, pending.legalCandidates.size)
+    }
+
+    @Test
     fun `Fortune Teller requires completed exact player pair before exposing truth domain`() {
         val ft = step(3, "Fortune Teller", InformationProposition.BooleanResult(
             BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, 3, listOf(1, 8), true,
@@ -108,6 +163,60 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
         assertEquals(StorytellerProviderScalarKindV1.BOOLEAN, pending.kind)
         assertEquals(setOf("true", "false"), values(pending))
         assertEquals(listOf(1, 8), pending.subjectSeats)
+    }
+
+    @Test
+    fun `later night scalar uses the same current legal domain without a new recommender`() {
+        val empath = step(2, "Empath", InformationProposition.NumericResult(
+            NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 1))
+        val later = requireNotNull(build(empath, phase = ClocktowerPhase.Night))
+        assertEquals(setOf("1"), values(later))
+        assertTrue(later.requestIdentity.requestId.contains("night-scalar:Night"))
+        assertEquals(2, later.sourceSeat)
+    }
+
+    @Test
+    fun `typed role results use the same Host information contract after a real query`() {
+        val role = step(3, "Ravenkeeper", InformationProposition.RoleAt(6,
+            com.codex.campboardgamehost.clocktower.domain.RoleId("Recluse"))).copy(
+            action = ClocktowerNightAction.Ravenkeeper,
+            displayKind = ClocktowerDisplayKind.RoleReveal,
+            automaticInformationCandidates = listOf("Recluse", "Imp").map { shown ->
+                ClocktowerDisplayOption(
+                    label = shown, displayKind = ClocktowerDisplayKind.RoleReveal,
+                    displayTitle = "role", displayPrimary = shown,
+                    displaySecondary = null, displayFooter = null,
+                    presentationSubjectSeats = listOf(6),
+                    presentationRoleId = shown)
+            })
+        val decision = requireNotNull(build(role, phase = ClocktowerPhase.Night))
+        assertEquals(StorytellerProviderScalarKindV1.ROLE, decision.kind)
+        assertEquals(listOf(6), decision.subjectSeats)
+        assertEquals(setOf("Recluse", "Imp"), values(decision))
+        assertNull(build(role.copy(displayProposition = null,
+            automaticInformationCandidates = emptyList()), phase = ClocktowerPhase.Night))
+    }
+
+    @Test
+    fun `possible Spy registration results never become a uniquely recorded witness`() {
+        val role = step(3, "Undertaker", InformationProposition.RoleAt(7,
+            com.codex.campboardgamehost.clocktower.domain.RoleId("Spy"))).copy(
+            displayKind = ClocktowerDisplayKind.RoleReveal,
+            manualInformationCandidates = listOf("Spy", "Chef").map { shown ->
+                ClocktowerDisplayOption(
+                    label = shown, displayKind = ClocktowerDisplayKind.RoleReveal,
+                    displayTitle = "role", displayPrimary = shown,
+                    displaySecondary = null, displayFooter = null,
+                    proposition = InformationProposition.RoleAt(7,
+                        com.codex.campboardgamehost.clocktower.domain.RoleId(shown)),
+                    spyRegistersGood = shown == "Chef")
+            })
+        val decision = requireNotNull(build(role.copy(displayProposition = null),
+            phase = ClocktowerPhase.Night))
+        assertEquals(setOf("Spy", "Chef"), values(decision))
+        assertTrue(decision.legalCandidates.all {
+            it.payload is StorytellerProviderCandidatePayloadV1.ScalarResult
+        })
     }
 
     @Test

@@ -1,48 +1,72 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
+import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ClocktowerNumericInformationOptionPreparationTest {
-    @Test
-    fun `previous unreliable number uses latest matching actor title and localized separator`() {
-        val events = listOf(
-            event(1, "共情者信息", "共情者信息：1", listOf("Alice")),
-            event(2, "Empath information", "Empath information: 2", listOf("Alice")),
-            event(3, "Empath information", "Empath information: 0", listOf("Bob")),
-            event(4, "Empath information", "Empath information: 7", listOf("Alice"), ClocktowerEventType.Information),
-        )
+    private val empath = RoleId("Empath")
+    private val empathMetric = NumericMetric.LIVING_EVIL_NEIGHBOURS
 
-        assertEquals(1, previousClocktowerUnreliableNumber(events, "共情者信息", "Alice"))
-        assertEquals(2, previousClocktowerUnreliableNumber(events, "Empath information", "Alice"))
-        assertNull(previousClocktowerUnreliableNumber(events, "Chef information", "Alice"))
+    @Test
+    fun `previously shown unreliable number comes from confirmed typed information`() {
+        val observations = listOf(
+            shown(0, 1, 1),
+            shown(1, 2, 2),
+            shown(2, 2, 0, actorSeat = 3),
+            shown(3, 2, 1, role = RoleId("Chef")),
+            shown(4, 2, 0, reliable = true),
+        )
+        assertEquals(2, previousClocktowerUnreliableNumber(observations, 2, empath, empathMetric))
+        assertEquals(0, previousClocktowerUnreliableNumber(observations, 3, empath, empathMetric))
+        assertNull(previousClocktowerUnreliableNumber(observations, 4, empath, empathMetric))
     }
 
     @Test
-    fun `previous unreliable number preserves digit extraction and malformed fallback`() {
-        val events = listOf(
-            event(1, "Empath information", "shown value 2 of 3", listOf("Alice")),
-            event(2, "Empath information", "no numeric result", listOf("Alice")),
+    fun `only actual numeric information for the same role and metric counts`() {
+        val observations = listOf(
+            shown(0, 1, 2, metric = NumericMetric.ADJACENT_EVIL_PAIRS),
+            shown(1, 1, 1),
+            shown(2, 2, 0, reliable = true),
         )
-
-        assertNull(previousClocktowerUnreliableNumber(events, "Empath information", "Alice"))
-        assertEquals(2, previousClocktowerUnreliableNumber(events.dropLast(1), "Empath information", "Alice"))
+        assertEquals(1, previousClocktowerUnreliableNumber(observations, 2, empath, empathMetric))
+        assertNull(previousClocktowerUnreliableNumber(
+            observations.filter { it.proposition is InformationProposition.NumericResult &&
+                (it.proposition as InformationProposition.NumericResult).metric == NumericMetric.ADJACENT_EVIL_PAIRS },
+            2, empath, empathMetric,
+        ))
     }
 
-    private fun event(
-        sequence: Int,
-        title: String,
-        detail: String,
-        players: List<String>,
-        type: ClocktowerEventType = ClocktowerEventType.UnreliableInformation,
-    ) = ClocktowerEvent(
-        sequence = sequence,
-        type = type,
-        title = title,
-        detail = detail,
-        playerNames = players,
-        phase = ClocktowerPhase.Night,
-        round = 2,
+    private fun shown(
+        globalSequence: Long,
+        round: Int,
+        value: Int,
+        actorSeat: Int = 2,
+        role: RoleId = empath,
+        metric: NumericMetric = empathMetric,
+        reliable: Boolean = false,
+    ) = RecordedEpistemicObservation(
+        recordId = "shown-$globalSequence",
+        phase = StorytellerPhase.NIGHT,
+        round = round,
+        sequence = globalSequence.toInt(),
+        sourceSeat = actorSeat,
+        sourceAbility = role,
+        visibility = ObservationVisibility.PRIVATE,
+        recipientSeats = setOf(actorSeat),
+        reliability = if (reliable) ObservationReliability.RECEIVED_AS_FUNCTIONING
+            else ObservationReliability.KNOWN_MALFUNCTIONING,
+        proposition = InformationProposition.NumericResult(metric, actorSeat, listOf(1, 3), value),
+        timelineBinding = ObservationTimelineBinding.Global(
+            TimelinePoint(StorytellerPhase.NIGHT, round, globalSequence.toInt(), globalSequence)),
     )
 }

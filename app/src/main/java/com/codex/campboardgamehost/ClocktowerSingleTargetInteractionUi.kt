@@ -32,7 +32,10 @@ internal fun ClocktowerSingleTargetAbilitySection(
         return
     }
     val title = when (action) {
-        ClocktowerNightAction.RedHerring -> stringResource(R.string.clocktower_host_choose_red_herring)
+        ClocktowerNightAction.RedHerring -> presentation.selection.selectedSeat?.let { seat ->
+            if (language == "en") "Red herring · P$seat preselected"
+            else "红鲱鱼 · 已预选 P$seat"
+        } ?: stringResource(R.string.clocktower_host_choose_red_herring)
         ClocktowerNightAction.Poison -> stringResource(R.string.clocktower_host_choose_poison_target)
         ClocktowerNightAction.ButlerMaster -> if (language == "en") "Choose the Butler's master" else "选择管家的主人"
         ClocktowerNightAction.MonkProtect -> stringResource(R.string.clocktower_host_choose_monk_protect)
@@ -43,6 +46,9 @@ internal fun ClocktowerSingleTargetAbilitySection(
     val helper = when (action) {
         ClocktowerNightAction.RedHerring -> if (presentation.selection.selectableSeats.isEmpty()) {
             stringResource(R.string.clocktower_host_no_red_herring_candidates)
+        } else if (presentation.selection.selectedSeat != null) {
+            if (language == "en") "Highlighted seat is already selected. Continue or tap another eligible seat to override."
+            else "已高亮预选座位，无需重新选择；可直接继续，或点击其他合法座位修改。"
         } else stringResource(R.string.clocktower_host_choose_red_herring_hint)
         ClocktowerNightAction.MonkProtect -> stringResource(R.string.clocktower_host_choose_monk_protect_hint)
         ClocktowerNightAction.Ravenkeeper -> stringResource(R.string.clocktower_host_ravenkeeper_target_hint)
@@ -64,7 +70,7 @@ internal fun ClocktowerSingleTargetAbilitySection(
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
         nextEnabled = presentation.confirmationEnabled,
-        showSelectionSummary = false,
+        showSelectionSummary = action == ClocktowerNightAction.RedHerring,
         secondaryActionLabel = if (action == ClocktowerNightAction.Ravenkeeper) {
             stringResource(R.string.clocktower_host_show_to_player)
         } else null,

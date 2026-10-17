@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
 
@@ -67,18 +69,31 @@ internal fun resolveClocktowerBooleanPlayerDisplay(
 
 private fun ClocktowerNightStepUi.withDisplayOption(
     option: ClocktowerDisplayOption,
-): ClocktowerNightStepUi = copy(
-    tellPlayer = option.displayPrimary,
-    displayKind = option.displayKind,
-    displayTitle = option.displayTitle,
-    displayPrimary = option.displayPrimary,
-    displaySecondary = option.displaySecondary,
-    displayFooter = option.displayFooter,
-    displayProposition = option.proposition,
-    presentationSubjectSeats = option.presentationSubjectSeats,
-    selectedInformationTruthful = option.isTruthful,
-    displayOptions = emptyList(),
-)
+): ClocktowerNightStepUi {
+    val anchorSeat = (displayProposition as? InformationProposition.RoleAt)?.seat
+    val optionSeat = option.presentationSubjectSeats.singleOrNull()
+    val shownRole = option.presentationRoleId
+    // A role's exact ID and subject seat come from selected typed presentation metadata,
+    // NEVER its localized display label or the truthful role in the original step.
+    val shownProposition = option.proposition ?: if (
+        option.displayKind == ClocktowerDisplayKind.RoleReveal && shownRole != null &&
+        (optionSeat ?: anchorSeat) != null && (anchorSeat == null || optionSeat == null || optionSeat == anchorSeat)
+    ) {
+        InformationProposition.RoleAt(requireNotNull(optionSeat ?: anchorSeat), RoleId(shownRole))
+    } else null
+    return copy(
+        tellPlayer = option.displayPrimary,
+        displayKind = option.displayKind,
+        displayTitle = option.displayTitle,
+        displayPrimary = option.displayPrimary,
+        displaySecondary = option.displaySecondary,
+        displayFooter = option.displayFooter,
+        displayProposition = shownProposition,
+        presentationSubjectSeats = option.presentationSubjectSeats,
+        selectedInformationTruthful = option.isTruthful,
+        displayOptions = emptyList(),
+    )
+}
 
 private fun ClocktowerNightStepUi.withConfirmedInformation(
     confirmed: ConfirmedInformationDecision,

@@ -1,115 +1,27 @@
-# CampBoardGameHost — Next Development Handoff
+# 当前开发交接：进入最小 Host 新轮次
 
-> Updated **2026-10-11 Australia/Sydney**. **唯一活动交接。** 进入新会话必须重新查开发机 live state / GitHub main、PR、CI，不能假设下述 commit 仍是最新。当前单一执行路线是 [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)；此文件只记录状态及下一步。旧 PROD-GLOBAL-1D/2B/analysis-first NEXT 作为历史，不得再次触发独立酒鬼模型规划。
+更新：2026-10-17（Australia/Sydney）。先读 AGENTS.md 顶部与 [产品合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)，再读 [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)。不得按旧 D5 NEXT 继续拆分规则模块。
 
-## LATEST HANDOFF — PROD-GLOBAL-3B3D-2B residual event review (2026-10-12)
+## 已有基线
 
-Confirmed Draft PR #302 head `9d5331b386c1109bca8fe6f6491e52e9450cab3c`, CI #4118/R2 #3740 GREEN, local clean, stacked #301 -> #300 -> #299. New branch `experiment/prod-global-3b3d2b-event-revalidation-20261012` introduces read-only `HostOpeningResidualEventGateV2` with typed first-night Host-confirmed game state, Poisoner/FT event facts, immutable published-observation references and current rules-owned candidate verification. Re-uses authoritative pair/numeric/FT/registration semantics. Returns WAIT / REPLAN WHOLE UNPUBLISHED / REVIEW READY (never publication), preserves all published record IDs. Key limitation: NOT YET connected to atomic production Host session, confirmed action journal or observation log, hence a positive experimental test cannot grant UI publication/adoption authority. Tests require full Android CI/R2. NEXT: audit this PR, then wire authoritative Host event/observation inputs and 3C/3D **one** background precommit Luna call instead of standalone Drunk plus postcommit call, followed by 3F phone checks. No paid API call or production cutover in this slice. [3B3D route](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md).
+本轮生产末端为 #328 `db16d38c`；它包含 #315–#327 的全部提交。#315–#328 各最新 head 的 CI/R2 已核对成功。收尾集成分支为 `codex/minimal-host-handoff`，面向 main 整合现有链和新权威文档；最终合并状态以 GitHub 为准。下一轮必须从该收尾已合并的 main 建立新分支，不能从旧 main `770ed32f` 开始。
 
-### Previous 3B3D-2A handoff
+已删除独立 Recovery、重复文字/整局归档及部分状态副本；Session 是现有游戏事实单源。App 3,768 行 / 212,701 bytes，Host 2,616 行 / 159,659 bytes；Host 仍有 90 参数、40 个操作回调，大文件治理未完成。
 
-## LATEST HANDOFF — PROD-GLOBAL-3B3D-2A real rules integration (2026-10-12)
+## 最新产品决定（覆盖旧文档）
 
-PR #301 latest confirmed HEAD `9056b6b0560bb85764668b5c8b49eefbe7b50f29`, CI #4116 / R2 #3738 GREEN and clean; stacked on Draft #300 -> #299. New branch `experiment/prod-global-3b3d2-rules-projection-20261012` contains experimental pure `HostOpeningRulesDomainV2` which materializes Host TB legal pair/numeric/setup domains per uncommitted Drunk branch, pending actions as barriers, with matching Kotlin real-rules scenarios. AI output V2 adds ZERO_OUTSIDERS; multi-witness semantics permitted without asserting a unique registration. New tests not yet independently run at this checkpoint. [Active 3B3D route](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md). NEXT: audit exact new PR CI/R2, repair real-domain test failures if any, then event-confirmation revalidation and 3C/3D single initial background Luna call. No production API/UI change, no paid EXPT, no full strategic/model or phone acceptance.
+删除 Host 游戏规则校验、线索计算、合法候选枚举、登记解释推导和手动规则/线索辅助。AI 推荐什么，实际确认什么，就记录并展示什么。保留玩家/座位/对局身份、原子记录、重复确认防护、过期响应隔离和私密信息保护；规则正确性由说书人承担。
 
-### Previous 3B3D-1 handoff
+旧信息发布函数会按角色从准备变量回推记录；下一轮应重新审计并删除这种不必要的耦合，不把它原样包装成新模块。旧 candidate/semantic gate/provider 请求结构有深层依赖，必须成链清理。现有 AI 自动模式不因新方向而获得任意改状态权限。
 
-## LATEST HANDOFF — PROD-GLOBAL-3B3D-1 Host semantic matching boundary (2026-10-12)
+## 下一项任务
 
-From confirmed PR #300 head `6c2286b7b9ee4c4c6baa960c200f83edf59b7056` (CI #4114 + R2 #3736 GREEN), use new branch `experiment/prod-global-3b3d-host-semantic-gate-20261012`, stacked on #300 (which stacks on #299). [3B3D implementation/remaining-work route](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md). EXPERIMENT ONLY: Kotlin `HostOpeningSemanticGateV2` uses exact typed public semantics and Host-supplied candidate domain, refuses stale/incomplete/unknown/duplicate/mismatched plans and retains event-dependent proposals uncommitted; Python V2 input/output now carries requestIdentity, logical decision IDs and nullable bluffs. **No production wiring, no real Host candidate projector, no independent TB rule verdict**: current Android tests are synthetic projection contracts, not semantic or strategic acceptance. Still only offline/mock EXPT and no paid API call. NEXT = exact CI/R2 for this branch, followed by 3B3D-2 actual rules-owned projection/coverage and sample parity, then controlled Luna blind study if paid EXPT is genuinely enabled.
+只读删除边界审计：以最小人工录入、AI建议确认、身份/死亡/阶段变更、提名投票、私密信息展示为验收流程，列保留状态/事件/入口与可整条删除的生产及测试链。然后制定有实际删减规模的实现检查点。不得直接继续旧 D5a 提取路线。
 
-### Previous 3B3 handoff
+## 已知缺口与权限
 
-## LATEST HANDOFF — PROD-GLOBAL-3B3 semantic V2 / expert quality (2026-10-12)
+仍无退出恢复、完整复盘或跨局归档；事件覆盖不完整。没有真机和付费模型验收。旧设备数据不迁移、不擦除。Undercover 保持范围外。
 
-At audit live main/local main = `10e5da8f165cbae0288b42d33c50bd0344b116d8`; active 3B2 Draft #299 at `3f87a397c542c64532623bb62694d0b3467a1c87` with CI #4112 and R2 #3734 GREEN, clean. 3B3 stacked Draft [PR #300](https://github.com/Jazz0006/CampBoardGameHost/pull/300), branch `experiment/prod-global-3b3-semantic-v2-20261012`, initial commit `1b5db290c093e4bda821745cca98b4f34b480b5e` based on #299; initial CI #4113/R2 #3735 GREEN **only for that initial commit**, later amendments require a new check. Check live SHA/PR/CI again on return. 3B2 paid Luna tests E05/E02/E03/E04 did actually run in private directories; 3B2 `NOT RUN` text below was historical. Structural E03/E04 warnings are not proof of illegal content, and **no sample has independent Host semantic acceptance**.
+持续授权仍包括本轮后续本地提交、codex/* 推送、Draft PR 创建/更新、CI/R2。所有者另于本次收尾明确授权必要同步、合并和 PR 清理，以及建立新的分支/环境；此授权用于本轮收尾，不自动成为下一轮所有 PR 的无条件合并授权。强制推送不在授权内。删除远端分支不是收尾必要条件，保留历史引用不影响关闭旧 PR。
 
-**Active design/read:** [3B3 semantic V2 and independent acceptance](PROD_GLOBAL_3B3_SEMANTIC_V2_AND_EXPERT_QUALITY_ROUTE_2026-10-12.md); [V2 prompt](PROD_GLOBAL_3B3_EXPERT_PROMPT_V2.txt); [sealed new holdouts](PROD_GLOBAL_3B3_BLIND_HOLDOUTS_V1.json); [main PROD-GLOBAL-3 route](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md). 3B3 experimental Python schema/screening is **not** Android Host rules validation and production is unchanged. Mini MCP EXPT-2A mock completed; exposed `experiment_run` still forbids paid requests. Do not launch paid EXPT or relabel old basic checks as semantic acceptance.
-
-**NEXT:** confirm newest CI/R2 for PR #300; four frozen E02/E03/E04/E05 original model plans were read from Project file library for **read-only V1 diagnostics** (summary in 3B3 route, originals never public). The E02 conditional Poisoner-dependent whole-board proposal motivated general V2 `CONDITIONAL_INTENT` (never a committed observation). Then wire an independently typed Host-native semantic adapter and real legality/revision/coverage validation; run Luna-only fresh paid holdouts with explicit cost bound **only** once a paid Mini MCP experimental interface actually exists. 3C/3F and true phone acceptance still follow. Old Drunk/postcommit production forks are not retired.
-
-### Previous handoff (historical checkpoint)
-
-## CURRENT HANDOFF — 2026-10-12 Expert Storyteller principle / next experiment
-
-**Latest product-owner correction is authoritative, overriding older 3B2 candidate-enumeration NEXT below.** Required read: [PROD-GLOBAL-3B2 Expert Storyteller Principle](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md); [main PROD-GLOBAL-3 route](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md); [3P A/B/B2 evidence](PROD_GLOBAL_3P_PROMPT_DESIGN_AND_EXTERNAL_PROJECT_REVIEW_2026-10-12.md); root AGENTS and testing strategy.
-
-- Verified before this docs PR: Oracle `clocktower/main` and GitHub main both `d720a845a113af0889360ed73717cdc9621f8abc`, worktree clean and zero open PRs; **must re-check actual live heads in next conversation**.
-- PR #297 (3B1 conditional precommit Host scope + validators and prompt-study notes) **MERGED**, CI #4103 / R2 #3727 GREEN. 3B1 remains in code for internal Host legality/safety; neither a production Luna request nor complete 3B2/3C/3D.
-- **NEW NEXT: 3B2-EXPERT-PROBE**. Test Luna expert Storyteller using game facts (full shown setup, `hasDrunk`/uncommitted state, accurate player expertise, concise script rules, optional recent-game summaries), **without pre-enumerating all legal candidate outcomes/Drunk branches**. Evaluate legality separately from strategic quality and request completeness; compare with B2 on multiple lawful TB cases, using actual outputs rather than predetermined 'optimal' answer.
-- Expert AI should know and apply rules; it must not routinely disclaim trivial legality or delegate rule understanding to Host. Still, LLM competence is not guaranteed: Host independently validates semantic choices, enforces revision/secrecy/timing and rejects invalid/incomplete choices or requests a bounded **whole-bundle** repair; no silent first-candidate replacement.
-- Keep one joint initial plan (Drunk when present + every applicable discretionary opening choice + bluffs/red herring), concise strategyMemory, then global event-driven residual updates. The existing two separate initial Drunk/postcommit calls **must be retired only after the new product passes validation**.
-- Retain safe offline Manual, AI_ASSISTED and AI_AUTOMATIC policy; recent-game experience anti-repeat is optional with moderate influence, not a blocking history/recovery project. Mini MCP general experiment directory enhancement proceeds independently; do not modify it in Host docs/code.
-- Android recommended-display retry reportedly succeeded; no confirmed exception root fix. Keep bounded final 3F real-device and duplicate/partial publication checks. This docs-only checkpoint changes no runtime code.
-
-## Historical 2026-10-12 PROD-GLOBAL-3P/3B1 handoff (overrides historical sections below)
-
-- GitHub `main` and Oracle Mini MCP `clocktower/main`: `2288d58f4bbc212e1e6d8cdd60f6ced539f32312`, clean/equal at audit; zero open PRs; #292–#295 **all merged**. The old stacked-Draft directions below are superseded.
-- Android real-phone follow-up: AI recommendation display succeeded without earlier app exit. Earlier root cause remains undetermined, so keep E2E and double-publication check in 3F, do not invent a fix.
-- Source-grounded external prompt study and Luna A/B/B2 findings: [3P design lessons](PROD_GLOBAL_3P_PROMPT_DESIGN_AND_EXTERNAL_PROJECT_REVIEW_2026-10-12.md). Incorporate explicit unknown coverage, rules research supplied by Host, fail-closed ID validation and mechanism opportunity cost; **do not copy** Olalall per-wake-item model calls.
-- Current feature branch: `prod-global-3b1-precommit-contract-20261012` starts from that exact main. 3B1 adds a pure Host precommit **one branch per legal Drunk candidate, or one none branch** schema + fail-closed selection. No API call, AI UI, auto-commit or Host candidate computation is yet wired. Validation/CI is required before merging.
-- **NEXT** complete 3B2 by deriving every branch's actual legal info/pair/scalar/red-herring/bluff and all deferred dependencies from real Host owners, preserving result-first Spy/Recluse uncertainty and avoiding synthetic ID fallback. Then 3C/3D single background Luna request with identity reveal and strict strategy memory; 3E residual global replanning; 3F phone/CI/R2.
-- Mini MCP experiments directory work is a **separate concurrent project**. Do not change that repository while working in Host.
-
-## 2026-10-12 当前 UI 小切片：AI 设置归位与原班人马快速重开
-
-- PR #295 stacked Draft 上已实施：App Settings 统一呈现 AI 模式、直连/Gateway 凭据/模型；开局仅展示默认模式与配置就绪状态，并可进入 App Settings 后返回相同开局步骤。模式默认值保存至 `AppPreferencesStore` 的 `storyteller_operation_mode`；API Key / Gateway token 保持原 Keystore 存储。
-- **经源码确认的旧行为**：快速重开直接调用 `startClocktowerGame`，使用尚在内存中的 `storytellerOperationMode`。此前的人工接管会使下一局意外 MANUAL，App 重新启动又默认 MANUAL；现以**独立的全局默认模式**纠正。
-- **新行为**：开新局/快速重开都会通过 `storytellerModeForNewGame` 取得新局模式、通过 `storytellerNewGameConfigurationReady` 拒绝未配置的 AI 开局；快速重开先检查凭据再归档旧局，并保留 5/6 人原剧本。NoGreaterJoy 不覆盖全局默认 AI 配置，只在当前不支持的剧本运行手动。
-- 此切片的自动化及 Android/真机状态需以本次最新 PR head 的 CI/R2 核对。尚未完成的 PROD-GLOBAL-3 全局开局、真机展示崩溃仍是主线下一项。
-
-## 当前并行清理：LEGACY-EXPERIENCE-RETIREMENT (2026-10-11)
-
-当前工作分支 `legacy-experience-retirement-20261011` 基于 Draft PR #293（其基于 Draft #292），不更改两者原始分支。旧说书人“新手/熟练”运行模式、设置开关/SharedPreferences 键及三个候选推荐专属 UI 已在清理分支删除；Drunk 路由不再接收说书人熟练模式；Fortune Teller/红鲱鱼不能在没有 Host 唯一合法结果时任取首项；Spy/Recluse 多解登记不可被自动定为单个见证。独立合法候选的人工选择和 `PlayerExperienceLevelV1` 均必须保留。
-
-正式操作权限仅有 `MANUAL`（全程手动且无 AI 请求）、`AI_ASSISTED`（推荐/明确采纳，不自动提交）与 `AI_AUTOMATIC`（只有 Host 核验当前合法性、版本和明确候选成功才可自动提交；失败安全暂停）。规则计算/唯一确定结果不取决于 AI。这是目标契约；**完整无人说书人尚未实现**。本清理不会修复 PROD-GLOBAL-3 旧独立 Drunk 请求的时序、Android 展示崩溃，亦不会分裂初始 Drunk + 全首夜一次联合规划目标。已创建 stacked Draft PR #295。角色简化夜间展示也须仅在唯一合法候选时展示快捷确认，绝不能因旧文本样式自动提交多个候选中的第一项。旧 CI/R2 仅针对 main；#295 已改为支持 stacked PR 直接触发，临时验收 PR #296 因与 main 冲突而关闭（从未合并）。#295 在 `2d1954f` 获 CI #4090 / R2 #3717 GREEN；本轮语义审查又发现 `allowRuleDeterminedAutoUi` 影响操作模式无关的 UI 排版、候选展示及 Pair 信息人工覆盖入口，已继续解除相关耦合，**需重跑更新后的 CI/R2**。#292 已通过双父合并提交 `02a19015` 吸收 main 的 TB schema-v3 (#294)，消除了上游的 GitHub 冲突；#293 集成父分支的提交为 `3c8b5724`。#295 此次需纳入上述历史并以 schema-v3 修正旧测试 fixture；三层均保持 Draft，CI/R2 与真机产品验收不可混为一谈。
-
-## 1. 当前基线 — VERIFIED at this documentation session
-
-- Repo: Jazz0006/CampBoardGameHost；Oracle 开发机 Mini MCP alias: clocktower，目录 /home/opc/repos/CampBoardGameHost。
-- Current local branch at start: experiment/personal-openai-direct-20261011, HEAD c01ddb3b61f638f7725230093563d24d4d5aed65; clean, remote same-name head equal. New **docs-only** commit after this checkpoint will advance HEAD; re-verify.
-- GitHub main at audit: 3e1cc4070911f0aa9d6510f48041985a14cedebb; local main older (ddfca4e38f00e78950a15d2256eefd4a9d633914). Do not rebase/change base or merge without independent audit.
-- [PR #292](https://github.com/Jazz0006/CampBoardGameHost/pull/292) is DRAFT, head prod-1-live-drunk-ai-assisted@c2dad5a9, base main; existing checks 7/7 GREEN.
-- [PR #293](https://github.com/Jazz0006/CampBoardGameHost/pull/293) is DRAFT, head experiment/personal-openai-direct-20261011@c01ddb3b **before this documentation change**, base PR #292 branch; existing checks 7/7 GREEN. Keep stacked PR architecture unless user authorizes change. Green old-head CI ≠ acceptance of new design.
-
-## 2. Confirmed real-phone feedback / outstanding product defects
-
-1. In a setup containing Drunk, old AI Drunk recommendation is called **before** any identity reveal, with a blocking waiting screen. It still displays lengthy situation/issue/alternative essays. It has not used the identity-dealing time to run the one complete opening plan.
-2. Single-legal-result Empath (e.g. both neighbours unambiguously Good) is unnecessarily included as a model choice rather than transmitted as deterministic context.
-3. Tapping show on an AI recommended information result causes the Android app to exit. **Exact crash cause unknown** until a bounded AndroidRuntime FATAL EXCEPTION stacktrace; no unverified blame or global catch-all fix.
-4. FirstNightOneShotRequestV1 currently requires SETUP_COMMITTED. A coded personal-direct AI_ASSISTED **post-Drunk** one-tap plan exists, but the actual Drunk seat cannot be optimized jointly with its first-night information/bluffs/red herring. It has not passed phone E2E. Prior dark UI contrast issue **accepted/adequate** on this pass; do not distract with a new theme redesign.
-
-## 3. Product owner confirmed new direction
-
-- **ONE initial model request** as soon as full shown roster is locked, running concurrently with shown-role-only player reveal. Not a Drunk request followed by a separate postcommit opening request. AI chooses Drunk + discretionary first-night information + red herring + legal Demon 3 bluff IDs as **one coordinated package**, and returns a private compact strategyMemory. Host uniquely determined information is passed as context and displayed by Host without model selection; future Poisoner/FT actions are deferred.
-- Host owns legality/conditional candidate scopes for every hypothetical legal Drunk, snapshots, revisions, confirmed facts and actual publication. LLM owns noncanonical strategic preferences; never infer unique Spy/Recluse registration witness from a result. After actual events, update the **global affected remaining plan**, not individual-role AI policies. Player's already-seen information is immutable.
-- Fix model to current experimental **gpt-5.6-luna**. **Do not compare another model or initiate training** this stage; improve instruction quality, complete inputs (especially player proficiency), legality encoding, compact outputs and strategy memory.
-- Existing Responses path store:false and no conversation continuation: no automatic AI memory. Implement client-managed compact strategic context plus canonical Host event prefix before considering an optional API continuation design. Cross-game anti-repeat strategy is deferred.
-
-## 4. Next implementation order / hard gates
-
-| Phase | Immediately actionable work | Exit |
-| --- | --- | --- |
-| 3A P0 | Reproduce app exit with safe ADB Logcat AndroidRuntime FATAL EXCEPTION; trace recommendation → reveal handoff | Proven fix + regression + phone confirmation; no double/partial Host publication |
-| 3B | Host setup-precommit **conditional global legal scope** with all lawful Drunk hypotheses, legal info/bluffs/red herring, deterministic context and player inputs | No standalone Drunk planning, no fabricated actual roles, complete legal coverage |
-| 3C | SHOWN_ROSTER_LOCKED starts *same single* Luna request while cards are shown; one-tap accepted plan after dealing | Parallel UX, fresh Host validation, legal Drunk commit, no premature observation |
-| 3D | Joint Luna prompt and openingPlan + strategyMemory strict schema | One configuration, no analysis wall; false/illegal IDs fail closed; private state later reusable |
-| 3E | Host causal events trigger global residual-plan revision | Reuse valid pending choices; no per-role recommender, no past rewrite, manual fallback |
-| 3F | Full Android 8-person TB and variations, independent CI/R2; retire superseded production AI paths | Human acceptance before Draft merge; no claim of complete AI_AUTOMATIC |
-
-Regression anchor: previously discussed eight-seat Chef / Fortune Teller / Ravenkeeper / Butler / Investigator / Recluse / Baron / Imp with novice evil seats. Model must assess Chef–Investigator–Recluse–Drunk–bluff/red-herring interactions without hardcoding the example's proposed Chef-as-Drunk, information 0, Investigator 6/7, red herring 4, bluff trio. Test no-Drunk, late player choices, incompatible/stale candidates, one-tap/display, offline Manual.
-
-## 5. Commands / tool workflow / preserved boundaries
-
-- First read root [AGENTS.md](../AGENTS.md), [roadmap](CURRENT_DEVELOPMENT_ROADMAP.md), [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md), [test strategy](TESTING_STRATEGY.md); inspect actual current code and Git, not the old long handoff or historical PR NEXT.
-- For real-device crash: Android Studio Logcat filter `AndroidRuntime` or ADB `adb logcat -v time -s AndroidRuntime:E BotcAiTrace:I`; share only bounded relevant FATAL EXCEPTION and sanitized oneshot lines, never API keys/auth headers or full secret-bearing logs.
-- Retain Manual entirely offline; Host truth > LLM plans/memory; no old heuristic resurrection; no new Recovery migration (current-format / ≤4-hour accidental-close only); registration-result witness ambiguity remains.
-- Do NOT change PR #292/#293 from Draft merely on docs/unit CI. Keep current branch and use exact-state bounded diff review; CI/R2 checks after push are independent evidence, not user real-phone signoff.
-- Current documents index: [docs/README.md](README.md). Earlier detailed design [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md) and experiment [PERSONAL-DIRECT-1](PERSONAL_DIRECT_OPENAI_ANDROID_EXPERIMENT_2026-10-11.md) remain useful **historical evidence**; contradictory single-Drunk/long-essay or mandatory model-comparison instructions have been superseded.
-
-**Next chat begins at PROD-GLOBAL-3A and prepares unified 3B–3D architecture, not another Drunk-only model call.**
-
-
-## TB setup simplification
-
-TB presets use schema v3: full shown `townsfolk`, `drunk` boolean, no Drunk outsider or runtime three-choice selection. See `TB_SETUP_SIMPLIFICATION_TEMPLATE_AUDIT.json`; the late canonical Drunk assignment still happens after shown-role dealing.
+在新的独立 worktree 使用 `codex/minimal-host-reset`（从收尾后 origin/main 创建）。不要复制旧 .gradle/build 缓存或未跟踪文件。新会话先验证目录、分支、HEAD 和工作区干净，再按上述任务开始。不要修改另一个工作区的未提交内容。

@@ -56,20 +56,12 @@ class ClocktowerRegistrationInteractionStateTest {
         assertTrue(state.manualChoicesMatchResult(spyKey, recluseKey, one))
         assertFalse(state.spyHasExplicitChoice(spyKey))
         assertFalse(state.recluseHasExplicitChoice(recluseKey))
-        assertFalse(state.spyWillRecord(spyKey))
-        assertFalse(state.markSpyRecorded(spyKey))
-        assertFalse(state.markRecluseRecorded(recluseKey))
         assertFalse(state.spyIsGood(spyKey))
         assertFalse(state.recluseIsEvil(recluseKey))
 
         state.chooseSpy(spyKey, good = false)
         state.chooseRecluse(recluseKey, evil = false)
         assertTrue(state.manualChoicesMatchResult(spyKey, recluseKey, one))
-        assertTrue(state.spyWillRecord(spyKey))
-        assertTrue(state.markSpyRecorded(spyKey))
-        assertTrue(state.markRecluseRecorded(recluseKey))
-        assertFalse(state.markSpyRecorded(spyKey))
-        assertFalse(state.markRecluseRecorded(recluseKey))
     }
 
     @Test
@@ -84,7 +76,6 @@ class ClocktowerRegistrationInteractionStateTest {
         state.chooseSpy(spyKey, good = false)
         state.chooseRecluse(recluseKey, evil = true)
         assertFalse(state.manualChoicesMatchResult(spyKey, recluseKey, one))
-        assertTrue(state.spyWillRecord(spyKey))
         assertTrue(state.recluseHasExplicitChoice(recluseKey))
         state.chooseRecluse(recluseKey, evil = false)
         assertTrue(state.manualChoicesMatchResult(spyKey, recluseKey, one))
@@ -98,18 +89,8 @@ class ClocktowerRegistrationInteractionStateTest {
         val state = ClocktowerRegistrationInteractionState()
         val spyKey = "Day:1:Virgin:Spy"
         val recluseKey = "Night:1:FortuneTellerRecluse:Bob"
-        assertFalse(state.spyWillRecord(null))
-        assertFalse(state.spyWillRecord(spyKey))
-        assertFalse(state.markSpyRecorded(spyKey))
-        assertFalse(state.markRecluseRecorded(recluseKey))
         state.chooseSpy(spyKey, good = false)
         state.chooseRecluse(recluseKey, evil = true)
-        assertTrue(state.spyWillRecord(spyKey))
-        assertTrue(state.markSpyRecorded(spyKey))
-        assertFalse(state.spyWillRecord(spyKey))
-        assertFalse(state.markSpyRecorded(spyKey))
-        assertTrue(state.markRecluseRecorded(recluseKey))
-        assertFalse(state.markRecluseRecorded(recluseKey))
     }
 
     @Test

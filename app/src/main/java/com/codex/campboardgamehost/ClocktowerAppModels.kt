@@ -1,29 +1,5 @@
 package com.codex.campboardgamehost
 
-internal enum class ClocktowerEventType {
-    System,
-    Phase,
-    RoleAction,
-    Information,
-    UnreliableInformation,
-    Nomination,
-    Vote,
-    Execution,
-    Death,
-    RoleChange,
-    GameEnd,
-}
-
-internal data class ClocktowerEvent(
-    val sequence: Int,
-    val type: ClocktowerEventType,
-    val title: String,
-    val detail: String,
-    val playerNames: List<String>,
-    val phase: ClocktowerPhase,
-    val round: Int,
-)
-
 internal enum class ClocktowerTeam {
     Townsfolk,
     Outsider,

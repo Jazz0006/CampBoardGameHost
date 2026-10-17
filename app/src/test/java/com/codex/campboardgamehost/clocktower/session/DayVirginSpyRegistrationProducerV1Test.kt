@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.ClocktowerCausalJournalPersistence
 import com.codex.campboardgamehost.clocktower.domain.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -58,13 +57,7 @@ class DayVirginSpyRegistrationProducerV1Test {
     )
     private fun recover(session: ClocktowerGameSession, journal: StorytellerCausalDecisionJournalV1) =
         StorytellerCausalDecisionJournalV1.restore(
-            ClocktowerCausalJournalPersistence.decode(
-                ClocktowerCausalJournalPersistence.encode(journal.archive()),
-                expectedGameId = session.state.gameId,
-                actions = session.state.actionTimeline,
-                observations = session.state.epistemicObservationLog.records,
-                recoveredCursor = session.state.nextTimelineGlobalSequence,
-            ),
+            journal.archive(),
             session.state,
         )
 
@@ -83,11 +76,7 @@ class DayVirginSpyRegistrationProducerV1Test {
         assertEquals(RegistrationQuestion.CHARACTER_TYPE, fact.registrationQuestion)
         assertEquals(RegistrationReason.SPY_ABILITY, fact.reason)
         assertTrue(s.state.epistemicObservationLog.records.isEmpty())
-        val id = journal.archive().records.filterIsInstance<
-            StorytellerCausalJournalRecordV1.Captured>().single().frozen.identity.decisionId
-        assertTrue(journal.effectiveAt(id).isEmpty())
         assertEquals(listOf(event), recover(s, journal).effectiveNow())
-        assertEquals(journal.frozenAt(id), recover(s, journal).frozenAt(id))
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
                 s, journal, snapshot(s), roles, input(true), confirmedExecution = true,
@@ -142,19 +131,20 @@ class DayVirginSpyRegistrationProducerV1Test {
         assertTrue(journal.archive().records.isEmpty())
     }
 
-    @Test fun `malformed Recovery cannot turn a type-only ruling into Washerwoman`() {
+    @Test fun `malformed journal cannot turn a type-only ruling into Washerwoman`() {
         val s = session()
         val journal = StorytellerCausalDecisionJournalV1(s.state.gameId)
         DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
             s, journal, snapshot(s), roles, input(true), confirmedExecution = true,
         )
-        val json = ClocktowerCausalJournalPersistence.encode(journal.archive())
-        json.getJSONArray("records").getJSONObject(1).getJSONArray("registrations")
-            .getJSONObject(0).put("registeredRole", "Washerwoman")
-        val decoded = ClocktowerCausalJournalPersistence.decode(
-            json, s.state.gameId, s.state.actionTimeline, s.state.epistemicObservationLog.records,
-            s.state.nextTimelineGlobalSequence,
-        )
+        val archive = journal.archive()
+        val decoded = archive.copy(records = archive.records.map { entry ->
+            if (entry is StorytellerCausalJournalRecordV1.Committed) {
+                entry.copy(value = entry.value.copy(
+                    registrations = entry.value.registrations.map { it.copy(registeredRole = RoleId("Washerwoman")) },
+                ))
+            } else entry
+        })
         assertThrows(IllegalArgumentException::class.java) {
             StorytellerCausalDecisionJournalV1.restore(decoded, s.state)
         }

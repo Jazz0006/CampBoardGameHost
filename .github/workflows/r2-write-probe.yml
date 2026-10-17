@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - codex/storyteller-algorithm-v4
+      - 'cleanup/**'
     paths:
       - app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt
@@ -22,7 +23,9 @@ on:
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerResultsScreen.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNominationInteraction.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerInteraction.kt
       - .github/workflows/r2-write-probe.yml
   workflow_dispatch:
 
@@ -55,9 +58,9 @@ jobs:
           day_overview=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt
           night=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
           host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-          history=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
+          results=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerResultsScreen.kt
 
-          for file in "$root" "$core" "$selection" "$presentation" "$recommendation_ui" "$player_display_ui" "$registration_controls" "$automatic_registration" "$night_step_ui" "$main" "$setup" "$day" "$day_overview" "$night" "$host" "$history"; do
+          for file in "$root" "$core" "$selection" "$presentation" "$recommendation_ui" "$player_display_ui" "$registration_controls" "$automatic_registration" "$night_step_ui" "$main" "$setup" "$day" "$day_overview" "$night" "$host" "$results"; do
             test -f "$file"
           done
           test ! -e "$legacy_registration_ui"
@@ -255,16 +258,22 @@ jobs:
           grep -q "internal fun ClocktowerSpyRegistrationDecisionControls" "$registration_controls"
           grep -q "internal fun ClocktowerRecluseRegistrationDecisionControls" "$registration_controls"
           grep -q "internal fun ClocktowerAutomaticRegistrationEffect" "$automatic_registration"
-          # TB Virgin genuinely allows Spy-as-Townsfolk TYPE registration.
-          grep -q "ClocktowerSpyTownsfolkTypeDecisionControls(" "$host"
+          # TB Virgin retains Spy-as-Townsfolk TYPE registration in its interaction owner.
+          nomination=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNominationInteraction.kt
+          grep -q "ClocktowerNominationInteraction(" "$host"
+          grep -q "internal fun ClocktowerNominationInteraction" "$nomination"
+          grep -q "ClocktowerSpyTownsfolkTypeDecisionControls(" "$nomination"
           # No supported script has both Klutz and Spy. Guard against restoring
           # the unreachable special-good UI or invented prechoice ruling.
-          if grep -q "ClocktowerSpyGoodAlignmentDecisionControls(" "$host"; then
+          if grep -q "ClocktowerSpyGoodAlignmentDecisionControls(" "$host" "$nomination"; then
             echo "Unreachable Klutz/Spy alignment picker resurfaced in production Host" >&2
             exit 1
           fi
-          # Named-role Spy registration is still legal for OTHER real interactions.
-          grep -q "ClocktowerRecluseRegistrationDecisionControls(" "$host"
+          # Slayer retains the legal Recluse registration controls in its interaction owner.
+          slayer=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerInteraction.kt
+          grep -q "ClocktowerSlayerInteraction(" "$host"
+          grep -q "internal fun ClocktowerSlayerInteraction" "$slayer"
+          grep -q "ClocktowerRecluseRegistrationDecisionControls(" "$slayer"
           grep -q "ClocktowerAutomaticRegistrationEffect(" "$night_step_ui"
 
           for name in ClocktowerResultsDialog; do
@@ -272,10 +281,9 @@ jobs:
               echo "${name} still lives in CampBoardGameHostApp.kt" >&2
               exit 1
             fi
-            grep -q "internal fun ${name}" "$history"
+            grep -q "internal fun ${name}" "$results"
           done
-          grep -q "internal fun clocktowerEventPhaseLabel" "$history"
-          grep -q "private fun ClocktowerResultPlayerRow" "$history"
+          grep -q "private fun ClocktowerResultPlayerRow" "$results"
 
           main_lines="$(wc -l < "$main")"
           main_bytes="$(wc -c < "$main")"

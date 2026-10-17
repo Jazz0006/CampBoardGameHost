@@ -24,8 +24,8 @@ import org.junit.Test
 /**
  * SNE-7 behavior matrix that composes existing typed seams without inspecting production source.
  *
- * These contracts intentionally stop before the not-yet-extracted Dawn planner. They lock the
- * checkpoint/reducer/projector/rule semantics that the planner must consume rather than duplicate.
+ * These contracts protect live checkpoint/projector/rule semantics consumed by the Dawn planner.
+ * Confirmation invalidation is covered at the Session commit boundary.
  */
 class SNE7NightTransactionBehaviorMatrixTest {
     private val poisonerInteraction = ClocktowerInteractionId("other_night:role:Poisoner")
@@ -49,10 +49,7 @@ class SNE7NightTransactionBehaviorMatrixTest {
             confirmedDemonSuccessorTarget = "Player 2",
         )
 
-        val afterPrevious = NightCheckpointReducer.reduce(
-            restored,
-            NightResolutionEvent.MovePrevious,
-        )
+        val afterPrevious = restored.copy(nightStepIndex = restored.nightStepIndex - 1)
         val effective = projectedAfterSuccessor(afterPrevious)
 
         assertEquals(2, afterPrevious.nightStepIndex)
@@ -67,35 +64,13 @@ class SNE7NightTransactionBehaviorMatrixTest {
             confirmedDemonSuccessorTarget = "Player 2",
         )
 
-        val edited = NightCheckpointReducer.reduce(
-            restored,
-            NightResolutionEvent.EditDemonSuccessorDraft("Player 3"),
-        )
+        val edited = restored.copy(demonSuccessorDraftTarget = "Player 3")
         val effective = projectedAfterSuccessor(edited)
 
         assertEquals("Player 3", edited.demonSuccessorDraftTarget)
         assertEquals("Player 2", edited.confirmedDemonSuccessorTarget)
         assertEquals(RoleId("Imp"), effective.currentRoleId(2))
         assertEquals(RoleId("Minion"), effective.currentRoleId(3))
-    }
-
-    @Test
-    fun `changed confirmed upstream attack invalidates successor confirmation but preserves its draft`() {
-        val restored = checkpoint(
-            confirmedAttackTarget = "Player 1",
-            attackDraftTarget = "Player 4",
-            demonSuccessorDraftTarget = "Player 2",
-            confirmedDemonSuccessorTarget = "Player 2",
-        )
-
-        val reconfirmed = NightCheckpointReducer.reduce(
-            restored,
-            NightResolutionEvent.ConfirmDemonAttack,
-        )
-
-        assertEquals("Player 4", reconfirmed.confirmedAttackTarget)
-        assertNull(reconfirmed.confirmedDemonSuccessorTarget)
-        assertEquals("Player 2", reconfirmed.demonSuccessorDraftTarget)
     }
 
     @Test

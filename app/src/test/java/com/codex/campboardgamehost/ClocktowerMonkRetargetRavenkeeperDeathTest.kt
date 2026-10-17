@@ -2,39 +2,18 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackOutcome
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
-import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
-import com.codex.campboardgamehost.clocktower.session.NightResolutionEvent
+import com.codex.campboardgamehost.clocktower.session.ClocktowerNightTargets
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ClocktowerMonkRetargetRavenkeeperDeathTest {
     @Test
     fun `reconfirmed Monk target replaces Ravenkeeper protection before Demon attack`() {
-        var checkpoint = emptyCheckpoint()
-        checkpoint = NightCheckpointReducer.reduce(
-            checkpoint,
-            NightResolutionEvent.EditMonkProtectionDraft("Ravenkeeper"),
-        )
-        checkpoint = NightCheckpointReducer.reduce(
-            checkpoint,
-            NightResolutionEvent.ConfirmMonkProtection,
-        )
-        checkpoint = NightCheckpointReducer.reduce(checkpoint, NightResolutionEvent.MovePrevious)
-        checkpoint = NightCheckpointReducer.reduce(
-            checkpoint,
-            NightResolutionEvent.EditMonkProtectionDraft("Empath"),
-        )
-        checkpoint = NightCheckpointReducer.reduce(
-            checkpoint,
-            NightResolutionEvent.ConfirmMonkProtection,
-        )
-        checkpoint = NightCheckpointReducer.reduce(
-            checkpoint,
-            NightResolutionEvent.EditDemonAttackDraft("Ravenkeeper"),
-        )
-        checkpoint = NightCheckpointReducer.reduce(
-            checkpoint,
-            NightResolutionEvent.ConfirmDemonAttack,
+        val targets = ClocktowerNightTargets().withProtection(3).withProtection(4).withAttack(3)
+        val names = listOf("Imp", "Monk", "Ravenkeeper", "Empath")
+        val checkpoint = emptyCheckpoint().copy(
+            confirmedMonkTarget = targets.monkSeat?.let { names[it - 1] },
+            confirmedAttackTarget = targets.attackSeat?.let { names[it - 1] },
         )
 
         assertEquals("Empath", checkpoint.confirmedMonkTarget)

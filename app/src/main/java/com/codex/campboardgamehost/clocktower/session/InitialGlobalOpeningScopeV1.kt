@@ -99,36 +99,6 @@ internal class InitialGlobalOpeningScopeV1 private constructor(
             "Unknown legal opening hypothesis."
         }
 
-    /** LLM-only view. A hypothetical actual Drunk is marked CONDITIONAL, never canonical. */
-    fun providerPayload(): JSONObject = JSONObject()
-        .put("schemaId", "botc.initial-global-opening-request")
-        .put("schemaVersion", 1)
-        .put("gameId", snapshot.gameId)
-        .put("stage", "SETUP_PRECOMMIT")
-        .put("gameStateRevision", gameStateRevision)
-        .put("playerInputRevision", playerInputRevision)
-        .put("rosterFingerprint", rosterFingerprint)
-        .put("scopeFingerprint", scopeFingerprint)
-        .put("seats", JSONArray().also { out ->
-            snapshot.grimoireSeats.forEach { seat ->
-                val shownRole = (seat.shownRoleId as SnapshotField.Known<String>).value
-                val actual = seat.actualRoleId
-                out.put(JSONObject()
-                    .put("seat", seat.seat)
-                    .put("shownRoleId", shownRole)
-                    .put("actualRoleId", when (actual) {
-                        is SnapshotField.Known<*> -> actual.value
-                        SnapshotField.Uncommitted -> "UNCOMMITTED"
-                        SnapshotField.Unknown -> "UNKNOWN"
-                        SnapshotField.NotApplicable -> "NOT_APPLICABLE"
-                    })
-                    .put("experience", playerExperience[seat.seat]!!.name))
-            }
-        })
-        .put("hasDrunk", hasDrunk)
-        .put("conditionalLegalScope", legalScopeJson())
-        .put("unknownPlayerActionsAreNotFacts", true)
-
     private fun legalScopeJson(): JSONObject = JSONObject()
         .put("legalDemonBluffRoleIds",
             legalDemonBluffs?.let(::JSONArray) ?: JSONObject.NULL)
@@ -238,7 +208,7 @@ internal class InitialGlobalOpeningScopeV1 private constructor(
             return InitialGlobalOpeningScopeV1(
                 snapshot, hasDrunk, hypotheses.sortedBy { it.drunkSeat ?: 0 },
                 legalDemonBluffs?.sorted(), (1..seats.size).associateWith { seat ->
-                    playerExperience[seat] ?: OpeningPlayerExperienceV1.UNKNOWN
+                    playerExperience[seat] ?: OpeningPlayerExperienceV1.BEGINNER
                 }, gameStateRevision, playerInputRevision, sha256(rosterKey),
             )
         }

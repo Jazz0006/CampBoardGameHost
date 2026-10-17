@@ -128,6 +128,10 @@ internal object PlayerHistoricalTimeline {
                 is ActionFact.Protect,
                 is ActionFact.Attack,
                 is ActionFact.RoleChange,
+                is ActionFact.RedHerringChoice,
+                is ActionFact.ButlerMasterChoice,
+                is ActionFact.MayorRedirectChoice,
+                is ActionFact.DemonBluffChoice,
                 -> null
             }
         }

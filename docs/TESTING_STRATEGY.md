@@ -1,5 +1,7 @@
 # CampBoardGameHost Testing Strategy
 
+> **2026-10-17 产品边界更新：** 最小 Host 明确取消游戏规则校验与线索辅助，相关测试可随取消的功能退休。数据完整性、发布真实性、隐私和异步过期响应保护继续有效。见 [当前产品合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)；本文件旧规则/Recovery 验收条款不覆盖新合同。
+
 > **Current policy (2026-10-15): Evidence-first, not mandatory test-first.** RED/GREEN is an optional technique chosen when it adds value; existing safeguards, CI tiers, exact-head merge acceptance, rules, security and persistence contracts are unchanged. See root `AGENTS.md`.
 
 > Role: **LONG-LIVED TEST EXECUTION / VALIDATION STRATEGY**
@@ -15,6 +17,8 @@ Frequent developer feedback and complete regression validation are separate conc
 
 The suite is also not append-only. A low-value test may be deliberately retired when it protects only obsolete implementation shape, duplicates stronger evidence, or has been superseded by a more stable typed/integration contract. Test retirement must be reviewed as a coverage decision, not treated as ordinary cleanup.
 
+**ARCH-CLEANUP-2 proof focus ([approved contract](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md)):** for each A1–A6 slice, audit all replacement/retirement call sites and deleted duplicate state, protect meaningful atomic commit + idempotency + actual published misinformation + safe recovery contracts, then use normal CI/R2 and representative Android Studio/ADB MANUAL/AI_ASSISTED/AI_AUTOMATIC gameplay. Do not manufacture tests to protect deliberately retired whole-plan adoption, perfect UI restoration, unused replay adapters or discarded formats. A documentation-only CI success is not proof of changed gameplay.
+
 ### 1.1 Evidence-driven test design
 
 The repository uses **risk-based, evidence-first development**:
@@ -24,6 +28,8 @@ The repository uses **risk-based, evidence-first development**:
 - behavior-preserving refactors, file/function movement, mechanical edits, visibility adjustments, and intermediate wiring steps do not require a newly invented RED solely because source code changes;
 - tests should protect behavior, regression risk, or stable architecture boundaries rather than temporary local implementation shape;
 - source-string tests are exceptional evidence and follow the stricter policy in `AGENTS.md`.
+
+For a small default-value, enum selection, or settings-flag change with existing contract coverage, do not mechanically demand a freshly failing test. Audit the impacted producers/consumers, adjust any stale existing expectations, review the exact diff and use the normal independent CI. A new test is justified by previously uncovered durable behavior, not by the number of edited branches or call sites.
 
 Before adding a test, prefer the highest-value stable seam that remains fast enough for the intended feedback loop. A test should ideally survive substantial internal refactoring while the protected behavior remains correct.
 
@@ -126,19 +132,15 @@ The implemented `:app:testFast` task uses default inclusion plus a small explici
 The current FAST exclusions are exactly:
 
 - `ZddPlayerWorldSetTest` (retained in FULL; affected representation correctness)
-- `FirstNightBundleHealthyHarnessAcceptanceTest`
 - `Sde2D4TopologyBundlePerformanceTest`
-- `FirstNightBundleBeginnerCorpusExperiment`
 - `Sde2D4ScaleBenchmarkTest`
-- `Sde2D5CalibrationExperiment`
 - `Sde2D5FExpertObservedCalibrationExperiment`
-- `Sde2D5FB4FSilverGeneralizationExperiment`
 
-All entries except `ZddPlayerWorldSetTest` are also excluded from `testDebugUnitTest` / `testFull` as explicit evidence experiments. The healthy-bundle and topology performance experiments run via `:app:testCostExperiments` (an exact `--tests` filter may select either). The other five keep their existing dedicated tasks: `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`.
+All entries except `ZddPlayerWorldSetTest` are also excluded from `testDebugUnitTest` / `testFull` as explicit evidence experiments. The topology performance experiment runs via `:app:testCostExperiments`. The two retained dedicated tasks are `sde2D4ScaleBenchmark` and `sde2D5FExpertObservedCalibration`. Legacy SDE feature-score/diagnostics, shadow planning, D5 normalized calibration and SILVER experiment surfaces were retired by ARCH-CLEANUP-1. The old FN-BUNDLE-3 corpus and role-specific Drunk/Demon Bluff bundle evaluators were retired by ARCH-CLEANUP-1.
 
 The three bounded Drunk adapter classes, expert legality/determinism, and small-sample setup simulation now default to FAST. `A4ZddBenchmarkTest` is deleted: repeated measurements are not an independent correctness oracle; `ZddPlayerWorldSetTest` retains representation parity, filtering and checkpoint proof.
 
-The 2026-09-27 audit restored `SetupMigrationTest`, `DemonBluffJointOutputEvaluatorTest`, and the three `TroubleBrewingTopology*DifferentialTest` classes to FAST: their current bounded fixtures consumed only 0.797s together in FULL. Their historical exclusion costs no longer describe the current tests. They remain mandatory affected contracts.
+The 2026-09-27 audit restored `SetupMigrationTest` and the three `TroubleBrewingTopology*DifferentialTest` classes to FAST. `DemonBluffJointOutputEvaluatorTest` was subsequently retired with the obsolete D5 experiment during ARCH-CLEANUP-1; production setup and legal-domain contracts remain independently protected.
 
 `A3EnumerationSmokeTest` keeps one exact enumeration per 8/10/12/15-player fixture, without repeated timing or a hardware-dependent deadline. `TopologyBundleBoundaryTest` retains feasibility/size bounds for 5/8/12/15 players. `A4DeviceBenchmarkHarnessTest` verifies report values directly without running world enumeration.
 
@@ -152,22 +154,15 @@ These classifications are not permanent measurements. Re-measure them when the t
 | `ZddPlayerWorldSetTest` | 10–11s | repeated enumeration, ZDD conversion, filtering and representation parity | affected T2 / T3 execution | ZDD, epistemic worlds, filtering, registration, checkpoint/restore |
 | `ExpertRecommendationReviewTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | all 24 scenarios remain legal/nonempty; stable decisions ignore display names; historical score superiority removed | T1 / affected T2 | recommendation legality and determinism |
 | `StorytellerV4BaselineSimulationTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | 25-sample legality, accounting and determinism; no thousand-game report | T1 / affected T2 | setup/selection semantics |
-| `DemonBluffJointOutputEvaluatorTest` | 0.722s local, 2026-09-27 | current bounded bluff-domain/parity and production integration contracts | restored T1 / affected T2 | Demon bluff joint output, exact shown-role fanout, setup/SDE shadow integration |
 | `Sde2D4ScaleBenchmarkTest` | >900s in isolated CI diagnostic | source-derived scale matrix plus raw-enumerator bounded-prefix measurement; no regression latency threshold | explicit T3 evidence harness, dedicated task only | SDE-2D4 raw enumerator scale investigation |
 | `Sde2D4TopologyBundlePerformanceTest` | 1.057s before follow-up | full 5–15 performance report; four-regime correctness smoke retained separately | explicit manual `testCostExperiments` | performance investigation |
-| `Sde2D5CalibrationExperiment` | 5m53s observed when 8 cross-regime topology points were temporarily placed in FAST; historical workflow runs have reached multi-hour duration | deterministic 5–15 STANDARD/BARON calibration evidence generation | explicit T3 evidence harness, dedicated task only | D5 calibration / policy evidence |
 | `Sde2D5FExpertObservedCalibrationExperiment` | about 3.5 minutes end-to-end in GitHub Actions for A Stud + Live + Human Remains topology-first reports | real expert-case committed-prefix counterfactual evidence using topology-first consequence; exhaustive parity remains owned by D4 differential tests | explicit T3 evidence harness, dedicated task/workflow only | D5F-B4 expert-observed reconstruction / consequence evidence |
-| `Sde2D5FB4FSilverGeneralizationExperiment` | about 7 minutes end-to-end in GitHub Actions run #3 after narrowing the historical ct-01 pilot; the retired legacy external-human workflow took about 2h48m | replays only the durable ct-01 legality plus observed whole-bundle-feasibility contracts through production-owned surfaces and emits bounded GOLD-hypothesis generalization evidence | explicit T3 evidence harness, dedicated task/workflow only | D5F-B4F bounded SILVER generalization |
 | `TroubleBrewingTopologySetupWitnessDifferentialTest` | 0.003s local, 2026-09-27 | bounded five-player setup witness parity | restored T1 / affected T2 | topology setup witness semantics |
 | `TroubleBrewingTopologyObservationDifferentialTest` | 0.008s local, 2026-09-27 | bounded observation parity | restored T1 / affected T2 | topology observation semantics |
 | `TroubleBrewingTopologyBundleDifferentialTest` | 0.011s local, 2026-09-27 | bounded same-world whole-bundle shared-witness parity | restored T1 / affected T2 | topology whole-bundle semantics |
 | `A3EnumerationSmokeTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | four single-run exact/nonempty fixtures | T1 / affected T2 | world enumeration |
-| `FirstNightBundleHealthyHarnessAcceptanceTest` | 62.635s before follow-up | 110,000 combinations / 100 public signatures, experimental quotient accounting | explicit manual `testCostExperiments` | historical experiment maintenance |
-| `FirstNightDrunkPairWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk Pair adapter / shared exact semantics |
-| `FirstNightDrunkNumericWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk Numeric adapter / shared exact semantics |
-| `FirstNightDrunkFortuneTellerWholeBundleEvaluatorTest` | see [follow-up measurements](TEST_COST_RETIREMENT_2026-09-27.md) | bounded catalog, unchanged candidate/public projection/marginal assertions; not an independent exact-count oracle | T1 / affected T2 | Drunk FortuneTeller adapter / shared exact semantics |
 
-T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `testCostExperiments`, `fnBundle3Calibration`, `sde2D4ScaleBenchmark`, `sde2D5Calibration`, `sde2D5FExpertObservedCalibration`, and `sde2D5FB4FSilverGeneralization`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
+T3 regression tests are invoked through the existing full test machinery with exact `--tests` filters when triggered. Explicit evidence-generation harnesses that are intentionally outside regression full use dedicated tasks instead; currently these are `testCostExperiments`, `sde2D4ScaleBenchmark`, and `sde2D5FExpertObservedCalibration`. S2 intentionally does not create a generic static `testAffected` or `testExpensive` suite.
 
 ## 7. Dependency-aware escalation matrix
 
@@ -300,11 +295,8 @@ Current Android JVM commands:
 
 `testFull` is a verification/lifecycle task that depends on `:app:testDebugUnitTest`. The underlying debug-unit-test task excludes only explicit non-regression evidence harnesses:
 
-- `FirstNightBundleBeginnerCorpusExperiment` → dedicated `:app:fnBundle3Calibration`;
 - `Sde2D4ScaleBenchmarkTest` → dedicated `:app:sde2D4ScaleBenchmark`;
-- `Sde2D5CalibrationExperiment` → dedicated `:app:sde2D5Calibration`;
 - `Sde2D5FExpertObservedCalibrationExperiment` → dedicated `:app:sde2D5FExpertObservedCalibration`;
-- `Sde2D5FB4FSilverGeneralizationExperiment` → dedicated `:app:sde2D5FB4FSilverGeneralization`.
 
 The SDE-2D4 scale harness remains available and was not deleted. Its isolated CI diagnostic exceeded 900 seconds despite having no stable regression latency threshold, so keeping it inside every T4 would make the acceptance gate unbounded without strengthening a correctness contract.
 
@@ -327,23 +319,11 @@ explicit experiment / scale evidence
 
 No regression test may disappear from full validation **accidentally**. Moving a class out of full requires an explicit coverage classification, preserved runnable evidence where useful, and acceptance of the changed suite contract.
 
-### 13.1 SDE-3 provisional-policy validation
+### 13.1 Old SDE recommendation scoring/shadow retirement
 
-SDE-3 separates stable engine contracts from continuously recalibrated policy.
+ARCH-CLEANUP-1 removed the old recommendation/feature/normalized-consistency/utility projectors, SDE Shadow decision adapters, role-specific Drunk whole-bundle evaluators, experiment-only export contracts and their dedicated tests. They no longer define a production policy or mandatory independent validation track. Historical measurement documents are retained as archival evidence, not current test requirements.
 
-Validation should follow the ownership layer:
-
-- legal candidate identity / lifecycle → focused typed domain/orchestration tests;
-- feature projection → deterministic feature-contract tests at the shared projector owner;
-- persistent impaired narrative → cross-role / cross-information-shape history tests that distinguish mechanical impairment credibility from player-believable functioning narrative continuity;
-- `BEGINNER_CONSERVATIVE_V1` policy → explicit reject/survive/reason-code tests rather than fragile scalar snapshots;
-- replay identity → typed same-game/request binding tests, including different-game/same-revision rejection before exact evaluation or trace persistence;
-- replay codec → strict nested schema/type fail-closed tests for action/observation/proposition material, while legacy save compatibility remains separately characterized;
-- `DecisionTrace` → persistence / replay / policy-version contract tests;
-- shadow production integration → typed integration tests proving recommendation does not mutate canonical state; persistence timing tests must distinguish evaluation, diagnostic I/O and total latency when runtime hardening is implemented;
-- historical expert/SILVER replay → named dedicated T3 evidence harnesses, not ordinary FAST regression.
-
-When evidence later changes policy ordering without changing legality/feature semantics, prefer versioned policy fixtures and replay evidence over rewriting rules tests.
+**Retained contracts**: Host legality and registration/witness rules, canonical ActionFactTimeline and EpistemicObservationLog, production SdeHistoricalReplayInput/JSON Recovery codec, exact topology/epistemic correctness, while the former test-only SDE setup/binding adapters have been retired. Production Host setup and Red Herring legality contracts remain in their own active rules modules. Validate these through their active owning tests, not the retired preference/score projections.
 
 Do not use win/loss as a direct expected value for a Storyteller recommendation test.
 

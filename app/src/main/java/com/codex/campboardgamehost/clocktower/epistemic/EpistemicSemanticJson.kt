@@ -107,6 +107,22 @@ object EpistemicSemanticJson {
             "learnedActionId" to value.learnedActionId,
         )
         is ActionFact.RoleChange -> mapOf("actionId" to value.actionId, "alignment" to value.alignment.name, "kind" to "role-change", "role" to value.role.value, "sequence" to value.sequence, "targetSeat" to value.targetSeat, "type" to value.type.name)
+        is ActionFact.ButlerMasterChoice -> mapOf(
+            "actionId" to value.actionId, "kind" to "butler-master",
+            "sequence" to value.sequence, "butlerSeat" to value.butlerSeat, "masterSeat" to value.masterSeat,
+        )
+        is ActionFact.RedHerringChoice -> mapOf(
+            "actionId" to value.actionId, "kind" to "red-herring-choice",
+            "sequence" to value.sequence, "selectedSeat" to value.selectedSeat,
+        )
+        is ActionFact.MayorRedirectChoice -> mapOf(
+            "actionId" to value.actionId, "kind" to "mayor-redirect",
+            "sequence" to value.sequence, "mayorSeat" to value.mayorSeat, "targetSeat" to value.targetSeat,
+        )
+        is ActionFact.DemonBluffChoice -> mapOf(
+            "actionId" to value.actionId, "kind" to "demon-bluff-choice",
+            "sequence" to value.sequence, "roleIds" to value.roles.map { it.value },
+        )
         is ActionFact.PhaseAdvance -> mapOf("actionId" to value.actionId, "kind" to "phase-advance", "phase" to value.phase.name, "round" to value.round, "sequence" to value.sequence)
     }
 
@@ -317,6 +333,16 @@ object EpistemicSemanticJson {
             json.getString("learnedActionId"),
         )
         "role-change" -> ActionFact.RoleChange(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"), RoleId(json.getString("role")), Alignment.valueOf(json.getString("alignment")), CharacterType.valueOf(json.getString("type")))
+        "red-herring-choice" -> ActionFact.RedHerringChoice(
+            json.getString("actionId"), json.getLong("sequence"),
+            if (json.isNull("selectedSeat")) null else json.getInt("selectedSeat"),
+        )
+        "demon-bluff-choice" -> ActionFact.DemonBluffChoice(
+            json.getString("actionId"), json.getLong("sequence"),
+            json.getJSONArray("roleIds").let { arr ->
+                (0 until arr.length()).map { i -> RoleId(arr.getString(i)) }
+            },
+        )
         "phase-advance" -> ActionFact.PhaseAdvance(json.getString("actionId"), json.getLong("sequence"), StorytellerPhase.valueOf(json.getString("phase")), json.getInt("round"))
         else -> error("Unknown B4 action fact kind: ${json.getString("kind")}")
     }

@@ -1,27 +1,18 @@
 package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
-import com.codex.campboardgamehost.clocktower.domain.DecisionCorrectionEvent
-import com.codex.campboardgamehost.clocktower.domain.DecisionEventStatus
 import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
-import com.codex.campboardgamehost.clocktower.domain.DecisionExplanation
-import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionEvent
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 
 internal class ClocktowerRecommendationCoordinator(
-    initialArchive: DecisionHistoryArchive = DecisionHistoryArchive(),
     private val nightModule: NightRecommendationModule = NightRecommendationModule(),
-    private val historyModule: HistoryReviewModule = HistoryReviewModule(),
 ) {
-    private val eventStore = InMemoryDecisionEventStore(initialArchive)
-
     fun resolveInformation(request: InformationResolutionRequest) = nightModule.resolveInformation(request)
 
     /** Typed UI-adapter seam; rules candidate generation remains owned by the recommendation/session layer. */
@@ -71,22 +62,4 @@ internal class ClocktowerRecommendationCoordinator(
                 metadata = candidate.metadata,
             )
         }
-
-    fun appendDecision(event: StorytellerDecisionEvent, revision: DecisionRevision): DecisionAppendResult =
-        eventStore.appendAtomically(event, revision)
-
-    fun transitionDecision(
-        eventId: String,
-        expected: DecisionEventStatus,
-        next: DecisionEventStatus,
-    ): Boolean = eventStore.transitionStatus(eventId, expected, next)
-
-    fun correctDecision(correction: DecisionCorrectionEvent): Boolean = eventStore.appendCorrection(correction)
-
-    fun archive(): DecisionHistoryArchive = eventStore.archive()
-
-    fun explainDecision(eventId: String): DecisionExplanation? = historyModule.explainEvent(eventStore.archive(), eventId)
-
-    fun postGameReview() = historyModule.postGameReview(eventStore.archive())
-
 }

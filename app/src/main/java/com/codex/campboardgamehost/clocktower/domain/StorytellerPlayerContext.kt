@@ -3,7 +3,7 @@ package com.codex.campboardgamehost.clocktower.domain
 /**
  * Player skill used as Storyteller recommendation enrichment.
  *
- * NORMAL is the product default when no player-profile value has been supplied yet.
+ * BEGINNER is the product default when no player-profile value has been supplied yet.
  */
 internal enum class PlayerExperienceLevelV1 {
     BEGINNER,
@@ -29,7 +29,7 @@ internal enum class StorytellerDeclaredPressureLevelV1 {
  * The session may store only non-default overrides; consumers must treat absence as this default.
  */
 internal data class StorytellerPlayerContextInputV1(
-    val experienceLevel: PlayerExperienceLevelV1 = PlayerExperienceLevelV1.NORMAL,
+    val experienceLevel: PlayerExperienceLevelV1 = PlayerExperienceLevelV1.BEGINNER,
     val claimedRoleIds: List<RoleId> = emptyList(),
     val pressureLevel: StorytellerDeclaredPressureLevelV1? = null,
 ) {

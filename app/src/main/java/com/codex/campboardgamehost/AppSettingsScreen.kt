@@ -26,11 +26,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.debug.DebugFlightRecorder
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 
 @Composable
 internal fun SettingsScreen(
     languageMode: LanguageMode,
     commonPlayers: List<String>,
+    playerExperienceByName: Map<String, PlayerExperienceLevelV1>,
+    onPlayerExperienceChange: (String, PlayerExperienceLevelV1) -> Unit,
     newCommonPlayerName: String,
     onLanguageModeChange: (LanguageMode) -> Unit,
     onNewCommonPlayerNameChange: (String) -> Unit,
@@ -42,6 +45,8 @@ internal fun SettingsScreen(
     SettingsContent(
         languageMode = languageMode,
         commonPlayers = commonPlayers,
+        playerExperienceByName = playerExperienceByName,
+        onPlayerExperienceChange = onPlayerExperienceChange,
         newCommonPlayerName = newCommonPlayerName,
         onLanguageModeChange = onLanguageModeChange,
         onNewCommonPlayerNameChange = onNewCommonPlayerNameChange,
@@ -57,6 +62,8 @@ internal fun SettingsScreen(
 internal fun SettingsContent(
     languageMode: LanguageMode,
     commonPlayers: List<String>,
+    playerExperienceByName: Map<String, PlayerExperienceLevelV1>,
+    onPlayerExperienceChange: (String, PlayerExperienceLevelV1) -> Unit,
     newCommonPlayerName: String,
     onLanguageModeChange: (LanguageMode) -> Unit,
     onNewCommonPlayerNameChange: (String) -> Unit,
@@ -124,6 +131,11 @@ internal fun SettingsContent(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(stringResource(R.string.common_players_management), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        if (isEnglish) "Experience belongs to each player. Unset means Beginner. Updates apply to future games, not the current game."
+                        else "玩家水平按人长期保存；未设置均为新手。修改对下一局生效，不改变正在进行的游戏。",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -155,6 +167,11 @@ internal fun SettingsContent(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text(name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                                PlayerExperiencePicker(
+                                    playerName = name,
+                                    value = playerExperienceByName[name] ?: PlayerExperienceLevelV1.BEGINNER,
+                                    onChange = { onPlayerExperienceChange(name, it) },
+                                )
                                 TextButton(onClick = { onRemoveCommonPlayer(name) }) {
                                     Text(stringResource(R.string.remove))
                                 }

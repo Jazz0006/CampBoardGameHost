@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.domain
 
-import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 
@@ -11,8 +10,6 @@ data class GameSnapshot(
     val gameSeed: Long,
     val rulesetRef: RulesetRef,
     val gameState: GameState,
-    val decisionHistory: DecisionHistoryArchive = DecisionHistoryArchive(),
-    val crossGameHistory: CrossGameHistory = CrossGameHistory(),
     /** Mechanical facts committed to the same game-wide timeline as epistemic observations. */
     val actionTimeline: ActionFactTimeline = ActionFactTimeline(),
     /** Recipient-scoped facts already delivered during this game; actual roles are never inferred from it. */

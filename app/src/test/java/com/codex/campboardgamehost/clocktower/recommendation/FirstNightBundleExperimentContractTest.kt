@@ -15,6 +15,9 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalContext
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalObservationBundleEvaluator
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleEvaluation
+import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
 import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
@@ -119,19 +122,24 @@ class FirstNightBundleExperimentContractTest {
         )
         val entriesBefore = bundle.entries.toList()
 
-        val evaluation = FirstNightBundleExperimentEvaluator.evaluateBeginnerPublicGoodInfo(
+        val projected = FirstNightPublicGoodInfoProjection.project(bundle)
+        val evaluation = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
             validatedRuleset = validatedRuleset,
             context = context(),
-            bundle = bundle,
-            evaluationRecipientSeats = setOf(2, 1),
+            queries = listOf(1, 2).map { seat ->
+                ExactHypotheticalObservationBundleQuery(
+                    bundleId = bundle.bundleId,
+                    recipientSeat = seat,
+                    observations = projected,
+                )
+            },
         )
 
-        assertTrue(evaluation is FirstNightBundleExperimentEvaluation.Ready)
-        val ready = evaluation as FirstNightBundleExperimentEvaluation.Ready
-        assertEquals(FirstNightExperimentProfile.BEGINNER_PUBLIC_GOOD_INFO, ready.profile)
-        assertEquals(1, ready.publicObservationCount)
-        assertEquals(listOf(1, 2), ready.recipientDiagnostics.map { it.recipientSeat })
-        assertTrue(ready.recipientDiagnostics.all { it.after.value <= it.before.value })
+        assertTrue(evaluation is ExactHypotheticalObservationBundleEvaluation.Ready)
+        val ready = evaluation as ExactHypotheticalObservationBundleEvaluation.Ready
+        assertEquals(1, projected.size)
+        assertEquals(listOf(1, 2), ready.diagnostics.map { it.recipientSeat })
+        assertTrue(ready.diagnostics.all { it.after.value <= it.before.value })
         assertEquals(entriesBefore, bundle.entries)
         assertEquals(ObservationVisibility.PRIVATE, original.visibility)
         assertEquals(setOf(1), original.recipientSeats)

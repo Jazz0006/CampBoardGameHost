@@ -4,62 +4,54 @@ import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMo
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionIdentityV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderGameContextV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryCutoffSourceV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryPrefixV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderPlayerContextV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryEntryV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderPriorDecisionV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
-import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSeat
-import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSetupState
 import java.util.Collections
 
 /**
- * Exact typed snapshot identity, not just game/input revisions. Contents are immutable scalar
- * snapshots; no localized role labels or inference from a later GameState.
+ * Identity and status required to validate a confirmed ruling. No setup or player-profile copy.
  */
 internal data class FrozenStorytellerSnapshotIdentityV1(
     val gameId: String,
-    val gameSeed: Long,
-    val position: TroubleBrewingSnapshotPosition,
-    val setupState: TroubleBrewingSnapshotSetupState,
+    val phase: SnapshotField<StorytellerPhase>,
     val seats: List<TroubleBrewingSnapshotSeat>,
 )
 
 /**
- * At-request-time captured data. Caller must retain it as-is; the current Session's cursor is NOT
- * a substitute for this frozen prefix when historical decisions are reviewed.
+ * Commit validation context, not a historical request archive. The single observation is the
+ * actual just-published information; full history stays in the Session.
  */
 internal class FrozenStorytellerDecisionPrefixV1 internal constructor(
     val identity: StorytellerProviderDecisionIdentityV1,
     val revision: StorytellerProviderRevisionV1,
     val snapshotIdentity: FrozenStorytellerSnapshotIdentityV1,
-    val historyPrefix: StorytellerProviderHistoryPrefixV1,
-    players: List<StorytellerProviderPlayerContextV1>,
+    val exclusiveGlobalSequence: Long,
+    val publishedObservation: StorytellerProviderHistoryEntryV1.Observation?,
     legalCandidateIds: List<String>,
 ) {
-    val players: List<StorytellerProviderPlayerContextV1> = Collections.unmodifiableList(
-        players.map { it.copy(claimedRoleIds = Collections.unmodifiableList(it.claimedRoleIds.toList())) },
-    )
     val legalCandidateIds: List<String> = Collections.unmodifiableList(legalCandidateIds.toList())
-    val exclusiveGlobalSequence: Long = requireNotNull(historyPrefix.exclusiveGlobalSequence)
 
     init {
-        require(identity.gameId == snapshotIdentity.gameId && identity.gameId == historyPrefix.gameId)
-        require(historyPrefix.sourceRevision == revision)
-        require(historyPrefix.cutoffSource == StorytellerProviderHistoryCutoffSourceV1.LIVE_CAPTURED)
+        require(identity.gameId == snapshotIdentity.gameId)
+        require(exclusiveGlobalSequence >= 0)
+        require(publishedObservation == null ||
+            publishedObservation.point.globalSequence == exclusiveGlobalSequence - 1)
         require(legalCandidateIds.isNotEmpty() && legalCandidateIds.distinct().size == legalCandidateIds.size)
     }
 
     override fun equals(other: Any?): Boolean = other is FrozenStorytellerDecisionPrefixV1 &&
         identity == other.identity && revision == other.revision &&
-        snapshotIdentity == other.snapshotIdentity && historyPrefix == other.historyPrefix &&
-        players == other.players && legalCandidateIds == other.legalCandidateIds
+        snapshotIdentity == other.snapshotIdentity && exclusiveGlobalSequence == other.exclusiveGlobalSequence &&
+        publishedObservation == other.publishedObservation && legalCandidateIds == other.legalCandidateIds
 
     override fun hashCode(): Int = listOf(
-        identity, revision, snapshotIdentity, historyPrefix, players, legalCandidateIds,
+        identity, revision, snapshotIdentity, exclusiveGlobalSequence, publishedObservation, legalCandidateIds,
     ).hashCode()
 }
 
@@ -70,12 +62,22 @@ internal class FrozenStorytellerDecisionPrefixV1 internal constructor(
  * Must be called with the frozen SessionState that actually produced the request.
  */
 internal object StorytellerDecisionPrefixCaptureV1 {
+    /**
+     * Runtime GameState RoleId uses names such as "Fortune Teller" while the verified TB
+     * projection has canonical external IDs such as "fortuneteller". They refer to the same
+     * identity, not two different characters. Never permit a genuinely different role.
+     */
+    private fun sameCharacterId(snapshotId: String, sessionId: String): Boolean =
+        snapshotId == sessionId ||
+            snapshotId.filter { it.isLetterOrDigit() }.lowercase() ==
+                sessionId.filter { it.isLetterOrDigit() }.lowercase()
+
     fun capture(
         request: StorytellerProviderRequestV1,
         sessionState: ClocktowerSessionState,
     ): FrozenStorytellerDecisionPrefixV1 {
         require(sessionState.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1) {
-            "Historical decision capture needs a verifiable global history."
+            "Decision validation needs a verifiable global history."
         }
         require(request.identity.gameId == sessionState.gameId)
         require(request.sourceRevision == StorytellerProviderRevisionV1(
@@ -91,10 +93,14 @@ internal object StorytellerDecisionPrefixCaptureV1 {
         require(snapshot.grimoireSeats.map { it.seat } == currentSeats.map { it.seat })
         snapshot.grimoireSeats.zip(currentSeats).forEach { (seat, player) ->
             (seat.actualRoleId as? SnapshotField.Known<String>)?.let {
-                require(it.value == player.actualRole.value) { "Snapshot actual role diverges from frozen Session." }
+                require(sameCharacterId(it.value, player.actualRole.value)) {
+                    "Snapshot actual role diverges from frozen Session."
+                }
             }
             (seat.shownRoleId as? SnapshotField.Known<String>)?.let {
-                require(it.value == (player.shownRole ?: player.actualRole).value) { "Snapshot shown role diverges from frozen Session." }
+                require(sameCharacterId(it.value, (player.shownRole ?: player.actualRole).value)) {
+                    "Snapshot shown role diverges from frozen Session."
+                }
             }
             (seat.alive as? SnapshotField.Known<Boolean>)?.let {
                 require(it.value == player.alive) { "Snapshot life state diverges from frozen Session." }
@@ -118,25 +124,29 @@ internal object StorytellerDecisionPrefixCaptureV1 {
         require(request.gameContext.players.map { it.seat } == snapshot.grimoireSeats.map { it.seat }) {
             "Frozen player context must cover the same canonical seats."
         }
+        val validationSeats = when (val context = request.decisionContext) {
+            is StorytellerProviderDecisionContextV1.RegistrationResolution -> setOf(context.subjectSeat)
+            is StorytellerProviderDecisionContextV1.DayAbilityRegistration -> setOf(context.actorSeat, context.subjectSeat)
+            else -> emptySet()
+        }
         return FrozenStorytellerDecisionPrefixV1(
             identity = request.identity,
             revision = request.sourceRevision,
             snapshotIdentity = FrozenStorytellerSnapshotIdentityV1(
                 gameId = snapshot.gameId,
-                gameSeed = snapshot.gameSeed,
-                position = snapshot.position,
-                setupState = snapshot.setupState,
-                seats = Collections.unmodifiableList(snapshot.grimoireSeats.toList()),
+                phase = snapshot.position.phase,
+                seats = Collections.unmodifiableList(snapshot.grimoireSeats.filter { it.seat in validationSeats }),
             ),
-            historyPrefix = actual,
-            players = request.gameContext.players,
+            exclusiveGlobalSequence = requireNotNull(actual.exclusiveGlobalSequence),
+            publishedObservation = if (request.decisionContext is StorytellerProviderDecisionContextV1.RegistrationResolution)
+                actual.entries.lastOrNull() as? StorytellerProviderHistoryEntryV1.Observation else null,
             legalCandidateIds = request.legalCandidateIds,
         )
     }
 }
 
 /**
- * Exact ordered journal entries used by the current-format Recovery codec. Unlike a final
+ * Exact ordered journal entries used by atomic commit validation. Unlike a final
  * DecisionHistoryProjection, corrections retain their original position in the chronology.
  */
 internal sealed interface StorytellerCausalJournalRecordV1 {
@@ -160,45 +170,25 @@ internal data class StorytellerCausalJournalArchiveV1(
 }
 
 /**
- * R1C2A in-memory reference implementation of independent decision chronology.
- * Distinct from the mechanical global timeline: two decisions may occur at the same game/input
- * revision and the same mechanical cursor, yet a later correction must not rewrite an old prefix.
- *
- * NO production writer or Recovery codec exists yet. Do not claim this is durable or exhaustive.
+ * Session-owned, append-only decision/correction chronology, distinct from mechanical facts.
+ * Two rulings may share one game/input revision and cursor; corrections retain causal order.
+ * Production first-publication rulings are staged and accepted with the observation,
+ * while later explicit corrections append new journal events. The journal is validated during
+ * atomic commits and is not an independent game-state authority.
  */
 internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
-    private sealed interface Entry {
-        data class Captured(val frozen: FrozenStorytellerDecisionPrefixV1) : Entry
-        data class Committed(val decisionId: String, val value: StorytellerProviderPriorDecisionV1) : Entry
-        data class Corrected(
-            val correctionId: String,
-            val replacedEventId: String,
-            val replacementEventId: String,
-        ) : Entry
-    }
-
-    private val entries = mutableListOf<Entry>()
+    private val entries = mutableListOf<StorytellerCausalJournalRecordV1>()
 
     init { require(gameId.isNotBlank()) }
 
     fun archive(): StorytellerCausalJournalArchiveV1 = StorytellerCausalJournalArchiveV1(
-        gameId, Collections.unmodifiableList(entries.map { entry ->
-            when (entry) {
-                is Entry.Captured -> StorytellerCausalJournalRecordV1.Captured(entry.frozen)
-                is Entry.Committed -> StorytellerCausalJournalRecordV1.Committed(
-                    entry.decisionId, immutableDecision(entry.value),
-                )
-                is Entry.Corrected -> StorytellerCausalJournalRecordV1.Corrected(
-                    entry.correctionId, entry.replacedEventId, entry.replacementEventId,
-                )
-            }
-        }),
+        gameId, Collections.unmodifiableList(entries.toList()),
     )
 
     companion object {
         /**
-         * Restore from typed Recovery, validating every historical capture against the *actual*
-         * recovered append-only global facts. No future event or amended correction is admitted.
+         * Stage an isolated journal for an atomic Session transaction. Validate each retained
+         * observation against canonical facts; this does not reconstruct historical requests.
          */
         fun restore(
             archive: StorytellerCausalJournalArchiveV1,
@@ -207,6 +197,10 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
             require(archive.gameId == currentSession.gameId)
             require(currentSession.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1)
             val journal = StorytellerCausalDecisionJournalV1(archive.gameId)
+            val history by lazy {
+                StorytellerProviderHistoryPrefixMaterializerV1.captureLive(currentSession,
+                    StorytellerProviderRevisionV1(currentSession.gameStateRevision, currentSession.playerInputRevision))
+            }
             archive.records.forEach { record ->
                 when (record) {
                     is StorytellerCausalJournalRecordV1.Captured -> {
@@ -214,25 +208,16 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
                         require(frozen.identity.gameId == archive.gameId)
                         require(frozen.exclusiveGlobalSequence <= currentSession.nextTimelineGlobalSequence)
                         require(journal.entries.none {
-                            it is Entry.Captured && it.frozen.identity.decisionId == frozen.identity.decisionId
+                            it is StorytellerCausalJournalRecordV1.Captured && it.frozen.identity.decisionId == frozen.identity.decisionId
                         })
                         require(frozen.revision.gameStateRevision <= currentSession.gameStateRevision)
                         require(frozen.revision.playerInputRevision <= currentSession.playerInputRevision)
-                        val full = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(
-                            currentSession,
-                            StorytellerProviderRevisionV1(
-                                currentSession.gameStateRevision,
-                                currentSession.playerInputRevision,
-                            ),
-                        )
-                        val rebuilt = StorytellerProviderHistoryPrefixV1.capturedLive(
-                            archive.gameId, frozen.revision, frozen.exclusiveGlobalSequence,
-                            full.entries.filter { it.point.globalSequence < frozen.exclusiveGlobalSequence },
-                        )
-                        require(frozen.historyPrefix == rebuilt) {
-                            "Saved decision history differs from canonical recovered facts."
+                        frozen.publishedObservation?.let { observation ->
+                            require(history.entries.singleOrNull { it.entryId == observation.entryId } == observation) {
+                                "Registration observation differs from canonical Session facts."
+                            }
                         }
-                        journal.entries += Entry.Captured(frozen)
+                        journal.entries += StorytellerCausalJournalRecordV1.Captured(frozen)
                     }
                     is StorytellerCausalJournalRecordV1.Committed ->
                         journal.commit(record.decisionId, record.value)
@@ -261,7 +246,7 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
             sessionState.gameStateRevision, sessionState.playerInputRevision,
         )
         val base = StorytellerProviderGameContextBuilderV1.build(snapshot, revision, sessionState)
-        return base.copy(priorDecisions = effectiveBefore(entries.size))
+        return base.copy(priorDecisions = effectiveNow())
     }
 
     fun captureBeforeDecision(
@@ -269,14 +254,14 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
         sessionState: ClocktowerSessionState,
     ): FrozenStorytellerDecisionPrefixV1 {
         require(request.identity.gameId == gameId)
-        require(entries.none { it is Entry.Captured && it.frozen.identity.decisionId == request.identity.decisionId }) {
+        require(entries.none { it is StorytellerCausalJournalRecordV1.Captured && it.frozen.identity.decisionId == request.identity.decisionId }) {
             "Decision capture identity already exists; do not replace its frozen prefix."
         }
-        require(request.gameContext.priorDecisions == effectiveBefore(entries.size)) {
+        require(request.gameContext.priorDecisions == effectiveNow()) {
             "The new decision must see exactly the available causal history at this instant."
         }
         val frozen = StorytellerDecisionPrefixCaptureV1.capture(request, sessionState)
-        entries += Entry.Captured(frozen)
+        entries += StorytellerCausalJournalRecordV1.Captured(frozen)
         return frozen
     }
 
@@ -299,10 +284,10 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
         require(event.selectedCandidateId in frozen.legalCandidateIds)
         require(event.gameStateRevision == frozen.revision.gameStateRevision &&
             event.playerInputRevision == frozen.revision.playerInputRevision)
-        require(entries.none { it is Entry.Committed && (it.decisionId == decisionId || it.value.eventId == event.eventId) }) {
+        require(entries.none { it is StorytellerCausalJournalRecordV1.Committed && (it.decisionId == decisionId || it.value.eventId == event.eventId) }) {
             "A decision and its commit event must each be unique."
         }
-        entries += Entry.Committed(decisionId, immutableDecision(event))
+        entries += StorytellerCausalJournalRecordV1.Committed(decisionId, immutableDecision(event))
     }
 
     /**
@@ -312,7 +297,7 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
     fun correct(correctionId: String, replacedEventId: String, replacementEventId: String) {
         require(correctionId.isNotBlank() && replacedEventId != replacementEventId)
         val prior = entries.mapIndexedNotNull { index, entry ->
-            (entry as? Entry.Committed)?.let { index to it.value.eventId }
+            (entry as? StorytellerCausalJournalRecordV1.Committed)?.let { index to it.value.eventId }
         }.toMap()
         val earlier = prior.entries.firstOrNull { it.value == replacedEventId }?.key
             ?: error("Correction requires an existing replaced commit.")
@@ -320,38 +305,24 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
             ?: error("Correction requires an existing replacement commit.")
         require(later > earlier) { "Replacement must causally follow the replaced commit." }
         require(entries.none {
-            it is Entry.Corrected && (it.correctionId == correctionId ||
+            it is StorytellerCausalJournalRecordV1.Corrected && (it.correctionId == correctionId ||
                 it.replacedEventId == replacedEventId || it.replacementEventId == replacementEventId)
         })
-        entries += Entry.Corrected(correctionId, replacedEventId, replacementEventId)
+        entries += StorytellerCausalJournalRecordV1.Corrected(correctionId, replacedEventId, replacementEventId)
     }
 
     /** Current effective decisions for the next Host-owned decision boundary. */
-    fun effectiveNow(): List<StorytellerProviderPriorDecisionV1> = effectiveBefore(entries.size)
-
-    /** Full frozen record survives later commits/corrections unchanged. */
-    fun frozenAt(decisionId: String): FrozenStorytellerDecisionPrefixV1 = captureFor(decisionId)
-
-    /** Effective decisions observable STRICTLY BEFORE this capture; no later correction rewrites it. */
-    fun effectiveAt(decisionId: String): List<StorytellerProviderPriorDecisionV1> {
-        val cutoff = entries.indexOfFirst {
-            it is Entry.Captured && it.frozen.identity.decisionId == decisionId
-        }
-        require(cutoff >= 0) { "Unknown frozen decision." }
-        return effectiveBefore(cutoff)
-    }
-
-    private fun effectiveBefore(exclusiveOrdinal: Int): List<StorytellerProviderPriorDecisionV1> {
-        val prior = entries.take(exclusiveOrdinal)
-        val replaced = prior.filterIsInstance<Entry.Corrected>().mapTo(mutableSetOf()) { it.replacedEventId }
-        return prior.filterIsInstance<Entry.Committed>()
+    fun effectiveNow(): List<StorytellerProviderPriorDecisionV1> {
+        val prior = entries
+        val replaced = prior.filterIsInstance<StorytellerCausalJournalRecordV1.Corrected>().mapTo(mutableSetOf()) { it.replacedEventId }
+        return prior.filterIsInstance<StorytellerCausalJournalRecordV1.Committed>()
             .map { it.value }
             .filterNot { it.eventId in replaced }
             .map(::immutableDecision)
     }
 
     private fun captureFor(decisionId: String): FrozenStorytellerDecisionPrefixV1 =
-        entries.filterIsInstance<Entry.Captured>()
+        entries.filterIsInstance<StorytellerCausalJournalRecordV1.Captured>()
             .singleOrNull { it.frozen.identity.decisionId == decisionId }?.frozen
             ?: error("No exact prior decision capture exists.")
 }

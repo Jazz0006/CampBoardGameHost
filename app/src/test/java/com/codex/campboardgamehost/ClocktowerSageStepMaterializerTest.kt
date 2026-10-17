@@ -1,14 +1,15 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerSageStepMaterializerTest {
     @Test
-    fun `Sage option projection carries typed pair seats without epistemic proposition`() {
-        val cards = (1..5).map { seat -> sageMaterializerCard("P$seat") }
+    fun `Sage option retains actually selected demon candidate seats as a typed proposition`() {
+        val cards = (1..5).map { seat -> sageMaterializerCard("P$seat", seat == 2) }
         val options = clocktowerSageDisplayOptions(
             cards = cards,
             actor = cards[3],
@@ -20,14 +21,14 @@ class ClocktowerSageStepMaterializerTest {
         assertEquals(6, options.size)
         val option = options.single { it.presentationSubjectSeats == listOf(1, 2) }
         assertEquals("1   2", option.displaySecondary)
-        assertNull(option.proposition)
+        assertEquals(demonClaim(1, 2), option.proposition)
         assertTrue(option.isTruthful)
         assertTrue(options.any { !it.isTruthful })
     }
 
     @Test
     fun `truthful-only Sage projection exposes every legal truthful pair without ranking`() {
-        val cards = (1..5).map { seat -> sageMaterializerCard("P$seat") }
+        val cards = (1..5).map { seat -> sageMaterializerCard("P$seat", seat == 2) }
 
         val options = clocktowerSageDisplayOptions(
             cards = cards,
@@ -40,12 +41,16 @@ class ClocktowerSageStepMaterializerTest {
         assertEquals(3, options.size)
         assertTrue(options.all { option -> 2 in option.presentationSubjectSeats })
         assertTrue(options.all { it.isTruthful })
-        assertTrue(options.all { it.proposition == null })
+        assertTrue(options.all { option ->
+            option.proposition == demonClaim(
+                option.presentationSubjectSeats[0], option.presentationSubjectSeats[1],
+            )
+        })
     }
 
     @Test
     fun `Sage materializer builds direct reliable step from prepared Host facts`() {
-        val cards = (1..5).map { seat -> sageMaterializerCard("P$seat") }
+        val cards = (1..5).map { seat -> sageMaterializerCard("P$seat", seat == 2) }
         val actor = cards[3]
         val demon = cards[1]
         val builder = ClocktowerInformationStepBuilder(
@@ -56,7 +61,6 @@ class ClocktowerSageStepMaterializerTest {
             roleMissingReason = { "missing" },
             abilityStateFor = { _, _ -> null },
             actorIsUnreliable = { _, _ -> false },
-            recentMisinformationStreak = { 0 },
         )
 
         val entry = clocktowerSageStepMaterializer(
@@ -75,8 +79,13 @@ class ClocktowerSageStepMaterializerTest {
         assertEquals(actor, step.actor)
         assertEquals(listOf(2, 5), step.presentationSubjectSeats)
         assertEquals("2   5", step.displaySecondary)
-        assertNull(step.displayProposition)
+        assertEquals(demonClaim(2, 5), step.displayProposition)
     }
+
+    private fun demonClaim(first: Int, second: Int) = InformationProposition.AnyOf(listOf(
+        InformationProposition.RoleAt(first, RoleId("Imp")),
+        InformationProposition.RoleAt(second, RoleId("Imp")),
+    ))
 
     private fun sageContent() = ClocktowerSageStepContent(
         explanation = "When killed by the Demon, the Sage learns that the Demon is one of two players.",
@@ -87,15 +96,15 @@ class ClocktowerSageStepMaterializerTest {
         highPressureSuffix = " high pressure",
     )
 
-    private fun sageMaterializerCard(name: String) = PlayerCard(
+    private fun sageMaterializerCard(name: String, demon: Boolean = false) = PlayerCard(
         name = name,
         role = Role.Civilian,
         word = "",
-        clocktowerTeam = ClocktowerTeam.Townsfolk,
+        clocktowerTeam = if (demon) ClocktowerTeam.Demon else ClocktowerTeam.Townsfolk,
         clocktowerRole = ClocktowerRole(
-            team = ClocktowerTeam.Townsfolk,
-            zhName = "贤者",
-            enName = "Sage",
+            team = if (demon) ClocktowerTeam.Demon else ClocktowerTeam.Townsfolk,
+            zhName = if (demon) "小恶魔" else "贤者",
+            enName = if (demon) "Imp" else "Sage",
             zhDescription = "",
             enDescription = "",
         ),

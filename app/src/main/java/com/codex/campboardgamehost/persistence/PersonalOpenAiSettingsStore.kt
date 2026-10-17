@@ -13,8 +13,12 @@ internal class PersonalOpenAiSettingsStore(context: Context) {
     fun saveEnabled(enabled: Boolean) {
         prefs.edit().putBoolean("direct_enabled", enabled).apply()
     }
-    fun loadModel(): String = credentials.loadEndpoint().ifBlank {
-        PersonalDirectOpenAiV1.DEFAULT_MODEL
+    fun loadModel(): String {
+        val saved = credentials.loadEndpoint().trim()
+        // Migrate the former shipped default; a saved gpt-5.6-luna would otherwise
+        // silently override the new default after every app upgrade.
+        return if (saved.isBlank() || saved == "gpt-5.6-luna")
+            PersonalDirectOpenAiV1.DEFAULT_MODEL else saved
     }
     fun saveModel(model: String) = credentials.saveEndpoint(model)
     fun loadKey(): String = credentials.loadToken()

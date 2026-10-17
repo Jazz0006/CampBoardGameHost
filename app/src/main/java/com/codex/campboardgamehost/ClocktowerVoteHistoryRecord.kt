@@ -1,6 +1,6 @@
 package com.codex.campboardgamehost
 
-/** Immutable voter snapshot captured at the confirmed-vote boundary for durable game history. */
+/** Immutable voter snapshot captured at the confirmed-vote boundary for the Session action. */
 internal data class ClocktowerConfirmedVoter(
     val seatId: ClocktowerSeatId,
     val playerName: String,
@@ -12,20 +12,6 @@ internal data class ClocktowerConfirmedVoteRecord(
 ) {
     val voteCount: Int
         get() = voters.size
-
-    fun voterDetail(
-        playerLabel: (String) -> String,
-        ghostVoteSuffix: String,
-        noVotesLabel: String,
-    ): String {
-        if (voters.isEmpty()) return noVotesLabel
-        return voters.joinToString(separator = "、") { voter ->
-            buildString {
-                append(playerLabel(voter.playerName))
-                if (voter.isGhostVote) append(ghostVoteSuffix)
-            }
-        }
-    }
 }
 
 internal fun ClocktowerTableVoteState.confirmedVoteRecord(): ClocktowerConfirmedVoteRecord {

@@ -46,6 +46,20 @@ class ClocktowerStructuredInformationPreparationTest {
     }
 
     @Test
+    fun `a verified joint plan selects from a multi-choice Host domain without narrowing it`() {
+        val first = option(1)
+        val second = option(2)
+        val legal = listOf(first, second)
+        assertSame(second, clocktowerAutomaticInformationOption(
+            legal, approvedOption = second.copy(label = "AI private suggestion")))
+        assertEquals(2, legal.size) // Host manual choice and override remain available
+        assertNull(clocktowerAutomaticInformationOption(
+            legal, approvedOption = option(5))) // stale recommendation fails closed
+        assertSame(first, clocktowerAutomaticInformationOption(
+            listOf(first), approvedOption = option(5))) // rules-only singleton
+    }
+
+    @Test
     fun `Empath uses legacy subjects and truthful candidate before display fallbacks`() {
         val legacy = option(1).copy(isTruthful = true, displayPrimary = "99")
         val input = requireNotNull(clocktowerNumericInformationPreparation(
@@ -187,7 +201,6 @@ class ClocktowerStructuredInformationPreparationTest {
             roleMissingReason = { "" },
             abilityStateFor = { _, _ -> AbilityFunctioningState.FUNCTIONING },
             actorIsUnreliable = { _, _ -> false },
-            recentMisinformationStreak = { 0 },
         )
 
         val built = builder.build(

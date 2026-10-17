@@ -66,6 +66,5 @@ class ClocktowerRecurringInformationStepMaterializersTest {
         roleMissingReason = { "missing $it" },
         abilityStateFor = { _, _ -> state },
         actorIsUnreliable = { _, _ -> state != AbilityFunctioningState.FUNCTIONING },
-        recentMisinformationStreak = { 0 },
     )
 }

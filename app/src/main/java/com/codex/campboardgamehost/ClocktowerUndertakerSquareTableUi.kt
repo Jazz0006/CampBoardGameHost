@@ -182,6 +182,9 @@ internal fun clocktowerUndertakerPlayerDisplayStep(
         displayPrimary = choice.displayLabel,
         displaySecondary = null,
         displayFooter = null,
+        displayProposition = choice.roleId?.let { shownRole ->
+            InformationProposition.RoleAt(choice.executedSeat, shownRole)
+        },
     )
 }
 

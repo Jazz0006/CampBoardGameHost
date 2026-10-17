@@ -1,10 +1,5 @@
 <resources>
     <string name="app_name">Camp Board Game Host</string>
-    <string name="resume_saved_game">Unfinished game found</string>
-    <string name="saved_game_summary_format">%1$s · %2$s · %3$d players</string>
-    <string name="saved_game_stage_dealing">Dealing</string>
-    <string name="saved_game_stage_dawn">Dawn</string>
-    <string name="saved_game_stage_results">Results</string>
     <string name="no_common_players_settings">No frequent players yet. Add friends here so they can join from the main screen with one tap.</string>
     <string name="common_players_management">Frequent Player Management</string>
     <string name="player_name_input_label">Player name</string>
@@ -83,17 +78,6 @@
     <string name="clocktower_phase_night">Night %1$d</string>
     <string name="clocktower_yes">DEMON</string>
     <string name="clocktower_no">NO DEMON</string>
-    <string name="clocktower_record_execution">Execution</string>
-    <string name="clocktower_record_night_death">Night death</string>
-    <string name="clocktower_record_ravenkeeper_check">Ravenkeeper checked %1$s</string>
-    <string name="clocktower_record_scarlet_woman_promoted">Scarlet Woman became the Demon</string>
-    <string name="clocktower_record_virgin_execution">Virgin ability: executed immediately after nominating %1$s</string>
-    <string name="clocktower_record_virgin_spent">Virgin was first nominated by %1$s; the nominator was not a real Townsfolk, so no execution</string>
-    <string name="clocktower_record_slayer_hit">%1$s hit the Demon with the Slayer ability</string>
-    <string name="clocktower_record_slayer_miss">Slayer chose %1$s; no one died</string>
-    <string name="clocktower_record_slayer_fake">Public Slayer claim chose %1$s; no one died</string>
-    <string name="clocktower_record_slayer_already_used">Slayer ability was already used and chose %1$s; no one died</string>
-    <string name="clocktower_record_slayer_poisoned">Slayer was poisoned tonight — ability failed; chose %1$s, no one died, ability permanently spent</string>
     <string name="clocktower_outcome_saint_summary">The Saint was executed</string>
     <string name="clocktower_outcome_saint_reason">%1$s was the Saint, so good loses immediately.</string>
     <string name="clocktower_outcome_mayor_summary">No execution with 3 players alive</string>
@@ -130,7 +114,4 @@
     <string name="clocktower_display_close">Close display card</string>
     <string name="clocktower_host_choose_monk_protect">Choose Monk protection target</string>
     <string name="clocktower_host_choose_monk_protect_hint">Choose one player other than the Monk. If the Demon attacks that player tonight, announce no death at dawn.</string>
-    <string name="clocktower_record_imp_passed">Imp killed itself; a Minion became the new Demon</string>
-    <string name="clocktower_record_monk_protected">Demon attack was stopped by Monk protection</string>
-    <string name="clocktower_record_soldier_safe">Soldier is safe from the Demon and did not die</string>
 </resources>

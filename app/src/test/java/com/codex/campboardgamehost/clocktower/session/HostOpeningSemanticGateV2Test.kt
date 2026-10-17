@@ -172,6 +172,35 @@ class HostOpeningSemanticGateV2Test {
         assertFalse(accepted.selection.choices.containsKey("first-night:seat-4"))
     }
 
+    @Test fun storesBoundedLongHorizonStrategyWithoutPromotingItToHostTruth() {
+        val host = scope()
+        val response = plan(host)
+        val memory = response.getJSONObject("strategyMemory")
+        memory.put("tensions", JSONArray(listOf("Seats 1 and 3 jointly shape early credibility.")))
+        memory.put("intentions", JSONArray().put(JSONObject()
+            .put("trigger", "A future player claim or a later night changes the evidence ecology")
+            .put("approach", "Preserve a plausible multi-night trajectory for all affected roles")
+            .put("risk", "Avoid retroactively treating an imagined observation as Host fact")))
+        val accepted = HostOpeningSemanticGateV2.accept(response, projection(host))
+        val retained = requireNotNull(accepted.strategyMemory)
+        assertEquals(1, retained.intentions.size)
+        assertEquals("A future player claim or a later night changes the evidence ecology",
+            retained.intentions.single().trigger)
+        assertEquals(1, retained.tensions.size)
+        assertTrue(accepted.selection.validFor(host))
+        assertFalse(accepted.selection.choices.containsKey("future-player-claim"))
+
+        reject(host) { responseWithInvalidStrategy ->
+            responseWithInvalidStrategy.getJSONObject("strategyMemory")
+                .put("intentions", JSONArray().put(JSONObject()
+                    .put("trigger", "").put("approach", "narrative").put("risk", "risk")))
+        }
+        reject(host) { responseWithOversizedStrategy ->
+            responseWithOversizedStrategy.getJSONObject("strategyMemory")
+                .put("uncertainties", JSONArray(listOf("x".repeat(301))))
+        }
+    }
+
     @Test fun rejectsStaleGameRevisionAndFingerprint() {
         val scope = scope()
         reject(scope) { it.getJSONObject("requestIdentity").put("gameId", "another") }

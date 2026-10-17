@@ -1,12 +1,14 @@
 package com.codex.campboardgamehost
 
 import android.content.Context
+import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Preferences owned by the application shell rather than an active game session.
  *
- * Recovery and archived-game persistence deliberately live behind separate owners.
+ * Archived-game persistence lives behind a separate owner.
  */
 internal class AppPreferencesStore(
     private val context: Context,
@@ -60,12 +62,41 @@ internal class AppPreferencesStore(
             .apply()
     }
 
+    /** Persistent player profile, independent of table seat, game and night. */
+    fun loadPlayerExperienceByName(): Map<String, PlayerExperienceLevelV1> {
+        val raw = preferences.getString(PLAYER_EXPERIENCE_KEY, null) ?: return emptyMap()
+        return runCatching {
+            val stored = JSONObject(raw)
+            buildMap {
+                stored.keys().forEach { name ->
+                    if (name.isNotBlank()) {
+                        val level = PlayerExperienceLevelV1.entries.firstOrNull {
+                            it.name == stored.optString(name)
+                        } ?: PlayerExperienceLevelV1.BEGINNER
+                        if (level != PlayerExperienceLevelV1.BEGINNER) put(name, level)
+                    }
+                }
+            }
+        }.getOrDefault(emptyMap())
+    }
+
+    fun savePlayerExperienceByName(values: Map<String, PlayerExperienceLevelV1>) {
+        val stored = JSONObject()
+        values.forEach { (name, level) ->
+            if (name.isNotBlank() && level != PlayerExperienceLevelV1.BEGINNER) {
+                stored.put(name, level.name)
+            }
+        }
+        preferences.edit().putString(PLAYER_EXPERIENCE_KEY, stored.toString()).apply()
+    }
+
     private val preferences
         get() = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     private companion object {
         const val PREFS_NAME = "camp_board_game_host"
         const val COMMON_PLAYERS_KEY = "common_players"
+        const val PLAYER_EXPERIENCE_KEY = "player_experience_by_name"
         const val LANGUAGE_MODE_KEY = "language_mode"
         const val STORYTELLER_OPERATION_MODE_KEY = "storyteller_operation_mode"
     }

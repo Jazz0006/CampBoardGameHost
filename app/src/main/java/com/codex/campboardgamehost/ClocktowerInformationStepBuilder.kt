@@ -13,7 +13,6 @@ internal class ClocktowerInformationStepBuilder(
     private val roleMissingReason: (String) -> String,
     private val abilityStateFor: (String, PlayerCard?) -> AbilityFunctioningState?,
     private val actorIsUnreliable: (String, PlayerCard?) -> Boolean,
-    private val recentMisinformationStreak: (PlayerCard?) -> Int,
 ) {
     fun build(
         roleName: String,
@@ -152,7 +151,6 @@ internal class ClocktowerInformationStepBuilder(
             automaticInformationCandidates = automaticInformationCandidates,
             roleEnName = enName,
             informationReliability = informationReliability,
-            recentMisinformationStreak = recentMisinformationStreak(actor),
             previousShownNumber = previousShownNumber,
             numericMinimumValue = numericMinimumValue,
             numericMaximumValue = numericMaximumValue,

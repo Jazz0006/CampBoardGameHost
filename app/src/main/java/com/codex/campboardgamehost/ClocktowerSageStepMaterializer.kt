@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 
@@ -29,6 +30,7 @@ internal fun clocktowerSageDisplayOptions(
         }
     }
     if (pairs.isEmpty()) return emptyList()
+    val demonRole = demon.clocktowerRole?.enName?.let(::RoleId) ?: return emptyList()
 
     fun pairId(pair: Pair<PlayerCard, PlayerCard>): String =
         listOf(cards.indexOf(pair.first), cards.indexOf(pair.second))
@@ -52,7 +54,9 @@ internal fun clocktowerSageDisplayOptions(
                 displayPrimary = content.displayPrimary,
                 displaySecondary = seats,
                 displayFooter = content.displayFooter,
-                proposition = null,
+                proposition = InformationProposition.AnyOf(subjectSeats.map { seat ->
+                    InformationProposition.RoleAt(seat, demonRole)
+                }),
                 presentationSubjectSeats = subjectSeats,
                 isTruthful = isTruthful,
                 misinformationPressure = 0,
@@ -92,6 +96,13 @@ internal fun clocktowerSageStepMaterializer(
             displayPrimary = content.displayPrimary,
             displaySecondary = directSubjectSeats.takeIf { it.size == 2 }?.joinToString("   "),
             displayFooter = content.displayFooter,
+            displayProposition = resolvedDemon.clocktowerRole?.enName?.let(::RoleId)
+                ?.takeIf { directSubjectSeats.size == 2 }
+                ?.let { demonRole ->
+                    InformationProposition.AnyOf(directSubjectSeats.map { seat ->
+                        InformationProposition.RoleAt(seat, demonRole)
+                    })
+                },
             presentationSubjectSeats = directSubjectSeats,
             hostInstruction = content.hostInstruction,
             displayOptions = { actor ->

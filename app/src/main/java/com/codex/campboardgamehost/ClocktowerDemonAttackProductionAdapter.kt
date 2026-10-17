@@ -1,7 +1,7 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackContext
@@ -10,6 +10,13 @@ import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackSemantics
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.NightDawnDeathResolutionInput
 import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
+
+/** Read-only base mechanics for a pending night; never reconstructed from UI cards. */
+internal fun GameState.toBaseEffectiveNightState(): ClocktowerEffectiveNightState =
+    ClocktowerEffectiveNightState(
+        effectiveAliveSeats = players.filter { it.alive }.mapTo(mutableSetOf()) { it.seat },
+        effectiveRoleIdsBySeat = players.associate { it.seat to it.actualRole },
+    )
 
 /**
  * Production adapter from current PlayerCard state into the canonical Trouble Brewing Demon attack
@@ -115,8 +122,7 @@ internal data class TroubleBrewingDawnDeathResolution(
  */
 internal fun resolveTroubleBrewingDawnDeathResolution(
     cards: List<PlayerCard>,
-    script: ClocktowerScript,
-    gameSeed: Long,
+    gameState: GameState,
     checkpoint: ClocktowerNightCheckpoint,
 ): TroubleBrewingDawnDeathResolution {
     val facts = resolveTroubleBrewingDawnDeathFacts(
@@ -125,26 +131,12 @@ internal fun resolveTroubleBrewingDawnDeathResolution(
         poisonedPlayerName = checkpoint.confirmedPoisonTarget,
         monkProtectedTargetName = checkpoint.confirmedMonkTarget,
     )
-    val baseGameState = cards.toClocktowerGameState(
-        script,
-        gameSeed,
-        poisonedPlayerName = checkpoint.confirmedPoisonTarget,
-    )
-    val effectiveNightState = ClocktowerEffectiveNightState(
-        effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
-            (index + 1).takeIf { card.eliminatedRound == null }
-        }.toSet(),
-        effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-            card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-        }.toMap(),
-    )
-    val demonRoleIds = cards.mapNotNull { card ->
-        card.clocktowerRole
-            ?.takeIf { card.clocktowerTeam == ClocktowerTeam.Demon }
-            ?.let { role -> RoleId(role.enName) }
-    }.toSet()
+    val effectiveNightState = gameState.toBaseEffectiveNightState()
+    val demonRoleIds = gameState.players
+        .filter { it.actualType == CharacterType.DEMON }
+        .mapTo(mutableSetOf()) { it.actualRole }
     val deathTransition = NightDawnResolutionPlanner.planValidatedNightDeath(
-        baseGameState = baseGameState,
+        baseGameState = gameState,
         checkpoint = checkpoint,
         input = NightDawnDeathResolutionInput(
             originalDeathSeat = facts.originalDeathSeat,

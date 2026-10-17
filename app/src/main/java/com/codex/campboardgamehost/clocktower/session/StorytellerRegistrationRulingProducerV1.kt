@@ -229,10 +229,9 @@ internal object StorytellerRegistrationRulingProducerV1 {
         require(interactionId.isNotBlank() && observationId.isNotBlank())
         require(sourceSeat != subjectSeat && sourceSeat > 0 && subjectSeat > 0)
         require(status != RegistrationResolutionStatusV1.UNAVAILABLE_OR_UNRECORDED)
-        val observation = frozen.historyPrefix.entries.singleOrNull {
-            it.entryId == observationId
-        } as? com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryEntryV1.Observation
-            ?: error("Registration outcome must reference an already frozen typed observation.")
+        val observation = frozen.publishedObservation
+            ?.takeIf { it.entryId == observationId }
+            ?: error("Registration outcome must reference the actual published observation.")
         require(observation.sourceSeat == sourceSeat && observation.visibility == ObservationVisibility.PRIVATE)
         require(observation.sourceAbility != null)
         require(observation.point.globalSequence == frozen.exclusiveGlobalSequence - 1L) {
@@ -241,12 +240,14 @@ internal object StorytellerRegistrationRulingProducerV1 {
         require(subjectSeat in observation.proposition.referencedSeats()) {
             "Recovered registration subject was not part of the frozen observed semantic result."
         }
-        val subject = frozen.snapshotIdentity.seats.single { it.seat == subjectSeat }
+        val subject = requireNotNull(frozen.snapshotIdentity.seats.singleOrNull { it.seat == subjectSeat })
         val subjectRole = (subject.actualRoleId as? SnapshotField.Known<String>)?.value
             ?: error("A confirmed registration requires a known frozen subject role.")
-        val reason = when (subjectRole) {
-            "Spy" -> RegistrationReason.SPY_ABILITY
-            "Recluse" -> RegistrationReason.RECLUSE_ABILITY
+        // Frozen TB runtime snapshots use registry external IDs ("spy"/"recluse");
+        // test/runtime Session RoleIds may use title case. Both denote the same character.
+        val reason = when (subjectRole.filter { it.isLetterOrDigit() }.lowercase()) {
+            "spy" -> RegistrationReason.SPY_ABILITY
+            "recluse" -> RegistrationReason.RECLUSE_ABILITY
             else -> null
         }
         val expectedAlignment = when (reason) {

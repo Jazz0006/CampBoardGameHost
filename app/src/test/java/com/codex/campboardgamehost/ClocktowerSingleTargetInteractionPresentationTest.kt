@@ -114,4 +114,46 @@ class ClocktowerSingleTargetInteractionPresentationTest {
         assertFalse(model.confirmationEnabled)
         assertNull(clocktowerNightRulingPresentation(ClocktowerNightAction.Poison, selection, false, null, ""))
     }
+
+    @Test
+    fun `real player target cannot advance until Host legal selection exists`() {
+        val legal = setOf("A", "B")
+        for (action in listOf(
+            ClocktowerNightAction.Poison, ClocktowerNightAction.ButlerMaster,
+            ClocktowerNightAction.MonkProtect, ClocktowerNightAction.DemonKill,
+        )) {
+            assertFalse(clocktowerLivePlayerTargetReady(action, true, null, legal))
+            assertFalse(clocktowerLivePlayerTargetReady(action, true, "C", legal))
+            assertTrue(clocktowerLivePlayerTargetReady(action, true, "A", legal))
+            assertTrue(clocktowerLivePlayerTargetReady(action, false, null, legal))
+            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
+                true, action, true, null, "A", legal, false,
+            ))
+            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
+                true, action, true, "A", null, legal, false,
+            ))
+            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
+                true, action, true, "A", "B", legal, false,
+            ))
+            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
+                true, action, true, "C", "C", legal, false,
+            ))
+            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
+                true, action, true, "A", "A", legal, true,
+            ))
+            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
+                false, action, true, "A", "A", legal, false,
+            ))
+            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
+                true, action, false, "A", "A", legal, false,
+            ))
+            assertTrue(clocktowerShouldAutoConfirmFreshPlayerTarget(
+                true, action, true, "A", "A", legal, false,
+            ))
+        }
+        assertTrue(clocktowerLivePlayerTargetReady(ClocktowerNightAction.FortuneTeller, true, null, legal))
+        assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
+            true, ClocktowerNightAction.MayorRedirect, true, "A", "A", legal, false,
+        ))
+    }
 }

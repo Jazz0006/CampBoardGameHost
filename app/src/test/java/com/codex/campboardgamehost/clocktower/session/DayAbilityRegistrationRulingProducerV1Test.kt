@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.ClocktowerCausalJournalPersistence
 import com.codex.campboardgamehost.clocktower.domain.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
@@ -68,13 +67,7 @@ class DayAbilityRegistrationRulingProducerV1Test {
     private fun recover(
         session: ClocktowerGameSession, journal: StorytellerCausalDecisionJournalV1,
     ): StorytellerCausalDecisionJournalV1 {
-        val archive = ClocktowerCausalJournalPersistence.decode(
-            ClocktowerCausalJournalPersistence.encode(journal.archive()),
-            expectedGameId = session.state.gameId,
-            actions = session.state.actionTimeline,
-            observations = session.state.epistemicObservationLog.records,
-            recoveredCursor = session.state.nextTimelineGlobalSequence,
-        )
+        val archive = journal.archive()
         return StorytellerCausalDecisionJournalV1.restore(archive, session.state)
     }
 
@@ -94,14 +87,9 @@ class DayAbilityRegistrationRulingProducerV1Test {
         assertEquals(RegistrationReason.RECLUSE_ABILITY, registration.reason)
         assertEquals(RegistrationQuestion.DEMON, registration.registrationQuestion)
         assertTrue(session.state.epistemicObservationLog.records.isEmpty())
-        val decisionId = journal.archive().records.filterIsInstance<
-            StorytellerCausalJournalRecordV1.Captured>().single().frozen.identity.decisionId
-        assertTrue(journal.effectiveAt(decisionId).isEmpty())
         assertEquals(listOf(committed), journal.effectiveNow())
         val restored = recover(session, journal)
         assertEquals(listOf(committed), restored.effectiveNow())
-        assertEquals(journal.frozenAt(decisionId), restored.frozenAt(decisionId))
-        assertEquals(journal.effectiveAt(decisionId), restored.effectiveAt(decisionId))
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmSlayer(
                 session, journal, snapshot(session), roleDefinitions, input(),
@@ -186,14 +174,14 @@ class DayAbilityRegistrationRulingProducerV1Test {
         DayAbilityRegistrationRulingProducerV1.confirmSlayer(
             session, journal, snapshot(session), roleDefinitions, input(),
         )
-        val encoded = ClocktowerCausalJournalPersistence.encode(journal.archive())
-        encoded.getJSONArray("records").getJSONObject(1)
-            .getJSONObject("outcomeFields").put("subjectSeat", "2")
-        val recovered = ClocktowerCausalJournalPersistence.decode(
-            encoded, session.state.gameId, session.state.actionTimeline,
-            session.state.epistemicObservationLog.records,
-            session.state.nextTimelineGlobalSequence,
-        )
+        val archive = journal.archive()
+        val recovered = archive.copy(records = archive.records.map { entry ->
+            if (entry is StorytellerCausalJournalRecordV1.Committed) {
+                entry.copy(value = entry.value.copy(selectedOutcome = entry.value.selectedOutcome.copy(
+                    canonicalFields = (entry.value.selectedOutcome.canonicalFields + ("subjectSeat" to "2")).toSortedMap(),
+                )))
+            } else entry
+        })
         assertThrows(IllegalArgumentException::class.java) {
             StorytellerCausalDecisionJournalV1.restore(recovered, session.state)
         }

@@ -3,7 +3,6 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.ClocktowerConfirmedRegistrationChoiceV1
 import com.codex.campboardgamehost.ClocktowerConfirmedRegistrationPublicationV1
 import com.codex.campboardgamehost.ClocktowerRegistrationWitness
-import com.codex.campboardgamehost.ClocktowerCausalJournalPersistence
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.epistemic.*
 import org.junit.Assert.assertEquals
@@ -114,14 +113,7 @@ class StorytellerRegistrationRulingProducerV1Test {
 
     private fun recover(session: ClocktowerGameSession, journal: StorytellerCausalDecisionJournalV1):
         StorytellerCausalDecisionJournalV1 {
-        val encoded = ClocktowerCausalJournalPersistence.encode(journal.archive())
-        val decoded = ClocktowerCausalJournalPersistence.decode(
-            encoded,
-            expectedGameId = session.state.gameId,
-            actions = session.state.actionTimeline,
-            observations = session.state.epistemicObservationLog.records,
-            recoveredCursor = session.state.nextTimelineGlobalSequence,
-        )
+        val decoded = journal.archive()
         return StorytellerCausalDecisionJournalV1.restore(decoded, session.state)
     }
 
@@ -134,23 +126,20 @@ class StorytellerRegistrationRulingProducerV1Test {
             RegistrationResolutionStatusV1.UNRESOLVED_NOT_REQUIRED)
         assertTrue(unresolved.registrations.isEmpty())
         assertEquals("unresolved", unresolved.selectedCandidateId)
-        val previous = journal.frozenAt("first")
-        assertEquals(listOf("empath-one"), previous.historyPrefix.entries.map { it.entryId })
+        val validation = journal.archive().records
+            .filterIsInstance<StorytellerCausalJournalRecordV1.Captured>().single().frozen
+        assertEquals("empath-one", validation.publishedObservation?.entryId)
+        assertEquals(listOf(4), validation.snapshotIdentity.seats.map { it.seat })
 
         val explicit = select(session, journal, "second", "empath-one", 5, 4,
             RegistrationResolutionStatusV1.EXPLICIT_SPECIAL, RoleId("Imp"))
         assertEquals(RegistrationReason.RECLUSE_ABILITY, explicit.registrations.single().reason)
         assertEquals(Alignment.EVIL, explicit.registrations.single().registeredAlignment)
         assertEquals(RoleId("Imp"), explicit.registrations.single().registeredRole)
-        assertEquals(listOf(unresolved.eventId), journal.effectiveAt("second").map { it.eventId })
         journal.correct("correction-1", unresolved.eventId, explicit.eventId)
         assertEquals(listOf(explicit), journal.effectiveNow())
-        assertTrue(journal.effectiveAt("first").isEmpty())
-        assertEquals(listOf(unresolved.eventId), journal.effectiveAt("second").map { it.eventId })
         val restored = recover(session, journal)
         assertEquals(journal.effectiveNow(), restored.effectiveNow())
-        assertEquals(journal.effectiveAt("second"), restored.effectiveAt("second"))
-        assertEquals(previous, restored.frozenAt("first"))
     }
 
     @Test
@@ -197,22 +186,20 @@ class StorytellerRegistrationRulingProducerV1Test {
     }
 
     @Test
-    fun `malformed registration subject and unobserved output fail strict Recovery`() {
+    fun `malformed registration subject and unobserved output fail journal validation`() {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         show(session, "empath-one", sourceSeat = 5)
         select(session, journal, "r", "empath-one", 5, 4,
             RegistrationResolutionStatusV1.EXPLICIT_SPECIAL, RoleId("Imp"))
-        val encoded = ClocktowerCausalJournalPersistence.encode(journal.archive())
-        encoded.getJSONArray("records").getJSONObject(1).getJSONArray("registrations")
-            .getJSONObject(0).put("subjectSeat", 2)
-        val broken = ClocktowerCausalJournalPersistence.decode(
-            encoded,
-            expectedGameId = session.state.gameId,
-            actions = session.state.actionTimeline,
-            observations = session.state.epistemicObservationLog.records,
-            recoveredCursor = session.state.nextTimelineGlobalSequence,
-        )
+        val archive = journal.archive()
+        val broken = archive.copy(records = archive.records.map { entry ->
+            if (entry is StorytellerCausalJournalRecordV1.Committed) {
+                entry.copy(value = entry.value.copy(
+                    registrations = entry.value.registrations.map { it.copy(subjectSeat = 2) },
+                ))
+            } else entry
+        })
         assertThrows(IllegalArgumentException::class.java) {
             StorytellerCausalDecisionJournalV1.restore(broken, session.state)
         }
@@ -244,6 +231,123 @@ class StorytellerRegistrationRulingProducerV1Test {
             ClocktowerRegistrationWitness(spyRegistersGood = true, recluseRegistersEvil = true),
         ),
     )
+
+    private fun externalIdSnapshot(session: ClocktowerGameSession): TroubleBrewingGameSnapshotV1 {
+        val original = snapshot(session)
+        return TroubleBrewingGameSnapshotV1(
+            gameId = original.gameId,
+            gameSeed = original.gameSeed,
+            position = original.position,
+            grimoireSeats = original.grimoireSeats.map { seat ->
+                seat.copy(
+                    actualRoleId = SnapshotField.Known(
+                        (seat.actualRoleId as SnapshotField.Known<String>).value.lowercase(),
+                    ),
+                    shownRoleId = SnapshotField.Known(
+                        (seat.shownRoleId as SnapshotField.Known<String>).value.lowercase(),
+                    ),
+                )
+            },
+            setupState = original.setupState,
+        )
+    }
+
+    private fun chefUncommittedDraft() = EpistemicObservationDraft(
+        recordId = "chef-one",
+        phase = StorytellerPhase.FIRST_NIGHT,
+        round = 1,
+        sequence = 1,
+        sourceSeat = 1,
+        sourceAbility = RoleId("Chef"),
+        visibility = ObservationVisibility.PRIVATE,
+        recipientSeats = setOf(1),
+        reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+        proposition = InformationProposition.NumericResult(
+            NumericMetric.ADJACENT_EVIL_PAIRS, 1, (1..5).toList(), 1,
+        ),
+    )
+
+    @Test
+    fun `one session publication commits observation with all verified registrations or neither`() {
+        val accepted = session()
+        val published = chefPublication(
+            RegistrationResolutionStatusV1.UNRESOLVED_NOT_REQUIRED,
+            RegistrationResolutionStatusV1.UNRESOLVED_NOT_REQUIRED,
+        )
+        val record = accepted.commitConfirmedPrivateInformationPublication(
+            draft = chefUncommittedDraft(),
+            registration = published,
+            registrationSnapshot = externalIdSnapshot(accepted),
+            legalRoles = roles,
+        )
+        assertEquals("chef-one", record.recordId)
+        assertEquals(1L, accepted.state.playerInputRevision)
+        assertEquals(1L, accepted.state.nextTimelineGlobalSequence)
+        assertEquals(1, accepted.state.epistemicObservationLog.records.size)
+        assertEquals(2, accepted.causalDecisionJournal.effectiveNow().size)
+
+        val stateAfter = accepted.state
+        val journalAfter = accepted.causalDecisionJournal.archive()
+        assertEquals(record, accepted.commitConfirmedPrivateInformationPublication(
+            draft = chefUncommittedDraft(),
+            registration = published,
+            registrationSnapshot = externalIdSnapshot(accepted),
+            legalRoles = roles,
+        ))
+        assertEquals(stateAfter, accepted.state)
+        assertEquals(journalAfter, accepted.causalDecisionJournal.archive())
+
+        val rejected = session()
+        val wrongJointWitness = chefPublication(
+            RegistrationResolutionStatusV1.EXPLICIT_SPECIAL,
+            RegistrationResolutionStatusV1.EXPLICIT_ACTUAL,
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            rejected.commitConfirmedPrivateInformationPublication(
+                draft = chefUncommittedDraft(),
+                registration = wrongJointWitness,
+                registrationSnapshot = externalIdSnapshot(rejected),
+                legalRoles = roles,
+            )
+        }
+        assertEquals(0L, rejected.state.nextTimelineGlobalSequence)
+        assertEquals(0L, rejected.state.playerInputRevision)
+        assertTrue(rejected.state.epistemicObservationLog.records.isEmpty())
+        assertTrue(rejected.causalDecisionJournal.archive().records.isEmpty())
+    }
+
+    @Test
+    fun `runtime external spy and recluse IDs validate explicit special registrations atomically`() {
+        val game = session()
+        val special = chefPublication(
+            RegistrationResolutionStatusV1.EXPLICIT_SPECIAL,
+            RegistrationResolutionStatusV1.EXPLICIT_SPECIAL,
+        )
+        val record = game.commitConfirmedPrivateInformationPublication(
+            draft = chefUncommittedDraft(),
+            registration = special,
+            registrationSnapshot = externalIdSnapshot(game),
+            legalRoles = roles,
+        )
+        assertEquals("chef-one", record.recordId)
+        val registrations = game.causalDecisionJournal.effectiveNow()
+            .flatMap { it.registrations }
+        assertEquals(2, registrations.size)
+        assertEquals(
+            mapOf(2 to Alignment.GOOD, 4 to Alignment.EVIL),
+            registrations.associate { it.subjectSeat to it.registeredAlignment },
+        )
+        assertEquals(1L, game.state.playerInputRevision)
+        assertEquals(1L, game.state.nextTimelineGlobalSequence)
+        val acceptedJournal = game.causalDecisionJournal.archive()
+        assertEquals(record, game.commitConfirmedPrivateInformationPublication(
+            draft = chefUncommittedDraft(),
+            registration = special,
+            registrationSnapshot = externalIdSnapshot(game),
+            legalRoles = roles,
+        ))
+        assertEquals(acceptedJournal, game.causalDecisionJournal.archive())
+    }
 
     @Test
     fun `real Host writer idempotently confirms and corrects same observed result then recovers`() {
@@ -281,14 +385,8 @@ class StorytellerRegistrationRulingProducerV1Test {
             unresolved, session, journal, snapshot(session), roles,
         ).isEmpty())
         assertEquals(1, journal.effectiveNow().count { it.registrations.isNotEmpty() })
-        val rewrittenDecisionId = journal.archive().records
-            .filterIsInstance<StorytellerCausalJournalRecordV1.Committed>()
-            .last().decisionId
-        assertEquals(first.map { it.eventId },
-            journal.effectiveAt(rewrittenDecisionId).map { it.eventId })
         val restored = recover(session, journal)
         assertEquals(journal.effectiveNow(), restored.effectiveNow())
-        assertEquals(journal.effectiveAt(rewrittenDecisionId), restored.effectiveAt(rewrittenDecisionId))
     }
 
     @Test

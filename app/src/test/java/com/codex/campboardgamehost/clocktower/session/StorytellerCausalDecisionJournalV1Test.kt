@@ -5,13 +5,11 @@ import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
@@ -28,11 +26,6 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
-import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
-import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -112,7 +105,86 @@ class StorytellerCausalDecisionJournalV1Test {
         )
 
     @Test
-    fun `same revision different global cursors and later correction preserve both old prefixes`() {
+    fun `confirmed Mayor decision commits typed fact and causal journal without half writes`() {
+        val game = session()
+        fun mayorRequest(id: String): StorytellerProviderRequestV1 =
+            request(id, game, game.causalDecisionJournal).copy(
+                legalCandidates = listOf(1, 2, 4).map { seat ->
+                    StorytellerProviderCandidateV1(
+                        MayorRedirectDecisionBoundary.candidateIdForSeat(seat),
+                        StorytellerProviderCandidatePayloadV1.SeatTarget(seat),
+                    )
+                },
+            )
+        val firstRequest = mayorRequest("night:2:mayor-redirect:first")
+        val choice = ActionFactDraft.MayorRedirectChoice(
+            actionId = "mayor-night-two-first",
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 1,
+            mayorSeat = 1,
+            targetSeat = 2,
+        )
+        val candidate = MayorRedirectDecisionBoundary.candidateIdForSeat(2)
+        val accepted = game.commitConfirmedMayorRedirect(choice, firstRequest, candidate, 0L)
+        assertEquals(0L, accepted.point.globalSequence)
+        assertEquals(1L, game.state.gameStateRevision)
+        assertEquals(1L, game.state.nextTimelineGlobalSequence)
+        assertEquals(choice.targetSeat, (game.state.actionTimeline.entries.single().fact as
+            com.codex.campboardgamehost.clocktower.domain.ActionFact.MayorRedirectChoice).targetSeat)
+        assertEquals(1, game.causalDecisionJournal.effectiveNow().size)
+        assertEquals(candidate, game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+
+        // Re-tapping the same stable confirmation is truly a no-op, including the journal.
+        val afterFirst = game.state
+        val journalAfterFirst = game.causalDecisionJournal.archive()
+        assertEquals(accepted, game.commitConfirmedMayorRedirect(choice, firstRequest, candidate, 0L))
+        assertEquals(afterFirst, game.state)
+        assertEquals(journalAfterFirst, game.causalDecisionJournal.archive())
+
+        val bad = choice.copy(actionId = "mayor-invalid", targetSeat = 3, sequence = 2)
+        assertThrows(IllegalArgumentException::class.java) {
+            game.commitConfirmedMayorRedirect(
+                bad, mayorRequest("night:2:mayor-redirect:invalid"),
+                MayorRedirectDecisionBoundary.candidateIdForSeat(3), 1L,
+            )
+        }
+        assertEquals(afterFirst, game.state)
+        assertEquals(journalAfterFirst, game.causalDecisionJournal.archive())
+
+        val secondRequest = mayorRequest("night:2:mayor-redirect:revised")
+        game.commitConfirmedMayorRedirect(
+            choice.copy(actionId = "mayor-night-two-revised", targetSeat = 4, sequence = 2),
+            secondRequest, MayorRedirectDecisionBoundary.candidateIdForSeat(4), 1L,
+        )
+        assertEquals(2L, game.state.gameStateRevision)
+        assertEquals(2L, game.state.nextTimelineGlobalSequence)
+        assertEquals(listOf(0L, 1L), game.state.actionTimeline.entries.map { it.point.globalSequence })
+        assertEquals(1, game.causalDecisionJournal.effectiveNow().size)
+        assertEquals(MayorRedirectDecisionBoundary.candidateIdForSeat(4),
+            game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+        assertEquals(2, game.causalDecisionJournal.archive().records.count {
+            it is StorytellerCausalJournalRecordV1.Captured
+        })
+        assertEquals(1, game.causalDecisionJournal.archive().records.count {
+            it is StorytellerCausalJournalRecordV1.Corrected
+        })
+
+        // The legal domain also permits letting the Mayor die: target == Mayor seat.
+        game.commitConfirmedMayorRedirect(
+            choice.copy(actionId = "mayor-night-two-no-redirect", targetSeat = 1, sequence = 3),
+            mayorRequest("night:2:mayor-redirect:no-redirect"),
+            MayorRedirectDecisionBoundary.candidateIdForSeat(1), 2L,
+        )
+        assertEquals(3L, game.state.gameStateRevision)
+        assertEquals(3L, game.state.nextTimelineGlobalSequence)
+        assertEquals(MayorRedirectDecisionBoundary.candidateIdForSeat(1),
+            game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+
+    }
+
+    @Test
+    fun `accepted corrections determine the next request without copying earlier history`() {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         val aReq = request("A", session, journal)
@@ -120,72 +192,23 @@ class StorytellerCausalDecisionJournalV1Test {
         assertEquals(0L, a.exclusiveGlobalSequence)
         journal.commit("A", event("A", revision = a.revision))
 
-        session.commitGlobalActionFact(ActionFactDraft.Poison(
+        session.commitAcceptedTestAction(ActionFactDraft.Poison(
             "poison", StorytellerPhase.FIRST_NIGHT, 1, 1, 5,
         ))
         val bReq = request("B", session, journal)
         val b = journal.captureBeforeDecision(bReq, session.state)
-        assertEquals(a.revision, b.revision)
+        assertTrue(a.revision != b.revision)
         assertEquals(1L, b.exclusiveGlobalSequence)
-        assertEquals(listOf("event-A"), journal.effectiveAt("B").map { it.eventId })
         assertEquals(listOf("event-A"), bReq.gameContext.priorDecisions.map { it.eventId })
         journal.commit("B", event("B", "seat-4", b.revision))
 
         journal.correct("correct-A-to-B", "event-A", "event-B")
         val cReq = request("C", session, journal)
+        assertEquals(listOf("event-B"), cReq.gameContext.priorDecisions.map { it.eventId })
         val c = journal.captureBeforeDecision(cReq, session.state)
         assertEquals(b.revision, c.revision)
         assertEquals(1L, c.exclusiveGlobalSequence)
-        assertEquals(listOf("event-B"), journal.effectiveAt("C").map { it.eventId })
-        assertEquals(listOf("event-A"), journal.effectiveAt("B").map { it.eventId })
-        assertTrue(journal.effectiveAt("A").isEmpty())
-        assertEquals(b, journal.frozenAt("B"))
-        assertEquals(listOf("poison"), journal.frozenAt("B").historyPrefix.entries.map { it.entryId })
 
-        session.commitGlobalActionFact(ActionFactDraft.Attack(
-            "future-attack", StorytellerPhase.NIGHT, 2, 2, 5,
-        ))
-        assertEquals(b, journal.frozenAt("B"))
-        assertEquals(1L, journal.frozenAt("B").exclusiveGlobalSequence)
-        assertEquals(listOf("poison"), journal.frozenAt("B").historyPrefix.entries.map { it.entryId })
-        assertEquals(listOf("event-A"), journal.effectiveAt("B").map { it.eventId })
-    }
-
-    @Test
-    fun `subsequent private information stays outside a previous frozen observation prefix`() {
-        val session = session()
-        val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
-        session.commitGlobalEpistemicObservation(EpistemicObservationDraft(
-            recordId = "empath-one",
-            phase = StorytellerPhase.FIRST_NIGHT, round = 1, sequence = 0,
-            sourceSeat = 5, sourceAbility = RoleId("Empath"),
-            visibility = ObservationVisibility.PRIVATE,
-            recipientSeats = setOf(5),
-            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
-            proposition = InformationProposition.NumericResult(
-                NumericMetric.LIVING_EVIL_NEIGHBOURS, 5, listOf(4, 1), 1,
-            ),
-        ))
-        val a = journal.captureBeforeDecision(request("A", session, journal), session.state)
-        assertEquals(1L, a.exclusiveGlobalSequence)
-        assertEquals(1, a.historyPrefix.entries.size)
-        assertEquals("empath-one", a.historyPrefix.entries.single().entryId)
-        assertTrue(a.historyPrefix.coverage.values.any { it.reasonCode == "NO_TYPED_EXPLICIT_REGISTRATION_PRODUCER" })
-        session.commitGlobalEpistemicObservation(EpistemicObservationDraft(
-            recordId = "second-night-number",
-            phase = StorytellerPhase.NIGHT, round = 2, sequence = 1,
-            sourceSeat = 5, sourceAbility = RoleId("Empath"),
-            visibility = ObservationVisibility.PRIVATE,
-            recipientSeats = setOf(5),
-            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
-            proposition = InformationProposition.NumericResult(
-                NumericMetric.LIVING_EVIL_NEIGHBOURS, 5, listOf(4, 1), 0,
-            ),
-        ))
-        val b = journal.captureBeforeDecision(request("B", session, journal), session.state)
-        assertEquals(2L, b.exclusiveGlobalSequence)
-        assertEquals(1, a.historyPrefix.entries.size)
-        assertEquals(2, b.historyPrefix.entries.size)
     }
 
     @Test
@@ -193,30 +216,11 @@ class StorytellerCausalDecisionJournalV1Test {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         val stale = request("stale", session, journal)
-        session.commitGlobalActionFact(ActionFactDraft.Death(
+        session.commitAcceptedTestAction(ActionFactDraft.Death(
             "new-action-same-revision", StorytellerPhase.DAWN, 1, 0, 2,
         ))
         assertThrows(IllegalArgumentException::class.java) {
             journal.captureBeforeDecision(stale, session.state)
-        }
-    }
-
-    @Test
-    fun `captured player input is frozen and does not follow later mutation`() {
-        val session = session()
-        val roles = mutableListOf(RoleId("Saint"))
-        session.updateStorytellerPlayerContext(1, StorytellerPlayerContextInputV1(
-            experienceLevel = PlayerExperienceLevelV1.BEGINNER,
-            claimedRoleIds = roles,
-        ))
-        val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
-        val a = journal.captureBeforeDecision(request("A", session, journal), session.state)
-        roles.add(RoleId("Chef"))
-        assertEquals(listOf(RoleId("Saint")), a.players.first().claimedRoleIds)
-        session.recordPlayerInput()
-        assertEquals(listOf(RoleId("Saint")), a.players.first().claimedRoleIds)
-        assertThrows(UnsupportedOperationException::class.java) {
-            (a.players.first().claimedRoleIds as MutableList<RoleId>).clear()
         }
     }
 

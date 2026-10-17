@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,9 +34,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 
 @Composable
 internal fun ClocktowerLandingScreen(
-    hasSavedGame: Boolean,
     onStartGame: () -> Unit,
-    onContinueGame: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
@@ -154,37 +151,6 @@ internal fun ClocktowerLandingScreen(
                     fontWeight = FontWeight.Black,
                     letterSpacing = 0.5.sp,
                 )
-            }
-            Spacer(modifier = Modifier.height(11.dp))
-            OutlinedButton(
-                onClick = onContinueGame,
-                enabled = hasSavedGame,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(15.dp),
-                border = BorderStroke(1.dp, brass.copy(alpha = if (hasSavedGame) 0.62f else 0.22f)),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = warmWhite.copy(alpha = 0.9f),
-                    disabledContentColor = warmWhite.copy(alpha = 0.3f),
-                    containerColor = Color(0xA8060D16),
-                    disabledContainerColor = Color(0x78060D16),
-                ),
-            ) {
-                Text(
-                    text("继续上次游戏", "Continue last game"),
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            if (!hasSavedGame) {
-                Text(
-                    text = text("暂无进行中的游戏", "No game in progress"),
-                    modifier = Modifier.padding(top = 8.dp),
-                    color = warmWhite.copy(alpha = 0.38f),
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            } else {
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

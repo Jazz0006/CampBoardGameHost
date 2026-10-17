@@ -4,7 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 
-/** Rebuilds only the recipient-scoped ZDD shadows affected by one durably appended observation. */
+/** Rebuilds only the recipient-scoped ZDD shadows affected by one committed Session observation. */
 class A4ObservationCacheRebuildExecutor(
     private val cache: A4ShadowWorldSetCache,
     private val builder: A4ObservationCacheRebuildBuilder = A4ObservationCacheRebuildBuilder { request, knowledge ->
