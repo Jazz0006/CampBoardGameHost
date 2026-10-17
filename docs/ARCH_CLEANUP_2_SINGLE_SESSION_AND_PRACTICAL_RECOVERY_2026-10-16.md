@@ -256,6 +256,7 @@
 
 - **实证缺口：** AI_AUTOMATIC 已自动展示当前合法信息并安全关闭展示后推进，但 Poison / ButlerMaster / MonkProtect / DemonKill 仍需点“下一步”。UI 的单目标方桌已经禁用了未选座位的下一步，顶层 `advanceNightStep` 却未独立验证上述真人目标，存在经其他入口跳过真实行动的可能。
 - **本批修复：** 复用现有单目标方桌的合法座位域，在当前 Host 原有推进入口严格要求真实行动有合法目标，错误/未选定时停留并提示；非真实步骤允许正常跳过。AI_AUTOMATIC 只在当前步骤玩家**新点击合法座位**、确认最新 Host 草稿已反映所选对象时，通过原有 `advanceNightStep` 确认，单个暂存 UI token 按 game/phase/round/step 重置，禁止已有草稿在返回/恢复后自动执行。MANUAL、AI_ASSISTED 继续手工确认。没有让 AI 代替玩家选择，无新事实事件或第二套动作提交。
+- **不适用步骤保护：** 审计确认非真实角色/裁定步骤原先仍可能执行 `onConfirmPoisonTarget`、`onConfirmMonkProtectedTarget`、`onConfirmDemonAttack`、Mayor 或 DemonSuccessor 回调，甚至在空目标时产生无意义的 revision；现改为仅当 `currentStep.isRealAction` 为真才进入这些确认回调，非真实步骤仅按现有流程前进，不生成 Host 行动。
 - **仍非 A2 总体验收：** 待精确源码独立 CI/R2、旧调用路径退出审计及完整连续夜晚场景确认。按批准决定，ADB 真机由 A6 统一验收；付费 API 不运行。
 
 ### A3 — 移除 Clocktower PlayerCard 第二写入源

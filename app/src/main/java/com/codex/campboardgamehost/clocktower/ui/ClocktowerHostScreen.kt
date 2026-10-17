@@ -2657,19 +2657,21 @@ internal fun ClocktowerJudgeScreen(
                     "Red Herring requires a selected rules-legal player."
                 })
             }
-            if (currentStep.action == ClocktowerNightAction.Poison) {
+            // Non-real night placeholders never commit an action or a
+            // synthetic revision. Only the active player/ruling has authority.
+            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.Poison) {
                 onConfirmPoisonTarget()
             }
-            if (currentStep.action == ClocktowerNightAction.MonkProtect) {
+            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.MonkProtect) {
                 onConfirmMonkProtectedTarget()
             }
-            if (currentStep.action == ClocktowerNightAction.DemonKill) {
+            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.DemonKill) {
                 onConfirmDemonAttack()
             }
-            if (currentStep.action == ClocktowerNightAction.MayorRedirect) {
+            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.MayorRedirect) {
                 onConfirmMayorRedirectTarget()
             }
-            if (currentStep.action == ClocktowerNightAction.DemonSuccessor) {
+            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.DemonSuccessor) {
                 val selectedTarget = requireNotNull(demonSuccessorTarget) {
                     "Demon successor confirmation requires a selected target."
                 }
