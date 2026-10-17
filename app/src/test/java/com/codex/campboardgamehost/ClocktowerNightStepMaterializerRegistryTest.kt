@@ -71,9 +71,7 @@ class ClocktowerNightStepMaterializerRegistryTest {
         val ravenkeeperIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper"))
         val ravenkeeperActor = PlayerCard(
             name = "Ravenkeeper",
-            role = Role.Civilian,
-            word = "",
-        )
+            )
         val registry = ClocktowerNightStepMaterializerRegistry(
             phase = otherNightPhase,
             entries = listOf(

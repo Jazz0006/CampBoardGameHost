@@ -128,9 +128,7 @@ class ClocktowerUndertakerSquareTablePresentationTest {
         val cards = List(7) { index ->
             PlayerCard(
                 name = "P${index + 1}",
-                role = Role.Civilian,
-                word = "",
-            )
+                )
         }
         val display = clocktowerUndertakerPlayerDisplayStep(undertakerStep(), choice, cards, "zh")
 

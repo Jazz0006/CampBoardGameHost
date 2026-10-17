@@ -124,8 +124,6 @@ class ClocktowerNightHostProjectionTest {
 
     private fun card(name: String, roleName: String, team: ClocktowerTeam) = PlayerCard(
         name = name,
-        role = Role.Civilian,
-        word = "",
         clocktowerTeam = team,
         clocktowerRole = ClocktowerRole(
             team = team,

@@ -46,8 +46,6 @@ class ClocktowerGameStateAdapterTest {
         eliminatedRound: Int? = null,
     ): PlayerCard = PlayerCard(
         name = name,
-        role = Role.Civilian,
-        word = "",
         clocktowerTeam = actualRole.team,
         clocktowerRole = actualRole,
         clocktowerShownRole = shownRole,
