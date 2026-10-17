@@ -14,22 +14,23 @@
 
 旧信息发布函数会按角色从准备变量回推记录；下一轮应重新审计并删除这种不必要的耦合，不把它原样包装成新模块。旧 candidate/semantic gate/provider 请求结构有深层依赖，必须成链清理。现有 AI 自动模式不因新方向而获得任意改状态权限。
 
-## 2026-10-18 最新补充
+## 2026-10-18 真实实施检查点
 
-已在 `codex/minimal-host-reset` 提交 Undercover 入口/导航删除（M0a）；默认游戏已设为 Clocktower。完整 Undercover 代码删除（M0b）仍待整合，不能声称已完成。原独立工作树含 +166/-1172 行的 52 文件删除草案，但 Codex App Server 出现 oversized critical JSON field，继续/提交受阻，本地 Gradle 亦不可用，未有代码编译/CI 证明。保留隔离工作树，以当前远端准确 HEAD 重新审计后继续整条删除和测试，不要单纯隐藏 UI 即视为完成。原文中保护 Undercover 的条款已被用户最新指令覆盖。后续接 M1 人工结果输入/发布简化。
+- **M0 已通过**：#330 `codex/minimal-host-reset` HEAD `946b23b`，CI #4312 与 R2 #3892 成功；Undercover（谁是卧底）全链已删除，净 -1039 行，含独立选择页。Draft 尚未合并 main。
+- **M1a 已实施，待最新 Android CI 最终验收**：堆叠 Draft PR #331，基于 #330，分支 `codex/minimal-host-m1-publication-20261018`。删除信息展示前 Spy/Recluse 合法登记见证解释与阻断、App 层登记规则写入回调、无消费者的 `ClocktowerAutomaticRegistrationEffect.kt` 及其旧 R2 守卫和对应无效测试。真实私密展示仍通过 Session 的 confirmed observation 入口，保留去重、旧查询不冲突、过期响应隔离、私密性。
+- 本次使用 GitHub Connector 直接小步提交；本地开发机 `clocktower` 可保持在 M0 工作树，**不能仅凭旧 HEAD 断言 M1 的本地 Git 状态**。
 
-## 下一项任务
+## 立即下一项任务
 
-只读删除边界审计：以最小人工录入、AI建议确认、身份/死亡/阶段变更、提名投票、私密信息展示为验收流程，列保留状态/事件/入口与可整条删除的生产及测试链。然后制定有实际删减规模的实现检查点。不得直接继续旧 D5a 提取路线。
+1. 核查 #331 最新 HEAD 的 CI/R2；Android 若失败直接读取失败 job log 并修复直至通过，不把旧测试重新引入。
+2. M1b 从人工最小流程入手：数值、布尔、角色、两座位信息由说书人直接确认并发布，无 Host 计算真实答案或按合法候选限制；迁移全部消费者后删除 `ClocktowerInformationStepBuilder` 的规则候选调用和相关旧 UI。
+3. 删除仍存在于 `ClocktowerGameSession.commitConfirmedPrivateInformationPublication` 中的可选 registration/witness 事务、`ClocktowerConfirmedRegistrationHostWriterV1`、`ClocktowerConfirmedRegistrationPublicationV1` 及纯旧规则测试；区分真实行动事实与自动推导登记，不复活第二权威状态。
+4. 后续 M2–M5 清理 AI 旧候选协议和规则结算链。避免把多条旧接口长期并存。
 
 ## 已知缺口与权限
 
-仍无退出恢复、完整复盘或跨局归档；事件覆盖不完整。没有真机和付费模型验收。旧设备数据不迁移、不擦除。Undercover 保持范围外。
+仍无退出恢复、完整复盘或跨局归档；事件覆盖不完整。没有真机和付费模型验收。旧设备数据不迁移、不擦除。Undercover 已按用户最新指令整体退休。
 
 持续授权仍包括本轮后续本地提交、codex/* 推送、Draft PR 创建/更新、CI/R2。所有者另于本次收尾明确授权必要同步、合并和 PR 清理，以及建立新的分支/环境；此授权用于本轮收尾，不自动成为下一轮所有 PR 的无条件合并授权。强制推送不在授权内。删除远端分支不是收尾必要条件，保留历史引用不影响关闭旧 PR。
 
 在新的独立 worktree 使用 `codex/minimal-host-reset`（从收尾后 origin/main 创建）。不要复制旧 .gradle/build 缓存或未跟踪文件。新会话先验证目录、分支、HEAD 和工作区干净，再按上述任务开始。不要修改另一个工作区的未提交内容。
-
-## M0b 当前交接（2026-10-18）
-
-Undercover 全链删除已推到 `codex/minimal-host-reset` 并纳入 Draft PR #330：包含旧 GameScreen、UndercoverSupport、分支导航、旧结果/角色数据与历史测试夹带项；请按 PR 最新 HEAD 做 CI/R2 与 `rg` 残留审计。如有 Kotlin 编译失败，直接补齐；修复并验收 M0b 后进入 M1，拒绝恢复 Undercover 兼容支架。注意此前仅入口删除的叙述属历史阶段。
