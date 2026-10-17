@@ -1,10 +1,10 @@
 # ARCH-CLEANUP-2 — 单一权威 Session、逐步确认与实用恢复（2026-10-16）
 
-> **CURRENT APPROVED IMPLEMENTATION CONTRACT / A1 已通过源码退出审计和独立 CI/R2（DONE）；A2–A6 仍未完成。** 此文件替代 ARCH-CLEANUP-1 中与本路线冲突的未来验收要求；ARCH-CLEANUP-1 是已完成批次与历史审计记录，不删除已发生事实。全局开发原则见根目录 AGENTS.md。
+> **CURRENT APPROVED IMPLEMENTATION CONTRACT / A1、A2 已通过源码退出审计和独立 CI/R2（DONE）；A3–A6 仍未完成。** 此文件替代 ARCH-CLEANUP-1 中与本路线冲突的未来验收要求；ARCH-CLEANUP-1 是已完成批次与历史审计记录，不删除已发生事实。全局开发原则见根目录 AGENTS.md。
 >
 > 唯一活动实施分支：cleanup/arch-cleanup-1-20261015；唯一集成入口：Draft PR #315（base main，未合并）。起点代码 HEAD ec6596a56cd23981acdc3e30b2cfcf6b23820ca0，Android CI #4213 与 R2 #3829 SUCCESS，仅为起点证据。新实施必须重新确认 live HEAD / worktree / PR / CI。
 >
-> 优先 ARCH-CLEANUP-2 A1→A6；暂停 AI-EVENT-JIT/P2 新功能、付费模型实验和 main 合并。文档批准 ≠ 生产已实现，整体目标 A 仍 PARTIAL（A2–A6 未完成）。
+> 优先 ARCH-CLEANUP-2 A1→A6；暂停 AI-EVENT-JIT/P2 新功能、付费模型实验和 main 合并。文档批准 ≠ 生产已实现，整体目标 A 仍 PARTIAL（A3–A6 未完成）。
 
 ## 1. 产品决策和根本原则
 
@@ -259,7 +259,8 @@
 - **不适用步骤保护：** 审计确认非真实角色/裁定步骤原先仍可能执行 `onConfirmPoisonTarget`、`onConfirmMonkProtectedTarget`、`onConfirmDemonAttack`、Mayor 或 DemonSuccessor 回调，甚至在空目标时产生无意义的 revision；现改为仅当 `currentStep.isRealAction` 为真才进入这些确认回调，非真实步骤仅按现有流程前进，不生成 Host 行动。
 - **独立验收：** 首批可执行提交 `8bcb4aea7a37ccbcc12cf0d98287a91d0ed00921`、补充非真实行动确认门禁 `7a6232ba3da7b44dd2061bd56448f49b3c4e4f86`。后者 [CI #4260](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38991952598) Android 全量测试/Debug APK、ASP、真实 Clingo、Gate 全部 SUCCESS；同源码 R2 #3855 SUCCESS。首次提交 R2 #3854 也成功。
 - **整包退役出口审计：** 全 `app/src` 搜索未发现 `adoptWholeResidualProposal`、`adoptJointOpeningAfterReveal`、`residualProposed`、`residualAdopted`、`jointOpeningApplied`、`adoptedJointOpening`、`onAdopt` 或“一键采纳”调用。`ClocktowerJointOpeningReviewScreen` 仍作为**展示未执行建议并进入 Drunk 逐步确认**的 UI 使用，不是整包采纳，应保留。
-- **A2 仍 PARTIAL 的具体边界：** MayorRedirect 的多合法目标 AI 裁量已有当前请求 `globalAiTargetPending`，但现有 `approvedOpeningOption` 只重新绑定 pair/scalar 的信息候选；`ClocktowerNightStepUi` 的 Mayor 自动落座仅覆盖 Host 唯一合法目标。这类非唯一当前裁量不能宣称已经自动执行。下一次优先核对并修复其 AI 当前合法座位匹配、Host 再校验和确认/自动推进，以及连续夜晚场景。按批准决定，ADB 真机由 A6 统一验收；付费 API 不运行。
+- **A2 最后缺口已关闭：** MayorRedirect 的多合法座位 AI SeatTarget 曾被信息展示类门禁拒绝。现明确支持当前 Host 市长裁定，AI 候选须同时匹配当前请求身份、合法候选、PendingMayorRedirectDecision 的 confirm、实时 revision 和当前方桌合法座位。AI_ASSISTED 预选，人工可覆盖；AI_AUTOMATIC 仅在原 Host 草稿反映合法选择后通过现有确认入口提交。不虚构玩家信息，不增加 Session 第二事实来源。
+- **A2 DONE（源码及自动化退出，2026-10-17）：** 最终可执行 SHA `150a9f2ec251912ff4396960803a3a67417d7326` [CI #4262](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38993147352) Android 全量测试/Debug APK、ASP、真实 Clingo、Gate 全部 SUCCESS；R2 #3856 SUCCESS。首夜和后续整包采纳按钮、旧状态机均已删除；保留首夜联合战略推荐，但只在当前 Host 步骤确认时成为事实。A6 负责延后的 Android Studio/ADB 三模式连续夜晚与恢复真机验收；本结论不代表真机或真实付费模型品质验收。PR #315 仍 Draft/未合并 main。下一实施为 A3。
 
 ### A3 — 移除 Clocktower PlayerCard 第二写入源
 
