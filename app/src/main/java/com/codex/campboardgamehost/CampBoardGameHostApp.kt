@@ -559,7 +559,18 @@ internal fun CampBoardGameHostApp() {
     var hostSeatingSetupFlow by remember { mutableStateOf(HostSeatingSetupFlow()) }
     // Retain the setup step when the user visits app-wide AI settings and returns.
     var clocktowerSetupStep by remember { mutableStateOf(0) }
-    val cards = remember { mutableStateListOf<PlayerCard>() }
+    val setupCards = remember { mutableStateListOf<PlayerCard>() }
+    // The live game has a read-only card presentation of Session facts.
+    // Only setup and Undercover keep writable cards.
+    val cards: List<PlayerCard> = remember(setupCards, language) {
+        ClocktowerSessionPlayerCards(
+            setupCards = setupCards,
+            currentSession = {
+                clocktowerGameSession?.state?.takeIf { currentGameKind == GameKind.Clocktower }
+            },
+            language = language,
+        )
+    }
     val clocktowerSlayerClaimedNames = clocktowerActionTimeline.entries
         .mapNotNull { entry ->
             (entry.fact as? com.codex.campboardgamehost.clocktower.domain.ActionFact.SlayerShot)
@@ -1372,8 +1383,8 @@ internal fun CampBoardGameHostApp() {
             playerNames = restoredPlayerNames,
             game = game.gameKind,
         )
-        cards.clear()
-        cards.addAll(restoredCards)
+        setupCards.clear()
+        setupCards.addAll(restoredCards)
         records.clear()
         records.addAll(game.records)
 
@@ -1714,8 +1725,8 @@ internal fun CampBoardGameHostApp() {
             repeat(playerNames.size - undercoverCount - blankCount) { add(Role.Civilian) }
         }.shuffled()
 
-        cards.clear()
-        cards.addAll(playerNames.mapIndexed { index, name ->
+        setupCards.clear()
+        setupCards.addAll(playerNames.mapIndexed { index, name ->
             val role = roles[index]
             val word = when (role) {
                 Role.Civilian -> pair.civilianWord
@@ -2094,8 +2105,8 @@ internal fun CampBoardGameHostApp() {
             )
         }
 
-        cards.clear()
-        cards.addAll(committedCards)
+        setupCards.clear()
+        setupCards.addAll(committedCards)
 
         resetDealState(
             nextGameKind = GameKind.Clocktower,
@@ -2564,8 +2575,8 @@ internal fun CampBoardGameHostApp() {
                 ),
             )
         }
-        cards.clear()
-        cards.addAll(committedCards)
+        setupCards.clear()
+        setupCards.addAll(committedCards)
         resetDealState(GameKind.Clocktower, script, preparedSeed)
         persistActiveGameStateIfNeeded()
     }
@@ -2607,7 +2618,7 @@ internal fun CampBoardGameHostApp() {
 
     fun archiveAndReturnToPlayerManagement() {
         if (!archiveCurrentGameForRestart()) return
-        cards.clear()
+        setupCards.clear()
         records.clear()
         clocktowerEvents.clear()
         clocktowerEventCounter = 0
@@ -2637,30 +2648,8 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    /**
-     * Project an already-accepted Session death into Compose rendering. PlayerCard may
-     * retain a display round, but it cannot independently establish that a seat died.
-     */
-    fun reflectCommittedClocktowerDeath(seat: Int, deathRound: Int = round) {
-        val confirmed = requireNotNull(requireClocktowerGameSession().state.gameState.playerAt(seat)) {
-            "Cannot render a death for an unknown Session seat $seat."
-        }
-        check(!confirmed.alive) { "Death must be committed to Session before updating PlayerCard." }
-        val index = seat - 1
-        val card = requireNotNull(cards.getOrNull(index)) {
-            "Cannot render death for a missing PlayerCard seat $seat."
-        }
-        check(card.name == confirmed.name) {
-            "PlayerCard seat $seat is not the confirmed Session player."
-        }
-        check(card.eliminatedRound == null || card.eliminatedRound == deathRound) {
-            "Cannot overwrite an earlier confirmed death round for seat $seat."
-        }
-        cards[index] = card.copy(eliminatedRound = card.eliminatedRound ?: deathRound)
-    }
-
-    /** Confirm a real successor, then reflect the authoritative Session role for Compose. */
-    fun setClocktowerActualRole(
+    /** Confirm real role changes once; card presentation reads Session. */
+    fun commitClocktowerActualRole(
         playerName: String,
         nextRole: ClocktowerRole,
         actionId: String? = null,
@@ -2697,15 +2686,6 @@ internal fun CampBoardGameHostApp() {
             )
             publishClocktowerSessionView()
             invalidateA4RevisionScope()
-            val committedRole = requireNotNull(requireClocktowerGameSession().state.gameState.playerAt(targetSeat))
-            check(committedRole.name == playerName && committedRole.actualRole == RoleId(nextRole.enName)) {
-                "Session role commit must precede the PlayerCard presentation update."
-            }
-            cards[index] = cards[index].copy(
-                actualRoleLabel = nextRole.nameFor(language),
-                clocktowerTeam = nextRole.team,
-                clocktowerRole = nextRole,
-            )
         }
     }
 
@@ -2734,7 +2714,7 @@ internal fun CampBoardGameHostApp() {
         val targetSeat = (resolution as? DemonSuccessionResolution.Forced)?.targetSeat ?: return null
         val scarletWoman = cards[targetSeat - 1]
         val imp = completeTroubleBrewingRoles.first { it.enName == "Imp" }
-        setClocktowerActualRole(scarletWoman.name, imp)
+        commitClocktowerActualRole(scarletWoman.name, imp)
         records.add(EliminationRecord(round, scarletWoman.name, context.getString(R.string.clocktower_record_scarlet_woman_promoted)))
         addClocktowerEvent(
             ClocktowerEventType.RoleChange,
@@ -3613,7 +3593,7 @@ internal fun CampBoardGameHostApp() {
                                                 val actionId = requireNotNull(roleChangeMaterialization.actionIdToCommit) {
                                                     "Unrecorded Dawn role change must have a stable action ID."
                                                 }
-                                                setClocktowerActualRole(
+                                                commitClocktowerActualRole(
                                                     playerName = targetName,
                                                     nextRole = nextRole,
                                                     actionId = actionId,
@@ -3894,7 +3874,6 @@ internal fun CampBoardGameHostApp() {
                                 publishClocktowerSessionView()
                                 invalidateA4RevisionScope()
                                 a4ObservationDurabilityGate.markPending("public-alive-${clocktowerGameId}-${localSequence}-$targetSeat")
-                                reflectCommittedClocktowerDeath(targetSeat)
                                 records.add(
                                     EliminationRecord(
                                         round,
@@ -4069,7 +4048,6 @@ internal fun CampBoardGameHostApp() {
                                     publishClocktowerSessionView()
                                     invalidateA4RevisionScope()
                                     a4ObservationDurabilityGate.markPending("public-alive-${clocktowerGameId}-$actionSequence-${index + 1}")
-                                    reflectCommittedClocktowerDeath(index + 1)
                                     records.add(
                                         EliminationRecord(
                                             round,
@@ -4224,7 +4202,6 @@ internal fun CampBoardGameHostApp() {
                                     publishClocktowerSessionView()
                                     invalidateA4RevisionScope()
                                     a4ObservationDurabilityGate.markPending("public-alive-${clocktowerGameId}-$actionSequence-${index + 1}")
-                                    reflectCommittedClocktowerDeath(index + 1)
                                     records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
                                     addClocktowerEvent(
                                         ClocktowerEventType.Execution,
@@ -4509,7 +4486,6 @@ internal fun CampBoardGameHostApp() {
                                         publishClocktowerSessionView()
                                         invalidateA4RevisionScope()
                                         dawnDeathMaterialization.publicAliveObservationIdToCommit?.let(a4ObservationDurabilityGate::markPending)
-                                        reflectCommittedClocktowerDeath(index + 1)
                                         records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
                                         addClocktowerEvent(
                                             ClocktowerEventType.Death,
@@ -4795,7 +4771,7 @@ internal fun CampBoardGameHostApp() {
                         if (name != null) {
                             val index = cards.indexOfFirst { it.name == name }
                             if (index >= 0) {
-                                cards[index] = cards[index].copy(eliminatedRound = round)
+                                setupCards[index] = setupCards[index].copy(eliminatedRound = round)
                                 records.add(EliminationRecord(round, name))
                                 selectedElimination = null
                                 gameOutcome = evaluateGameOutcome(context, cards, currentGameKind)
