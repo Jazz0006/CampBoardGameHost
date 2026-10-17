@@ -31,7 +31,7 @@ class ClocktowerVoteTransactionTest {
         assertEquals("Player 4", result.highestVoteName)
         assertEquals(3, result.highestVoteCount)
         assertEquals("Player 4", result.executionCandidateName)
-        assertEquals(setOf(ClocktowerSeatId(2)), result.ghostVoteAuthority.spentSeatIds)
+        assertEquals(listOf(ClocktowerSeatId(2)), result.voteRecord.voters.filter { it.isGhostVote }.map { it.seatId })
         assertTrue(result.voteRecord.voters.first { it.seatId == ClocktowerSeatId(2) }.isGhostVote)
     }
 
@@ -70,7 +70,7 @@ class ClocktowerVoteTransactionTest {
         assertEquals("Player 3", result.highestVoteName)
         assertEquals(5, result.highestVoteCount)
         assertEquals("Player 3", result.executionCandidateName)
-        assertEquals(setOf(ClocktowerSeatId(7)), result.ghostVoteAuthority.spentSeatIds)
+        assertEquals(listOf(ClocktowerSeatId(7)), result.voteRecord.voters.filter { it.isGhostVote }.map { it.seatId })
     }
 
     @Test

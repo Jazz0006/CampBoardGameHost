@@ -124,7 +124,6 @@ internal fun ClocktowerJudgeScreen(
     highestVoteNameState: MutableState<String?>,
     highestVoteCountState: MutableState<Int>,
     gameOutcome: GameOutcome?,
-    onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
     onCommitConfirmedPrivateInformationPublication: (
         EpistemicObservationDraft, ClocktowerConfirmedRegistrationPublicationV1?,
     ) -> Unit,
@@ -1989,10 +1988,9 @@ internal fun ClocktowerJudgeScreen(
                     highestVoteName = highestVoteName,
                     highestVoteCount = highestVoteCount,
                 )
-                onGhostVoteAuthorityChange(voteTransaction.ghostVoteAuthority)
+                onConfirmedVote(requireNotNull(nominatorName), requireNotNull(nomineeName), voteTransaction.voteRecord)
                 highestVoteName = voteTransaction.highestVoteName
                 highestVoteCount = voteTransaction.highestVoteCount
-                onConfirmedVote(requireNotNull(nominatorName), requireNotNull(nomineeName), voteTransaction.voteRecord)
                 nominatorName = null
                 nomineeName = null
                 dayMode = ClocktowerDayMode.Overview

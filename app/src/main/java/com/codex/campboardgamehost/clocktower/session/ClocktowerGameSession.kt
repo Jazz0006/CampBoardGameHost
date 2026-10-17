@@ -35,8 +35,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import com.codex.campboardgamehost.clocktower.epistemic.bindGlobal
 import com.codex.campboardgamehost.clocktower.epistemic.matches
-import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
-import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 
 /** Transient result of one session-owned Global observation transition; never persisted as a second state model. */
 internal data class GlobalEpistemicObservationCommit(
@@ -71,6 +69,8 @@ internal data class ClocktowerSessionView(
     val epistemicObservationLog: EpistemicObservationLog,
     val semanticHistoryMode: ClocktowerSemanticHistoryMode,
     val nextTimelineGlobalSequence: Long,
+    val phase: StorytellerPhase,
+    val round: Int,
     val redHerringSeat: Int?,
     val demonBluffRoleIds: List<RoleId>,
 )
@@ -87,7 +87,6 @@ internal data class ClocktowerSessionState(
     val playerInputRevision: Long,
     val gameSeed: Long,
     val gameState: GameState,
-    val crossGameHistory: CrossGameHistory = CrossGameHistory(),
     val actionTimeline: ActionFactTimeline = ActionFactTimeline(),
     val epistemicObservationLog: EpistemicObservationLog = EpistemicObservationLog(),
     val semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
@@ -97,6 +96,11 @@ internal data class ClocktowerSessionState(
     val redHerringSeat: Int? = null,
     val demonBluffRoleIds: List<RoleId> = emptyList(),
 ) {
+    private val lastPhaseAdvance: ActionFact.PhaseAdvance?
+        get() = actionTimeline.entries.asReversed().firstNotNullOfOrNull { it.fact as? ActionFact.PhaseAdvance }
+    val phase: StorytellerPhase get() = lastPhaseAdvance?.phase ?: StorytellerPhase.FIRST_NIGHT
+    val round: Int get() = lastPhaseAdvance?.round ?: 1
+
     init {
         require(gameId.isNotBlank()) { "gameId cannot be blank." }
         require(gameStateRevision >= 0L) { "gameStateRevision cannot be negative." }
@@ -131,12 +135,9 @@ internal data class ClocktowerSessionState(
 internal class ClocktowerGameSession private constructor(
     initialState: ClocktowerSessionState,
     private val defaultRulesetRef: RulesetRef?,
-    initialSnapshotCache: GameSnapshot? = null,
 ) {
     var state: ClocktowerSessionState = initialState
         private set
-
-    private var snapshotCache: GameSnapshot? = initialSnapshotCache
 
     /** Read live at each confirmation, including multiple commits before UI recomposition. */
     val nextInputSequence: Int
@@ -166,6 +167,8 @@ internal class ClocktowerGameSession private constructor(
             epistemicObservationLog = state.epistemicObservationLog,
             semanticHistoryMode = state.semanticHistoryMode,
             nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
+            phase = state.phase,
+            round = state.round,
             redHerringSeat = state.redHerringSeat,
             demonBluffRoleIds = state.demonBluffRoleIds,
         )
@@ -179,8 +182,7 @@ internal class ClocktowerGameSession private constructor(
             val rulesetRef = requireNotNull(defaultRulesetRef) {
                 "This production session has no default advanced RulesetRef; use state or toGameSnapshot(ref)."
             }
-            snapshotCache?.let { return it }
-            return toGameSnapshot(rulesetRef).also { snapshotCache = it }
+            return toGameSnapshot(rulesetRef)
         }
 
     fun toGameSnapshot(rulesetRef: RulesetRef): GameSnapshot = GameSnapshot(
@@ -190,7 +192,6 @@ internal class ClocktowerGameSession private constructor(
         gameSeed = state.gameSeed,
         rulesetRef = rulesetRef,
         gameState = state.gameState,
-        crossGameHistory = state.crossGameHistory,
         actionTimeline = state.actionTimeline,
         epistemicObservationLog = state.epistemicObservationLog,
         semanticHistoryMode = state.semanticHistoryMode,
@@ -326,25 +327,6 @@ internal class ClocktowerGameSession private constructor(
                 storytellerPlayerContextBySeat = nextOverrides,
             ),
         )
-    }
-
-    /**
-     * Allocates the next game-wide timeline identity without changing semantic game/input revisions.
-     * Local [sequence] remains phase-specific replay/display context and never resets global ordering.
-     */
-    fun allocateTimelinePoint(
-        phase: StorytellerPhase,
-        round: Int,
-        sequence: Int,
-    ): TimelinePoint {
-        val point = nextTimelinePoint(
-            phase = phase,
-            round = round,
-            sequence = sequence,
-            nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
-        )
-        updateState(state.copy(nextTimelineGlobalSequence = point.globalSequence + 1))
-        return point
     }
 
     /** Shared Host preflight: capture pre-death evidence before any Session mechanics change. */
@@ -698,14 +680,9 @@ internal class ClocktowerGameSession private constructor(
         )
     }
 
-    fun recordCompletedGameSignature(signature: HistoricalClueSignature): ClocktowerSessionState = updateState(
-        state.copy(crossGameHistory = state.crossGameHistory.append(signature)),
-    )
-
     private fun updateState(nextState: ClocktowerSessionState): ClocktowerSessionState {
         if (nextState == state) return state
         state = nextState
-        snapshotCache = null
         return state
     }
 
@@ -845,7 +822,6 @@ internal class ClocktowerGameSession private constructor(
             return ClocktowerGameSession(
                 initialState = snapshot.toSessionState(),
                 defaultRulesetRef = rulesetRef,
-                initialSnapshotCache = snapshot,
             )
         }
 
@@ -871,19 +847,12 @@ internal class ClocktowerGameSession private constructor(
             defaultRulesetRef = null,
         )
 
-        fun restore(snapshot: GameSnapshot): ClocktowerGameSession = ClocktowerGameSession(
-            initialState = snapshot.toSessionState(),
-            defaultRulesetRef = snapshot.rulesetRef,
-            initialSnapshotCache = snapshot,
-        )
-
         private fun GameSnapshot.toSessionState(): ClocktowerSessionState = ClocktowerSessionState(
             gameId = gameId,
             gameStateRevision = gameStateRevision,
             playerInputRevision = playerInputRevision,
             gameSeed = gameSeed,
             gameState = gameState,
-            crossGameHistory = crossGameHistory,
             actionTimeline = actionTimeline,
             epistemicObservationLog = epistemicObservationLog,
             semanticHistoryMode = semanticHistoryMode,

@@ -18,6 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -382,9 +383,8 @@ internal fun CampBoardGameHostApp() {
     var undercoverCount by remember { mutableStateOf(1) }
     var includeBlank by remember { mutableStateOf(false) }
     var currentDealIndex by remember { mutableStateOf(0) }
-    var round by remember { mutableStateOf(1) }
+    var undercoverRound by remember { mutableStateOf(1) }
     var selectedElimination by remember { mutableStateOf<String?>(null) }
-    var clocktowerPhase by remember { mutableStateOf(ClocktowerPhase.FirstNight) }
     // The Demon may revise this while awake. Only the confirmed attack may
     // reach protection, Mayor redirection, death, or succession resolution.
     var clocktowerDemonAttackDraftTarget by remember { mutableStateOf<String?>(null) }
@@ -419,6 +419,22 @@ internal fun CampBoardGameHostApp() {
     var selectedClocktowerScript by remember { mutableStateOf<ClocktowerScript?>(null) }
     var clocktowerGameSession by remember { mutableStateOf<ClocktowerGameSession?>(null) }
     var clocktowerSessionView by remember { mutableStateOf<ClocktowerSessionView?>(null) }
+    val clocktowerPhase by remember {
+        derivedStateOf {
+            when (clocktowerSessionView?.phase ?: StorytellerPhase.FIRST_NIGHT) {
+                StorytellerPhase.FIRST_NIGHT -> ClocktowerPhase.FirstNight
+                StorytellerPhase.DAY -> ClocktowerPhase.Day
+                StorytellerPhase.DAWN -> ClocktowerPhase.Dawn
+                StorytellerPhase.NIGHT -> ClocktowerPhase.Night
+            }
+        }
+    }
+    val round by remember {
+        derivedStateOf {
+            if (currentGameKind == GameKind.Clocktower) clocktowerSessionView?.round ?: 1
+            else undercoverRound
+        }
+    }
     val currentClocktowerScript = clocktowerSessionView?.scriptId
         ?.let { scriptId ->
             ClocktowerScript.entries.singleOrNull { script -> script.toRecommendationScriptId() == scriptId }
@@ -520,7 +536,7 @@ internal fun CampBoardGameHostApp() {
     val clocktowerNightStartedState = remember { mutableStateOf(false) }
     val clocktowerNightStepIndexState = remember { mutableStateOf(0) }
     val clocktowerDayModeState = remember { mutableStateOf(ClocktowerDayMode.Overview) }
-    val clocktowerGhostVoteAuthorityState = remember { mutableStateOf(ClocktowerGhostVoteAuthority()) }
+    val clocktowerGhostVoteAuthority = ClocktowerGhostVoteAuthority.from(clocktowerActionTimeline)
     val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerHighestVoteCountState = remember { mutableStateOf(0) }
     val troubleBrewingFirstNightPrecomputeScope = rememberCoroutineScope()
@@ -1202,11 +1218,11 @@ internal fun CampBoardGameHostApp() {
         clocktowerGameSession = null
         publishClocktowerSessionView()
         currentDealIndex = 0
-        round = 1
+        undercoverRound = 1
         showResults = false
         gameOutcome = null
         selectedElimination = null
-        clocktowerPhase = ClocktowerPhase.FirstNight
+
         if (nextGameKind == GameKind.Clocktower) {
             val gameId = preparedClocktowerGameId ?: UUID.randomUUID().toString()
             require(gameId.isNotBlank()) { "Prepared Clocktower game ID cannot be blank." }
@@ -1277,7 +1293,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerPendingKlutzName = null
         clocktowerKlutzChoiceName = null
         clocktowerKlutzReturnToDawn = false
-        clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
         resetClocktowerFlow()
         screen = Screen.PassPhone
     }
@@ -1305,7 +1320,6 @@ internal fun CampBoardGameHostApp() {
         })
         resetDealState(GameKind.Undercover)
     }
-
 
     fun requestLiveGlobalAdvice(steps: List<ClocktowerNightStepUi>, stepIndex: Int) {
         val step = steps.getOrNull(stepIndex) ?: return
@@ -1700,7 +1714,6 @@ internal fun CampBoardGameHostApp() {
             )
         }
     }
-
 
     /** 3C: the only INITIAL paid model request for personal-direct TB opening. */
     fun requestJointOpening(pending: PendingTroubleBrewingJointOpening) {
@@ -2714,8 +2727,7 @@ internal fun CampBoardGameHostApp() {
                             clocktowerNightStepIndexState.value = transaction.checkpoint.nightStepIndex
                         },
                         dayModeState = clocktowerDayModeState,
-                        ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
-                        onGhostVoteAuthorityChange = { clocktowerGhostVoteAuthorityState.value = it },
+                        ghostVoteAuthority = clocktowerGhostVoteAuthority,
                         highestVoteNameState = clocktowerHighestVoteNameState,
                         highestVoteCountState = clocktowerHighestVoteCountState,
                         gameOutcome = gameOutcome,
@@ -3149,9 +3161,6 @@ internal fun CampBoardGameHostApp() {
                                         "Dawn phase already has a fact but the phase is not advanced."
                                     }
                                 }
-                                if (dawnPhaseStateMutationRequired) {
-                                    clocktowerPhase = ClocktowerPhase.Dawn
-                                }
                                 resetClocktowerNightFlow()
                             }
                         },
@@ -3190,14 +3199,11 @@ internal fun CampBoardGameHostApp() {
                                     clocktowerKlutzChoiceName = null
                                     if (clocktowerKlutzReturnToDawn) {
                                         commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
-                                        clocktowerPhase = ClocktowerPhase.Dawn
                                         clocktowerKlutzReturnToDawn = false
                                     } else {
                                         val nextRound = round + 1
                                         materializeClocktowerPoisonExpiryAtDusk()
                                         commitClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
-                                        round = nextRound
-                                        clocktowerPhase = ClocktowerPhase.Night
                                     }
                                     resetClocktowerDayFlow()
                                     resetClocktowerNightFlow()
@@ -3471,8 +3477,6 @@ internal fun CampBoardGameHostApp() {
                                     val nextRound = round + 1
                                     materializeClocktowerPoisonExpiryAtDusk()
                                     commitClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
-                                    round = nextRound
-                                    clocktowerPhase = ClocktowerPhase.Night
                                     resetClocktowerDayFlow()
                                     resetClocktowerNightFlow()
                                 }
@@ -3481,7 +3485,6 @@ internal fun CampBoardGameHostApp() {
                         },
                         onAdvanceFromFirstNight = {
                             commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                            clocktowerPhase = ClocktowerPhase.Day
                             clocktowerPendingNightDeath = null
                             clocktowerDemonAttackDraftTarget = null
                             resetClocktowerNightFlow()
@@ -3591,7 +3594,7 @@ internal fun CampBoardGameHostApp() {
                                         clocktowerPendingKlutzName = executionName
                                         clocktowerKlutzChoiceName = null
                                         clocktowerKlutzReturnToDawn = false
-                                        clocktowerPhase = ClocktowerPhase.Day
+
                                         clocktowerDayModeState.value = ClocktowerDayMode.Klutz
                                         captureKlutzLearnedDeathOnPublicAnnouncement(executionName)
                                         executionOutcome = null
@@ -3646,8 +3649,6 @@ internal fun CampBoardGameHostApp() {
                                 val nextRound = round + 1
                                 materializeClocktowerPoisonExpiryAtDusk()
                                 commitClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
-                                round = nextRound
-                                clocktowerPhase = ClocktowerPhase.Night
                                 resetClocktowerDayFlow()
                                 resetClocktowerNightFlow()
                             }
@@ -3878,7 +3879,6 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerKlutzChoiceName = null
                                 clocktowerKlutzReturnToDawn = true
                                 commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                                clocktowerPhase = ClocktowerPhase.Day
                                 clocktowerDayModeState.value = ClocktowerDayMode.Klutz
                                 captureKlutzLearnedDeathOnPublicAnnouncement(nightKlutzName)
                             }
@@ -3930,9 +3930,6 @@ internal fun CampBoardGameHostApp() {
                                         "Dawn phase action exists but the UI phase has not advanced."
                                     }
                                 }
-                                if (phaseAdvance.stateMutationRequired) {
-                                    clocktowerPhase = ClocktowerPhase.Dawn
-                                }
                                 resetClocktowerNightFlow()
                             }
                             clocktowerFortuneTellerFirst = null
@@ -3980,7 +3977,7 @@ internal fun CampBoardGameHostApp() {
                                 if (gameOutcome != null) {
                                     showResults = true
                                 }
-                                round += 1
+                                undercoverRound += 1
                             }
                         }
                     },
@@ -4106,7 +4103,6 @@ private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>, gameK
         else -> null
     }
 }
-
 
 @Composable
 internal fun EmptyStateCard(text: String) {

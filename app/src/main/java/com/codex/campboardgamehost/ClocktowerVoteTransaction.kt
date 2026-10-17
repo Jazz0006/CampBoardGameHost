@@ -3,13 +3,12 @@ package com.codex.campboardgamehost
 /**
  * Atomic semantic result for one confirmed nomination vote.
  *
- * The transaction commits the durable voter snapshot, ghost-vote consumption,
+ * The transaction prepares the voter record (including ghost voters),
  * current high/tie standing, and execution candidate from the same immutable
  * pending table state. UI remains responsible only for collecting pending taps.
  */
 internal data class ClocktowerVoteTransactionResult(
     val voteRecord: ClocktowerConfirmedVoteRecord,
-    val ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     val highestVoteName: String?,
     val highestVoteCount: Int,
     val executionCandidateName: String?,
@@ -27,11 +26,6 @@ internal fun commitClocktowerVoteTransaction(
     require(highestVoteCount >= 0) { "Highest vote count cannot be negative" }
 
     val voteRecord = voteState.confirmedVoteRecord()
-    val confirmedGhostVoteAuthority = voteState.ghostVoteAuthority.confirmVote(
-        selectedVoterSeatIds = voteState.selectedVoterSeatIds,
-        seats = voteState.seats,
-    )
-
     var nextHighestVoteName = highestVoteName
     var nextHighestVoteCount = highestVoteCount
     if (voteRecord.voteCount >= executionThreshold) {
@@ -52,7 +46,6 @@ internal fun commitClocktowerVoteTransaction(
 
     return ClocktowerVoteTransactionResult(
         voteRecord = voteRecord,
-        ghostVoteAuthority = confirmedGhostVoteAuthority,
         highestVoteName = nextHighestVoteName,
         highestVoteCount = nextHighestVoteCount,
         executionCandidateName = executionCandidateName,

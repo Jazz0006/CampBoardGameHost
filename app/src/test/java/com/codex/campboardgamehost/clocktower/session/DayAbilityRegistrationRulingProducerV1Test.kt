@@ -87,14 +87,9 @@ class DayAbilityRegistrationRulingProducerV1Test {
         assertEquals(RegistrationReason.RECLUSE_ABILITY, registration.reason)
         assertEquals(RegistrationQuestion.DEMON, registration.registrationQuestion)
         assertTrue(session.state.epistemicObservationLog.records.isEmpty())
-        val decisionId = journal.archive().records.filterIsInstance<
-            StorytellerCausalJournalRecordV1.Captured>().single().frozen.identity.decisionId
-        assertTrue(journal.effectiveAt(decisionId).isEmpty())
         assertEquals(listOf(committed), journal.effectiveNow())
         val restored = recover(session, journal)
         assertEquals(listOf(committed), restored.effectiveNow())
-        assertEquals(journal.frozenAt(decisionId), restored.frozenAt(decisionId))
-        assertEquals(journal.effectiveAt(decisionId), restored.effectiveAt(decisionId))
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmSlayer(
                 session, journal, snapshot(session), roleDefinitions, input(),

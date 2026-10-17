@@ -94,28 +94,16 @@ class ClocktowerGlobalObservationCommitTest {
     }
 
     @Test
-    fun `restored global session continues persisted cursor`() {
-        val original = newGlobalSession()
-        original.commitGlobalEpistemicObservation(privateDraft("first", localSequence = 2))
-        val restored = ClocktowerGameSession.restore(original.snapshot)
-
-        val second = restored.commitGlobalEpistemicObservation(privateDraft("second", localSequence = 0))
-
-        assertEquals(1L, second.globalSequence())
-        assertEquals(2L, restored.snapshot.nextTimelineGlobalSequence)
-    }
-
-    @Test
     fun `exact duplicate record id is idempotent and consumes no global slot`() {
         val session = newGlobalSession()
         val draft = privateDraft("same-record", localSequence = 4)
         val first = session.commitGlobalEpistemicObservation(draft)
-        val afterFirst = session.snapshot
+        val afterFirst = session.state
 
         val second = session.commitGlobalEpistemicObservation(draft)
 
         assertSame(first, second)
-        assertSame(afterFirst, session.snapshot)
+        assertSame(afterFirst, session.state)
         assertEquals(1L, session.snapshot.nextTimelineGlobalSequence)
         assertEquals(1L, session.snapshot.playerInputRevision)
     }
@@ -124,7 +112,7 @@ class ClocktowerGlobalObservationCommitTest {
     fun `same record id with different content fails without consuming cursor`() {
         val session = newGlobalSession()
         session.commitGlobalEpistemicObservation(privateDraft("same-record", localSequence = 4))
-        val before = session.snapshot
+        val before = session.state
 
         assertFails {
             session.commitGlobalEpistemicObservation(
@@ -132,7 +120,7 @@ class ClocktowerGlobalObservationCommitTest {
             )
         }
 
-        assertSame(before, session.snapshot)
+        assertSame(before, session.state)
     }
 
     @Test
@@ -143,20 +131,19 @@ class ClocktowerGlobalObservationCommitTest {
             rulesetRef = rulesetRef,
             initialState = initialState,
         )
-        val before = session.snapshot
+        val before = session.state
 
         assertFails {
             session.commitGlobalEpistemicObservation(privateDraft("private-chef", localSequence = 1))
         }
 
-        assertSame(before, session.snapshot)
+        assertSame(before, session.state)
     }
 
     @Test
     fun `global session rejects direct injection of a prebound durable record`() {
-        val snapshot = newGlobalSession().snapshot.copy(nextTimelineGlobalSequence = 5L)
-        val session = ClocktowerGameSession.restore(snapshot)
-        val before = session.snapshot
+        val session = newGlobalSession()
+        val before = session.state
         val externallyBound = RecordedEpistemicObservation(
             recordId = "externally-bound",
             phase = StorytellerPhase.DAWN,
@@ -175,21 +162,22 @@ class ClocktowerGlobalObservationCommitTest {
 
         assertFails { session.recordEpistemicObservation(externallyBound) }
 
-        assertSame(before, session.snapshot)
+        assertSame(before, session.state)
     }
 
     @Test
     fun `global cursor exhaustion fails without partial allocation or commit`() {
-        val session = ClocktowerGameSession.restore(
-            newGlobalSession().snapshot.copy(nextTimelineGlobalSequence = Long.MAX_VALUE),
-        )
-        val before = session.snapshot
-
+        val beforeLog = EpistemicObservationLog()
         assertFails {
-            session.commitGlobalEpistemicObservation(privateDraft("overflow", localSequence = 0))
+            ClocktowerGameSession.commitGlobalEpistemicObservation(
+                semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+                observationLog = beforeLog,
+                nextTimelineGlobalSequence = Long.MAX_VALUE,
+                playerInputRevision = 0L,
+                draft = privateDraft("overflow", localSequence = 0),
+            )
         }
-
-        assertSame(before, session.snapshot)
+        assertTrue(beforeLog.records.isEmpty())
     }
 
     @Test

@@ -147,25 +147,23 @@ class PoisonExecutionDuskTimelineRegressionTest {
             ),
         )
 
-        val restored = ClocktowerGameSession.restore(session.snapshot)
-        assertEquals(session.snapshot, restored.snapshot)
-        assertEquals(5L, restored.snapshot.nextTimelineGlobalSequence)
+        assertEquals(5L, session.snapshot.nextTimelineGlobalSequence)
         assertEquals(
             listOf(0L, 1L, 3L, 4L),
-            restored.snapshot.actionTimeline.entries.map { it.point.globalSequence },
+            session.snapshot.actionTimeline.entries.map { it.point.globalSequence },
         )
         assertEquals(
             listOf(2L),
-            restored.snapshot.epistemicObservationLog.records.map { record ->
+            session.snapshot.epistemicObservationLog.records.map { record ->
                 val binding = record.timelineBinding as com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding.Global
                 binding.point.globalSequence
             },
         )
-        assertFalse(restored.snapshot.gameState.playerAt(POISONER_SEAT)!!.alive)
-        assertFalse(restored.snapshot.gameState.playerAt(POISON_TARGET_SEAT)!!.poisoned)
+        assertFalse(session.snapshot.gameState.playerAt(POISONER_SEAT)!!.alive)
+        assertFalse(session.snapshot.gameState.playerAt(POISON_TARGET_SEAT)!!.poisoned)
 
         val retryPreviousTarget = DuskPoisonExpiryRecoveryAuthority.latestTargetSeatForRound(
-            actionTimeline = restored.snapshot.actionTimeline,
+            actionTimeline = session.snapshot.actionTimeline,
             round = ROUND,
         )
         assertNull(retryPreviousTarget)

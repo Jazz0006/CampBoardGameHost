@@ -59,9 +59,6 @@ class ClocktowerHistoricalActionObservationCaptureTest {
         assertEquals(2L, session.snapshot.nextTimelineGlobalSequence)
         assertEquals(listOf("night-one-poison-seat-two"), session.snapshot.actionTimeline.reducerFacts().map { it.actionId })
 
-        val restored = ClocktowerGameSession.restore(session.snapshot)
-        assertEquals(session.snapshot.actionTimeline, restored.snapshot.actionTimeline)
-        assertEquals(2L, restored.snapshot.nextTimelineGlobalSequence)
     }
 
     @Test

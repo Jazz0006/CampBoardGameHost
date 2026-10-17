@@ -5,13 +5,11 @@ import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
@@ -28,11 +26,6 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
-import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
-import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -191,7 +184,7 @@ class StorytellerCausalDecisionJournalV1Test {
     }
 
     @Test
-    fun `accepted revision changes preserve both previously frozen prefixes and corrections`() {
+    fun `accepted corrections determine the next request without copying earlier history`() {
         val session = session()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         val aReq = request("A", session, journal)
@@ -206,65 +199,16 @@ class StorytellerCausalDecisionJournalV1Test {
         val b = journal.captureBeforeDecision(bReq, session.state)
         assertTrue(a.revision != b.revision)
         assertEquals(1L, b.exclusiveGlobalSequence)
-        assertEquals(listOf("event-A"), journal.effectiveAt("B").map { it.eventId })
         assertEquals(listOf("event-A"), bReq.gameContext.priorDecisions.map { it.eventId })
         journal.commit("B", event("B", "seat-4", b.revision))
 
         journal.correct("correct-A-to-B", "event-A", "event-B")
         val cReq = request("C", session, journal)
+        assertEquals(listOf("event-B"), cReq.gameContext.priorDecisions.map { it.eventId })
         val c = journal.captureBeforeDecision(cReq, session.state)
         assertEquals(b.revision, c.revision)
         assertEquals(1L, c.exclusiveGlobalSequence)
-        assertEquals(listOf("event-B"), journal.effectiveAt("C").map { it.eventId })
-        assertEquals(listOf("event-A"), journal.effectiveAt("B").map { it.eventId })
-        assertTrue(journal.effectiveAt("A").isEmpty())
-        assertEquals(b, journal.frozenAt("B"))
-        assertEquals(listOf("poison"), journal.frozenAt("B").historyPrefix.entries.map { it.entryId })
 
-        session.commitAcceptedTestAction(ActionFactDraft.Attack(
-            "future-attack", StorytellerPhase.NIGHT, 2, 2, 5,
-        ))
-        assertEquals(b, journal.frozenAt("B"))
-        assertEquals(1L, journal.frozenAt("B").exclusiveGlobalSequence)
-        assertEquals(listOf("poison"), journal.frozenAt("B").historyPrefix.entries.map { it.entryId })
-        assertEquals(listOf("event-A"), journal.effectiveAt("B").map { it.eventId })
-    }
-
-    @Test
-    fun `subsequent private information stays outside a previous frozen observation prefix`() {
-        val session = session()
-        val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
-        session.commitGlobalEpistemicObservation(EpistemicObservationDraft(
-            recordId = "empath-one",
-            phase = StorytellerPhase.FIRST_NIGHT, round = 1, sequence = 0,
-            sourceSeat = 5, sourceAbility = RoleId("Empath"),
-            visibility = ObservationVisibility.PRIVATE,
-            recipientSeats = setOf(5),
-            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
-            proposition = InformationProposition.NumericResult(
-                NumericMetric.LIVING_EVIL_NEIGHBOURS, 5, listOf(4, 1), 1,
-            ),
-        ))
-        val a = journal.captureBeforeDecision(request("A", session, journal), session.state)
-        assertEquals(1L, a.exclusiveGlobalSequence)
-        assertEquals(1, a.historyPrefix.entries.size)
-        assertEquals("empath-one", a.historyPrefix.entries.single().entryId)
-        assertTrue(a.historyPrefix.coverage.values.any { it.reasonCode == "NO_TYPED_EXPLICIT_REGISTRATION_PRODUCER" })
-        session.commitGlobalEpistemicObservation(EpistemicObservationDraft(
-            recordId = "second-night-number",
-            phase = StorytellerPhase.NIGHT, round = 2, sequence = 1,
-            sourceSeat = 5, sourceAbility = RoleId("Empath"),
-            visibility = ObservationVisibility.PRIVATE,
-            recipientSeats = setOf(5),
-            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
-            proposition = InformationProposition.NumericResult(
-                NumericMetric.LIVING_EVIL_NEIGHBOURS, 5, listOf(4, 1), 0,
-            ),
-        ))
-        val b = journal.captureBeforeDecision(request("B", session, journal), session.state)
-        assertEquals(2L, b.exclusiveGlobalSequence)
-        assertEquals(1, a.historyPrefix.entries.size)
-        assertEquals(2, b.historyPrefix.entries.size)
     }
 
     @Test
@@ -277,25 +221,6 @@ class StorytellerCausalDecisionJournalV1Test {
         ))
         assertThrows(IllegalArgumentException::class.java) {
             journal.captureBeforeDecision(stale, session.state)
-        }
-    }
-
-    @Test
-    fun `captured player input is frozen and does not follow later mutation`() {
-        val session = session()
-        val roles = mutableListOf(RoleId("Saint"))
-        session.updateStorytellerPlayerContext(1, StorytellerPlayerContextInputV1(
-            experienceLevel = PlayerExperienceLevelV1.BEGINNER,
-            claimedRoleIds = roles,
-        ))
-        val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
-        val a = journal.captureBeforeDecision(request("A", session, journal), session.state)
-        roles.add(RoleId("Chef"))
-        assertEquals(listOf(RoleId("Saint")), a.players.first().claimedRoleIds)
-        session.recordPlayerInput()
-        assertEquals(listOf(RoleId("Saint")), a.players.first().claimedRoleIds)
-        assertThrows(UnsupportedOperationException::class.java) {
-            (a.players.first().claimedRoleIds as MutableList<RoleId>).clear()
         }
     }
 

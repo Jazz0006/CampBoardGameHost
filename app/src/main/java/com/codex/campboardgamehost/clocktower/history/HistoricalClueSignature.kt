@@ -25,20 +25,3 @@ data class HistoricalClueSignature(
     ).joinToString("|")
 
 }
-
-data class CrossGameHistory(
-    val recentSignatures: List<HistoricalClueSignature> = emptyList(),
-) {
-    init {
-        require(recentSignatures.size <= MAX_SAVED_GAMES) { "At most $MAX_SAVED_GAMES games are retained." }
-    }
-
-    fun append(signature: HistoricalClueSignature): CrossGameHistory =
-        CrossGameHistory((listOf(signature) + recentSignatures).take(MAX_SAVED_GAMES))
-
-    fun digest(): String = recentSignatures.joinToString(";") { it.canonical() }
-
-    companion object {
-        const val MAX_SAVED_GAMES = 10
-    }
-}

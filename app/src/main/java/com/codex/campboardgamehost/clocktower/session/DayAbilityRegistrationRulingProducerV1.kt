@@ -264,10 +264,6 @@ internal object DayAbilityRegistrationRulingProducerV1 {
             validateVirginCommitted(frozen, event)
             return
         }
-        if (f["abilityRole"] == "Klutz") {
-            LegacyKlutzSpyRegistrationRecoveryValidatorV1.validateCommitted(frozen, event)
-            return
-        }
         require(f.keys == setOf(
             "interactionId", "abilityRole", "actorSeat", "subjectSeat", "question", "status", "registeredRoleId",
         ))
@@ -278,13 +274,13 @@ internal object DayAbilityRegistrationRulingProducerV1 {
         require(status in setOf(
             RegistrationResolutionStatusV1.EXPLICIT_SPECIAL, RegistrationResolutionStatusV1.EXPLICIT_ACTUAL,
         ))
-        require((frozen.snapshotIdentity.position.phase as? SnapshotField.Known<StorytellerPhase>)?.value ==
+        require((frozen.snapshotIdentity.phase as? SnapshotField.Known<StorytellerPhase>)?.value ==
             StorytellerPhase.DAY)
         val actorSeat = f.getValue("actorSeat").toInt()
         val subjectSeat = f.getValue("subjectSeat").toInt()
         require(actorSeat > 0 && subjectSeat > 0 && actorSeat != subjectSeat)
-        val actor = frozen.snapshotIdentity.seats.single { it.seat == actorSeat }
-        val subject = frozen.snapshotIdentity.seats.single { it.seat == subjectSeat }
+        val actor = requireNotNull(frozen.snapshotIdentity.seats.singleOrNull { it.seat == actorSeat })
+        val subject = requireNotNull(frozen.snapshotIdentity.seats.singleOrNull { it.seat == subjectSeat })
         require((actor.actualRoleId as? SnapshotField.Known<String>)?.value == "Slayer")
         require((subject.actualRoleId as? SnapshotField.Known<String>)?.value == "Recluse")
         require((actor.alive as? SnapshotField.Known<Boolean>)?.value == true)
@@ -329,13 +325,13 @@ internal object DayAbilityRegistrationRulingProducerV1 {
         require(fields.getValue("interactionId").isNotBlank())
         require(fields.getValue("abilityRole") == "Virgin")
         require(fields.getValue("question") == RegistrationQuestion.CHARACTER_TYPE.name)
-        require((frozen.snapshotIdentity.position.phase as? SnapshotField.Known<StorytellerPhase>)?.value ==
+        require((frozen.snapshotIdentity.phase as? SnapshotField.Known<StorytellerPhase>)?.value ==
             StorytellerPhase.DAY)
         val virginSeat = fields.getValue("actorSeat").toInt()
         val spySeat = fields.getValue("subjectSeat").toInt()
         require(virginSeat > 0 && spySeat > 0 && virginSeat != spySeat)
-        val virgin = frozen.snapshotIdentity.seats.single { it.seat == virginSeat }
-        val spy = frozen.snapshotIdentity.seats.single { it.seat == spySeat }
+        val virgin = requireNotNull(frozen.snapshotIdentity.seats.singleOrNull { it.seat == virginSeat })
+        val spy = requireNotNull(frozen.snapshotIdentity.seats.singleOrNull { it.seat == spySeat })
         require((virgin.actualRoleId as? SnapshotField.Known<String>)?.value == "Virgin")
         require((spy.actualRoleId as? SnapshotField.Known<String>)?.value == "Spy")
         require((virgin.alive as? SnapshotField.Known<Boolean>)?.value == true)

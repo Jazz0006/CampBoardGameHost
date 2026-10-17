@@ -126,23 +126,20 @@ class StorytellerRegistrationRulingProducerV1Test {
             RegistrationResolutionStatusV1.UNRESOLVED_NOT_REQUIRED)
         assertTrue(unresolved.registrations.isEmpty())
         assertEquals("unresolved", unresolved.selectedCandidateId)
-        val previous = journal.frozenAt("first")
-        assertEquals(listOf("empath-one"), previous.historyPrefix.entries.map { it.entryId })
+        val validation = journal.archive().records
+            .filterIsInstance<StorytellerCausalJournalRecordV1.Captured>().single().frozen
+        assertEquals("empath-one", validation.publishedObservation?.entryId)
+        assertEquals(listOf(4), validation.snapshotIdentity.seats.map { it.seat })
 
         val explicit = select(session, journal, "second", "empath-one", 5, 4,
             RegistrationResolutionStatusV1.EXPLICIT_SPECIAL, RoleId("Imp"))
         assertEquals(RegistrationReason.RECLUSE_ABILITY, explicit.registrations.single().reason)
         assertEquals(Alignment.EVIL, explicit.registrations.single().registeredAlignment)
         assertEquals(RoleId("Imp"), explicit.registrations.single().registeredRole)
-        assertEquals(listOf(unresolved.eventId), journal.effectiveAt("second").map { it.eventId })
         journal.correct("correction-1", unresolved.eventId, explicit.eventId)
         assertEquals(listOf(explicit), journal.effectiveNow())
-        assertTrue(journal.effectiveAt("first").isEmpty())
-        assertEquals(listOf(unresolved.eventId), journal.effectiveAt("second").map { it.eventId })
         val restored = recover(session, journal)
         assertEquals(journal.effectiveNow(), restored.effectiveNow())
-        assertEquals(journal.effectiveAt("second"), restored.effectiveAt("second"))
-        assertEquals(previous, restored.frozenAt("first"))
     }
 
     @Test
@@ -388,14 +385,8 @@ class StorytellerRegistrationRulingProducerV1Test {
             unresolved, session, journal, snapshot(session), roles,
         ).isEmpty())
         assertEquals(1, journal.effectiveNow().count { it.registrations.isNotEmpty() })
-        val rewrittenDecisionId = journal.archive().records
-            .filterIsInstance<StorytellerCausalJournalRecordV1.Committed>()
-            .last().decisionId
-        assertEquals(first.map { it.eventId },
-            journal.effectiveAt(rewrittenDecisionId).map { it.eventId })
         val restored = recover(session, journal)
         assertEquals(journal.effectiveNow(), restored.effectiveNow())
-        assertEquals(journal.effectiveAt(rewrittenDecisionId), restored.effectiveAt(rewrittenDecisionId))
     }
 
     @Test

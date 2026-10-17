@@ -142,30 +142,6 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
     }
 
     @Test
-    fun `unfrozen historical cutoff refuses later actions even across revisions`() {
-        val session = newSession()
-        val oldRevision = revision(session)
-        session.commitAcceptedTestAction(
-            ActionFactDraft.Attack("after-unrecorded-decision", StorytellerPhase.NIGHT, 2, 5, 3),
-        )
-        val unavailable = StorytellerProviderHistoryPrefixMaterializerV1.withoutFrozenHistoricalCutoff(
-            gameId = session.state.gameId,
-            sourceRevision = oldRevision,
-        )
-        assertEquals(StorytellerProviderHistoryCutoffSourceV1.UNAVAILABLE, unavailable.cutoffSource)
-        assertEquals(null, unavailable.exclusiveGlobalSequence)
-        assertTrue(unavailable.entries.isEmpty())
-        assertTrue(unavailable.coverage.values.all {
-            it.state == StorytellerProviderHistoryCoverageStateV1.UNRECONSTRUCTABLE &&
-                it.reasonCode == "HISTORICAL_CUTOFF_UNAVAILABLE"
-        })
-        assertTrue(oldRevision != revision(session)) // Unfrozen past cutoffs remain unavailable.
-        assertEquals(1, StorytellerProviderHistoryPrefixMaterializerV1.captureLive(
-            session.state, revision(session),
-        ).entries.size)
-    }
-
-    @Test
     fun `ambiguous Spy Recluse Empath observation never becomes a canonical witness`() {
         val game = com.codex.campboardgamehost.clocktower.domain.GameState(
             script = com.codex.campboardgamehost.clocktower.domain.ScriptId("trouble_brewing"),

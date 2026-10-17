@@ -76,11 +76,7 @@ class DayVirginSpyRegistrationProducerV1Test {
         assertEquals(RegistrationQuestion.CHARACTER_TYPE, fact.registrationQuestion)
         assertEquals(RegistrationReason.SPY_ABILITY, fact.reason)
         assertTrue(s.state.epistemicObservationLog.records.isEmpty())
-        val id = journal.archive().records.filterIsInstance<
-            StorytellerCausalJournalRecordV1.Captured>().single().frozen.identity.decisionId
-        assertTrue(journal.effectiveAt(id).isEmpty())
         assertEquals(listOf(event), recover(s, journal).effectiveNow())
-        assertEquals(journal.frozenAt(id), recover(s, journal).frozenAt(id))
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
                 s, journal, snapshot(s), roles, input(true), confirmedExecution = true,

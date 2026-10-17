@@ -45,10 +45,8 @@ class ClocktowerTableVoteStateTest {
         assertEquals(setOf(ClocktowerSeatId(4)), pending.selectedVoterSeatIds)
         assertTrue(pending.ghostVoteAuthority.spentSeatIds.isEmpty())
 
-        val spentAuthority = available.ghostVoteAuthority.confirmVote(
-            selectedVoterSeatIds = setOf(ClocktowerSeatId(4)),
-            seats = seats,
-        )
+        val spentAuthority = ClocktowerGhostVoteAuthority(setOf(ClocktowerSeatId(4)))
+
         val spent = clocktowerTableVoteState(
             seats = seats,
             nomineeSeatId = ClocktowerSeatId(6),
