@@ -1,8 +1,6 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
-import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
-import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
@@ -46,7 +44,6 @@ internal sealed interface RecoverySafeReentry {
 }
 
 internal data class ValidatedClocktowerRecoveryRuntime(
-    val rulesetBasis: ClocktowerRulesetPersistenceBasis,
     val rulesetRef: RulesetRef?,
     /** The fully verified Session is applied directly; UI never rebuilds it from recovered cards. */
     val session: ClocktowerGameSession,
@@ -235,7 +232,6 @@ internal object RecoveryRestorePlanner {
         val mechanics = game.mechanics
         listOf(
             mechanics.confirmedAttackTarget,
-            mechanics.confirmedPoisonTarget,
             mechanics.confirmedMonkProtectedTarget,
             mechanics.confirmedMayorRedirectTarget,
             mechanics.pendingNewDemonName,
@@ -295,9 +291,14 @@ internal object RecoveryRestorePlanner {
                 "Only the current Trouble Brewing typed snapshot can own a causal decision journal."
             }
         }
-        // Legacy v3 cards are a one-time recovery input. Construct and validate the *actual*
-        // Session before returning Ready, including the causal journal and accepted setup.
-        // The same instance is then applied without a second cards -> GameState conversion.
+        // Current-format emergency recovery carries one accepted poison fact in Session
+        // chronology, not a second saved UI/mechanics target.
+        val poisonedPlayerName = game.history.actionTimeline.entries.asReversed()
+            .firstOrNull { entry -> entry.fact is ActionFact.Poison }
+            ?.let { entry -> (entry.fact as ActionFact.Poison).targetSeat }
+            ?.let { seat -> game.cards.getOrNull(seat - 1)?.name
+                ?: error("Recovered poison target references an unknown seat.") }
+        // Build the single recovered Session before mutating live UI.
         val restoredState = ClocktowerSessionState(
             gameId = game.identity.gameId,
             gameStateRevision = game.history.gameStateRevision,
@@ -306,7 +307,7 @@ internal object RecoveryRestorePlanner {
             gameState = game.cards.toClocktowerGameState(
                 script = game.identity.script,
                 seed = game.identity.gameSeed,
-                poisonedPlayerName = mechanics.confirmedPoisonTarget,
+                poisonedPlayerName = poisonedPlayerName,
             ),
             storytellerPlayerContextBySeat = game.history.storytellerPlayerContextBySeat,
             actionTimeline = game.history.actionTimeline,
@@ -358,7 +359,6 @@ internal object RecoveryRestorePlanner {
             }
         }
         return ValidatedClocktowerRecoveryRuntime(
-            rulesetBasis = basis,
             rulesetRef = resolvedRuleset,
             session = restoredSession,
         )
@@ -372,102 +372,50 @@ internal object RecoveryRestorePlanner {
             require(entry.point.round in 1..game.round) {
                 "Action timeline point is outside the recovered game round."
             }
+            // This is a current snapshot read boundary, not a second historical rule engine.
+            // Verify referenced seats, then rely on Host-committed facts and Session integrity.
             when (val fact = entry.fact) {
                 is ActionFact.Poison -> fact.targetSeat?.let { requireKnownSeat(it, playerCount) }
                 is ActionFact.Protect -> requireKnownSeat(fact.targetSeat, playerCount)
                 is ActionFact.Attack -> requireKnownSeat(fact.targetSeat, playerCount)
                 is ActionFact.Execution -> requireKnownSeat(fact.targetSeat, playerCount)
                 is ActionFact.Death -> requireKnownSeat(fact.targetSeat, playerCount)
-                is ActionFact.NoExecution -> require(
-                    entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY
-                ) { "No-execution can only be a confirmed Day outcome." }
                 is ActionFact.SlayerShot -> {
                     requireKnownSeat(fact.claimantSeat, playerCount)
                     requireKnownSeat(fact.targetSeat, playerCount)
-                    require(!fact.hit || fact.abilityConsumed)
-                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
-                    require(game.identity.script == ClocktowerScript.TroubleBrewing) {
-                        "No Greater Joy has no Slayer ability and cannot carry a canonical SlayerShot."
-                    }
                 }
                 is ActionFact.Nomination -> {
                     requireKnownSeat(fact.nominatorSeat, playerCount)
                     requireKnownSeat(fact.nomineeSeat, playerCount)
-                    require(fact.nominatorSeat != fact.nomineeSeat)
-                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
-                    if (fact.firstVirginNomination) {
-                        val nominee = game.cards[fact.nomineeSeat - 1]
-                        // Match live onConfirmedNomination: a Drunk SHOWN Virgin interacts as
-                        // Virgin and consumes the first-nomination opportunity, even though
-                        // the actual Drunk ability cannot execute the nominator. Use the
-                        // saved actual+shown role, not the player's later alive/poison state.
-                        val perceivedAtInteraction = AbilityFunctioningSemantics.perceivedRole(
-                            AbilitySubject(
-                                actualRole = nominee.clocktowerRole?.enName,
-                                shownRole = nominee.clocktowerShownRole?.enName,
-                                isPoisoned = false,
-                                isAlive = true,
-                            ),
-                        )
-                        require(game.identity.script == ClocktowerScript.TroubleBrewing &&
-                            perceivedAtInteraction == "Virgin") {
-                            "First Virgin nomination requires actual or Drunk-shown Virgin in TB."
-                        }
-                    }
                 }
                 is ActionFact.Vote -> {
                     requireKnownSeat(fact.nominatorSeat, playerCount)
                     requireKnownSeat(fact.nomineeSeat, playerCount)
-                    require(fact.nominatorSeat != fact.nomineeSeat)
-                    require(fact.ghostVoterSeats.all { it in fact.voterSeats })
                     fact.voterSeats.forEach { requireKnownSeat(it, playerCount) }
-                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
+                    fact.ghostVoterSeats.forEach { requireKnownSeat(it, playerCount) }
                 }
-                is ActionFact.KlutzLearnedDeath -> {
-                    requireKnownSeat(fact.klutzSeat, playerCount)
-                    require(fact.deathActionId.isNotBlank() && fact.functioningWhenLearned)
-                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
-                    require(game.identity.script == ClocktowerScript.NoGreaterJoy)
-                }
+                is ActionFact.KlutzLearnedDeath -> requireKnownSeat(fact.klutzSeat, playerCount)
                 is ActionFact.KlutzChoice -> {
                     requireKnownSeat(fact.klutzSeat, playerCount)
                     requireKnownSeat(fact.chosenSeat, playerCount)
-                    require(fact.klutzSeat != fact.chosenSeat && fact.learnedActionId.isNotBlank())
-                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY)
-                    require(game.identity.script == ClocktowerScript.NoGreaterJoy)
                 }
                 is ActionFact.RoleChange -> requireKnownSeat(fact.targetSeat, playerCount)
                 is ActionFact.ButlerMasterChoice -> {
                     requireKnownSeat(fact.butlerSeat, playerCount)
                     requireKnownSeat(fact.masterSeat, playerCount)
-                    require(fact.butlerSeat != fact.masterSeat)
-                    require(entry.point.phase in setOf(
-                        com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT,
-                        com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT,
-                    ))
                 }
-                is ActionFact.RedHerringChoice -> {
+                is ActionFact.RedHerringChoice ->
                     fact.selectedSeat?.let { requireKnownSeat(it, playerCount) }
-                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT) {
-                        "Red Herring choice belongs to first-night setup."
-                    }
-                }
                 is ActionFact.MayorRedirectChoice -> {
                     requireKnownSeat(fact.mayorSeat, playerCount)
                     requireKnownSeat(fact.targetSeat, playerCount)
-                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT)
                 }
-                is ActionFact.DemonBluffChoice -> {
-                    require(fact.roles.distinct() == fact.roles)
-                    require(entry.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT) {
-                        "Demon bluffs belong to first-night setup."
-                    }
-                }
-                is ActionFact.PhaseAdvance -> require(fact.round in 1..game.round) {
-                    "Phase-advance fact is outside the recovered game round."
-                }
+                is ActionFact.PhaseAdvance ->
+                    require(fact.round in 1..game.round) { "Phase advance exceeds current game round." }
+                is ActionFact.NoExecution, is ActionFact.DemonBluffChoice -> Unit
             }
         }
+
 
         // Accepted setup decisions must agree with their last typed event. Recovery never
         // substitutes an independently mutable UI choice for an established Session fact.
@@ -486,106 +434,6 @@ internal object RecoveryRestorePlanner {
                     "Recovered Demon bluffs diverge from the canonical action timeline."
                 }
             }
-
-        // Newly typed player-action events must retain their actual causal order in Recovery.
-        // This does not infer a Storyteller ruling from a shot, nomination or voting result.
-        val orderedDayActions = history.actionTimeline.entries.sortedBy { it.point.globalSequence }
-        val klutzLearnedSeats = mutableSetOf<Int>()
-        val klutzChosenSeats = mutableSetOf<Int>()
-        val klutzLearnedActions = mutableMapOf<String, com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact>()
-        val noExecutionRounds = mutableSetOf<Int>()
-        val consumedSlayerSeats = mutableSetOf<Int>()
-        val firstVirginNominees = mutableSetOf<Int>()
-        val unvotedNominations = mutableListOf<com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact>()
-        orderedDayActions.forEach { entry ->
-            when (val fact = entry.fact) {
-                is ActionFact.NoExecution -> {
-                    require(noExecutionRounds.add(entry.point.round)) {
-                        "A day cannot be confirmed as no-execution twice."
-                    }
-                    require(orderedDayActions.none { other ->
-                        other.point.round == entry.point.round &&
-                            other.fact is ActionFact.Execution
-                    }) { "No-execution contradicts a same-day confirmed execution." }
-                    require(orderedDayActions.none { other ->
-                        other.point.round == entry.point.round &&
-                            other.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY &&
-                            other.point.globalSequence > entry.point.globalSequence &&
-                            (other.fact is ActionFact.Nomination ||
-                                other.fact is ActionFact.Vote ||
-                                other.fact is ActionFact.SlayerShot)
-                    }) { "No player day actions may follow confirmed end-of-day no-execution." }
-                }
-                is ActionFact.KlutzLearnedDeath -> {
-                    require(klutzLearnedSeats.add(fact.klutzSeat)) {
-                        "One Klutz cannot have two learned-death actions."
-                    }
-                    val predecessor = orderedDayActions.firstOrNull { earlier ->
-                        earlier.point.globalSequence < entry.point.globalSequence &&
-                            earlier.fact.actionId == fact.deathActionId &&
-                            when (val death = earlier.fact) {
-                                is ActionFact.Death -> death.targetSeat == fact.klutzSeat &&
-                                    death.klutzDeathTrigger?.actualRole?.value == "Klutz"
-                                is ActionFact.Execution -> death.targetSeat == fact.klutzSeat &&
-                                    death.klutzDeathTrigger?.actualRole?.value == "Klutz"
-                                else -> false
-                            }
-                    }
-                    require(predecessor != null) {
-                        "Klutz learned-death requires an earlier canonical real Klutz death."
-                    }
-                    require(game.cards[fact.klutzSeat - 1].clocktowerRole?.enName == "Klutz")
-                    klutzLearnedActions[fact.actionId] = entry
-                }
-                is ActionFact.KlutzChoice -> {
-                    require(klutzChosenSeats.add(fact.klutzSeat)) {
-                        "Klutz player choice cannot be committed twice."
-                    }
-                    val learn = requireNotNull(klutzLearnedActions[fact.learnedActionId]) {
-                        "Klutz choice requires prior known learned-of-death action."
-                    }
-                    require(learn.point.globalSequence < entry.point.globalSequence)
-                    require((learn.fact as ActionFact.KlutzLearnedDeath).klutzSeat == fact.klutzSeat)
-                    require(orderedDayActions.none { prior ->
-                        prior.point.globalSequence < entry.point.globalSequence &&
-                            ((prior.fact as? ActionFact.Death)?.targetSeat == fact.chosenSeat ||
-                                (prior.fact as? ActionFact.Execution)?.targetSeat == fact.chosenSeat)
-                    }) { "Klutz must select a living player at choice time." }
-                }
-                is ActionFact.SlayerShot -> {
-                    if (fact.abilityConsumed) {
-                        require(consumedSlayerSeats.add(fact.claimantSeat)) {
-                            "One actual Slayer ability cannot be spent twice."
-                        }
-                    }
-                    if (fact.hit) {
-                        require(orderedDayActions.any { subsequent ->
-                            subsequent.point.globalSequence > entry.point.globalSequence &&
-                                (subsequent.fact as? ActionFact.Death)?.targetSeat == fact.targetSeat
-                        }) { "Confirmed Slayer hit must precede its canonical Death." }
-                    }
-                }
-                is ActionFact.Nomination -> {
-                    if (fact.firstVirginNomination) {
-                        require(firstVirginNominees.add(fact.nomineeSeat)) {
-                            "The same Virgin cannot have two first nominations."
-                        }
-                    }
-                    unvotedNominations.add(entry)
-                }
-                is ActionFact.Vote -> {
-                    val matching = unvotedNominations.indexOfFirst { nomination ->
-                        val previous = nomination.fact as ActionFact.Nomination
-                        previous.nominatorSeat == fact.nominatorSeat &&
-                            previous.nomineeSeat == fact.nomineeSeat &&
-                            nomination.point.round == entry.point.round
-                    }
-                    require(matching >= 0) { "Vote must follow an unconsumed confirmed nomination." }
-                    unvotedNominations.removeAt(matching)
-                }
-                else -> Unit
-            }
-        }
 
         val observationLog = EpistemicObservationLog(history.epistemicObservations)
         ClocktowerSemanticHistoryMode.GLOBAL_V1.requireCompatible(

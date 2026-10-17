@@ -9,7 +9,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 /**
  * Read the accepted poison choice from the one Session, including a dead target whose
  * mechanical poisoned flag has already cleared. The last same-round expiry (null) wins.
- * Legacy v3 recovery may carry mechanical poison without a typed Poison action.
+ * No obsolete snapshot compatibility fallback: current games commit their choices as facts.
  */
 internal fun ClocktowerSessionState.confirmedPoisonTargetName(round: Int): String? {
     require(round > 0)
@@ -22,10 +22,7 @@ internal fun ClocktowerSessionState.confirmedPoisonTargetName(round: Int): Strin
             "Confirmed Session poison references unknown seat $targetSeat."
         }.name
     }
-    // Fallback only for a v3 legacy state without *any* typed poison history.
-    // A previous round's confirmed target must not leak into an untouched new round.
-    if (actionTimeline.entries.any { it.fact is ActionFact.Poison }) return null
-    return gameState.players.singleOrNull { it.poisoned }?.name
+    return null
 }
 
 private fun ClocktowerGameSession.gameStateWithPoisonTarget(targetSeat: Int?): GameState {

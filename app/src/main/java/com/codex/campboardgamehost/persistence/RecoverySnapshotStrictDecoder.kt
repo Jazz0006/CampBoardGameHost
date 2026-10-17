@@ -111,7 +111,6 @@ internal object RecoverySnapshotStrictDecoder {
             ),
             mechanics = ClocktowerRecoveryMechanics(
                 confirmedAttackTarget = json.requiredNullableString("clocktowerPendingNightDeath"),
-                confirmedPoisonTarget = json.requiredNullableString("clocktowerConfirmedPoisonTarget"),
                 confirmedMonkProtectedTarget = json.requiredNullableString("clocktowerConfirmedMonkProtectedTarget"),
                 confirmedMayorRedirectTarget = json.requiredNullableString("clocktowerConfirmedMayorRedirectTarget"),
                 pendingNewDemonName = json.requiredNullableString("clocktowerPendingNewDemonName"),
@@ -120,9 +119,6 @@ internal object RecoverySnapshotStrictDecoder {
                 redHerring = json.requiredNullableString("clocktowerRedHerring"),
                 demonBluffRoleNames = json.requiredArray("clocktowerRecommendedDemonBluffRoleNames").strictStringList(),
                 butlerMaster = json.requiredNullableString("clocktowerButlerMaster"),
-                virginUsed = json.requiredBoolean("clocktowerVirginUsed"),
-                slayerUsed = json.requiredBoolean("clocktowerSlayerUsed"),
-                slayerClaimedNames = json.requiredArray("clocktowerSlayerClaimedNames").strictStringList(),
                 artistUsed = json.requiredBoolean("clocktowerArtistUsed"),
                 artistClaimedNames = json.requiredArray("clocktowerArtistClaimedNames").strictStringList(),
                 lastExecutedName = json.requiredNullableString("clocktowerLastExecutedName"),

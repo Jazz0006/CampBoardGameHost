@@ -151,7 +151,7 @@ class RecoveryRestorePlannerTest {
         val game = decoded.game as ClocktowerRecovery
 
         assertEquals("Alice", game.mechanics.confirmedAttackTarget)
-        assertEquals("Bob", game.mechanics.confirmedPoisonTarget)
+        assertFalse(json.has("clocktowerConfirmedPoisonTarget"))
         assertEquals("Carol", game.mechanics.confirmedMonkProtectedTarget)
         assertEquals("Demon 2", game.mechanics.confirmedDemonSuccessorTarget)
         assertEquals(listOf("Mayor", "Butler", "Soldier"), game.mechanics.demonBluffRoleNames)
@@ -170,7 +170,6 @@ class RecoveryRestorePlannerTest {
         val runtime = (result as RecoveryPlanPreparation.Ready).plan.clocktowerRuntime
         assertNotNull(runtime)
         assertEquals(TEST_RULESET_REF, runtime?.rulesetRef)
-        assertEquals(TEST_ROLE_IDS, runtime?.rulesetBasis?.roleIds)
         val recovered = requireNotNull(runtime).session.state
         assertEquals("game-1", recovered.gameId)
         assertEquals(10L, recovered.gameStateRevision)
@@ -178,7 +177,43 @@ class RecoveryRestorePlannerTest {
         assertEquals(2, recovered.redHerringSeat)
         assertEquals(listOf(RoleId("Mayor"), RoleId("Butler"), RoleId("Soldier")), recovered.demonBluffRoleIds)
         assertEquals(RoleId("Imp"), recovered.gameState.playerAt(5)?.actualRole)
-        assertTrue(recovered.gameState.playerAt(2)?.poisoned == true)
+        // A synthetic fixture without any accepted Poison fact cannot resurrect poison.
+        assertFalse(recovered.gameState.playerAt(2)?.poisoned == true)
+    }
+
+    @Test
+    fun currentEmergencyRecoveryDerivesPoisonFromAcceptedActionsNotADuplicateSavedField() {
+        val snapshot = clocktowerSnapshot()
+        val game = snapshot.game as ClocktowerRecovery
+        val poison = com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact(
+            com.codex.campboardgamehost.clocktower.domain.ActionFact.Poison("night-2-poison", 0L, 2),
+            com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint(
+                com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT, 2, 1, 0L,
+            ),
+        )
+        val withPoison = game.copy(history = game.history.copy(
+            actionTimeline = ActionFactTimeline(listOf(poison)),
+            nextTimelineGlobalSequence = 1L,
+        ))
+        val json = RecoverySnapshotJsonCodec.encode(snapshot.copy(game = withPoison))
+        assertFalse(json.has("clocktowerConfirmedPoisonTarget"))
+        val recovered = (prepare(json) as RecoveryPlanPreparation.Ready)
+            .plan.clocktowerRuntime!!.session.state.gameState
+        assertTrue(recovered.playerAt(2)?.poisoned == true)
+
+        val expiry = com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact(
+            com.codex.campboardgamehost.clocktower.domain.ActionFact.Poison("dusk-clear", 1L, null),
+            com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint(
+                com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.DAY, 2, 2, 1L,
+            ),
+        )
+        val withExpiry = withPoison.copy(history = withPoison.history.copy(
+            actionTimeline = ActionFactTimeline(listOf(poison, expiry)),
+            nextTimelineGlobalSequence = 2L,
+        ))
+        val afterExpiry = (prepare(RecoverySnapshotJsonCodec.encode(snapshot.copy(game = withExpiry)))
+            as RecoveryPlanPreparation.Ready).plan.clocktowerRuntime!!.session.state.gameState
+        assertFalse(afterExpiry.playerAt(2)?.poisoned == true)
     }
 
     @Test
@@ -379,7 +414,7 @@ class RecoveryRestorePlannerTest {
         val original = clocktowerSnapshot()
         val game = original.game as ClocktowerRecovery
         val initialState = game.cards.toClocktowerGameState(
-            game.identity.script, game.identity.gameSeed, game.mechanics.confirmedPoisonTarget,
+            game.identity.script, game.identity.gameSeed,
         )
         val session = com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession.createProduction(
             gameId = game.identity.gameId,
@@ -643,7 +678,6 @@ class RecoveryRestorePlannerTest {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = "Alice",
-                    confirmedPoisonTarget = "Bob",
                     confirmedMonkProtectedTarget = "Carol",
                     confirmedMayorRedirectTarget = null,
                     pendingNewDemonName = pendingNewDemonName,
@@ -652,9 +686,6 @@ class RecoveryRestorePlannerTest {
                     redHerring = "Bob",
                     demonBluffRoleNames = listOf("Mayor", "Butler", "Soldier"),
                     butlerMaster = "Carol",
-                    virginUsed = true,
-                    slayerUsed = true,
-                    slayerClaimedNames = listOf("Alice"),
                     artistUsed = true,
                     artistClaimedNames = listOf("Bob"),
                     lastExecutedName = "Carol",

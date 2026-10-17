@@ -1304,7 +1304,6 @@ internal fun CampBoardGameHostApp() {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = clocktowerPendingNightDeath,
-                    confirmedPoisonTarget = confirmedClocktowerPoisonTarget(),
                     confirmedMonkProtectedTarget = clocktowerConfirmedMonkProtectedTarget,
                     confirmedMayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
                     pendingNewDemonName = clocktowerPendingNewDemonName,
@@ -1313,9 +1312,6 @@ internal fun CampBoardGameHostApp() {
                     redHerring = clocktowerRedHerring,
                     demonBluffRoleNames = clocktowerRecommendedDemonBluffRoleNames.toList(),
                     butlerMaster = clocktowerButlerMaster,
-                    virginUsed = clocktowerVirginUsed,
-                    slayerUsed = clocktowerSlayerUsed,
-                    slayerClaimedNames = clocktowerSlayerClaimedNames.toList(),
                     artistUsed = clocktowerArtistUsed,
                     artistClaimedNames = clocktowerArtistClaimedNames.toList(),
                     lastExecutedName = clocktowerLastExecutedName,

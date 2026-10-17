@@ -148,20 +148,6 @@ class ClocktowerGameSessionPoisonBoundaryTest {
     }
 
     @Test
-    fun `legacy mechanical poison without a typed choice remains recoverable`() {
-        val poisoned = initialState.copy(players = initialState.players.map { player ->
-            player.copy(poisoned = player.seat == 3)
-        })
-        val session = ClocktowerGameSession.createProduction(
-            gameId = "a3-legacy-poison",
-            gameSeed = poisoned.seed,
-            initialState = poisoned,
-            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
-        )
-        assertEquals(initialState.playerAt(3)?.name, session.state.confirmedPoisonTargetName(2))
-    }
-
-    @Test
     fun `outgoing Day cannot secretly choose a new poison target`() {
         val session = newSession("a1-day-poison-illegal")
         val before = session.state
