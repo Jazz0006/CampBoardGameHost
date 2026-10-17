@@ -25,7 +25,7 @@ class ClocktowerFirstNightInformationRequestTest {
     }.ruleset(ClocktowerScript.TroubleBrewing)
     private val cards = listOf("Investigator", "Chef", "Empath", "Poisoner", "Imp").mapIndexed { index, name ->
         val role = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing).single { it.enName == name }
-        PlayerCard("P${index + 1}", Role.Civilian, "", clocktowerRole = role, clocktowerTeam = role.team)
+        PlayerCard("P${index + 1}", clocktowerRole = role, clocktowerTeam = role.team)
     }
     private fun step(role: String = "Chef") = ClocktowerNightStepUi(
         title = "information", actor = cards[0], isRealAction = true, reason = "",
@@ -123,7 +123,7 @@ class ClocktowerFirstNightInformationRequestTest {
     @Test fun `no greater joy investigator uses Host selected pair publication`() {
         val ngjCards = listOf("Investigator", "Clockmaker", "Baron", "Imp", "Empath").mapIndexed { index, name ->
             val role = clocktowerRolesForScript(ClocktowerScript.NoGreaterJoy).single { it.enName == name }
-            PlayerCard("N${index + 1}", Role.Civilian, "", clocktowerRole = role, clocktowerTeam = role.team)
+            PlayerCard("N${index + 1}", clocktowerRole = role, clocktowerTeam = role.team)
         }
         val proposition = InformationProposition.AnyOf(listOf(
             InformationProposition.RoleAt(3, RoleId("Baron")),

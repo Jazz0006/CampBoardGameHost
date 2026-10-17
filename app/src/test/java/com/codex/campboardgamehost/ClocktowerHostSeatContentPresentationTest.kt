@@ -96,8 +96,6 @@ class ClocktowerHostSeatContentPresentationTest {
         )
         val card = PlayerCard(
             name = "Dana",
-            role = Role.Civilian,
-            word = "",
             clocktowerRole = drunk,
             clocktowerShownRole = empath,
             eliminatedRound = 2,

@@ -60,8 +60,6 @@ class ClocktowerMonkRetargetRavenkeeperDeathTest {
         team: ClocktowerTeam,
     ) = PlayerCard(
         name = name,
-        role = Role.Civilian,
-        word = "",
         clocktowerTeam = team,
         clocktowerRole = ClocktowerRole(
             team = team,
