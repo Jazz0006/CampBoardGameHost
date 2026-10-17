@@ -35,90 +35,25 @@ import androidx.compose.ui.unit.sp
 internal fun PassPhoneScreen(
     playerName: String,
     playerNames: List<String>,
-    gameKind: GameKind,
     current: Int,
     total: Int,
     onReveal: () -> Unit,
     onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
-) {
-    if (gameKind == GameKind.Clocktower) {
-        ClocktowerDealHandoffScreen(
-            playerName = playerName,
-            playerNames = playerNames,
-            current = current,
-            total = total,
-            onReveal = onReveal,
-            onPrevious = onPrevious,
-            onHostTools = onHostTools,
-            onNext = onNext,
-        )
-        return
-    }
-    FullScreenColumn {
-        Text("$current / $total", color = Color(0xFF6F7B74))
-        Text(stringResource(R.string.pass_phone_to), style = MaterialTheme.typography.titleLarge)
-        Text(playerName, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-        Text(stringResource(R.string.reveal_privacy_hint), color = Color(0xFF5C6A63), textAlign = TextAlign.Center)
-        Button(
-            onClick = onReveal,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp),
-            shape = RoundedCornerShape(8.dp),
-        ) {
-            Text(stringResource(R.string.reveal_my_card))
-        }
-    }
-}
+) = ClocktowerDealHandoffScreen(
+    playerName = playerName, playerNames = playerNames, current = current, total = total,
+    onReveal = onReveal, onPrevious = onPrevious, onHostTools = onHostTools, onNext = onNext,
+)
 
 @Composable
 internal fun RevealCardScreen(
     card: PlayerCard,
-    gameKind: GameKind,
     current: Int,
     total: Int,
     onHide: () -> Unit,
-) {
-    if (gameKind == GameKind.Clocktower) {
-        ClocktowerPlayerRoleRevealScreen(
-            card = card,
-            onHide = onHide,
-        )
-        return
-    }
-    FullScreenColumn {
-        Text("$current / $total", color = Color(0xFF6F7B74))
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFCF6)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(26.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(card.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(card.word, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
-                Text(stringResource(R.string.remember_word_hint), color = Color(0xFF5C6A63))
-            }
-        }
-        Button(
-            onClick = onHide,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp),
-            shape = RoundedCornerShape(8.dp),
-        ) {
-            Text(if (current == total) stringResource(R.string.all_done_return_to_host) else stringResource(R.string.hide_and_next))
-        }
-    }
-}
+) = ClocktowerPlayerRoleRevealScreen(card = card, onHide = onHide)
+
 @Composable
 private fun ClocktowerDealHandoffScreen(
     playerName: String,

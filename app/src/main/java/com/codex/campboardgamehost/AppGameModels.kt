@@ -1,10 +1,5 @@
 package com.codex.campboardgamehost
 
-internal enum class GameKind {
-    Undercover,
-    Clocktower,
-}
-
 internal enum class Role {
     Civilian,
     Undercover,

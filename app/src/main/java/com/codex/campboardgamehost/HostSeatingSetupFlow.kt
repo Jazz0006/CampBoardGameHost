@@ -8,30 +8,18 @@ package com.codex.campboardgamehost
  */
 internal data class HostSeatingSetupFlow(
     val confirmedSeating: ConfirmedHostSeating? = null,
-    val selectedGame: GameKind? = null,
 ) {
     fun confirmSeats(playerNames: List<String>): HostSeatingSetupFlow = copy(
         confirmedSeating = confirmHostSeating(playerNames),
-        selectedGame = null,
     )
 
-    fun chooseGame(game: GameKind): HostSeatingSetupFlow {
-        requireNotNull(confirmedSeating) { "Seats must be confirmed before choosing a game" }
-        return copy(selectedGame = game)
-    }
-
-    fun playerNamesFor(game: GameKind): List<String> {
-        require(selectedGame == game) {
-            "Production start requires the currently selected game"
-        }
-        return requireNotNull(confirmedSeating) {
-            "Production start requires confirmed seating"
-        }.playerNames
-    }
+    fun playerNamesFor(): List<String> = requireNotNull(confirmedSeating) {
+        "Production start requires confirmed seating"
+    }.playerNames
 
     fun returnToGameSelection(): HostSeatingSetupFlow {
         requireNotNull(confirmedSeating) { "Game selection requires confirmed seating" }
-        return copy(selectedGame = null)
+        return this
     }
 
     fun reopenSeating(): HostSeatingSetupFlow = HostSeatingSetupFlow()

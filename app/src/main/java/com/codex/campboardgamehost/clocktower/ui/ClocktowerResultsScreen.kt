@@ -286,7 +286,7 @@ private fun ClocktowerResultPlayerRow(
         ClocktowerTeam.Demon -> Color(0xFFD96B70)
         null -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    val actualRole = card.hostRoleLabel(context, GameKind.Clocktower)
+    val actualRole = card.hostRoleLabel(context)
     val shownRole = card.clocktowerShownRole
         ?.takeIf { card.clocktowerShownAsDifferentRole() }
         ?.nameFor(language)
