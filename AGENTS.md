@@ -1,5 +1,19 @@
 # CampBoardGameHost AI Development Instructions
 
+## Product correction: minimal state and event record (2026-10-17)
+
+The current owner-directed priority is deletion of redundant state, the independent game
+Recovery/save system, and separately maintained textual game records. See
+`docs/MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md` for the inspected dependencies and sequence.
+Delete first even when the replacement event coverage or interruption recovery is incomplete;
+report those gaps honestly. Do not preserve the old system until a replacement is complete,
+introduce compatibility scaffolding, or manufacture a new precise-state reconstruction framework.
+Preserve normal game rules, confirmed facts, and the single game-truth authority. Future recovery,
+AI input and textual display must consume the same authoritative game record; this still requires
+local durability, not an independent save-state copy. Existing instructions to retain Recovery or
+its exact reconstruction contracts are superseded within this cleanup scope. Production deletion
+has not yet been implemented at the documentation checkpoint.
+
 ## Evidence-first validation policy (2026-10-15; current authority)
 
 - **Default to evidence-first delivery, not mandatory TDD.** Before changing code, define the user-observable acceptance criterion, risk, owning boundary, and cheapest independent proof. Do **not** require a new test file, artificial RED, or RED/GREEN trace for each new feature, bug fix, source edit, or intermediate wiring step.
