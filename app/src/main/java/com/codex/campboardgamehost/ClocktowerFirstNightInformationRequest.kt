@@ -70,6 +70,47 @@ internal fun clocktowerFirstNightInformationRequest(
         ),
         )
     }
+    if (displayStep.manualUnrestrictedPairResult && family.usesAuthoritativePairDomain()) {
+        val pair = when (val shown = displayStep.displayProposition) {
+            is com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AnyOf -> {
+                val roles = shown.alternatives.mapNotNull {
+                    it as? com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.RoleAt
+                }
+                if (roles.size != 2 || roles.map { it.seat }.distinct().size != 2 ||
+                    roles.map { it.role }.distinct().size != 1
+                ) return null
+                roles.first().role to roles.map { it.seat }.sorted()
+            }
+            is com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AllOf -> {
+                if (shown.propositions.isEmpty() ||
+                    shown.propositions.any {
+                        (it as? com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.RoleInPlay)?.inPlay != false
+                    }
+                ) return null
+                null to emptyList<Int>()
+            }
+            else -> return null
+        }
+        val candidate = FirstNightInformationCandidate(
+            id = "manual-pair:$decisionId",
+            observation = AbilityObservation(
+                sourceSeat = sourceSeat,
+                perceivedRole = family.role,
+                shownRole = pair.first,
+                candidateSeats = pair.second,
+                reliability = reliability,
+                semanticTruth = SemanticTruth.NOT_APPLICABLE,
+            ),
+        )
+        return FirstNightInformationRequest(
+            decisionId = decisionId,
+            family = family,
+            sourceSeat = sourceSeat,
+            reliability = reliability,
+            selectedCandidateId = candidate.id,
+            candidates = listOf(candidate),
+        )
+    }
     val selectedOption = ClocktowerDisplayOption(
         label = "selected",
         displayKind = displayStep.displayKind,

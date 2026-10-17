@@ -2242,6 +2242,7 @@ internal fun ClocktowerJudgeScreen(
                     }
                 }
                 ClocktowerNightStepCardLocalized(
+                    script = script,
                 recommendationCoordinator = recommendationCoordinator,
                 allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                 phase = phase,

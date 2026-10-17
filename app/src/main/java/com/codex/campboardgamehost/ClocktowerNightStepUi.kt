@@ -37,6 +37,7 @@ internal fun ClocktowerNightStepCardLocalized(
     recommendationCoordinator: ClocktowerRecommendationCoordinator,
     allowRuleDeterminedAutoUi: Boolean,
     phase: ClocktowerPhase,
+    script: ClocktowerScript,
     gameId: String,
     round: Int,
     sequence: Int,
@@ -100,6 +101,56 @@ internal fun ClocktowerNightStepCardLocalized(
             onNext = onNext,
             onConfirm = { value ->
                 clocktowerDirectNumericResult(step, directNumericActorSeat, value)
+                    ?.let(onShowPlayerDisplay)
+            },
+        )
+        return
+    }
+    // First-stage Manual/AI-assisted pair information: no legal-role or seat/role truth filtering.
+    // The dynamically narrowed dropdown is a separate, post-cleanup product phase.
+    if (!allowRuleDeterminedAutoUi && phase == ClocktowerPhase.FirstNight &&
+        step.isRealAction &&
+        presentationRoleEnName in setOf("Washerwoman", "Librarian", "Investigator") &&
+        directNumericActorSeat != null
+    ) {
+        val allRoles = clocktowerRolesForScript(script)
+        val eligibleTeam = when (presentationRoleEnName) {
+            "Washerwoman" -> ClocktowerTeam.Townsfolk
+            "Librarian" -> ClocktowerTeam.Outsider
+            else -> ClocktowerTeam.Minion
+        }
+        val availableIds = allRoles.map { it.enName }.toSet()
+        val zeroRoleIds = allRoles.filter { it.team == eligibleTeam }.map { it.enName }
+        val hostSeats = cards.mapIndexed { index, card ->
+            card.toStorytellerHostSeatPresentation(
+                seatNumber = index + 1,
+                language = language,
+                ghostVoteAuthority = ghostVoteAuthority,
+                isPoisoned = card.name == poisonedPlayerName,
+            )
+        }
+        ClocktowerDirectPairInformationDialog(
+            interactionKey = informationDecisionKey,
+            seats = hostSeats,
+            actorSeat = directNumericActorSeat,
+            roleIds = availableIds.sorted(),
+            roleLabel = { role -> clocktowerRoleLabel(
+                com.codex.campboardgamehost.clocktower.domain.RoleId(role), language,
+            ) },
+            abilityLabel = step.title,
+            language = language,
+            wakeInstruction = step.storytellerAction,
+            canGoPrevious = canGoPrevious,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            onConfirm = { seatA, seatB, role ->
+                clocktowerDirectPairResult(step, directNumericActorSeat,
+                    seatA, seatB, role, availableIds, cards.size)
+                    ?.let(onShowPlayerDisplay)
+            },
+            onConfirmNone = {
+                clocktowerDirectPairNoneResult(step, directNumericActorSeat, zeroRoleIds)
                     ?.let(onShowPlayerDisplay)
             },
         )

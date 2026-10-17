@@ -70,5 +70,7 @@ internal data class ClocktowerNightStepUi(
     val spyRegistrationHint: String? = null,
     val recluseRegistrationKey: String? = null,
     val recluseRegistrationTeams: List<ClocktowerTeam> = emptyList(),
+    /** Transient UI provenance: bypass obsolete Host legal-candidate validation for human-entered pair values. */
+    val manualUnrestrictedPairResult: Boolean = false,
     val interactionId: ClocktowerInteractionId? = null,
 )
