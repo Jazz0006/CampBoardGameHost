@@ -127,6 +127,46 @@ internal fun clocktowerShouldAutoPresentCurrentInformation(
             received.sourceAbility?.value == step.roleEnName
     }
 
+/**
+ * Player-chosen targets are drafts until their information is actually shown.
+ * Once one result has been published in the Session, it may only be reopened
+ * with the identical typed result. A new target/result must not silently add a
+ * second incompatible observation for the same actor, ability, phase and night.
+ */
+internal enum class ClocktowerLiveQueryRevealDisposition {
+    NEW,
+    REOPEN,
+    CONFLICT,
+}
+
+internal fun clocktowerLiveQueryRevealDisposition(
+    action: ClocktowerNightAction,
+    phase: ClocktowerPhase,
+    round: Int,
+    actorSeat: Int?,
+    roleEnName: String?,
+    shown: InformationProposition?,
+    confirmedObservations: List<RecordedEpistemicObservation>,
+): ClocktowerLiveQueryRevealDisposition {
+    if (action !in setOf(
+            ClocktowerNightAction.FortuneTeller,
+            ClocktowerNightAction.Chambermaid,
+            ClocktowerNightAction.Ravenkeeper,
+        )
+    ) return ClocktowerLiveQueryRevealDisposition.NEW
+    if (shown == null || actorSeat == null || roleEnName == null) {
+        return ClocktowerLiveQueryRevealDisposition.CONFLICT
+    }
+    val previous = confirmedObservations.filter { it.phase == phase.toStorytellerPhase() &&
+        it.round == round && it.visibility == ObservationVisibility.PRIVATE &&
+        it.sourceSeat == actorSeat && it.sourceAbility?.value == roleEnName
+    }
+    if (previous.isEmpty()) return ClocktowerLiveQueryRevealDisposition.NEW
+    return if (previous.all { it.proposition == shown }) {
+        ClocktowerLiveQueryRevealDisposition.REOPEN
+    } else ClocktowerLiveQueryRevealDisposition.CONFLICT
+}
+
 /** A previously published observation never becomes a fresh auto-advance permission
  * just because its player display was manually reopened. */
 internal fun clocktowerShouldAutoAdvanceAfterFreshReveal(

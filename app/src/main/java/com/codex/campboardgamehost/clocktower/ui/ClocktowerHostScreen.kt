@@ -2912,6 +2912,29 @@ internal fun ClocktowerJudgeScreen(
                                 observation.sourceAbility?.value == displayStep.roleEnName &&
                                 observation.visibility == ObservationVisibility.PRIVATE
                         }
+                    // Use the SAME typed precedence as the actual Session writer;
+                    // unreliable information must never compare against a stale true answer.
+                    val shownQueryResult = displayStep.informationDecisionConfirmation?.draft?.proposition
+                        ?: if (clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)) {
+                            displayActorSeat?.let { actorSeat ->
+                                clocktowerShownUnreliableProposition(
+                                    step = displayStep,
+                                    actorSeat = actorSeat,
+                                    allSeats = cards.indices.map { it + 1 },
+                                    empathNeighborSeats = empathNeighbors.map { cards.indexOf(it) + 1 },
+                                    fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
+                                )
+                            }
+                        } else displayStep.displayProposition
+                    val queryRevealDisposition = clocktowerLiveQueryRevealDisposition(
+                        action = currentStep.action,
+                        phase = phase,
+                        round = round,
+                        actorSeat = displayActorSeat,
+                        roleEnName = displayStep.roleEnName,
+                        shown = shownQueryResult,
+                        confirmedObservations = actualInformationHistory,
+                    )
                     try {
                     com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
                         .revealStage("CLICKED", phase.toStorytellerPhase().name, round)
@@ -3000,12 +3023,16 @@ internal fun ClocktowerJudgeScreen(
                         }
                         val handoff = performClocktowerPlayerRevealHandoff(
                             authorize = {
-                                informationDecisionPublicationAllowed(displayStep) &&
+                                queryRevealDisposition != ClocktowerLiveQueryRevealDisposition.CONFLICT &&
+                                    informationDecisionPublicationAllowed(displayStep) &&
                                     unreliableInformationCanBeRecorded(displayStep) &&
                                     (ready == null || (publication != null &&
                                         onPreflightConfirmedRegistrationResult(publication)))
                             },
-                            publicationNeeded = { firstNightPublicationNeeded(displayStep) },
+                            publicationNeeded = {
+                                queryRevealDisposition != ClocktowerLiveQueryRevealDisposition.REOPEN &&
+                                    firstNightPublicationNeeded(displayStep)
+                            },
                             recordPrivateInformation = {
                                 recordReliablePrivateInformation(displayStep, publication)
                                 com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
@@ -3059,6 +3086,18 @@ internal fun ClocktowerJudgeScreen(
                             )) {
                             pendingAutoAdvanceAfterDisplay =
                                 currentStepIndex to currentStep.interactionId.toString()
+                        }
+                        if (!handoff.openReveal &&
+                            queryRevealDisposition == ClocktowerLiveQueryRevealDisposition.CONFLICT
+                        ) {
+                            Toast.makeText(
+                                context,
+                                text(
+                                    "本夜该角色已收到信息，不能修改查询目标或公布另一条结果；只能重新查看原信息。",
+                                    "This role has already received information tonight. Only the original result may be reopened.",
+                                ),
+                                Toast.LENGTH_LONG,
+                            ).show()
                         }
                         if (!handoff.openReveal && !unreliableInformationCanBeRecorded(displayStep)) {
                             Toast.makeText(

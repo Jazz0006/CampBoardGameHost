@@ -71,6 +71,12 @@
 - Fix eighth-slice post-reveal replay weakness: arm the existing UI-only next-step token after the real Host handoff reports fresh publication, provided no same-actor, same-ability, same-round private observation existed before the handoff. Dismissal never creates authorization; an open display blocks step change. Keep automatic/assisted/manual policy independent of stored recommendations.
 - Regression protects unresolved registration choices / cross-target rejection and fresh vs. reopened private reveal, steps/mode mismatch. **Verified executable SHA `ea82a7a135595105ee4bc938ddff90edd29ed0ec`: [CI #4254](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38977871373) Android full tests/build + ASP + real Clingo + Gate SUCCESS; R2 #3852 SUCCESS.** No paid requests or Android Studio device testing. **A2 remains PARTIAL**; further audit of night player input barriers and role registration semantics stays next, no A3–A6.
 
+## A2 tenth production slice — immutable confirmed live-query information (2026-10-17; pending exact-source CI/R2)
+
+- Start HEAD `8f632e459d29a6ba9987d6d4408fc94fb8e5c8b0` clean/equal origin; #315 Draft and still merge-conflicted. Prior ninth executable `ea82a7a135595105ee4bc938ddff90edd29ed0ec` passed exact CI #4254 and R2 #3852; documentation-only #4255 passed.
+- Audit found live-query target editing on revisited Ravenkeeper/Fortune Teller/Chambermaid steps could produce a different information proposition and Session record ID while the prior observation remained actual player knowledge. Guard the original Host publication handoff using real Session observed phase/round/actor/ability. No record => normal new publication; matching typed result => reopen without a new record; different/untyped result => fail closed, alert Storyteller. The old original result remains viewable, and no extra event type/state/history is created.
+- Focused regression includes all 3 live-query actions, target and value changes, mismatched existing facts, other rounds/seats, and ordinary decisions. Do not work on paid API, Android/ADB, main merge or A3–A6. **A2 remains PARTIAL** pending further live night-flow acceptance.
+
 ## Starting repository state (recheck live)
 
 - Repository Jazz0006/CampBoardGameHost; developer machine via Mini MCP alias **clocktower**.

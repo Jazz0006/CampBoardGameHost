@@ -245,6 +245,12 @@
 - **本批源码 `ea82a7a135595105ee4bc938ddff90edd29ed0ec`** 已独立通过 [CI #4254](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38977871373)：Android 全量单元测试、Debug APK、ASP、真实 Clingo 与 CI Gate 全部 SUCCESS；R2 main-thread boundary **#3852** SUCCESS。机器成功不等于 Android Studio/ADB 现场对局验收。
 - 其他角色原 Host 决策和方桌不动；仅增加两个高价值边界回归。A2 仍 PARTIAL，真机验收后置。不进行真实付费 API，也不合并 Draft PR #315。
 
+### A2 第十批：现场查询已公布信息的不可变性（2026-10-17；源码待独立 CI/R2）
+
+- **审计发现的风险：** Ravenkeeper / Fortune Teller / Chambermaid 的现场目标选择会更新 Host `playerInputRevision`，但一次已公布信息的 Session 记录是按 `recordId` 幂等；回到原步骤后改座位或同目标改返回内容，可能形成第二条相互矛盾的“本夜已告知”记录，继而污染 AI 增量游戏历史。仅阻止自动再展示不足以阻止人工模式的二次公布。
+- **修复范围仅限这三类实际玩家现场查验：** 在原有 `onShowPlayerDisplay` 正式 Host 公布交接入口，用既有 Session `actualInformationHistory` 检查同夜、同接收座位、同能力的已确认私密观察；如果没有，则照常使用 Host 验证和正式发布；如果已有且类型化显示结果完全相同，则只重新打开原私密展示（不重记历史）；如果目标/结果变了或无法证明结构化结果相同，则禁止公布并给出提示。所有未确认目标仍可改变。对同夜已有不一致历史采用 fail closed，不“修正”玩家已经知道的内容。
+- 不新增事件、状态、历史副本或自动请求；已公布结果依然属于单一 Session。聚焦回归覆盖三个现场查询角色、相同重看、结果/目标改变、跨夜、不同角色及普通非查询动作。真机/付费 API 暂缓，A2 **仍 PARTIAL**。
+
 ### A3 — 移除 Clocktower PlayerCard 第二写入源
 
 - Session 对游戏中的真实角色/展示身份/存活/投毒/阶段/确认选择和必要能力状态提供只读 view；PlayerCard 只保留 UI 名称/视觉元素等非权威展示属性。
