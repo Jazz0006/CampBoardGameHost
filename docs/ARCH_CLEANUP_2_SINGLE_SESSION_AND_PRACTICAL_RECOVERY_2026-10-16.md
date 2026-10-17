@@ -271,6 +271,14 @@
 - 源码提交 `4bed72c9b67f0f313e0d3853d7725f8ad3d57a0c`，已推送；[R2 #3857](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38995467309) SUCCESS；同一源码 [CI #4264](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38995467235) 完成并 SUCCESS，包含 Android 全量单元测试/Debug APK、ASP、Real Clingo 与 CI Gate。此为自动化验收，非 Android 真机验收。
 - **待完成且不可盲删：** `reflectCommittedClocktowerDeath` 和 `setClocktowerActualRole` 仍写 PlayerCard；Host 夜间 projection、Dawn/Slayer/Virgin/处决/继承等生产规则仍读卡片死亡/角色/阵营；首夜信息请求、Debug 预热、恢复仍存在反向转换。优先将这些消费者统一从 Session 派生只读 UI，再移除原镜像写入和持久化双事实。当前阶段、回合和已确认夜间选择的 Compose/Session 归属还要单独检查。A3 未完成，A4–A6 未开始；不做付费调用、真机验收或 PR 合并。
 
+#### A3 第二批：消除已确认死亡与角色变化的 PlayerCard 镜像写入（2026-10-17；A3 PARTIAL）
+
+- 起点 `1f6ad75d73db688efb64c97fcb4a9ec2538fa95e`（local/origin clean/equal）；PR #315 Draft，main 冲突保持不处理。用户要求优先迁移真实消费者而不是叠加同步层。
+- 通过 `ClocktowerSessionPlayerCards` 单一只读、无缓存、无存储的实时列表展示，现有 Host/魔典/玩家卡片/夜晚规则消费者仍可接收 `List<PlayerCard>`，但每一次读取的角色、显示身份、阵营、存活和死亡回合都来自当前 `ClocktowerGameSession.state`；死亡回合从已有的已确认 `ActionFact.Death/Execution` 的 `TimelinePoint.round` 获取。不复制持续可写的第二套机械状态，不在 UI 回调间保留旧卡片快照。
+- 开局角色展示原始卡片仅用于 Session 尚未建立的发牌阶段；`Undercover` 仍使用唯一的可写 `setupCards` 和原来淘汰机制。已有 `cards` 更名为只读实时展示；原始可变集合改为 `setupCards` 且只有初始化/恢复读取和 Undercover 游戏可以写。删除整段 `reflectCommittedClocktowerDeath` 和 Slayer / Virgin / 日间处决 / 夜间破晓四处镜像调用；正式角色变化保留原 Session 提交，删除其事后 `cards[index].copy(clocktowerRole/team)` 镜像更新，确认方法重命名为 `commitClocktowerActualRole`。
+- 新增 `ClocktowerSessionPlayerCardsTest` 的三个重要边界回归：Session death/round 无需卡片写入即时读取、角色更替即时读取且展示身份不改变，以及没有 Clocktower Session 时 Undercover 独立可写。代码提交 `83e57985936bad4a000a967cd3b271e76af6418c` 已推送；[R2 #3858](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38996412152) SUCCESS；同一源码 [CI #4267](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38996412117) SUCCESS，包含 Android 全量 JVM 测试/Debug APK、ASP、Real Clingo 与 aggregate CI Gate。未进行 Android 真机/ADB 验收。
+- **尚未完成：** 原始 `PlayerCard` 类型中仍保留开局/恢复存档机械字段，部分运行期 `cards.toClocktowerGameState` 仍有反向转换；`ClocktowerNightCheckpoint`/Compose 阶段回合和已确认夜间目标的数据归属需要后续收敛。此只读实时列表是现有消费者迁移步骤而不是长期新的状态框架；消费端直接使用 Session `GameState` 后继续删除无用的 PlayerCard 机械字段及转换。不能宣称 A3 DONE 或 A5 Recovery DONE。
+
 - Session 对游戏中的真实角色/展示身份/存活/投毒/阶段/确认选择和必要能力状态提供只读 view；PlayerCard 只保留 UI 名称/视觉元素等非权威展示属性。
 - 消除游戏进行中的 cards.toClocktowerGameState() 读取和由 UI 卡片反向覆盖 Session 的写入；仅允许开局初始化及必要的旧边界适配（迁移完成即移除不必要适配）。
 - 逐项统一攻击、保护、处决、死亡、角色变化、夜间动作，保留 Undercover 原行为。
