@@ -352,8 +352,7 @@ internal fun ClocktowerJudgeScreen(
     var pendingNightAdvance by remember(gameId, round, phase) {
         mutableStateOf<ClocktowerNightAdvanceDirective.AwaitRefreshedFlow?>(null)
     }
-    var nominatorName by remember(gameId, round) { mutableStateOf<String?>(null) }
-    var nomineeName by remember(gameId, round) { mutableStateOf<String?>(null) }
+    val nominationDraft = remember(gameId, round) { ClocktowerNominationDraft() }
     var slayerClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
     var slayerTargetName by remember(gameId) { mutableStateOf<String?>(null) }
     val artistDraft = remember(gameId) { ClocktowerArtistDraft() }
@@ -1719,8 +1718,7 @@ internal fun ClocktowerJudgeScreen(
                     .firstOrNull { seat -> seat.seatId == targetSeatId && seat.isAlive }
                     ?.playerName
                 if (sourceName != null && targetName != null && sourceName != targetName) {
-                    nominatorName = sourceName
-                    nomineeName = targetName
+                    nominationDraft.select(sourceName, targetName)
                     dayMode = ClocktowerDayMode.Nomination
                 }
             },
@@ -1743,94 +1741,36 @@ internal fun ClocktowerJudgeScreen(
     }
 
     if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Nomination) {
-        val nominatorCard = cards.firstOrNull { it.name == nominatorName }
-        val nomineeCard = cards.firstOrNull { it.name == nomineeName }
-        val virginFirstNomination = nomineeCard?.let {
-            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Virgin")
-        } == true && !virginUsed
-        val virginAbilityWorks = nomineeCard?.let {
-            AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Virgin")
-        } == true && virginFirstNomination
-        val virginRegistrationKey = nominatorCard
-            ?.takeIf { it.name == spyCard?.name && virginFirstNomination }
-            ?.let { registrationKey("Virgin", it.name) }
-        val virginSpyRegistersGood = registration.spyRegistersGood(virginRegistrationKey, "Virgin")
-        val virginExecutes = virginAbilityWorks &&
-            (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || virginSpyRegistersGood)
-        val specialNotice = when {
-            virginExecutes -> text(
-                "${playerSeatLabel(cards, nomineeName)} 首次被登记为镇民的玩家提名：不进行投票，提名者将立即被处决。",
-                "${playerSeatLabel(cards, nomineeName)} was first nominated by a player registering as Townsfolk: skip voting and execute the nominator.",
-            )
-            virginFirstNomination -> text(
-                "这是圣女第一次被提名，但能力不会处决提名者；记录能力已用过后继续投票。",
-                "This is the Virgin's first nomination, but the ability does not execute the nominator. Mark it spent and continue.",
-            )
-            else -> null
-        }
-        ClocktowerPendingNominationTableScreen(
-            round = round,
-            compact = false,
+        ClocktowerNominationInteraction(
+            draft = nominationDraft,
             cards = cards,
             tableState = clocktowerDayOverviewTableState(
                 sessionGameState,
                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
                 ghostVoteAuthority = ghostVoteAuthority,
             ),
+            registration = registration,
+            registrationState = registrationState,
+            round = round,
             executionThreshold = executionThreshold,
-            nominatorName = nominatorName,
-            nomineeName = nomineeName,
-            specialNotice = specialNotice,
-            specialNoticeIsDanger = virginExecutes,
-            continueLabel = when {
-                virginExecutes -> text("确认并处决提名者", "Confirm and execute nominator")
-                virginFirstNomination -> text("记录能力，进入投票", "Record ability and continue")
-                else -> text("开始投票", "Start voting")
-            },
+            poisonTarget = poisonTarget,
+            virginUsed = virginUsed,
             actionsEnabled = gameOutcome == null,
             onHostTools = onHostTools,
-            onContinue = {
-                val chosenNominator = nominatorName
-                val chosenNominee = nomineeName
-                if (chosenNominator != null && chosenNominee != null && virginFirstNomination && virginExecutes) {
-                    onPreflightVirginExecution(
-                        chosenNominator,
-                    )
+            onConfirm = { confirmation ->
+                if (confirmation.firstVirginNomination && confirmation.virginExecutes) {
+                    onPreflightVirginExecution(confirmation.nominator)
                 }
-                if (chosenNominator != null && chosenNominee != null) {
-                    onConfirmedNomination(chosenNominator, chosenNominee)
-                }
-                if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
-                    val explicitSpyRuling = registrationState.explicitChoice(
-                        ClocktowerRegistrationSubject.SPY, virginRegistrationKey,
-                    )?.takeIf { virginAbilityWorks && registration.spyCanRegister("Virgin") }
+                onConfirmedNomination(confirmation.nominator, confirmation.nominee)
+                if (confirmation.firstVirginNomination) {
                     onVirginNomination(
-                        chosenNominator, chosenNominee, virginExecutes,
-                        explicitSpyRuling?.usesSpecialRegistration,
+                        confirmation.nominator, confirmation.nominee, confirmation.virginExecutes,
+                        confirmation.explicitSpyRegistration,
                     )
                 }
-                if (!virginExecutes) {
-                    dayMode = ClocktowerDayMode.Vote
-                }
+                if (!confirmation.virginExecutes) dayMode = ClocktowerDayMode.Vote
             },
-            onCancel = {
-                nominatorName = null
-                nomineeName = null
-                dayMode = ClocktowerDayMode.Overview
-            },
-            specialContent = {
-                if (virginRegistrationKey != null && spyCard != null) {
-                    ClocktowerSpyTownsfolkTypeDecisionControls(
-                        registersAsTownsfolk = registration.spyRegistersGood(virginRegistrationKey, "Virgin"),
-                        hasExplicitChoice = registrationState.spyHasExplicitChoice(virginRegistrationKey),
-                        enabled = registration.spyCanRegister("Virgin"),
-                        language = language,
-                        onRegistersAsTownsfolkChange = { chosen ->
-                            registrationState.chooseSpy(virginRegistrationKey, chosen)
-                        },
-                    )
-                }
-            },
+            onCancel = { dayMode = ClocktowerDayMode.Overview },
         )
         return
     }
@@ -1857,15 +1797,13 @@ internal fun ClocktowerJudgeScreen(
                 ghostVoteAuthority = ghostVoteAuthority,
             ),
             executionThreshold = executionThreshold,
-            nominatorName = nominatorName,
-            nomineeName = nomineeName,
+            nominatorName = nominationDraft.nominatorName,
+            nomineeName = nominationDraft.nomineeName,
             highestVoteText = highestVoteText,
             actionsEnabled = gameOutcome == null,
             onHostTools = onHostTools,
             onConfirm = { voteState ->
-                onConfirmedVote(requireNotNull(nominatorName), requireNotNull(nomineeName), voteState.confirmedVoteRecord())
-                nominatorName = null
-                nomineeName = null
+                nominationDraft.confirmVote(voteState.confirmedVoteRecord(), onConfirmedVote)
                 dayMode = ClocktowerDayMode.Overview
             },
             onCancel = {
