@@ -10,9 +10,7 @@ import org.junit.Test
 class ClocktowerChambermaidPresentationSemanticsTest {
     private fun card(name: String) = PlayerCard(
         name = name,
-        role = Role.Civilian,
-        word = "",
-    )
+        )
 
     @Test
     fun `Chambermaid result binds actor value and exact selected subject seats`() {

@@ -123,8 +123,6 @@ class ClocktowerCurrentDemonAuthorityTest {
         eliminatedRound: Int? = null,
     ) = PlayerCard(
         name = name,
-        role = Role.Civilian,
-        word = "",
         clocktowerTeam = team,
         clocktowerRole = ClocktowerRole(
             team = team,
