@@ -279,6 +279,14 @@
 - 新增 `ClocktowerSessionPlayerCardsTest` 的三个重要边界回归：Session death/round 无需卡片写入即时读取、角色更替即时读取且展示身份不改变，以及没有 Clocktower Session 时 Undercover 独立可写。代码提交 `83e57985936bad4a000a967cd3b271e76af6418c` 已推送；[R2 #3858](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38996412152) SUCCESS；同一源码 [CI #4267](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38996412117) SUCCESS，包含 Android 全量 JVM 测试/Debug APK、ASP、Real Clingo 与 aggregate CI Gate。未进行 Android 真机/ADB 验收。
 - **尚未完成：** 原始 `PlayerCard` 类型中仍保留开局/恢复存档机械字段，部分运行期 `cards.toClocktowerGameState` 仍有反向转换；`ClocktowerNightCheckpoint`/Compose 阶段回合和已确认夜间目标的数据归属需要后续收敛。此只读实时列表是现有消费者迁移步骤而不是长期新的状态框架；消费端直接使用 Session `GameState` 后继续删除无用的 PlayerCard 机械字段及转换。不能宣称 A3 DONE 或 A5 Recovery DONE。
 
+#### A3 第三批：夜间 Host／破晓裁定消除 PlayerCard 反向 GameState（2026-10-17；A3 PARTIAL）
+
+- 开始时重新核对开发机与 GitHub：`cleanup/arch-cleanup-1-20261015` 的本地/远程 HEAD `34dd4b28fdc4170bf16c58888a94ec55928f12ec`，工作树 clean，文档 CI #4268 SUCCESS；PR #315 Draft、对 main 仍 dirty，未合并。
+- 原 `ClocktowerNightHostProjectionFactory.project` 从 `cards.toClocktowerGameState(script, seed, poisonTarget)` 构造夜间规则事实，然后送入 Demon successor 与 `NightTransactionRestoreComposition`；`resolveTroubleBrewingDawnDeathResolution` 再做一次 cards→GameState，并根据卡片拼出存活/真实角色/恶魔身份。现一并改用调用端 Session `GameState`，移除旧 `script/gameSeed` 转换参数和两处反向转换。夜间基础存活集、角色映射、非夜晚侍女目标与登记真实角色也直接使用传入 GameState；卡片只作为名单/页面交互的展示容器。
+- `CampBoardGameHostApp.onConfirmNewDemon` 与 `onConfirmNight` 的两处 `cards.toClocktowerGameState` 改为 `requireClocktowerGameSession().state.gameState`。存活/角色/恶魔类型、存活投毒者、死亡后毒效 carry 和 Dawn materialization 均从提交时的最新 Session 机械事实派生；引入一个纯 `GameState.toBaseEffectiveNightState()` 投影函数，不存状态、不建缓存，也不保留双轨。原 Host 正式提交入口与 Undercover 保持不变。
+- `ClocktowerNightHostProjectionTest` 更新到新签名，并新增“故意提供过时 PlayerCard，夜间有效存活与实际角色仍服从已确认 GameState”的边界测试。可执行提交 `f1ea1b6af610042fc1b072674d806d57f2c8e3b0` 已推送，R2 #3859 成功，CI #4269 正在验证（Android、Clingo 待最后复核；ASP 已通过）。此提交成功编译、完成全量测试后才可宣称自动化验收通过。
+- **剩余 A3：** 生产 `ClocktowerFirstNightInformationRequest` 的非 TB fallback，Debug 预热两处，开局唯一合法初始化，以及 Recovery 恢复/校验中仍有 cards→GameState；`resolveTroubleBrewingDawnDeathFacts` 等攻击语义仍通过现役 Session-backed 只读 cards 消费能力主体。还要清理恢复卡片机械字段、审计 Compose phase/round/night checkpoint 的权威归属。不得越界进入 A4/A5/A6、付费 API、真机或 PR 合并。
+
 - Session 对游戏中的真实角色/展示身份/存活/投毒/阶段/确认选择和必要能力状态提供只读 view；PlayerCard 只保留 UI 名称/视觉元素等非权威展示属性。
 - 消除游戏进行中的 cards.toClocktowerGameState() 读取和由 UI 卡片反向覆盖 Session 的写入；仅允许开局初始化及必要的旧边界适配（迁移完成即移除不必要适配）。
 - 逐项统一攻击、保护、处决、死亡、角色变化、夜间动作，保留 Undercover 原行为。
