@@ -1,19 +1,38 @@
 # CampBoardGameHost AI Development Instructions
 
-## Product correction: minimal state and event record (2026-10-17)
+## Current product authority: minimal Host (2026-10-17, supersedes prior rules-engine requirements)
 
-The current owner-directed priority is deletion of redundant state, the independent game
-Recovery/save system, and separately maintained textual game records. See
-`docs/MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md` for the inspected dependencies and sequence.
-Delete first even when the replacement event coverage or interruption recovery is incomplete;
-report those gaps honestly. Do not preserve the old system until a replacement is complete,
-introduce compatibility scaffolding, or manufacture a new precise-state reconstruction framework.
-Preserve normal game rules, confirmed facts, and the single game-truth authority. Future recovery,
-AI input and textual display must consume the same authoritative game record; this still requires
-local durability, not an independent save-state copy. Existing instructions to retain Recovery or
-its exact reconstruction contracts are superseded within this cleanup scope. Independent Recovery was removed in #316; duplicate text history and archives were removed in #317. The current C1 checkpoint removes
-state/request copies; remaining C2 ownership work is tracked in
-`docs/STATE_COPY_REMOVAL_IMPLEMENTATION_2026-10-17.md`. Prior #315 Session convergence remains part of the baseline.
+The owner has explicitly changed the product boundary: build a minimal Host for current game
+state, one authoritative game record, and basic operations. Remove Host game-rule legality
+validation, clue computation, legal-candidate enumeration, registration-witness inference,
+and manual rule/clue assistance. AI provides recommendations; the Storyteller is responsible
+for game-rule correctness. A confirmed result such as “Empath received 1” is recorded and
+shown as that result, without reconstructing why it is legal.
+
+Read `docs/CURRENT_DEVELOPMENT_ROADMAP.md`, `docs/MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md`,
+and `docs/NEXT_DEVELOPMENT_HANDOFF.md` before continuing. The old behavior-preserving D5
+extraction plan is suspended. Start the next campaign with a deletion-boundary audit, not
+further extraction of rule machinery that is now intended for removal.
+
+Retain data integrity: one game-truth owner, ordered confirmed facts, real player/seat/game
+identity, atomic state/record updates, duplicate prevention, rejection of stale AI responses,
+and private-information protection. These are NOT game-rule legality checks. AI suggestions
+remain proposals until explicitly confirmed or processed through a separately specified
+authorized execution flow; this correction does not authorize arbitrary AI writes.
+
+Delete first; event coverage, crash continuation and recap may remain explicit gaps. Do not
+restore an independent save system, exact UI reconstruction, duplicate textual history,
+compatibility scaffolding, or a new generic AI execution framework. Basic manual entry and
+state editing remain necessary even though rule assistance is removed. Preserve Undercover
+outside the Clocktower refactor unless explicitly scoped otherwise.
+
+This section overrides conflicting older instructions anywhere in this repository to preserve
+Host legality, rules semantics, legal domains, inferred witnesses or rule-specific regression
+coverage. Such production code and tests may be retired together after consumer/dependency
+audit. Security, privacy, data-integrity tests and applicable CI/R2 remain required; update
+obsolete architecture guards rather than retaining deleted product behavior to satisfy them.
+Older recovery/architecture documents below are historical where they conflict with this section.
+Local Codex work reads and writes the local project directly; Mini MCP is not required.
 
 ## Evidence-first validation policy (2026-10-15; current authority)
 

@@ -1,5 +1,7 @@
 # 第四阶段 D5a：登记结果候选准备
 
+> 历史检查点：后续执行方向已由 [最小 Host 产品合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md) 覆盖。旧规则保留要求及 NEXT 不再适用；本文件保留实施证据。
+
 基线 D4e #327 `a8c1c479`。D4 已完成源码层面的日间早分流，真机生命周期验收仍缺；本步进入 D5 夜间信息准备边界。
 
 Architecture pre-flight:

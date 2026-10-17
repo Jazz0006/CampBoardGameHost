@@ -1,5 +1,7 @@
 # CampBoardGameHost Testing Strategy
 
+> **2026-10-17 产品边界更新：** 最小 Host 明确取消游戏规则校验与线索辅助，相关测试可随取消的功能退休。数据完整性、发布真实性、隐私和异步过期响应保护继续有效。见 [当前产品合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)；本文件旧规则/Recovery 验收条款不覆盖新合同。
+
 > **Current policy (2026-10-15): Evidence-first, not mandatory test-first.** RED/GREEN is an optional technique chosen when it adds value; existing safeguards, CI tiers, exact-head merge acceptance, rules, security and persistence contracts are unchanged. See root `AGENTS.md`.
 
 > Role: **LONG-LIVED TEST EXECUTION / VALIDATION STRATEGY**
