@@ -32,7 +32,6 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
-import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
@@ -41,9 +40,6 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNigh
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
-import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDomain
-import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
-import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
@@ -225,97 +221,7 @@ internal fun ClocktowerJudgeScreen(
     val spyCard = cards.firstOrNull { it.clocktowerRole?.enName == "Spy" }
     val recluseCard = cards.firstOrNull { it.clocktowerRole?.enName == "Recluse" }
     val registrationState = remember { ClocktowerRegistrationInteractionState() }
-    var effectivePoisonForRole: (String) -> String? = { poisonTarget }
-    var effectiveRoleForRegistration: (String, PlayerCard) -> RoleId? = { _, card ->
-        card.clocktowerRole?.enName?.let(::RoleId)
-    }
     fun registrationKey(ability: String, subject: String = "spy") = "${phase.name}:$round:$ability:$subject"
-    fun registrationSubject(
-        queryingRoleEnName: String,
-        card: PlayerCard,
-    ): TroubleBrewingRegistrationSubject? {
-        val actualRole = card.clocktowerRole ?: return null
-        val seat = cards.indexOf(card).plus(1).takeIf { it > 0 } ?: return null
-        val actualType = when (actualRole.team) {
-            ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
-            ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
-            ClocktowerTeam.Minion -> CharacterType.MINION
-            ClocktowerTeam.Demon -> CharacterType.DEMON
-        }
-        val actualAlignment = when (actualRole.team) {
-            ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider -> com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD
-            ClocktowerTeam.Minion, ClocktowerTeam.Demon -> com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL
-        }
-        return TroubleBrewingRegistrationSubject(
-            seat = seat,
-            actualRole = RoleId(actualRole.enName),
-            actualAlignment = actualAlignment,
-            actualType = actualType,
-            effectiveRole = effectiveRoleForRegistration(queryingRoleEnName, card),
-            poisoned = effectivePoisonForRole(queryingRoleEnName) == card.name,
-        )
-    }
-    fun registrationResolution(
-        key: String?,
-        queryingRoleEnName: String,
-        card: PlayerCard?,
-        teams: List<ClocktowerTeam>,
-        detail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
-        question: RegistrationQuestion = if (detail == ClocktowerRegistrationDetail.AlignmentOnly) {
-            RegistrationQuestion.ALIGNMENT
-        } else {
-            RegistrationQuestion.ROLE
-        },
-    ): TroubleBrewingRegistrationResolution? {
-        if (key == null || card == null || teams.isEmpty()) return null
-        val subject = registrationSubject(queryingRoleEnName, card) ?: return null
-        val allowedTypes = teams.mapTo(mutableSetOf()) { team ->
-            when (team) {
-                ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
-                ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
-                ClocktowerTeam.Minion -> CharacterType.MINION
-                ClocktowerTeam.Demon -> CharacterType.DEMON
-            }
-        }
-        return TroubleBrewingRegistrationDomain.resolve(
-            subject = subject,
-            allowedRoles = clocktowerRoleDefinitionsForScript(script).filter { it.type in allowedTypes },
-            question = question,
-        )
-    }
-    fun spyCanRegister(queryingRoleEnName: String): Boolean = spyCard
-        ?.let { registrationSubject(queryingRoleEnName, it) }
-        ?.let(TroubleBrewingRegistrationDomain::specialReason) == RegistrationReason.SPY_ABILITY
-    fun legalRegistrationRoles(
-        key: String?,
-        queryingRoleEnName: String,
-        card: PlayerCard?,
-        teams: List<ClocktowerTeam>,
-        detail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
-    ): List<ClocktowerRole> {
-        val legalRoleIds = registrationResolution(key, queryingRoleEnName, card, teams, detail)
-            ?.special
-            ?.mapTo(mutableSetOf()) { it.registeredRole }
-            .orEmpty()
-        return completeTroubleBrewingRoles.filter { RoleId(it.enName) in legalRoleIds }
-    }
-    fun spyRegistersGood(key: String?, queryingRoleEnName: String): Boolean =
-        key != null && spyCanRegister(queryingRoleEnName) && registrationState.spyIsGood(key)
-    fun registeredRole(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String): ClocktowerRole? {
-        if (!spyRegistersGood(key, queryingRoleEnName)) return spyCard?.clocktowerRole
-        val allowed = legalRegistrationRoles(key, queryingRoleEnName, spyCard, teams)
-        return allowed.firstOrNull { it.enName == registrationState.spyRole(key) }
-    }
-    fun recluseCanRegister(queryingRoleEnName: String): Boolean = recluseCard
-        ?.let { registrationSubject(queryingRoleEnName, it) }
-        ?.let(TroubleBrewingRegistrationDomain::specialReason) == RegistrationReason.RECLUSE_ABILITY
-    fun recluseRegistersEvil(key: String?, queryingRoleEnName: String): Boolean =
-        key != null && recluseCanRegister(queryingRoleEnName) && registrationState.recluseIsEvil(key)
-    fun recluseRegisteredRole(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String): ClocktowerRole? {
-        if (!recluseRegistersEvil(key, queryingRoleEnName)) return recluseCard?.clocktowerRole
-        val allowed = legalRegistrationRoles(key, queryingRoleEnName, recluseCard, teams)
-        return allowed.firstOrNull { it.enName == registrationState.recluseRole(key) }
-    }
     val nightHostProjection = ClocktowerNightHostProjectionFactory.project(
         cards = cards,
         gameState = sessionGameState,
@@ -351,8 +257,11 @@ internal fun ClocktowerJudgeScreen(
     fun effectiveAbilitySubjectForRole(enName: String, actor: PlayerCard?): AbilitySubject? =
         nightHostProjection.effectiveAbilitySubjectForRole(enName, actor)
 
-    effectivePoisonForRole = nightHostProjection::effectivePoisonForRole
-    effectiveRoleForRegistration = nightHostProjection::effectiveRoleForRegistration
+    val effectivePoisonForRole = nightHostProjection::effectivePoisonForRole
+    val registration = ClocktowerRegistrationProjection(
+        cards, script, registrationState, effectivePoisonForRole,
+        nightHostProjection::effectiveRoleForRegistration,
+    )
 
     val fortuneTellerRecluseRegistrationKey = recluseCard
         ?.takeIf { it.name == fortuneTellerFirst || it.name == fortuneTellerSecond }
@@ -393,7 +302,7 @@ internal fun ClocktowerJudgeScreen(
         }
     }
     val fortuneTellerMatched = fortuneTellerMatches(
-        recluseRegistersEvil(fortuneTellerRecluseRegistrationKey, "Fortune Teller"),
+        registration.recluseRegistersEvil(fortuneTellerRecluseRegistrationKey, "Fortune Teller"),
     )
     val fortuneTellerResult = fortuneTellerMatched?.let { matched ->
         if (matched) stringResource(R.string.clocktower_yes) else stringResource(R.string.clocktower_no)
@@ -640,20 +549,20 @@ internal fun ClocktowerJudgeScreen(
 
     val washerwomanActor = roleActor("Washerwoman")
     val washerwomanRegistrationKey = washerwomanActor?.let { registrationKey("Washerwoman") }
-    val washerwomanTarget = spyCard?.takeIf { spyRegistersGood(washerwomanRegistrationKey, "Washerwoman") }
+    val washerwomanTarget = spyCard?.takeIf { registration.spyRegistersGood(washerwomanRegistrationKey, "Washerwoman") }
         ?: cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Townsfolk && it.clocktowerRole?.enName != "Washerwoman" }
     val washerwomanPair = washerwomanTarget?.let { storytellerPairHint(it, cards, excludeNames = setOfNotNull(washerwomanActor?.name)) }
     val washerwomanRevealedRole = if (washerwomanTarget?.name == spyCard?.name) {
-        registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Washerwoman")
+        registration.registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Washerwoman")
     } else washerwomanTarget?.clocktowerRole
     val washerwomanOrderedPair = orderedPair(washerwomanPair?.first, washerwomanPair?.second, "Washerwoman-${washerwomanPair?.first?.name}-${washerwomanPair?.second?.name}")
     val librarianActor = roleActor("Librarian")
     val librarianRegistrationKey = librarianActor?.let { registrationKey("Librarian") }
-    val librarianTarget = spyCard?.takeIf { spyRegistersGood(librarianRegistrationKey, "Librarian") }
+    val librarianTarget = spyCard?.takeIf { registration.spyRegistersGood(librarianRegistrationKey, "Librarian") }
         ?: cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Outsider }
     val librarianPair = librarianTarget?.let { storytellerPairHint(it, cards, excludeNames = setOfNotNull(librarianActor?.name)) }
     val librarianRevealedRole = if (librarianTarget?.name == spyCard?.name) {
-        registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider), "Librarian")
+        registration.registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider), "Librarian")
     } else librarianTarget?.clocktowerRole
     val librarianOrderedPair = orderedPair(librarianPair?.first, librarianPair?.second, "Librarian-${librarianPair?.first?.name}-${librarianPair?.second?.name}")
     val investigatorActor = roleActor("Investigator")
@@ -661,11 +570,11 @@ internal fun ClocktowerJudgeScreen(
     val investigatorRecluseRegistrationKey = investigatorActor?.let {
         recluseCard?.let { recluse -> registrationKey("InvestigatorRecluse", recluse.name) }
     }
-    val investigatorTarget = recluseCard?.takeIf { recluseRegistersEvil(investigatorRecluseRegistrationKey, "Investigator") }
-        ?: spyCard?.takeIf { !spyRegistersGood(investigatorRegistrationKey, "Investigator") }
+    val investigatorTarget = recluseCard?.takeIf { registration.recluseRegistersEvil(investigatorRecluseRegistrationKey, "Investigator") }
+        ?: spyCard?.takeIf { !registration.spyRegistersGood(investigatorRegistrationKey, "Investigator") }
         ?: cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Minion && it.clocktowerRole?.enName != "Spy" }
     val investigatorRevealedRole = if (investigatorTarget?.name == recluseCard?.name) {
-        recluseRegisteredRole(investigatorRecluseRegistrationKey, listOf(ClocktowerTeam.Minion), "Investigator")
+        registration.recluseRegisteredRole(investigatorRecluseRegistrationKey, listOf(ClocktowerTeam.Minion), "Investigator")
     } else {
         investigatorTarget?.clocktowerRole
     }
@@ -691,8 +600,8 @@ internal fun ClocktowerJudgeScreen(
         ?.takeIf { empathNeighbors.any { neighbor -> neighbor.name == recluseCard?.name } }
         ?.let { registrationKey("EmpathRecluse", it.name) }
     fun registeredIsEvil(card: PlayerCard, queryingRoleEnName: String, spyKey: String?, recluseKey: String?): Boolean = when {
-        card.name == spyCard?.name && spyRegistersGood(spyKey, queryingRoleEnName) -> false
-        card.name == recluseCard?.name && recluseRegistersEvil(recluseKey, queryingRoleEnName) -> true
+        card.name == spyCard?.name && registration.spyRegistersGood(spyKey, queryingRoleEnName) -> false
+        card.name == recluseCard?.name && registration.recluseRegistersEvil(recluseKey, queryingRoleEnName) -> true
         else -> isClocktowerEvil(card)
     }
     val chefActor = roleActor("Chef")
@@ -942,15 +851,15 @@ internal fun ClocktowerJudgeScreen(
         recluseKey: String?,
         valueFor: (ClocktowerAlignmentRegistrationWitness) -> Int,
     ): List<ClocktowerDisplayOption> {
-        val spySelectable = spyKey != null && spyCanRegister(roleEnName)
-        val recluseSelectable = recluseKey != null && recluseCanRegister(roleEnName)
+        val spySelectable = spyKey != null && registration.spyCanRegister(roleEnName)
+        val recluseSelectable = recluseKey != null && registration.recluseCanRegister(roleEnName)
         if (!spySelectable && !recluseSelectable) return emptyList()
         val sourceSeat = cards.indexOf(actor) + 1
         if (sourceSeat <= 0) return emptyList()
         val witnesses = clocktowerAlignmentRegistrationWitnesses(
-            currentSpyRegistersGood = spyRegistersGood(spyKey, roleEnName),
+            currentSpyRegistersGood = registration.spyRegistersGood(spyKey, roleEnName),
             spySelectable = spySelectable,
-            currentRecluseRegistersEvil = recluseRegistersEvil(recluseKey, roleEnName),
+            currentRecluseRegistersEvil = registration.recluseRegistersEvil(recluseKey, roleEnName),
             recluseSelectable = recluseSelectable,
         )
         return ClocktowerRegistrationResultPresentation.numericOptions(
@@ -966,14 +875,14 @@ internal fun ClocktowerJudgeScreen(
 
     fun resultFirstFortuneTellerRegistrationOptions(actor: PlayerCard): List<ClocktowerDisplayOption> {
         val key = fortuneTellerRecluseRegistrationKey ?: return emptyList()
-        if (!recluseCanRegister("Fortune Teller")) return emptyList()
+        if (!registration.recluseCanRegister("Fortune Teller")) return emptyList()
         val sourceSeat = cards.indexOf(actor) + 1
         val subjectSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
             cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
         }
         if (sourceSeat <= 0 || subjectSeats.size != 2 || subjectSeats.distinct().size != 2) return emptyList()
-        val current = recluseRegistersEvil(key, "Fortune Teller")
-        val demonRole = legalRegistrationRoles(
+        val current = registration.recluseRegistersEvil(key, "Fortune Teller")
+        val demonRole = registration.legalRegistrationRoles(
             key,
             "Fortune Teller",
             recluseCard,
@@ -1007,24 +916,24 @@ internal fun ClocktowerJudgeScreen(
         val targetSeat = cards.indexOf(resolvedTarget) + 1
         if (targetSeat <= 0) return emptyList()
         val ruling = when {
-            resolvedTarget.name == spyCard?.name && spyKey != null && spyCanRegister(roleEnName) -> {
-                val selected = spyRegistersGood(spyKey, roleEnName)
+            resolvedTarget.name == spyCard?.name && spyKey != null && registration.spyCanRegister(roleEnName) -> {
+                val selected = registration.spyRegistersGood(spyKey, roleEnName)
                 ClocktowerRegistrationResultPresentation.RoleRevealRuling(
                     specialRegistration = ClocktowerRegistrationResultPresentation.SpecialRegistration.Spy,
                     specialSelected = selected,
                     actualRole = resolvedTarget.clocktowerRole,
-                    selectedRole = if (selected) registeredRole(spyKey, spyTeams, roleEnName) else null,
-                    legalSpecialRoles = legalRegistrationRoles(spyKey, roleEnName, spyCard, spyTeams),
+                    selectedRole = if (selected) registration.registeredRole(spyKey, spyTeams, roleEnName) else null,
+                    legalSpecialRoles = registration.legalRegistrationRoles(spyKey, roleEnName, spyCard, spyTeams),
                 )
             }
-            resolvedTarget.name == recluseCard?.name && recluseKey != null && recluseCanRegister(roleEnName) -> {
-                val selected = recluseRegistersEvil(recluseKey, roleEnName)
+            resolvedTarget.name == recluseCard?.name && recluseKey != null && registration.recluseCanRegister(roleEnName) -> {
+                val selected = registration.recluseRegistersEvil(recluseKey, roleEnName)
                 ClocktowerRegistrationResultPresentation.RoleRevealRuling(
                     specialRegistration = ClocktowerRegistrationResultPresentation.SpecialRegistration.Recluse,
                     specialSelected = selected,
                     actualRole = resolvedTarget.clocktowerRole,
-                    selectedRole = if (selected) recluseRegisteredRole(recluseKey, recluseTeams, roleEnName) else null,
-                    legalSpecialRoles = legalRegistrationRoles(recluseKey, roleEnName, recluseCard, recluseTeams),
+                    selectedRole = if (selected) registration.recluseRegisteredRole(recluseKey, recluseTeams, roleEnName) else null,
+                    legalSpecialRoles = registration.legalRegistrationRoles(recluseKey, roleEnName, recluseCard, recluseTeams),
                 )
             }
             else -> return emptyList()
@@ -1230,9 +1139,9 @@ internal fun ClocktowerJudgeScreen(
                 informationStepBuilder.build(
                                 roleName = "洗衣妇",
                                 enName = "Washerwoman",
-                                tellPlayer = washerwomanTarget?.let { text("${if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Washerwoman")?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Washerwoman")?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}") },
+                                tellPlayer = washerwomanTarget?.let { text("${if (it.name == spyCard?.name) registration.registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Washerwoman")?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registration.registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Washerwoman")?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}") },
                                 explanation = text("洗衣妇会得知某个镇民在两名玩家之一中。", "The Washerwoman learns that a particular Townsfolk is one of two players."),
-                                displayPrimary = washerwomanTarget?.let { if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Washerwoman")?.nameFor(language) else it.clocktowerRole?.nameFor(language) },
+                                displayPrimary = washerwomanTarget?.let { if (it.name == spyCard?.name) registration.registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk), "Washerwoman")?.nameFor(language) else it.clocktowerRole?.nameFor(language) },
                                 displaySecondary = seatNumbersText(washerwomanOrderedPair),
                                 displayFooter = text("在下面两位玩家之中", "One of these two players"),
                                 hostInstruction = text("轻拍洗衣妇，示意睁眼。点击“全屏展示给玩家”，只给她看；看完后收回手机，示意闭眼。", "Tap the Washerwoman to wake them. Show the full-screen information only to that player, then take the phone back and signal them to close their eyes."),
@@ -1253,9 +1162,9 @@ internal fun ClocktowerJudgeScreen(
                 informationStepBuilder.build(
                                 roleName = "图书管理员",
                                 enName = "Librarian",
-                                tellPlayer = librarianTarget?.let { text("${if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider), "Librarian")?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider), "Librarian")?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}") } ?: text("本局没有外来者。", "There are no Outsiders in play."),
+                                tellPlayer = librarianTarget?.let { text("${if (it.name == spyCard?.name) registration.registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider), "Librarian")?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registration.registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider), "Librarian")?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}") } ?: text("本局没有外来者。", "There are no Outsiders in play."),
                                 explanation = text("图书管理员会得知某个外来者在两名玩家之一中，或得知没有外来者。", "The Librarian learns that an Outsider is one of two players, or that no Outsiders are in play."),
-                                displayPrimary = librarianTarget?.let { if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider), "Librarian")?.nameFor(language) else it.clocktowerRole?.nameFor(language) } ?: text("没有外来者", "No Outsiders"),
+                                displayPrimary = librarianTarget?.let { if (it.name == spyCard?.name) registration.registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider), "Librarian")?.nameFor(language) else it.clocktowerRole?.nameFor(language) } ?: text("没有外来者", "No Outsiders"),
                                 displaySecondary = seatNumbersText(librarianOrderedPair),
                                 displayFooter = if (librarianTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
                                 hostInstruction = text("轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。", "Tap the Librarian to wake them. Show the result only to that player, including a No Outsiders result."),
@@ -1430,26 +1339,26 @@ internal fun ClocktowerJudgeScreen(
                         roleName = "送葬者",
                         enName = "Undertaker",
                         tellPlayer = text("${playerSeatLabel(cards, executedName)} 的角色是 ${when (undertakerTarget?.name) {
-                            spyCard?.name -> registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Undertaker")?.nameFor(language).orEmpty()
-                            recluseCard?.name -> recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Undertaker")?.nameFor(language).orEmpty()
+                            spyCard?.name -> registration.registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Undertaker")?.nameFor(language).orEmpty()
+                            recluseCard?.name -> registration.recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Undertaker")?.nameFor(language).orEmpty()
                             else -> undertakerTarget?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()
                         }}", "${playerSeatLabel(cards, executedName)} was ${when (undertakerTarget?.name) {
-                            spyCard?.name -> registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Undertaker")?.nameFor(language).orEmpty()
-                            recluseCard?.name -> recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Undertaker")?.nameFor(language).orEmpty()
+                            spyCard?.name -> registration.registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Undertaker")?.nameFor(language).orEmpty()
+                            recluseCard?.name -> registration.recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Undertaker")?.nameFor(language).orEmpty()
                             else -> undertakerTarget?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()
                         }}"),
                         explanation = text("送葬者每晚得知今天被处决玩家的真实身份。", "Each night, the Undertaker learns the character of the player executed today."),
                         displayKind = ClocktowerDisplayKind.RoleReveal,
                         displayTitle = text("送葬者信息", "Undertaker information"),
                         displayPrimary = when (undertakerTarget?.name) {
-                            spyCard?.name -> registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Undertaker")?.nameFor(language)
-                            recluseCard?.name -> recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Undertaker")?.nameFor(language)
+                            spyCard?.name -> registration.registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Undertaker")?.nameFor(language)
+                            recluseCard?.name -> registration.recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Undertaker")?.nameFor(language)
                             else -> undertakerTarget?.clocktowerRole?.nameFor(language)
                         },
                         displayProposition = undertakerTarget?.let { target ->
                             val shownRole = when (target.name) {
-                                spyCard?.name -> registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Undertaker")
-                                recluseCard?.name -> recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Undertaker")
+                                spyCard?.name -> registration.registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Undertaker")
+                                recluseCard?.name -> registration.recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Undertaker")
                                 else -> target.clocktowerRole
                             } ?: return@let null
                             InformationProposition.RoleAt(cards.indexOf(target) + 1, RoleId(shownRole.enName))
@@ -1634,12 +1543,12 @@ internal fun ClocktowerJudgeScreen(
                         actorOverride = trigger,
                         abilityStateOverride = ravenkeeperDeathTriggerAbilityState,
                         tellPlayer = ravenkeeperTarget?.let { text("${playerSeatLabel(cards, it)} 的角色是 ${when (ravenkeeperTargetCard?.name) {
-                            spyCard?.name -> registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")?.nameFor(language).orEmpty()
-                            recluseCard?.name -> recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")?.nameFor(language).orEmpty()
+                            spyCard?.name -> registration.registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")?.nameFor(language).orEmpty()
+                            recluseCard?.name -> registration.recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")?.nameFor(language).orEmpty()
                             else -> ravenkeeperTargetCard?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()
                         }}", "${playerSeatLabel(cards, it)} is ${when (ravenkeeperTargetCard?.name) {
-                            spyCard?.name -> registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")?.nameFor(language).orEmpty()
-                            recluseCard?.name -> recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")?.nameFor(language).orEmpty()
+                            spyCard?.name -> registration.registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")?.nameFor(language).orEmpty()
+                            recluseCard?.name -> registration.recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")?.nameFor(language).orEmpty()
                             else -> ravenkeeperTargetCard?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()
                         }}") },
                         explanation = text("守鸦人只有在夜晚死亡时才会当晚醒来，选择一名玩家并得知其真实身份。", "The Ravenkeeper wakes only when they die at night, then chooses a player and learns that player's character."),
@@ -1647,14 +1556,14 @@ internal fun ClocktowerJudgeScreen(
                         displayKind = ClocktowerDisplayKind.RoleReveal,
                         displayTitle = text("守鸦人信息", "Ravenkeeper information"),
                         displayPrimary = when (ravenkeeperTargetCard?.name) {
-                            spyCard?.name -> registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")?.nameFor(language)
-                            recluseCard?.name -> recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")?.nameFor(language)
+                            spyCard?.name -> registration.registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")?.nameFor(language)
+                            recluseCard?.name -> registration.recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")?.nameFor(language)
                             else -> ravenkeeperTargetCard?.clocktowerRole?.nameFor(language)
                         },
                         displayProposition = ravenkeeperTargetCard?.let { target ->
                             val shownRole = when (target.name) {
-                                spyCard?.name -> registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")
-                                recluseCard?.name -> recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")
+                                spyCard?.name -> registration.registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")
+                                recluseCard?.name -> registration.recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")
                                 else -> target.clocktowerRole
                             } ?: return@let null
                             InformationProposition.RoleAt(cards.indexOf(target) + 1, RoleId(shownRole.enName))
@@ -1845,7 +1754,7 @@ internal fun ClocktowerJudgeScreen(
         val virginRegistrationKey = nominatorCard
             ?.takeIf { it.name == spyCard?.name && virginFirstNomination }
             ?.let { registrationKey("Virgin", it.name) }
-        val virginSpyRegistersGood = spyRegistersGood(virginRegistrationKey, "Virgin")
+        val virginSpyRegistersGood = registration.spyRegistersGood(virginRegistrationKey, "Virgin")
         val virginExecutes = virginAbilityWorks &&
             (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || virginSpyRegistersGood)
         val specialNotice = when {
@@ -1894,7 +1803,7 @@ internal fun ClocktowerJudgeScreen(
                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
                     val explicitSpyRuling = registrationState.explicitChoice(
                         ClocktowerRegistrationSubject.SPY, virginRegistrationKey,
-                    )?.takeIf { virginAbilityWorks && spyCanRegister("Virgin") }
+                    )?.takeIf { virginAbilityWorks && registration.spyCanRegister("Virgin") }
                     onVirginNomination(
                         chosenNominator, chosenNominee, virginExecutes,
                         explicitSpyRuling?.usesSpecialRegistration,
@@ -1912,9 +1821,9 @@ internal fun ClocktowerJudgeScreen(
             specialContent = {
                 if (virginRegistrationKey != null && spyCard != null) {
                     ClocktowerSpyTownsfolkTypeDecisionControls(
-                        registersAsTownsfolk = spyRegistersGood(virginRegistrationKey, "Virgin"),
+                        registersAsTownsfolk = registration.spyRegistersGood(virginRegistrationKey, "Virgin"),
                         hasExplicitChoice = registrationState.spyHasExplicitChoice(virginRegistrationKey),
-                        enabled = spyCanRegister("Virgin"),
+                        enabled = registration.spyCanRegister("Virgin"),
                         language = language,
                         onRegistersAsTownsfolkChange = { chosen ->
                             registrationState.chooseSpy(virginRegistrationKey, chosen)
@@ -2041,7 +1950,7 @@ internal fun ClocktowerJudgeScreen(
             specialContent = {
                 if (slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
                     ClocktowerRecluseRegistrationDecisionControls(
-                        legalRoles = legalRegistrationRoles(
+                        legalRoles = registration.legalRegistrationRoles(
                             registrationKey("SlayerRecluse", requireNotNull(slayerTargetCard).name),
                             "Slayer",
                             slayerTargetCard,
@@ -2050,7 +1959,7 @@ internal fun ClocktowerJudgeScreen(
                             .map { it.enName to it.nameFor(language) },
                         registersEvil = slayerRecluseRegistersDemon == true,
                         registeredRoleEnName = if (slayerRecluseRegistersDemon == true) "Imp" else null,
-                        enabled = recluseCanRegister("Slayer"),
+                        enabled = registration.recluseCanRegister("Slayer"),
                         hasExplicitChoice = slayerRecluseRegistersDemon != null,
                         language = language,
                         onRegistersEvilChange = { slayerRecluseRegistersDemon = it },
@@ -2302,7 +2211,7 @@ internal fun ClocktowerJudgeScreen(
         }
         val currentSurfacePlan = clocktowerNightSurfacePlan(currentStep, phase)
         val currentSpyRegistrationResolution = currentStep.roleEnName?.let { roleEnName ->
-            registrationResolution(
+            registration.registrationResolution(
                 currentStep.spyRegistrationKey,
                 roleEnName,
                 spyCard,
@@ -2316,7 +2225,7 @@ internal fun ClocktowerJudgeScreen(
             val filteredTeams = currentStep.recluseRegistrationTeams.ifEmpty {
                 listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon)
             }
-            registrationResolution(
+            registration.registrationResolution(
                 currentStep.recluseRegistrationKey,
                 roleEnName,
                 recluseCard,
