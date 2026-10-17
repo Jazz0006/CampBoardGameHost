@@ -8,11 +8,8 @@ import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -27,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.ClocktowerResidualDisplayMatcherV2
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
@@ -451,28 +447,7 @@ internal fun ClocktowerJudgeScreen(
     var nomineeName by remember(gameId, round) { mutableStateOf<String?>(null) }
     var slayerClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
     var slayerTargetName by remember(gameId) { mutableStateOf<String?>(null) }
-    var artistClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
-    var artistTruthfulAnswer by remember(gameId) { mutableStateOf<Boolean?>(null) }
-    var artistShownAnswer by remember(gameId) { mutableStateOf<Boolean?>(null) }
-    fun selectArtistClaimant(next: String?) {
-        artistClaimantName = next
-        artistTruthfulAnswer = null
-        artistShownAnswer = null
-    }
-    fun selectArtistTruthfulAnswer(next: Boolean?) {
-        artistTruthfulAnswer = next
-        artistShownAnswer = null
-    }
-    fun selectArtistShownAnswer(next: Boolean?) {
-        artistShownAnswer = next
-    }
-    val confirmArtistQuestion = {
-        val claimantName = requireNotNull(artistClaimantName) { "Artist confirmation requires a claimant." }
-        requireNotNull(artistTruthfulAnswer) { "Artist confirmation requires a truthful answer." }
-        requireNotNull(artistShownAnswer) { "Artist confirmation requires a shown answer." }
-        onConfirmArtistQuestion(claimantName)
-        selectArtistClaimant(null)
-    }
+    val artistDraft = remember(gameId) { ClocktowerArtistDraft() }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
     // Transient UI handoff only; Session publication is the lasting fact.
     // Advancing from a confirmed player display must wait for its dismissal.
@@ -1847,7 +1822,7 @@ internal fun ClocktowerJudgeScreen(
                 dayMode = ClocktowerDayMode.Slayer
             },
             onOpenArtist = {
-                selectArtistClaimant(null)
+                artistDraft.selectClaimant(null)
                 dayMode = ClocktowerDayMode.Artist
             },
             onEndDay = {
@@ -2088,95 +2063,23 @@ internal fun ClocktowerJudgeScreen(
     }
 
     if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Artist) {
-        val artistClaimant = cards.firstOrNull { it.name == artistClaimantName }
-        val currentArtistTruthfulAnswer = artistTruthfulAnswer
-        val artistReliable = artistClaimant?.let {
-            it.clocktowerRole?.enName == "Artist" && it.name != poisonTarget
-        } == true
-        val artistAnswerOptions = if (artistClaimant != null && currentArtistTruthfulAnswer != null) {
-            if (artistReliable) listOf(currentArtistTruthfulAnswer) else listOf(true, false)
-        } else {
-            emptyList()
-        }
-        val artistManualRequired = !artistReliable && artistAnswerOptions.size > 1
-        val automaticArtistAnswer = currentArtistTruthfulAnswer
-            ?.takeIf { allowRuleDeterminedAutoUi && artistReliable }
-        LaunchedEffect(allowRuleDeterminedAutoUi, artistClaimantName, currentArtistTruthfulAnswer, automaticArtistAnswer) {
-            if (allowRuleDeterminedAutoUi && automaticArtistAnswer != null && artistShownAnswer != automaticArtistAnswer) {
-                selectArtistShownAnswer(automaticArtistAnswer)
-            }
-        }
-        val artistTableState = clocktowerArtistTableState(
+        ClocktowerArtistInteraction(
+            draft = artistDraft,
+            cards = cards,
             seats = clocktowerDayOverviewTableState(
                 sessionGameState,
                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
                 ghostVoteAuthority = ghostVoteAuthority,
             ).seats,
             claimantCandidateNames = artistClaimantCandidates.mapTo(mutableSetOf()) { it.name },
-            claimantName = artistClaimantName,
-        )
-        ClocktowerArtistTableScreen(
             round = round,
-            tableState = artistTableState,
+            poisonTarget = poisonTarget,
+            allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
             actionsEnabled = gameOutcome == null,
-            primaryEnabled = artistClaimantName != null &&
-                currentArtistTruthfulAnswer != null &&
-                artistShownAnswer != null &&
-                gameOutcome == null,
             onHostTools = onHostTools,
-            onSeatClick = { seatId ->
-                val claimant = artistTableState.playerNameForSeat(seatId)
-                selectArtistClaimant(if (artistClaimantName == claimant) null else claimant)
-            },
-            onPrimary = confirmArtistQuestion,
-            onBack = {
-                selectArtistClaimant(null)
-                dayMode = ClocktowerDayMode.Overview
-            },
-        ) {
-            if (artistClaimant != null) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
-                HostActionSection(title = text("问题的真实答案", "Truthful answer")) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(true, false).forEach { answer ->
-                            val label = if (answer) text("是", "Yes") else text("否", "No")
-                            if (currentArtistTruthfulAnswer == answer) {
-                                Button(
-                                    onClick = { selectArtistTruthfulAnswer(answer) },
-                                    modifier = Modifier.weight(1f),
-                                ) { Text(label) }
-                            } else {
-                                OutlinedButton(
-                                    onClick = { selectArtistTruthfulAnswer(answer) },
-                                    modifier = Modifier.weight(1f),
-                                ) { Text(label) }
-                            }
-                        }
-                    }
-                }
-            }
-            if (artistClaimant != null && currentArtistTruthfulAnswer != null) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
-                HostActionSection(title = text("告诉玩家的答案", "Answer to show")) {
-                    artistAnswerOptions.forEach { answer ->
-                        val label = if (answer) text("是", "Yes") else text("否", "No")
-                        if (allowRuleDeterminedAutoUi && !artistManualRequired) {
-                            Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                        } else if (artistShownAnswer == answer) {
-                            Button(
-                                onClick = { selectArtistShownAnswer(answer) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) { Text(label) }
-                        } else {
-                            OutlinedButton(
-                                onClick = { selectArtistShownAnswer(answer) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) { Text(label) }
-                        }
-                    }
-                }
-            }
-        }
+            onConfirm = onConfirmArtistQuestion,
+            onBack = { dayMode = ClocktowerDayMode.Overview },
+        )
         return
     }
 
