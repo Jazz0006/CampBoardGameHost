@@ -10,6 +10,7 @@
 4. [最小游戏状态与记录清理](MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md)：本轮产品纠正、代码审计与删除顺序。
 5. [测试策略](TESTING_STRATEGY.md)：证据分级，不要求机械 RED/GREEN。
 
+- [第四阶段 App/Host 审计与拆分路线](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)
 - [分支清理结果与恢复入口](BRANCH_CLEANUP_RESULT_2026-10-17.md)
 
 ## 按需参考
