@@ -7,6 +7,9 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
+import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
+import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfirmation
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 
 /**
  * A validated whole-residual candidate becomes only a PRESELECTED current UI
@@ -103,6 +106,20 @@ internal object ClocktowerResidualDisplayMatcherV2 {
             val candidate = request.legalCandidates.singleOrNull { it.candidateId == id }
                 ?: return@all false
             val context = request.decisionContext
+            if (context is StorytellerProviderDecisionContextV1.MayorRedirect) {
+                // A SeatTarget is a Host ruling, NOT an information reveal.
+                // The provider candidate is already from the canonical pending
+                // Mayor domain; the live pending boundary validates it again
+                // just before application/commit.
+                val seat = (candidate.payload as?
+                    StorytellerProviderCandidatePayloadV1.SeatTarget)?.seat
+                    ?: return@all false
+                return@all seat in 1..cards.size &&
+                    context.mayorSeat in 1..cards.size &&
+                    steps.count {
+                        it.isRealAction && it.action == ClocktowerNightAction.MayorRedirect
+                    } == 1
+            }
             val actorSeat = when (context) {
                 is StorytellerProviderDecisionContextV1.ScalarInformation -> context.sourceSeat
                 is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> context.sourceSeat
@@ -173,6 +190,23 @@ internal object ClocktowerResidualDisplayMatcherV2 {
             option.spyRegisteredRoleEnName == null &&
             option.recluseRegistersEvil == null &&
             option.recluseRegisteredRoleEnName == null
+
+    /**
+     * Bind the current AI SeatTarget to the SAME live Mayor Host decision.
+     * No candidate ID is parsed, no default seat is chosen, and a stale
+     * revision or changed live seat eligibility fails closed.
+     */
+    fun matchMayorRedirect(
+        decision: PendingMayorRedirectDecision,
+        selectedCandidateId: String?,
+        currentRevision: StorytellerDecisionRevision,
+        currentLegalSeats: Set<Int>,
+    ): Int? {
+        val candidateId = selectedCandidateId ?: return null
+        val confirmation = decision.confirm(candidateId, currentRevision)
+            as? MayorRedirectDecisionConfirmation.Confirmed ?: return null
+        return confirmation.targetSeat.takeIf { it in currentLegalSeats }
+    }
 
     fun matchPair(
         decision: PendingPairInformationDecision,

@@ -2552,6 +2552,31 @@ internal fun ClocktowerJudgeScreen(
         val currentAiRequestBlocked = clocktowerCurrentAiRequestBlocked(
             globalAiCurrentKey, globalAiAdviceKey, globalAiAdviceBusy, globalAiAdviceError,
         )
+        // Mayor is a current Host ruling, not an information option. Resolve
+        // the accepted model candidate ONLY through the current pending Host
+        // decision and the square-table's live eligible seats; never parse IDs
+        // or pick a default candidate.
+        val recommendedMayorTargetName = globalAiTargetPending?.takeIf {
+            globalAiCurrentKey != null &&
+                globalAiAdviceKey == globalAiCurrentKey &&
+                !currentAiRequestBlocked &&
+                globalAiLegalIds?.size != 1
+        }?.let { decision ->
+            val visibleEligibleNames = mayorRedirectTargetCards.mapTo(mutableSetOf()) { it.name }
+            cards.getOrNull(decision.mayorSeat - 1)?.name?.let(visibleEligibleNames::add)
+            val eligibleSeats = cards.mapIndexedNotNull { index, card ->
+                (index + 1).takeIf { card.name in visibleEligibleNames }
+            }.toSet()
+            ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
+                decision = decision,
+                selectedCandidateId =
+                    globalResidualRecommendedChoices[decision.requestIdentity.requestId],
+                currentRevision = com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision(
+                    gameStateRevision, playerInputRevision,
+                ),
+                currentLegalSeats = eligibleSeats,
+            )?.let { seat -> cards.getOrNull(seat - 1)?.name }
+        }
         val approvedOpeningOption = if (globalAiAutomatic &&
             currentAiRequestBlocked) null else
             residualRecommendedOption ?: preplannedSeat?.takeIf {
@@ -2571,7 +2596,9 @@ internal fun ClocktowerJudgeScreen(
                 globalAiCurrentKey != null &&
                 globalAiAdviceKey != globalAiCurrentKey &&
                 approvedOpeningOption == null &&
-                globalAiLegalIds?.size != 1
+                globalAiLegalIds?.size != 1 &&
+                !(currentStep.action == ClocktowerNightAction.MayorRedirect &&
+                    mayorRedirectDraftTarget != null)
             ) {
                 onRequestGlobalAiAdvice(nightSteps, currentStepIndex)
             }
@@ -2699,12 +2726,38 @@ internal fun ClocktowerJudgeScreen(
         }
 
         LaunchedEffect(
+            recommendedMayorTargetName, currentStepIndex, currentStep.interactionId,
+            selectedNightName, globalAiAssisted, globalAiAutomatic,
+        ) {
+            val choice = recommendedMayorTargetName ?: return@LaunchedEffect
+            if (globalAiAssisted && currentStep.isRealAction &&
+                currentStep.action == ClocktowerNightAction.MayorRedirect &&
+                selectedNightName == null
+            ) {
+                // Assisted: visibly preselect but leave the Next button to the
+                // Storyteller. Automatic: same Host draft, then safely commit.
+                onSelectMayorRedirectTarget(choice)
+                if (globalAiAutomatic && allowRuleDeterminedAutoUi) {
+                    freshAutomaticPlayerTarget = choice
+                }
+            }
+        }
+
+        LaunchedEffect(
             freshAutomaticPlayerTarget, selectedNightName, currentStepIndex,
             currentStep.interactionId, playerTargetReady, globalAiAutomatic,
             allowRuleDeterminedAutoUi, playerDisplayStep,
         ) {
             val freshlySelected = freshAutomaticPlayerTarget ?: return@LaunchedEffect
-            if (clocktowerShouldAutoConfirmFreshPlayerTarget(
+            val verifiedMayorTarget = globalAiAutomatic && allowRuleDeterminedAutoUi &&
+                currentStep.isRealAction &&
+                currentStep.action == ClocktowerNightAction.MayorRedirect &&
+                selectedNightName == freshlySelected &&
+                freshlySelected in (
+                    mayorRedirectTargetCards.map { it.name } +
+                        listOfNotNull(cards.getOrNull(globalAiTargetPending?.mayorSeat?.minus(1) ?: -1)?.name)
+                ) && playerDisplayStep == null
+            if (verifiedMayorTarget || clocktowerShouldAutoConfirmFreshPlayerTarget(
                     automaticMode = globalAiAutomatic && allowRuleDeterminedAutoUi,
                     action = currentStep.action,
                     isRealAction = currentStep.isRealAction,

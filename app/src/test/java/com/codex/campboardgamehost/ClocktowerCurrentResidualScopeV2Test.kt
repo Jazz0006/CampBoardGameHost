@@ -23,6 +23,11 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSeat
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSetupState
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
+import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionBoundary
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
+import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -30,8 +35,9 @@ import org.junit.Test
 
 /** Boundary safety tests against a real production GLOBAL_V1 Host session. */
 class ClocktowerCurrentResidualScopeV2Test {
-    private fun host(): ClocktowerGameSession {
-        val roles = listOf("Ravenkeeper", "Empath", "Monk", "Poisoner", "Imp")
+    private fun host(
+        roles: List<String> = listOf("Ravenkeeper", "Empath", "Monk", "Poisoner", "Imp"),
+    ): ClocktowerGameSession {
         return ClocktowerGameSession.createProduction(
             "residual-boundary", 17,
             GameState(ScriptId("trouble_brewing"), roles.mapIndexed { index, role ->
@@ -191,6 +197,41 @@ class ClocktowerCurrentResidualScopeV2Test {
             StorytellerProviderDecisionContextV1.ScalarInformation).kind.name)
         assertTrue(scope(current.copy(displayProposition = null,
             automaticInformationCandidates = emptyList())).requests.isEmpty())
+    }
+
+    @Test fun mayorAiSeatTargetIsHostMatchedAndCanPassCurrentRulingGate() {
+        val session = host(listOf("Mayor", "Empath", "Monk", "Poisoner", "Imp"))
+        val revision = StorytellerDecisionRevision(
+            session.state.gameStateRevision, session.state.playerInputRevision)
+        val pending = MayorRedirectDecisionBoundary.create(
+            requestIdentity = StorytellerDecisionRequestIdentity(
+                session.state.gameId, "night:2:mayor-redirect"),
+            revision = revision, game = session.state.gameState)
+        val request = StorytellerProviderRequestFactoryV1.fromMayorRedirect(
+            pending, snapshot(session, StorytellerPhase.NIGHT, 2))
+        val cards = (0..4).map { PlayerCard("Player $it", Role.Civilian, "") }
+        val mayorStep = step(ClocktowerNightAction.MayorRedirect)
+        val id = requireNotNull(pending.candidateIdForSeat(3))
+        val choice = mapOf(request.identity.decisionId to id)
+        assertTrue(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+            listOf(request), choice, listOf(mayorStep), cards))
+        assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+            listOf(request), choice, listOf(mayorStep.copy(isRealAction = false)), cards))
+        assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+            listOf(request), choice, emptyList(), cards))
+        assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
+            listOf(request), mapOf(request.identity.decisionId to "illegal"), listOf(mayorStep), cards))
+        assertEquals(3, ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
+            pending, id, revision, pending.legalTargetSeats))
+        assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
+            pending, id, revision.copy(playerInputRevision = revision.playerInputRevision + 1),
+            pending.legalTargetSeats))
+        assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
+            pending, id, revision, setOf(1, 2)))
+        assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
+            pending, "illegal", revision, pending.legalTargetSeats))
+        assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
+            pending, null, revision, pending.legalTargetSeats))
     }
 
     @Test fun actionKindsAreFlowBarriersNotIndependentAiRoleRecommenders() {
