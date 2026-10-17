@@ -184,10 +184,10 @@ private fun ClocktowerPlayerRoleRevealScreen(
     val language = context.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val shownRole = card.clocktowerShownRole
-    val roleName = shownRole?.nameFor(language) ?: card.roleLabel ?: stringResource(card.role.labelResId())
+    val roleName = shownRole?.nameFor(language) ?: card.roleLabel ?: "?"
     val team = shownRole?.team
     val teamName = team?.label(context)
-    val description = shownRole?.descriptionFor(language) ?: card.word
+    val description = shownRole?.descriptionFor(language).orEmpty()
     val accentColor = when (team) {
         ClocktowerTeam.Townsfolk -> Color(0xFF8FB6D6)
         ClocktowerTeam.Outsider -> Color(0xFF9AAEC0)

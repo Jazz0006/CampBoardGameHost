@@ -29,3 +29,7 @@
 持续授权仍包括本轮后续本地提交、codex/* 推送、Draft PR 创建/更新、CI/R2。所有者另于本次收尾明确授权必要同步、合并和 PR 清理，以及建立新的分支/环境；此授权用于本轮收尾，不自动成为下一轮所有 PR 的无条件合并授权。强制推送不在授权内。删除远端分支不是收尾必要条件，保留历史引用不影响关闭旧 PR。
 
 在新的独立 worktree 使用 `codex/minimal-host-reset`（从收尾后 origin/main 创建）。不要复制旧 .gradle/build 缓存或未跟踪文件。新会话先验证目录、分支、HEAD 和工作区干净，再按上述任务开始。不要修改另一个工作区的未提交内容。
+
+## M0b 当前交接（2026-10-18）
+
+Undercover 全链删除已推到 `codex/minimal-host-reset` 并纳入 Draft PR #330：包含旧 GameScreen、UndercoverSupport、分支导航、旧结果/角色数据与历史测试夹带项；请按 PR 最新 HEAD 做 CI/R2 与 `rg` 残留审计。如有 Kotlin 编译失败，直接补齐；修复并验收 M0b 后进入 M1，拒绝恢复 Undercover 兼容支架。注意此前仅入口删除的叙述属历史阶段。

@@ -224,12 +224,6 @@ private fun Context.localized(languageMode: LanguageMode): Context {
     return createConfigurationContext(config)
 }
 
-internal fun Role.labelResId(): Int = when (this) {
-    Role.Civilian -> R.string.role_civilian
-    Role.Undercover -> R.string.role_undercover
-    Role.Blank -> R.string.role_blank
-}
-
 internal fun LanguageMode.labelResId(): Int = when (this) {
     LanguageMode.System -> R.string.language_system
     LanguageMode.Chinese -> R.string.language_chinese
@@ -1547,17 +1541,11 @@ internal fun CampBoardGameHostApp() {
                 name = assignment.playerName.ifBlank {
                     context.playerName(assignment.seat)
                 },
-                role = Role.Civilian,
-                roleLabel = shownRole.nameFor(language),
+                                roleLabel = shownRole.nameFor(language),
                 actualRoleLabel = role.nameFor(language),
                 clocktowerTeam = role.team,
                 clocktowerRole = role,
                 clocktowerShownRole = shownRole,
-                word = context.getString(
-                    R.string.clocktower_card_desc_format,
-                    shownRole.team.label(context),
-                    shownRole.descriptionFor(language),
-                ),
             )
         }
 
@@ -1888,9 +1876,7 @@ internal fun CampBoardGameHostApp() {
                 }) { "Missing shown-only precommit role." }
                 PlayerCard(
                     name = assignment.playerName,
-                    role = Role.Civilian,
-                    word = role.descriptionFor(language),
-                    roleLabel = role.nameFor(language),
+                                                            roleLabel = role.nameFor(language),
                     actualRoleLabel = null,
                     clocktowerTeam = role.team,
                     clocktowerRole = null, // No speculative actual Drunk identity.
@@ -2000,17 +1986,11 @@ internal fun CampBoardGameHostApp() {
             }
             PlayerCard(
                 name = name.ifBlank { context.playerName(assignment.seat) },
-                role = Role.Civilian,
-                roleLabel = shownRole.nameFor(language),
+                                roleLabel = shownRole.nameFor(language),
                 actualRoleLabel = role.nameFor(language),
                 clocktowerTeam = role.team,
                 clocktowerRole = role,
                 clocktowerShownRole = shownRole,
-                word = context.getString(
-                    R.string.clocktower_card_desc_format,
-                    shownRole.team.label(context),
-                    shownRole.descriptionFor(language),
-                ),
             )
         }
         setupCards.clear()
@@ -3574,7 +3554,7 @@ internal fun PlayerCard.clocktowerHostRoleLabel(language: String): String? =
 
 internal fun PlayerCard.hostRoleLabel(context: Context): String =
     clocktowerHostRoleLabel(context.resources.configuration.locales[0].language)
-        ?: context.getString(role.labelResId())
+        ?: "?"
 
 internal fun PlayerCard.seatLabel(cards: List<PlayerCard>): String =
     "#${cards.indexOfFirst { it.name == name } + 1} $name"

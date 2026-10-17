@@ -6,7 +6,7 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 /**
  * Read-only Clocktower presentation over the *live* Session, not a second card-state cache.
  *
- * The backing cards own seat presentation during setup (and Undercover gameplay).
+ * The backing cards own seat presentation during setup.
  * After Clocktower Session creation, every access resolves mechanics from Session.
  * A live list is essential: confirmation callbacks can read the updated Session in
  * the same frame, before Compose has recomposed the screen.
