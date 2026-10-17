@@ -264,6 +264,13 @@
 
 ### A3 — 移除 Clocktower PlayerCard 第二写入源
 
+#### A3 第一批：Host 方桌与成对信息读取 Session（2026-10-17；A3 PARTIAL）
+
+- 从 clean/remote-equal `bacce721d8962588d62cd0382f9d20c9802d2cd6` 开始，PR #315 仍 Draft、merge-conflicted，main 未合并。实际源码审计确认 `PlayerCard` 还包含可写 `clocktowerRole`、`clocktowerShownRole`、`clocktowerTeam`、`eliminatedRound`，且存在死亡/角色变化后镜像卡片的写入口、恢复卡片重构及多个夜间决策/首夜/Debug 反向 `toClocktowerGameState` 读取。Undercover `Screen.Game` 的 `cards[index].copy(eliminatedRound=round)` 属 Undercover 路径，暂不删除。
+- 第一条完整消费者边界：`ClocktowerJudgeScreen` 的当前 Host 成对信息合法性，以及白天概览、提名、投票、杀手、艺术家、呆瓜六个方桌中的 `GameState` 均改为读取同一个 `ClocktowerGameSession.state.gameState`；删除该 Screen 全部七处 `cards.toClocktowerGameState`，并删除其对应 import。未增加缓存、影子状态或同步函数。既有 `clocktowerDayOverviewTableState` 仍直接由 `GameState` 派生 readonly seats。
+- 源码提交 `4bed72c9b67f0f313e0d3853d7725f8ad3d57a0c`，已推送；R2 #3857 SUCCESS；[CI #4264](https://github.com/Jazz0006/CampBoardGameHost/actions) 的 ASP/Clingo 已成功，Android/full-ci 在本次记录时仍运行中，必须复核最终状态后才能宣称完整通过。
+- **待完成且不可盲删：** `reflectCommittedClocktowerDeath` 和 `setClocktowerActualRole` 仍写 PlayerCard；Host 夜间 projection、Dawn/Slayer/Virgin/处决/继承等生产规则仍读卡片死亡/角色/阵营；首夜信息请求、Debug 预热、恢复仍存在反向转换。优先将这些消费者统一从 Session 派生只读 UI，再移除原镜像写入和持久化双事实。当前阶段、回合和已确认夜间选择的 Compose/Session 归属还要单独检查。A3 未完成，A4–A6 未开始；不做付费调用、真机验收或 PR 合并。
+
 - Session 对游戏中的真实角色/展示身份/存活/投毒/阶段/确认选择和必要能力状态提供只读 view；PlayerCard 只保留 UI 名称/视觉元素等非权威展示属性。
 - 消除游戏进行中的 cards.toClocktowerGameState() 读取和由 UI 卡片反向覆盖 Session 的写入；仅允许开局初始化及必要的旧边界适配（迁移完成即移除不必要适配）。
 - 逐项统一攻击、保护、处决、死亡、角色变化、夜间动作，保留 Undercover 原行为。
