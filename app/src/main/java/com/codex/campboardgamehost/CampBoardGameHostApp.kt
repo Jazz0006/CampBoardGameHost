@@ -190,7 +190,6 @@ private data class PendingTroubleBrewingDrunkSelection(
     val preparedSetup: TroubleBrewingPreparedSetup,
     val request: TroubleBrewingDrunkSelectionRequest,
     val decision: PendingDrunkAssignmentDecision,
-    val providerRequest: StorytellerProviderRequestV1,
 )
 
 /** Showing roles may begin while Drunk actual identity is uncommitted. No real session yet. */
@@ -433,8 +432,6 @@ internal fun CampBoardGameHostApp() {
     val clocktowerGameSeed = clocktowerSessionView?.gameSeed ?: 0L
     val clocktowerGameStateRevision = clocktowerSessionView?.gameStateRevision ?: 0L
     val clocktowerPlayerInputRevision = clocktowerSessionView?.playerInputRevision ?: 0L
-    val clocktowerSemanticHistoryMode =
-        clocktowerSessionView?.semanticHistoryMode ?: ClocktowerSemanticHistoryMode.LEGACY_LOCAL
     val clocktowerNextTimelineGlobalSequence =
         clocktowerSessionView?.nextTimelineGlobalSequence ?: 0L
     val clocktowerActionTimeline = clocktowerSessionView?.actionTimeline ?: ActionFactTimeline()
@@ -839,7 +836,6 @@ internal fun CampBoardGameHostApp() {
 
     /** Host-accepted action: one Session step for typed chronology and revision. */
     fun commitClocktowerConfirmedAction(draft: ActionFactDraft) {
-        if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) return
         val session = requireClocktowerGameSession()
         session.commitConfirmedGameAction(
             draft = draft,
@@ -854,8 +850,7 @@ internal fun CampBoardGameHostApp() {
      * No replay/backfill from an earlier death or a localized note is permitted.
      */
     fun captureKlutzLearnedDeathOnPublicAnnouncement(name: String) {
-        if (currentClocktowerScript != ClocktowerScript.NoGreaterJoy ||
-            clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) return
+        if (currentClocktowerScript != ClocktowerScript.NoGreaterJoy) return
         val seat = clocktowerSeatFor(name)
         val source = requireClocktowerGameSession()
         NoGreaterJoyKlutzHistoryProducerV1.learned(
@@ -990,30 +985,19 @@ internal fun CampBoardGameHostApp() {
 
     fun recordEpistemicObservation(draft: EpistemicObservationDraft) {
         val session = requireClocktowerGameSession()
-        when (clocktowerSemanticHistoryMode) {
-            ClocktowerSemanticHistoryMode.LEGACY_LOCAL -> {
-                if (clocktowerEpistemicObservations.any { it.recordId == draft.recordId }) return
-                session.recordEpistemicObservation(draft.bindLegacyLocal())
-                publishClocktowerSessionView()
-                invalidateA4RevisionScope()
-                pendingA4ObservationRecordId = draft.recordId
-            }
-            ClocktowerSemanticHistoryMode.GLOBAL_V1 -> {
-                // A callback may have already published another observation since the Compose
-                // snapshot was captured. Deduplicate against the live Session revision.
-                val before = session.state
-                val committed = session.commitGlobalEpistemicObservation(draft)
-                if (session.view.playerInputRevision == before.playerInputRevision) return
-                reviewConfirmedCurrentStepAdvice(before, draft)
-                publishClocktowerSessionView()
-                invalidateA4RevisionScope()
-                pendingA4ObservationRecordId = committed.recordId
-                if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
-                    BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
-                        strategicPolicyCursor?.version ?: 0,
-                        draft.phase.name, draft.round)
-                }
-            }
+        // A callback may have already published another observation since the Compose
+        // snapshot was captured. Deduplicate against the live Session revision.
+        val before = session.state
+        val committed = session.commitGlobalEpistemicObservation(draft)
+        if (session.view.playerInputRevision == before.playerInputRevision) return
+        reviewConfirmedCurrentStepAdvice(before, draft)
+        publishClocktowerSessionView()
+        invalidateA4RevisionScope()
+        pendingA4ObservationRecordId = committed.recordId
+        if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
+            BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
+                strategicPolicyCursor?.version ?: 0,
+                draft.phase.name, draft.round)
         }
     }
 
@@ -1021,10 +1005,6 @@ internal fun CampBoardGameHostApp() {
         draft: EpistemicObservationDraft,
         registration: ClocktowerConfirmedRegistrationPublicationV1?,
     ) {
-        if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) {
-            recordEpistemicObservation(draft)
-            return
-        }
         val session = requireClocktowerGameSession()
         val rulesetRef = clocktowerRulesetRef
         val registrationSnapshot = registration?.let {
@@ -1063,11 +1043,7 @@ internal fun CampBoardGameHostApp() {
      * per-subject rules and causal revision before mutating the Host-owned journal.
      */
     fun canCommitConfirmedRegistrationResult(publication: ClocktowerConfirmedRegistrationPublicationV1): Boolean {
-        // LEGACY_LOCAL games must continue to display information without claiming a typed
-        // historical ruling. The production typed writer itself is GLOBAL_V1-only.
-        if (currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
-            clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
-        ) return true
+        if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) return true
         val session = clocktowerGameSession ?: return false
         return publication.isRulesConsistent(
             session.state.gameState,
@@ -1077,8 +1053,7 @@ internal fun CampBoardGameHostApp() {
 
     fun commitConfirmedRegistrationResult(publication: ClocktowerConfirmedRegistrationPublicationV1) {
         if (currentGameKind != GameKind.Clocktower ||
-            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
-            clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing
         ) return
         val session = requireClocktowerGameSession()
         val rulesetRef = requireNotNull(clocktowerRulesetRef)
@@ -1105,7 +1080,6 @@ internal fun CampBoardGameHostApp() {
         eventRound: Int = round,
         recordId: String? = null,
     ) {
-        if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) return
         val seat = cards.indexOfFirst { it.name == playerName }
             .takeIf { index -> index >= 0 }
             ?.plus(1)
@@ -1888,9 +1862,6 @@ internal fun CampBoardGameHostApp() {
             pending.preparedGameId, pending.preparedSetup,
             legal.request.copy(recommendedCandidate = recommended),
             decision,
-            StorytellerProviderRequestFactoryV1.fromDrunkAssignment(
-                decision, snapshot, StorytellerProviderGameContextBuilderV1.build(
-                    snapshot, StorytellerProviderRevisionV1(0, 0))),
         )
         screen = Screen.ClocktowerDrunkSelection
     }
@@ -1929,13 +1900,9 @@ internal fun CampBoardGameHostApp() {
                     pending.preparedGameId, pending.preparedSetup.intermediateSetup)
                 val decision = DrunkAssignmentDecisionBoundary.create(
                     snapshot, registry, StorytellerDecisionRevision(0, 0))
-                val providerRequest = StorytellerProviderRequestFactoryV1.fromDrunkAssignment(
-                    decision, snapshot,
-                    StorytellerProviderGameContextBuilderV1.build(
-                        snapshot, StorytellerProviderRevisionV1(0, 0)))
                 pendingTroubleBrewingDrunkSelection = PendingTroubleBrewingDrunkSelection(
                     pending.preparedGameId, pending.preparedSetup, route.request,
-                    decision, providerRequest)
+                    decision)
                 screen = Screen.ClocktowerDrunkSelection
                 // Deliberately NO standalone AI call. Manual fallback is local.
             }
@@ -2067,12 +2034,6 @@ internal fun CampBoardGameHostApp() {
                     characterRegistry = characterRegistry,
                     revision = StorytellerDecisionRevision(0, 0),
                 )
-                val revision = StorytellerProviderRevisionV1(0, 0)
-                val providerRequest = StorytellerProviderRequestFactoryV1.fromDrunkAssignment(
-                    decision = decision,
-                    snapshot = snapshot,
-                    gameContext = StorytellerProviderGameContextBuilderV1.build(snapshot, revision),
-                )
                 require(route.request.candidates.map { it.seat to it.shownRoleId } ==
                     decision.legalCandidates.map { it.payload.seat to it.payload.shownRoleId }) {
                     "Displayed Drunk candidates must exactly match Host's legal domain."
@@ -2082,7 +2043,6 @@ internal fun CampBoardGameHostApp() {
                     preparedSetup = preparedSetup,
                     request = route.request,
                     decision = decision,
-                    providerRequest = providerRequest,
                 )
                 pendingTroubleBrewingDrunkSelection = pending
                 screen = Screen.ClocktowerDrunkSelection
@@ -3164,7 +3124,6 @@ internal fun CampBoardGameHostApp() {
                                 targetIndex >= 0 && targetCard != null &&
                                 targetCard.eliminatedRound == null && targetRegistersAsDemon
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
-                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1 &&
                                 claimantCard != null && targetCard != null
                             ) {
                                 // Player's confirmed public shot precedes the optional Storyteller
@@ -3182,7 +3141,6 @@ internal fun CampBoardGameHostApp() {
                             }
                             if (
                                 currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
-                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1 &&
                                 slayerDecision.effectApplies &&
                                 !clocktowerSlayerUsed &&
                                 targetCard?.clocktowerRole?.enName == "Recluse" &&
@@ -3217,12 +3175,6 @@ internal fun CampBoardGameHostApp() {
                                 )
                             }
                             var shotOutcome: GameOutcome? = null
-                            if (slayerDecision.consumesUse && !shotWillHit &&
-                                clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
-                            ) {
-                                // A Global SlayerShot fact now owns the accepted-shot revision even on a miss.
-                                advanceClocktowerGameStateRevision()
-                            }
                             if (shotWillHit && targetIndex >= 0 && targetCard != null) {
                                 val targetSeat = targetIndex + 1
                                 val localSequence = requireClocktowerGameSession().nextInputSequence
@@ -3278,7 +3230,7 @@ internal fun CampBoardGameHostApp() {
                         onConfirmedNomination = { nominatorName, nomineeName ->
                             if (currentClocktowerScript in setOf(
                                     ClocktowerScript.TroubleBrewing, ClocktowerScript.NoGreaterJoy,
-                                ) && clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+                                )
                             ) {
                                 // Public nomination belongs to both supported scripts. The hidden
                                 // first-Virgin marker is only meaningful in real Trouble Brewing.
@@ -3303,7 +3255,7 @@ internal fun CampBoardGameHostApp() {
                         onConfirmedVote = { nominatorName, nomineeName, voteRecord ->
                             if (currentClocktowerScript in setOf(
                                     ClocktowerScript.TroubleBrewing, ClocktowerScript.NoGreaterJoy,
-                                ) && clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+                                )
                             ) {
                                 val voterSeats = voteRecord.voters.map { clocktowerSeatFor(it.playerName) }
                                 commitClocktowerConfirmedAction(ActionFactDraft.Vote(
@@ -3323,8 +3275,7 @@ internal fun CampBoardGameHostApp() {
                             if (
                                 explicitSpyRegistersTownsfolk != null &&
                                 !clocktowerVirginUsed &&
-                                currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
-                                clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1
+                                currentClocktowerScript == ClocktowerScript.TroubleBrewing
                             ) {
                                 val virginCard = cards.firstOrNull { it.name == nomineeName }
                                 val spyCard = cards.firstOrNull { it.name == nominatorName }
@@ -3360,14 +3311,6 @@ internal fun CampBoardGameHostApp() {
                                         confirmedExecution = executeNominator,
                                     )
                                 }
-                            }
-                            // A confirmed Virgin execution owns its revision through Session.
-                            // A nomination without death still advances the accepted game step.
-                            if ((!executeNominator || cards.none { it.name == nominatorName && it.eliminatedRound == null }) &&
-                                clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1
-                            ) {
-                                // The confirmed nomination already advanced a Global Session revision.
-                                advanceClocktowerGameStateRevision()
                             }
                             if (executeNominator) {
                                 val index = cards.indexOfFirst { it.name == nominatorName }
@@ -3479,8 +3422,7 @@ internal fun CampBoardGameHostApp() {
                                     eventSequence = proposedSequence,
                                 )
                             }
-                            // An execution and a GLOBAL_V1 NoExecution each own their revision
-                            // with their fact. Non-Global fallback still advances below.
+                            // Execution and NoExecution own their revision with the accepted fact.
                             val aliveBeforeExecution = cards.filter { it.eliminatedRound == null }
                             val executionName = clocktowerSelectedExecution
                             var executionOutcome: GameOutcome? = null
@@ -3540,8 +3482,7 @@ internal fun CampBoardGameHostApp() {
                                 }
                             } else {
                                 clocktowerLastExecutedName = null
-                                if (clocktowerSemanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1 &&
-                                    currentClocktowerScript in setOf(
+                                if (currentClocktowerScript in setOf(
                                         ClocktowerScript.TroubleBrewing, ClocktowerScript.NoGreaterJoy,
                                     )
                                 ) {
