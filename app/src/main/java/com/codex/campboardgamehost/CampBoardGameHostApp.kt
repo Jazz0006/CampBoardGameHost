@@ -1254,19 +1254,8 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun activeGameRecoverySnapshot(): RecoverySnapshot {
-        when (currentGameKind) {
-            GameKind.Undercover -> Unit
-            GameKind.Clocktower -> {
-                ClocktowerActiveSessionValidator.validateForRecoverySave(
-                    script = activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript).script,
-                    assignedRoleIds = cards.map { card ->
-                        RoleId(requireNotNull(card.clocktowerRole) {
-                            "Clocktower recovery save is missing an assigned role."
-                        }.enName)
-                    },
-                )
-            }
-        }
+        // Live Session already owns accepted roles; Recovery is a current-game snapshot,
+        // not a second script-legalization pass on every Compose persistence attempt.
         val entryPoint = when (screen) {
             Screen.PassPhone -> RecoveryEntryPoint.PassPhone
             Screen.RevealCard -> RecoveryEntryPoint.RevealCard
