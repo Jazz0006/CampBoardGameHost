@@ -1,9 +1,29 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
+
+/**
+ * Read the accepted poison choice from the one Session, including a dead target whose
+ * mechanical poisoned flag has already cleared. The last same-round expiry (null) wins.
+ * Legacy v3 recovery may carry mechanical poison without a typed Poison action.
+ */
+internal fun ClocktowerSessionState.confirmedPoisonTargetName(round: Int): String? {
+    require(round > 0)
+    val last = actionTimeline.entries.asReversed().firstOrNull { entry ->
+        entry.point.round == round && entry.fact is ActionFact.Poison
+    }
+    if (last != null) {
+        val targetSeat = (last.fact as ActionFact.Poison).targetSeat ?: return null
+        return requireNotNull(gameState.playerAt(targetSeat)) {
+            "Confirmed Session poison references unknown seat $targetSeat."
+        }.name
+    }
+    return gameState.players.singleOrNull { it.poisoned }?.name
+}
 
 private fun ClocktowerGameSession.gameStateWithPoisonTarget(targetSeat: Int?): GameState {
     val currentGameState = state.gameState

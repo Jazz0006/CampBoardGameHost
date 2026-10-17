@@ -112,6 +112,7 @@ import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequest
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleChange
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPoisonTransition
+import com.codex.campboardgamehost.clocktower.session.confirmedPoisonTargetName
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPlayerDeath
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointHostTransaction
@@ -472,7 +473,6 @@ internal fun CampBoardGameHostApp() {
     var clocktowerPoisonTarget by remember { mutableStateOf<String?>(null) }
     // A target is provisional while the Poisoner is still awake. It becomes a
     // mechanical fact only when the night step is advanced.
-    var clocktowerConfirmedPoisonTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerFortuneTellerFirst by remember { mutableStateOf<String?>(null) }
     var clocktowerFortuneTellerSecond by remember { mutableStateOf<String?>(null) }
     var clocktowerChambermaidFirst by remember { mutableStateOf<String?>(null) }
@@ -646,6 +646,11 @@ internal fun CampBoardGameHostApp() {
         requireNotNull(clocktowerGameSession) {
             "Clocktower session authority is unavailable."
         }
+
+    // Accepted poison is derived on each read from Session history/mechanics, including
+    // same-callback confirmations and poison choices targeting players who later died.
+    fun confirmedClocktowerPoisonTarget(): String? =
+        clocktowerGameSession?.state?.confirmedPoisonTargetName(round)
 
     fun currentClocktowerCausalJournal(): StorytellerCausalDecisionJournalV1 =
         requireClocktowerGameSession().causalDecisionJournal
@@ -869,7 +874,7 @@ internal fun CampBoardGameHostApp() {
         nightStepIndex = clocktowerNightStepIndexState.value,
         confirmedAttackTarget = clocktowerPendingNightDeath,
         attackDraftTarget = clocktowerDemonAttackDraftTarget,
-        confirmedPoisonTarget = clocktowerConfirmedPoisonTarget,
+        confirmedPoisonTarget = confirmedClocktowerPoisonTarget(),
         poisonDraftTarget = clocktowerPoisonTarget,
         confirmedMonkTarget = clocktowerConfirmedMonkProtectedTarget,
         monkDraftTarget = clocktowerMonkProtectedTarget,
@@ -930,7 +935,7 @@ internal fun CampBoardGameHostApp() {
         }
 
         val currentPoisonTargetSeat =
-            clocktowerConfirmedPoisonTarget?.let(::clocktowerSeatFor)
+            confirmedClocktowerPoisonTarget()?.let(::clocktowerSeatFor)
 
         val durablePreviousPoisonTargetSeat =
             currentPoisonTargetSeat
@@ -972,7 +977,6 @@ internal fun CampBoardGameHostApp() {
             }
         }
         clocktowerPoisonTarget = null
-        clocktowerConfirmedPoisonTarget = null
     }
 
     fun commitClocktowerPhaseAdvance(
@@ -1300,7 +1304,7 @@ internal fun CampBoardGameHostApp() {
                 ),
                 mechanics = ClocktowerRecoveryMechanics(
                     confirmedAttackTarget = clocktowerPendingNightDeath,
-                    confirmedPoisonTarget = clocktowerConfirmedPoisonTarget,
+                    confirmedPoisonTarget = confirmedClocktowerPoisonTarget(),
                     confirmedMonkProtectedTarget = clocktowerConfirmedMonkProtectedTarget,
                     confirmedMayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
                     pendingNewDemonName = clocktowerPendingNewDemonName,
@@ -1400,7 +1404,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerDemonAttackDraftTarget = null
         clocktowerSelectedExecution = null
         clocktowerPoisonTarget = null
-        clocktowerConfirmedPoisonTarget = null
         clocktowerFortuneTellerFirst = null
         clocktowerFortuneTellerSecond = null
         clocktowerChambermaidFirst = null
@@ -1454,7 +1457,6 @@ internal fun CampBoardGameHostApp() {
                 clocktowerEventCounter = history.events.maxOfOrNull(ClocktowerEvent::sequence) ?: 0
 
                 clocktowerPendingNightDeath = mechanics.confirmedAttackTarget
-                clocktowerConfirmedPoisonTarget = mechanics.confirmedPoisonTarget
                 clocktowerConfirmedMonkProtectedTarget = mechanics.confirmedMonkProtectedTarget
                 clocktowerConfirmedMayorRedirectTarget = mechanics.confirmedMayorRedirectTarget
                 clocktowerPendingNewDemonName = mechanics.pendingNewDemonName
@@ -1646,7 +1648,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerDemonAttackDraftTarget = null
         clocktowerSelectedExecution = null
         clocktowerPoisonTarget = null
-        clocktowerConfirmedPoisonTarget = null
         clocktowerFortuneTellerFirst = null
         clocktowerFortuneTellerSecond = null
         clocktowerChambermaidFirst = null
@@ -2654,7 +2655,7 @@ internal fun CampBoardGameHostApp() {
         val alivePlayers = cards.filter { it.eliminatedRound == null }
         val functioningScarletWomanSeat = cards.indexOfFirst { card ->
             card.eliminatedRound == null && AbilityFunctioningSemantics.functionsAs(
-                card.abilitySubject(clocktowerConfirmedPoisonTarget),
+                card.abilitySubject(confirmedClocktowerPoisonTarget()),
                 "Scarlet Woman",
             )
         }.takeIf { it >= 0 }?.plus(1)
@@ -3236,7 +3237,6 @@ internal fun CampBoardGameHostApp() {
                                 )
                                 publishClocktowerSessionView()
                                 invalidateA4RevisionScope()
-                                clocktowerConfirmedPoisonTarget = transaction.checkpoint.confirmedPoisonTarget
                                 clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
                                 clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
                             }
@@ -3511,7 +3511,7 @@ internal fun CampBoardGameHostApp() {
                                                 roleIdsBySeat = effectiveNightState.effectiveRoleIdsBySeat,
                                                 currentPhase = storytellerPhaseFor(),
                                                 currentPoisonTargetSeat =
-                                                    clocktowerConfirmedPoisonTarget?.let(::clocktowerSeatFor),
+                                                    confirmedClocktowerPoisonTarget()?.let(::clocktowerSeatFor),
                                                 committedActionIds = clocktowerActionTimeline.entries
                                                     .map { it.fact.actionId }
                                                     .toSet(),
@@ -3587,7 +3587,6 @@ internal fun CampBoardGameHostApp() {
                                             }
                                             val poisonTargetName = materialization.intent.targetSeat
                                                 ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
-                                            clocktowerConfirmedPoisonTarget = poisonTargetName
                                             clocktowerPoisonTarget = poisonTargetName
                                         }
                                         clocktowerPendingNewDemonName = transition.checkpoint.pendingNewDemonName
@@ -3708,13 +3707,13 @@ internal fun CampBoardGameHostApp() {
                             val targetIndex = cards.indexOfFirst { it.name == targetName }
                             val targetCard = cards.getOrNull(targetIndex)
                             val slayerDecision = AbilityFunctioningSemantics.oneShotDecision(
-                                subject = claimantCard?.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                subject = claimantCard?.abilitySubject(confirmedClocktowerPoisonTarget()),
                                 role = "Slayer",
                                 alreadyUsed = clocktowerSlayerUsed,
                             )
                             val targetRegistersAsDemon = targetCard?.clocktowerTeam == ClocktowerTeam.Demon ||
                                 (targetCard?.clocktowerRole?.enName == "Recluse" &&
-                                    targetCard.name != clocktowerConfirmedPoisonTarget &&
+                                    targetCard.name != confirmedClocktowerPoisonTarget() &&
                                     recluseRegistersAsDemon == true)
                             val shotWillHit = slayerDecision.effectApplies &&
                                 targetIndex >= 0 && targetCard != null &&
@@ -3773,7 +3772,7 @@ internal fun CampBoardGameHostApp() {
                                 )
                             }
                             if (slayerDecision.effectApplies && targetCard?.clocktowerRole?.enName == "Recluse" &&
-                                targetCard.eliminatedRound == null && targetCard.name != clocktowerConfirmedPoisonTarget &&
+                                targetCard.eliminatedRound == null && targetCard.name != confirmedClocktowerPoisonTarget() &&
                                 recluseRegistersAsDemon == true
                             ) {
                                 addClocktowerEvent(
@@ -3885,7 +3884,7 @@ internal fun CampBoardGameHostApp() {
                                 val nominatedCard = cards.firstOrNull { it.name == nomineeName }
                                 val firstVirginNomination = nominatedCard?.let {
                                     AbilityFunctioningSemantics.interactsAs(
-                                        it.abilitySubject(clocktowerConfirmedPoisonTarget), "Virgin",
+                                        it.abilitySubject(confirmedClocktowerPoisonTarget()), "Virgin",
                                     )
                                 } == true && !clocktowerVirginUsed &&
                                     currentClocktowerScript == ClocktowerScript.TroubleBrewing
@@ -4208,7 +4207,7 @@ internal fun CampBoardGameHostApp() {
                                 )
                             }
                             if (executionName == null && aliveBeforeExecution.size == 3 && aliveBeforeExecution.any {
-                                    AbilityFunctioningSemantics.functionsAs(it.abilitySubject(clocktowerConfirmedPoisonTarget), "Mayor")
+                                    AbilityFunctioningSemantics.functionsAs(it.abilitySubject(confirmedClocktowerPoisonTarget()), "Mayor")
                                 }
                             ) {
                                 executionOutcome = GameOutcome(
@@ -4237,7 +4236,7 @@ internal fun CampBoardGameHostApp() {
                             // accepted typed action still needs one revision invalidation.
                             val nightCloseStartingRevision = requireClocktowerGameSession().state.gameStateRevision
                             clocktowerPendingNightNewDemonIdentityName = null
-                            val demonPoisonedTonight = clocktowerConfirmedPoisonTarget?.let { name ->
+                            val demonPoisonedTonight = confirmedClocktowerPoisonTarget()?.let { name ->
                                 cards.firstOrNull { it.name == name && it.eliminatedRound == null }?.clocktowerTeam == ClocktowerTeam.Demon
                             } == true
                             var nightKlutzName: String? = null
@@ -4247,7 +4246,7 @@ internal fun CampBoardGameHostApp() {
                             val dawnDeathFacts = resolveTroubleBrewingDawnDeathFacts(
                                 cards = cards,
                                 targetName = originalDeathName,
-                                poisonedPlayerName = clocktowerConfirmedPoisonTarget,
+                                poisonedPlayerName = confirmedClocktowerPoisonTarget(),
                                 monkProtectedTargetName = clocktowerConfirmedMonkProtectedTarget,
                             )
                             val mayorCanRedirect = dawnDeathFacts.mayorSeat != null
@@ -4334,7 +4333,7 @@ internal fun CampBoardGameHostApp() {
                                             "${playerSeatLabel(cards, targetName)} · 失败（恶魔中毒）",
                                             "${playerSeatLabel(cards, targetName)} · failed (Demon poisoned)",
                                         ),
-                                        listOfNotNull(clocktowerConfirmedPoisonTarget, targetName),
+                                        listOfNotNull(confirmedClocktowerPoisonTarget(), targetName),
                                     )
                                 }
                                 clocktowerPendingNightDeath = null
@@ -4352,18 +4351,18 @@ internal fun CampBoardGameHostApp() {
                                 val failedAttackCard = cards.firstOrNull { it.name == failedProtectedAttackName }
                                 val apparentMonk = cards.firstOrNull {
                                     AbilityFunctioningSemantics.interactsAs(
-                                        it.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                        it.abilitySubject(confirmedClocktowerPoisonTarget()),
                                         "Monk",
                                     )
                                 }
                                 val protectedByMonkForRecord = AbilityFunctioningSemantics.selectedMechanicalEffectApplies(
-                                    subject = apparentMonk?.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                    subject = apparentMonk?.abilitySubject(confirmedClocktowerPoisonTarget()),
                                     role = "Monk",
                                     selectionMatches = clocktowerConfirmedMonkProtectedTarget == failedProtectedAttackName,
                                 )
                                 val protectedBySoldierForRecord = failedAttackCard?.let { card ->
                                     AbilityFunctioningSemantics.functionsAs(
-                                        card.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                        card.abilitySubject(confirmedClocktowerPoisonTarget()),
                                         "Soldier",
                                     )
                                 } == true
@@ -4475,7 +4474,7 @@ internal fun CampBoardGameHostApp() {
                                     }
                                     if (
                                         AbilityFunctioningSemantics.interactsAs(
-                                            nightDeathCard.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                            nightDeathCard.abilitySubject(confirmedClocktowerPoisonTarget()),
                                             "Ravenkeeper",
                                         ) && clocktowerRavenkeeperTarget != null
                                     ) {
@@ -4545,7 +4544,7 @@ internal fun CampBoardGameHostApp() {
                                             roleIdsBySeat = postDeathEffectiveNightState.effectiveRoleIdsBySeat,
                                             currentPhase = storytellerPhaseFor(),
                                             currentPoisonTargetSeat =
-                                                clocktowerConfirmedPoisonTarget?.let(::clocktowerSeatFor),
+                                                confirmedClocktowerPoisonTarget()?.let(::clocktowerSeatFor),
                                             committedActionIds = clocktowerActionTimeline.entries
                                                 .map { it.fact.actionId }
                                                 .toSet(),
@@ -4578,7 +4577,6 @@ internal fun CampBoardGameHostApp() {
                                 }
                                 val poisonTargetName = poisonMaterialization.intent.targetSeat
                                     ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
-                                clocktowerConfirmedPoisonTarget = poisonTargetName
                                 clocktowerPoisonTarget = poisonTargetName
                             }
 

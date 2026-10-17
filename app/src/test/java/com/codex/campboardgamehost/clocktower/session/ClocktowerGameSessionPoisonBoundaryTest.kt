@@ -29,6 +29,8 @@ class ClocktowerGameSessionPoisonBoundaryTest {
         assertEquals(0L, committed.point.globalSequence)
         assertEquals(committed, session.state.actionTimeline.entries.single())
         assertEquals("poison-choice", committed.fact.actionId)
+        assertEquals(beforePlayers[1].name, session.state.confirmedPoisonTargetName(1))
+        assertEquals(null, session.state.confirmedPoisonTargetName(2))
 
         val acceptedState = session.state
         val duplicate = session.commitConfirmedPoisonTransition(draft, expectedGameStateRevision = 0L)
@@ -72,6 +74,8 @@ class ClocktowerGameSessionPoisonBoundaryTest {
 
         assertEquals(false, requireNotNull(session.state.gameState.playerAt(deadSeat)).poisoned)
         assertEquals(emptyList<Int>(), session.state.gameState.players.filter { it.poisoned }.map { it.seat })
+        // The confirmed choice still exists even though the dead target has no poison flag.
+        assertEquals(seeded.playerAt(deadSeat)?.name, session.state.confirmedPoisonTargetName(1))
         assertEquals(1L, session.state.gameStateRevision)
         assertEquals(1, session.state.actionTimeline.entries.size)
     }
@@ -127,6 +131,34 @@ class ClocktowerGameSessionPoisonBoundaryTest {
         assertEquals(1L, session.state.gameStateRevision)
         assertEquals(1L, session.state.nextTimelineGlobalSequence)
         assertEquals(1, session.state.actionTimeline.entries.size)
+    }
+
+    @Test
+    fun `outgoing Day expiry supersedes accepted target without UI poison mirrors`() {
+        val session = newSession("a3-confirmed-poison-projection")
+        session.commitConfirmedPoisonTransition(poison("first-night-target", 2), 0L)
+        assertEquals(initialState.playerAt(2)?.name, session.state.confirmedPoisonTargetName(1))
+        session.commitConfirmedPoisonTransition(
+            ActionFactDraft.Poison("dusk-expiry", StorytellerPhase.DAY, 1, 2, null),
+            session.state.gameStateRevision,
+        )
+        assertEquals(null, session.state.confirmedPoisonTargetName(1))
+        assertEquals(null, session.state.confirmedPoisonTargetName(2))
+        assertEquals(emptyList<Int>(), session.state.gameState.players.filter { it.poisoned }.map { it.seat })
+    }
+
+    @Test
+    fun `legacy mechanical poison without a typed choice remains recoverable`() {
+        val poisoned = initialState.copy(players = initialState.players.map { player ->
+            player.copy(poisoned = player.seat == 3)
+        })
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "a3-legacy-poison",
+            gameSeed = poisoned.seed,
+            initialState = poisoned,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        assertEquals(initialState.playerAt(3)?.name, session.state.confirmedPoisonTargetName(2))
     }
 
     @Test
