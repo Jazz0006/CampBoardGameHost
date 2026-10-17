@@ -209,7 +209,7 @@ internal fun ClocktowerJudgeScreen(
 
     fun firstNightPublicationNeeded(displayStep: ClocktowerNightStepUi): Boolean {
         val request = clocktowerFirstNightInformationRequest(
-            displayStep, phase, round, cards, script, gameSeed, poisonTarget, language,
+            displayStep, phase, round, cards, sessionGameState, script, language,
             firstNightPairDecisionContext,
         ) ?: return true
         return !firstNightInformationMigration.isDisplayed(request.decisionId)
@@ -220,9 +220,8 @@ internal fun ClocktowerJudgeScreen(
             phase,
             round,
             cards,
+            sessionGameState,
             script,
-            gameSeed,
-            poisonTarget,
             language,
             firstNightPairDecisionContext,
         ) ?: return true

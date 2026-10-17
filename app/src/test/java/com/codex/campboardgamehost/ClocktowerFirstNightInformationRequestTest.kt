@@ -42,9 +42,8 @@ class ClocktowerFirstNightInformationRequestTest {
         phase,
         round,
         cards,
+        cards.toClocktowerGameState(ClocktowerScript.TroubleBrewing, 42L),
         ClocktowerScript.TroubleBrewing,
-        42L,
-        null,
         "en",
         pairContext,
     )
@@ -130,8 +129,7 @@ class ClocktowerFirstNightInformationRequestTest {
             InformationProposition.RoleAt(3, RoleId("Baron")),
             InformationProposition.RoleAt(2, RoleId("Baron")),
         ))
-        val result = requireNotNull(clocktowerFirstNightInformationRequest(
-            displayStep = ClocktowerNightStepUi(
+        val displayStep = ClocktowerNightStepUi(
                 title = "information",
                 actor = ngjCards[0],
                 isRealAction = true,
@@ -143,19 +141,50 @@ class ClocktowerFirstNightInformationRequestTest {
                 displayKind = ClocktowerDisplayKind.EitherOne,
                 displayPrimary = "Baron",
                 displayProposition = proposition,
-            ),
+            )
+        val gameState = ngjCards.toClocktowerGameState(ClocktowerScript.NoGreaterJoy, 99L)
+        val result = requireNotNull(clocktowerFirstNightInformationRequest(
+            displayStep = displayStep,
             phase = ClocktowerPhase.FirstNight,
             round = 1,
             cards = ngjCards,
+            gameState = gameState,
             script = ClocktowerScript.NoGreaterJoy,
-            gameSeed = 99L,
-            poisonTarget = null,
             language = "en",
         ))
 
         assertEquals(listOf(2, 3), result.candidates.single().observation.candidateSeats)
         assertEquals(RoleId("Baron"), result.candidates.single().observation.shownRole)
         assertEquals(SemanticTruth.TRUE, result.candidates.single().observation.semanticTruth)
+
+        // The display cards are deliberately stale: the accepted Session moved
+        // Baron from seat 3 to seat 5. Seat 2/3 must no longer be a legal true pair.
+        val baronMoved = gameState.copy(players = gameState.players.map { player ->
+            when (player.seat) {
+                3 -> player.copy(
+                    actualRole = RoleId("Empath"),
+                    actualAlignment = com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD,
+                    actualType = com.codex.campboardgamehost.clocktower.domain.CharacterType.TOWNSFOLK,
+                )
+                5 -> player.copy(
+                    actualRole = RoleId("Baron"),
+                    actualAlignment = com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL,
+                    actualType = com.codex.campboardgamehost.clocktower.domain.CharacterType.MINION,
+                )
+                else -> player
+            }
+        })
+        assertThrows(IllegalStateException::class.java) {
+            clocktowerFirstNightInformationRequest(
+                displayStep = displayStep,
+                phase = ClocktowerPhase.FirstNight,
+                round = 1,
+                cards = ngjCards,
+                gameState = baronMoved,
+                script = ClocktowerScript.NoGreaterJoy,
+                language = "en",
+            )
+        }
     }
 
     private fun pairContext(): TroubleBrewingFirstNightPairDecisionContext {

@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
+import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.RegistrationResolutionStatusV1
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
@@ -50,7 +51,8 @@ class ClocktowerChefAlternativePublicationTest {
             val displayed = resolveClocktowerPlayerDisplay(step, choice)
             val request = requireNotNull(clocktowerFirstNightInformationRequest(
                 displayed, ClocktowerPhase.FirstNight, 1, cards,
-                ClocktowerScript.TroubleBrewing, 42L, null, "en",
+                cards.toClocktowerGameState(ClocktowerScript.TroubleBrewing, 42L),
+                ClocktowerScript.TroubleBrewing, "en",
             ))
             val migration = FirstNightInformationMigration()
             val publication = migration.resolvePublication(request)

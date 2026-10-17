@@ -741,27 +741,17 @@ internal fun CampBoardGameHostApp() {
 
     fun a4InitialIdentityPrewarmRequestOrNull(): A4IdentityRevealPrewarmRequest? {
         val activeRuleset = clocktowerRulesetRef ?: return null
+        val session = clocktowerGameSession ?: return null
         if (!BuildConfig.DEBUG || currentGameKind != GameKind.Clocktower ||
-            currentClocktowerScript != ClocktowerScript.TroubleBrewing || cards.size != 5 ||
-            cards.any { it.clocktowerRole == null || it.clocktowerShownRole == null }
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            session.state.gameState.players.size != 5 ||
+            session.state.gameState.players.any { it.shownRole == null }
         ) return null
-        val gameState = cards.toClocktowerGameState(
-            currentClocktowerScript,
-            clocktowerGameSeed,
-            poisonedPlayerName = null,
-        )
-        val snapshot = GameSnapshot(
-            gameId = clocktowerGameId,
-            gameStateRevision = clocktowerGameStateRevision,
-            playerInputRevision = clocktowerPlayerInputRevision,
-            gameSeed = clocktowerGameSeed,
-            rulesetRef = activeRuleset,
-            gameState = gameState,
-        )
+        val snapshot = session.toGameSnapshot(activeRuleset)
         val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, round = 1)
-        val perceivedRolesBySeat = cards.mapIndexed { index, card ->
-            index + 1 to RoleId(requireNotNull(card.clocktowerShownRole).enName)
-        }.toMap()
+        val perceivedRolesBySeat = session.state.gameState.players.associate { player ->
+            player.seat to requireNotNull(player.shownRole)
+        }
         return A4IdentityRevealPrewarmRequest(
             formal = formal,
             playerInputRevision = clocktowerPlayerInputRevision,
@@ -770,7 +760,7 @@ internal fun CampBoardGameHostApp() {
                 perceivedRolesBySeat = perceivedRolesBySeat,
                 observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
             ).associateBy(PlayerKnowledgeSnapshot::recipientSeat),
-            revealOrder = cards.indices.map { it + 1 },
+            revealOrder = session.state.gameState.players.map { it.seat },
             hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
             roleDefinitions = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
         )
@@ -778,27 +768,21 @@ internal fun CampBoardGameHostApp() {
 
     fun a4ObservationCacheRebuildRequestOrNull(recordId: String): A4ObservationCacheRebuildRequest? {
         val activeRuleset = clocktowerRulesetRef ?: return null
+        val session = clocktowerGameSession ?: return null
         if (!BuildConfig.DEBUG || currentGameKind != GameKind.Clocktower ||
-            currentClocktowerScript != ClocktowerScript.TroubleBrewing || cards.size != 5 ||
-            cards.any { it.clocktowerRole == null || it.clocktowerShownRole == null }
+            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+            session.state.gameState.players.size != 5 ||
+            session.state.gameState.players.any { it.shownRole == null }
         ) return null
         val record = clocktowerEpistemicObservations.singleOrNull { it.recordId == recordId } ?: return null
-        val gameState = cards.toClocktowerGameState(currentClocktowerScript, clocktowerGameSeed, poisonedPlayerName = null)
-        val snapshot = GameSnapshot(
-            gameId = clocktowerGameId,
-            gameStateRevision = clocktowerGameStateRevision,
-            playerInputRevision = clocktowerPlayerInputRevision,
-            gameSeed = clocktowerGameSeed,
-            rulesetRef = activeRuleset,
-            gameState = gameState,
-        )
+        val snapshot = session.toGameSnapshot(activeRuleset)
         val formal = FormalGameState.from(snapshot, record.phase, record.round)
         return A4ObservationCacheRebuildRequest(
             formal = formal,
             playerInputRevision = clocktowerPlayerInputRevision,
-            perceivedRolesBySeat = cards.mapIndexed { index, card ->
-                index + 1 to RoleId(requireNotNull(card.clocktowerShownRole).enName)
-            }.toMap(),
+            perceivedRolesBySeat = session.state.gameState.players.associate { player ->
+                player.seat to requireNotNull(player.shownRole)
+            },
             observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
             appendedRecordId = recordId,
             hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,

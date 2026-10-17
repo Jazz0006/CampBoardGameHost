@@ -1,13 +1,13 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.YesNoAnswer
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
-import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.history.InformationReferenceExtractor
 import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
@@ -26,9 +26,8 @@ internal fun clocktowerFirstNightInformationRequest(
     phase: ClocktowerPhase,
     round: Int,
     cards: List<PlayerCard>,
+    gameState: GameState,
     script: ClocktowerScript,
-    gameSeed: Long,
-    poisonTarget: String?,
     language: String,
     firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
 ): FirstNightInformationRequest? {
@@ -84,11 +83,7 @@ internal fun clocktowerFirstNightInformationRequest(
         } else {
             null
         }
-        val legacyGame = if (pairContext == null) {
-            cards.toClocktowerGameState(script, gameSeed, poisonTarget)
-        } else {
-            null
-        }
+        val directGame = gameState.takeIf { pairContext == null }
         val legacyRoleDefinitions = if (pairContext == null) {
             clocktowerRoleDefinitionsForScript(script)
         } else {
@@ -137,7 +132,7 @@ internal fun clocktowerFirstNightInformationRequest(
                         }
                     } else {
                         ClocktowerPairManualAuthority.selectedObservation(
-                            game = requireNotNull(legacyGame),
+                            game = requireNotNull(directGame),
                             roleDefinitions = requireNotNull(legacyRoleDefinitions),
                             sourceSeat = sourceSeat,
                             abilityRole = family.role,
