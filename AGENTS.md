@@ -33,6 +33,10 @@ obsolete architecture guards rather than retaining deleted product behavior to s
 Older recovery/architecture documents below are historical where they conflict with this section.
 Local Codex work reads and writes the local project directly; Mini MCP is not required.
 
+## Current owner override: exhaustive module-by-module reduction and <=50KB source cap (2026-10-18)
+
+Do not continue old M1c path as an incremental feature plan. Traverse the actual complete current source tree, review real production consumers and owners per module, delete unneeded code/tests when verified, and surface uncertain deletion boundaries for owner approval. The only retained product is minimum live game state, one ordered authoritative record of actual key events and necessary game controls, plus security/privacy/stale-response safeguards. Every source file must be <= 50,000 bytes; delete obsolete responsibilities before splitting oversized files and never repackage a God class as new delegate wrappers. Manual results have **no gameplay-rule candidate/legality restrictions during cleanup**. Better contextual pair/Chef/Empath choice suggestions are **phase two only**, after reduction is complete. Canonical inventory: `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`.
+
 ## Evidence-first validation policy (2026-10-15; current authority)
 
 - **Default to evidence-first delivery, not mandatory TDD.** Before changing code, define the user-observable acceptance criterion, risk, owning boundary, and cheapest independent proof. Do **not** require a new test file, artificial RED, or RED/GREEN trace for each new feature, bug fix, source edit, or intermediate wiring step.

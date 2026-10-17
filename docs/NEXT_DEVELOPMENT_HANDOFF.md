@@ -2,6 +2,10 @@
 
 更新：2026-10-17（Australia/Sydney）。先读 AGENTS.md 顶部与 [产品合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)，再读 [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)。不得按旧 D5 NEXT 继续拆分规则模块。
 
+## 2026-10-18 新执行入口（覆盖下文旧 NEXT）
+
+当前基线为堆叠 Draft PR #333 HEAD `64be30905b88f639a464204ed1db89b7b62bc910`；改为 `codex/minimal-host-full-scan-20261018` 逐模块全仓源码审计、直接删除确定废弃模块及旧测试。全仓库存 1,150 文件 / 698 个源代码文件；4 个文件超过 50,000 B；目标所有源文件小于等于 50,000 B，先净删后拆分。权威逐文件库存和模块状态见 `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`。清理期人工结果不提供任何游戏规则合法性限制，先记录实际确认值；pair/Chef/Empath 的动态候选优化移到清理完成后第二阶段。不得依照下文过时的 M1b/M1c 下一步顺序续做。未知模块必须列明风险请所有者审查。保持 Draft 和 CI/R2 审核，没有授权合并。
+
 ## 已有基线
 
 本轮生产末端为 #328 `db16d38c`；它包含 #315–#327 的全部提交。#315–#328 各最新 head 的 CI/R2 已核对成功。收尾集成分支为 `codex/minimal-host-handoff`，面向 main 整合现有链和新权威文档；最终合并状态以 GitHub 为准。下一轮必须从该收尾已合并的 main 建立新分支，不能从旧 main `770ed32f` 开始。
