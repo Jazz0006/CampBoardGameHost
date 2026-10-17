@@ -91,7 +91,7 @@ internal fun ClocktowerNightStepCardLocalized(
     ) {
         ClocktowerDirectNumericResultUi(
             title = step.displayTitle,
-            actorLabel = step.actor.seatLabel(cards),
+            actorLabel = requireNotNull(step.actor).seatLabel(cards),
             wakeInstruction = step.storytellerAction,
             language = language,
             canGoPrevious = canGoPrevious,
