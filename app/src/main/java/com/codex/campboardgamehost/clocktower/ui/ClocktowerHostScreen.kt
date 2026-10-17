@@ -353,8 +353,7 @@ internal fun ClocktowerJudgeScreen(
         mutableStateOf<ClocktowerNightAdvanceDirective.AwaitRefreshedFlow?>(null)
     }
     val nominationDraft = remember(gameId, round) { ClocktowerNominationDraft() }
-    var slayerClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
-    var slayerTargetName by remember(gameId) { mutableStateOf<String?>(null) }
+    val slayerDraft = remember(gameId) { ClocktowerSlayerDraft() }
     val artistDraft = remember(gameId) { ClocktowerArtistDraft() }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
     // Transient UI handoff only; Session publication is the lasting fact.
@@ -362,7 +361,6 @@ internal fun ClocktowerJudgeScreen(
     var pendingAutoAdvanceAfterDisplay by remember(gameId, phase, round) {
         mutableStateOf<Pair<Int, String>?>(null)
     }
-    var slayerRecluseRegistersDemon by remember { mutableStateOf<Boolean?>(null) }
     val firstNightNaturalPairPrecomputeRequest = if (
         script == ClocktowerScript.TroubleBrewing &&
         phase == ClocktowerPhase.FirstNight &&
@@ -1723,9 +1721,7 @@ internal fun ClocktowerJudgeScreen(
                 }
             },
             onOpenSlayer = {
-                slayerClaimantName = null
-                slayerTargetName = null
-                slayerRecluseRegistersDemon = null
+                slayerDraft.clear()
                 dayMode = ClocktowerDayMode.Slayer
             },
             onOpenArtist = {
@@ -1829,82 +1825,22 @@ internal fun ClocktowerJudgeScreen(
     }
 
     if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Slayer) {
-        val slayerTargetCard = cards.firstOrNull { it.name == slayerTargetName }
-        val slayerTableState = clocktowerSlayerTableState(
+        ClocktowerSlayerInteraction(
+            draft = slayerDraft,
+            cards = cards,
             seats = clocktowerDayOverviewTableState(
                 sessionGameState,
                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
                 ghostVoteAuthority = ghostVoteAuthority,
             ).seats,
             claimantCandidateNames = slayerClaimantCandidates.mapTo(mutableSetOf()) { it.name },
-            alivePlayerNames = publicAliveCards.mapTo(mutableSetOf()) { it.name },
-            claimantName = slayerClaimantName,
-            targetName = slayerTargetName,
-        )
-        ClocktowerSlayerTableScreen(
+            registration = registration,
             round = round,
-            tableState = slayerTableState,
+            poisonTarget = poisonTarget,
             actionsEnabled = gameOutcome == null,
-            compact = false,
             onHostTools = onHostTools,
-            onSeatClick = { seatId ->
-                val selectedName = slayerTableState.playerNameForSeat(seatId)
-                if (slayerClaimantName == null) {
-                    slayerClaimantName = selectedName
-                    slayerTargetName = null
-                    slayerRecluseRegistersDemon = null
-                } else {
-                    slayerTargetName = if (slayerTargetName == selectedName) null else selectedName
-                    slayerRecluseRegistersDemon = null
-                }
-            },
-            onResetClaimant = {
-                slayerClaimantName = null
-                slayerTargetName = null
-                slayerRecluseRegistersDemon = null
-            },
-            onResolve = {
-                val claimantName = slayerClaimantName
-                val targetName = slayerTargetName
-                if (claimantName != null && targetName != null) {
-                    val targetIsHealthyRecluse =
-                        slayerTargetCard?.clocktowerRole?.enName == "Recluse" &&
-                            poisonTarget != targetName
-                    val recluseRegistersDemon =
-                        if (targetIsHealthyRecluse) slayerRecluseRegistersDemon else null
-                    onSlayerShot(claimantName, targetName, recluseRegistersDemon)
-                    slayerClaimantName = null
-                    slayerTargetName = null
-                    slayerRecluseRegistersDemon = null
-                    dayMode = ClocktowerDayMode.Overview
-                }
-            },
-            onBack = {
-                slayerClaimantName = null
-                slayerTargetName = null
-                slayerRecluseRegistersDemon = null
-                dayMode = ClocktowerDayMode.Overview
-            },
-            specialContent = {
-                if (slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
-                    ClocktowerRecluseRegistrationDecisionControls(
-                        legalRoles = registration.legalRegistrationRoles(
-                            registrationKey("SlayerRecluse", requireNotNull(slayerTargetCard).name),
-                            "Slayer",
-                            slayerTargetCard,
-                            listOf(ClocktowerTeam.Demon),
-                        )
-                            .map { it.enName to it.nameFor(language) },
-                        registersEvil = slayerRecluseRegistersDemon == true,
-                        registeredRoleEnName = if (slayerRecluseRegistersDemon == true) "Imp" else null,
-                        enabled = registration.recluseCanRegister("Slayer"),
-                        hasExplicitChoice = slayerRecluseRegistersDemon != null,
-                        language = language,
-                        onRegistersEvilChange = { slayerRecluseRegistersDemon = it },
-                        onRoleChange = {},
-                    )
-                }
-            },
+            onSlayerShot = onSlayerShot,
+            onBack = { dayMode = ClocktowerDayMode.Overview },
         )
         return
     }

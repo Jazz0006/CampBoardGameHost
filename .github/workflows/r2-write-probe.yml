@@ -25,6 +25,7 @@ on:
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerResultsScreen.kt
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNominationInteraction.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerInteraction.kt
       - .github/workflows/r2-write-probe.yml
   workflow_dispatch:
 
@@ -268,8 +269,11 @@ jobs:
             echo "Unreachable Klutz/Spy alignment picker resurfaced in production Host" >&2
             exit 1
           fi
-          # Named-role Spy registration is still legal for OTHER real interactions.
-          grep -q "ClocktowerRecluseRegistrationDecisionControls(" "$host"
+          # Slayer retains the legal Recluse registration controls in its interaction owner.
+          slayer=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerInteraction.kt
+          grep -q "ClocktowerSlayerInteraction(" "$host"
+          grep -q "internal fun ClocktowerSlayerInteraction" "$slayer"
+          grep -q "ClocktowerRecluseRegistrationDecisionControls(" "$slayer"
           grep -q "ClocktowerAutomaticRegistrationEffect(" "$night_step_ui"
 
           for name in ClocktowerResultsDialog; do
