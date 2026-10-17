@@ -585,6 +585,15 @@ internal fun ClocktowerNightStepCardLocalized(
     }
 
     fun showStructuredFortuneTellerResult(value: Boolean) {
+        // A Manual/AI-assisted confirmation is the actual answer shown, not a
+        // Host-approved legal-result candidate. Current query seats are structural facts.
+        if (!allowRuleDeterminedAutoUi) {
+            val actorSeat = structuredActorSeat ?: return
+            val subjects = structuredFortuneTellerSelectedSeats ?: return
+            clocktowerDirectBooleanResult(step, actorSeat, subjects, value, language)
+                ?.let(onShowPlayerDisplay)
+            return
+        }
         resultFirstFortuneTellerOptions.firstOrNull { option ->
             (option.proposition as? InformationProposition.BooleanResult)?.value == value
         }?.let { option ->
@@ -949,7 +958,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
                     redHerringSeat = redHerringSeat,
-                    legalResults = fortuneTellerLegalResults,
+                    legalResults = if (!allowRuleDeterminedAutoUi) setOf(true, false)
+                        else fortuneTellerLegalResults,
                     recommendedResult = fortuneTellerRecommendedResult,
                     allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
                     language = language,
