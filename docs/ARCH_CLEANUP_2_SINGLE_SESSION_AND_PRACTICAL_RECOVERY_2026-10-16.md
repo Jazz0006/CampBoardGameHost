@@ -252,12 +252,14 @@
 - **验证：** 可执行源码 `469b530a5d421cd531cbe4cf6d209aeab89b557f`，测试编译括号修复 `523de06a3d48fb8a2df995bcacd21ace32945e5f`。前者 [CI #4256](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38989745640) 因测试代码语法失败（生产代码 Kotlin 编译已通过），后者完整 [CI #4257](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38990048858) Android 全量测试/Debug APK、ASP、Clingo 和 CI Gate 均 SUCCESS；R2 #3853 在生产修改提交成功。
 - 不新增事件、状态、历史副本或自动请求；已公布结果依然属于单一 Session。聚焦回归覆盖三个现场查询角色、相同重看、结果/目标改变、跨夜、不同角色及普通非查询动作。真机/付费 API 暂缓，A2 **仍 PARTIAL**。
 
-### A2 收尾批次：真人现场目标的全自动确认与统一合法性门禁（2026-10-17；待独立 CI/R2）
+### A2 收尾批次：真人现场目标的全自动确认与统一合法性门禁（2026-10-17；独立 CI/R2 GREEN）
 
 - **实证缺口：** AI_AUTOMATIC 已自动展示当前合法信息并安全关闭展示后推进，但 Poison / ButlerMaster / MonkProtect / DemonKill 仍需点“下一步”。UI 的单目标方桌已经禁用了未选座位的下一步，顶层 `advanceNightStep` 却未独立验证上述真人目标，存在经其他入口跳过真实行动的可能。
 - **本批修复：** 复用现有单目标方桌的合法座位域，在当前 Host 原有推进入口严格要求真实行动有合法目标，错误/未选定时停留并提示；非真实步骤允许正常跳过。AI_AUTOMATIC 只在当前步骤玩家**新点击合法座位**、确认最新 Host 草稿已反映所选对象时，通过原有 `advanceNightStep` 确认，单个暂存 UI token 按 game/phase/round/step 重置，禁止已有草稿在返回/恢复后自动执行。MANUAL、AI_ASSISTED 继续手工确认。没有让 AI 代替玩家选择，无新事实事件或第二套动作提交。
 - **不适用步骤保护：** 审计确认非真实角色/裁定步骤原先仍可能执行 `onConfirmPoisonTarget`、`onConfirmMonkProtectedTarget`、`onConfirmDemonAttack`、Mayor 或 DemonSuccessor 回调，甚至在空目标时产生无意义的 revision；现改为仅当 `currentStep.isRealAction` 为真才进入这些确认回调，非真实步骤仅按现有流程前进，不生成 Host 行动。
-- **仍非 A2 总体验收：** 待精确源码独立 CI/R2、旧调用路径退出审计及完整连续夜晚场景确认。按批准决定，ADB 真机由 A6 统一验收；付费 API 不运行。
+- **独立验收：** 首批可执行提交 `8bcb4aea7a37ccbcc12cf0d98287a91d0ed00921`、补充非真实行动确认门禁 `7a6232ba3da7b44dd2061bd56448f49b3c4e4f86`。后者 [CI #4260](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/38991952598) Android 全量测试/Debug APK、ASP、真实 Clingo、Gate 全部 SUCCESS；同源码 R2 #3855 SUCCESS。首次提交 R2 #3854 也成功。
+- **整包退役出口审计：** 全 `app/src` 搜索未发现 `adoptWholeResidualProposal`、`adoptJointOpeningAfterReveal`、`residualProposed`、`residualAdopted`、`jointOpeningApplied`、`adoptedJointOpening`、`onAdopt` 或“一键采纳”调用。`ClocktowerJointOpeningReviewScreen` 仍作为**展示未执行建议并进入 Drunk 逐步确认**的 UI 使用，不是整包采纳，应保留。
+- **A2 仍 PARTIAL 的具体边界：** MayorRedirect 的多合法目标 AI 裁量已有当前请求 `globalAiTargetPending`，但现有 `approvedOpeningOption` 只重新绑定 pair/scalar 的信息候选；`ClocktowerNightStepUi` 的 Mayor 自动落座仅覆盖 Host 唯一合法目标。这类非唯一当前裁量不能宣称已经自动执行。下一次优先核对并修复其 AI 当前合法座位匹配、Host 再校验和确认/自动推进，以及连续夜晚场景。按批准决定，ADB 真机由 A6 统一验收；付费 API 不运行。
 
 ### A3 — 移除 Clocktower PlayerCard 第二写入源
 
