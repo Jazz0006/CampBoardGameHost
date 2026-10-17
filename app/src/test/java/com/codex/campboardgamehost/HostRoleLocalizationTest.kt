@@ -10,8 +10,6 @@ class HostRoleLocalizationTest {
     fun `clocktower host role uses current chinese locale instead of cached english label`() {
         val card = PlayerCard(
             name = "Alice",
-            role = Role.Civilian,
-            word = "",
             roleLabel = "Washerwoman",
             actualRoleLabel = "Washerwoman",
             clocktowerTeam = ClocktowerTeam.Townsfolk,
@@ -26,8 +24,6 @@ class HostRoleLocalizationTest {
     fun `clocktower host role uses current english locale instead of cached chinese label`() {
         val card = PlayerCard(
             name = "Alice",
-            role = Role.Civilian,
-            word = "",
             roleLabel = "洗衣妇",
             actualRoleLabel = "洗衣妇",
             clocktowerTeam = ClocktowerTeam.Townsfolk,
@@ -42,8 +38,6 @@ class HostRoleLocalizationTest {
     fun `legacy clocktower card without typed role keeps cached fallback label`() {
         val card = PlayerCard(
             name = "Alice",
-            role = Role.Civilian,
-            word = "",
             roleLabel = "shown",
             actualRoleLabel = "actual",
         )

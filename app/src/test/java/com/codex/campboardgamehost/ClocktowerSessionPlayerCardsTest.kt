@@ -28,8 +28,6 @@ class ClocktowerSessionPlayerCardsTest {
     private fun setupCards() = initial.players.map { player ->
         PlayerCard(
             name = player.name,
-            role = Role.Civilian,
-            word = "setup only",
             clocktowerRole = clocktowerRoleByName(player.actualRole.value),
             clocktowerShownRole = clocktowerRoleByName(player.shownRole?.value),
             clocktowerTeam = clocktowerRoleByName(player.actualRole.value)?.team,

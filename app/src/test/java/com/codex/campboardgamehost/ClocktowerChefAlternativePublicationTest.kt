@@ -19,7 +19,7 @@ class ClocktowerChefAlternativePublicationTest {
             .mapIndexed { index, name ->
                 val role = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing)
                     .single { it.enName == name }
-                PlayerCard("S${index + 1}", Role.Civilian, "",
+                PlayerCard("S${index + 1}",
                     clocktowerRole = role, clocktowerTeam = role.team)
             }
         val choices = ClocktowerRegistrationResultPresentation.numericOptions(

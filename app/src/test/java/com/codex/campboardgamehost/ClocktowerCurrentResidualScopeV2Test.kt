@@ -102,7 +102,7 @@ class ClocktowerCurrentResidualScopeV2Test {
 
     @Test fun secondNightRealNumericInformationIsOpenAndHostLegal() {
         val session = host()
-        val cards = (0..4).map { PlayerCard("Player $it", Role.Civilian, "") }
+        val cards = (0..4).map { PlayerCard("Player $it") }
         val empath = step(ClocktowerNightAction.None).copy(
             actor = cards[1], roleEnName = "Empath",
             displayProposition = InformationProposition.NumericResult(
@@ -124,7 +124,7 @@ class ClocktowerCurrentResidualScopeV2Test {
 
     @Test fun publishedFirstNightObservationIsImmutableYetNextNightGetsFreshHostDomain() {
         val host = host()
-        val cards = (0..4).map { PlayerCard("Player $it", Role.Civilian, "") }
+        val cards = (0..4).map { PlayerCard("Player $it") }
         val information = step(ClocktowerNightAction.None).copy(
             actor = cards[1], roleEnName = "Empath",
             displayProposition = InformationProposition.NumericResult(
@@ -155,7 +155,7 @@ class ClocktowerCurrentResidualScopeV2Test {
 
     @Test fun aCurrentNightRoleResultOpensOnlyAfterPlayerTargetIsKnown() {
         val session = host()
-        val cards = (0..4).map { PlayerCard("Player $it", Role.Civilian, "") }
+        val cards = (0..4).map { PlayerCard("Player $it") }
         val roleOption = ClocktowerDisplayOption(
             label = "Monk", displayKind = ClocktowerDisplayKind.RoleReveal,
             displayTitle = "revealed", displayPrimary = "Monk",
@@ -209,7 +209,7 @@ class ClocktowerCurrentResidualScopeV2Test {
             revision = revision, game = session.state.gameState)
         val request = StorytellerProviderRequestFactoryV1.fromMayorRedirect(
             pending, snapshot(session, StorytellerPhase.NIGHT, 2))
-        val cards = (0..4).map { PlayerCard("Player $it", Role.Civilian, "") }
+        val cards = (0..4).map { PlayerCard("Player $it") }
         val mayorStep = step(ClocktowerNightAction.MayorRedirect)
         val id = requireNotNull(pending.candidateIdForSeat(3))
         val choice = mapOf(request.identity.decisionId to id)
