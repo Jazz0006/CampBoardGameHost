@@ -27,6 +27,8 @@
 
 ## 二、立即执行顺序（纠偏后的 R0 → P1 → P5）
 
+**所有者 2026-10-18 最新顺序**：不再逐小函数探路，优先整块退休旧 `web/`，再删 `epistemic/` 的历史世界枚举/Exact/Topology 等试验；**必须保留其真实 ActionFact、ObservationLog、Json/Model、安全和历史展示合同**。两者已在 F5 删除并经完整 Android **CI #4355 / R2 #3935 SUCCESS**：Git tree 1112→1005 文件，web 文件 0、epistemic 35→9 生产文件。下一个需要大块退出的是旧 `HostOpeningRulesDomainV2` / `HostOpeningSemanticGateV2` 候选合法域，只保留 AI 直接按 Host State + 结构化事件规划的生产行为、响应字段、战略记忆和安全确认。具体提交 SHA/删除统计见全源审计台账与当前交接，不重复维护一套进度表。
+
 **R0（2026-10-18 已完成）恢复误伤的 AI 推荐能力。** 核对 B3 d5f21d43 / 39860f40 的 AI 配对请求、Provider、全局残余选择、UI 匹配与续规划；依历史提交恢复必要调用/测试，但不把规则合法检查重新接回人工信息提交。恢复代码 CI #4341 / R2 #3921 通过；AI-only 候选与 Host 规则确认分离的修正代码 CI #4342 / R2 #3922 通过。未获授权不调用付费 API；目前真实模型返回、真机交互尚未单独验收。
 
 **P1** 继续删除 Host 自己承担的规则合法性检查、自动真值/登记见证、对人工或 AI 结果的规则拒绝，连同确实只用于这些用途的文件和测试。**当前初夜请求已经不发送候选表，但 decode 仍调用 HostOpeningSemanticGateV2.accept(raw, domain.forDrunkSeat(drunk))，通过 HostOpeningRulesDomainV2 重验合法域；这是必须拆的旧生产耦合，不是 AI 功能需求。** 解耦时保护实际模型调用、JSON 结构、战略记忆和新鲜度/权限检查；重点清理重复领域投影、Host/Session/Flow/UI 中旧规则判断。

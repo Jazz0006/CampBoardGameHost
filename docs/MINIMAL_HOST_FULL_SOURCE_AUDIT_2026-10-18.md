@@ -2,7 +2,7 @@
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
 
-## F5：先删大型完整模块（代码删除已执行，完整 CI/R2 待验收）
+## F5：大型整块删除已完成（Android CI/R2 全通过）
 
 **顺序更新（所有者 2026-10-18）**：先整删旧 `web/` 客户端，再横向删除 `epistemic` 旧世界推演系统及专属实验，**最后**处理仍依赖 Host 候选 ID 的旧首夜合法域引擎；不要把小函数手术当主进度。
 
@@ -12,7 +12,7 @@
 - `app/build.gradle.kts` 移除已退役 SDE-2D4/SDE-2D5F 规模/费用实验的 Gradle 路由及排除规则，保留原 `:app:testFast`、`:app:testFull` 正式验证任务。
 - **AI 保证**：`InitialJointOpeningDirectV2`、Provider/OpenAI API、模型提示词、战略记忆、后夜增量规划、AI_ASSISTED/AI_AUTOMATIC、结构化结果与自动/辅助选择均未触及。Host 保存实际 ActionFact/ObservationLog 的路径和安全/身份/时间戳校验保留。原 `epistemic` 中保留的 `EpistemicContracts` 仍含旧登记语义，下一步 Host candidate cleanup 才核查删除。
 - 当前仍有未审计的旧 `HostOpeningRulesDomainV2` → `HostOpeningSemanticGateV2` → `InitialGlobalOpeningScopeV1` 候选 ID 采纳链，列为**下一大块 REMOVE_AFTER_DISCONNECT**。不可把“当前生产调用”写成最终 AI 策略需 Host 候选；保留 AI 请求/返回及 Session 安全，改为直接结构化字段后删除。
-- F5 代码 SHA、全套 Android CI/R2 及净删行数必须以完整真实提交验收记录为准；此条不是提前声明测试通过。
+- **F5 实际验收**：旧 Web PNG 删除提交 `5be8d37bad28e6055b89611de7be22388a7fffd1`，其余 7 文件删除 `bb96b0c525b1550875d5e0ae22e9c68e62b0e308`；世界引擎/测试整删及 Gradle 提交 `3be99bbc40a099a18c8f1bfc13b1a5d7ed978bc7`，该代码提交 **103 文件 +27/-17731，净删 17,704 行**。完整 Android **CI #4355 SUCCESS**（单测、Debug APK），**R2 #3935 SUCCESS**，ASP/Clingo/CI gate SUCCESS。最新完整非截断 Git tree **1005 个文件**（此前 1112），Android 生产 Kotlin **298 个**、测试 Kotlin **240 个**；epistemic 生产 9/test 12，web 文件 0。超 50,000 字节源码 3 件：App 188473B、HostScreen 149006B、NightStepUi 60237B；旧 web/app.js 已删。无真实收费 API/真机测试，PR #334 仍 Draft。
 
 
 
@@ -30,10 +30,10 @@
 | HostOpeningRulesDomainV2 / HostOpeningSemanticGateV2 / InitialGlobalOpeningScopeV1 的旧候选验证 | REMOVE_AFTER_DISCONNECT | `decode` 仍拿合法域校验模型输出；这不是 AI 策略必要依赖。需先把完整 AI 请求/接受结构从旧 legalCandidates 投影解耦，再删除门禁，保留 identity/隐私/时序安全 |
 | FixedInformationEvaluator、FirstNightNumericInformationSemantics、TroubleBrewingRegistrationDomain | REMOVE_AFTER_DISCONNECT（混合） | 当前仍被 Host/UI 候选与 AI 辅助旧路径引用，**不代表 AI 需要 Host 给出候选**；优先断开合法域复核及候选消费，不牺牲真实 AI 功能。结构/必要手动操作可独立保留 |
 | A4 identity reveal prewarm / A4 runtime/ZDD rollout | F3 + F4 REMOVE_CONFIRMED | Debug-only 缓存已在 F3 删除；F4 确认 A4 world runtime、rollout policy、ZDD 原型无生产消费者，仅测试自持，连专属测试和双轨契约整删 |
-| B4DynamicPlayerWorldSetShadow / ExactHistorical 和 Topology bundle 旧实验 | B4 独立接口 REMOVE_CONFIRMED（F2）；Exact/Topology AUDIT_PENDING | B4 全部生产引用仅本文件，无 AI 消费；时间线测试改测共享 API，Exact 评估测试独立保留；其余大型推演不能据此一起删 |
+| B4DynamicPlayerWorldSetShadow / ExactHistorical 和 Topology bundle 旧实验 | F2 + F5 REMOVE_CONFIRMED | B4 查询接口在 F2 已删；独立 Exact/Topology/枚举世界实验及专属测试在 F5 一并删除；事件/观察核心类型未删 |
 | FN-BUNDLE PublicGoodInfoProjection 等压力实验 | REMOVE_AFTER_DISCONNECT 待核 | 旧实验/测试消费者存在；与正式联合规划 API 不是同一合同；先完整检查引用，再批量删除 |
 | ClocktowerHostSelectionSemantics / HostScreen / NightStepUi | AUDIT_PENDING 混合 | 夜间人工候选过滤和规则否决需要删，但显示、事实与 AI 自动/辅助流程要保留 |
-| legacy web/ 独立网页客户端及多剧本 | REVIEW_SCOPE | 非 Android Host，是否保留 Undercover/狼人及旧网页，由产品范围决定 |
+| legacy web/ 独立网页客户端及多剧本 | F5 REMOVE_CONFIRMED | 产品所有者批准整删：Git tree 中 web/ 已零文件；不是新 WebHost |
 | tools、CI、assets、测试 | AUDIT_PENDING | 以当前 CI/R2/运行时消费者实际使用为依据，专属废弃实验测试可与生产实现一起删除 |
 
 ### F4：A4/ZDD 原型整链退役；AI 无 Host 合法候选原则（CI/R2 已完成）

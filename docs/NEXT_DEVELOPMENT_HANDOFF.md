@@ -2,13 +2,13 @@
 
 **用户再次确认：不要再以旧代码调用栈为主线逐段探索。** 优先枚举当前 Git HEAD 的全部源码模块，按 Host Core、现有 AI、旧 Host Rules、无生产消费者的实验、需要产品决策的外部客户端五类做证据分类。审计及确认/标记删除均记录到现有 `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`，不复制第二份全树文件索引。已确认无效的整块实现与专属测试直接删除并独立验证；仅有风险或实际消费者的标记 `REMOVE_AFTER_DISCONNECT`，先保护 AI 生产调用。P1 持续清除 Host 规则门禁，不重写 AI。
 
-## F5 大块删除：web/ 全部退役、epistemic 旧推演大幅清理（CI/R2 待验收）
+## F5 大块删除：web/ 全部退役、epistemic 旧推演大幅清理（完整 CI/R2 已通过）
 
 - 本轮现行顺序：web → epistemic 旧世界计算 → Host 候选引擎。首个二进制删除提交 `5be8d37bad28e6055b89611de7be22388a7fffd1`，旧 web 其余 7 文件提交 `bb96b0c525b1550875d5e0ae22e9c68e62b0e308`；无 Android/CI 生产引用。
 - 在 `bb96b0c5` 基线，删 `epistemic/` 26 个旧世界枚举/Exact/Topology/注册推演生产 Kotlin、48 个专属测试，`clocktower/review/` 17 个试验 Kotlin 与 3 个 manifest，`recommendation/` 2 个死实验源码+3 个专属测试；调整 Gradle 去掉所有已废弃 SDE-2D4/SDE-2D5F benchmark/filter，保留 `testFast`、`testFull`。
 - **必须留下** `epistemic` 的 ActionFactDraft、ActionFactTimeline、EpistemicObservationDraft/Log、SemanticModel/Json/Contracts、GrimoireReminderToken 和 PlayerHistoricalTimeline 9 个 Host Core 事实/私密信息/序列化/历史投影类型。保留 12 个相关核心测试。保留现有 AI 真正生产请求、Provider、提示词、战略记忆、预选、后夜推荐和模式行为。没有调用付费模型。
 - 下个大块是去掉 HostOpeningRulesDomainV2 / HostOpeningSemanticGateV2 的旧候选枚举与规则匹配，现仍参与首夜结果接收及 UI，不得不经结构化替代就删除真实 AI 功能。
-- 代码提交 SHA、净行数、Android 全量 CI/R2 和任何剩余编译错误均待实际验证；接手必须先读真实 HEAD 和上述台账。
+- **F5 代码提交** `3be99bbc40a099a18c8f1bfc13b1a5d7ed978bc7`，103 文件 +27/-17731，净删 **17,704 行**。完整 Android **CI #4355 SUCCESS**（单测+Debug APK）、**R2 #3935 SUCCESS**、ASP/Clingo/CI gate SUCCESS；无编译或测试失败。web/ 两次删除另见 `5be8d37b` 与 `bb96b0c5`。新完整 Git tree **1,005** 文件（F4 1,112），Android **298** 主 Kotlin + **240** 测试 Kotlin；epistemic 保留生产 9 + 测试 12，web 目录文件 0。三个大于 50000B 源码是 App 188473B、HostScreen 149006B、NightStepUi 60237B。未执行真实付费 API/真机。PR #334 Draft 堆叠，保持不合并。下一批先检查全树当前 HEAD，再对 Host 旧首夜候选域与 AI decode/selection 逐点做结构直接采纳替代，集中删除旧引擎/专属测试；不再回到 A3/Exact/ZDD 世界推演重建。
 
 ## F4 全树清理及 AI 候选边界纠偏（完整 CI/R2 已通过）
 
