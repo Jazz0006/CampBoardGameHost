@@ -9,7 +9,6 @@ internal data class ClocktowerNightTargets(
     val attackSeat: Int? = null,
     val monkSeat: Int? = null,
     val mayorRedirectSeat: Int? = null,
-    val successorSeat: Int? = null,
 ) {
     fun withAttack(seat: Int?): ClocktowerNightTargets =
         invalidateDependents(attackSeat != seat).copy(attackSeat = seat)
@@ -18,7 +17,7 @@ internal data class ClocktowerNightTargets(
         invalidateDependents(monkSeat != seat).copy(monkSeat = seat)
 
     private fun invalidateDependents(changed: Boolean): ClocktowerNightTargets =
-        if (changed) copy(mayorRedirectSeat = null, successorSeat = null) else this
+        if (changed) copy(mayorRedirectSeat = null) else this
 
     fun after(
         entry: TimelineBoundActionFact,
@@ -31,8 +30,6 @@ internal data class ClocktowerNightTargets(
             is ActionFact.Poison ->
                 invalidateDependents(!preserveNightChoices && priorPoisonSeat != fact.targetSeat)
             is ActionFact.MayorRedirectChoice -> copy(mayorRedirectSeat = fact.targetSeat)
-            is ActionFact.Death -> if (entry.point.phase == StorytellerPhase.NIGHT)
-                copy(attackSeat = fact.targetSeat) else this
             is ActionFact.PhaseAdvance -> if (fact.phase == StorytellerPhase.NIGHT)
                 ClocktowerNightTargets() else this
             else -> this

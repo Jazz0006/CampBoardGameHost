@@ -6,6 +6,11 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 
+/** Explicit keep/clear result for the previously confirmed poison choice. */
+internal data class DawnPoisonCarryIntent(val targetSeat: Int?, val previousTargetSeat: Int? = null) {
+    init { require(targetSeat == null || targetSeat > 0); require(previousTargetSeat == null || previousTargetSeat > 0) }
+}
+
 /**
  * Read the accepted poison choice from the one Session, including a dead target whose
  * mechanical poisoned flag has already cleared. The last same-round expiry (null) wins.
@@ -25,7 +30,7 @@ internal fun ClocktowerSessionState.confirmedPoisonTargetName(round: Int): Strin
         }.name
     }
 
-/** Commit the rules planner's carry/expiry; it cannot choose a different poison victim. */
+/** Commit the explicitly confirmed keep/clear result for the existing poison choice. */
 internal fun ClocktowerGameSession.commitDawnPoisonCarry(
     intent: DawnPoisonCarryIntent,
     expectedGameStateRevision: Long,

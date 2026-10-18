@@ -23,8 +23,6 @@ internal data class ClocktowerNightCheckpoint(
     val mayorRedirectDraftTarget: String?,
     val pendingNewDemonName: String?,
     val pendingNightNewDemonIdentityName: String? = null,
-    val demonSuccessorDraftTarget: String?,
-    val confirmedDemonSuccessorTarget: String? = null,
     val nextTimelineGlobalSequence: Long = 0L,
 ) {
     init {

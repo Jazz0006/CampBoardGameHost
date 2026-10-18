@@ -33,13 +33,13 @@ import androidx.compose.ui.unit.sp
 internal fun ClocktowerDawnSummaryScreen(
     round: Int,
     cards: List<PlayerCard>,
-    pendingNightDeath: String?,
+    deathNames: List<String>,
     onHostTools: () -> Unit,
     onEnterDay: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
-    val deathLabel = pendingNightDeath?.let { playerSeatLabel(cards, it) }
+    val deathLabel = deathNames.takeIf { it.isNotEmpty() }?.joinToString("、") { playerSeatLabel(cards, it) }
     ClocktowerDarkTheme {
         Column(
             modifier = Modifier
@@ -66,7 +66,7 @@ internal fun ClocktowerDawnSummaryScreen(
                         fontWeight = FontWeight.Black,
                     )
                     Text(
-                        text("先私下复核结算，再向所有玩家播报。", "Review the private resolution before making the public announcement."),
+                        text("已记录本夜确认结果，向所有玩家播报死亡名单。", "Confirmed night results. Announce the death list to all players."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }

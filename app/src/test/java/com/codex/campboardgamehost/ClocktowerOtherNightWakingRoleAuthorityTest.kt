@@ -6,36 +6,6 @@ import org.junit.Test
 
 class ClocktowerOtherNightWakingRoleAuthorityTest {
     @Test
-    fun `pending succession retains historical Imp ordering anchor after old Imp is dead`() {
-        val cards = listOf(
-            card(
-                name = "Imp0",
-                roleName = "Imp",
-                team = ClocktowerTeam.Demon,
-                eliminatedRound = 3,
-            ),
-            card(
-                name = "Poisoner",
-                roleName = "Poisoner",
-                team = ClocktowerTeam.Minion,
-            ),
-            card(
-                name = "Empath",
-                roleName = "Empath",
-                team = ClocktowerTeam.Townsfolk,
-            ),
-        )
-
-        assertEquals(
-            setOf(RoleId("Poisoner"), RoleId("Empath"), RoleId("Imp")),
-            clocktowerOtherNightWakingRoleIds(
-                cards = cards,
-                pendingSuccessionDemonRoleId = RoleId("Imp"),
-            ),
-        )
-    }
-
-    @Test
     fun `ordinary other night keeps only living current and shown Drunk roles`() {
         val drunk = card(
             name = "Drunk",
@@ -53,7 +23,6 @@ class ClocktowerOtherNightWakingRoleAuthorityTest {
             setOf(RoleId("Monk"), RoleId("Drunk"), RoleId("Fortune Teller")),
             clocktowerOtherNightWakingRoleIds(
                 cards = cards,
-                pendingSuccessionDemonRoleId = null,
             ),
         )
     }

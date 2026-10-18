@@ -102,6 +102,7 @@ internal object StorytellerGlobalEventProjectionV1 {
         is ActionFact.Attack -> JSONObject().put("type", "attack").put("target", fact.targetSeat)
         is ActionFact.Execution -> JSONObject().put("type", "execution").put("seat", fact.targetSeat)
         is ActionFact.Death -> JSONObject().put("type", "death").put("seat", fact.targetSeat)
+        is ActionFact.NoNightDeaths -> JSONObject().put("type", "no_night_deaths")
         is ActionFact.NoExecution -> JSONObject().put("type", "no_execution")
         is ActionFact.SlayerShot -> JSONObject().put("type", "slayer")
             .put("seat", fact.claimantSeat).put("target", fact.targetSeat)

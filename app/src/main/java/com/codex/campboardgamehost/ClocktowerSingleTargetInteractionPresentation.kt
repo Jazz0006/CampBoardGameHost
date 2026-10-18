@@ -88,16 +88,6 @@ internal fun clocktowerNightRulingPresentation(
             explanation,
             automatic,
         )
-        ClocktowerNightAction.DemonSuccessor -> ClocktowerNightRulingPresentation(
-            action,
-            selection.copy(
-                selectableSeats = if (automatic) emptySet() else selection.selectableSeats,
-                enabled = !automatic && selection.enabled,
-            ),
-            null,
-            explanation,
-            automatic,
-        )
         else -> null
     }
 }

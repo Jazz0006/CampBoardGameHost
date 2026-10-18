@@ -47,6 +47,11 @@ class EpistemicSemanticModelTest {
         setupKnowledge = listOf(InformationProposition.SetupProfile(3, 0, 1, 1)),
     )
 
+    @Test fun `explicit no night deaths round trips without inferring a death or registration`() {
+        val formal = state.copy(timeline = listOf(com.codex.campboardgamehost.clocktower.domain.ActionFact.NoNightDeaths("none", 0L)))
+        assertEquals(formal, EpistemicSemanticJson.decodeFormalGameState(EpistemicSemanticJson.encode(formal)))
+    }
+
     @Test
     fun `registration answers round trip and legacy absence remains unknown`() {
         listOf<Boolean?>(null, false, true).forEach { answer ->

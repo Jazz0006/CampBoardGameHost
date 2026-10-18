@@ -51,7 +51,6 @@ class ClocktowerMonkRetargetRavenkeeperDeathTest {
         confirmedMayorRedirectTarget = null,
         mayorRedirectDraftTarget = null,
         pendingNewDemonName = null,
-        demonSuccessorDraftTarget = null,
     )
 
     private fun card(

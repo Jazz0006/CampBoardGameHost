@@ -39,13 +39,5 @@ class ClocktowerAutomaticRulingsTest {
                 automaticTargetName = "Alice",
             ),
         )
-        assertTrue(
-            clocktowerAutomaticMayorRulingShouldAdvance(
-                allowRuleDeterminedAutoUi = true,
-                action = ClocktowerNightAction.DemonSuccessor,
-                selectedName = "Alice",
-                automaticTargetName = "Alice",
-            ),
-        )
     }
 }

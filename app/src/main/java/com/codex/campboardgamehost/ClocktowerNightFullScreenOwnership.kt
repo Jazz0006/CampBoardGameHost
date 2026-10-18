@@ -65,8 +65,7 @@ internal fun clocktowerNightSurfacePlan(
         ClocktowerNightAction.FortuneTeller -> ClocktowerNightFullScreenSurface.FortuneTeller
         ClocktowerNightAction.Chambermaid -> ClocktowerNightFullScreenSurface.Chambermaid
         ClocktowerNightAction.Ravenkeeper -> ClocktowerNightFullScreenSurface.Ravenkeeper
-        ClocktowerNightAction.MayorRedirect,
-        ClocktowerNightAction.DemonSuccessor -> ClocktowerNightFullScreenSurface.Ruling
+        ClocktowerNightAction.MayorRedirect -> ClocktowerNightFullScreenSurface.Ruling
 
         ClocktowerNightAction.NewDemonIdentity -> ClocktowerNightFullScreenSurface.EvilInformation
         ClocktowerNightAction.None -> null

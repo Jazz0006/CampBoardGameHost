@@ -34,7 +34,6 @@ internal object ClocktowerCurrentResidualScopeV2 {
         ClocktowerNightAction.FortuneTeller,
         ClocktowerNightAction.DemonKill,
         ClocktowerNightAction.MayorRedirect,
-        ClocktowerNightAction.DemonSuccessor,
         ClocktowerNightAction.Ravenkeeper,
         ClocktowerNightAction.RedHerring -> true
         ClocktowerNightAction.None,

@@ -1,22 +1,11 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
-import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackContext
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackOutcome
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackSemantics
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
-import com.codex.campboardgamehost.clocktower.session.NightDawnDeathResolutionInput
-import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
-
-/** Read-only base mechanics for a pending night; never reconstructed from UI cards. */
-internal fun GameState.toBaseEffectiveNightState(): ClocktowerEffectiveNightState =
-    ClocktowerEffectiveNightState(
-        effectiveAliveSeats = players.filter { it.alive }.mapTo(mutableSetOf()) { it.seat },
-        effectiveRoleIdsBySeat = players.associate { it.seat to it.actualRole },
-    )
 
 /**
  * Production adapter from current PlayerCard state into the canonical Trouble Brewing Demon attack
@@ -117,8 +106,7 @@ internal data class TroubleBrewingDawnDeathResolution(
 
 /**
  * Checkpoint-backed production composition used by non-durable consumers such as Host. Confirmed
- * unfinished-night facts remain the input authority; the existing Dawn planner remains the death
- * and Mayor-redirect authority.
+ * choices only preview later information steps. This prediction is never a fact-commit authority.
  */
 internal fun resolveTroubleBrewingDawnDeathResolution(
     cards: List<PlayerCard>,
@@ -131,24 +119,14 @@ internal fun resolveTroubleBrewingDawnDeathResolution(
         poisonedPlayerName = checkpoint.confirmedPoisonTarget,
         monkProtectedTargetName = checkpoint.confirmedMonkTarget,
     )
-    val effectiveNightState = gameState.toBaseEffectiveNightState()
-    val demonRoleIds = gameState.players
-        .filter { it.actualType == CharacterType.DEMON }
-        .mapTo(mutableSetOf()) { it.actualRole }
-    val deathTransition = NightDawnResolutionPlanner.planValidatedNightDeath(
-        baseGameState = gameState,
-        checkpoint = checkpoint,
-        input = NightDawnDeathResolutionInput(
-            originalDeathSeat = facts.originalDeathSeat,
-            mayorSeat = facts.mayorSeat,
-            mayorRedirectMayApply = facts.mayorSeat != null,
-            attackOutcome = facts.attackOutcome,
-            demonSafeSeats = facts.demonSafeSeats,
-            effectiveNightState = effectiveNightState,
-            demonRoleIds = demonRoleIds,
-        ),
-    )
-    val resolvedDeathSeat = deathTransition.dawnCommitIntent?.death?.targetSeat
+    val redirectedSeat = checkpoint.confirmedMayorRedirectTarget
+        ?.let { name -> gameState.players.firstOrNull { it.name == name }?.seat }
+    val resolvedDeathSeat = when {
+        facts.attackOutcome == DemonNightAttackOutcome.NO_DEATH -> null
+        facts.mayorSeat != null && redirectedSeat != null -> redirectedSeat
+            .takeIf { gameState.playerAt(it)?.alive == true && it !in facts.demonSafeSeats }
+        else -> facts.originalDeathSeat
+    }
     val resolvedDeathName = resolvedDeathSeat
         ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
 

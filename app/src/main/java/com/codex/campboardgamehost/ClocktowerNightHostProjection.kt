@@ -16,7 +16,6 @@ import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightCursor
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerOptionalNightSourceChronology
-import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 
@@ -34,9 +33,6 @@ internal class ClocktowerNightHostProjection internal constructor(
     val mayorRedirectTargetCards: List<PlayerCard>,
     val ravenkeeperTrigger: PlayerCard?,
     val currentDemonHostContext: CurrentDemonHostContext?,
-    val demonSuccessorRoleId: RoleId?,
-    val demonSuccessorTargetSeats: Set<Int>,
-    val demonSuccessorTargetCards: List<PlayerCard>,
     val sageNightDeath: PlayerCard?,
     val otherNightInteractions: List<ClocktowerHostInteraction>,
 ) {
@@ -163,37 +159,12 @@ internal object ClocktowerNightHostProjectionFactory {
             cards = cards,
             poisonedPlayerName = checkpoint.confirmedPoisonTarget,
         )
-        val demonSuccessorRoleId = resolveNightReconstructionDemonRoleId(
-            cards = cards,
-            currentDemonHostContext = currentDemonHostContext,
-            confirmedDemonAttackerName = checkpoint.confirmedAttackTarget,
-        )
-        val demonSuccessionResolution = if (phase == ClocktowerPhase.Night) {
-            resolveNightDemonSuccessionForHost(
-                baseGameState = gameState,
-                checkpoint = checkpoint,
-                currentDemonHostContext = currentDemonHostContext,
-                demonRoleId = demonSuccessorRoleId,
-            )
-        } else {
-            DemonSuccessionResolution.None
-        }
-        val demonSuccessorTargetSeats = when (val resolution = demonSuccessionResolution) {
-            DemonSuccessionResolution.None -> emptySet()
-            is DemonSuccessionResolution.Forced -> setOf(resolution.targetSeat)
-            is DemonSuccessionResolution.Choice -> resolution.targetSeats
-        }
-        val demonSuccessorTargetCards = cards.filterIndexed { index, _ ->
-            index + 1 in demonSuccessorTargetSeats
-        }
-        val impSelfKillNeedsSuccessor = demonSuccessorTargetSeats.isNotEmpty()
         val sageNightDeath = resolvedNightDeathCard?.takeIf {
             nightDeathWillOccur &&
                 AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage")
         }
         val otherNightWakingRoleIds = clocktowerOtherNightWakingRoleIds(
             cards = cards,
-            pendingSuccessionDemonRoleId = demonSuccessorRoleId.takeIf { impSelfKillNeedsSuccessor },
         )
         val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(
             buildSet {
@@ -203,7 +174,6 @@ internal object ClocktowerNightHostProjectionFactory {
                 if (lastExecutedName != null) add(ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY)
                 if (ravenkeeperTrigger != null) add(ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT)
                 if (mayorCanRedirect) add(ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE)
-                if (impSelfKillNeedsSuccessor) add(ClocktowerResolvedFlowFact.DEMON_SUCCESSION_REQUIRED)
                 if (sageNightDeath != null) add(ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON)
             },
         )
@@ -227,9 +197,6 @@ internal object ClocktowerNightHostProjectionFactory {
             mayorRedirectTargetCards = mayorRedirectTargetCards,
             ravenkeeperTrigger = ravenkeeperTrigger,
             currentDemonHostContext = currentDemonHostContext,
-            demonSuccessorRoleId = demonSuccessorRoleId,
-            demonSuccessorTargetSeats = demonSuccessorTargetSeats,
-            demonSuccessorTargetCards = demonSuccessorTargetCards,
             sageNightDeath = sageNightDeath,
             otherNightInteractions = otherNightInteractions,
         )

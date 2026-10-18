@@ -95,6 +95,13 @@ sealed interface ActionFactDraft {
         init { requireIdentity(actionId, round, sequence) }
     }
 
+    data class NoNightDeaths(
+        override val actionId: String, override val phase: StorytellerPhase,
+        override val round: Int, override val sequence: Int,
+    ) : ActionFactDraft {
+        init { requireIdentity(actionId, round, sequence) }
+    }
+
     data class SlayerShot(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -314,6 +321,7 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     is ActionFactDraft.Execution -> ActionFact.Execution(actionId, globalSequence, targetSeat, klutzDeathTrigger)
     is ActionFactDraft.Death -> ActionFact.Death(actionId, globalSequence, targetSeat, klutzDeathTrigger)
     is ActionFactDraft.NoExecution -> ActionFact.NoExecution(actionId, globalSequence)
+    is ActionFactDraft.NoNightDeaths -> ActionFact.NoNightDeaths(actionId, globalSequence)
     is ActionFactDraft.SlayerShot -> ActionFact.SlayerShot(
         actionId, globalSequence, claimantSeat, targetSeat, abilityConsumed, hit, targetRegistersAsDemon,
     )

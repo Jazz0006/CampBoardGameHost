@@ -107,15 +107,12 @@ class ClocktowerNightHostProjectionTest {
         session.commitConfirmedGameAction(
             ActionFactDraft.Attack("self-attack", StorytellerPhase.NIGHT, 2, 1, 1), game, 0L,
         )
-        session.confirmDemonSuccessor(2)
         val acceptedSelection = session.state
-        val selectedCheckpoint = checkpoint("Imp").copy(
-            confirmedDemonSuccessorTarget = "Poisoner", demonSuccessorDraftTarget = "Poisoner",
-        )
+        val selectedCheckpoint = checkpoint("Imp")
         listOf(2, 1, 0, 99).forEach { step ->
             val projection = ClocktowerNightHostProjectionFactory.project(
                 cards, session.state.gameState, builtInRuleset(), ClocktowerPhase.Night, null,
-                selectedCheckpoint.copy(nightStepIndex = step, demonSuccessorDraftTarget = "Chef"),
+                selectedCheckpoint.copy(nightStepIndex = step),
                 null, null,
             )
             assertTrue(projection.chambermaidTargetCards.any { it.name == "Imp" })
@@ -168,7 +165,6 @@ class ClocktowerNightHostProjectionTest {
         confirmedMayorRedirectTarget = null,
         mayorRedirectDraftTarget = null,
         pendingNewDemonName = null,
-        demonSuccessorDraftTarget = null,
     )
 
     private fun card(name: String, roleName: String, team: ClocktowerTeam) = PlayerCard(

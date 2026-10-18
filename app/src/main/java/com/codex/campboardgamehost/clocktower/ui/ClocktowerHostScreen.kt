@@ -51,6 +51,7 @@ internal fun ClocktowerJudgeScreen(
     // Confirmed mechanical facts come from the one Session, never rebuilt from UI cards.
     sessionGameState: GameState,
     actualInformationHistory: List<RecordedEpistemicObservation>,
+    confirmedNightDeathSeats: List<Int>,
     confirmedGrimoireSeats: List<HostSeatPresentation>,
     confirmedRedHerringSeat: Int?,
     script: ClocktowerScript,
@@ -119,8 +120,6 @@ internal fun ClocktowerJudgeScreen(
     onConfirmMonkProtectedTarget: () -> Unit,
     onSelectMayorRedirectTarget: (String?) -> Unit,
     onConfirmMayorRedirectTarget: () -> Unit,
-    onSelectDemonSuccessor: (String?) -> Unit,
-    onConfirmDemonSuccessorTarget: (String) -> Unit,
     onConfirmNewDemon: () -> Unit,
     onSelectKlutzChoice: (String?) -> Unit,
     onConfirmKlutzChoice: () -> Unit,
@@ -132,7 +131,7 @@ internal fun ClocktowerJudgeScreen(
     onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
-    onConfirmNight: () -> Unit,
+    onConfirmNight: (ClocktowerConfirmedNightResult) -> Unit,
 ) {
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
@@ -148,7 +147,6 @@ internal fun ClocktowerJudgeScreen(
     val mayorRedirectDraftTarget = nightCheckpoint.mayorRedirectDraftTarget
     val pendingNewDemonName = nightCheckpoint.pendingNewDemonName
     val pendingNightNewDemonIdentityName = nightCheckpoint.pendingNightNewDemonIdentityName
-    val demonSuccessorTarget = nightCheckpoint.demonSuccessorDraftTarget
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val publicAliveCards = cards.filter { it.eliminatedRound == null }
     // The UI still owns rendering, but first-night information now crosses one
@@ -173,6 +171,18 @@ internal fun ClocktowerJudgeScreen(
     var dayMode by dayModeState
     var pendingNightAdvance by remember(gameId, round, phase) {
         mutableStateOf<ClocktowerNightAdvanceDirective.AwaitRefreshedFlow?>(null)
+    }
+    var nightResultRevision by remember(gameId, round, phase) { mutableStateOf<StorytellerDecisionRevision?>(null) }
+    fun confirmActualNightResult() { nightResultRevision = StorytellerDecisionRevision(gameStateRevision, playerInputRevision) }
+    nightResultRevision?.let { anchor ->
+        ClocktowerNightResultConfirmationScreen(
+            gameId = gameId, cards = cards, sourceRevision = anchor,
+            currentRevision = StorytellerDecisionRevision(gameStateRevision, playerInputRevision),
+            poisonedPlayerName = poisonTarget, language = language,
+            onCancel = { nightResultRevision = null },
+            onConfirm = { result -> onConfirmNight(result); nightResultRevision = null },
+        )
+        return
     }
     val nominationDraft = remember(gameId, round) { ClocktowerNominationDraft() }
     val slayerDraft = remember(gameId) { ClocktowerSlayerDraft() }
@@ -244,7 +254,7 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerDawnSummaryScreen(
             round = round,
             cards = cards,
-            pendingNightDeath = pendingNightDeath,
+            deathNames = confirmedNightDeathSeats.mapNotNull { sessionGameState.playerAt(it)?.name },
             onHostTools = onHostTools,
             onEnterDay = onAdvanceFromFirstNight,
         )
@@ -510,8 +520,6 @@ internal fun ClocktowerJudgeScreen(
     val ravenkeeperTrigger = nightHostProjection.ravenkeeperTrigger
     val demonCard = nightHostProjection.demonCard
     val demonPoisonedForActionExplanation = nightHostProjection.demonPoisonedForActionExplanation
-    val demonSuccessorTargetSeats = nightHostProjection.demonSuccessorTargetSeats
-    val demonSuccessorTargetCards = nightHostProjection.demonSuccessorTargetCards
     val sageNightDeath = nightHostProjection.sageNightDeath
     val otherNightInteractions = nightHostProjection.otherNightInteractions
     val otherNightCanonicalInteractionIds = nightHostProjection.otherNightCanonicalInteractionIds
@@ -1023,28 +1031,6 @@ internal fun ClocktowerJudgeScreen(
             },
         ),
         ClocktowerNightStepMaterializerRegistry.Entry(
-            identity = ClocktowerProductionNightStepIdentity.demonSuccessor(),
-            build = {
-                    ClocktowerNightStepUi(
-                        title = text("选择新小恶魔", "Choose the new Imp"),
-                        actor = null,
-                        isRealAction = true,
-                        reason = "",
-                        storytellerAction = text(
-                            "小恶魔选择自杀。请选择一名存活爪牙成为新的小恶魔。",
-                            "The Imp chose themself. Choose a living Minion to become the new Imp.",
-                        ),
-                        tellPlayer = demonSuccessorTarget?.let { playerSeatLabel(cards, it) },
-                        explanation = text(
-                            "五名或更多玩家存活且猩红女巫能力正常时，必须由猩红女巫继承。",
-                            "With five or more alive, a healthy Scarlet Woman must inherit.",
-                        ),
-                        action = ClocktowerNightAction.DemonSuccessor,
-                        roleEnName = "Imp",
-                    )
-            },
-        ),
-        ClocktowerNightStepMaterializerRegistry.Entry(
             identity = ClocktowerProductionNightStepIdentity.mayorRedirect(),
             build = {
             val targetedMayor = requireNotNull(mayorTarget)
@@ -1313,7 +1299,6 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerNightAction.MonkProtect -> monkProtectedDraftTarget
             ClocktowerNightAction.DemonKill -> demonAttackDraftTarget
             ClocktowerNightAction.MayorRedirect -> mayorRedirectDraftTarget
-            ClocktowerNightAction.DemonSuccessor -> demonSuccessorTarget
             ClocktowerNightAction.Ravenkeeper -> ravenkeeperTarget
             else -> null
         }
@@ -1367,15 +1352,6 @@ internal fun ClocktowerJudgeScreen(
             if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.MayorRedirect) {
                 onConfirmMayorRedirectTarget()
             }
-            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.DemonSuccessor) {
-                val selectedTarget = requireNotNull(demonSuccessorTarget) {
-                    "Demon successor confirmation requires a selected target."
-                }
-                require(demonSuccessorTargetCards.any { it.name == selectedTarget }) {
-                    "Demon successor confirmation requires a rules-legal target."
-                }
-                onConfirmDemonSuccessorTarget(selectedTarget)
-            }
             if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.ButlerMaster) {
                 onConfirmButlerMaster(
                     requireNotNull(currentStep.actor).name,
@@ -1395,7 +1371,7 @@ internal fun ClocktowerJudgeScreen(
             ) {
                 is ClocktowerNightAdvanceDirective.MoveTo -> nightStepIndex = directive.stepIndex
                 is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow -> pendingNightAdvance = directive
-                ClocktowerNightAdvanceDirective.CompleteNight -> onConfirmNight()
+                ClocktowerNightAdvanceDirective.CompleteNight -> confirmActualNightResult()
             }
         }
 
@@ -1475,7 +1451,7 @@ internal fun ClocktowerJudgeScreen(
                     error("Refreshed night advance cannot remain pending.")
                 ClocktowerNightAdvanceDirective.CompleteNight -> {
                     pendingNightAdvance = null
-                    onConfirmNight()
+                    confirmActualNightResult()
                 }
             }
         }
@@ -1528,7 +1504,6 @@ internal fun ClocktowerJudgeScreen(
             canGoPrevious = currentStepIndex > 0,
             nextEnabled = playerTargetReady && (currentStep.action !in setOf(
                 ClocktowerNightAction.MayorRedirect,
-                ClocktowerNightAction.DemonSuccessor,
             ) || selectedNightName != null) &&
                 (currentStep.action != ClocktowerNightAction.RedHerring ||
                     !currentStep.isRealAction || redHerring != null),
@@ -1577,7 +1552,6 @@ internal fun ClocktowerJudgeScreen(
                 aliveCards = publicAliveCards,
                 chambermaidTargetCards = chambermaidTargetCards,
                 mayorRedirectTargetCards = mayorRedirectTargetCards,
-                demonSuccessorTargetCards = demonSuccessorTargetCards,
                 // One optional current-step suggestion for both AI modes.
                 // The card retains the complete Host legal domain for manual edits.
                 // Automatic mode can use the same verified choice at this step only.
@@ -1626,7 +1600,6 @@ internal fun ClocktowerJudgeScreen(
                         ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(nextSelection)
                         ClocktowerNightAction.DemonKill -> onSelectNightDeath(nextSelection)
                         ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(nextSelection)
-                        ClocktowerNightAction.DemonSuccessor -> onSelectDemonSuccessor(nextSelection)
                         ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(nextSelection)
                         else -> Unit
                     }

@@ -80,7 +80,7 @@ class ClocktowerSingleTargetInteractionPresentationTest {
 
     @Test
     fun `automatic rulings keep a concrete read only surface while effects settle`() {
-        for (action in listOf(ClocktowerNightAction.MayorRedirect, ClocktowerNightAction.DemonSuccessor)) {
+        for (action in listOf(ClocktowerNightAction.MayorRedirect)) {
             val presentation = requireNotNull(
                 clocktowerNightRulingPresentation(action, selection, true, 2, "explanation"),
             )
@@ -103,16 +103,6 @@ class ClocktowerSingleTargetInteractionPresentationTest {
         assertEquals(selection, present.selection)
         assertEquals(2, present.mayorSeat)
         assertTrue(present.confirmationEnabled)
-    }
-
-    @Test
-    fun `successor retains supplied eligibility and explanation without Mayor action`() {
-        val model = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.DemonSuccessor, selection, false, 2, "Choose eligible minion"))
-        assertEquals(selection, model.selection)
-        assertEquals("Choose eligible minion", model.explanation)
-        assertNull(model.mayorSeat)
-        assertFalse(model.confirmationEnabled)
-        assertNull(clocktowerNightRulingPresentation(ClocktowerNightAction.Poison, selection, false, null, ""))
     }
 
     @Test

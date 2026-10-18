@@ -586,21 +586,78 @@ internal class ClocktowerGameSession private constructor(
     }
 
     /** Pending selection only; the existing New Demon boundary owns the actual role change. */
-    fun confirmDemonSuccessor(seat: Int?) {
-        require(seat == null || state.gameState.playerAt(seat)?.alive == true)
-        if (seat == state.nightTargets.successorSeat) return
-        check(state.playerInputRevision != Long.MAX_VALUE)
-        updateState(state.copy(nightTargets = state.nightTargets.copy(successorSeat = seat),
-            playerInputRevision = state.playerInputRevision + 1))
-    }
-
-    fun clearPendingDemonSuccessor() {
-        updateState(state.copy(nightTargets = state.nightTargets.copy(successorSeat = null)))
-    }
-
-    /** The rules planner has resolved no death; this is not another player action. */
-    fun clearResolvedNightDeath() {
-        updateState(state.copy(nightTargets = state.nightTargets.copy(attackSeat = null)))
+    /** Publish the explicitly confirmed night deaths together; Attack remains a separate fact. */
+    fun commitConfirmedNightDeaths(
+        deathSeats: List<Int>,
+        expectedGameStateRevision: Long,
+        expectedPlayerInputRevision: Long,
+    ) {
+        check(state.phase == StorytellerPhase.NIGHT) { "Night results require the current Night." }
+        check(state.gameStateRevision == expectedGameStateRevision &&
+            state.playerInputRevision == expectedPlayerInputRevision) { "Stale night result confirmation." }
+        require(deathSeats.distinct().size == deathSeats.size) { "Duplicate night death seat." }
+        deathSeats.forEach { require(state.gameState.playerAt(it) != null) { "Unknown night death seat $it." } }
+        var actions = state.actionTimeline
+        var observations = state.epistemicObservationLog
+        var cursor = state.nextTimelineGlobalSequence
+        var inputRevision = state.playerInputRevision
+        var newlyDead = emptySet<Int>()
+        deathSeats.sorted().forEach { seat ->
+            val actionId = DawnCommitIdentity.death(state.gameId, state.round, seat)
+            val prior = actions.entries.firstOrNull { it.fact.actionId == actionId }
+            // Reconfirming an already dead player is a no-op, not an invented second death.
+            if (prior != null || state.gameState.playerAt(seat)?.alive == true) {
+                check(cursor < Int.MAX_VALUE) { "Night result input sequence exhausted." }
+                val sequence = prior?.point?.sequence ?: (cursor.toInt() + 1)
+                val action = commitGlobalActionFact(
+                    state.semanticHistoryMode, actions, observations, cursor,
+                    prepareGlobalActionDraft(ActionFactDraft.Death(
+                        actionId, StorytellerPhase.NIGHT, state.round, sequence, seat,
+                    )),
+                )
+                val observation = commitGlobalEpistemicObservation(
+                    state.semanticHistoryMode, observations, action.nextTimelineGlobalSequence, inputRevision,
+                    com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft(
+                        recordId = DawnCommitIdentity.deathObservation(state.gameId, state.round, seat),
+                        phase = StorytellerPhase.NIGHT, round = state.round, sequence = sequence,
+                        sourceSeat = null, sourceAbility = null,
+                        visibility = com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PUBLIC,
+                        recipientSeats = emptySet(),
+                        reliability = com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability.NOT_ABILITY_INFORMATION,
+                        proposition = com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AliveAt(seat, false),
+                    ), action.actionTimeline,
+                )
+                check(prior == null || observation.observationLog === observations) {
+                    "Previously committed death has no matching publication."
+                }
+                if (prior == null) newlyDead = newlyDead + seat
+                actions = action.actionTimeline
+                observations = observation.observationLog
+                cursor = observation.nextTimelineGlobalSequence
+                inputRevision = observation.playerInputRevision
+            }
+        }
+        var resultFacts = newlyDead.size
+        if (deathSeats.isEmpty()) {
+            val id = "night-no-deaths-${state.gameId}-${state.round}"
+            val prior = actions.entries.firstOrNull { it.fact.actionId == id }
+            check(cursor < Int.MAX_VALUE) { "Night result input sequence exhausted." }
+            val action = commitGlobalActionFact(state.semanticHistoryMode, actions, observations, cursor,
+                ActionFactDraft.NoNightDeaths(id, StorytellerPhase.NIGHT, state.round,
+                    prior?.point?.sequence ?: (cursor.toInt() + 1)))
+            if (prior == null) resultFacts++
+            actions = action.actionTimeline
+            cursor = action.nextTimelineGlobalSequence
+        }
+        check(state.gameStateRevision <= Long.MAX_VALUE - resultFacts) { "Game-state revision exhausted." }
+        updateState(state.copy(
+            gameState = state.gameState.copy(players = state.gameState.players.map { player ->
+                if (player.seat in newlyDead) player.copy(alive = false, poisoned = false) else player
+            }),
+            gameStateRevision = state.gameStateRevision + resultFacts,
+            actionTimeline = actions, epistemicObservationLog = observations,
+            nextTimelineGlobalSequence = cursor, playerInputRevision = inputRevision,
+        ))
     }
 
     fun finishNightResolution() {

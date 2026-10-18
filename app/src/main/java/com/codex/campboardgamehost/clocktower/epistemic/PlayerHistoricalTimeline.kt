@@ -31,6 +31,8 @@ internal sealed interface PlayerHistoricalEvent {
     ) : PlayerHistoricalEvent
 
     /** Visible action identities omit concealed actual-role/ability-functioning metadata. */
+    data class PublicNoNightDeaths(val actionId: String, override val point: TimelinePoint) : PlayerHistoricalEvent
+
     data class PublicSlayerShot(
         val actionId: String,
         val claimantSeat: Int,
@@ -101,6 +103,7 @@ internal object PlayerHistoricalTimeline {
                     targetSeat = fact.targetSeat,
                     point = entry.point,
                 )
+                is ActionFact.NoNightDeaths -> PlayerHistoricalEvent.PublicNoNightDeaths(fact.actionId, entry.point)
                 is ActionFact.NoExecution -> PlayerHistoricalEvent.PublicNoExecution(
                     fact.actionId, entry.point,
                 )
@@ -155,6 +158,7 @@ internal object PlayerHistoricalTimeline {
         is PlayerHistoricalEvent.PublicExecution -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicDeath -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicNoExecution -> "action:${event.actionId}"
+        is PlayerHistoricalEvent.PublicNoNightDeaths -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicSlayerShot -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicNomination -> "action:${event.actionId}"
         is PlayerHistoricalEvent.PublicVote -> "action:${event.actionId}"

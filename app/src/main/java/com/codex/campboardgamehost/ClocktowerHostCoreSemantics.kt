@@ -130,7 +130,6 @@ internal fun <T> clocktowerFortuneTellerRoleAuthority(
 
 internal fun clocktowerOtherNightWakingRoleIds(
     cards: List<PlayerCard>,
-    pendingSuccessionDemonRoleId: RoleId?,
 ): Set<RoleId> = buildSet {
     cards.filter { it.eliminatedRound == null }.forEach { card ->
         card.clocktowerRole?.enName?.let { add(RoleId(it)) }
@@ -138,7 +137,6 @@ internal fun clocktowerOtherNightWakingRoleIds(
             card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
         }
     }
-    pendingSuccessionDemonRoleId?.let(::add)
 }
 
 internal fun storytellerPairHint(

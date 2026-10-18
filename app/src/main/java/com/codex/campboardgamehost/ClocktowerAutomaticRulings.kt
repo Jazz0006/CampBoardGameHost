@@ -12,6 +12,6 @@ internal fun clocktowerAutomaticMayorRulingShouldAdvance(
     automaticTargetName: String?,
 ): Boolean =
     allowRuleDeterminedAutoUi &&
-        action in setOf(ClocktowerNightAction.MayorRedirect, ClocktowerNightAction.DemonSuccessor) &&
+        action == ClocktowerNightAction.MayorRedirect &&
         automaticTargetName != null &&
         selectedName == automaticTargetName

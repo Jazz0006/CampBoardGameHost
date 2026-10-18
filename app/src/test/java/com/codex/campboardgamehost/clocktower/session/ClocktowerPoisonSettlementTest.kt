@@ -26,14 +26,12 @@ class ClocktowerPoisonSettlementTest {
             s.state.phase, s.state.round, s.nextInputSequence, target), s.state.gameStateRevision)
     }
 
-    @Test fun `unchanged carry adds no history and expiry preserves pending successor`() {
+    @Test fun `unchanged carry adds no history and explicit expiry commits once`() {
         val s = session(); night(s); poison(s, 2)
-        s.confirmDemonSuccessor(3)
         val before = s.state
         assertFalse(s.commitDawnPoisonCarry(DawnPoisonCarryIntent(2, 2), before.gameStateRevision))
         assertEquals(before, s.state)
         assertTrue(s.commitDawnPoisonCarry(DawnPoisonCarryIntent(null, 2), before.gameStateRevision))
-        assertEquals(3, s.state.nightTargets.successorSeat)
         assertEquals(before.gameStateRevision + 1, s.state.gameStateRevision)
         assertEquals(before.nextTimelineGlobalSequence + 1, s.state.nextTimelineGlobalSequence)
         assertFalse(s.state.gameState.playerAt(2)!!.poisoned)

@@ -35,7 +35,6 @@ internal enum class ClocktowerNightAction {
     NewDemonIdentity,
     DemonKill,
     MayorRedirect,
-    DemonSuccessor,
     Ravenkeeper,
 }
 

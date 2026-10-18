@@ -1,16 +1,6 @@
 package com.codex.campboardgamehost.clocktower.rules
 
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
-import com.codex.campboardgamehost.clocktower.domain.RoleId
-
-internal data class ClocktowerEffectiveNightState(
-    val effectiveAliveSeats: Set<Int>,
-    val effectiveRoleIdsBySeat: Map<Int, RoleId> = emptyMap(),
-) {
-    fun isMechanicallyAlive(seat: Int): Boolean = seat in effectiveAliveSeats
-
-    fun currentRoleId(seat: Int): RoleId? = effectiveRoleIdsBySeat[seat]
-}
 
 internal enum class ClocktowerInteractionBoundary {
     BEFORE,

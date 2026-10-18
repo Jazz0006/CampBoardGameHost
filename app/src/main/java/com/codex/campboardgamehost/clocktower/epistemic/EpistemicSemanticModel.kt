@@ -210,6 +210,7 @@ internal fun ActionFact.b4CanonicalPayload(): String = when (this) {
         (klutzDeathTrigger?.let { ":${it.b4DeathProof()}" } ?: "")
     is ActionFact.Death -> "death:$actionId:$sequence:$targetSeat" +
         (klutzDeathTrigger?.let { ":${it.b4DeathProof()}" } ?: "")
+    is ActionFact.NoNightDeaths -> "no-night-deaths:$actionId:$sequence"
     is ActionFact.NoExecution -> "no-execution:$actionId:$sequence"
     is ActionFact.SlayerShot -> "slayer-shot:$actionId:$sequence:$claimantSeat:$targetSeat:$abilityConsumed:$hit" +
         (targetRegistersAsDemon?.let { ":registration=$it" } ?: "")

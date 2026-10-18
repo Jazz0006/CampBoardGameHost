@@ -19,7 +19,6 @@ class ClocktowerNightFullScreenOwnershipTest {
             ClocktowerNightAction.Chambermaid to ClocktowerNightFullScreenSurface.Chambermaid,
             ClocktowerNightAction.Ravenkeeper to ClocktowerNightFullScreenSurface.Ravenkeeper,
             ClocktowerNightAction.MayorRedirect to ClocktowerNightFullScreenSurface.Ruling,
-            ClocktowerNightAction.DemonSuccessor to ClocktowerNightFullScreenSurface.Ruling,
             ClocktowerNightAction.NewDemonIdentity to ClocktowerNightFullScreenSurface.EvilInformation,
         )
         assertEquals(

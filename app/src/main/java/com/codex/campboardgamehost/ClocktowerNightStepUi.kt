@@ -41,7 +41,6 @@ internal fun ClocktowerNightStepCardLocalized(
     aliveCards: List<PlayerCard>,
     chambermaidTargetCards: List<PlayerCard>,
     mayorRedirectTargetCards: List<PlayerCard>,
-    demonSuccessorTargetCards: List<PlayerCard>,
     step: ClocktowerNightStepUi,
     /** Suggested current-step option only. Never narrows the Host's legal domain. */
     aiSuggestedInformationOption: ClocktowerDisplayOption? = null,
@@ -151,33 +150,12 @@ internal fun ClocktowerNightStepCardLocalized(
         null
     }
 
-    val legalDemonSuccessorSeats = demonSuccessorTargetCards
-        .mapNotNull(::seatNumberForAutomaticCandidate)
-        .distinct()
-        .sorted()
-    val demonSuccessorAuthority = legalDemonSuccessorSeats
-        .takeIf { it.isNotEmpty() }
-        ?.let { storytellerDecisionAuthority(legalCandidateCount = it.size) }
-    val automaticDemonSuccessorTargetName = if (
-        allowRuleDeterminedAutoUi &&
-        step.isRealAction &&
-        step.action == ClocktowerNightAction.DemonSuccessor &&
-        demonSuccessorAuthority is StorytellerDecisionAuthority.RuleDeterministic
-    ) {
-        legalDemonSuccessorSeats.singleOrNull()?.let { seat -> cards.getOrNull(seat - 1)?.name }
-    } else {
-        null
-    }
     val automaticDecisionTargetName = when (step.action) {
         ClocktowerNightAction.MayorRedirect -> automaticMayorTargetName
-        ClocktowerNightAction.DemonSuccessor -> automaticDemonSuccessorTargetName
         else -> null
     }
     val rulingPresentationAutomatic = when (step.action) {
         ClocktowerNightAction.MayorRedirect -> mayorRedirectAuthority?.let { authority ->
-            storytellerDecisionPresentationIsAutomatic(allowRuleDeterminedAutoUi, authority)
-        } ?: false
-        ClocktowerNightAction.DemonSuccessor -> demonSuccessorAuthority?.let { authority ->
             storytellerDecisionPresentationIsAutomatic(allowRuleDeterminedAutoUi, authority)
         } ?: false
         else -> false
@@ -463,7 +441,6 @@ internal fun ClocktowerNightStepCardLocalized(
         step.action == ClocktowerNightAction.MonkProtect -> if (language == "en") "Record the protected player." else "记录被保护的玩家。"
         step.action == ClocktowerNightAction.DemonKill -> if (language == "en") "Record the selected kill target." else "记录被击杀的玩家。"
         step.action == ClocktowerNightAction.MayorRedirect -> if (language == "en") "Let the Mayor die or redirect the death to another player." else "选择让市长死亡，或将死亡转移给另一名玩家。"
-        step.action == ClocktowerNightAction.DemonSuccessor -> if (language == "en") "Choose an eligible living Minion to become the new Imp." else "选择一名合法的存活爪牙成为新的小恶魔。"
         step.action == ClocktowerNightAction.Ravenkeeper -> if (language == "en") "After choosing a target, show that character only to the Ravenkeeper." else "选目标后，把该玩家角色只给他看。"
         step.displayKind != ClocktowerDisplayKind.None -> if (language == "en") "Show the information to the player." else "展示信息给玩家。"
         else -> step.explanation
@@ -766,9 +743,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightFullScreenSurface.Ruling -> {
-                val candidates = if (step.action == ClocktowerNightAction.MayorRedirect) {
-                    mayorRedirectTargetCards
-                } else demonSuccessorTargetCards
+                val candidates = mayorRedirectTargetCards
                 val mayor = aliveCards.firstOrNull { it.clocktowerRole?.enName == "Mayor" }
                 val presentation = checkNotNull(
                     clocktowerNightRulingPresentation(
