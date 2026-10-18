@@ -57,9 +57,7 @@ internal class FirstNightSetupDependencyRegistry(
     companion object {
         fun builtIn(): FirstNightSetupDependencyRegistry = FirstNightSetupDependencyRegistry()
 
-        private val BUILT_IN_ROLE_OBSERVATION_CAPABILITIES = mapOf(
-            RoleId("Spy") to setOf(FirstNightObservationCapability.GRIMOIRE_STATE),
-        )
+        private val BUILT_IN_ROLE_OBSERVATION_CAPABILITIES = emptyMap<RoleId, Set<FirstNightObservationCapability>>()
 
         private val BUILT_IN_ROLE_DEPENDENCIES = mapOf(
             RoleId("Fortune Teller") to setOf(
@@ -88,14 +86,7 @@ internal class FirstNightSetupDependencyRegistry(
                 ),
         )
 
-        private val BUILT_IN_OBSERVATION_DEPENDENCIES = mapOf(
-            FirstNightObservationCapability.GRIMOIRE_STATE to setOf(
-                FirstNightSetupFactDependencySpec(
-                    fact = DeferredFirstNightSetupFact.RED_HERRING,
-                    kind = FirstNightSetupFactDependencyKind.OBSERVATION_REQUIRED,
-                ),
-            ),
-        )
+        private val BUILT_IN_OBSERVATION_DEPENDENCIES = emptyMap<FirstNightObservationCapability, Set<FirstNightSetupFactDependencySpec>>()
     }
 }
 

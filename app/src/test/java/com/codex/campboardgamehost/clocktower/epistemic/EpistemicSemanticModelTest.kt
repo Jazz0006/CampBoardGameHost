@@ -3,7 +3,6 @@ package com.codex.campboardgamehost.clocktower.epistemic
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -65,23 +64,6 @@ class EpistemicSemanticModelTest {
 
         assertEquals(listOf(earlier, later), listOf(later, earlier).sorted())
 
-    }
-
-    @Test fun `spy grimoire is a private timed observation and has no bluff field`() {
-        val grimoire = InformationProposition.GrimoireState(
-            listOf(
-                GrimoireSeatView(1, RoleId("Investigator"), true),
-                GrimoireSeatView(2, RoleId("Spy"), true),
-            ),
-        )
-        val spyView = EpistemicObservation(
-            "observation-spy-grimoire-night-1", snapshotId, StorytellerPhase.FIRST_NIGHT, 1, 12,
-            2, RoleId("Spy"), ObservationVisibility.PRIVATE, setOf(2),
-            ObservationReliability.NOT_ABILITY_INFORMATION, grimoire,
-        )
-        val json = EpistemicSemanticJson.encode(spyView)
-        assertEquals(spyView, EpistemicSemanticJson.decodeEpistemicObservation(json))
-        assertFalse(json.contains("bluff", ignoreCase = true))
     }
 
     @Test fun `canonical sets and stable ids remain deterministic`() {

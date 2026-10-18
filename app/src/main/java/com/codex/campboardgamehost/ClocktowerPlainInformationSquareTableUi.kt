@@ -38,9 +38,7 @@ internal fun clocktowerPlainInformationSquareTablePresentation(
         actorSeat = actorSeat,
         wakeInstruction = wakeInstruction,
         displayStep = step,
-        showPlayerDisplayAction = step.displayKind != ClocktowerDisplayKind.Grimoire ||
-            (step.tellPlayer != null &&
-                step.displayProposition is com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.GrimoireState),
+        showPlayerDisplayAction = true,
     )
 }
 
@@ -68,9 +66,6 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
             onHostTools = onHostTools,
             onNext = onNext,
             onShow = onShowPlayerDisplay,
-            buttonLabel = if (step.displayKind == ClocktowerDisplayKind.Grimoire) {
-                if (language == "en") "Show Grimoire" else "展示魔典"
-            } else null,
         )
         return
     }
@@ -107,7 +102,7 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
                     textAlign = TextAlign.Center,
                 )
                 (step.displayPrimary ?: step.tellPlayer)
-                    ?.takeIf { it.isNotBlank() && step.displayKind != ClocktowerDisplayKind.Grimoire }
+                    ?.takeIf { it.isNotBlank() }
                     ?.let { primary ->
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -134,9 +129,7 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
                     Spacer(Modifier.height(10.dp))
                     OutlinedButton(onClick = onShowPlayerDisplay, modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            if (step.displayKind == ClocktowerDisplayKind.Grimoire) {
-                                if (language == "en") "Show Grimoire" else "展示魔典"
-                            } else if (language == "en") "Show to player" else "展示给玩家",
+                            if (language == "en") "Show to player" else "展示给玩家",
                         )
                     }
                 }

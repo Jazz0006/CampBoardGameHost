@@ -7,18 +7,9 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
-import java.util.Collections
 
 /** Stable schema marker for persisted A1/A1.1 semantic objects. */
 const val EPISTEMIC_SCHEMA_VERSION: Int = 2
-
-enum class GrimoireTruthBinding {
-    /** Legacy producers know only display-role/alive payloads and make no completeness claim for reminders. */
-    LEGACY_DISPLAY_ONLY,
-
-    /** Produced from an explicit complete physical-Grimoire truth snapshot. */
-    VERIFIED_EXACT,
-}
 
 sealed interface InformationProposition {
     data class RoleAt(val seat: Int, val role: RoleId) : InformationProposition { init { require(seat > 0) } }
@@ -68,66 +59,6 @@ sealed interface InformationProposition {
         }
     }
 
-    /** Grimoire contents visible to the Spy at one wake interaction, with explicit truth provenance. */
-    class GrimoireState(
-        seats: List<GrimoireSeatView>,
-        val truthBinding: GrimoireTruthBinding = GrimoireTruthBinding.LEGACY_DISPLAY_ONLY,
-    ) : InformationProposition {
-        val seats: List<GrimoireSeatView> = Collections.unmodifiableList(seats.toList())
-
-        init {
-            require(this.seats.isNotEmpty()) { "GrimoireState cannot be empty." }
-            require(this.seats.map { it.seat }.distinct().size == this.seats.size) { "Grimoire seats must be unique." }
-            require(this.seats.map { it.seat } == this.seats.map { it.seat }.sorted()) { "Grimoire seats must use canonical seat order." }
-            val tokens = this.seats.flatMap(GrimoireSeatView::reminderTokens)
-            require(tokens.distinct().size == tokens.size) {
-                "The same physical reminder-token reference cannot appear on multiple Grimoire seats."
-            }
-        }
-
-        override fun equals(other: Any?): Boolean = other is GrimoireState &&
-            seats == other.seats && truthBinding == other.truthBinding
-
-        override fun hashCode(): Int = 31 * seats.hashCode() + truthBinding.hashCode()
-
-        override fun toString(): String = "GrimoireState(seats=$seats, truthBinding=$truthBinding)"
-    }
-}
-
-class GrimoireSeatView(
-    val seat: Int,
-    val displayedRole: RoleId,
-    val alive: Boolean,
-    reminderTokens: List<GrimoireReminderTokenRef> = emptyList(),
-) {
-    val reminderTokens: List<GrimoireReminderTokenRef> = Collections.unmodifiableList(reminderTokens.toList())
-
-    init {
-        require(seat > 0)
-        require(this.reminderTokens.distinct().size == this.reminderTokens.size) {
-            "The same physical reminder-token reference cannot appear twice on one seat."
-        }
-        require(this.reminderTokens == this.reminderTokens.sorted()) {
-            "Rule-backed reminder tokens must use canonical order."
-        }
-    }
-
-    override fun equals(other: Any?): Boolean = other is GrimoireSeatView &&
-        seat == other.seat &&
-        displayedRole == other.displayedRole &&
-        alive == other.alive &&
-        reminderTokens == other.reminderTokens
-
-    override fun hashCode(): Int {
-        var result = seat
-        result = 31 * result + displayedRole.hashCode()
-        result = 31 * result + alive.hashCode()
-        result = 31 * result + reminderTokens.hashCode()
-        return result
-    }
-
-    override fun toString(): String =
-        "GrimoireSeatView(seat=$seat, displayedRole=$displayedRole, alive=$alive, reminderTokens=$reminderTokens)"
 }
 
 enum class NumericMetric { ADJACENT_EVIL_PAIRS, LIVING_EVIL_NEIGHBOURS, STEPS_TO_NEAREST_MINION, PLAYERS_WAKING_FOR_ABILITY }
@@ -158,10 +89,6 @@ data class EpistemicObservation(
         require(recipientSeats.all { it > 0 })
         require(visibility != ObservationVisibility.PRIVATE || recipientSeats.isNotEmpty())
         require(visibility != ObservationVisibility.PUBLIC || recipientSeats.isEmpty())
-        require(proposition !is InformationProposition.GrimoireState ||
-            (visibility == ObservationVisibility.PRIVATE && sourceAbility?.value == "Spy")) {
-            "GrimoireState must be a private observation sourced from the Spy ability."
-        }
         timelineBinding.requireReplayFieldsMatch(phase, round, sequence)
     }
 }

@@ -46,7 +46,6 @@ internal enum class ClocktowerDisplayKind {
     RoleReveal,
     Plain,
     EvilInfo,
-    Grimoire,
 }
 
 internal enum class ClocktowerScript {

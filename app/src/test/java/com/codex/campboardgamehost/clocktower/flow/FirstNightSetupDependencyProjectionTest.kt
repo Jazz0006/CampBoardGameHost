@@ -8,7 +8,7 @@ import org.junit.Test
 
 class FirstNightSetupDependencyProjectionTest {
     @Test
-    fun `built in projection exposes demon presentation and effective grimoire observation dependencies`() {
+    fun `built in projection preserves demon presentation and fortune teller red herring prerequisites`() {
         val interactions = listOf(
             system("first_night:system:demon_info", ClocktowerHostInteractionKind.EVIL_INFORMATION),
             role("Poisoner"),
@@ -38,43 +38,8 @@ class FirstNightSetupDependencyProjectionTest {
         )
         assertTrue(
             projection.dependencies.any {
-                it.interactionId == id("first_night:role:Spy") &&
-                    it.fact == DeferredFirstNightSetupFact.RED_HERRING &&
-                    it.kind == FirstNightSetupFactDependencyKind.OBSERVATION_REQUIRED
-            },
-        )
-        assertTrue(
-            projection.dependencies.any {
                 it.interactionId == id("first_night:role:Fortune Teller") &&
                     it.fact == DeferredFirstNightSetupFact.RED_HERRING &&
-                    it.kind == FirstNightSetupFactDependencyKind.RESULT_SEMANTICS_REQUIRED
-            },
-        )
-    }
-
-    @Test
-    fun `malfunctioning grimoire observer contributes no observation dependency`() {
-        val interactions = listOf(
-            role("Poisoner"),
-            role("Spy"),
-            redHerringSetup(),
-            role("Fortune Teller"),
-        )
-
-        val projection = FirstNightSetupDependencyProjector.project(
-            interactions = interactions,
-            functioningRoleIds = setOf(RoleId("Poisoner"), RoleId("Fortune Teller")),
-        )
-
-        assertFalse(
-            projection.dependencies.any {
-                it.interactionId == id("first_night:role:Spy") &&
-                    it.kind == FirstNightSetupFactDependencyKind.OBSERVATION_REQUIRED
-            },
-        )
-        assertTrue(
-            projection.dependencies.any {
-                it.interactionId == id("first_night:role:Fortune Teller") &&
                     it.kind == FirstNightSetupFactDependencyKind.RESULT_SEMANTICS_REQUIRED
             },
         )
@@ -92,7 +57,7 @@ class FirstNightSetupDependencyProjectionTest {
     }
 
     @Test
-    fun `commit interaction moves before earliest effective observer while preserving all other order`() {
+    fun `red herring setup moves before fortune teller and leaves spy stage uninterrupted`() {
         val interactions = listOf(
             system("first_night:system:minion_info", ClocktowerHostInteractionKind.EVIL_INFORMATION),
             system("first_night:system:demon_info", ClocktowerHostInteractionKind.EVIL_INFORMATION),
@@ -120,9 +85,9 @@ class FirstNightSetupDependencyProjectionTest {
                 "first_night:system:minion_info",
                 "first_night:system:demon_info",
                 "first_night:role:Poisoner",
-                "first_night:fortune_teller:red_herring",
                 "first_night:role:Spy",
                 "first_night:role:Empath",
+                "first_night:fortune_teller:red_herring",
                 "first_night:role:Fortune Teller",
                 "first_night:role:Butler",
             ),
@@ -131,7 +96,7 @@ class FirstNightSetupDependencyProjectionTest {
     }
 
     @Test
-    fun `commit interaction stays at fortune teller barrier when grimoire observer is not functioning`() {
+    fun `fortune teller red herring barrier does not depend on spy functioning`() {
         val interactions = listOf(
             role("Poisoner"),
             role("Spy"),
@@ -158,50 +123,6 @@ class FirstNightSetupDependencyProjectionTest {
                 "first_night:role:Fortune Teller",
             ),
             ordered.map { it.id.value },
-        )
-    }
-
-    @Test
-    fun `capability registry supports a future grimoire observer without planner changes`() {
-        val futureObserver = RoleId("Future Grimoire Viewer")
-        val registry = FirstNightSetupDependencyRegistry(
-            roleObservationCapabilities = mapOf(
-                futureObserver to setOf(FirstNightObservationCapability.GRIMOIRE_STATE),
-            ),
-            roleDependencies = mapOf(
-                RoleId("Fortune Teller") to setOf(
-                    FirstNightSetupFactDependencySpec(
-                        fact = DeferredFirstNightSetupFact.RED_HERRING,
-                        kind = FirstNightSetupFactDependencyKind.RESULT_SEMANTICS_REQUIRED,
-                    ),
-                ),
-            ),
-            interactionMetadata = mapOf(
-                id("first_night:fortune_teller:red_herring") to
-                    FirstNightSetupInteractionMetadata(
-                        activatesFacts = setOf(DeferredFirstNightSetupFact.RED_HERRING),
-                        commitsFact = DeferredFirstNightSetupFact.RED_HERRING,
-                    ),
-            ),
-        )
-        val interactions = listOf(
-            role(futureObserver.value),
-            redHerringSetup(),
-            role("Fortune Teller"),
-        )
-
-        val projection = FirstNightSetupDependencyProjector.project(
-            interactions = interactions,
-            functioningRoleIds = setOf(futureObserver, RoleId("Fortune Teller")),
-            registry = registry,
-        )
-
-        assertTrue(
-            projection.dependencies.any {
-                it.interactionId == id("first_night:role:${futureObserver.value}") &&
-                    it.fact == DeferredFirstNightSetupFact.RED_HERRING &&
-                    it.kind == FirstNightSetupFactDependencyKind.OBSERVATION_REQUIRED
-            },
         )
     }
 

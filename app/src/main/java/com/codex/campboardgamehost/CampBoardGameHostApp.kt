@@ -2047,9 +2047,6 @@ internal fun CampBoardGameHostApp() {
                             .filter { it.point.round == round && it.point.phase == StorytellerPhase.NIGHT }
                             .mapNotNull { (it.fact as? com.codex.campboardgamehost.clocktower.domain.ActionFact.Death)?.targetSeat },
                         actualInformationHistory = clocktowerEpistemicObservations,
-                        confirmedGrimoireSeats = requireClocktowerGameSession().state.gameState
-                            .toHostSeatPresentations { roleId -> clocktowerRoleLabel(roleId, language) },
-                        confirmedRedHerringSeat = requireClocktowerGameSession().state.redHerringSeat,
                         script = currentClocktowerScript,
                         gameId = clocktowerGameId,
                         gameSeed = clocktowerGameSeed,
