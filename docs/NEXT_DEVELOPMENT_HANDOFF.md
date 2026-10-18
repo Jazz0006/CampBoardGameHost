@@ -9,7 +9,7 @@ AGENTS.md；docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md；docs/CUR
 ## 当前远端/开发机基线（先重新核对）
 
 - 仓库：Jazz0006/CampBoardGameHost。开发机 Mini MCP 别名 clocktower。
-- PR #330→#334 均为依赖堆叠 Draft。当前 P1 开发分支为 `codex/minimal-host-full-scan-20261018`，最新已提交的 P1 代码检查点为 `4b1267e8e7d3277577e44c01dd7004cb04da6fb5`；后续文档提交会继续推进 HEAD，开始新批次必须重新核对 GitHub。
+- PR #330→#334 均为依赖堆叠 Draft。当前 P1 开发分支为 `codex/minimal-host-full-scan-20261018`，最新已提交的 P1 B2 代码检查点为 `f2869f0fd3965939adc131b55f22ef7d3e25179c`；后续文档提交会继续推进 HEAD，开始新批次必须重新核对 GitHub。
 - P1 B1 首次 Android CI #4330 测试 1301 项 / 1 项失败（旧登记键）；修复代码 `4b1267e8...` 的完整 Android CI #4331 与 R2 #3911 是本批对应独立检验（最终状态需要重查）。更早 CI #4325/R2 #3905 与 docs-only #4326/R2 #3906 仅属清理前的历史基线。
 - 开发机已经 `git_fetch` 后经 Mini MCP `git_track_remote_branch` 从旧 `codex/minimal-host-reset` 切换并同步到正确 #334 分支，且 B1 两次代码提交均已推送。继续时必须再次检查 branch/HEAD/working tree，不能依赖本段历史记录。
 - 不自动合并 Draft / 强推 / 删除远端分支。真实付费模型调用没有授权。
@@ -21,6 +21,14 @@ AGENTS.md；docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md；docs/CUR
 - B1 初次 `[full-ci]` #4330：主程序和测试源码均编译成功，1301 项单元测试中 1 个旧登记键断言失败。R2 #3910 成功。修复提交 `4b1267e8e7d3277577e44c01dd7004cb04da6fb5` 关闭了旧夜间信息 builder 的全部隐式登记键：不复活旧可靠性过滤规则，也不推断未确认的 Spy/Recluse 裁定。最新完整 Android CI #4331 **SUCCESS**（`:app:testFull :app:assembleDebug`）、R2 #3911 **SUCCESS**，ASP/Clingo 和 CI gate 同样成功；这是当前有效的完整代码验收。未进行真机或收费模型调用。
 - 保留原 Session 事件 writer、直接数字展示/确认、私密信息与方桌真实身份提示；但旧规则算法仍有生产消费者，**不得宣称人工结果全面不受限制或 P1 已完成**。
 - 已按 B1 **代码 HEAD** 从 GitHub 读取并实测 4 个超 50,000B 的源码：`CampBoardGameHostApp.kt` 198706B、`ClocktowerHostScreen.kt` 150032B、`ClocktowerNightStepUi.kt` 60237B、`web/app.js` 143503B。其他文件以完整仓库再扫描为准。
+
+## P1 B2 结果与下一批边界
+
+- B2 提交 `4e87bee2...`、`f2869f0f...`，相对 B1 文档 HEAD `19d67c...`：12 文件，+123/-2012，净删 **1889 行**；整删 `HostOpeningResidualEventGateV2.kt`、`FirstNightPairInformationProductionSemanticsTest.kt`、`HostOpeningRulesDomainV2Test.kt`。
+- 人工 Washerwoman/Librarian/Investigator 配对选项现在从脚本角色和座位构建，不经旧 Pair Rules 真值/注册见证筛选；首夜发布使用确认的结构化显示事实，不再使用 Rules 候选 ID 或推导登记。`ClocktowerPairManualAuthority` 已删除旧合法域重算/判定；`ClocktowerHostSelectionSemantics` 删除旧配对真值投影。
+- B2 第一次全量 CI #4333 编译通过，1292 个测试中一项旧候选顺序断言失败，已修正；第二个代码 HEAD 的完整 Android CI **#4334 SUCCESS**（`:app:testFull :app:assembleDebug`）、R2 **#3914 SUCCESS** 才是本批有效验收；ASP/Clingo/CI gate 均 SUCCESS。
+- B2 HEAD 源码超 50KB 实测：`CampBoardGameHostApp.kt` 198706B，`ClocktowerHostScreen.kt` 149006B，`ClocktowerNightStepUi.kt` 60237B，`web/app.js` 143503B。
+- P1 **未完成**：`clocktower/rules` 依然保留约 20 个规则文件；`HostOpeningRulesDomainV2` 仍被旧开局 AI 消费；`PairInformationDecisionBoundary` 仍被旧 Provider 和残余匹配器消费；数值合法域仍被其他旧消费者使用。下一批沿这些消费链断开并删除规则，谨慎保护真实状态/行动/隐私。
 
 ## P1 下一批具体工作
 
