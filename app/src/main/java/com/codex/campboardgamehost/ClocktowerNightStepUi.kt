@@ -542,7 +542,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 val candidates = when (step.action) {
                     ClocktowerNightAction.RedHerring -> cards
                     ClocktowerNightAction.ButlerMaster -> cards.filter { it.name != step.actor?.name }
-                    ClocktowerNightAction.MonkProtect -> clocktowerMonkTargetCards(cards, step.actor?.name)
+                    ClocktowerNightAction.MonkProtect -> cards
                     else -> aliveCards
                 }
                 val presentation = checkNotNull(
@@ -563,7 +563,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightFullScreenSurface.Ravenkeeper -> {
-                val candidates = clocktowerRavenkeeperTargetCards(cards)
+                val candidates = cards
                 ClocktowerRavenkeeperSquareTableDialog(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,

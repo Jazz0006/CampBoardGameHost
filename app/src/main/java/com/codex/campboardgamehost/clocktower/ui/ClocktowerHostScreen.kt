@@ -1286,8 +1286,7 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerNightAction.ButlerMaster ->
                 cards.filter { it.name != currentStep.actor?.name }.mapTo(mutableSetOf()) { it.name }
             ClocktowerNightAction.MonkProtect ->
-                clocktowerMonkTargetCards(cards, currentStep.actor?.name)
-                    .mapTo(mutableSetOf()) { it.name }
+                cards.mapTo(mutableSetOf()) { it.name }
             else -> emptySet()
         }
         val playerTargetReady = clocktowerLivePlayerTargetReady(
@@ -1551,7 +1550,7 @@ internal fun ClocktowerJudgeScreen(
                             fortuneTellerSecond != null && fortuneTellerFirst != fortuneTellerSecond
                         ClocktowerNightAction.Chambermaid -> chambermaidSelection.isComplete
                         ClocktowerNightAction.Ravenkeeper -> ravenkeeperTarget != null &&
-                            clocktowerRavenkeeperTargetCards(cards).any { it.name == ravenkeeperTarget }
+                            cards.any { it.name == ravenkeeperTarget }
                         else -> false
                     },
                     confirmedObservations = actualInformationHistory,

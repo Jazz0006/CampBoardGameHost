@@ -148,22 +148,6 @@ internal fun ClocktowerSageSquareTableDialog(
 ) {
     if (choices.isEmpty()) return
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
-        clocktowerRuleOnlyCompactChoice(choices) != null
-    ) {
-        ClocktowerBeginnerReadOnlyRevealDialog(
-            seats = seats,
-            actorSeat = actorSeat,
-            wakeInstruction = wakeInstruction,
-            language = language,
-            canGoPrevious = canGoPrevious,
-            onPrevious = onPrevious,
-            onHostTools = onHostTools,
-            onNext = onNext,
-            onShow = { onConfirm(initialChoice) },
-        )
-        return
-    }
     val recommendations = choices.filter { it.recommended }.take(1)
     val manualChoices = choices.filterNot { it in recommendations }
     var manualSelection by remember(choices.map { it.key }, recommendations.map { it.key }) {
