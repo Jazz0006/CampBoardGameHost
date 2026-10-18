@@ -12,87 +12,46 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/** Protects AI pair provider inputs, NOT a Host game-rule confirmation gate. */
 class PairInformationDecisionBoundaryTest {
-    private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
-
     @Test
-    fun `manual confirmation accepts only a current rules-legal candidate and produces the observation without a recommender`() {
+    fun `AI receives pair candidates and stable request identity without publishing a Host observation`() {
+        val identity = StorytellerDecisionRequestIdentity(
+            gameId = "game-res-1", requestId = "first-night:investigator:seat-1")
+        val revision = StorytellerDecisionRevision(7, 3)
         val decision = PairInformationDecisionBoundary.create(
-            requestIdentity = InformationDecisionRequestIdentity(
-                gameId = "game-res-1",
-                requestId = "first-night:investigator:seat-1",
+            requestIdentity = identity,
+            revision = revision,
+            game = GameState(
+                script = ScriptId("trouble_brewing"),
+                players = listOf(
+                    player(1, "Investigator", CharacterType.TOWNSFOLK),
+                    player(2, "Chef", CharacterType.TOWNSFOLK),
+                    player(3, "Recluse", CharacterType.OUTSIDER),
+                    player(4, "Poisoner", CharacterType.MINION),
+                    player(5, "Imp", CharacterType.DEMON),
+                ),
+                seed = 20261006L,
             ),
-            revision = InformationDecisionRevision(gameStateRevision = 7, playerInputRevision = 3),
-            game = game(
-                player(1, "Investigator", CharacterType.TOWNSFOLK),
-                player(2, "Chef", CharacterType.TOWNSFOLK),
-                player(3, "Recluse", CharacterType.OUTSIDER),
-                player(4, "Poisoner", CharacterType.MINION),
-                player(5, "Imp", CharacterType.DEMON),
-            ),
-            roleDefinitions = roles,
+            roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
             sourceSeat = 1,
             abilityRole = RoleId("Investigator"),
             reliability = ReliabilityState.RELIABLE,
         )
-        val selected = decision.legalCandidates.first()
-
-        val confirmation = decision.confirm(selected.candidateId, decision.revision)
-        assertTrue(confirmation is PairInformationDecisionConfirmation.Confirmed)
-        confirmation as PairInformationDecisionConfirmation.Confirmed
-        assertEquals(selected.candidateId, confirmation.candidateId)
-        assertEquals(selected.outcome.shownRole, confirmation.observation.shownRole)
-        assertEquals(selected.outcome.candidateSeats, confirmation.observation.candidateSeats)
-        assertEquals(selected.semanticTruth, confirmation.observation.semanticTruth)
-        assertEquals(selected.registrations.map { it.subjectSeat }, confirmation.observation.registrations.map { it.playerSeat })
+        assertEquals(identity, decision.requestIdentity)
+        assertEquals(revision, decision.revision)
+        assertEquals(RoleId("Investigator"), decision.abilityRole)
+        assertTrue(decision.legalCandidates.isNotEmpty())
+        assertEquals(
+            decision.legalCandidates.size,
+            decision.legalCandidates.map { it.candidateId }.distinct().size,
+        )
+        assertTrue(decision.legalCandidates.all { candidate ->
+            candidate.outcome.candidateSeats.all { it in 1..5 }
+        })
     }
 
-    @Test
-    fun `unknown and stale selections fail closed before observation publication`() {
-        val revision = InformationDecisionRevision(gameStateRevision = 7, playerInputRevision = 3)
-        val decision = PairInformationDecisionBoundary.create(
-            requestIdentity = InformationDecisionRequestIdentity(
-                gameId = "game-res-1",
-                requestId = "first-night:librarian:seat-1",
-            ),
-            revision = revision,
-            game = game(
-                player(1, "Librarian", CharacterType.TOWNSFOLK),
-                player(2, "Chef", CharacterType.TOWNSFOLK),
-                player(3, "Butler", CharacterType.OUTSIDER),
-                player(4, "Poisoner", CharacterType.MINION),
-                player(5, "Imp", CharacterType.DEMON),
-            ),
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = RoleId("Librarian"),
-            reliability = ReliabilityState.RELIABLE,
-        )
-
-        assertEquals(
-            PairInformationDecisionConfirmation.Blocked(PairInformationDecisionBlockReason.ILLEGAL_CANDIDATE),
-            decision.confirm("not-legal", revision),
-        )
-        assertEquals(
-            PairInformationDecisionConfirmation.Blocked(PairInformationDecisionBlockReason.STALE_CONTEXT),
-            decision.confirm(
-                decision.legalCandidates.first().candidateId,
-                revision.copy(playerInputRevision = 4),
-            ),
-        )
-    }
-
-    private fun game(vararg players: PlayerState) = GameState(
-        script = ScriptId("trouble_brewing"),
-        players = players.toList(),
-        seed = 20261006L,
-    )
-
-    private fun player(
-        seat: Int,
-        role: String,
-        type: CharacterType,
-    ) = PlayerState(
+    private fun player(seat: Int, role: String, type: CharacterType) = PlayerState(
         seat = seat,
         name = "Player $seat",
         actualRole = RoleId(role),
@@ -104,3 +63,4 @@ class PairInformationDecisionBoundaryTest {
         shownRole = RoleId(role),
     )
 }
+
