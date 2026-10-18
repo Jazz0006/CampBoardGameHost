@@ -4,7 +4,7 @@
 
 所有者已授权按完整职责链加速实施。F13在起点 `d76968168eb02e37cd87084bb51eabc60f789d9c` 补齐8个Session全文审计，并实际删除日间裁定producer、独立causal journal及DecisionOutcomeSnapshot：3生产+3旧测试文件退出，其中Mayor安全用例迁出保留。明确登记并入SlayerShot/Nomination，与公开动作共享一次Session事件提交，不推造角色/阵营。保留现用AI及实际死亡/执行操作。
 
-本地完整 `:app:testFull :app:assembleDebug` SUCCESS：807 tests，0 failure/error/skipped。生产净删800行/43958B、测试净删338行/16469B，共1138行/60427B；900跟踪文件，243生产+193测试Kotlin。当前App172872B、HostScreen101994B仍超限。精确代码HEAD完整远端CI/R2提交后核实；上一完整远端代码基线仍为F11 `d9fb47f2` CI #4369 / R2 #3949，不能替代本次验收。完整边界/证据只在全源台账F13记录。
+本地完整 `:app:testFull :app:assembleDebug` SUCCESS：807 tests，0 failure/error/skipped。生产净删800行/43958B、测试净删338行/16469B，共1138行/60427B；900跟踪文件，243生产+193测试Kotlin。当前App172872B、HostScreen101994B仍超限。精确代码 **`27d02f723340ff88c466d170655898be768d3ae3`** 的完整 Android **[CI #4373 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39119071885)**（full单测+Debug APK）、**[R2 #3953 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39119071868)**；ASP、真实Clingo、CI gate均SUCCESS。 后续docs-only提交不改变此代码验收基线。完整边界/证据只在全源台账F13记录。
 
 ## 最终职责
 

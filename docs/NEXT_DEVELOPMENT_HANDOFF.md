@@ -1,59 +1,32 @@
 # 新对话交接：F13 日间裁定重复历史已退休（2026-10-18）
 
-## 已获所有者授权的顺序
+## 先读与现行授权
 
-1. 先完成信息真值/登记投影、Mayor 候选链解耦。本轮 F11 已实施并通过本地完整回归及精确代码 HEAD 的完整 CI/R2。
-2. 最新授权：按完整职责链加速实际删除，审计与实施同步推进。F13补齐8个Session全文审计并整组退休日间裁定/独立causal journal；当前111/492（22.56%）、0审计中、381待审，900跟踪文件。完整路径状态仍只在原台账F12，实施证据见同文件F13。
+先读AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，然后读原MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md的F13/F12。唯一逐路径状态维护在原台账，不另建库存或NEXT。
 
-## 读取顺序与唯一记录位置
+所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
-先读 AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，再读现有 MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md 的 F12/F11。分类明细继续维护在这份台账中，不复制第二份库存或 NEXT。历史 TSV 不是已完成的语义审计清单。
+## 精确代码与环境基线（每次进入必须重查）
 
-## F13 本轮代码检查点（后续进入时重新核实远端）
+- 分支 `codex/minimal-host-full-scan-20261018`，Draft PR #334，base `64be30905b88f639a464204ed1db89b7b62bc910`；main `61cd6796569ed8dfdea360caefeb5b9328745090`。
+- F13实现代码 **`27d02f723340ff88c466d170655898be768d3ae3`**；远端compare确认相对起点`d76968168eb02e37cd87084bb51eabc60f789d9c`只有本批26文件差异。精确代码 **`27d02f723340ff88c466d170655898be768d3ae3`** 的完整 Android **[CI #4373 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39119071885)**（full单测+Debug APK）、**[R2 #3953 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39119071868)**；ASP、真实Clingo、CI gate均SUCCESS。 后续docs-only HEAD不能替代Android编译证明。
+- 本地 `:app:testFull :app:assembleDebug` SUCCESS：190 suites、807 tests，0 failure/error/skipped。F11旧完整远端验收是`d9fb47f2` CI #4369 / R2 #3949；F12-A/B仅审计文档，不用其CI证明F13。
+- Windows工作区 `C:/Users/Jazz_/source/repos/CampBoardGameHost`，PowerShell，`JAVA_HOME=C:/Program Files/Android/Android Studio/jbr`，Gradle使用gradlew.bat。Mini MCP clocktower是独立旧Linux `/home/opc/repos/CampBoardGameHost`、同名分支但HEAD `a2cbcac82b457b5a56abf3833b604d9c4fdd74f7`，不得覆盖本地或假设同步。
+- 原未跟踪文件原样保留：artifacts/branch-audit-2026-10-04/、artifacts/test-audit-2026-10-04/；docs下2026-10-04的BRANCH_CLEANUP_AUDIT/RESULT、MAIN_SYNC_VALIDATION、TEST_RETIREMENT_AUDIT/CLEANUP；node_modules、package.json、package-lock.json。未创建工作树，未真机/付费API验收，不merge/retarget/force push或删除分支。
 
-- 起点 `d76968168eb02e37cd87084bb51eabc60f789d9c`，远端Draft #334/base/main与下列一致；起点docs-only CI #4372 / R2 #3952 SUCCESS。当前实现将提交现有分支并核对精确代码HEAD的完整CI/R2；未核实时不得引用旧CI证明新代码。
-- 本地 `:app:testFull :app:assembleDebug` SUCCESS，807 tests、0 failure/error/skipped。没有真机/付费API调用。独立Mini仍是旧Linux `a2cbcac8`。
-- 整删DayAbilityRegistrationRulingProducerV1、StorytellerCausalDecisionJournalV1、DecisionOutcomeSnapshot三生产文件；三旧专属测试退出，Mayor安全测试迁出保留。生产净删800行/43958B，测试净删338行/16469B，总1138行/60427B。
-- SlayerShot.targetRegistersAsDemon / Nomination.nominatorRegistersAsTownsfolk直接存实际明确Boolean；null未知、false明确否，不推断角色/阵营。不新增事件种类或第二历史。JSON旧历史兼容、canonical payload与AI delta更新，玩家回放不含登记。Mayor context只读既有Session/history builder；所有现用AI仍在。
-- 当前App172872B、HostScreen101994B超限；P1/P4尚未完成。U1自定义导入仍未决。原未跟踪文件保持不变，不merge/retarget/force push。
+## F13 已落实的完整链
 
-## 精确基线（新对话必须重新核实）
+- 整删3生产文件：DayAbilityRegistrationRulingProducerV1、StorytellerCausalDecisionJournalV1、DecisionOutcomeSnapshot；3旧测试路径退出，其中Mayor安全用例迁至MayorRedirectBoundaryTest保留。生产净删800行/43958B、测试净删338行/16469B，共1138行/60427B。
+- 删除日间provider候选/frozen snapshot/PriorDecision/ability-truth推导及Captured/Committed/Corrected第二历史；Provider的DayAbilityRegistration context与priorDecisions字段退出。Mayor context由既有Session/history builder读取。
+- SlayerShot.targetRegistersAsDemon / Nomination.nominatorRegistersAsTownsfolk直接记录已明确Boolean，和公开动作共享一次Session提交。null未知、false明确否；不把恶魔登记推成Imp/邪恶阵营，不把镇民类型推成好人阵营，不由命中/处决反推登记。
+- JSON兼容缺失字段且未知值仍省略，canonical payload只为明确值扩展；AI delta读取唯一事件，玩家回放继续隐藏登记。完整回归覆盖编解码、重复/变更ID/stale原子性、delta及每玩家隐私；现用AI与实际死亡/执行操作仍保留。
+- 补齐8个Session全文审计，其中2项随实现删除、6项保留/待解耦；不要重读当新增进度。当前900跟踪文件，243生产+193测试Kotlin；源码/测试/工具配置审计范围492项、111已审计（22.56%）、0审计中、381待审。全Git tree与台账逐路径核对无缺漏/重复。删除历史及分母497→492证据见原台账F13。
+- App172872B、HostScreen101994B仍超50,000B；P1/P4未完成。U1无生产用户入口的custom/homebrew导入分支待所有者决定，推荐退休；未决前保留，不阻塞其他组。本批无新增待决项。
 
-- 分支 `codex/minimal-host-full-scan-20261018`，PR #334 保持 Draft，base `64be30905b88f639a464204ed1db89b7b62bc910`；main `61cd6796569ed8dfdea360caefeb5b9328745090`。
-- F12 审计证据起点为本地/远端一致的 `cfe258b17ed1c8abb248f0ada4ee1c871593d961`；其 docs-only CI #4370 / R2 #3950 SUCCESS，Android skipped。后续审计文档提交的实时 HEAD/CI 必须重新查询，不替代下面完整代码验收。当前本地定向 `testFast --tests *GatewayTokenEnvelopeV1Test --tests *MurmurHash3Test --no-daemon` SUCCESS：3 tests，0 failure/error/skipped，未执行付费调用或真机。
-- F12-B 起点本地/远端 `22716fa4d6bdbe92edeb0091b4c9483a733a7370`，其 docs-only CI #4371 / R2 #3951 SUCCESS。B批新增30生产+4测试结论，478849B；App3121行、HostScreen1795行、Session816行已全文分段核查并交叉检索消费者。已有PersonalDirectOpenAiV1Test、ConfirmedActionBoundaryTest、RoleIdentityBoundaryTest、SessionPlayerCardsTest定向共16用例全部通过，仅离线请求编码/解析和JVM行为，不执行API/真机。
-- F11 实现 `56a927979fad03402d9a3de6e611db5ce2eb7840`；修正旧 R2 enum 存在守卫后的验收代码 **`d9fb47f2e805339736f6a70cd3b347090810bea9`** 的完整 Android **[CI #4369 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39116071137)**（完整单测+Debug APK）、**[R2 #3949 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39116071147)**，ASP/真实 Clingo/CI gate SUCCESS。本文件后续 docs-only 提交不改变代码基线，不能作为新的编译证明。
-- F11 本地 `:app:testFull :app:assembleDebug` SUCCESS：819 tests、0 failure/error/skipped。存量 905 跟踪文件，246 生产 +195 测试 Kotlin；净删 4678 行代码，整删 10 生产+11 专属旧测试。
-- 超限 App 178170B、HostScreen 101971B；NightStepUi 44505B。两个超限仍须在后续职责清理中解决，不得宣布 P4 完成。
-- Windows 工作区 `C:/Users/Jazz_/source/repos/CampBoardGameHost`。JDK 为 `C:/Program Files/Android/Android Studio/jbr`，本地 Gradle 用 gradlew.bat。Mini MCP clocktower 是独立旧 Linux checkout `a2cbcac8`，不拿其状态覆盖本地。
-- 用户未跟踪文件需原样保留：artifacts 下 2026-10-04 审计目录、docs 下同日审计/同步记录、node_modules、package.json、package-lock.json。没有创建工作树，没有真机/付费 API 验收，不 merge/retarget/force push。
+## 下一组：实际死亡 → 继承 → 新身份 / Dawn
 
-## F11 已完成的职责边界
+先明确实际结果确认输入及canonical Death/RoleChange/Session单writer，再删除NightDawnResolutionPlanner中的attackOutcome/demonSafeSeats/继承候选/毒生命周期推导、RestoreComposition预测confirmedEvents和SuccessionResolver旧计算。真实消费者有App、DemonAttackProductionAdapter、CurrentDemonAuthority、NightHostProjection，逐项核查专属测试。保留必要状态应用、事件关联、隐私、时序及继续游戏；不重建大而全facade或兼容archive。
 
-- 当前信息问题只携带指标/实际目标，不携带 Host 算出的答案。Chef/Empath/Clockmaker/Chambermaid 走直接数字，FT 保留实际已选 pair，Undertaker/Ravenkeeper 保留实际查询目标和所给角色。
-- 删除 Host 真值/登记 witness producer → renderer/domain 的完整旧链，保留日间明确登记选择。原私密公布、Session 单 writer、实际事件顺序、去重/原子性、stale-response 与 recipient 保护保留。
-- Mayor AI 请求不提供合法候选；直接 seat 建议通过身份/版本边界，实际 ActionFact 写一次；退出候选确认和重复候选裁定日志，确认到 Demon 也不被旧门禁重定向回 Mayor。实际死亡/继承/角色变化继续沿原 Session/Dawn 路径应用。
-- 真实 AI 请求/提示词/模型通信/解析、首夜联合与后夜推荐、记忆、预选和辅助/自动模式保留。没有调用收费模型。
+Slayer命中/Virgin后果及UI登记展示条件仍含旧规则，F13只退休登记裁定/重复历史链。然后横向继续epistemic/codec、setup、工具/CI和测试；Sage/Spy、毒/终局、发牌门禁仍需完整职责处理。两个超限根组件已全文审计，但还没有完成职责净删和体积要求。
 
-## 下一批入口与逐文件审计标准
-
-8个Session文件已在F13全文审计完，不要再次当新增进度。下一组优先实际死亡→继承→新身份/Dawn链：先明确实际结果确认输入、canonical Death/RoleChange及Session单writer，再删除NightDawnResolutionPlanner中的attackOutcome/demonSafeSeats/继承候选/毒生命周期推导、RestoreComposition预测confirmedEvents和SuccessionResolver旧计算，逐个核查App、DemonAttackProductionAdapter、CurrentDemonAuthority、NightHostProjection及专属测试。不得整删必要状态应用，也不得重建大而全facade或兼容archive。
-
-日间Slayer命中/Virgin后果及UI登记展示条件仍含规则，本批只退出登记裁定/重复历史链。之后横向epistemic/codec、setup、工具/CI及测试；两个超限根组件已全文审计但未缩至50,000B。U1未决前保留，不阻塞其他组。实际开局/后夜AI、唯一Session、privacy/revision/duplicate/atomic边界必须保护。
-
-范围先从最新、未截断 Git tree 明确列出所有生产源码、测试、构建配置、脚本和工具；文档/生成物/素材单独说明纳入或排除，不能用全部文件数冒充源码审计分母。已删除文件作为完成历史，不反复作为当前未审项。
-
-| 最终分类 | 必填证据 |
-|---|---|
-| 必须保留 | 对应 Host 控制、记录或 AI 推荐；必要平台/传输/安全支撑注明服务对象，核实真实消费者 |
-| 必须删除 | 职责为何退休、全部消费者、专属测试与删除风险；无消费者证据不能只靠名称判断 |
-| 需要解耦 | 混合文件应保留/应删除职责、调用与事实边界、具体断开方案 |
-| 需要人工审核 | 具体产品决策、现状证据、删除影响、推荐选项 |
-
-每个文件另记待审/审计中/已审计、证据 HEAD、消费者和验证情况。未检查的维持待审；混合文件允许多功能归属。完成率只统计有证据最终结论的文件，不把扫描100%、代码净删率或曾碰过文件当语义审计完成率。
-
-优先横向覆盖尚未完整审核的 Host UI/根组件、Session/记录、活跃 AI、setup、flow/rules、catalog/persistence/debug、工具/CI和跨项目 codec。特别核查 Sage、Spy 显示分支、日间后果、其它行动/继承/发牌门禁、剩余展示候选/Provider DTO、因果日志/重复历史；F11 不等于这些都已完成或可整删。不要重建已删除 web/world 引擎，不要误删工作中的 AI。
-
-## 可直接粘贴给新对话的指令
-
-读取 AGENTS.md 和当前交接/路线/测试策略，核对远端 PR #334 最新 HEAD、CI/R2 与本地状态。F13日间明确登记已并入唯一动作事件，独立causal journal整组删除且本地完整验证；优先推进实际死亡/继承/Dawn整组解耦，同时按全 Git 树逐文件审计，在现有全源台账分类为必须保留（Host 控制/记录/AI 推荐/必要支撑）、必须删除、需要解耦、需要人工审核，并记录待审状态和真实完成率。保护现有 AI、唯一 Session、事实/隐私/时序，先形成有证据的分类与整组处理建议，不沿单条旧调用链代替全仓遍历。
+每组必须报告实际生产/测试删除、断开链、净代码体量、超限文件、Host事实/事件风险、精确HEAD的CI/R2及未决所有者项。测试随职责退役，不能用旧绿灯要求恢复Host合法性引擎；真实AI与Session/security测试保留。
