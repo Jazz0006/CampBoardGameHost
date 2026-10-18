@@ -2,7 +2,7 @@
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
 
-## F9：四模块整组解耦与删除（本地完整构建通过，远端验收待回填）
+## F9：四模块整组解耦与删除（完整 Android CI/R2 已通过）
 
 - 起点：GitHub/本地 `a3008b33ff9fa4d8f8fc11389ef1f972fb529323`，main `61cd6796569ed8dfdea360caefeb5b9328745090`，Draft #334/base `64be30905b88f639a464204ed1db89b7b62bc910`；fetch 后一致。Mini MCP 仍为独立旧 checkout `a2cbcac8`，本批直接改 Windows 本地文件。完整未截断 Git tree 974 文件；本批工作树预计 936，生产 263 + 测试 209 Kotlin。历史版本库存不代表逐文件语义审计完成。
 - **Pair**：App/current residual scope/HostScreen 的真实 AI 请求保留，只发送当前 recipient/ability/revision/problem。删除 PairInformationDecisionBoundary → PairInformationLegalDomain → NaturalPair/DisplaySemantics 真值、见证与合法候选枚举链；保留窄 PendingPairInformationDecision 身份 DTO。直接建议生成 witness-free typed display，不匹配合法候选 ID；手工 pair 允许任意已有座位（含 actor）及已知剧本角色，零结果仍表达本角色类别的缺席陈述，不从显示反推登记。
@@ -53,6 +53,8 @@
 - **验证**：本地 `:app:testFull :app:assembleDebug` SUCCESS，898 项、0 失败/错误/跳过。旧候选测试/fixture 编译及旧断言曾失败，已按新职责退休/修改；过程中删 import 误去掉 Compose 委托运算符，编译发现后已恢复。重点回归：直接 99 数字与不在旧菜单的 pair/role、未知/重复/小数/越界座位拒绝、真实已存首夜模型响应、后夜记忆/历史/收件人、非镇民 Drunk、evil 红鲱鱼/in-play bluff 的单 writer 事件及重放、过期回复不改 Session。CI routing 只移除 R2 对已退役 unifiedFirstNightInformationPool 的存在性守卫；其他安全/构建/R2 验收保留。没有付费 API 或真机验收。
 - **规模**：生产 +410/-3215，测试 +165/-2649，源码净删 **5289 行**（以本地 Git diff 加新 DTO 实测；另 R2 -1 行）。NightStepUi **49650B** 已低于 50,000；仍超限 App **180482B**、HostScreen **144543B**，源码按 canonical UTF-8/LF，修改的生产文件本地亦保存 LF。
 - **明确剩余/风险**：这不是全部 Host Rules 清空。HostScreen/InformationStepBuilder 的角色信息真值/登记预览、ResultFirstRegistrationDomain 与 FixedInformationEvaluator、Mayor/NewDemon/其他行动候选及旧 Provider 通用候选 DTO 仍需横向审计；其中部分服务当前 Host flow，要先断开必要事实/交互。Pair 手工 UI 当前仍把结构化组合物化为展示列表，未来可继续化简。App/HostScreen 两个大混合文件须继续删职责并收敛到 <=50,000B。跨项目状态合同/真机/实际收费模型品质未验收；无新所有者决策。保留唯一 Session、既有结构化事实与观察日志、私密交付/事件顺序；PR #334 保持 Draft，不 merge/retarget。
+
+- **Exact code HEAD 验收**：`4113974d840f1c201d6b9aa7686193435c710f9b`，GitHub 完整 Android **[CI #4363](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39111596271) SUCCESS**（Android tests/Debug APK）、**[R2 #3943](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39111596284) SUCCESS**，ASP、真实 Clingo、CI gate 均成功。GitHub 独立 compare 为 96 文件 +641/-5865（含文档），生产 +410/-3215、测试 +165/-2649，**源码净删 5289 行**；另 R2 净删 1 行。实际提交 tree 936 文件、263 生产 + 209 测试 Kotlin，两个超限文件及 NightStepUi 49650B 已以完整 Git tree 复核。后续 docs-only HEAD 不替代此代码的 Android 验收。未改变用户原有未跟踪文件，未合并/retarget Draft #334。
 
 ## F8：首夜无效候选预计算、等待门禁与重复上下文整链删除（本地完整构建与 exact-SHA CI/R2 已通过）
 

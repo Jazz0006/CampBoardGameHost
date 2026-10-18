@@ -1,10 +1,10 @@
 # 当前开发路线（2026-10-18）
 
-## F9 当前交接：四模块候选解耦（覆盖下方历史状态）
+## F9 当前交接：四模块候选解耦，完整 CI/R2 成功（覆盖下方历史状态）
 
 - Pair 真值/见证/合法候选生成、Numeric/Boolean Foundation/Coordinator/适配与重复确认、Drunk 假设投影/候选确认、后夜语义回匹配候选 ID 已整链退出；整删 19 生产 + 20 专属测试，源码净删 5289 行。真实首夜/后夜 AI transport/提示词/响应、战略记忆、AI_ASSISTED 预选和 AI_AUTOMATIC 原发布回调保留；建议不写事实。
 - setup 接受任意已发牌 Drunk 座位、已有邪恶红鲱鱼座位及已在场 bluff；只验证结构身份/去重/时序。直接数字接受非负 Int，不受旧 gameplay range 约束。Session 保留单 writer、私密 recipient、当前 revision 与实际确认边界。
-- 本地完整 `:app:testFull :app:assembleDebug` SUCCESS：898 项，0 失败/错误/跳过。GitHub exact-code-SHA CI/R2 待回填；不得以 F8 或 docs-only CI 代替本批证明。树预计 936 文件，263 生产 + 209 测试 Kotlin。NightStepUi 49650B，余超限 App 180482B、HostScreen 144543B。
+- 本地完整 `:app:testFull :app:assembleDebug` SUCCESS：898 项，0 失败/错误/跳过。代码 `4113974d840f1c201d6b9aa7686193435c710f9b` 的完整 Android **CI #4363 / R2 #3943 SUCCESS**，ASP/真实 Clingo/CI gate 成功；后续 docs-only HEAD 不是新的编译证明。实际 Git tree 936 文件，263 生产 + 209 测试 Kotlin。NightStepUi 49650B，余超限 App 180482B、HostScreen 144543B。
 - 下一批优先审计 HostScreen/InformationStepBuilder 的真值/登记预览、ResultFirstRegistrationDomain/FixedInformationEvaluator、Mayor/NewDemon 等行动候选与旧 Provider 通用候选合同；确认消费者后继续整组删除。四块已取得实质进展，不等于全树或所有规则已清完。完整清单、消费证据、风险只维护全源台账 F9。无新产品决策，无真机/付费 API，Draft #334 不合并/retarget。
 
 唯一详细权威：docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md。**所有者纠偏（2026-10-18）**：仅清除 Host 过度工程化的规则合法性门禁与真值推断；已有 AI 说书人推荐是保留的产品功能，包括首夜整局规划、配对/数字推荐、提示词、API、响应合同和长期战略记忆。B3 意外删除 AI 配对推荐链，应先恢复并验证，再继续 P1；未来 Rules 为独立只读查询，不成为事实提交门禁。Rules 和 AI 均不得写入 Host 事实，人工结果在清理期间不受游戏规则候选限制。
