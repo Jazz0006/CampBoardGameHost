@@ -2,13 +2,13 @@
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
 
-## F10-B：孤立候选与旧世界合同整组删除（本地验证通过，远端验收待运行）
+## F10-B：孤立候选与旧世界合同整组删除（完整 CI/R2 已通过）
 
 - **起点与范围**：远端/本地 `968261005f0003a137745eedbdaafbe9d4c40040`，Draft #334；沿 F10-A 的全树分类落实 A1–A3。重新核实无 App、Session、现用 AI、tools/CI 消费者后删除封闭旧类型岛，不把混合文件整体判死。
 - **整删生产 7 文件**：`ClocktowerBooleanDisplayOptionSelection.kt`、`clocktower/domain/DecisionCandidate.kt`、`DynamicInformationOutcome.kt`、`EffectDraft.kt`、`RecommendationModels.kt`、`SetupClueOutcome.kt`、`StableCandidateIdFactory.kt`（后六个均在 domain/）。移除链为旧 candidate/effect/plan/ID → 孤立辅助/专属测试；实际事实仍用 ActionFactDraft/EpistemicObservationDraft。
 - **混合职责删除**：StorytellerProviderContractV1 删除旧 response/outcome/recommendation/confidence/validator 尾部，保留现用 request/context/prior-decision；DecisionTypes 删除无人使用的 DetectionSemantics/AbilityType。EpistemicContracts/SemanticModel/Json 删除 F10-A 列出的 13 个旧世界、合法选择、登记推演类型及专属 codec/identity helper，并移除无人使用的 GOOD 红鲱鱼 eligible helper；保留 TimelinePoint、真实 ActionFact/Observation、Grimoire、PlayerKnowledge、安全稳定 ID 和现用 JSON。
 - **测试**：整删 `ClocktowerBooleanDisplayOptionSelectionTest.kt`、`clocktower/domain/UnifiedDecisionModelsTest.kt`、`clocktower/epistemic/TimelinePointJsonCompatibilityTest.kt`（最后一项仅调用退休 RegistrationQuery codec）；混合 MurmurHash3/Provider/SemanticModel/ObservationTimelineBinding 测试只移除旧候选/世界段。现用观察日志仍验证缺失 globalSequence 拒绝、旧 local 显式兼容、全局序列一致性、隐私和 round-trip；保留实际 hash vectors、AI request/stale/隐私测试。
-- **实际验证/规模**：本地 `:app:testFull :app:assembleDebug` SUCCESS，**883 tests，0 failure/error/skipped**。生产 +2/-816（净删 814），测试 +0/-432，合计净删 **1246 行代码**。Git 跟踪存量预计 **926 文件，256 生产 + 206 测试 Kotlin**。仍有两个 >50000B 源码：App **180424B**、HostScreen **144485B**；NightStepUi **49650B**。`git diff --check` 通过。远端精确代码 SHA 的 CI/R2 待提交后独立核验，不能拿旧 docs-only 成功代替。
+- **实际验证/规模**：本地 `:app:testFull :app:assembleDebug` SUCCESS，**883 tests，0 failure/error/skipped**。生产 +2/-816（净删 814），测试 +0/-432，合计净删 **1246 行代码**。Git 跟踪存量预计 **926 文件，256 生产 + 206 测试 Kotlin**。仍有两个 >50000B 源码：App **180424B**、HostScreen **144485B**；NightStepUi **49650B**。`git diff --check` 通过。代码 **`800f1d9797ecb0154c970a8a7cd8c58f5352d588`** 已经 GitHub Connector 独立比较远端 24 文件 +25/-1248 diff；完整 Android **[CI #4366 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39113685085)**（完整单测+Debug APK）、**[R2 #3946 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39113685103)**，ASP/真实 Clingo/CI gate SUCCESS。退役符号在现用 app/src、tools、CI 无残留；跟踪工作树干净，未跟踪用户文件保留。
 - **事实/AI 风险及剩余**：本批没有改 Session 写入、事件身份/顺序、实际信息、recipient/revision、AI transport/parser/策略记忆/预选/模式；没有 API 调用或真机验收。B4 真实问题/真值/登记投影链、B5 Mayor 候选与实际死亡/继承链仍待先解耦后删除，不能称 Host Rules 已清空；无新增所有者决策，跨项目核心 codec 和现用工具保留。PR #334 保持 Draft，不 merge/retarget；用户未跟踪文件不动。
 
 ## F10-A 审计：F9 后剩余高置信清理对象（仅审计，未删除源码）
