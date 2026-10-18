@@ -1,17 +1,18 @@
-# 新对话交接：解耦完成，下一步全模块逐文件审计（2026-10-18）
+# 新对话交接：F12 全模块逐文件审计进行中（2026-10-18）
 
 ## 已获所有者授权的顺序
 
 1. 先完成信息真值/登记投影、Mayor 候选链解耦。本轮 F11 已实施并通过本地完整回归及精确代码 HEAD 的完整 CI/R2。
-2. 切换新对话后，遍历全仓代码并逐文件形成有证据的分类；此轮不以新功能、重建 Rules 或删除现有 AI 替代审计。
+2. 全仓逐文件审计已开始。F12 首批已审71/497（14.29%）、2审计中、424待审；完整逐路径状态和证据只在原全源台账F12，不以新功能、重建 Rules 或删除现有 AI 替代审计。当前审计批没有产品代码删除。
 
 ## 读取顺序与唯一记录位置
 
-先读 AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，再读现有 MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md 的 F11。分类明细继续维护在这份台账中，不复制第二份库存或 NEXT。历史 TSV 不是已完成的语义审计清单。
+先读 AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，再读现有 MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md 的 F12/F11。分类明细继续维护在这份台账中，不复制第二份库存或 NEXT。历史 TSV 不是已完成的语义审计清单。
 
 ## 精确基线（新对话必须重新核实）
 
 - 分支 `codex/minimal-host-full-scan-20261018`，PR #334 保持 Draft，base `64be30905b88f639a464204ed1db89b7b62bc910`；main `61cd6796569ed8dfdea360caefeb5b9328745090`。
+- F12 审计证据起点为本地/远端一致的 `cfe258b17ed1c8abb248f0ada4ee1c871593d961`；其 docs-only CI #4370 / R2 #3950 SUCCESS，Android skipped。后续审计文档提交的实时 HEAD/CI 必须重新查询，不替代下面完整代码验收。当前本地定向 `testFast --tests *GatewayTokenEnvelopeV1Test --tests *MurmurHash3Test --no-daemon` SUCCESS：3 tests，0 failure/error/skipped，未执行付费调用或真机。
 - F11 实现 `56a927979fad03402d9a3de6e611db5ce2eb7840`；修正旧 R2 enum 存在守卫后的验收代码 **`d9fb47f2e805339736f6a70cd3b347090810bea9`** 的完整 Android **[CI #4369 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39116071137)**（完整单测+Debug APK）、**[R2 #3949 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39116071147)**，ASP/真实 Clingo/CI gate SUCCESS。本文件后续 docs-only 提交不改变代码基线，不能作为新的编译证明。
 - F11 本地 `:app:testFull :app:assembleDebug` SUCCESS：819 tests、0 failure/error/skipped。存量 905 跟踪文件，246 生产 +195 测试 Kotlin；净删 4678 行代码，整删 10 生产+11 专属旧测试。
 - 超限 App 178170B、HostScreen 101971B；NightStepUi 44505B。两个超限仍须在后续职责清理中解决，不得宣布 P4 完成。
@@ -25,7 +26,9 @@
 - Mayor AI 请求不提供合法候选；直接 seat 建议通过身份/版本边界，实际 ActionFact 写一次；退出候选确认和重复候选裁定日志，确认到 Demon 也不被旧门禁重定向回 Mayor。实际死亡/继承/角色变化继续沿原 Session/Dawn 路径应用。
 - 真实 AI 请求/提示词/模型通信/解析、首夜联合与后夜推荐、记忆、预选和辅助/自动模式保留。没有调用收费模型。
 
-## 下一轮逐文件审计标准
+## 下一批入口与逐文件审计标准
+
+先继续台账内2个审计中大文件 App/HostScreen 的整文件核查，并横向扩展尚待审的 Session/实际日志与活跃AI、setup、epistemic/codec、工具CI及其测试；不要再重扫首批已审71项冒充新进度。Sage/Spy已有准确分支证据但两个根组件未读完，不计整文件完成。先形成整组处理建议，再实施已确认的删除/解耦。PairInformationOutcome 是可直接删除叶子，但本审计轮不以零星删除替代覆盖。U1自定义导入产品范围未决前保留；不阻塞其余已授权审计。
 
 范围先从最新、未截断 Git tree 明确列出所有生产源码、测试、构建配置、脚本和工具；文档/生成物/素材单独说明纳入或排除，不能用全部文件数冒充源码审计分母。已删除文件作为完成历史，不反复作为当前未审项。
 
