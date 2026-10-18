@@ -7,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import java.util.Collections
 
 /** Stable schema marker for persisted A1/A1.1 semantic objects. */
 const val EPISTEMIC_SCHEMA_VERSION: Int = 2
