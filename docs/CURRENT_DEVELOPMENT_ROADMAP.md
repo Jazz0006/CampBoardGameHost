@@ -6,8 +6,8 @@
 
 | 阶段 | 任务 | 状态 |
 |---|---|---|
-| R0 | **优先恢复 B3 误伤的 AI 配对推荐及残余推荐路径，保持 Host 人工发布不受规则门禁** | **立即执行** |
-| P1 | 删除 Host 旧规则合法性否决、真值/登记见证、重复投影和专属测试；**保留 AI 正在使用的候选生产/适配路径直至安全替换** | **R0 验收后继续** |
+| R0 | 恢复 B3 误伤的 AI 配对推荐、Provider/残余范围/方桌预选，同时清除无消费的 Host 规则确认接口 | **已完成：代码 CI #4342 / R2 #3922 SUCCESS** |
+| P1 | 删除 Host 旧规则合法性否决、真值/登记见证、重复投影和专属测试；**保留 AI 正在使用的候选生产/适配路径直至安全替换** | **继续实施，严禁误删 AI** |
 | P2 | 仅清理已证明无 AI 生产消费者的旧实验/重复算法；禁止整包删除 AI 推荐、提示词、API、联合规划与战略记忆 | 待 P1 |
 | P3 | 收敛唯一 GameState/Session 事实及结构化事件记录，最小继续游戏、通用合同 | 待 P2 |
 | P4 | 净删后的 UI 和源码职责拆分；全部源文件 <=50,000 bytes | 待 P3 |
@@ -21,6 +21,7 @@
 - B1 首个代码 HEAD 的完整 Android CI **#4330**：编译通过，1301 项测试中 1 项旧规则键断言失败；R2 **#3910 SUCCESS**。已根据批准的退役方向修复：夜间信息 Builder 不再开启旧登记见证交互（无自动见证、不可凭信息展示补记登记），修复提交 **`4b1267e8e7d3277577e44c01dd7004cb04da6fb5`**；修复后的完整 Android CI **#4331 SUCCESS**（`testFull` 和 Debug APK 构建），R2 **#3911 SUCCESS**；ASP/Clingo 和 CI gate 均成功。保留原 Session 事实提交、直接数字选择和方桌实际身份提示；未进行真机手动通局验收。
 - **B2 代码提交 `4e87bee2adedbe4ad2542e87426b3449d7893a19` 和 `f2869f0fd3965939adc131b55f22ef7d3e25179c`**：洗衣妇/图书管理员/调查员人工选项改为纯结构性角色与座位组合，不再调用 `PairInformationLegalDomain`；首夜确认结果不再经过 `PairInformationDecisionBoundary` 合法候选 ID 或配对见证推断，而由选定的结构化显示事实生成 Session 观察请求；废除 `projectFirstNightPairInformationOptions` 真值/登记推导和选项池按剧本答案过滤。完整删除无人调用的 `HostOpeningResidualEventGateV2` 旧规则复核器，以及 `FirstNightPairInformationProductionSemanticsTest`、`HostOpeningRulesDomainV2Test`；将混合测试精简为结构选项与实际确认保护。**B2 合计 12 文件，+123/-2012，净删除 1889 行**。初次完整 CI #4333 主程序编译成功，1292 项测试中 1 项因旧顺序断言失败，已修正；第二代码提交的完整 Android CI **#4334 SUCCESS**（包含 `:app:testFull :app:assembleDebug`）、R2 **#3914 SUCCESS**，ASP、Clingo、CI gate 均 SUCCESS。
 - **B3 代码提交 `d5f21d431ea3334d0bee05ff8e450e08c6ca7661` 和 `39860f40011729f5c5a148a0fc39d5f8e8895450`**：沿旧 `PairInformationDecisionBoundary` 的消费者真正删除生产调用，包括 App 实时残余 AI 请求、残余范围批次、Host UI 旧配对匹配、Provider 的 `fromPairInformation` 与 Matcher 的 `matchPair`。完整删除 `ClocktowerGlobalFirstNightDecision.kt`、`PairInformationDecisionBoundary.kt`、专属旧测试 `PairInformationDecisionBoundaryTest.kt`；另外已实证零生产消费者的 `FirstNightBundleCandidateSpaceAudit.kt` 和它的专属测试一起删除。保留 MANUAL 的结构化配对录入/发布，旧配对 AI 推荐暂停，不生成临时兼容合法域。**B3 修复后 13 文件，+17/-993，净删 976 行**，初次全量 CI #4337 编译失败：独占测试的旧位置参数遗留 `null`，不是 Rules 生产链失败；R2 #3917 SUCCESS。已删除旧位置参数，修复代码提交 `2b751f4d7719a241540516e176349305d18fe8d9`，修复后的完整 Android CI **#4338 SUCCESS**（单测与 Debug APK 构建）、R2 **#3918 SUCCESS**，ASP/Clingo 与 CI gate 均通过；未做真机或收费 API 测试。
+- **R0 纠偏与恢复完成**：权威范围修订提交 `838297d9602735eff82dafffbe57f22ef1710fc0`；AI 配对生产调用恢复提交 `0774711c5899a193bffc36d3b2f376f8bfaf99b6`，完整 Android CI **#4341 SUCCESS** / R2 **#3921 SUCCESS**。随后在保留 AI provider 候选请求的前提下，移除旧 `PendingPairInformationDecision.confirm` 规则确认/观察生成接口和相关死 DTO，新增 AI 配对候选匹配结构化方桌选项、人工公布不依赖 AI 候选的回归测试；代码提交 `e60a3ef9d6b7a3598ddfc59451ba1d84fb3644bb`，完整 Android CI **#4342 SUCCESS**、R2 **#3922 SUCCESS**，ASP/Clingo/CI gate SUCCESS。未执行真机与收费 API，因此验收是源码/模拟数据/CI 层，而非真实模型响应质量验收。
 - **P1 仍未完成**：需继续识别 Host 规则门禁的生产消费者；Pair/Numeric 候选计算若供首夜 AI/后夜 AI 使用必须先保留，否则无法恢复 AI。`HostOpeningRulesDomainV2` 是首夜联合 AI 输入，不得作为无用 Host 门禁直接删除。后续批次复核 CI/R2 旧源码守卫。
 
 ## 当前历史基线（不是 P1 完成证明）

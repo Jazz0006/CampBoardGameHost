@@ -1,6 +1,6 @@
-# 当前唯一 NEXT：先修复 AI 误伤，再继续清除 Host 规则门禁（2026-10-18）
+# 当前唯一 NEXT：AI 已恢复，继续 P1 删除 Host 规则合法性门禁（2026-10-18）
 
-**优先执行 R0：恢复 B3 删除的 AI 配对推荐、Provider、UI 匹配与跨夜残余规划消费路径。** 已有 AI 提示词、API、战略记忆、首夜联合规划和自动/辅助模式均是需要保护的产品功能，不得当成 P2 删除对象。完成 R0、完整 CI/R2 后继续 P1 删除 **Host** 内规则合法性门禁，不删除生产 AI。
+**R0 已完成并通过真实完整 CI/R2。继续执行 P1：只删 Host 旧合法性门禁、真值推断、过度工程及无效专属测试，不删除 AI 推荐的调用、Provider、提示词、战略记忆或必要候选依赖。**
 
 ## 权威阅读顺序
 
@@ -9,7 +9,7 @@ AGENTS.md；docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md；docs/CUR
 ## 当前远端/开发机基线（先重新核对）
 
 - 仓库：Jazz0006/CampBoardGameHost。开发机 Mini MCP 别名 clocktower。
-- PR #330→#334 均为依赖堆叠 Draft。当前 P1 开发分支为 `codex/minimal-host-full-scan-20261018`，最新已提交的 P1 B3 代码检查点为 `2b751f4d7719a241540516e176349305d18fe8d9`；后续文档提交会继续推进 HEAD，开始新批次必须重新核对 GitHub。
+- PR #330→#334 均为依赖堆叠 Draft。当前 P1 开发分支为 `codex/minimal-host-full-scan-20261018`，已验收的 R0 最新**代码**检查点为 `e60a3ef9d6b7a3598ddfc59451ba1d84fb3644bb`；后续文档 HEAD 不等于代码验收 HEAD；后续文档提交会继续推进 HEAD，开始新批次必须重新核对 GitHub。
 - P1 B1 首次 Android CI #4330 测试 1301 项 / 1 项失败（旧登记键）；修复代码 `4b1267e8...` 的完整 Android CI #4331 与 R2 #3911 是本批对应独立检验（最终状态需要重查）。更早 CI #4325/R2 #3905 与 docs-only #4326/R2 #3906 仅属清理前的历史基线。
 - 开发机已经 `git_fetch` 后经 Mini MCP `git_track_remote_branch` 从旧 `codex/minimal-host-reset` 切换并同步到正确 #334 分支，且 B1 两次代码提交均已推送。继续时必须再次检查 branch/HEAD/working tree，不能依赖本段历史记录。
 - 不自动合并 Draft / 强推 / 删除远端分支。真实付费模型调用没有授权。
@@ -36,11 +36,11 @@ AGENTS.md；docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md；docs/CUR
 - 清除零生产消费者的 `clocktower/recommendation/FirstNightBundleCandidateSpaceAudit.kt` 与专属 `FirstNightBundleCandidateSpaceAuditTest.kt`，不再保留旧首夜法域笛卡尔积实验。**B3 修复后相对于 `91663dd34...` 共 13 个文件，+17/-993，净删 976 行，整删 3 个生产源码及 2 个专属测试文件**。
 - B3 代码 HEAD `39860f40...` 的 CI #4337 Kotlin 测试编译失败：旧 Scope 测试有一个位置参数 `null`（原 `pairContext` 参数已退出）。R2 #3917 SUCCESS。已直接删除过时调用参数，修复提交 **`2b751f4d7719a241540516e176349305d18fe8d9`**；修复后完整 Android **CI #4338 SUCCESS**（单测+Debug APK）、R2 **#3918 SUCCESS**；ASP/Clingo/CI gate 均 SUCCESS，这是 B3 最新有效完整验收。B3 首个代码 HEAD 对应 CI #4336/R2 #3916，不替代修复验证。
 - B3 HEAD 从 GitHub 实测超 50,000B 文件：`CampBoardGameHostApp.kt` **198219B**，`ClocktowerHostScreen.kt` **148322B**，`ClocktowerNightStepUi.kt` **60237B**，`web/app.js` **143503B**；P4 以前不预先拆大文件。
-- **所有者纠偏：不得直接删除 `HostOpeningRulesDomainV2` / `InitialJointOpeningDirectV2` 或其首夜 AI 消费者。** 继续审计其规则候选只服务 AI 输入还是阻止 Host 事实提交；仅剥离后者。保留 MANUAL 与 AI_ASSISTED/AI_AUTOMATIC、开局/配对/后夜建议、真实事件、私密交付。
+- **R0 已修复 B3 AI 误删。接下来不得直接删除 `HostOpeningRulesDomainV2` / `InitialJointOpeningDirectV2` 或其首夜 AI 消费者。** 继续审计其规则候选只服务 AI 输入还是阻止 Host 事实提交；仅剥离后者。保留 MANUAL 与 AI_ASSISTED/AI_AUTOMATIC、开局/配对/后夜建议、真实事件、私密交付。
 
 ## 纠偏后的实施顺序
 
-0. **R0（本轮优先）**：从 B3 前 Git 历史恢复被误删的 AI 配对推荐、Provider 和残余请求/展示匹配。恢复仅作为 AI 的候选生成，不恢复对 Host 手动确认结果的规则否决。用真实 Android full CI/R2 检查；禁止未授权付费 API 请求。
+0. **R0（已通过）**：恢复 B3 前的 AI 配对决策、Provider 请求、全局残余规划与方桌预选；恢复提交 `0774711c...` 完整 CI #4341 / R2 #3921 成功。删除没有生产消费者的 `PendingPairInformationDecision.confirm` 规则确认到 Host 观察转换接口，保留 AI-only 候选，新增推荐匹配与自由手工公布回归测试；修复代码 `e60a3ef9...` 完整 CI #4342 / R2 #3922 成功。未做真实收费 API/真机验收。
 1. **P1**：将人工线索/动作的结构与事实记录同旧规则合法性判定拆开，清除 Host 真值、见证、过度合法性门禁和它们的专属测试。AI 正在消费的候选/策略模块可暂时保留并标注迁移边界，不得为净删行数关停 AI。
 2. **P2**：只删除确认为废弃的实验、重复层、影子缓存，避免影响现有 AI 推荐。P3–P5 继续遵循修订权威文档。
 
