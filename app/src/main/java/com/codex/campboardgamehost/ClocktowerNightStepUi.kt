@@ -289,7 +289,6 @@ internal fun ClocktowerNightStepCardLocalized(
     val chefResultChoices = if (presentationRoleEnName == "Chef" && step.actor != null) {
         clocktowerChefResultChoices(
             step = manualFallbackStep,
-            players = chefPlayers,
             allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,

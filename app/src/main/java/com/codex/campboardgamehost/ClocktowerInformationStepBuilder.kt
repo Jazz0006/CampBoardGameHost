@@ -3,7 +3,6 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
-import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
 
 internal class ClocktowerInformationStepBuilder(
     private val cards: List<PlayerCard>,
@@ -154,17 +153,11 @@ internal class ClocktowerInformationStepBuilder(
             previousShownNumber = previousShownNumber,
             numericMinimumValue = numericMinimumValue,
             numericMaximumValue = numericMaximumValue,
-            spyRegistrationKey = RegistrationInteractionRules.effectiveRegistrationKey(
-                spyRegistrationKey,
-                informationAbilityReliable = !actorAbilityUnreliable,
-            ),
+            spyRegistrationKey = spyRegistrationKey,
             spyRegistrationTeams = spyRegistrationTeams,
             spyRegistrationDetail = spyRegistrationDetail,
             spyRegistrationHint = spyRegistrationHint,
-            recluseRegistrationKey = RegistrationInteractionRules.effectiveRegistrationKey(
-                recluseRegistrationKey,
-                informationAbilityReliable = !actorAbilityUnreliable,
-            ),
+            recluseRegistrationKey = recluseRegistrationKey,
             recluseRegistrationTeams = recluseRegistrationTeams,
         )
     }

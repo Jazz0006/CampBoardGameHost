@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 
 internal enum class ClocktowerChefResultSourceKind {
@@ -41,20 +40,17 @@ internal data class ClocktowerChefResultChoice(
     val displayOption: ClocktowerDisplayOption? = null,
     val structuredCandidateId: String? = null,
     val recommended: Boolean = false,
-    val effectivePairSeats: Set<Int> = emptySet(),
 )
 
 internal data class ClocktowerChefSeatVisual(
     val state: ClocktowerSquareTableSeatState,
     val badge: String?,
-    val marker: String?,
     val isCurrentActor: Boolean,
 )
 
 /**
  * Storyteller-only Chef evidence. Actual evil identity is a read-only information hint; a Recluse
- * is a separate registration hint; seats participating in the currently chosen counted pair(s)
- * are the only seats promoted to a selected/highlighted state.
+ * is a separate role hint. A displayed number never implies an unconfirmed registration witness.
  */
 internal fun clocktowerChefSeatVisual(
     seatNumber: Int,
@@ -62,17 +58,14 @@ internal fun clocktowerChefSeatVisual(
     actualEvilSeats: Set<Int>,
     spySeat: Int?,
     recluseSeat: Int?,
-    effectivePairSeats: Set<Int>,
     language: String,
 ): ClocktowerChefSeatVisual {
     val isSpy = seatNumber == spySeat
     val isRecluse = seatNumber == recluseSeat
     val isRegistrationRole = isSpy || isRecluse
-    val participatesInCountedPair = seatNumber in effectivePairSeats
     return ClocktowerChefSeatVisual(
         state = when {
             isRegistrationRole -> ClocktowerSquareTableSeatState.RegistrationHint
-            participatesInCountedPair -> ClocktowerSquareTableSeatState.SelectedHighlighted
             seatNumber in actualEvilSeats -> ClocktowerSquareTableSeatState.HighlightedInformation
             else -> ClocktowerSquareTableSeatState.Neutral
         },
@@ -81,7 +74,6 @@ internal fun clocktowerChefSeatVisual(
             isRecluse -> if (language == "en") "R" else "隐"
             else -> null
         },
-        marker = if (isRegistrationRole && participatesInCountedPair) "★" else null,
         isCurrentActor = seatNumber == actorSeat,
     )
 }
@@ -98,64 +90,8 @@ internal fun clocktowerChefRecluseSeat(players: List<PlayerState>): Int? = playe
     .firstOrNull { player -> player.actualRole.value == "Recluse" }
     ?.seat
 
-/** Compute a visual explanation only when supplied with a separately adjudicated witness. */
-internal fun clocktowerChefEffectiveEvilSeats(
-    players: List<PlayerState>,
-    option: ClocktowerDisplayOption?,
-): Set<Int> {
-    val effective = clocktowerChefActualEvilSeats(players).toMutableSet()
-    players.firstOrNull { it.actualRole.value == "Spy" }?.let { spy ->
-        when (option?.spyRegistersGood) {
-            true -> effective.remove(spy.seat)
-            false -> effective.add(spy.seat)
-            null -> Unit
-        }
-    }
-    players.firstOrNull { it.actualRole.value == "Recluse" }?.let { recluse ->
-        when (option?.recluseRegistersEvil) {
-            true -> effective.add(recluse.seat)
-            false -> effective.remove(recluse.seat)
-            null -> Unit
-        }
-    }
-    return effective
-}
-
-/**
- * Presentation-only witness projection. The rules evaluator remains authoritative for the numeric
- * result; if this witness does not reproduce that value, visual selection fails closed.
- */
-internal fun clocktowerChefEffectivePairSeats(
-    players: List<PlayerState>,
-    option: ClocktowerDisplayOption?,
-    value: Int,
-): Set<Int> {
-    // A result may have multiple equally legal contributing pairs. Never imply the first
-    // explanation was selected by highlighting its seats.
-    if (option?.legalRegistrationWitnesses?.isNotEmpty() == true) return emptySet()
-    val effectiveEvilSeats = clocktowerChefEffectiveEvilSeats(players, option)
-    val evaluatedValue = FixedInformationEvaluator.chefEvilPairs(players) { player ->
-        player.seat in effectiveEvilSeats
-    }
-    if (evaluatedValue != value) return emptySet()
-
-    val seated = players.sortedBy(PlayerState::seat)
-    if (seated.size < 2) return emptySet()
-    return buildSet {
-        seated.indices.forEach { index ->
-            val first = seated[index]
-            val second = seated[(index + 1) % seated.size]
-            if (first.seat in effectiveEvilSeats && second.seat in effectiveEvilSeats) {
-                add(first.seat)
-                add(second.seat)
-            }
-        }
-    }
-}
-
 internal fun clocktowerChefResultChoices(
     step: ClocktowerNightStepUi,
-    players: List<PlayerState>,
     allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
@@ -177,7 +113,6 @@ internal fun clocktowerChefResultChoices(
                         sourceKind = ClocktowerChefResultSourceKind.DisplayOption,
                         displayOption = option,
                         recommended = true,
-                        effectivePairSeats = clocktowerChefEffectivePairSeats(players, option, value),
                     ),
                 )
             }
@@ -192,7 +127,6 @@ internal fun clocktowerChefResultChoices(
                 displayOption = option,
                 recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
                     (recommendedOptionIds.isEmpty() && option.isDefaultRecommendation),
-                effectivePairSeats = clocktowerChefEffectivePairSeats(players, option, value),
             )
         }
     }
@@ -214,9 +148,6 @@ internal fun clocktowerChefResultChoices(
                 structuredCandidateId = choice.candidateId,
                 recommended = choice.value in recommendedValues ||
                     (recommendedValues.isEmpty() && choice.recommended),
-                // An impaired Chef may legally receive an arbitrary value. There is no truthful
-                // seat witness to invent for such a value, so keep only the static information hints.
-                effectivePairSeats = emptySet(),
             )
         }
     }
@@ -228,17 +159,8 @@ internal fun clocktowerChefResultChoices(
             value = direct.value,
             sourceKind = ClocktowerChefResultSourceKind.Direct,
             recommended = true,
-            effectivePairSeats = clocktowerChefEffectivePairSeats(players, option = null, value = direct.value),
         ),
     )
-}
-
-internal fun clocktowerChefDisplayedPairSeats(
-    choices: List<ClocktowerChefResultChoice>,
-    selectedKey: String,
-): Set<Int> {
-    if (choices.size <= 1) return emptySet()
-    return choices.firstOrNull { it.key == selectedKey }?.effectivePairSeats.orEmpty()
 }
 
 @Composable
@@ -275,9 +197,7 @@ internal fun ClocktowerChefSquareTableDialog(
         )
         return
     }
-    val displayedPairSeats = clocktowerChefDisplayedPairSeats(choices, initialChoice.key)
     val recommendedChoices = choices.filter { it.recommended }.take(1)
-        
 
     ClocktowerHostSquareTableScaffold(
         seats = seats,
@@ -295,7 +215,6 @@ internal fun ClocktowerChefSquareTableDialog(
                 actualEvilSeats = actualEvilSeats,
                 spySeat = spySeat,
                 recluseSeat = recluseSeat,
-                effectivePairSeats = displayedPairSeats,
                 language = language,
             )
             ClocktowerSquareTableSeatUiModel(
@@ -308,7 +227,6 @@ internal fun ClocktowerChefSquareTableDialog(
                 state = visual.state,
                 isCurrentActor = visual.isCurrentActor,
                 badge = visual.badge,
-                stateMarkerOverride = visual.marker,
             )
         },
     ) {

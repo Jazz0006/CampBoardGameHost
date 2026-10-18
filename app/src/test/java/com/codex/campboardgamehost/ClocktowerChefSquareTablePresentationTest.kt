@@ -1,9 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.PlayerState
-import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import org.junit.Assert.assertEquals
@@ -13,231 +9,50 @@ import org.junit.Test
 
 class ClocktowerChefSquareTablePresentationTest {
     @Test
-    fun `actual evil is information hint while recluse uses a distinct badge`() {
-        val visualEvil = clocktowerChefSeatVisual(
-            seatNumber = 2,
-            actorSeat = 1,
-            actualEvilSeats = setOf(2, 3),
-            spySeat = null,
-            recluseSeat = 4,
-            effectivePairSeats = emptySet(),
-            language = "zh",
+    fun `host visual distinguishes actual evil and recluse without inferring a registration witness`() {
+        val evil = clocktowerChefSeatVisual(
+            seatNumber = 2, actorSeat = 1, actualEvilSeats = setOf(2),
+            spySeat = null, recluseSeat = 4, language = "zh",
         )
-        val visualRecluse = clocktowerChefSeatVisual(
-            seatNumber = 4,
-            actorSeat = 1,
-            actualEvilSeats = setOf(2, 3),
-            spySeat = null,
-            recluseSeat = 4,
-            effectivePairSeats = emptySet(),
-            language = "zh",
+        val recluse = clocktowerChefSeatVisual(
+            seatNumber = 4, actorSeat = 1, actualEvilSeats = setOf(2),
+            spySeat = null, recluseSeat = 4, language = "zh",
         )
-        val visualActor = clocktowerChefSeatVisual(
-            seatNumber = 1,
-            actorSeat = 1,
-            actualEvilSeats = setOf(2, 3),
-            spySeat = null,
-            recluseSeat = 4,
-            effectivePairSeats = emptySet(),
-            language = "zh",
+        val actor = clocktowerChefSeatVisual(
+            seatNumber = 1, actorSeat = 1, actualEvilSeats = setOf(2),
+            spySeat = null, recluseSeat = 4, language = "zh",
         )
-
-        assertEquals(ClocktowerSquareTableSeatState.HighlightedInformation, visualEvil.state)
-        assertEquals(null, visualEvil.badge)
-        assertEquals(ClocktowerSquareTableSeatState.RegistrationHint, visualRecluse.state)
-        assertEquals("隐", visualRecluse.badge)
-        assertTrue(visualActor.isCurrentActor)
-        assertFalse(visualEvil.isCurrentActor)
+        assertEquals(ClocktowerSquareTableSeatState.HighlightedInformation, evil.state)
+        assertEquals(ClocktowerSquareTableSeatState.RegistrationHint, recluse.state)
+        assertEquals("隐", recluse.badge)
+        assertTrue(actor.isCurrentActor)
+        assertFalse(evil.isCurrentActor)
     }
 
     @Test
-    fun `recluse registration witness highlights only seats participating in counted evil pairs`() {
-        val players = players()
-        val option = option(value = 2, recluseRegistersEvil = true)
-
-        assertEquals(setOf(2, 3, 4), clocktowerChefEffectivePairSeats(players, option, value = 2))
-        val recluseVisual = clocktowerChefSeatVisual(
-            seatNumber = 4,
-            actorSeat = 1,
-            actualEvilSeats = clocktowerChefActualEvilSeats(players),
-            spySeat = null,
-            recluseSeat = clocktowerChefRecluseSeat(players),
-            effectivePairSeats = clocktowerChefEffectivePairSeats(players, option, 2),
-            language = "zh",
-        )
-        assertEquals(ClocktowerSquareTableSeatState.RegistrationHint, recluseVisual.state)
-        assertEquals("隐", recluseVisual.badge)
-        assertEquals("★", recluseVisual.marker)
-    }
-
-    @Test
-    fun `unresolved multiple Chef witnesses never draw one counted pair as definitive`() {
-        val options = ClocktowerRegistrationResultPresentation.numericOptions(
-            title = "Chef", sourceSeat = 1, metric = NumericMetric.ADJACENT_EVIL_PAIRS,
-            subjectSeats = listOf(1, 2, 3, 4, 5), footer = "pairs",
-            witnesses = listOf(
-                ClocktowerAlignmentRegistrationWitness(false, false),
-                ClocktowerAlignmentRegistrationWitness(true, true),
-            ),
-            valueFor = { 1 },
-        )
-        val result = options.single()
-        assertEquals(2, result.legalRegistrationWitnesses.size)
-        assertEquals(emptySet<Int>(), clocktowerChefEffectivePairSeats(players(), result, value = 1))
-    }
-
-    @Test
-    fun `single chef result never presents counted players as a choice`() {
-        val choice = ClocktowerChefResultChoice(
-            key = "only",
-            value = 1,
-            sourceKind = ClocktowerChefResultSourceKind.Direct,
-            effectivePairSeats = setOf(2, 3),
-        )
-
-        assertEquals(emptySet<Int>(), clocktowerChefDisplayedPairSeats(listOf(choice), "only"))
-    }
-
-    @Test
-    fun `multiple chef results present the currently selected witness players`() {
-        val first = ClocktowerChefResultChoice(
-            key = "first",
-            value = 1,
-            sourceKind = ClocktowerChefResultSourceKind.DisplayOption,
-            effectivePairSeats = setOf(2, 3),
-        )
-        val second = ClocktowerChefResultChoice(
-            key = "second",
-            value = 2,
-            sourceKind = ClocktowerChefResultSourceKind.DisplayOption,
-            effectivePairSeats = setOf(2, 3, 4),
-        )
-
-        assertEquals(
-            setOf(2, 3, 4),
-            clocktowerChefDisplayedPairSeats(listOf(first, second), "second"),
-        )
-    }
-
-    @Test
-    fun `spy registering good removes the spy from the selected result but keeps static evil identity available`() {
-        val players = listOf(
-            player(1, "Chef", Alignment.GOOD, CharacterType.TOWNSFOLK),
-            player(2, "Imp", Alignment.EVIL, CharacterType.DEMON),
-            player(3, "Spy", Alignment.EVIL, CharacterType.MINION),
-            player(4, "Washerwoman", Alignment.GOOD, CharacterType.TOWNSFOLK),
-        )
-        val option = option(value = 0, spyRegistersGood = true)
-
-        assertEquals(setOf(2), clocktowerChefEffectiveEvilSeats(players, option))
-        assertEquals(emptySet<Int>(), clocktowerChefEffectivePairSeats(players, option, value = 0))
-        assertEquals(setOf(2, 3), clocktowerChefActualEvilSeats(players))
-
-        val spyVisual = clocktowerChefSeatVisual(
-            seatNumber = 3,
-            actorSeat = 1,
-            actualEvilSeats = setOf(2, 3),
-            spySeat = 3,
-            recluseSeat = null,
-            effectivePairSeats = emptySet(),
-            language = "zh",
-        )
-        assertEquals(ClocktowerSquareTableSeatState.RegistrationHint, spyVisual.state)
-        assertEquals("间", spyVisual.badge)
-        assertEquals(null, spyVisual.marker)
-    }
-
-    @Test
-    fun `mismatched witness fails closed instead of inventing selected players`() {
-        val players = players()
-        val option = option(value = 1, recluseRegistersEvil = true)
-
-        assertEquals(emptySet<Int>(), clocktowerChefEffectivePairSeats(players, option, value = 1))
-    }
-
-    @Test
-    fun `automatic Chef keeps direct square-table result when automatic preview is unavailable`() {
+    fun `a confirmed direct Chef number stays usable without legacy automatic witness`() {
         val proposition = InformationProposition.NumericResult(
             metric = NumericMetric.ADJACENT_EVIL_PAIRS,
             sourceSeat = 1,
             subjectSeats = listOf(1, 2, 3),
             value = 1,
         )
+        val step = ClocktowerNightStepUi(
+            title = "Chef", actor = null, isRealAction = true, reason = "",
+            storytellerAction = "", tellPlayer = "1", explanation = "",
+            displayKind = ClocktowerDisplayKind.Number,
+            displayPrimary = "1", displayProposition = proposition, roleEnName = "Chef",
+        )
         val choices = clocktowerChefResultChoices(
-            step = numericStep("Chef", proposition, "1"),
-            players = listOf(
-                player(1, "Chef", Alignment.GOOD, CharacterType.TOWNSFOLK),
-                player(2, "Imp", Alignment.EVIL, CharacterType.DEMON),
-                player(3, "Poisoner", Alignment.EVIL, CharacterType.MINION),
-            ),
+            step = step,
             allowRuleDeterminedAutoUi = true,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = emptyList(),
             structuredNumberUiModel = null,
         )
-
         assertEquals(1, choices.size)
         assertEquals(ClocktowerChefResultSourceKind.Direct, choices.single().sourceKind)
         assertEquals(1, choices.single().value)
     }
-
-    private fun players() = listOf(
-        player(1, "Chef", Alignment.GOOD, CharacterType.TOWNSFOLK),
-        player(2, "Imp", Alignment.EVIL, CharacterType.DEMON),
-        player(3, "Poisoner", Alignment.EVIL, CharacterType.MINION),
-        player(4, "Recluse", Alignment.GOOD, CharacterType.OUTSIDER),
-        player(5, "Washerwoman", Alignment.GOOD, CharacterType.TOWNSFOLK),
-    )
-
-    private fun player(
-        seat: Int,
-        role: String,
-        alignment: Alignment,
-        type: CharacterType,
-    ) = PlayerState(
-        seat = seat,
-        name = "P$seat",
-        actualRole = RoleId(role),
-        actualAlignment = alignment,
-        actualType = type,
-    )
-
-    private fun option(
-        value: Int,
-        spyRegistersGood: Boolean? = null,
-        recluseRegistersEvil: Boolean? = null,
-    ) = ClocktowerDisplayOption(
-        label = value.toString(),
-        displayKind = ClocktowerDisplayKind.Number,
-        displayTitle = "Chef information",
-        displayPrimary = value.toString(),
-        displaySecondary = null,
-        displayFooter = null,
-        proposition = InformationProposition.NumericResult(
-            metric = NumericMetric.ADJACENT_EVIL_PAIRS,
-            sourceSeat = 1,
-            subjectSeats = listOf(1, 2, 3, 4, 5),
-            value = value,
-        ),
-        spyRegistersGood = spyRegistersGood,
-        recluseRegistersEvil = recluseRegistersEvil,
-    )
-
-    private fun numericStep(
-        role: String,
-        proposition: InformationProposition.NumericResult,
-        shown: String,
-    ) = ClocktowerNightStepUi(
-        title = role,
-        actor = null,
-        isRealAction = true,
-        reason = "",
-        storytellerAction = "",
-        tellPlayer = shown,
-        explanation = "",
-        displayKind = ClocktowerDisplayKind.Number,
-        displayPrimary = shown,
-        displayProposition = proposition,
-        roleEnName = role,
-    )
 }
+

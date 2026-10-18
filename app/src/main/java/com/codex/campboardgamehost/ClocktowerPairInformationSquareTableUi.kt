@@ -114,7 +114,6 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                     isSelectedCandidate = isSelectedCandidate,
                     selectedRoleId = selection.selectedRoleId,
                     actualRoleId = seat.actualRole?.roleId,
-                    selectedOption = selection.resolvedOption,
                 ),
             )
         },
@@ -147,18 +146,7 @@ internal fun clocktowerPairInformationTruthMarker(
     isSelectedCandidate: Boolean,
     selectedRoleId: String?,
     actualRoleId: String?,
-    selectedOption: ClocktowerDisplayOption?,
-): String? {
-    if (!isSelectedCandidate || selectedRoleId == null) return null
-    val directTruth = actualRoleId == selectedRoleId
-    val spyRegistrationTruth = actualRoleId == "Spy" &&
-        selectedOption?.spyRegistersGood == true &&
-        selectedOption.spyRegisteredRoleEnName == selectedRoleId
-    val recluseRegistrationTruth = actualRoleId == "Recluse" &&
-        selectedOption?.recluseRegistersEvil == true &&
-        selectedOption.recluseRegisteredRoleEnName == selectedRoleId
-    return if (directTruth || spyRegistrationTruth || recluseRegistrationTruth) "✓" else null
-}
+): String? = if (isSelectedCandidate && selectedRoleId != null && actualRoleId == selectedRoleId) "✓" else null
 
 /**
  * Recommended mode is read-only: only the recommended pair is accented. Manual mode delegates

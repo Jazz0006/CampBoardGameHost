@@ -33,14 +33,12 @@ class ClocktowerPairInformationSquareTablePresentationTest {
 
     @Test
     fun `truth marker follows direct role truth for the selected candidate`() {
-        val chefOption = option("Chef", 1, 4)
         assertEquals(
             "✓",
             clocktowerPairInformationTruthMarker(
                 isSelectedCandidate = true,
                 selectedRoleId = "Chef",
                 actualRoleId = "Chef",
-                selectedOption = chefOption,
             ),
         )
         assertNull(
@@ -48,7 +46,6 @@ class ClocktowerPairInformationSquareTablePresentationTest {
                 isSelectedCandidate = true,
                 selectedRoleId = "Chef",
                 actualRoleId = "Empath",
-                selectedOption = chefOption,
             ),
         )
         assertNull(
@@ -56,7 +53,6 @@ class ClocktowerPairInformationSquareTablePresentationTest {
                 isSelectedCandidate = false,
                 selectedRoleId = "Chef",
                 actualRoleId = "Chef",
-                selectedOption = chefOption,
             ),
         )
         assertNull(
@@ -64,32 +60,14 @@ class ClocktowerPairInformationSquareTablePresentationTest {
                 isSelectedCandidate = true,
                 selectedRoleId = null,
                 actualRoleId = "Chef",
-                selectedOption = chefOption,
             ),
         )
     }
 
     @Test
-    fun `truth marker includes typed Spy and Recluse registration hits`() {
-        val spyOption = option("Washerwoman", 2, 5).copy(
-            spyRegistersGood = true,
-            spyRegisteredRoleEnName = "Washerwoman",
-        )
-        val recluseOption = option("Poisoner", 3, 6).copy(
-            recluseRegistersEvil = true,
-            recluseRegisteredRoleEnName = "Poisoner",
-        )
-
-        assertEquals(
-            "✓",
-            clocktowerPairInformationTruthMarker(true, "Washerwoman", "Spy", spyOption),
-        )
-        assertEquals(
-            "✓",
-            clocktowerPairInformationTruthMarker(true, "Poisoner", "Recluse", recluseOption),
-        )
-        assertNull(clocktowerPairInformationTruthMarker(true, "Chef", "Spy", spyOption))
-        assertNull(clocktowerPairInformationTruthMarker(true, "Chef", "Recluse", recluseOption))
+    fun `pair truth cue never infers an unconfirmed special registration`() {
+        assertNull(clocktowerPairInformationTruthMarker(true, "Washerwoman", "Spy"))
+        assertNull(clocktowerPairInformationTruthMarker(true, "Poisoner", "Recluse"))
     }
 
     @Test
