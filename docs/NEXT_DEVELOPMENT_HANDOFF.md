@@ -2,7 +2,7 @@
 
 ## 已获所有者授权的顺序
 
-1. 先完成信息真值/登记投影、Mayor 候选链解耦。本轮 F11 已实施并通过本地完整回归；远端精确代码验收待更新。
+1. 先完成信息真值/登记投影、Mayor 候选链解耦。本轮 F11 已实施并通过本地完整回归及精确代码 HEAD 的完整 CI/R2。
 2. 切换新对话后，遍历全仓代码并逐文件形成有证据的分类；此轮不以新功能、重建 Rules 或删除现有 AI 替代审计。
 
 ## 读取顺序与唯一记录位置
@@ -12,7 +12,7 @@
 ## 精确基线（新对话必须重新核实）
 
 - 分支 `codex/minimal-host-full-scan-20261018`，PR #334 保持 Draft，base `64be30905b88f639a464204ed1db89b7b62bc910`；main `61cd6796569ed8dfdea360caefeb5b9328745090`。
-- F11 起点 `f2c09e175e8e70e2394594806ee7e969d285a996`，代码提交与完整 CI/R2 待更新。最近旧代码基线 `800f1d97` 的完整 CI #4366/R2 #3946 SUCCESS；docs-only 成功不能代替真实编译。
+- F11 实现 `56a927979fad03402d9a3de6e611db5ce2eb7840`；修正旧 R2 enum 存在守卫后的验收代码 **`d9fb47f2e805339736f6a70cd3b347090810bea9`** 的完整 Android **[CI #4369 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39116071137)**（完整单测+Debug APK）、**[R2 #3949 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39116071147)**，ASP/真实 Clingo/CI gate SUCCESS。本文件后续 docs-only 提交不改变代码基线，不能作为新的编译证明。
 - F11 本地 `:app:testFull :app:assembleDebug` SUCCESS：819 tests、0 failure/error/skipped。存量 905 跟踪文件，246 生产 +195 测试 Kotlin；净删 4678 行代码，整删 10 生产+11 专属旧测试。
 - 超限 App 178170B、HostScreen 101971B；NightStepUi 44505B。两个超限仍须在后续职责清理中解决，不得宣布 P4 完成。
 - Windows 工作区 `C:/Users/Jazz_/source/repos/CampBoardGameHost`。JDK 为 `C:/Program Files/Android/Android Studio/jbr`，本地 Gradle 用 gradlew.bat。Mini MCP clocktower 是独立旧 Linux checkout `a2cbcac8`，不拿其状态覆盖本地。

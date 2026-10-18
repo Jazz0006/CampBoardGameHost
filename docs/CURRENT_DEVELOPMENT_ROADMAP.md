@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-所有者最新顺序：先解耦信息真值/登记投影与 Mayor 候选链，再在新对话做全模块逐文件审计。F11 已实施；本地完整 testFull + Debug APK SUCCESS（819 tests，0 failure/error/skipped），代码 SHA 与远端完整 CI/R2 待更新。现用 AI 保留，P1 未全面完成。
+所有者最新顺序：先解耦信息真值/登记投影与 Mayor 候选链，再在新对话做全模块逐文件审计。F11 已实施；本地完整 testFull + Debug APK SUCCESS（819 tests，0 failure/error/skipped），代码 **`d9fb47f2e805339736f6a70cd3b347090810bea9`** 的完整 Android **[CI #4369 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39116071137)**（完整单测+Debug APK）、**[R2 #3949 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39116071147)**，ASP/真实 Clingo/CI gate SUCCESS。现用 AI 保留，P1 未全面完成。
 
 F11 整删 10 生产+11 专属旧测试；生产净删2827行、测试净删1851行，共4678行。当前905跟踪文件，246生产+195测试Kotlin。App178170B、HostScreen101971B仍超限；NightStepUi44505B。详细消费者、实际删除、风险与验收只见现有全源台账F11，下一步入口只见NEXT_DEVELOPMENT_HANDOFF。
 
