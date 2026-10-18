@@ -73,8 +73,8 @@ internal fun ClocktowerJointOpeningReviewScreen(
                     Text("恶魔掩饰身份：" + bluffs.joinToString(" · "),
                         color = MaterialTheme.colorScheme.onSurface)
                 }
-                Text("联合推荐已经通过 Host 初始规则域验证；包含信息 " +
-                    acceptance.matchingCandidateIds.size + " 项，待真实行动 " +
+                Text("联合推荐已就绪；包含信息 " +
+                    acceptance.selection.information.size + " 项，待真实行动 " +
                     acceptance.conditional.size + " 项。",
                     color = MaterialTheme.colorScheme.onSurface)
                 Text("以上均为未执行推荐。酒鬼会在下一步确认；掩饰身份和线索只在相应步骤确认、展示。",

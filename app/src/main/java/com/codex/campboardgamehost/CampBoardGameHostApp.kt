@@ -74,7 +74,7 @@ import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicChange
 import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2
 import com.codex.campboardgamehost.clocktower.session.StorytellerResidualPackageGateV2
 import com.codex.campboardgamehost.clocktower.session.HostCurrentOpenDecisionInventoryV2
-import com.codex.campboardgamehost.clocktower.session.HostOpeningRulesDomainV2
+import com.codex.campboardgamehost.clocktower.session.InitialOpeningRequestV2
 import com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticAcceptanceV2
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
@@ -173,7 +173,7 @@ private data class PendingTroubleBrewingDrunkSelection(
 private data class PendingTroubleBrewingJointOpening(
     val preparedGameId: String,
     val preparedSetup: TroubleBrewingPreparedSetup,
-    val domain: HostOpeningRulesDomainV2,
+    val request: InitialOpeningRequestV2,
     val shownOnlyCards: List<PlayerCard>,
 )
 
@@ -1376,7 +1376,7 @@ internal fun CampBoardGameHostApp() {
                 InitialJointOpeningDirectV2.recommendWithReceipt(
                     endpoint = PersonalDirectOpenAiV1.ENDPOINT,
                     accessToken = requestedKey,
-                    domain = pending.domain,
+                    request = pending.request,
                     registry = registry,
                     model = requestedModel,
                     onStage = { stage -> BotcAiTrace.firstNightStage(serial, stage) },
@@ -1390,7 +1390,7 @@ internal fun CampBoardGameHostApp() {
                     Screen.ClocktowerJointReveal, Screen.ClocktowerJointReview)
             ) return@launch
             result.onSuccess { receipt ->
-                if (receipt.accepted.selection.validFor(pending.domain.scope)) {
+                if (receipt.accepted.selection.validFor(pending.request)) {
                     jointOpeningResult = receipt.accepted
                     pendingOpeningResponseId = receipt.responseId
                     pendingOpeningModel = requestedModel
@@ -1421,7 +1421,7 @@ internal fun CampBoardGameHostApp() {
     ) {
         val accepted = jointOpeningResult ?: return
         if (pendingJointOpening !== pending ||
-            !accepted.selection.validFor(pending.domain.scope) ||
+            !accepted.selection.validFor(pending.request) ||
             storytellerOperationMode == StorytellerOperationMode.MANUAL) return
         val legalRoute = TroubleBrewingDrunkSelectionRouter.route(pending.preparedSetup, null)
         when (legalRoute) {
@@ -1448,12 +1448,7 @@ internal fun CampBoardGameHostApp() {
         // An overridden Drunk must invalidate all dependent opening display hints.
         openingPlanRecommendation = accepted
         openingRecommendedInformation = if (recommendationMatchesActualDrunk) {
-            val projection = pending.domain.forDrunkSeat(selectedSeat)
-            accepted.selection.choices.mapNotNull { (id, option) ->
-                projection.candidatesByDecision[id]?.get(option)?.let { meaning ->
-                    meaning.sourceSeat to meaning
-                }
-            }.toMap()
+            accepted.selection.information
         } else emptyMap()
         openingRecommendedBluffRoleNames = if (recommendationMatchesActualDrunk) {
             val registry = activeGameClocktowerRulesetCatalog
@@ -1463,9 +1458,7 @@ internal fun CampBoardGameHostApp() {
             }
         } else emptyList()
         openingRecommendedRedHerringSeat = if (recommendationMatchesActualDrunk) {
-            val redId = accepted.selection.choices["setup.red-herring"]
-            pending.domain.forDrunkSeat(selectedSeat).redHerringCandidatesBySeat
-                .entries.singleOrNull { it.value == redId }?.key
+            accepted.selection.redHerringSeat
         } else null
         strategicPolicyCursor = accepted.strategyMemory?.let {
             StorytellerStrategicContinuationV2.MemoryCursor.initial(accepted)
@@ -1490,7 +1483,7 @@ internal fun CampBoardGameHostApp() {
         val accepted = jointOpeningResult ?: return
         if (screen != Screen.ClocktowerJointReview || jointOpeningBusy ||
             storytellerOperationMode == StorytellerOperationMode.MANUAL ||
-            !accepted.selection.validFor(pending.domain.scope)) return
+            !accepted.selection.validFor(pending.request)) return
         val legal = TroubleBrewingDrunkSelectionRouter.route(pending.preparedSetup, null)
         val recommended = when (legal) {
             TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded -> {
@@ -1498,13 +1491,19 @@ internal fun CampBoardGameHostApp() {
                 null
             }
             is TroubleBrewingDrunkSelectionRoute.RuleDetermined -> {
-                require(accepted.selection.drunkSeat == legal.candidate.seat)
+                if (accepted.selection.drunkSeat != legal.candidate.seat) {
+                    jointOpeningError = "This Drunk recommendation cannot be applied. Retry planning or take over manually."
+                    return
+                }
                 legal.candidate
             }
             is TroubleBrewingDrunkSelectionRoute.ManualSelection ->
-                requireNotNull(legal.request.candidates.singleOrNull {
+                legal.request.candidates.singleOrNull {
                     it.seat == accepted.selection.drunkSeat
-                }) { "Joint Drunk recommendation no longer belongs to the Host legal domain." }
+                } ?: run {
+                    jointOpeningError = "This Drunk recommendation cannot be applied. Retry planning or take over manually."
+                    return
+                }
         }
         if (legal !is TroubleBrewingDrunkSelectionRoute.ManualSelection ||
             storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC
@@ -1636,9 +1635,8 @@ internal fun CampBoardGameHostApp() {
         ) {
             val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
                 preparedGameId, preparedSetup.intermediateSetup)
-            val domain = HostOpeningRulesDomainV2.fromHostSnapshot(
+            val openingRequest = InitialOpeningRequestV2.fromHostSnapshot(
                 snapshot, characterRegistry,
-                clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
                 playerExperience = playerNames.mapIndexed { index, name ->
                     (index + 1) to openingExperience(name)
                 }.toMap(),
@@ -1657,7 +1655,7 @@ internal fun CampBoardGameHostApp() {
                 )
             }
             val pending = PendingTroubleBrewingJointOpening(
-                preparedGameId, preparedSetup, domain, visibleCards)
+                preparedGameId, preparedSetup, openingRequest, visibleCards)
             pendingJointOpening = pending
             jointRevealIndex = 0
             screen = Screen.ClocktowerJointPass
@@ -2043,7 +2041,7 @@ internal fun CampBoardGameHostApp() {
                         val pending = requireNotNull(pendingJointOpening)
                         ClocktowerJointOpeningReviewScreen(
                             acceptance = jointOpeningResult?.takeIf {
-                                it.selection.validFor(pending.domain.scope)
+                                it.selection.validFor(pending.request)
                             },
                             busy = jointOpeningBusy,
                             error = jointOpeningError,

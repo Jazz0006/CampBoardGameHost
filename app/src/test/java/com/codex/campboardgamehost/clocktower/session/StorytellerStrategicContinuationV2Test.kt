@@ -72,13 +72,12 @@ class StorytellerStrategicContinuationV2Test {
     }
 
     private fun prior() = HostOpeningSemanticAcceptanceV2(
-        selection = InitialGlobalOpeningSelectionV1(
+        selection = OpeningSelectionV2(
             gameId = "strategic-continuation-game",
             gameStateRevision = 0, playerInputRevision = 0,
             rosterFingerprint = "shown-roster-fixed",
-            scopeFingerprint = "rules-fixed",
-            drunkSeat = null, choices = emptyMap(),
-            demonBluffs = null, deferredDecisionIds = emptyList(),
+            drunkSeat = null, redHerringSeat = null, information = emptyMap(),
+            demonBluffs = null,
         ),
         conditional = emptyList(),
         strategyMemory = memory,

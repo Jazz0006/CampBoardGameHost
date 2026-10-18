@@ -2,7 +2,6 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
-import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import org.json.JSONArray
 import org.json.JSONObject
@@ -14,8 +13,8 @@ import kotlinx.coroutines.withContext
  *
  * The provider sees actual/shown roster facts and decision needs, NOT exhaustive Host
  * candidate domains, witness registrations or hypothetical cartesian products.
- * Any returned decision is validated as an entire conditional opening against
- * HostOpeningRulesDomainV2, and a subsequent Host commit remains separate.
+ * Returned advice is checked for structure and request identity; only later Host
+ * confirmation records actual facts. No gameplay legal domain is generated.
  */
 internal object InitialJointOpeningDirectV2 {
     const val REQUEST_SCHEMA = "botc.initial-joint-opening-request-v2"
@@ -126,13 +125,13 @@ tradeoffSummary 简要交代主要取舍，不复述角色规则或详细分析�
 information 必须完整覆盖 decisionInventory.information，逐项使用相同的 decisionId、
 sourceSeat、abilityRoleId。选定的酒鬼 effectiveAbilityRoleId=null，其他角色按展示身份；
 resolution、basis、waitingForEvents 必须符合已知状态与尚未确认的真实玩家行动。
-当前可裁量信息用 DECISION 与合法观察值；Host 已确定信息用 HOST_DETERMINED /
-RULE_DETERMINED、NONE 观察；依赖未发生行动的信息用 DEFERRED / STATUS_DEPENDENT、
+当前能够推荐的信息用 DECISION 与具体观察值，即使按规则只有一个答案也应给出具体值；
+Host 不会替模型计算或补齐信息。依赖未发生行动的信息用 DEFERRED / STATUS_DEPENDENT、
 NONE 观察及真实 waitingForEvents，不猜测未来目标或结果。
 deferredActions 必须只对应 decisionInventory.events 中本局已知待确认事件，
 decisionId、event、actorSeat 与实际身份一致；不得编造事件。
-Host 在收到结果后依据自身完整合法域独立校验所有选择、登记见证与待决状态。
-需要 Red Herring 时，按本局实际阵容选择座位；Host 将后验校验合法性。
+Host 只检查响应结构、座位/角色引用、请求身份和版本；推荐不会自动成为已确认事实。
+需要 Red Herring 时，按本局实际阵容选择座位。不要输出或推断未确认的登记事实。
 demonBluffRoleIds 根据剧本角色目录选三个不同且未在场的善良身份，
 否则为 null。FIXED_NEIGHBORS 的 subject.seats 为空；EVIDENCE_PAIR 只填两个座位，
 配合 observation.kind=ROLE 与 roleId 表示该身份在二人之一；不另输出固定规则文案。
@@ -143,39 +142,25 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
 """
 
     fun encode(
-        domain: HostOpeningRulesDomainV2,
+        request: InitialOpeningRequestV2,
         registry: ClocktowerCharacterRegistry,
         recentGames: List<String> = emptyList(),
     ): String {
-        val scope = domain.scope
-        val snapshot = scope.snapshot
+        val snapshot = request.snapshot
         require(snapshot.position.stage == TroubleBrewingSnapshotStage.SETUP_PRECOMMIT)
         require(recentGames.size <= 4 && recentGames.all { it.length <= 250 })
-        val infoRoles = setOf("washerwoman", "librarian", "investigator",
-            "chef", "empath", "fortuneteller")
         // Script role knowledge is part of the expert's task, not a menu of
-        // model-facing legal candidate roles. Host alone validates all roles.
+        // model-facing legal candidate roles. Only known role references are checked.
         require(snapshot.grimoireSeats.all { seat ->
             registry.findByExternalId(
                 (seat.shownRoleId as SnapshotField.Known<String>).value) != null
         }) { "Host opening roster contains an unknown script role." }
         val info = JSONArray()
-        snapshot.grimoireSeats.sortedBy { it.seat }.forEach { seat ->
-            val shown = (seat.shownRoleId as SnapshotField.Known<String>).value
-            if (shown in infoRoles) info.put(JSONObject()
-                .put("decisionId", "first-night:seat-" + seat.seat)
-                .put("sourceSeat", seat.seat)
-                .put("shownRoleId", shown))
+        request.information.forEach { (id, seat) ->
+            info.put(JSONObject().put("decisionId", id).put("sourceSeat", seat)
+                .put("shownRoleId", request.shownRoles.getValue(seat)))
         }
-        val eventMap = linkedMapOf<String, String>()
-        domain.projections.values.forEach { branch ->
-            branch.deferredActions.forEach { (id, action) ->
-                val previous = eventMap.putIfAbsent(id, action.first)
-                require(previous == null || previous == action.first) {
-                    "Inconsistent Host action identity across Drunk branches."
-                }
-            }
-        }
+        val eventMap = request.events.mapValues { it.value.first }
         val pendingEvents = eventMap.values.toSet().sorted()
         return JSONObject()
             .put("schemaId", REQUEST_SCHEMA)
@@ -183,9 +168,9 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
             .put("scriptId", snapshot.script.value)
             .put("requestIdentity", JSONObject()
                 .put("gameId", snapshot.gameId)
-                .put("gameStateRevision", scope.gameStateRevision)
-                .put("playerInputRevision", scope.playerInputRevision)
-                .put("rosterFingerprint", scope.rosterFingerprint))
+                .put("gameStateRevision", request.gameStateRevision)
+                .put("playerInputRevision", request.playerInputRevision)
+                .put("rosterFingerprint", request.rosterFingerprint))
             .put("decisionInventory", JSONObject()
                 .put("information", info)
                 .put("events", JSONArray().also { arr ->
@@ -194,10 +179,10 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
                     }
                 }))
             .put("state", JSONObject()
-                .put("asOfRevision", scope.gameStateRevision)
+                .put("asOfRevision", request.gameStateRevision)
                 .put("phase", "SETUP_PRECOMMIT")
-                .put("hasDrunk", scope.hasDrunk)
-                .put("drunkAssignment", if (scope.hasDrunk) "UNCOMMITTED" else "NOT_APPLICABLE")
+                .put("hasDrunk", request.hasDrunk)
+                .put("drunkAssignment", if (request.hasDrunk) "UNCOMMITTED" else "NOT_APPLICABLE")
                 .put("seats", JSONArray().also { arr ->
                     snapshot.grimoireSeats.sortedBy { it.seat }.forEach { seat ->
                         val role = (seat.shownRoleId as SnapshotField.Known<String>).value
@@ -210,7 +195,7 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
                             .put("seat", seat.seat)
                             .put("shownRoleId", role)
                             .put("actualRoleId", actual)
-                            .put("experience", scope.playerExperience.getValue(seat.seat).name))
+                            .put("experience", request.playerExperience.getValue(seat.seat).name))
                     }
                 })
                 .put("confirmedEvents", JSONArray())
@@ -222,14 +207,141 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
 
     fun decode(
         response: String,
-        domain: HostOpeningRulesDomainV2,
+        request: InitialOpeningRequestV2,
     ): HostOpeningSemanticAcceptanceV2 {
-        val raw = JSONObject(response)
-        require(raw.getInt("schemaVersion") == 2)
-        val drunk = raw.getJSONObject("openingPlan").let { plan ->
-            if (plan.isNull("drunkSeat")) null else plan.getInt("drunkSeat")
+        return parseRecommendation(JSONObject(response), request)
+    }
+
+    private fun JSONObject.exact(vararg keys: String) {
+        require(this.keys().asSequence().toSet() == keys.toSet()) { "Unexpected or missing opening fields." }
+    }
+
+    private fun JSONObject.integer(key: String): Long {
+        val value = get(key)
+        require(value is Int || value is Long) { "Opening $key must be an integer." }
+        return (value as Number).toLong()
+    }
+
+    private fun JSONObject.seat(key: String): Int? {
+        if (isNull(key)) return null
+        val value = integer(key)
+        require(value in 1..Int.MAX_VALUE.toLong())
+        return value.toInt()
+    }
+
+    private fun JSONArray.strings(): List<String> = (0 until length()).map {
+        require(get(it) is String)
+        getString(it)
+    }
+
+    private fun parseRecommendation(raw: JSONObject, request: InitialOpeningRequestV2): HostOpeningSemanticAcceptanceV2 {
+        raw.exact("schemaVersion", "asOfRevision", "requestIdentity", "openingPlan", "strategyMemory", "tradeoffSummary")
+        require(raw.integer("schemaVersion") == 2L)
+        val identity = raw.getJSONObject("requestIdentity")
+        identity.exact("gameId", "gameStateRevision", "playerInputRevision", "rosterFingerprint")
+        require(identity.getString("gameId") == request.snapshot.gameId &&
+            identity.integer("gameStateRevision") == request.gameStateRevision &&
+            identity.integer("playerInputRevision") == request.playerInputRevision &&
+            identity.getString("rosterFingerprint") == request.rosterFingerprint &&
+            raw.integer("asOfRevision") == request.gameStateRevision) { "Stale opening response." }
+        val plan = raw.getJSONObject("openingPlan")
+        plan.exact("drunkSeat", "redHerringSeat", "demonBluffRoleIds", "information", "deferredActions")
+        val drunk = plan.seat("drunkSeat")
+        val red = plan.seat("redHerringSeat")
+        require(request.hasDrunk == (drunk != null))
+        require(drunk == null || drunk in request.shownRoles)
+        require(red == null || red in request.shownRoles)
+        val bluffs = if (plan.isNull("demonBluffRoleIds")) null else plan.getJSONArray("demonBluffRoleIds").strings()
+        bluffs?.let {
+            require(it.size == 3 && it.distinct().size == 3 && it.all(request.knownRoleIds::contains))
         }
-        return HostOpeningSemanticGateV2.accept(raw, domain.forDrunkSeat(drunk))
+        val information = linkedMapOf<Int, HostOpeningSemanticValueV2>()
+        val conditional = mutableListOf<HostOpeningConditionalIntentV2>()
+        val ids = mutableSetOf<String>()
+        val items = plan.getJSONArray("information")
+        require(items.length() <= 64)
+        repeat(items.length()) { index ->
+            val item = items.getJSONObject(index)
+            item.exact("decisionId", "sourceSeat", "abilityRoleId", "effectiveAbilityRoleId", "resolution", "basis",
+                "subject", "observation", "waitingForEvents")
+            val id = item.getString("decisionId")
+            require(ids.add(id)) { "Duplicate opening decision." }
+            val source = requireNotNull(item.seat("sourceSeat"))
+            require(request.information[id] == source)
+            val subject = item.getJSONObject("subject")
+            subject.exact("mode", "seats")
+            val subjects = subject.getJSONArray("seats")
+            val seats = (0 until subjects.length()).map {
+                val seat = subjects.get(it)
+                require(seat is Int && seat in request.shownRoles)
+                seat as Int
+            }.sorted()
+            val observation = item.getJSONObject("observation")
+            observation.exact("kind", "number", "roleId", "boolean")
+            val number = if (observation.isNull("number")) null else observation.integer("number").let {
+                require(it in 0..Int.MAX_VALUE.toLong())
+                it.toInt()
+            }
+            val value = HostOpeningSemanticValueV2(source, item.getString("abilityRoleId"),
+                if (item.isNull("effectiveAbilityRoleId")) null else item.getString("effectiveAbilityRoleId"),
+                item.getString("basis"), subject.getString("mode"), seats, observation.getString("kind"), number,
+                if (observation.isNull("roleId")) null else observation.getString("roleId"),
+                if (observation.isNull("boolean")) null else observation.get("boolean").let {
+                    require(it is Boolean)
+                    it as Boolean
+                })
+            require(value.abilityRoleId == request.shownRoles[source]) { "Opening source identity changed." }
+            require(value.effectiveAbilityRoleId == null || value.effectiveAbilityRoleId in request.knownRoleIds)
+            require(value.roleId == null || value.roleId in request.knownRoleIds)
+            val waiting = item.getJSONArray("waitingForEvents").strings()
+            require(waiting.distinct().size == waiting.size && waiting.all { event ->
+                request.events.values.any { it.first == event }
+            }) { "Opening refers to an unknown pending event." }
+            when (item.getString("resolution")) {
+                "DECISION" -> {
+                    require(waiting.isEmpty() && value.observationKind != "NONE")
+                    information[source] = value
+                }
+                "HOST_DETERMINED" -> {
+                    // Older responses can abstain; Host never calculates a replacement value.
+                    require(waiting.isEmpty() && value.observationKind == "NONE")
+                }
+                "DEFERRED", "CONDITIONAL_INTENT" -> {
+                    require(waiting.isNotEmpty())
+                    require((item.getString("resolution") == "DEFERRED") == (value.observationKind == "NONE"))
+                    conditional += HostOpeningConditionalIntentV2(id,
+                        value.takeIf { it.observationKind != "NONE" }, waiting)
+                }
+                else -> error("Unknown opening resolution.")
+            }
+        }
+        require(ids == request.information.keys) { "Incomplete opening information inventory." }
+        val actions = plan.getJSONArray("deferredActions")
+        require(actions.length() == request.events.size)
+        repeat(actions.length()) { index ->
+            val action = actions.getJSONObject(index)
+            action.exact("decisionId", "event", "actorSeat")
+            val id = action.getString("decisionId")
+            val event = action.getString("event")
+            require(ids.add(id) && request.events[id] == (event to action.seat("actorSeat"))) {
+                "Unknown or duplicate pending player action."
+            }
+            conditional += HostOpeningConditionalIntentV2(id, null, listOf(event))
+        }
+        val strategy = raw.getJSONObject("strategyMemory")
+        strategy.exact("tensions", "intentions", "uncertainties")
+        val intentions = strategy.getJSONArray("intentions")
+        require(intentions.length() <= 3)
+        val memory = HostOpeningStrategyMemoryV2(strategy.getJSONArray("tensions").strings(),
+            (0 until intentions.length()).map { index ->
+                val entry = intentions.getJSONObject(index)
+                entry.exact("trigger", "approach", "risk")
+                HostOpeningStrategicIntentionV2(entry.getString("trigger"), entry.getString("approach"), entry.getString("risk"))
+            }, strategy.getJSONArray("uncertainties").strings())
+        require(raw.getString("tradeoffSummary").length <= 1200)
+        return HostOpeningSemanticAcceptanceV2(OpeningSelectionV2(request.snapshot.gameId,
+            request.gameStateRevision, request.playerInputRevision, request.rosterFingerprint,
+            drunk, red, bluffs, information.toMap()), conditional.toList(), memory)
     }
 
     /** Provider ID is provisional: only the caller's actual Host adoption may promote it. */
@@ -241,7 +353,7 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
     suspend fun recommendWithReceipt(
         endpoint: String,
         accessToken: String,
-        domain: HostOpeningRulesDomainV2,
+        request: InitialOpeningRequestV2,
         registry: ClocktowerCharacterRegistry,
         model: String,
         recentGames: List<String> = emptyList(),
@@ -251,16 +363,16 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
             "Unified opening requires personal-direct Responses support."
         }
         onStage("BUILDING_JOINT_OPENING_CONTEXT")
-        val payload = encode(domain, registry, recentGames)
+        val payload = encode(request, registry, recentGames)
         val receipt = withContext(Dispatchers.IO) {
             PersonalDirectOpenAiV1.postRetained(accessToken, payload, model,
                 onStage = onStage)
         }
         onStage("VALIDATING_COMPLETE_HOST_OPENING")
         return try {
-            val accepted = decode(receipt.text, domain)
+            val accepted = decode(receipt.text, request)
             BotcAiWireTrace.hostValidation(
-                "JOINT_OPENING", true, accepted.selection.choices.size)
+                "JOINT_OPENING", true, accepted.selection.information.size)
             AcceptedResponse(accepted, receipt.responseId)
         } catch (error: Throwable) {
             BotcAiWireTrace.hostValidation("JOINT_OPENING", false, 0,

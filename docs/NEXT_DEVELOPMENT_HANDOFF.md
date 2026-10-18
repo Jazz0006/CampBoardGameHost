@@ -2,6 +2,13 @@
 
 **用户再次确认：不要再以旧代码调用栈为主线逐段探索。** 优先枚举当前 Git HEAD 的全部源码模块，按 Host Core、现有 AI、旧 Host Rules、无生产消费者的实验、需要产品决策的外部客户端五类做证据分类。审计及确认/标记删除均记录到现有 `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`，不复制第二份全树文件索引。已确认无效的整块实现与专属测试直接删除并独立验证；仅有风险或实际消费者的标记 `REMOVE_AFTER_DISCONNECT`，先保护 AI 生产调用。P1 持续清除 Host 规则门禁，不重写 AI。
 
+## F6 当前批次与下一步（覆盖下方历史 NEXT）
+
+- 本地直接删除首夜合法候选域、语义匹配门禁和 V1 候选 scope，及其失去消费者的 Numeric/Setup 生成器；不再枚举酒鬼假设并生成第二份 GameState。首夜模型输出直接转结构化建议，Host 保留 identity/版本、座位/角色引用、JSON 与记忆边界、完整信息/事件标识及异步隔离；实际事件仍由原 Session 写入。
+- 保留真实 OpenAI transport、首夜联合规划、已存真实响应的离线回归、后夜战略记忆、AI_ASSISTED/AI_AUTOMATIC 与手动接管。第一轮本地 testFast、testFull + assembleDebug：993 项全通过；最终代码复验及远端 exact-SHA CI/R2 待补记。完整删除/风险/代码规模统一见全源台账 F6。
+- **下一批不是重建已删候选域**：横向继续检查 setup/Drunk commit、HostScreen/NightStepUi 菜单绑定、Numeric/Pair/目标/Bluffs 确认与后夜候选复核。首夜响应域虽已删，当前 UI 仍可能要求推荐落在旧菜单中，酒鬼 setup picker 仍有限制；不能把它们称为全路径结构直接采纳完成。先保证真实 AI/私密交付和事件安全，再按职责整组删除残留。
+- 本批不会自动合并/retarget Draft #334；没有真机/新付费 API 验收，无新增产品决策。
+
 ## F5 大块删除：web/ 全部退役、epistemic 旧推演大幅清理（完整 CI/R2 已通过）
 
 - 本轮现行顺序：web → epistemic 旧世界计算 → Host 候选引擎。首个二进制删除提交 `5be8d37bad28e6055b89611de7be22388a7fffd1`，旧 web 其余 7 文件提交 `bb96b0c525b1550875d5e0ae22e9c68e62b0e308`；无 Android/CI 生产引用。
