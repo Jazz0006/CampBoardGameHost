@@ -104,6 +104,8 @@ sealed interface ActionFactDraft {
         val targetSeat: Int,
         val abilityConsumed: Boolean,
         val hit: Boolean,
+        /** Private explicit answer only; null means no registration was confirmed. */
+        val targetRegistersAsDemon: Boolean? = null,
     ) : ActionFactDraft {
         init {
             requireIdentity(actionId, round, sequence)
@@ -121,6 +123,8 @@ sealed interface ActionFactDraft {
         val nominatorSeat: Int,
         val nomineeSeat: Int,
         val firstVirginNomination: Boolean,
+        /** Private explicit answer only; never infer role or alignment from this type. */
+        val nominatorRegistersAsTownsfolk: Boolean? = null,
     ) : ActionFactDraft {
         init {
             requireIdentity(actionId, round, sequence)
@@ -311,10 +315,10 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     is ActionFactDraft.Death -> ActionFact.Death(actionId, globalSequence, targetSeat, klutzDeathTrigger)
     is ActionFactDraft.NoExecution -> ActionFact.NoExecution(actionId, globalSequence)
     is ActionFactDraft.SlayerShot -> ActionFact.SlayerShot(
-        actionId, globalSequence, claimantSeat, targetSeat, abilityConsumed, hit,
+        actionId, globalSequence, claimantSeat, targetSeat, abilityConsumed, hit, targetRegistersAsDemon,
     )
     is ActionFactDraft.Nomination -> ActionFact.Nomination(
-        actionId, globalSequence, nominatorSeat, nomineeSeat, firstVirginNomination,
+        actionId, globalSequence, nominatorSeat, nomineeSeat, firstVirginNomination, nominatorRegistersAsTownsfolk,
     )
     is ActionFactDraft.Vote -> ActionFact.Vote(
         actionId, globalSequence, nominatorSeat, nomineeSeat, voterSeats.toList(), ghostVoterSeats.toList(),

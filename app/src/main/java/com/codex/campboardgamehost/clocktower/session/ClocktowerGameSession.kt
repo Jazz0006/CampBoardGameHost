@@ -2,8 +2,6 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
-import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderPriorDecisionV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
@@ -138,15 +136,6 @@ internal class ClocktowerGameSession private constructor(
             check(state.nextTimelineGlobalSequence < Int.MAX_VALUE) { "Input sequence exhausted." }
             return state.nextTimelineGlobalSequence.toInt() + 1
         }
-
-    /**
-     * One causal decision journal belongs to this game session, not to the root Compose
-     * screen. Atomic commits validate this journal against the Session history.
-     * Decision producers still use its existing validated append/correct interface.
-     */
-    var causalDecisionJournal: StorytellerCausalDecisionJournalV1 =
-        StorytellerCausalDecisionJournalV1(initialState.gameId)
-        private set
 
     /** Read-only cutover projection suitable for publishing through an observable UI boundary. */
     val view: ClocktowerSessionView
@@ -397,7 +386,7 @@ internal class ClocktowerGameSession private constructor(
      * One confirmed Host mechanical step: preflight the action and state, then publish exactly
      * one Session transition carrying both the mechanical projection and global action fact.
      * An already accepted action ID is an idempotent no-op, even after the revision advances.
-     * The Host caller remains responsible for the role/phase-specific legal decision.
+     * The caller supplies the actual confirmed result; no gameplay legality verdict is required.
      */
     fun commitConfirmedGameAction(
         draft: ActionFactDraft,

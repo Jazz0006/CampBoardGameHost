@@ -35,8 +35,6 @@ internal object HostCurrentOpenDecisionInventoryV2 {
                     context.sourceSeat
                 is StorytellerProviderDecisionContextV1.RegistrationResolution ->
                     context.sourceSeat
-                is StorytellerProviderDecisionContextV1.DayAbilityRegistration ->
-                    context.actorSeat
                 is StorytellerProviderDecisionContextV1.MayorRedirect ->
                     context.mayorSeat
                 StorytellerProviderDecisionContextV1.DrunkAssignment ->
@@ -63,7 +61,6 @@ internal object HostCurrentOpenDecisionInventoryV2 {
                 abilityRoleId = when (context) {
                     is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> context.abilityRole.value
                     is StorytellerProviderDecisionContextV1.ScalarInformation -> context.abilityRole.value
-                    is StorytellerProviderDecisionContextV1.DayAbilityRegistration -> context.abilityRole.value
                     else -> null
                 },
             )

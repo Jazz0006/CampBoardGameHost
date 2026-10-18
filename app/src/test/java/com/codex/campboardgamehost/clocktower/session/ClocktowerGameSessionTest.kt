@@ -148,20 +148,6 @@ class ClocktowerGameSessionTest {
     }
 
     @Test
-    fun `causal journal belongs to the live Session as its single owner`() {
-        val session = ClocktowerGameSession.createProduction(
-            gameId = "journal-session",
-            gameSeed = initialState.seed,
-            initialState = initialState,
-            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
-        )
-        val owned = session.causalDecisionJournal
-        assertSame(owned, session.causalDecisionJournal)
-        val archive = owned.archive()
-        assertEquals("journal-session", archive.gameId)
-    }
-
-    @Test
     fun `accepted setup choices are Session owned and appear in canonical history`() {
         val session = ClocktowerGameSession.createProduction(
             gameId = "single-writer-setup",

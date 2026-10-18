@@ -2,9 +2,9 @@
 
 ## 当前状态
 
-所有者最新顺序：先解耦信息真值/登记投影与 Mayor 候选链，再在新对话做全模块逐文件审计。F11 已实施；本地完整 testFull + Debug APK SUCCESS（819 tests，0 failure/error/skipped），代码 **`d9fb47f2e805339736f6a70cd3b347090810bea9`** 的完整 Android **[CI #4369 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39116071137)**（完整单测+Debug APK）、**[R2 #3949 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39116071147)**，ASP/真实 Clingo/CI gate SUCCESS。现用 AI 保留，P1 未全面完成。
+所有者已授权按完整职责链加速实施。F13在起点 `d76968168eb02e37cd87084bb51eabc60f789d9c` 补齐8个Session全文审计，并实际删除日间裁定producer、独立causal journal及DecisionOutcomeSnapshot：3生产+3旧测试文件退出，其中Mayor安全用例迁出保留。明确登记并入SlayerShot/Nomination，与公开动作共享一次Session事件提交，不推造角色/阵营。保留现用AI及实际死亡/执行操作。
 
-F11 整删 10 生产+11 专属旧测试；生产净删2827行、测试净删1851行，共4678行。当前905跟踪文件，246生产+195测试Kotlin。App178170B、HostScreen101971B仍超限；NightStepUi44505B。详细消费者、实际删除、风险与验收只见现有全源台账F11，下一步入口只见NEXT_DEVELOPMENT_HANDOFF。
+本地完整 `:app:testFull :app:assembleDebug` SUCCESS：807 tests，0 failure/error/skipped。生产净删800行/43958B、测试净删338行/16469B，共1138行/60427B；900跟踪文件，243生产+193测试Kotlin。当前App172872B、HostScreen101994B仍超限。精确代码HEAD完整远端CI/R2提交后核实；上一完整远端代码基线仍为F11 `d9fb47f2` CI #4369 / R2 #3949，不能替代本次验收。完整边界/证据只在全源台账F13记录。
 
 ## 最终职责
 
@@ -12,17 +12,13 @@ F11 整删 10 生产+11 专属旧测试；生产净删2827行、测试净删1851
 - AI 推荐：保留开局/后夜、联合规划、真实 API/提示词/解析、战略记忆、预选、AI_ASSISTED/AI_AUTOMATIC；直接读取 canonical facts/events，不接受 Host 的合法候选菜单。
 - Rules：以后独立只读重建，不能写事实或成为提交许可。已删除的旧 web/world/candidate 引擎不重建；当前不为清理重新创造规则包装器。
 
-## 当前阶段：全模块逐文件审计
+## 当前阶段：成组解耦与全树审计同步推进
 
-新对话先重新核对远端、本地、PR/CI，再以最新完整 Git tree 定义源码/测试/配置/工具范围，按四类出具证据结论：必须保留（Host 控制/记录/AI 推荐/必要平台安全支撑）、必须删除、需要解耦、需要人工审核。未审查文件另记待审，不强行归类。只在原全源台账维护明细、证据 HEAD、消费者及验证，不能另建重复库存。
+原F12范围497项，A/B完成105项；F13补齐8个Session审计并落实整组删除，6个删除路径退出当前表、1个迁移测试入表。当前范围 **492**，已审计 **111（22.56%）**，0审计中、381待审。真实消费者、每路径状态/字节、证据和历史分母只在原全源台账F12/F13维护；扫描或代码净删不算语义审计进度。
 
-F12 已从当前完整905文件 Git tree 明确497个源码/测试/配置/工具文件范围，在原全源台账逐路径记录状态；A批71项，B批新增34项（30生产+4测试、478849B），累计 **105/497（21.13%）**，0审计中、392待审。App/HostScreen两个超限根组件已完成整文件职责审计，Session目录25个文件（含GameSession）的当前职责和消费者已核查；8个Session文件仍待审，不以引用扫描代替全文审计。当前仅改审计文档，未删产品代码；B批16项已有离线AI wire、Session原子提交/角色变更及只读cards测试通过，完整代码基线仍为F11。全树清点100%和生产文件净减率都不是语义审计完成率。
+本批已移除日间provider候选/frozen snapshot/PriorDecision/correction archive整条重复历史链。登记的null/false/true、JSON旧历史兼容、canonical身份、AI delta及各玩家回放隐私已纳入完整回归；不再存放或生成独立裁定历史。信息录入与AI的游戏规则门禁尚未全部删除，P1没有完成。
 
-首批发现：孤立 PairInformationOutcome 可删；攻击/继承/毒/Klutz、flow eligibility、Sage默认真值/pair、Provider候选及causal元数据须解耦；文本/内容身份、canonical事实、时序和密钥边界保留。U1人工审核项是无生产用户入口的custom/homebrew导入分支，建议退休未上线分支而保留两内置脚本解析，未决前不删除。明细和证据仅在台账F12维护。
-
-B批进一步确认：App/HostScreen混合真实操作与Slayer/Virgin/继承/Dawn/终局计算，UI同夜同recipient拒绝不同信息与同事件ID去重必须区分；NightTargets清除/毒生命周期及UI实际语义仍需唯一事件收敛。现用开局/续规划及pair/scalar/Mayor请求工厂不发送Host合法候选，保留其prompt/transport/schema/memory与stale边界。下一批补齐8个待审Session文件，再横向epistemic/codec、setup、工具与测试。
-
-剩余重点：Sage真值/pair与truth标签、Spy魔典/poison分支、Virgin/Slayer日间后果、其它行动/死亡/继承/发牌门禁、剩余展示候选/Provider DTO、因果日志/重复状态历史、跨项目codec/工具CI。含规则的混合文件不能整包删除必要操作和状态应用。人工审核项必须列具体决策证据与风险，不以不确定为由随意删除，也不把所有当前消费者默认为最终保留。
+下一组优先处理实际死亡→继承→新身份/Dawn：从NightDawnResolutionPlanner、RestoreComposition和DemonSuccessionResolver混合链中保留真正结果确认及Session应用，删除预测confirmedEvents和强制/候选规则推导，再处理其专属测试。横向审计继续覆盖epistemic/codec、setup、工具/CI和测试，避免只沿调用链。剩余Sage/Spy、日间命中/后果、毒/终局、发牌门禁及两个超大根组件仍列待解耦。U1自定义导入未决前保留，不阻塞其他组。
 
 ## 阶段验收与治理
 

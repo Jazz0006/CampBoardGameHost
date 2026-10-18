@@ -1,13 +1,21 @@
-# 新对话交接：F12 全模块逐文件审计进行中（2026-10-18）
+# 新对话交接：F13 日间裁定重复历史已退休（2026-10-18）
 
 ## 已获所有者授权的顺序
 
 1. 先完成信息真值/登记投影、Mayor 候选链解耦。本轮 F11 已实施并通过本地完整回归及精确代码 HEAD 的完整 CI/R2。
-2. 全仓逐文件审计持续推进。F12 A批71项，B批新增34项，累计105/497（21.13%）、0审计中、392待审；完整逐路径状态和证据只在原全源台账F12，不以新功能、重建 Rules 或删除现有 AI 替代审计。两个审计批均没有产品代码删除。
+2. 最新授权：按完整职责链加速实际删除，审计与实施同步推进。F13补齐8个Session全文审计并整组退休日间裁定/独立causal journal；当前111/492（22.56%）、0审计中、381待审，900跟踪文件。完整路径状态仍只在原台账F12，实施证据见同文件F13。
 
 ## 读取顺序与唯一记录位置
 
 先读 AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，再读现有 MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md 的 F12/F11。分类明细继续维护在这份台账中，不复制第二份库存或 NEXT。历史 TSV 不是已完成的语义审计清单。
+
+## F13 本轮代码检查点（后续进入时重新核实远端）
+
+- 起点 `d76968168eb02e37cd87084bb51eabc60f789d9c`，远端Draft #334/base/main与下列一致；起点docs-only CI #4372 / R2 #3952 SUCCESS。当前实现将提交现有分支并核对精确代码HEAD的完整CI/R2；未核实时不得引用旧CI证明新代码。
+- 本地 `:app:testFull :app:assembleDebug` SUCCESS，807 tests、0 failure/error/skipped。没有真机/付费API调用。独立Mini仍是旧Linux `a2cbcac8`。
+- 整删DayAbilityRegistrationRulingProducerV1、StorytellerCausalDecisionJournalV1、DecisionOutcomeSnapshot三生产文件；三旧专属测试退出，Mayor安全测试迁出保留。生产净删800行/43958B，测试净删338行/16469B，总1138行/60427B。
+- SlayerShot.targetRegistersAsDemon / Nomination.nominatorRegistersAsTownsfolk直接存实际明确Boolean；null未知、false明确否，不推断角色/阵营。不新增事件种类或第二历史。JSON旧历史兼容、canonical payload与AI delta更新，玩家回放不含登记。Mayor context只读既有Session/history builder；所有现用AI仍在。
+- 当前App172872B、HostScreen101994B超限；P1/P4尚未完成。U1自定义导入仍未决。原未跟踪文件保持不变，不merge/retarget/force push。
 
 ## 精确基线（新对话必须重新核实）
 
@@ -29,9 +37,9 @@
 
 ## 下一批入口与逐文件审计标准
 
-先补齐8个待审Session文件：DayAbilityRegistrationRulingProducerV1、StorytellerCausalDecisionJournalV1、StorytellerGlobalEventProjectionV1、NightDawnResolutionPlanner、NightTransactionRestoreComposition、NoGreaterJoyKlutzHistoryProducerV1、TroubleBrewingDemonSuccessionResolver、TroubleBrewingRuntimeGameProjector；再横向epistemic/codec、setup、工具/CI及测试。不要重读已审105项冒充新进度；App/HostScreen全文审计已完成但职责删除/体积约束未落实。先形成整组处理建议，再实施已确认删除/解耦。PairInformationOutcome 是可删叶子，但不以零星删除替代全树覆盖。U1自定义导入未决前保留，不阻塞其余审计。
+8个Session文件已在F13全文审计完，不要再次当新增进度。下一组优先实际死亡→继承→新身份/Dawn链：先明确实际结果确认输入、canonical Death/RoleChange及Session单writer，再删除NightDawnResolutionPlanner中的attackOutcome/demonSafeSeats/继承候选/毒生命周期推导、RestoreComposition预测confirmedEvents和SuccessionResolver旧计算，逐个核查App、DemonAttackProductionAdapter、CurrentDemonAuthority、NightHostProjection及专属测试。不得整删必要状态应用，也不得重建大而全facade或兼容archive。
 
-B批关键边界：保留实际Session原子提交、recipient/revision/重复ID防护与现用AI；同夜source已有信息不等于新确认事实非法，需与只读重开/重复点击分开。pair/scalar/Mayor工厂及开局/续规划encode/decode当前没有Host合法候选域重算；App中HOST_DETERMINED等旧注释不作代码证据。后续成组缩减Slayer/Virgin/继承/Dawn/终局、UI实际状态及NightTargets/票数推导，不能按混合文件整体删除真正操作。
+日间Slayer命中/Virgin后果及UI登记展示条件仍含规则，本批只退出登记裁定/重复历史链。之后横向epistemic/codec、setup、工具/CI及测试；两个超限根组件已全文审计但未缩至50,000B。U1未决前保留，不阻塞其他组。实际开局/后夜AI、唯一Session、privacy/revision/duplicate/atomic边界必须保护。
 
 范围先从最新、未截断 Git tree 明确列出所有生产源码、测试、构建配置、脚本和工具；文档/生成物/素材单独说明纳入或排除，不能用全部文件数冒充源码审计分母。已删除文件作为完成历史，不反复作为当前未审项。
 
@@ -48,4 +56,4 @@ B批关键边界：保留实际Session原子提交、recipient/revision/重复ID
 
 ## 可直接粘贴给新对话的指令
 
-读取 AGENTS.md 和当前交接/路线/测试策略，核对远端 PR #334 最新 HEAD、CI/R2 与本地状态。F11 的信息真值/登记投影和 Mayor 候选链已解耦；现在按全 Git 树逐文件审计，在现有全源台账分类为必须保留（Host 控制/记录/AI 推荐/必要支撑）、必须删除、需要解耦、需要人工审核，并记录待审状态和真实完成率。保护现有 AI、唯一 Session、事实/隐私/时序，先形成有证据的分类与整组处理建议，不沿单条旧调用链代替全仓遍历。
+读取 AGENTS.md 和当前交接/路线/测试策略，核对远端 PR #334 最新 HEAD、CI/R2 与本地状态。F13日间明确登记已并入唯一动作事件，独立causal journal整组删除且本地完整验证；优先推进实际死亡/继承/Dawn整组解耦，同时按全 Git 树逐文件审计，在现有全源台账分类为必须保留（Host 控制/记录/AI 推荐/必要支撑）、必须删除、需要解耦、需要人工审核，并记录待审状态和真实完成率。保护现有 AI、唯一 Session、事实/隐私/时序，先形成有证据的分类与整组处理建议，不沿单条旧调用链代替全仓遍历。

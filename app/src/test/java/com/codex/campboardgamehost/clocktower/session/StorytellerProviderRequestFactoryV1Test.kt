@@ -108,7 +108,6 @@ class StorytellerProviderRequestFactoryV1Test {
         assertEquals(PlayerExperienceLevelV1.BEGINNER, context.players[1].experienceLevel)
         assertEquals(listOf(RoleId("Saint")), context.players[1].claimedRoleIds)
         assertEquals(StorytellerDeclaredPressureLevelV1.HIGH, context.players[1].pressureLevel)
-        assertTrue(context.priorDecisions.isEmpty())
     }
 
     @Test
@@ -133,7 +132,6 @@ class StorytellerProviderRequestFactoryV1Test {
         assertEquals("provider-direct", context.historyPrefix?.gameId)
         assertEquals(1L, context.historyPrefix?.exclusiveGlobalSequence)
         assertEquals(listOf("first-poison"), context.historyPrefix?.entries?.map { it.entryId })
-        assertTrue(context.priorDecisions.isEmpty())
     }
 
     private fun pairGame() = GameState(

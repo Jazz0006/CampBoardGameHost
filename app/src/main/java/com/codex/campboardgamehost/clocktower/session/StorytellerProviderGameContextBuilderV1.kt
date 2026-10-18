@@ -35,7 +35,6 @@ internal object StorytellerProviderGameContextBuilderV1 {
 
         return StorytellerProviderGameContextV1(
             players = players,
-            priorDecisions = emptyList(), // Live committed decisions enter through StorytellerCausalDecisionJournalV1.
         )
     }
 
@@ -53,9 +52,8 @@ internal object StorytellerProviderGameContextBuilderV1 {
         require(sessionState.playerInputRevision == sourceRevision.playerInputRevision) {
             "Provider context player-input revision must match the request revision."
         }
-        // Current effective decision events cannot be causally interleaved with GLOBAL_V1 facts.
-        // Until R1C persists exact decision cutoffs and corrections, keep them out of the
-        // historical provider prefix. Coverage explicitly marks PRIOR_DECISIONS unknown.
+        // Confirmed choices belong to the shared action timeline. Capture their exact
+        // action/observation cutoff from this frozen Session, with no parallel decision store.
         val base = build(
             snapshot = snapshot,
             sourceRevision = sourceRevision,

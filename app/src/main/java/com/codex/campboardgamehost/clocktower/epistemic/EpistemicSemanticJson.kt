@@ -51,12 +51,12 @@ object EpistemicSemanticJson {
             "actionId" to value.actionId, "kind" to "slayer-shot", "sequence" to value.sequence,
             "claimantSeat" to value.claimantSeat, "targetSeat" to value.targetSeat,
             "abilityConsumed" to value.abilityConsumed, "hit" to value.hit,
-        )
+        ) + (value.targetRegistersAsDemon?.let { mapOf("targetRegistersAsDemon" to it) } ?: emptyMap())
         is ActionFact.Nomination -> mapOf(
             "actionId" to value.actionId, "kind" to "nomination", "sequence" to value.sequence,
             "nominatorSeat" to value.nominatorSeat, "nomineeSeat" to value.nomineeSeat,
             "firstVirginNomination" to value.firstVirginNomination,
-        )
+        ) + (value.nominatorRegistersAsTownsfolk?.let { mapOf("nominatorRegistersAsTownsfolk" to it) } ?: emptyMap())
         is ActionFact.Vote -> mapOf(
             "actionId" to value.actionId, "kind" to "vote", "sequence" to value.sequence,
             "nominatorSeat" to value.nominatorSeat, "nomineeSeat" to value.nomineeSeat,
@@ -223,11 +223,13 @@ object EpistemicSemanticJson {
             json.getString("actionId"), json.getLong("sequence"),
             json.getInt("claimantSeat"), json.getInt("targetSeat"),
             json.getBoolean("abilityConsumed"), json.getBoolean("hit"),
+            json.nullableBoolean("targetRegistersAsDemon"),
         )
         "nomination" -> ActionFact.Nomination(
             json.getString("actionId"), json.getLong("sequence"),
             json.getInt("nominatorSeat"), json.getInt("nomineeSeat"),
             json.getBoolean("firstVirginNomination"),
+            json.nullableBoolean("nominatorRegistersAsTownsfolk"),
         )
         "vote" -> ActionFact.Vote(
             json.getString("actionId"), json.getLong("sequence"),
@@ -440,5 +442,6 @@ object EpistemicSemanticJson {
     private fun JSONArray.ints(): List<Int> = List(length(), ::getInt)
     private fun JSONArray.strings(): List<String> = List(length(), ::getString)
     private fun JSONObject.nullableString(key: String): String? = if (!has(key) || isNull(key)) null else getString(key)
+    private fun JSONObject.nullableBoolean(key: String): Boolean? = if (!has(key) || isNull(key)) null else getBoolean(key)
     private fun JSONObject.nullableInt(key: String): Int? = if (!has(key) || isNull(key)) null else getInt(key)
 }

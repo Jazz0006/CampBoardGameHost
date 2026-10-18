@@ -47,6 +47,26 @@ class EpistemicSemanticModelTest {
         setupKnowledge = listOf(InformationProposition.SetupProfile(3, 0, 1, 1)),
     )
 
+    @Test
+    fun `registration answers round trip and legacy absence remains unknown`() {
+        listOf<Boolean?>(null, false, true).forEach { answer ->
+            val shot = com.codex.campboardgamehost.clocktower.domain.ActionFact.SlayerShot(
+                "shot", 0L, 1, 2, true, false, answer,
+            )
+            val nomination = com.codex.campboardgamehost.clocktower.domain.ActionFact.Nomination(
+                "nomination", 1L, 2, 3, false, answer,
+            )
+            val formal = state.copy(timeline = listOf(shot, nomination))
+            val json = EpistemicSemanticJson.encode(formal)
+            assertEquals(formal, EpistemicSemanticJson.decodeFormalGameState(json))
+            val entries = org.json.JSONObject(json).getJSONArray("timeline")
+            assertEquals(answer != null, entries.getJSONObject(0).has("targetRegistersAsDemon"))
+            assertEquals(answer != null, entries.getJSONObject(1).has("nominatorRegistersAsTownsfolk"))
+            assertNotEquals(shot.b4CanonicalPayload(), shot.copy(targetRegistersAsDemon = answer != true).b4CanonicalPayload())
+            assertNotEquals(nomination.b4CanonicalPayload(), nomination.copy(nominatorRegistersAsTownsfolk = answer != true).b4CanonicalPayload())
+        }
+    }
+
     @Test fun `schema v2 roots and A1_1 values round trip canonically`() {
         val durableRecord = RecordedEpistemicObservation(
             recordId = "first-night-investigator", phase = StorytellerPhase.FIRST_NIGHT,

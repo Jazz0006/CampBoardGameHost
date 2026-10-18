@@ -69,11 +69,7 @@ import com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticAccepta
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
-import com.codex.campboardgamehost.clocktower.session.StorytellerCausalDecisionJournalV1
-import com.codex.campboardgamehost.clocktower.session.DayAbilityRegistrationRulingProducerV1
 import com.codex.campboardgamehost.clocktower.rules.NoGreaterJoyKlutzChoiceRuleV1
-import com.codex.campboardgamehost.clocktower.session.ConfirmedDaySlayerRegistrationV1
-import com.codex.campboardgamehost.clocktower.session.ConfirmedDayVirginSpyRegistrationV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleChange
@@ -496,9 +492,6 @@ internal fun CampBoardGameHostApp() {
 
     fun confirmedClocktowerPoisonTarget(): String? =
         clocktowerGameSession?.state?.confirmedPoisonTargetName(round)
-
-    fun currentClocktowerCausalJournal(): StorytellerCausalDecisionJournalV1 =
-        requireClocktowerGameSession().causalDecisionJournal
 
     fun currentTroubleBrewingMayorRedirectPendingDecision(): PendingMayorRedirectDecision? {
         if (
@@ -2297,7 +2290,11 @@ internal fun CampBoardGameHostApp() {
                                     )
                                     val request = StorytellerProviderRequestFactoryV1.fromMayorRedirect(
                                         decision = pendingDecision, snapshot = snapshot,
-                                        gameContext = currentClocktowerCausalJournal().contextForRequest(snapshot, session.state),
+                                        gameContext = StorytellerProviderGameContextBuilderV1.build(
+                                            snapshot, StorytellerProviderRevisionV1(
+                                                session.state.gameStateRevision, session.state.playerInputRevision,
+                                            ), session.state,
+                                        ),
                                     )
                                     session.commitConfirmedMayorRedirect(
                                         draft = ActionFactDraft.MayorRedirectChoice(
@@ -2461,8 +2458,8 @@ internal fun CampBoardGameHostApp() {
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
                                 claimantCard != null && targetCard != null
                             ) {
-                                // Player's confirmed public shot precedes the optional Storyteller
-                                // registration ruling; misses and non-functioning claims remain facts.
+                                // One action records the public attempt and any explicitly selected private
+                                // registration; neither a miss nor impairment fabricates a registration.
                                 commitClocktowerConfirmedAction(ActionFactDraft.SlayerShot(
                                     actionId = clocktowerActionId("slayer-shot", targetSeat = targetIndex + 1),
                                     phase = storytellerPhaseFor(),
@@ -2472,41 +2469,8 @@ internal fun CampBoardGameHostApp() {
                                     targetSeat = targetIndex + 1,
                                     abilityConsumed = slayerDecision.consumesUse,
                                     hit = shotWillHit,
+                                    targetRegistersAsDemon = recluseRegistersAsDemon,
                                 ))
-                            }
-                            if (
-                                currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
-                                slayerDecision.effectApplies &&
-                                !clocktowerSlayerUsed &&
-                                targetCard?.clocktowerRole?.enName == "Recluse" &&
-                                targetCard.eliminatedRound == null &&
-                                recluseRegistersAsDemon != null
-                            ) {
-                                // Real public ability adjudication, recorded BEFORE the shot changes
-                                // player death/ability-used state. No fake private information is made.
-                                val session = requireClocktowerGameSession()
-                                val actorSeat = clocktowerSeatFor(claimantName)
-                                val subjectSeat = targetIndex + 1
-                                val rulesetRef = requireNotNull(clocktowerRulesetRef)
-                                val registry = activeGameClocktowerRulesetCatalog
-                                    .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
-                                val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
-                                    gameSnapshot = session.toGameSnapshot(rulesetRef),
-                                    phase = StorytellerPhase.DAY,
-                                    round = round,
-                                    characterRegistry = registry,
-                                )
-                                DayAbilityRegistrationRulingProducerV1.confirmSlayer(
-                                    session = session,
-                                    journal = currentClocktowerCausalJournal(),
-                                    snapshot = snapshot,
-                                    input = ConfirmedDaySlayerRegistrationV1(
-                                        interactionId = "day:$round:slayer:$actorSeat:$subjectSeat",
-                                        slayerSeat = actorSeat,
-                                        recluseSeat = subjectSeat,
-                                        registeredDemonRole = if (recluseRegistersAsDemon) RoleId("Imp") else null,
-                                    ),
-                                )
                             }
                             var shotOutcome: GameOutcome? = null
                             if (shotWillHit && targetIndex >= 0 && targetCard != null) {
@@ -2559,7 +2523,7 @@ internal fun CampBoardGameHostApp() {
                                 )
                             }
                         },
-                        onConfirmedNomination = { nominatorName, nomineeName ->
+                        onConfirmedNomination = { nominatorName, nomineeName, explicitSpyRegistration ->
                             if (currentClocktowerScript in setOf(
                                     ClocktowerScript.TroubleBrewing, ClocktowerScript.NoGreaterJoy,
                                 )
@@ -2581,6 +2545,7 @@ internal fun CampBoardGameHostApp() {
                                     nominatorSeat = clocktowerSeatFor(nominatorName),
                                     nomineeSeat = clocktowerSeatFor(nomineeName),
                                     firstVirginNomination = firstVirginNomination,
+                                    nominatorRegistersAsTownsfolk = explicitSpyRegistration,
                                 ))
                             }
                         },
@@ -2603,46 +2568,7 @@ internal fun CampBoardGameHostApp() {
                                 ))
                             }
                         },
-                        onVirginNomination = { nominatorName, nomineeName, executeNominator, explicitSpyRegistersTownsfolk ->
-                            if (
-                                explicitSpyRegistersTownsfolk != null &&
-                                !clocktowerVirginUsed &&
-                                currentClocktowerScript == ClocktowerScript.TroubleBrewing
-                            ) {
-                                val virginCard = cards.firstOrNull { it.name == nomineeName }
-                                val spyCard = cards.firstOrNull { it.name == nominatorName }
-                                if (
-                                    virginCard?.clocktowerRole?.enName == "Virgin" &&
-                                    spyCard?.clocktowerRole?.enName == "Spy"
-                                ) {
-                                    // The player chose the public nomination; only this Spy type
-                                    // registration is Storyteller discretion. Freeze BEFORE
-                                    // virginUsed, the execution, death or phase changes.
-                                    val session = requireClocktowerGameSession()
-                                    val rulesetRef = requireNotNull(clocktowerRulesetRef)
-                                    val registry = activeGameClocktowerRulesetCatalog
-                                        .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
-                                    val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
-                                        gameSnapshot = session.toGameSnapshot(rulesetRef),
-                                        phase = StorytellerPhase.DAY,
-                                        round = round,
-                                        characterRegistry = registry,
-                                    )
-                                    DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
-                                        session = session,
-                                        journal = currentClocktowerCausalJournal(),
-                                        snapshot = snapshot,
-                                        input = ConfirmedDayVirginSpyRegistrationV1(
-                                            interactionId = "day:$round:virgin:${clocktowerSeatFor(nomineeName)}:" +
-                                                clocktowerSeatFor(nominatorName),
-                                            virginSeat = clocktowerSeatFor(nomineeName),
-                                            spyNominatorSeat = clocktowerSeatFor(nominatorName),
-                                            registersAsTownsfolk = explicitSpyRegistersTownsfolk,
-                                        ),
-                                        confirmedExecution = executeNominator,
-                                    )
-                                }
-                            }
+                        onVirginNomination = { nominatorName, nomineeName, executeNominator ->
                             if (executeNominator) {
                                 val index = cards.indexOfFirst { it.name == nominatorName }
                                 val nominatorCard = cards.getOrNull(index)

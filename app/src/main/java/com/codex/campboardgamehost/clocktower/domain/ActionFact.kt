@@ -75,6 +75,8 @@ sealed interface ActionFact {
         val targetSeat: Int,
         val abilityConsumed: Boolean,
         val hit: Boolean,
+        /** Private explicit answer only; null means no registration was confirmed. */
+        val targetRegistersAsDemon: Boolean? = null,
     ) : ActionFact
 
     /** The confirmed public nomination; first-Virgin consumption is rules-owned mechanical history. */
@@ -84,6 +86,8 @@ sealed interface ActionFact {
         val nominatorSeat: Int,
         val nomineeSeat: Int,
         val firstVirginNomination: Boolean,
+        /** Private explicit answer only; never infer role or alignment from this type. */
+        val nominatorRegistersAsTownsfolk: Boolean? = null,
     ) : ActionFact
 
     /** Voters are explicit seats; ghost voters remain a subset, never reconstructed from text. */

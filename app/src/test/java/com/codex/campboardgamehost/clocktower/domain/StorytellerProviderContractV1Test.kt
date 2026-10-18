@@ -89,7 +89,6 @@ class StorytellerProviderContractV1Test {
                         pressureLevel = StorytellerDeclaredPressureLevelV1.HIGH,
                     ),
                 ),
-                priorDecisions = emptyList(),
             ),
         )
     }

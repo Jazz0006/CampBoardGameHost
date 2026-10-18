@@ -78,13 +78,6 @@ internal data class StorytellerProviderRequestV1(
                 }) { "Scalar-information candidates must be typed legal results." }
             }
 
-            is StorytellerProviderDecisionContextV1.DayAbilityRegistration -> {
-                require(context.actorSeat in stateSeats && context.subjectSeat in stateSeats)
-                require(legalCandidates.all { it.payload is StorytellerProviderCandidatePayloadV1.RegistrationChoice }) {
-                    "Day ability-registration candidates must carry typed choices."
-                }
-            }
-
             is StorytellerProviderDecisionContextV1.RegistrationResolution -> {
                 require(context.sourceSeat in stateSeats && context.subjectSeat in stateSeats)
                 require(legalCandidates.all { candidate ->
@@ -123,15 +116,6 @@ internal data class StorytellerProviderRequestV1(
             require(prefix.sourceRevision == sourceRevision) {
                 "Provider history prefix must match the request's frozen source revision."
             }
-        }
-        require(gameContext.priorDecisions.map { it.eventId }.distinct().size == gameContext.priorDecisions.size) {
-            "Provider prior-decision event IDs must be unique."
-        }
-        require(gameContext.priorDecisions.all { decision ->
-            decision.gameStateRevision <= sourceRevision.gameStateRevision &&
-                decision.playerInputRevision <= sourceRevision.playerInputRevision
-        }) {
-            "Provider request cannot contain future decision history."
         }
     }
 
@@ -254,24 +238,6 @@ internal sealed interface StorytellerProviderDecisionContextV1 {
         }
     }
 
-    /**
-     * Actual public/day ability interaction, NOT a fabricated private information observation.
-     * The Host alone confirms a ruling at the ability's real outcome boundary.
-     */
-    data class DayAbilityRegistration(
-        val interactionId: String,
-        val abilityRole: RoleId,
-        val actorSeat: Int,
-        val subjectSeat: Int,
-        val question: RegistrationQuestion,
-    ) : StorytellerProviderDecisionContextV1 {
-        override val decisionTypeId: String = DAY_ABILITY_REGISTRATION
-        init {
-            require(interactionId.isNotBlank())
-            require(actorSeat > 0 && subjectSeat > 0 && actorSeat != subjectSeat)
-        }
-    }
-
     data class MayorRedirect(
         val mayorSeat: Int,
     ) : StorytellerProviderDecisionContextV1 {
@@ -288,7 +254,6 @@ internal sealed interface StorytellerProviderDecisionContextV1 {
         const val SCALAR_INFORMATION = "scalar-information"
         const val MAYOR_REDIRECT = "mayor-redirect"
         const val REGISTRATION_RESOLUTION = "registration-resolution"
-        const val DAY_ABILITY_REGISTRATION = "day-ability-registration"
     }
 }
 
@@ -385,34 +350,14 @@ internal data class StorytellerProviderPlayerContextV1(
     }
 }
 
-internal data class StorytellerProviderPriorDecisionV1(
-    val eventId: String,
-    val gameStateRevision: Long,
-    val playerInputRevision: Long,
-    val selectedCandidateId: String,
-    val selectedOutcome: DecisionOutcomeSnapshot,
-    val abilityState: AbilityState,
-    val truthRelation: TruthRelation,
-    val registrations: List<RegistrationFact>,
-) {
-    init {
-        require(eventId.isNotBlank()) { "Provider prior-decision event ID cannot be blank." }
-        require(gameStateRevision >= 0) { "Prior game-state revision cannot be negative." }
-        require(playerInputRevision >= 0) { "Prior player-input revision cannot be negative." }
-        require(selectedCandidateId.isNotBlank()) { "Prior selected candidate ID cannot be blank." }
-    }
-}
-
 internal data class StorytellerProviderGameContextV1(
     val players: List<StorytellerProviderPlayerContextV1>,
-    val priorDecisions: List<StorytellerProviderPriorDecisionV1>,
     /** Null means not provided, NEVER a proven complete empty history. */
     val historyPrefix: StorytellerProviderHistoryPrefixV1? = null,
 ) {
     companion object {
         val EMPTY = StorytellerProviderGameContextV1(
             players = emptyList(),
-            priorDecisions = emptyList(),
         )
     }
 }

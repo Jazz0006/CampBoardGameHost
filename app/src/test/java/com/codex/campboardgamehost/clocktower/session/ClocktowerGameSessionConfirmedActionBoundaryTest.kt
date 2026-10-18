@@ -224,6 +224,75 @@ class ClocktowerGameSessionConfirmedActionBoundaryTest {
         assertEquals(1L, session.state.actionTimeline.entries.single().point.globalSequence)
     }
 
+    @Test
+    fun `explicit day registrations share their action identity and reject stale or changed retry atomically`() {
+        val session = create("confirmed-registration")
+        // No actual-role, impairment or rule-candidate prerequisite for a confirmed value.
+        val shot = ActionFactDraft.SlayerShot(
+            "registered-shot", StorytellerPhase.DAY, 2, 1, 1, 2,
+            abilityConsumed = false, hit = false, targetRegistersAsDemon = true,
+        )
+        val first = confirm(session, shot)
+        assertEquals(true, (first.fact as ActionFact.SlayerShot).targetRegistersAsDemon)
+        val accepted = session.state
+        assertEquals(first, session.commitConfirmedGameAction(shot, base, 0L))
+        org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
+            confirm(session, shot.copy(targetRegistersAsDemon = false))
+        }
+        org.junit.Assert.assertThrows(IllegalStateException::class.java) {
+            session.commitConfirmedGameAction(shot.copy(actionId = "stale-shot", sequence = 2), base, 0L)
+        }
+        assertEquals(accepted, session.state)
+        confirm(session, ActionFactDraft.Nomination(
+            "registered-nomination", StorytellerPhase.DAY, 2, 2, 2, 3,
+            firstVirginNomination = false, nominatorRegistersAsTownsfolk = false,
+        ))
+        assertEquals(false, (session.state.actionTimeline.entries.last().fact as
+            ActionFact.Nomination).nominatorRegistersAsTownsfolk)
+        assertEquals(base, session.state.gameState)
+        assertEquals(2L, session.state.gameStateRevision)
+        assertEquals(listOf(0L, 1L), session.state.actionTimeline.entries.map { it.point.globalSequence })
+    }
+
+    @Test
+    fun `AI receives only explicit registration answers while public replay keeps them private`() {
+        val session = create("private-registration")
+        listOf<Boolean?>(null, false, true).forEachIndexed { index, answer ->
+            confirm(session, ActionFactDraft.SlayerShot(
+                "shot-$index", StorytellerPhase.DAY, 2, session.nextInputSequence, 1, 2,
+                abilityConsumed = true, hit = false, targetRegistersAsDemon = answer,
+            ))
+            confirm(session, ActionFactDraft.Nomination(
+                "nomination-$index", StorytellerPhase.DAY, 2, session.nextInputSequence, 2, 3,
+                firstVirginNomination = false, nominatorRegistersAsTownsfolk = answer,
+            ))
+        }
+        val prefix = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(
+            session.state, com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1(
+                session.state.gameStateRevision, session.state.playerInputRevision,
+            ),
+        )
+        val encoded = StorytellerGlobalEventProjectionV1.encode(prefix)
+        assertEquals(6, encoded.length())
+        org.junit.Assert.assertFalse(encoded.getJSONObject(0).has("targetRegistersAsDemon"))
+        org.junit.Assert.assertFalse(encoded.getJSONObject(1).has("nominatorRegistersAsTownsfolk"))
+        assertEquals(false, encoded.getJSONObject(2).getBoolean("targetRegistersAsDemon"))
+        assertEquals(false, encoded.getJSONObject(3).getBoolean("nominatorRegistersAsTownsfolk"))
+        assertEquals(true, encoded.getJSONObject(4).getBoolean("targetRegistersAsDemon"))
+        assertEquals(true, encoded.getJSONObject(5).getBoolean("nominatorRegistersAsTownsfolk"))
+        val delta = StorytellerGlobalEventProjectionV1.encode(prefix, 4L)
+        assertEquals(2, delta.length())
+        assertEquals("slayer", delta.getJSONObject(0).getString("type"))
+        session.state.gameState.players.forEach { player ->
+            val replay = com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
+                player.seat, session.state.actionTimeline, session.state.epistemicObservationLog,
+            )
+            assertEquals(6, replay.size)
+            org.junit.Assert.assertFalse(replay.toString().contains("RegistersAs"))
+            assertEquals(listOf(0L, 1L, 2L, 3L, 4L, 5L), replay.map { it.point.globalSequence })
+        }
+    }
+
     private fun confirm(session: ClocktowerGameSession, draft: ActionFactDraft) =
         session.commitConfirmedGameAction(
             draft = draft,

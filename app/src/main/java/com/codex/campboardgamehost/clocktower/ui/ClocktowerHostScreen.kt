@@ -129,8 +129,8 @@ internal fun ClocktowerJudgeScreen(
     onConfirmArtistQuestion: (String) -> Unit,
     onSlayerShot: (String, String, Boolean?) -> Unit,
     onPreflightVirginExecution: (String) -> Unit,
-    onVirginNomination: (String, String, Boolean, Boolean?) -> Unit,
-    onConfirmedNomination: (String, String) -> Unit,
+    onVirginNomination: (String, String, Boolean) -> Unit,
+    onConfirmedNomination: (String, String, Boolean?) -> Unit,
     onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
@@ -342,11 +342,12 @@ internal fun ClocktowerJudgeScreen(
                         if (confirmation.firstVirginNomination && confirmation.virginExecutes) {
                             onPreflightVirginExecution(confirmation.nominator)
                         }
-                        onConfirmedNomination(confirmation.nominator, confirmation.nominee)
+                        onConfirmedNomination(
+                            confirmation.nominator, confirmation.nominee, confirmation.explicitSpyRegistration,
+                        )
                         if (confirmation.firstVirginNomination) {
                             onVirginNomination(
                                 confirmation.nominator, confirmation.nominee, confirmation.virginExecutes,
-                                confirmation.explicitSpyRegistration,
                             )
                         }
                         if (!confirmation.virginExecutes) dayMode = ClocktowerDayMode.Vote
