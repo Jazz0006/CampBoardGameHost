@@ -1,12 +1,17 @@
-# 新对话交接：F12-H 间谍共享方桌替代专用魔典及产品必要性清理（2026-10-19）
+# 新对话交接：F12-I 保留跨局开局防重复，清理影子玩家历史与旧Mayor/FT门禁（2026-10-19）
 
 ## 先读与现行授权
 
-先读AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，然后读原MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md的F12-H/F12-G/F12-F/F12-E/F15/F12-D/F12。唯一逐路径状态维护在原台账，不另建库存或NEXT。
+先读AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，然后读原MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md的F12-I/F12-H/F12-G/F12-F/F12-E/F15/F12-D/F12。唯一逐路径状态维护在原台账，不另建库存或NEXT。
 
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **所有者新增硬保留要求（2026-10-19）**：开局前的**角色阵容多样性**（不要连续重复相同角色/展示阵容）与**同一玩家跨局角色轮换**（尽量不要连续获得相同身份）必须共同保留，属于实际产品体验，不能再以“删除也可开局”为理由删除。曾在本轮未提交工作树中尝试删SetupDiversitySelector/History、TemplateRepository及其测试、断开TB历史调用；接到纠正后通过远端真实原HEAD逐字恢复，已验证工作树clean，没有commit/push这些误删。必须保留TB开局prep中的history、近期PlayerStartingIdentityHistory、rotation record/store、DealPlanner的minimumRotationCostAssignment及对应测试。不要擅自对其改成单纯随机。
+- **本轮F12-I生产代码已验收**：基线f8cdf8af，提交`eb702ff6387c8b4e28425986e0e089401028130a`（旧PlayerHistoricalTimeline完全没有生产consumer，移除并缩窄混合测试；Mayor仅singleton合法结果自动选定/自动Next及Authority整体退休），**CI #4389/R2 #3969 SUCCESS**。随后提交`69f1bf31df067e3c0d586f6e4a5f93d77d3781cc`（FT Boolean始终YES/NO，删旧Host唯一合法项auto分支/测试，保留AI建议优先和人工确认），**[CI #4390 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39174608692)**（full Android JVM+Debug APK，ASP/real Clingo/gate均通过）、**[R2 #3970 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39174608628)**。从f8cdf8..69f1bf合计13文件+29/-610（**净删581行、3生产+3专属旧测试退出**）。没有付费API或真机；现用开局/后夜AI、Session实际Mayor/FT结果、私密事实/版本安全均保留。
+- **台账**：原463源路径减6个删除文件、净新增3个曾待审的真实合同全文审计，现行**171/457（37.42%）已审、286待审、0审计中**，逐路径见唯一MINIMAL_HOST_FULL_SOURCE_AUDIT的F12-I；文档将有独立提交导致HEAD前进，勿把docs-only CI当成上述代码验收。
+- **后续**：在两类防重复保留的前提下，继续审已标需要解耦的旧规则生产调用。Sage全pair枚举仍被真实Sage UI消费且当前用户无法从该UI直接结构化选择任意两座位，**应先迁移到直接手工pair/AI确认再整删候选生成**，不应直接砍掉还能公布信息的入口；随后Ravenkeeper/Monk目标门禁、Klutz自动结算、日间规则判输赢、老夜间预览及超50KB组件。Draft #334维持原base，未批准不merge/retarget/force-push。
 
 - **新产品删减准则（所有者2026-10-19确认）**：旧模块即使有生产调用，若取消后仍能按现有方桌/人工确认/Session事实/AI推荐正常游戏，就先移除/替换调用再整删该旧模块及专属测试；绝不能单凭当前有调用判保留，低概率特例暂交给说书人处理。真正无替代且关系到继续游戏、唯一事实/隐私/原子性与正在运行的AI链才保留。此项已写入AGENTS.md、HOST_RULES_AI_REBUILD路线和TESTING_STRATEGY。
 - **F12-H已经实际实施并全验收**：从clean`fc80fd1a`开始，代码提交`7982b654`移除Spy独立Show Grimoire页面与按钮、首夜/后夜生成的GrimoireState/ReminderToken镜像、独立中毒Spy规则界面、Spy观察导致红鲱鱼提前的过度依赖、相应JSON/历史copy，以及零引用PairInformationOutcome。Spy现在在原方桌上显示唤醒指定座位、拿手机给玩家看、收回再按原Next；未新增确认按钮，普通Spy身份/登记/其他信息记录保留。2个生产文件+4个专属旧测试文件整删。最初CI #4386旧测试要求Spy前确定红鲱鱼失败，修正测试而非恢复旧依赖，最终代码HEAD **`f7f47d1e28b5fd74db61179a3c22736f6ca04d3d`**，GitHub compare**18文件+20/-869、净删849行**，精确 **[CI #4387 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39172098629)**（Android full JVM+Debug APK、ASP、Clingo、gate）、**[R2 #3967 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39172098663)**。无真机、无收费API。
@@ -48,9 +53,9 @@
 - 生产净删642行/30217B、测试净删1300行/47578B，共1942行/77795B。当前883跟踪文件，241生产+178测试Kotlin；F15完工时475项、116已审计；之后F12-D已新增横向6项，当前122已审计（25.68%）、0审计中、353待审。每路径状态及删除历史只维护在原台账F12/F15。
 - App159449B、HostScreen99682B仍超50,000B；Session42993B、新界面4673B未新增超限。P1/P4未完成。U1无生产入口的自定义导入仍待所有者决定，本批无新增决策阻塞。
 
-## 下一任务：从F12-H继续未审291项，以可继续游戏为准则整组删减
+## 下一任务：从F12-I继续未审286项，同时保护两类跨局防重复
 
-**最新正式批准：生产调用不是保留证据；游戏有现成替代或说书人可绕过就删除整条过时功能及测试，无法继续实际游戏或会破坏唯一Session、必要事实/隐私、AI推荐时才保留。F12-H已实践（取消Spy专用页）；当前台账172/463、291待审。下批从291项横向继续，并挑无需保留的现有生产调用做整组删除，不拿净删行数冒充完成全仓语义审计。** 保持唯一现行台账，横向覆盖epistemic/codec、catalog/setup、平台/transport、tools/CI和测试，全文读取并验证真实消费者后再给最终分类；不重读已审文件冒充新进度。再依据横向结果选规模大、证据闭合的一组退休。
+**当前两条并行准则**：旧功能生产有调用不构成保留理由、可以用真实Session/人工或现用AI等价继续游戏则删除；但开局角色阵容防重复与同一玩家跨局身份防重复已被所有者明确认定必须保留，绝不再次擅删。F12-I退役public影子历史与Mayor/FT旧单例真值门禁，现行171/457已审、286待审；下一轮从286项继续横向审计并处理有等价可用入口的旧模块，不能用净删行数冒充完成全仓审计。** 保持唯一现行台账，横向覆盖epistemic/codec、catalog/setup、平台/transport、tools/CI和测试，全文读取并验证真实消费者后再给最终分类；不重读已审文件冒充新进度。再依据横向结果选规模大、证据闭合的一组退休。
 
 F15未清空所有Host Rules：DemonAttackProductionAdapter仍仅给现有信息步骤作只读死亡预览，Sage/Ravenkeeper触发/毒展示、日间自动继承/终局、Klutz/日落清除及旧Flow模板仍有消费者。最终实际死者可与早前预览不同，后续UI补充信息与触发流程仍需审计及真机验收。新NoNightDeaths的跨项目消费者仍需完整合同复核；不要声称已做外部服务/付费/真机验证。夜间已退出旧规则顺便自动判终局，实际结果提交后允许继续；日间终局规则尚在。
 

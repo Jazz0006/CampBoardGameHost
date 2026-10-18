@@ -1,10 +1,12 @@
-# 当前开发路线（2026-10-19，F12-H 删除间谍专用展示与按必要性退役旧模块）
+# 当前开发路线（2026-10-19，F12-I 保留两类跨局防重复并清理旧门禁）
 
 ## 当前状态
 
+**最新F12-I**：所有者在清理期间明确要求永久保留两个独立开局体验：（1）连续局阵容/展示角色避免重复，（2）同一玩家跨局尽量不被分配相同身份。开发机先前**未提交**的SetupDiversitySelector/History、TemplateRepository及rotation history/role assignment和专属测试删除，已全部恢复，git_state再次确认没有变动；不删/改相关生产行为。其它确认可替代模块继续减法：退役PlayerHistoricalTimeline影子公开历史、Mayor singleton Host-legal自动结果及自动跳步（保留实际选择/Session确认）、FT Host唯一Boolean自动判定（保留人工YES/NO及AI推荐）；3生产+3专属旧测试整删，GitHub范围f8cdf8af..69f1bf31 **13文件+29/-610、净删581行**。实际代码经过两个独立检查点：eb702ff6 CI #4389/R2 #3969 SUCCESS，最终69f1bf31 **[CI #4390 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39174608692)**（Android全单测+Debug APK、ASP、Clingo、gate）及 **[R2 #3970 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39174608628)**。现行台账**171/457（37.42%）已审、286待审**；无真机或付费模型调用。下批清Sage等之前先保留结构化人工两座位决定与AI原有效行为，避免仅删除候选导致无法正常公布。P1/P4继续。
+
 **最新F12-H（2026-10-19）**：所有者明确“已有生产调用不是保留理由；删除后游戏可按既有方桌/人工操作/Session/AI继续则删除整条旧链，只有不能替代的基本游戏、事实/安全和AI路径保留”。已实施首夜/后夜间谍只提示唤醒具体座位、说书人把当前方桌给间谍看后收回手机点击原下一步；正式取消“展示魔典”按钮、单独魔典视图、GrimoireState/ReminderToken DTO及JSON、独立中毒Spy gate、Spy→红鲱鱼旧依赖。两个生产文件及四个专属旧测试文件整删，还清除孤立PairInformationOutcome。GitHub代码范围 `fc80fd1a..f7f47d1e` **18文件+20/-869，净删849行**。第一完整CI #4386失败因旧FirstNightFlowTest强制红鲱鱼先于Spy；已退休该测试并保留占卜师前置事实测试，最终精确代码 `f7f47d1e28b5fd74db61179a3c22736f6ca04d3d` 的 **[CI #4387 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39172098629)**（Android full JVM+Debug APK、ASP/real Clingo/gate成功）及 **[R2 #3967 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39172098663)**。唯一台账移除6文件后**172/463（37.15%）已审、291待审**。App/HostScreen仍超50,000B，P1/P4未完成。
 
-**当前最新（F12-G）**：实际删除无生产调用的FormalGameState、FormalPlayerState、PlayerKnowledgeSnapshot及配套JSON/旧Timeline绑定，专属旧测试文件1个退出，两个混合测试保留真实global chronology/私密观察合同。代码起点`4da03849`、最终代码SHA **`8644e7575b67d9f3bef6cc269c7c93bca4332bf1`**，GitHub精确比对7文件+8/-737（净删729行）。首轮CI #4383 Kotlin import误删失败，定位只补回`Collections`后最终完整Android **CI #4384 SUCCESS / R2 #3964 SUCCESS**，ASP/真实Clingo/gate通过。新全文审计7项、退役原待审测试1项：**177/469（37.74%）已审，292待审**。现用AI与Session事实/隐私均未修改。
+**历史F12-G**：实际删除无生产调用的FormalGameState、FormalPlayerState、PlayerKnowledgeSnapshot及配套JSON/旧Timeline绑定，专属旧测试文件1个退出，两个混合测试保留真实global chronology/私密观察合同。代码起点`4da03849`、最终代码SHA **`8644e7575b67d9f3bef6cc269c7c93bca4332bf1`**，GitHub精确比对7文件+8/-737（净删729行）。首轮CI #4383 Kotlin import误删失败，定位只补回`Collections`后最终完整Android **CI #4384 SUCCESS / R2 #3964 SUCCESS**，ASP/真实Clingo/gate通过。新全文审计7项、退役原待审测试1项：**177/469（37.74%）已审，292待审**。现用AI与Session事实/隐私均未修改。
 
 **当前最新（F12-F，MiniMCP）**：在`56975956`基线完成32个原待审文件全文语义审计，整删旧PROD-GLOBAL 3B2/3B3独立实验2脚本/2专属测试及过时P1分支专用CI工作流、删掉主CI中的6行旧Python运行步骤。代码独立提交`e6faea27bb28a571b45669bf2357af0b11e4f863`并推送，GitHub实际对比6文件净删1087行（旧台账估计约52,165B）；精确代码完整Android（full JVM+Debug APK）CI #4381 SUCCESS / R2 #3961 SUCCESS，ASP、Clingo、CI gate均通过。本批后**170/470（36.17%）已审、300待审**，新改动不涉及Android应用源码或现用AI模型链。
 
