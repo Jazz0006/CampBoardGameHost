@@ -16,47 +16,6 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKi
 
 /** Direct RES-1 engine decision -> RES-2 neutral provider request materialization. */
 internal object StorytellerProviderRequestFactoryV1 {
-    fun fromPairInformation(
-        decision: PendingPairInformationDecision,
-        snapshot: TroubleBrewingGameSnapshotV1,
-        gameContext: StorytellerProviderGameContextV1 = StorytellerProviderGameContextV1.EMPTY,
-        coordinationHorizon: StorytellerProviderCoordinationHorizonV1 =
-            StorytellerProviderCoordinationHorizonV1.CURRENT_DECISION_ONLY,
-    ): StorytellerProviderRequestV1 {
-        require(decision.requestIdentity.gameId == snapshot.gameId) {
-            "Pair provider request must use the pending decision's canonical game."
-        }
-        val context = StorytellerProviderDecisionContextV1.FirstNightPairInformation(
-            sourceSeat = decision.sourceSeat,
-            abilityRole = decision.abilityRole,
-            reliability = decision.reliability,
-        )
-        return StorytellerProviderRequestV1(
-            identity = StorytellerProviderDecisionIdentityV1(
-                gameId = snapshot.gameId,
-                scriptId = snapshot.script.value,
-                decisionTypeId = context.decisionTypeId,
-                decisionId = decision.requestIdentity.requestId,
-            ),
-            sourceRevision = decision.revision.toProviderRevision(),
-            state = StorytellerProviderGameStateV1.TroubleBrewing(snapshot),
-            decisionContext = context,
-            legalCandidates = decision.legalCandidates.map { candidate ->
-                StorytellerProviderCandidateV1(
-                    candidateId = candidate.candidateId,
-                    payload = StorytellerProviderCandidatePayloadV1.PairInformation(
-                        shownRoleId = candidate.outcome.shownRole?.value,
-                        candidateSeats = candidate.outcome.candidateSeats.toList(),
-                        semanticTruth = candidate.semanticTruth,
-                        registrations = candidate.registrations.toList(),
-                    ),
-                )
-            },
-            gameContext = gameContext,
-            coordinationHorizon = coordinationHorizon,
-        )
-    }
-
     /** Adapts an existing Host scalar result domain into the common LLM interface. */
     fun fromScalarInformation(
         identity: StorytellerDecisionRequestIdentity,

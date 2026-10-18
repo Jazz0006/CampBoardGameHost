@@ -29,46 +29,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StorytellerProviderRequestFactoryV1Test {
-    private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
-
     @Test
-    fun `pair and Mayor engine decisions materialize neutral requests without recommendation implementation`() {
-        val pairRevision = StorytellerDecisionRevision(3, 2)
-        val pairDecision = PairInformationDecisionBoundary.create(
-            requestIdentity = StorytellerDecisionRequestIdentity(
-                gameId = "provider-direct",
-                requestId = "first-night:investigator:1",
-            ),
-            revision = pairRevision,
-            game = pairGame(),
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = RoleId("Investigator"),
-            reliability = ReliabilityState.RELIABLE,
-        )
-        val pairRequest = StorytellerProviderRequestFactoryV1.fromPairInformation(
-            decision = pairDecision,
-            snapshot = runtimeSnapshot(
-                phase = StorytellerPhase.FIRST_NIGHT,
-                gameRevision = 3,
-                playerRevision = 2,
-            ),
-        )
-
-        assertEquals(
-            StorytellerProviderDecisionContextV1.FIRST_NIGHT_PAIR_INFORMATION,
-            pairRequest.identity.decisionTypeId,
-        )
-        assertEquals(
-            pairDecision.legalCandidates.map { it.candidateId },
-            pairRequest.legalCandidateIds,
-        )
-        assertTrue(
-            pairRequest.legalCandidates.all {
-                it.payload is StorytellerProviderCandidatePayloadV1.PairInformation
-            },
-        )
-
+    fun `Mayor target decision materializes neutral request without recommendation implementation`() {
         val mayorRevision = StorytellerDecisionRevision(8, 5)
         val mayorDecision = MayorRedirectDecisionBoundary.create(
             requestIdentity = StorytellerDecisionRequestIdentity(

@@ -87,7 +87,7 @@ class ClocktowerCurrentResidualScopeV2Test {
             state = session.state, phase = StorytellerPhase.FIRST_NIGHT,
             round = 1, steps = steps, startIndex = 0, cards = emptyList(),
             snapshot = snapshot(session), gameContext = StorytellerProviderGameContextV1.EMPTY,
-            pairContext = null)
+            )
         assertTrue(scope.requests.isEmpty())
         assertEquals(0, scope.barrierStep)
         assertEquals("PLAYER_OR_HOST_ACTION_NOT_YET_CONFIRMED", scope.barrierReason)
@@ -95,7 +95,7 @@ class ClocktowerCurrentResidualScopeV2Test {
             state = session.state, phase = StorytellerPhase.FIRST_NIGHT,
             round = 1, steps = steps, startIndex = 1, cards = emptyList(),
             snapshot = snapshot(session), gameContext = StorytellerProviderGameContextV1.EMPTY,
-            pairContext = null)
+            )
         assertEquals(null, past.barrierStep)
         assertTrue(past.requests.isEmpty())
     }
@@ -113,7 +113,7 @@ class ClocktowerCurrentResidualScopeV2Test {
             steps = listOf(empath, step(ClocktowerNightAction.DemonKill)),
             startIndex = 0, cards = cards, snapshot = snapshot(session, StorytellerPhase.NIGHT, 2),
             gameContext = StorytellerProviderGameContextV1.EMPTY,
-            pairContext = null)
+            )
         assertEquals(1, scope.requests.size)
         assertEquals(1, scope.barrierStep)
         val open = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
@@ -142,7 +142,7 @@ class ClocktowerCurrentResidualScopeV2Test {
             ClocktowerCurrentResidualScopeV2.collect(
                 host.state, phase, round, listOf(information), 0, cards,
                 snapshot(host, phase, round), StorytellerProviderGameContextV1.EMPTY,
-                pairContext = null)
+                )
         assertTrue(scope(StorytellerPhase.FIRST_NIGHT, 1).requests.isEmpty())
         val second = scope(StorytellerPhase.NIGHT, 2)
         assertEquals(1, second.requests.size)
@@ -250,7 +250,7 @@ class ClocktowerCurrentResidualScopeV2Test {
                 step(ClocktowerNightAction.Poison)), startIndex = 0,
             cards = emptyList(), snapshot = snapshot(session),
             gameContext = StorytellerProviderGameContextV1.EMPTY,
-            pairContext = null, redHerringAlreadyChosen = true)
+            redHerringAlreadyChosen = true)
         assertEquals(1, scope.barrierStep)
     }
 }

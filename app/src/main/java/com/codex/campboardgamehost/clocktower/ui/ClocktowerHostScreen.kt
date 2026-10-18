@@ -1849,14 +1849,8 @@ internal fun ClocktowerJudgeScreen(
         require(nightSteps.isNotEmpty()) { "A started night must contain an actionable step." }
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
-        val globalAiPending = if (globalAiAssisted && phase == ClocktowerPhase.FirstNight) {
-            pendingGlobalFirstNightPairDecision(
-                currentStep, phase, round, cards, firstNightPairDecisionContext,
-            )
-        } else null
         val globalAiScalarPending = if (globalAiAssisted &&
-            phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
-            globalAiPending == null
+            phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night)
         ) pendingGlobalNightScalarDecision(
             currentStep, phase, round, currentStepIndex, cards, gameId,
             InformationDecisionRevision(gameStateRevision, playerInputRevision),
@@ -1868,11 +1862,9 @@ internal fun ClocktowerJudgeScreen(
                 currentStep.action == ClocktowerNightAction.MayorRedirect &&
                 currentStep.isRealAction
         }
-        val globalAiDecisionIdentity = globalAiPending?.requestIdentity
-            ?: globalAiScalarPending?.requestIdentity
+        val globalAiDecisionIdentity = globalAiScalarPending?.requestIdentity
             ?: globalAiTargetPending?.requestIdentity
-        val globalAiLegalIds = globalAiPending?.legalCandidates?.map { it.candidateId }
-            ?: globalAiScalarPending?.legalCandidates?.map { it.candidateId }
+        val globalAiLegalIds = globalAiScalarPending?.legalCandidates?.map { it.candidateId }
             ?: globalAiTargetPending?.pending?.legalCandidates?.map { it.candidateId }
         val globalAiCurrentKey = globalAiDecisionIdentity?.let { identity ->
             val legalIds = requireNotNull(globalAiLegalIds)
@@ -1893,10 +1885,6 @@ internal fun ClocktowerJudgeScreen(
         val residualRecommendedOption = if (globalAiCurrentKey != null &&
             globalAiAdviceKey == globalAiCurrentKey
         ) when {
-            globalAiPending != null -> ClocktowerResidualDisplayMatcherV2.matchPair(
-                globalAiPending,
-                globalResidualRecommendedChoices[globalAiPending.requestIdentity.requestId],
-                currentStep.manualInformationCandidates)
             globalAiScalarPending != null -> ClocktowerResidualDisplayMatcherV2.matchScalar(
                 globalAiScalarPending,
                 globalResidualRecommendedChoices[globalAiScalarPending.requestIdentity.requestId],
