@@ -11,11 +11,12 @@ import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import com.codex.campboardgamehost.clocktower.rules.NaturalPairInformationCandidateGenerator
 import org.junit.Test
 
 class NaturalPairInformationCandidateGeneratorPerceivedAbilityTest {
     @Test
-    fun `first night aggregation includes Drunk perceived Investigator registration truth`() {
+    fun `Drunk perceived Investigator retains current pair semantics without whole-night aggregation`() {
         val investigator = RoleId("Investigator")
         val poisoner = RoleId("Poisoner")
         val game = GameState(
@@ -31,7 +32,7 @@ class NaturalPairInformationCandidateGeneratorPerceivedAbilityTest {
         )
 
         val candidates = NaturalPairInformationCandidateGenerator
-            .generatePerceivedFirstNightInformationSpace(game)
+            .generateHealthyInformationSpace(game, 1, investigator)
         val perceivedInvestigatorCandidates = candidates.filter { candidate ->
             candidate.effects
                 .filterIsInstance<EffectDraft.PlayerInformation>()

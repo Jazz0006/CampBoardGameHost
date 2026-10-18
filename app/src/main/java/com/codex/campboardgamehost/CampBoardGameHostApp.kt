@@ -39,7 +39,6 @@ import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.session.OpeningPlayerExperienceV1
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
-import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
@@ -50,10 +49,6 @@ import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContextBuilder
-import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
-import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.NoGreaterJoyKlutzHistoryProducerV1
@@ -99,7 +94,6 @@ import com.codex.campboardgamehost.clocktower.session.NightDawnDeathResolutionIn
 import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
 import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuation
 import com.codex.campboardgamehost.clocktower.session.resolveTroubleBrewingImpSelfKillSuccession
-import com.codex.campboardgamehost.clocktower.session.TroubleBrewingFirstNightPrecomputeCoordinator
 import com.codex.campboardgamehost.clocktower.setup.NoGreaterJoyProductionSetupPreparer
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDealRoleResolver
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkCandidate
@@ -480,13 +474,6 @@ internal fun CampBoardGameHostApp() {
     val clocktowerNightStepIndexState = remember { mutableStateOf(0) }
     val clocktowerDayModeState = remember { mutableStateOf(ClocktowerDayMode.Overview) }
     val clocktowerGhostVoteAuthority = ClocktowerGhostVoteAuthority.from(clocktowerActionTimeline)
-    val troubleBrewingFirstNightPrecomputeScope = rememberCoroutineScope()
-    val troubleBrewingFirstNightPrecomputeCoordinator = remember {
-        val recommendationCoordinator = ClocktowerRecommendationCoordinator()
-        TroubleBrewingFirstNightPrecomputeCoordinator<TroubleBrewingFirstNightPairDecisionContext, List<DecisionCandidate<SetupClueOutcome>>> { request ->
-            recommendationCoordinator.naturalPairCandidates(request)
-        }
-    }
     fun publishClocktowerSessionView() {
         clocktowerSessionView = clocktowerGameSession?.view
     }
@@ -519,31 +506,6 @@ internal fun CampBoardGameHostApp() {
 
     fun currentClocktowerCausalJournal(): StorytellerCausalDecisionJournalV1 =
         requireClocktowerGameSession().causalDecisionJournal
-
-    fun currentTroubleBrewingFirstNightPairDecisionContext(): TroubleBrewingFirstNightPairDecisionContext? {
-        if (
-            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
-            clocktowerPhase != ClocktowerPhase.FirstNight ||
-            round != 1
-        ) {
-            return null
-        }
-        val session = clocktowerGameSession ?: return null
-        val rulesetRef = clocktowerRulesetRef ?: return null
-        val registry = activeGameClocktowerRulesetCatalog
-            .ruleset(ClocktowerScript.TroubleBrewing)
-            .characterRegistry
-        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
-            gameSnapshot = session.toGameSnapshot(rulesetRef),
-            phase = StorytellerPhase.FIRST_NIGHT,
-            round = round,
-            characterRegistry = registry,
-        )
-        return TroubleBrewingFirstNightPairDecisionContextBuilder.build(
-            snapshot = snapshot,
-            characterRegistry = registry,
-        )
-    }
 
     fun currentTroubleBrewingMayorRedirectPendingDecision(): PendingMayorRedirectDecision? {
         if (
@@ -971,12 +933,10 @@ internal fun CampBoardGameHostApp() {
         ) return
         val session = clocktowerGameSession ?: return
         val requestedOperationMode = storytellerOperationMode
-        val context = currentTroubleBrewingFirstNightPairDecisionContext()
-        val pendingPair = context?.let {
-            pendingGlobalFirstNightPairDecision(
-                step, clocktowerPhase, round, cards, it,
-            )
-        }
+        val pendingPair = pendingGlobalFirstNightPairDecision(
+            step, clocktowerPhase, round, cards, session.state.gameState, session.state.gameId,
+            StorytellerDecisionRevision(session.state.gameStateRevision, session.state.playerInputRevision),
+        )
         val pendingScalar = if (clocktowerPhase in setOf(
                 ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
             pendingPair == null
@@ -1022,7 +982,7 @@ internal fun CampBoardGameHostApp() {
             return
         }
         val providerRequest = runCatching {
-            val snapshot = context?.snapshot ?: run {
+            val snapshot = run {
                 val rulesetRef = requireNotNull(clocktowerRulesetRef)
                 val registry = activeGameClocktowerRulesetCatalog
                     .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
@@ -1085,7 +1045,6 @@ internal fun CampBoardGameHostApp() {
                     state = session.state, phase = phasePosition.phase, round = round,
                     steps = steps, startIndex = stepIndex, cards = cards,
                     snapshot = snapshot, gameContext = providerRequest.gameContext,
-                    pairContext = context,
                     fortuneTellerSelectedNames = listOfNotNull(
                         clocktowerFortuneTellerFirst, clocktowerFortuneTellerSecond),
                     mayorPending = pendingTarget,
@@ -1337,16 +1296,6 @@ internal fun CampBoardGameHostApp() {
                 committedSetup = committedSetup,
                 characterRegistry = characterRegistry,
             )
-        currentTroubleBrewingFirstNightPairDecisionContext()?.let { request ->
-            troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
-                request = request,
-                launchBackground = { work ->
-                    troubleBrewingFirstNightPrecomputeScope.launch(Dispatchers.Default) {
-                        work()
-                    }
-                },
-            )
-        }
     }
 
     /** 3C: the only INITIAL paid model request for personal-direct TB opening. */
@@ -2197,7 +2146,6 @@ internal fun CampBoardGameHostApp() {
                         script = currentClocktowerScript,
                         gameId = clocktowerGameId,
                         gameSeed = clocktowerGameSeed,
-                        firstNightPairDecisionContext = currentTroubleBrewingFirstNightPairDecisionContext(),
                         globalAiAssisted = storytellerOperationMode != StorytellerOperationMode.MANUAL,
                         globalAiAutomatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC,
                         jointOpeningAvailable = openingHintsUsable,
@@ -2223,18 +2171,6 @@ internal fun CampBoardGameHostApp() {
                                 latest.nextTimelineGlobalSequence == plan.exclusiveGlobalSequence
                         }?.recommendation?.choices.orEmpty(),
                         onRequestGlobalAiAdvice = ::requestLiveGlobalAdvice,
-                        firstNightNaturalPairReadyProvider =
-                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
-                                troubleBrewingFirstNightPrecomputeCoordinator::readyFor
-                            } else {
-                                null
-                            },
-                        firstNightNaturalPairResultProvider =
-                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
-                                troubleBrewingFirstNightPrecomputeCoordinator::resultFor
-                            } else {
-                                null
-                            },
                         phase = clocktowerPhase,
                         round = round,
                         nightCheckpoint = currentClocktowerNightCheckpoint(),

@@ -2,6 +2,18 @@
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
 
+## F8：首夜无效候选预计算、等待门禁与重复上下文整链删除（本地完整通过，远端待验收）
+
+- 起点：远端/本地 `0e7e4a4e6c1c51c3522456393349d51240e109b3`，main `61cd6796`，PR #334 Draft/base `64be3090`；Mini MCP 仍为 `a2cbcac8`，本批继续本地直接读写。读取完整 979 文件树，横向比较大文件/消费者后选中整个首夜预计算链，而非沿某个规则小函数逐段清理。
+- **消费证据**：App 在 setup commit 后预热整局 natural pair 候选；HostScreen 通过 ready/result provider 拉取并保存在 `firstNightNaturalPairCandidates`。该结果没有送入任何信息 Builder、AI 请求或确认回调，唯一读取用途是 `firstNightNaturalPairPrecomputeReady`，进而阻塞手动/自动开始首夜并保留失败重试 UI 状态。实际 AI 配对由另一个 current-step producer 独立生成，信息展示已有结构化手工选项。
+- **整删 3 个生产文件**：`clocktower/session/TroubleBrewingFirstNightPrecomputeCoordinator.kt`（缓存/后台任务/BUSY/READY/fallback）、`clocktower/recommendation/TroubleBrewingFirstNightPairDecisionContext.kt`（snapshot 重建 poison-neutral GameState、角色定义拷贝及忽略版本/投毒的缓存相等性）、`clocktower/recommendation/NaturalPairInformationCandidateGenerator.kt`（兼容转发层）。删除 App 的 prewarm scope/调度/context builder/双 provider，HostScreen 的候选缓存/异步加载/失败重试/待开始状态以及纯预计算等待门禁；确认当前必要 setup 信息后直接进入实际首夜步骤。
+- `ClocktowerRecommendationCoordinator` 删除只为预计算存在的 naturalPairCandidates 和 SetupClueOutcome/EffectDraft 包装；实际 rules/NaturalPairInformationCandidateGenerator 删去已经没有生产消费者的整局 perceived 汇总、其角色识别 helper 和旧 functioning 入口。**保留**仍被 PairInformationLegalDomain 消费的 generateHealthyInformationSpace，不重建或扩展规则算法。
+- **AI 等价接续**：`pendingGlobalFirstNightPairDecision` 直接接受当前 canonical Session 的 GameState/gameId/revision，调用现存 AI-only pair boundary；App、HostScreen 和残余 scope 全部改用同一事实/版本输入。保留座位顺序/来源身份引用检查及真实请求/响应 key、战略记忆、已确认事件历史和过期异步隔离；不再为配对建议复制另一份 roster 或把毒状态归零。角色定义使用已有 TB 元数据函数（旧 context 测试已证明它与 registry 投影相同），没有引入新 Context/Manager 或第二份 writer。
+- **测试处理**：整删 `TroubleBrewingFirstNightPrecomputeCoordinatorTest.kt`、`TroubleBrewingFirstNightPairDecisionContextTest.kt` 两个专属旧测试；去掉只验证已退役 functioning 入口拒绝 poison 的一项旧测试。保留并改为直测实际 rules owner 的自然配对、Drunk perceived Investigator、NoGreaterJoy 通用配置测试；保留首夜真实已存模型响应、配对 Provider/预选和战略续规划测试。补充真实 Session 投毒事件前后配对请求版本更新/残余 Provider 接续、来源身份/座位漂移拒绝、非首夜/非实际步骤退出及事实不被生产建议改写的回归。
+- **本地验收**：首次 testFast 在测试编译发现遗漏的旧包名消费者，已迁移到实际 owner；补充测试中的 Provider revision 字段名修正后，最终 `:app:testFull :app:assembleDebug` SUCCESS，**973 项、0 失败/错误/跳过**。没有为旧测试恢复预计算或规则入口，没有执行付费 API/真机。
+- **规模/风险**：生产 +31/-554，测试 +76/-313，源码净删 **760 行**；整删 3 个生产、2 个测试，无新增文件。树 979→974，Android 生产 284→281、测试 231→229。三个超限源码按 UTF-8/LF 实测：App **184919B**、HostScreen **145615B**、NightStepUi **60237B**。唯一 Session、事实/观察日志、收件人和原子提交未修改；变化只退出无用缓存与等待，并将活跃 AI producer 绑定当前 canonical facts。代码 exact-SHA CI/R2 待本批推送独立验收。
+- **明确剩余**：当前 pair AI-only 旧候选边界、Numeric/UI/setup/目标合法域及后夜 response candidate matching 仍需解耦；不能把本批删除说成所有 Host 规则门禁已清空。其余大块按实际职责继续审计，没有新增所有者决策，PR 保持堆叠 Draft。
+
 ## F7：优先集中删除已证实无生产消费者的旧实现（本地完整构建及 exact-SHA CI/R2 已通过）
 
 - **执行顺序按所有者最新指示调整**：先横向比较全树的体量、职责和消费者证据，集中整删规模较大且有把握的旧实现；清完明确可删部分后，再逐文件审计剩余混合模块。不再默认沿酒鬼确认链逐函数推进，也不先建立另一套文件台账。

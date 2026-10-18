@@ -16,6 +16,7 @@ import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import com.codex.campboardgamehost.clocktower.rules.NaturalPairInformationCandidateGenerator
 import org.junit.Test
 
 class NaturalPairInformationCandidateGeneratorTest {
@@ -29,7 +30,7 @@ class NaturalPairInformationCandidateGeneratorTest {
             player(5, "Imp", CharacterType.DEMON),
         )
 
-        val candidates = NaturalPairInformationCandidateGenerator.generate(game, 1, RoleId("Librarian"))
+        val candidates = NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace(game, 1, RoleId("Librarian"))
 
         assertEquals(3, candidates.size)
         assertTrue(candidates.all { it.outcome.shownRole == RoleId("Recluse") })
@@ -50,7 +51,7 @@ class NaturalPairInformationCandidateGeneratorTest {
             player(5, "Imp", CharacterType.DEMON),
         )
 
-        val candidates = NaturalPairInformationCandidateGenerator.generate(game, 1, RoleId("Investigator"))
+        val candidates = NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace(game, 1, RoleId("Investigator"))
 
         assertEquals(3, candidates.size)
         assertEquals(setOf(RoleId("Spy")), candidates.mapNotNull { it.outcome.shownRole }.toSet())
@@ -69,7 +70,7 @@ class NaturalPairInformationCandidateGeneratorTest {
             player(5, "Imp", CharacterType.DEMON),
         )
 
-        val candidates = NaturalPairInformationCandidateGenerator.generate(game, 1, RoleId("Investigator"))
+        val candidates = NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace(game, 1, RoleId("Investigator"))
         val recluseCandidates = candidates.filter { candidate ->
             candidate.registrations.any { it.subjectSeat == 3 }
         }
@@ -127,42 +128,12 @@ class NaturalPairInformationCandidateGeneratorTest {
         )
 
         val candidate = NaturalPairInformationCandidateGenerator
-            .generate(game, 1, RoleId("Librarian"))
+            .generateHealthyInformationSpace(game, 1, RoleId("Librarian"))
             .single()
 
         assertTrue(candidate.outcome.candidateSeats.isEmpty())
         val information = candidate.effects.single() as EffectDraft.PlayerInformation
         assertEquals(InformationValue.NoCharacters(CharacterType.OUTSIDER), information.value)
-    }
-
-    @Test
-    fun `poisoned ability does not enter the functioning natural truth generator`() {
-        val game = game(
-            player(1, "Librarian", CharacterType.TOWNSFOLK, poisoned = true),
-            player(2, "Recluse", CharacterType.OUTSIDER),
-            player(3, "Chef", CharacterType.TOWNSFOLK),
-            player(4, "Poisoner", CharacterType.MINION),
-            player(5, "Imp", CharacterType.DEMON),
-        )
-
-        assertTrue(
-            NaturalPairInformationCandidateGenerator.generate(game, 1, RoleId("Librarian")).isEmpty(),
-        )
-    }
-
-    @Test
-    fun `drunk simulating librarian does not enter the functioning natural truth generator`() {
-        val game = game(
-            player(1, "Drunk", CharacterType.OUTSIDER, shownRole = "Librarian"),
-            player(2, "Recluse", CharacterType.OUTSIDER),
-            player(3, "Chef", CharacterType.TOWNSFOLK),
-            player(4, "Poisoner", CharacterType.MINION),
-            player(5, "Imp", CharacterType.DEMON),
-        )
-
-        assertTrue(
-            NaturalPairInformationCandidateGenerator.generate(game, 1, RoleId("Librarian")).isEmpty(),
-        )
     }
 
     private fun game(vararg players: PlayerState) = GameState(

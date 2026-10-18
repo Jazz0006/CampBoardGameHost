@@ -4,7 +4,6 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderGameContextV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
@@ -51,7 +50,6 @@ internal object ClocktowerCurrentResidualScopeV2 {
         cards: List<PlayerCard>,
         snapshot: TroubleBrewingGameSnapshotV1,
         gameContext: StorytellerProviderGameContextV1,
-        pairContext: TroubleBrewingFirstNightPairDecisionContext?,
         fortuneTellerSelectedNames: List<String> = emptyList(),
         mayorPending: PendingMayorRedirectDecision? = null,
         redHerringAlreadyChosen: Boolean = false,
@@ -111,7 +109,7 @@ internal object ClocktowerCurrentResidualScopeV2 {
             if (phase !in setOf(StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT)) continue
             val pair = if (phase == StorytellerPhase.FIRST_NIGHT && round == 1)
                 pendingGlobalFirstNightPairDecision(
-                    step, ClocktowerPhase.FirstNight, round, cards, pairContext)
+                    step, ClocktowerPhase.FirstNight, round, cards, state.gameState, state.gameId, revision)
             else null
             if (pair != null) {
                 produced += StorytellerProviderRequestFactoryV1.fromPairInformation(

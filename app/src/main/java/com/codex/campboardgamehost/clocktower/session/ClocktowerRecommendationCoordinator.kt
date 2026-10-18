@@ -1,14 +1,8 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
-import com.codex.campboardgamehost.clocktower.domain.EffectDraft
-import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
-import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 
 internal class ClocktowerRecommendationCoordinator(
     private val nightModule: NightRecommendationModule = NightRecommendationModule(),
@@ -37,29 +31,4 @@ internal class ClocktowerRecommendationCoordinator(
         draftOf = draftOf,
     )
 
-    /**
-     * Compatibility shape for the existing first-night precompute cache.
-     * Pair-information truth ownership is canonical in [NaturalPairInformationCandidateGenerator];
-     * this method only wraps those candidates in the historical SetupClueOutcome transport type.
-     */
-    fun naturalPairCandidates(context: TroubleBrewingFirstNightPairDecisionContext): List<DecisionCandidate<SetupClueOutcome>> =
-        naturalPairCandidates(context.naturalPairGameState)
-
-    fun naturalPairCandidates(game: GameState): List<DecisionCandidate<SetupClueOutcome>> =
-        NaturalPairInformationCandidateGenerator.generatePerceivedFirstNightInformationSpace(game).map { candidate ->
-            val sourceAbility = candidate.effects
-                .filterIsInstance<EffectDraft.PlayerInformation>()
-                .single()
-                .sourceAbility
-            DecisionCandidate(
-                candidateId = candidate.candidateId,
-                candidateFamilyId = candidate.candidateFamilyId,
-                outcome = SetupClueOutcome.PairInformation(sourceAbility, candidate.outcome),
-                abilityState = candidate.abilityState,
-                truthRelation = candidate.truthRelation,
-                registrations = candidate.registrations,
-                effects = candidate.effects,
-                metadata = candidate.metadata,
-            )
-        }
 }

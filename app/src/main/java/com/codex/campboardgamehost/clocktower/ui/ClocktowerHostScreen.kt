@@ -30,7 +30,6 @@ import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.kind
@@ -40,8 +39,6 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNigh
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
-import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
@@ -56,9 +53,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -73,7 +67,6 @@ internal fun ClocktowerJudgeScreen(
     script: ClocktowerScript,
     gameId: String,
     gameSeed: Long,
-    firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
     globalAiAssisted: Boolean = false,
     /** A verified joint plan is advisory; only confirmed current steps affect Session. */
     globalAiAutomatic: Boolean = false,
@@ -86,8 +79,6 @@ internal fun ClocktowerJudgeScreen(
     globalAiAdviceError: String? = null,
     globalResidualRecommendedChoices: Map<String, String> = emptyMap(),
     onRequestGlobalAiAdvice: (List<ClocktowerNightStepUi>, Int) -> Unit = { _, _ -> },
-    firstNightNaturalPairReadyProvider: ((TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
-    firstNightNaturalPairResultProvider: (suspend (TroubleBrewingFirstNightPairDecisionContext) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
     phase: ClocktowerPhase,
     round: Int,
     nightCheckpoint: ClocktowerNightCheckpoint,
@@ -203,59 +194,6 @@ internal fun ClocktowerJudgeScreen(
     // Advancing from a confirmed player display must wait for its dismissal.
     var pendingAutoAdvanceAfterDisplay by remember(gameId, phase, round) {
         mutableStateOf<Pair<Int, String>?>(null)
-    }
-    val firstNightNaturalPairPrecomputeRequest = if (
-        script == ClocktowerScript.TroubleBrewing &&
-        phase == ClocktowerPhase.FirstNight &&
-        firstNightNaturalPairResultProvider != null
-    ) {
-        firstNightPairDecisionContext
-    } else {
-        null
-    }
-    var firstNightNaturalPairCandidates by remember(gameId, gameSeed) {
-        mutableStateOf<List<DecisionCandidate<SetupClueOutcome>>?>(null)
-    }
-    var firstNightNaturalPairStartRequested by remember(gameId, gameSeed) { mutableStateOf(false) }
-    var firstNightNaturalPairLoadFailed by remember(gameId, gameSeed) { mutableStateOf(false) }
-    var firstNightNaturalPairRetryGeneration by remember(gameId, gameSeed) { mutableStateOf(0) }
-    LaunchedEffect(firstNightNaturalPairPrecomputeRequest, firstNightNaturalPairRetryGeneration) {
-        val request = firstNightNaturalPairPrecomputeRequest
-        val resultProvider = firstNightNaturalPairResultProvider
-        if (request == null || resultProvider == null) {
-            firstNightNaturalPairCandidates = null
-            firstNightNaturalPairLoadFailed = false
-            return@LaunchedEffect
-        }
-        firstNightNaturalPairCandidates = firstNightNaturalPairReadyProvider?.invoke(request)
-        if (firstNightNaturalPairCandidates != null) {
-            firstNightNaturalPairLoadFailed = false
-            return@LaunchedEffect
-        }
-        val result = runCatching {
-            withContext(Dispatchers.Default) {
-                resultProvider(request)
-            }
-        }
-        if (!isActive) return@LaunchedEffect
-        result.fold(
-            onSuccess = { candidates ->
-                firstNightNaturalPairCandidates = candidates
-                firstNightNaturalPairLoadFailed = false
-            },
-            onFailure = {
-                firstNightNaturalPairCandidates = null
-                firstNightNaturalPairLoadFailed = true
-            },
-        )
-    }
-    val firstNightNaturalPairPrecomputeReady =
-        firstNightNaturalPairPrecomputeRequest == null || firstNightNaturalPairCandidates != null
-    LaunchedEffect(firstNightNaturalPairStartRequested, firstNightNaturalPairPrecomputeReady) {
-        if (firstNightNaturalPairStartRequested && firstNightNaturalPairPrecomputeReady) {
-            firstNightNaturalPairStartRequested = false
-            nightStarted = true
-        }
     }
     val legalDemonBluffs = legalDemonBluffRoles(
         scriptRoles = clocktowerRolesForScript(script),
@@ -1776,10 +1714,9 @@ internal fun ClocktowerJudgeScreen(
         // Do not fast-forward any unshown player information.
         LaunchedEffect(
             globalAiAutomatic, jointOpeningAvailable, manualDemonBluffsReady,
-            firstNightNaturalPairPrecomputeReady, manualDemonBluffDraft,
+            manualDemonBluffDraft,
         ) {
-            if (globalAiAutomatic && jointOpeningAvailable && manualDemonBluffsReady &&
-                firstNightNaturalPairPrecomputeReady && !nightStarted
+            if (globalAiAutomatic && jointOpeningAvailable && manualDemonBluffsReady && !nightStarted
             ) {
                 if (manualDemonBluffsRequired) onCommitDemonBluffs(manualDemonBluffDraft)
                 nightStarted = true
@@ -1800,14 +1737,7 @@ internal fun ClocktowerJudgeScreen(
                 if (manualDemonBluffsRequired && manualDemonBluffsReady) {
                     onCommitDemonBluffs(manualDemonBluffDraft)
                 }
-                if (firstNightNaturalPairPrecomputeReady) {
-                    nightStarted = true
-                } else {
-                    firstNightNaturalPairStartRequested = true
-                    if (firstNightNaturalPairLoadFailed) {
-                        firstNightNaturalPairRetryGeneration += 1
-                    }
-                }
+                nightStarted = true
             },
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1851,7 +1781,9 @@ internal fun ClocktowerJudgeScreen(
         val currentStep = nightSteps[currentStepIndex]
         val globalAiPending = if (globalAiAssisted && phase == ClocktowerPhase.FirstNight) {
             pendingGlobalFirstNightPairDecision(
-                currentStep, phase, round, cards, firstNightPairDecisionContext,
+                currentStep, phase, round, cards, sessionGameState, gameId,
+                com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision(
+                    gameStateRevision, playerInputRevision),
             )
         } else null
         val globalAiScalarPending = if (globalAiAssisted &&

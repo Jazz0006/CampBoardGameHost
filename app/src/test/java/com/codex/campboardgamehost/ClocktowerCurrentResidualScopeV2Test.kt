@@ -27,6 +27,10 @@ import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionBound
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
+import com.codex.campboardgamehost.clocktower.session.commitConfirmedPoisonTransition
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -86,16 +90,14 @@ class ClocktowerCurrentResidualScopeV2Test {
         val scope = ClocktowerCurrentResidualScopeV2.collect(
             state = session.state, phase = StorytellerPhase.FIRST_NIGHT,
             round = 1, steps = steps, startIndex = 0, cards = emptyList(),
-            snapshot = snapshot(session), gameContext = StorytellerProviderGameContextV1.EMPTY,
-            pairContext = null)
+            snapshot = snapshot(session), gameContext = StorytellerProviderGameContextV1.EMPTY)
         assertTrue(scope.requests.isEmpty())
         assertEquals(0, scope.barrierStep)
         assertEquals("PLAYER_OR_HOST_ACTION_NOT_YET_CONFIRMED", scope.barrierReason)
         val past = ClocktowerCurrentResidualScopeV2.collect(
             state = session.state, phase = StorytellerPhase.FIRST_NIGHT,
             round = 1, steps = steps, startIndex = 1, cards = emptyList(),
-            snapshot = snapshot(session), gameContext = StorytellerProviderGameContextV1.EMPTY,
-            pairContext = null)
+            snapshot = snapshot(session), gameContext = StorytellerProviderGameContextV1.EMPTY)
         assertEquals(null, past.barrierStep)
         assertTrue(past.requests.isEmpty())
     }
@@ -112,8 +114,7 @@ class ClocktowerCurrentResidualScopeV2Test {
             state = session.state, phase = StorytellerPhase.NIGHT, round = 2,
             steps = listOf(empath, step(ClocktowerNightAction.DemonKill)),
             startIndex = 0, cards = cards, snapshot = snapshot(session, StorytellerPhase.NIGHT, 2),
-            gameContext = StorytellerProviderGameContextV1.EMPTY,
-            pairContext = null)
+            gameContext = StorytellerProviderGameContextV1.EMPTY)
         assertEquals(1, scope.requests.size)
         assertEquals(1, scope.barrierStep)
         val open = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
@@ -141,8 +142,7 @@ class ClocktowerCurrentResidualScopeV2Test {
         fun scope(phase: StorytellerPhase, round: Int) =
             ClocktowerCurrentResidualScopeV2.collect(
                 host.state, phase, round, listOf(information), 0, cards,
-                snapshot(host, phase, round), StorytellerProviderGameContextV1.EMPTY,
-                pairContext = null)
+                snapshot(host, phase, round), StorytellerProviderGameContextV1.EMPTY)
         assertTrue(scope(StorytellerPhase.FIRST_NIGHT, 1).requests.isEmpty())
         val second = scope(StorytellerPhase.NIGHT, 2)
         assertEquals(1, second.requests.size)
@@ -170,7 +170,7 @@ class ClocktowerCurrentResidualScopeV2Test {
             session.state, StorytellerPhase.NIGHT, 2,
             listOf(value, step(ClocktowerNightAction.DemonKill)), 0, cards,
             snapshot(session, StorytellerPhase.NIGHT, 2),
-            StorytellerProviderGameContextV1.EMPTY, null)
+            StorytellerProviderGameContextV1.EMPTY)
         val pending = scope(current)
         assertEquals(1, pending.requests.size)
         val first = pending.requests.single()
@@ -249,8 +249,64 @@ class ClocktowerCurrentResidualScopeV2Test {
             round = 1, steps = listOf(step(ClocktowerNightAction.RedHerring),
                 step(ClocktowerNightAction.Poison)), startIndex = 0,
             cards = emptyList(), snapshot = snapshot(session),
-            gameContext = StorytellerProviderGameContextV1.EMPTY,
-            pairContext = null, redHerringAlreadyChosen = true)
+            gameContext = StorytellerProviderGameContextV1.EMPTY, redHerringAlreadyChosen = true)
         assertEquals(1, scope.barrierStep)
     }
+
+    @Test fun pairAdviceUsesCurrentSessionRevisionAndLeavesFactsUntouched() {
+        val session = host(listOf("Washerwoman", "Chef", "Soldier", "Poisoner", "Imp"))
+        val cards = session.state.gameState.players.map { PlayerCard(it.name) }
+        val current = step(ClocktowerNightAction.None).copy(actor = cards[0], roleEnName = "Washerwoman")
+        val before = session.state
+        val first = pendingGlobalFirstNightPairDecision(current, ClocktowerPhase.FirstNight, 1,
+            cards, before.gameState, before.gameId,
+            StorytellerDecisionRevision(before.gameStateRevision, before.playerInputRevision))!!
+        assertEquals(before.gameId, first.requestIdentity.gameId)
+        assertEquals(1, first.sourceSeat)
+        assertTrue(first.legalCandidates.isNotEmpty())
+        assertSame(before, session.state)
+        session.commitConfirmedPoisonTransition(ActionFactDraft.Poison("confirmed-poison",
+            StorytellerPhase.FIRST_NIGHT, 1, session.nextInputSequence, 1), before.gameStateRevision)
+        val after = session.state
+        val poisoned = current.copy(informationReliability =
+            com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability.POISONED)
+        val next = pendingGlobalFirstNightPairDecision(poisoned, ClocktowerPhase.FirstNight, 1,
+            cards, after.gameState, after.gameId,
+            StorytellerDecisionRevision(after.gameStateRevision, after.playerInputRevision))!!
+        assertEquals(after.gameStateRevision, next.revision.gameStateRevision)
+        assertTrue(next.revision.gameStateRevision > first.revision.gameStateRevision)
+        assertEquals(com.codex.campboardgamehost.clocktower.domain.ReliabilityState.POISONED, next.reliability)
+        assertTrue(next.legalCandidates.size >= first.legalCandidates.size)
+        assertSame(after, session.state)
+        assertTrue(session.state.gameState.playerAt(1)!!.poisoned)
+        val scope = ClocktowerCurrentResidualScopeV2.collect(after, StorytellerPhase.FIRST_NIGHT, 1,
+            listOf(poisoned, step(ClocktowerNightAction.Poison)), 0, cards, snapshot(session),
+            StorytellerProviderGameContextV1.EMPTY)
+        assertEquals(1, scope.requests.size)
+        assertEquals(next.requestIdentity.requestId, scope.requests.single().identity.decisionId)
+        assertEquals(after.gameStateRevision, scope.requests.single().sourceRevision.gameStateRevision)
+        assertEquals(1, scope.barrierStep)
+    }
+
+    @Test fun pairAdviceRejectsSeatAndSourceIdentityDriftAndDoesNotRunForOtherNights() {
+        val session = host(listOf("Washerwoman", "Chef", "Soldier", "Poisoner", "Imp"))
+        val cards = session.state.gameState.players.map { PlayerCard(it.name) }
+        val current = step(ClocktowerNightAction.None).copy(actor = cards[0], roleEnName = "Washerwoman")
+        val state = session.state
+        val revision = StorytellerDecisionRevision(state.gameStateRevision, state.playerInputRevision)
+        assertThrows(IllegalArgumentException::class.java) {
+            pendingGlobalFirstNightPairDecision(current, ClocktowerPhase.FirstNight, 1,
+                cards.reversed(), state.gameState, state.gameId, revision)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            pendingGlobalFirstNightPairDecision(current.copy(roleEnName = "Librarian"),
+                ClocktowerPhase.FirstNight, 1, cards, state.gameState, state.gameId, revision)
+        }
+        assertNull(pendingGlobalFirstNightPairDecision(current, ClocktowerPhase.Night, 2,
+            cards, state.gameState, state.gameId, revision))
+        assertNull(pendingGlobalFirstNightPairDecision(current.copy(isRealAction = false),
+            ClocktowerPhase.FirstNight, 1, cards, state.gameState, state.gameId, revision))
+        assertSame(state, session.state)
+    }
+
 }

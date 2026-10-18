@@ -2,6 +2,13 @@
 
 **用户再次确认：不要再以旧代码调用栈为主线逐段探索。** 优先枚举当前 Git HEAD 的全部源码模块，按 Host Core、现有 AI、旧 Host Rules、无生产消费者的实验、需要产品决策的外部客户端五类做证据分类。审计及确认/标记删除均记录到现有 `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`，不复制第二份全树文件索引。已确认无效的整块实现与专属测试直接删除并独立验证；仅有风险或实际消费者的标记 `REMOVE_AFTER_DISCONNECT`，先保护 AI 生产调用。P1 持续清除 Host 规则门禁，不重写 AI。
 
+## F8 最新交接（覆盖下方历史 NEXT）
+
+- 首夜整局 natural pair 候选预计算结果只被 readiness 门禁读取，未进入实际信息/AI 输出。本批已整删其缓存/后台 scope/ready-result provider/UI 加载失败重试与首夜等待，退出重复的 snapshot→poison-neutral GameState context 和 compatibility forwarding；current-step AI 配对继续工作，直接用当前 Session GameState/gameId/revision。
+- 整删 3 个生产与 2 个独占测试，源码净删 760 行；当前树 974 文件，281 生产 + 229 测试 Kotlin。原 Session writer/事件/私密信息/异步安全和真实模型 transport/战略记忆不动；保留 Drunk perceived/配对 Provider/通用配置与实际请求合同回归。本地完整 `:app:testFull :app:assembleDebug` SUCCESS（973 项、0 失败/错误/跳过），远端本批 exact-SHA CI/R2 待补记。
+- 下一批继续按全树规模和消费者证据选择能整组退出的候选。pair AI-only candidate boundary、Numeric/UI/setup、后夜候选匹配仍在，不要误以为全部 Host Rules 已删除；解耦前保护真实 AI 和事实确认。已删除的预计算/兼容 Context 不再恢复。
+- 超限源码：App 184919B、HostScreen 145615B、NightStepUi 60237B。无新所有者决策，未做真机或收费 API；PR #334 保持 Draft，不合并/retarget。完整证据和清单只维护全源台账 F8。
+
 ## 最新顺序与 F7（覆盖下方历史 NEXT）
 
 - 所有者最新顺序：优先清除规模大、证据充分、可以整块退出的旧实现；集中删完明确无用部分后，再逐文件审计剩余代码。现有台账继续作为唯一记录，不把路径库存当语义审计，也不先从某一旧调用链逐函数推进。

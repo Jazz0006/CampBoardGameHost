@@ -1,8 +1,8 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
-import com.codex.campboardgamehost.clocktower.domain.SnapshotField
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationFamily
 import com.codex.campboardgamehost.clocktower.session.PairInformationDecisionBoundary
@@ -20,20 +20,24 @@ internal fun pendingGlobalFirstNightPairDecision(
     phase: ClocktowerPhase,
     round: Int,
     cards: List<PlayerCard>,
-    context: TroubleBrewingFirstNightPairDecisionContext?,
+    game: GameState,
+    gameId: String,
+    revision: StorytellerDecisionRevision,
 ): PendingPairInformationDecision? {
-    if (phase != ClocktowerPhase.FirstNight || context == null) return null
+    if (phase != ClocktowerPhase.FirstNight || round != 1 || !step.isRealAction ||
+        game.script.value != "trouble_brewing") return null
     val family = FirstNightInformationFamily.entries.firstOrNull {
         it.role.value == step.roleEnName
     }?.takeIf { it.usesAuthoritativePairDomain() } ?: return null
     val actor = step.actor ?: return null
-    val seat = cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
-        ?: return null
-    val position = context.snapshot.position
-    val gameRevision = (position.gameStateRevision as? SnapshotField.Known<Long>)?.value
-        ?: return null
-    val inputRevision = (position.playerInputRevision as? SnapshotField.Known<Long>)?.value
-        ?: return null
+    require(game.players.sortedBy { it.seat }.map { it.name } == cards.map { it.name }) {
+        "UI card order diverged from canonical Host seats."
+    }
+    val source = game.players.singleOrNull { it.name == actor.name } ?: return null
+    val seat = source.seat
+    require((source.shownRole ?: source.actualRole) == family.role) {
+        "Pair-information source role differs from the canonical Host identity."
+    }
     val reliability = when (step.informationReliability) {
         InformationReliability.RELIABLE -> ReliabilityState.RELIABLE
         InformationReliability.DRUNK -> ReliabilityState.DRUNK
@@ -41,12 +45,12 @@ internal fun pendingGlobalFirstNightPairDecision(
     }
     return PairInformationDecisionBoundary.create(
         requestIdentity = StorytellerDecisionRequestIdentity(
-            gameId = context.snapshot.gameId,
+            gameId = gameId,
             requestId = "first-night:${phase.name}:$round:${family.name}:$seat",
         ),
-        revision = StorytellerDecisionRevision(gameRevision, inputRevision),
-        game = context.naturalPairGameState,
-        roleDefinitions = context.roleDefinitions,
+        revision = revision,
+        game = game,
+        roleDefinitions = clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
         sourceSeat = seat,
         abilityRole = family.role,
         reliability = reliability,

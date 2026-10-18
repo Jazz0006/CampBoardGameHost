@@ -11,7 +11,7 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
-import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
+import com.codex.campboardgamehost.clocktower.rules.NaturalPairInformationCandidateGenerator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
