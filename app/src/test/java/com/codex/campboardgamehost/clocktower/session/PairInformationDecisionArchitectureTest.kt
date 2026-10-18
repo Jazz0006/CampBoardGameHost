@@ -12,6 +12,7 @@ class PairInformationDecisionArchitectureTest {
             "src/main/java/com/codex/campboardgamehost/clocktower/rules/NaturalPairInformationCandidateGenerator.kt",
             "src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerDecisionFoundation.kt",
             "src/main/java/com/codex/campboardgamehost/clocktower/session/DrunkAssignmentDecisionBoundary.kt",
+            "src/main/java/com/codex/campboardgamehost/clocktower/session/PairInformationDecisionBoundary.kt",
             "src/main/java/com/codex/campboardgamehost/clocktower/session/MayorRedirectDecisionBoundary.kt",
             "src/main/java/com/codex/campboardgamehost/clocktower/session/TroubleBrewingRuntimeGameProjector.kt",
             "src/main/java/com/codex/campboardgamehost/clocktower/domain/StorytellerProviderContractV1.kt",

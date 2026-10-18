@@ -1141,10 +1141,14 @@ internal fun CampBoardGameHostApp() {
         val session = clocktowerGameSession ?: return
         val requestedOperationMode = storytellerOperationMode
         val context = currentTroubleBrewingFirstNightPairDecisionContext()
-        // P1: old pair-information Rules candidate API is retired. Manual pair
-        // observations remain available; AI cannot invent replacement legal domains.
+        val pendingPair = context?.let {
+            pendingGlobalFirstNightPairDecision(
+                step, clocktowerPhase, round, cards, it,
+            )
+        }
         val pendingScalar = if (clocktowerPhase in setOf(
-                ClocktowerPhase.FirstNight, ClocktowerPhase.Night)
+                ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
+            pendingPair == null
         ) pendingGlobalNightScalarDecision(
             step, clocktowerPhase, round, stepIndex, cards, session.state.gameId,
             StorytellerDecisionRevision(
@@ -1153,17 +1157,19 @@ internal fun CampBoardGameHostApp() {
             listOfNotNull(clocktowerFortuneTellerFirst, clocktowerFortuneTellerSecond),
             canonicalGameState = session.state.gameState,
         ) else null
-        // Only surviving legacy scalar/target AI routes remain until their P1 retirement.
+        // The Host supplies a currently legal decision. The LLM uses the same
+        // global strategy for pair, numeric/Boolean and later-night target decisions.
         val pendingTarget = if (clocktowerPhase == ClocktowerPhase.Night &&
             step.action == ClocktowerNightAction.MayorRedirect && step.isRealAction
         ) runCatching { currentTroubleBrewingMayorRedirectPendingDecision() }.getOrNull()
         else null
-        val identity = pendingScalar?.requestIdentity
+        val identity = pendingPair?.requestIdentity ?: pendingScalar?.requestIdentity
             ?: pendingTarget?.requestIdentity ?: return
         val revision = StorytellerProviderRevisionV1(
             session.state.gameStateRevision, session.state.playerInputRevision,
         )
-        val legalIds = pendingScalar?.legalCandidates?.map { it.candidateId }
+        val legalIds = pendingPair?.legalCandidates?.map { it.candidateId }
+            ?: pendingScalar?.legalCandidates?.map { it.candidateId }
             ?: pendingTarget?.pending?.legalCandidates?.map { it.candidateId }
             ?: return
         val key = ClocktowerResidualRequestIdentityV2.build(
@@ -1201,7 +1207,11 @@ internal fun CampBoardGameHostApp() {
             val gameContext = StorytellerProviderGameContextBuilderV1.build(
                 snapshot, revision, session.state,
             )
-            if (pendingScalar != null) {
+            if (pendingPair != null) {
+                StorytellerProviderRequestFactoryV1.fromPairInformation(
+                    decision = pendingPair, snapshot = snapshot, gameContext = gameContext,
+                )
+            } else if (pendingScalar != null) {
                 StorytellerProviderRequestFactoryV1.fromScalarInformation(
                     pendingScalar.requestIdentity, pendingScalar.revision,
                     pendingScalar.sourceSeat, pendingScalar.abilityRole, pendingScalar.reliability,
@@ -1244,6 +1254,7 @@ internal fun CampBoardGameHostApp() {
                     state = session.state, phase = phasePosition.phase, round = round,
                     steps = steps, startIndex = stepIndex, cards = cards,
                     snapshot = snapshot, gameContext = providerRequest.gameContext,
+                    pairContext = context,
                     fortuneTellerSelectedNames = listOfNotNull(
                         clocktowerFortuneTellerFirst, clocktowerFortuneTellerSecond),
                     mayorPending = pendingTarget,

@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
@@ -205,6 +206,28 @@ internal object ClocktowerResidualDisplayMatcherV2 {
         val confirmation = decision.confirm(candidateId, currentRevision)
             as? MayorRedirectDecisionConfirmation.Confirmed ?: return null
         return confirmation.targetSeat.takeIf { it in currentLegalSeats }
+    }
+
+    fun matchPair(
+        decision: PendingPairInformationDecision,
+        selectedCandidateId: String?,
+        currentOptions: List<ClocktowerDisplayOption>,
+    ): ClocktowerDisplayOption? {
+        if (selectedCandidateId == null) return null
+        val chosen = decision.legalCandidates.singleOrNull {
+            it.candidateId == selectedCandidateId
+        } ?: return null
+        val role = chosen.outcome.shownRole?.value ?: return null
+        val seats = chosen.outcome.candidateSeats.sorted()
+        if (seats.size != 2) return null
+        return currentOptions.filter(::safe).singleOrNull { option ->
+            val statement = option.proposition as? InformationProposition.AnyOf
+                ?: return@singleOrNull false
+            val parts = statement.alternatives.filterIsInstance<InformationProposition.RoleAt>()
+            parts.size == 2 &&
+                parts.map { it.seat }.sorted() == seats &&
+                parts.all { normalize(it.role.value) == normalize(role) }
+        }
     }
 
     fun matchScalar(
