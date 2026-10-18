@@ -2,6 +2,20 @@
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
 
+## F5：先删大型完整模块（代码删除已执行，完整 CI/R2 待验收）
+
+**顺序更新（所有者 2026-10-18）**：先整删旧 `web/` 客户端，再横向删除 `epistemic` 旧世界推演系统及专属实验，**最后**处理仍依赖 Host 候选 ID 的旧首夜合法域引擎；不要把小函数手术当主进度。
+
+- `web/` 旧独立网页客户端 8 个受控文件整体移除（其中 PNG 由 GitHub 内容 API 单独提交 `5be8d37bad28e6055b89611de7be22388a7fffd1`，7 个文本文件由 Mini MCP 提交 `bb96b0c525b1550875d5e0ae22e9c68e62b0e308`）。Android、CI、工具源码无任何引用；这个网页不是未来新设计的独立 WebHost。
+- `epistemic/` 不能整目录删：原 35 个生产 Kotlin 中，**26 个**旧 A3/A4/B4 枚举、历史世界重放、Exact、Topology、玩家知识计算、登记见证推演、Spy 旧投影等已整文件删除；保留 9 个核心文件：`ActionFactDraft`、`ActionFactTimeline`、`EpistemicObservationDraft`、`EpistemicObservationLog`、`EpistemicSemanticJson`、`EpistemicSemanticModel`、`EpistemicContracts`、`GrimoireReminderToken`、`PlayerHistoricalTimeline`。原因：App、唯一 Session、历史事实、可见/私密信息、结构化 JSON、两个公共历史隐私测试仍引用其类型；之后可按统一合同重命名/迁目录，但不需为删目录制造新工程。
+- `epistemic` 原 60 测试 Kotlin 删除 **48 个**世界推演专属测试；保留事件时间线、私密观察、JSON 兼容、魔典令牌和历史投影相关 12 个测试及测试 fixture。整删独立 `clocktower/review/` 的 17 个旧专家世界后验实验 Kotlin 测试、其 3 份离线 manifest，及仅这些实验/测试使用的两份 `recommendation/` 源文件与三份专属测试。
+- `app/build.gradle.kts` 移除已退役 SDE-2D4/SDE-2D5F 规模/费用实验的 Gradle 路由及排除规则，保留原 `:app:testFast`、`:app:testFull` 正式验证任务。
+- **AI 保证**：`InitialJointOpeningDirectV2`、Provider/OpenAI API、模型提示词、战略记忆、后夜增量规划、AI_ASSISTED/AI_AUTOMATIC、结构化结果与自动/辅助选择均未触及。Host 保存实际 ActionFact/ObservationLog 的路径和安全/身份/时间戳校验保留。原 `epistemic` 中保留的 `EpistemicContracts` 仍含旧登记语义，下一步 Host candidate cleanup 才核查删除。
+- 当前仍有未审计的旧 `HostOpeningRulesDomainV2` → `HostOpeningSemanticGateV2` → `InitialGlobalOpeningScopeV1` 候选 ID 采纳链，列为**下一大块 REMOVE_AFTER_DISCONNECT**。不可把“当前生产调用”写成最终 AI 策略需 Host 候选；保留 AI 请求/返回及 Session 安全，改为直接结构化字段后删除。
+- F5 代码 SHA、全套 Android CI/R2 及净删行数必须以完整真实提交验收记录为准；此条不是提前声明测试通过。
+
+
+
 ## 2026-10-18 全树重启审计（替代沿调用路径逐段清理；最新当前方向）
 
 - 全量 Git tree 快照 SHA `8c1a4dc114060806c33d5f78102b6b3c6457cf71`：未截断、**1135 个文件**（树条目除目录）、按扩展名初筛 **723 个代码/配置类文件**（含 Kotlin/DSL、Java、JS/TS、HTML/CSS、Python、Shell、XML、YAML、JSON 等）；Android Kotlin **337 生产 + 320 测试**。不同扩展名口径下的源代码数量不能与上方历史的 717 或窄口径 703 直接比作增删。
