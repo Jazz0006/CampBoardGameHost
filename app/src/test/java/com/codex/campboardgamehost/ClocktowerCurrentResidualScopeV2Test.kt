@@ -170,7 +170,7 @@ class ClocktowerCurrentResidualScopeV2Test {
             session.state, StorytellerPhase.NIGHT, 2,
             listOf(value, step(ClocktowerNightAction.DemonKill)), 0, cards,
             snapshot(session, StorytellerPhase.NIGHT, 2),
-            StorytellerProviderGameContextV1.EMPTY, null)
+            StorytellerProviderGameContextV1.EMPTY)
         val pending = scope(current)
         assertEquals(1, pending.requests.size)
         val first = pending.requests.single()
