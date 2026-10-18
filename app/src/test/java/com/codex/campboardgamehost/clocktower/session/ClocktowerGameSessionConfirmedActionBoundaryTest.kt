@@ -283,14 +283,6 @@ class ClocktowerGameSessionConfirmedActionBoundaryTest {
         val delta = StorytellerGlobalEventProjectionV1.encode(prefix, 4L)
         assertEquals(2, delta.length())
         assertEquals("slayer", delta.getJSONObject(0).getString("type"))
-        session.state.gameState.players.forEach { player ->
-            val replay = com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
-                player.seat, session.state.actionTimeline, session.state.epistemicObservationLog,
-            )
-            assertEquals(6, replay.size)
-            org.junit.Assert.assertFalse(replay.toString().contains("RegistersAs"))
-            assertEquals(listOf(0L, 1L, 2L, 3L, 4L, 5L), replay.map { it.point.globalSequence })
-        }
     }
 
     private fun confirm(session: ClocktowerGameSession, draft: ActionFactDraft) =

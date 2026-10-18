@@ -19,9 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.codex.campboardgamehost.clocktower.recommendation.StorytellerDecisionAuthority
-import com.codex.campboardgamehost.clocktower.recommendation.storytellerDecisionAuthority
-import com.codex.campboardgamehost.clocktower.recommendation.storytellerDecisionPresentationIsAutomatic
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 
@@ -121,44 +118,6 @@ internal fun ClocktowerNightStepCardLocalized(
         step.manualInformationCandidates
     } else {
         emptyList()
-    }
-    fun seatNumberForAutomaticCandidate(card: PlayerCard): Int? = cards
-        .indexOfFirst { candidate -> candidate.name == card.name }
-        .takeIf { index -> index >= 0 }
-        ?.plus(1)
-    val mayor = aliveCards.firstOrNull { card -> card.clocktowerRole?.enName == "Mayor" }
-    val mayorSeat = mayor?.let(::seatNumberForAutomaticCandidate)
-    val legalMayorRedirectSeats = mayorSeat?.let { resolvedMayorSeat ->
-        buildSet {
-            add(resolvedMayorSeat)
-            mayorRedirectTargetCards
-                .mapNotNull(::seatNumberForAutomaticCandidate)
-                .forEach(::add)
-        }
-    }.orEmpty()
-    val mayorRedirectAuthority = legalMayorRedirectSeats
-        .takeIf { it.isNotEmpty() }
-        ?.let { storytellerDecisionAuthority(legalCandidateCount = it.size) }
-    val automaticMayorTargetName = if (
-        allowRuleDeterminedAutoUi &&
-        step.isRealAction &&
-        step.action == ClocktowerNightAction.MayorRedirect &&
-        mayorRedirectAuthority is StorytellerDecisionAuthority.RuleDeterministic
-    ) {
-        mayor?.name
-    } else {
-        null
-    }
-
-    val automaticDecisionTargetName = when (step.action) {
-        ClocktowerNightAction.MayorRedirect -> automaticMayorTargetName
-        else -> null
-    }
-    val rulingPresentationAutomatic = when (step.action) {
-        ClocktowerNightAction.MayorRedirect -> mayorRedirectAuthority?.let { authority ->
-            storytellerDecisionPresentationIsAutomatic(allowRuleDeterminedAutoUi, authority)
-        } ?: false
-        else -> false
     }
     val automaticDisplayOption = currentAiSuggestedOption.takeIf { allowRuleDeterminedAutoUi }
     val manualInformationFallback = allowRuleDeterminedAutoUi &&
@@ -381,29 +340,6 @@ internal fun ClocktowerNightStepCardLocalized(
         automaticRavenkeeperChoice?.let(::showRavenkeeperChoice)
     }
 
-    LaunchedEffect(allowRuleDeterminedAutoUi, step.title, automaticDecisionTargetName) {
-        if (allowRuleDeterminedAutoUi && automaticDecisionTargetName != null && selectedName != automaticDecisionTargetName) {
-            onSelectName(automaticDecisionTargetName)
-        }
-    }
-    LaunchedEffect(
-        allowRuleDeterminedAutoUi,
-        step.title,
-        step.action,
-        selectedName,
-        automaticDecisionTargetName,
-    ) {
-        if (
-            clocktowerAutomaticMayorRulingShouldAdvance(
-                allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
-                action = step.action,
-                selectedName = selectedName,
-                automaticTargetName = automaticDecisionTargetName,
-            )
-        ) {
-            onNext()
-        }
-    }
     val compactNightGuidance = clocktowerBeginnerNightGuidance(
         action = step.action,
         actor = step.actor,
@@ -751,7 +687,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         selection = ClocktowerSingleTargetSelection(
                             seatNumberForName(selectedName), selectableSeatNumbers(candidates), step.isRealAction,
                         ),
-                        automatic = rulingPresentationAutomatic,
+                        automatic = false,
                         mayorSeat = seatNumberForName(mayor?.name),
                         explanation = step.explanation,
                     ),

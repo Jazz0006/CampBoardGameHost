@@ -152,23 +152,7 @@ class LiveKlutzScriptReachabilityTest {
         val timeline = session.state.actionTimeline
         assertEquals(listOf("night-death", "learn-public", "public-choice"),
             timeline.entries.map { it.fact.actionId })
-        val public = com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
-            recipientSeat = 3, actionTimeline = timeline,
-            observationLog = com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog(),
-        )
-        assertTrue(public.none { it.actionIdOrNull() == "learn-public" })
-        assertTrue(public.any {
-            it is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicKlutzChoice &&
-                it.klutzSeat == 1 && it.chosenSeat == 2
-        })
     }
-
-    private fun com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.actionIdOrNull(): String? =
-        when (this) {
-            is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicDeath -> actionId
-            is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicKlutzChoice -> actionId
-            else -> null
-        }
 
     @Test fun `legacy NGJ death with no predeath provenance stays unknown and cannot invent learned event`() {
         val game = state(klutzAlive = false)

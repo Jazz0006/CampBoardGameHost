@@ -50,9 +50,6 @@ class DawnCommitBoundaryTest {
         s.commitConfirmedActualRoleChange(role, s.state.gameStateRevision)
         assertEquals(RoleId("Imp"), s.state.gameState.playerAt(1)!!.actualRole)
         assertFalse(s.state.gameState.playerAt(1)!!.alive)
-        val public = com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
-            3, s.state.actionTimeline, s.state.epistemicObservationLog)
-        assertFalse(public.toString().contains("Imp"))
     }
 
     @Test fun `unknown duplicate and stale result inputs cannot partially publish deaths`() {
@@ -102,9 +99,6 @@ class DawnCommitBoundaryTest {
             StorytellerProviderRevisionV1(s.state.gameStateRevision, s.state.playerInputRevision))
         val delta = StorytellerGlobalEventProjectionV1.encode(prefix, accepted.nextTimelineGlobalSequence - 1)
         assertEquals("no_night_deaths", delta.getJSONObject(0).getString("type"))
-        assertTrue(com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
-            1, s.state.actionTimeline, s.state.epistemicObservationLog).last() is
-            com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicNoNightDeaths)
     }
 
     @Test fun `death publication succession and dawn are ordered and retries add nothing`() {

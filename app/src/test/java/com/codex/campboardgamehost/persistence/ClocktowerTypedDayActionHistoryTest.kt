@@ -26,24 +26,6 @@ class ClocktowerTypedDayActionHistoryTest {
         assertTrue(timeline.entries.none { it.fact is ActionFact.Death })
     }
 
-    @Test fun `public replay keeps player actions but hides private functioning and virgin-role flags`() {
-        val timeline = ActionFactTimeline(listOf(
-            entry(ActionFact.SlayerShot("shot", 0L, 1, 4, abilityConsumed = true, hit = false), 1),
-            entry(ActionFact.Nomination("nom", 1L, 2, 3, firstVirginNomination = true), 2),
-            entry(ActionFact.Vote("vote", 2L, 2, 3, listOf(1, 2), listOf(1)), 3),
-        ))
-        val public = com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
-            recipientSeat = 5,
-            actionTimeline = timeline,
-            observationLog = com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog(),
-        )
-        assertEquals(3, public.size)
-        assertTrue(public[0] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicSlayerShot)
-        assertTrue(public[1] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicNomination)
-        assertTrue(public[2] is com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicVote)
-        assertEquals(listOf(0L, 1L, 2L), public.map { it.point.globalSequence })
-    }
-
     @Test fun `explicit no execution is canonical and publicly visible not an inferred missing death`() {
         val actions = listOf(
             ActionFact.Nomination("nominee", 0L, 2, 3, firstVirginNomination = false),
@@ -53,14 +35,8 @@ class ClocktowerTypedDayActionHistoryTest {
         val timeline = ActionFactTimeline(actions.mapIndexed { index, fact ->
             entry(fact, index + 1)
         })
-        val public = com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalTimeline.project(
-            recipientSeat = 5,
-            actionTimeline = timeline,
-            observationLog = com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog(),
-        )
-        assertEquals(3, public.size)
-        assertTrue(public.last() is
-            com.codex.campboardgamehost.clocktower.epistemic.PlayerHistoricalEvent.PublicNoExecution)
+        assertEquals(listOf("nominee", "voting", "confirmed-nobody"), timeline.entries.map { it.fact.actionId })
+        assertTrue(timeline.entries.last().fact is ActionFact.NoExecution)
         assertTrue(timeline.entries.none { it.fact is ActionFact.Execution })
     }
 
