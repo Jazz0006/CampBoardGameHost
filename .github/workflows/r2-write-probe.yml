@@ -210,7 +210,6 @@ jobs:
           done
 
           for symbol in \
-            "internal enum class ClocktowerRegistrationDetail" \
             "internal enum class ClocktowerPairInformationAbility" \
             "internal data class ClocktowerNightStepUi"
           do
@@ -266,7 +265,7 @@ jobs:
             echo "Unreachable Klutz/Spy alignment picker resurfaced in production Host" >&2
             exit 1
           fi
-          # Slayer retains the legal Recluse registration controls in its interaction owner.
+          # Slayer retains explicit Recluse registration controls in its interaction owner.
           slayer=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerInteraction.kt
           grep -q "ClocktowerSlayerInteraction(" "$host"
           grep -q "internal fun ClocktowerSlayerInteraction" "$slayer"
