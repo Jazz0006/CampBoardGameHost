@@ -1,322 +1,43 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
-import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
-import com.codex.campboardgamehost.clocktower.domain.PlayerState
-import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
-import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
-import com.codex.campboardgamehost.clocktower.domain.RulesetRef
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
-import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
-import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLegalDomain
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContextBuilder
-import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
-import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingGameSnapshotProjector
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import java.io.File
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerPairManualAuthorityTest {
-    private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
-    private val investigator = RoleId("Investigator")
-    private val ruleset = BuiltInClocktowerRulesetCatalog { assetPath ->
-        File("src/main/assets", assetPath).readText(Charsets.UTF_8)
-    }.ruleset(ClocktowerScript.TroubleBrewing)
-
-    @Test
-    fun `manual projection is exactly the legal domain and ignores an illegal presentation template`() {
-        val game = game()
-        val legalOutcomes = PairInformationDisplaySemantics.legalOutcomes(
-            game = game,
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = investigator,
-        )
-        val illegalZeroTemplate = ClocktowerDisplayOption(
-            label = "No Minions",
-            displayKind = ClocktowerDisplayKind.EitherOne,
-            displayTitle = "Investigator information",
-            displayPrimary = "No Minions",
-            displaySecondary = null,
-            displayFooter = null,
-            proposition = InformationProposition.AllOf(
-                listOf(InformationProposition.RoleInPlay(RoleId("Poisoner"), false)),
-            ),
-        )
-        val expected = PairInformationLegalDomain.generate(
-            game = game,
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = investigator,
-            reliability = ReliabilityState.DRUNK,
-        )
-
-        val projected = ClocktowerPairManualAuthority.projectLegalOptions(
-            game = game,
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = investigator,
-            reliability = ReliabilityState.DRUNK,
-            presentationOptions = legalOutcomes.map(::template) + illegalZeroTemplate,
-        )
-
-        assertEquals(expected.size, projected.size)
-        assertEquals(
-            expected.map { it.outcome.shownRole to it.outcome.candidateSeats }.toSet(),
-            projected.mapNotNull(::keyOf).toSet(),
-        )
-        assertFalse(projected.any { it.displayPrimary == "No Minions" })
-        val selection = ClocktowerPairManualSelectionModel.from(
-            ClocktowerPairManualAuthority.selectionPresentation(projected),
-        )
-        projected.forEach { option ->
-            val (role, seats) = requireNotNull(keyOf(option))
-            val resolved = if (role == null) selection.selectZeroCase().resolvedOption else {
-                selection.selectRole(role.value).selectSeat(seats[0]).selectSeat(seats[1]).resolvedOption
-            }
-            assertEquals(option, resolved)
-        }
-    }
-
-    @Test
-    fun `snapshot context preserves manual legal domain and selected observation`() {
-        val game = game()
-        val context = context(game)
-        val presentationOptions = PairInformationDisplaySemantics.legalOutcomes(
-            game = game,
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = investigator,
-        ).map(::template)
-
-        val legacyOptions = ClocktowerPairManualAuthority.projectLegalOptions(
-            game = game,
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = investigator,
-            reliability = ReliabilityState.DRUNK,
-            presentationOptions = presentationOptions,
-        )
-        val migratedOptions = ClocktowerPairManualAuthority.projectLegalOptions(
-            context = context,
-            sourceSeat = 1,
-            abilityRole = investigator,
-            reliability = ReliabilityState.DRUNK,
-            presentationOptions = presentationOptions,
-        )
-
-        assertEquals(legacyOptions, migratedOptions)
-
-        val selected = ClocktowerPairManualAuthority.projectLegalOptions(
-            game = game,
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = investigator,
-            reliability = ReliabilityState.RELIABLE,
-            presentationOptions = presentationOptions,
-        ).first { option ->
-            val key = keyOf(option)
-            key?.first != null && key.second.contains(3)
-        }
-        assertEquals(
-            ClocktowerPairManualAuthority.selectedObservation(
-                game = game,
-                roleDefinitions = roles,
-                sourceSeat = 1,
-                abilityRole = investigator,
-                reliability = ReliabilityState.RELIABLE,
-                selectedOption = selected,
-            ),
-            ClocktowerPairManualAuthority.selectedObservation(
-                context = context,
-                sourceSeat = 1,
-                abilityRole = investigator,
-                reliability = ReliabilityState.RELIABLE,
-                selectedOption = selected,
-            ),
-        )
-    }
-
-    @Test
-    fun `recommended presentation canonicalizes to the matching manual legal option by structured pair key`() {
-        val canonical = template(PairInformationOutcome(RoleId("Chef"), 2, 5)).copy(
-            label = "manual legal option",
-            misinformationPressure = 2,
-        )
-        val recommendation = canonical.copy(
-            label = "localized recommended label",
-            misinformationPressure = 0,
-        )
-        val presentation = ClocktowerPairManualAuthority.selectionPresentation(
-            listOf(canonical, template(PairInformationOutcome(RoleId("Chef"), 3, 5))),
-        )
-
-        assertEquals(
-            canonical,
-            ClocktowerPairManualAuthority.canonicalManualOption(presentation, recommendation),
-        )
-        assertNull(
-            ClocktowerPairManualAuthority.canonicalManualOption(
-                presentation,
-                template(PairInformationOutcome(RoleId("Chef"), 1, 4)),
-            ),
-        )
-    }
-
-    @Test
-    fun `rules candidate canonicalizes to the matching manual legal option`() {
-        val game = game()
-        val legalCandidate = PairInformationLegalDomain.generate(
-            game = game,
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = investigator,
-            reliability = ReliabilityState.RELIABLE,
-        ).first()
-        val canonical = template(legalCandidate.outcome).copy(label = "canonical")
-        val presentation = ClocktowerPairManualAuthority.selectionPresentation(
-            listOf(canonical, template(PairInformationOutcome(RoleId("Baron"), 2, 4))),
-        )
-
-        assertEquals(
-            canonical,
-            ClocktowerPairManualAuthority.canonicalManualOption(presentation, legalCandidate),
-        )
-    }
-
-    @Test
-    fun `selected manual clue commits the exact legal registration fact`() {
-        val game = game()
-        val legalCandidates = PairInformationLegalDomain.generate(
-            game = game,
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = investigator,
-            reliability = ReliabilityState.RELIABLE,
-        )
-        val registeredCandidate = legalCandidates.first { candidate ->
-            candidate.registrations.any { it.reason == RegistrationReason.RECLUSE_ABILITY }
-        }
-        val selectedOption = template(registeredCandidate.outcome)
-
-        val observation = ClocktowerPairManualAuthority.selectedObservation(
-            game = game,
-            roleDefinitions = roles,
-            sourceSeat = 1,
-            abilityRole = investigator,
-            reliability = ReliabilityState.RELIABLE,
-            selectedOption = selectedOption,
-        )
-
-        assertEquals(registeredCandidate.outcome.shownRole, observation.shownRole)
-        assertEquals(registeredCandidate.outcome.candidateSeats, observation.candidateSeats)
-        assertEquals(registeredCandidate.semanticTruth, observation.semanticTruth)
-        assertEquals(registeredCandidate.registrations.size, observation.registrations.size)
-        registeredCandidate.registrations.zip(observation.registrations).forEach { (fact, committed) ->
-            assertEquals(fact.subjectSeat, committed.playerSeat)
-            assertEquals(investigator, committed.affectedAbility)
-            assertEquals(fact.registeredAlignment, committed.registeredAlignment)
-            assertEquals(fact.registeredType, committed.registeredType)
-            assertEquals(fact.registeredRole, committed.registeredRole)
-            assertEquals(fact.reason, committed.reason)
-        }
-        assertTrue(observation.registrations.any { it.reason == RegistrationReason.RECLUSE_ABILITY })
-    }
-
-    private fun context(game: GameState) = TroubleBrewingFirstNightPairDecisionContextBuilder.build(
-        snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
-            gameSnapshot = GameSnapshot(
-                gameId = "tbgs-2b",
-                gameStateRevision = 4L,
-                playerInputRevision = 2L,
-                gameSeed = game.seed,
-                rulesetRef = RulesetRef(
-                    scriptId = ScriptId("trouble_brewing"),
-                    scriptContentHash = "0123456789abcdef0123456789abcdef",
-                    rulesetVersion = "tbgs-2b-test",
-                    sourceRevision = "tbgs-2b-test",
-                    coverage = RuleCoverage.PARTIAL,
-                ),
-                gameState = game,
-            ),
-            phase = StorytellerPhase.FIRST_NIGHT,
-            round = 1,
-            characterRegistry = ruleset.characterRegistry,
-        ),
-        characterRegistry = ruleset.characterRegistry,
+    private fun option(role: String, first: Int, second: Int) = ClocktowerDisplayOption(
+        label = "$role $first/$second",
+        displayKind = ClocktowerDisplayKind.EitherOne,
+        displayTitle = "Information",
+        displayPrimary = role,
+        displaySecondary = "$first / $second",
+        displayFooter = null,
+        proposition = InformationProposition.AnyOf(listOf(
+            InformationProposition.RoleAt(first, RoleId(role)),
+            InformationProposition.RoleAt(second, RoleId(role)),
+        )),
     )
 
-    private fun game() = GameState(
-        script = ScriptId("trouble_brewing"),
-        players = listOf(
-            player(1, "Investigator", CharacterType.TOWNSFOLK),
-            player(2, "Chef", CharacterType.TOWNSFOLK),
-            player(3, "Recluse", CharacterType.OUTSIDER),
-            player(4, "Poisoner", CharacterType.MINION),
-            player(5, "Imp", CharacterType.DEMON),
-        ),
-        seed = 20260901L,
-    )
+    @Test fun `manual choice resolves selected structured role and seats without a Rules domain`() {
+        val a = option("Chef", 2, 5)
+        val b = option("Chef", 3, 5)
+        val presentation = ClocktowerPairManualAuthority.selectionPresentation(listOf(a, b))
+        val selected = ClocktowerPairManualSelectionModel.from(presentation)
+            .selectRole("Chef").selectSeat(2).selectSeat(5)
+        assertEquals(a, selected.resolvedOption)
+    }
 
-    private fun player(seat: Int, role: String, type: CharacterType) = PlayerState(
-        seat = seat,
-        name = "Player $seat",
-        actualRole = RoleId(role),
-        actualAlignment = when (type) {
-            CharacterType.TOWNSFOLK, CharacterType.OUTSIDER -> Alignment.GOOD
-            CharacterType.MINION, CharacterType.DEMON -> Alignment.EVIL
-        },
-        actualType = type,
-        shownRole = RoleId(role),
-    )
-
-    private fun template(outcome: PairInformationOutcome): ClocktowerDisplayOption =
-        if (outcome.shownRole == null) {
-            ClocktowerDisplayOption(
-                label = "No Outsiders",
-                displayKind = ClocktowerDisplayKind.EitherOne,
-                displayTitle = "Information",
-                displayPrimary = "No Outsiders",
-                displaySecondary = null,
-                displayFooter = null,
-                proposition = InformationProposition.AllOf(
-                    listOf(InformationProposition.RoleInPlay(RoleId("Saint"), false)),
-                ),
-            )
-        } else {
-            ClocktowerDisplayOption(
-                label = "${outcome.shownRole.value}: ${outcome.candidateSeats.joinToString(" / ")}",
-                displayKind = ClocktowerDisplayKind.EitherOne,
-                displayTitle = "Information",
-                displayPrimary = outcome.shownRole.value,
-                displaySecondary = outcome.candidateSeats.joinToString(" / "),
-                displayFooter = null,
-                proposition = InformationProposition.AnyOf(
-                    outcome.candidateSeats.map { seat ->
-                        InformationProposition.RoleAt(seat, outcome.shownRole)
-                    },
-                ),
-            )
-        }
-
-    private fun keyOf(option: ClocktowerDisplayOption): Pair<RoleId?, List<Int>>? = when (val proposition = option.proposition) {
-        is InformationProposition.AnyOf -> {
-            val rolesAt = proposition.alternatives.map { it as? InformationProposition.RoleAt ?: return null }
-            val role = rolesAt.map { it.role }.distinct().singleOrNull() ?: return null
-            role to rolesAt.map { it.seat }.sorted()
-        }
-        is InformationProposition.AllOf -> null to emptyList()
-        else -> null
+    @Test fun `recommendation projection matches only an existing structurally identical manual option`() {
+        val a = option("Chef", 2, 5)
+        val presentation = ClocktowerPairManualAuthority.selectionPresentation(listOf(a))
+        assertEquals(a, ClocktowerPairManualAuthority.canonicalManualOption(
+            presentation, a.copy(label = "localized recommendation"),
+        ))
+        assertNull(ClocktowerPairManualAuthority.canonicalManualOption(
+            presentation, option("Chef", 1, 4),
+        ))
     }
 }
+

@@ -7,7 +7,7 @@ import org.junit.Test
 
 class FirstNightPairInformationPoolLegalityTest {
     @Test
-    fun `investigator pool drops zero minions but retains pair clue`() {
+    fun `manual information pool retains a structurally valid zero case even for Investigator`() {
         val pair = pairOption(
             title = "Investigator information",
             shownRole = "Poisoner",
@@ -25,7 +25,7 @@ class FirstNightPairInformationPoolLegalityTest {
             familyId = "Investigator",
         )
 
-        assertEquals(listOf(pair), pool.orderedCandidates.map { it.payload })
+        assertEquals(listOf(pair, zero), pool.orderedCandidates.map { it.payload })
     }
 
     @Test

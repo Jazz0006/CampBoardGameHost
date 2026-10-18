@@ -49,8 +49,6 @@ class ClocktowerChefAlternativePublicationTest {
             val displayed = resolveClocktowerPlayerDisplay(step, choice)
             val request = requireNotNull(clocktowerFirstNightInformationRequest(
                 displayed, ClocktowerPhase.FirstNight, 1, cards,
-                cards.toClocktowerGameState(ClocktowerScript.TroubleBrewing, 42L),
-                ClocktowerScript.TroubleBrewing, "en",
             ))
             val migration = FirstNightInformationMigration()
             val publication = migration.resolvePublication(request)

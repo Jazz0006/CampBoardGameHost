@@ -1,162 +1,78 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
-import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
-import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.YesNoAnswer
-import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
-import com.codex.campboardgamehost.clocktower.history.InformationReferenceExtractor
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationCandidate
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationFamily
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationRequest
-import com.codex.campboardgamehost.clocktower.session.InformationDecisionRequestIdentity
-import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
-import com.codex.campboardgamehost.clocktower.session.PairInformationDecisionBoundary
-import com.codex.campboardgamehost.clocktower.session.PairInformationDecisionConfirmation
-import com.codex.campboardgamehost.clocktower.session.usesAuthoritativePairDomain
 
-/** Host publication adapter: no old candidate parity/Shadow or model-facing candidate menu. */
+/**
+ * A confirmed first-night display is a Host observation, not a Rules candidate.
+ * Never reconstruct Spy/Recluse registrations or reject a manually shown value by rule truth.
+ */
 internal fun clocktowerFirstNightInformationRequest(
     displayStep: ClocktowerNightStepUi,
     phase: ClocktowerPhase,
     round: Int,
     cards: List<PlayerCard>,
-    gameState: GameState,
-    script: ClocktowerScript,
-    language: String,
-    firstNightPairDecisionContext: TroubleBrewingFirstNightPairDecisionContext? = null,
 ): FirstNightInformationRequest? {
     if (phase != ClocktowerPhase.FirstNight) return null
     val actor = displayStep.actor ?: return null
-    val family = FirstNightInformationFamily.entries.firstOrNull { it.role.value == displayStep.roleEnName } ?: return null
-    val sourceSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return null
-    val decisionId = "first-night:${phase.name}:$round:${family.name}:$sourceSeat"
+    val family = FirstNightInformationFamily.entries.firstOrNull {
+        it.role.value == displayStep.roleEnName
+    } ?: return null
+    val sourceSeat = cards.indexOfFirst { it.name == actor.name }
+        .takeIf { it >= 0 }?.plus(1) ?: return null
+    val rawValue = (displayStep.displayPrimary ?: displayStep.tellPlayer)?.trim()
+    val proposition = displayStep.informationDecisionConfirmation?.draft?.proposition
+        ?: displayStep.displayProposition
+    val shownPair = (proposition as? InformationProposition.AnyOf)
+        ?.alternatives?.map { it as? InformationProposition.RoleAt }
+        ?.takeIf { entries ->
+            entries.size == 2 && entries.all { it != null } &&
+                entries.mapNotNull { it?.role }.distinct().size == 1 &&
+                entries.mapNotNull { it?.seat }.distinct().size == 2
+        }?.filterNotNull()
+    val pairSeats = shownPair?.map { it.seat }?.sorted().orEmpty()
+    val shownRole = shownPair?.firstOrNull()?.role
+    val isPair = family.role.value in setOf("Washerwoman", "Librarian", "Investigator")
+    if (isPair && (proposition !is InformationProposition.AllOf && shownPair == null)) return null
+    if (pairSeats.any { it !in 1..cards.size }) return null
     val reliability = when (displayStep.informationReliability) {
         InformationReliability.RELIABLE -> ReliabilityState.RELIABLE
         InformationReliability.DRUNK -> ReliabilityState.DRUNK
         InformationReliability.POISONED -> ReliabilityState.POISONED
     }
-    fun legacyCandidate(option: ClocktowerDisplayOption): FirstNightInformationCandidate {
-        val primary = option.displayPrimary
-        return FirstNightInformationCandidate(clocktowerInformationCandidateId(option), AbilityObservation(
-            sourceSeat = sourceSeat,
-            perceivedRole = family.role,
-            shownRole = primary?.takeIf { option.displayKind == ClocktowerDisplayKind.EitherOne }
-                ?.let { shown -> clocktowerRolesForScript(script).firstOrNull { it.nameFor(language) == shown }?.enName ?: shown }
-                ?.let(::RoleId),
-            candidateSeats = InformationReferenceExtractor.extractSeatNumbers(
-                listOf(option.displaySecondary, option.displayFooter), cards.size,
-            ).toList(),
-            shownNumber = primary?.toIntOrNull(),
-            shownAnswer = primary?.let { answer ->
-                when (answer) {
-                    "有", "Yes" -> YesNoAnswer.YES
-                    "没有", "No" -> YesNoAnswer.NO
-                    else -> null
-                }
-            },
-            reliability = reliability,
-            // The confirmed display is an observation; Manual input does not certify truth.
-            semanticTruth = when (displayStep.selectedInformationTruthful) {
-                true -> SemanticTruth.TRUE
-                false -> SemanticTruth.FALSE
-                null -> SemanticTruth.NOT_APPLICABLE
-            },
-        ),
-        )
-    }
-    val selectedOption = ClocktowerDisplayOption(
-        label = "selected",
-        displayKind = displayStep.displayKind,
-        displayTitle = displayStep.displayTitle,
-        displayPrimary = displayStep.displayPrimary ?: displayStep.tellPlayer,
-        displaySecondary = displayStep.displaySecondary,
-        displayFooter = displayStep.displayFooter,
-        proposition = displayStep.displayProposition,
-        isTruthful = displayStep.selectedInformationTruthful != false,
+    val observation = AbilityObservation(
+        sourceSeat = sourceSeat,
+        perceivedRole = family.role,
+        shownRole = shownRole,
+        candidateSeats = pairSeats,
+        shownNumber = (proposition as? InformationProposition.NumericResult)?.value
+            ?: rawValue?.toIntOrNull(),
+        shownAnswer = ((proposition as? InformationProposition.BooleanResult)?.value
+            ?: when (rawValue?.lowercase()) {
+                "有", "是", "yes" -> true
+                "没有", "否", "no" -> false
+                else -> null
+            })?.let { if (it) YesNoAnswer.YES else YesNoAnswer.NO },
+        reliability = reliability,
+        semanticTruth = SemanticTruth.NOT_APPLICABLE,
     )
-    val migrated = if (family.usesAuthoritativePairDomain()) {
-        val pairContext = if (script == ClocktowerScript.TroubleBrewing) {
-            requireNotNull(firstNightPairDecisionContext) {
-                "Trouble Brewing pair publication requires snapshot-backed first-night context."
-            }
-        } else {
-            null
-        }
-        val directGame = gameState.takeIf { pairContext == null }
-        val legacyRoleDefinitions = if (pairContext == null) {
-            clocktowerRoleDefinitionsForScript(script)
-        } else {
-            null
-        }
-        val pendingPairDecision = pairContext?.let { context ->
-            val gameStateRevision = (context.snapshot.position.gameStateRevision as? SnapshotField.Known<Long>)?.value
-                ?: error("Pair-information runtime snapshot requires a known game-state revision.")
-            val playerInputRevision = (context.snapshot.position.playerInputRevision as? SnapshotField.Known<Long>)?.value
-                ?: error("Pair-information runtime snapshot requires a known player-input revision.")
-            PairInformationDecisionBoundary.create(
-                requestIdentity = InformationDecisionRequestIdentity(
-                    gameId = context.snapshot.gameId,
-                    requestId = decisionId,
-                ),
-                revision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
-                game = context.naturalPairGameState,
-                roleDefinitions = context.roleDefinitions,
-                sourceSeat = sourceSeat,
-                abilityRole = family.role,
-                reliability = reliability,
-            )
-        }
-        fun candidateIdFor(option: ClocktowerDisplayOption): String =
-            pendingPairDecision?.let { decision ->
-                ClocktowerPairManualAuthority.selectedCandidateId(
-                    decision = decision,
-                    selectedOption = option,
-                )
-            } ?: clocktowerInformationCandidateId(option)
-
-        (displayStep.manualInformationCandidates + selectedOption)
-            .distinctBy(::clocktowerInformationCandidateId)
-            .map { option ->
-                val candidateId = candidateIdFor(option)
-                FirstNightInformationCandidate(
-                    id = candidateId,
-                    observation = if (pendingPairDecision != null) {
-                        when (val confirmation = pendingPairDecision.confirm(
-                            candidateId = candidateId,
-                            currentRevision = pendingPairDecision.revision,
-                        )) {
-                            is PairInformationDecisionConfirmation.Confirmed -> confirmation.observation
-                            is PairInformationDecisionConfirmation.Blocked ->
-                                error("Current Manual pair-information selection was blocked: ${confirmation.reason}")
-                        }
-                    } else {
-                        ClocktowerPairManualAuthority.selectedObservation(
-                            game = requireNotNull(directGame),
-                            roleDefinitions = requireNotNull(legacyRoleDefinitions),
-                            sourceSeat = sourceSeat,
-                            abilityRole = family.role,
-                            reliability = reliability,
-                            selectedOption = option,
-                        )
-                    },
-                )
-            }
-            .let { candidates -> candidates to candidateIdFor(selectedOption) }
-    } else {
-        listOf(legacyCandidate(selectedOption)) to clocktowerInformationCandidateId(selectedOption)
-    }
+    val decisionId = "first-night:${phase.name}:$round:${family.name}:$sourceSeat"
+    val candidateId = "host-observed:${decisionId}"
     return FirstNightInformationRequest(
         decisionId = decisionId,
         family = family,
         sourceSeat = sourceSeat,
         reliability = reliability,
-        selectedCandidateId = migrated.second,
-        candidates = migrated.first,
+        selectedCandidateId = candidateId,
+        candidates = listOf(FirstNightInformationCandidate(candidateId, observation)),
     )
 }
+

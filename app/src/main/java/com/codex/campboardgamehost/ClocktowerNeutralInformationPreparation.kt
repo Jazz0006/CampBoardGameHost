@@ -1,16 +1,12 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
-import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 
 /**
  * Stateless, read-only preparation of player-visible information candidates.
  *
- * This owner prepares complete presentation/legal domains only. It does not rank candidates, retain
+ * This owner prepares structural presentation options only. It does not rank candidates, retain
  * recommendation memory, publish information, mutate registration choices, or commit game state.
  */
 internal object ClocktowerNeutralInformationPreparation {
@@ -87,64 +83,16 @@ internal object ClocktowerNeutralInformationPreparation {
             }
     }
 
-    fun legalPairInformationOptions(
+    /** Manual presentation choices represent available seats and script roles, not legal answers. */
+    fun pairInformationOptions(
         ability: ClocktowerPairInformationAbility,
         actor: PlayerCard,
         cards: List<PlayerCard>,
         scriptRoles: List<ClocktowerRole>,
-        phase: ClocktowerPhase,
-        game: GameState,
-        roleDefinitions: List<RoleDefinition>,
-        firstNightContext: TroubleBrewingFirstNightPairDecisionContext?,
-        requireFirstNightContext: Boolean,
-        reliability: ReliabilityState,
         roleLabel: (ClocktowerRole) -> String,
         text: (String, String) -> String,
     ): List<ClocktowerDisplayOption> {
-        val sourceSeat = cards.indexOf(actor).plus(1).takeIf { it > 0 } ?: return emptyList()
-        val presentationOptions = pairPresentationOptions(
-            ability = ability,
-            actor = actor,
-            cards = cards,
-            scriptRoles = scriptRoles,
-            phase = phase,
-            game = game,
-            roleDefinitions = roleDefinitions,
-            roleLabel = roleLabel,
-            text = text,
-        )
-        return if (requireFirstNightContext) {
-            val context = firstNightContext ?: return emptyList()
-            ClocktowerPairManualAuthority.projectLegalOptions(
-                context = context,
-                sourceSeat = sourceSeat,
-                abilityRole = RoleId(ability.name),
-                reliability = reliability,
-                presentationOptions = presentationOptions,
-            )
-        } else {
-            ClocktowerPairManualAuthority.projectLegalOptions(
-                game = game,
-                roleDefinitions = roleDefinitions,
-                sourceSeat = sourceSeat,
-                abilityRole = RoleId(ability.name),
-                reliability = reliability,
-                presentationOptions = presentationOptions,
-            )
-        }
-    }
-
-    private fun pairPresentationOptions(
-        ability: ClocktowerPairInformationAbility,
-        actor: PlayerCard,
-        cards: List<PlayerCard>,
-        scriptRoles: List<ClocktowerRole>,
-        phase: ClocktowerPhase,
-        game: GameState,
-        roleDefinitions: List<RoleDefinition>,
-        roleLabel: (ClocktowerRole) -> String,
-        text: (String, String) -> String,
-    ): List<ClocktowerDisplayOption> {
+        if (actor !in cards) return emptyList()
         val roleTeam = when (ability) {
             ClocktowerPairInformationAbility.Washerwoman -> ClocktowerTeam.Townsfolk
             ClocktowerPairInformationAbility.Librarian -> ClocktowerTeam.Outsider
@@ -167,7 +115,8 @@ internal object ClocktowerNeutralInformationPreparation {
                     }
                 }
             }
-            if (ability != ClocktowerPairInformationAbility.Washerwoman) {
+            // A manual result is an observed fact, including unusual or intentionally false cases.
+            run {
                 add(
                     PairInformationEffect(
                         id = "unreliable:${ability.name}:none",
@@ -193,30 +142,7 @@ internal object ClocktowerNeutralInformationPreparation {
                 )
             }
 
-        val sourceSeat = cards.indexOf(actor) + 1
-        val projectedSemanticsById = projectFirstNightPairInformationOptions(
-            phase = phase,
-            roleEnName = ability.name,
-            sourceSeat = sourceSeat,
-            game = game,
-            roleDefinitions = roleDefinitions,
-            options = effects.map { effect ->
-                ClocktowerDisplayOption(
-                    label = effect.id,
-                    displayKind = ClocktowerDisplayKind.EitherOne,
-                    displayTitle = ability.name,
-                    displayPrimary = null,
-                    displaySecondary = null,
-                    displayFooter = null,
-                    proposition = propositionFor(effect),
-                    isTruthful = false,
-                    misinformationPressure = 1,
-                )
-            },
-        ).associateBy(ClocktowerDisplayOption::label)
-
         return effects.map { effect ->
-            val semantics = projectedSemanticsById.getValue(effect.id)
             val noRoleText = when (ability) {
                 ClocktowerPairInformationAbility.Librarian -> text("没有外来者", "No Outsiders")
                 ClocktowerPairInformationAbility.Investigator -> text("没有爪牙", "No Minions")
@@ -240,12 +166,7 @@ internal object ClocktowerNeutralInformationPreparation {
                 secondary = seats,
                 footer = if (seats == null) "" else text("在下面两位玩家之中", "One of these two players"),
                 proposition = propositionFor(effect),
-                isTruthful = semantics.isTruthful,
-            ).copy(
-                spyRegistersGood = semantics.spyRegistersGood,
-                spyRegisteredRoleEnName = semantics.spyRegisteredRoleEnName,
-                recluseRegistersEvil = semantics.recluseRegistersEvil,
-                recluseRegisteredRoleEnName = semantics.recluseRegisteredRoleEnName,
+                isTruthful = false,
             )
         }
     }

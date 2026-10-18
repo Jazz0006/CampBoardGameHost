@@ -558,8 +558,7 @@ internal fun ClocktowerJudgeScreen(
 
     fun firstNightPublicationNeeded(displayStep: ClocktowerNightStepUi): Boolean {
         val request = clocktowerFirstNightInformationRequest(
-            displayStep, phase, round, cards, sessionGameState, script, language,
-            firstNightPairDecisionContext,
+            displayStep, phase, round, cards,
         ) ?: return true
         return !firstNightInformationMigration.isDisplayed(request.decisionId)
     }
@@ -569,10 +568,6 @@ internal fun ClocktowerJudgeScreen(
             phase,
             round,
             cards,
-            sessionGameState,
-            script,
-            language,
-            firstNightPairDecisionContext,
         ) ?: return true
         return when (val result = firstNightInformationMigration.resolvePublication(request)) {
             is FirstNightPublicationResolution.Published -> {
@@ -785,31 +780,15 @@ internal fun ClocktowerJudgeScreen(
     fun seatNumberFor(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
     fun seatNumbersText(pair: Pair<PlayerCard, PlayerCard>?): String? =
         pair?.let { "${seatNumberFor(it.first)}   ${seatNumberFor(it.second)}" }
-    fun legalPairInformationOptions(
+    fun pairInformationOptions(
         ability: ClocktowerPairInformationAbility,
         actor: PlayerCard,
     ): List<ClocktowerDisplayOption> {
-        val reliability = when (
-            effectiveAbilitySubjectForRole(ability.name, actor)?.let { subject ->
-                AbilityFunctioningSemantics.stateFor(subject, ability.name)
-            }
-        ) {
-            AbilityFunctioningState.DRUNK -> ReliabilityState.DRUNK
-            AbilityFunctioningState.POISONED -> ReliabilityState.POISONED
-            else -> ReliabilityState.RELIABLE
-        }
-        return ClocktowerNeutralInformationPreparation.legalPairInformationOptions(
+        return ClocktowerNeutralInformationPreparation.pairInformationOptions(
             ability = ability,
             actor = actor,
             cards = cards,
             scriptRoles = clocktowerRolesForScript(script),
-            phase = phase,
-            game = sessionGameState,
-            roleDefinitions = clocktowerRoleDefinitionsForScript(script),
-            firstNightContext = firstNightPairDecisionContext,
-            requireFirstNightContext =
-                script == ClocktowerScript.TroubleBrewing && phase == ClocktowerPhase.FirstNight,
-            reliability = reliability,
             roleLabel = { role -> role.nameFor(language) },
             text = ::text,
         )
@@ -1310,10 +1289,10 @@ internal fun ClocktowerJudgeScreen(
                                 displayFooter = text("在下面两位玩家之中", "One of these two players"),
                                 hostInstruction = text("轻拍洗衣妇，示意睁眼。点击“全屏展示给玩家”，只给她看；看完后收回手机，示意闭眼。", "Tap the Washerwoman to wake them. Show the full-screen information only to that player, then take the phone back and signal them to close their eyes."),
                                 displayOptions = { actor ->
-                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
+                                    pairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
                                 },
                                 legalSelectionOptions = { actor ->
-                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
+                                    pairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
                                 },
                                 spyRegistrationKey = washerwomanRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk),
@@ -1333,10 +1312,10 @@ internal fun ClocktowerJudgeScreen(
                                 displayFooter = if (librarianTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
                                 hostInstruction = text("轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。", "Tap the Librarian to wake them. Show the result only to that player, including a No Outsiders result."),
                                 displayOptions = { actor ->
-                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
+                                    pairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
                                 },
                                 legalSelectionOptions = { actor ->
-                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
+                                    pairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
                                 },
                                 spyRegistrationKey = librarianRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Outsider),
@@ -1356,10 +1335,10 @@ internal fun ClocktowerJudgeScreen(
                                 displayFooter = if (investigatorTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
                                 hostInstruction = text("轻拍调查员，示意睁眼。把结果只给他看；不要让其他玩家看到被点名的两人。", "Tap the Investigator to wake them. Show the result only to that player; do not let anyone else see the two named players."),
                                 displayOptions = { actor ->
-                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                    pairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
                                 },
                                 legalSelectionOptions = { actor ->
-                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                    pairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
                                 },
                                 spyRegistrationKey = investigatorRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
