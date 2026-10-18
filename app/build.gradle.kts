@@ -95,7 +95,6 @@ afterEvaluate {
             // testFast is a separate Test task and does not inherit debugUnitTest's filter.
             manualCostExperiments.forEach { excludeTestsMatching(it) }
             excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest")
             excludeTestsMatching(sde2D4ScaleBenchmark)
         }
     }

@@ -12,15 +12,21 @@
 | 目录/链路 | 当前判定 | 可核实依据与操作 |
 |---|---|---|
 | domain / ClocktowerGameSession / canonical ActionFact / UI 事实提交 | KEEP_CORE + AUDIT_PENDING（混合文件） | 保留唯一状态、已确认事实、安全、私密/顺序/去重/过期防护；不按旧 Rules 正确答案驳回已发生信息 |
-| 首夜 HostOpeningRulesDomainV2 + InitialJointOpeningDirectV2、配对候选与 Provider、战略续规划 | KEEP_AI | 生产 App、Session、推荐路径直接消费；既有 AI 不重建不降级 |
+| 首夜 InitialJointOpeningDirectV2、Provider、战略续规划与 UI 预选 | KEEP_AI | `encode` 已不把候选列表交给模型。保留真实模型请求、响应合同、上下文/记忆和 UI | 
+| HostOpeningRulesDomainV2 / HostOpeningSemanticGateV2 / InitialGlobalOpeningScopeV1 的旧候选验证 | REMOVE_AFTER_DISCONNECT | `decode` 仍拿合法域校验模型输出；这不是 AI 策略必要依赖。需先把完整 AI 请求/接受结构从旧 legalCandidates 投影解耦，再删除门禁，保留 identity/隐私/时序安全 |
 | FixedInformationEvaluator、FirstNightNumericInformationSemantics、TroubleBrewingRegistrationDomain | KEEP_AI（混合旧 Rules） | 数值与配对 AI 候选实际使用；先分离 Host 规则 veto 后再清理旧 Host 消费者 |
-| A4 identity-reveal prewarm / A4 Observation ZDD shadow | F3 REMOVE_CONFIRMED；A4 runtime/ZDD 剩余 AUDIT_PENDING | App 的调用全部限定 BuildConfig.DEBUG、TB 5 人局；只对旧影子缓存生成诊断日志，不供 AI/事实提交。现已连消费者整链删除；通用世界推演运行时在其他测试中仍有引用，单独审计 |
+| A4 identity reveal prewarm / A4 runtime/ZDD rollout | F3 + F4 REMOVE_CONFIRMED | Debug-only 缓存已在 F3 删除；F4 确认 A4 world runtime、rollout policy、ZDD 原型无生产消费者，仅测试自持，连专属测试和双轨契约整删 |
 | B4DynamicPlayerWorldSetShadow / ExactHistorical 和 Topology bundle 旧实验 | B4 独立接口 REMOVE_CONFIRMED（F2）；Exact/Topology AUDIT_PENDING | B4 全部生产引用仅本文件，无 AI 消费；时间线测试改测共享 API，Exact 评估测试独立保留；其余大型推演不能据此一起删 |
 | FN-BUNDLE PublicGoodInfoProjection 等压力实验 | REMOVE_AFTER_DISCONNECT 待核 | 旧实验/测试消费者存在；与正式联合规划 API 不是同一合同；先完整检查引用，再批量删除 |
 | ClocktowerHostSelectionSemantics / HostScreen / NightStepUi | AUDIT_PENDING 混合 | 夜间人工候选过滤和规则否决需要删，但显示、事实与 AI 自动/辅助流程要保留 |
 | legacy web/ 独立网页客户端及多剧本 | REVIEW_SCOPE | 非 Android Host，是否保留 Undercover/狼人及旧网页，由产品范围决定 |
 | tools、CI、assets、测试 | AUDIT_PENDING | 以当前 CI/R2/运行时消费者实际使用为依据，专属废弃实验测试可与生产实现一起删除 |
 
+### F4：A4/ZDD 原型整链退役；AI 无 Host 合法候选原则（代码验收待完成）
+
+- **最终设计**：AI 不从 Host 获取候选表，只接收真实 GameState 和已确认事件，自行规划。源码核实：`InitialJointOpeningDirectV2.encode` 没有输出候选列表，但 `decode` 仍走 `HostOpeningSemanticGateV2.accept(raw, domain.forDrunkSeat(drunk))`，由 `HostOpeningRulesDomainV2` 的规则候选域重验模型方案。这部分标记 `REMOVE_AFTER_DISCONNECT`，不是长期 `KEEP_AI`；安全合同的 identity/版本/座位/隐私与 JSON shape、strategic memory 必须保留。
+- **真实删除**：`A4PlayerWorldSetRuntime.kt`、`A4WorldEngineRuntimePolicy.kt`、`ZddPlayerWorldSet.kt` 及三份同名专属测试整删；`KnowledgeSafeWorldInputTest` 保留结构输入/隐藏真相验证，退役仅对 A4 Runtime 的测试；`KnowledgeTimelineSemanticsTest` 保留共享时间线检查，退役孤立 ZDD 双轨；`A3GoldenContractCatalogTest` 金标准改用已存在的枚举引擎，不再生成第二份 ZDD 结果；Gradle 移除过期 `testFast` 的 ZDD 排除。
+- 实测删除后 `app/src` 不再含 `A4PlayerWorldSetRuntime` / `A4WorldEngineRuntimePolicy` / `ZddPlayerWorldSet` / `ZddFilterStrategy` / `useZdd` 调用。本批不动 Session、ActionFact、模型 API、AI 请求、提示词、战略记忆或 UI。GitHub 完整 CI/R2、代码 SHA 和净删除将在提交后核验。
 ### 全树横向删除批次 F3（已通过完整 GitHub CI/R2）
 
 - 跨目录整体删除 `CampBoardGameHostApp.kt` 中**仅适用于 Debug 5 人局**的 A4 identity-reveal prewarm、观察缓存重建、worker 和框架耗时诊断，以及伴随每个 Session 写入/修订触发的旧 A4 cache-invalidations 和临时记录 ID，不改动原 Session 状态写入、公开/私密 EpistemicObservationLog、结构化事件或真实首夜 AI 预计算。

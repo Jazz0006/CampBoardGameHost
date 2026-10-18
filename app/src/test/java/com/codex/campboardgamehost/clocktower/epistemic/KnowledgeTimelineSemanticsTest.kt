@@ -96,19 +96,6 @@ class KnowledgeTimelineSemanticsTest {
         }
     }
 
-    @Test fun `ZDD replay consumer rejects mixed legacy and global chronology`() {
-        val knowledge = mixedModeFirstNightKnowledge()
-
-        expectIllegalArgument("ZDD mixed timeline modes") {
-            ZddPlayerWorldSet.enumerateDirect(
-                snapshot.rulesetRef,
-                knowledge,
-                EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-                TroubleBrewingFixtures.fullRoleDefinitions(),
-            )
-        }
-    }
-
     @Test fun `knowledge factory rejects mixed legacy and global observation modes`() {
         val global = globalObservation(
             id = "global-one",

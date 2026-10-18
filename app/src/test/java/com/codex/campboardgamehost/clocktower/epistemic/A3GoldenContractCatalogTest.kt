@@ -157,16 +157,16 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
     private val script = ScriptId("trouble_brewing")
     private val roles: List<RoleDefinition> = buildRoleCatalog(catalog.getJSONObject("formalStates"))
 
-    fun runAll(useZdd: Boolean = false): List<A3ExecutionResult> = catalog.getJSONArray("scenarios").objects()
+    fun runAll(): List<A3ExecutionResult> = catalog.getJSONArray("scenarios").objects()
         .filter { it.getJSONObject("query").getString("kind") in EXECUTABLE_QUERY_KINDS }
-        .map { run(it, useZdd) }
+        .map(::run)
 
-    private fun run(scenario: JSONObject, useZdd: Boolean): A3ExecutionResult {
+    private fun run(scenario: JSONObject): A3ExecutionResult {
         val id = scenario.getString("scenarioId")
         return try {
             val state = catalog.getJSONObject("formalStates").getJSONObject(scenario.getString("stateRef"))
             val query = scenario.getJSONObject("query")
-            val outcome = execute(id, state, scenario.getInt("perspectiveSeat"), query, useZdd)
+            val outcome = execute(id, state, scenario.getInt("perspectiveSeat"), query)
             val expected = scenario.getString("expectedStatus")
             val passed = when (expected) {
                 "SAT" -> outcome.selectedMatches
@@ -193,7 +193,7 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
         val hasBoundRegistration: Boolean = false,
     )
 
-    private fun execute(id: String, state: JSONObject, recipientSeat: Int, query: JSONObject, useZdd: Boolean): Outcome {
+    private fun execute(id: String, state: JSONObject, recipientSeat: Int, query: JSONObject): Outcome {
         val players = state.getJSONArray("players").objects()
         val ruleset = state.getJSONObject("rulesetRef").let {
             RulesetRef(script, it.getString("scriptContentHash"), it.getString("rulesetVersion"),
@@ -227,7 +227,7 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
         val enumerated = EnumeratedWorldSet.fromWorlds(
             ruleset, knowledge, EpistemicHypothesis.MECHANICALLY_CREDIBLE, roles, listOf(world),
         )
-        val set: PlayerWorldSet = if (useZdd) ZddPlayerWorldSet.fromEnumerated(enumerated) else enumerated
+        val set: PlayerWorldSet = enumerated
         return when (query.getString("kind")) {
             "setup-profile" -> Outcome(!set.isEmpty() && profile == query.setupProfile())
             "no-outsiders" -> Outcome(profile.outsiders == 0, setOf("no-outsiders"))
@@ -312,11 +312,7 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
     private fun boundRegistrationFacts(
         set: PlayerWorldSet,
         observation: EpistemicObservation,
-    ) = when (set) {
-        is EnumeratedWorldSet -> set.boundRegistrationFacts(observation)
-        is ZddPlayerWorldSet -> set.boundRegistrationFacts(observation)
-        else -> emptySet()
-    }
+    ) = (set as? EnumeratedWorldSet)?.boundRegistrationFacts(observation).orEmpty()
 
     private fun expectedOutputs(scenario: JSONObject): Set<String> = scenario.optJSONArray("outputAssertions")
         ?.objects().orEmpty().flatMap { it.getJSONArray("atoms").strings() }.mapNotNullTo(linkedSetOf()) { atom ->
