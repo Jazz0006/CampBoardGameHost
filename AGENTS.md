@@ -18,7 +18,7 @@ Phase-one manual information entry must accept any **structurally representable*
 
 ## Every-file review and deletion policy
 
-Traverse the entire **actual current** repository tree, not only paths named in a legacy roadmap. For each module, inspect production consumers and decide:
+**Full-tree-first is the required primary workflow (owner reiterated 2026-10-18).** Read the untruncated real Git tree, classify **all** source modules horizontally by Host fact/security, active AI, obsolete Host Rules, dead experimentation, and undecided product scope. Record conclusions in the existing full-source audit ledger; do not traverse one legacy call path and mistake that for a full repository audit. Verify consumers of each deletion candidate before actually deleting it. For each module decide:
 1. necessary Host state/event/operation, transport/security or platform adaptation: retain minimal responsibility;
 2. Host-owned gameplay validity engine, proven-unused experiment, dead feature or duplicate state/history: delete the implementation and its exclusive tests; preserve AI recommendation producers/consumers and strategic logic;
 3. mixed files: first disconnect retired consumers, delete obsolete responsibilities, then keep only narrow real ownership;

@@ -1,6 +1,31 @@
-> **历史扫描快照，不是现行产品保留决策。** 2026-10-18 项目所有者已批准三个独立职责 Host Core / Rules（旧实现全删后重建）/ AI Clues（Host 清理后重建），以及 P1→P5 净删路线。请以 HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md 为准。本文件保留原始全树数据与实际删除批次，仅作为审计证据。下方“旧规则模块不再存在”等措辞是当时阶段表述，不应理解为永远不允许独立 Rules 模块。
+> **历史库存保留，现行审计结论见下文最新补记。** 2026-10-18 所有者纠正了早期方案：Host Core 保留唯一事实及安全提交；旧 Host 规则合法性门禁要删除，未来 Rules 独立只读重建；**现有 AI 说书人推荐系统必须完整保留**，不再执行“AI 清空后重建”。旧库存列表含先前已删除文件，不能视为现行 Git tree。
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
+
+## 2026-10-18 全树重启审计（替代沿调用路径逐段清理；最新当前方向）
+
+- 全量 Git tree 快照 SHA `8c1a4dc114060806c33d5f78102b6b3c6457cf71`：未截断、**1135 个文件**（树条目除目录）、按扩展名初筛 **723 个代码/配置类文件**（含 Kotlin/DSL、Java、JS/TS、HTML/CSS、Python、Shell、XML、YAML、JSON 等）；Android Kotlin **337 生产 + 320 测试**。不同扩展名口径下的源代码数量不能与上方历史的 717 或窄口径 703 直接比作增删。
+- 审计必须**横向遍历全部真实代码目录及构建/工具资产**：Host UI 与根组件、Session、domain、epistemic、rules、recommendation、setup、flow、catalog、persistence、debug、test、Web、工具/CI；每个文件先按职责分类，而不是沿某个旧规则调用栈寻找下一步。
+- **决策标签**：`KEEP_CORE` 唯一事实、事件、安全、隐私、必要输入/展示；`KEEP_AI` 实际 AI 规划、建议、提示词、Provider、响应/战略与必须的规则候选依赖；`REMOVE_CONFIRMED` 仅自身或专属测试使用的旧实验/适配和过度 Host 规则门禁；`REMOVE_AFTER_DISCONNECT` 已判断应删但存在实际消费者，整条拆除后删；`REVIEW_SCOPE` 需要产品边界决策；`AUDIT_PENDING` 只有路径/体积证据，尚不能声称消费者审计完成。不得以目录名推定去留，也不得保留原代码仅因为旧测试要求。
+- 全仓源码索引 `MINIMAL_HOST_ALL_SOURCE_FILE_INDEX_2026-10-18.tsv` 是**旧基线库存**，不是另一套可写状态；新增审计结果统一记入本文件。任何新 HEAD 对照均重新拉完整 Git 树，不以静态清单判定实际删除完成。
+
+| 目录/链路 | 当前判定 | 可核实依据与操作 |
+|---|---|---|
+| domain / ClocktowerGameSession / canonical ActionFact / UI 事实提交 | KEEP_CORE + AUDIT_PENDING（混合文件） | 保留唯一状态、已确认事实、安全、私密/顺序/去重/过期防护；不按旧 Rules 正确答案驳回已发生信息 |
+| 首夜 HostOpeningRulesDomainV2 + InitialJointOpeningDirectV2、配对候选与 Provider、战略续规划 | KEEP_AI | 生产 App、Session、推荐路径直接消费；既有 AI 不重建不降级 |
+| FixedInformationEvaluator、FirstNightNumericInformationSemantics、TroubleBrewingRegistrationDomain | KEEP_AI（混合旧 Rules） | 数值与配对 AI 候选实际使用；先分离 Host 规则 veto 后再清理旧 Host 消费者 |
+| A4 identity-reveal prewarm / A4 Observation ZDD shadow | REMOVE_AFTER_DISCONNECT 待核 | App 仍有生产初始化/调用；不是 AI 首夜联合请求的直接入口，但须核实隐私和生命周期再删除 |
+| B4DynamicPlayerWorldSetShadow / ExactHistorical 和 Topology bundle 旧实验 | REMOVE_AFTER_DISCONNECT / 待分解 | B4 名称、请求类型仅文件自引用且有旧测试；共用的 Exact 类型被其他测试/推演引用，不能不审计就整包删 |
+| FN-BUNDLE PublicGoodInfoProjection 等压力实验 | REMOVE_AFTER_DISCONNECT 待核 | 旧实验/测试消费者存在；与正式联合规划 API 不是同一合同；先完整检查引用，再批量删除 |
+| ClocktowerHostSelectionSemantics / HostScreen / NightStepUi | AUDIT_PENDING 混合 | 夜间人工候选过滤和规则否决需要删，但显示、事实与 AI 自动/辅助流程要保留 |
+| legacy web/ 独立网页客户端及多剧本 | REVIEW_SCOPE | 非 Android Host，是否保留 Undercover/狼人及旧网页，由产品范围决定 |
+| tools、CI、assets、测试 | AUDIT_PENDING | 以当前 CI/R2/运行时消费者实际使用为依据，专属废弃实验测试可与生产实现一起删除 |
+
+### 全树横向删除批次 F1（源码修改与 CI 以提交为准）
+
+- **整删 `clocktower/recommendation/DecisionSeedFactory.kt` 及 `DecisionSeedFactoryTest.kt`**：旧 `DecisionSeedFactory`/`DecisionSeedMaterial` 在全部生产 Kotlin 中只有自身文件，无实际 AI 推荐调用，专属测试只测旧决定种子和旧回放假设。
+- **整删 `clocktower/recommendation/TroubleBrewingSetupRecommendationDecisionContext.kt` 及 `TroubleBrewingSetupRecommendationDecisionContextTest.kt`**：旧 Builder/上下文在完整仓库的源码检索中只有自身和专属测试引用，当前真正首夜联合规划依赖的是 `HostOpeningRulesDomainV2` 等，而不是这个旧快照转换器。
+- 两条完整孤立生产/测试链均与 Host 核心事实、AI Provider、生产提示词和战略记忆无生产调用关系。此批是**按全树角色筛选而非沿 B4 规则调用栈的删除**。需由提交前 diff 及真实 GitHub CI/R2 验收，未完成的遍历项目保留 `AUDIT_PENDING`，不宣称 337 个生产 Kotlin 已逐文件完成语义审计。
 
 **审计基线：** 64be30905b88f639a464204ed1db89b7b62bc910（PR #333 当前 HEAD）。本文件属于当前开发路线的源码库存与分批清理台账，不把“列出文件”混同“已完成逐项语义审计”。
 

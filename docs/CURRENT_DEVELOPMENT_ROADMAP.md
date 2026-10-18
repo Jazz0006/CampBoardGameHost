@@ -15,6 +15,12 @@
 
 以真实生产消费者审计为依据，有把握的整条删除；不确定的给用户一份简短的保留/删除风险报告，倾向先删、以后按正确边界重建。允许旧 Host 自动规则门禁退休，但**不得主动停用有效 AI 推荐**，**必须保留 MANUAL 最小游戏操作、真实已确认事实、安全和隐私**。每批报告净删除、源文件超限、唯一事实风险和真实 CI/R2。
 
+## 全树优先（2026-10-18 再次确认）
+
+实施策略由 B1–B4 的“沿旧调用路径小批清理”切换为**Git 全树横向遍历，按最小 Host / 现有 AI / 旧 Host Rules / 实验冗余 / 待审核产品范围逐模块分类**。分类与证据更新在已有 `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`（沿用旧文件，不并建台账）。`REMOVE_CONFIRMED` 可带专属测试直接整删；`REMOVE_AFTER_DISCONNECT` 列完整消费者并在断开后整删；AI 生产依赖明确 `KEEP_AI`，不因目录有 Rules/推荐/旧版本名而删。现行全树 1135 文件，按较宽代码/配置扩展名口径 723 个、Android 337 主 Kotlin + 320 测试 Kotlin，当前本次 F1 以前的 Git HEAD 8c1a4dc1。
+
+F1 首批横向筛选确认 `DecisionSeedFactory` 与 `TroubleBrewingSetupRecommendationDecisionContext` 均仅有自身和专属测试调用，无实际 AI/Host 生产消费者；四文件（生产两件、专属测试两件）整删。后续按**全树分类**集中安排删除，不再用旧调用链决定审计顺序；未知与混合文件继续核查，不虚称全部源码已语义审核。CI/R2 和最终 SHA 在真实运行后登记。
+
 ## P1 实施记录（只记录真实提交）
 
 - **B4（2026-10-18，代码 HEAD `3ad502ac34cb3e93a2a1c843752e8c3b63d93f54`）**：审计 DayAbilityRegistrationRulingProducerV1（App 白天 Slayer/Virgin → StorytellerCausalDecisionJournalV1）并移除它对 TroubleBrewingRegistrationDomain 的重复合法性查询，以及对健康/存活、Virgin 公开执行结果等的规则否决；显式登记直接构建事实，不从旧合法域反推。移除 App 和测试中的无用 legalRoles 参数。保留主体身份、座位、DAY 阶段、快照版本、决定 ID 去重、事件字段/登记事实完整性；清理旧规则拒绝测试，保留事实重放与防篡改测试。AI 的 TroubleBrewingRegistrationDomain/NaturalPairInformationCandidateGenerator、HostOpeningRulesDomainV2、InitialJointOpeningDirectV2、Provider、提示词和续规划保持原生产调用。P1 尚未完成：HostScreen/Night 的其他门禁待清理。GitHub 对比 6 文件 +73/-150，净删 77 行（生产净删 42、测试净删 44，文档新增 9）。**该代码 SHA 完整 Android CI #4344 SUCCESS**（单测+Debug APK）、**R2 #3924 SUCCESS**，ASP/Clingo/CI gate SUCCESS；尚未执行真机或收费 API。PR #334 继续 Draft 堆叠、不合并。

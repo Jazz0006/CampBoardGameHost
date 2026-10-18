@@ -1,4 +1,14 @@
-# 当前唯一 NEXT：AI 已恢复，继续 P1 删除 Host 规则合法性门禁（2026-10-18）
+# 当前唯一 NEXT：全树遍历优先、按职责直接清除（2026-10-18）
+
+**用户再次确认：不要再以旧代码调用栈为主线逐段探索。** 优先枚举当前 Git HEAD 的全部源码模块，按 Host Core、现有 AI、旧 Host Rules、无生产消费者的实验、需要产品决策的外部客户端五类做证据分类。审计及确认/标记删除均记录到现有 `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`，不复制第二份全树文件索引。已确认无效的整块实现与专属测试直接删除并独立验证；仅有风险或实际消费者的标记 `REMOVE_AFTER_DISCONNECT`，先保护 AI 生产调用。P1 持续清除 Host 规则门禁，不重写 AI。
+
+## F1 当前进展（2026-10-18）
+
+- Git 树 SHA `8c1a4dc114060806c33d5f78102b6b3c6457cf71`：1135 文件；含 Kotlin/DSL、Java、JS/TS、HTML/CSS、Python、Shell、XML、YAML、JSON 的宽口径源码/配置 723 文件；Android 337 生产 Kotlin、320 测试 Kotlin（当前删除前基线）。不同统计扩展名口径不要直接比较。
+- `clocktower/recommendation/DecisionSeedFactory.kt`、`TroubleBrewingSetupRecommendationDecisionContext.kt` 的唯一消费者均为各自专属测试；已直接删除这 2 个生产文件和对应 2 个独占测试。保留真正首夜 AI `HostOpeningRulesDomainV2`、`InitialJointOpeningDirectV2`、Provider、配对候选、战略记忆及请求合同。
+- A4/B4 世界影子、FN-BUNDLE 旧实验、HostScreen/UI 规则门禁等按审计台账标记，尚未完成逐文件全语义核查；不要凭目录名整删。与 web/ 和非 TB 剧本有关的产品范围仍需用户决定。
+- 代码提交 SHA、净删行数、GitHub 全量 CI/R2 尚待执行，不得把此前 B4 #4344 当作 F1 验收。
+
 
 ## B4 实施交接（已完成代码及完整 CI/R2 验收）
 
