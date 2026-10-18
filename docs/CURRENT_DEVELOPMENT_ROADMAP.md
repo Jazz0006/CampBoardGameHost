@@ -1,8 +1,8 @@
-# 当前开发路线（2026-10-18，F15 代码已实施；F12-E 新增横向审计）
+# 当前开发路线（2026-10-19，F12-F 全源审计与旧实验退役）
 
 ## 当前状态
 
-**当前最新（F12-E，开发机 MiniMCP）**：已将干净的clocktower同名分支从a2cbcac8安全快进至远端PR #334 HEAD `2ce0e897898e8f040c3bef8dcbda20186e2e4689`，追加16项首次全文语义审计，现 **138/475（29.05%）已审、337待审**。本批仅改文档、无生产代码删除/净缩减；CI #4379/R2 #3959 SUCCESS但Android被跳过，完整Android验收仍是F15代码`0f904f70`的CI #4377/R2 #3957。
+**当前最新（F12-F，MiniMCP）**：在`56975956`基线完成32个原待审文件全文语义审计，整删旧PROD-GLOBAL 3B2/3B3独立实验2脚本/2专属测试及过时P1分支专用CI工作流、删掉主CI中的6行旧Python运行步骤。代码独立提交`e6faea27bb28a571b45669bf2357af0b11e4f863`并推送，GitHub实际对比6文件净删1087行（旧台账估计约52,165B）；精确代码完整Android（full JVM+Debug APK）CI #4381 SUCCESS / R2 #3961 SUCCESS，ASP、Clingo、CI gate均通过。本批后**170/470（36.17%）已审、300待审**，新改动不涉及Android应用源码或现用AI模型链。
 
 F15已落实明确夜间实际结果确认：无人/多名死者、任意实际Imp继承座位、原中毒keep/clear；Dawn提交不再引用攻击/保护/Mayor/Soldier/SW或合法继承候选。删除NightDawnResolutionPlanner和TroubleBrewingDemonSuccessionResolver，旧候选UI/元数据/API一同退出；Attack与实际Death独立。多死亡通过原纯Action/Observation提交函数完整预检后一次更新唯一Session；NoNightDeaths为明确空结果事实。私密新身份仍沿实际RoleChange确认，Dawn名单读取实际Death。
 
@@ -10,7 +10,7 @@ F15已落实明确夜间实际结果确认：无人/多名死者、任意实际I
 
 ## 新对话 / 开发机接续
 
-F12-E已通过MiniMCP完成开发机安全同步并读取权威文档、台账，随后对16个原待审文件全文核查和扫描真实引用，新增结论写入唯一全源台账。代码基线`2ce0e897`；后续新对话仍应重新读取GitHub实时PR head/base及CI，再核对MiniMCP分支/worktree，若远端继续前进则只做安全fetch/精确快进。当前 **138/475已审、337待审**；下一批继续跨未审目录（epistemic codec、setup/catalog、transport、tools/CI和测试），不重复计数或直接误删生产AI。
+F12-F代码提交已经推送到同名Draft #334的`e6faea27`，但本文档后续还有独立交接提交。下次先复查远端PR/head/base与精确提交的CI #4381/R2 #3961，再核对MiniMCP branch/HEAD/clean及远端同步；勿重用旧版本令牌。当前**170/470已审、300待审**；下一批优先收敛epistemic内部无生产消费者FormalGameState/PlayerKnowledge模型及同文件JSON，保留实际InformationProposition/Global观察日志/AI历史；继续横向setup/transport/测试，逐批清理真正过时的Host规则门禁。
 
 ## 最终职责
 
@@ -22,7 +22,7 @@ F12-E已通过MiniMCP完成开发机安全同步并读取权威文档、台账�
 
 **所有者本轮再次强调：全文件遍历约20%尚未完成，F15之后必须继续。横向审计已恢复，下一任务继续覆盖未审文件，不再仅沿夜间调用链实施。** 继续在原台账逐路径记录最终分类、消费者、证据和待审状态，不复制库存或NEXT。
 
-F12-D后本轮F12-E又跨epistemic/setup/Android平台/离线CI/测试新增16项，当前范围 **475**，已审计 **138（29.05%）**，0审计中、**337待审**。F12原497项、A/B完成105；F13/F14/F15删除历史和分母变化在唯一台账。三个已审catalog文件本轮虽再次核查但不计新进度。代码删除/符号扫描与完成逐文件语义审计仍严格区分。
+F12-D新增6项、F12-E新增16项；F12-F跨epistemic codec/setup/平台AI和隐私测试/工具新增32项，删除原待审历史实验脚本与工作流5项。当前范围**470**，**已审计170（36.17%）**、0审计中、**300待审**；唯一审计表470条路径无重复/缺漏。F12原497项与F13-F15变动均有历史记录。真实Android工具/外部契约需按功能审计，不能把旧脚本删除推称整个Host Rules已完成。
 
 下一审计横向覆盖未审epistemic/codec、catalog/setup、平台/transport、工具/CI与测试，按实际必要Host/现用AI、旧Rules、死实验或需所有者决策分类，再选择有证据的整组退出。F15没有完成P1：DemonAttackProductionAdapter仍为信息步骤提供只读预览，Sage/Ravenkeeper触发和毒展示、日间自动继承/终局、其它规则和旧Flow模板仍待删除/解耦。预览和最终实际死者可不同，需要后续UI职责审计及真机验收；不能声称跨项目新kind消费者均已验证。
 
