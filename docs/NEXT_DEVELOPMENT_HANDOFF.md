@@ -9,7 +9,7 @@ AGENTS.md；docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md；docs/CUR
 ## 当前远端/开发机基线（先重新核对）
 
 - 仓库：Jazz0006/CampBoardGameHost。开发机 Mini MCP 别名 clocktower。
-- PR #330→#334 均为依赖堆叠 Draft。当前 P1 开发分支为 `codex/minimal-host-full-scan-20261018`，最新已提交的 P1 B2 代码检查点为 `f2869f0fd3965939adc131b55f22ef7d3e25179c`；后续文档提交会继续推进 HEAD，开始新批次必须重新核对 GitHub。
+- PR #330→#334 均为依赖堆叠 Draft。当前 P1 开发分支为 `codex/minimal-host-full-scan-20261018`，最新已提交的 P1 B3 代码检查点为 `2b751f4d7719a241540516e176349305d18fe8d9`；后续文档提交会继续推进 HEAD，开始新批次必须重新核对 GitHub。
 - P1 B1 首次 Android CI #4330 测试 1301 项 / 1 项失败（旧登记键）；修复代码 `4b1267e8...` 的完整 Android CI #4331 与 R2 #3911 是本批对应独立检验（最终状态需要重查）。更早 CI #4325/R2 #3905 与 docs-only #4326/R2 #3906 仅属清理前的历史基线。
 - 开发机已经 `git_fetch` 后经 Mini MCP `git_track_remote_branch` 从旧 `codex/minimal-host-reset` 切换并同步到正确 #334 分支，且 B1 两次代码提交均已推送。继续时必须再次检查 branch/HEAD/working tree，不能依赖本段历史记录。
 - 不自动合并 Draft / 强推 / 删除远端分支。真实付费模型调用没有授权。
@@ -28,7 +28,15 @@ AGENTS.md；docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md；docs/CUR
 - 人工 Washerwoman/Librarian/Investigator 配对选项现在从脚本角色和座位构建，不经旧 Pair Rules 真值/注册见证筛选；首夜发布使用确认的结构化显示事实，不再使用 Rules 候选 ID 或推导登记。`ClocktowerPairManualAuthority` 已删除旧合法域重算/判定；`ClocktowerHostSelectionSemantics` 删除旧配对真值投影。
 - B2 第一次全量 CI #4333 编译通过，1292 个测试中一项旧候选顺序断言失败，已修正；第二个代码 HEAD 的完整 Android CI **#4334 SUCCESS**（`:app:testFull :app:assembleDebug`）、R2 **#3914 SUCCESS** 才是本批有效验收；ASP/Clingo/CI gate 均 SUCCESS。
 - B2 HEAD 源码超 50KB 实测：`CampBoardGameHostApp.kt` 198706B，`ClocktowerHostScreen.kt` 149006B，`ClocktowerNightStepUi.kt` 60237B，`web/app.js` 143503B。
-- P1 **未完成**：`clocktower/rules` 依然保留约 20 个规则文件；`HostOpeningRulesDomainV2` 仍被旧开局 AI 消费；`PairInformationDecisionBoundary` 仍被旧 Provider 和残余匹配器消费；数值合法域仍被其他旧消费者使用。下一批沿这些消费链断开并删除规则，谨慎保护真实状态/行动/隐私。
+- P1 **未完成**：`clocktower/rules` 依然保留约 20 个规则文件；`HostOpeningRulesDomainV2` 仍被旧开局 AI 消费；数值合法域仍被其他旧消费者使用。B3 已删除 `PairInformationDecisionBoundary` 的整个生产消费者链。下一批沿剩余规则消费链断开并删除，谨慎保护真实状态/行动/隐私。
+
+## P1 B3 实际代码清理及交接
+
+- B3 两次代码提交 `d5f21d431ea3334d0bee05ff8e450e08c6ca7661`、`39860f40011729f5c5a148a0fc39d5f8e8895450`：旧全局配对 AI 决策创建/Provider 映射/残余集合/UI 推荐匹配整链停止，删去 `ClocktowerGlobalFirstNightDecision.kt`、`clocktower/session/PairInformationDecisionBoundary.kt` 和专属测试。没有新建 Rules 代用品，MANUAL 配对结构输入及 Host 信息记录继续保留。
+- 清除零生产消费者的 `clocktower/recommendation/FirstNightBundleCandidateSpaceAudit.kt` 与专属 `FirstNightBundleCandidateSpaceAuditTest.kt`，不再保留旧首夜法域笛卡尔积实验。**B3 修复后相对于 `91663dd34...` 共 13 个文件，+17/-993，净删 976 行，整删 3 个生产源码及 2 个专属测试文件**。
+- B3 代码 HEAD `39860f40...` 的 CI #4337 Kotlin 测试编译失败：旧 Scope 测试有一个位置参数 `null`（原 `pairContext` 参数已退出）。R2 #3917 SUCCESS。已直接删除过时调用参数，修复提交 **`2b751f4d7719a241540516e176349305d18fe8d9`**；修复后完整 Android **CI #4338 SUCCESS**（单测+Debug APK）、R2 **#3918 SUCCESS**；ASP/Clingo/CI gate 均 SUCCESS，这是 B3 最新有效完整验收。B3 首个代码 HEAD 对应 CI #4336/R2 #3916，不替代修复验证。
+- B3 HEAD 从 GitHub 实测超 50,000B 文件：`CampBoardGameHostApp.kt` **198219B**，`ClocktowerHostScreen.kt` **148322B**，`ClocktowerNightStepUi.kt` **60237B**，`web/app.js` **143503B**；P4 以前不预先拆大文件。
+- 下一批重点 **`HostOpeningRulesDomainV2` 与 `InitialJointOpeningDirectV2` 的联合 AI 规则候选入口**，其仍是开局展示阶段的核心规则依赖；以及 `clocktower/rules` 内剩余 Pair/Numeric/AbilityFunctioning/Registration 计算器及其他生产消费者。要优先保护 MANUAL 布局/初始配置/酒鬼确认/真实事件、私密交付、阶段推进，不用旧候选域伪装新 Rules。
 
 ## P1 下一批具体工作
 

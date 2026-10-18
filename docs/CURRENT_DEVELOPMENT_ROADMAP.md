@@ -6,7 +6,7 @@
 
 | 阶段 | 任务 | 状态 |
 |---|---|---|
-| P1 | 全仓删除旧规则引擎、合法候选、真值/登记见证、关联 UI/Session/Setup/AI 调用及专属旧测试 | **实施中**：B1/B2 已删登记见证、人工配对合法筛选与首夜发布旧规则候选验证；整条 Rules 引擎尚未完成 |
+| P1 | 全仓删除旧规则引擎、合法候选、真值/登记见证、关联 UI/Session/Setup/AI 调用及专属旧测试 | **实施中**：B1–B3 已清除登记见证、人工配对合法筛选、首夜发布 Rules 候选验证、AI 配对 Provider 决策链；整条 Rules 引擎尚未完成 |
 | P2 | 删除旧 AI 候选协议与评分、A4/B4/ZDD/世界枚举和缓存，保留事件/隐私/请求安全 | 待 P1 |
 | P3 | 收敛唯一 GameState/Session 事实及结构化事件记录，最小继续游戏、通用合同 | 待 P2 |
 | P4 | 净删后的 UI 和源码职责拆分；全部源文件 <=50,000 bytes | 待 P3 |
@@ -19,7 +19,8 @@
 - **B1 代码提交 `892e0252eb89d9c4bf99f69754f1984fe5bbba98`**，PR #334 Draft 堆叠关系不变。删除旧 `RegistrationInteractionRules` 及专属测试、无消费者的 `TroubleBrewingRecurringPlayerInformationRouteDomain`，以及厨师方桌由数值推导登记见证/有效邪恶座位/相邻计数高亮、配对方桌对 Spy/Recluse 登记见证推断勾选。另清除旧步骤构建器中依可靠性过滤登记键的调用。初始净减少 **379 行（+31/-410）**，修复后 B1 合计净减少 **378 行（+32/-410）**，生产源码删除 2 文件、旧测试删除 1 文件，其余按职责精简。
 - B1 首个代码 HEAD 的完整 Android CI **#4330**：编译通过，1301 项测试中 1 项旧规则键断言失败；R2 **#3910 SUCCESS**。已根据批准的退役方向修复：夜间信息 Builder 不再开启旧登记见证交互（无自动见证、不可凭信息展示补记登记），修复提交 **`4b1267e8e7d3277577e44c01dd7004cb04da6fb5`**；修复后的完整 Android CI **#4331 SUCCESS**（`testFull` 和 Debug APK 构建），R2 **#3911 SUCCESS**；ASP/Clingo 和 CI gate 均成功。保留原 Session 事实提交、直接数字选择和方桌实际身份提示；未进行真机手动通局验收。
 - **B2 代码提交 `4e87bee2adedbe4ad2542e87426b3449d7893a19` 和 `f2869f0fd3965939adc131b55f22ef7d3e25179c`**：洗衣妇/图书管理员/调查员人工选项改为纯结构性角色与座位组合，不再调用 `PairInformationLegalDomain`；首夜确认结果不再经过 `PairInformationDecisionBoundary` 合法候选 ID 或配对见证推断，而由选定的结构化显示事实生成 Session 观察请求；废除 `projectFirstNightPairInformationOptions` 真值/登记推导和选项池按剧本答案过滤。完整删除无人调用的 `HostOpeningResidualEventGateV2` 旧规则复核器，以及 `FirstNightPairInformationProductionSemanticsTest`、`HostOpeningRulesDomainV2Test`；将混合测试精简为结构选项与实际确认保护。**B2 合计 12 文件，+123/-2012，净删除 1889 行**。初次完整 CI #4333 主程序编译成功，1292 项测试中 1 项因旧顺序断言失败，已修正；第二代码提交的完整 Android CI **#4334 SUCCESS**（包含 `:app:testFull :app:assembleDebug`）、R2 **#3914 SUCCESS**，ASP、Clingo、CI gate 均 SUCCESS。
-- **P1 仍未完成**：`clocktower/rules` 仍有约 20 个旧源码文件；Pair/Numeric legal domain、Registration、AbilityFunctioning、Night/Session、Opening residual/event gate、Recommendation 与 Setup/Provider 旧消费者须继续断开并删除，不得提前进入 P2。后续批次复核 CI/R2 旧源码守卫。
+- **B3 代码提交 `d5f21d431ea3334d0bee05ff8e450e08c6ca7661` 和 `39860f40011729f5c5a148a0fc39d5f8e8895450`**：沿旧 `PairInformationDecisionBoundary` 的消费者真正删除生产调用，包括 App 实时残余 AI 请求、残余范围批次、Host UI 旧配对匹配、Provider 的 `fromPairInformation` 与 Matcher 的 `matchPair`。完整删除 `ClocktowerGlobalFirstNightDecision.kt`、`PairInformationDecisionBoundary.kt`、专属旧测试 `PairInformationDecisionBoundaryTest.kt`；另外已实证零生产消费者的 `FirstNightBundleCandidateSpaceAudit.kt` 和它的专属测试一起删除。保留 MANUAL 的结构化配对录入/发布，旧配对 AI 推荐暂停，不生成临时兼容合法域。**B3 修复后 13 文件，+17/-993，净删 976 行**，初次全量 CI #4337 编译失败：独占测试的旧位置参数遗留 `null`，不是 Rules 生产链失败；R2 #3917 SUCCESS。已删除旧位置参数，修复代码提交 `2b751f4d7719a241540516e176349305d18fe8d9`，修复后的完整 Android CI **#4338 SUCCESS**（单测与 Debug APK 构建）、R2 **#3918 SUCCESS**，ASP/Clingo 与 CI gate 均通过；未做真机或收费 API 测试。
+- **P1 仍未完成**：`clocktower/rules` 仍有约 20 个旧源码文件；Pair/Numeric legal domain、Registration、AbilityFunctioning、Night/Session、HostOpeningRulesDomainV2、Recommendation 与 Setup/Provider 剩余旧消费者须继续断开并删除，不得提前进入 P2。后续批次复核 CI/R2 旧源码守卫。
 
 ## 当前历史基线（不是 P1 完成证明）
 
