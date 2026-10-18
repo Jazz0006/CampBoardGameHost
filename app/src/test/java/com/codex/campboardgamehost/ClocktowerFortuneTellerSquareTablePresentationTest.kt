@@ -74,27 +74,9 @@ class ClocktowerFortuneTellerSquareTablePresentationTest {
     }
 
     @Test
-    fun `result actions expose exactly supplied legal values with recommendation first`() {
-        assertEquals(
-            listOf(true),
-            clocktowerFortuneTellerResultActions(
-                legalResults = setOf(true),
-                recommendedResult = false,
-            ),
-        )
-        assertEquals(
-            listOf(false, true),
-            clocktowerFortuneTellerResultActions(
-                legalResults = setOf(true, false),
-                recommendedResult = false,
-            ),
-        )
-        assertEquals(
-            emptyList<Boolean>(),
-            clocktowerFortuneTellerResultActions(
-                legalResults = emptySet(),
-                recommendedResult = true,
-            ),
-        )
+    fun `result actions always allow both answers and highlight AI recommendation first`() {
+        assertEquals(listOf(true, false), clocktowerFortuneTellerResultActions(null))
+        assertEquals(listOf(false, true), clocktowerFortuneTellerResultActions(false))
+        assertEquals(listOf(true, false), clocktowerFortuneTellerResultActions(true))
     }
 }

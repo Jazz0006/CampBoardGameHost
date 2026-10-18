@@ -593,10 +593,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
                     redHerringSeat = redHerringSeat,
-                    legalResults = if (!allowRuleDeterminedAutoUi) setOf(true, false)
-                        else setOf(true, false),
                     recommendedResult = fortuneTellerRecommendedResult,
-                    allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onSeatSelected = { seatNumber ->
@@ -609,7 +606,6 @@ internal fun ClocktowerNightStepCardLocalized(
                         }
                     },
                     onResultSelected = ::showStructuredFortuneTellerResult,
-                    onAutomaticResultSelected = ::showStructuredFortuneTellerResult,
                     onPrevious = onPrevious,
                     onHostTools = onHostTools,
                     onNext = onNext,
