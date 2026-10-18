@@ -1,14 +1,6 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
-import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
-import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
-import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
-import com.codex.campboardgamehost.clocktower.domain.RulesetRef
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -18,21 +10,7 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class EpistemicSemanticModelTest {
-    private val ruleset = RulesetRef(
-        ScriptId("trouble-brewing"), "0123456789abcdef0123456789abcdef",
-        "trouble-brewing-v1", "official-2026-08-11", RuleCoverage.PARTIAL,
-    )
     private val snapshotId = "snapshot-0123456789abcdef0123456789abcdef"
-    private val state = FormalGameState(
-        snapshotId, "game-1", 4, ruleset, StorytellerPhase.FIRST_NIGHT, 1,
-        listOf(
-            FormalPlayerState(1, RoleId("Investigator"), Alignment.GOOD, CharacterType.TOWNSFOLK),
-            FormalPlayerState(2, RoleId("Spy"), Alignment.EVIL, CharacterType.MINION),
-            FormalPlayerState(3, RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON),
-            FormalPlayerState(4, RoleId("Recluse"), Alignment.GOOD, CharacterType.OUTSIDER),
-            FormalPlayerState(5, RoleId("Empath"), Alignment.GOOD, CharacterType.TOWNSFOLK),
-        ),
-    )
     private val pair = InformationProposition.AnyOf(
         listOf(InformationProposition.RoleAt(2, RoleId("Spy")), InformationProposition.RoleAt(5, RoleId("Spy"))),
     )
@@ -41,37 +19,6 @@ class EpistemicSemanticModelTest {
         1, RoleId("Investigator"), ObservationVisibility.PRIVATE, setOf(1),
         ObservationReliability.RECEIVED_AS_FUNCTIONING, pair,
     )
-    private val knowledge = PlayerKnowledgeSnapshot(
-        "knowledge-seat-1", snapshotId, 1, RoleId("Investigator"),
-        privateObservations = listOf(observation),
-        setupKnowledge = listOf(InformationProposition.SetupProfile(3, 0, 1, 1)),
-    )
-
-    @Test fun `explicit no night deaths round trips without inferring a death or registration`() {
-        val formal = state.copy(timeline = listOf(com.codex.campboardgamehost.clocktower.domain.ActionFact.NoNightDeaths("none", 0L)))
-        assertEquals(formal, EpistemicSemanticJson.decodeFormalGameState(EpistemicSemanticJson.encode(formal)))
-    }
-
-    @Test
-    fun `registration answers round trip and legacy absence remains unknown`() {
-        listOf<Boolean?>(null, false, true).forEach { answer ->
-            val shot = com.codex.campboardgamehost.clocktower.domain.ActionFact.SlayerShot(
-                "shot", 0L, 1, 2, true, false, answer,
-            )
-            val nomination = com.codex.campboardgamehost.clocktower.domain.ActionFact.Nomination(
-                "nomination", 1L, 2, 3, false, answer,
-            )
-            val formal = state.copy(timeline = listOf(shot, nomination))
-            val json = EpistemicSemanticJson.encode(formal)
-            assertEquals(formal, EpistemicSemanticJson.decodeFormalGameState(json))
-            val entries = org.json.JSONObject(json).getJSONArray("timeline")
-            assertEquals(answer != null, entries.getJSONObject(0).has("targetRegistersAsDemon"))
-            assertEquals(answer != null, entries.getJSONObject(1).has("nominatorRegistersAsTownsfolk"))
-            assertNotEquals(shot.b4CanonicalPayload(), shot.copy(targetRegistersAsDemon = answer != true).b4CanonicalPayload())
-            assertNotEquals(nomination.b4CanonicalPayload(), nomination.copy(nominatorRegistersAsTownsfolk = answer != true).b4CanonicalPayload())
-        }
-    }
-
     @Test fun `schema v2 roots and A1_1 values round trip canonically`() {
         val durableRecord = RecordedEpistemicObservation(
             recordId = "first-night-investigator", phase = StorytellerPhase.FIRST_NIGHT,
@@ -80,7 +27,6 @@ class EpistemicSemanticModelTest {
             reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING, proposition = pair,
         )
 
-        assertEquals(state, EpistemicSemanticJson.decodeFormalGameState(EpistemicSemanticJson.encode(state)))
         assertEquals(pair, EpistemicSemanticJson.decodeInformationProposition(EpistemicSemanticJson.encode(pair)))
         val playerCount = InformationProposition.PlayerCount(5)
         assertEquals(playerCount, EpistemicSemanticJson.decodeInformationProposition(EpistemicSemanticJson.encode(playerCount)))
@@ -90,14 +36,13 @@ class EpistemicSemanticModelTest {
         assertEquals(booleanResult, EpistemicSemanticJson.decodeInformationProposition(EpistemicSemanticJson.encode(booleanResult)))
         assertEquals(observation, EpistemicSemanticJson.decodeEpistemicObservation(EpistemicSemanticJson.encode(observation)))
         assertEquals(durableRecord, EpistemicSemanticJson.decodeRecordedEpistemicObservation(EpistemicSemanticJson.encode(durableRecord)))
-        assertEquals(knowledge, EpistemicSemanticJson.decodePlayerKnowledgeSnapshot(EpistemicSemanticJson.encode(knowledge)))
-        assertTrue(EpistemicSemanticJson.encode(state).contains("\"schemaVersion\":2"))
+        assertTrue(EpistemicSemanticJson.encode(durableRecord).contains("\"schemaVersion\":2"))
     }
 
     @Test fun `schema v1 is rejected with an explicit migration error`() {
-        val v1 = EpistemicSemanticJson.encode(knowledge).replaceFirst("\"schemaVersion\":2", "\"schemaVersion\":1")
+        val v1 = EpistemicSemanticJson.encode(observation).replaceFirst("\"schemaVersion\":2", "\"schemaVersion\":1")
         try {
-            EpistemicSemanticJson.decodePlayerKnowledgeSnapshot(v1)
+            EpistemicSemanticJson.decodeEpistemicObservation(v1)
             fail("schema v1 must not be silently decoded")
         } catch (error: IllegalArgumentException) {
             assertTrue(error.message.orEmpty().contains("explicitly migrated"))
@@ -151,7 +96,7 @@ class EpistemicSemanticModelTest {
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun `knowledge rejects private observation addressed to another player`() {
-        knowledge.copy(recipientSeat = 2)
+    fun `private observation rejects missing recipient`() {
+        observation.copy(recipientSeats = emptySet())
     }
 }

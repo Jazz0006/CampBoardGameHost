@@ -1,115 +1,22 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
-import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
-import com.codex.campboardgamehost.clocktower.domain.RulesetRef
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Canonical, locale-independent schema-v2 JSON used by fixtures, replay and oracle adapters. */
+/** Canonical, locale-independent JSON for actual observations and information propositions. */
 object EpistemicSemanticJson {
-    fun encode(value: FormalGameState): String = canonical(formalGameState(value))
     fun encode(value: InformationProposition): String = canonical(proposition(value))
     fun encode(value: EpistemicObservation): String = canonical(observation(value))
     fun encode(value: RecordedEpistemicObservation): String = canonical(recordedObservation(value))
-    fun encode(value: PlayerKnowledgeSnapshot): String = canonical(playerKnowledge(value))
 
-    fun decodeFormalGameState(json: String): FormalGameState = formalGameState(checkedRoot(json))
     fun decodeInformationProposition(json: String): InformationProposition = proposition(JSONObject(json))
     fun decodeEpistemicObservation(json: String): EpistemicObservation = observation(checkedRoot(json))
     fun decodeRecordedEpistemicObservation(json: String): RecordedEpistemicObservation = recordedObservation(checkedRoot(json))
-    fun decodePlayerKnowledgeSnapshot(json: String): PlayerKnowledgeSnapshot = playerKnowledge(checkedRoot(json))
-
-    private fun formalGameState(value: FormalGameState): Map<String, Any?> = mapOf(
-        "gameId" to value.gameId, "gameStateRevision" to value.gameStateRevision, "phase" to value.phase.name,
-        "players" to value.players.map(::formalPlayer), "publicPropositions" to value.publicPropositions.map(::proposition),
-        "round" to value.round, "rulesetRef" to ruleset(value.rulesetRef), "schemaVersion" to value.schemaVersion,
-        "snapshotId" to value.snapshotId, "storytellerOnlyPropositions" to value.storytellerOnlyPropositions.map(::proposition),
-        "timeline" to value.timeline.map(::actionFact),
-    ) + formalActionTimelineBindingFields(value.actionTimelineBinding)
-
-    private fun formalPlayer(value: FormalPlayerState): Map<String, Any?> = mapOf(
-        "actualAlignment" to value.actualAlignment.name, "actualRole" to value.actualRole.value,
-        "actualType" to value.actualType.name, "alive" to value.alive, "poisoned" to value.poisoned,
-        "seat" to value.seat, "shownRole" to value.shownRole?.value,
-    )
-
-    private fun actionFact(value: ActionFact): Map<String, Any?> = when (value) {
-        is ActionFact.Poison -> mapOf("actionId" to value.actionId, "kind" to "poison", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
-        is ActionFact.Protect -> mapOf("actionId" to value.actionId, "kind" to "protect", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
-        is ActionFact.Attack -> mapOf("actionId" to value.actionId, "kind" to "attack", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
-        is ActionFact.Execution -> mapOf("actionId" to value.actionId, "kind" to "execution", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
-        is ActionFact.Death -> mapOf("actionId" to value.actionId, "kind" to "death", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
-        is ActionFact.NoNightDeaths -> mapOf("actionId" to value.actionId, "kind" to "no-night-deaths", "sequence" to value.sequence)
-        is ActionFact.NoExecution -> mapOf("actionId" to value.actionId, "kind" to "no-execution", "sequence" to value.sequence)
-        is ActionFact.SlayerShot -> mapOf(
-            "actionId" to value.actionId, "kind" to "slayer-shot", "sequence" to value.sequence,
-            "claimantSeat" to value.claimantSeat, "targetSeat" to value.targetSeat,
-            "abilityConsumed" to value.abilityConsumed, "hit" to value.hit,
-        ) + (value.targetRegistersAsDemon?.let { mapOf("targetRegistersAsDemon" to it) } ?: emptyMap())
-        is ActionFact.Nomination -> mapOf(
-            "actionId" to value.actionId, "kind" to "nomination", "sequence" to value.sequence,
-            "nominatorSeat" to value.nominatorSeat, "nomineeSeat" to value.nomineeSeat,
-            "firstVirginNomination" to value.firstVirginNomination,
-        ) + (value.nominatorRegistersAsTownsfolk?.let { mapOf("nominatorRegistersAsTownsfolk" to it) } ?: emptyMap())
-        is ActionFact.Vote -> mapOf(
-            "actionId" to value.actionId, "kind" to "vote", "sequence" to value.sequence,
-            "nominatorSeat" to value.nominatorSeat, "nomineeSeat" to value.nomineeSeat,
-            "voterSeats" to value.voterSeats, "ghostVoterSeats" to value.ghostVoterSeats,
-        )
-        is ActionFact.KlutzLearnedDeath -> mapOf(
-            "actionId" to value.actionId, "kind" to "klutz-learned-death", "sequence" to value.sequence,
-            "klutzSeat" to value.klutzSeat, "deathActionId" to value.deathActionId,
-            "functioningWhenLearned" to value.functioningWhenLearned,
-        )
-        is ActionFact.KlutzChoice -> mapOf(
-            "actionId" to value.actionId, "kind" to "klutz-choice", "sequence" to value.sequence,
-            "klutzSeat" to value.klutzSeat, "chosenSeat" to value.chosenSeat,
-            "learnedActionId" to value.learnedActionId,
-        )
-        is ActionFact.RoleChange -> mapOf("actionId" to value.actionId, "alignment" to value.alignment.name, "kind" to "role-change", "role" to value.role.value, "sequence" to value.sequence, "targetSeat" to value.targetSeat, "type" to value.type.name)
-        is ActionFact.ButlerMasterChoice -> mapOf(
-            "actionId" to value.actionId, "kind" to "butler-master",
-            "sequence" to value.sequence, "butlerSeat" to value.butlerSeat, "masterSeat" to value.masterSeat,
-        )
-        is ActionFact.RedHerringChoice -> mapOf(
-            "actionId" to value.actionId, "kind" to "red-herring-choice",
-            "sequence" to value.sequence, "selectedSeat" to value.selectedSeat,
-        )
-        is ActionFact.MayorRedirectChoice -> mapOf(
-            "actionId" to value.actionId, "kind" to "mayor-redirect",
-            "sequence" to value.sequence, "mayorSeat" to value.mayorSeat, "targetSeat" to value.targetSeat,
-        )
-        is ActionFact.DemonBluffChoice -> mapOf(
-            "actionId" to value.actionId, "kind" to "demon-bluff-choice",
-            "sequence" to value.sequence, "roleIds" to value.roles.map { it.value },
-        )
-        is ActionFact.PhaseAdvance -> mapOf("actionId" to value.actionId, "kind" to "phase-advance", "phase" to value.phase.name, "round" to value.round, "sequence" to value.sequence)
-    }
-
-    private fun formalActionTimelineBindingFields(value: FormalActionTimelineBinding): Map<String, Any?> = when (value) {
-        FormalActionTimelineBinding.Legacy -> emptyMap()
-        is FormalActionTimelineBinding.Global -> mapOf(
-            "actionTimelineBinding" to mapOf(
-                "kind" to "global",
-                "entries" to value.timeline.entries.map { entry ->
-                    mapOf("actionId" to entry.fact.actionId, "point" to timelinePoint(entry.point))
-                },
-            ),
-        )
-    }
-
-    private fun ruleset(value: RulesetRef): Map<String, Any?> = mapOf(
-        "coverage" to value.coverage.name, "rulesetVersion" to value.rulesetVersion,
-        "scriptContentHash" to value.scriptContentHash, "scriptId" to value.scriptId.value,
-        "sourceRevision" to value.sourceRevision,
-    )
 
     private fun proposition(value: InformationProposition): Map<String, Any?> = when (value) {
         is InformationProposition.RoleAt -> mapOf("kind" to "role-at", "role" to value.role.value, "seat" to value.seat)
@@ -178,133 +85,9 @@ object EpistemicSemanticJson {
         )
     }
 
-    private fun playerKnowledge(value: PlayerKnowledgeSnapshot): Map<String, Any?> = mapOf(
-        "formalSnapshotId" to value.formalSnapshotId, "knowledgeSnapshotId" to value.knowledgeSnapshotId,
-        "perceivedRole" to value.perceivedRole.value, "privateObservations" to value.privateObservations.map(::observation),
-        "publicObservations" to value.publicObservations.map(::observation), "recipientSeat" to value.recipientSeat,
-        "schemaVersion" to value.schemaVersion, "setupKnowledge" to value.setupKnowledge.map(::proposition),
-    )
-
     private fun timelinePoint(value: TimelinePoint): Map<String, Any?> = mapOf(
         "globalSequence" to value.globalSequence, "phase" to value.phase.name,
         "round" to value.round, "sequence" to value.sequence,
-    )
-
-    private fun formalGameState(json: JSONObject): FormalGameState {
-        val timeline = json.optJSONArray("timeline")?.objects()?.map(::actionFact).orEmpty()
-        return FormalGameState(
-            snapshotId = json.getString("snapshotId"), gameId = json.getString("gameId"),
-            gameStateRevision = json.getLong("gameStateRevision"), rulesetRef = ruleset(json.getJSONObject("rulesetRef")),
-            phase = StorytellerPhase.valueOf(json.getString("phase")), round = json.getInt("round"),
-            players = json.getJSONArray("players").objects().map(::formalPlayer),
-            publicPropositions = json.getJSONArray("publicPropositions").objects().map(::proposition),
-            storytellerOnlyPropositions = json.getJSONArray("storytellerOnlyPropositions").objects().map(::proposition),
-            timeline = timeline,
-            schemaVersion = json.getInt("schemaVersion"),
-            actionTimelineBinding = formalActionTimelineBinding(json, timeline),
-        )
-    }
-
-    private fun formalPlayer(json: JSONObject): FormalPlayerState = FormalPlayerState(
-        seat = json.getInt("seat"), actualRole = RoleId(json.getString("actualRole")),
-        actualAlignment = Alignment.valueOf(json.getString("actualAlignment")),
-        actualType = CharacterType.valueOf(json.getString("actualType")),
-        shownRole = json.nullableString("shownRole")?.let(::RoleId), alive = json.getBoolean("alive"),
-        poisoned = json.getBoolean("poisoned"),
-    )
-
-    private fun actionFact(json: JSONObject): ActionFact = when (json.getString("kind")) {
-        "poison" -> ActionFact.Poison(json.getString("actionId"), json.getLong("sequence"), json.nullableInt("targetSeat"))
-        "protect" -> ActionFact.Protect(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
-        "attack" -> ActionFact.Attack(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
-        "execution" -> ActionFact.Execution(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
-        "death" -> ActionFact.Death(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
-        "no-night-deaths" -> ActionFact.NoNightDeaths(json.getString("actionId"), json.getLong("sequence"))
-        "no-execution" -> ActionFact.NoExecution(json.getString("actionId"), json.getLong("sequence"))
-        "slayer-shot" -> ActionFact.SlayerShot(
-            json.getString("actionId"), json.getLong("sequence"),
-            json.getInt("claimantSeat"), json.getInt("targetSeat"),
-            json.getBoolean("abilityConsumed"), json.getBoolean("hit"),
-            json.nullableBoolean("targetRegistersAsDemon"),
-        )
-        "nomination" -> ActionFact.Nomination(
-            json.getString("actionId"), json.getLong("sequence"),
-            json.getInt("nominatorSeat"), json.getInt("nomineeSeat"),
-            json.getBoolean("firstVirginNomination"),
-            json.nullableBoolean("nominatorRegistersAsTownsfolk"),
-        )
-        "vote" -> ActionFact.Vote(
-            json.getString("actionId"), json.getLong("sequence"),
-            json.getInt("nominatorSeat"), json.getInt("nomineeSeat"),
-            json.getJSONArray("voterSeats").let { a -> (0 until a.length()).map(a::getInt) },
-            json.getJSONArray("ghostVoterSeats").let { a -> (0 until a.length()).map(a::getInt) },
-        )
-        "klutz-learned-death" -> ActionFact.KlutzLearnedDeath(
-            json.getString("actionId"), json.getLong("sequence"),
-            json.getInt("klutzSeat"), json.getString("deathActionId"),
-            json.getBoolean("functioningWhenLearned"),
-        )
-        "klutz-choice" -> ActionFact.KlutzChoice(
-            json.getString("actionId"), json.getLong("sequence"),
-            json.getInt("klutzSeat"), json.getInt("chosenSeat"),
-            json.getString("learnedActionId"),
-        )
-        "role-change" -> ActionFact.RoleChange(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"), RoleId(json.getString("role")), Alignment.valueOf(json.getString("alignment")), CharacterType.valueOf(json.getString("type")))
-        "red-herring-choice" -> ActionFact.RedHerringChoice(
-            json.getString("actionId"), json.getLong("sequence"),
-            if (json.isNull("selectedSeat")) null else json.getInt("selectedSeat"),
-        )
-        "demon-bluff-choice" -> ActionFact.DemonBluffChoice(
-            json.getString("actionId"), json.getLong("sequence"),
-            json.getJSONArray("roleIds").let { arr ->
-                (0 until arr.length()).map { i -> RoleId(arr.getString(i)) }
-            },
-        )
-        "phase-advance" -> ActionFact.PhaseAdvance(json.getString("actionId"), json.getLong("sequence"), StorytellerPhase.valueOf(json.getString("phase")), json.getInt("round"))
-        else -> error("Unknown B4 action fact kind: ${json.getString("kind")}")
-    }
-
-    private fun formalActionTimelineBinding(
-        json: JSONObject,
-        timeline: List<ActionFact>,
-    ): FormalActionTimelineBinding {
-        if (!json.has("actionTimelineBinding")) return FormalActionTimelineBinding.Legacy
-        require(!json.isNull("actionTimelineBinding")) {
-            "actionTimelineBinding cannot be null when present."
-        }
-        val binding = json.getJSONObject("actionTimelineBinding")
-        return when (binding.getString("kind")) {
-            "global" -> {
-                val persistedEntries = binding.getJSONArray("entries").objects()
-                val actionIds = persistedEntries.map { it.getString("actionId") }
-                require(actionIds.distinct().size == actionIds.size) {
-                    "Global formal action timeline binding cannot contain duplicate action IDs."
-                }
-                val factsById = timeline.associateBy(ActionFact::actionId)
-                require(actionIds.toSet() == factsById.keys) {
-                    "Global formal action timeline binding must reference every persisted action exactly once."
-                }
-                FormalActionTimelineBinding.Global(
-                    ActionFactTimeline(
-                        persistedEntries.map { entry ->
-                            TimelineBoundActionFact(
-                                fact = factsById.getValue(entry.getString("actionId")),
-                                point = timelinePoint(entry.getJSONObject("point")),
-                            )
-                        },
-                    ),
-                )
-            }
-            else -> throw IllegalArgumentException(
-                "Unknown formal action timeline binding kind: ${binding.getString("kind")}",
-            )
-        }
-    }
-
-    private fun ruleset(json: JSONObject): RulesetRef = RulesetRef(
-        scriptId = ScriptId(json.getString("scriptId")), scriptContentHash = json.getString("scriptContentHash"),
-        rulesetVersion = json.getString("rulesetVersion"), sourceRevision = json.getString("sourceRevision"),
-        coverage = RuleCoverage.valueOf(json.getString("coverage")),
     )
 
     private fun proposition(json: JSONObject): InformationProposition = when (json.getString("kind")) {
@@ -406,14 +189,6 @@ object EpistemicSemanticJson {
         }
     }
 
-    private fun playerKnowledge(json: JSONObject): PlayerKnowledgeSnapshot = PlayerKnowledgeSnapshot(
-        knowledgeSnapshotId = json.getString("knowledgeSnapshotId"), formalSnapshotId = json.getString("formalSnapshotId"),
-        recipientSeat = json.getInt("recipientSeat"), perceivedRole = RoleId(json.getString("perceivedRole")),
-        publicObservations = json.getJSONArray("publicObservations").objects().map(::observation),
-        privateObservations = json.getJSONArray("privateObservations").objects().map(::observation),
-        setupKnowledge = json.getJSONArray("setupKnowledge").objects().map(::proposition), schemaVersion = json.getInt("schemaVersion"),
-    )
-
     private fun timelinePoint(json: JSONObject): TimelinePoint {
         require(json.has("globalSequence") && !json.isNull("globalSequence")) {
             "Legacy schema-v2 TimelinePoint without globalSequence requires explicit migration; " +
@@ -444,6 +219,5 @@ object EpistemicSemanticJson {
     private fun JSONArray.ints(): List<Int> = List(length(), ::getInt)
     private fun JSONArray.strings(): List<String> = List(length(), ::getString)
     private fun JSONObject.nullableString(key: String): String? = if (!has(key) || isNull(key)) null else getString(key)
-    private fun JSONObject.nullableBoolean(key: String): Boolean? = if (!has(key) || isNull(key)) null else getBoolean(key)
     private fun JSONObject.nullableInt(key: String): Int? = if (!has(key) || isNull(key)) null else getInt(key)
 }
