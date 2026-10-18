@@ -1,6 +1,8 @@
-# 当前开发路线（2026-10-19，F12-G Formal世界镜像清除与全树审计）
+# 当前开发路线（2026-10-19，F12-H 删除间谍专用展示与按必要性退役旧模块）
 
 ## 当前状态
+
+**最新F12-H（2026-10-19）**：所有者明确“已有生产调用不是保留理由；删除后游戏可按既有方桌/人工操作/Session/AI继续则删除整条旧链，只有不能替代的基本游戏、事实/安全和AI路径保留”。已实施首夜/后夜间谍只提示唤醒具体座位、说书人把当前方桌给间谍看后收回手机点击原下一步；正式取消“展示魔典”按钮、单独魔典视图、GrimoireState/ReminderToken DTO及JSON、独立中毒Spy gate、Spy→红鲱鱼旧依赖。两个生产文件及四个专属旧测试文件整删，还清除孤立PairInformationOutcome。GitHub代码范围 `fc80fd1a..f7f47d1e` **18文件+20/-869，净删849行**。第一完整CI #4386失败因旧FirstNightFlowTest强制红鲱鱼先于Spy；已退休该测试并保留占卜师前置事实测试，最终精确代码 `f7f47d1e28b5fd74db61179a3c22736f6ca04d3d` 的 **[CI #4387 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39172098629)**（Android full JVM+Debug APK、ASP/real Clingo/gate成功）及 **[R2 #3967 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39172098663)**。唯一台账移除6文件后**172/463（37.15%）已审、291待审**。App/HostScreen仍超50,000B，P1/P4未完成。
 
 **当前最新（F12-G）**：实际删除无生产调用的FormalGameState、FormalPlayerState、PlayerKnowledgeSnapshot及配套JSON/旧Timeline绑定，专属旧测试文件1个退出，两个混合测试保留真实global chronology/私密观察合同。代码起点`4da03849`、最终代码SHA **`8644e7575b67d9f3bef6cc269c7c93bca4332bf1`**，GitHub精确比对7文件+8/-737（净删729行）。首轮CI #4383 Kotlin import误删失败，定位只补回`Collections`后最终完整Android **CI #4384 SUCCESS / R2 #3964 SUCCESS**，ASP/真实Clingo/gate通过。新全文审计7项、退役原待审测试1项：**177/469（37.74%）已审，292待审**。现用AI与Session事实/隐私均未修改。
 
@@ -12,7 +14,7 @@ F15已落实明确夜间实际结果确认：无人/多名死者、任意实际I
 
 ## 新对话 / 开发机接续
 
-F12-G代码最终HEAD`8644e757`，本轮审计/交接文档另有提交，请从PR #334与MiniMCP实时核对，不可直接用本行SHA当当前HEAD；最终代码完整验收CI #4384/R2 #3964 SUCCESS（新的docs-only CI不替代此证明）。目前**177/469已审、292待审**。下批优先先迁移真实公开历史保密测试后删除无人生产消费的PlayerHistoricalTimeline，并继续横向setup、transport、流程和Host剩余Rules门禁审计，不重复已审文件计数。
+F12-H最终完整代码SHA `f7f47d1e`，CI #4387/R2 #3967 SUCCESS；本次文档还会另行提交，进入下一轮必须实时核对GitHub PR/head/base、MiniMCP干净同步及精确代码CI，不能将docs-only CI算Android编译通过。当前**172/463已审、291待审**。下一批应用产品必要性新标准：若已有简单直接路径继续游戏，先替换/取消真实生产调用再整组退出旧模块，优先PlayerHistoricalTimeline、Mayor/FT host singleton/法律候选、Sage菜单、SetupDiversity/角色轮换；不要以有消费者作为默认保留理由。现用AI/唯一Session事实安全不可丢。
 
 ## 最终职责
 
@@ -24,7 +26,7 @@ F12-G代码最终HEAD`8644e757`，本轮审计/交接文档另有提交，请从
 
 **所有者本轮再次强调：全文件遍历约20%尚未完成，F15之后必须继续。横向审计已恢复，下一任务继续覆盖未审文件，不再仅沿夜间调用链实施。** 继续在原台账逐路径记录最终分类、消费者、证据和待审状态，不复制库存或NEXT。
 
-F12-D/E/F分别新增6/16/32项横向审计、F12-F移除历史实验5文件；F12-G又新增**7项**epistemic测试全文审计、删1个原待审Formal持久化测试；当前唯一台账 **177/469（37.74%）已审、0审计中、292待审**。已审生产文件本批复查不计新增。代码净删率不能替代剩余语义审计；Host Rules P1、两大文件50KB治理和实际真机均未完成。
+F12-D/E/F/G完成的横向审计和旧Formal删除见唯一台账；F12-H正式取消间谍独立魔典与旧Reminder Token，连同完全孤立的pair DTO，当前范围 `469-6=463`，已审旧路径退役5项、原未审旧展示测试退役1项，现行**172/463（37.15%）已审、0审计中、291待审**；删除不当作新增审计。已删实例证明：生产调用是耦合，不代表功能有保留必要。继续横向逐文件与高价值旧生产链净删并进；Host Rules P1、超50KB治理和实际真机仍未完成。
 
 下一审计横向覆盖未审epistemic/codec、catalog/setup、平台/transport、工具/CI与测试，按实际必要Host/现用AI、旧Rules、死实验或需所有者决策分类，再选择有证据的整组退出。F15没有完成P1：DemonAttackProductionAdapter仍为信息步骤提供只读预览，Sage/Ravenkeeper触发和毒展示、日间自动继承/终局、其它规则和旧Flow模板仍待删除/解耦。预览和最终实际死者可不同，需要后续UI职责审计及真机验收；不能声称跨项目新kind消费者均已验证。
 
