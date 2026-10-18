@@ -1,12 +1,16 @@
-# 新对话交接：F12-F 旧实验整组退役及全源横向审计（2026-10-19）
+# 新对话交接：F12-G Formal世界镜像清除及继续全源审计（2026-10-19）
 
 ## 先读与现行授权
 
-先读AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，然后读原MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md的F12-F/F12-E/F15/F12-D/F12。唯一逐路径状态维护在原台账，不另建库存或NEXT。
+先读AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，然后读原MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md的F12-G/F12-F/F12-E/F15/F12-D/F12。唯一逐路径状态维护在原台账，不另建库存或NEXT。
 
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **F12-G最新代码证据**：在已同步的MiniMCP `clocktower` 分支`codex/minimal-host-full-scan-20261018`实施，起点`4da03849`，第一代码提交`0d8f145b`删旧Formal世界模型/JSON/时间线绑定及专属测试。首轮CI #4383因误删Grimoire immutable-list使用的`java.util.Collections` import编译失败；精准修复提交最终代码 HEAD **`8644e7575b67d9f3bef6cc269c7c93bca4332bf1`** 已推送。GitHub独立比较7文件**+8/-737（净删729行）**。完整 **[CI #4384 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39166056035)**（full Android单测+debug APK、ASP、真实Clingo、CI gate均通过）和 **[R2 #3964 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39166056032)**。该精确代码之后本交接文档另单独提交，下一轮按GitHub PR实时head/base/CI核对，不把docs-only CI冒充代码验收。
+- **F12-G进度**：唯一台账 **177/469（37.74%）已审、292待审、0审计中**，7个原待审epistemic测试全文审计并分类，删1个原待审Formal旧测试，原有4个已审生产文件只做复审/代码缩减不重计。事实/全球事件/recipient保密、唯一Session、现用AI开局/后夜/策略记忆与模式未改。
+- **下一组明确任务**：首先核对并迁移`PlayerHistoricalTimeline.project`中独有的公开历史/recipient隐私断言到现用生产历史结构，再完整删除该只在测试消费的旧投影与旧专属测试。继续横向剩余292文件，随后攻Mayor及FT单候选Host规则门禁、Sage/Ravenkeeper预览规则、TB setup rotation评分与App/HostScreen超50000B清理。保留跨项目真实合同，未知功能U1在所有者定夺前不能删除；不merge、retarget、force-push Draft #334。
 
 - **本轮F12-F代码已推送**：分支`codex/minimal-host-full-scan-20261018`，Draft #334（base SHA 64be3090），代码提交**`e6faea27bb28a571b45669bf2357af0b11e4f863`**（从56975956前进）。实际净删2个3B2/3B3 Python实验脚本、2个专属测试、1个过时P1分支工作流及主CI中调用旧实验测试的6行；GitHub compare 6文件0新增/1087删除行，旧台账文件大小估计共52,165B。未改Android生产、正式AI请求/传输/解析/战略记忆或Session事实。代码级[full-ci] **[CI #4381 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39164379709)**（full Android JVM+Debug APK、ASP、Clingo、gate均SUCCESS）、**[R2 #3961 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39164379711)**，已核精确HEAD和Android job steps。后续docs-only HEAD不可冒充代码编译证明；新对话仍应重新核对GitHub实时状态。
 - **全源审计**：F12-F新增32项保留路径的首次全文语义结论，连同旧5个已退休路径从现行目录表移除。当前**170/470（36.17%）已审、300待审、0审计中**；470路径每项唯一。审核结论只维护在原台账F12-F与原表，不另建库存。当前代码后还将另有本文档提交，最新Git HEAD必须重新读取。
@@ -39,9 +43,9 @@
 - 生产净删642行/30217B、测试净删1300行/47578B，共1942行/77795B。当前883跟踪文件，241生产+178测试Kotlin；F15完工时475项、116已审计；之后F12-D已新增横向6项，当前122已审计（25.68%）、0审计中、353待审。每路径状态及删除历史只维护在原台账F12/F15。
 - App159449B、HostScreen99682B仍超50,000B；Session42993B、新界面4673B未新增超限。P1/P4未完成。U1无生产入口的自定义导入仍待所有者决定，本批无新增决策阻塞。
 
-## 下一任务：从F12-F继续未审300项横向语义审计
+## 下一任务：从F12-G继续未审292项横向语义审计
 
-**所有者再次明确：全文件审计必须继续。F12-D新增6项、F12-E新增16项，F12-F再新增32项并删5个原待审实验/过时工作流路径，现有台账170/470、300待审；下一批从300项继续，不只沿夜间局部链或拿代码净删当审计完成。** 保持唯一现行台账，横向覆盖epistemic/codec、catalog/setup、平台/transport、tools/CI和测试，全文读取并验证真实消费者后再给最终分类；不重读已审文件冒充新进度。再依据横向结果选规模大、证据闭合的一组退休。
+**所有者再次明确：全文件审计必须继续。F12-D/E/F分别新增6/16/32项，F12-G本轮又完整审阅7项测试并退役1项原待审文件；现有台账177/469、292待审。下一批从292项继续，不以局部夜间路径和净删行数充当全仓审计。** 保持唯一现行台账，横向覆盖epistemic/codec、catalog/setup、平台/transport、tools/CI和测试，全文读取并验证真实消费者后再给最终分类；不重读已审文件冒充新进度。再依据横向结果选规模大、证据闭合的一组退休。
 
 F15未清空所有Host Rules：DemonAttackProductionAdapter仍仅给现有信息步骤作只读死亡预览，Sage/Ravenkeeper触发/毒展示、日间自动继承/终局、Klutz/日落清除及旧Flow模板仍有消费者。最终实际死者可与早前预览不同，后续UI补充信息与触发流程仍需审计及真机验收。新NoNightDeaths的跨项目消费者仍需完整合同复核；不要声称已做外部服务/付费/真机验证。夜间已退出旧规则顺便自动判终局，实际结果提交后允许继续；日间终局规则尚在。
 

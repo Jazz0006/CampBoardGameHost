@@ -1,6 +1,8 @@
-# 当前开发路线（2026-10-19，F12-F 全源审计与旧实验退役）
+# 当前开发路线（2026-10-19，F12-G Formal世界镜像清除与全树审计）
 
 ## 当前状态
+
+**当前最新（F12-G）**：实际删除无生产调用的FormalGameState、FormalPlayerState、PlayerKnowledgeSnapshot及配套JSON/旧Timeline绑定，专属旧测试文件1个退出，两个混合测试保留真实global chronology/私密观察合同。代码起点`4da03849`、最终代码SHA **`8644e7575b67d9f3bef6cc269c7c93bca4332bf1`**，GitHub精确比对7文件+8/-737（净删729行）。首轮CI #4383 Kotlin import误删失败，定位只补回`Collections`后最终完整Android **CI #4384 SUCCESS / R2 #3964 SUCCESS**，ASP/真实Clingo/gate通过。新全文审计7项、退役原待审测试1项：**177/469（37.74%）已审，292待审**。现用AI与Session事实/隐私均未修改。
 
 **当前最新（F12-F，MiniMCP）**：在`56975956`基线完成32个原待审文件全文语义审计，整删旧PROD-GLOBAL 3B2/3B3独立实验2脚本/2专属测试及过时P1分支专用CI工作流、删掉主CI中的6行旧Python运行步骤。代码独立提交`e6faea27bb28a571b45669bf2357af0b11e4f863`并推送，GitHub实际对比6文件净删1087行（旧台账估计约52,165B）；精确代码完整Android（full JVM+Debug APK）CI #4381 SUCCESS / R2 #3961 SUCCESS，ASP、Clingo、CI gate均通过。本批后**170/470（36.17%）已审、300待审**，新改动不涉及Android应用源码或现用AI模型链。
 
@@ -10,7 +12,7 @@ F15已落实明确夜间实际结果确认：无人/多名死者、任意实际I
 
 ## 新对话 / 开发机接续
 
-F12-F代码提交已经推送到同名Draft #334的`e6faea27`，但本文档后续还有独立交接提交。下次先复查远端PR/head/base与精确提交的CI #4381/R2 #3961，再核对MiniMCP branch/HEAD/clean及远端同步；勿重用旧版本令牌。当前**170/470已审、300待审**；下一批优先收敛epistemic内部无生产消费者FormalGameState/PlayerKnowledge模型及同文件JSON，保留实际InformationProposition/Global观察日志/AI历史；继续横向setup/transport/测试，逐批清理真正过时的Host规则门禁。
+F12-G代码最终HEAD`8644e757`，本轮审计/交接文档另有提交，请从PR #334与MiniMCP实时核对，不可直接用本行SHA当当前HEAD；最终代码完整验收CI #4384/R2 #3964 SUCCESS（新的docs-only CI不替代此证明）。目前**177/469已审、292待审**。下批优先先迁移真实公开历史保密测试后删除无人生产消费的PlayerHistoricalTimeline，并继续横向setup、transport、流程和Host剩余Rules门禁审计，不重复已审文件计数。
 
 ## 最终职责
 
@@ -22,7 +24,7 @@ F12-F代码提交已经推送到同名Draft #334的`e6faea27`，但本文档后�
 
 **所有者本轮再次强调：全文件遍历约20%尚未完成，F15之后必须继续。横向审计已恢复，下一任务继续覆盖未审文件，不再仅沿夜间调用链实施。** 继续在原台账逐路径记录最终分类、消费者、证据和待审状态，不复制库存或NEXT。
 
-F12-D新增6项、F12-E新增16项；F12-F跨epistemic codec/setup/平台AI和隐私测试/工具新增32项，删除原待审历史实验脚本与工作流5项。当前范围**470**，**已审计170（36.17%）**、0审计中、**300待审**；唯一审计表470条路径无重复/缺漏。F12原497项与F13-F15变动均有历史记录。真实Android工具/外部契约需按功能审计，不能把旧脚本删除推称整个Host Rules已完成。
+F12-D/E/F分别新增6/16/32项横向审计、F12-F移除历史实验5文件；F12-G又新增**7项**epistemic测试全文审计、删1个原待审Formal持久化测试；当前唯一台账 **177/469（37.74%）已审、0审计中、292待审**。已审生产文件本批复查不计新增。代码净删率不能替代剩余语义审计；Host Rules P1、两大文件50KB治理和实际真机均未完成。
 
 下一审计横向覆盖未审epistemic/codec、catalog/setup、平台/transport、工具/CI与测试，按实际必要Host/现用AI、旧Rules、死实验或需所有者决策分类，再选择有证据的整组退出。F15没有完成P1：DemonAttackProductionAdapter仍为信息步骤提供只读预览，Sage/Ravenkeeper触发和毒展示、日间自动继承/终局、其它规则和旧Flow模板仍待删除/解耦。预览和最终实际死者可不同，需要后续UI职责审计及真机验收；不能声称跨项目新kind消费者均已验证。
 
