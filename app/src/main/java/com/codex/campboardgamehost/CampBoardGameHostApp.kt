@@ -2848,7 +2848,6 @@ internal fun CampBoardGameHostApp() {
                                     session = session,
                                     journal = currentClocktowerCausalJournal(),
                                     snapshot = snapshot,
-                                    legalRoles = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
                                     input = ConfirmedDaySlayerRegistrationV1(
                                         interactionId = "day:$round:slayer:$actorSeat:$subjectSeat",
                                         slayerSeat = actorSeat,
@@ -2983,7 +2982,6 @@ internal fun CampBoardGameHostApp() {
                                         session = session,
                                         journal = currentClocktowerCausalJournal(),
                                         snapshot = snapshot,
-                                        legalRoles = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
                                         input = ConfirmedDayVirginSpyRegistrationV1(
                                             interactionId = "day:$round:virgin:${clocktowerSeatFor(nomineeName)}:" +
                                                 clocktowerSeatFor(nominatorName),

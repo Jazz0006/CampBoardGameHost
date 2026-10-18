@@ -18,16 +18,6 @@ class DayAbilityRegistrationRulingProducerV1Test {
         PlayerState(7, "Fortune Teller", RoleId("Fortune Teller"), Alignment.GOOD, CharacterType.TOWNSFOLK),
         PlayerState(8, "Investigator", RoleId("Investigator"), Alignment.GOOD, CharacterType.TOWNSFOLK),
     )
-    private val roleDefinitions = listOf(
-        RoleDefinition(RoleId("Slayer"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
-        RoleDefinition(RoleId("Chef"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
-        RoleDefinition(RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON, setOf(script)),
-        RoleDefinition(RoleId("Recluse"), Alignment.GOOD, CharacterType.OUTSIDER, setOf(script)),
-        RoleDefinition(RoleId("Spy"), Alignment.EVIL, CharacterType.MINION, setOf(script)),
-        RoleDefinition(RoleId("Virgin"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
-        RoleDefinition(RoleId("Fortune Teller"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
-        RoleDefinition(RoleId("Investigator"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
-    )
     private fun makeSession(players: List<PlayerState> = basePlayers) =
         ClocktowerGameSession.createProduction(
             gameId = "day-slayer-registration",
@@ -75,7 +65,7 @@ class DayAbilityRegistrationRulingProducerV1Test {
         val session = makeSession()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         val committed = DayAbilityRegistrationRulingProducerV1.confirmSlayer(
-            session, journal, snapshot(session), roleDefinitions, input(),
+            session, journal, snapshot(session), input(),
         )
         assertEquals("day-ability-registration", committed.selectedOutcome.decisionType)
         assertEquals(1, committed.registrations.size)
@@ -92,7 +82,7 @@ class DayAbilityRegistrationRulingProducerV1Test {
         assertEquals(listOf(committed), restored.effectiveNow())
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmSlayer(
-                session, journal, snapshot(session), roleDefinitions, input(),
+                session, journal, snapshot(session), input(),
             )
         }
     }
@@ -105,8 +95,7 @@ class DayAbilityRegistrationRulingProducerV1Test {
         val actual = makeSession()
         val journal = StorytellerCausalDecisionJournalV1(actual.state.gameId)
         val committed = DayAbilityRegistrationRulingProducerV1.confirmSlayer(
-            actual, journal, snapshot(actual), roleDefinitions,
-            input().copy(registeredDemonRole = null),
+            actual, journal, snapshot(actual), input().copy(registeredDemonRole = null),
         )
         assertEquals(RegistrationResolutionStatusV1.EXPLICIT_ACTUAL.name,
             committed.selectedOutcome.canonicalFields.getValue("status"))
@@ -116,53 +105,35 @@ class DayAbilityRegistrationRulingProducerV1Test {
         assertEquals(listOf(committed), recover(actual, journal).effectiveNow())
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmSlayer(
-                actual, journal, snapshot(actual), roleDefinitions,
-                input().copy(registeredDemonRole = null),
+                actual, journal, snapshot(actual), input().copy(registeredDemonRole = null),
             )
         }
     }
 
-    @Test fun `non-Slayer claimant poisoned participant and non-day phase never create a ruling`() {
-        val cases = listOf(
-            basePlayers.map { if (it.seat == 1) it.copy(actualRole = RoleId("Chef")) else it },
-            basePlayers.map { if (it.seat == 1) it.copy(poisoned = true) else it },
-            basePlayers.map { if (it.seat == 4) it.copy(poisoned = true) else it },
-            basePlayers.map { if (it.seat == 4) it.copy(alive = false) else it },
+    @Test fun `explicit ruling records what was confirmed without Host ability-functioning veto`() {
+        val roster = basePlayers.map {
+            if (it.seat == 1 || it.seat == 4) it.copy(poisoned = true) else it
+        }
+        val session = makeSession(roster)
+        val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
+        val committed = DayAbilityRegistrationRulingProducerV1.confirmSlayer(
+            session, journal, snapshot(session), input(),
         )
-        cases.forEach { roster ->
-            val session = makeSession(roster)
-            val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
-            assertThrows(IllegalArgumentException::class.java) {
-                DayAbilityRegistrationRulingProducerV1.confirmSlayer(
-                    session, journal, snapshot(session), roleDefinitions, input(),
-                )
-            }
-            assertTrue(journal.archive().records.isEmpty())
-        }
-        val session = makeSession()
-        val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
-        assertThrows(IllegalArgumentException::class.java) {
-            DayAbilityRegistrationRulingProducerV1.confirmSlayer(
-                session, journal, snapshot(session, StorytellerPhase.NIGHT), roleDefinitions, input(),
-            )
-        }
-        assertTrue(journal.archive().records.isEmpty())
+        assertEquals(RoleId("Imp"), committed.registrations.single().registeredRole)
+        assertEquals(listOf(committed), recover(session, journal).effectiveNow())
     }
 
-    @Test fun `unverified Demon role and mismatched subject fail before capture`() {
+    @Test fun `subject identity and snapshot phase still protect the fact record`() {
         val session = makeSession()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmSlayer(
-                session, journal, snapshot(session), roleDefinitions,
-                input().copy(registeredDemonRole = RoleId("Poisoner")),
+                session, journal, snapshot(session), input().copy(recluseSeat = 2),
             )
         }
-        assertTrue(journal.archive().records.isEmpty())
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmSlayer(
-                session, journal, snapshot(session), roleDefinitions,
-                input().copy(recluseSeat = 2),
+                session, journal, snapshot(session, StorytellerPhase.NIGHT), input(),
             )
         }
         assertTrue(journal.archive().records.isEmpty())
@@ -172,7 +143,7 @@ class DayAbilityRegistrationRulingProducerV1Test {
         val session = makeSession()
         val journal = StorytellerCausalDecisionJournalV1(session.state.gameId)
         DayAbilityRegistrationRulingProducerV1.confirmSlayer(
-            session, journal, snapshot(session), roleDefinitions, input(),
+            session, journal, snapshot(session), input(),
         )
         val archive = journal.archive()
         val recovered = archive.copy(records = archive.records.map { entry ->

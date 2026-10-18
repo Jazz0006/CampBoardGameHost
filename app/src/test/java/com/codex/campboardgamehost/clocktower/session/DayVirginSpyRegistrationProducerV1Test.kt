@@ -16,13 +16,6 @@ class DayVirginSpyRegistrationProducerV1Test {
         PlayerState(4, "Chef", RoleId("Chef"), Alignment.GOOD, CharacterType.TOWNSFOLK),
         PlayerState(5, "Recluse", RoleId("Recluse"), Alignment.GOOD, CharacterType.OUTSIDER),
     )
-    private val roles = listOf(
-        RoleDefinition(RoleId("Virgin"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
-        RoleDefinition(RoleId("Chef"), Alignment.GOOD, CharacterType.TOWNSFOLK, setOf(script)),
-        RoleDefinition(RoleId("Spy"), Alignment.EVIL, CharacterType.MINION, setOf(script)),
-        RoleDefinition(RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON, setOf(script)),
-        RoleDefinition(RoleId("Recluse"), Alignment.GOOD, CharacterType.OUTSIDER, setOf(script)),
-    )
     private fun session(players: List<PlayerState> = original) =
         ClocktowerGameSession.createProduction(
             gameId = "virgin-public-first-nomination",
@@ -65,7 +58,7 @@ class DayVirginSpyRegistrationProducerV1Test {
         val s = session()
         val journal = StorytellerCausalDecisionJournalV1(s.state.gameId)
         val event = DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
-            s, journal, snapshot(s), roles, input(true), confirmedExecution = true,
+            s, journal, snapshot(s), input(true), confirmedExecution = true,
         )
         assertEquals("day-ability-registration", event.selectedOutcome.decisionType)
         assertEquals("special:type:TOWNSFOLK", event.selectedCandidateId)
@@ -79,7 +72,7 @@ class DayVirginSpyRegistrationProducerV1Test {
         assertEquals(listOf(event), recover(s, journal).effectiveNow())
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
-                s, journal, snapshot(s), roles, input(true), confirmedExecution = true,
+                s, journal, snapshot(s), input(true), confirmedExecution = true,
             )
         }
     }
@@ -88,7 +81,7 @@ class DayVirginSpyRegistrationProducerV1Test {
         val s = session()
         val journal = StorytellerCausalDecisionJournalV1(s.state.gameId)
         val event = DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
-            s, journal, snapshot(s), roles, input(false), confirmedExecution = false,
+            s, journal, snapshot(s), input(false), confirmedExecution = false,
         )
         assertEquals("actual", event.selectedCandidateId)
         assertEquals("EXPLICIT_ACTUAL", event.selectedOutcome.canonicalFields["status"])
@@ -97,34 +90,26 @@ class DayVirginSpyRegistrationProducerV1Test {
         assertEquals(listOf(event), recover(s, journal).effectiveNow())
     }
 
-    @Test fun `contradictory execution forged actor or role and poisoned subjects fail before capture`() {
-        val bad = listOf(
-            original.map { if (it.seat == 1) it.copy(actualRole = RoleId("Chef")) else it },
-            original.map { if (it.seat == 2) it.copy(actualRole = RoleId("Chef")) else it },
-            original.map { if (it.seat == 1) it.copy(poisoned = true) else it },
-            original.map { if (it.seat == 2) it.copy(poisoned = true) else it },
-            original.map { if (it.seat == 2) it.copy(alive = false) else it },
-        )
-        bad.forEach { roster ->
-            val s = session(roster)
-            val journal = StorytellerCausalDecisionJournalV1(s.state.gameId)
-            assertThrows(IllegalArgumentException::class.java) {
-                DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
-                    s, journal, snapshot(s), roles, input(true), confirmedExecution = true,
-                )
-            }
-            assertTrue(journal.archive().records.isEmpty())
+    @Test fun `actual execution is recorded independently of selected Spy ruling`() {
+        val roster = original.map {
+            if (it.seat == 1 || it.seat == 2) it.copy(poisoned = true) else it
         }
+        val s = session(roster)
+        val journal = StorytellerCausalDecisionJournalV1(s.state.gameId)
+        val event = DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
+            s, journal, snapshot(s), input(true), confirmedExecution = false,
+        )
+        assertEquals("false", event.selectedOutcome.canonicalFields["executeNominator"])
+        assertEquals(CharacterType.TOWNSFOLK, event.registrations.single().registeredType)
+        assertEquals(listOf(event), recover(s, journal).effectiveNow())
+    }
+
+    @Test fun `wrong snapshot phase still blocks the event`() {
         val s = session()
         val journal = StorytellerCausalDecisionJournalV1(s.state.gameId)
         assertThrows(IllegalArgumentException::class.java) {
             DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
-                s, journal, snapshot(s), roles, input(true), confirmedExecution = false,
-            )
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
-                s, journal, snapshot(s, StorytellerPhase.NIGHT), roles, input(false),
+                s, journal, snapshot(s, StorytellerPhase.NIGHT), input(false),
                 confirmedExecution = false,
             )
         }
@@ -135,7 +120,7 @@ class DayVirginSpyRegistrationProducerV1Test {
         val s = session()
         val journal = StorytellerCausalDecisionJournalV1(s.state.gameId)
         DayAbilityRegistrationRulingProducerV1.confirmVirginSpy(
-            s, journal, snapshot(s), roles, input(true), confirmedExecution = true,
+            s, journal, snapshot(s), input(true), confirmedExecution = true,
         )
         val archive = journal.archive()
         val decoded = archive.copy(records = archive.records.map { entry ->
