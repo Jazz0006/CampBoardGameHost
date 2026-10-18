@@ -1,6 +1,6 @@
-# 当前唯一 NEXT：P1 继续整链清除旧规则检查系统（2026-10-18）
+# 当前唯一 NEXT：先修复 AI 误伤，再继续清除 Host 规则门禁（2026-10-18）
 
-**新对话必须实际实施代码、提交并验证 CI/R2**，不重新规划；必须从真实仓库当前 HEAD 核查开始，不继续旧 M1c 逐角色推荐功能。
+**优先执行 R0：恢复 B3 删除的 AI 配对推荐、Provider、UI 匹配与跨夜残余规划消费路径。** 已有 AI 提示词、API、战略记忆、首夜联合规划和自动/辅助模式均是需要保护的产品功能，不得当成 P2 删除对象。完成 R0、完整 CI/R2 后继续 P1 删除 **Host** 内规则合法性门禁，不删除生产 AI。
 
 ## 权威阅读顺序
 
@@ -28,7 +28,7 @@ AGENTS.md；docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md；docs/CUR
 - 人工 Washerwoman/Librarian/Investigator 配对选项现在从脚本角色和座位构建，不经旧 Pair Rules 真值/注册见证筛选；首夜发布使用确认的结构化显示事实，不再使用 Rules 候选 ID 或推导登记。`ClocktowerPairManualAuthority` 已删除旧合法域重算/判定；`ClocktowerHostSelectionSemantics` 删除旧配对真值投影。
 - B2 第一次全量 CI #4333 编译通过，1292 个测试中一项旧候选顺序断言失败，已修正；第二个代码 HEAD 的完整 Android CI **#4334 SUCCESS**（`:app:testFull :app:assembleDebug`）、R2 **#3914 SUCCESS** 才是本批有效验收；ASP/Clingo/CI gate 均 SUCCESS。
 - B2 HEAD 源码超 50KB 实测：`CampBoardGameHostApp.kt` 198706B，`ClocktowerHostScreen.kt` 149006B，`ClocktowerNightStepUi.kt` 60237B，`web/app.js` 143503B。
-- P1 **未完成**：`clocktower/rules` 依然保留约 20 个规则文件；`HostOpeningRulesDomainV2` 仍被旧开局 AI 消费；数值合法域仍被其他旧消费者使用。B3 已删除 `PairInformationDecisionBoundary` 的整个生产消费者链。下一批沿剩余规则消费链断开并删除，谨慎保护真实状态/行动/隐私。
+- P1 **未完成**：`clocktower/rules` 还保留支持 AI 推荐的候选与部分 Host 规则逻辑；`HostOpeningRulesDomainV2` 是正在使用的首夜 AI 输入，**不得因目录名而删除**。B3 误删的 `PairInformationDecisionBoundary` AI 链先恢复；以后只把 Host 人工提交门禁与 AI 候选提供分开。
 
 ## P1 B3 实际代码清理及交接
 
@@ -36,18 +36,24 @@ AGENTS.md；docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md；docs/CUR
 - 清除零生产消费者的 `clocktower/recommendation/FirstNightBundleCandidateSpaceAudit.kt` 与专属 `FirstNightBundleCandidateSpaceAuditTest.kt`，不再保留旧首夜法域笛卡尔积实验。**B3 修复后相对于 `91663dd34...` 共 13 个文件，+17/-993，净删 976 行，整删 3 个生产源码及 2 个专属测试文件**。
 - B3 代码 HEAD `39860f40...` 的 CI #4337 Kotlin 测试编译失败：旧 Scope 测试有一个位置参数 `null`（原 `pairContext` 参数已退出）。R2 #3917 SUCCESS。已直接删除过时调用参数，修复提交 **`2b751f4d7719a241540516e176349305d18fe8d9`**；修复后完整 Android **CI #4338 SUCCESS**（单测+Debug APK）、R2 **#3918 SUCCESS**；ASP/Clingo/CI gate 均 SUCCESS，这是 B3 最新有效完整验收。B3 首个代码 HEAD 对应 CI #4336/R2 #3916，不替代修复验证。
 - B3 HEAD 从 GitHub 实测超 50,000B 文件：`CampBoardGameHostApp.kt` **198219B**，`ClocktowerHostScreen.kt` **148322B**，`ClocktowerNightStepUi.kt` **60237B**，`web/app.js` **143503B**；P4 以前不预先拆大文件。
-- 下一批重点 **`HostOpeningRulesDomainV2` 与 `InitialJointOpeningDirectV2` 的联合 AI 规则候选入口**，其仍是开局展示阶段的核心规则依赖；以及 `clocktower/rules` 内剩余 Pair/Numeric/AbilityFunctioning/Registration 计算器及其他生产消费者。要优先保护 MANUAL 布局/初始配置/酒鬼确认/真实事件、私密交付、阶段推进，不用旧候选域伪装新 Rules。
+- **所有者纠偏：不得直接删除 `HostOpeningRulesDomainV2` / `InitialJointOpeningDirectV2` 或其首夜 AI 消费者。** 继续审计其规则候选只服务 AI 输入还是阻止 Host 事实提交；仅剥离后者。保留 MANUAL 与 AI_ASSISTED/AI_AUTOMATIC、开局/配对/后夜建议、真实事件、私密交付。
+
+## 纠偏后的实施顺序
+
+0. **R0（本轮优先）**：从 B3 前 Git 历史恢复被误删的 AI 配对推荐、Provider 和残余请求/展示匹配。恢复仅作为 AI 的候选生成，不恢复对 Host 手动确认结果的规则否决。用真实 Android full CI/R2 检查；禁止未授权付费 API 请求。
+1. **P1**：将人工线索/动作的结构与事实记录同旧规则合法性判定拆开，清除 Host 真值、见证、过度合法性门禁和它们的专属测试。AI 正在消费的候选/策略模块可暂时保留并标注迁移边界，不得为净删行数关停 AI。
+2. **P2**：只删除确认为废弃的实验、重复层、影子缓存，避免影响现有 AI 推荐。P3–P5 继续遵循修订权威文档。
 
 ## P1 下一批具体工作
 
 1. 以完整 Git tree 而非现有局部流程为入口，遍历 clocktower/rules 下全部旧检查模块和外部生产消费者。重点 App/HostScreen/NightStepUi、Setup、Session、Flow、Recommendation、Provider 法域、角色候选 UI、R2 源码守卫及旧规则测试。
-2. 旧规则检查**全部要删除**，不是重构或迁移。先解开消费者，再整链净删。若 Host/UI 要记录某个实际动作或展示值，保留其结构性录入/确认/显示/事件，不以规则合法候选阻拦。移除基于 Spy/Recluse 的见证推导、固定真值、自动挑合法结果、规则阻断和影子推演的辅助代码。
-3. 此阶段优先保护基础手动游戏：阵容配置、魔典、隐私展示、玩家行动、投票/死亡、实际信息记录、夜/日阶段推进。旧自动裁定/旧 AI 可以明确短期不可用，但不能因删除旧功能阻塞正常事实写入。
+2. Host 中旧规则合法性门禁**全部要删除**，不是重构或迁移。先解开消费者，再整链净删。若 Host/UI 要记录某个实际动作或展示值，保留其结构性录入/确认/显示/事件，不以规则合法候选阻拦。移除基于 Spy/Recluse 的见证推导、固定真值、自动挑合法结果、规则阻断和影子推演的辅助代码。
+3. 此阶段优先保护基础手动游戏：阵容配置、魔典、隐私展示、玩家行动、投票/死亡、实际信息记录、夜/日阶段推进。旧 Host 自动裁定可以临时退出，但不能使现有 AI 推荐失效，但不能因删除旧功能阻塞正常事实写入。
 4. 删除专用旧规则/候选测试和只为旧源码形状存在的 CI 守卫。核心事件顺序、唯一权威、去重、原子写入、座位/身份、私密收件人、过期响应以及必须的交互安全测试应保留。采用 evidence-first，无机械 test-first。
 5. 每批逐项报告：已清除的生产消费者与旧源码/测试、净删除量、遗留绑定、当前超 50,000 B 的全部源文件、GitHub 真实 CI/R2。CI 失败查运行日志并修复，不为旧规则测试恢复删除路径。遇到不确定是否属于事实核心的字段，形成简短的用户审核包而不是重新设计整个路线。
 
 ## P2→P5 已批准顺序
 
-P2 删除旧 AI 候选/评分、A4/B4/ZDD/世界推演；P3 一份 Host 状态与关键事件，最小安全续局；P4 精简 UI/所有源码 <=50,000 bytes；P5 全树再审、跨项目数据合同，然后重新规划独立 Rules 与 AI 模块。新规则交互（pair、厨师、共情者合法按钮）等清理完成后再做。
+P2 审计并清除无生产 AI 消费者的旧实验/重复推演（现有 AI 功能一律保留）；P3 一份 Host 状态与关键事件，最小安全续局；P4 精简 UI/所有源码 <=50,000 bytes；P5 全树再审、跨项目数据合同，然后重新规划独立只读 Rules 并对接继续维护的 AI 模块。新规则交互（pair、厨师、共情者合法按钮）等清理完成后再做。
 
 本轮仍未确认是否整包删除仓库旧 web/ 客户端及非 Trouble Brewing 剧本；这些是需要所有者审核的边界，不能因此拖延已明确授权的 Rules 删除。
