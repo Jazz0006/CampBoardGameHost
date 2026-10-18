@@ -7,7 +7,7 @@
 - Git 树 SHA `8c1a4dc114060806c33d5f78102b6b3c6457cf71`：1135 文件；含 Kotlin/DSL、Java、JS/TS、HTML/CSS、Python、Shell、XML、YAML、JSON 的宽口径源码/配置 723 文件；Android 337 生产 Kotlin、320 测试 Kotlin（当前删除前基线）。不同统计扩展名口径不要直接比较。
 - `clocktower/recommendation/DecisionSeedFactory.kt`、`TroubleBrewingSetupRecommendationDecisionContext.kt` 的唯一消费者均为各自专属测试；已直接删除这 2 个生产文件和对应 2 个独占测试。保留真正首夜 AI `HostOpeningRulesDomainV2`、`InitialJointOpeningDirectV2`、Provider、配对候选、战略记忆及请求合同。
 - A4/B4 世界影子、FN-BUNDLE 旧实验、HostScreen/UI 规则门禁等按审计台账标记，尚未完成逐文件全语义核查；不要凭目录名整删。与 web/ 和非 TB 剧本有关的产品范围仍需用户决定。
-- 代码提交 SHA、净删行数、GitHub 全量 CI/R2 尚待执行，不得把此前 B4 #4344 当作 F1 验收。
+- **F1 代码验收**：HEAD `24995d37041bdf24a5bd6ad8da50a51ad693c8b4`，GitHub 完整 Android **CI #4346 SUCCESS**（单测和 Debug APK），**R2 #3926 SUCCESS**，ASP/Clingo/CI gate 成功。四文件整删 478 行（210 生产 + 268 专属测试）；GitHub 全部本次提交 8 文件，新增 44 / 删除 481，净减少 437 行（含文档）。新 HEAD 的未截断 Git 树为 1131 文件、宽口径代码/配置 719、Android 335 生产 + 318 测试 Kotlin。4 个超 50,000B 源文件保持不变（App 198482、HostScreen 149006、NightStepUi 60237、web/app.js 143503）。未做真机/收费 API。PR #334 Draft 未合并。
 
 
 ## B4 实施交接（已完成代码及完整 CI/R2 验收）

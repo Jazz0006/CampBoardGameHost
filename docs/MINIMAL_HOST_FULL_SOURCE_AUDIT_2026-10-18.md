@@ -25,7 +25,7 @@
 
 - **整删 `clocktower/recommendation/DecisionSeedFactory.kt` 及 `DecisionSeedFactoryTest.kt`**：旧 `DecisionSeedFactory`/`DecisionSeedMaterial` 在全部生产 Kotlin 中只有自身文件，无实际 AI 推荐调用，专属测试只测旧决定种子和旧回放假设。
 - **整删 `clocktower/recommendation/TroubleBrewingSetupRecommendationDecisionContext.kt` 及 `TroubleBrewingSetupRecommendationDecisionContextTest.kt`**：旧 Builder/上下文在完整仓库的源码检索中只有自身和专属测试引用，当前真正首夜联合规划依赖的是 `HostOpeningRulesDomainV2` 等，而不是这个旧快照转换器。
-- 两条完整孤立生产/测试链均与 Host 核心事实、AI Provider、生产提示词和战略记忆无生产调用关系。此批是**按全树角色筛选而非沿 B4 规则调用栈的删除**。需由提交前 diff 及真实 GitHub CI/R2 验收，未完成的遍历项目保留 `AUDIT_PENDING`，不宣称 337 个生产 Kotlin 已逐文件完成语义审计。
+- 两条完整孤立生产/测试链均与 Host 核心事实、AI Provider、生产提示词和战略记忆无生产调用关系。此批是**按全树角色筛选而非沿 B4 规则调用栈的删除**。已提交 `24995d37041bdf24a5bd6ad8da50a51ad693c8b4`；4 个文件全删 478 行（生产 210 + 专属测试 268），包含文档共 8 文件 +44/-481，净删 437 行。GitHub **完整 Android CI #4346 SUCCESS**、**R2 #3926 SUCCESS**，ASP/Clingo/CI gate 成功。新 Git 树文件 1131、宽口径代码/配置 719，Android 335 主 Kotlin + 318 测试 Kotlin；4 个超 50,000B 实际源文件仍为 App/HostScreen/NightStepUi/web.app.js。未完成的遍历项目保留 `AUDIT_PENDING`，不宣称 337 个起始生产 Kotlin 已逐文件完成语义审计。
 
 **审计基线：** 64be30905b88f639a464204ed1db89b7b62bc910（PR #333 当前 HEAD）。本文件属于当前开发路线的源码库存与分批清理台账，不把“列出文件”混同“已完成逐项语义审计”。
 

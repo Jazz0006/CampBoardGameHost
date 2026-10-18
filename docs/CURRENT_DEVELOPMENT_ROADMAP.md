@@ -19,7 +19,7 @@
 
 实施策略由 B1–B4 的“沿旧调用路径小批清理”切换为**Git 全树横向遍历，按最小 Host / 现有 AI / 旧 Host Rules / 实验冗余 / 待审核产品范围逐模块分类**。分类与证据更新在已有 `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`（沿用旧文件，不并建台账）。`REMOVE_CONFIRMED` 可带专属测试直接整删；`REMOVE_AFTER_DISCONNECT` 列完整消费者并在断开后整删；AI 生产依赖明确 `KEEP_AI`，不因目录有 Rules/推荐/旧版本名而删。现行全树 1135 文件，按较宽代码/配置扩展名口径 723 个、Android 337 主 Kotlin + 320 测试 Kotlin，当前本次 F1 以前的 Git HEAD 8c1a4dc1。
 
-F1 首批横向筛选确认 `DecisionSeedFactory` 与 `TroubleBrewingSetupRecommendationDecisionContext` 均仅有自身和专属测试调用，无实际 AI/Host 生产消费者；四文件（生产两件、专属测试两件）整删。后续按**全树分类**集中安排删除，不再用旧调用链决定审计顺序；未知与混合文件继续核查，不虚称全部源码已语义审核。CI/R2 和最终 SHA 在真实运行后登记。
+F1 首批横向筛选确认 `DecisionSeedFactory` 与 `TroubleBrewingSetupRecommendationDecisionContext` 均仅有自身和专属测试调用，无实际 AI/Host 生产消费者；四文件（生产两件、专属测试两件）整删，净删 **478 行代码**（210 生产、268 测试）。代码及台账 HEAD `24995d37041bdf24a5bd6ad8da50a51ad693c8b4`，GitHub **完整 Android CI #4346 SUCCESS**（单测+Debug APK）、**R2 #3926 SUCCESS**，ASP、Clingo 和 CI gate 成功；PR #334 Draft 仍堆叠，未做真机/收费 API。后续按**全树分类**集中安排删除，不再用旧调用链决定审计顺序；未知与混合文件继续核查，不虚称全部源码已语义审核。
 
 ## P1 实施记录（只记录真实提交）
 
