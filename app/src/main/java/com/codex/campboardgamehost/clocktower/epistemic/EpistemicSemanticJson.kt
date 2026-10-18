@@ -4,15 +4,11 @@ import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
-import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
-import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import java.math.BigInteger
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -22,43 +18,13 @@ object EpistemicSemanticJson {
     fun encode(value: InformationProposition): String = canonical(proposition(value))
     fun encode(value: EpistemicObservation): String = canonical(observation(value))
     fun encode(value: RecordedEpistemicObservation): String = canonical(recordedObservation(value))
-    fun encode(value: StorytellerDecisionPoint): String = canonical(decisionPoint(value))
-    fun encode(value: LegalChoiceSet): String = canonical(legalChoiceSet(value))
     fun encode(value: PlayerKnowledgeSnapshot): String = canonical(playerKnowledge(value))
-    fun encode(value: RegistrationQuery): String = canonical(registrationQuery(value))
-    fun encode(value: RegistrationProfile): String = canonical(registrationProfile(value))
-    fun encode(value: WorldCardinality): String = canonical(worldCardinality(value))
-    fun encode(value: PlayerWorldSetIdentity): String = canonical(playerWorldSetIdentity(value))
 
     fun decodeFormalGameState(json: String): FormalGameState = formalGameState(checkedRoot(json))
     fun decodeInformationProposition(json: String): InformationProposition = proposition(JSONObject(json))
     fun decodeEpistemicObservation(json: String): EpistemicObservation = observation(checkedRoot(json))
     fun decodeRecordedEpistemicObservation(json: String): RecordedEpistemicObservation = recordedObservation(checkedRoot(json))
-    fun decodeStorytellerDecisionPoint(json: String): StorytellerDecisionPoint = decisionPoint(checkedRoot(json))
-    fun decodeLegalChoiceSet(json: String): LegalChoiceSet = legalChoiceSet(checkedRoot(json))
     fun decodePlayerKnowledgeSnapshot(json: String): PlayerKnowledgeSnapshot = playerKnowledge(checkedRoot(json))
-    fun decodeRegistrationQuery(json: String): RegistrationQuery = registrationQuery(checkedRoot(json))
-    fun decodeRegistrationProfile(json: String): RegistrationProfile = registrationProfile(checkedRoot(json))
-    fun decodeWorldCardinality(json: String): WorldCardinality = worldCardinality(checkedRoot(json))
-    fun decodePlayerWorldSetIdentity(json: String): PlayerWorldSetIdentity = playerWorldSetIdentity(checkedRoot(json))
-
-    /** Omits formal snapshot and caller-supplied IDs so storyteller secrets cannot perturb a player cache key. */
-    fun encodeKnowledgeIdentityPayload(
-        rulesetRef: RulesetRef,
-        knowledge: PlayerKnowledgeSnapshot,
-        hypothesis: EpistemicHypothesis,
-    ): String = canonical(
-        mapOf(
-            "hypothesis" to hypothesis.name,
-            "perceivedRole" to knowledge.perceivedRole.value,
-            "privateObservations" to knowledge.privateObservations.map { identityObservation(it, knowledge.recipientSeat) },
-            "publicObservations" to knowledge.publicObservations.map { identityObservation(it, knowledge.recipientSeat) },
-            "recipientSeat" to knowledge.recipientSeat,
-            "rulesetRef" to ruleset(rulesetRef),
-            "schemaVersion" to EPISTEMIC_SCHEMA_VERSION,
-            "setupKnowledge" to knowledge.setupKnowledge.map(::proposition),
-        ),
-    )
 
     private fun formalGameState(value: FormalGameState): Map<String, Any?> = mapOf(
         "gameId" to value.gameId, "gameStateRevision" to value.gameStateRevision, "phase" to value.phase.name,
@@ -211,35 +177,6 @@ object EpistemicSemanticJson {
         )
     }
 
-    private fun identityObservation(value: EpistemicObservation, perspectiveSeat: Int): Map<String, Any?> = mapOf(
-        "phase" to value.phase.name, "proposition" to proposition(value.proposition),
-        "recipientSeats" to if (value.visibility == ObservationVisibility.PRIVATE) listOf(perspectiveSeat) else emptyList<Int>(),
-        "reliability" to value.reliability.name, "round" to value.round,
-        "sourceAbility" to value.sourceAbility?.value, "sourceSeat" to value.sourceSeat,
-        "visibility" to value.visibility.name,
-    )
-
-    private fun decisionPoint(value: StorytellerDecisionPoint): Map<String, Any?> = mapOf(
-        "candidateFamilyId" to value.candidateFamilyId?.value, "decisionPointId" to value.decisionPointId,
-        "decisionTypeId" to value.decisionTypeId, "phase" to value.phase.name,
-        "queryPropositions" to value.queryPropositions.map(::proposition), "recipientSeats" to value.recipientSeats.sorted(),
-        "round" to value.round, "schemaVersion" to value.schemaVersion, "sequence" to value.sequence,
-        "snapshotId" to value.snapshotId, "sourceAbility" to value.sourceAbility.value, "sourceSeat" to value.sourceSeat,
-    )
-
-    private fun legalChoiceSet(value: LegalChoiceSet): Map<String, Any?> = mapOf(
-        "choiceSetId" to value.choiceSetId,
-        "choices" to value.choices.map { mapOf("choiceId" to it.choiceId, "interactionId" to it.interactionId, "observation" to observation(it.observation), "registrations" to it.registrations.map(::registration)) },
-        "decisionPointId" to value.decisionPointId, "rulesetRef" to ruleset(value.rulesetRef), "schemaVersion" to value.schemaVersion,
-    )
-
-    private fun registration(value: RegistrationFact): Map<String, Any?> = mapOf(
-        "interactionId" to value.interactionId, "reason" to value.reason.name,
-        "registeredAlignment" to value.registeredAlignment?.name, "registeredRole" to value.registeredRole?.value,
-        "registeredType" to value.registeredType?.name, "registrationQuestion" to value.registrationQuestion.name,
-        "subjectSeat" to value.subjectSeat,
-    )
-
     private fun playerKnowledge(value: PlayerKnowledgeSnapshot): Map<String, Any?> = mapOf(
         "formalSnapshotId" to value.formalSnapshotId, "knowledgeSnapshotId" to value.knowledgeSnapshotId,
         "perceivedRole" to value.perceivedRole.value, "privateObservations" to value.privateObservations.map(::observation),
@@ -247,33 +184,9 @@ object EpistemicSemanticJson {
         "schemaVersion" to value.schemaVersion, "setupKnowledge" to value.setupKnowledge.map(::proposition),
     )
 
-    private fun registrationQuery(value: RegistrationQuery): Map<String, Any?> = mapOf(
-        "detectingAbility" to value.detectingAbility.value, "interactionId" to value.interactionId,
-        "queriedAlignment" to value.queriedAlignment?.name, "queriedRole" to value.queriedRole?.value,
-        "queriedType" to value.queriedType?.name, "question" to value.question.name,
-        "schemaVersion" to EPISTEMIC_SCHEMA_VERSION, "subjectSeat" to value.subjectSeat,
-        "timelinePoint" to timelinePoint(value.timelinePoint),
-    )
-
     private fun timelinePoint(value: TimelinePoint): Map<String, Any?> = mapOf(
         "globalSequence" to value.globalSequence, "phase" to value.phase.name,
         "round" to value.round, "sequence" to value.sequence,
-    )
-
-    private fun registrationProfile(value: RegistrationProfile): Map<String, Any?> = mapOf(
-        "alignment" to value.alignment?.name, "basis" to value.basis.name,
-        "characterType" to value.characterType?.name, "role" to value.role?.value,
-        "schemaVersion" to EPISTEMIC_SCHEMA_VERSION,
-    )
-
-    private fun worldCardinality(value: WorldCardinality): Map<String, Any?> = when (value) {
-        is WorldCardinality.Exact -> mapOf("kind" to "exact", "schemaVersion" to EPISTEMIC_SCHEMA_VERSION, "value" to value.value.toString())
-        is WorldCardinality.AtLeast -> mapOf("kind" to "at-least", "lowerBound" to value.lowerBound.toString(), "schemaVersion" to EPISTEMIC_SCHEMA_VERSION)
-    }
-
-    private fun playerWorldSetIdentity(value: PlayerWorldSetIdentity): Map<String, Any?> = mapOf(
-        "hypothesis" to value.hypothesis.name, "recipientSeat" to value.recipientSeat,
-        "schemaVersion" to value.schemaVersion, "value" to value.value,
     )
 
     private fun formalGameState(json: JSONObject): FormalGameState {
@@ -489,48 +402,12 @@ object EpistemicSemanticJson {
         }
     }
 
-    private fun decisionPoint(json: JSONObject): StorytellerDecisionPoint = StorytellerDecisionPoint(
-        decisionPointId = json.getString("decisionPointId"), snapshotId = json.getString("snapshotId"),
-        phase = StorytellerPhase.valueOf(json.getString("phase")), round = json.getInt("round"),
-        sequence = json.getInt("sequence"), sourceSeat = json.nullableInt("sourceSeat"),
-        sourceAbility = RoleId(json.getString("sourceAbility")), decisionTypeId = json.getString("decisionTypeId"),
-        recipientSeats = json.getJSONArray("recipientSeats").ints().toSet(),
-        queryPropositions = json.getJSONArray("queryPropositions").objects().map(::proposition),
-        candidateFamilyId = json.nullableString("candidateFamilyId")?.let(::CandidateFamilyId),
-        schemaVersion = json.getInt("schemaVersion"),
-    )
-
-    private fun legalChoiceSet(json: JSONObject): LegalChoiceSet = LegalChoiceSet(
-        choiceSetId = json.getString("choiceSetId"), decisionPointId = json.getString("decisionPointId"),
-        rulesetRef = ruleset(json.getJSONObject("rulesetRef")),
-        choices = json.getJSONArray("choices").objects().map {
-            LegalEpistemicChoice(it.getString("choiceId"), it.getString("interactionId"), observation(it.getJSONObject("observation")), it.getJSONArray("registrations").objects().map(::registration))
-        }, schemaVersion = json.getInt("schemaVersion"),
-    )
-
-    private fun registration(json: JSONObject): RegistrationFact = RegistrationFact(
-        interactionId = json.getString("interactionId"), subjectSeat = json.getInt("subjectSeat"),
-        registeredRole = json.nullableString("registeredRole")?.let(::RoleId),
-        registeredType = json.nullableString("registeredType")?.let { CharacterType.valueOf(it) },
-        registeredAlignment = json.nullableString("registeredAlignment")?.let { Alignment.valueOf(it) },
-        registrationQuestion = RegistrationQuestion.valueOf(json.getString("registrationQuestion")),
-        reason = RegistrationReason.valueOf(json.getString("reason")),
-    )
-
     private fun playerKnowledge(json: JSONObject): PlayerKnowledgeSnapshot = PlayerKnowledgeSnapshot(
         knowledgeSnapshotId = json.getString("knowledgeSnapshotId"), formalSnapshotId = json.getString("formalSnapshotId"),
         recipientSeat = json.getInt("recipientSeat"), perceivedRole = RoleId(json.getString("perceivedRole")),
         publicObservations = json.getJSONArray("publicObservations").objects().map(::observation),
         privateObservations = json.getJSONArray("privateObservations").objects().map(::observation),
         setupKnowledge = json.getJSONArray("setupKnowledge").objects().map(::proposition), schemaVersion = json.getInt("schemaVersion"),
-    )
-
-    private fun registrationQuery(json: JSONObject): RegistrationQuery = RegistrationQuery(
-        subjectSeat = json.getInt("subjectSeat"), interactionId = json.getString("interactionId"),
-        timelinePoint = timelinePoint(json.getJSONObject("timelinePoint")), detectingAbility = RoleId(json.getString("detectingAbility")),
-        question = RegistrationQuestion.valueOf(json.getString("question")), queriedRole = json.nullableString("queriedRole")?.let(::RoleId),
-        queriedType = json.nullableString("queriedType")?.let { CharacterType.valueOf(it) },
-        queriedAlignment = json.nullableString("queriedAlignment")?.let { Alignment.valueOf(it) },
     )
 
     private fun timelinePoint(json: JSONObject): TimelinePoint {
@@ -545,19 +422,6 @@ object EpistemicSemanticJson {
             globalSequence = json.getLong("globalSequence"),
         )
     }
-    private fun registrationProfile(json: JSONObject) = RegistrationProfile(
-        json.nullableString("role")?.let(::RoleId), json.nullableString("characterType")?.let { CharacterType.valueOf(it) },
-        json.nullableString("alignment")?.let { Alignment.valueOf(it) }, RegistrationBasis.valueOf(json.getString("basis")),
-    )
-    private fun worldCardinality(json: JSONObject): WorldCardinality = when (json.getString("kind")) {
-        "exact" -> WorldCardinality.Exact(BigInteger(json.getString("value")))
-        "at-least" -> WorldCardinality.AtLeast(BigInteger(json.getString("lowerBound")))
-        else -> error("Unknown WorldCardinality kind: ${json.getString("kind")}")
-    }
-    private fun playerWorldSetIdentity(json: JSONObject) = PlayerWorldSetIdentity(
-        json.getString("value"), json.getInt("recipientSeat"), EpistemicHypothesis.valueOf(json.getString("hypothesis")), json.getInt("schemaVersion"),
-    )
-
     private fun checkedRoot(json: String): JSONObject = JSONObject(json).also {
         requireSchemaVersion(it.getInt("schemaVersion"))
     }

@@ -146,36 +146,6 @@ class ObservationTimelineBindingTest {
         assertEquals(bound, EpistemicSemanticJson.decodeEpistemicObservation(EpistemicSemanticJson.encode(bound)))
     }
 
-    @Test fun `player world identity remains unchanged when only timeline migration binding changes`() {
-        val point = TimelinePoint(StorytellerPhase.NIGHT, round = 2, sequence = 5, globalSequence = 33)
-        val globalObservation = globalRecord("identity-observation", point).bindTo(formal)
-        val legacyObservation = globalObservation.copy(timelineBinding = ObservationTimelineBinding.LegacyLocal)
-        val globalKnowledge = PlayerKnowledgeSnapshot(
-            knowledgeSnapshotId = "knowledge-global",
-            formalSnapshotId = formal.snapshotId,
-            recipientSeat = 1,
-            perceivedRole = RoleId("Chef"),
-            publicObservations = listOf(globalObservation),
-        )
-        val legacyKnowledge = globalKnowledge.copy(
-            knowledgeSnapshotId = "knowledge-legacy",
-            publicObservations = listOf(legacyObservation),
-        )
-
-        val globalIdentity = PlayerWorldSetIdentity.create(
-            ruleset,
-            globalKnowledge,
-            EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-        )
-        val legacyIdentity = PlayerWorldSetIdentity.create(
-            ruleset,
-            legacyKnowledge,
-            EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-        )
-
-        assertEquals(globalIdentity.value, legacyIdentity.value)
-    }
-
     private fun legacyRecord(recordId: String): RecordedEpistemicObservation = RecordedEpistemicObservation(
         recordId = recordId,
         phase = StorytellerPhase.FIRST_NIGHT,

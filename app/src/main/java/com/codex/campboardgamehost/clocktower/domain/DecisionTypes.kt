@@ -14,27 +14,6 @@ enum class TruthRelation {
     NOT_APPLICABLE,
 }
 
-enum class DetectionSemantics {
-    ACTUAL_ROLE,
-    CHARACTER_TYPE,
-    ALIGNMENT,
-    SPECIFIC_MINION,
-    DEMON_DETECTION,
-    NUMERIC_INFORMATION,
-    ABILITY_EFFECT,
-}
-
-enum class AbilityType {
-    SETUP_INFORMATION,
-    PAIR_INFORMATION,
-    NUMERIC_INFORMATION,
-    CATEGORICAL_INFORMATION,
-    REGISTRATION,
-    DEATH_RESOLUTION,
-    CHARACTER_CHANGE,
-    OTHER,
-}
-
 enum class RegistrationQuestion {
     ALIGNMENT,
     CHARACTER_TYPE,

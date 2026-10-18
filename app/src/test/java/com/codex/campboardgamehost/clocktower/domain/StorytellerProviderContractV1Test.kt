@@ -8,67 +8,6 @@ import org.junit.Test
 
 class StorytellerProviderContractV1Test {
     @Test
-    fun `neutral request carries complete legal domain and validates only current candidate IDs`() {
-        val request = request()
-        val response = StorytellerProviderResponseV1(
-            decisionId = request.identity.decisionId,
-            sourceRevision = request.sourceRevision,
-            outcome = StorytellerProviderOutcomeV1.Recommendation(
-                primary = StorytellerProviderRecommendationV1(
-                    candidateId = "drunk:1",
-                    rationale = listOf("whole-game interaction"),
-                ),
-                alternatives = listOf(
-                    StorytellerProviderRecommendationV1(candidateId = "drunk:2"),
-                ),
-            ),
-            confidence = StorytellerProviderConfidenceV1.MEDIUM,
-        )
-
-        assertEquals(
-            StorytellerProviderValidationV1.AcceptedRecommendation(
-                primaryCandidateId = "drunk:1",
-                alternativeCandidateIds = listOf("drunk:2"),
-            ),
-            StorytellerProviderResponseValidatorV1.validate(request, response),
-        )
-
-        val invented = response.copy(
-            outcome = StorytellerProviderOutcomeV1.Recommendation(
-                primary = StorytellerProviderRecommendationV1("invented"),
-            ),
-        )
-        val rejected = StorytellerProviderResponseValidatorV1.validate(request, invented)
-        assertTrue(rejected is StorytellerProviderValidationV1.Rejected)
-        rejected as StorytellerProviderValidationV1.Rejected
-        assertTrue(
-            StorytellerProviderValidationFailureV1.UNKNOWN_PRIMARY_CANDIDATE in rejected.reasons,
-        )
-        assertEquals(listOf("drunk:1", "drunk:2"), request.legalCandidateIds)
-    }
-
-    @Test
-    fun `neutral response can defer without manufacturing a choice`() {
-        val request = request()
-        val response = StorytellerProviderResponseV1(
-            decisionId = request.identity.decisionId,
-            sourceRevision = request.sourceRevision,
-            outcome = StorytellerProviderOutcomeV1.Deferred(
-                reasons = listOf("insufficient public narrative"),
-                missingContext = listOf("claims"),
-            ),
-        )
-
-        assertEquals(
-            StorytellerProviderValidationV1.AcceptedDeferral(
-                reasons = listOf("insufficient public narrative"),
-                missingContext = listOf("claims"),
-            ),
-            StorytellerProviderResponseValidatorV1.validate(request, response),
-        )
-    }
-
-    @Test
     fun `request rejects decision payload or player context outside canonical state`() {
         val valid = request()
 

@@ -1,5 +1,12 @@
 # 当前唯一 NEXT：全树遍历优先、按职责直接清除（2026-10-18）
 
+## F10-B 当前进展：A1–A3 封闭删除完成，本地完整验证通过
+
+- 整删 7 个孤立生产文件、3 个专属旧测试，退出旧候选/effect/plan/ID、旧 Provider response validator 和 13 个旧世界/合法选择/登记推演合同及 codec；现用 AI、Session 事实、事件/隐私序列化保留。源码净删 **1246 行**（生产 814、测试 432），本地完整 `:app:testFull :app:assembleDebug` SUCCESS：**883 tests，0 failure/error/skipped**。
+- 当前预计 Git 树 **926 文件、256 生产 + 206 测试 Kotlin**；超限 App **180424B**、HostScreen **144485B**，NightStepUi 49650B。起点 `96826100`，远端精确代码 HEAD 的完整 CI/R2 待本次提交后核验；历史 docs-only 成功不能替代。
+- 下一批 B4：先显式保存 source/metric/实际查询 targets，再清除 HostScreen/InformationStepBuilder 真值、登记见证和旧结果菜单；B5 Mayor 候选/规则门禁随后处理。保留日间明确登记、实际结果输入、AI 推荐、死亡/继承应用与 Session 安全边界。详细清单/证据/风险只维护现有全源台账 F10-B，无新增产品阻塞；Draft #334 不合并/retarget，无付费 API/真机验收。
+
+
 ## F10-A 最新审计与推荐删除批（本轮仅审计，覆盖下方 NEXT）
 
 - 完整树 936 文件、263 生产 + 209 测试 Kotlin 已横向比较；高置信可直接清理 A1 7 个孤立候选/辅助文件（274 行）、A2 旧 V1 Provider response/validator 尾部（144 行）、A3 三个 epistemic 混合文件中的旧世界/合法选择/登记推演合同与对应 codec。建议合并为一个封闭删除批，不删真实 AI 或核心事实/隐私序列化。确切清单、消费者和测试边界仅见全源台账 F10-A。

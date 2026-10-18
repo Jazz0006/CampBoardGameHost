@@ -5,7 +5,6 @@ import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
-import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
@@ -68,10 +67,6 @@ class FormalGameState(
             }
         }
     }
-
-    fun eligibleRedHerringSeats(): Set<Int> = players
-        .filter { it.actualAlignment == Alignment.GOOD }
-        .mapTo(linkedSetOf()) { it.seat }
 
     fun copy(
         snapshotId: String = this.snapshotId,
@@ -381,67 +376,6 @@ data class EpistemicObservation(
             "GrimoireState must be a private observation sourced from the Spy ability."
         }
         timelineBinding.requireReplayFieldsMatch(phase, round, sequence)
-    }
-}
-
-data class StorytellerDecisionPoint(
-    val decisionPointId: String,
-    val snapshotId: String,
-    val phase: StorytellerPhase,
-    val round: Int,
-    val sequence: Int,
-    val sourceSeat: Int?,
-    val sourceAbility: RoleId,
-    val decisionTypeId: String,
-    val recipientSeats: Set<Int>,
-    val queryPropositions: List<InformationProposition> = emptyList(),
-    val candidateFamilyId: CandidateFamilyId? = null,
-    val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
-) {
-    init {
-        requireSchemaVersion(schemaVersion)
-        require(decisionPointId.isNotBlank() && snapshotId.isNotBlank())
-        require(round > 0 && sequence >= 0)
-        require(sourceSeat == null || sourceSeat > 0)
-        require(STABLE_TYPE_ID.matches(decisionTypeId))
-        require(recipientSeats.isNotEmpty() && recipientSeats.all { it > 0 })
-    }
-    companion object { private val STABLE_TYPE_ID = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*") }
-}
-
-data class LegalEpistemicChoice(
-    val choiceId: String,
-    val interactionId: String,
-    val observation: EpistemicObservation,
-    val registrations: List<RegistrationFact> = emptyList(),
-) {
-    init {
-        require(choiceId.isNotBlank())
-        require(interactionId.matches(Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*"))) {
-            "interactionId must be a stable lowercase ID."
-        }
-        require(registrations.all { it.interactionId == interactionId }) {
-            "Every selected registration must be bound to the legal choice interaction."
-        }
-        require(registrations.map { it.subjectSeat to it.registrationQuestion }.distinct().size == registrations.size) {
-            "A subject may have only one selected registration per question in an interaction."
-        }
-    }
-}
-
-data class LegalChoiceSet(
-    val choiceSetId: String,
-    val decisionPointId: String,
-    val rulesetRef: RulesetRef,
-    val choices: List<LegalEpistemicChoice>,
-    val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
-) {
-    init {
-        requireSchemaVersion(schemaVersion)
-        require(choiceSetId.isNotBlank() && decisionPointId.isNotBlank())
-        require(choices.isNotEmpty())
-        require(choices.map { it.choiceId }.distinct().size == choices.size)
-        require(choices.map { it.observation.snapshotId }.distinct().size == 1)
     }
 }
 
