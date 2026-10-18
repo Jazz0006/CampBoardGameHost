@@ -6,6 +6,10 @@ F15已落实明确夜间实际结果确认：无人/多名死者、任意实际I
 
 本地完整 `:app:testFull :app:assembleDebug` SUCCESS：741 tests、0 failure/error/skipped。生产净删642行/30217B，测试净删1300行/47578B，共1942行/77795B；2生产+10专属旧测试文件退出，新确认界面4673B。当前883跟踪文件、241生产+178测试Kotlin；App159449B、HostScreen99682B仍超限，Session42993B。精确代码 **`0f904f7031770bd2f12acea4299aa9b1d5c8e5c0`** 的完整 Android **[CI #4377 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39121759682)**（full单测+Debug APK）、**[R2 #3957 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39121759696)**；ASP、真实Clingo、CI gate均SUCCESS。 后续docs-only HEAD不替代此代码验收。详细边界及风险只在原全源台账F15。
 
+## 新对话 / 开发机接续
+
+所有者要求当前进度先同步远端，随后通过开发机 MiniMCP 继续。本次同步前远端文档HEAD `8f8f9573d452b92cdd727fc7fd98906a1446cb26` 的docs-only CI #4378 / R2 #3958 SUCCESS；完整Android证明仍为上述F15代码SHA。MiniMCP `clocktower` 实查仍在同名分支旧HEAD `a2cbcac82b457b5a56abf3833b604d9c4fdd74f7`、工作区干净，本轮没有操作其分支或文件。新对话必须重新核对GitHub实时HEAD/base/CI和MiniMCP状态，fetch后只做可安全的精确快进，再从现有 **122/475已审、353待审** 继续横向审计。详细同步边界和步骤见唯一现行 `NEXT_DEVELOPMENT_HANDOFF.md`，不另建交接副本。
+
 ## 最终职责
 
 - Host：唯一 canonical Session/GameState、实际行动与公布信息、结构化事件、必要手工控制与继续游戏；只保护身份/结构、版本、去重/原子性、时序、隐私，不能以游戏规则否决确认事实或从信息反推未选登记。

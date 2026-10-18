@@ -14,6 +14,16 @@
 - Windows工作区 `C:/Users/Jazz_/source/repos/CampBoardGameHost`，PowerShell，`JAVA_HOME=C:/Program Files/Android/Android Studio/jbr`，Gradle使用gradlew.bat。Mini MCP clocktower是独立旧Linux `/home/opc/repos/CampBoardGameHost`、同名分支但HEAD `a2cbcac82b457b5a56abf3833b604d9c4fdd74f7`，不得覆盖本地或假设同步。
 - 原未跟踪文件原样保留：artifacts/branch-audit-2026-10-04/、artifacts/test-audit-2026-10-04/；docs下2026-10-04的BRANCH_CLEANUP_AUDIT/RESULT、MAIN_SYNC_VALIDATION、TEST_RETIREMENT_AUDIT/CLEANUP；node_modules、package.json、package-lock.json。未创建工作树，未真机/付费API验收，不merge/retarget/force push或删除分支。
 
+## 转入开发机 MiniMCP 的接续说明（2026-10-18 同步）
+
+本轮所有者要求同步文档并转入新对话，后续在开发机通过 MiniMCP 继续；本次只整理交接，不新增生产改动，也不提前启动下一批审计。
+
+- 本次同步前远端/Windows HEAD 均为 **`8f8f9573d452b92cdd727fc7fd98906a1446cb26`**（F15验收记录及F12-D横向审计）。该文档提交的 [CI #4378 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39122159425)、[R2 #3958 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39122159339) 已复核；它们是docs-only检查，完整Android代码证明仍是上节 `0f904f70` 的 CI #4377 / R2 #3957。本节所在提交是后续交接文档提交，进入新对话必须从GitHub重新取得最新HEAD及其检查，不能把此处基线当最新HEAD。
+- 本次只读实查 MiniMCP `clocktower`：目录 `/home/opc/repos/CampBoardGameHost`，分支 `codex/minimal-host-full-scan-20261018`，HEAD **`a2cbcac82b457b5a56abf3833b604d9c4fdd74f7`**，index tree `4d2cdd8b643f23520222a1d9ce540941d3c6b370`，工作区干净。此状态尚未快进到本轮远端；所有expected HEAD/index/worktree版本令牌进入新对话后都必须重取，不复用本次快照。
+- 接续顺序：先用GitHub检查main、Draft #334的实时head/base和对应CI/R2；再用MiniMCP `git_state`、`git_remote_status`核对开发机。确认无本地改动及未发布提交后，`git_fetch`获取配置远端，重新读取refs/state，使用精确预期HEAD与目标SHA执行同名分支 `git_fast_forward`。若不是可安全快进，先检查分叉/本地差异；不要reset、强推或覆盖工作区。同步后再次 `git_state`，确认开发机HEAD等于GitHub的最新远端HEAD，再全文读取本交接、权威架构、路线、测试策略和原审计台账。
+- 本次未切换或修改MiniMCP开发机分支/文件；Windows原有未跟踪文件没有提交或迁移。开发机Android/JDK/Gradle能力需实查，不能套用Windows JAVA_HOME或声称开发机已运行741项测试；当前独立Android接受证据来自精确代码HEAD的GitHub完整CI。
+- 新对话第一项实施任务仍是**继续原台账的横向全文件语义审计**：当前 **122/475（25.68%）已审，353待审**，先从未审epistemic/codec、catalog/setup、平台/transport、tools/CI及测试选一组，全文读取并验证真实消费者，更新原表；不是重复已审夜间链，也不是重做F15。下一批再依据审计证据选择完整删除职责链。全部现用AI必须保留，两个超大文件和剩余Host Rules问题见下文。
+
 ## F15 已落实：实际结果独立确认
 
 - 增加NightResultConfirmation界面：明确无人/多名死者、任意座位实际成为Imp、原已确认中毒keep/clear；取消/复核、gameId绑定及双revision过期及防双击。最终实际结果不从攻击/保护/Mayor/Soldier/SW重算，不因合法候选拒绝；新身份沿原私密展示与实际RoleChange确认，Dawn从实际Death名单播报多名。
