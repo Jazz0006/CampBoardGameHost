@@ -12,7 +12,7 @@
 - **生产整删2文件**：`clocktower/session/NightDawnResolutionPlanner.kt`、`clocktower/session/TroubleBrewingDemonSuccessionResolver.kt`。删除planner death/role/continuation/poison-resolution DTO与Forced/Choice晋升规划、临时effective alive/role值类型、重建当前Imp fallback、旧DemonSuccessor action/Materializer/UI合法候选与自动单候选选择、Session/checkpoint的旧继承候选字段/API。DawnPoisonCarryIntent只保留已确认keep/clear的窄输入，归于原SessionPoisonBoundaries；不再按Poisoner活着/转职推导清除。
 - **旧链退出**：App.onConfirmNight → DawnDeathFacts/planValidatedNightDeath → 候选继承/planDemonSuccession → confirmNewDemonIdentity/planPoisonCarry 的提交链，及UI候选→Session pending successor→规则合法域再次否决均退出。既有DemonAttackProductionAdapter仍仅供信息步骤的只读预览，原公式在既有adapter中直接收敛，不参与最终确认。其死亡/保护计算、Sage/Ravenkeeper预览、毒效果展示与旧Flow模板仍待后续职责删除，不能称全部Host Rules已移除。
 - **专属旧测试整删10文件**：NightDawnResolutionPlannerContractTest、NightDawnResolutionPlannerPoisonContractTest、NightDawnResolutionPlannerMayorContractTest、NightDawnResolutionPlannerAttackOutcomeContractTest、NightDawnResolutionPlannerSuccessionResolutionTest、NightDawnPoisonClearIntentTest、NightDawnOrdinaryPoisonOwnershipTest、MayorRedirectDependencyInvalidationTest、TroubleBrewingCurrentDemonRegressionTest、ClocktowerPendingSuccessionFlowAuthorityTest。核实这些专属文件只消费退休pure producer/DTO，没有真实commitConfirmedPlayerDeath/ActualRoleChange/GlobalObservation调用；历史Imp识别的真实断言保留在CurrentDemonAuthorityTest。混合UI/current-Demon/poison/vote测试只去旧继承分支及旧checkpoint参数，真实identity/stale/幂等/独立Mayor/票数/机械状态断言保留。
-- **本地验证**：完整 `:app:testFull :app:assembleDebug` **BUILD SUCCESSFUL**；175 suites、**741 tests，0 failure/error/skipped**（原761，退休25旧用例，新增5实际合同用例）。新增多死亡与原Attack/Protect独立、任意已知座位可接受实际角色变化、未知/重复/双revision stale不变、后续公布冲突整个批次不变、公开无角色泄漏、明确无人死亡的AI/public/JSON往返；既有开局/后夜/传输/战略/Session回归一起运行。无真机/付费API调用。提交后再核对精确代码HEAD的完整CI/R2。
+- **本地验证**：完整 `:app:testFull :app:assembleDebug` **BUILD SUCCESSFUL**；175 suites、**741 tests，0 failure/error/skipped**（原761，退休25旧用例，新增5实际合同用例）。新增多死亡与原Attack/Protect独立、任意已知座位可接受实际角色变化、未知/重复/双revision stale不变、后续公布冲突整个批次不变、公开无角色泄漏、明确无人死亡的AI/public/JSON往返；既有开局/后夜/传输/战略/Session回归一起运行。无真机/付费API调用。精确代码 **`0f904f7031770bd2f12acea4299aa9b1d5c8e5c0`** 的完整 Android **[CI #4377 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39121759682)**（full单测+Debug APK）、**[R2 #3957 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39121759696)**；ASP、真实Clingo、CI gate均SUCCESS。 远端compare与本地51文件提交一致；883文件树/475审计路径无缺失、额外或重复。
 - **净缩减/体积**：含新确认界面4673B，生产净删 **642行 / 30217B**；测试净删 **1300行 / 47578B**；共 **1942行 / 77795B**，不含文档。当前App **159449B**、HostScreen **99682B**仍超50000；Session42993B、新界面4673B，未新增超限文件。P1/P4未完成。
 - **审计进度**：当前树 **883** 跟踪文件、**241**生产+**178**测试Kotlin；原486范围删除2生产+10测试、增1界面→**475**。已审计 **116/475（24.42%）**，0审计中、**359待审**。本批2个已审生产文件删除退出当前表，新界面、缩窄后的CurrentDemonAuthority及4个全文核查的实际边界/混合测试计新增结论；重读已审App/Session等不计新增。所有现行路径和字节维护在下方同一F12表，历史删除仅在本节留证。
 - **风险/未决**：全树审计仍约四分之一，不能停在局部夜间链。只读信息预览还可能与最后确认的实际死者不同，其触发/手工补充流程仍待UI职责审计及真机验收；夜间不再由旧死亡预测顺便自动判终局，保留实际结果提交后的继续流程；日间自动继承/终局、Klutz、毒机械标记/日落清除与其它Host规则仍有真实消费者。所有现用AI首夜/pair/数字/后夜、prompt/IO/parser/memory/preselection及AI模式信息采纳保留；没有为退休Host规则停用AI。U1自定义导入仍待所有者决定，未删除；本批无新增所有者决策阻塞。保持Draft堆叠，不merge/retarget/force push。
@@ -45,7 +45,7 @@
 
 - **证据 HEAD**：`cfe258b17ed1c8abb248f0ada4ee1c871593d961`。2026-10-18 重新核实本地/远端 Draft #334 一致，base `64be30905b88f639a464204ed1db89b7b62bc910`，main `61cd6796569ed8dfdea360caefeb5b9328745090`。Mini MCP 独立旧 Linux HEAD `a2cbcac8` 不用作编辑工作副本。原未跟踪文件保持不动。
 - **准确范围**：完整 `git -c core.quotepath=false ls-tree -r --name-only HEAD` 共 **905** 跟踪文件；审计分母 **497**：246 生产 Kotlin、195 测试 Kotlin + 1 测试 fixture、14 Android XML/JSON资源配置、20 tools 源码/数据、21 构建/CI/仓库配置及 player/ui 网页源码。纳入非 docs/artifacts 目录的 `.kt/.kts/.java/.py/.sh/.ps1/.bat/.xml/.yml/.yaml/.html/.css/.js/.ts/.tsx/.jsx/.json/.properties` 及 `gradlew/.gitignore/.gitattributes`。`docs/`、`artifacts/` 的历史文档/报告/数据，以及 README/AGENTS 说明、两个二进制 PNG/JAR 排除语义源码分母；AGENTS 是已读治理权威而非产品源码。构建输出与未跟踪 node_modules/package 文件不在 Git tree，不计入。完整树由程序读取并核对数量，终端大段输出曾被截断，不用该输出冒充完整清单。
-- **逐项状态**：本节每条只有在全文读取并核查真实生产消费者后才给最终分类；A/B历史累计105/497；F13/F14之后F15继续删除/实施，当前已审计 **116/475（24.42%）**，审计中 **0**，其余 **359** 待审。扫描、符号匹配、旧台账曾提及和代码净删率不计语义完成率。测试/工具未读全文的维持待审，不能随生产文件结论自动标成已审。
+- **逐项状态**：本节每条只有在全文读取并核查真实生产消费者后才给最终分类；A/B历史累计105/497；F13/F14之后F15继续删除/实施，当前已审计 **122/475（25.68%）**，审计中 **0**，其余 **353** 待审。扫描、符号匹配、旧台账曾提及和代码净删率不计语义完成率。测试/工具未读全文的维持待审，不能随生产文件结论自动标成已审。
 - **验证口径**：下表最终结论已做源码静态审计、声明/实际引用交叉检索（app/src/main、app/src/test、tools、.github）；这不是新运行的行为测试。现有完整代码验收仍是 `d9fb47f2` 的 Android CI #4369 / R2 #3949 SUCCESS；文档 HEAD 的 CI #4370 / R2 #3950 SUCCESS，Android skipped。A/B审计批尚未改产品/测试/CI；F13已实施并完整验证，见上节。A批本地已运行 `:app:testFast --tests *GatewayTokenEnvelopeV1Test --tests *MurmurHash3Test --no-daemon`，BUILD SUCCESSFUL，3用例0失败；其余表项仅静态审计，未运行真机或付费 API。
 - **首批整组建议**：① `PairInformationOutcome.kt` 为独立孤立叶子，列必须删除；此审计批先记录、不靠删一个叶子替代全树审计。② 攻击/继承/毒/Klutz 规则计算及 flow eligibility 为混合生产链，必须先保留实际结果输入和 Session 状态应用再退休。③ Provider/日间 causal DTO 仍有合法候选/真值标签和重复决策历史，需联合实际消费者审计；不能删活跃 AI。④ 目录、文本、时序、密钥、canonical state 与只读 AI 快照不是旧规则真值引擎，保留必要责任。
 - **风险与待办**：所有手工事实应能绕过规则生成步骤/合法菜单，事实 seat/权限/时序/去重/原子性仍保留。App **178170B**、HostScreen **101971B** 仍超限；F12-B已完成整文件职责审计，两个都列需要解耦，尚未净删/缩至硬上限。人工审核项 U1：是否退出无生产用户入口的 custom/homebrew 导入分支；两内置脚本均只有 official references。推荐删除未上线分支，保留两剧本解析/目录；未决前不删。详见 parser/normalizer 两行。A/B纯审计批生产删除 0、专属测试删除 0、移除链 0、净代码缩减 0；F13实际删除见上节；不宣称 P1/P4 或全仓审计完成。
@@ -58,7 +58,14 @@
 - **本地验证**：既有 `testFast` 定向PersonalDirectOpenAiV1Test、ConfirmedActionBoundaryTest、RoleIdentityBoundaryTest、SessionPlayerCardsTest，**16 tests、0 failure/error/skipped，BUILD SUCCESSFUL**；XML各6/6/1/3已核实。覆盖离线AI wire/retained链、Session事件/版本幂等、role原子性和同frame只读展示。通过的旧Butler规则断言仍列待解耦，不把绿灯当保留规则理由；没有新增形状测试。
 - **变更/风险/下一批**：本批删除生产0、专属测试0、移除生产链0、净代码缩减0，只维护本台账与路线/交接；两个超限仍如上。实际Session/AI产品行为未改变，不等于上列旧门禁已修复。无新增所有者阻塞决策；U1自定义导入范围保持待决但不阻塞其余审计。下一批先补齐DayAbilityRegistrationRulingProducer、CausalDecisionJournal、GlobalEventProjection、NightDawnPlanner/RestoreComposition、KlutzHistoryProducer、DemonSuccessionResolver、RuntimeGameProjector这8个待审Session文件，再横向epistemic/codec、setup与工具/测试。完整代码验收仍为F11 `d9fb47f2` CI #4369 / R2 #3949，审计文档新HEAD需另查CI，不冒充Android编译。
 
-当前范围已按F15变动重核：883跟踪文件、475源码/测试/工具配置；每个现行路径仍恰好一次。表内路径以仓库根为基准。首批71条的证据 HEAD 为上列 `cfe258b1`；F12-B新增条目在行内明确标注 `22716fa4` 完整SHA（两者之间仅文档变化，产品代码相同）；“待审”的 `—` 表示没有最终结论，“审计中”不计完成；“静态”验证同上，后续运行结果另补，不能从历史 CI 推断新改动已编译。
+当前范围已按F15变动重核：883跟踪文件、475源码/测试/工具配置；每个现行路径仍恰好一次。### F12-D：恢复跨模块横向审计（F15实现后的独立只读批）
+
+- 按所有者最新提醒恢复全文件遍历，不沿夜间链：新增全文核查6项，跨epistemic合同/唯一时序、setup比例/来源、独立开发工具及其测试；实际消费者和保留/退休边界见原表对应路径。证据代码HEAD `0f904f7031770bd2f12acea4299aa9b1d5c8e5c0`，与F15通过完整CI的代码相同，本批只修改文档。
+- 新增2项必须保留、1项必须删除（有真实开局消费者，先断开才能执行）、3项需要解耦。不是把名称含candidate/实验就直接删，也不从当前测试存在反推生产必要。该批生产/测试删除0、净代码缩减0；F15实际删除和体积单独见上节。
+- 累计当前 **122/475（25.68%）**，0审计中、**353待审**；F15完工时为116/475，本只读批新增6。完整遍历仍未完成，下一批继续横向未审epistemic/codec、setup、平台/transport、tools/CI和测试。U1仍未决，无新增所有者阻塞。
+- 本地明确运行 `python -m unittest discover -s tools -p test_ai_conversation_probe.py`，5 tests OK；先全文确认仅纯prepare/check调用，并用PYTHONDONTWRITEBYTECODE禁写缓存。没有运行CLI send、访问凭据、发起付费调用或把历史实验文档当现行指令。Kotlin代码验收见F15精确SHA，未新增设备验收。
+
+表内路径以仓库根为基准。首批71条的证据 HEAD 为上列 `cfe258b1`；F12-B新增条目在行内明确标注 `22716fa4` 完整SHA（两者之间仅文档变化，产品代码相同）；“待审”的 `—` 表示没有最终结论，“审计中”不计完成；“静态”验证同上，后续运行结果另补，不能从历史 CI 推断新改动已编译。
 
 | 文件（当前完整范围，每路径恰好一次） | 字节 | 状态 | 最终分类 | 真实消费者 / 证据与处理边界 |
 |---|---:|---|---|---|
@@ -214,8 +221,8 @@
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/domain/StorytellerProviderHistoryPrefixV1.kt` | 9442 | 已审计 | 必须保留 | ProviderHistoryPrefixMaterializer、GlobalEventProjection、StrategicContinuation、ProviderContract；不可变冻结事实前缀、明确 UNKNOWN/PARTIAL、recipient 和 cutoff；供 AI 连续策略，非独立文本复盘。Action.copy 对 list 字段浅拷贝是后续不可变性核查项，未断言 bug。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/domain/TroubleBrewingGameSnapshot.kt` | 5165 | 已审计 | 必须保留 | RuntimeGameProjector、GameSnapshotProjector、InitialOpeningRequest/Joint、MayorBoundary、JsonCodec；只读真实座位/状态投影及 known/uncommitted/unknown，不自算信息真值；保留现用 AI 请求；不是另一份可写 GameState。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/ActionFactDraft.kt` | 12877 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/ActionFactTimeline.kt` | 5094 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicContracts.kt` | 848 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/ActionFactTimeline.kt` | 5094 | 已审计 | 必须保留 | F12-D全文/真实引用证据0f904f7031770bd2f12acea4299aa9b1d5c8e5c0；Session纯Action提交、SemanticHistoryMode、FormalState/codec与PlayerHistoricalTimeline真实消费；不可变defensive snapshot，ID/global位置唯一，绑定fact.sequence与globalSequence一致，两类记录collision/Legacy不能猜全局顺序。没有规则合法域/第二writer，不应因旧world引擎退休而删。 |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicContracts.kt` | 848 | 已审计 | 必须保留 | F12-D全文/真实引用证据0f904f7031770bd2f12acea4299aa9b1d5c8e5c0；TimelinePoint由Session.nextTimelinePoint→绑定Action/Observation、公开历史/AI prefix/JSON消费；globalSequence唯一排序权威，round/本地sequence仅结构和诊断，正数/非负形状检查不涉及游戏规则。 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicObservationDraft.kt` | 3378 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicObservationLog.kt` | 9783 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicSemanticJson.kt` | 29916 | 待审 | — | 尚未形成有证据结论 |
@@ -273,8 +280,8 @@
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerStrategicChangeCheckpointV2.kt` | 8667 | 已审计 | 需要解耦 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；App.requestLiveGlobalAdvice/reviewConfirmedCurrentStepAdvice；保留已确认日志append-only、单调revision、策略memory版本/真实状态变化与提案验证；pendingNeedsJudgment实际仅isNotEmpty，不再有Host唯一答案计算，App的HOST_DETERMINED说明不能当代码证据。同夜published source集合拒新问题仍需改为交互ID；历史accept只推进advisory memory，不是Session写入。（静态；运行仅上述明确测试） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerStrategicContinuationV2.kt` | 29879 | 已审计 | 必须保留 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；App.requestLiveGlobalAdvice、PersonalDirectOpenAiV1、CurrentInventory/ResidualGate/Matchers；完整encode/decode/prompt/strict schema/IO/MemoryCursor：从canonical状态+实际event delta规划当前问题，输出直接scalar/pair/seat，验证结构/已知引用，不重算合法候选。保留afterConfirmedPublication才升级记忆/response anchor、无anchor重发完整事实、state!==frozen丢弃，未来条件意图不写事实。（静态；运行仅上述明确测试） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/session/TroubleBrewingRuntimeGameProjector.kt` | 3512 | 已审计 | 需要解耦 | 全文/消费者证据 d76968168eb02e37cd87084bb51eabc60f789d9c；唯一生产消费者MayorRedirectDecisionBoundary snapshot重载；重复从快照+catalog造GameState/name用于默认living actual Mayor定位。应传实际来源seat与canonical state后删除此反向投影，保留Mayor实际redirect事实和现用AI。 F13本地807测试/APK及代码27d02f72完整CI #4373 / R2 #3953通过。 |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/setup/ClocktowerSetupDistribution.kt` | 1018 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/setup/ClocktowerSetupProvider.kt` | 4186 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/setup/ClocktowerSetupDistribution.kt` | 1018 | 已审计 | 必须删除 | F12-D全文/真实引用证据0f904f7031770bd2f12acea4299aa9b1d5c8e5c0；纯5–15人数的规则角色比例表及DTO；消费者为SetupScreen显示、GeneratedSetupCandidateSource与TroubleBrewingSetupPresetValidator。不是AI请求/推荐合同；须先让真实角色配置/发牌确认脱离比例菜单和验证器，再整文件退休，不能直接断掉正常开局。本批仅给退出结论，未删除。 |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/setup/ClocktowerSetupProvider.kt` | 4186 | 已审计 | 需要解耦 | F12-D全文/真实引用证据0f904f7031770bd2f12acea4299aa9b1d5c8e5c0；TB/NGJ ProductionSetupPreparer经Provider/Registry→GeneratedSetupCandidateSource/TemplateRepository；保留script/playerCount/provenance身份、实际角色多重集的窄输入和结构检查（本文件不计算规则真值）。legal-candidate source/provider抽象随setup生成/预设校验链解开后再缩窄，不能按legal注释误删必要已选配置。 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSource.kt` | 5567 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/setup/NoGreaterJoyProductionSetupPreparer.kt` | 3562 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/setup/SetupDiversityHistory.kt` | 1550 | 待审 | — | 尚未形成有证据结论 |
@@ -513,7 +520,7 @@
 | `gradlew.bat` | 2966 | 待审 | — | 尚未形成有证据结论 |
 | `player/handbook.html` | 48372 | 待审 | — | 尚未形成有证据结论 |
 | `settings.gradle.kts` | 336 | 已审计 | 必须保留 | Gradle构建入口；仅 include(:app)，Google/MavenCentral/插件仓库和项目身份；无被删 web/独立 Rules module，后续不能据历史路径虚构消费者。（静态，运行结论仅明确列出者） |
-| `tools/ai_conversation_probe.py` | 8245 | 待审 | — | 尚未形成有证据结论 |
+| `tools/ai_conversation_probe.py` | 8245 | 已审计 | 需要解耦 | F12-D全文/真实引用证据0f904f7031770bd2f12acea4299aa9b1d5c8e5c0；仅手动CLI及test_ai_conversation_probe消费，历史AI_CONVERSATION_1文档标记prepared-only；未接Android生产/Gradle/当前CI该工具调用。保留必要离线APP请求结构核对、显式单次付费gate、无retry/私密输出边界；store=true/previous_response_id/reasoning/delta是独立实验，不是现用stateless Host合同。--host-verified仅operator断言不能代替事实安全或预算授权；后续按工具用途缩窄，不凭5个离线绿灯声称供应商支持或生产验收。本轮未运行send/写出私密请求。 |
 | `tools/asp_oracle/oracle_harness.py` | 22933 | 待审 | — | 尚未形成有证据结论 |
 | `tools/asp_oracle/scenarios/trouble_brewing_a2.json` | 44315 | 待审 | — | 尚未形成有证据结论 |
 | `tools/asp_oracle/test_oracle_harness.py` | 6979 | 待审 | — | 尚未形成有证据结论 |
@@ -525,7 +532,7 @@
 | `tools/setup/migrate_tb_drunk_templates.py` | 4626 | 待审 | — | 尚未形成有证据结论 |
 | `tools/setup_field_test_keystore.sh` | 1965 | 待审 | — | 尚未形成有证据结论 |
 | `tools/storyteller_gateway.py` | 40604 | 待审 | — | 尚未形成有证据结论 |
-| `tools/test_ai_conversation_probe.py` | 2268 | 待审 | — | 尚未形成有证据结论 |
+| `tools/test_ai_conversation_probe.py` | 2268 | 已审计 | 需要解耦 | F12-D全文/真实引用证据0f904f7031770bd2f12acea4299aa9b1d5c8e5c0；全文5个unittest只测prepare/check_app_request：opening变store、chain operator anchor、baseline stateless、旧schema/模型排除、实验delta；不调用cmd_send，不覆盖真实网络/模型支持/私密文件权限。随实验分支退休相应用例，若保留工具则保留必要离线baseline/结构/安全验证。当前CI没有引用该test，不能拿其它CI冒充它通过；本轮单独离线运行5 tests OK，未写pycache或调用网络。 |
 | `tools/testing/summarize_junit.py` | 2979 | 待审 | — | 尚未形成有证据结论 |
 | `tools/tests/test_gsp_api0_responses.py` | 5431 | 待审 | — | 尚未形成有证据结论 |
 | `tools/tests/test_prod_global_3b2_manual_probe.py` | 6616 | 待审 | — | 尚未形成有证据结论 |
