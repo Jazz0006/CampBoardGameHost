@@ -10,6 +10,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.rules.PairInformationLegalDomain
 import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
