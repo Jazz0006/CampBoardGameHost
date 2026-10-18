@@ -2,8 +2,6 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
 
 /**
  * 3E generic *Host fact* checkpoint. There is no event-type or role-specific
@@ -14,34 +12,9 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidat
  * authority, not model output or a guessed future role activation.
  */
 internal object StorytellerStrategicChangeCheckpointV2 {
-    /**
-     * A model is needed for a current information choice only when the Host's
-     * authoritative candidates have more than one PLAYER-VISIBLE meaning.
-     * Multiple registration witnesses for the same result are not multiple
-     * public answers; this gate never selects or commits a witness.
-     * Other genuine Host discretion stays eligible for whole-game planning.
-     */
-    fun informationNeedsJudgment(candidates: List<StorytellerProviderCandidateV1>): Boolean {
-        if (candidates.isEmpty()) return true
-        val results = candidates.map { candidate ->
-            when (val payload = candidate.payload) {
-                is StorytellerProviderCandidatePayloadV1.ScalarResult ->
-                    "scalar:" + payload.value
-                is StorytellerProviderCandidatePayloadV1.PairInformation ->
-                    "pair:" + payload.shownRoleId + ":" +
-                        payload.candidateSeats.sorted().joinToString(",")
-                else -> return true
-            }
-        }
-        return results.distinct().size > 1
-    }
-
     fun pendingNeedsJudgment(
         openDecisions: List<StorytellerStrategicContinuationV2.OpenDecision>,
-    ): Boolean = openDecisions.any { decision ->
-        decision.family != "NIGHT_INFORMATION" ||
-            informationNeedsJudgment(decision.legalCandidates)
-    }
+    ): Boolean = openDecisions.isNotEmpty()
 
     internal data class Position(
         val phase: StorytellerPhase,
@@ -190,14 +163,13 @@ internal object StorytellerStrategicChangeCheckpointV2 {
         require(response.affectedOpenDecisionIds.all { id ->
             reviewed.openDecisions.any { it.decisionId == id }
         })
-        val legalChoices = reviewed.openDecisions.filter { it.legalCandidates.isNotEmpty() }
-            .associate { it.decisionId to it.legalCandidates.map { option ->
-                option.candidateId
-            }.toSet() }
-        require(response.remainingChoices.keys == legalChoices.keys &&
-            response.remainingChoices.all { (id, option) ->
-                option in requireNotNull(legalChoices[id])
-            }) { "Strategy memory cannot advance with an incomplete or illegal residual bundle." }
+        require(response.remainingChoices.keys == reviewed.openDecisions.map { it.decisionId }.toSet()) {
+            "Strategy memory cannot advance with an incomplete current response."
+        }
+        reviewed.openDecisions.forEach { decision ->
+            requireNotNull(response.remainingChoices[decision.decisionId]).validate(
+                decision.currentDecisionContext, now.gameState.players.size)
+        }
         require(response.gameId == reviewed.gameId &&
             response.gameStateRevision == reviewed.gameStateRevision &&
             response.playerInputRevision == reviewed.playerInputRevision &&

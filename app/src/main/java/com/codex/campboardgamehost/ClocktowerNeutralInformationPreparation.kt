@@ -98,8 +98,8 @@ internal object ClocktowerNeutralInformationPreparation {
             ClocktowerPairInformationAbility.Librarian -> ClocktowerTeam.Outsider
             ClocktowerPairInformationAbility.Investigator -> ClocktowerTeam.Minion
         }
-        val roles = scriptRoles.filter { it.team == roleTeam }
-        val pool = cards.filter { it.name != actor.name }
+        val roles = scriptRoles.distinctBy { it.enName }
+        val pool = cards
         val effects = buildList<PairInformationEffect> {
             roles.forEach { role ->
                 for (firstIndex in 0 until pool.lastIndex) {
@@ -138,7 +138,7 @@ internal object ClocktowerNeutralInformationPreparation {
                 )
             } else {
                 InformationProposition.AllOf(
-                    roles.map { InformationProposition.RoleInPlay(RoleId(it.enName), false) },
+                    scriptRoles.filter { it.team == roleTeam }.map { InformationProposition.RoleInPlay(RoleId(it.enName), false) },
                 )
             }
 

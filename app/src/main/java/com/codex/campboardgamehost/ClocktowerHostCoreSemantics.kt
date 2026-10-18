@@ -39,8 +39,7 @@ internal fun clocktowerShownUnreliableProposition(
     empathNeighborSeats: List<Int>,
     fortuneTellerSubjectSeats: List<Int>,
 ): InformationProposition? {
-    val authoritative = step.informationDecisionConfirmation?.draft?.proposition
-        ?: step.displayProposition
+    val authoritative = step.displayProposition
     // Numeric information is compared against the literal number on the player display.
     // A stale truthful proposition cannot be substituted for a different fabricated number.
     if (authoritative != null) {
@@ -114,8 +113,6 @@ internal fun clocktowerPrivateObservationRecordId(
     return "private-$gameId-${phase.name}-$round-$roleEnName-$actorSeat-$statementKey"
 }
 
-internal fun clocktowerRedHerringCandidates(aliveCards: List<PlayerCard>): List<PlayerCard> =
-    aliveCards.filter { card -> card.clocktowerTeam?.isLegalRedHerringTeam() == true }
 
 internal fun actualClocktowerRoleCards(cards: List<PlayerCard>, enName: String): List<PlayerCard> =
     cards.filter { it.clocktowerRole?.enName == enName }

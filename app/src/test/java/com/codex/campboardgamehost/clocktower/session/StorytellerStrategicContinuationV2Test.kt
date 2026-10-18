@@ -87,10 +87,6 @@ class StorytellerStrategicContinuationV2Test {
         decisionId = "current:seat-2",
         sourceSeat = 2,
         family = "NIGHT_INFORMATION",
-        legalCandidates = listOf(
-            StorytellerProviderCandidateV1("empath-zero", StorytellerProviderCandidatePayloadV1.ScalarResult("0")),
-            StorytellerProviderCandidateV1("empath-one", StorytellerProviderCandidatePayloadV1.ScalarResult("1")),
-        ),
         abilityRoleId = "Empath",
         currentDecisionContext = StorytellerProviderDecisionContextV1.ScalarInformation(
             2, RoleId("Empath"), ReliabilityState.RELIABLE,
@@ -179,7 +175,7 @@ class StorytellerStrategicContinuationV2Test {
         assertTrue(wire.getString("instructions").contains("currentResult"))
         val accepted = StorytellerStrategicContinuationV2.decode(
             host.toString(), response(host).toString(), open)
-        assertEquals(mapOf("current:seat-2" to "empath-one"), accepted.remainingChoices)
+        assertEquals(mapOf("current:seat-2" to StorytellerStrategicContinuationV2.SemanticResult("SCALAR_RESULT", scalarValue = "1")), accepted.remainingChoices)
         assertEquals(memory, accepted.updatedMemory)
         assertEquals(game.state.nextTimelineGlobalSequence, accepted.exclusiveGlobalSequence)
     }
@@ -329,10 +325,10 @@ class StorytellerStrategicContinuationV2Test {
         assertEquals(3, log.getJSONObject(0).getInt("target"))
     }
 
-    @Test fun directSemanticResultMustMatchFreshHostLegalMeaning() {
+    @Test fun directSemanticResultAcceptsRepresentableAnswersAndRejectsStaleOrMalformedReplies() {
         val host = JSONObject(StorytellerStrategicContinuationV2.encode(
             session().state, prior(), open))
-        assertEquals(mapOf("current:seat-2" to "empath-zero"),
+        assertEquals(mapOf("current:seat-2" to StorytellerStrategicContinuationV2.SemanticResult("SCALAR_RESULT", scalarValue = "0")),
             StorytellerStrategicContinuationV2.decode(
                 host.toString(), response(host, semantic(scalar = "0")).toString(), open)
                 .remainingChoices)
@@ -343,8 +339,10 @@ class StorytellerStrategicContinuationV2Test {
                 StorytellerStrategicContinuationV2.decode(host.toString(), raw.toString(), open)
             }.isFailure)
         }
+        assertEquals("99", StorytellerStrategicContinuationV2.decode(host.toString(),
+            response(host, semantic(scalar = "99")).toString(), open).remainingChoices.values.single().scalarValue)
         rejects { it.getJSONObject("currentResult").getJSONObject("semantic")
-            .put("scalarValue", "99") }
+            .put("scalarValue", "-1") }
         rejects { it.getJSONObject("currentResult").put("decisionId", "invented") }
         rejects { it.getJSONObject("currentResult").getJSONObject("semantic")
             .put("scalarValue", "0").put("candidateId", "private-id") }
@@ -361,27 +359,38 @@ class StorytellerStrategicContinuationV2Test {
     }
 
     @Test fun sameVisiblePairWithMultipleInternalWitnessIdsDoesNotLeakCandidateIds() {
-        val pairs = listOf(
-            StorytellerProviderCandidateV1("witness-b",
-                StorytellerProviderCandidatePayloadV1.PairInformation(
-                    "Baron", listOf(7, 6), com.codex.campboardgamehost.clocktower.domain.SemanticTruth.TRUE,
-                    emptyList())),
-            StorytellerProviderCandidateV1("witness-a",
-                StorytellerProviderCandidatePayloadV1.PairInformation(
-                    "Baron", listOf(6, 7), com.codex.campboardgamehost.clocktower.domain.SemanticTruth.FALSE,
-                    emptyList())),
-        )
         val current = listOf(StorytellerStrategicContinuationV2.OpenDecision(
-            "current:pair", 5, "NIGHT_INFORMATION", pairs, "Investigator"))
+            "current:pair", 5, "NIGHT_INFORMATION", "Investigator",
+            StorytellerProviderDecisionContextV1.FirstNightPairInformation(
+                5, RoleId("Investigator"), ReliabilityState.RELIABLE)))
         val host = JSONObject(StorytellerStrategicContinuationV2.encode(
             session().state, prior(), current))
         val proposal = response(host, semantic(kind = "PAIR_RESULT", scalar = null,
             role = "Baron", pair = listOf(7, 6)))
         val accepted = StorytellerStrategicContinuationV2.decode(
             host.toString(), proposal.toString(), current)
-        assertEquals(mapOf("current:pair" to "witness-a"), accepted.remainingChoices)
+        assertEquals(mapOf("current:pair" to StorytellerStrategicContinuationV2.SemanticResult("PAIR_RESULT", pairRoleId = "Baron", pairSeats = listOf(6, 7))), accepted.remainingChoices)
         assertFalse(host.toString().contains("witness-a"))
         assertFalse(host.toString().contains("witness-b"))
+    }
+
+    @Test fun directPairRejectsUnknownSeatsRolesFractionalSeatsAndUnusedFields() {
+        val current = listOf(StorytellerStrategicContinuationV2.OpenDecision(
+            "current:pair", 5, "NIGHT_INFORMATION", "Investigator",
+            StorytellerProviderDecisionContextV1.FirstNightPairInformation(5, RoleId("Investigator"), ReliabilityState.RELIABLE)))
+        val host = JSONObject(StorytellerStrategicContinuationV2.encode(session().state, prior(), current))
+        val valid = semantic(kind = "PAIR_RESULT", scalar = null, role = "Baron", pair = listOf(5, 7))
+        assertEquals(listOf(5, 7), StorytellerStrategicContinuationV2.decode(host.toString(), response(host, valid).toString(), current)
+            .remainingChoices.values.single().pairSeats)
+        for (invalid in listOf(
+            JSONObject(valid.toString()).put("pairRoleId", "InventedCharacter"),
+            JSONObject(valid.toString()).put("pairSeats", JSONArray(listOf(2, 99))),
+            JSONObject(valid.toString()).put("pairSeats", JSONArray(listOf(2, 2))),
+            JSONObject(valid.toString()).put("pairSeats", JSONArray(listOf(2, 3.5))),
+            JSONObject(valid.toString()).put("scalarValue", "1"))) {
+            assertTrue(runCatching { StorytellerStrategicContinuationV2.decode(host.toString(),
+                response(host, invalid).toString(), current) }.isFailure)
+        }
     }
 
     @Test fun staleGameStateAndMismatchedHostDomainNeverAcceptASemanticResponse() {
@@ -400,10 +409,8 @@ class StorytellerStrategicContinuationV2Test {
             StorytellerStrategicContinuationV2.decode(
                 changed.toString(), response(first).toString(), open)
         }.isFailure)
-        val mutatedDomain = open.map { it.copy(
-            legalCandidates = listOf(StorytellerProviderCandidateV1(
-                "changed-legal", StorytellerProviderCandidatePayloadV1.ScalarResult("2")))
-        ) }
+        val mutatedDomain = open.map { it.copy(currentDecisionContext =
+            (it.currentDecisionContext as StorytellerProviderDecisionContextV1.ScalarInformation).copy(subjectSeats = listOf(4, 5))) }
         assertTrue(runCatching {
             StorytellerStrategicContinuationV2.decode(
                 changed.toString(), response(changed).toString(), mutatedDomain)

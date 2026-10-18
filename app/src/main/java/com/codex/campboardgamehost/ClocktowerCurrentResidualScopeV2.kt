@@ -99,7 +99,7 @@ internal object ClocktowerCurrentResidualScopeV2 {
                         produced += StorytellerProviderRequestFactoryV1.fromScalarInformation(
                             current.requestIdentity, current.revision, current.sourceSeat,
                             current.abilityRole, current.reliability, current.kind,
-                            current.metric, current.subjectSeats, current.legalCandidates,
+                            current.metric, current.subjectSeats,
                             snapshot, gameContext)
                         return Scope(produced, i + 1, "NEXT_INTERACTION_NOT_YET_CONFIRMED")
                     }
@@ -126,7 +126,7 @@ internal object ClocktowerCurrentResidualScopeV2 {
                 produced += StorytellerProviderRequestFactoryV1.fromScalarInformation(
                     scalar.requestIdentity, scalar.revision, scalar.sourceSeat,
                     scalar.abilityRole, scalar.reliability, scalar.kind, scalar.metric,
-                    scalar.subjectSeats, scalar.legalCandidates, snapshot, gameContext)
+                    scalar.subjectSeats, snapshot, gameContext)
             } else if (step.manualInformationCandidates.isNotEmpty()) {
                 // An actual Host information domain exists but this producer does
                 // not understand its typed contract. Never skip it and pretend

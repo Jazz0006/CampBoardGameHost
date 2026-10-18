@@ -1,8 +1,6 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
-import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
-import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 
 internal data class ClocktowerPlayerRevealHandoff(
     val openReveal: Boolean,
@@ -31,16 +29,11 @@ internal fun resolveClocktowerPlayerRevealHandoff(
     )
 }
 
-/** Legacy displays have no structured confirmation; confirmed displays must match exactly. */
+/** A displayed response belongs to the same Host revision that produced its current question. */
 internal fun clocktowerInformationPublicationAllowed(
-    confirmation: ConfirmedInformationDecision?,
-    expectedSnapshot: InformationDecisionSnapshot?,
-    currentRevision: InformationDecisionRevision,
-): Boolean {
-    if (confirmation == null) return true
-    if (expectedSnapshot == null) return false
-    return confirmation.authorizes(expectedSnapshot, currentRevision)
-}
+    sourceRevision: StorytellerDecisionRevision?,
+    currentRevision: StorytellerDecisionRevision,
+): Boolean = sourceRevision == null || sourceRevision == currentRevision
 
 /**
  * Authoritative observation (and its confirmed registration rulings) must commit BEFORE

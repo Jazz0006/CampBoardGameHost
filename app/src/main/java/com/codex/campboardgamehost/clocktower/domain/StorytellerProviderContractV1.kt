@@ -14,7 +14,7 @@ internal data class StorytellerProviderRequestV1(
     val sourceRevision: StorytellerProviderRevisionV1,
     val state: StorytellerProviderGameStateV1,
     val decisionContext: StorytellerProviderDecisionContextV1,
-    val legalCandidates: List<StorytellerProviderCandidateV1>,
+    val legalCandidates: List<StorytellerProviderCandidateV1> = emptyList(),
     val gameContext: StorytellerProviderGameContextV1 = StorytellerProviderGameContextV1.EMPTY,
     val coordinationHorizon: StorytellerProviderCoordinationHorizonV1 =
         StorytellerProviderCoordinationHorizonV1.CURRENT_DECISION_ONLY,
@@ -22,7 +22,6 @@ internal data class StorytellerProviderRequestV1(
     init {
         require(schemaId == SCHEMA_ID) { "Unsupported Storyteller provider request schema ID." }
         require(schemaVersion == SCHEMA_VERSION) { "Unsupported Storyteller provider request schema version." }
-        require(legalCandidates.isNotEmpty()) { "Provider request requires a non-empty legal candidate domain." }
         require(legalCandidates.map { it.candidateId }.distinct().size == legalCandidates.size) {
             "Provider request legal candidate IDs must be unique."
         }

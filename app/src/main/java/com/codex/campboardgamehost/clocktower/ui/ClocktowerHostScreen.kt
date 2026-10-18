@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import android.widget.Toast
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
@@ -8,29 +10,22 @@ import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.ClocktowerResidualDisplayMatcherV2
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
@@ -39,8 +34,7 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNigh
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
-import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
-import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
@@ -77,7 +71,7 @@ internal fun ClocktowerJudgeScreen(
     globalAiAdviceText: String? = null,
     globalAiAdviceBusy: Boolean = false,
     globalAiAdviceError: String? = null,
-    globalResidualRecommendedChoices: Map<String, String> = emptyMap(),
+    globalResidualRecommendedChoices: Map<String, com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2.SemanticResult> = emptyMap(),
     onRequestGlobalAiAdvice: (List<ClocktowerNightStepUi>, Int) -> Unit = { _, _ -> },
     phase: ClocktowerPhase,
     round: Int,
@@ -107,7 +101,7 @@ internal fun ClocktowerJudgeScreen(
     highestVoteName: String?,
     highestVoteCount: Int,
     gameOutcome: GameOutcome?,
-    onCommitConfirmedPrivateInformationPublication: (EpistemicObservationDraft) -> Unit,
+    onCommitConfirmedPrivateInformationPublication: (EpistemicObservationDraft, StorytellerDecisionRevision) -> Unit,
     onHostTools: () -> Unit,
     onPreviousFromFirstNightReady: () -> Unit,
     onMovePreviousNightStep: () -> Unit,
@@ -160,7 +154,6 @@ internal fun ClocktowerJudgeScreen(
     val pendingNewDemonName = nightCheckpoint.pendingNewDemonName
     val pendingNightNewDemonIdentityName = nightCheckpoint.pendingNightNewDemonIdentityName
     val demonSuccessorTarget = nightCheckpoint.demonSuccessorDraftTarget
-    val recommendationCoordinator = remember(gameSeed) { ClocktowerRecommendationCoordinator() }
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val publicAliveCards = cards.filter { it.eliminatedRound == null }
     // The UI still owns rendering, but first-night information now crosses one
@@ -195,10 +188,7 @@ internal fun ClocktowerJudgeScreen(
     var pendingAutoAdvanceAfterDisplay by remember(gameId, phase, round) {
         mutableStateOf<Pair<Int, String>?>(null)
     }
-    val legalDemonBluffs = legalDemonBluffRoles(
-        scriptRoles = clocktowerRolesForScript(script),
-        inPlayRoleNames = cards.mapNotNull { it.clocktowerRole?.enName }.toSet(),
-    )
+    val legalDemonBluffs = clocktowerRolesForScript(script).distinctBy { it.enName }
     val legalDemonBluffRoleNames = legalDemonBluffs.mapTo(linkedSetOf()) { it.enName }
     var manualDemonBluffDraft by remember(
         gameId,
@@ -863,9 +853,8 @@ internal fun ClocktowerJudgeScreen(
     }
     fun informationDecisionPublicationAllowed(displayStep: ClocktowerNightStepUi): Boolean =
         clocktowerInformationPublicationAllowed(
-            confirmation = displayStep.informationDecisionConfirmation,
-            expectedSnapshot = displayStep.informationDecisionExpectedSnapshot,
-            currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
+            sourceRevision = displayStep.informationSourceRevision,
+            currentRevision = StorytellerDecisionRevision(gameStateRevision, playerInputRevision),
         )
     fun unreliableInformationCanBeRecorded(displayStep: ClocktowerNightStepUi): Boolean {
         if (!clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)) return true
@@ -888,10 +877,6 @@ internal fun ClocktowerJudgeScreen(
         val actor = displayStep.actor ?: return
         val actorSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return
         if (!informationDecisionPublicationAllowed(displayStep)) return
-        displayStep.informationDecisionConfirmation?.let { confirmation ->
-            onCommitConfirmedPrivateInformationPublication(confirmation.draft)
-            return
-        }
         val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
         val shownUnreliable = if (unreliable) clocktowerShownUnreliableProposition(
             step = displayStep,
@@ -971,7 +956,7 @@ internal fun ClocktowerJudgeScreen(
                 ObservationReliability.RECEIVED_AS_FUNCTIONING
             },
             proposition = proposition,
-        ))
+        ), displayStep.informationSourceRevision ?: StorytellerDecisionRevision(gameStateRevision, playerInputRevision))
     }
     val undertakerTarget = lastExecutedName?.let { name -> cards.firstOrNull { it.name == name } }
     val undertakerRegistrationKey = undertakerTarget?.takeIf { it.name == spyCard?.name }?.let { registrationKey("Undertaker", it.name) }
@@ -1791,9 +1776,8 @@ internal fun ClocktowerJudgeScreen(
             globalAiPending == null
         ) pendingGlobalNightScalarDecision(
             currentStep, phase, round, currentStepIndex, cards, gameId,
-            InformationDecisionRevision(gameStateRevision, playerInputRevision),
+            StorytellerDecisionRevision(gameStateRevision, playerInputRevision),
             listOfNotNull(fortuneTellerFirst, fortuneTellerSecond),
-            recommendationCoordinator,
         ) else null
         val globalAiTargetPending = globalNightPendingDecision?.takeIf {
             globalAiAssisted && phase == ClocktowerPhase.Night &&
@@ -1803,15 +1787,11 @@ internal fun ClocktowerJudgeScreen(
         val globalAiDecisionIdentity = globalAiPending?.requestIdentity
             ?: globalAiScalarPending?.requestIdentity
             ?: globalAiTargetPending?.requestIdentity
-        val globalAiLegalIds = globalAiPending?.legalCandidates?.map { it.candidateId }
-            ?: globalAiScalarPending?.legalCandidates?.map { it.candidateId }
-            ?: globalAiTargetPending?.pending?.legalCandidates?.map { it.candidateId }
         val globalAiCurrentKey = globalAiDecisionIdentity?.let { identity ->
-            val legalIds = requireNotNull(globalAiLegalIds)
             ClocktowerResidualRequestIdentityV2.build(
                 gameId, round, currentStepIndex, identity.requestId,
                 gameStateRevision, playerInputRevision, nightCheckpoint.nextTimelineGlobalSequence,
-                legalIds, if (globalAiAutomatic) StorytellerOperationMode.AI_AUTOMATIC
+                if (globalAiAutomatic) StorytellerOperationMode.AI_AUTOMATIC
                 else StorytellerOperationMode.AI_ASSISTED,
             )
         }
@@ -1828,7 +1808,7 @@ internal fun ClocktowerJudgeScreen(
             globalAiPending != null -> ClocktowerResidualDisplayMatcherV2.matchPair(
                 globalAiPending,
                 globalResidualRecommendedChoices[globalAiPending.requestIdentity.requestId],
-                currentStep.manualInformationCandidates)
+                currentStep.manualInformationCandidates, cards, language)
             globalAiScalarPending != null -> ClocktowerResidualDisplayMatcherV2.matchScalar(
                 globalAiScalarPending,
                 globalResidualRecommendedChoices[globalAiScalarPending.requestIdentity.requestId],
@@ -1851,8 +1831,7 @@ internal fun ClocktowerJudgeScreen(
         val recommendedMayorTargetName = globalAiTargetPending?.takeIf {
             globalAiCurrentKey != null &&
                 globalAiAdviceKey == globalAiCurrentKey &&
-                !currentAiRequestBlocked &&
-                globalAiLegalIds?.size != 1
+                !currentAiRequestBlocked
         }?.let { decision ->
             val visibleEligibleNames = mayorRedirectTargetCards.mapTo(mutableSetOf()) { it.name }
             cards.getOrNull(decision.mayorSeat - 1)?.name?.let(visibleEligibleNames::add)
@@ -1861,7 +1840,7 @@ internal fun ClocktowerJudgeScreen(
             }.toSet()
             ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
                 decision = decision,
-                selectedCandidateId =
+                selected =
                     globalResidualRecommendedChoices[decision.requestIdentity.requestId],
                 currentRevision = com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision(
                     gameStateRevision, playerInputRevision,
@@ -1888,7 +1867,6 @@ internal fun ClocktowerJudgeScreen(
                 globalAiCurrentKey != null &&
                 globalAiAdviceKey != globalAiCurrentKey &&
                 approvedOpeningOption == null &&
-                globalAiLegalIds?.size != 1 &&
                 !(currentStep.action == ClocktowerNightAction.MayorRedirect &&
                     mayorRedirectDraftTarget != null)
             ) {
@@ -2153,7 +2131,6 @@ internal fun ClocktowerJudgeScreen(
                     }
                 }
                 ClocktowerNightStepCardLocalized(
-                recommendationCoordinator = recommendationCoordinator,
                 allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                 phase = phase,
                 gameId = gameId,
@@ -2186,7 +2163,7 @@ internal fun ClocktowerJudgeScreen(
                     round = round,
                     actorSeat = preplannedSeat,
                     hasCurrentLegalResult = approvedOpeningOption != null ||
-                        globalAiLegalIds?.size == 1,
+                        false,
                     playerQueryResolved = when (currentStep.action) {
                         ClocktowerNightAction.FortuneTeller -> fortuneTellerFirst != null &&
                             fortuneTellerSecond != null && fortuneTellerFirst != fortuneTellerSecond
@@ -2246,7 +2223,9 @@ internal fun ClocktowerJudgeScreen(
                 onSelectChambermaidSecond = {
                     onSelectChambermaidSecond(if (chambermaidSecond == it) null else it)
                 },
-                onShowPlayerDisplay = { displayStep ->
+                onShowPlayerDisplay = { selectedStep ->
+                    val displayStep = selectedStep.copy(informationSourceRevision =
+                        StorytellerDecisionRevision(gameStateRevision, playerInputRevision))
                     // UI handoff token is fresh only for newly confirmed
                     // information; a prior displayed observation is not a new turn.
                     pendingAutoAdvanceAfterDisplay = null
@@ -2263,8 +2242,7 @@ internal fun ClocktowerJudgeScreen(
                         }
                     // Use the SAME typed precedence as the actual Session writer;
                     // unreliable information must never compare against a stale true answer.
-                    val shownQueryResult = displayStep.informationDecisionConfirmation?.draft?.proposition
-                        ?: if (clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)) {
+                    val shownQueryResult = if (clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)) {
                             displayActorSeat?.let { actorSeat ->
                                 clocktowerShownUnreliableProposition(
                                     step = displayStep,

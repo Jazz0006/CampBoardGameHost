@@ -59,7 +59,6 @@ internal object HostCurrentOpenDecisionInventoryV2 {
                 decisionId = identity.decisionId,
                 sourceSeat = seat,
                 family = if (information) "NIGHT_INFORMATION" else "STORYTELLER_DISCRETION",
-                legalCandidates = request.legalCandidates,
                 currentDecisionContext = context,
                 abilityRoleId = when (context) {
                     is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> context.abilityRole.value

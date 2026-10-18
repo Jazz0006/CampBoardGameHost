@@ -4,7 +4,6 @@ import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -33,7 +32,7 @@ class ClocktowerFirstNightInformationRequestTest {
 
     @Test fun `manual numeric publication records exactly the shown number, not claimed truth`() {
         val result = requireNotNull(request(step().copy(
-            informationReliability = InformationReliability.POISONED,
+            informationReliability = ReliabilityState.POISONED,
             selectedInformationTruthful = false,
         )))
         val observed = result.candidates.single().observation

@@ -5,7 +5,7 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV
 
 /**
  * An all-or-nothing *proposal* handoff. It never writes observations/actions.
- * Callers must regenerate every pending Host domain immediately before applying
+ * Callers must regenerate the current Host question immediately before applying
  * any decision, and then use that decision's existing Host confirmation route.
  */
 internal object StorytellerResidualPackageGateV2 {
@@ -14,7 +14,7 @@ internal object StorytellerResidualPackageGateV2 {
         val gameStateRevision: Long,
         val playerInputRevision: Long,
         val exclusiveGlobalSequence: Long,
-        val choices: Map<String, String>,
+        val choices: Map<String, StorytellerStrategicContinuationV2.SemanticResult>,
     )
 
     fun verify(
@@ -38,19 +38,16 @@ internal object StorytellerResidualPackageGateV2 {
         }
         val fresh = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
             frozen, phase, round, currentRequests)
-        // Includes candidate payload semantics, not just a matching opaque ID.
+        // Includes recipient, ability, observed subjects and revision, not just an opaque ID.
         require(originalOpen == fresh) {
-            "Any newly opened, resolved or changed legal decision invalidates the whole package."
+            "Any newly opened, resolved or changed current question invalidates the whole package."
         }
-        val expected = fresh.associate { decision ->
-            decision.decisionId to decision.legalCandidates.map { it.candidateId }.toSet()
+        require(result.remainingChoices.keys == fresh.map { it.decisionId }.toSet()) {
+            "All and only current Host decisions must have a response."
         }
-        require(expected.values.all { it.isNotEmpty() })
-        require(result.remainingChoices.keys == expected.keys &&
-            result.remainingChoices.all { (id, choice) ->
-                choice in requireNotNull(expected[id])
-            }) {
-            "All and only currently Host-legal residual decisions must be selected."
+        fresh.forEach { decision ->
+            requireNotNull(result.remainingChoices[decision.decisionId]).validate(
+                decision.currentDecisionContext, frozen.gameState.players.size)
         }
         // No implicit default, witness selection, game mutation or partial commit.
         return Accepted(frozen.gameId, frozen.gameStateRevision,

@@ -137,7 +137,7 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
             intermediateSetup = intermediate,
         )
         val registry = canonicalRegistry()
-        val chefCandidate = TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate)
+        val chefCandidate = intermediate.shownSeatAssignments.map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }
             .single { it.shownRoleId == "chef" }
         val committed = TroubleBrewingSetupCommitter.commit(
             intermediateSetup = intermediate,

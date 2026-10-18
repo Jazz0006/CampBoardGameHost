@@ -223,7 +223,6 @@ class ClocktowerEmpathSquareTablePresentationTest {
             allowRuleDeterminedAutoUi = true,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = emptyList(),
-            structuredNumberUiModel = null,
         )
 
         assertEquals(1, choices.size)

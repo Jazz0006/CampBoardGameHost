@@ -48,7 +48,6 @@ class ClocktowerChefSquareTablePresentationTest {
             allowRuleDeterminedAutoUi = true,
             automaticDisplayOption = null,
             resultFirstRegistrationCandidates = emptyList(),
-            structuredNumberUiModel = null,
         )
         assertEquals(1, choices.size)
         assertEquals(ClocktowerChefResultSourceKind.Direct, choices.single().sourceKind)

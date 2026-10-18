@@ -38,21 +38,12 @@ class ClocktowerJointOpeningDisplayMatcherV2Test {
         observationKind = "NUMBER", number = 1,
     )
 
-    @Test fun currentTypedNumericHostOptionMustMatchPlanExactly() {
-        val chosen = numericOption(1)
-        assertEquals(chosen, ClocktowerJointOpeningDisplayMatcherV2.match(
-            chefOne, 1, listOf(numericOption(0), chosen)))
-        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(
-            chefOne, 1, listOf(numericOption(0))))
-        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(
-            chefOne, 2, listOf(chosen)))
-        // A duplicated visible interpretation is not a license to pick a witness.
-        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(
-            chefOne, 1, listOf(chosen, chosen)))
-        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(
-            chefOne, 1, listOf(chosen.copy(spyRegistersGood = true))))
-        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(
-            chefOne, 1, listOf(chosen.copy(proposition = null))))
+    @Test fun numericAdviceKeepsQuestionIdentityButDoesNotRequireMenuMembership() {
+        val result = ClocktowerJointOpeningDisplayMatcherV2.match(chefOne.copy(number = 99), 1, listOf(numericOption(0)))!!
+        assertEquals(99, (result.proposition as InformationProposition.NumericResult).value)
+        assertNull(result.spyRegistersGood)
+        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(chefOne, 2, listOf(numericOption(0))))
+        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(chefOne, 1, emptyList()))
     }
 
     private fun currentSession(): ClocktowerGameSession {
@@ -129,11 +120,12 @@ class ClocktowerJointOpeningDisplayMatcherV2Test {
             subjectMode = "EVIDENCE_PAIR", subjectSeats = listOf(6, 7),
             observationKind = "ROLE", roleId = "baron",
         )
-        assertEquals(option, ClocktowerJointOpeningDisplayMatcherV2.match(
-            proposed, 5, listOf(option)))
-        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(
-            proposed.copy(subjectSeats = listOf(5, 7)), 5, listOf(option)))
-        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(
-            proposed.copy(roleId = "spy"), 5, listOf(option)))
+        val result = ClocktowerJointOpeningDisplayMatcherV2.match(proposed, 5, emptyList())!!
+        assertEquals(proposition, result.proposition)
+        assertNull(result.recluseRegistersEvil)
+        assertEquals(InformationProposition.AnyOf(listOf(
+            InformationProposition.RoleAt(5, RoleId("Spy")),
+            InformationProposition.RoleAt(7, RoleId("Spy")))),
+            ClocktowerJointOpeningDisplayMatcherV2.match(proposed.copy(subjectSeats = listOf(5, 7), roleId = "spy"), 5, emptyList())!!.proposition)
     }
 }

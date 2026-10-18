@@ -2,19 +2,13 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationFamily
-import com.codex.campboardgamehost.clocktower.session.PairInformationDecisionBoundary
 import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.usesAuthoritativePairDomain
 
-/**
- * Shared Host rules boundary for the existing playable first-night pair interactions.
- * It delegates the complete legal domain to the engine; no AI selector or role policy.
- */
+/** Current pair recipient/ability identity for AI; Host does not calculate possible answers. */
 internal fun pendingGlobalFirstNightPairDecision(
     step: ClocktowerNightStepUi,
     phase: ClocktowerPhase,
@@ -38,19 +32,13 @@ internal fun pendingGlobalFirstNightPairDecision(
     require((source.shownRole ?: source.actualRole) == family.role) {
         "Pair-information source role differs from the canonical Host identity."
     }
-    val reliability = when (step.informationReliability) {
-        InformationReliability.RELIABLE -> ReliabilityState.RELIABLE
-        InformationReliability.DRUNK -> ReliabilityState.DRUNK
-        InformationReliability.POISONED -> ReliabilityState.POISONED
-    }
-    return PairInformationDecisionBoundary.create(
+    val reliability = step.informationReliability
+    return PendingPairInformationDecision(
         requestIdentity = StorytellerDecisionRequestIdentity(
             gameId = gameId,
             requestId = "first-night:${phase.name}:$round:${family.name}:$seat",
         ),
         revision = revision,
-        game = game,
-        roleDefinitions = clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
         sourceSeat = seat,
         abilityRole = family.role,
         reliability = reliability,

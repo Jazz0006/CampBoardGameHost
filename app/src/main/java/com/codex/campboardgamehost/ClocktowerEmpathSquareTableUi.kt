@@ -13,11 +13,9 @@ import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlig
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
-import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 
 internal enum class ClocktowerEmpathResultSourceKind {
     DisplayOption,
-    Structured,
     Direct,
 }
 
@@ -26,7 +24,6 @@ internal data class ClocktowerEmpathResultChoice(
     val value: Int,
     val sourceKind: ClocktowerEmpathResultSourceKind,
     val displayOption: ClocktowerDisplayOption? = null,
-    val structuredCandidateId: String? = null,
     val recommended: Boolean = false,
     val scopeSeats: Set<Int> = emptySet(),
     val contributingSeats: Set<Int> = emptySet(),
@@ -149,7 +146,6 @@ internal fun clocktowerEmpathResultChoices(
     allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
-    structuredNumberUiModel: StructuredNumberInformationUiModel?,
     recommendedOptionIds: Set<String> = emptySet(),
     recommendedValues: Set<Int> = emptySet(),
 ): List<ClocktowerEmpathResultChoice> {
@@ -180,39 +176,6 @@ internal fun clocktowerEmpathResultChoices(
     } else if (resultFirstRegistrationCandidates.isNotEmpty()) {
         return resultFirstRegistrationCandidates.mapNotNull { option ->
             choiceFor(option, recommended = option.isDefaultRecommendation)
-        }
-    }
-
-    structuredNumberUiModel?.let { model ->
-        val scope = sequenceOf(
-            step.displayProposition,
-            step.legacyInformationCandidates.firstOrNull()?.proposition,
-            step.displayOptions.firstOrNull()?.proposition,
-        ).map { proposition -> clocktowerEmpathScopeSeats(proposition, players.size) }
-            .firstOrNull { it.isNotEmpty() }
-            .orEmpty()
-        if (scope.isEmpty()) return emptyList()
-        val visibleChoices = if (allowRuleDeterminedAutoUi) {
-            listOfNotNull(
-                model.choices.singleOrNull(),
-            )
-        } else {
-            model.choices
-        }
-        if (allowRuleDeterminedAutoUi && model.choices.isNotEmpty() && visibleChoices.isEmpty()) return emptyList()
-        if (visibleChoices.isNotEmpty()) return visibleChoices.map { choice ->
-            ClocktowerEmpathResultChoice(
-                key = choice.candidateId,
-                value = choice.value,
-                sourceKind = ClocktowerEmpathResultSourceKind.Structured,
-                structuredCandidateId = choice.candidateId,
-                recommended = choice.value in recommendedValues ||
-                    (recommendedValues.isEmpty() && choice.recommended),
-                scopeSeats = scope,
-                // An unreliable Empath may legally receive an arbitrary result. No truthful
-                // Spy/Recluse seat witness exists for that arbitrary number, so do not fabricate one.
-                contributingSeats = emptySet(),
-            )
         }
     }
 

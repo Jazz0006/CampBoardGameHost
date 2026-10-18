@@ -1,7 +1,7 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 
 internal class ClocktowerInformationStepBuilder(
@@ -48,9 +48,9 @@ internal class ClocktowerInformationStepBuilder(
         val abilityState = abilityStateOverride ?: abilityStateFor(enName, actor)
         val actorIsDrunkShownRole = abilityState == AbilityFunctioningState.DRUNK
         val informationReliability = when (abilityState) {
-            AbilityFunctioningState.POISONED -> InformationReliability.POISONED
-            AbilityFunctioningState.DRUNK -> InformationReliability.DRUNK
-            else -> InformationReliability.RELIABLE
+            AbilityFunctioningState.POISONED -> ReliabilityState.POISONED
+            AbilityFunctioningState.DRUNK -> ReliabilityState.DRUNK
+            else -> ReliabilityState.RELIABLE
         }
         val hostUnreliableNote = if (actorIsDrunkShownRole) {
             text(

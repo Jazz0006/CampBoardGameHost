@@ -11,7 +11,6 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
-import com.codex.campboardgamehost.clocktower.rules.NaturalPairInformationCandidateGenerator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -82,19 +81,7 @@ class NoGreaterJoyGenericArchitectureAcceptanceTest {
             seed = setupSeed,
         )
         val investigatorSeat = game.players.single { it.actualRole == investigator }.seat
-        val legalInformation = NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace(
-            game = game,
-            sourceSeat = investigatorSeat,
-            abilityRole = investigator,
-        )
-
-        assertTrue(legalInformation.isNotEmpty())
-        assertTrue(
-            legalInformation.all { information ->
-                val shownRole = requireNotNull(information.outcome.shownRole)
-                ruleset.characterRegistry.findByRoleId(shownRole)?.team == ClocktowerCatalogTeam.MINION
-            },
-        )
+        assertTrue(game.playerAt(investigatorSeat)?.shownRole == investigator)
 
         val candidatePool = (0L until 64L)
             .map { seed -> provider.candidates(request(seed)).single() }

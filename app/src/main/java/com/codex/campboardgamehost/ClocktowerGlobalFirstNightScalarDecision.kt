@@ -3,22 +3,12 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
-import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 
-/**
- * A current, real-night scalar information boundary for the GLOBAL strategist.
- *
- * This is an adaptation of the existing Host legal domains, not a second selector.
- * Result-first registration options remain possible legal explanations, never an
- * asserted unique registration. Foundation supplies the legal unreliable values.
- */
+/** The current actual information question, without Host-generated answer candidates. */
 internal data class PendingGlobalScalarInformationDecision(
     val requestIdentity: StorytellerDecisionRequestIdentity,
     val revision: StorytellerDecisionRevision,
@@ -28,7 +18,6 @@ internal data class PendingGlobalScalarInformationDecision(
     val kind: StorytellerProviderScalarKindV1,
     val metric: String,
     val subjectSeats: List<Int>,
-    val legalCandidates: List<StorytellerProviderCandidateV1>,
 )
 
 internal fun pendingGlobalNightScalarDecision(
@@ -40,7 +29,6 @@ internal fun pendingGlobalNightScalarDecision(
     gameId: String,
     revision: StorytellerDecisionRevision,
     fortuneTellerSelectedNames: List<String> = emptyList(),
-    coordinator: ClocktowerRecommendationCoordinator = ClocktowerRecommendationCoordinator(),
     canonicalGameState: GameState? = null,
 ): PendingGlobalScalarInformationDecision? {
     if (phase !in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) ||
@@ -78,7 +66,6 @@ internal fun pendingGlobalNightScalarDecision(
     val kind: StorytellerProviderScalarKindV1
     val metric: String
     val subjects: List<Int>
-    val legalValues: List<Pair<String, String>>
     val selectedSeats = fortuneTellerSelectedNames.mapNotNull(::canonicalSeat)
     when (proposition) {
         is InformationProposition.NumericResult -> {
@@ -86,41 +73,7 @@ internal fun pendingGlobalNightScalarDecision(
             kind = StorytellerProviderScalarKindV1.NUMBER
             metric = proposition.metric.name
             subjects = proposition.subjectSeats
-            // The Host's result-first domain expresses legal observable results without
-            // committing a particular Spy/Recluse registration witness.
-            // Reuse the Host's complete typed domain before constructing a
-            // synthetic scalar foundation pool. This matters for unreliable
-            // target-dependent numbers (for example Chambermaid): the true
-            // value alone is not the full legal result set.
-            val hostOptions = step.manualInformationCandidates.ifEmpty {
-                step.automaticInformationCandidates
-            }
-            val manual = hostOptions
-                .mapNotNull { option ->
-                    val value = option.proposition as? InformationProposition.NumericResult
-                    value?.takeIf {
-                        it.sourceSeat == actorSeat && it.metric == proposition.metric &&
-                            it.subjectSeats == subjects
-                    }?.let { it.value.toString() to clocktowerInformationCandidateId(option) }
-                }
-                .distinctBy { it.first }
-            legalValues = if (manual.isNotEmpty()) {
-                manual
-            } else {
-                val preparation = clocktowerNumericInformationPreparation(step, actorSeat, null)
-                    ?: ClocktowerNumericInformationPreparation(
-                        actorSeat, RoleId(requireNotNull(step.roleEnName)),
-                        proposition.metric, subjects, proposition.value,
-                        step.numericMinimumValue ?: proposition.value,
-                        step.numericMaximumValue ?: proposition.value,
-                        step.informationReliability, null, step.previousShownNumber,
-                    )
-                preparation.prepareUiModel(
-                    coordinator, ClocktowerInformationDecisionIdentity(
-                        gameId, phase, round, sequence, revision,
-                    ),
-                ).choices.map { it.value.toString() to it.candidateId }
-            }
+
         }
         is InformationProposition.BooleanResult -> {
             if (proposition.sourceSeat != actorSeat || selectedSeats.size != 2 ||
@@ -129,27 +82,7 @@ internal fun pendingGlobalNightScalarDecision(
             kind = StorytellerProviderScalarKindV1.BOOLEAN
             metric = proposition.metric.name
             subjects = proposition.subjectSeats
-            val manual = step.manualInformationCandidates
-                .mapNotNull { option ->
-                    val value = option.proposition as? InformationProposition.BooleanResult
-                    value?.takeIf {
-                        it.sourceSeat == actorSeat && it.metric == proposition.metric &&
-                            it.subjectSeats == subjects
-                    }?.let { it.value.toString() to clocktowerInformationCandidateId(option) }
-                }
-                .distinctBy { it.first }
-            legalValues = if (manual.isNotEmpty()) {
-                manual
-            } else {
-                val preparation = clocktowerBooleanInformationPreparation(
-                    step, actorSeat, subjects, null,
-                ) ?: return null
-                preparation.prepareUiModel(
-                    coordinator, ClocktowerInformationDecisionIdentity(
-                        gameId, phase, round, sequence, revision,
-                    ),
-                ).choices.map { it.value.toString() to it.candidateId }
-            }
+
         }
         is InformationProposition.RoleAt -> {
             // A real target is a prerequisite. Never produce role-result choices
@@ -162,34 +95,12 @@ internal fun pendingGlobalNightScalarDecision(
             kind = StorytellerProviderScalarKindV1.ROLE
             metric = "REVEALED_CHARACTER"
             subjects = listOf(proposition.seat)
-            // Prefer the Host's exact legal result-first domain. When there
-            // is no special registration, use the complete Host-rendered role
-            // choice domain; only typed RoleAt can enter the model request.
-            val roleOptions = step.manualInformationCandidates.ifEmpty {
-                step.automaticInformationCandidates
-            }
-            val typed = roleOptions.mapNotNull(::typedRoleResult)
-                .filter { it.first == proposition.seat }
-                .map { it.second }.distinct()
-            val legalRoles = typed.ifEmpty {
-                // Reliable, ordinary target has exactly one confirmed true
-                // role, which the Host itself has materialized as RoleAt.
-                if (step.informationReliability == InformationReliability.RELIABLE &&
-                    step.manualInformationCandidates.isEmpty()
-                ) listOf(proposition.role.value) else emptyList()
-            }
-            legalValues = legalRoles.map { role ->
-                role to "role-result:${proposition.seat}:$role"
-            }
+
         }
         else -> return null
     }
-    if (legalValues.isEmpty() || subjects.any { it !in 1..cards.size }) return null
-    val reliability = when (step.informationReliability) {
-        InformationReliability.RELIABLE -> ReliabilityState.RELIABLE
-        InformationReliability.DRUNK -> ReliabilityState.DRUNK
-        InformationReliability.POISONED -> ReliabilityState.POISONED
-    }
+    if (subjects.any { it !in 1..cards.size }) return null
+    val reliability = step.informationReliability
     return PendingGlobalScalarInformationDecision(
         requestIdentity = StorytellerDecisionRequestIdentity(
             gameId, "night-scalar:${phase.name}:$round:$sequence:$actorSeat:" +
@@ -202,10 +113,5 @@ internal fun pendingGlobalNightScalarDecision(
         kind = kind,
         metric = metric,
         subjectSeats = subjects,
-        legalCandidates = legalValues.map { (value, candidateId) ->
-            StorytellerProviderCandidateV1(
-                candidateId, StorytellerProviderCandidatePayloadV1.ScalarResult(value),
-            )
-        },
     )
 }

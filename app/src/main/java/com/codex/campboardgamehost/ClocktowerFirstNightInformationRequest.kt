@@ -2,11 +2,9 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
-import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.YesNoAnswer
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationCandidate
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationFamily
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationRequest
@@ -29,8 +27,7 @@ internal fun clocktowerFirstNightInformationRequest(
     val sourceSeat = cards.indexOfFirst { it.name == actor.name }
         .takeIf { it >= 0 }?.plus(1) ?: return null
     val rawValue = (displayStep.displayPrimary ?: displayStep.tellPlayer)?.trim()
-    val proposition = displayStep.informationDecisionConfirmation?.draft?.proposition
-        ?: displayStep.displayProposition
+    val proposition = displayStep.displayProposition
     val shownPair = (proposition as? InformationProposition.AnyOf)
         ?.alternatives?.map { it as? InformationProposition.RoleAt }
         ?.takeIf { entries ->
@@ -44,9 +41,9 @@ internal fun clocktowerFirstNightInformationRequest(
     if (isPair && (proposition !is InformationProposition.AllOf && shownPair == null)) return null
     if (pairSeats.any { it !in 1..cards.size }) return null
     val reliability = when (displayStep.informationReliability) {
-        InformationReliability.RELIABLE -> ReliabilityState.RELIABLE
-        InformationReliability.DRUNK -> ReliabilityState.DRUNK
-        InformationReliability.POISONED -> ReliabilityState.POISONED
+        ReliabilityState.RELIABLE -> ReliabilityState.RELIABLE
+        ReliabilityState.DRUNK -> ReliabilityState.DRUNK
+        ReliabilityState.POISONED -> ReliabilityState.POISONED
     }
     val observation = AbilityObservation(
         sourceSeat = sourceSeat,
@@ -75,4 +72,3 @@ internal fun clocktowerFirstNightInformationRequest(
         candidates = listOf(FirstNightInformationCandidate(candidateId, observation)),
     )
 }
-

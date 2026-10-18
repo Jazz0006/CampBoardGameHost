@@ -9,7 +9,7 @@ class TroubleBrewingDrunkSelectionRouterTest {
     @Test
     fun `multiple legal Drunk assignments remain manual without a recommendation`() {
         val prepared = drunkPreparedSetup()
-        val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup)
+        val legal = prepared.intermediateSetup.shownSeatAssignments.map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }
         val route = TroubleBrewingDrunkSelectionRouter.route(prepared, null)
         val manual = route as TroubleBrewingDrunkSelectionRoute.ManualSelection
         assertEquals(legal, manual.request.candidates)
@@ -19,7 +19,7 @@ class TroubleBrewingDrunkSelectionRouterTest {
     @Test
     fun `recommended Drunk must exactly match the live Host legal domain`() {
         val prepared = drunkPreparedSetup()
-        val selected = TroubleBrewingDrunkCandidateDomain.legalCandidates(prepared.intermediateSetup).first()
+        val selected = prepared.intermediateSetup.shownSeatAssignments.map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }.first()
         val route = TroubleBrewingDrunkSelectionRouter.route(prepared, selected)
         assertEquals(selected,
             (route as TroubleBrewingDrunkSelectionRoute.ManualSelection).request.recommendedCandidate)

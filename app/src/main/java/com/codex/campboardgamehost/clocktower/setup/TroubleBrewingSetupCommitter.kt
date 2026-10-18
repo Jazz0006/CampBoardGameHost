@@ -13,76 +13,30 @@ import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 
-/**
- * Final immutable Trouble Brewing setup materialized by the DLB canonical commit boundary.
- *
- * [confirmedDrunkCandidate] records only the already-confirmed rules-legal input. This result owns
- * no recommendation/ranking authority.
- */
+/** The final confirmed setup, without hypothetical alternative GameStates. */
 internal data class TroubleBrewingCommittedSetupResult(
     val committedSetup: CommittedClocktowerSetup,
     val gameState: GameState,
     val confirmedDrunkCandidate: TroubleBrewingDrunkCandidate?,
 )
 
-/**
- * Canonical DLB commit boundary.
- *
- * Rules/setup remains the legality owner through [TroubleBrewingDrunkCandidateDomain]. This seam
- * accepts an explicitly confirmed candidate, verifies that it still belongs to the current legal
- * domain, and materializes final setup truth. It never chooses or ranks a candidate.
- */
+/** Materialize the confirmed identities once; gameplay legality belongs outside Host. */
 internal object TroubleBrewingSetupCommitter {
     fun commit(
         intermediateSetup: TroubleBrewingIntermediateSetup,
         confirmedDrunkCandidate: TroubleBrewingDrunkCandidate?,
         characterRegistry: ClocktowerCharacterRegistry,
     ): TroubleBrewingCommittedSetupResult {
-        val gameState = if (intermediateSetup.visibleRoster.hasDrunk) {
-            val confirmed = requireNotNull(confirmedDrunkCandidate) {
-                "Trouble Brewing Drunk setup requires an explicitly confirmed legal candidate."
-            }
-            val legal = TroubleBrewingDrunkCandidateDomain
-                .legalCandidates(intermediateSetup)
-                .singleOrNull { candidate -> candidate == confirmed }
-            requireNotNull(legal) {
-                "Trouble Brewing Drunk commit requires a candidate from the current legal domain."
-            }
-            TroubleBrewingDrunkHypotheticalProjector.project(
-                intermediateSetup = intermediateSetup,
-                candidate = legal,
-                characterRegistry = characterRegistry,
-            ).gameState
-        } else {
-            require(confirmedDrunkCandidate == null) {
-                "Trouble Brewing setup without Drunk cannot commit a Drunk candidate."
-            }
-            projectWithoutDrunk(intermediateSetup, characterRegistry)
+        require(intermediateSetup.visibleRoster.hasDrunk == (confirmedDrunkCandidate != null)) {
+            "The confirmed setup must resolve its pending Drunk assignment."
         }
-
-        val drunkRole = requireNotNull(characterRegistry.findByExternalId(DRUNK_EXTERNAL_ID)) {
-            "Trouble Brewing canonical commit requires the Drunk definition."
-        }.id
-        val actualDrunkCount = gameState.players.count { player -> player.actualRole == drunkRole }
-        require(actualDrunkCount == if (intermediateSetup.visibleRoster.hasDrunk) 1 else 0) {
-            "Trouble Brewing canonical commit must contain exactly one Drunk iff the setup has Drunk."
+        confirmedDrunkCandidate?.let { confirmed ->
+            require(intermediateSetup.shownSeatAssignments.any {
+                it.seat == confirmed.seat && it.playerName == confirmed.playerName &&
+                    it.shownRoleId == confirmed.shownRoleId
+            }) { "Drunk assignment references a changed or unknown dealt seat." }
         }
-
-        val confirmedSeat = confirmedDrunkCandidate?.seat
-        gameState.players.forEach { player ->
-            if (player.seat == confirmedSeat) {
-                require(player.actualRole == drunkRole) {
-                    "Trouble Brewing confirmed Drunk seat must commit the canonical Drunk role."
-                }
-                require(player.shownRole != null && player.shownRole != player.actualRole) {
-                    "Trouble Brewing Drunk must retain its dealt Townsfolk shown identity."
-                }
-            } else {
-                require(player.actualRole == player.shownRole) {
-                    "Trouble Brewing non-Drunk seats must keep actual role equal to shown role at setup commit."
-                }
-            }
-        }
+        val gameState = materialize(intermediateSetup, confirmedDrunkCandidate, characterRegistry)
 
         val committedSetup = CommittedClocktowerSetup(
             script = ClocktowerScript.TroubleBrewing.toRecommendationScriptId(),
@@ -112,25 +66,26 @@ internal object TroubleBrewingSetupCommitter {
         )
     }
 
-    private fun projectWithoutDrunk(
+    private fun materialize(
         intermediateSetup: TroubleBrewingIntermediateSetup,
+        confirmed: TroubleBrewingDrunkCandidate?,
         characterRegistry: ClocktowerCharacterRegistry,
     ): GameState {
-        require(!intermediateSetup.visibleRoster.hasDrunk) {
-            "Non-Drunk projection cannot materialize a Drunk-bearing setup."
-        }
         return GameState(
             script = ClocktowerScript.TroubleBrewing.toRecommendationScriptId(),
             players = intermediateSetup.shownSeatAssignments.map { assignment ->
                 val role = requireNotNull(characterRegistry.findByExternalId(assignment.shownRoleId)) {
                     "Trouble Brewing shown role '${assignment.shownRoleId}' is missing from the character registry."
                 }
+                val actual = if (assignment.seat == confirmed?.seat)
+                    requireNotNull(characterRegistry.findByExternalId(DRUNK_EXTERNAL_ID))
+                else role
                 PlayerState(
                     seat = assignment.seat,
                     name = assignment.playerName,
-                    actualRole = role.id,
-                    actualAlignment = role.team.toDomainAlignment(),
-                    actualType = role.team.toDomainCharacterType(),
+                    actualRole = actual.id,
+                    actualAlignment = actual.team.toDomainAlignment(),
+                    actualType = actual.team.toDomainCharacterType(),
                     shownRole = role.id,
                     alive = true,
                     poisoned = false,

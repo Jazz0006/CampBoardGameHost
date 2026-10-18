@@ -19,7 +19,7 @@ class TroubleBrewingSetupCommitterTest {
             visibleRoster = setup.visibleRoster.copy(),
             shownSeatAssignments = setup.shownSeatAssignments.map { it.copy() },
         )
-        val candidate = TroubleBrewingDrunkCandidateDomain.legalCandidates(setup)
+        val candidate = setup.shownSeatAssignments.map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }
             .single { it.shownRoleId == "chef" }
 
         val committed = TroubleBrewingSetupCommitter.commit(
@@ -60,7 +60,7 @@ class TroubleBrewingSetupCommitterTest {
     @Test
     fun `stale candidate fails closed against the current intermediate setup legal domain`() {
         val setup = drunkIntermediateSetup()
-        val legal = TroubleBrewingDrunkCandidateDomain.legalCandidates(setup).first()
+        val legal = setup.shownSeatAssignments.map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }.first()
         val stale = legal.copy(playerName = "Stale Player")
 
         assertThrows(IllegalArgumentException::class.java) {
@@ -120,6 +120,19 @@ class TroubleBrewingSetupCommitterTest {
                 Triple(assignment.seat, assignment.actualRole, assignment.shownRole)
             },
         )
+    }
+
+    @Test fun `confirmed non townsfolk Drunk seat is a structural fact with its shown identity preserved`() {
+        val setup = drunkIntermediateSetup()
+        for (assignment in setup.shownSeatAssignments.filter { it.shownRoleId in setOf("saint", "poisoner", "imp") }) {
+            val chosen = TroubleBrewingDrunkCandidate(assignment.seat, assignment.playerName, assignment.shownRoleId)
+            val result = TroubleBrewingSetupCommitter.commit(setup, chosen, canonicalRegistry())
+            val player = result.gameState.playerAt(assignment.seat)!!
+            assertEquals(RoleId("Drunk"), player.actualRole)
+            assertEquals(canonicalRegistry().findByExternalId(assignment.shownRoleId)!!.id, player.shownRole)
+            assertEquals(com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD, player.actualAlignment)
+            assertEquals(1, result.gameState.players.count { it.actualRole == RoleId("Drunk") })
+        }
     }
 
     private fun drunkIntermediateSetup(): TroubleBrewingIntermediateSetup =

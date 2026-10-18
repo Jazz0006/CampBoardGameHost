@@ -9,7 +9,8 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
-import com.codex.campboardgamehost.clocktower.session.PairInformationDecisionBoundary
+import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
+import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2.SemanticResult
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import org.junit.Assert.assertEquals
@@ -35,12 +36,10 @@ class ClocktowerAiPairRecommendationRecoveryTest {
             state(4, "Poisoner", CharacterType.MINION),
             state(5, "Imp", CharacterType.DEMON),
         )
-        val decision = PairInformationDecisionBoundary.create(
+        val decision = PendingPairInformationDecision(
             requestIdentity = StorytellerDecisionRequestIdentity(
                 "ai-recovery", "first-night:investigator:1"),
             revision = StorytellerDecisionRevision(1, 0),
-            game = GameState(ScriptId("trouble_brewing"), players, 42L),
-            roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
             sourceSeat = 1,
             abilityRole = RoleId("Investigator"),
             reliability = ReliabilityState.RELIABLE,
@@ -53,11 +52,11 @@ class ClocktowerAiPairRecommendationRecoveryTest {
             roleLabel = { it.enName },
             text = { _, en -> en },
         )
-        val candidate = decision.legalCandidates.first { it.outcome.shownRole != null }
+        val candidate = SemanticResult("PAIR_RESULT", pairRoleId = "Baron", pairSeats = listOf(1, 2))
         val selected = ClocktowerResidualDisplayMatcherV2.matchPair(
-            decision, candidate.candidateId, options)
+            decision, candidate, emptyList(), cards, "en")
         assertNotNull("the restored AI candidate should preselect the structural Host UI", selected)
-        assertEquals(candidate.outcome.candidateSeats.sorted(),
+        assertEquals(candidate.pairSeats.sorted(),
             selected!!.proposition.let {
                 (it as com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AnyOf)
                     .alternatives.map { item ->

@@ -1,22 +1,17 @@
 package com.codex.campboardgamehost
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,11 +20,9 @@ import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 
 internal enum class ClocktowerChefResultSourceKind {
     DisplayOption,
-    Structured,
     Direct,
 }
 
@@ -38,7 +31,6 @@ internal data class ClocktowerChefResultChoice(
     val value: Int,
     val sourceKind: ClocktowerChefResultSourceKind,
     val displayOption: ClocktowerDisplayOption? = null,
-    val structuredCandidateId: String? = null,
     val recommended: Boolean = false,
 )
 
@@ -95,7 +87,6 @@ internal fun clocktowerChefResultChoices(
     allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
-    structuredNumberUiModel: StructuredNumberInformationUiModel?,
     recommendedOptionIds: Set<String> = emptySet(),
     recommendedValues: Set<Int> = emptySet(),
 ): List<ClocktowerChefResultChoice> {
@@ -127,27 +118,6 @@ internal fun clocktowerChefResultChoices(
                 displayOption = option,
                 recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
                     (recommendedOptionIds.isEmpty() && option.isDefaultRecommendation),
-            )
-        }
-    }
-
-    structuredNumberUiModel?.let { model ->
-        val visibleChoices = if (allowRuleDeterminedAutoUi) {
-            listOfNotNull(
-                model.choices.singleOrNull(),
-            )
-        } else {
-            model.choices
-        }
-        if (allowRuleDeterminedAutoUi && model.choices.isNotEmpty() && visibleChoices.isEmpty()) return emptyList()
-        if (visibleChoices.isNotEmpty()) return visibleChoices.map { choice ->
-            ClocktowerChefResultChoice(
-                key = choice.candidateId,
-                value = choice.value,
-                sourceKind = ClocktowerChefResultSourceKind.Structured,
-                structuredCandidateId = choice.candidateId,
-                recommended = choice.value in recommendedValues ||
-                    (recommendedValues.isEmpty() && choice.recommended),
             )
         }
     }

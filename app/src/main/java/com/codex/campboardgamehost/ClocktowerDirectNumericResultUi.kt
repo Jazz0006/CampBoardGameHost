@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,10 +14,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,6 +32,7 @@ internal fun clocktowerDirectNumericResult(
     actorSeat: Int,
     value: Int,
 ): ClocktowerNightStepUi? {
+    if (value < 0) return null
     val semanticSources = sequenceOf(step.displayProposition) +
         step.manualInformationCandidates.asSequence().map { it.proposition } +
         step.legacyInformationCandidates.asSequence().map { it.proposition } +
@@ -62,6 +63,7 @@ internal fun clocktowerHasDirectNumericInput(step: ClocktowerNightStepUi, actorS
 @Composable
 internal fun ClocktowerDirectNumericResultUi(
     title: String,
+    initialValue: Int? = null,
     actorLabel: String,
     wakeInstruction: String?,
     language: String,
@@ -71,8 +73,8 @@ internal fun ClocktowerDirectNumericResultUi(
     onNext: () -> Unit,
     onConfirm: (Int) -> Unit,
 ) {
-    var entered by remember(title, actorLabel) { mutableStateOf("") }
-    val selected = entered.trim().toIntOrNull()
+    var entered by remember(title, actorLabel, initialValue) { mutableStateOf(initialValue?.toString().orEmpty()) }
+    val selected = entered.trim().toIntOrNull()?.takeIf { it >= 0 }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(18.dp),

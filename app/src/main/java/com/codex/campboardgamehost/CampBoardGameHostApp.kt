@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import android.content.Context
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
@@ -21,14 +23,12 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -59,9 +59,6 @@ import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfi
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderGameContextBuilderV1
-import com.codex.campboardgamehost.clocktower.session.DrunkAssignmentDecisionBoundary
-import com.codex.campboardgamehost.clocktower.session.PendingDrunkAssignmentDecision
-import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.PersonalDirectOpenAiV1
 import com.codex.campboardgamehost.clocktower.session.InitialJointOpeningDirectV2
 import com.codex.campboardgamehost.clocktower.session.BotcAiWireTrace
@@ -110,7 +107,6 @@ import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationR
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
@@ -160,7 +156,6 @@ private data class PendingTroubleBrewingDrunkSelection(
     val preparedGameId: String,
     val preparedSetup: TroubleBrewingPreparedSetup,
     val request: TroubleBrewingDrunkSelectionRequest,
-    val decision: PendingDrunkAssignmentDecision,
 )
 
 /** Showing roles may begin while Drunk actual identity is uncommitted. No real session yet. */
@@ -739,10 +734,10 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun commitClocktowerPrivateInformationPublication(draft: EpistemicObservationDraft) {
+    fun commitClocktowerPrivateInformationPublication(draft: EpistemicObservationDraft, expectedRevision: StorytellerDecisionRevision) {
         val session = requireClocktowerGameSession()
         val before = session.state
-        val committed = session.commitGlobalEpistemicObservation(draft)
+        val committed = session.commitGlobalEpistemicObservation(draft, expectedRevision)
         if (session.state.playerInputRevision == before.playerInputRevision) return
         reviewConfirmedCurrentStepAdvice(before, draft)
         publishClocktowerSessionView()
@@ -959,14 +954,10 @@ internal fun CampBoardGameHostApp() {
         val revision = StorytellerProviderRevisionV1(
             session.state.gameStateRevision, session.state.playerInputRevision,
         )
-        val legalIds = pendingPair?.legalCandidates?.map { it.candidateId }
-            ?: pendingScalar?.legalCandidates?.map { it.candidateId }
-            ?: pendingTarget?.pending?.legalCandidates?.map { it.candidateId }
-            ?: return
         val key = ClocktowerResidualRequestIdentityV2.build(
             session.state.gameId, round, stepIndex, identity.requestId,
             revision.gameStateRevision, revision.playerInputRevision,
-            session.state.nextTimelineGlobalSequence, legalIds, requestedOperationMode,
+            session.state.nextTimelineGlobalSequence, requestedOperationMode,
         )
         if (liveAiAdviceKey == key && (liveAiAdviceBusy || liveAiAdviceText != null)) return
         liveAiAdviceKey = key
@@ -1007,7 +998,7 @@ internal fun CampBoardGameHostApp() {
                     pendingScalar.requestIdentity, pendingScalar.revision,
                     pendingScalar.sourceSeat, pendingScalar.abilityRole, pendingScalar.reliability,
                     pendingScalar.kind, pendingScalar.metric, pendingScalar.subjectSeats,
-                    pendingScalar.legalCandidates, snapshot, gameContext,
+                    snapshot, gameContext,
                 )
             } else {
                 StorytellerProviderRequestFactoryV1.fromMayorRedirect(
@@ -1186,11 +1177,8 @@ internal fun CampBoardGameHostApp() {
                             append("本次整局续规划：")
                             append(verified.choices.size)
                             append(" 项当前合法选择（尚未发布，必须在 Host 确认）。")
-                            verified.choices.forEach { (id, candidateId) ->
+                            verified.choices.forEach { (id, meaning) ->
                                 val decision = legalOpen.single { it.decisionId == id }
-                                val meaning = decision.legalCandidates.single {
-                                    it.candidateId == candidateId
-                                }.payload
                                 append("\n")
                                 append(decision.abilityRoleId ?: decision.family)
                                 append("（")
@@ -1375,8 +1363,6 @@ internal fun CampBoardGameHostApp() {
         val legalRoute = TroubleBrewingDrunkSelectionRouter.route(pending.preparedSetup, null)
         when (legalRoute) {
             TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded -> require(candidate == null)
-            is TroubleBrewingDrunkSelectionRoute.RuleDetermined ->
-                require(candidate == legalRoute.candidate)
             is TroubleBrewingDrunkSelectionRoute.ManualSelection ->
                 require(candidate in legalRoute.request.candidates)
         }
@@ -1439,13 +1425,6 @@ internal fun CampBoardGameHostApp() {
                 require(accepted.selection.drunkSeat == null)
                 null
             }
-            is TroubleBrewingDrunkSelectionRoute.RuleDetermined -> {
-                if (accepted.selection.drunkSeat != legal.candidate.seat) {
-                    jointOpeningError = "This Drunk recommendation cannot be applied. Retry planning or take over manually."
-                    return
-                }
-                legal.candidate
-            }
             is TroubleBrewingDrunkSelectionRoute.ManualSelection ->
                 legal.request.candidates.singleOrNull {
                     it.seat == accepted.selection.drunkSeat
@@ -1460,18 +1439,9 @@ internal fun CampBoardGameHostApp() {
             confirmJointOpeningDrunk(pending, recommended)
             return
         }
-        val registry = activeGameClocktowerRulesetCatalog
-            .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
-        val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
-            pending.preparedGameId, pending.preparedSetup.intermediateSetup)
-        val decision = DrunkAssignmentDecisionBoundary.create(
-            snapshot, registry, StorytellerDecisionRevision(0, 0))
-        require(legal.request.candidates.map { it.seat to it.shownRoleId } ==
-            decision.legalCandidates.map { it.payload.seat to it.payload.shownRoleId })
         pendingTroubleBrewingDrunkSelection = PendingTroubleBrewingDrunkSelection(
             pending.preparedGameId, pending.preparedSetup,
             legal.request.copy(recommendedCandidate = recommended),
-            decision,
         )
         screen = Screen.ClocktowerDrunkSelection
     }
@@ -1498,21 +1468,9 @@ internal fun CampBoardGameHostApp() {
                     pending.preparedGameId, pending.preparedSetup, null)
                 screen = Screen.ClocktowerJudge // shown roles already dealt
             }
-            is TroubleBrewingDrunkSelectionRoute.RuleDetermined -> {
-                commitAndStartTroubleBrewingGame(
-                    pending.preparedGameId, pending.preparedSetup, route.candidate)
-                screen = Screen.ClocktowerJudge
-            }
             is TroubleBrewingDrunkSelectionRoute.ManualSelection -> {
-                val registry = activeGameClocktowerRulesetCatalog
-                    .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
-                val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
-                    pending.preparedGameId, pending.preparedSetup.intermediateSetup)
-                val decision = DrunkAssignmentDecisionBoundary.create(
-                    snapshot, registry, StorytellerDecisionRevision(0, 0))
                 pendingTroubleBrewingDrunkSelection = PendingTroubleBrewingDrunkSelection(
-                    pending.preparedGameId, pending.preparedSetup, route.request,
-                    decision)
+                    pending.preparedGameId, pending.preparedSetup, route.request)
                 screen = Screen.ClocktowerDrunkSelection
                 // Deliberately NO standalone AI call. Manual fallback is local.
             }
@@ -1624,32 +1582,11 @@ internal fun CampBoardGameHostApp() {
                     confirmedDrunkCandidate = null,
                 )
 
-            is TroubleBrewingDrunkSelectionRoute.RuleDetermined ->
-                commitAndStartTroubleBrewingGame(
-                    preparedGameId = preparedGameId,
-                    preparedSetup = preparedSetup,
-                    confirmedDrunkCandidate = route.candidate,
-                )
-
             is TroubleBrewingDrunkSelectionRoute.ManualSelection -> {
-                val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
-                    gameId = preparedGameId,
-                    intermediateSetup = preparedSetup.intermediateSetup,
-                )
-                val decision = DrunkAssignmentDecisionBoundary.create(
-                    snapshot = snapshot,
-                    characterRegistry = characterRegistry,
-                    revision = StorytellerDecisionRevision(0, 0),
-                )
-                require(route.request.candidates.map { it.seat to it.shownRoleId } ==
-                    decision.legalCandidates.map { it.payload.seat to it.payload.shownRoleId }) {
-                    "Displayed Drunk candidates must exactly match Host's legal domain."
-                }
                 val pending = PendingTroubleBrewingDrunkSelection(
                     preparedGameId = preparedGameId,
                     preparedSetup = preparedSetup,
                     request = route.request,
-                    decision = decision,
                 )
                 pendingTroubleBrewingDrunkSelection = pending
                 screen = Screen.ClocktowerDrunkSelection
@@ -2033,16 +1970,8 @@ internal fun CampBoardGameHostApp() {
                                 require(candidate in pending.request.candidates) {
                                     "Trouble Brewing Drunk selection confirmation must use a displayed legal candidate."
                                 }
-                                val legalId = requireNotNull(pending.decision.legalCandidates.singleOrNull {
-                                    it.payload.seat == candidate.seat &&
-                                        it.payload.shownRoleId == candidate.shownRoleId
-                                }) { "Drunk candidate not in current Host domain." }.candidateId
-                                val fresh = pendingTroubleBrewingDrunkSelection === pending &&
-                                    screen == Screen.ClocktowerDrunkSelection
-                                val confirmation = if (fresh) {
-                                    pending.decision.confirm(legalId, pending.decision.revision)
-                                } else null
-                                if (confirmation !is StorytellerDecisionConfirmation.Confirmed<*>) {
+                                if (pendingTroubleBrewingDrunkSelection !== pending ||
+                                    screen != Screen.ClocktowerDrunkSelection) {
                                     DebugFlightRecorder.record("MANUAL_DRUNK_SELECTION_STALE")
                                     return@ClocktowerDrunkSelectionScreen
                                 }

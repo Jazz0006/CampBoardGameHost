@@ -207,20 +207,26 @@ class ClocktowerGameSessionTest {
         assertEquals(4, replay.redHerringSeat)
         assertEquals(bluffRoles, replay.demonBluffRoleIds)
 
+        session.commitRedHerringSeat(8, StorytellerPhase.FIRST_NIGHT, 1, 3)
+        assertEquals(8, session.state.redHerringSeat)
+        session.commitDemonBluffs(listOf(RoleId("Chef")), StorytellerPhase.FIRST_NIGHT, 1, 4)
+        assertEquals(listOf(RoleId("Chef")), session.state.demonBluffRoleIds)
+        val confirmed = session.state
         assertThrows(IllegalArgumentException::class.java) {
-            session.commitRedHerringSeat(8, StorytellerPhase.FIRST_NIGHT, 1, 3) // Imp is Evil.
+            session.commitRedHerringSeat(99, StorytellerPhase.FIRST_NIGHT, 1, 5)
         }
         assertThrows(IllegalArgumentException::class.java) {
             session.commitDemonBluffs(
                 listOf(RoleId("Saint"), RoleId("Saint")), StorytellerPhase.FIRST_NIGHT, 1, 3,
             )
         }
-        assertThrows(IllegalArgumentException::class.java) {
-            session.commitDemonBluffs(
-                listOf(RoleId("Chef")), StorytellerPhase.FIRST_NIGHT, 1, 3,
-            ) // Already in play.
-        }
-        assertEquals(2L, session.state.playerInputRevision)
+        assertSame(confirmed, session.state)
+        assertEquals(4L, session.state.playerInputRevision)
+        val replayConfirmed = com.codex.campboardgamehost.clocktower.domain.DynamicActionReducer.reduce(
+            initialSnapshot = session.toGameSnapshot(rulesetRef), initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1, facts = session.state.actionTimeline.reducerFacts())
+        assertEquals(8, replayConfirmed.redHerringSeat)
+        assertEquals(listOf(RoleId("Chef")), replayConfirmed.demonBluffRoleIds)
     }
 
     @Test
@@ -308,6 +314,22 @@ class ClocktowerGameSessionTest {
         assertEquals(session.state.gameSeed, snapshot.gameSeed)
         assertEquals(session.state.gameState, snapshot.gameState)
         assertEquals(rulesetRef, snapshot.rulesetRef)
+    }
+
+    @Test fun `stale information response cannot mutate the single Session writer`() {
+        val session = ClocktowerGameSession.createProduction("stale-reply", initialState.seed,
+            initialState, semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1)
+        val requested = StorytellerDecisionRevision(session.state.gameStateRevision, session.state.playerInputRevision)
+        session.recordPlayerInput()
+        val before = session.state
+        assertThrows(IllegalStateException::class.java) {
+            session.commitGlobalEpistemicObservation(globalPublicDraft("stale"), requested)
+        }
+        assertSame(before, session.state)
+        session.commitGlobalEpistemicObservation(globalPublicDraft("fresh"),
+            StorytellerDecisionRevision(before.gameStateRevision, before.playerInputRevision))
+        assertEquals(listOf("fresh"), session.state.epistemicObservationLog.records.map { it.recordId })
+        assertEquals(1L, session.state.nextTimelineGlobalSequence)
     }
 
     private fun newSession(): ClocktowerGameSession = ClocktowerGameSession.create(

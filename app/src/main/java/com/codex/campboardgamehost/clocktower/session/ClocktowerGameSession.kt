@@ -14,7 +14,6 @@ import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
@@ -112,15 +111,12 @@ internal data class ClocktowerSessionState(
             "Storyteller player-context overrides must reference current GameState seats."
         }
         redHerringSeat?.let { seat ->
-            require(gameState.playerAt(seat)?.actualAlignment == Alignment.GOOD) {
-                "Committed Red Herring must be an actual Good Session seat."
+            require(gameState.playerAt(seat) != null) {
+                "Committed Red Herring must reference a current Session seat."
             }
         }
         require(demonBluffRoleIds.distinct() == demonBluffRoleIds) {
             "Committed Demon bluff roles must be distinct."
-        }
-        require(demonBluffRoleIds.none { role -> gameState.players.any { it.actualRole == role } }) {
-            "Committed Demon bluffs must not be actual in-play roles."
         }
         semanticHistoryMode.requireCompatible(
             actionTimeline = actionTimeline,
@@ -237,11 +233,8 @@ internal class ClocktowerGameSession private constructor(
             "Red Herring may only be set during the first-night setup."
         }
         if (seat != null) {
-            val player = requireNotNull(state.gameState.playerAt(seat)) {
+            requireNotNull(state.gameState.playerAt(seat)) {
                 "Unknown Red Herring seat $seat."
-            }
-            require(player.actualAlignment == Alignment.GOOD) {
-                "Red Herring must be an actually good player."
             }
         }
         if (state.redHerringSeat == seat) return state
@@ -274,9 +267,6 @@ internal class ClocktowerGameSession private constructor(
             "Demon bluffs may only be set during the first-night setup."
         }
         require(roles.distinct().size == roles.size) { "Demon bluff roles must be distinct." }
-        require(roles.none { role -> state.gameState.players.any {
-            it.actualRole == role
-        } }) { "Demon bluffs cannot contain an actual in-play role." }
         if (state.demonBluffRoleIds == roles) return state
         check(state.playerInputRevision != Long.MAX_VALUE)
         val committed = commitGlobalActionFact(
@@ -597,7 +587,14 @@ internal class ClocktowerGameSession private constructor(
         )
 
     /** Atomic instance authority for newly produced Global observations. */
-    fun commitGlobalEpistemicObservation(draft: EpistemicObservationDraft): RecordedEpistemicObservation {
+    fun commitGlobalEpistemicObservation(
+        draft: EpistemicObservationDraft,
+        expectedRevision: StorytellerDecisionRevision? = null,
+    ): RecordedEpistemicObservation {
+        check(expectedRevision == null || expectedRevision ==
+            StorytellerDecisionRevision(state.gameStateRevision, state.playerInputRevision)) {
+            "Stale information publication."
+        }
         val committed = preflightGlobalEpistemicObservation(draft)
         if (
             committed.observationLog === state.epistemicObservationLog &&

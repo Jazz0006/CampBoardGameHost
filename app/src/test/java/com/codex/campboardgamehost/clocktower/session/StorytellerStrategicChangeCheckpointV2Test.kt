@@ -34,37 +34,15 @@ import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2.SemanticResult
 import org.junit.Test
 
 /** All actions use the SAME generic transition gate. No role-specific planner. */
 class StorytellerStrategicChangeCheckpointV2Test {
-    @Test fun modelCostGateUsesActualPublicResultsAcrossInformationTypes() {
-        fun scalar(id: String, value: String) = StorytellerProviderCandidateV1(
-            id, StorytellerProviderCandidatePayloadV1.ScalarResult(value))
-        val sameNumber = listOf(scalar("witness-a", "1"), scalar("witness-b", "1"))
-        assertFalse(StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(sameNumber))
-        assertFalse(StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(
-            listOf(scalar("role-one", "washerwoman"))))
-        assertTrue(StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(
-            listOf(scalar("no", "false"), scalar("yes", "true"))))
-        assertTrue(StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(
-            listOf(scalar("role-one", "washerwoman"), scalar("role-two", "imp"))))
-        fun pair(id: String) = StorytellerProviderCandidateV1(id,
-            StorytellerProviderCandidatePayloadV1.PairInformation(
-                "imp", listOf(5, 7), SemanticTruth.TRUE, emptyList()))
-        assertFalse(StorytellerStrategicChangeCheckpointV2.informationNeedsJudgment(
-            listOf(pair("witness-a"), pair("witness-b"))))
-        val determined = StorytellerStrategicContinuationV2.OpenDecision(
-            "det", 1, "NIGHT_INFORMATION", sameNumber)
-        val discretionary = StorytellerStrategicContinuationV2.OpenDecision(
-            "disc", 2, "NIGHT_INFORMATION",
-            listOf(scalar("no", "false"), scalar("yes", "true")))
-        assertFalse(StorytellerStrategicChangeCheckpointV2.pendingNeedsJudgment(listOf(determined)))
-        assertTrue(StorytellerStrategicChangeCheckpointV2.pendingNeedsJudgment(
-            listOf(determined, discretionary)))
+    @Test fun currentInformationAlwaysUsesModelAdviceWithoutHostCandidateSelection() {
+        assertFalse(StorytellerStrategicChangeCheckpointV2.pendingNeedsJudgment(emptyList()))
         assertTrue(StorytellerStrategicChangeCheckpointV2.pendingNeedsJudgment(listOf(
-            StorytellerStrategicContinuationV2.OpenDecision(
-                "mayor", 3, "STORYTELLER_DISCRETION", sameNumber))))
+            StorytellerStrategicContinuationV2.OpenDecision("current", 1, "NIGHT_INFORMATION"))))
     }
 
     private val position = StorytellerStrategicChangeCheckpointV2.Position(
@@ -109,7 +87,10 @@ class StorytellerStrategicChangeCheckpointV2Test {
 
     private fun open(seat: Int = 2) = listOf(
         StorytellerStrategicContinuationV2.OpenDecision(
-            "host-current-open-" + seat, seat, "NIGHT_INFORMATION"))
+            "host-current-open-" + seat, seat, "NIGHT_INFORMATION", "Empath",
+            StorytellerProviderDecisionContextV1.ScalarInformation(seat, RoleId("Empath"),
+                ReliabilityState.RELIABLE, StorytellerProviderScalarKindV1.NUMBER,
+                NumericMetric.LIVING_EVIL_NEIGHBOURS.name, emptyList())))
 
     @Test fun confirmedSetupContradictingAdvisoryOpeningCanRequestWithoutInventingAHostEvent() {
         val host = session()
@@ -130,6 +111,7 @@ class StorytellerStrategicChangeCheckpointV2Test {
             memoryVersion = 0,
             revisions = emptyList(),
             affectedOpenDecisionIds = emptySet(),
+            remainingChoices = mapOf("host-current-open-2" to SemanticResult("SCALAR_RESULT", scalarValue = "99")),
             updatedMemory = memory,
             strategicDirection = "Reevaluate against actual confirmed setup.",
         )
@@ -241,6 +223,7 @@ class StorytellerStrategicChangeCheckpointV2Test {
             revisions = listOf(StorytellerStrategicContinuationV2.Revision(
                 0, "REVISE", "New confirmed actual game event")),
             affectedOpenDecisionIds = setOf("host-current-open-2"),
+            remainingChoices = mapOf("host-current-open-2" to SemanticResult("SCALAR_RESULT", scalarValue = "99")),
             updatedMemory = memory,
             strategicDirection = "Reevaluate coupled unexecuted information.",
         )
@@ -310,13 +293,13 @@ class StorytellerStrategicChangeCheckpointV2Test {
                     NumericMetric.ADJACENT_EVIL_PAIRS, seat, value = value),
             )
         val matcher = com.codex.campboardgamehost.ClocktowerResidualDisplayMatcherV2
-        assertTrue(matcher.matchesConfirmedPublication(request, "number-0", publication(0)))
-        assertFalse(matcher.matchesConfirmedPublication(request, "number-0", publication(1)))
-        assertFalse(matcher.matchesConfirmedPublication(request, "number-0", publication(0, 2)))
-        assertFalse(matcher.matchesConfirmedPublication(request, "number-0",
+        assertTrue(matcher.matchesConfirmedPublication(request, SemanticResult("SCALAR_RESULT", scalarValue = "0"), publication(0)))
+        assertFalse(matcher.matchesConfirmedPublication(request, SemanticResult("SCALAR_RESULT", scalarValue = "0"), publication(1)))
+        assertFalse(matcher.matchesConfirmedPublication(request, SemanticResult("SCALAR_RESULT", scalarValue = "0"), publication(0, 2)))
+        assertFalse(matcher.matchesConfirmedPublication(request, SemanticResult("SCALAR_RESULT", scalarValue = "0"),
             publication(0, role = "Empath")))
-        assertFalse(matcher.matchesConfirmedPublication(request, "missing", publication(0)))
-        assertFalse(matcher.matchesConfirmedPublication(request, "number-0",
+        assertFalse(matcher.matchesConfirmedPublication(request, SemanticResult("SCALAR_RESULT", scalarValue = "99"), publication(0)))
+        assertFalse(matcher.matchesConfirmedPublication(request, SemanticResult("SCALAR_RESULT", scalarValue = "0"),
             publication(0).copy(visibility = ObservationVisibility.PUBLIC, recipientSeats = emptySet())))
     }
 
@@ -340,7 +323,7 @@ class StorytellerStrategicChangeCheckpointV2Test {
             exclusiveGlobalSequence = host.state.nextTimelineGlobalSequence,
             memoryVersion = 0,
             revisions = emptyList(), affectedOpenDecisionIds = original.map { it.decisionId }.toSet(),
-            remainingChoices = mapOf("current-chef-info" to "number-0", "second-current-choice" to "number-1"),
+            remainingChoices = mapOf("current-chef-info" to SemanticResult("SCALAR_RESULT", scalarValue = "0"), "second-current-choice" to SemanticResult("SCALAR_RESULT", scalarValue = "1")),
             updatedMemory = memory, strategicDirection = "Linked current decisions",
         )
         val accepted = StorytellerResidualPackageGateV2.verify(
@@ -357,13 +340,13 @@ class StorytellerStrategicChangeCheckpointV2Test {
         }.isFailure)
         assertTrue(runCatching {
             StorytellerResidualPackageGateV2.verify(host.state, StorytellerPhase.FIRST_NIGHT, 1,
-                original, requests, reply.copy(remainingChoices = mapOf("current-chef-info" to "number-0")), cursor())
+                original, requests, reply.copy(remainingChoices = mapOf("current-chef-info" to SemanticResult("SCALAR_RESULT", scalarValue = "0"))), cursor())
         }.isFailure)
         assertTrue(runCatching {
             StorytellerResidualPackageGateV2.verify(host.state, StorytellerPhase.FIRST_NIGHT, 1,
-                original, listOf(first, second.copy(legalCandidates = listOf(
-                    StorytellerProviderCandidateV1("number-1",
-                        StorytellerProviderCandidatePayloadV1.ScalarResult("2"))))), reply, cursor())
+                original, listOf(first, second.copy(decisionContext =
+                    (second.decisionContext as StorytellerProviderDecisionContextV1.ScalarInformation)
+                        .copy(subjectSeats = listOf(3)))), reply, cursor())
         }.isFailure) // same opaque ID but changed public meaning
         host.recordPlayerInput()
         assertTrue(runCatching {
@@ -380,7 +363,6 @@ class StorytellerStrategicChangeCheckpointV2Test {
         assertEquals(listOf("current-chef-info"), correct.map { it.decisionId })
         assertEquals("NIGHT_INFORMATION", correct.single().family)
         assertEquals(1, correct.single().sourceSeat)
-        assertEquals(listOf("number-0"), correct.single().legalCandidates.map { it.candidateId })
         assertEquals("Chef", correct.single().abilityRoleId)
         // Multiple independent Host-owned requests form ONE coherent residual scope.
         val secondContext = StorytellerProviderDecisionContextV1.ScalarInformation(
@@ -398,7 +380,6 @@ class StorytellerStrategicChangeCheckpointV2Test {
             host.state, StorytellerPhase.FIRST_NIGHT, 1, listOf(request, second))
         assertEquals(listOf("current-chef-info", "current-empath-info"),
             whole.map { it.decisionId })
-        assertTrue(whole.all { it.legalCandidates.isNotEmpty() })
         assertTrue(runCatching {
             HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
                 host.state, StorytellerPhase.FIRST_NIGHT, 1,

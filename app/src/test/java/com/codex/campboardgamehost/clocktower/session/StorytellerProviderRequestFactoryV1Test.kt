@@ -34,14 +34,12 @@ class StorytellerProviderRequestFactoryV1Test {
     @Test
     fun `pair and Mayor engine decisions materialize neutral requests without recommendation implementation`() {
         val pairRevision = StorytellerDecisionRevision(3, 2)
-        val pairDecision = PairInformationDecisionBoundary.create(
+        val pairDecision = PendingPairInformationDecision(
             requestIdentity = StorytellerDecisionRequestIdentity(
                 gameId = "provider-direct",
                 requestId = "first-night:investigator:1",
             ),
             revision = pairRevision,
-            game = pairGame(),
-            roleDefinitions = roles,
             sourceSeat = 1,
             abilityRole = RoleId("Investigator"),
             reliability = ReliabilityState.RELIABLE,
@@ -59,15 +57,7 @@ class StorytellerProviderRequestFactoryV1Test {
             StorytellerProviderDecisionContextV1.FIRST_NIGHT_PAIR_INFORMATION,
             pairRequest.identity.decisionTypeId,
         )
-        assertEquals(
-            pairDecision.legalCandidates.map { it.candidateId },
-            pairRequest.legalCandidateIds,
-        )
-        assertTrue(
-            pairRequest.legalCandidates.all {
-                it.payload is StorytellerProviderCandidatePayloadV1.PairInformation
-            },
-        )
+        assertTrue(pairRequest.legalCandidates.isEmpty())
 
         val mayorRevision = StorytellerDecisionRevision(8, 5)
         val mayorDecision = MayorRedirectDecisionBoundary.create(

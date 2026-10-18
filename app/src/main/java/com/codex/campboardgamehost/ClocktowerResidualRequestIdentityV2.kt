@@ -15,7 +15,6 @@ internal object ClocktowerResidualRequestIdentityV2 {
         gameStateRevision: Long,
         playerInputRevision: Long,
         exclusiveGlobalSequence: Long,
-        legalCandidateIds: List<String>,
         mode: StorytellerOperationMode,
     ): String {
         require(mode != StorytellerOperationMode.MANUAL)
@@ -23,7 +22,6 @@ internal object ClocktowerResidualRequestIdentityV2 {
             gameId, round, stepIndex, requestId,
             gameStateRevision, playerInputRevision,
             exclusiveGlobalSequence,
-            legalCandidateIds.size, legalCandidateIds.hashCode(),
             mode.name,
         ).joinToString(":")
     }

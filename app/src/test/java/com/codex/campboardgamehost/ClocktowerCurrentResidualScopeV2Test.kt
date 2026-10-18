@@ -35,6 +35,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2.SemanticResult
 import org.junit.Test
 
 /** Boundary safety tests against a real production GLOBAL_V1 Host session. */
@@ -174,7 +175,7 @@ class ClocktowerCurrentResidualScopeV2Test {
         val pending = scope(current)
         assertEquals(1, pending.requests.size)
         val first = pending.requests.single()
-        val chosen = first.legalCandidates.single().candidateId
+        val chosen = SemanticResult("SCALAR_RESULT", scalarValue = "Monk")
         val selection = mapOf(first.identity.decisionId to chosen)
         assertTrue(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
             pending.requests, selection, listOf(current), cards))
@@ -183,12 +184,7 @@ class ClocktowerCurrentResidualScopeV2Test {
         assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
             listOf(first, first), selection, listOf(current), cards))
         assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
-            pending.requests, selection, listOf(current.copy(
-                automaticInformationCandidates = listOf(roleOption.copy(
-                    recluseRegistersEvil = true)))), cards))
-        assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
-            pending.requests, selection, listOf(current.copy(
-                automaticInformationCandidates = listOf(roleOption, roleOption))), cards))
+            pending.requests, selection, listOf(current.copy(actor = cards[1])), cards))
         assertEquals(1, pending.barrierStep)
         val legal = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
             session.state, StorytellerPhase.NIGHT, 2, pending.requests)
@@ -211,7 +207,7 @@ class ClocktowerCurrentResidualScopeV2Test {
             pending, snapshot(session, StorytellerPhase.NIGHT, 2))
         val cards = (0..4).map { PlayerCard("Player $it") }
         val mayorStep = step(ClocktowerNightAction.MayorRedirect)
-        val id = requireNotNull(pending.candidateIdForSeat(3))
+        val id = SemanticResult("SEAT_TARGET", seat = 3)
         val choice = mapOf(request.identity.decisionId to id)
         assertTrue(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
             listOf(request), choice, listOf(mayorStep), cards))
@@ -220,7 +216,7 @@ class ClocktowerCurrentResidualScopeV2Test {
         assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
             listOf(request), choice, emptyList(), cards))
         assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
-            listOf(request), mapOf(request.identity.decisionId to "illegal"), listOf(mayorStep), cards))
+            listOf(request), mapOf(request.identity.decisionId to SemanticResult("SEAT_TARGET", seat = 99)), listOf(mayorStep), cards))
         assertEquals(3, ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
             pending, id, revision, pending.legalTargetSeats))
         assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
@@ -229,7 +225,7 @@ class ClocktowerCurrentResidualScopeV2Test {
         assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
             pending, id, revision, setOf(1, 2)))
         assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
-            pending, "illegal", revision, pending.legalTargetSeats))
+            pending, SemanticResult("SEAT_TARGET", seat = 99), revision, pending.legalTargetSeats))
         assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
             pending, null, revision, pending.legalTargetSeats))
     }
@@ -263,20 +259,20 @@ class ClocktowerCurrentResidualScopeV2Test {
             StorytellerDecisionRevision(before.gameStateRevision, before.playerInputRevision))!!
         assertEquals(before.gameId, first.requestIdentity.gameId)
         assertEquals(1, first.sourceSeat)
-        assertTrue(first.legalCandidates.isNotEmpty())
+        assertEquals("Washerwoman", first.abilityRole.value)
         assertSame(before, session.state)
         session.commitConfirmedPoisonTransition(ActionFactDraft.Poison("confirmed-poison",
             StorytellerPhase.FIRST_NIGHT, 1, session.nextInputSequence, 1), before.gameStateRevision)
         val after = session.state
         val poisoned = current.copy(informationReliability =
-            com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability.POISONED)
+            com.codex.campboardgamehost.clocktower.domain.ReliabilityState.POISONED)
         val next = pendingGlobalFirstNightPairDecision(poisoned, ClocktowerPhase.FirstNight, 1,
             cards, after.gameState, after.gameId,
             StorytellerDecisionRevision(after.gameStateRevision, after.playerInputRevision))!!
         assertEquals(after.gameStateRevision, next.revision.gameStateRevision)
         assertTrue(next.revision.gameStateRevision > first.revision.gameStateRevision)
         assertEquals(com.codex.campboardgamehost.clocktower.domain.ReliabilityState.POISONED, next.reliability)
-        assertTrue(next.legalCandidates.size >= first.legalCandidates.size)
+        assertEquals(first.sourceSeat, next.sourceSeat)
         assertSame(after, session.state)
         assertTrue(session.state.gameState.playerAt(1)!!.poisoned)
         val scope = ClocktowerCurrentResidualScopeV2.collect(after, StorytellerPhase.FIRST_NIGHT, 1,

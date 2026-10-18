@@ -2,6 +2,58 @@
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
 
+## F9：四模块整组解耦与删除（本地完整构建通过，远端验收待回填）
+
+- 起点：GitHub/本地 `a3008b33ff9fa4d8f8fc11389ef1f972fb529323`，main `61cd6796569ed8dfdea360caefeb5b9328745090`，Draft #334/base `64be30905b88f639a464204ed1db89b7b62bc910`；fetch 后一致。Mini MCP 仍为独立旧 checkout `a2cbcac8`，本批直接改 Windows 本地文件。完整未截断 Git tree 974 文件；本批工作树预计 936，生产 263 + 测试 209 Kotlin。历史版本库存不代表逐文件语义审计完成。
+- **Pair**：App/current residual scope/HostScreen 的真实 AI 请求保留，只发送当前 recipient/ability/revision/problem。删除 PairInformationDecisionBoundary → PairInformationLegalDomain → NaturalPair/DisplaySemantics 真值、见证与合法候选枚举链；保留窄 PendingPairInformationDecision 身份 DTO。直接建议生成 witness-free typed display，不匹配合法候选 ID；手工 pair 允许任意已有座位（含 actor）及已知剧本角色，零结果仍表达本角色类别的缺席陈述，不从显示反推登记。
+- **Numeric/Boolean**：删除 Coordinator → NightRecommendationModule → DynamicCandidateGenerator → InformationDecisionFoundation → StructuredNumber/Boolean UI model/adapter 的生成、值域/真假分类、候选包装与确认链；删除 FirstNightNumericInformationSemantics 真值枚举、UI truth projection 与 UnifiedSelectionPool。统一使用已有 ReliabilityState，退出重复枚举/版本 aliases。Chef/Empath 等直接数字输入保留非负 Int 的结构限制，AI_ASSISTED 预填、AI_AUTOMATIC 通过同一实际发布回调；FT 等只要求真实已选查询座位，直接接收真假结果，不以旧真值域二次否决。
+- **Setup**：删除 Drunk 候选域/假设 GameState projector 和第二候选确认边界；原 pending object/screen/game identity 仍隔离旧点击，最终 commit 一次构造实际状态。任意已发牌座位都能被明确确认为 Drunk，保留 shown role 和实际 Drunk 元数据；未知/改名/换牌引用仍拒绝。红鲱鱼选座和 Session/SessionState 均退出善良阵营门禁；恶魔伪装使用所有已知剧本角色，Session/SessionState 不再拒绝已在场角色，去重、事件时序与单 writer 保留。
+- **后夜接收**：StorytellerStrategicContinuationV2 的真实 transport、结构化 JSON、提示词、原模型响应 anchor、历史增量和多夜战略记忆保留；直接返回 SemanticResult，删除“语义 → 当前 legalCandidates 匹配 → 内部候选 ID → UI 再匹配”。保留严格字段/整数、当前问题/实际目标、已知角色与座位、game/revisions/global-prefix/memory-version、完整响应和已发布不可重开校验。记忆只在同一私密 recipient 实际收到相同结果后晋升；不凭建议写事实。Session 发布端增加当前 revision 校验，替代退役候选 snapshot 的过期安全职责。
+- **整删生产 19 文件**：
+  - `ClocktowerRecommendationRules.kt`
+  - `StructuredBooleanInformationAdapter.kt`
+  - `StructuredNumericInformationAdapter.kt`
+  - `clocktower/recommendation/UnifiedSelectionPool.kt`
+  - `clocktower/recommendation/dynamic/DynamicCandidateGenerator.kt`
+  - `clocktower/recommendation/dynamic/UnreliableInformationModels.kt`
+  - `clocktower/rules/FirstNightNumericInformationSemantics.kt`
+  - `clocktower/rules/NaturalPairInformationCandidateGenerator.kt`
+  - `clocktower/rules/PairInformationDisplaySemantics.kt`
+  - `clocktower/rules/PairInformationLegalDomain.kt`
+  - `clocktower/session/ClocktowerRecommendationCoordinator.kt`
+  - `clocktower/session/DrunkAssignmentDecisionBoundary.kt`
+  - `clocktower/session/InformationDecisionFoundation.kt`
+  - `clocktower/session/PairInformationDecisionBoundary.kt`
+  - `clocktower/session/RecommendationModules.kt`
+  - `clocktower/session/StructuredBooleanInformationUiModel.kt`
+  - `clocktower/session/StructuredNumberInformationUiModel.kt`
+  - `clocktower/setup/TroubleBrewingDrunkCandidateProjection.kt`
+  - `clocktower/ui/StructuredStorytellerInformationUi.kt`
+- **整删专属测试 20 文件**（旧真值/合法候选、包装/假设投影/来源形状断言；真实 AI 与事实安全测试保留并改接直接语义）：
+  - `ClocktowerRecommendationRulesTest.kt`
+  - `ClocktowerStructuredInformationPreparationTest.kt`
+  - `FirstNightPairInformationPoolLegalityTest.kt`
+  - `StructuredChefInformationAdapterTest.kt`
+  - `StructuredEmpathInformationAdapterTest.kt`
+  - `StructuredFortuneTellerInformationAdapterTest.kt`
+  - `clocktower/recommendation/NaturalPairInformationCandidateGeneratorPerceivedAbilityTest.kt`
+  - `clocktower/recommendation/NaturalPairInformationCandidateGeneratorTest.kt`
+  - `clocktower/recommendation/PairInformationLegalDomainTest.kt`
+  - `clocktower/recommendation/UnifiedSelectionPoolTest.kt`
+  - `clocktower/recommendation/dynamic/DynamicCandidateGeneratorTest.kt`
+  - `clocktower/rules/FirstNightNumericInformationSemanticsTest.kt`
+  - `clocktower/rules/PairInformationDisplaySemanticsTest.kt`
+  - `clocktower/session/ClocktowerRecommendationCoordinatorTest.kt`
+  - `clocktower/session/InformationDecisionCoordinatorIntegrationTest.kt`
+  - `clocktower/session/InformationDecisionFoundationTest.kt`
+  - `clocktower/session/PairInformationDecisionArchitectureTest.kt`
+  - `clocktower/session/PairInformationDecisionBoundaryTest.kt`
+  - `clocktower/session/StructuredNumberInformationUiModelTest.kt`
+  - `clocktower/setup/TroubleBrewingDrunkCandidateProjectionTest.kt`
+- **验证**：本地 `:app:testFull :app:assembleDebug` SUCCESS，898 项、0 失败/错误/跳过。旧候选测试/fixture 编译及旧断言曾失败，已按新职责退休/修改；过程中删 import 误去掉 Compose 委托运算符，编译发现后已恢复。重点回归：直接 99 数字与不在旧菜单的 pair/role、未知/重复/小数/越界座位拒绝、真实已存首夜模型响应、后夜记忆/历史/收件人、非镇民 Drunk、evil 红鲱鱼/in-play bluff 的单 writer 事件及重放、过期回复不改 Session。CI routing 只移除 R2 对已退役 unifiedFirstNightInformationPool 的存在性守卫；其他安全/构建/R2 验收保留。没有付费 API 或真机验收。
+- **规模**：生产 +410/-3215，测试 +165/-2649，源码净删 **5289 行**（以本地 Git diff 加新 DTO 实测；另 R2 -1 行）。NightStepUi **49650B** 已低于 50,000；仍超限 App **180482B**、HostScreen **144543B**，源码按 canonical UTF-8/LF，修改的生产文件本地亦保存 LF。
+- **明确剩余/风险**：这不是全部 Host Rules 清空。HostScreen/InformationStepBuilder 的角色信息真值/登记预览、ResultFirstRegistrationDomain 与 FixedInformationEvaluator、Mayor/NewDemon/其他行动候选及旧 Provider 通用候选 DTO 仍需横向审计；其中部分服务当前 Host flow，要先断开必要事实/交互。Pair 手工 UI 当前仍把结构化组合物化为展示列表，未来可继续化简。App/HostScreen 两个大混合文件须继续删职责并收敛到 <=50,000B。跨项目状态合同/真机/实际收费模型品质未验收；无新所有者决策。保留唯一 Session、既有结构化事实与观察日志、私密交付/事件顺序；PR #334 保持 Draft，不 merge/retarget。
+
 ## F8：首夜无效候选预计算、等待门禁与重复上下文整链删除（本地完整构建与 exact-SHA CI/R2 已通过）
 
 - 起点：远端/本地 `0e7e4a4e6c1c51c3522456393349d51240e109b3`，main `61cd6796`，PR #334 Draft/base `64be3090`；Mini MCP 仍为 `a2cbcac8`，本批继续本地直接读写。读取完整 979 文件树，横向比较大文件/消费者后选中整个首夜预计算链，而非沿某个规则小函数逐段清理。

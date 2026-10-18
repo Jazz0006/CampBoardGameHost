@@ -1,8 +1,7 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
-import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
-import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertFalse
@@ -133,37 +132,17 @@ class ClocktowerFirstNightPlayerRevealHandoffTest {
         assertEquals(listOf("observed", "marked", "revealed"), events)
     }
 
-    @Test fun `legacy publication remains allowed without structured confirmation`() {
-        assertTrue(clocktowerInformationPublicationAllowed(null, null, InformationDecisionRevision(1, 2)))
-    }
-
-    @Test fun `confirmed publication requires exact snapshot and current revisions before effects`() {
-        val revision = InformationDecisionRevision(5, 6)
-        val model = prepareEmpathNumberInformationUiModel(
-            coordinator = ClocktowerRecommendationCoordinator(), gameId = "publication-test",
-            phase = ClocktowerPhase.Night, round = 2, sequence = 4, actorSeat = 2,
-            subjectSeats = listOf(1, 3), trueValue = 1,
-            reliability = InformationReliability.RELIABLE,
-            revision = revision, recommendedValue = 1,
-        )
-        val confirmed = requireNotNull(model.acceptRecommendation(model.choices.single().candidateId, revision).confirmed)
-        assertTrue(clocktowerInformationPublicationAllowed(confirmed, model.contextSnapshot, revision))
-        val rejected = listOf(
-            null to revision,
-            model.contextSnapshot.copy(
-                requestIdentity = model.contextSnapshot.requestIdentity.copy(requestId = "other-decision"),
-            ) to revision,
-            model.contextSnapshot to revision.copy(gameStateRevision = 7),
-            model.contextSnapshot to revision.copy(playerInputRevision = 7),
-        )
-        for ((snapshot, currentRevision) in rejected) {
+    @Test fun `publication keeps revision safety without candidate authorization`() {
+        val revision = StorytellerDecisionRevision(5, 6)
+        assertTrue(clocktowerInformationPublicationAllowed(null, revision))
+        assertTrue(clocktowerInformationPublicationAllowed(revision, revision))
+        for (current in listOf(revision.copy(gameStateRevision = 7), revision.copy(playerInputRevision = 7))) {
             val result = performClocktowerPlayerRevealHandoff(
-                authorize = { clocktowerInformationPublicationAllowed(confirmed, snapshot, currentRevision) },
+                authorize = { clocktowerInformationPublicationAllowed(revision, current) },
                 publicationNeeded = { error("stale publication") },
                 recordPrivateInformation = { error("stale observation") },
                 markFirstNightPublished = { error("stale mark") },
-                openReveal = { error("stale reveal") },
-            )
+                openReveal = { error("stale reveal") })
             assertFalse(result.openReveal)
         }
     }
