@@ -54,7 +54,6 @@ import com.codex.campboardgamehost.clocktower.session.NoGreaterJoyKlutzHistoryPr
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionBoundary
-import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderGameContextBuilderV1
@@ -2282,64 +2281,34 @@ internal fun CampBoardGameHostApp() {
                         onConfirmMayorRedirectTarget = {
                             val checkpoint = currentClocktowerNightCheckpoint()
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
-                                val selectedTarget = requireNotNull(checkpoint.mayorRedirectDraftTarget) {
-                                    "Trouble Brewing Mayor redirect confirmation requires a selected legal target."
-                                }
-                                val pendingDecision = requireNotNull(currentTroubleBrewingMayorRedirectPendingDecision()) {
-                                    "Trouble Brewing Mayor redirect confirmation requires a current engine decision."
-                                }
-                                val targetSeat = clocktowerSeatFor(selectedTarget)
-                                val candidateId = requireNotNull(pendingDecision.candidateIdForSeat(targetSeat)) {
-                                    "Selected Mayor redirect target is outside the current rules-owned legal domain."
-                                }
-                                when (
-                                    val confirmation = pendingDecision.confirm(
-                                        candidateId = candidateId,
-                                        currentRevision = StorytellerDecisionRevision(
-                                            gameStateRevision = clocktowerGameStateRevision,
-                                            playerInputRevision = clocktowerPlayerInputRevision,
-                                        ),
+                                val selectedTarget = requireNotNull(checkpoint.mayorRedirectDraftTarget)
+                                val pendingDecision = requireNotNull(currentTroubleBrewingMayorRedirectPendingDecision())
+                                require(pendingDecision.revision == StorytellerDecisionRevision(
+                                    clocktowerGameStateRevision, clocktowerPlayerInputRevision,
+                                )) { "Stale Mayor confirmation." }
+                                if (checkpoint.confirmedMayorRedirectTarget != selectedTarget) {
+                                    val targetSeat = clocktowerSeatFor(selectedTarget)
+                                    val session = requireClocktowerGameSession()
+                                    val registry = activeGameClocktowerRulesetCatalog
+                                        .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+                                    val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+                                        gameSnapshot = session.toGameSnapshot(requireNotNull(clocktowerRulesetRef)),
+                                        phase = StorytellerPhase.NIGHT, round = round, characterRegistry = registry,
                                     )
-                                ) {
-                                    is MayorRedirectDecisionConfirmation.Confirmed -> {
-                                        require(confirmation.targetSeat == targetSeat) {
-                                            "Mayor redirect confirmation changed the selected target."
-                                        }
-                                        if (checkpoint.confirmedMayorRedirectTarget != selectedTarget) {
-                                            val session = requireClocktowerGameSession()
-                                            val rulesetRef = requireNotNull(clocktowerRulesetRef)
-                                            val registry = activeGameClocktowerRulesetCatalog
-                                                .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
-                                            val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
-                                                gameSnapshot = session.toGameSnapshot(rulesetRef),
-                                                phase = StorytellerPhase.NIGHT,
-                                                round = round,
-                                                characterRegistry = registry,
-                                            )
-                                            val request = StorytellerProviderRequestFactoryV1.fromMayorRedirect(
-                                                decision = pendingDecision,
-                                                snapshot = snapshot,
-                                                gameContext = currentClocktowerCausalJournal().contextForRequest(snapshot, session.state),
-                                            )
-                                            session.commitConfirmedMayorRedirect(
-                                                draft = ActionFactDraft.MayorRedirectChoice(
-                                                    actionId = clocktowerActionId("mayor-redirect", targetSeat = targetSeat),
-                                                    phase = StorytellerPhase.NIGHT,
-                                                    round = round,
-                                                    sequence = requireClocktowerGameSession().nextInputSequence,
-                                                    mayorSeat = pendingDecision.mayorSeat,
-                                                    targetSeat = targetSeat,
-                                                ),
-                                                request = request,
-                                                candidateId = candidateId,
-                                                expectedGameStateRevision = session.state.gameStateRevision,
-                                            )
-                                            publishClocktowerSessionView()
-                                        }
-                                    }
-                                    is MayorRedirectDecisionConfirmation.Blocked -> {
-                                        error("Mayor redirect confirmation blocked: ${confirmation.reason}")
-                                    }
+                                    val request = StorytellerProviderRequestFactoryV1.fromMayorRedirect(
+                                        decision = pendingDecision, snapshot = snapshot,
+                                        gameContext = currentClocktowerCausalJournal().contextForRequest(snapshot, session.state),
+                                    )
+                                    session.commitConfirmedMayorRedirect(
+                                        draft = ActionFactDraft.MayorRedirectChoice(
+                                            actionId = clocktowerActionId("mayor-redirect", targetSeat = targetSeat),
+                                            phase = StorytellerPhase.NIGHT, round = round,
+                                            sequence = session.nextInputSequence,
+                                            mayorSeat = pendingDecision.mayorSeat, targetSeat = targetSeat,
+                                        ),
+                                        request = request, expectedGameStateRevision = session.state.gameStateRevision,
+                                    )
+                                    publishClocktowerSessionView()
                                 }
                             }
                         },

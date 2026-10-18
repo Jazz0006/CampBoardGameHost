@@ -18,17 +18,15 @@ internal object ClocktowerJointOpeningDisplayMatcherV2 {
         plan: HostOpeningSemanticValueV2,
         currentSourceSeat: Int,
         currentOptions: List<ClocktowerDisplayOption>,
+        question: ClocktowerInformationQuestion? = null,
     ): ClocktowerDisplayOption? {
         if (plan.sourceSeat != currentSourceSeat) return null
         val template = currentOptions.firstOrNull()
         val proposition = when (plan.observationKind) {
             "NUMBER" -> {
-                val question = currentOptions.mapNotNull { it.proposition as?
-                    InformationProposition.NumericResult }.firstOrNull {
-                        it.sourceSeat == currentSourceSeat
-                    } ?: return null
+                val numericQuestion = question as? ClocktowerInformationQuestion.Number ?: return null
                 val number = plan.number?.takeIf { it >= 0 } ?: return null
-                question.copy(value = number)
+                InformationProposition.NumericResult(numericQuestion.metric, currentSourceSeat, numericQuestion.subjectSeats, number)
             }
             "ROLE" -> {
                 if (plan.subjectMode != "EVIDENCE_PAIR" || plan.subjectSeats.size != 2) return null

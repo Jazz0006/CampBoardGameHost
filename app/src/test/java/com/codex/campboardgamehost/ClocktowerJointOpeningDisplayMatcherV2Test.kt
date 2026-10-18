@@ -39,10 +39,11 @@ class ClocktowerJointOpeningDisplayMatcherV2Test {
     )
 
     @Test fun numericAdviceKeepsQuestionIdentityButDoesNotRequireMenuMembership() {
-        val result = ClocktowerJointOpeningDisplayMatcherV2.match(chefOne.copy(number = 99), 1, listOf(numericOption(0)))!!
+        val question = ClocktowerInformationQuestion.Number(NumericMetric.ADJACENT_EVIL_PAIRS, listOf(1, 2, 3))
+        val result = ClocktowerJointOpeningDisplayMatcherV2.match(chefOne.copy(number = 99), 1, emptyList(), question)!!
         assertEquals(99, (result.proposition as InformationProposition.NumericResult).value)
         assertNull(result.spyRegistersGood)
-        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(chefOne, 2, listOf(numericOption(0))))
+        assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(chefOne, 2, emptyList(), question))
         assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(chefOne, 1, emptyList()))
     }
 

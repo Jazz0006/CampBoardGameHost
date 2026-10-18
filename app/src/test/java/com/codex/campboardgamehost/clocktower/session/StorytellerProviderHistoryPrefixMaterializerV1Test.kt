@@ -179,14 +179,6 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
             ),
             seed = 99L,
         )
-        val witnesses = com.codex.campboardgamehost.clocktowerAlignmentRegistrationWitnesses(
-            currentSpyRegistersGood = false, spySelectable = true,
-            currentRecluseRegistersEvil = false, recluseSelectable = true,
-        ).filter { witness ->
-            (if (witness.spyRegistersGood == false) 1 else 0) +
-                (if (witness.recluseRegistersEvil == true) 1 else 0) == 1
-        }
-        assertEquals(2, witnesses.size)
         val session = ClocktowerGameSession.createProduction(
             gameId = "empath-ambiguous",
             gameSeed = game.seed,

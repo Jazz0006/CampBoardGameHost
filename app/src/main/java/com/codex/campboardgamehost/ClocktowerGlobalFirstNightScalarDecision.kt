@@ -4,7 +4,6 @@ import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 
@@ -44,62 +43,27 @@ internal fun pendingGlobalNightScalarDecision(
         canonicalGameState?.players?.singleOrNull { it.name == name }?.seat
             ?: cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
     val actorSeat = canonicalSeat(actor.name) ?: return null
-    fun typedRoleResult(option: ClocktowerDisplayOption): Pair<Int, String>? {
-        if (option.displayKind != ClocktowerDisplayKind.RoleReveal) return null
-        (option.proposition as? InformationProposition.RoleAt)?.let {
-            return it.seat to it.role.value
-        }
-        val seat = option.presentationSubjectSeats.singleOrNull() ?: return null
-        val role = option.presentationRoleId?.takeIf { it.isNotBlank() } ?: return null
-        return seat to role
-    }
-    val proposition = step.displayProposition ?: run {
-        // A registration-sensitive Host step may not yet have a single true
-        // role proposition, although its legal *possible* results already
-        // identify one confirmed queried target. Preserve that ambiguity.
-        val typed = (step.manualInformationCandidates + step.automaticInformationCandidates)
-            .mapNotNull(::typedRoleResult)
-        if (typed.isNotEmpty() && typed.map { it.first }.distinct().size == 1)
-            InformationProposition.RoleAt(typed.first().first, RoleId(typed.first().second))
-        else null
-    }
+    val question = step.informationQuestion ?: return null
+    val subjects = question.subjectSeats
     val kind: StorytellerProviderScalarKindV1
     val metric: String
-    val subjects: List<Int>
-    val selectedSeats = fortuneTellerSelectedNames.mapNotNull(::canonicalSeat)
-    when (proposition) {
-        is InformationProposition.NumericResult -> {
-            if (proposition.sourceSeat != actorSeat) return null
+    when (question) {
+        is ClocktowerInformationQuestion.Number -> {
             kind = StorytellerProviderScalarKindV1.NUMBER
-            metric = proposition.metric.name
-            subjects = proposition.subjectSeats
-
+            metric = question.metric.name
         }
-        is InformationProposition.BooleanResult -> {
-            if (proposition.sourceSeat != actorSeat || selectedSeats.size != 2 ||
-                selectedSeats.distinct().size != 2 || selectedSeats != proposition.subjectSeats
-            ) return null
+        is ClocktowerInformationQuestion.Boolean -> {
+            val selectedSeats = fortuneTellerSelectedNames.mapNotNull(::canonicalSeat)
+            if (selectedSeats.size != 2 || selectedSeats.distinct().size != 2 || selectedSeats != subjects) return null
             kind = StorytellerProviderScalarKindV1.BOOLEAN
-            metric = proposition.metric.name
-            subjects = proposition.subjectSeats
-
+            metric = question.metric.name
         }
-        is InformationProposition.RoleAt -> {
-            // A real target is a prerequisite. Never produce role-result choices
-            // for a future player query whose target has not been observed.
-            if (proposition.seat !in 1..cards.size ||
-                step.displayKind != ClocktowerDisplayKind.RoleReveal &&
-                    step.automaticInformationCandidates.none {
-                        it.displayKind == ClocktowerDisplayKind.RoleReveal
-                    }) return null
+        is ClocktowerInformationQuestion.Role -> {
             kind = StorytellerProviderScalarKindV1.ROLE
             metric = "REVEALED_CHARACTER"
-            subjects = listOf(proposition.seat)
-
         }
-        else -> return null
     }
-    if (subjects.any { it !in 1..cards.size }) return null
+    if (subjects.distinct().size != subjects.size || subjects.any { it !in 1..cards.size }) return null
     val reliability = step.informationReliability
     return PendingGlobalScalarInformationDecision(
         requestIdentity = StorytellerDecisionRequestIdentity(

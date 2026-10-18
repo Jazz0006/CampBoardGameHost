@@ -85,34 +85,6 @@ internal fun revalidateTwoPlayerSelection(
     )
 }
 
-internal data class ChambermaidSelectionResolution(
-    val selection: RevalidatedTwoPlayerSelection,
-    val wokeCount: Int?,
-)
-
-internal fun resolveChambermaidSelection(
-    first: String?,
-    second: String?,
-    eligibleNames: Set<String>,
-    wokeBecauseOwnAbilityNames: Set<String>,
-): ChambermaidSelectionResolution {
-    val selection = revalidateTwoPlayerSelection(
-        first = first,
-        second = second,
-        eligibleNames = eligibleNames,
-    )
-    val wokeCount = if (selection.isComplete) {
-        listOfNotNull(selection.first, selection.second)
-            .count { it in wokeBecauseOwnAbilityNames }
-    } else {
-        null
-    }
-    return ChambermaidSelectionResolution(
-        selection = selection,
-        wokeCount = wokeCount,
-    )
-}
-
 /**
  * Only a genuinely current, Host-resolved information result may enter the
  * normal reveal flow without a human information-choice click. For player-query
@@ -264,7 +236,6 @@ internal data class ClocktowerDisplayOption(
     val recluseRegistersEvil: Boolean? = null,
     val recluseRegisteredRoleEnName: String? = null,
     /** Legal explanations, not committed facts. Result-first choices never set a witness implicitly. */
-    val legalRegistrationWitnesses: List<ClocktowerRegistrationWitness> = emptyList(),
     val isTruthful: Boolean = true,
     val misinformationPressure: Int = 0,
     val isDefaultRecommendation: Boolean = false,

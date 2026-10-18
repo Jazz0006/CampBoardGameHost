@@ -4,15 +4,22 @@ import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 
-internal enum class ClocktowerRegistrationDetail {
-    AlignmentOnly,
-    Role,
-}
-
 internal enum class ClocktowerPairInformationAbility {
     Washerwoman,
     Librarian,
     Investigator,
+}
+
+/** The actual question and its targets, with no calculated answer or registration witness. */
+internal sealed interface ClocktowerInformationQuestion {
+    val subjectSeats: List<Int>
+    data class Number(val metric: com.codex.campboardgamehost.clocktower.epistemic.NumericMetric,
+        override val subjectSeats: List<Int>) : ClocktowerInformationQuestion
+    data class Boolean(val metric: com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric,
+        override val subjectSeats: List<Int>) : ClocktowerInformationQuestion
+    data class Role(val subjectSeat: Int) : ClocktowerInformationQuestion {
+        override val subjectSeats: List<Int> get() = listOf(subjectSeat)
+    }
 }
 
 internal data class ClocktowerNightStepUi(
@@ -29,6 +36,7 @@ internal data class ClocktowerNightStepUi(
     val displayPrimary: String? = null,
     val displaySecondary: String? = null,
     val displayFooter: String? = null,
+    val informationQuestion: ClocktowerInformationQuestion? = null,
     val displayProposition: InformationProposition? = null,
     /** Spatial presentation identity only; it does not make a player-visible claim reliable. */
     val presentationSubjectSeats: List<Int> = emptyList(),
@@ -61,11 +69,5 @@ internal data class ClocktowerNightStepUi(
     val selectedInformationTruthful: Boolean? = null,
     /** Confirmed Foundation authority; the draft is only publishable through this envelope. */
     val informationSourceRevision: com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision? = null,
-    val spyRegistrationKey: String? = null,
-    val spyRegistrationTeams: List<ClocktowerTeam> = emptyList(),
-    val spyRegistrationDetail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
-    val spyRegistrationHint: String? = null,
-    val recluseRegistrationKey: String? = null,
-    val recluseRegistrationTeams: List<ClocktowerTeam> = emptyList(),
     val interactionId: ClocktowerInteractionId? = null,
 )

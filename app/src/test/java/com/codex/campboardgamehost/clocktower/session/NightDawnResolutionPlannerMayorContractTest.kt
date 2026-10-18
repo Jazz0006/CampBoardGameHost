@@ -42,7 +42,7 @@ class NightDawnResolutionPlannerMayorContractTest {
     }
 
     @Test
-    fun `restored Mayor redirect to current effective Demon falls back to Mayor death`() {
+    fun `confirmed Mayor redirect keeps its actual target after target becomes Demon`() {
         val transition = NightDawnResolutionPlanner.planValidatedNightDeath(
             baseGameState = promotedDemonGameState(),
             checkpoint = checkpoint(confirmedMayorRedirectTarget = "Poisoner"),
@@ -64,7 +64,7 @@ class NightDawnResolutionPlannerMayorContractTest {
 
         assertEquals(NightResolutionContinuation.DAWN, transition.continuation)
         assertTrue(transition.dawnCommitIntent?.roleChanges?.isEmpty() == true)
-        assertEquals(2, transition.dawnCommitIntent?.death?.targetSeat)
+        assertEquals(1, transition.dawnCommitIntent?.death?.targetSeat)
         assertTrue(transition.outcomeEvaluationAllowed)
     }
 

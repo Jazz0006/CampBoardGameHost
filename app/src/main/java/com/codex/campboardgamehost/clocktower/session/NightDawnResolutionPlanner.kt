@@ -5,7 +5,6 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackOutcome
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
-import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
 
 /**
@@ -238,16 +237,11 @@ internal object NightDawnResolutionPlanner {
         }
         val confirmedRedirectSeat = checkpoint.confirmedMayorRedirectTarget
             ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
-        val confirmedRedirectIsLegal = confirmedRedirectSeat?.let { targetSeat ->
-            MayorRedirectLegality.canReceiveRedirect(
-                targetIsDemon = input.effectiveNightState.currentRoleId(targetSeat) in input.demonRoleIds,
-            )
-        } == true
         val redirectApplies =
             canonicalMayorRedirectMayApply &&
                 canonicalOriginalDeathSeat != null &&
                 canonicalOriginalDeathSeat == input.mayorSeat &&
-                confirmedRedirectIsLegal
+                confirmedRedirectSeat != null
         val resolvedDeathSeat = if (redirectApplies) {
             confirmedRedirectSeat
                 ?.takeIf(input.effectiveNightState::isMechanicallyAlive)

@@ -2,6 +2,40 @@
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
 
+## F11：信息真值/登记投影与 Mayor 候选链已解耦（本地完整通过，远端待验收）
+
+- **核对基线**：本地/远端 `f2c09e175e8e70e2394594806ee7e969d285a996`、PR #334 Draft/base `64be30905b88f639a464204ed1db89b7b62bc910`，main `61cd6796569ed8dfdea360caefeb5b9328745090`；其 docs-only CI #4367 / R2 #3947 SUCCESS，代码基线仍为 `800f1d97` 的完整 CI #4366 / R2 #3946。Mini MCP 是独立旧 checkout `a2cbcac8`、clean，不在那里修改。本批按用户明确指示先完成 B4/B5 解耦，再交接新对话做逐文件分类审计。
+- **B4 信息链**：现有 presentation model 内的窄 `ClocktowerInformationQuestion` 仅携带 Number/Boolean 指标和实际查询 subjects 或 Role 查询座位；source 仍由当前 actor 与 canonical Session roster 定位，没有新增可写游戏状态。Builder → current scalar request、joint opening numeric matcher、direct numeric input 不再从真值/候选菜单抽取问题。Chef/Empath/Clockmaker/Chambermaid 输入任意非负 Int；FT/Chambermaid/Ravenkeeper 等须先有实际目标；Role 揭示可选择已知角色。保留原私密展示、手工/AI_ASSISTED 预选、AI_AUTOMATIC 发布回调、实际 API/提示词/解析/记忆及 revision/recipient 边界。直接输入绑定真实 actor 和 targets；改变数字查询目标会重置输入。
+- **B4 删除链**：HostScreen 的 WW/Librarian/Investigator 默认真角色/自动 decoy、Chef/Empath/FT/Clockmaker/Chambermaid 真值计算、角色结果默认真值/登记假设及发布时真值回退已退出。RegistrationOptionPreparation → ResultPresentation/ResultDomain → RegistrationProjection → TroubleBrewingRegistrationDomain 整链删除；日间 Nomination/Slayer 直接保留明确选择，退出该规则投影的 poison/role 合法域门禁，未删除真实登记事实生产者。FixedInformationEvaluator 整删，livingNeighbors 只保留现有查询座位定位，不算阵营数字。旧 Chef/Empath/Clockmaker 方桌候选 renderer、Chambermaid wake-count/0..2 旧 helper 及无人消费的夜间登记 metadata 同时删除。
+- **B5 Mayor 链**：pending 只保留 identity/revision/source，AI Provider 不再发 legalCandidates，返回的 SEAT_TARGET 按当前座位/版本直接预选。App/Session 删除 candidate ID 回匹配、living-actual-Mayor 事实门禁和排除 Demon 座位的合法域；Session 保留 request game/source/revision、已知座位、去重与单 writer 原子 ActionFact。一次确认只有实际 MayorRedirectChoice，不再为同一动作追加候选 causal capture/decision/correction；AI 历史仍从实际 ActionFact 读取。Dawn planner 使用已确认目标，不因目标后来成为 Demon 改杀 Mayor；保留原死亡、角色改变、继承和基本续局应用。
+- **整删生产 10 文件**：
+  - `ClocktowerChefSquareTableUi.kt`
+  - `ClocktowerClockmakerSquareTableUi.kt`
+  - `ClocktowerEmpathSquareTableUi.kt`
+  - `ClocktowerRegistrationOptionPreparation.kt`
+  - `ClocktowerRegistrationProjection.kt`
+  - `ClocktowerRegistrationResultDomain.kt`
+  - `ClocktowerRegistrationResultPresentation.kt`
+  - `clocktower/rules/FixedInformationEvaluator.kt`
+  - `clocktower/rules/MayorRedirectLegality.kt`
+  - `clocktower/rules/TroubleBrewingRegistrationDomain.kt`
+- **整删专属旧测试 11 文件**：
+  - `ClocktowerChefSquareTablePresentationTest.kt`
+  - `ClocktowerClockmakerSquareTablePresentationTest.kt`
+  - `ClocktowerEmpathSquareTablePresentationTest.kt`
+  - `ClocktowerRegistrationOptionPreparationTest.kt`
+  - `ClocktowerRegistrationProjectionTest.kt`
+  - `ClocktowerRegistrationResultDomainTest.kt`
+  - `ClocktowerRegistrationResultPresentationTest.kt`
+  - `FirstNightPairInformationSelectionDomainTest.kt`
+  - `clocktower/rules/FixedInformationEvaluatorTest.kt`
+  - `clocktower/session/MayorRedirectDecisionBoundaryTest.kt`
+  - `clocktower/session/StorytellerDecisionFoundationTest.kt`
+- **保留/迁移的验证**：当前无答案/无候选菜单时的首夜/后夜请求与已发表不可重开、首夜 joint 数字直接建议、查询 targets 与 actor 身份、任意 99 数字及阴性结构检查、Role 查询无真值锚仍接受手工/AI、actual information 不反推 Spy/Recluse 登记、Mayor Demon 目标接受/未知座位拒绝/源不匹配/过期版本/失败无半写/重复 no-op/改选事件顺序、Dawn/角色变化重建不改写已确认目标。保持实际 AI transport/模型响应/战略与隐私测试；退役旧 truth/候选/witness-only 断言，不恢复旧规则为测试兜底。
+- **实际规模/本地验收**：生产 +258/-3085（净删 **2827**），测试 +169/-2020（净删 **1851**），合计净删 **4678 行代码**。当前存量 **905 跟踪文件、246 生产 + 195 测试 Kotlin**。`testFull + assembleDebug` SUCCESS，**819 tests，0 failure/error/skipped**；diff whitespace check 通过。超限源码：App **178170B**、HostScreen **101971B**；NightStepUi **44505B** 已低于 50000B。远端完整 CI/R2 待本次提交后独立核验；本地 JVM/APK 不等于实际真机或付费模型验收。
+- **明确保留与剩余**：本批完成上述两条指定链，不宣称 P1 或全仓语义审计完成。Sage 仍有默认真值/pair 与 truth 标签、Spy 魔典/poison 分支、日间 Virgin/Slayer 后果、其它行动/继承/发牌门禁、剩余 candidate presentation/Provider DTO、因果日志及重复状态/历史仍须逐文件分类审计；必要死亡/角色变化/继承应用不能因含规则就整模块删除。跨项目 codec、安全/平台、tools/CI 必须读真实消费者。无新增必须由用户决策的产品阻塞项；潜在范围问题在下轮用证据列人工审核，不能假称已经裁定。
+- **交接与边界**：NEXT_DEVELOPMENT_HANDOFF 和 CURRENT_DEVELOPMENT_ROADMAP 已改为单一当前入口，旧批次历史只留本台账；新对话先核实最新远端/head/CI，再按“必须保留（Host 控制/记录/AI 推荐/平台安全支撑）、必须删除、需要解耦、需要人工审核”逐文件审计。待审状态不是已审核类，混合文件需分职责；完成比例按有证据的最终结论数/明确范围统计，不以扫描或净删除率冒充审计进度。Draft #334 不合并/retarget，不动既有未跟踪文件，无付费 API/真机操作。
+
 ## F10-B：孤立候选与旧世界合同整组删除（完整 CI/R2 已通过）
 
 - **起点与范围**：远端/本地 `968261005f0003a137745eedbdaafbe9d4c40040`，Draft #334；沿 F10-A 的全树分类落实 A1–A3。重新核实无 App、Session、现用 AI、tools/CI 消费者后删除封闭旧类型岛，不把混合文件整体判死。

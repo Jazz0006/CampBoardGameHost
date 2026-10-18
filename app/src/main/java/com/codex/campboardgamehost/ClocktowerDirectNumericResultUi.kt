@@ -31,16 +31,13 @@ internal fun clocktowerDirectNumericResult(
     step: ClocktowerNightStepUi,
     actorSeat: Int,
     value: Int,
+    cards: List<PlayerCard>,
 ): ClocktowerNightStepUi? {
     if (value < 0) return null
-    val semanticSources = sequenceOf(step.displayProposition) +
-        step.manualInformationCandidates.asSequence().map { it.proposition } +
-        step.legacyInformationCandidates.asSequence().map { it.proposition } +
-        step.displayOptions.asSequence().map { it.proposition }
-    val template = semanticSources
-        .filterIsInstance<InformationProposition.NumericResult>()
-        .firstOrNull { it.sourceSeat == actorSeat }
-        ?: return null
+    if (cards.indexOfFirst { it.name == step.actor?.name } + 1 != actorSeat || actorSeat <= 0) return null
+    val question = step.informationQuestion as? ClocktowerInformationQuestion.Number ?: return null
+    if (question.subjectSeats.distinct().size != question.subjectSeats.size ||
+        question.subjectSeats.any { it !in 1..cards.size }) return null
     val result = ClocktowerDisplayOption(
         label = value.toString(),
         displayKind = ClocktowerDisplayKind.Number,
@@ -48,8 +45,8 @@ internal fun clocktowerDirectNumericResult(
         displayPrimary = value.toString(),
         displaySecondary = null,
         displayFooter = null,
-        proposition = template.copy(value = value),
-        presentationSubjectSeats = template.subjectSeats,
+        proposition = InformationProposition.NumericResult(question.metric, actorSeat, question.subjectSeats, value),
+        presentationSubjectSeats = question.subjectSeats,
     )
     return resolveClocktowerPlayerDisplay(step, result).copy(
         // The Storyteller confirmed what was shown, not whether Host rules say it is true.
@@ -57,13 +54,14 @@ internal fun clocktowerDirectNumericResult(
     )
 }
 
-internal fun clocktowerHasDirectNumericInput(step: ClocktowerNightStepUi, actorSeat: Int): Boolean =
-    clocktowerDirectNumericResult(step, actorSeat, 0) != null
+internal fun clocktowerHasDirectNumericInput(step: ClocktowerNightStepUi, actorSeat: Int, cards: List<PlayerCard>): Boolean =
+    clocktowerDirectNumericResult(step, actorSeat, 0, cards) != null
 
 @Composable
 internal fun ClocktowerDirectNumericResultUi(
     title: String,
     initialValue: Int? = null,
+    subjectSeats: List<Int>,
     actorLabel: String,
     wakeInstruction: String?,
     language: String,
@@ -73,7 +71,7 @@ internal fun ClocktowerDirectNumericResultUi(
     onNext: () -> Unit,
     onConfirm: (Int) -> Unit,
 ) {
-    var entered by remember(title, actorLabel, initialValue) { mutableStateOf(initialValue?.toString().orEmpty()) }
+    var entered by remember(title, actorLabel, initialValue, subjectSeats) { mutableStateOf(initialValue?.toString().orEmpty()) }
     val selected = entered.trim().toIntOrNull()?.takeIf { it >= 0 }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(

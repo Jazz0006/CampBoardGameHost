@@ -42,7 +42,6 @@ internal fun ClocktowerNominationInteraction(
     draft: ClocktowerNominationDraft,
     cards: List<PlayerCard>,
     tableState: ClocktowerDayOverviewTableState,
-    registration: ClocktowerRegistrationProjection,
     registrationState: ClocktowerRegistrationInteractionState,
     round: Int,
     executionThreshold: Int,
@@ -70,7 +69,7 @@ internal fun ClocktowerNominationInteraction(
     val virginRegistrationKey = nominatorCard
         ?.takeIf { it.name == spyCard?.name && virginFirstNomination }
         ?.let { registrationKey("Virgin", it.name) }
-    val virginSpyRegistersGood = registration.spyRegistersGood(virginRegistrationKey, "Virgin")
+    val virginSpyRegistersGood = registrationState.spyIsGood(virginRegistrationKey)
     val virginExecutes = virginAbilityWorks &&
         (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || virginSpyRegistersGood)
     val specialNotice = when {
@@ -107,7 +106,7 @@ internal fun ClocktowerNominationInteraction(
             if (chosenNominator != null && chosenNominee != null) {
                 val explicitSpyRuling = registrationState.explicitChoice(
                     ClocktowerRegistrationSubject.SPY, virginRegistrationKey,
-                )?.takeIf { virginAbilityWorks && registration.spyCanRegister("Virgin") }
+                )
                 onConfirm(ClocktowerNominationConfirmation(
                     chosenNominator, chosenNominee, virginFirstNomination, virginExecutes,
                     explicitSpyRuling?.usesSpecialRegistration,
@@ -121,9 +120,9 @@ internal fun ClocktowerNominationInteraction(
         specialContent = {
             if (virginRegistrationKey != null && spyCard != null) {
                 ClocktowerSpyTownsfolkTypeDecisionControls(
-                    registersAsTownsfolk = registration.spyRegistersGood(virginRegistrationKey, "Virgin"),
+                    registersAsTownsfolk = registrationState.spyIsGood(virginRegistrationKey),
                     hasExplicitChoice = registrationState.spyHasExplicitChoice(virginRegistrationKey),
-                    enabled = registration.spyCanRegister("Virgin"),
+                    enabled = actionsEnabled,
                     language = language,
                     onRegistersAsTownsfolkChange = { chosen ->
                         registrationState.chooseSpy(virginRegistrationKey, chosen)

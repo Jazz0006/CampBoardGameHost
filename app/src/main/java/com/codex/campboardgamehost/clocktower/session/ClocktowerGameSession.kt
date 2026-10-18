@@ -7,7 +7,6 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderPriorDec
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
-import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegalDomain
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.KlutzDeathTriggerEvidenceV1
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
@@ -508,15 +507,10 @@ internal class ClocktowerGameSession private constructor(
         )
     }
 
-    /**
-     * Mayor redirect acceptance: stage the full causal capture/decision/correction off-session,
-     * validate the rules-owned target, then commit its typed action, revision and timeline cursor.
-     * There is no live journal write before the Session action succeeds.
-     */
+    /** Confirm the actual redirect once; its canonical action is also the AI history. */
     fun commitConfirmedMayorRedirect(
         draft: ActionFactDraft.MayorRedirectChoice,
         request: StorytellerProviderRequestV1,
-        candidateId: String,
         expectedGameStateRevision: Long,
     ): TimelineBoundActionFact {
         require(draft.phase == StorytellerPhase.NIGHT)
@@ -524,55 +518,14 @@ internal class ClocktowerGameSession private constructor(
             require(draft.matches(accepted)) { "Mayor action ID already committed with different content." }
             return accepted
         }
-        check(state.gameStateRevision == expectedGameStateRevision) {
-            "Stale Mayor confirmation."
-        }
+        check(state.gameStateRevision == expectedGameStateRevision) { "Stale Mayor confirmation." }
         require(request.identity.gameId == state.gameId)
-        require(request.sourceRevision == StorytellerProviderRevisionV1(
-            state.gameStateRevision, state.playerInputRevision,
-        ))
-        require(candidateId == MayorRedirectDecisionBoundary.candidateIdForSeat(draft.targetSeat))
-        val mayor = requireNotNull(state.gameState.playerAt(draft.mayorSeat))
-        require(mayor.actualRole == RoleId("Mayor") && mayor.alive)
-        require(draft.targetSeat in MayorRedirectLegalDomain.resolve(
-            state.gameState, draft.mayorSeat,
-        ).legalTargetSeats) { "Mayor redirect target is not legal in the current Session." }
-
-        val stagedJournal = StorytellerCausalDecisionJournalV1.restore(
-            causalDecisionJournal.archive(), state,
-        )
-        val previous = stagedJournal.effectiveNow().lastOrNull {
-            it.eventId.startsWith("confirmed:night:${draft.round}:mayor-redirect:")
-        }
-        val frozen = stagedJournal.captureBeforeDecision(request, state)
-        val eventId = "confirmed:${request.identity.decisionId}"
-        stagedJournal.commit(request.identity.decisionId, StorytellerProviderPriorDecisionV1(
-            eventId = eventId,
-            gameStateRevision = frozen.revision.gameStateRevision,
-            playerInputRevision = frozen.revision.playerInputRevision,
-            selectedCandidateId = candidateId,
-            selectedOutcome = DecisionOutcomeSnapshot(
-                decisionType = "mayor-redirect",
-                canonicalFields = sortedMapOf("targetSeat" to draft.targetSeat.toString()),
-            ),
-            abilityState = AbilityState.FUNCTIONING,
-            truthRelation = TruthRelation.NOT_APPLICABLE,
-            registrations = emptyList(),
-        ))
-        previous?.let {
-            stagedJournal.correct(
-                correctionId = "revised:$eventId",
-                replacedEventId = it.eventId,
-                replacementEventId = eventId,
-            )
-        }
-        val committed = commitConfirmedGameAction(
-            draft = draft,
-            nextGameState = state.gameState,
-            expectedGameStateRevision = expectedGameStateRevision,
-        )
-        causalDecisionJournal = stagedJournal
-        return committed
+        require(request.sourceRevision == StorytellerProviderRevisionV1(state.gameStateRevision, state.playerInputRevision))
+        val question = request.decisionContext as? com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.MayorRedirect
+        require(question?.mayorSeat == draft.mayorSeat) { "Mayor request source differs from the actual action." }
+        require(state.gameState.playerAt(draft.mayorSeat) != null)
+        require(state.gameState.playerAt(draft.targetSeat) != null) { "Unknown Mayor redirect target seat." }
+        return commitConfirmedGameAction(draft, state.gameState, expectedGameStateRevision)
     }
 
     /** Non-mutating validation/projection for production flows that must persist before commit. */

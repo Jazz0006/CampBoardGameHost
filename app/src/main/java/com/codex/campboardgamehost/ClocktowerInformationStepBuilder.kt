@@ -11,7 +11,6 @@ internal class ClocktowerInformationStepBuilder(
     private val roleActor: (String) -> PlayerCard?,
     private val roleMissingReason: (String) -> String,
     private val abilityStateFor: (String, PlayerCard?) -> AbilityFunctioningState?,
-    private val actorIsUnreliable: (String, PlayerCard?) -> Boolean,
 ) {
     fun build(
         roleName: String,
@@ -24,21 +23,14 @@ internal class ClocktowerInformationStepBuilder(
         displaySecondary: String? = null,
         displayFooter: String? = explanation,
         displayTitle: String? = null,
+        informationQuestion: ClocktowerInformationQuestion? = null,
         displayProposition: InformationProposition? = null,
         presentationSubjectSeats: List<Int> = emptyList(),
         hostInstruction: String? = null,
         displayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
-        legalSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
-        reliableDisplayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         previousShownNumber: Int? = null,
         numericMinimumValue: Int? = null,
         numericMaximumValue: Int? = null,
-        spyRegistrationKey: String? = null,
-        spyRegistrationTeams: List<ClocktowerTeam> = emptyList(),
-        spyRegistrationDetail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
-        spyRegistrationHint: String? = null,
-        recluseRegistrationKey: String? = null,
-        recluseRegistrationTeams: List<ClocktowerTeam> = emptyList(),
         actorOverride: PlayerCard? = null,
         abilityStateOverride: AbilityFunctioningState? = null,
     ): ClocktowerNightStepUi {
@@ -65,16 +57,7 @@ internal class ClocktowerInformationStepBuilder(
         } else {
             null
         }
-        val actorAbilityUnreliable = actor != null && actorIsUnreliable(enName, actor)
-        val unreliableOptions = actor?.takeIf { actorAbilityUnreliable }?.let(displayOptions).orEmpty()
-        val legalSelectionDomain = actor
-            ?.let(legalSelectionOptions)
-            .orEmpty()
-            .distinctBy(::clocktowerInformationCandidateId)
-        val reliableRecommendations = actor?.takeUnless { actorAbilityUnreliable }?.let(reliableDisplayOptions).orEmpty()
-        // Build the full legal information domain independently of the operation mode.
-        val automaticRecommendations =
-            if (actorAbilityUnreliable) unreliableOptions else reliableRecommendations
+        val options = actor?.let(displayOptions).orEmpty().distinctBy(::clocktowerInformationCandidateId)
         val resolvedDisplayKind = when (enName) {
             "Chef", "Empath", "Clockmaker", "Chambermaid" -> ClocktowerDisplayKind.Number
             "Fortune Teller" -> ClocktowerDisplayKind.YesNo
@@ -82,38 +65,6 @@ internal class ClocktowerInformationStepBuilder(
             "Washerwoman", "Librarian", "Investigator" -> ClocktowerDisplayKind.EitherOne
             else -> displayKind
         }
-        val directLegacyCandidate = actor
-            ?.takeIf { unreliableOptions.isEmpty() && !tellPlayer.isNullOrBlank() }
-            ?.let {
-                ClocktowerDisplayOption(
-                    label = "direct-legacy",
-                    displayKind = resolvedDisplayKind,
-                    displayTitle = localizedDisplayTitle,
-                    displayPrimary = displayPrimary ?: tellPlayer,
-                    displaySecondary = displaySecondary,
-                    displayFooter = displayFooter ?: explanation,
-                    proposition = displayProposition,
-                    presentationSubjectSeats = presentationSubjectSeats,
-                )
-            }
-        val completeLegacyCandidates = (unreliableOptions + reliableRecommendations + listOfNotNull(directLegacyCandidate))
-            .distinctBy { option ->
-                listOf(
-                    option.displayKind.name,
-                    option.proposition?.toString().orEmpty(),
-                    option.displayPrimary.orEmpty(),
-                    option.displaySecondary.orEmpty(),
-                    option.displayFooter.orEmpty(),
-                    option.spyRegistersGood?.toString().orEmpty(),
-                    option.spyRegisteredRoleEnName.orEmpty(),
-                    option.recluseRegistersEvil?.toString().orEmpty(),
-                    option.recluseRegisteredRoleEnName.orEmpty(),
-                    option.isTruthful.toString(),
-                ).joinToString("|")
-            }
-        val automaticInformationCandidates = legalSelectionDomain
-            .takeIf { it.isNotEmpty() }
-            ?: completeLegacyCandidates
         return ClocktowerNightStepUi(
             title = localizedRoleName,
             actor = actor,
@@ -133,33 +84,25 @@ internal class ClocktowerInformationStepBuilder(
                     "Do not wake anyone. Pause for 2–3 seconds so players cannot infer whether this character is in play, then continue.",
                 )
             },
-            tellPlayer = if (actor != null && unreliableOptions.isEmpty()) tellPlayer else null,
+            tellPlayer = if (actor != null) tellPlayer else null,
             explanation = listOfNotNull(explanation, hostUnreliableNote).joinToString("\n"),
             action = action,
-            displayKind = if (actor != null && unreliableOptions.isEmpty() && !tellPlayer.isNullOrBlank()) resolvedDisplayKind else ClocktowerDisplayKind.None,
+            displayKind = if (actor != null && !tellPlayer.isNullOrBlank()) resolvedDisplayKind else ClocktowerDisplayKind.None,
             displayTitle = localizedDisplayTitle,
+            informationQuestion = informationQuestion,
             displayProposition = displayProposition,
-            presentationSubjectSeats = if (actor != null && unreliableOptions.isEmpty()) presentationSubjectSeats else emptyList(),
-            displayPrimary = if (actor != null && unreliableOptions.isEmpty()) displayPrimary ?: tellPlayer else null,
-            displaySecondary = if (actor != null && unreliableOptions.isEmpty()) displaySecondary else null,
-            displayFooter = if (actor != null && unreliableOptions.isEmpty()) displayFooter ?: explanation else null,
-            displayOptions = unreliableOptions,
-            recommendedDisplayOptions = automaticRecommendations,
-            legacyInformationCandidates = completeLegacyCandidates,
-            manualInformationCandidates = legalSelectionDomain,
-            automaticInformationCandidates = automaticInformationCandidates,
+            presentationSubjectSeats = if (actor != null) presentationSubjectSeats else emptyList(),
+            displayPrimary = if (actor != null) displayPrimary ?: tellPlayer else null,
+            displaySecondary = if (actor != null) displaySecondary else null,
+            displayFooter = if (actor != null) displayFooter ?: explanation else null,
+            displayOptions = options,
+            manualInformationCandidates = options,
+            automaticInformationCandidates = options,
             roleEnName = enName,
             informationReliability = informationReliability,
             previousShownNumber = previousShownNumber,
             numericMinimumValue = numericMinimumValue,
             numericMaximumValue = numericMaximumValue,
-            // P1: the legacy registration witness wizard cannot own a confirmed information fact.
-            spyRegistrationKey = null,
-            spyRegistrationTeams = spyRegistrationTeams,
-            spyRegistrationDetail = spyRegistrationDetail,
-            spyRegistrationHint = spyRegistrationHint,
-            recluseRegistrationKey = null,
-            recluseRegistrationTeams = recluseRegistrationTeams,
         )
     }
 }

@@ -10,61 +10,16 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
  * recommendation memory, publish information, mutate registration choices, or commit game state.
  */
 internal object ClocktowerNeutralInformationPreparation {
-    fun numericOptions(
-        title: String,
-        trueValue: Int,
-        maxValue: Int,
-        footer: String,
-        secondary: String? = null,
-        propositionForValue: ((Int) -> InformationProposition)? = null,
-    ): List<ClocktowerDisplayOption> {
-        val maximumValue = maxOf(trueValue, maxValue)
-        return (0..maximumValue).map { value ->
-            displayOption(
-                label = value.toString(),
-                kind = ClocktowerDisplayKind.Number,
-                title = title,
-                primary = value.toString(),
-                secondary = secondary,
-                footer = footer,
-                proposition = propositionForValue?.invoke(value),
-                isTruthful = value == trueValue,
-            )
-        }
-    }
-
-    fun yesNoOptions(
-        title: String,
-        truthfulYes: Boolean,
-        secondary: String?,
-        footer: String,
-        text: (String, String) -> String,
-        propositionForValue: ((Boolean) -> InformationProposition)? = null,
-    ): List<ClocktowerDisplayOption> = listOf(true, false).map { answer ->
-        val value = if (answer) text("有", "Yes") else text("没有", "No")
-        displayOption(
-            label = value,
-            kind = ClocktowerDisplayKind.YesNo,
-            title = title,
-            primary = value,
-            secondary = secondary,
-            footer = footer,
-            proposition = propositionForValue?.invoke(answer),
-            isTruthful = answer == truthfulYes,
-        )
-    }
-
     fun roleRevealOptions(
         title: String,
-        truthfulRole: ClocktowerRole?,
         scriptRoles: List<ClocktowerRole>,
         roleLabel: (ClocktowerRole) -> String,
         footer: String,
         /** Player-selected or previously executed target, never an inferred future choice. */
         targetSeat: Int? = null,
     ): List<ClocktowerDisplayOption> {
-        if (truthfulRole == null || (targetSeat != null && targetSeat <= 0)) return emptyList()
-        return (scriptRoles + truthfulRole)
+        if (targetSeat == null || targetSeat <= 0) return emptyList()
+        return scriptRoles
             .distinctBy(ClocktowerRole::enName)
             .sortedBy(ClocktowerRole::enName)
             .map { role ->
@@ -74,11 +29,10 @@ internal object ClocktowerNeutralInformationPreparation {
                     title = title,
                     primary = roleLabel(role),
                     footer = footer,
-                    // Misinformation needs typed candidate metadata, NOT a
-                    // fabricated epistemic RoleAt observation.
+                    proposition = InformationProposition.RoleAt(targetSeat, RoleId(role.enName)),
                     presentationSubjectSeats = targetSeat?.let { listOf(it) }.orEmpty(),
                     presentationRoleId = role.enName,
-                    isTruthful = role.enName == truthfulRole.enName,
+                    isTruthful = false,
                 )
             }
     }

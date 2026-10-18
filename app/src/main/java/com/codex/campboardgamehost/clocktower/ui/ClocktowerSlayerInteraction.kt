@@ -45,7 +45,6 @@ internal fun ClocktowerSlayerInteraction(
     cards: List<PlayerCard>,
     seats: List<HostSeatPresentation>,
     claimantCandidateNames: Set<String>,
-    registration: ClocktowerRegistrationProjection,
     round: Int,
     poisonTarget: String?,
     actionsEnabled: Boolean,
@@ -72,8 +71,7 @@ internal fun ClocktowerSlayerInteraction(
         onSeatClick = { seatId -> draft.selectSeat(slayerTableState.playerNameForSeat(seatId)) },
         onResetClaimant = draft::clear,
         onResolve = {
-            val targetIsHealthyRecluse = slayerTargetCard?.clocktowerRole?.enName == "Recluse" &&
-                poisonTarget != draft.targetName
+            val targetIsHealthyRecluse = slayerTargetCard?.clocktowerRole?.enName == "Recluse"
             if (draft.confirm(targetIsHealthyRecluse, onSlayerShot)) onBack()
         },
         onBack = {
@@ -83,16 +81,10 @@ internal fun ClocktowerSlayerInteraction(
         specialContent = {
             if (slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
                 ClocktowerRecluseRegistrationDecisionControls(
-                    legalRoles = registration.legalRegistrationRoles(
-                        registrationKey("SlayerRecluse", requireNotNull(slayerTargetCard).name),
-                        "Slayer",
-                        slayerTargetCard,
-                        listOf(ClocktowerTeam.Demon),
-                    )
-                        .map { it.enName to it.nameFor(language) },
+                    legalRoles = emptyList(),
                     registersEvil = draft.recluseRegistersDemon == true,
-                    registeredRoleEnName = if (draft.recluseRegistersDemon == true) "Imp" else null,
-                    enabled = registration.recluseCanRegister("Slayer"),
+                    registeredRoleEnName = null,
+                    enabled = actionsEnabled,
                     hasExplicitChoice = draft.recluseRegistersDemon != null,
                     language = language,
                     onRegistersEvilChange = draft::chooseRecluseRegistration,

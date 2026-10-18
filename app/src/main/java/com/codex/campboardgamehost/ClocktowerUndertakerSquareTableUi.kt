@@ -71,73 +71,23 @@ internal fun clocktowerUndertakerResultChoices(
     seatCount: Int,
     allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
-    resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     recommendedOptionIds: Set<String> = emptySet(),
 ): List<ClocktowerUndertakerResultChoice> {
     if (step.roleEnName != "Undertaker") return emptyList()
-    val anchor = clocktowerRoleRevealAnchor(
-        proposition = step.displayProposition,
-        expectedSeat = (step.displayProposition as? InformationProposition.RoleAt)?.seat,
-        seatCount = seatCount,
-    ) ?: return emptyList()
-
-    fun choicesFrom(
-        options: List<ClocktowerDisplayOption>,
-        sourceKind: ClocktowerUndertakerResultSourceKind,
-    ): List<ClocktowerUndertakerResultChoice> {
-        if (options.isEmpty()) return emptyList()
-        return options.map { option ->
-            val projected = clocktowerRoleRevealChoiceProjection(
-                option = option,
-                targetSeat = anchor.targetSeat,
-                seatCount = seatCount,
-            ) ?: return emptyList()
-            ClocktowerUndertakerResultChoice(
-                key = clocktowerInformationCandidateId(option),
-                executedSeat = projected.targetSeat,
-                roleId = projected.roleId,
-                displayLabel = projected.displayLabel,
-                sourceKind = sourceKind,
-                displayOption = option,
-                recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
-                    (recommendedOptionIds.isEmpty() && option.isDefaultRecommendation),
-            )
-        }.distinctBy { it.key }
-    }
-
-    if (allowRuleDeterminedAutoUi) {
-        automaticDisplayOption?.let { option ->
-            return choicesFrom(
-                options = listOf(option),
-                sourceKind = ClocktowerUndertakerResultSourceKind.DisplayOption,
-            )
-        }
-    } else {
-        if (resultFirstRegistrationCandidates.isNotEmpty()) {
-            return choicesFrom(
-                options = resultFirstRegistrationCandidates,
-                sourceKind = ClocktowerUndertakerResultSourceKind.DisplayOption,
-            )
-        }
-        if (step.displayOptions.isNotEmpty()) {
-            return choicesFrom(
-                options = step.displayOptions,
-                sourceKind = ClocktowerUndertakerResultSourceKind.LegacyUnreliable,
-            )
-        }
-    }
-
-    val displayLabel = step.displayPrimary?.takeIf { it.isNotBlank() } ?: return emptyList()
-    return listOf(
+    val targetSeat = (step.informationQuestion as? ClocktowerInformationQuestion.Role)?.subjectSeat
+        ?.takeIf { it in 1..seatCount } ?: return emptyList()
+    val options = if (allowRuleDeterminedAutoUi && automaticDisplayOption != null) listOf(automaticDisplayOption)
+        else listOfNotNull(automaticDisplayOption) + step.manualInformationCandidates
+    return options.distinctBy(::clocktowerInformationCandidateId).mapNotNull { option ->
+        val result = option.proposition as? InformationProposition.RoleAt ?: return@mapNotNull null
+        if (result.seat != targetSeat) return@mapNotNull null
         ClocktowerUndertakerResultChoice(
-            key = "direct|${anchor.targetSeat}|${anchor.roleId.value}",
-            executedSeat = anchor.targetSeat,
-            roleId = anchor.roleId,
-            displayLabel = displayLabel,
-            sourceKind = ClocktowerUndertakerResultSourceKind.Direct,
-            recommended = true,
-        ),
-    )
+            key = clocktowerInformationCandidateId(option), executedSeat = targetSeat,
+            roleId = result.role, displayLabel = option.displayPrimary.orEmpty(),
+            sourceKind = ClocktowerUndertakerResultSourceKind.DisplayOption, displayOption = option,
+            recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds,
+        )
+    }
 }
 
 internal fun clocktowerUndertakerSeatVisual(

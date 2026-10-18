@@ -174,7 +174,7 @@ class NightTransactionReconstructionContractTest {
     }
 
     @Test
-    fun `restored stale Mayor redirect to reconstructed new Demon fails closed`() {
+    fun `confirmed Mayor target survives effective role reconstruction without rule replacement`() {
         val baseGameState = gameState(includeMayor = true)
         val recoveredCheckpoint = checkpoint(
             nightStepIndex = 2,
@@ -202,7 +202,7 @@ class NightTransactionReconstructionContractTest {
         )
 
         assertEquals(RoleId("Imp"), reconstruction.effectiveState.currentRoleId(2))
-        assertEquals(4, transition.dawnCommitIntent?.death?.targetSeat)
+        assertEquals(2, transition.dawnCommitIntent?.death?.targetSeat)
         assertEquals(RoleId("Poisoner"), baseGameState.playerAt(2)?.actualRole)
     }
 

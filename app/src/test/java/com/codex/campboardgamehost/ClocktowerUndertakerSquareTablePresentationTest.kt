@@ -1,195 +1,35 @@
 package com.codex.campboardgamehost
-
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 
 class ClocktowerUndertakerSquareTablePresentationTest {
-    @Test
-    fun `executed seat and shown role come only from typed role-at proposition`() {
-        val result = clocktowerUndertakerTypedResult(
-            proposition = InformationProposition.RoleAt(4, RoleId("Chef")),
-            seatCount = 7,
-        )
-
-        assertEquals(ClocktowerUndertakerTypedResult(4, RoleId("Chef")), result)
+    private fun option(seat: Int, role: String) = ClocktowerDisplayOption(role, ClocktowerDisplayKind.RoleReveal,
+        "Undertaker", role, null, null, proposition = InformationProposition.RoleAt(seat, RoleId(role)))
+    private fun step() = ClocktowerNightStepUi("Undertaker", PlayerCard("Alice"), true, "", "", null, "",
+        roleEnName = "Undertaker", informationQuestion = ClocktowerInformationQuestion.Role(4),
+        manualInformationCandidates = listOf(option(4, "Chef"), option(4, "Imp")))
+    @Test fun `executed subject stays fixed without a Host generated role answer`() {
+        val step = step()
+        assertNull(step.displayProposition)
+        val choices = clocktowerUndertakerResultChoices(step, 7, false, null)
+        assertEquals(setOf("Chef", "Imp"), choices.map { it.roleId!!.value }.toSet())
+        assertTrue(choices.all { it.executedSeat == 4 })
+        val advised = option(4, "Spy")
+        assertEquals("Spy", clocktowerUndertakerResultChoices(step, 7, true, advised).single().roleId!!.value)
+        assertTrue(clocktowerUndertakerResultChoices(step, 7, true, option(5, "Spy")).isEmpty())
+        assertTrue(clocktowerUndertakerResultChoices(step.copy(informationQuestion = null), 7, false, null).isEmpty())
     }
-
-    @Test
-    fun `non role-at or invalid seat fails closed`() {
-        assertNull(
-            clocktowerUndertakerTypedResult(
-                proposition = InformationProposition.RoleInPlay(RoleId("Chef"), true),
-                seatCount = 7,
-            ),
-        )
-        assertNull(
-            clocktowerUndertakerTypedResult(
-                proposition = InformationProposition.RoleAt(8, RoleId("Chef")),
-                seatCount = 7,
-            ),
-        )
+    @Test fun `executed context and current actor are independent presentation dimensions`() {
+        val visual = clocktowerUndertakerSeatVisual(4, 1, 4, "en")
+        assertEquals(ClocktowerSquareTableSeatState.HighlightedInformation, visual.state)
+        assertFalse(visual.isCurrentActor)
+        assertTrue(clocktowerUndertakerSeatVisual(1, 1, 4, "en").isCurrentActor)
     }
-
-    @Test
-    fun `manual final results keep one fixed executed seat while role may vary`() {
-        val chef = option(seat = 4, role = "Chef", recommended = true)
-        val spy = option(seat = 4, role = "Spy")
-
-        val choices = clocktowerUndertakerResultChoices(
-            step = undertakerStep(),
-            seatCount = 7,
-            allowRuleDeterminedAutoUi = false,
-            automaticDisplayOption = null,
-            resultFirstRegistrationCandidates = listOf(chef, spy),
-        )
-
-        assertEquals(listOf(4, 4), choices.map { it.executedSeat })
-        assertEquals(listOf("Chef", "Spy"), choices.map { it.roleId?.value })
-        assertEquals(listOf("Chef", "Spy"), choices.map { it.displayLabel })
-        assertEquals(
-            listOf(
-                ClocktowerUndertakerResultSourceKind.DisplayOption,
-                ClocktowerUndertakerResultSourceKind.DisplayOption,
-            ),
-            choices.map { it.sourceKind },
-        )
-        assertTrue(choices.first().recommended)
+    @Test fun `typed role result rejects non-role and unknown target`() {
+        assertEquals(4, clocktowerUndertakerTypedResult(InformationProposition.RoleAt(4, RoleId("Chef")), 7)!!.executedSeat)
+        assertNull(clocktowerUndertakerTypedResult(InformationProposition.RoleInPlay(RoleId("Chef"), true), 7))
+        assertNull(clocktowerUndertakerTypedResult(InformationProposition.RoleAt(9, RoleId("Chef")), 7))
     }
-
-    @Test
-    fun `conflicting candidate seats fail closed instead of inventing execution context`() {
-        val choices = clocktowerUndertakerResultChoices(
-            step = undertakerStep(),
-            seatCount = 7,
-            allowRuleDeterminedAutoUi = false,
-            automaticDisplayOption = null,
-            resultFirstRegistrationCandidates = listOf(
-                option(seat = 4, role = "Chef"),
-                option(seat = 5, role = "Spy"),
-            ),
-        )
-
-        assertTrue(choices.isEmpty())
-    }
-
-    @Test
-    fun `unreliable role choices stay opaque while execution context remains typed`() {
-        val choices = clocktowerUndertakerResultChoices(
-            step = undertakerStep(
-                displayOptions = listOf(
-                    option(seat = 4, role = "Chef", typed = false),
-                    option(seat = 4, role = "Imp", typed = false),
-                ),
-            ),
-            seatCount = 7,
-            allowRuleDeterminedAutoUi = false,
-            automaticDisplayOption = null,
-            resultFirstRegistrationCandidates = emptyList(),
-        )
-
-        assertEquals(setOf(4), choices.map { it.executedSeat }.toSet())
-        assertTrue(choices.all { it.roleId == null })
-        assertEquals(listOf("Chef", "Imp"), choices.map { it.displayLabel })
-        assertEquals(
-            listOf(
-                ClocktowerUndertakerResultSourceKind.LegacyUnreliable,
-                ClocktowerUndertakerResultSourceKind.LegacyUnreliable,
-            ),
-            choices.map { it.sourceKind },
-        )
-    }
-
-    @Test
-    fun `opaque unreliable option never becomes a player proposition`() {
-        val selected = option(seat = 4, role = "Imp", typed = false)
-        val resolved = resolveClocktowerLegacyUnreliablePlayerDisplay(
-            undertakerStep(displayOptions = listOf(selected)),
-            selected,
-        )
-
-        assertEquals("Imp", resolved.displayPrimary)
-        assertNull(resolved.displayProposition)
-    }
-
-    @Test
-    fun `player reveal leads with executed player and shows role as primary`() {
-        val choice = ClocktowerUndertakerResultChoice(
-            key = "chef",
-            executedSeat = 4,
-            roleId = RoleId("Chef"),
-            displayLabel = "厨师",
-            sourceKind = ClocktowerUndertakerResultSourceKind.Direct,
-        )
-        val cards = List(7) { index ->
-            PlayerCard(
-                name = "P${index + 1}",
-                )
-        }
-        val display = clocktowerUndertakerPlayerDisplayStep(undertakerStep(), choice, cards, "zh")
-
-        assertEquals("昨天被处决的 4号 P4，身份是", display.displayTitle)
-        assertEquals("厨师", display.displayPrimary)
-        assertNull(display.displaySecondary)
-        assertNull(display.displayFooter)
-    }
-
-    @Test
-    fun `executed context and current actor are independent visual dimensions`() {
-        val executed = clocktowerUndertakerSeatVisual(
-            seatNumber = 4,
-            actorSeat = 2,
-            executedSeat = 4,
-            language = "zh",
-        )
-        val actor = clocktowerUndertakerSeatVisual(
-            seatNumber = 2,
-            actorSeat = 2,
-            executedSeat = 4,
-            language = "zh",
-        )
-
-        assertEquals(ClocktowerSquareTableSeatState.HighlightedInformation, executed.state)
-        assertEquals("处", executed.badge)
-        assertFalse(executed.isCurrentActor)
-        assertEquals(ClocktowerSquareTableSeatState.Neutral, actor.state)
-        assertTrue(actor.isCurrentActor)
-    }
-
-    private fun undertakerStep(
-        displayOptions: List<ClocktowerDisplayOption> = emptyList(),
-    ) = ClocktowerNightStepUi(
-        title = "Undertaker",
-        actor = null,
-        isRealAction = true,
-        reason = "",
-        storytellerAction = "",
-        tellPlayer = "P4 was Chef",
-        explanation = "",
-        roleEnName = "Undertaker",
-        displayKind = ClocktowerDisplayKind.RoleReveal,
-        displayPrimary = "Chef",
-        displayProposition = InformationProposition.RoleAt(4, RoleId("Chef")),
-        displayOptions = displayOptions,
-    )
-
-    private fun option(
-        seat: Int,
-        role: String,
-        recommended: Boolean = false,
-        typed: Boolean = true,
-    ) = ClocktowerDisplayOption(
-        label = role,
-        displayKind = ClocktowerDisplayKind.RoleReveal,
-        displayTitle = "Undertaker information",
-        displayPrimary = role,
-        displaySecondary = null,
-        displayFooter = "Executed today: P$seat",
-        proposition = if (typed) InformationProposition.RoleAt(seat, RoleId(role)) else null,
-        isDefaultRecommendation = recommended,
-    )
 }

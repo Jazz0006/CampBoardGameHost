@@ -34,7 +34,13 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
         storytellerAction = "", tellPlayer = null, explanation = "",
         action = if (role == "Fortune Teller") ClocktowerNightAction.FortuneTeller
             else ClocktowerNightAction.None,
-        roleEnName = role, displayProposition = proposition,
+        roleEnName = role, displayProposition = null,
+        informationQuestion = when (proposition) {
+            is InformationProposition.NumericResult -> ClocktowerInformationQuestion.Number(proposition.metric, proposition.subjectSeats)
+            is InformationProposition.BooleanResult -> ClocktowerInformationQuestion.Boolean(proposition.metric, proposition.subjectSeats)
+            is InformationProposition.RoleAt -> ClocktowerInformationQuestion.Role(proposition.seat)
+            else -> null
+        },
         informationReliability = reliability,
         manualInformationCandidates = manual,
         numericMinimumValue = 0, numericMaximumValue = 3,
@@ -176,7 +182,7 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
         val decision = requireNotNull(build(role, phase = ClocktowerPhase.Night))
         assertEquals(StorytellerProviderScalarKindV1.ROLE, decision.kind)
         assertEquals(listOf(6), decision.subjectSeats)
-        assertNull(build(role.copy(displayProposition = null,
+        assertNull(build(role.copy(informationQuestion = null, displayProposition = null,
             automaticInformationCandidates = emptyList()), phase = ClocktowerPhase.Night))
     }
 

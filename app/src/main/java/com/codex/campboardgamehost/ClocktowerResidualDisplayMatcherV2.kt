@@ -12,7 +12,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraf
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
-import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 
 /** Direct semantic advice becomes a UI preselection; only confirmation records a fact. */
@@ -130,13 +129,11 @@ internal object ClocktowerResidualDisplayMatcherV2 {
         decision: PendingMayorRedirectDecision,
         selected: SemanticResult?,
         currentRevision: StorytellerDecisionRevision,
-        currentLegalSeats: Set<Int>,
+        currentSeats: Set<Int>,
     ): Int? {
         if (selected?.kind != "SEAT_TARGET") return null
-        val candidateId = selected.seat?.let(decision::candidateIdForSeat) ?: return null
-        val confirmation = decision.confirm(candidateId, currentRevision)
-            as? MayorRedirectDecisionConfirmation.Confirmed ?: return null
-        return confirmation.targetSeat.takeIf { it in currentLegalSeats }
+        if (decision.revision != currentRevision) return null
+        return selected.seat?.takeIf { it in currentSeats }
     }
 
     /** Materialize exactly the model's structured result; never choose a Host alternative. */

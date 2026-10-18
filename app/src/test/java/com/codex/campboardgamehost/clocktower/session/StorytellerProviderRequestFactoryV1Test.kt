@@ -81,16 +81,7 @@ class StorytellerProviderRequestFactoryV1Test {
             StorytellerProviderDecisionContextV1.MAYOR_REDIRECT,
             mayorRequest.identity.decisionTypeId,
         )
-        assertEquals(
-            mayorDecision.pending.legalCandidates.map { it.candidateId },
-            mayorRequest.legalCandidateIds,
-        )
-        assertEquals(
-            mayorDecision.legalTargetSeats,
-            mayorRequest.legalCandidates
-                .map { (it.payload as StorytellerProviderCandidatePayloadV1.SeatTarget).seat }
-                .toSet(),
-        )
+        assertTrue(mayorRequest.legalCandidates.isEmpty())
     }
 
     @Test

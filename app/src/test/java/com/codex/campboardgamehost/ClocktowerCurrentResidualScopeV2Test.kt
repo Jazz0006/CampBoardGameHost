@@ -108,8 +108,8 @@ class ClocktowerCurrentResidualScopeV2Test {
         val cards = (0..4).map { PlayerCard("Player $it") }
         val empath = step(ClocktowerNightAction.None).copy(
             actor = cards[1], roleEnName = "Empath",
-            displayProposition = InformationProposition.NumericResult(
-                NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 0),
+            informationQuestion = ClocktowerInformationQuestion.Number(NumericMetric.LIVING_EVIL_NEIGHBOURS, listOf(1, 3)),
+            displayProposition = null,
             numericMinimumValue = 0, numericMaximumValue = 2)
         val scope = ClocktowerCurrentResidualScopeV2.collect(
             state = session.state, phase = StorytellerPhase.NIGHT, round = 2,
@@ -129,8 +129,8 @@ class ClocktowerCurrentResidualScopeV2Test {
         val cards = (0..4).map { PlayerCard("Player $it") }
         val information = step(ClocktowerNightAction.None).copy(
             actor = cards[1], roleEnName = "Empath",
-            displayProposition = InformationProposition.NumericResult(
-                NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 0),
+            informationQuestion = ClocktowerInformationQuestion.Number(NumericMetric.LIVING_EVIL_NEIGHBOURS, listOf(1, 3)),
+            displayProposition = null,
             numericMinimumValue = 0, numericMaximumValue = 2)
         val received = InformationProposition.NumericResult(
             NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 0)
@@ -164,8 +164,9 @@ class ClocktowerCurrentResidualScopeV2Test {
             proposition = InformationProposition.RoleAt(3, RoleId("Monk")))
         val current = step(ClocktowerNightAction.Ravenkeeper).copy(
             actor = cards[0], roleEnName = "Ravenkeeper",
+            informationQuestion = ClocktowerInformationQuestion.Role(3),
             displayKind = ClocktowerDisplayKind.RoleReveal,
-            displayProposition = InformationProposition.RoleAt(3, RoleId("Monk")),
+            displayProposition = null,
             automaticInformationCandidates = listOf(roleOption))
         fun scope(value: ClocktowerNightStepUi) = ClocktowerCurrentResidualScopeV2.collect(
             session.state, StorytellerPhase.NIGHT, 2,
@@ -191,7 +192,7 @@ class ClocktowerCurrentResidualScopeV2Test {
         assertEquals("Ravenkeeper", legal.single().abilityRoleId)
         assertEquals("ROLE", (legal.single().currentDecisionContext as
             StorytellerProviderDecisionContextV1.ScalarInformation).kind.name)
-        assertTrue(scope(current.copy(displayProposition = null,
+        assertTrue(scope(current.copy(informationQuestion = null, displayProposition = null,
             automaticInformationCandidates = emptyList())).requests.isEmpty())
     }
 
@@ -218,16 +219,16 @@ class ClocktowerCurrentResidualScopeV2Test {
         assertFalse(ClocktowerResidualDisplayMatcherV2.allChoicesCanBePresented(
             listOf(request), mapOf(request.identity.decisionId to SemanticResult("SEAT_TARGET", seat = 99)), listOf(mayorStep), cards))
         assertEquals(3, ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
-            pending, id, revision, pending.legalTargetSeats))
+            pending, id, revision, (1..5).toSet()))
         assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
             pending, id, revision.copy(playerInputRevision = revision.playerInputRevision + 1),
-            pending.legalTargetSeats))
+            (1..5).toSet()))
         assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
             pending, id, revision, setOf(1, 2)))
         assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
-            pending, SemanticResult("SEAT_TARGET", seat = 99), revision, pending.legalTargetSeats))
+            pending, SemanticResult("SEAT_TARGET", seat = 99), revision, (1..5).toSet()))
         assertNull(ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
-            pending, null, revision, pending.legalTargetSeats))
+            pending, null, revision, (1..5).toSet()))
     }
 
     @Test fun actionKindsAreFlowBarriersNotIndependentAiRoleRecommenders() {

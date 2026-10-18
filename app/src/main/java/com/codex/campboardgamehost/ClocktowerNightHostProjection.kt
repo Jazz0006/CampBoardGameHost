@@ -19,7 +19,6 @@ import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightStat
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerOptionalNightSourceChronology
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
-import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
 import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
@@ -229,10 +228,7 @@ internal object ClocktowerNightHostProjectionFactory {
         val mayorTarget = canonicalNightDeathResolution.facts.mayorSeat
             ?.let { targetSeat -> cards.getOrNull(targetSeat - 1) }
         val mayorRedirectTargetCards = cards.filter { card ->
-            card.name != mayorTarget?.name &&
-                MayorRedirectLegality.canReceiveRedirect(
-                    targetIsDemon = card.clocktowerTeam == ClocktowerTeam.Demon,
-                )
+            card.name != mayorTarget?.name
         }
         val resolvedNightDeathCard = canonicalNightDeathResolution.resolvedDeathName
             ?.let { name -> cards.firstOrNull { it.name == name } }

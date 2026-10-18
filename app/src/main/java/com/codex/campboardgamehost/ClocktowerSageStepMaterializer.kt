@@ -114,15 +114,7 @@ internal fun clocktowerSageStepMaterializer(
                     content = content,
                 )
             },
-            reliableDisplayOptions = { actor ->
-                clocktowerSageDisplayOptions(
-                    cards = cards,
-                    actor = actor,
-                    demon = resolvedDemon,
-                    truthfulOnly = true,
-                    content = content,
-                )
-            },
+
         )
     },
 )

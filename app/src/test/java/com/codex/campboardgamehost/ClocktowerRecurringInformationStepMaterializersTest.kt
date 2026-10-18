@@ -1,70 +1,22 @@
 package com.codex.campboardgamehost
-
-import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.*
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.*
 import org.junit.Test
 
 class ClocktowerRecurringInformationStepMaterializersTest {
-    private val actor = PlayerCard("Alice")
-    private val cards = listOf(actor, PlayerCard("Bob"), PlayerCard("Carol"))
-
-    @Test
-    fun `Empath keeps prepared result and defers candidate calculation for a reliable actor`() {
-        var optionCalls = 0
-        val step = clocktowerEmpathStepMaterializer(
-            builder = builder(AbilityFunctioningState.FUNCTIONING),
-            content = ClocktowerEmpathStepContent("1", null, 0, null, null),
-            text = { _, en -> en },
-            displayOptions = {
-                optionCalls++
-                emptyList()
-            },
-            legalSelectionOptions = { emptyList() },
-        ).build()
-
-        assertEquals("1", step.tellPlayer)
-        assertEquals(ClocktowerDisplayKind.Number, step.displayKind)
-        assertEquals(0, step.previousShownNumber)
-        assertEquals(0, optionCalls)
+    private val cards = listOf(PlayerCard("Alice"), PlayerCard("Bob"), PlayerCard("Carol"))
+    private val builder = ClocktowerInformationStepBuilder(cards, "en", { _, en -> en }, { cards[0] },
+        { "missing" }, { _, _ -> AbilityFunctioningState.POISONED })
+    @Test fun `recurring questions keep actual targets without Host answers or candidate menus`() {
+        val empath = clocktowerEmpathStepMaterializer(builder, listOf(2, 3), { _, en -> en }).build()
+        assertEquals(ClocktowerInformationQuestion.Number(NumericMetric.LIVING_EVIL_NEIGHBOURS, listOf(2, 3)), empath.informationQuestion)
+        assertNull(empath.displayProposition)
+        assertTrue(empath.manualInformationCandidates.isEmpty())
+        val ft = clocktowerFortuneTellerStepMaterializer(builder, listOf(2, 3), { _, en -> en }).build()
+        assertEquals(ClocktowerInformationQuestion.Boolean(BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, listOf(2, 3)), ft.informationQuestion)
+        assertNull(ft.tellPlayer)
+        assertTrue(ft.displayOptions.isEmpty())
+        assertNull(clocktowerFortuneTellerStepMaterializer(builder, listOf(2), { _, en -> en }).build().informationQuestion)
     }
-
-    @Test
-    fun `Fortune Teller retains the selected seats in unreliable options`() {
-        val proposition = InformationProposition.BooleanResult(
-            BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, 1, listOf(2, 3), true,
-        )
-        val step = clocktowerFortuneTellerStepMaterializer(
-            builder = builder(AbilityFunctioningState.POISONED),
-            content = ClocktowerFortuneTellerStepContent(
-                result = "Yes",
-                matched = true,
-                selectedNames = listOf("Bob", "Carol"),
-                displaySecondary = "2   3",
-                proposition = proposition,
-                recluseRegistrationKey = "registration",
-            ),
-            cards = cards,
-            text = { _, en -> en },
-            legalSelectionOptions = { emptyList() },
-        ).build()
-
-        assertNull(step.tellPlayer)
-        assertNull(step.recluseRegistrationKey)
-        assertEquals(listOf(true, false), step.recommendedDisplayOptions.map { it.isTruthful })
-        assertEquals(listOf(2, 3),
-            (step.recommendedDisplayOptions.first().proposition as InformationProposition.BooleanResult).subjectSeats)
-    }
-
-    private fun builder(state: AbilityFunctioningState) = ClocktowerInformationStepBuilder(
-        cards = cards,
-        language = "en",
-        text = { _, en -> en },
-        roleActor = { actor },
-        roleMissingReason = { "missing $it" },
-        abilityStateFor = { _, _ -> state },
-        actorIsUnreliable = { _, _ -> state != AbilityFunctioningState.FUNCTIONING },
-    )
 }

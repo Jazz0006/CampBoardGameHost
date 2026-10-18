@@ -105,17 +105,10 @@ class StorytellerCausalDecisionJournalV1Test {
         )
 
     @Test
-    fun `confirmed Mayor decision commits typed fact and causal journal without half writes`() {
+    fun `confirmed Mayor commits one actual fact without candidate or duplicate journal writes`() {
         val game = session()
         fun mayorRequest(id: String): StorytellerProviderRequestV1 =
-            request(id, game, game.causalDecisionJournal).copy(
-                legalCandidates = listOf(1, 2, 4).map { seat ->
-                    StorytellerProviderCandidateV1(
-                        MayorRedirectDecisionBoundary.candidateIdForSeat(seat),
-                        StorytellerProviderCandidatePayloadV1.SeatTarget(seat),
-                    )
-                },
-            )
+            request(id, game, game.causalDecisionJournal).copy(legalCandidates = emptyList())
         val firstRequest = mayorRequest("night:2:mayor-redirect:first")
         val choice = ActionFactDraft.MayorRedirectChoice(
             actionId = "mayor-night-two-first",
@@ -125,61 +118,62 @@ class StorytellerCausalDecisionJournalV1Test {
             mayorSeat = 1,
             targetSeat = 2,
         )
-        val candidate = MayorRedirectDecisionBoundary.candidateIdForSeat(2)
-        val accepted = game.commitConfirmedMayorRedirect(choice, firstRequest, candidate, 0L)
+        val accepted = game.commitConfirmedMayorRedirect(choice, firstRequest, 0L)
         assertEquals(0L, accepted.point.globalSequence)
         assertEquals(1L, game.state.gameStateRevision)
         assertEquals(1L, game.state.nextTimelineGlobalSequence)
         assertEquals(choice.targetSeat, (game.state.actionTimeline.entries.single().fact as
             com.codex.campboardgamehost.clocktower.domain.ActionFact.MayorRedirectChoice).targetSeat)
-        assertEquals(1, game.causalDecisionJournal.effectiveNow().size)
-        assertEquals(candidate, game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+        assertTrue(game.causalDecisionJournal.archive().records.isEmpty())
 
         // Re-tapping the same stable confirmation is truly a no-op, including the journal.
         val afterFirst = game.state
         val journalAfterFirst = game.causalDecisionJournal.archive()
-        assertEquals(accepted, game.commitConfirmedMayorRedirect(choice, firstRequest, candidate, 0L))
+        assertEquals(accepted, game.commitConfirmedMayorRedirect(choice, firstRequest, 0L))
         assertEquals(afterFirst, game.state)
         assertEquals(journalAfterFirst, game.causalDecisionJournal.archive())
 
-        val bad = choice.copy(actionId = "mayor-invalid", targetSeat = 3, sequence = 2)
+        val bad = choice.copy(actionId = "mayor-invalid", targetSeat = 99, sequence = 2)
         assertThrows(IllegalArgumentException::class.java) {
             game.commitConfirmedMayorRedirect(
                 bad, mayorRequest("night:2:mayor-redirect:invalid"),
-                MayorRedirectDecisionBoundary.candidateIdForSeat(3), 1L,
+                1L,
             )
         }
         assertEquals(afterFirst, game.state)
         assertEquals(journalAfterFirst, game.causalDecisionJournal.archive())
 
+        assertThrows(IllegalStateException::class.java) {
+            game.commitConfirmedMayorRedirect(choice.copy(actionId = "stale", sequence = 2), firstRequest, 0L)
+        }
+        val wrongSource = mayorRequest("wrong-source").copy(
+            decisionContext = StorytellerProviderDecisionContextV1.MayorRedirect(2))
+        assertThrows(IllegalArgumentException::class.java) {
+            game.commitConfirmedMayorRedirect(choice.copy(actionId = "wrong-source", sequence = 2), wrongSource, 1L)
+        }
+        assertEquals(afterFirst, game.state)
+
         val secondRequest = mayorRequest("night:2:mayor-redirect:revised")
         game.commitConfirmedMayorRedirect(
-            choice.copy(actionId = "mayor-night-two-revised", targetSeat = 4, sequence = 2),
-            secondRequest, MayorRedirectDecisionBoundary.candidateIdForSeat(4), 1L,
+            choice.copy(actionId = "mayor-night-two-revised", targetSeat = 3, sequence = 2),
+            secondRequest, 1L,
         )
         assertEquals(2L, game.state.gameStateRevision)
         assertEquals(2L, game.state.nextTimelineGlobalSequence)
         assertEquals(listOf(0L, 1L), game.state.actionTimeline.entries.map { it.point.globalSequence })
-        assertEquals(1, game.causalDecisionJournal.effectiveNow().size)
-        assertEquals(MayorRedirectDecisionBoundary.candidateIdForSeat(4),
-            game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
-        assertEquals(2, game.causalDecisionJournal.archive().records.count {
-            it is StorytellerCausalJournalRecordV1.Captured
-        })
-        assertEquals(1, game.causalDecisionJournal.archive().records.count {
-            it is StorytellerCausalJournalRecordV1.Corrected
-        })
+        assertEquals(3, game.state.nightTargets.mayorRedirectSeat)
+        assertTrue(game.causalDecisionJournal.archive().records.isEmpty())
 
         // The legal domain also permits letting the Mayor die: target == Mayor seat.
         game.commitConfirmedMayorRedirect(
             choice.copy(actionId = "mayor-night-two-no-redirect", targetSeat = 1, sequence = 3),
             mayorRequest("night:2:mayor-redirect:no-redirect"),
-            MayorRedirectDecisionBoundary.candidateIdForSeat(1), 2L,
+            2L,
         )
         assertEquals(3L, game.state.gameStateRevision)
         assertEquals(3L, game.state.nextTimelineGlobalSequence)
-        assertEquals(MayorRedirectDecisionBoundary.candidateIdForSeat(1),
-            game.causalDecisionJournal.effectiveNow().single().selectedCandidateId)
+        assertEquals(1, game.state.nightTargets.mayorRedirectSeat)
+        assertTrue(game.causalDecisionJournal.archive().records.isEmpty())
 
     }
 

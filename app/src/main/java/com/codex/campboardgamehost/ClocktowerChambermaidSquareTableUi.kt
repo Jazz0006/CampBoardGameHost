@@ -33,11 +33,12 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     onSeatSelected: (Int) -> Unit,
     onShowDeterminedResult: () -> Unit,
     onResultSelected: (ClocktowerDisplayOption) -> Unit,
+    numericInput: (@Composable () -> Unit)? = null,
     onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
+    if (numericInput == null && clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
         resultOptions.distinctBy(::clocktowerInformationCandidateId).size <= 1
     ) {
         val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
@@ -82,7 +83,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
         onHostTools = onHostTools,
         onNext = onNext,
     ) {
-        ClocktowerChambermaidCenterControls(
+        if (numericInput != null) numericInput() else ClocktowerChambermaidCenterControls(
             wakeInstruction = wakeInstruction,
             selectedSeats = selectedSeats,
             recommendedResultOptions = recommendedResultOptions,

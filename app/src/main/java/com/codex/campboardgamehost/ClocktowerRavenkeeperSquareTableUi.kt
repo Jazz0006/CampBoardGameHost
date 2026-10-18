@@ -75,95 +75,24 @@ internal fun clocktowerRavenkeeperResultChoices(
     seatCount: Int,
     allowRuleDeterminedAutoUi: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
-    resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     recommendedOptionIds: Set<String> = emptySet(),
 ): List<ClocktowerRavenkeeperResultChoice> {
-    if (step.action != ClocktowerNightAction.Ravenkeeper || step.roleEnName != "Ravenkeeper") {
-        return emptyList()
-    }
-    val directAnchor = clocktowerRoleRevealAnchor(
-        proposition = step.displayProposition,
-        expectedSeat = selectedSeat,
-        seatCount = seatCount,
-    )
-    // Before a Spy/Recluse registration is chosen, there is no one truthful
-    // RoleAt yet. The Host's typed legal options still prove the real queried
-    // seat; use them to open the existing choice UI, never to assert a role.
-    val registrationTargetSeat = if (directAnchor == null && step.displayProposition == null &&
-        selectedSeat != null && selectedSeat in 1..seatCount &&
-        resultFirstRegistrationCandidates.isNotEmpty()
-    ) {
-        val rolesAtTarget = resultFirstRegistrationCandidates.mapNotNull { option ->
-            (option.proposition as? InformationProposition.RoleAt)?.takeIf {
-                option.displayKind == ClocktowerDisplayKind.RoleReveal && it.seat == selectedSeat
-            }
-        }
-        if (rolesAtTarget.size == resultFirstRegistrationCandidates.size) {
-            selectedSeat
-        } else null
-    } else null
-    val targetSeat = directAnchor?.targetSeat ?: registrationTargetSeat ?: return emptyList()
-
-    fun choicesFrom(
-        options: List<ClocktowerDisplayOption>,
-        sourceKind: ClocktowerRavenkeeperResultSourceKind,
-    ): List<ClocktowerRavenkeeperResultChoice> {
-        if (options.isEmpty()) return emptyList()
-        return options.map { option ->
-            val projected = clocktowerRoleRevealChoiceProjection(
-                option = option,
-                targetSeat = targetSeat,
-                seatCount = seatCount,
-            ) ?: return emptyList()
-            ClocktowerRavenkeeperResultChoice(
-                key = clocktowerInformationCandidateId(option),
-                targetSeat = projected.targetSeat,
-                roleId = projected.roleId,
-                displayLabel = projected.displayLabel,
-                sourceKind = sourceKind,
-                displayOption = option,
-                recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
-                    (recommendedOptionIds.isEmpty() && option.isDefaultRecommendation),
-            )
-        }.distinctBy { it.key }
-    }
-
-    if (allowRuleDeterminedAutoUi) {
-        automaticDisplayOption?.let { option ->
-            return choicesFrom(
-                options = listOf(option),
-                sourceKind = ClocktowerRavenkeeperResultSourceKind.DisplayOption,
-            )
-        }
-    } else {
-        if (resultFirstRegistrationCandidates.isNotEmpty()) {
-            return choicesFrom(
-                options = resultFirstRegistrationCandidates,
-                sourceKind = ClocktowerRavenkeeperResultSourceKind.DisplayOption,
-            )
-        }
-        if (step.displayOptions.isNotEmpty()) {
-            return choicesFrom(
-                options = step.displayOptions,
-                sourceKind = ClocktowerRavenkeeperResultSourceKind.LegacyUnreliable,
-            )
-        }
-    }
-
-    // Only a genuine step-level RoleAt may fall back to the direct truthful
-    // display; a provisional registration candidate is not a settled result.
-    if (directAnchor == null) return emptyList()
-    val displayLabel = step.displayPrimary?.takeIf { it.isNotBlank() } ?: return emptyList()
-    return listOf(
+    if (step.roleEnName != "Ravenkeeper" || step.action != ClocktowerNightAction.Ravenkeeper) return emptyList()
+    val targetSeat = (step.informationQuestion as? ClocktowerInformationQuestion.Role)?.subjectSeat
+        ?.takeIf { it in 1..seatCount } ?: return emptyList()
+    if (selectedSeat != targetSeat) return emptyList()
+    val options = if (allowRuleDeterminedAutoUi && automaticDisplayOption != null) listOf(automaticDisplayOption)
+        else listOfNotNull(automaticDisplayOption) + step.manualInformationCandidates
+    return options.distinctBy(::clocktowerInformationCandidateId).mapNotNull { option ->
+        val result = option.proposition as? InformationProposition.RoleAt ?: return@mapNotNull null
+        if (result.seat != targetSeat) return@mapNotNull null
         ClocktowerRavenkeeperResultChoice(
-            key = "direct|${directAnchor.targetSeat}|${directAnchor.roleId.value}",
-            targetSeat = directAnchor.targetSeat,
-            roleId = directAnchor.roleId,
-            displayLabel = displayLabel,
-            sourceKind = ClocktowerRavenkeeperResultSourceKind.Direct,
-            recommended = true,
-        ),
-    )
+            key = clocktowerInformationCandidateId(option), targetSeat = targetSeat,
+            roleId = result.role, displayLabel = option.displayPrimary.orEmpty(),
+            sourceKind = ClocktowerRavenkeeperResultSourceKind.DisplayOption, displayOption = option,
+            recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds,
+        )
+    }
 }
 
 /**
