@@ -2,6 +2,13 @@
 
 **用户再次确认：不要再以旧代码调用栈为主线逐段探索。** 优先枚举当前 Git HEAD 的全部源码模块，按 Host Core、现有 AI、旧 Host Rules、无生产消费者的实验、需要产品决策的外部客户端五类做证据分类。审计及确认/标记删除均记录到现有 `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`，不复制第二份全树文件索引。已确认无效的整块实现与专属测试直接删除并独立验证；仅有风险或实际消费者的标记 `REMOVE_AFTER_DISCONNECT`，先保护 AI 生产调用。P1 持续清除 Host 规则门禁，不重写 AI。
 
+## F2 全树横向删除（代码 CI/R2 待执行）
+
+- F1 docs HEAD `5fe9869266f54832b2cec7462ac4563d89b2a4fa` 起始，分支 `codex/minimal-host-full-scan-20261018`，PR #334 Draft 堆叠未合并。
+- 生产文件 `epistemic/B4DynamicPlayerWorldSetShadow.kt` 及两份独占 B4 测试被整体删除：无任何 App/AI 生产消费者。调整 `CrossTypeTimelineCompatibilityTest` 直接校验共享时间线/观察日志兼容，`ExactHistoricalHypotheticalObservationBundleEvaluatorTest` 去除 B4 对照但继续校验 Exact 结果/无副作用。
+- 保留当前活跃 AI 所需 `HostOpeningRulesDomainV2`、`InitialJointOpeningDirectV2`、Pair/Numeric AI 候选、Provider、战略记忆、API 与 UI 预选。保留 App 真实调用的 A4 预热/缓存链直至消费者审计完成；没有改变唯一游戏记录、权限/隐私、原子写入、过期请求处理。
+- 本批代码 SHA、git diff 净删和 CI/R2 真实状态待新提交核实；下一组继续从全树台账挑选死代码岛，避免回到沿旧调用路径扩散的工作方式。
+
 ## F1 当前进展（2026-10-18）
 
 - Git 树 SHA `8c1a4dc114060806c33d5f78102b6b3c6457cf71`：1135 文件；含 Kotlin/DSL、Java、JS/TS、HTML/CSS、Python、Shell、XML、YAML、JSON 的宽口径源码/配置 723 文件；Android 337 生产 Kotlin、320 测试 Kotlin（当前删除前基线）。不同统计扩展名口径不要直接比较。

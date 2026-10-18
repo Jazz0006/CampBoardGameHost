@@ -15,11 +15,18 @@
 | 首夜 HostOpeningRulesDomainV2 + InitialJointOpeningDirectV2、配对候选与 Provider、战略续规划 | KEEP_AI | 生产 App、Session、推荐路径直接消费；既有 AI 不重建不降级 |
 | FixedInformationEvaluator、FirstNightNumericInformationSemantics、TroubleBrewingRegistrationDomain | KEEP_AI（混合旧 Rules） | 数值与配对 AI 候选实际使用；先分离 Host 规则 veto 后再清理旧 Host 消费者 |
 | A4 identity-reveal prewarm / A4 Observation ZDD shadow | REMOVE_AFTER_DISCONNECT 待核 | App 仍有生产初始化/调用；不是 AI 首夜联合请求的直接入口，但须核实隐私和生命周期再删除 |
-| B4DynamicPlayerWorldSetShadow / ExactHistorical 和 Topology bundle 旧实验 | REMOVE_AFTER_DISCONNECT / 待分解 | B4 名称、请求类型仅文件自引用且有旧测试；共用的 Exact 类型被其他测试/推演引用，不能不审计就整包删 |
+| B4DynamicPlayerWorldSetShadow / ExactHistorical 和 Topology bundle 旧实验 | B4 独立接口 REMOVE_CONFIRMED（F2）；Exact/Topology AUDIT_PENDING | B4 全部生产引用仅本文件，无 AI 消费；时间线测试改测共享 API，Exact 评估测试独立保留；其余大型推演不能据此一起删 |
 | FN-BUNDLE PublicGoodInfoProjection 等压力实验 | REMOVE_AFTER_DISCONNECT 待核 | 旧实验/测试消费者存在；与正式联合规划 API 不是同一合同；先完整检查引用，再批量删除 |
 | ClocktowerHostSelectionSemantics / HostScreen / NightStepUi | AUDIT_PENDING 混合 | 夜间人工候选过滤和规则否决需要删，但显示、事实与 AI 自动/辅助流程要保留 |
 | legacy web/ 独立网页客户端及多剧本 | REVIEW_SCOPE | 非 Android Host，是否保留 Undercover/狼人及旧网页，由产品范围决定 |
 | tools、CI、assets、测试 | AUDIT_PENDING | 以当前 CI/R2/运行时消费者实际使用为依据，专属废弃实验测试可与生产实现一起删除 |
+
+### 全树横向删除批次 F2（待 GitHub 代码验收）
+
+- 生产 `epistemic/B4DynamicPlayerWorldSetShadow.kt`（B4ShadowRequest、B4ShadowCandidate、B4ShadowReport、`b4FormalGameState`、`b4ReplayObservationsInTimelineOrder`）在 `app/src/main` 无任何外部使用：B4 旧影子查询适配只给专属实验提供接口，**不是 App 首夜/后夜 AI 推荐、Host 状态或隐私写入依赖**。
+- 整删该生产文件以及独占的 `B4DynamicPlayerWorldSetShadowTest.kt`、`B4HistoricalExactShadowBridgeTest.kt`；`CrossTypeTimelineCompatibilityTest` 改为直接测试原始 `ActionFactTimeline.requireCompatibleWith(observationLog)` 和防外部列表篡改，`ExactHistoricalHypotheticalObservationBundleEvaluatorTest` 保留真实 Exact 评估稳定性/不变更记录断言，删 B4 对照包装要求。
+- `A4IdentityRevealPrewarmCoordinator` / `A4ObservationCacheRebuildExecutor` **仍由 App 生产引用**，故仍标记 `REMOVE_AFTER_DISCONNECT` 而不误删；`ExactHistoricalHypotheticalObservationBundleEvaluator` 和 Topology 分支当前仅旧测试消费者，但仍在关联实验系统中，待整组独立审计，未动。
+- 代码及专属测试净删体积和对应 CI/R2 状态在真实提交验收后回填；整个 F2 无 Canonical GameState、ActionFact、AI Provider、提示词、战略记忆、OpenAI 传输或 Android UI 生产改动。
 
 ### 全树横向删除批次 F1（源码修改与 CI 以提交为准）
 

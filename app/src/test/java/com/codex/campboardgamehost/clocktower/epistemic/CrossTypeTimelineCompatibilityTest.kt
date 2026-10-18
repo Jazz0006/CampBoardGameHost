@@ -3,87 +3,76 @@ package com.codex.campboardgamehost.clocktower.epistemic
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class CrossTypeTimelineCompatibilityTest {
-    private val snapshot = A4RuntimeFixtures.snapshot()
-    private val perceived = snapshot.gameState.players.associate { it.seat to (it.shownRole ?: it.actualRole) }
-    private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
-
-    @Test fun `B4 rejects action and observation sharing one global sequence`() {
+    @Test fun `Shared timeline rejects action and observation sharing one global sequence`() {
         assertThrows(IllegalArgumentException::class.java) {
-            request(
+            validatedPair(
                 actionTimeline = actionTimeline(10L),
                 observationLog = globalObservationLog(10L),
             )
         }
     }
 
-    @Test fun `B4 accepts distinct action and observation global sequences`() {
-        val request = request(
+    @Test fun `Shared timeline accepts distinct action and observation global sequences`() {
+        val request = validatedPair(
             actionTimeline = actionTimeline(10L),
             observationLog = globalObservationLog(11L),
         )
 
-        assertEquals(10L, request.actionTimeline.entries.single().point.globalSequence)
+        assertEquals(10L, request.first.entries.single().point.globalSequence)
         assertEquals(
             11L,
-            (request.observationLog.records.single().timelineBinding as ObservationTimelineBinding.Global)
+            (request.second.records.single().timelineBinding as ObservationTimelineBinding.Global)
                 .point.globalSequence,
         )
     }
 
-    @Test fun `B4 rejects globally bound actions combined with legacy local observations`() {
+    @Test fun `Shared timeline rejects globally bound actions combined with legacy local observations`() {
         assertThrows(IllegalArgumentException::class.java) {
-            request(
+            validatedPair(
                 actionTimeline = actionTimeline(10L),
                 observationLog = legacyObservationLog(),
             )
         }
     }
 
-    @Test fun `B4 keeps observation-only legacy compatibility when action timeline is empty`() {
-        val request = request(
+    @Test fun `Shared timeline keeps observation-only legacy compatibility when action timeline is empty`() {
+        val request = validatedPair(
             actionTimeline = ActionFactTimeline(),
             observationLog = legacyObservationLog(),
         )
 
-        assertEquals(1, request.observationLog.records.size)
-        assertEquals(ObservationTimelineBinding.LegacyLocal, request.observationLog.records.single().timelineBinding)
+        assertEquals(1, request.second.records.size)
+        assertEquals(ObservationTimelineBinding.LegacyLocal, request.second.records.single().timelineBinding)
     }
 
     @Test fun `validated observation log cannot be rewritten through caller owned mutable list`() {
         val callerOwned = mutableListOf(globalObservation(11L))
         val log = EpistemicObservationLog(callerOwned)
-        val request = request(actionTimeline(10L), log)
+        val request = validatedPair(actionTimeline(10L), log)
 
         callerOwned.clear()
         callerOwned += globalObservation(10L)
 
         assertEquals(
             11L,
-            (request.observationLog.records.single().timelineBinding as ObservationTimelineBinding.Global)
+            (request.second.records.single().timelineBinding as ObservationTimelineBinding.Global)
                 .point.globalSequence,
         )
     }
 
-    private fun request(
+    private fun validatedPair(
         actionTimeline: ActionFactTimeline,
         observationLog: EpistemicObservationLog,
-    ): B4ShadowRequest = B4ShadowRequest(
-        initialSnapshot = snapshot,
-        initialPhase = StorytellerPhase.FIRST_NIGHT,
-        initialRound = 1,
-        actionTimeline = actionTimeline,
-        perceivedRolesBySeat = perceived,
-        observationLog = observationLog,
-        hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-        roleDefinitions = roles,
-        candidates = emptyList(),
-    )
+    ): Pair<ActionFactTimeline, EpistemicObservationLog> {
+        // Same shared chronology boundary formerly wrapped by the test-only B4 request.
+        actionTimeline.requireCompatibleWith(observationLog)
+        return actionTimeline to observationLog
+    }
 
     private fun actionTimeline(globalSequence: Long): ActionFactTimeline = ActionFactTimeline(
         listOf(

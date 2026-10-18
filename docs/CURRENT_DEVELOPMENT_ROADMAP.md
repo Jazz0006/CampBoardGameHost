@@ -21,6 +21,8 @@
 
 F1 首批横向筛选确认 `DecisionSeedFactory` 与 `TroubleBrewingSetupRecommendationDecisionContext` 均仅有自身和专属测试调用，无实际 AI/Host 生产消费者；四文件（生产两件、专属测试两件）整删，净删 **478 行代码**（210 生产、268 测试）。代码及台账 HEAD `24995d37041bdf24a5bd6ad8da50a51ad693c8b4`，GitHub **完整 Android CI #4346 SUCCESS**（单测+Debug APK）、**R2 #3926 SUCCESS**，ASP、Clingo 和 CI gate 成功；PR #334 Draft 仍堆叠，未做真机/收费 API。后续按**全树分类**集中安排删除，不再用旧调用链决定审计顺序；未知与混合文件继续核查，不虚称全部源码已语义审核。
 
+F2 横向筛选到 `epistemic/B4DynamicPlayerWorldSetShadow` 的孤立测试影子接口：无 App/AI 生产消费者，整删接口与两份独占实验测试；两份混合时间线/Exact 测试脱离旧 B4 包装，继续核验共享记录和 Exact 评估不变量。A4 ZDD 预热有实际 App 消费，本轮暂保留且标记断开后可删。具体净删行数与完整 CI/R2 由新代码 SHA 验收后补记；不提前宣称通过。
+
 ## P1 实施记录（只记录真实提交）
 
 - **B4（2026-10-18，代码 HEAD `3ad502ac34cb3e93a2a1c843752e8c3b63d93f54`）**：审计 DayAbilityRegistrationRulingProducerV1（App 白天 Slayer/Virgin → StorytellerCausalDecisionJournalV1）并移除它对 TroubleBrewingRegistrationDomain 的重复合法性查询，以及对健康/存活、Virgin 公开执行结果等的规则否决；显式登记直接构建事实，不从旧合法域反推。移除 App 和测试中的无用 legalRoles 参数。保留主体身份、座位、DAY 阶段、快照版本、决定 ID 去重、事件字段/登记事实完整性；清理旧规则拒绝测试，保留事实重放与防篡改测试。AI 的 TroubleBrewingRegistrationDomain/NaturalPairInformationCandidateGenerator、HostOpeningRulesDomainV2、InitialJointOpeningDirectV2、Provider、提示词和续规划保持原生产调用。P1 尚未完成：HostScreen/Night 的其他门禁待清理。GitHub 对比 6 文件 +73/-150，净删 77 行（生产净删 42、测试净删 44，文档新增 9）。**该代码 SHA 完整 Android CI #4344 SUCCESS**（单测+Debug APK）、**R2 #3924 SUCCESS**，ASP/Clingo/CI gate SUCCESS；尚未执行真机或收费 API。PR #334 继续 Draft 堆叠、不合并。

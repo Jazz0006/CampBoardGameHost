@@ -31,7 +31,7 @@ class ExactHistoricalHypotheticalObservationBundleEvaluatorTest {
     private val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, 1)
 
     @Test
-    fun `singleton bundle preserves validated B4 exact consequence and does not mutate history`() {
+    fun `singleton bundle returns stable exact consequence and does not mutate history`() {
         val timeline = timelineOf(emptyList())
         val observationLog = EpistemicObservationLog()
         val observation = publicObservation(
@@ -63,23 +63,8 @@ class ExactHistoricalHypotheticalObservationBundleEvaluatorTest {
         assertTrue(first is ExactHypotheticalObservationBundleEvaluation.Ready)
         val diagnostic = (first as ExactHypotheticalObservationBundleEvaluation.Ready).diagnostics.single()
 
-        val b4 = B4DynamicPlayerWorldSetShadow(validatedRuleset).evaluate(
-            B4ShadowRequest(
-                initialSnapshot = snapshot,
-                initialPhase = StorytellerPhase.FIRST_NIGHT,
-                initialRound = 1,
-                actionTimeline = timeline,
-                perceivedRolesBySeat = perceived,
-                observationLog = observationLog,
-                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-                roleDefinitions = roles,
-                candidates = listOf(B4ShadowCandidate("singleton", 1, observation)),
-            ),
-        )
-
-        assertEquals(B4ShadowOutcome.READY, b4.outcome)
-        assertEquals(diagnostic.before, b4.queries.single().before)
-        assertEquals(diagnostic.after, b4.queries.single().after)
+        assertEquals("singleton", diagnostic.bundleId)
+        assertTrue(diagnostic.before.value >= diagnostic.after.value)
         assertEquals(timelineBefore, timeline.reducerFacts())
         assertEquals(logBefore, observationLog.records)
         assertEquals(observationsBefore, query.observations)
