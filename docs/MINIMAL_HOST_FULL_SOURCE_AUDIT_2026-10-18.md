@@ -2,6 +2,50 @@
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
 
+## F10-A 审计：F9 后剩余高置信清理对象（仅审计，未删除源码）
+
+- **核对基线**：GitHub PR #334 仍为 Draft，远端/本地 HEAD `7552918161508522c2a0e677f38df6a49bf1a9ca`、base `64be30905b88f639a464204ed1db89b7b62bc910`，main `61cd6796569ed8dfdea360caefeb5b9328745090`；Mini MCP 独立旧 checkout `a2cbcac8`，不能当成本地工作副本。代码基线 `4113974d` 完整 Android CI #4363 / R2 #3943 SUCCESS；当前 docs-only HEAD CI #4364 / R2 #3944 SUCCESS，不能作为新 Android 编译证明。
+- **覆盖口径**：读取未截断的全部 936 文件 Git tree，按目录/体积横向比较 263 个 Android 生产 Kotlin、209 个测试 Kotlin，以及 tools/CI；对下述候选检查声明、真实调用、manifest、工具/工作流和混合测试。它是全树库存加候选语义审计，**不等于 263 个生产文件均已逐函数完整审计**。初筛发现“零 Kotlin 引用”的 Application 实际由 manifest 加载，已排除；没有仅按名称、正则扫描或测试数量判死代码。
+
+### A：可以直接清除的高置信对象
+
+1. **F9 删除后孤立的候选模型/辅助岛：7 个整文件，274 生产行 / 9277B。**
+   - `clocktower/domain/DecisionCandidate.kt`：CandidateMetadata/DecisionCandidate/DecisionEvaluation；只有旧模型专属测试，已无生产生成器或消费者。
+   - `clocktower/domain/DynamicInformationOutcome.kt`：旧 Number/Category 候选包装，生产/工具/工作流无外部消费者。
+   - `clocktower/domain/EffectDraft.kt`：InformationValue/PlayerStatus/EffectDraft 只互相引用或被上述孤立 DecisionCandidate 引用；真正事实仍是 ActionFactDraft/EpistemicObservationDraft，不是这个候选 effect。
+   - `clocktower/domain/RecommendationModels.kt`：CandidatePlan、StorytellerDecision、QualityTier 等只由本岛的 SetupClueOutcome/DecisionCandidate 引用，不是现用 OpeningRecommendationV2 或 StrategicContinuation。
+   - `clocktower/domain/SetupClueOutcome.kt`：只剩自身声明；旧开局生成器已退役。
+   - `clocktower/domain/StableCandidateIdFactory.kt`：无生产消费者，仅 MurmurHash3Test 的旧候选 ID 用例。保留实际 setup/seed 使用的 MurmurHash3 和 hash golden vectors，删除候选 ID 专属用例即可。
+   - `ClocktowerBooleanDisplayOptionSelection.kt`：findBooleanDisplayOption 仅独占测试调用；F9 已删除其真实调用方，现用真假直接结果不需要反查菜单。
+   - 测试：可整删 UnifiedDecisionModelsTest、ClocktowerBooleanDisplayOptionSelectionTest；MurmurHash3Test 只删候选部分，不连同活跃 hash 测试一起删。DecisionTypes.kt 的 DetectionSemantics/AbilityType 也没有生产/工具消费者，可以连带精简；保留仍服务 Session/观察/登记事实的 AbilityState、TruthRelation、RegistrationFact 等。
+2. **旧 V1 Provider 响应/候选验证器：144 生产行 / 5706B，混合文件中的完整尾部。**
+   - `clocktower/domain/StorytellerProviderContractV1.kt:420` 起的 Response/Outcome/Recommendation/Confidence/Validation/ResponseValidator 七个类型只在本段和 StorytellerProviderContractV1Test 的旧 response 用例中引用。其职责是 primary/alternative candidate ID 回匹配和 deferred response，不在真实 OpenAI 网络/解析/记忆路径。
+   - 可直接删除该尾部和专属旧断言；**不能整删文件**：Request、DecisionContext、Revision、GameContext、PriorDecision 等仍由 App、Session、AI 续规划与实际因果日志消费。也不能据此整删剩余 Candidate DTO：Mayor 和日间登记事实生产者仍在使用它们。
+3. **旧世界/合法选择合同残留：三个混合文件中的封闭分支。**
+   - `epistemic/EpistemicContracts.kt`：EpistemicHypothesis、RegistrationQuery/Basis/Profile/Semantics、TroubleBrewingRegistrationSemantics、WorldCardinality、CandidateFamilyId、WorldExplanationClusterId、PlayerWorldSetIdentity。
+   - `epistemic/EpistemicSemanticModel.kt`：StorytellerDecisionPoint、LegalEpistemicChoice、LegalChoiceSet；与上一项合计 13 个顶层旧类型。
+   - 上述对象的外部“生产”引用仅为 EpistemicSemanticJson 的对应 overload/codec 和对象内部 ID 构造，没有 App/实际 AI/Session 入口；tools/CI 无这些类型或旧 schema kind 消费者。旧 RegistrationSemantics 算法只有 EpistemicSemanticModelTest 调用。可连同 Json 中相应 encode/decode/private helper 和混合测试的旧世界/合法候选段一起删除。
+   - 三个文件总库存为 1281 行 / 72296B，**这不是可删除量**，不把整文件体积当收益。必须保留 TimelinePoint、InformationProposition、Recorded/EpistemicObservation、可见范围/Grimoire、安全稳定 ID、实际事件 JSON，以及仍与观察日志/历史兼容有关的部分。保留 World identity 测试中真正的隐私/顺序性质时，应在现用日志合同验证，不为保旧 wrapper 继续供养世界合同。
+
+A1+A2 确定整段生产体量为 **418 行 / 14983B**，另有 A3 数百行混合职责及专属测试可退役；精确净减少量应在真实删除后由 Git diff 统计，不能把“关联文件体量”算成净删除。建议把 A1–A3 合为一个封闭删除批：优先退出旧世界/合法选择合同，再一次收走孤立类型与旧响应验证器。
+
+### B：删除方向置信高，但先断开当前事实/交互消费者
+
+4. **Host 信息真值与登记见证投影（下一大批优先）**：RegistrationOptionPreparation、RegistrationResultPresentation、RegistrationResultDomain、RegistrationProjection、rules/FixedInformationEvaluator 五个关联文件合计 463 行 / 21878B，另有 HostScreen 中大段 Chef/Empath/FT/角色结果真值/枚举和 InformationStepBuilder 的旧候选字段。真实链是 HostScreen → RegistrationOptionPreparation → ResultPresentation/Domain，并经 RegistrationProjection → TroubleBrewingRegistrationDomain；FixedInformationEvaluator 由 HostCoreSemantics → HostScreen 使用。
+   - Host 不应继续算线索真假或枚举 Spy/Recluse 见证，因此方向明确。先让当前问题显式持有 source/metric/实际查询 subjects，再移除旧数值/角色菜单及回退真值；保留实际输入、AI advice、Session 发布、recipient/revision 和必要座位展示。livingNeighbors 与其它必要查询/座位投影须单独判断，不能以删数字计数为由抹掉实际目标语义。
+   - Builder 已把 night step 的 spy/recluseRegistrationKey 强制为 null，部分旧分支实际不会进入；但相同登记 State/Controls 仍被白天 Nomination/Virgin/Slayer 的明确登记事实操作消费，**不整包删除全部登记 UI**。日间实际确认不得被夜间“见证推导”连带删除。
+5. **Mayor 合法候选/确认及通用 pending 候选底座**：MayorRedirectLegality、MayorRedirectDecisionBoundary、StorytellerDecisionFoundation 三个文件总库存 258 行 / 9935B。Mayor 边界是 PendingStorytellerDecision 的唯一生产消费者；规则域又被 Session.commitConfirmedMayorRedirect、NightDawnResolutionPlanner、NightHostProjection 使用。当前排除恶魔座位的产品限制与最新 Host 事实职责不符，应删除规则限制和候选 ID 中转。
+   - 先保留已有 request/revision、实际重定向 seat 与后续死亡/继承事实应用，再退出域与确认包装。Foundation 前段 RequestIdentity/Revision 仍被活跃 AI/其他事实大量引用，不能连根整删。相关旧合法性测试可退役，去重/过期/原子事件/基本续局测试保留。
+
+### 本轮不列为“可直接整删”的对象
+
+- **旧 Chef/Empath/Clockmaker 方桌 UI**：3 文件库存 816 行 / 32332B。Chef 的真实 typed numeric 路径会在 NightStepUi 前段转直接数字输入；部分旧 UI 可以跟随 B4 化简，但 **Clockmaker materializer 仍未提供 typed NumericResult，旧数值展示兜底仍是真实路径**。不能因看到 F9 的 early return 就宣布三文件全无消费者。先补齐当前问题/输入合同再删除旧重复 renderer；不把源码 shape 测试当实际产品证据。
+- **Epistemic 时间线/隐私、PlayerHistoricalTimeline 与 TB snapshot Json codec**：部分无 Android live 调用，但属于明确保留的观察/公共历史安全及跨 EvidenceLab 合同，不能仅凭零调用列为死实验；当前保留。后续合同收敛另议，避免误删 core serialization/security。
+- **Python gateway / API0 / prod_global 工具**：不是已经证明无用的孤岛。prod1-gateway-offline、api0-offline、ci.yml 仍实际执行对应脚本/测试；这只证明有开发验收消费者，不自动证明长期产品必需，但本轮证据不足以批准整包删除。需要先判断现用连接/验收职责，不能为腾空间删掉所有 AI 工具。
+- **Dawn、死亡、角色变化、继承、投毒等**：含规则和实际状态应用的混合模块；应去规则否决，保留必要事实提交和安全继续。此次不认定为整模块垃圾，也不扩大成删除现有 AI/基本 Host 操作。
+
+- **本轮变更/验收**：仅形成审计结论与更新交接，生产删除 0、测试删除 0、净代码减少 0；未改状态/事件/AI 代码，因此不重复运行 Android 测试。最近完整代码验收仍为 `4113974d` 的 CI #4363/R2 #3943（898 tests + Debug APK）；未运行付费 API/真机。现仍有 App 180482B、HostScreen 144543B 两个超限源码，NightStepUi 49650B。未新增必须由所有者决策的阻塞项，工具/跨项目范围保守保留。PR #334 保持 Draft，不 merge/retarget，原有未跟踪文件不动。
+
 ## F9：四模块整组解耦与删除（完整 Android CI/R2 已通过）
 
 - 起点：GitHub/本地 `a3008b33ff9fa4d8f8fc11389ef1f972fb529323`，main `61cd6796569ed8dfdea360caefeb5b9328745090`，Draft #334/base `64be30905b88f639a464204ed1db89b7b62bc910`；fetch 后一致。Mini MCP 仍为独立旧 checkout `a2cbcac8`，本批直接改 Windows 本地文件。完整未截断 Git tree 974 文件；本批工作树预计 936，生产 263 + 测试 209 Kotlin。历史版本库存不代表逐文件语义审计完成。

@@ -1,5 +1,11 @@
 # 当前唯一 NEXT：全树遍历优先、按职责直接清除（2026-10-18）
 
+## F10-A 最新审计与推荐删除批（本轮仅审计，覆盖下方 NEXT）
+
+- 完整树 936 文件、263 生产 + 209 测试 Kotlin 已横向比较；高置信可直接清理 A1 7 个孤立候选/辅助文件（274 行）、A2 旧 V1 Provider response/validator 尾部（144 行）、A3 三个 epistemic 混合文件中的旧世界/合法选择/登记推演合同与对应 codec。建议合并为一个封闭删除批，不删真实 AI 或核心事实/隐私序列化。确切清单、消费者和测试边界仅见全源台账 F10-A。
+- 之后优先 B4 HostScreen/Builder 的真值/登记候选投影，再 B5 Mayor 候选确认/Session 合法域；有真实消费者，需先保留 source/metric/实际 targets、手工/AI 结果与原 Session 提交。Chef/Empath 旧 UI 部分可随清理退出；Clockmaker 尚走旧数值兜底，不能把 3 个方桌文件一口气判死。
+- 本轮源码/测试删除 0，不重跑 Android；完整代码基线仍 `4113974d`：898 tests + Debug APK，CI #4363 / R2 #3943 SUCCESS。当前两个超限源码 App 180482B、HostScreen 144543B；NightStepUi 49650B。Gateway/API0 工具仍有 CI 消费，Player 历史/隐私和跨项目 codec 保留，无新增必须确认的产品阻塞项。
+
 ## F9 当前交接：四模块候选解耦，完整 CI/R2 成功（覆盖下方历史状态）
 
 - Pair 真值/见证/合法候选生成、Numeric/Boolean Foundation/Coordinator/适配与重复确认、Drunk 假设投影/候选确认、后夜语义回匹配候选 ID 已整链退出；整删 19 生产 + 20 专属测试，源码净删 5289 行。真实首夜/后夜 AI transport/提示词/响应、战略记忆、AI_ASSISTED 预选和 AI_AUTOMATIC 原发布回调保留；建议不写事实。
