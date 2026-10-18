@@ -153,11 +153,12 @@ internal class ClocktowerInformationStepBuilder(
             previousShownNumber = previousShownNumber,
             numericMinimumValue = numericMinimumValue,
             numericMaximumValue = numericMaximumValue,
-            spyRegistrationKey = spyRegistrationKey,
+            // P1: the legacy registration witness wizard cannot own a confirmed information fact.
+            spyRegistrationKey = null,
             spyRegistrationTeams = spyRegistrationTeams,
             spyRegistrationDetail = spyRegistrationDetail,
             spyRegistrationHint = spyRegistrationHint,
-            recluseRegistrationKey = recluseRegistrationKey,
+            recluseRegistrationKey = null,
             recluseRegistrationTeams = recluseRegistrationTeams,
         )
     }
