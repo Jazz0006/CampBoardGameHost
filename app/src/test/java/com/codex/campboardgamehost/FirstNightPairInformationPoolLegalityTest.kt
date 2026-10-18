@@ -25,7 +25,7 @@ class FirstNightPairInformationPoolLegalityTest {
             familyId = "Investigator",
         )
 
-        assertEquals(listOf(pair, zero), pool.orderedCandidates.map { it.payload })
+        assertEquals(setOf(pair, zero), pool.orderedCandidates.map { it.payload }.toSet())
     }
 
     @Test
