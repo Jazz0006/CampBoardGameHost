@@ -1,6 +1,8 @@
-# 当前开发路线（2026-10-18，F15 已实施）
+# 当前开发路线（2026-10-18，F15 代码已实施；F12-E 新增横向审计）
 
 ## 当前状态
+
+**当前最新（F12-E，开发机 MiniMCP）**：已将干净的clocktower同名分支从a2cbcac8安全快进至远端PR #334 HEAD `2ce0e897898e8f040c3bef8dcbda20186e2e4689`，追加16项首次全文语义审计，现 **138/475（29.05%）已审、337待审**。本批仅改文档、无生产代码删除/净缩减；CI #4379/R2 #3959 SUCCESS但Android被跳过，完整Android验收仍是F15代码`0f904f70`的CI #4377/R2 #3957。
 
 F15已落实明确夜间实际结果确认：无人/多名死者、任意实际Imp继承座位、原中毒keep/clear；Dawn提交不再引用攻击/保护/Mayor/Soldier/SW或合法继承候选。删除NightDawnResolutionPlanner和TroubleBrewingDemonSuccessionResolver，旧候选UI/元数据/API一同退出；Attack与实际Death独立。多死亡通过原纯Action/Observation提交函数完整预检后一次更新唯一Session；NoNightDeaths为明确空结果事实。私密新身份仍沿实际RoleChange确认，Dawn名单读取实际Death。
 
@@ -8,7 +10,7 @@ F15已落实明确夜间实际结果确认：无人/多名死者、任意实际I
 
 ## 新对话 / 开发机接续
 
-所有者要求当前进度先同步远端，随后通过开发机 MiniMCP 继续。本次同步前远端文档HEAD `8f8f9573d452b92cdd727fc7fd98906a1446cb26` 的docs-only CI #4378 / R2 #3958 SUCCESS；完整Android证明仍为上述F15代码SHA。MiniMCP `clocktower` 实查仍在同名分支旧HEAD `a2cbcac82b457b5a56abf3833b604d9c4fdd74f7`、工作区干净，本轮没有操作其分支或文件。新对话必须重新核对GitHub实时HEAD/base/CI和MiniMCP状态，fetch后只做可安全的精确快进，再从现有 **122/475已审、353待审** 继续横向审计。详细同步边界和步骤见唯一现行 `NEXT_DEVELOPMENT_HANDOFF.md`，不另建交接副本。
+F12-E已通过MiniMCP完成开发机安全同步并读取权威文档、台账，随后对16个原待审文件全文核查和扫描真实引用，新增结论写入唯一全源台账。代码基线`2ce0e897`；后续新对话仍应重新读取GitHub实时PR head/base及CI，再核对MiniMCP分支/worktree，若远端继续前进则只做安全fetch/精确快进。当前 **138/475已审、337待审**；下一批继续跨未审目录（epistemic codec、setup/catalog、transport、tools/CI和测试），不重复计数或直接误删生产AI。
 
 ## 最终职责
 
@@ -20,7 +22,7 @@ F15已落实明确夜间实际结果确认：无人/多名死者、任意实际I
 
 **所有者本轮再次强调：全文件遍历约20%尚未完成，F15之后必须继续。横向审计已恢复，下一任务继续覆盖未审文件，不再仅沿夜间调用链实施。** 继续在原台账逐路径记录最终分类、消费者、证据和待审状态，不复制库存或NEXT。
 
-F15后已恢复F12-D横向审计：跨时序合同、setup与工具新增6项，当前范围 **475**，已审计 **122（25.68%）**，0审计中、**353待审**。F12原497项、A/B完成105；F13/F14/F15删除历史和分母变化记录在原台账。重读已审App/Session不计新增，变更/扫描/净删不等于全树语义审计完成。
+F12-D后本轮F12-E又跨epistemic/setup/Android平台/离线CI/测试新增16项，当前范围 **475**，已审计 **138（29.05%）**，0审计中、**337待审**。F12原497项、A/B完成105；F13/F14/F15删除历史和分母变化在唯一台账。三个已审catalog文件本轮虽再次核查但不计新进度。代码删除/符号扫描与完成逐文件语义审计仍严格区分。
 
 下一审计横向覆盖未审epistemic/codec、catalog/setup、平台/transport、工具/CI与测试，按实际必要Host/现用AI、旧Rules、死实验或需所有者决策分类，再选择有证据的整组退出。F15没有完成P1：DemonAttackProductionAdapter仍为信息步骤提供只读预览，Sage/Ravenkeeper触发和毒展示、日间自动继承/终局、其它规则和旧Flow模板仍待删除/解耦。预览和最终实际死者可不同，需要后续UI职责审计及真机验收；不能声称跨项目新kind消费者均已验证。
 
