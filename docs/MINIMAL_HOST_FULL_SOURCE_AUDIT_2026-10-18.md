@@ -21,12 +21,12 @@
 | legacy web/ 独立网页客户端及多剧本 | REVIEW_SCOPE | 非 Android Host，是否保留 Undercover/狼人及旧网页，由产品范围决定 |
 | tools、CI、assets、测试 | AUDIT_PENDING | 以当前 CI/R2/运行时消费者实际使用为依据，专属废弃实验测试可与生产实现一起删除 |
 
-### 全树横向删除批次 F3（待 GitHub 代码验收）
+### 全树横向删除批次 F3（已通过完整 GitHub CI/R2）
 
 - 跨目录整体删除 `CampBoardGameHostApp.kt` 中**仅适用于 Debug 5 人局**的 A4 identity-reveal prewarm、观察缓存重建、worker 和框架耗时诊断，以及伴随每个 Session 写入/修订触发的旧 A4 cache-invalidations 和临时记录 ID，不改动原 Session 状态写入、公开/私密 EpistemicObservationLog、结构化事件或真实首夜 AI 预计算。
 - 完整删除 5 个已无生产消费者的 A4 影子缓存源码：`A4IdentityRevealPrewarmCoordinator.kt`、`A4ObservationCacheRebuildExecutor.kt`、`A4ObservationCacheUpdateCoordinator.kt`、`A4ShadowWorldSetCache.kt`、`A4ShadowLifecycleInvalidator.kt`，及它们 5 个独占单测/实验验证类（含 `A4ShadowProductionIsolationTest.kt`，已无对象可测）。
 - **保留** `A4PlayerKnowledgeFactory`、`A4PlayerWorldSetRuntime`、`A4WorldEngineRuntimePolicy`、`ZddPlayerWorldSet` 等被其他精确推演测试使用的类型，本批没有整包误删；下一次仍需判定这些类有无真实 AI 消费者，不能以旧测试为长期保留理由。
-- 对 App 的所有 A4 调用和源文件互引用进行实际符号检索，删除后无 A4 预热/缓存/失效器残余；生产 AI Provider、整局首夜与后夜推荐、战略记忆、预选和模式路径保持原样。代码 SHA、精确净删和 CI/R2 由提交后核验。
+- 对 App 的所有 A4 调用和源文件互引用进行实际符号检索，删除后无 A4 预热/缓存/失效器残余；生产 AI Provider、整局首夜与后夜推荐、战略记忆、预选和模式路径保持原样。**代码 SHA `6ea36666ceb0b2d3d7a919a25c2e0b04841f7dce`，14 文件、生产源码 -977 行（App -187，5 服务 -790）、专属测试 -735 行，净删 1712 行代码**；文档 +22/-6，全提交 +22/-1718，净删 1696 行。完整 Android **CI #4349 SUCCESS**，R2 **#3929 SUCCESS**，ASP/Clingo/CI gate 全部成功。最新 Git tree 1118 文件、宽口径代码/配置 706、Android 329 主 Kotlin + 311 测试 Kotlin；源码超 50000B 仍为 App 188473B、HostScreen 149006B、NightStepUi 60237B、web/app.js 143503B。无付费 API 或真机验收。
 
 ### 全树横向删除批次 F2（已通过 CI/R2）
 
