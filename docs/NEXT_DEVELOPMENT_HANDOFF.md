@@ -5,7 +5,7 @@
 ## F8 最新交接（覆盖下方历史 NEXT）
 
 - 首夜整局 natural pair 候选预计算结果只被 readiness 门禁读取，未进入实际信息/AI 输出。本批已整删其缓存/后台 scope/ready-result provider/UI 加载失败重试与首夜等待，退出重复的 snapshot→poison-neutral GameState context 和 compatibility forwarding；current-step AI 配对继续工作，直接用当前 Session GameState/gameId/revision。
-- 整删 3 个生产与 2 个独占测试，源码净删 760 行；当前树 974 文件，281 生产 + 229 测试 Kotlin。原 Session writer/事件/私密信息/异步安全和真实模型 transport/战略记忆不动；保留 Drunk perceived/配对 Provider/通用配置与实际请求合同回归。本地完整 `:app:testFull :app:assembleDebug` SUCCESS（973 项、0 失败/错误/跳过），远端本批 exact-SHA CI/R2 待补记。
+- 整删 3 个生产与 2 个独占测试，源码净删 760 行；当前树 974 文件，281 生产 + 229 测试 Kotlin。原 Session writer/事件/私密信息/异步安全和真实模型 transport/战略记忆不动；保留 Drunk perceived/配对 Provider/通用配置与实际请求合同回归。本地完整 `:app:testFull :app:assembleDebug` SUCCESS（973 项、0 失败/错误/跳过），代码 `119de9496e52088a0fde164aeafd24973743bfda` 的完整 Android **CI #4361 / R2 #3941 SUCCESS**，ASP/真实 Clingo/CI gate 成功；后续 docs-only HEAD 不作为新编译证明。
 - 下一批继续按全树规模和消费者证据选择能整组退出的候选。pair AI-only candidate boundary、Numeric/UI/setup、后夜候选匹配仍在，不要误以为全部 Host Rules 已删除；解耦前保护真实 AI 和事实确认。已删除的预计算/兼容 Context 不再恢复。
 - 超限源码：App 184919B、HostScreen 145615B、NightStepUi 60237B。无新所有者决策，未做真机或收费 API；PR #334 保持 Draft，不合并/retarget。完整证据和清单只维护全源台账 F8。
 

@@ -4,7 +4,7 @@
 
 ## F8 当前批次：无效首夜预计算整链退出
 
-本地已删除首夜 natural pair 全局预计算缓存/后台调度/等待/重试及重复 snapshot→GameState context，共整删 3 生产 + 2 专属测试；保留 current-step AI 配对请求并直接使用 canonical Session 事实与版本。源码净删 760 行，无新增 Context/状态/算法；本地完整 testFull + Debug APK SUCCESS（973 项，0 失败/错误/跳过），远端 exact-SHA CI/R2 待验收。实际剩余 pair/UI/setup/后夜候选复核另行解耦，P1 未完成，详细证据见全源台账 F8。
+本地已删除首夜 natural pair 全局预计算缓存/后台调度/等待/重试及重复 snapshot→GameState context，共整删 3 生产 + 2 专属测试；保留 current-step AI 配对请求并直接使用 canonical Session 事实与版本。源码净删 760 行，无新增 Context/状态/算法；本地完整 testFull + Debug APK SUCCESS（973 项，0 失败/错误/跳过），代码 `119de9496e52088a0fde164aeafd24973743bfda` 的完整 Android **CI #4361 / R2 #3941 SUCCESS**，ASP/真实 Clingo/CI gate 全部成功。实际剩余 pair/UI/setup/后夜候选复核另行解耦，P1 未完成，详细证据见全源台账 F8。
 
 ## F7 当前执行：先集中整删有把握的部分，再审计剩余
 
