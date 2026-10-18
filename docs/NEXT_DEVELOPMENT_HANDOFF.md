@@ -1,11 +1,12 @@
 # 当前唯一 NEXT：AI 已恢复，继续 P1 删除 Host 规则合法性门禁（2026-10-18）
 
-## B4 实施交接（本轮代码验收待核实）
+## B4 实施交接（已完成代码及完整 CI/R2 验收）
 
 - 从起始 HEAD 15a27e9cce0a41190b9704c148a4dd3321d1f30e、工作树 Clean、远端一致、PR #334 Draft 开始。
 - 实际审计确认：DayAbilityRegistrationRulingProducerV1 只由 App 白天两处（Slayer 对 Recluse 明确裁定、Virgin 首提名的 Spy 明确裁定）及 CausalDecisionJournal 验证消费；旧 TroubleBrewingRegistrationDomain.resolve 的再校验阻止明确确认事实。删除这段 Host 规则校验与规则健康/真值拒绝，保留真实登记身份、座位、时间阶段、版本、重复/篡改/事件合同；注册事实取自显式选择。删除 legalRoles 重复传参、调整专属旧测试。
 - **AI 保护**：NaturalPairInformationCandidateGenerator 仍直接依赖 TroubleBrewingRegistrationDomain；FirstNightNumericInformationSemantics、FixedInformationEvaluator 仍被首夜数值/推荐消费；HostOpeningRulesDomainV2/InitialJointOpeningDirectV2 仍用于首夜联合请求；这些、生产 API、提示词、战略记忆、辅助/自动模式及 Provider 未删。
-- **未解决**：App/HostScreen/Night 仍有其他旧候选门禁和规则自动结果；本批不宣称 P1 完成。待提交后回填精确差异、CI/R2、超 50KB 源码数量；没有付费 API/真机测试。下一批继续以生产消费者为依据清除 Host 人工信息拒绝，尤其避免破坏 AI 提前预选。
+- **验收**：代码 HEAD `3ad502ac34cb3e93a2a1c843752e8c3b63d93f54`（6 文件，+73/-150，净删 77 行，生产净删 42 行）；GitHub 完整 Android CI **#4344 SUCCESS**（测试和 Debug APK），R2 **#3924 SUCCESS**，ASP、Clingo、CI gate SUCCESS。重新按 GitHub 目录元数据核对已知超 50,000B 源码：`CampBoardGameHostApp.kt` 198482B，`ClocktowerHostScreen.kt` 149006B，`ClocktowerNightStepUi.kt` 60237B，`web/app.js` 143503B。没有付费 API/真机测试。
+- **未解决**：App/HostScreen/Night 仍有其他旧候选门禁和规则自动结果；本批不宣称 P1 完成。下一批继续以生产消费者为依据清除 Host 人工信息拒绝，尤其避免破坏 AI 提前预选。
 
 **R0 已完成并通过真实完整 CI/R2。继续执行 P1：只删 Host 旧合法性门禁、真值推断、过度工程及无效专属测试，不删除 AI 推荐的调用、Provider、提示词、战略记忆或必要候选依赖。**
 
