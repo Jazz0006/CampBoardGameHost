@@ -5,9 +5,15 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
-import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
-import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
+import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
+import com.codex.campboardgamehost.clocktower.session.commitConfirmedPlayerDeath
+import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleChange
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
+import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -16,7 +22,7 @@ import java.io.File
 
 class ClocktowerNightHostProjectionTest {
     @Test
-    fun `confirmed Imp attack projects one Ravenkeeper death and effective night chronology`() {
+    fun `pending death preview preserves Ravenkeeper information without changing confirmed alive`() {
         val cards = listOf(
             card("Imp", "Imp", ClocktowerTeam.Demon),
             card("Poisoner", "Poisoner", ClocktowerTeam.Minion),
@@ -42,24 +48,13 @@ class ClocktowerNightHostProjectionTest {
         assertEquals("Ravenkeeper", projection.ravenkeeperTrigger?.name)
         assertEquals(null, projection.sageNightDeath)
         assertTrue(projection.otherNightInteractions.any { it.id == impInteractionId })
-        assertEquals(
-            listOf(3),
-            projection.resolvedMechanicalEvents
-                .filterIsInstance<ResolvedNightMechanicalEvent.MechanicalDeath>()
-                .map { it.targetSeat },
-        )
-        assertTrue(
-            projection.effectiveNightStateAt(
-                impInteractionId,
-                ClocktowerInteractionBoundary.BEFORE,
-            ).isMechanicallyAlive(3),
-        )
-        assertFalse(
-            projection.effectiveNightStateAt(
-                impInteractionId,
-                ClocktowerInteractionBoundary.AFTER,
-            ).isMechanicallyAlive(3),
-        )
+        assertTrue(projection.chambermaidTargetCards.any { it.name == "Ravenkeeper" })
+        assertTrue(projection.effectiveAbilitySubjectForRole("Ravenkeeper", cards[2])?.isAlive == true)
+        assertEquals(RoleId("Ravenkeeper").value,
+            projection.effectiveAbilitySubjectForRole("Ravenkeeper", cards[2])?.actualRole)
+        assertEquals(com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState.FUNCTIONING,
+            projection.ravenkeeperDeathTriggerAbilityState)
+
     }
 
     @Test
@@ -88,15 +83,69 @@ class ClocktowerNightHostProjectionTest {
             pendingNightNewDemonIdentityName = null,
             lastExecutedName = null,
         )
-        val impInteraction = ClocktowerProductionNightStepIdentity
-            .role(RoleId("Imp"))
-            .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-        assertEquals(RoleId("Chef"), projection.baseRoleIdsBySeat[4])
-        assertFalse(
-            projection.effectiveNightStateAt(
-                impInteraction, ClocktowerInteractionBoundary.BEFORE,
-            ).isMechanicallyAlive(4),
+        assertFalse(projection.chambermaidTargetCards.any { it.name == "Empath" })
+        val subject = requireNotNull(projection.effectiveAbilitySubjectForRole("Empath", cards[3]))
+        assertFalse(subject.isAlive)
+        assertEquals("Chef", subject.actualRole)
+
+    }
+
+    @Test
+    fun `successor selection and back navigation never create death or role facts`() {
+        val cards = listOf(
+            card("Imp", "Imp", ClocktowerTeam.Demon),
+            card("Poisoner", "Poisoner", ClocktowerTeam.Minion),
+            card("Empath", "Empath", ClocktowerTeam.Townsfolk),
+            card("Chef", "Chef", ClocktowerTeam.Townsfolk),
+            card("Soldier", "Soldier", ClocktowerTeam.Townsfolk),
         )
+        val game = cards.toClocktowerGameState(ClocktowerScript.TroubleBrewing, 17L)
+        val session = ClocktowerGameSession.createProduction(
+            "night-canonical", game.seed, game,
+            com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        session.commitConfirmedGameAction(
+            ActionFactDraft.Attack("self-attack", StorytellerPhase.NIGHT, 2, 1, 1), game, 0L,
+        )
+        session.confirmDemonSuccessor(2)
+        val acceptedSelection = session.state
+        val selectedCheckpoint = checkpoint("Imp").copy(
+            confirmedDemonSuccessorTarget = "Poisoner", demonSuccessorDraftTarget = "Poisoner",
+        )
+        listOf(2, 1, 0, 99).forEach { step ->
+            val projection = ClocktowerNightHostProjectionFactory.project(
+                cards, session.state.gameState, builtInRuleset(), ClocktowerPhase.Night, null,
+                selectedCheckpoint.copy(nightStepIndex = step, demonSuccessorDraftTarget = "Chef"),
+                null, null,
+            )
+            assertTrue(projection.chambermaidTargetCards.any { it.name == "Imp" })
+            assertEquals("Poisoner", projection.effectiveAbilitySubjectForRole("Poisoner", cards[1])?.actualRole)
+            assertEquals(acceptedSelection, session.state)
+        }
+        assertEquals(listOf("self-attack"), session.state.actionTimeline.entries.map { it.fact.actionId })
+        assertTrue(session.state.gameState.playerAt(1)?.alive == true)
+        assertEquals(RoleId("Poisoner"), session.state.gameState.playerAt(2)?.actualRole)
+
+        val death = ActionFactDraft.Death("actual-death", StorytellerPhase.NIGHT, 2, 2, 1)
+        session.commitConfirmedPlayerDeath(death, session.state.gameStateRevision)
+        val role = ActionFactDraft.RoleChange(
+            "actual-role", StorytellerPhase.NIGHT, 2, 3, 2, RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON,
+        )
+        session.commitConfirmedActualRoleChange(role, session.state.gameStateRevision)
+        val committed = session.state
+        // Stale cards and old navigation/selection cannot resurrect or reassign committed facts.
+        val projection = ClocktowerNightHostProjectionFactory.project(
+            cards, session.state.gameState, builtInRuleset(), ClocktowerPhase.Night, null,
+            selectedCheckpoint.copy(nightStepIndex = 0), null, null,
+        )
+        assertFalse(projection.chambermaidTargetCards.any { it.name == "Imp" })
+        assertEquals("Imp", projection.effectiveAbilitySubjectForRole("Poisoner", cards[1])?.actualRole)
+        session.commitConfirmedPlayerDeath(death, 1L)
+        session.commitConfirmedActualRoleChange(role, 2L)
+        assertEquals(committed, session.state)
+        assertEquals(listOf(0L, 1L, 2L), session.state.actionTimeline.entries.map { it.point.globalSequence })
+        assertTrue(session.state.actionTimeline.entries[1].fact is ActionFact.Death)
+        assertTrue(session.state.actionTimeline.entries[2].fact is ActionFact.RoleChange)
     }
 
     private fun builtInRuleset() = BuiltInClocktowerRulesetCatalog { assetPath ->

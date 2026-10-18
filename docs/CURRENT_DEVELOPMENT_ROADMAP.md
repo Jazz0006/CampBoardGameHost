@@ -1,10 +1,10 @@
-# 当前开发路线（2026-10-18，F12 审计进行中）
+# 当前开发路线（2026-10-18，F14 已实施）
 
 ## 当前状态
 
-所有者已授权按完整职责链加速实施。F13在起点 `d76968168eb02e37cd87084bb51eabc60f789d9c` 补齐8个Session全文审计，并实际删除日间裁定producer、独立causal journal及DecisionOutcomeSnapshot：3生产+3旧测试文件退出，其中Mayor安全用例迁出保留。明确登记并入SlayerShot/Nomination，与公开动作共享一次Session事件提交，不推造角色/阵营。保留现用AI及实际死亡/执行操作。
+F14已先退休日间登记之后的夜间影子重建：攻击/继承选择不再通过伪MechanicalDeath/RoleChanged改变界面的实际alive/role。删除NightTransactionRestoreComposition，删除EffectiveNightStateProjector及其伪事件类型，Chambermaid/Empath和身份读取直接使用canonical Session状态。保留Ravenkeeper信息入口、现用AI、真实Death/RoleChange和Dawn应用。实际死亡/继承/毒等旧规则尚未整体退出，P1未完成。
 
-本地完整 `:app:testFull :app:assembleDebug` SUCCESS：807 tests，0 failure/error/skipped。生产净删800行/43958B、测试净删338行/16469B，共1138行/60427B；900跟踪文件，243生产+193测试Kotlin。当前App172872B、HostScreen101994B仍超限。精确代码 **`27d02f723340ff88c466d170655898be768d3ae3`** 的完整 Android **[CI #4373 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39119071885)**（full单测+Debug APK）、**[R2 #3953 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39119071868)**；ASP、真实Clingo、CI gate均SUCCESS。 后续docs-only提交不改变此代码验收基线。完整边界/证据只在全源台账F13记录。
+本地完整 `:app:testFull :app:assembleDebug` SUCCESS：761 tests、0 failure/error/skipped，Debug APK成功。生产净删318行/15571B、测试净删1238行/51061B，共1556行/66632B；894跟踪文件、242生产+188测试Kotlin。当前App172872B、HostScreen101202B仍超限。F14精确代码HEAD远端完整CI/R2待提交后核实；上一完整代码基线F13 `27d02f72` CI #4373 / R2 #3953不能代替本轮验收。完整边界/证据只在原全源台账F14记录。
 
 ## 最终职责
 
@@ -14,11 +14,11 @@
 
 ## 当前阶段：成组解耦与全树审计同步推进
 
-原F12范围497项，A/B完成105项；F13补齐8个Session审计并落实整组删除，6个删除路径退出当前表、1个迁移测试入表。当前范围 **492**，已审计 **111（22.56%）**，0审计中、381待审。真实消费者、每路径状态/字节、证据和历史分母只在原全源台账F12/F13维护；扫描或代码净删不算语义审计进度。
+原F12范围497项、A/B完成105；F13并入实际日间登记并删除独立causal journal，F14继续删影子重建。当前范围 **486**，已审计 **112（23.05%）**，0审计中、374待审；已从真实Git tree核对每路径库存，删除历史/分母变化只见原台账F12/F13/F14。扫描或净删率不算语义审计完成率。
 
-本批已移除日间provider候选/frozen snapshot/PriorDecision/correction archive整条重复历史链。登记的null/false/true、JSON旧历史兼容、canonical身份、AI delta及各玩家回放隐私已纳入完整回归；不再存放或生成独立裁定历史。信息录入与AI的游戏规则门禁尚未全部删除，P1没有完成。
+下一组先接实际夜间结果与继承确认：App.onConfirmNight仍用DawnDeathFacts→NightDawnResolutionPlanner.planValidatedNightDeath，继承仍有Forced/Choice、App自动promote和合法候选限制。需要保留实际Death/RoleChange的Session原子提交、公开告知及私密新身份，再成组删除预测/候选门禁，避免改变尚未宣布信息的recipient/时间。F14只删除把这些预测二次投影成事实的分支，没有称它们已从提交端移除。
 
-下一组优先处理实际死亡→继承→新身份/Dawn：从NightDawnResolutionPlanner、RestoreComposition和DemonSuccessionResolver混合链中保留真正结果确认及Session应用，删除预测confirmedEvents和强制/候选规则推导，再处理其专属测试。横向审计继续覆盖epistemic/codec、setup、工具/CI和测试，避免只沿调用链。剩余Sage/Spy、日间命中/后果、毒/终局、发牌门禁及两个超大根组件仍列待解耦。U1自定义导入未决前保留，不阻塞其他组。
+横向审计继续覆盖epistemic/codec、setup、工具/CI及测试。Ravenkeeper/Sage预览与eligibility、Spy、日间命中/后果、毒/终局、发牌门禁及两个超大根组件仍待职责处理；U1自定义导入范围未决前保留，不阻塞其他组。现用AI的prompt/IO/parser/memory/preselection及身份/版本/隐私边界必须保留。
 
 ## 阶段验收与治理
 

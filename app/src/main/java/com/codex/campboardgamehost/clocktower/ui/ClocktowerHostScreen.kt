@@ -30,8 +30,6 @@ import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCa
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNightFlow
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
-import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
-import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
@@ -521,11 +519,6 @@ internal fun ClocktowerJudgeScreen(
     val ravenkeeperDeathTriggerAbilityState = nightHostProjection.ravenkeeperDeathTriggerAbilityState
     val sageDeathTriggerAbilityState = nightHostProjection.sageDeathTriggerAbilityState
 
-    fun effectiveNightStateAt(
-        interactionId: ClocktowerInteractionId,
-        boundary: ClocktowerInteractionBoundary,
-    ) = nightHostProjection.effectiveNightStateAt(interactionId, boundary)
-
     fun effectiveAbilitySubjectForRole(enName: String, actor: PlayerCard?): AbilitySubject? =
         nightHostProjection.effectiveAbilitySubjectForRole(enName, actor)
 
@@ -632,16 +625,9 @@ internal fun ClocktowerJudgeScreen(
     )
 
     val empathActor = roleActor("Empath")
-    val empathInteractionId = ClocktowerProductionNightStepIdentity.role(RoleId("Empath"))
-        .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-    val empathStateBefore = empathActor?.takeIf { phase == ClocktowerPhase.Night }
-        ?.let { effectiveNightStateAt(empathInteractionId, ClocktowerInteractionBoundary.BEFORE) }
-    val effectiveEmpathCards = empathStateBefore?.let { state ->
-        cards.filter { card ->
-            val seat = cards.indexOf(card).plus(1)
-            seat > 0 && state.isMechanicallyAlive(seat)
-        }
-    } ?: cards
+    val effectiveEmpathCards = cards.filterIndexed { index, _ ->
+        sessionGameState.playerAt(index + 1)?.alive == true
+    }
     val empathNeighbors = empathActor?.let { livingNeighbors(effectiveEmpathCards, it.name) }.orEmpty()
     // Capture query seats before the information-publication callbacks that record the
     // actual Fortune Teller result; the materializer below reuses this same seat list.

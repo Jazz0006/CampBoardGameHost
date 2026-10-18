@@ -14,16 +14,11 @@ import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightCursor
-import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
-import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightStateProjector
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerOptionalNightSourceChronology
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
-import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
-import com.codex.campboardgamehost.clocktower.session.NightTransactionReconstruction
-import com.codex.campboardgamehost.clocktower.session.NightTransactionRestoreComposition
 
 /**
  * Immutable, non-Compose projection of the mechanical state consumed by the Clocktower host UI.
@@ -37,20 +32,13 @@ internal class ClocktowerNightHostProjection internal constructor(
     val canonicalNightDeathResolution: TroubleBrewingDawnDeathResolution,
     val mayorTarget: PlayerCard?,
     val mayorRedirectTargetCards: List<PlayerCard>,
-    val resolvedNightDeathCard: PlayerCard?,
     val ravenkeeperTrigger: PlayerCard?,
     val currentDemonHostContext: CurrentDemonHostContext?,
     val demonSuccessorRoleId: RoleId?,
-    val demonSuccessionResolution: DemonSuccessionResolution,
     val demonSuccessorTargetSeats: Set<Int>,
     val demonSuccessorTargetCards: List<PlayerCard>,
     val sageNightDeath: PlayerCard?,
-    val otherNightWakingRoleIds: Set<RoleId>,
-    val otherNightResolvedFacts: ClocktowerResolvedFlowFacts,
     val otherNightInteractions: List<ClocktowerHostInteraction>,
-    val baseRoleIdsBySeat: Map<Int, RoleId>,
-    val canonicalNightReconstruction: NightTransactionReconstruction?,
-    val resolvedMechanicalEvents: List<ResolvedNightMechanicalEvent>,
 ) {
     val mayorCanRedirect: Boolean
         get() = canonicalNightDeathResolution.mayorRedirectEligible
@@ -64,23 +52,12 @@ internal class ClocktowerNightHostProjection internal constructor(
     val demonPoisonedForActionExplanation: Boolean
         get() = currentDemonHostContext?.isPoisoned == true
 
-    val impSelfKillNeedsSuccessor: Boolean
-        get() = demonSuccessorTargetSeats.isNotEmpty()
-
     val otherNightCanonicalInteractionIds: List<ClocktowerInteractionId>
         get() = otherNightInteractions.map { it.id }
 
-    val chambermaidTargetCards: List<PlayerCard> by lazy {
-        val interactionId = ClocktowerProductionNightStepIdentity
-            .role(RoleId("Chambermaid"))
-            .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-        if (phase == ClocktowerPhase.Night && interactionId in otherNightCanonicalInteractionIds) {
-            val state = effectiveNightStateAt(interactionId, ClocktowerInteractionBoundary.BEFORE)
-            cards.filterIndexed { index, _ -> state.isMechanicallyAlive(index + 1) }
-        } else {
-            cards.filterIndexed { index, _ -> gameState.playerAt(index + 1)?.alive == true }
-        }
-    }
+    // Menus use confirmed Session state. Attack/successor choices do not change alive or roles.
+    val chambermaidTargetCards: List<PlayerCard>
+        get() = cards.filterIndexed { index, _ -> gameState.playerAt(index + 1)?.alive == true }
 
     val ravenkeeperDeathTriggerAbilityState: AbilityFunctioningState? by lazy {
         deathTriggerAbilityState("Ravenkeeper", ravenkeeperTrigger)
@@ -89,17 +66,6 @@ internal class ClocktowerNightHostProjection internal constructor(
     val sageDeathTriggerAbilityState: AbilityFunctioningState? by lazy {
         deathTriggerAbilityState("Sage", sageNightDeath)
     }
-
-    fun effectiveNightStateAt(
-        interactionId: ClocktowerInteractionId,
-        boundary: ClocktowerInteractionBoundary,
-    ): ClocktowerEffectiveNightState = ClocktowerEffectiveNightStateProjector.projectAt(
-        baseAliveSeats = gameState.players.filter { it.alive }.mapTo(mutableSetOf()) { it.seat },
-        canonicalInteractionIds = otherNightCanonicalInteractionIds,
-        confirmedEvents = resolvedMechanicalEvents,
-        cursor = ClocktowerEffectiveNightCursor(interactionId, boundary),
-        baseRoleIdsBySeat = baseRoleIdsBySeat,
-    )
 
     fun effectivePoisonTargetAt(
         interactionId: ClocktowerInteractionId,
@@ -116,12 +82,11 @@ internal class ClocktowerNightHostProjection internal constructor(
                 sourceInteractionId = sourceInteractionId,
             )
         ) return null
-        val effectiveState = effectiveNightStateAt(interactionId, boundary)
         val sourceFunctioning =
-            effectiveState.currentRoleId(sourceSeat) == RoleId("Poisoner") &&
+            gameState.playerAt(sourceSeat)?.actualRole == RoleId("Poisoner") &&
                 AbilityFunctioningSemantics.functionsAs(
                     source.abilitySubject(null).copy(
-                        isAlive = effectiveState.isMechanicallyAlive(sourceSeat),
+                        isAlive = gameState.playerAt(sourceSeat)?.alive == true,
                     ),
                     "Poisoner",
                 )
@@ -134,22 +99,12 @@ internal class ClocktowerNightHostProjection internal constructor(
 
     fun effectiveAbilitySubjectForRole(enName: String, actor: PlayerCard?): AbilitySubject? {
         if (actor == null) return null
-        val interactionId = ClocktowerProductionNightStepIdentity.role(RoleId(enName))
-            .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-        if (phase != ClocktowerPhase.Night || interactionId !in otherNightCanonicalInteractionIds) {
-            return actor.abilitySubject(poisonTarget)
-        }
-        val seat = cards.indexOf(actor).plus(1).takeIf { it > 0 }
-            ?: return actor.abilitySubject(poisonTarget)
-        val state = effectiveNightStateAt(interactionId, ClocktowerInteractionBoundary.BEFORE)
-        return actor.abilitySubject(
-            effectivePoisonTargetAt(
-                interactionId,
-                ClocktowerInteractionBoundary.BEFORE,
-            ),
-        ).copy(
-            actualRole = state.currentRoleId(seat)?.value,
-            isAlive = state.isMechanicallyAlive(seat),
+        val seat = cards.indexOf(actor).plus(1).takeIf { it > 0 } ?: return null
+        val player = gameState.playerAt(seat) ?: return null
+        return actor.abilitySubject(effectivePoisonForRole(enName)).copy(
+            actualRole = player.actualRole.value,
+            shownRole = player.shownRole?.value,
+            isAlive = player.alive,
         )
     }
 
@@ -164,48 +119,14 @@ internal class ClocktowerNightHostProjection internal constructor(
             )
         }
 
-    fun effectiveRoleForRegistration(enName: String, card: PlayerCard): RoleId? {
-        if (phase != ClocktowerPhase.Night) {
-            val seat = cards.indexOf(card).plus(1)
-            return gameState.playerAt(seat)?.actualRole
-        }
-        val interactionId = ClocktowerProductionNightStepIdentity
-            .role(RoleId(enName))
-            .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-        val seat = cards.indexOf(card).plus(1)
-        return if (interactionId !in otherNightCanonicalInteractionIds || seat <= 0) {
-            null
-        } else {
-            effectiveNightStateAt(
-                interactionId,
-                ClocktowerInteractionBoundary.BEFORE,
-            ).currentRoleId(seat)
-        }
-    }
-
+    // The trigger is still a pending UI preview. It must not synthesize a death/role event
+    // or treat a selected successor as a committed role change.
     private fun deathTriggerAbilityState(
         roleEnName: String,
         triggerActor: PlayerCard?,
-    ): AbilityFunctioningState? {
-        if (triggerActor == null) return null
-        val deathEvent = resolvedMechanicalEvents.singleOrNull()
-            as? ResolvedNightMechanicalEvent.MechanicalDeath
-            ?: return null
-        val deathInteractionId = deathEvent.effectiveAt.interactionId
-        val beforeDeathState = effectiveNightStateAt(
-            deathInteractionId,
-            ClocktowerInteractionBoundary.BEFORE,
-        )
-        val effectivePoison = effectivePoisonTargetAt(
-            deathInteractionId,
-            ClocktowerInteractionBoundary.BEFORE,
-        )
-        val seat = cards.indexOf(triggerActor).plus(1).takeIf { it > 0 } ?: return null
-        val subject = triggerActor.abilitySubject(effectivePoison).copy(
-            isAlive = beforeDeathState.isMechanicallyAlive(seat),
-        )
-        return AbilityFunctioningSemantics.stateFor(subject, roleEnName)
-    }
+    ): AbilityFunctioningState? = effectiveAbilitySubjectForRole(roleEnName, triggerActor)
+        ?.let { subject -> AbilityFunctioningSemantics.stateFor(subject, roleEnName) }
+
 }
 
 internal object ClocktowerNightHostProjectionFactory {
@@ -296,55 +217,6 @@ internal object ClocktowerNightHostProjectionFactory {
         } else {
             emptyList()
         }
-        val otherNightCanonicalInteractionIds = otherNightInteractions.map { it.id }
-        val baseRoleIdsBySeat = gameState.players.associate { it.seat to it.actualRole }
-        val demonSuccessorInteractionId = ClocktowerProductionNightStepIdentity.demonSuccessor()
-            .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-        val canonicalNightReconstruction = if (phase == ClocktowerPhase.Night) {
-            NightTransactionRestoreComposition.compose(
-                baseGameState = gameState,
-                checkpoint = checkpoint,
-                canonicalInteractionIds = otherNightCanonicalInteractionIds,
-                demonSuccessorInteractionId = demonSuccessorInteractionId,
-                demonRoleId = requireNotNull(demonSuccessorRoleId) {
-                    "Night transaction reconstruction requires a canonical Demon role."
-                },
-            )
-        } else {
-            null
-        }
-        val resolvedMechanicalEvents = buildList<ResolvedNightMechanicalEvent> {
-            if (phase == ClocktowerPhase.Night && nightDeathWillOccur) {
-                val targetSeat = cards.indexOf(resolvedNightDeathCard).plus(1)
-                require(targetSeat > 0) { "Resolved night death must identify a valid target seat." }
-                val effectiveInteractionId = if (mayorCanRedirect) {
-                    ClocktowerProductionNightStepIdentity.mayorRedirect()
-                        .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-                } else {
-                    val demonRoleId = requireNotNull(demonSuccessorRoleId) {
-                        "Resolved night death requires a canonical Demon interaction."
-                    }
-                    ClocktowerProductionNightStepIdentity.role(demonRoleId)
-                        .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-                }
-                add(
-                    ResolvedNightMechanicalEvent.MechanicalDeath(
-                        targetSeat = targetSeat,
-                        effectiveAt = ClocktowerEffectiveNightCursor(
-                            effectiveInteractionId,
-                            ClocktowerInteractionBoundary.AFTER,
-                        ),
-                    ),
-                )
-            }
-            if (phase == ClocktowerPhase.Night && canonicalNightReconstruction != null) {
-                addAll(
-                    canonicalNightReconstruction.confirmedEvents
-                        .filterIsInstance<ResolvedNightMechanicalEvent.RoleChanged>(),
-                )
-            }
-        }
-
         return ClocktowerNightHostProjection(
             cards = cards,
             gameState = gameState,
@@ -353,20 +225,13 @@ internal object ClocktowerNightHostProjectionFactory {
             canonicalNightDeathResolution = canonicalNightDeathResolution,
             mayorTarget = mayorTarget,
             mayorRedirectTargetCards = mayorRedirectTargetCards,
-            resolvedNightDeathCard = resolvedNightDeathCard,
             ravenkeeperTrigger = ravenkeeperTrigger,
             currentDemonHostContext = currentDemonHostContext,
             demonSuccessorRoleId = demonSuccessorRoleId,
-            demonSuccessionResolution = demonSuccessionResolution,
             demonSuccessorTargetSeats = demonSuccessorTargetSeats,
             demonSuccessorTargetCards = demonSuccessorTargetCards,
             sageNightDeath = sageNightDeath,
-            otherNightWakingRoleIds = otherNightWakingRoleIds,
-            otherNightResolvedFacts = otherNightResolvedFacts,
             otherNightInteractions = otherNightInteractions,
-            baseRoleIdsBySeat = baseRoleIdsBySeat,
-            canonicalNightReconstruction = canonicalNightReconstruction,
-            resolvedMechanicalEvents = resolvedMechanicalEvents,
         )
     }
 }
