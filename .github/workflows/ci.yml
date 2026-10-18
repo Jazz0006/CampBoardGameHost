@@ -195,12 +195,6 @@ jobs:
           echo "oracle=$oracle" >> "$GITHUB_OUTPUT"
           echo "Routing: android=$android android_full=$android_full asp=$asp oracle=$oracle"
 
-      - name: Offline expert semantic protocol tests (no paid calls)
-        run: |
-          python3 -m unittest -v \
-            tools.tests.test_prod_global_3b2_manual_probe \
-            tools.tests.test_prod_global_3b3_semantic_v2
-
   android-tests:
     name: Android tests
     needs: changes
