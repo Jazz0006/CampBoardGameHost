@@ -2,11 +2,11 @@
 
 **用户再次确认：不要再以旧代码调用栈为主线逐段探索。** 优先枚举当前 Git HEAD 的全部源码模块，按 Host Core、现有 AI、旧 Host Rules、无生产消费者的实验、需要产品决策的外部客户端五类做证据分类。审计及确认/标记删除均记录到现有 `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`，不复制第二份全树文件索引。已确认无效的整块实现与专属测试直接删除并独立验证；仅有风险或实际消费者的标记 `REMOVE_AFTER_DISCONNECT`，先保护 AI 生产调用。P1 持续清除 Host 规则门禁，不重写 AI。
 
-## F4 全树清理及 AI 候选边界纠偏（待代码 CI/R2）
+## F4 全树清理及 AI 候选边界纠偏（完整 CI/R2 已通过）
 
 - 用户强调 AI 不依赖 Host 给出候选：Host 仅提供 GameState/事件及必要安全检查，AI 独立规划。实际 `InitialJointOpeningDirectV2.encode` 不包含候选清单，但 `decode` → `HostOpeningSemanticGateV2.accept(raw, domain.forDrunkSeat(drunk))` 仍通过 `HostOpeningRulesDomainV2` 执行旧合法域复核。这不是应保护的 AI 能力，而是下批应断开删除的旧规则门禁；不能破坏真实 API、响应结构、请求时效、座位身份及策略记忆。
 - F4 已整删无生产消费的 A4PlayerWorldSetRuntime、A4WorldEngineRuntimePolicy、ZddPlayerWorldSet 以及三份专属测试；精简 KnowledgeSafeWorldInputTest、KnowledgeTimelineSemanticsTest、A3GoldenContractCatalogTest，保留高价值的结构信息安全、时间线和枚举金标准测试；Gradle 移除对应孤立过滤。
-- 未修改 Host Session 事件提交、AI 请求/响应路径或付费 API；本批代码 SHA、行数和完整 Android CI/R2 状态待实测。
+- **F4 实际验收**：代码 SHA `52ef98ee4c406fc49af21e1592a954da7e4246ff`、15 文件 +27/-1309、净删 1282 行（代码净删 1296：生产 740、测试 555、Gradle 1）；完整 Android **CI #4351 SUCCESS**、**R2 #3931 SUCCESS**，ASP/Clingo/CI gate 成功。未修改 Host Session 事件提交、AI 请求/响应路径或付费 API。新全树 1112 文件、宽口径代码配置 700、Android 326 主 Kotlin + 308 测试 Kotlin；四个 >50KB 源码同 F3。未做收费 API/真机。PR #334 保持堆叠 Draft。
 
 
 ## F3 全树横向清理：Debug-only A4 影子缓存整链删除，完整 CI/R2 已通过
