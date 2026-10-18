@@ -1,38 +1,25 @@
 # CampBoardGameHost
 
-离线优先的 Android 桌游主持应用。当前代码中的游戏类型为血染钟楼和谁是卧底；主要研发围绕 Trouble Brewing 的规则、游戏流程及 AI 说书人推荐。
+Blood on the Clocktower Android 主持项目。正在进行 **Host Core 优先的整仓架构清理**；当前旧 Rules/AI 和旧世界推演仍有残留，不能把历史代码误认为最终模块实现。
 
-## 当前方向（2026-10-17）
+## 三个职责
 
-**先做减法：删除独立存档恢复、重复文字记录和冗余状态，再审计超大源文件。** 游戏中断后的最终需求只是恢复身份与足以继续游戏的进度；未来恢复、AI 上下文和文字展示应共用权威游戏记录。
+- **Host Core：当前唯一优先级。** 唯一真实状态与结构化关键事件，基本手动操作和安全提交。以后与独立 WebHost、EvidenceLab 共用状态/事件语义合同。
+- **Rules：将来重新建。** 只读 Host，返回指定角色、时刻和状态的合法信息；旧规则检查实现现阶段全部删除。
+- **AI Clues：Host 稳定后再规划。** 只读 Host + 实际事件，生成一条或多条接近专家说书人的线索；建议确认后才形成事实。
 
-当前基线继承 #315 已有的 Session 收敛和旧代码删除；独立 Recovery 已在第一阶段删除；第二阶段进一步删除独立文字记录和整局重复归档；第三阶段 C1 收敛幽灵票与阶段/轮数，移除精确历史请求副本，夜间机械归属仍待 C2。清理允许暂缺恢复与部分历史展示，不以先建完替代系统为条件保留旧代码。规则合法性、正常手动游戏与已确认事实仍需保护。
+**严格执行 P1–P5：**删除旧规则 → 删除旧 AI/候选/世界推演 → 收敛 Host 事实核心 → 精简 UI/所有源文件 <=50,000 B → 全仓验收/跨项目合同。清理期间不允许旧规则计算阻止手动信息输入。
 
-AI 长期方向仍是一次联合开局规划和基于确认事件的后续修订；完整自动主持和手机端到端验收不能据现有实验代码宣称完成。
+## 唯一权威文档
 
-## 权威入口
+1. [开发规范](AGENTS.md)
+2. [三模块重建与全仓清理路线](docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md)
+3. [当前路线](docs/CURRENT_DEVELOPMENT_ROADMAP.md) 与 [当前交接](docs/NEXT_DEVELOPMENT_HANDOFF.md)
+4. [Host 事实合同](docs/MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)
+5. [源码库存](docs/MINIMAL_HOST_ALL_SOURCE_FILE_INDEX_2026-10-18.tsv)、[测试策略](docs/TESTING_STRATEGY.md)、[文档索引](docs/README.md)
 
-- [开发规范](AGENTS.md)
-- [当前路线](docs/CURRENT_DEVELOPMENT_ROADMAP.md)
-- [当前交接](docs/NEXT_DEVELOPMENT_HANDOFF.md)
-- [本轮清理规格与审计](docs/MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md)
-- [文档索引](docs/README.md)与[测试策略](docs/TESTING_STRATEGY.md)
+## 项目结构和运行
 
-## 工程结构与运行
+app/ 为 Android Gradle 模块。tools/ 包含旧实验/测试及 CI 工具，须逐项按新合同审查。web/ 是另一套独立旧网页主持程序，仍有 Undercover/狼人杀/localStorage，是否全盘退役待用户审核；**不能误当成独立 WebHost 项目的未来统一 Host**。
 
-`app/` 是当前唯一 Gradle 模块，包含 Android UI、开局生成、规则、Session、推荐及持久化。`tools/` 存放 Gateway、实验和 ASP 验证工具；`player/`、`ui/`、`web/` 为其他客户端或界面资产，未作为独立 Gradle 模块接入。
-
-用 Android Studio 打开仓库根目录。Android JVM 检查：
-
-```bash
-./gradlew :app:testFast
-./gradlew :app:testFull
-```
-
-ASP 检查：
-
-```bash
-python3 -m unittest discover -s tools/asp_oracle -p 'test_*.py'
-```
-
-真实模型调用须另有明确预算授权，不隐含在本地清理或 CI 中。
+Android Studio 可直接打开仓库；本地入口为 ./gradlew :app:testFast 和 ./gradlew :app:testFull :app:assembleDebug。GitHub CI/R2 是当前代码提交的独立验收。真实付费模型测试须另行获得预算授权。

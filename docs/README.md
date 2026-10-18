@@ -1,26 +1,18 @@
-# 文档入口
+# 文档入口（2026-10-18）
 
-更新：2026-10-17（Australia/Sydney）。导航不另行决定优先级。
+## 现行权威：只从这些文件读取下一步
 
-## 当前必读
+1. [AGENTS](../AGENTS.md)：产品边界、开发与验收规则。
+2. [Host / Rules / AI 三模块及 P1–P5 删除路线](HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md)：唯一执行设计权威。
+3. [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md) 与 [当前 NEXT](NEXT_DEVELOPMENT_HANDOFF.md)：阶段状态、远端准确起点、下一批实际代码工作。
+4. [Host 事实合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)。
+5. [测试策略](TESTING_STRATEGY.md)：evidence-first、CI/R2 及废弃测试退休。
 
-1. [开发规范](../AGENTS.md)：所有权、证据和合并规则。
-2. [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)：唯一执行优先级。
-3. [当前交接](NEXT_DEVELOPMENT_HANDOFF.md)：已做与未做。
-4. [最小游戏状态与记录清理](MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md)：本轮产品纠正、代码审计与删除顺序。
-5. [测试策略](TESTING_STRATEGY.md)：证据分级，不要求机械 RED/GREEN。
+## 只作为库存和历史证据，不给出新的开发优先级
 
-- [第四阶段 App/Host 审计与拆分路线](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)
-- [分支清理结果与恢复入口](BRANCH_CLEANUP_RESULT_2026-10-17.md)
+- [当前扫描源码索引](MINIMAL_HOST_ALL_SOURCE_FILE_INDEX_2026-10-18.tsv)：原扫描 717 个代码类文件的路径、大小与**初步分类**；需以最新 Git 树更新，不能视为完成逐文件行为审计。
+- [第一轮全仓扫描与删除台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)：曾用最小 Host 无 Rules 的定义，现在被现行三模块路线覆盖。保留其历史尺寸与实际删除证据。
+- [2026-10-17 旧最小状态清理](MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md)、[D 阶段拆分审计](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)、[旧 ARCH-CLEANUP-2 / Recovery](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md) 均是历史。
+- [历史归档](archive/README.md) 和 Git 提交保留设计追溯。旧 Rules 完整合法性、恢复/历史影子、多路径开发 NEXT 不再是生产必须保持的合同。
 
-## 按需参考
-
-- [核心模块所有权目标](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md)：Setup、Game Engine、推荐分离；旧多份历史/恢复保留要求由本轮清理规格覆盖。
-- [既有 App/Host 拆分审计](APP_HOST_POST_RES5_DECOUPLING_AUDIT_2026-10-08.md)：历史边界与经验；尺寸、候选和完成状态须以代码重查。
-- [专家说书人规划原则](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md)、[联合开局规划](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)、[Host 语义校验](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md)：AI 方向保留，当前不优先扩展。
-- [历史捕捉审计](GSP_R1A_CANONICAL_HISTORY_CAPTURE_PREFIX_COVERAGE_AUDIT_2026-10-08.md)：当时的覆盖证据，不是当前实现清单。
-- [旧 Recovery 范围决策](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md) 和 [旧最小恢复审计](CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md)：历史方案，不再授权保留独立恢复体系。
-- [工作流](AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md)：本轮本地读写按用户明确覆盖执行；独立验收规则仍有效。
-- [历史归档](archive/README.md)：既有记录，不从旧 NEXT 推导新任务。
-
-当前入口不保留滚动叠加的旧 PR/CI/handoff 快照；需要历史时查 Git 历史或对应专项文档。不得将旧验收结果当作当前工作区的验证。
+不要在 CURRENT_DEVELOPMENT_ROADMAP 或 NEXT_DEVELOPMENT_HANDOFF 再叠加旧日期、旧下一步列表；新任务只更新唯一当前状态与 GitHub 可验证结果。
