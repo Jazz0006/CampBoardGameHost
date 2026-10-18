@@ -6,7 +6,7 @@
 
 | 阶段 | 任务 | 状态 |
 |---|---|---|
-| P1 | 全仓删除旧规则引擎、合法候选、真值/登记见证、关联 UI/Session/Setup/AI 调用及专属旧测试 | 下一轮**立即实施** |
+| P1 | 全仓删除旧规则引擎、合法候选、真值/登记见证、关联 UI/Session/Setup/AI 调用及专属旧测试 | **实施中**：B1 登记及展示见证消费者已清理，规则整链尚未完成 |
 | P2 | 删除旧 AI 候选协议与评分、A4/B4/ZDD/世界枚举和缓存，保留事件/隐私/请求安全 | 待 P1 |
 | P3 | 收敛唯一 GameState/Session 事实及结构化事件记录，最小继续游戏、通用合同 | 待 P2 |
 | P4 | 净删后的 UI 和源码职责拆分；全部源文件 <=50,000 bytes | 待 P3 |
@@ -14,9 +14,15 @@
 
 以真实生产消费者审计为依据，有把握的整条删除；不确定的给用户一份简短的保留/删除风险报告，倾向先删、以后按正确边界重建。允许现有自动规则/旧 AI 临时不可用，**必须保留 MANUAL 最小游戏操作、真实已确认事实、安全和隐私**。每批报告净删除、源文件超限、唯一事实风险和真实 CI/R2。
 
+## P1 实施记录（只记录真实提交）
+
+- **B1 代码提交 `892e0252eb89d9c4bf99f69754f1984fe5bbba98`**，PR #334 Draft 堆叠关系不变。删除旧 `RegistrationInteractionRules` 及专属测试、无消费者的 `TroubleBrewingRecurringPlayerInformationRouteDomain`，以及厨师方桌由数值推导登记见证/有效邪恶座位/相邻计数高亮、配对方桌对 Spy/Recluse 登记见证推断勾选。另清除旧步骤构建器中依可靠性过滤登记键的调用。初始净减少 **379 行（+31/-410）**，修复后 B1 合计净减少 **378 行（+32/-410）**，生产源码删除 2 文件、旧测试删除 1 文件，其余按职责精简。
+- B1 首个代码 HEAD 的完整 Android CI **#4330**：编译通过，1301 项测试中 1 项旧规则键断言失败；R2 **#3910 SUCCESS**。已根据批准的退役方向修复：夜间信息 Builder 不再开启旧登记见证交互（无自动见证、不可凭信息展示补记登记），修复提交 **`4b1267e8e7d3277577e44c01dd7004cb04da6fb5`**；修复后的完整 Android CI **#4331 SUCCESS**（`testFull` 和 Debug APK 构建），R2 **#3911 SUCCESS**；ASP/Clingo 和 CI gate 均成功。保留原 Session 事实提交、直接数字选择和方桌实际身份提示；未进行真机手动通局验收。
+- P1 **未完成**：`clocktower/rules` 仍有约 20 个旧源码文件；Pair/Numeric legal domain、Registration、AbilityFunctioning、Night/Session、Opening residual/event gate、Recommendation 与 Setup/Provider 旧消费者须继续断开并删除，不得提前进入 P2。后续批次复核 CI/R2 旧源码守卫。
+
 ## 当前历史基线（不是 P1 完成证明）
 
-GitHub 堆叠 Draft PR #330→#334 未合并。#334 目前确认的代码检查点 HEAD 为 55508645a11dc9277d0af7260bca4968c211e31c；Android 全量代码 CI #4325、R2 #3905 成功；docs-only CI #4326/R2 #3906 成功。开发机本地与此远端分支并不同步，新会话需先检查并从最新远端实际 HEAD 起步。
+GitHub 堆叠 Draft PR #330→#334 未合并。开发机已从旧 `codex/minimal-host-reset` 显式切换到 #334 正确分支 `codex/minimal-host-full-scan-20261018`。P1 B1 原始代码提交 `892e0252...`，后续修复代码提交 `4b1267e8...`；当前 HEAD 后续可能被文档提交推进，始终以最新 GitHub 和本地 Git 实测为准。更早 #4325/#3905 是 P1 之前的历史基线，不得当作新 P1 验收。
 
 原全树扫描约 717 个代码类文件，4 个源文件超过 50,000 bytes：CampBoardGameHostApp.kt、ClocktowerHostScreen.kt、ClocktowerNightStepUi.kt、web/app.js。web/ 为旧独立网页客户端，含 Undercover/狼人杀与独立 localStorage；是否整个退休属待用户审核，不应误当成未来独立 WebHost。其余旧 Rules/A4/B4/ZDD 整链已获准退休，不需重复征求方向批准。
 
