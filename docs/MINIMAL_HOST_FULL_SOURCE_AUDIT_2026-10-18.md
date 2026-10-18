@@ -14,19 +14,26 @@
 | domain / ClocktowerGameSession / canonical ActionFact / UI 事实提交 | KEEP_CORE + AUDIT_PENDING（混合文件） | 保留唯一状态、已确认事实、安全、私密/顺序/去重/过期防护；不按旧 Rules 正确答案驳回已发生信息 |
 | 首夜 HostOpeningRulesDomainV2 + InitialJointOpeningDirectV2、配对候选与 Provider、战略续规划 | KEEP_AI | 生产 App、Session、推荐路径直接消费；既有 AI 不重建不降级 |
 | FixedInformationEvaluator、FirstNightNumericInformationSemantics、TroubleBrewingRegistrationDomain | KEEP_AI（混合旧 Rules） | 数值与配对 AI 候选实际使用；先分离 Host 规则 veto 后再清理旧 Host 消费者 |
-| A4 identity-reveal prewarm / A4 Observation ZDD shadow | REMOVE_AFTER_DISCONNECT 待核 | App 仍有生产初始化/调用；不是 AI 首夜联合请求的直接入口，但须核实隐私和生命周期再删除 |
+| A4 identity-reveal prewarm / A4 Observation ZDD shadow | F3 REMOVE_CONFIRMED；A4 runtime/ZDD 剩余 AUDIT_PENDING | App 的调用全部限定 BuildConfig.DEBUG、TB 5 人局；只对旧影子缓存生成诊断日志，不供 AI/事实提交。现已连消费者整链删除；通用世界推演运行时在其他测试中仍有引用，单独审计 |
 | B4DynamicPlayerWorldSetShadow / ExactHistorical 和 Topology bundle 旧实验 | B4 独立接口 REMOVE_CONFIRMED（F2）；Exact/Topology AUDIT_PENDING | B4 全部生产引用仅本文件，无 AI 消费；时间线测试改测共享 API，Exact 评估测试独立保留；其余大型推演不能据此一起删 |
 | FN-BUNDLE PublicGoodInfoProjection 等压力实验 | REMOVE_AFTER_DISCONNECT 待核 | 旧实验/测试消费者存在；与正式联合规划 API 不是同一合同；先完整检查引用，再批量删除 |
 | ClocktowerHostSelectionSemantics / HostScreen / NightStepUi | AUDIT_PENDING 混合 | 夜间人工候选过滤和规则否决需要删，但显示、事实与 AI 自动/辅助流程要保留 |
 | legacy web/ 独立网页客户端及多剧本 | REVIEW_SCOPE | 非 Android Host，是否保留 Undercover/狼人及旧网页，由产品范围决定 |
 | tools、CI、assets、测试 | AUDIT_PENDING | 以当前 CI/R2/运行时消费者实际使用为依据，专属废弃实验测试可与生产实现一起删除 |
 
-### 全树横向删除批次 F2（待 GitHub 代码验收）
+### 全树横向删除批次 F3（待 GitHub 代码验收）
+
+- 跨目录整体删除 `CampBoardGameHostApp.kt` 中**仅适用于 Debug 5 人局**的 A4 identity-reveal prewarm、观察缓存重建、worker 和框架耗时诊断，以及伴随每个 Session 写入/修订触发的旧 A4 cache-invalidations 和临时记录 ID，不改动原 Session 状态写入、公开/私密 EpistemicObservationLog、结构化事件或真实首夜 AI 预计算。
+- 完整删除 5 个已无生产消费者的 A4 影子缓存源码：`A4IdentityRevealPrewarmCoordinator.kt`、`A4ObservationCacheRebuildExecutor.kt`、`A4ObservationCacheUpdateCoordinator.kt`、`A4ShadowWorldSetCache.kt`、`A4ShadowLifecycleInvalidator.kt`，及它们 5 个独占单测/实验验证类（含 `A4ShadowProductionIsolationTest.kt`，已无对象可测）。
+- **保留** `A4PlayerKnowledgeFactory`、`A4PlayerWorldSetRuntime`、`A4WorldEngineRuntimePolicy`、`ZddPlayerWorldSet` 等被其他精确推演测试使用的类型，本批没有整包误删；下一次仍需判定这些类有无真实 AI 消费者，不能以旧测试为长期保留理由。
+- 对 App 的所有 A4 调用和源文件互引用进行实际符号检索，删除后无 A4 预热/缓存/失效器残余；生产 AI Provider、整局首夜与后夜推荐、战略记忆、预选和模式路径保持原样。代码 SHA、精确净删和 CI/R2 由提交后核验。
+
+### 全树横向删除批次 F2（已通过 CI/R2）
 
 - 生产 `epistemic/B4DynamicPlayerWorldSetShadow.kt`（B4ShadowRequest、B4ShadowCandidate、B4ShadowReport、`b4FormalGameState`、`b4ReplayObservationsInTimelineOrder`）在 `app/src/main` 无任何外部使用：B4 旧影子查询适配只给专属实验提供接口，**不是 App 首夜/后夜 AI 推荐、Host 状态或隐私写入依赖**。
 - 整删该生产文件以及独占的 `B4DynamicPlayerWorldSetShadowTest.kt`、`B4HistoricalExactShadowBridgeTest.kt`；`CrossTypeTimelineCompatibilityTest` 改为直接测试原始 `ActionFactTimeline.requireCompatibleWith(observationLog)` 和防外部列表篡改，`ExactHistoricalHypotheticalObservationBundleEvaluatorTest` 保留真实 Exact 评估稳定性/不变更记录断言，删 B4 对照包装要求。
 - `A4IdentityRevealPrewarmCoordinator` / `A4ObservationCacheRebuildExecutor` **仍由 App 生产引用**，故仍标记 `REMOVE_AFTER_DISCONNECT` 而不误删；`ExactHistoricalHypotheticalObservationBundleEvaluator` 和 Topology 分支当前仅旧测试消费者，但仍在关联实验系统中，待整组独立审计，未动。
-- 代码及专属测试净删体积和对应 CI/R2 状态在真实提交验收后回填；整个 F2 无 Canonical GameState、ActionFact、AI Provider、提示词、战略记忆、OpenAI 传输或 Android UI 生产改动。
+- F2 代码提交 `bdf5dbcdccdb9ad7024580a2283ad4d704f496a6`；完整 Android CI **#4348 SUCCESS**、R2 **#3928 SUCCESS**（ASP/Clingo/CI gate 均成功）。整文件删除生产 180 行与专属测试 391 行，混合测试另净删 26 行；整个 F2 无 Canonical GameState、ActionFact、AI Provider、提示词、战略记忆、OpenAI 传输或 Android UI 生产改动。
 
 ### 全树横向删除批次 F1（源码修改与 CI 以提交为准）
 

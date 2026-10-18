@@ -21,7 +21,9 @@
 
 F1 首批横向筛选确认 `DecisionSeedFactory` 与 `TroubleBrewingSetupRecommendationDecisionContext` 均仅有自身和专属测试调用，无实际 AI/Host 生产消费者；四文件（生产两件、专属测试两件）整删，净删 **478 行代码**（210 生产、268 测试）。代码及台账 HEAD `24995d37041bdf24a5bd6ad8da50a51ad693c8b4`，GitHub **完整 Android CI #4346 SUCCESS**（单测+Debug APK）、**R2 #3926 SUCCESS**，ASP、Clingo 和 CI gate 成功；PR #334 Draft 仍堆叠，未做真机/收费 API。后续按**全树分类**集中安排删除，不再用旧调用链决定审计顺序；未知与混合文件继续核查，不虚称全部源码已语义审核。
 
-F2 横向筛选到 `epistemic/B4DynamicPlayerWorldSetShadow` 的孤立测试影子接口：无 App/AI 生产消费者，整删接口与两份独占实验测试；两份混合时间线/Exact 测试脱离旧 B4 包装，继续核验共享记录和 Exact 评估不变量。A4 ZDD 预热有实际 App 消费，本轮暂保留且标记断开后可删。具体净删行数与完整 CI/R2 由新代码 SHA 验收后补记；不提前宣称通过。
+F2 横向筛选到 `epistemic/B4DynamicPlayerWorldSetShadow` 的孤立测试影子接口：无 App/AI 生产消费者，整删接口与两份独占实验测试；两份混合时间线/Exact 测试脱离旧 B4 包装，继续核验共享记录和 Exact 评估不变量。A4 ZDD 预热有实际 App 消费，本轮暂保留且标记断开后可删。F2 代码提交 `bdf5dbcdccdb9ad7024580a2283ad4d704f496a6`，完整 Android **CI #4348 SUCCESS**、**R2 #3928 SUCCESS**，ASP/Clingo/CI gate 成功；整删生产 180 行、专属测试 391 行，混合测试另净删 26 行。
+
+F3 基于全树模块分类进一步确认：A4 身份展示预热和观察缓存重建仅在 App Debug TB 5 人诊断中消费，不参与现有 AI 推荐。已从 App 消除整个影子缓存调度/失效/日志链，并连同五个 A4 生产源码和五个独占实验测试整删；真实 Session 日志、事实提交及 AI 规划代码未动。A4/ZDD 通用推演基底暂由其他测试使用，留待后续生产消费者审计。提交 SHA、净删和 CI/R2 待本批真实验证。
 
 ## P1 实施记录（只记录真实提交）
 

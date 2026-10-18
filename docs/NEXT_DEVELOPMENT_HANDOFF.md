@@ -2,12 +2,19 @@
 
 **用户再次确认：不要再以旧代码调用栈为主线逐段探索。** 优先枚举当前 Git HEAD 的全部源码模块，按 Host Core、现有 AI、旧 Host Rules、无生产消费者的实验、需要产品决策的外部客户端五类做证据分类。审计及确认/标记删除均记录到现有 `docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`，不复制第二份全树文件索引。已确认无效的整块实现与专属测试直接删除并独立验证；仅有风险或实际消费者的标记 `REMOVE_AFTER_DISCONNECT`，先保护 AI 生产调用。P1 持续清除 Host 规则门禁，不重写 AI。
 
-## F2 全树横向删除（代码 CI/R2 待执行）
+## F3 全树横向清理：移除 Debug-only A4 影子缓存（代码验收待进行）
+
+- F2 代码 HEAD `bdf5dbcdccdb9ad7024580a2283ad4d704f496a6`（完整 Android CI #4348 / R2 #3928 SUCCESS）起始。已跨目录审计，A4 identity reveal prewarm、observation cache rebuild 只在 App 的 `BuildConfig.DEBUG` + TB 5 人场景执行；它们未进入真正 AI 首夜/后夜推荐、模型请求或 Host 事实提交。
+- App 已删除上述独立诊断请求/LaunchedEffect/SideEffect/耗时遥测、修订触发影子缓存清除、虚拟待重建记录 ID；未删除实际 Session/ActionFact/epistemic 记录提交及隐私范围。原 App 很大的混合文件进一步净删。
+- 整删五个 A4-only 生产文件及五份独占旧测试（身份预热、缓存重建、受影响玩家座位计算、缓存、失效器、影子生产隔离）；`A4PlayerWorldSetRuntime`、ZDD/枚举及 Exact 等目前还有测试消费者，此轮保留待下轮全树独立审计。该批删除后 `app/src` 关键旧 A4 类型全文引用检索为零。
+- 未获授权不能真实调用付费 API，不自动合并 PR #334。具体 HEAD/行数/完整 GitHub CI/R2 待提交验证。
+
+## F2 全树横向删除（代码 CI/R2 已通过）
 
 - F1 docs HEAD `5fe9869266f54832b2cec7462ac4563d89b2a4fa` 起始，分支 `codex/minimal-host-full-scan-20261018`，PR #334 Draft 堆叠未合并。
 - 生产文件 `epistemic/B4DynamicPlayerWorldSetShadow.kt` 及两份独占 B4 测试被整体删除：无任何 App/AI 生产消费者。调整 `CrossTypeTimelineCompatibilityTest` 直接校验共享时间线/观察日志兼容，`ExactHistoricalHypotheticalObservationBundleEvaluatorTest` 去除 B4 对照但继续校验 Exact 结果/无副作用。
 - 保留当前活跃 AI 所需 `HostOpeningRulesDomainV2`、`InitialJointOpeningDirectV2`、Pair/Numeric AI 候选、Provider、战略记忆、API 与 UI 预选。保留 App 真实调用的 A4 预热/缓存链直至消费者审计完成；没有改变唯一游戏记录、权限/隐私、原子写入、过期请求处理。
-- 本批代码 SHA、git diff 净删和 CI/R2 真实状态待新提交核实；下一组继续从全树台账挑选死代码岛，避免回到沿旧调用路径扩散的工作方式。
+- **F2 代码提交** `bdf5dbcdccdb9ad7024580a2283ad4d704f496a6`，完整 Android **CI #4348 SUCCESS**、**R2 #3928 SUCCESS**，ASP/Clingo/CI gate 全部成功；删除 B4 独立生产 180 行、2 测试 391 行、混合测试另净删 26 行。下一组继续从全树台账挑选死代码岛，避免回到沿旧调用路径扩散的工作方式。
 
 ## F1 当前进展（2026-10-18）
 

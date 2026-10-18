@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 import android.content.Context
 import android.content.res.Configuration
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,7 +21,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
@@ -31,7 +29,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -116,25 +113,13 @@ import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingProductionSetu
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetJson
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecordFactory
-import com.codex.campboardgamehost.clocktower.epistemic.A4IdentityRevealPrewarmCoordinator
-import com.codex.campboardgamehost.clocktower.epistemic.A4IdentityRevealPrewarmRequest
-import com.codex.campboardgamehost.clocktower.epistemic.A4MainThreadFrameTelemetry
-import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildExecutor
-import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildRequest
-import com.codex.campboardgamehost.clocktower.epistemic.A4PlayerKnowledgeFactory
-import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowWorldSetCache
-import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowLifecycleInvalidator
-import com.codex.campboardgamehost.clocktower.epistemic.A4WorldEngineRollout
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
-import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
-import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionContext
@@ -143,7 +128,6 @@ import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionSemantics
 import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
 import com.codex.campboardgamehost.debug.DebugFlightRecorder
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -208,8 +192,6 @@ internal fun PlayerCard.abilitySubject(poisonTarget: String?): AbilitySubject = 
 
 private fun Context.playerName(number: Int): String = getString(R.string.default_player_name_format, number)
 
-internal const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
-internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdate"
 internal const val MIN_CLOCKTOWER_PLAYERS = 5
 internal const val MAX_PLAYERS = 15
 
@@ -505,31 +487,6 @@ internal fun CampBoardGameHostApp() {
             recommendationCoordinator.naturalPairCandidates(request)
         }
     }
-    val a4ShadowWorldSetCache = remember { A4ShadowWorldSetCache() }
-    val a4IdentityRevealPrewarmer = remember(a4ShadowWorldSetCache) {
-        A4IdentityRevealPrewarmCoordinator(cache = a4ShadowWorldSetCache)
-    }
-    val a4ObservationCacheRebuildExecutor = remember(a4ShadowWorldSetCache) {
-        A4ObservationCacheRebuildExecutor(a4ShadowWorldSetCache)
-    }
-    var pendingA4ObservationRecordId by remember(clocktowerGameId) { mutableStateOf<String?>(null) }
-    var a4ObservationCacheRebuildRequest by remember { mutableStateOf<A4ObservationCacheRebuildRequest?>(null) }
-    val a4ShadowLifecycleInvalidator = remember(a4ShadowWorldSetCache, clocktowerGameId) {
-        A4ShadowLifecycleInvalidator(
-            invalidateGame = a4ShadowWorldSetCache::invalidateGame,
-            clearPendingObservation = { pendingA4ObservationRecordId = null },
-            cancelObservationRebuild = { a4ObservationCacheRebuildRequest = null },
-        )
-    }
-
-    fun invalidateA4RevisionScope() {
-        a4ShadowLifecycleInvalidator.revisionSuperseded(clocktowerGameId)
-    }
-
-    fun invalidateA4SessionBoundary() {
-        a4ShadowLifecycleInvalidator.sessionBoundary(clocktowerGameId)
-    }
-
     fun publishClocktowerSessionView() {
         clocktowerSessionView = clocktowerGameSession?.view
     }
@@ -623,13 +580,11 @@ internal fun CampBoardGameHostApp() {
     fun advanceClocktowerGameStateRevision() {
         requireClocktowerGameSession().advanceGameStateRevision()
         publishClocktowerSessionView()
-        invalidateA4RevisionScope()
     }
 
     fun advanceClocktowerPlayerInputRevision() {
         requireClocktowerGameSession().recordPlayerInput()
         publishClocktowerSessionView()
-        invalidateA4RevisionScope()
     }
     val playerCount = playerNames.size
 
@@ -650,114 +605,6 @@ internal fun CampBoardGameHostApp() {
         return runCatching { TroubleBrewingRulesetPersistence.refFor(knowledge, basis) }.getOrNull()
     }
 
-    fun a4InitialIdentityPrewarmRequestOrNull(): A4IdentityRevealPrewarmRequest? {
-        val activeRuleset = clocktowerRulesetRef ?: return null
-        val session = clocktowerGameSession ?: return null
-        if (!BuildConfig.DEBUG || currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
-            session.state.gameState.players.size != 5 ||
-            session.state.gameState.players.any { it.shownRole == null }
-        ) return null
-        val snapshot = session.toGameSnapshot(activeRuleset)
-        val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, round = 1)
-        val perceivedRolesBySeat = session.state.gameState.players.associate { player ->
-            player.seat to requireNotNull(player.shownRole)
-        }
-        return A4IdentityRevealPrewarmRequest(
-            formal = formal,
-            playerInputRevision = clocktowerPlayerInputRevision,
-            knowledgeBySeat = A4PlayerKnowledgeFactory.createAll(
-                formal = formal,
-                perceivedRolesBySeat = perceivedRolesBySeat,
-                observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
-            ).associateBy(PlayerKnowledgeSnapshot::recipientSeat),
-            revealOrder = session.state.gameState.players.map { it.seat },
-            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-            roleDefinitions = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
-        )
-    }
-
-    fun a4ObservationCacheRebuildRequestOrNull(recordId: String): A4ObservationCacheRebuildRequest? {
-        val activeRuleset = clocktowerRulesetRef ?: return null
-        val session = clocktowerGameSession ?: return null
-        if (!BuildConfig.DEBUG || currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
-            session.state.gameState.players.size != 5 ||
-            session.state.gameState.players.any { it.shownRole == null }
-        ) return null
-        val record = clocktowerEpistemicObservations.singleOrNull { it.recordId == recordId } ?: return null
-        val snapshot = session.toGameSnapshot(activeRuleset)
-        val formal = FormalGameState.from(snapshot, record.phase, record.round)
-        return A4ObservationCacheRebuildRequest(
-            formal = formal,
-            playerInputRevision = clocktowerPlayerInputRevision,
-            perceivedRolesBySeat = session.state.gameState.players.associate { player ->
-                player.seat to requireNotNull(player.shownRole)
-            },
-            observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
-            appendedRecordId = recordId,
-            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-            roleDefinitions = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
-            rollout = A4WorldEngineRollout.ZDD_SHADOW,
-        )
-    }
-
-    val identityRevealActive = screen == Screen.PassPhone || screen == Screen.RevealCard
-    val identityRevealAssignmentFingerprint = cards.joinToString("|") { card ->
-        "${card.clocktowerRole?.enName}:${card.clocktowerShownRole?.enName}"
-    }
-    LaunchedEffect(
-        identityRevealActive,
-        currentClocktowerScript,
-        clocktowerGameId,
-        clocktowerGameStateRevision,
-        clocktowerPlayerInputRevision,
-        clocktowerRulesetRef,
-        identityRevealAssignmentFingerprint,
-    ) {
-        val eligible = BuildConfig.DEBUG && identityRevealActive &&
-            currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
-            cards.size == 5 && clocktowerRulesetRef != null &&
-            cards.all { it.clocktowerRole != null && it.clocktowerShownRole != null }
-        if (!eligible) return@LaunchedEffect
-        val request = a4InitialIdentityPrewarmRequestOrNull() ?: return@LaunchedEffect
-        val session = a4IdentityRevealPrewarmer.start(request)
-        val frameTelemetry = A4MainThreadFrameTelemetry()
-        val frameMonitor = launch {
-            while (isActive) {
-                withFrameNanos(frameTelemetry::recordFrame)
-            }
-        }
-        var completedReportLogged = false
-        try {
-            val report = withContext(Dispatchers.Default) {
-                a4IdentityRevealPrewarmer.run(
-                    session = session,
-                    prioritizedRecipientSeat = currentDealIndex + 1,
-                )
-            }
-            Log.i(A4_IDENTITY_PREWARM_LOG_TAG, report.toLogLine(frameTelemetry.summary()))
-            completedReportLogged = true
-        } finally {
-            frameMonitor.cancel()
-            val cancellation = a4IdentityRevealPrewarmer.cancel(session)
-            if (cancellation.cancelledEntries > 0) {
-                Log.i(A4_IDENTITY_PREWARM_LOG_TAG, cancellation.toLogLine())
-            }
-            if (!completedReportLogged) {
-                Log.i(
-                    A4_IDENTITY_PREWARM_LOG_TAG,
-                    a4IdentityRevealPrewarmer.report(session).toLogLine(frameTelemetry.summary()),
-                )
-            }
-        }
-    }
-    LaunchedEffect(a4ObservationCacheRebuildRequest) {
-        val request = a4ObservationCacheRebuildRequest ?: return@LaunchedEffect
-        val report = withContext(Dispatchers.Default) {
-            val workerScope = this
-            a4ObservationCacheRebuildExecutor.execute(request) { !workerScope.isActive }
-        }
-        Log.i(A4_OBSERVATION_CACHE_UPDATE_LOG_TAG, report.toLogLine(request))
-    }
     fun storytellerPhaseFor(phase: ClocktowerPhase = clocktowerPhase): StorytellerPhase =
         phase.toStorytellerPhase()
 
@@ -812,7 +659,6 @@ internal fun CampBoardGameHostApp() {
             expectedGameStateRevision = session.state.gameStateRevision,
         )
         publishClocktowerSessionView()
-        invalidateA4RevisionScope()
     }
 
     /** An announced death is learned at the real Host transition into the Klutz public choice.
@@ -833,7 +679,6 @@ internal fun CampBoardGameHostApp() {
         val session = requireClocktowerGameSession()
         if (session.expirePoisonAtDusk(session.state.gameStateRevision)) {
             publishClocktowerSessionView()
-            invalidateA4RevisionScope()
         }
         clocktowerPoisonTarget = null
     }
@@ -842,7 +687,6 @@ internal fun CampBoardGameHostApp() {
         val session = requireClocktowerGameSession()
         if (session.commitDawnPoisonCarry(intent, session.state.gameStateRevision)) {
             publishClocktowerSessionView()
-            invalidateA4RevisionScope()
         }
         clocktowerPoisonTarget = session.state.confirmedPoisonTargetName(round)
     }
@@ -870,7 +714,6 @@ internal fun CampBoardGameHostApp() {
             expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
         )
         publishClocktowerSessionView()
-        invalidateA4RevisionScope()
     }
 
     /**
@@ -927,8 +770,6 @@ internal fun CampBoardGameHostApp() {
         if (session.view.playerInputRevision == before.playerInputRevision) return
         reviewConfirmedCurrentStepAdvice(before, draft)
         publishClocktowerSessionView()
-        invalidateA4RevisionScope()
-        pendingA4ObservationRecordId = committed.recordId
         if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
             BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
                 strategicPolicyCursor?.version ?: 0,
@@ -943,8 +784,6 @@ internal fun CampBoardGameHostApp() {
         if (session.state.playerInputRevision == before.playerInputRevision) return
         reviewConfirmedCurrentStepAdvice(before, draft)
         publishClocktowerSessionView()
-        invalidateA4RevisionScope()
-        pendingA4ObservationRecordId = committed.recordId
         if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
             BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
                 strategicPolicyCursor?.version ?: 0,
@@ -999,13 +838,6 @@ internal fun CampBoardGameHostApp() {
         resetClocktowerDayFlow()
     }
 
-    SideEffect {
-        pendingA4ObservationRecordId?.let { recordId ->
-            pendingA4ObservationRecordId = null
-            a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(recordId)
-        }
-    }
-
     fun addCurrentPlayer(name: String) {
         val trimmedName = name.trim()
         if (trimmedName.isNotEmpty() && playerNames.size < MAX_PLAYERS && trimmedName !in playerNames) {
@@ -1051,7 +883,6 @@ internal fun CampBoardGameHostApp() {
         preparedClocktowerInitialState: GameState? = null,
         preparedClocktowerGameId: String? = null,
     ) {
-        invalidateA4SessionBoundary()
         pendingTroubleBrewingDrunkSelection = null
         pendingCurrentStepAdvice = null
         committedTroubleBrewingSetupRotationRecord = null
@@ -1954,7 +1785,6 @@ internal fun CampBoardGameHostApp() {
     fun finishCurrentGameForRestart(): Boolean {
         if (cards.isEmpty()) return false
         if (!persistCompletedTroubleBrewingSetupIfNeeded()) return false
-        invalidateA4SessionBoundary()
         clocktowerGameSession = null
         publishClocktowerSessionView()
         showNewGameConfirmation = false
@@ -2028,7 +1858,6 @@ internal fun CampBoardGameHostApp() {
             )
             if (session.state.gameStateRevision != beforeRevision) {
                 publishClocktowerSessionView()
-                invalidateA4RevisionScope()
             }
         }
     }
@@ -2467,7 +2296,6 @@ internal fun CampBoardGameHostApp() {
                                 if (targetName == null) {
                                     session.clearConfirmedNightAttack(session.state.gameStateRevision)
                                     publishClocktowerSessionView()
-                                    invalidateA4RevisionScope()
                                 } else {
                                     val targetSeat = clocktowerSeatFor(targetName)
                                     commitClocktowerConfirmedAction(ActionFactDraft.Attack(
@@ -2499,7 +2327,6 @@ internal fun CampBoardGameHostApp() {
                                     expectedGameStateRevision = session.state.gameStateRevision,
                                 )
                                 publishClocktowerSessionView()
-                                invalidateA4RevisionScope()
                             }
                         },
                         onSelectFortuneTellerFirst = {
@@ -2541,7 +2368,6 @@ internal fun CampBoardGameHostApp() {
                                 sequence = requireClocktowerGameSession().nextInputSequence,
                             )
                             publishClocktowerSessionView()
-                            invalidateA4RevisionScope()
                             redHerringDraftName = null
                         },
                         onCommitDemonBluffs = { roleNames ->
@@ -2552,7 +2378,6 @@ internal fun CampBoardGameHostApp() {
                                     sequence = requireClocktowerGameSession().nextInputSequence,
                                 )
                                 publishClocktowerSessionView()
-                                invalidateA4RevisionScope()
                             }
                         },
                         onSelectButlerMaster = {
@@ -2566,7 +2391,6 @@ internal fun CampBoardGameHostApp() {
                                 masterSeat = clocktowerSeatFor(masterName),
                             )
                             publishClocktowerSessionView()
-                            invalidateA4RevisionScope()
                         },
                         onSelectMonkProtectedTarget = { selected ->
                             advanceClocktowerPlayerInputRevision()
@@ -2579,7 +2403,6 @@ internal fun CampBoardGameHostApp() {
                                 if (targetName == null) {
                                     session.clearConfirmedNightProtection(session.state.gameStateRevision)
                                     publishClocktowerSessionView()
-                                    invalidateA4RevisionScope()
                                 } else {
                                     val targetSeat = clocktowerSeatFor(targetName)
                                     commitClocktowerConfirmedAction(ActionFactDraft.Protect(
@@ -2650,7 +2473,6 @@ internal fun CampBoardGameHostApp() {
                                                 expectedGameStateRevision = session.state.gameStateRevision,
                                             )
                                             publishClocktowerSessionView()
-                                            invalidateA4RevisionScope()
                                         }
                                     }
                                     is MayorRedirectDecisionConfirmation.Blocked -> {
@@ -2668,7 +2490,6 @@ internal fun CampBoardGameHostApp() {
                             val previousRevision = session.state.playerInputRevision
                             session.confirmDemonSuccessor(clocktowerDemonSuccessorTarget?.let(::clocktowerSeatFor))
                             publishClocktowerSessionView()
-                            if (session.state.playerInputRevision != previousRevision) invalidateA4RevisionScope()
                         },
                         onConfirmNewDemon = {
                             val pendingName = clocktowerPendingNewDemonName
@@ -2880,8 +2701,6 @@ internal fun CampBoardGameHostApp() {
                                     publishedObservationId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat",
                                 )
                                 publishClocktowerSessionView()
-                                invalidateA4RevisionScope()
-                                pendingA4ObservationRecordId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat"
                                 val promotedName = if (targetCard.clocktowerTeam == ClocktowerTeam.Demon) {
                                     promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen = false)
                                 } else {
@@ -3014,8 +2833,6 @@ internal fun CampBoardGameHostApp() {
                                         publishedObservationId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}",
                                     )
                                     publishClocktowerSessionView()
-                                    invalidateA4RevisionScope()
-                                    pendingA4ObservationRecordId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}"
                                 }
                                 clocktowerLastExecutedName = nominatorName
                                 val outcome = evaluateGameOutcome(context, cards)
@@ -3130,8 +2947,6 @@ internal fun CampBoardGameHostApp() {
                                         publishedObservationId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}",
                                     )
                                     publishClocktowerSessionView()
-                                    invalidateA4RevisionScope()
-                                    pendingA4ObservationRecordId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}"
                                     clocktowerLastExecutedName = executionName
                                     if (executedCard.clocktowerRole?.enName == "Saint") {
                                         executionOutcome = GameOutcome(
@@ -3265,8 +3080,6 @@ internal fun CampBoardGameHostApp() {
                                     )
                                     if (session.state.gameStateRevision != beforeRevision) {
                                         publishClocktowerSessionView()
-                                        invalidateA4RevisionScope()
-                                        pendingA4ObservationRecordId = observationId
                                     }
                                     if (demonDied) {
                                         if (impSelfChosen) {
