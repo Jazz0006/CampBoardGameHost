@@ -5,7 +5,7 @@
 ## F6 当前批次与下一步（覆盖下方历史 NEXT）
 
 - 本地直接删除首夜合法候选域、语义匹配门禁和 V1 候选 scope，及其失去消费者的 Numeric/Setup 生成器；不再枚举酒鬼假设并生成第二份 GameState。首夜模型输出直接转结构化建议，Host 保留 identity/版本、座位/角色引用、JSON 与记忆边界、完整信息/事件标识及异步隔离；实际事件仍由原 Session 写入。
-- 保留真实 OpenAI transport、首夜联合规划、已存真实响应的离线回归、后夜战略记忆、AI_ASSISTED/AI_AUTOMATIC 与手动接管。第一轮本地 testFast、testFull + assembleDebug：993 项全通过；最终代码复验及远端 exact-SHA CI/R2 待补记。完整删除/风险/代码规模统一见全源台账 F6。
+- 保留真实 OpenAI transport、首夜联合规划、已存真实响应的离线回归、后夜战略记忆、AI_ASSISTED/AI_AUTOMATIC 与手动接管。第一轮本地 testFast、testFull + assembleDebug：993 项全通过；最终代码 `f3fae3f2e5bfde9083c919f9a5ae34f4e10fb90c` 完整本地复验及 GitHub **CI #4357 / R2 #3937 SUCCESS**，Android 单测/Debug APK、ASP、真实 Clingo 与 CI gate 均通过。完整删除/风险/代码规模统一见全源台账 F6。
 - **下一批不是重建已删候选域**：横向继续检查 setup/Drunk commit、HostScreen/NightStepUi 菜单绑定、Numeric/Pair/目标/Bluffs 确认与后夜候选复核。首夜响应域虽已删，当前 UI 仍可能要求推荐落在旧菜单中，酒鬼 setup picker 仍有限制；不能把它们称为全路径结构直接采纳完成。先保证真实 AI/私密交付和事件安全，再按职责整组删除残留。
 - 本批不会自动合并/retarget Draft #334；没有真机/新付费 API 验收，无新增产品决策。
 

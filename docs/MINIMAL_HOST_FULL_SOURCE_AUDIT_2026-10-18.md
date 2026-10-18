@@ -2,17 +2,17 @@
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
 
-## F6：首夜候选合法域整链删除（本地实施，远端验收待更新）
+## F6：首夜候选合法域整链删除（本地完整构建及独立 CI/R2 已通过）
 
 - 本批按所有者最新指示在 Windows 本地直接读写；起点为远端/本地 `a2cbcac82b457b5a56abf3833b604d9c4fdd74f7`，main `61cd6796`，PR #334 仍堆叠 Draft、base `64be3090`。读取完整 1,005 文件 Git tree 并复核当前模块分类；未声称全部文件已完成语义审计。旧 web/world 引擎不重建。
 - 删除生产 `HostOpeningRulesDomainV2.kt`、`HostOpeningSemanticGateV2.kt`、`InitialGlobalOpeningScopeV1.kt`：退出「每个酒鬼假设构造 GameState → Pair/Numeric/Setup 合法候选 → 语义匹配候选 ID → V1 选择复核 → App 反解推荐」整链。真实 AI 网络调用不再生成这些合法域；首夜提示词去掉 Host 后验规则校验承诺，要求模型提供具体观察值而非依赖 Host 计算唯一答案。
 - 断开最后生产消费者后，删除 `recommendation/FirstNightNumericLegalDomain.kt` 和 `recommendation/setup/SetupCandidateGenerator.kt`。删除四个专属测试文件：`HostOpeningSemanticGateV2Test.kt`、`InitialGlobalOpeningScopeV1Test.kt`、`FirstNightNumericLegalDomainTest.kt`、`CandidateGeneratorTest.kt`（该文件只含 SetupCandidateGeneratorTest）。删除前已检索所有源码、工具和 CI 消费者；PairInformationLegalDomain 仍有真实后续 AI 消费者，未误删。
 - `InitialOpeningRequestV2` 只承载已有 precommit snapshot、请求身份/版本、经验和信息/待输入事件标识；`OpeningRecommendationV2` 保留实际 AI 结构化建议、待决意图和战略记忆 DTO。没有候选枚举、第二份 GameState、规则 verdict、登记见证或 Session writer。App 直接保存模型的 seat/value/role 信息、Red Herring 座位和 bluffs；移除候选 ID 中转。保留 serial、pending object、模式/页面边界、response receipt、记忆续规划和逐步事实确认。
-- 保留/补充有价值的原生产测试：不发送候选、真实已存 P15 模型响应解析（离线）、战略续规划；验证具体数值/角色不再按旧合法域拒绝，并验证跨游戏/版本/roster、信息清单遗漏/重复、收件来源身份、未知角色/座位、待决行动身份、整数/DTO 结构及战略记忆上限。第一轮本地 testFast、testFull + assembleDebug 均通过（993 项、0 失败、0 跳过）；最终代码变动后的复验与 GitHub CI/R2 见下一补记。
+- 保留/补充有价值的原生产测试：不发送候选、真实已存 P15 模型响应解析（离线）、战略续规划；验证具体数值/角色不再按旧合法域拒绝，并验证跨游戏/版本/roster、信息清单遗漏/重复、收件来源身份、未知角色/座位、待决行动身份、整数/DTO 结构及战略记忆上限。第一轮本地 testFast、testFull + assembleDebug 均通过（993 项、0 失败、0 跳过）；最终代码变动后的复验与 GitHub CI/R2 见下方验收补记。
 - **明确剩余绑定**：`TroubleBrewingDrunkSelectionRouter` / setup commit、HostScreen/NightStepUi 的既有菜单匹配/数值/目标/掩饰身份确认，以及后夜 `StorytellerStrategicContinuationV2` 对候选的复核仍需继续解耦。本批只删除首夜响应规则域；尚不能声称所有 AI/UI 和 Host 事实提交均已无规则门禁。新解析器接受、旧酒鬼选择器尚不能应用的建议会显示重试/手动接管，避免 UI 抛异常；后续应从结构化 setup 确认端清除该限制。
 - Host 状态/事件风险：未修改唯一 Session、ActionFact、ObservationLog、收件权限、事件顺序和原子提交；建议、条件意图、战略记忆都不是已发生事实。未执行真机或新付费 API 调用，无新增所有者决策，PR 不合并/不 retarget。
 
-- **本批代码规模与最终本地复验**：含两个保留 AI 合同新文件，生产 +356/-1268，测试 +100/-784，合计净删 **1596 行代码**。删除 5 个生产 + 4 个测试、增加 2 个窄职责 AI 合同文件，预计受控树 1,005→998、Android 生产 298→295、测试 240→236。最终本地 `:app:testFull :app:assembleDebug` SUCCESS（993 项，0 失败/错误/跳过）；APK 为 `app/build/outputs/apk/debug/app-debug.apk`。当前超 50,000B 源码：App 188197B、HostScreen 149006B、NightStepUi 60237B（按 UTF-8/LF 源码实测），其余受控源码无新增超限。远端 CI/R2 尚待本批提交触发，不能沿用 F5 作为本批证明。
+- **本批代码规模与最终本地复验**：含两个保留 AI 合同新文件，生产 +356/-1268，测试 +100/-784，合计净删 **1596 行代码**。删除 5 个生产 + 4 个测试、增加 2 个窄职责 AI 合同文件，实际受控树 1,005→998、Android 生产 298→295、测试 240→236。最终本地 `:app:testFull :app:assembleDebug` SUCCESS（993 项，0 失败/错误/跳过）；APK 为 `app/build/outputs/apk/debug/app-debug.apk`。当前超 50,000B 源码：App 188197B、HostScreen 149006B、NightStepUi 60237B（按 UTF-8/LF 源码实测），其余受控源码无新增超限。代码提交 `f3fae3f2e5bfde9083c919f9a5ae34f4e10fb90c` 的 GitHub 完整 Android **CI #4357 SUCCESS**、**R2 #3937 SUCCESS**，ASP、真实 Clingo 和 CI gate 全部成功。该 SHA 是本批代码验收基线；后续 docs-only HEAD 不等于新的 Android 构建证据。
 
 ## F5：大型整块删除已完成（Android CI/R2 全通过）
 

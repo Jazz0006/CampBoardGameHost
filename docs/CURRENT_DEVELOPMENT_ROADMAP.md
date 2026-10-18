@@ -2,9 +2,9 @@
 
 唯一详细权威：docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md。**所有者纠偏（2026-10-18）**：仅清除 Host 过度工程化的规则合法性门禁与真值推断；已有 AI 说书人推荐是保留的产品功能，包括首夜整局规划、配对/数字推荐、提示词、API、响应合同和长期战略记忆。B3 意外删除 AI 配对推荐链，应先恢复并验证，再继续 P1；未来 Rules 为独立只读查询，不成为事实提交门禁。Rules 和 AI 均不得写入 Host 事实，人工结果在清理期间不受游戏规则候选限制。
 
-## F6 当前本地批次：首夜候选域已删除，独立验收待更新
+## F6 当前本地批次：首夜候选域已删除，完整 CI/R2 已通过
 
-Windows 本地直接开发，已删除首夜 HostOpeningRulesDomainV2 / HostOpeningSemanticGateV2 / InitialGlobalOpeningScopeV1 和失去生产消费者的 Numeric/Setup 生成器（5 个生产、4 个专属测试文件）。保留真实首夜请求/响应、结构化预选内容、战略记忆及异步安全；当前本地 testFast 与完整 testFull/Debug APK 通过，详情和剩余 UI/setup/后夜候选绑定见全源台账 F6。P1 继续进行，不宣称全面移除规则门禁。
+Windows 本地直接开发，已删除首夜 HostOpeningRulesDomainV2 / HostOpeningSemanticGateV2 / InitialGlobalOpeningScopeV1 和失去生产消费者的 Numeric/Setup 生成器（5 个生产、4 个专属测试文件）。保留真实首夜请求/响应、结构化预选内容、战略记忆及异步安全；当前本地 testFast 与完整 testFull/Debug APK 通过，代码 `f3fae3f2e5bfde9083c919f9a5ae34f4e10fb90c` 的完整 Android **CI #4357 / R2 #3937 SUCCESS**，ASP/Clingo/CI gate 均成功。净删 **1596 行代码**，受控树 998 文件，Android 295 生产 + 236 测试 Kotlin；详情和剩余 UI/setup/后夜候选绑定见全源台账 F6。P1 继续进行，不宣称全面移除规则门禁。
 
 ## F5 大模块优先（2026-10-18）
 
@@ -15,7 +15,7 @@ Windows 本地直接开发，已删除首夜 HostOpeningRulesDomainV2 / HostOpen
 | 阶段 | 任务 | 状态 |
 |---|---|---|
 | R0 | 恢复 B3 误伤的 AI 配对推荐、Provider/残余范围/方桌预选，同时清除无消费的 Host 规则确认接口 | **已完成：代码 CI #4342 / R2 #3922 SUCCESS** |
-| P1 | 删除 Host 旧规则合法性否决、真值/登记见证、重复投影和专属测试；**先保持 AI 真实生产行为，再拆除旧候选适配，不把 Host 候选当成 AI 产品需求** | **F5 已验收；F6 首夜候选域本地已删，UI/setup/后夜残留待清理** |
+| P1 | 删除 Host 旧规则合法性否决、真值/登记见证、重复投影和专属测试；**先保持 AI 真实生产行为，再拆除旧候选适配，不把 Host 候选当成 AI 产品需求** | **F5 已验收；F6 首夜候选域已删并验收，UI/setup/后夜残留待清理** |
 | P2 | 仅清理已证明无 AI 生产消费者的旧实验/重复算法；禁止整包删除 AI 推荐、提示词、API、联合规划与战略记忆 | 待 P1 |
 | P3 | 收敛唯一 GameState/Session 事实及结构化事件记录，最小继续游戏、通用合同 | 待 P2 |
 | P4 | 净删后的 UI 和源码职责拆分；全部源文件 <=50,000 bytes | 待 P3 |
