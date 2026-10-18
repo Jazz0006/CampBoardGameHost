@@ -2,7 +2,7 @@
 
 # 最小 Host 全仓源码遍历 / 删除边界台账（2026-10-18）
 
-## F7：优先集中删除已证实无生产消费者的旧实现（本地完整验收已通过，远端待更新）
+## F7：优先集中删除已证实无生产消费者的旧实现（本地完整构建及 exact-SHA CI/R2 已通过）
 
 - **执行顺序按所有者最新指示调整**：先横向比较全树的体量、职责和消费者证据，集中整删规模较大且有把握的旧实现；清完明确可删部分后，再逐文件审计剩余混合模块。不再默认沿酒鬼确认链逐函数推进，也不先建立另一套文件台账。
 - 起点：GitHub/local `13228a7e7dbe994d1eeebe6fa108389e27401bdd`，PR #334 Draft、base `64be3090`；Mini MCP 仍停在 `a2cbcac8`（本批不通过它改代码或提交）。已读取完整 998 文件树，横向比较全部 Kotlin 模块；词法引用扫描只作候选筛选，最终删除逐项以完整受控源码/XML/工具/CI 的符号和路径引用复核为依据。普通本地未跟踪文件不动。
@@ -16,7 +16,7 @@
 - **整删 5 个专属测试（281 行）**：`clocktower/rules/FortuneTellerInformationSemanticsTest.kt`、`FirstNightNumericInformationDisplayDomainTest.kt`、`clocktower/session/FirstNightPoisonLifecycleTest.kt`、`clocktower/history/InformationReferenceExtractorTest.kt`、`ClocktowerCommittedSetupRecommendationLockTest.kt`。这些均只验证被退休实现；没有删除实际 Session 去重、poison commit、AI Provider/请求时效或隐私测试。
 - **整删 3 条失效实验工作流（193 行）**：`.github/workflows/fn-bundle-3-calibration.yml`、`sde-2d5f-expert-observed-calibration.yml`、`sde-2d5f-b4f-silver-generalization.yml`。各自仅调用 F5 已退休的 Gradle 实验任务/测试；当前 app/build.gradle.kts 无这些 task，工作流不是复用 workflow，无正式 CI/生产依赖。保留完整 Android CI、R2、离线 API/网关检查和 field-test 构建。
 - **明确保留/剩余**：厨师/共情者仍调用 ClocktowerSingleNumericChoiceRows，其他现用信息 UI 仍调用 SingleRecommendationButtons 和 compact helper，因此不因粗筛结果删除。Snapshot JSON codec、PlayerHistoricalTimeline 和其余 epistemic 核心继续保留。当前有真实消费者的大块（Session、NightTransaction、Setup/Flow、规则生成器、UI/后夜候选）不是本批整删对象，留待剩余审计和可验证解耦；不宣称 P1 完成。
-- 代码/配置总净删 **917 行**（生产 -444、测试 +1/-281、实验 CI -193），没有新算法/新兼容层/新状态。实际 Git tree 998→979，Android 生产 295→284、测试 236→231。三个超限源码仍为 App 188197B、HostScreen 149006B、NightStepUi 60237B。唯一事实/事件/安全和活跃 AI 未修改；无付费 API/真机测试，无新增所有者决策；本地 `:app:testFull :app:assembleDebug` SUCCESS（980 项、0 失败/错误/跳过）；exact-SHA CI/R2 待补记，PR 保持堆叠 Draft。
+- 代码/配置总净删 **917 行**（生产 -444、测试 +1/-281、实验 CI -193），没有新算法/新兼容层/新状态。实际 Git tree 998→979，Android 生产 295→284、测试 236→231。三个超限源码仍为 App 188197B、HostScreen 149006B、NightStepUi 60237B。唯一事实/事件/安全和活跃 AI 未修改；无付费 API/真机测试，无新增所有者决策；本地 `:app:testFull :app:assembleDebug` SUCCESS（980 项、0 失败/错误/跳过）；代码 `6320a735a9ee13a7c57dcd6a259361d40de591c3` 的完整 Android **CI #4359 SUCCESS**（单测/Debug APK）、**R2 #3939 SUCCESS**，ASP/真实 Clingo/CI gate 均成功。GitHub 独立 diff 核对：24 文件 +33/-920（含文档）；源码净减 724 行、另删 CI 193 行，合计代码/配置净删 917 行。该 SHA 是本批代码验收基线；后续 docs-only HEAD 不是新的编译证明。PR 保持堆叠 Draft、不合并。
 
 ## F6：首夜候选合法域整链删除（本地完整构建及独立 CI/R2 已通过）
 
