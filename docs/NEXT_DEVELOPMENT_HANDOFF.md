@@ -2,7 +2,13 @@
 
 > **唯一现行实施合同**：[MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。以下早期“最新” F12、局部夜间和重新追查已删规则的历史记录不可作为新一轮执行命令。
 
-## P1 2026-10-20 最终简化：所有夜间步骤只向前、不设 Pending（最高优先级）
+## P1 2026-10-20 市长死亡即时结算检查点（最新）
+
+- 实际提交 `19c7c9a1861e2d9c53be0d5a2a1dba84e3b74f68` 已推送 #335：`ClocktowerGameSession.commitConfirmedMayorRedirect` 不再仅记录 `MayorRedirectChoice`，而是在同一个 `state.copy` 原子记录选定的裁量与可能发生的私密 `Death`，即时更新唯一 GameState、死亡 Timeline、版本和已接受市长目标；自己的死亡、转移给健康玩家、转移给已死/受有效保护/有免疫的玩家均按实际状态结算。同夜重选会被拒绝。原允许独立记市长事实、多次改选的 `MayorRedirectBoundaryTest` 被新事件边界用例替代。精确 Android [CI #39340843586](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39340843586) / [R2 #39340843687](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39340843687) SUCCESS。
+- 第二批 `c178e8f31987bada5621b099ac91542e36265621` 防止已确认恶魔攻击市长、但裁量尚未完成时直接在夜末记录“无人死亡”或进入黎明，回归测试同步提交。[完整 Android CI #39341689671](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39341689671) / [R2 #39341689637](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39341689637) 均 SUCCESS。
+- **下一个未闭合业务链**：小恶魔自杀后应在袭击结算时记录 Imp Death，并按真实 Minion/Scarlet Woman 继任裁量记录 RoleChange，通知新恶魔后继续余下夜间步骤；随后才能安全删除旧夜末自由勾选 Death/继任/毒延续的确认页面及其重复适配器，不能为了删除而令自杀局无法继续。另需审查市长转移杀死恶魔时是否触发继任、夜间终局以及单 Session 恢复。P1 尚未完成；PR #334/#335 继续 Draft。
+
+## P1 2026-10-20 最终简化：所有夜间步骤只向前、不设 Pending（以下为上批次事实）
 
 - 用户继前一条“恶魔袭击禁止返回”后，**进一步明确整个夜间流程一律不允许“上一步”**，包括信息展示类角色；不采用“信息类可回退重看”的中间建议。各夜间角色在本步骤点 Next 时立即接受机械事件，展示信息则在实际私密公布时接受 Observation。用户不需要为任何角色多点“开始当前步骤”。
 - 真实代码 `2eb56b2fb71d13965ff8832ccacddfe3445603f8` 已推送 #335：删除 `ClocktowerSessionState.pendingOperation`、`PendingNightOperation`、`stageNightPoison/Protection/ButlerMaster`、`startNextNightStep`、`acceptPendingOperation` 与 Checkpoint 的 Pending 字段；改成各自的 `confirmNightPoison/Protection/ButlerMaster` 直接写入同一 Session，保留 `confirmNightAttack` 原子私密死亡。夜间 UI 移除了“开始当前步骤/开始夜间结算”页面与后退回调，通常夜间 Previous 被禁用并隐藏；新增立即确认/幂等测试取代旧 Pending 测试。[完整 Android CI #39339115698](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39339115698) / [R2 #39339115692](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39339115692) 均 SUCCESS。继续保留 AI 全链、跨局两类防重复、TB/NGJ。

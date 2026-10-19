@@ -10,9 +10,9 @@
 
 > **2026-10-20 最新的最终 UI/提交裁定（覆盖上方“单 Pending、下一步交接、恶魔例外”的全部历史记录）**：夜间首夜和后夜角色**全部禁止“上一步”**（包括信息展示）；任何行动类角色在自己的“下一步”确认时立刻原子提交事件/真实状态，玩家信息在实际展示时记入唯一 Observation；**无统一 `pendingOperation`、无“开始当前步骤/开始夜间结算”的额外交接页、无 Undo/Redo**。#335 新代码已在 `2eb56b2fb71d13965ff8832ccacddfe3445603f8` 推送（删除 Pending 模型/入口/UI，Poison/Monk/Butler 改为立即确认、Imp 保留及时死亡，夜间 Previous 禁用并隐藏，重写测试），[完整 Android CI #39339115698](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39339115698) / [R2 #39339115692](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39339115692) 均 SUCCESS。**尚未完成** Mayor/Imp 继任即时机械裁量、旧夜末死亡确认彻底删除、持久化恢复和双内置剧本全角色验收；PR #334/#335 均继续 Draft。下述任何 `pendingOperation` 规范均已被本条取代。
 
-> **当前目标架构**：一个 Session/GameState + 顺序已提交事实及实际公布信息 + 最多一个可持久化 pendingOperation + 稳定步骤身份；Host 从两内置剧本和事件决定整局（开局/首夜/后夜/黎明/白天/终局）的确定步骤、机械效果与唯一信息，AI/人工仅决定真正非唯一项。Next 暂存上一项，下一步骤实际执行前提交；Previous 只能纠正最近尚未提交项；安全恢复、玩家保密、AI stale 校验必须同步设计。
+> **当前目标架构（2026-10-20 最新）**：**一个 Session/GameState + 顺序已提交事实及实际公布信息 + 稳定步骤身份；不再有可持久化 pendingOperation**。夜间所有角色包括信息步骤**只向前**；自身 Next 当即接受机械操作，实际展示信息时立即接受观察。Host 从两内置剧本和实际事件决定整局确定机械效果与唯一信息，AI/人工仅决定真正非唯一项。不实现夜间 Previous/Undo/Redo，安全恢复只重建可继续的安全位置；玩家保密、AI stale 校验继续保留。
 >
-> **阶段**：P0 全仓职责/角色合同/删除与替换清单及 PR 策略；P1 与代表性 P2 场景联动完成 pending/提交/恢复；P2 全夜间步骤与即时结果；P3 白天/胜负/固定线索；P4 UI 与保留现有 AI 同一入口；P5 全树源码、测试、CI 和 5–15 人完整对局验收。每条链被新路径接管以后立刻物理删除旧实现、冗余 UI 状态和独占旧测试。保留跨局阵容及同玩家身份双多样性、现行 AI 全链、TB/NGJ。未来动态剧本可延期。
+> **阶段**：P0 全仓职责/角色合同/删除与替换清单及 PR 策略；P1 与代表性 P2 场景联动完成即时提交、单 Session 和实用恢复（原 pending 计划已取消）；P2 全夜间步骤与即时结果；P3 白天/胜负/固定线索；P4 UI 与保留现有 AI 同一入口；P5 全树源码、测试、CI 和 5–15 人完整对局验收。每条链被新路径接管以后立刻物理删除旧实现、冗余 UI 状态和独占旧测试。保留跨局阵容及同玩家身份双多样性、现行 AI 全链、TB/NGJ。未来动态剧本可延期。
 >
 > **当前实测起点（后续必须重查）**：Mini MCP `clocktower` `refactor/minimal-night-flow-20261019`，clean/equal HEAD `011baa1f49683c42b1eef65acc5a50f669c373ab`；Draft PR #335 基于 #334 分支，尚未合并。代码 `47ce60da` 全 Android CI #4422 / R2 #4002 SUCCESS；docs-only `011baa1f` CI #4423 / R2 #4003 成功但 Android skipped。当前夜末死亡仍旧确认、UI 流程等尚未重构。禁止把此文档变更当成新代码通过测试。
 
