@@ -2,6 +2,8 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
@@ -69,11 +71,17 @@ class PendingNightOperationTest {
     }
 
     @Test fun `first night Butler also follows next step boundary and remains immutable afterwards`() {
-        val game = TroubleBrewingFixtures.eightPlayerExample()
+        val game = TroubleBrewingFixtures.eightPlayerExample().let { base ->
+            base.copy(players = base.players.map { player ->
+                if (player.seat == 4) player.copy(
+                    actualRole = RoleId("Butler"), shownRole = RoleId("Butler"),
+                    actualType = CharacterType.OUTSIDER,
+                ) else player
+            })
+        }
         val s = ClocktowerGameSession.createProduction(
             "butler", game.seed, game, ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        // Fixture seat 4 is the actual Butler.
         s.stageNightButlerMaster(4, 2, StorytellerPhase.FIRST_NIGHT, 1, "butler-step")
         assertEquals(NightOperationKind.BUTLER, s.state.pendingOperation?.kind)
         assertTrue(s.state.actionTimeline.entries.isEmpty())
