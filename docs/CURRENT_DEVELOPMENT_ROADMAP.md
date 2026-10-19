@@ -1,6 +1,8 @@
-# 当前开发路线（2026-10-19，F12-K Sage直选配对完成及切换新对话）
+# 当前开发路线（2026-10-19，F12-L 横向源码审计与旧展示分支清理）
 
 ## 当前状态
+
+**最新F12-L（已实施并提交推送）**：以远端/开发机干净HEAD `b4c979ac`起步，在Draft #334原分支完成两笔代码提交`c420bd9e2dd4b0e7ebaa8436aa956a55f4f101e9`和`4e1c9d40e72acf6a08abb3f6a843c3d0be9d091b`。NightStepUi/Undertaker/Ravenkeeper统一移除根本不可达的`LegacyUnreliable`/`Direct`显示来源和兼容resolver，不改真正AI建议、人工RoleAt实际公布；另将只被旧专属测试调用的`previousClocktowerUnreliableNumber`实现及测试**2文件整删**。远端比对**7文件+8/-155，净删147行**。两个代码检查点完整**CI #4398/R2 #3978 SUCCESS**与**CI #4399/R2 #3979 SUCCESS**，最终Android tests、ASP、Clingo、CI gate全绿，不是docs-only。唯一台账旧453项净退2项、新全文审阅9项，现**186/451（41.24%）已审、265待审**；App/HostScreen超50KB、Host夜间死亡只读推演、Klutz自动终局及旧候选菜单仍未完成。两类跨局防重复、现行AI全部能力、唯一Session真实事件/隐私/安全继续保留。无付费API、无真机。PR #334仍Draft/base `64be3090`，不merge/retarget/force-push；本段docs提交CI与真正代码验收应区分。
 
 **最新F12-K（Sage子阶段完成，准备转入新对话）**：正式将Sage旧“枚举全部pair、真假筛选、手动候选下拉”改为现有方桌上人工直接点两个实际座位，并仍可直接采纳AI明确返回的两个座位；统一沿原onShowPlayerDisplay→唯一Session私密公布/事件记录。连带删除Host`storytellerPairHint`根据真恶魔自动拼出来的默认decoy，Sage夜步骤不再带伪默认信息。两个代码提交`9d962565b18e53b41713d639129e1ec8f6af253e`、最终`9c7c57a7369d9ee76324b009d26d088a66660923`，GitHub实际比对**7文件+163/-558，净删395行**。精确最终Android完整 **[CI #4396 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39181025505)**（full JVM tests+Debug APK、ASP/Clingo/gate成功）、**[R2 #3976 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39181025502)**。唯一台账**177/453（39.07%）已审、276待审、0审计中**；Sage已审生产/测试只复查、新全文审阅HostCoreSemantics+1，NightStepUi仍待全文件审计。阵容跨局防重复和同一玩家身份防重复、现有AI/唯一Session/安全保密全保留。**注意本轮只完成Sage子阶段，P1/P4及未审276文件并未完成**。无真机/付费API验证。
 

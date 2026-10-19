@@ -1,4 +1,4 @@
-# 新对话交接：F12-K Sage直接配对收尾，下一轮恢复横向全文件清理（2026-10-19）
+# 新对话交接：F12-L 已审186/451，继续剩余旧规则与 UI 清理（2026-10-19）
 
 ## 先读与现行授权
 
@@ -7,6 +7,10 @@
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **最新F12-L代码事实**：起点MiniMCP `clocktower`与远端clean/equal `b4c979ac143d25c455e0d7011705f0800cd1690f`；分支`codex/minimal-host-full-scan-20261018`，PR #334 Draft且base `codex/minimal-host-m1c-direct-number-20261018`（SHA `64be3090`）不变。两次实际代码提交并推送：`c420bd9e2dd4b0e7ebaa8436aa956a55f4f101e9`清Undertaker/Ravenkeeper Night UI不可达LegacyUnreliable/Direct来源/compat，完整 **CI #4398/R2 #3978 SUCCESS**；`4e1c9d40e72acf6a08abb3f6a843c3d0be9d091b`整删无生产调用的旧不可靠数字历史选择函数及唯一专属测试，完整 **CI #4399/R2 #3979 SUCCESS**（真实Android tests、ASP、Clingo、gate全绿）。GitHub精确比较7文件+8/-155、净删147行，其中整删1生产+1专属旧测试。后续本handoff/docs-only提交会令HEAD前进，**不能把docs-only CI当作比此代码更新的Android编译证据**。
+- **唯一台账**：`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`新增F12-L及9个全文+消费者审阅结论，现**186/451（41.24%）已审、265待审、审计中0**；删除路径退出逐文件库存，历史仅在F12-L。NightStepUi、DemonAttackAdapter本轮已全文件审阅并标待解耦；PlayerDisplayResolution+测试、Drunk展示身份、phase mapper保留；Klutz真正方桌选择保留但判输赢尚需退出规则门禁。Sage直选、两类跨局防重复、现有AI首夜/后夜/配对/数字/提示词/真实API/解析/战略记忆/预选/辅助和自动模式、唯一Session及隐私不改。未进行付费API/真机。
+- **下一优先序**：从台账剩余265路径继续横向首审epistemic/codec、setup、平台、transport、测试与tools/CI，不能重复算已审项。清Host日间Klutz规则自动胜负（保留公开选择实际Session事件与继续步骤的可用替代）、夜间DemonAttackProductionAdapter预测链（先保证Sage/Ravenkeeper有可用实际唤醒/信息展示入口，再删触发规则推演）、NightStepUi中仍被使用的manual/automatic候选域及其它可替代UI/DTO，和App/HostScreen>50KB大文件真正无用职责。不为通过旧测试恢复已退休Host Rules。每代码批提交推送、跑精确完整GitHub CI/R2并修失败，不merge/retarget/force push，未经授权不做收费API/真机。此处未宣称P1/P4/P5完成。
 
 - **F12-K Sage子阶段实际完成**：从clean+sync `4b29f45117119299f6ed3c395b3f8a4e9556fa35`出发，提交`9d962565b18e53b41713d639129e1ec8f6af253e`将旧全pair真/假枚举、LegacyUnreliable候选菜单替换成Sage方桌直接轻点两名实际玩家，保留有效AI两座位建议的一键确认、现有onShowPlayerDisplay/私密观察原子记录；Sage手工结果使用typed two-seat AnyOf并不强行标truthful。进一步提交最终真实代码`9c7c57a7369d9ee76324b009d26d088a66660923`，彻底删掉`storytellerPairHint`旧默认恶魔+第一人配对、删Sage初始化虚构已选命题和无用传参。真实GitHub对比7文件**+163/-558、净删395行**（本轮无整文件删除）。代码两次完整验收：首CI #4395/R2 #3975 SUCCESS，最终 **[CI #4396 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39181025505)**（Android full JVM unit tests、debug APK、ASP、real Clingo、CI gate）、**[R2 #3976 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39181025502)**。无真实付费OpenAI API/真机测试。
 - **保护项重申**：User明确要求保留两种跨局体验：①阵容/展示角色尽量避免连局重复（SetupDiversitySelector/History/TemplateRepository）；②同一玩家不同对局尽量避免分到相同身份角色（TB DealPlanner、PlayerStartingIdentityHistory、rotation record/store）。禁止重新以“游戏仍能启动”为理由删除它们。仍须保留现有首夜/pair/numeric/后夜AI推荐、真正的调用/提示词/返回parser/战略记忆、所有MANUAL/AI_ASSISTED/AI_AUTOMATIC模式、唯一Session/GameState、结构化实际行动/公布/角色/存活历史、stale/privacy/idempotent/atomic safety。
