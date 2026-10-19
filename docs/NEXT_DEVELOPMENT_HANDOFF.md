@@ -1,12 +1,17 @@
-# 新对话交接：F12-I 保留跨局开局防重复，清理影子玩家历史与旧Mayor/FT门禁（2026-10-19）
+# 新对话交接：F12-J 退役目标规则候选与Mayor不可达分支（2026-10-19）
 
 ## 先读与现行授权
 
-先读AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，然后读原MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md的F12-I/F12-H/F12-G/F12-F/F12-E/F15/F12-D/F12。唯一逐路径状态维护在原台账，不另建库存或NEXT。
+先读AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，然后读原MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md的F12-J/F12-I/F12-H/F12-G/F12-F/F12-E/F15/F12-D/F12。唯一逐路径状态维护在原台账，不另建库存或NEXT。
 
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **F12-J正式代码验收**：原分支/远端Clean、HEAD `2210130d9f89fc03de0f0345d809135748ef7718`。代码提交 `8582fe7a435c2f4c01c84b3a9468f25bc63c4541` 完整Android CI #4392/R2 #3972 SUCCESS；接续提交 **`f822ef5b9174c2e5d38b4704dca68af1042c9c72`** 完整 **[CI #4393 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39178966455)**（Android全套单元测试、Debug APK、ASP、真实Clingo和gate）及 **[R2 #3973 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39178966521)**。GitHub比对13文件**+13/-243，净删230行**。2生产文件（ClocktowerNightTargetLegality、ClocktowerRuleOnlyCompactChoice）与2项只保护旧实现的专属测试整删，3个信息角色single-choice专用compact UI与已孤立BeginnerSingleTargetRevealDialog切除；Mayor仅false的automatic/旧ImpSuccession展示退役。所有现行AI建议/真实Session提交、Mayor事件、两种跨局防重复、夜间按Next继续及手工/AI信息确认保留。无付费API或真机验证。
+- **最新全源台账**：在F12-I `171/457`上删4路径，其中1已审、3待审；另6个此前未审UI/Presentation/测试已实际全文+consumer复核，故**176/453（38.85%）已审，277待审、0审计中**，单一路径库存详见F12-J段。HostScreen/SageSquareTable以前已审本轮不重复计，NightStepUi的大规模源码继续待全量横向复核。
+- **继续清理的边界**：两类开局体验为正式硬保留：阵容防重复+同人连续身份轮换（SetupDiversitySelector/History与旋转planner/history），不可当多余规则校验删掉。SageDisplayOptions全合法pairs仍为手工下拉的当前生产来源，必须先接通可手工选择任意两座位的真实可提交信息路径，再整删其枚举器/专属旧测试；其它旧夜晚规则preview/手工目标拒绝、Klutz旧自动终局与两个超50KB源文件仍待推进。Monk本轮直接选择真实座位，已不阻止选自己的情况，说书人自行判断游戏规则；这里是职责迁移而非正式改变游戏规则。Draft #334 base为`64be3090`，绝不合并/retarget/force push。
+- **注意**：后续提交本交接的docs-only CI不等于完整Android二次构建，精确产品代码通过证据须引用f822ef5b的CI #4393。
 
 - **所有者新增硬保留要求（2026-10-19）**：开局前的**角色阵容多样性**（不要连续重复相同角色/展示阵容）与**同一玩家跨局角色轮换**（尽量不要连续获得相同身份）必须共同保留，属于实际产品体验，不能再以“删除也可开局”为理由删除。曾在本轮未提交工作树中尝试删SetupDiversitySelector/History、TemplateRepository及其测试、断开TB历史调用；接到纠正后通过远端真实原HEAD逐字恢复，已验证工作树clean，没有commit/push这些误删。必须保留TB开局prep中的history、近期PlayerStartingIdentityHistory、rotation record/store、DealPlanner的minimumRotationCostAssignment及对应测试。不要擅自对其改成单纯随机。
 - **本轮F12-I生产代码已验收**：基线f8cdf8af，提交`eb702ff6387c8b4e28425986e0e089401028130a`（旧PlayerHistoricalTimeline完全没有生产consumer，移除并缩窄混合测试；Mayor仅singleton合法结果自动选定/自动Next及Authority整体退休），**CI #4389/R2 #3969 SUCCESS**。随后提交`69f1bf31df067e3c0d586f6e4a5f93d77d3781cc`（FT Boolean始终YES/NO，删旧Host唯一合法项auto分支/测试，保留AI建议优先和人工确认），**[CI #4390 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39174608692)**（full Android JVM+Debug APK，ASP/real Clingo/gate均通过）、**[R2 #3970 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39174608628)**。从f8cdf8..69f1bf合计13文件+29/-610（**净删581行、3生产+3专属旧测试退出**）。没有付费API或真机；现用开局/后夜AI、Session实际Mayor/FT结果、私密事实/版本安全均保留。
@@ -53,7 +58,7 @@
 - 生产净删642行/30217B、测试净删1300行/47578B，共1942行/77795B。当前883跟踪文件，241生产+178测试Kotlin；F15完工时475项、116已审计；之后F12-D已新增横向6项，当前122已审计（25.68%）、0审计中、353待审。每路径状态及删除历史只维护在原台账F12/F15。
 - App159449B、HostScreen99682B仍超50,000B；Session42993B、新界面4673B未新增超限。P1/P4未完成。U1无生产入口的自定义导入仍待所有者决定，本批无新增决策阻塞。
 
-## 下一任务：从F12-I继续未审286项，同时保护两类跨局防重复
+## 下一任务：从F12-J继续未审277项，同时保护两类跨局防重复
 
 **当前两条并行准则**：旧功能生产有调用不构成保留理由、可以用真实Session/人工或现用AI等价继续游戏则删除；但开局角色阵容防重复与同一玩家跨局身份防重复已被所有者明确认定必须保留，绝不再次擅删。F12-I退役public影子历史与Mayor/FT旧单例真值门禁，现行171/457已审、286待审；下一轮从286项继续横向审计并处理有等价可用入口的旧模块，不能用净删行数冒充完成全仓审计。** 保持唯一现行台账，横向覆盖epistemic/codec、catalog/setup、平台/transport、tools/CI和测试，全文读取并验证真实消费者后再给最终分类；不重读已审文件冒充新进度。再依据横向结果选规模大、证据闭合的一组退休。
 

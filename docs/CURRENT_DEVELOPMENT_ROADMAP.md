@@ -1,6 +1,8 @@
-# 当前开发路线（2026-10-19，F12-I 保留两类跨局防重复并清理旧门禁）
+# 当前开发路线（2026-10-19，F12-J 清理夜间规则候选包装和不可达自动分支）
 
 ## 当前状态
+
+**最新F12-J**：用户批准的两类开局防重复（跨局阵容多样性、同一玩家身份轮换）及现有AI/唯一Session均保留。已整删Host夜间Monk/Ravenkeeper目标合法性包装器、singleton紧凑授权模块及两份专属测试（4文件）；Undertaker/Sage/Ravenkeeper取消仅有一个候选时的特别展示分支，改用原统一确认UI；切除已孤立的BeginnerSingleTargetRevealDialog。随后清掉Mayor方桌永不可达的automatic/Imp继任分支和无消费者DTO字段，保留真实Mayor选择目标、Mayor dies按钮与Session实际事件。代码从`2210130d`经`8582fe7a`到最终**`f822ef5b9174c2e5d38b4704dca68af1042c9c72`**，GitHub比较13文件+13/-243，**净删230行**。最终完整 **[CI #4393 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39178966455)**（Android全JVM单测+Debug APK、ASP/Clingo/gate成功）、**[R2 #3973 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39178966521)**。唯一审计账**176/453（38.85%）已审、277待审**。Monk界面现允许选择任意已存在座位，不再由Host按玩法过滤自己，规则裁量由说书人自行把握。Sage全配对仍供真实手工下拉使用，待直接座位Pair UI可用才整删。App/HostScreen仍>50KB，P1/P4未完成；未运行真机/付费API。
 
 **最新F12-I**：所有者在清理期间明确要求永久保留两个独立开局体验：（1）连续局阵容/展示角色避免重复，（2）同一玩家跨局尽量不被分配相同身份。开发机先前**未提交**的SetupDiversitySelector/History、TemplateRepository及rotation history/role assignment和专属测试删除，已全部恢复，git_state再次确认没有变动；不删/改相关生产行为。其它确认可替代模块继续减法：退役PlayerHistoricalTimeline影子公开历史、Mayor singleton Host-legal自动结果及自动跳步（保留实际选择/Session确认）、FT Host唯一Boolean自动判定（保留人工YES/NO及AI推荐）；3生产+3专属旧测试整删，GitHub范围f8cdf8af..69f1bf31 **13文件+29/-610、净删581行**。实际代码经过两个独立检查点：eb702ff6 CI #4389/R2 #3969 SUCCESS，最终69f1bf31 **[CI #4390 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39174608692)**（Android全单测+Debug APK、ASP、Clingo、gate）及 **[R2 #3970 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39174608628)**。现行台账**171/457（37.42%）已审、286待审**；无真机或付费模型调用。下批清Sage等之前先保留结构化人工两座位决定与AI原有效行为，避免仅删除候选导致无法正常公布。P1/P4继续。
 
