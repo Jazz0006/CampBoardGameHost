@@ -1,4 +1,6 @@
-# ARCH-CLEANUP-2 — 单一权威 Session、逐步确认与实用恢复（2026-10-16）
+# ARCH-CLEANUP-2 — 单一权威 Session、逐步确认与实用恢复（历史实施记录，2026-10-16）
+
+> **新批准的执行合同（2026-10-19）**：[Minimal Host Architecture Rebuild](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。本文件以下原 A1–A6 执行顺序、commit-on-Next、最近一步可改仅“未来可选”、无恢复当前要求等历史描述已被修改：现行要求**最多一项 Session-owned 可持久 pending**，Next 暂存 n 并进入 n+1，在 n+1 实际行动/展示之前原子提交 n；若 n+1 尚未实际发生，允许退一个步骤纠错。只保存单一权威 Session 和安全步骤而非第二个恢复模型；已经告知玩家的信息不可普通撤销。原文中已发生 A1/A2 代码及 CI 事实仍保留作历史证据。
 
 > 2026-10-17 后续纠正：本文保留既有实现证据；当前目标改为先删除独立 Recovery 和重复记录，允许功能暂缺。旧 A4/A5/A6 继续完善恢复、先完成替代才能退役等要求不再作为本轮执行条件。见 [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)。
 
