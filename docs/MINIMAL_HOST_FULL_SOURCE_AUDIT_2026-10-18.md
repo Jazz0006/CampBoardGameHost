@@ -60,6 +60,15 @@
 
 当前范围已按F15变动重核：883跟踪文件、475源码/测试/工具配置；每个现行路径仍恰好一次。
 
+### F12-Q：Slayer射击改为说书人实际结果确认并删除旧one-shot自动裁定（2026-10-19）
+
+- **仓库基线**：MiniMCP`clocktower`于同一Draft PR #334分支`codex/minimal-host-full-scan-20261018`从clean/equal`0a500c2f6d3438e9fa91611e2c31caef8c28ae4d`开始，base SHA`64be3090`不变；未合并、未retarget、未force push、无付费API/真机。
+- **真实代码提交**：`3de38e6e53a841bd4c866ce1f2daa1fa5a739228`（`[full-ci]`）用`ClocktowerSlayerInteraction`中的显式“说书人确认：目标因射击死亡”勾选替代AI/Host对中毒、Drunk、真恶魔及Recluse登记的自动命中判断；真人仍选claimant和target，默认**没有死亡**，变更座位时清空临时确认；App按此**确认事实**记`SlayerShot`事件并仅在确认death时调用原`commitConfirmedPlayerDeath`和后续实际恶魔身份/终局流程，不悄悄用静态规则推断。已有`abilityConsumed`保留为本局真实Slayer已使用的事实字段，不再阻止说书人确认其他射击结果；`targetRegistersAsDemon`旧字段对已有Session历史与codec保留但新的现场动作不臆造私密登记。删除生产完全零消费者`AbilityFunctioningSemantics.oneShotDecision`、`OneShotAbilityDecision`、`selectedMechanicalEffectApplies`，以及旧Slayer专属醉毒/登记测试，保留其仍被其他角色生产使用的functionsAs/stateFor和真正的Session合约。**7文件+45/-165，净删120行**，无整文件删除。
+- **R2旧门禁修订**：旧R2 #3991因硬要求已退休的`ClocktowerRecluseRegistrationDecisionControls`存在而FAILED；没有恢复控件，而提交`8b1d07b983de190ed0a61ec994fb01704a6e3cca`（`[full-ci]`）改为断言新显式`targetDied`和退休控件禁入。第一笔代码Android CI #4411 SUCCESS、R2失败属架构门禁与当前产品目标不符；**最终最新完整CI #4412及R2 #3992**以GitHub实际结果为准；不能把过时失败检查或docs-only skipped冒充验收。
+- **重要夜间阻塞**：完整复读DemonAttackProductionAdapter→NightHostProjection→Mayor/Sage/Ravenkeeper真实调用，以及`ClocktowerNightResultConfirmation`/App夜末实际Death提交。结论不变：攻击选择不等于死亡，未经早期真实确认不能整删当前trigger并仍保证角色实际唤醒/自动AI可靠；不以临时shadow-GameState模仿替代。优先后续完整阶段重连。另SlayerTableState仍有旧alive/claimant候选门禁、其它Virgin/Mayor日间自动结果，待继续P1删除。
+- **审计进度**：本批全文首次审阅现行5文件：SlayerInteraction、SlayerDraftTest、AbilityFunctioningSemanticsTest、SlayerTableState及其Test；7其他涉及文件原台账已审只复核不重计。库存不变**444项；已审217（48.87%）、待审227、审计中0**。两类跨局setup/玩家身份防重复、现行首夜/后夜AI、prompt/transport/parser/整局策略记忆/辅助自动与Session安全都保留。
+- **下一步**：继续剩227源码/测试横向实际删除，重点移出旧NightDemonAttack规则前先提供真实的death-trigger行动确认入口；并审Virgin/Mayor白天自动终局、App/HostScreen/NightStepUi三个>50KB文件真实无关代码。每个代码提交必须完整Android CI/R2。
+
 ### F12-P：守鸦人/送葬者角色直选，退休最后的Host全脚本角色候选器（2026-10-19）
 
 - **环境**：MiniMCP `clocktower`从clean/equal的`d7c9484f804f882485ba7257c12952f82b2147bd`起步，仍在`codex/minimal-host-full-scan-20261018`，PR #334仍Draft，base SHA`64be3090`不动；无merge/retarget/force push。
@@ -278,7 +287,7 @@
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleRecommendationChoiceUi.kt` | 2362 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionPresentation.kt` | 3360 | 已审计 | 需要解耦 | F12-J全文核查现用consumer：Mayor夜间展示签名移除无消费者automatic/explanation，现有single-target合约仍兼容受权Session用户提交，但upstream selectableSeats来自旧Host候选，未来需仅保留结构输入。 完整代码CI #4393 / R2 #3973均成功。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt` | 5600 | 已审计 | 必须保留 | F12-J全文核查现用consumer：现唯一MayorRedirect方桌确认路径，删不可达automatic/ImpSuccession分支，仍支持手选重定向及Mayor dies。 完整代码CI #4393 / R2 #3973均成功。 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerSlayerTableState.kt` | 3543 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerSlayerTableState.kt` | 3543 | 已审计 | 需要解耦 | F12-Q全文与SlayerInteraction消费者：物理座位稳定/玩家身份选择、UI互斥高亮仍需；现在仍把claimant/target alive-only及曾用过候选门禁混入投影，后续按最小结构/存在座位改造，不能为旧测试还原机械命中推导。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableLifeMarkers.kt` | 434 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableSeatDensityPolicy.kt` | 3360 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt` | 35812 | 待审 | — | 尚未形成有证据结论 |
@@ -412,7 +421,7 @@
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt` | 7382 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerResultsScreen.kt` | 17211 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt` | 20901 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerInteraction.kt` | 3693 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerInteraction.kt` | 3693 | 已审计 | 需要解耦 | F12-Q全文与HostScreen真实调用：保留公共claimant→target现场操作、方桌座位投影、真实结果确认勾选；去掉仅旧Host规则使用的Recluse/poisoned私密登记和one-shot自动命中。手工目标死亡默认false，每次换目标重置；App仅把确认结果提交Session。后续可精简候选座位UI规则。 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerTableUi.kt` | 8133 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt` | 7854 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/StorytellerAutoPauseScreen.kt` | 2721 | 待审 | — | 尚未形成有证据结论 |
@@ -491,8 +500,8 @@
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSessionPlayerCardsTest.kt` | 3910 | 已审计 | 必须保留 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；testFast/testFull→ClocktowerSessionPlayerCards；3项验证同frame读取Session死亡/role变化无需镜像写cards、纯setup仍可编辑；本轮通过，保护唯一事实来源而非UI表象字符串。（静态；运行仅上述明确测试） |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerShownUnreliablePropositionTest.kt` | 4641 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionPresentationTest.kt` | 6316 | 已审计 | 必须保留 | F12-J全文核查现用consumer：复核现行target selection/seat identity/首夜动作人工与auto确认防旧selection自动提交；删除只测已退役Mayor automatic旧呈现的断言。 完整代码CI #4393 / R2 #3973均成功。 |
-| `app/src/test/java/com/codex/campboardgamehost/ClocktowerSlayerDraftTest.kt` | 2344 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/test/java/com/codex/campboardgamehost/ClocktowerSlayerTableStateTest.kt` | 3471 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/test/java/com/codex/campboardgamehost/ClocktowerSlayerDraftTest.kt` | 2344 | 已审计 | 必须保留 | F12-Q全文重写：当前草稿只记录真实claimant/target及直接确认布尔结果，取消旧Recluse登记矩阵断言；测试不完整不得提交、Session拒绝不清掉草稿、实际确认布尔值原样传递。 |
+| `app/src/test/java/com/codex/campboardgamehost/ClocktowerSlayerTableStateTest.kt` | 3471 | 已审计 | 需要解耦 | F12-Q全文：实体座位稳定、选中先后结构需要；待删claimant候选合法域及dead-target硬门禁旧玩法裁定断言，随生产UI变更调整。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSquareTableLifeMarkersTest.kt` | 1151 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSquareTableSeatDensityPolicyTest.kt` | 3003 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSquareTableSeatLayoutTest.kt` | 4397 | 待审 | — | 尚未形成有证据结论 |
@@ -538,7 +547,7 @@
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/flow/FirstNightSetupDependencyPlannerTest.kt` | 7875 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/flow/FirstNightSetupDependencyProjectionTest.kt` | 8894 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/flow/NoGreaterJoyStructuralProofTest.kt` | 7788 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/test/java/com/codex/campboardgamehost/clocktower/rules/AbilityFunctioningSemanticsTest.kt` | 7212 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/test/java/com/codex/campboardgamehost/clocktower/rules/AbilityFunctioningSemanticsTest.kt` | 7212 | 已审计 | 需要解耦 | F12-Q全文：原oneShotDecision与selectedMechanicalEffectApplies全无生产消费者，连旧Poison/Drunk Slayer效果计算测试整删；仍有角色身份/Drunk可靠性和functioning语义等其他生产夜间规则消费者，后续逐路径拆分。 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/rules/ClocktowerNightChronologyTest.kt` | 2022 | 已审计 | 必须保留 | F14从旧EffectiveNightState混合测试保留4个source/cursor排序、未知/重复interaction身份用例；OptionalNightSourceChronology仍真实消费。只测试当前排序责任，不重建MechanicalDeath/RoleChanged；完整761测试/APK通过。 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/rules/ClocktowerOptionalNightSourceChronologyTest.kt` | 2131 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/rules/DemonNightAttackSemanticsTest.kt` | 3221 | 待审 | — | 尚未形成有证据结论 |

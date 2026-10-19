@@ -1,4 +1,4 @@
-# 新对话交接：F12-P 已审212/444，继续实际夜间触发及超大 Host UI 清理（2026-10-19）
+# 新对话交接：F12-Q 已审217/444，继续夜间预测与白天旧规则清理（2026-10-19）
 
 ## 先读与现行授权
 
@@ -7,6 +7,10 @@
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **最新F12-Q实际代码验收**：开发机`clocktower`、原Draft #334分支`codex/minimal-host-full-scan-20261018`，起点`0a500c2f6d3438e9fa91611e2c31caef8c28ae4d` clean/equal。生产提交`3de38e6e53a841bd4c866ce1f2daa1fa5a739228`（`[full-ci]`）Slayer射击从根据中毒/Drunk/Recluse/恶魔自动命中和自动死亡，换为说书人勾选**真实目标死亡**（默认无死亡、换座位重置），继续用原Session提交真实Shot、已确认Death和后续继任；移除旧oneShotDecision/OneShotAbilityDecision/selectedMechanicalEffectApplies和专属规则测试，7文件+45/-165**净删120行**。现有`SlayerShot.abilityConsumed`标识真实Slayer使用历史，`targetRegistersAsDemon`旧事件字段保留向后兼容但新界面不臆造。旧R2 #3991因硬依赖退休登记控件FAILED，后续`8b1d07b983de190ed0a61ec994fb01704a6e3cca`更新门禁断言新实际结果而不恢复旧控件，真正最新完整[Android CI #4412 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39202867302)/[R2 #3992 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39202867257)，Android tests+APK/ASP/Clingo/CI gate全成功。无真机/付费API。
+- **唯一台账**：`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md` F12-Q真实横向5原待审源码/测试：SlayerInteraction、SlayerDraftTest、AbilityFunctioningSemanticsTest、SlayerTableState+Test首次全文并追真实引用；现库存**444项、217（48.87%）已审、227待审、0审计中**。其余原已审App/Screen/ActionFactDraft/AbilityFunctioningSemantics和docs只复核，不双计。
+- **下一任务优先**：`DemonAttackProductionAdapter`仍是Sage/Ravenkeeper/Mayor实时夜间预览消费者，而`ClocktowerNightResultConfirmation`只在夜末确认真正死者，直接删除会破坏可玩的夜间唤醒与自动AI，不能把攻击目标假冒死者、增影子GameState；需要先设计并实施真实可恢复的先于唤醒确认/继续入口再移除完整attack语义及独占测试。并继续SlayerTableState里实际没有必要的alive/claimant规则候选门禁、Virgin/Mayor自动裁定和三个大于50KB源码的减法，以及227待审横向遍历。现有AI开局/后夜/pair/numeric/策略memory/API transport/schema/多模式、两类跨局防重复、唯一Session事实/保密与提交安全都要保留。PR #334继续Draft/base SHA`64be3090`，未merge/retarget/force push，不授权真机/付费API。此后docs-only Android skipped不能取代#4412完整代码验收。
 
 - **最新F12-P真实验收检查点**：MiniMCP`clocktower`原Draft PR #334工作分支`codex/minimal-host-full-scan-20261018`，起点`d7c9484f804f882485ba7257c12952f82b2147bd` clean/equal，实际代码`ea6d9a03c968077299c0aea3aac043ab7514d6bf`（`[full-ci]`）完整退役`ClocktowerNeutralInformationPreparation.kt`与2份独占Undertaker/Ravenkeeper旧角色菜单测试；同时移除HostScreen调用、InformationStepBuilder三个重复候选域赋值、旧ResultChoices转换，UI走直接RoleAt和AI typed预选，保留已确认目标seat/Session事实/原玩家展示。GitHub精确比较**10文件+269/-431，净删162行**，3整删/2新增。首次CI #4408 Android编译失败旧`choice.key`字段，随后修复`37f7c63bcc0df93dd47918153fcfce4f04db5c7a`（`[full-ci]`），用原`clocktowerInformationCandidateId`去重，最终真完整[Android CI #4409 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39192215275)/[R2 #3989 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39192215497)，Android tests+APK/ASP/Clingo/CI gate全部SUCCESS，无付费API或真机。
 - **现行唯一源审计库存**：`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md` F12-P：445退役3项、增加2项→**444项**；211已审删1、加新2→**212/444（47.75%）已审、232待审、0进行中**。原两份旧测试原待审但已退役，不假装新审。原已审UI/builder复审不双计。守鸦人玩家先选座位；送葬者仅用实际昨日处决座位；不会因AI预测或旧候选规则改变座位/事实。
