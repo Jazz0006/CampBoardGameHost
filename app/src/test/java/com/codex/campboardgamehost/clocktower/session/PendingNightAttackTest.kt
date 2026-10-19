@@ -83,6 +83,21 @@ class PendingNightAttackTest {
         assertEquals(4, session.state.pendingNightAttack?.targetSeat)
     }
 
+    @Test fun `pending action cannot be silently lost by a phase change`() {
+        val session = sessionAtSecondNight()
+        session.stageNightAttack(3, StorytellerPhase.NIGHT, 2, "imp-step")
+        val before = session.state
+        assertThrows(IllegalStateException::class.java) {
+            session.commitConfirmedPhaseAdvance(
+                ActionFactDraft.PhaseAdvance(
+                    "night-to-dawn", StorytellerPhase.NIGHT, 2,
+                    session.nextInputSequence, StorytellerPhase.DAWN, 2,
+                ), session.state.gameStateRevision,
+            )
+        }
+        assertSame(before, session.state)
+    }
+
     @Test fun `staging invalidates stale recommendation without killing anyone`() {
         val session = sessionAtSecondNight()
         val previousRequest = StorytellerDecisionRevision(

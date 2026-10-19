@@ -57,6 +57,29 @@ class ClocktowerNightHostProjectionTest {
     }
 
     @Test
+    fun `pending Imp attack previews the Ravenkeeper step without creating a death fact`() {
+        val cards = listOf(
+            card("Imp", "Imp", ClocktowerTeam.Demon),
+            card("Poisoner", "Poisoner", ClocktowerTeam.Minion),
+            card("Ravenkeeper", "Ravenkeeper", ClocktowerTeam.Townsfolk),
+            card("Empath", "Empath", ClocktowerTeam.Townsfolk),
+            card("Chef", "Chef", ClocktowerTeam.Townsfolk),
+        )
+        val game = cards.toClocktowerGameState(ClocktowerScript.TroubleBrewing, 17L)
+        val checkpoint = checkpoint(null).copy(
+            pendingNightAttackStepId = "imp-step",
+            pendingNightAttackTargetSeat = 3,
+            pendingNightAttackTargetName = "Ravenkeeper",
+        )
+        val projection = ClocktowerNightHostProjectionFactory.project(
+            cards, game, builtInRuleset(), ClocktowerPhase.Night, null, checkpoint, null, null,
+        )
+        assertEquals("Ravenkeeper", projection.ravenkeeperTrigger?.name)
+        assertTrue(game.playerAt(3)?.alive == true)
+        assertTrue(projection.chambermaidTargetCards.any { it.name == "Ravenkeeper" })
+    }
+
+    @Test
     fun `night base alive and role maps are read from canonical GameState, not stale cards`() {
         val cards = listOf(
             card("Imp", "Imp", ClocktowerTeam.Demon),
@@ -148,7 +171,7 @@ class ClocktowerNightHostProjectionTest {
         File("src/main/assets", assetPath).readText(Charsets.UTF_8)
     }.ruleset(ClocktowerScript.TroubleBrewing)
 
-    private fun checkpoint(confirmedAttackTarget: String) = ClocktowerNightCheckpoint(
+    private fun checkpoint(confirmedAttackTarget: String?) = ClocktowerNightCheckpoint(
         phaseName = "Night",
         round = 2,
         gameStateRevision = 1L,

@@ -477,6 +477,9 @@ internal class ClocktowerGameSession private constructor(
         draft: ActionFactDraft.PhaseAdvance,
         expectedGameStateRevision: Long,
     ): TimelineBoundActionFact {
+        check(state.pendingNightAttack == null) {
+            "Begin night resolution to accept the staged attack before changing phases."
+        }
         val legal = when (draft.phase) {
             StorytellerPhase.FIRST_NIGHT ->
                 draft.nextPhase == StorytellerPhase.DAY && draft.nextRound == draft.round
@@ -615,6 +618,9 @@ internal class ClocktowerGameSession private constructor(
     /** Accepts the pending action atomically at the next step's actual start. */
     fun startNextNightStep(stepId: String): TimelineBoundActionFact? {
         val pending = state.pendingNightAttack ?: return null
+        check(pending.phase == state.phase && pending.round == state.round) {
+            "Staged night action belongs to a different phase or round."
+        }
         check(pending.stepId != stepId) { "The staged attack step has not advanced." }
         val draft = prepareGlobalActionDraft(ActionFactDraft.Attack(
             pending.actionId, pending.phase, pending.round, pending.sequence, pending.targetSeat,
