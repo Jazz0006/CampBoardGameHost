@@ -1,4 +1,4 @@
-# 新对话交接：F12-L 已审186/451，继续剩余旧规则与 UI 清理（2026-10-19）
+# 新对话交接：F12-M 已审198/450，继续旧规则及超大 Host UI 减法（2026-10-19）
 
 ## 先读与现行授权
 
@@ -7,6 +7,10 @@
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **最新F12-M完整代码检查点**：先核实`clocktower`与远端在`codex/minimal-host-full-scan-20261018` clean/equal，起点`c3ea51af96a2c44429bd8f4782e0c6eb61d6c2c1`。真实代码提交推送`ba8ea494acc9aada4e4ead4168734de4f60d8894`，在App中Klutz只提交实际选择并统一继续游戏；NoGreaterJoyKlutzHistoryProducer去掉旧Host阵营/候选计算，整删`NoGreaterJoyKlutzChoiceRuleV1.kt`及混合LiveKlutzScriptReachabilityTest的旧专属裁定断言。GitHub独立对比**4文件+30/-162，净删132行、整删1生产文件**。精确代码[full-ci] **[CI #4401 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39185744458)**（Android tests+Debug APK、ASP/Clingo/CI gate全绿）与**[R2 #3981 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39185744492)**。未真机、未付费API，所有活跃AI/唯一GameState事件和两类跨局防重复不改。
+- **唯一台账**：`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md` F12-M新增13个原待审生产/测试首次全文语义结论，退休原已审KlutzRule 1项并移除当前索引，故**198/450（44.00%）已审、252待审**，0审计中。保留现有DemonBluff三身份、开局AI匹配及review、FT直接YES/NO、Drunk可见角色、Host魔典与事实投影；DayNominationGesture的alive-only和InformationStepBuilder的manual/auto候选仍标待解耦。Klutz选中邪恶玩家后如今不会自动宣告胜负；说书人裁量，不得误称已实现单独显式终局入口。
+- **下一步任务**：继续横向252项；优先真实App/HostScreen>50KB源职责删除、拆断`DemonAttackProductionAdapter`旧Imp/Monk/Soldier/Mayor死亡预览→NightHostProjection→Sage/Ravenkeeper触发，但必须先保证这两角色仍有真人唤醒、座位选择、AI和实际信息公布途径；审日间Slayer/Virgin/Mayor/旧自动终局并尽可能移除不可替代性低的门禁。保留当前阶段推进、Session事实/隐私/幂等、真实AI首夜/后夜/pair/numeric/prompt/transport/parser/memory/preselection/辅助自动模式，以及两类setup防重复。不为旧测试恢复退休规则。每批代码提交推送及完整Android CI/R2修失败，PR #334仍Draft/base`64be3090`，无授权不得merge/retarget/force push/付费API/真机。此后docs-only HEAD不能替代`ba8ea494`实际Android编译基线。
 
 - **最新F12-L代码事实**：起点MiniMCP `clocktower`与远端clean/equal `b4c979ac143d25c455e0d7011705f0800cd1690f`；分支`codex/minimal-host-full-scan-20261018`，PR #334 Draft且base `codex/minimal-host-m1c-direct-number-20261018`（SHA `64be3090`）不变。两次实际代码提交并推送：`c420bd9e2dd4b0e7ebaa8436aa956a55f4f101e9`清Undertaker/Ravenkeeper Night UI不可达LegacyUnreliable/Direct来源/compat，完整 **CI #4398/R2 #3978 SUCCESS**；`4e1c9d40e72acf6a08abb3f6a843c3d0be9d091b`整删无生产调用的旧不可靠数字历史选择函数及唯一专属测试，完整 **CI #4399/R2 #3979 SUCCESS**（真实Android tests、ASP、Clingo、gate全绿）。GitHub精确比较7文件+8/-155、净删147行，其中整删1生产+1专属旧测试。后续本handoff/docs-only提交会令HEAD前进，**不能把docs-only CI当作比此代码更新的Android编译证据**。
 - **唯一台账**：`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`新增F12-L及9个全文+消费者审阅结论，现**186/451（41.24%）已审、265待审、审计中0**；删除路径退出逐文件库存，历史仅在F12-L。NightStepUi、DemonAttackAdapter本轮已全文件审阅并标待解耦；PlayerDisplayResolution+测试、Drunk展示身份、phase mapper保留；Klutz真正方桌选择保留但判输赢尚需退出规则门禁。Sage直选、两类跨局防重复、现有AI首夜/后夜/配对/数字/提示词/真实API/解析/战略记忆/预选/辅助和自动模式、唯一Session及隐私不改。未进行付费API/真机。
