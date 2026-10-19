@@ -1,4 +1,4 @@
-# 新对话交接：F12-N 已审209/450，继续旧规则及超大 Host UI 减法（2026-10-19）
+# 新对话交接：F12-O 已审211/445，继续其余旧规则和超大 Host UI 清理（2026-10-19）
 
 ## 先读与现行授权
 
@@ -7,6 +7,10 @@
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **最新F12-O已验收代码**：开发机MiniMCP别名`clocktower`；起点`0513123ef51d82766327908cbd412ad9aaf66b3d` clean/equal，代码提交`de091e2480373b271325d679c87c10bbb3093e10`（`[full-ci]`）17文件+372/-1166（净删794行）、整删3个生产旧PairManualAuthority/SelectionModel/SelectionUi和4个旧依赖测试；新`ClocktowerDirectPairInformation.kt`+测试保留人工角色/双座位/缺席输入、真实Session信息、AI typed preselection；Role×座位全组合从HostScreen/NeutralPrep/夜间入口全部移除。CI修复提交`526190030926eb5e52e8a2e9f85ec73e4aef148d`同步R2老enum必须存在的错误架构门禁，真正完整[Android CI #4406 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39189973397)与[R2 #3986 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39189973230)，Android tests+APK/ASP/Clingo/CI gate/R2全成功（老R2 #3985失败已修，旧CI #4405取消）。**如果后续HEAD由docs-only提交向前，不得把其Android skipped等同#4406真实编译。**
+- **唯一审计台账**：原`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`新增F12-O。现行范围从450整退7、增加2=>**445项**；从209已审退出2旧已审、增加2新增已审及2原待审首审=>**211/445（47.42%）已审、234待审、0审计中**。原已审UI/AI代码只复核不重计。AI首夜/后夜/pair/numeric/strategy/context/解析/transport/preselection/辅助/自动模式、两种跨局防重复、唯一GameState/Session、实际死亡确认/秘密展示和安全原子提交不改，未付费API、未真机。
+- **下一任务**：继续横向234项全文件遍历，优先Undertaker/Ravenkeeper当前仍从全脚本roleRevealOptions生成的旧角色候选菜单，考虑像Sage一样按角色直接选/接AI；随后解决夜间Sage/Ravenkeeper和Mayor还依赖DemonAttackProductionAdapter只读预测：真正死亡由夜末ClocktowerNightResultConfirmation确认，不能把恶魔攻击目标当实际死者直接删除adapter/规则，须保持正确真人唤醒与信息收到。继续App/HostScreen>50KB实际无用职责，以及Slayer/Virgin旧自动规则/终局/人工作用路径，保留AI和双轮换。不重建旧Host规则以取悦旧测试。PR #334仍Draft、base `codex/minimal-host-m1c-direct-number-20261018` SHA `64be3090`，不merge/retarget/force push，不做未经授权的付费API/真机。
 
 - **最新F12-N代码检查点**：MiniMCP别名`clocktower`，代码起点前一docs HEAD`9f11548825903330d76700c08d7ccb041e933707` clean/equal；推送`e49972e1268b483dc273301f4287f760772d0ffd`（`[full-ci]`），删除无人用于生产的Host红鲱鱼singleton伪裁定函数和测试、删除旧夜死亡预览的死getter/引用/重复判断及未使用的全配对临时ID；精确GitHub比较**6文件+2/-103，净删101行**，0整文件删除。正式代码Android [CI #4403 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39188307015)与[R2 #3983 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39188307113)，Android tests/ASP/Clingo/gate全通过，无付费API/真机。
 - **审计量与严格限制**：唯一原台账`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`的F12-N新增11个原待审生产/测试全文+consumer结论；**209/450（46.44%）已审、241待审、0审计中**，不把历史子阶段累加成当前库存。PR #334依然Draft、原base`codex/minimal-host-m1c-direct-number-20261018` / SHA`64be3090`，不得merge/retarget/force push。旧`DemonAttackProductionAdapter`仍是真实Sage/Ravenkeeper触发的唯一预览生产链，真正`ClocktowerNightResultConfirmation`在最后才确认实际死亡；**先建早于唤醒的真实Host选择/事件/安全步骤，再移除旧推演及其专属测试**，不能把攻击目标当死者或破坏AI实时依赖。
