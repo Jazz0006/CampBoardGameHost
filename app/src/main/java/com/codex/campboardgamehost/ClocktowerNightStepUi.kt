@@ -81,6 +81,30 @@ internal fun ClocktowerNightStepCardLocalized(
         stepRoleEnName = step.roleEnName,
         actor = step.actor,
     )
+    val directNumericActorSeat = step.actor?.let { actor ->
+        cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
+    }
+    if (!allowRuleDeterminedAutoUi && step.isRealAction &&
+        step.action == ClocktowerNightAction.None &&
+        directNumericActorSeat != null &&
+        clocktowerHasDirectNumericInput(step, directNumericActorSeat)
+    ) {
+        ClocktowerDirectNumericResultUi(
+            title = step.displayTitle,
+            actorLabel = requireNotNull(step.actor).seatLabel(cards),
+            wakeInstruction = step.storytellerAction,
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            onConfirm = { value ->
+                clocktowerDirectNumericResult(step, directNumericActorSeat, value)
+                    ?.let(onShowPlayerDisplay)
+            },
+        )
+        return
+    }
     fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
     // B7.3's first production slice: a single complete first-night pool is
     // projected differently by execution policy. Later-night families retain
@@ -561,6 +585,15 @@ internal fun ClocktowerNightStepCardLocalized(
     }
 
     fun showStructuredFortuneTellerResult(value: Boolean) {
+        // A Manual/AI-assisted confirmation is the actual answer shown, not a
+        // Host-approved legal-result candidate. Current query seats are structural facts.
+        if (!allowRuleDeterminedAutoUi) {
+            val actorSeat = structuredActorSeat ?: return
+            val subjects = structuredFortuneTellerSelectedSeats ?: return
+            clocktowerDirectBooleanResult(step, actorSeat, subjects, value, language)
+                ?.let(onShowPlayerDisplay)
+            return
+        }
         resultFirstFortuneTellerOptions.firstOrNull { option ->
             (option.proposition as? InformationProposition.BooleanResult)?.value == value
         }?.let { option ->
@@ -925,7 +958,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
                     redHerringSeat = redHerringSeat,
-                    legalResults = fortuneTellerLegalResults,
+                    legalResults = if (!allowRuleDeterminedAutoUi) setOf(true, false)
+                        else fortuneTellerLegalResults,
                     recommendedResult = fortuneTellerRecommendedResult,
                     allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
                     language = language,

@@ -35,6 +35,12 @@ Draft PR #332 基于 #331、代码分支 `codex/minimal-host-m1b-session-2026101
 3. 删除仍存在于 `ClocktowerGameSession.commitConfirmedPrivateInformationPublication` 中的可选 registration/witness 事务、`ClocktowerConfirmedRegistrationHostWriterV1`、`ClocktowerConfirmedRegistrationPublicationV1` 及纯旧规则测试；区分真实行动事实与自动推导登记，不复活第二权威状态。
 4. 后续 M2–M5 清理 AI 旧候选协议和规则结算链。避免把多条旧接口长期并存。
 
+## M1c 下一步交接（2026-10-18）
+
+堆叠 Draft PR #333 `codex/minimal-host-m1c-direct-number-20261018`，基于已完成 Session 双轨清理的 #332。代码新增 `ClocktowerDirectNumericResultUi.kt`、`ClocktowerDirectBooleanResult.kt` 及两项关键行为测试，并修改 `ClocktowerNightStepUi.kt` 与首夜历史语义适配。Manual/AI_ASSISTED 的数字及占卜师真假不再受 Host 的合法候选过滤。使用严格的输入类型与查询座位身份，只记录说书人决定展示的实际结果，未做规则真假核定不自动写 TRUE/FALSE。请先核对 #333 最后代码 CI、R2，必要时读 Android job log 直接修复。
+
+下阶段依次清除 Chambermaid 查询后数字、各类角色揭示、洗衣妇/图书管理员/调查员二座位线索的 Host 计算与合法候选 UI。更重要的是迁移完消费者后应彻底删除旧 `ClocktowerInformationStepBuilder` 候选域生产、`ClocktowerRegistrationOptionPreparation` 登记见证枚举及 `ClocktowerFirstNightInformationRequest` 中余下按合法语义检验的路径；不能长期叠两套 UI。暂不处理 AI_AUTOMATIC 任意自由写状态，不恢复已删除的独立 Recovery 或 Undercover。
+
 ## 已知缺口与权限
 
 仍无退出恢复、完整复盘或跨局归档；事件覆盖不完整。没有真机和付费模型验收。旧设备数据不迁移、不擦除。Undercover 已按用户最新指令整体退休。
