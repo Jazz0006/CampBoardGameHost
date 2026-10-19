@@ -425,11 +425,6 @@ internal fun CampBoardGameHostApp() {
             language = language,
         )
     }
-    val clocktowerSlayerClaimedNames = clocktowerActionTimeline.entries
-        .mapNotNull { entry ->
-            (entry.fact as? com.codex.campboardgamehost.clocktower.domain.ActionFact.SlayerShot)
-                ?.claimantSeat?.let { seat -> cards.getOrNull(seat - 1)?.name }
-        }.distinct()
     // Accepted setup choices come from Session, not separate writable Compose state.
     val clocktowerRedHerring = clocktowerSessionView?.redHerringSeat
         ?.let { seat -> cards.getOrNull(seat - 1)?.name }
@@ -2093,8 +2088,6 @@ internal fun CampBoardGameHostApp() {
                             },
                         butlerMaster = clocktowerButlerMaster,
                         virginUsed = clocktowerVirginUsed,
-                        slayerUsed = clocktowerSlayerUsed,
-                        slayerClaimedNames = clocktowerSlayerClaimedNames,
                         artistUsed = clocktowerArtistUsed,
                         artistClaimedNames = clocktowerArtistClaimedNames,
                         lastExecutedName = clocktowerLastExecutedName,

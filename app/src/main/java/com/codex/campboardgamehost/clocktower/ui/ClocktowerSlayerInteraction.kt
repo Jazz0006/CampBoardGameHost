@@ -45,9 +45,7 @@ internal class ClocktowerSlayerDraft {
 @Composable
 internal fun ClocktowerSlayerInteraction(
     draft: ClocktowerSlayerDraft,
-    cards: List<PlayerCard>,
     seats: List<HostSeatPresentation>,
-    claimantCandidateNames: Set<String>,
     round: Int,
     actionsEnabled: Boolean,
     onHostTools: () -> Unit,
@@ -59,8 +57,6 @@ internal fun ClocktowerSlayerInteraction(
     var targetDied by remember(draft.claimantName, draft.targetName) { mutableStateOf(false) }
     val slayerTableState = clocktowerSlayerTableState(
         seats = seats,
-        claimantCandidateNames = claimantCandidateNames,
-        alivePlayerNames = cards.filter { it.eliminatedRound == null }.mapTo(mutableSetOf()) { it.name },
         claimantName = draft.claimantName,
         targetName = draft.targetName,
     )

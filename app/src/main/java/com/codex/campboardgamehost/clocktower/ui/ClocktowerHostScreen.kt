@@ -80,8 +80,6 @@ internal fun ClocktowerJudgeScreen(
     recommendedDemonBluffRoleNames: List<String>,
     butlerMaster: String?,
     virginUsed: Boolean,
-    slayerUsed: Boolean,
-    slayerClaimedNames: List<String>,
     artistUsed: Boolean,
     artistClaimedNames: List<String>,
     lastExecutedName: String?,
@@ -258,9 +256,6 @@ internal fun ClocktowerJudgeScreen(
         val scriptRoleNames = clocktowerRolesForScript(script).map { it.enName }.toSet()
         val scriptHasSlayer = "Slayer" in scriptRoleNames
         val scriptHasArtist = "Artist" in scriptRoleNames
-        val slayerClaimantCandidates = publicAliveCards.filter { card ->
-            card.name !in slayerClaimedNames && !(slayerUsed && card.clocktowerRole?.enName == "Slayer")
-        }
         val artistClaimantCandidates = publicAliveCards.filter { card ->
             card.name !in artistClaimedNames && !(artistUsed && card.clocktowerRole?.enName == "Artist")
         }
@@ -289,7 +284,7 @@ internal fun ClocktowerJudgeScreen(
                     executionThreshold = executionThreshold,
                     highestVoteText = highestVoteText,
                     showSlayerAction = scriptHasSlayer,
-                    slayerActionEnabled = slayerClaimantCandidates.isNotEmpty(),
+                    slayerActionEnabled = cards.isNotEmpty(),
                     showArtistAction = scriptHasArtist,
                     artistActionEnabled = artistClaimantCandidates.isNotEmpty(),
                     actionsEnabled = gameOutcome == null,
@@ -410,13 +405,11 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerDayMode.Slayer -> {
                 ClocktowerSlayerInteraction(
                     draft = slayerDraft,
-                    cards = cards,
                     seats = clocktowerDayOverviewTableState(
                         sessionGameState,
                         roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
                         ghostVoteAuthority = ghostVoteAuthority,
                     ).seats,
-                    claimantCandidateNames = slayerClaimantCandidates.mapTo(mutableSetOf()) { it.name },
                     round = round,
                     actionsEnabled = gameOutcome == null,
                     onHostTools = onHostTools,
