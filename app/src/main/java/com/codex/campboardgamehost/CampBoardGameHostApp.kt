@@ -44,7 +44,6 @@ import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlig
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
@@ -66,10 +65,8 @@ import com.codex.campboardgamehost.clocktower.session.StorytellerResidualPackage
 import com.codex.campboardgamehost.clocktower.session.HostCurrentOpenDecisionInventoryV2
 import com.codex.campboardgamehost.clocktower.session.InitialOpeningRequestV2
 import com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticAcceptanceV2
-import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
-import com.codex.campboardgamehost.clocktower.rules.NoGreaterJoyKlutzChoiceRuleV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleChange
@@ -2323,43 +2320,28 @@ internal fun CampBoardGameHostApp() {
                         onConfirmKlutzChoice = {
                             val choice = clocktowerKlutzChoiceName
                             if (choice != null) {
-                                // The real NGJ Klutz learns of death and publicly chooses a
-                                // living player. No Spy appears on NGJ; this is a player action,
-                                // never an invented Storyteller registration ruling.
+                                // Record the player's actual public choice. The Host does not
+                                // rule on the target's team or end the game from that choice.
                                 val session = requireClocktowerGameSession()
-                                val choiceResult = NoGreaterJoyKlutzChoiceRuleV1.resolve(
-                                    gameState = session.state.gameState,
-                                    klutzSeat = clocktowerSeatFor(requireNotNull(clocktowerPendingKlutzName)),
-                                    chosenSeat = clocktowerSeatFor(choice),
-                                    scriptRoles = clocktowerRoleDefinitionsForScript(requireNotNull(currentClocktowerScript)),
-                                )
-                                val klutzSeat = choiceResult.klutzSeat
+                                val klutzSeat = clocktowerSeatFor(requireNotNull(clocktowerPendingKlutzName))
+                                val chosenSeat = clocktowerSeatFor(choice)
                                 NoGreaterJoyKlutzHistoryProducerV1.choice(
-                                    session.state, klutzSeat, choiceResult.chosenSeat,
-                                    clocktowerActionId(kind = "klutz-choice", targetSeat = choiceResult.chosenSeat),
-                                    round, requireClocktowerGameSession().nextInputSequence,
+                                    session.state, klutzSeat, chosenSeat,
+                                    clocktowerActionId(kind = "klutz-choice", targetSeat = chosenSeat),
+                                    round, session.nextInputSequence,
                                 )?.let(::commitClocktowerConfirmedAction)
-                                if (choiceResult.evilWins) {
-                                    gameOutcome = GameOutcome(
-                                        title = context.getString(R.string.outcome_clocktower_evil_title),
-                                        summary = localizedText("呆瓜选择了邪恶玩家，善良阵营失败。", "The Klutz chose an evil player, so the good team loses."),
-                                        reason = localizedText("${playerSeatLabel(cards, clocktowerPendingKlutzName)} 选择了 ${playerSeatLabel(cards, choice)}。", "${playerSeatLabel(cards, clocktowerPendingKlutzName)} chose ${playerSeatLabel(cards, choice)}."),
-                                    )
-                                    showResults = true
+                                clocktowerPendingKlutzName = null
+                                clocktowerKlutzChoiceName = null
+                                if (clocktowerKlutzReturnToDawn) {
+                                    commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
+                                    clocktowerKlutzReturnToDawn = false
                                 } else {
-                                    clocktowerPendingKlutzName = null
-                                    clocktowerKlutzChoiceName = null
-                                    if (clocktowerKlutzReturnToDawn) {
-                                        commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
-                                        clocktowerKlutzReturnToDawn = false
-                                    } else {
-                                        val nextRound = round + 1
-                                        materializeClocktowerPoisonExpiryAtDusk()
-                                        commitClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
-                                    }
-                                    resetClocktowerDayFlow()
-                                    resetClocktowerNightFlow()
+                                    val nextRound = round + 1
+                                    materializeClocktowerPoisonExpiryAtDusk()
+                                    commitClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
                                 }
+                                resetClocktowerDayFlow()
+                                resetClocktowerNightFlow()
                             }
                         },
                         onConfirmArtistQuestion = { claimantName ->

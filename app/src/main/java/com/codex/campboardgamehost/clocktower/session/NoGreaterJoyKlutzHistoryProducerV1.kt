@@ -1,9 +1,7 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
-import com.codex.campboardgamehost.clocktower.rules.NoGreaterJoyKlutzChoiceRuleV1
 
 /**
  * NGJ-only Host mechanical action planner. The user-selected seat is NEVER a Storyteller
@@ -59,14 +57,9 @@ internal object NoGreaterJoyKlutzHistoryProducerV1 {
         if (facts.any { it is ActionFact.KlutzChoice && it.klutzSeat == klutzSeat }) return null
         val learned = facts.filterIsInstance<ActionFact.KlutzLearnedDeath>()
             .lastOrNull { it.klutzSeat == klutzSeat } ?: return null
-        // The choice is only capturable after an actual recorded learned-death event.
-        if (!learned.functioningWhenLearned) return null
-        NoGreaterJoyKlutzChoiceRuleV1.resolve(
-            state.gameState, klutzSeat, chosenSeat,
-            com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript(
-                ClocktowerScript.NoGreaterJoy,
-            ),
-        )
+        // A recorded actual choice needs only known seat identities and the
+        // preceding announcement event, not a Host-derived outcome or legal target.
+        if (state.gameState.playerAt(chosenSeat) == null) return null
         return ActionFactDraft.KlutzChoice(
             actionId, StorytellerPhase.DAY, round, localSequence,
             klutzSeat, chosenSeat, learned.actionId,
