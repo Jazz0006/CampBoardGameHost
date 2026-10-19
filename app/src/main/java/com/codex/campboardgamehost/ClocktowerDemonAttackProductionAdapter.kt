@@ -116,7 +116,7 @@ internal fun resolveTroubleBrewingDawnDeathResolution(
 ): TroubleBrewingDawnDeathResolution {
     val pendingTargetName = checkpoint.pendingNightAttackTargetSeat?.let { seat ->
         requireNotNull(gameState.playerAt(seat)) { "Unknown pending attack seat $seat." }.name
-    } ?: checkpoint.pendingNightAttackTargetName
+    }
     val facts = resolveTroubleBrewingDawnDeathFacts(
         cards = cards,
         // A Session-owned pending target feeds only this pure future-step preview.

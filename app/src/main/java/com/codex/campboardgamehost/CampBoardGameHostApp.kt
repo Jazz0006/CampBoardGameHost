@@ -49,6 +49,7 @@ import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
+import com.codex.campboardgamehost.clocktower.session.NightOperationKind
 import com.codex.campboardgamehost.clocktower.session.NoGreaterJoyKlutzHistoryProducerV1
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
@@ -542,7 +543,7 @@ internal fun CampBoardGameHostApp() {
             ?: error("Unknown Clocktower player '$playerName'.")
 
     fun currentClocktowerNightCheckpoint(): ClocktowerNightCheckpoint {
-        val pendingNightAttack = clocktowerGameSession?.state?.pendingNightAttack
+        val pending = clocktowerGameSession?.state?.pendingOperation
         return ClocktowerNightCheckpoint(
             phaseName = clocktowerPhase.name,
             round = round,
@@ -561,10 +562,9 @@ internal fun CampBoardGameHostApp() {
             pendingNewDemonName = clocktowerPendingNewDemonName,
             pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
             nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
-            pendingNightAttackStepId = pendingNightAttack?.stepId,
-            pendingNightAttackTargetSeat = pendingNightAttack?.targetSeat,
-            pendingNightAttackTargetName = pendingNightAttack?.targetSeat
-                ?.let { seat -> cards.getOrNull(seat - 1)?.name },
+            pendingOperationStepId = pending?.stepId,
+            pendingNightAttackTargetSeat = pending?.targetSeat
+                ?.takeIf { pending.kind == NightOperationKind.ATTACK },
         )
     }
 
@@ -2155,20 +2155,13 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerPoisonTarget = selected
                         },
-                        onConfirmPoisonTarget = {
-                            if (clocktowerPoisonTarget != confirmedClocktowerPoisonTarget()) {
-                                val session = requireClocktowerGameSession()
-                                val targetSeat = clocktowerPoisonTarget?.let(::clocktowerSeatFor)
-                                session.commitConfirmedPoisonTransition(
-                                    draft = ActionFactDraft.Poison(
-                                        actionId = clocktowerActionId("poison", targetSeat = targetSeat),
-                                        phase = storytellerPhaseFor(), round = round,
-                                        sequence = session.nextInputSequence, targetSeat = targetSeat,
-                                    ),
-                                    expectedGameStateRevision = session.state.gameStateRevision,
-                                )
-                                publishClocktowerSessionView()
-                            }
+                        onConfirmPoisonTarget = { stepId ->
+                            val session = requireClocktowerGameSession()
+                            session.stageNightPoison(
+                                targetSeat = clocktowerPoisonTarget?.let(::clocktowerSeatFor),
+                                phase = storytellerPhaseFor(), round = round, stepId = stepId,
+                            )
+                            publishClocktowerSessionView()
                         },
                         onSelectFortuneTellerFirst = {
                             advanceClocktowerPlayerInputRevision()
@@ -2225,10 +2218,10 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerButlerMaster = it
                         },
-                        onConfirmButlerMaster = { actorName, masterName ->
-                            requireClocktowerGameSession().confirmButlerMaster(
-                                phase = storytellerPhaseFor(), round = round,
-                                butlerSeat = clocktowerSeatFor(actorName),
+                        onConfirmButlerMaster = { actorName, masterName, stepId ->
+                            requireClocktowerGameSession().stageNightButlerMaster(
+                                phase = storytellerPhaseFor(), round = round, stepId = stepId,
+                                actorSeat = clocktowerSeatFor(actorName),
                                 masterSeat = clocktowerSeatFor(masterName),
                             )
                             publishClocktowerSessionView()
@@ -2237,22 +2230,13 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerMonkProtectedTarget = selected
                         },
-                        onConfirmMonkProtectedTarget = {
-                            val targetName = clocktowerMonkProtectedTarget
-                            if (targetName != confirmedNightMonkName()) {
-                                val session = requireClocktowerGameSession()
-                                if (targetName == null) {
-                                    session.clearConfirmedNightProtection(session.state.gameStateRevision)
-                                    publishClocktowerSessionView()
-                                } else {
-                                    val targetSeat = clocktowerSeatFor(targetName)
-                                    commitClocktowerConfirmedAction(ActionFactDraft.Protect(
-                                        actionId = clocktowerActionId("protect", targetSeat = targetSeat),
-                                        phase = storytellerPhaseFor(), round = round,
-                                        sequence = session.nextInputSequence, targetSeat = targetSeat,
-                                    ))
-                                }
-                            }
+                        onConfirmMonkProtectedTarget = { stepId ->
+                            val session = requireClocktowerGameSession()
+                            session.stageNightProtection(
+                                targetSeat = clocktowerSeatFor(requireNotNull(clocktowerMonkProtectedTarget)),
+                                phase = storytellerPhaseFor(), round = round, stepId = stepId,
+                            )
+                            publishClocktowerSessionView()
                         },
                         onSelectMayorRedirectTarget = { selected ->
                             advanceClocktowerPlayerInputRevision()

@@ -67,9 +67,8 @@ class ClocktowerNightHostProjectionTest {
         )
         val game = cards.toClocktowerGameState(ClocktowerScript.TroubleBrewing, 17L)
         val checkpoint = checkpoint(null).copy(
-            pendingNightAttackStepId = "imp-step",
+            pendingOperationStepId = "imp-step",
             pendingNightAttackTargetSeat = 3,
-            pendingNightAttackTargetName = "Ravenkeeper",
         )
         val projection = ClocktowerNightHostProjectionFactory.project(
             cards, game, builtInRuleset(), ClocktowerPhase.Night, null, checkpoint, null, null,

@@ -102,7 +102,7 @@ internal fun ClocktowerJudgeScreen(
     onStartNightResolution: (String) -> StorytellerDecisionRevision,
     onSelectExecution: (String?) -> Unit,
     onSelectPoisonTarget: (String?) -> Unit,
-    onConfirmPoisonTarget: () -> Unit,
+    onConfirmPoisonTarget: (String) -> Unit,
     onSelectFortuneTellerFirst: (String?) -> Unit,
     onSelectFortuneTellerSecond: (String?) -> Unit,
     onSelectChambermaidFirst: (String?) -> Unit,
@@ -112,9 +112,9 @@ internal fun ClocktowerJudgeScreen(
     onConfirmRedHerring: (String) -> Unit,
     onCommitDemonBluffs: (List<String>) -> Unit,
     onSelectButlerMaster: (String?) -> Unit,
-    onConfirmButlerMaster: (String, String) -> Unit,
+    onConfirmButlerMaster: (String, String, String) -> Unit,
     onSelectMonkProtectedTarget: (String?) -> Unit,
-    onConfirmMonkProtectedTarget: () -> Unit,
+    onConfirmMonkProtectedTarget: (String) -> Unit,
     onSelectMayorRedirectTarget: (String?) -> Unit,
     onConfirmMayorRedirectTarget: () -> Unit,
     onConfirmNewDemon: () -> Unit,
@@ -184,13 +184,13 @@ internal fun ClocktowerJudgeScreen(
         )
         return
     }
-    if (readyToResolveNight && nightCheckpoint.pendingNightAttackStepId != null) {
+    if (readyToResolveNight && nightCheckpoint.pendingOperationStepId != null) {
         ClocktowerStorytellerRecommendationScreen(
             title = text("夜间流程结束", "NIGHT ACTIONS COMPLETE"),
             subtitle = text("准备确认今夜结果", "Ready to resolve the night"),
             description = text(
-                "恶魔目标仍可修改。只有实际进入夜间结算，上一行动才正式写入事件记录。",
-                "The attack is still editable. It is recorded only when night resolution actually begins.",
+                "最后一个夜间行动尚可修改。进入夜间结算时才提交上一行动。",
+                "The final night action is still editable until night resolution begins.",
             ),
             buttonLabel = text("开始夜间结算", "Begin night resolution"),
             onHostTools = onHostTools,
@@ -1138,14 +1138,14 @@ internal fun ClocktowerJudgeScreen(
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
         if (readyToBeginNightStep == currentStepIndex &&
-            nightCheckpoint.pendingNightAttackStepId != null
+            nightCheckpoint.pendingOperationStepId != null
         ) {
             ClocktowerStorytellerRecommendationScreen(
                 title = text("下一位玩家", "NEXT PLAYER"),
                 subtitle = currentStep.title,
                 description = text(
-                    "当前恶魔目标尚未记为事实。可以返回修改，或在真正唤醒下一位玩家时开始这一步并提交上一行动。",
-                    "The attack has not been recorded. Go back to amend it, or start this step to accept the previous action.",
+                    "上一夜间行动尚未提交。可以返回修改，或在开始本步骤时正式记录。",
+                    "The previous night action is still editable. Starting this step commits it.",
                 ),
                 buttonLabel = text("开始当前步骤", "Begin this step"),
                 onHostTools = onHostTools,
@@ -1316,10 +1316,10 @@ internal fun ClocktowerJudgeScreen(
             // Non-real night placeholders never commit an action or a
             // synthetic revision. Only the active player/ruling has authority.
             if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.Poison) {
-                onConfirmPoisonTarget()
+                onConfirmPoisonTarget(currentStep.interactionId.toString())
             }
             if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.MonkProtect) {
-                onConfirmMonkProtectedTarget()
+                onConfirmMonkProtectedTarget(currentStep.interactionId.toString())
             }
             if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.DemonKill) {
                 onConfirmDemonAttack(currentStep.interactionId.toString())
@@ -1331,8 +1331,15 @@ internal fun ClocktowerJudgeScreen(
                 onConfirmButlerMaster(
                     requireNotNull(currentStep.actor).name,
                     requireNotNull(butlerMaster) { "Butler must choose a master before proceeding." },
+                    currentStep.interactionId.toString(),
                 )
             }
+            val hasStagedOperation = currentStep.isRealAction && currentStep.action in setOf(
+                ClocktowerNightAction.Poison,
+                ClocktowerNightAction.MonkProtect,
+                ClocktowerNightAction.ButlerMaster,
+                ClocktowerNightAction.DemonKill,
+            )
             val flowMayExpandAfterConfirmation = currentStep.action in setOf(
                 ClocktowerNightAction.DemonKill,
                 ClocktowerNightAction.MayorRedirect,
@@ -1345,16 +1352,13 @@ internal fun ClocktowerJudgeScreen(
                 )
             ) {
                 is ClocktowerNightAdvanceDirective.MoveTo -> {
-                    if (currentStep.action == ClocktowerNightAction.DemonKill && currentStep.isRealAction) {
-                        readyToBeginNightStep = directive.stepIndex
-                    }
+                    if (hasStagedOperation) readyToBeginNightStep = directive.stepIndex
                     nightStepIndex = directive.stepIndex
                 }
                 is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow -> pendingNightAdvance = directive
                 ClocktowerNightAdvanceDirective.CompleteNight -> {
-                    if (currentStep.action == ClocktowerNightAction.DemonKill && currentStep.isRealAction) {
-                        readyToResolveNight = true
-                    } else confirmActualNightResult()
+                    if (hasStagedOperation) readyToResolveNight = true
+                    else confirmActualNightResult()
                 }
             }
         }
@@ -1429,7 +1433,7 @@ internal fun ClocktowerJudgeScreen(
             ) {
                 is ClocktowerNightAdvanceDirective.MoveTo -> {
                     pendingNightAdvance = null
-                    if (nightCheckpoint.pendingNightAttackStepId != null) {
+                    if (nightCheckpoint.pendingOperationStepId != null) {
                         readyToBeginNightStep = directive.stepIndex
                     }
                     nightStepIndex = directive.stepIndex
@@ -1438,7 +1442,7 @@ internal fun ClocktowerJudgeScreen(
                     error("Refreshed night advance cannot remain pending.")
                 ClocktowerNightAdvanceDirective.CompleteNight -> {
                     pendingNightAdvance = null
-                    if (nightCheckpoint.pendingNightAttackStepId != null) {
+                    if (nightCheckpoint.pendingOperationStepId != null) {
                         readyToResolveNight = true
                     } else confirmActualNightResult()
                 }
@@ -1590,7 +1594,7 @@ internal fun ClocktowerJudgeScreen(
                         ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(nextSelection)
                         ClocktowerNightAction.DemonKill -> {
                             if (nightCheckpoint.confirmedAttackTarget == null ||
-                                nightCheckpoint.pendingNightAttackStepId != null
+                                nightCheckpoint.pendingOperationStepId != null
                             ) onSelectNightDeath(nextSelection)
                             else Toast.makeText(context, text(
                                 "上一行动已正式记录，不能修改目标。",

@@ -65,7 +65,7 @@ class PendingNightAttackTest {
         assertNotNull(session.startNextNightStep("ravenkeeper-step"))
         assertEquals(listOf(6), attacks(session).map { it.targetSeat })
         assertEquals(6, session.state.nightTargets.attackSeat)
-        assertNull(session.state.pendingNightAttack)
+        assertNull(session.state.pendingOperation)
         assertNull(session.startNextNightStep("ravenkeeper-step"))
         assertEquals(1, attacks(session).size)
         val accepted = session.state
@@ -87,7 +87,7 @@ class PendingNightAttackTest {
             session.stageNightAttack(99, StorytellerPhase.NIGHT, 2, "imp-step")
         }
         assertSame(before, session.state)
-        assertEquals(4, session.state.pendingNightAttack?.targetSeat)
+        assertEquals(4, session.state.pendingOperation?.targetSeat)
     }
 
     @Test fun `pending action cannot be silently lost by a phase change`() {
