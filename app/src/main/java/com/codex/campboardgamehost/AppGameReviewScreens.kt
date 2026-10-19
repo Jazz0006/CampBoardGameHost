@@ -43,64 +43,7 @@ internal enum class HostToolTab {
     Settings,
 }
 @Composable
-internal fun ResultsDialog(
-    gameKind: GameKind,
-    cards: List<PlayerCard>,
-    outcome: GameOutcome?,
-    onDismiss: () -> Unit,
-    onNewGame: () -> Unit,
-) {
-    val defaultTitle = if (gameKind == GameKind.Clocktower) {
-        stringResource(R.string.clocktower_role_results)
-    } else {
-        stringResource(R.string.identity_results)
-    }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(outcome?.title ?: defaultTitle) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (outcome != null) {
-                    Text(outcome.summary, fontWeight = FontWeight.SemiBold)
-                    Text(outcome.reason, color = Color(0xFF5C6A63))
-                    HorizontalDivider()
-                }
-                cards.forEach { card ->
-                    if (gameKind == GameKind.Clocktower) {
-                        val roleText = if (gameKind == GameKind.Clocktower && card.clocktowerShownAsDifferentRole() && card.clocktowerShownRole != null) {
-                            stringResource(
-                                R.string.clocktower_result_role_format,
-                                card.hostRoleLabel(LocalContext.current, GameKind.Clocktower),
-                                card.clocktowerShownRole.nameFor(LocalContext.current.resources.configuration.locales[0].language),
-                            )
-                        } else {
-                            card.hostRoleLabel(LocalContext.current, gameKind)
-                        }
-                        Text(stringResource(R.string.result_role_format, card.name, roleText))
-                    } else {
-                        Text(stringResource(R.string.result_card_format, card.name, stringResource(card.role.labelResId()), card.word))
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Row {
-                TextButton(onClick = onNewGame) {
-                    Text(if (LocalContext.current.resources.configuration.locales[0].language == "en") "Prepare next game" else "准备下一局")
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.back))
-            }
-        },
-    )
-}
-
-@Composable
 internal fun NewGameConfirmationDialog(
-    gameKind: GameKind,
     onDismiss: () -> Unit,
     onManagePlayers: () -> Unit,
     onQuickRestart: () -> Unit,
@@ -108,10 +51,7 @@ internal fun NewGameConfirmationDialog(
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
-    val gameName = when (gameKind) {
-        GameKind.Undercover -> stringResource(R.string.game_who_is_undercover)
-        GameKind.Clocktower -> stringResource(R.string.game_clocktower)
-    }
+    val gameName = stringResource(R.string.game_clocktower)
     ClocktowerDarkTheme {
         AlertDialog(
             onDismissRequest = onDismiss,
@@ -156,7 +96,6 @@ internal fun NewGameConfirmationDialog(
 
 @Composable
 internal fun HostGameToolsScreen(
-    gameKind: GameKind,
     cards: List<PlayerCard>,
     initialTab: HostToolTab,
     settingsContent: @Composable () -> Unit,
@@ -242,7 +181,6 @@ internal fun HostGameToolsScreen(
 
                 when (selectedTab) {
                     HostToolTab.Roles -> HostRolesList(
-                        gameKind = gameKind,
                         cards = cards,
                         modifier = Modifier.weight(1f),
                     )
@@ -282,7 +220,6 @@ internal fun HostGameToolsScreen(
 
 @Composable
 private fun HostRolesList(
-    gameKind: GameKind,
     cards: List<PlayerCard>,
     modifier: Modifier = Modifier,
 ) {
@@ -302,9 +239,8 @@ private fun HostRolesList(
             )
         }
         items(cards) { card ->
-            val role = card.hostRoleLabel(context, gameKind)
+            val role = card.hostRoleLabel(context)
             val shown = if (
-                gameKind == GameKind.Clocktower &&
                 card.clocktowerShownAsDifferentRole() &&
                 card.clocktowerShownRole != null
             ) {

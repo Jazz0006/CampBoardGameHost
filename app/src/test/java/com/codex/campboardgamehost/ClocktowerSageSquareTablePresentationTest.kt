@@ -198,8 +198,6 @@ class ClocktowerSageSquareTablePresentationTest {
 
     private fun sageTestCard(name: String) = PlayerCard(
         name = name,
-        role = Role.Civilian,
-        word = "",
         clocktowerTeam = ClocktowerTeam.Townsfolk,
         clocktowerRole = ClocktowerRole(
             team = ClocktowerTeam.Townsfolk,

@@ -70,98 +70,29 @@ class HostSeatingRosterTest {
     }
 
     @Test
-    fun `game choice is impossible before seats are confirmed`() {
+    fun `production player names require confirmed physical seating`() {
         try {
-            HostSeatingSetupFlow().chooseGame(GameKind.Clocktower)
-            fail("Expected game choice before seat confirmation to be rejected")
+            HostSeatingSetupFlow().playerNamesFor()
+            fail("Expected unconfirmed seating to be rejected")
         } catch (_: IllegalArgumentException) {
             // Expected.
         }
     }
 
     @Test
-    fun `game selection and settings keep the same confirmed seating`() {
+    fun `single game settings use the confirmed roster and can reopen seating`() {
         val confirmed = HostSeatingSetupFlow()
             .confirmSeats(listOf("Alice", "Bob", "Casey", "Dana", "Evan"))
-        val selected = confirmed.chooseGame(GameKind.Clocktower)
-        val backAtGameSelection = selected.returnToGameSelection()
-
-        assertEquals(confirmed.confirmedSeating, selected.confirmedSeating)
-        assertEquals(confirmed.confirmedSeating, backAtGameSelection.confirmedSeating)
-        assertEquals(GameKind.Clocktower, selected.selectedGame)
-        assertNull(backAtGameSelection.selectedGame)
+        assertEquals(listOf("Alice", "Bob", "Casey", "Dana", "Evan"), confirmed.playerNamesFor())
+        assertNull(confirmed.reopenSeating().confirmedSeating)
     }
 
     @Test
-    fun `returning to seating explicitly releases the old confirmation`() {
-        val reopened = HostSeatingSetupFlow()
-            .confirmSeats(listOf("Alice", "Bob", "Casey"))
-            .chooseGame(GameKind.Undercover)
-            .reopenSeating()
-
-        assertNull(reopened.confirmedSeating)
-        assertNull(reopened.selectedGame)
-    }
-
-    @Test
-    fun `back from game selection reopens seating and releases confirmation`() {
-        val confirmed = HostSeatingSetupFlow()
-            .confirmSeats(listOf("Alice", "Bob", "Casey", "Dana", "Evan"))
-
-        val transition = hostSeatingBackTransition(
-            flow = confirmed,
-            origin = HostSeatingBackOrigin.GameSelection,
-        )
-
-        assertEquals(HostSeatingSetupDestination.Seating, transition.destination)
-        assertNull(transition.flow.confirmedSeating)
-        assertNull(transition.flow.selectedGame)
-    }
-
-    @Test
-    fun `back from game settings preserves confirmation and returns game selection`() {
-        val confirmed = HostSeatingSetupFlow()
-            .confirmSeats(listOf("Alice", "Bob", "Casey", "Dana", "Evan"))
-        val selected = confirmed.chooseGame(GameKind.Clocktower)
-
-        val transition = hostSeatingBackTransition(
-            flow = selected,
-            origin = HostSeatingBackOrigin.GameSettings,
-        )
-
-        assertEquals(HostSeatingSetupDestination.GameSelection, transition.destination)
-        assertEquals(confirmed.confirmedSeating, transition.flow.confirmedSeating)
-        assertNull(transition.flow.selectedGame)
-    }
-
-    @Test
-    fun `production player names come only from the frozen confirmed roster`() {
-        val arrangement = mutableListOf("Alice", "Bob", "Casey", "Dana")
-        val selected = HostSeatingSetupFlow()
-            .confirmSeats(arrangement)
-            .chooseGame(GameKind.Undercover)
-
+    fun `frozen roster is not rewritten when arrangement changes`() {
+        val arrangement = mutableListOf("Alice", "Bob", "Casey", "Dana", "Evan")
+        val confirmed = HostSeatingSetupFlow().confirmSeats(arrangement)
         arrangement.reverse()
-        arrangement[0] = "Changed"
-
-        assertEquals(
-            listOf("Alice", "Bob", "Casey", "Dana"),
-            selected.playerNamesFor(GameKind.Undercover),
-        )
-    }
-
-    @Test
-    fun `production player names reject a game that is not the selected game`() {
-        val selected = HostSeatingSetupFlow()
-            .confirmSeats(listOf("Alice", "Bob", "Casey", "Dana", "Evan"))
-            .chooseGame(GameKind.Clocktower)
-
-        try {
-            selected.playerNamesFor(GameKind.Undercover)
-            fail("Expected mismatched production game authority to be rejected")
-        } catch (_: IllegalArgumentException) {
-            // Expected.
-        }
+        assertEquals(listOf("Alice", "Bob", "Casey", "Dana", "Evan"), confirmed.playerNamesFor())
     }
 
     private fun layoutFor(playerCount: Int): HostTableLayout = hostTableLayout(

@@ -153,8 +153,6 @@ import java.util.UUID
 private enum class Screen {
     Landing,
     Setup,
-    GameSelection,
-    UndercoverSettings,
     ClocktowerSettings,
     ClocktowerDrunkSelection,
     ClocktowerJointPass,
@@ -165,7 +163,6 @@ private enum class Screen {
     PassPhone,
     RevealCard,
     ClocktowerJudge,
-    Game,
 }
 
 /**
@@ -214,7 +211,6 @@ private fun Context.playerName(number: Int): String = getString(R.string.default
 
 internal const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
 internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdate"
-internal const val MIN_PLAYERS = 3
 internal const val MIN_CLOCKTOWER_PLAYERS = 5
 internal const val MAX_PLAYERS = 15
 
@@ -224,12 +220,6 @@ private fun Context.localized(languageMode: LanguageMode): Context {
     val config = Configuration(resources.configuration)
     config.setLocale(locale)
     return createConfigurationContext(config)
-}
-
-internal fun Role.labelResId(): Int = when (this) {
-    Role.Civilian -> R.string.role_civilian
-    Role.Undercover -> R.string.role_undercover
-    Role.Blank -> R.string.role_blank
 }
 
 internal fun LanguageMode.labelResId(): Int = when (this) {
@@ -368,15 +358,10 @@ internal fun CampBoardGameHostApp() {
     var liveAiAdviceBusy by remember { mutableStateOf(false) }
     var liveAiAdviceError by remember { mutableStateOf<String?>(null) }
     val drunkAiScope = rememberCoroutineScope()
-    var currentGameKind by remember { mutableStateOf(GameKind.Undercover) }
     var showHostTools by remember { mutableStateOf(false) }
     var hostToolTab by remember { mutableStateOf(HostToolTab.Roles) }
     var showNewGameConfirmation by remember { mutableStateOf(false) }
-    var undercoverCount by remember { mutableStateOf(1) }
-    var includeBlank by remember { mutableStateOf(false) }
     var currentDealIndex by remember { mutableStateOf(0) }
-    var undercoverRound by remember { mutableStateOf(1) }
-    var selectedElimination by remember { mutableStateOf<String?>(null) }
     // The Demon may revise this while awake. Only the confirmed attack may
     // reach protection, Mayor redirection, death, or succession resolution.
     var clocktowerDemonAttackDraftTarget by remember { mutableStateOf<String?>(null) }
@@ -414,12 +399,7 @@ internal fun CampBoardGameHostApp() {
             }
         }
     }
-    val round by remember {
-        derivedStateOf {
-            if (currentGameKind == GameKind.Clocktower) clocktowerSessionView?.round ?: 1
-            else undercoverRound
-        }
-    }
+    val round by remember { derivedStateOf { clocktowerSessionView?.round ?: 1 } }
     val currentClocktowerScript = clocktowerSessionView?.scriptId
         ?.let { scriptId ->
             ClocktowerScript.entries.singleOrNull { script -> script.toRecommendationScriptId() == scriptId }
@@ -479,12 +459,12 @@ internal fun CampBoardGameHostApp() {
     var clocktowerSetupStep by remember { mutableStateOf(0) }
     val setupCards = remember { mutableStateListOf<PlayerCard>() }
     // The live game has a read-only card presentation of Session facts.
-    // Only setup and Undercover keep writable cards.
+    // Only setup cards are mutable.
     val cards: List<PlayerCard> = remember(setupCards, language) {
         ClocktowerSessionPlayerCards(
             setupCards = setupCards,
             currentSession = {
-                clocktowerGameSession?.state?.takeIf { currentGameKind == GameKind.Clocktower }
+                clocktowerGameSession?.state
             },
             language = language,
         )
@@ -513,7 +493,6 @@ internal fun CampBoardGameHostApp() {
             )
         }
     } == true
-    val records = remember { mutableStateListOf<EliminationRecord>() }
     // UI-only selection; the Red Herring enters Session at its first-night Next step.
     var redHerringDraftName by remember { mutableStateOf<String?>(null) }
     val clocktowerNightStartedState = remember { mutableStateOf(false) }
@@ -587,7 +566,6 @@ internal fun CampBoardGameHostApp() {
 
     fun currentTroubleBrewingFirstNightPairDecisionContext(): TroubleBrewingFirstNightPairDecisionContext? {
         if (
-            currentGameKind != GameKind.Clocktower ||
             currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
             clocktowerPhase != ClocktowerPhase.FirstNight ||
             round != 1
@@ -613,7 +591,6 @@ internal fun CampBoardGameHostApp() {
 
     fun currentTroubleBrewingMayorRedirectPendingDecision(): PendingMayorRedirectDecision? {
         if (
-            currentGameKind != GameKind.Clocktower ||
             currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
             clocktowerPhase != ClocktowerPhase.Night
         ) {
@@ -677,8 +654,7 @@ internal fun CampBoardGameHostApp() {
     fun a4InitialIdentityPrewarmRequestOrNull(): A4IdentityRevealPrewarmRequest? {
         val activeRuleset = clocktowerRulesetRef ?: return null
         val session = clocktowerGameSession ?: return null
-        if (!BuildConfig.DEBUG || currentGameKind != GameKind.Clocktower ||
-            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+        if (!BuildConfig.DEBUG || currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
             session.state.gameState.players.size != 5 ||
             session.state.gameState.players.any { it.shownRole == null }
         ) return null
@@ -704,8 +680,7 @@ internal fun CampBoardGameHostApp() {
     fun a4ObservationCacheRebuildRequestOrNull(recordId: String): A4ObservationCacheRebuildRequest? {
         val activeRuleset = clocktowerRulesetRef ?: return null
         val session = clocktowerGameSession ?: return null
-        if (!BuildConfig.DEBUG || currentGameKind != GameKind.Clocktower ||
-            currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
+        if (!BuildConfig.DEBUG || currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
             session.state.gameState.players.size != 5 ||
             session.state.gameState.players.any { it.shownRole == null }
         ) return null
@@ -732,7 +707,6 @@ internal fun CampBoardGameHostApp() {
     }
     LaunchedEffect(
         identityRevealActive,
-        currentGameKind,
         currentClocktowerScript,
         clocktowerGameId,
         clocktowerGameStateRevision,
@@ -741,7 +715,6 @@ internal fun CampBoardGameHostApp() {
         identityRevealAssignmentFingerprint,
     ) {
         val eligible = BuildConfig.DEBUG && identityRevealActive &&
-            currentGameKind == GameKind.Clocktower &&
             currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
             cards.size == 5 && clocktowerRulesetRef != null &&
             cards.all { it.clocktowerRole != null && it.clocktowerShownRole != null }
@@ -1015,8 +988,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun commitConfirmedRegistrationResult(publication: ClocktowerConfirmedRegistrationPublicationV1) {
-        if (currentGameKind != GameKind.Clocktower ||
-            currentClocktowerScript != ClocktowerScript.TroubleBrewing
+        if (currentClocktowerScript != ClocktowerScript.TroubleBrewing
         ) return
         val session = requireClocktowerGameSession()
         val rulesetRef = requireNotNull(clocktowerRulesetRef)
@@ -1090,26 +1062,16 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun maxUndercoverFor(count: Int): Int {
-        return ((if (includeBlank) count - 2 else count - 1).coerceAtLeast(1))
-    }
-
-    fun clampUndercoverCount() {
-        undercoverCount = undercoverCount.coerceIn(1, maxUndercoverFor(playerNames.size))
-    }
-
     fun addCurrentPlayer(name: String) {
         val trimmedName = name.trim()
         if (trimmedName.isNotEmpty() && playerNames.size < MAX_PLAYERS && trimmedName !in playerNames) {
             playerNames.add(trimmedName)
-            clampUndercoverCount()
         }
     }
 
     fun removeCurrentPlayer(index: Int) {
         if (index in playerNames.indices) {
             playerNames.removeAt(index)
-            clampUndercoverCount()
         }
     }
 
@@ -1140,7 +1102,6 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun resetDealState(
-        nextGameKind: GameKind,
         clocktowerScript: ClocktowerScript = ClocktowerScript.TroubleBrewing,
         preparedClocktowerSeed: Long? = null,
         preparedClocktowerInitialState: GameState? = null,
@@ -1150,19 +1111,15 @@ internal fun CampBoardGameHostApp() {
         pendingTroubleBrewingDrunkSelection = null
         pendingCurrentStepAdvice = null
         committedTroubleBrewingSetupRotationRecord = null
-        currentGameKind = nextGameKind
         canonicalConversationResponseId = null
         canonicalConversationModel = null
-        records.clear()
         clocktowerGameSession = null
         publishClocktowerSessionView()
         currentDealIndex = 0
-        undercoverRound = 1
         showResults = false
         gameOutcome = null
-        selectedElimination = null
 
-        if (nextGameKind == GameKind.Clocktower) {
+        
             val gameId = preparedClocktowerGameId ?: UUID.randomUUID().toString()
             require(gameId.isNotBlank()) { "Prepared Clocktower game ID cannot be blank." }
             val gameSeed = preparedClocktowerSeed ?: newClocktowerSeed()
@@ -1205,9 +1162,7 @@ internal fun CampBoardGameHostApp() {
             } else {
                 clocktowerRulesetRef = null
             }
-        } else {
-            clocktowerRulesetRef = null
-        }
+        
         clocktowerDemonAttackDraftTarget = null
         clocktowerSelectedExecution = null
         clocktowerPoisonTarget = null
@@ -1230,30 +1185,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerKlutzReturnToDawn = false
         resetClocktowerFlow()
         screen = Screen.PassPhone
-    }
-
-    fun startUndercoverGame() {
-        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Undercover)
-        if (playerNames.size < MIN_PLAYERS) return
-        val pair = wordPairsFor(language).random()
-        val blankCount = if (includeBlank) 1 else 0
-        val roles = buildList {
-            repeat(undercoverCount) { add(Role.Undercover) }
-            repeat(blankCount) { add(Role.Blank) }
-            repeat(playerNames.size - undercoverCount - blankCount) { add(Role.Civilian) }
-        }.shuffled()
-
-        setupCards.clear()
-        setupCards.addAll(playerNames.mapIndexed { index, name ->
-            val role = roles[index]
-            val word = when (role) {
-                Role.Civilian -> pair.civilianWord
-                Role.Undercover -> pair.undercoverWord
-                Role.Blank -> context.getString(R.string.blank_word)
-            }
-            PlayerCard(name = name.ifBlank { context.playerName(index + 1) }, role = role, word = word)
-        })
-        resetDealState(GameKind.Undercover)
     }
 
     fun requestLiveGlobalAdvice(steps: List<ClocktowerNightStepUi>, stepIndex: Int) {
@@ -1608,17 +1539,11 @@ internal fun CampBoardGameHostApp() {
                 name = assignment.playerName.ifBlank {
                     context.playerName(assignment.seat)
                 },
-                role = Role.Civilian,
-                roleLabel = shownRole.nameFor(language),
+                                roleLabel = shownRole.nameFor(language),
                 actualRoleLabel = role.nameFor(language),
                 clocktowerTeam = role.team,
                 clocktowerRole = role,
                 clocktowerShownRole = shownRole,
-                word = context.getString(
-                    R.string.clocktower_card_desc_format,
-                    shownRole.team.label(context),
-                    shownRole.descriptionFor(language),
-                ),
             )
         }
 
@@ -1626,7 +1551,6 @@ internal fun CampBoardGameHostApp() {
         setupCards.addAll(committedCards)
 
         resetDealState(
-            nextGameKind = GameKind.Clocktower,
             clocktowerScript = ClocktowerScript.TroubleBrewing,
             preparedClocktowerSeed = preparedSeed,
             preparedClocktowerInitialState = committedSetup.gameState,
@@ -1901,7 +1825,7 @@ internal fun CampBoardGameHostApp() {
         jointOpeningError = null
         jointRevealIndex = 0
         pendingTroubleBrewingDrunkSelection = null
-        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
+        val playerNames = hostSeatingSetupFlow.playerNamesFor()
         val preparedSeed = newClocktowerSeed()
         val preparedGameId = UUID.randomUUID().toString()
 
@@ -1950,9 +1874,7 @@ internal fun CampBoardGameHostApp() {
                 }) { "Missing shown-only precommit role." }
                 PlayerCard(
                     name = assignment.playerName,
-                    role = Role.Civilian,
-                    word = role.descriptionFor(language),
-                    roleLabel = role.nameFor(language),
+                                                            roleLabel = role.nameFor(language),
                     actualRoleLabel = null,
                     clocktowerTeam = role.team,
                     clocktowerRole = null, // No speculative actual Drunk identity.
@@ -2028,7 +1950,7 @@ internal fun CampBoardGameHostApp() {
         )
 
     fun startClocktowerGame() {
-        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
+        val playerNames = hostSeatingSetupFlow.playerNamesFor()
         if (playerNames.size < MIN_CLOCKTOWER_PLAYERS) return
         val script = if (playerNames.size in 5..6) {
             selectedClocktowerScript ?: defaultClocktowerScriptFor(playerNames.size)
@@ -2062,26 +1984,19 @@ internal fun CampBoardGameHostApp() {
             }
             PlayerCard(
                 name = name.ifBlank { context.playerName(assignment.seat) },
-                role = Role.Civilian,
-                roleLabel = shownRole.nameFor(language),
+                                roleLabel = shownRole.nameFor(language),
                 actualRoleLabel = role.nameFor(language),
                 clocktowerTeam = role.team,
                 clocktowerRole = role,
                 clocktowerShownRole = shownRole,
-                word = context.getString(
-                    R.string.clocktower_card_desc_format,
-                    shownRole.team.label(context),
-                    shownRole.descriptionFor(language),
-                ),
             )
         }
         setupCards.clear()
         setupCards.addAll(committedCards)
-        resetDealState(GameKind.Clocktower, script, preparedSeed)
+        resetDealState(clocktowerScript = script, preparedClocktowerSeed = preparedSeed)
     }
 
     fun persistCompletedTroubleBrewingSetupIfNeeded(): Boolean {
-        if (currentGameKind != GameKind.Clocktower) return true
         if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) return true
         if (gameOutcome == null) return true
         val record = committedTroubleBrewingSetupRotationRecord ?: return true
@@ -2107,7 +2022,6 @@ internal fun CampBoardGameHostApp() {
     fun returnToPlayerManagement() {
         if (!finishCurrentGameForRestart()) return
         setupCards.clear()
-        records.clear()
         gameOutcome = null
         currentDealIndex = 0
         resetClocktowerFlow()
@@ -2115,7 +2029,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun restartGame() {
-        val restartScript = if (currentGameKind == GameKind.Clocktower) currentClocktowerScript else null
+        val restartScript = currentClocktowerScript
         if (restartScript != null && !readyForNewClocktowerGame(restartScript)) {
             // Do not leave the old game when the selected AI transport cannot start the next one.
             settingsReturnScreen = screen
@@ -2124,14 +2038,9 @@ internal fun CampBoardGameHostApp() {
             return
         }
         if (!finishCurrentGameForRestart()) return
-        when (currentGameKind) {
-            GameKind.Undercover -> startUndercoverGame()
-            GameKind.Clocktower -> {
-                // A five/six-player quick restart must not silently switch scripts.
-                selectedClocktowerScript = restartScript
-                startClocktowerGame()
-            }
-        }
+        // A five/six-player quick restart must not silently switch scripts.
+        selectedClocktowerScript = restartScript
+        startClocktowerGame()
     }
 
     /** Confirm real role changes once; card presentation reads Session. */
@@ -2216,26 +2125,13 @@ internal fun CampBoardGameHostApp() {
         return promoteScarletWomanIfNeeded()
     }
 
-    fun applyHostSeatingBack(origin: HostSeatingBackOrigin) {
-        val transition = hostSeatingBackTransition(
-            flow = hostSeatingSetupFlow,
-            origin = origin,
-        )
-        hostSeatingSetupFlow = transition.flow
-        screen = when (transition.destination) {
-            HostSeatingSetupDestination.Seating -> Screen.Setup
-            HostSeatingSetupDestination.GameSelection -> Screen.GameSelection
-        }
+    fun reopenSeatingSetup() {
+        hostSeatingSetupFlow = hostSeatingSetupFlow.reopenSeating()
+        screen = Screen.Setup
     }
 
-    val hostSeatingBackOrigin = when (screen) {
-        Screen.GameSelection -> HostSeatingBackOrigin.GameSelection
-        Screen.UndercoverSettings,
-        Screen.ClocktowerSettings -> HostSeatingBackOrigin.GameSettings
-        else -> null
-    }
-    BackHandler(enabled = hostSeatingBackOrigin != null) {
-        applyHostSeatingBack(requireNotNull(hostSeatingBackOrigin))
+    BackHandler(enabled = screen == Screen.ClocktowerSettings) {
+        reopenSeatingSetup()
     }
 
     val aiSettingsSection: @Composable () -> Unit = {
@@ -2306,42 +2202,10 @@ internal fun CampBoardGameHostApp() {
                     },
                     onConfirmSeats = {
                         hostSeatingSetupFlow = hostSeatingSetupFlow.confirmSeats(playerNames)
-                        screen = Screen.GameSelection
-                    },
-                )
-
-                    Screen.GameSelection -> SeatingFirstGameSelectionScreen(
-                    seating = requireNotNull(hostSeatingSetupFlow.confirmedSeating) {
-                        "Game selection requires confirmed seating"
-                    },
-                    onBackToSeating = {
-                        applyHostSeatingBack(HostSeatingBackOrigin.GameSelection)
-                    },
-                    onOpenUndercoverSettings = {
-                        hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Undercover)
-                        screen = Screen.UndercoverSettings
-                    },
-                    onOpenClocktowerSettings = {
-                        hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Clocktower)
                         clocktowerSetupStep = 0
                         screen = Screen.ClocktowerSettings
                     },
                 )
-
-                    Screen.UndercoverSettings -> UndercoverSettingsScreen(
-                        playerCount = playerCount,
-                        undercoverCount = undercoverCount,
-                        includeBlank = includeBlank,
-                        onUndercoverCountChange = { undercoverCount = it },
-                        onIncludeBlankChange = { checked ->
-                            includeBlank = checked
-                            clampUndercoverCount()
-                        },
-                        onBack = {
-                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
-                        },
-                        onStart = ::startUndercoverGame,
-                    )
 
                     Screen.ClocktowerSettings -> ClocktowerSettingsScreen(
                         playerCount = playerCount,
@@ -2363,7 +2227,7 @@ internal fun CampBoardGameHostApp() {
                         },
                         onScriptChange = { selectedClocktowerScript = it },
                         onBack = {
-                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
+                            reopenSeatingSetup()
                         },
                         onStart = ::startClocktowerGame,
                     )
@@ -2375,8 +2239,7 @@ internal fun CampBoardGameHostApp() {
                         PassPhoneScreen(
                             playerName = previewCards[jointRevealIndex].name,
                             playerNames = previewCards.map { it.name },
-                            gameKind = GameKind.Clocktower,
-                            current = jointRevealIndex + 1,
+                                                        current = jointRevealIndex + 1,
                             total = previewCards.size,
                             onReveal = { screen = Screen.ClocktowerJointReveal },
                             onPrevious = {
@@ -2397,8 +2260,7 @@ internal fun CampBoardGameHostApp() {
                         val pending = requireNotNull(pendingJointOpening)
                         RevealCardScreen(
                             card = pending.shownOnlyCards[jointRevealIndex],
-                            gameKind = GameKind.Clocktower,
-                            current = jointRevealIndex + 1,
+                                                        current = jointRevealIndex + 1,
                             total = pending.shownOnlyCards.size,
                             onHide = { screen = Screen.ClocktowerJointPass },
                         )
@@ -2505,23 +2367,22 @@ internal fun CampBoardGameHostApp() {
                     Screen.PassPhone -> PassPhoneScreen(
                         playerName = cards[currentDealIndex].name,
                         playerNames = cards.map { it.name },
-                        gameKind = currentGameKind,
                         current = currentDealIndex + 1,
                         total = cards.size,
                         onReveal = { screen = Screen.RevealCard },
                         onPrevious = {
-                            if (currentGameKind == GameKind.Clocktower && currentDealIndex > 0) {
+                            if (currentDealIndex > 0) {
                                 currentDealIndex -= 1
                             }
                         },
                         onHostTools = {
-                            if (currentGameKind == GameKind.Clocktower) {
+                            
                                 hostToolTab = HostToolTab.Roles
                                 showHostTools = true
-                            }
+                            
                         },
                         onNext = {
-                            if (currentGameKind == GameKind.Clocktower) {
+                            
                                 if (currentDealIndex == cards.lastIndex) {
                                     screen = when {
                                         currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
@@ -2532,27 +2393,16 @@ internal fun CampBoardGameHostApp() {
                                 } else {
                                     currentDealIndex += 1
                                 }
-                            }
+                            
                         },
                     )
 
                     Screen.RevealCard -> RevealCardScreen(
                         card = cards[currentDealIndex],
-                        gameKind = currentGameKind,
                         current = currentDealIndex + 1,
                         total = cards.size,
                         onHide = {
-                            when (currentGameKind) {
-                                GameKind.Clocktower -> screen = Screen.PassPhone
-                                GameKind.Undercover -> {
-                                    if (currentDealIndex == cards.lastIndex) {
-                                        screen = Screen.Game
-                                    } else {
-                                        currentDealIndex += 1
-                                        screen = Screen.PassPhone
-                                    }
-                                }
-                            }
+                            screen = Screen.PassPhone
                         },
                     )
 
@@ -3100,7 +2950,7 @@ internal fun CampBoardGameHostApp() {
                                     clocktowerPendingNightNewDemonIdentityName = promotedName
                                 }
                                 shotOutcome = if (targetCard.clocktowerTeam != ClocktowerTeam.Demon || promotedName != null) null
-                                else evaluateGameOutcome(context, cards, currentGameKind)
+                                else evaluateGameOutcome(context, cards)
                             }
                             gameOutcome = shotOutcome
                             if (shotOutcome != null) {
@@ -3228,7 +3078,7 @@ internal fun CampBoardGameHostApp() {
                                     pendingA4ObservationRecordId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}"
                                 }
                                 clocktowerLastExecutedName = nominatorName
-                                val outcome = evaluateGameOutcome(context, cards, currentGameKind)
+                                val outcome = evaluateGameOutcome(context, cards)
                                 gameOutcome = outcome
                                 if (outcome != null) {
                                     showResults = true
@@ -3363,12 +3213,12 @@ internal fun CampBoardGameHostApp() {
                                             clocktowerPendingNightNewDemonIdentityName = promotedName
                                         }
                                         executionOutcome = if (promotedName == null) {
-                                            evaluateGameOutcome(context, cards, currentGameKind)
+                                            evaluateGameOutcome(context, cards)
                                         } else {
                                             null
                                         }
                                     } else {
-                                        executionOutcome = evaluateGameOutcome(context, cards, currentGameKind)
+                                        executionOutcome = evaluateGameOutcome(context, cards)
                                     }
                                 }
                             } else {
@@ -3550,7 +3400,7 @@ internal fun CampBoardGameHostApp() {
                                     newDemonName == null &&
                                     !unresolvedDemonSuccessor
                                 ) {
-                                    evaluateGameOutcome(context, cards, currentGameKind)
+                                    evaluateGameOutcome(context, cards)
                                 } else {
                                     null
                                 }
@@ -3584,69 +3434,21 @@ internal fun CampBoardGameHostApp() {
                         },
                     )
 
-                    Screen.Game -> GameScreen(
-                    gameKind = currentGameKind,
-                    onHostTools = {
-                        hostToolTab = HostToolTab.Roles
-                        showHostTools = true
-                    },
-                    cards = cards,
-                    records = records,
-                    round = round,
-                    gameOutcome = gameOutcome,
-                    selectedElimination = selectedElimination,
-                    onSelectElimination = { selectedElimination = it },
-                    onConfirmElimination = {
-                        val name = selectedElimination
-                        if (name != null) {
-                            val index = cards.indexOfFirst { it.name == name }
-                            if (index >= 0) {
-                                setupCards[index] = setupCards[index].copy(eliminatedRound = round)
-                                records.add(EliminationRecord(round, name))
-                                selectedElimination = null
-                                gameOutcome = evaluateGameOutcome(context, cards, currentGameKind)
-                                if (gameOutcome != null) {
-                                    showResults = true
-                                }
-                                undercoverRound += 1
-                            }
-                        }
-                    },
-                    onShowResults = {
-                        gameOutcome = gameOutcome ?: GameOutcome(
-                            title = context.getString(R.string.outcome_manual_title),
-                            summary = context.getString(R.string.outcome_manual_summary),
-                            reason = context.getString(R.string.outcome_manual_reason),
-                        )
-                        showResults = true
-                    },
-                )
                         }
                     }
                 }
 
                 if (showResults) {
-                    if (currentGameKind == GameKind.Clocktower) {
-                        ClocktowerResultsDialog(
-                            cards = cards,
-                            outcome = gameOutcome,
-                            onDismiss = { showResults = false },
-                            onNewGame = { showNewGameConfirmation = true },
-                        )
-                    } else {
-                        ResultsDialog(
-                            gameKind = currentGameKind,
-                            cards = cards,
-                            outcome = gameOutcome,
-                            onDismiss = { showResults = false },
-                            onNewGame = { showNewGameConfirmation = true },
-                        )
-                    }
+                    ClocktowerResultsDialog(
+                        cards = cards,
+                        outcome = gameOutcome,
+                        onDismiss = { showResults = false },
+                        onNewGame = { showNewGameConfirmation = true },
+                    )
                 }
 
                 if (showHostTools) {
                     HostGameToolsScreen(
-                        gameKind = currentGameKind,
                         cards = cards,
                         initialTab = hostToolTab,
                         settingsContent = {
@@ -3676,7 +3478,6 @@ internal fun CampBoardGameHostApp() {
 
                 if (showNewGameConfirmation) {
                     NewGameConfirmationDialog(
-                        gameKind = currentGameKind,
                         onDismiss = { showNewGameConfirmation = false },
                         onManagePlayers = ::returnToPlayerManagement,
                         onQuickRestart = ::restartGame,
@@ -3687,50 +3488,20 @@ internal fun CampBoardGameHostApp() {
     }
 }
 
-private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>, gameKind: GameKind): GameOutcome? {
+private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>): GameOutcome? {
     val activeCards = cards.filter { it.eliminatedRound == null }
-    if (gameKind == GameKind.Clocktower) {
-        val activeDemons = activeCards.count { it.clocktowerTeam == ClocktowerTeam.Demon }
-        return when {
-            activeDemons == 0 -> GameOutcome(
-                title = context.getString(R.string.outcome_clocktower_good_title),
-                summary = context.getString(R.string.outcome_clocktower_good_summary),
-                reason = context.getString(R.string.outcome_clocktower_good_reason),
-            )
-
-            activeCards.size <= 2 -> GameOutcome(
-                title = context.getString(R.string.outcome_clocktower_evil_title),
-                summary = context.getString(R.string.outcome_clocktower_evil_summary),
-                reason = context.getString(R.string.outcome_clocktower_evil_reason, activeCards.size, activeDemons),
-            )
-
-            else -> null
-        }
-    }
-
-    val activeCivilians = activeCards.count { it.role == Role.Civilian }
-    val activeUndercovers = activeCards.count { it.role == Role.Undercover }
-    val activeBlanks = activeCards.count { it.role == Role.Blank }
-
+    val activeDemons = activeCards.count { it.clocktowerTeam == ClocktowerTeam.Demon }
     return when {
-        activeUndercovers == 0 && activeBlanks == 0 -> GameOutcome(
-            title = context.getString(R.string.outcome_civilian_title),
-            summary = context.getString(R.string.outcome_civilian_summary),
-            reason = context.getString(R.string.outcome_civilian_reason, activeCivilians),
+        activeDemons == 0 -> GameOutcome(
+            title = context.getString(R.string.outcome_clocktower_good_title),
+            summary = context.getString(R.string.outcome_clocktower_good_summary),
+            reason = context.getString(R.string.outcome_clocktower_good_reason),
         )
-
-        activeUndercovers > 0 && activeUndercovers >= activeCivilians -> GameOutcome(
-            title = context.getString(R.string.outcome_undercover_title),
-            summary = context.getString(R.string.outcome_undercover_summary),
-            reason = context.getString(R.string.outcome_undercover_reason, activeUndercovers, activeCivilians),
+        activeCards.size <= 2 -> GameOutcome(
+            title = context.getString(R.string.outcome_clocktower_evil_title),
+            summary = context.getString(R.string.outcome_clocktower_evil_summary),
+            reason = context.getString(R.string.outcome_clocktower_evil_reason, activeCards.size, activeDemons),
         )
-
-        activeCivilians == 0 && activeUndercovers == 0 && activeBlanks > 0 -> GameOutcome(
-            title = context.getString(R.string.outcome_blank_title),
-            summary = context.getString(R.string.outcome_blank_summary),
-            reason = context.getString(R.string.outcome_blank_reason, activeBlanks),
-        )
-
         else -> null
     }
 }
@@ -3755,11 +3526,9 @@ internal fun EmptyStateCard(text: String) {
 internal fun PlayerCard.clocktowerHostRoleLabel(language: String): String? =
     clocktowerRole?.nameFor(language) ?: actualRoleLabel ?: roleLabel
 
-internal fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): String = when (gameKind) {
-    GameKind.Clocktower -> clocktowerHostRoleLabel(context.resources.configuration.locales[0].language)
-        ?: context.getString(role.labelResId())
-    GameKind.Undercover -> context.getString(role.labelResId())
-}
+internal fun PlayerCard.hostRoleLabel(context: Context): String =
+    clocktowerHostRoleLabel(context.resources.configuration.locales[0].language)
+        ?: "?"
 
 internal fun PlayerCard.seatLabel(cards: List<PlayerCard>): String =
     "#${cards.indexOfFirst { it.name == name } + 1} $name"

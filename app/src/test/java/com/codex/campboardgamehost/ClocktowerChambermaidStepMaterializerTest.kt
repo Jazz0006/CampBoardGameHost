@@ -10,7 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerChambermaidStepMaterializerTest {
-    private val actor = PlayerCard("Alice", Role.Civilian, "")
+    private val actor = PlayerCard("Alice")
     private val presentation = ClocktowerChambermaidSelectionPresentation(
         selectedTargetNames = listOf("Bob", "Carol"),
         subjectSeats = listOf(2, 3),

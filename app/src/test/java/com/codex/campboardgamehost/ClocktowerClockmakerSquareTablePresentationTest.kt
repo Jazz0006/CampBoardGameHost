@@ -136,8 +136,6 @@ class ClocktowerClockmakerSquareTablePresentationTest {
 
     private fun clockmakerCard() = PlayerCard(
         name = "C",
-        role = Role.Civilian,
-        word = "",
         clocktowerTeam = ClocktowerTeam.Townsfolk,
         clocktowerRole = ClocktowerRole(
             team = ClocktowerTeam.Townsfolk,

@@ -28,8 +28,6 @@ class ClocktowerSessionPlayerCardsTest {
     private fun setupCards() = initial.players.map { player ->
         PlayerCard(
             name = player.name,
-            role = Role.Civilian,
-            word = "setup only",
             clocktowerRole = clocktowerRoleByName(player.actualRole.value),
             clocktowerShownRole = clocktowerRoleByName(player.shownRole?.value),
             clocktowerTeam = clocktowerRoleByName(player.actualRole.value)?.team,
@@ -81,8 +79,8 @@ class ClocktowerSessionPlayerCardsTest {
     }
 
     @Test
-    fun `without Clocktower Session setup and Undercover remain independently editable`() {
-        val source = mutableListOf(PlayerCard("Undercover player", Role.Undercover, "word"))
+    fun `without Session setup presentation remains independently editable`() {
+        val source = mutableListOf(PlayerCard("Setup player"))
         val cards = ClocktowerSessionPlayerCards(source, { null }, "en")
         assertSame(source[0], cards[0])
         source[0] = source[0].copy(eliminatedRound = 3)

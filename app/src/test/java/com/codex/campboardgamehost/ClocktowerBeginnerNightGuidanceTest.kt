@@ -19,8 +19,6 @@ class ClocktowerBeginnerNightGuidanceTest {
         shown: ClocktowerRole = actual,
     ) = PlayerCard(
         name = name,
-        role = Role.Civilian,
-        word = "",
         clocktowerTeam = actual.team,
         clocktowerRole = actual,
         clocktowerShownRole = shown,

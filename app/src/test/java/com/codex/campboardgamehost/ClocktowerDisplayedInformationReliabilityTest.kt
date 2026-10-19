@@ -52,8 +52,6 @@ class ClocktowerDisplayedInformationReliabilityTest {
 
     private fun playerCardWithRole(roleName: String): PlayerCard = PlayerCard(
         name = "Player",
-        role = Role.Civilian,
-        word = "",
         clocktowerRole = ClocktowerRole(
             team = ClocktowerTeam.Minion,
             zhName = roleName,

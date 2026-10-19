@@ -7,9 +7,7 @@ import org.junit.Test
 class FirstNightPairInformationSelectionDomainTest {
     private val actor = PlayerCard(
         name = "Alice",
-        role = Role.Civilian,
-        word = "",
-    )
+        )
 
     @Test
     fun `impaired pair step preserves full legal domain while assisted candidates stay curated`() {

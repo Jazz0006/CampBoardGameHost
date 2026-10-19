@@ -7,8 +7,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerFirstNightEvilInformationPresentationTest {
-    private val minion = PlayerCard("Minion", Role.Civilian, "")
-    private val demon = PlayerCard("Demon", Role.Civilian, "")
+    private val minion = PlayerCard("Minion")
+    private val demon = PlayerCard("Demon")
 
     @Test
     fun `normal evil information preserves prepared Minion and Demon presentation`() {

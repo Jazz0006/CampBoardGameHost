@@ -20,7 +20,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerGlobalFirstNightScalarDecisionTest {
-    private val cards = (1..8).map { PlayerCard("P$it", Role.Civilian, "") }
+    private val cards = (1..8).map { PlayerCard("P$it") }
     private val revision = StorytellerDecisionRevision(4, 2)
 
     private fun step(

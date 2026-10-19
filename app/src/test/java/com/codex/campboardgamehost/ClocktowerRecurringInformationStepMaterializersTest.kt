@@ -8,8 +8,8 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ClocktowerRecurringInformationStepMaterializersTest {
-    private val actor = PlayerCard("Alice", Role.Civilian, "")
-    private val cards = listOf(actor, PlayerCard("Bob", Role.Civilian, ""), PlayerCard("Carol", Role.Civilian, ""))
+    private val actor = PlayerCard("Alice")
+    private val cards = listOf(actor, PlayerCard("Bob"), PlayerCard("Carol"))
 
     @Test
     fun `Empath keeps prepared result and defers candidate calculation for a reliable actor`() {

@@ -21,8 +21,6 @@ class ClocktowerGhostVotePresentationTest {
     fun `night storyteller seat carries dead and unspent ghost vote presentation together`() {
         val deadCard = PlayerCard(
             name = "Dana",
-            role = Role.Civilian,
-            word = "",
             eliminatedRound = 2,
         )
         val seat = deadCard.toStorytellerHostSeatPresentation(
@@ -40,8 +38,6 @@ class ClocktowerGhostVotePresentationTest {
         val seatId = ClocktowerSeatId(3)
         val deadCard = PlayerCard(
             name = "Dana",
-            role = Role.Civilian,
-            word = "",
             eliminatedRound = 2,
         )
         val seat = deadCard.toStorytellerHostSeatPresentation(

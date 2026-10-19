@@ -217,86 +217,10 @@ internal fun SeatingFirstSetupScreen(
                     onNext = onConfirmSeats,
                     previousEnabled = false,
                     hostToolsEnabled = false,
-                    nextEnabled = playerNames.size >= MIN_PLAYERS,
+                    nextEnabled = playerNames.size >= MIN_CLOCKTOWER_PLAYERS,
                 )
             }
         }
     }
 }
 
-/** Choose the hosted game only after the physical seating roster is frozen. */
-@Composable
-internal fun SeatingFirstGameSelectionScreen(
-    seating: ConfirmedHostSeating,
-    onBackToSeating: () -> Unit,
-    onOpenUndercoverSettings: () -> Unit,
-    onOpenClocktowerSettings: () -> Unit,
-) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-    val playerCount = seating.seats.size
-
-    ClocktowerDarkTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                HostTableShell(
-                    seats = seating.toHostSeatPresentations(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(
-                            text = text("选择游戏", "Choose game"),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = text("${playerCount}人", "$playerCount players"),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Button(
-                            onClick = onOpenClocktowerSettings,
-                            enabled = playerCount >= MIN_CLOCKTOWER_PLAYERS,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(text("血染钟楼", "Blood on the Clocktower"))
-                        }
-                        OutlinedButton(
-                            onClick = onOpenUndercoverSettings,
-                            enabled = playerCount >= MIN_PLAYERS,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(text("谁是卧底", "Who is Undercover"))
-                        }
-                    }
-                }
-
-                HostBottomActionBar(
-                    previousLabel = text("上一步", "Previous"),
-                    hostToolsLabel = text("主持工具", "Host Tools"),
-                    nextLabel = text("下一步", "Next"),
-                    onPrevious = onBackToSeating,
-                    onHostTools = {},
-                    onNext = {},
-                    hostToolsEnabled = false,
-                    nextEnabled = false,
-                )
-            }
-        }
-    }
-}

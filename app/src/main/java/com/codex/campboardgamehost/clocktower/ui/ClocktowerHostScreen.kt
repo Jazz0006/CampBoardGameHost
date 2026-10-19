@@ -1512,11 +1512,11 @@ internal fun ClocktowerJudgeScreen(
                         tellPlayer = text("${playerSeatLabel(cards, executedName)} 的角色是 ${when (undertakerTarget?.name) {
                             spyCard?.name -> registration.registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Undertaker")?.nameFor(language).orEmpty()
                             recluseCard?.name -> registration.recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Undertaker")?.nameFor(language).orEmpty()
-                            else -> undertakerTarget?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()
+                            else -> undertakerTarget?.hostRoleLabel(context).orEmpty()
                         }}", "${playerSeatLabel(cards, executedName)} was ${when (undertakerTarget?.name) {
                             spyCard?.name -> registration.registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Undertaker")?.nameFor(language).orEmpty()
                             recluseCard?.name -> registration.recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Undertaker")?.nameFor(language).orEmpty()
-                            else -> undertakerTarget?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()
+                            else -> undertakerTarget?.hostRoleLabel(context).orEmpty()
                         }}"),
                         explanation = text("送葬者每晚得知今天被处决玩家的真实身份。", "Each night, the Undertaker learns the character of the player executed today."),
                         displayKind = ClocktowerDisplayKind.RoleReveal,
@@ -1716,11 +1716,11 @@ internal fun ClocktowerJudgeScreen(
                         tellPlayer = ravenkeeperTarget?.let { text("${playerSeatLabel(cards, it)} 的角色是 ${when (ravenkeeperTargetCard?.name) {
                             spyCard?.name -> registration.registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")?.nameFor(language).orEmpty()
                             recluseCard?.name -> registration.recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")?.nameFor(language).orEmpty()
-                            else -> ravenkeeperTargetCard?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()
+                            else -> ravenkeeperTargetCard?.hostRoleLabel(context).orEmpty()
                         }}", "${playerSeatLabel(cards, it)} is ${when (ravenkeeperTargetCard?.name) {
                             spyCard?.name -> registration.registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")?.nameFor(language).orEmpty()
                             recluseCard?.name -> registration.recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")?.nameFor(language).orEmpty()
-                            else -> ravenkeeperTargetCard?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()
+                            else -> ravenkeeperTargetCard?.hostRoleLabel(context).orEmpty()
                         }}") },
                         explanation = text("守鸦人只有在夜晚死亡时才会当晚醒来，选择一名玩家并得知其真实身份。", "The Ravenkeeper wakes only when they die at night, then chooses a player and learns that player's character."),
                         action = ClocktowerNightAction.Ravenkeeper,

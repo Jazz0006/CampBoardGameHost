@@ -175,8 +175,6 @@ class ClocktowerPlayerDisplayPresentationTest {
     ).map { name ->
         PlayerCard(
             name = name,
-            role = Role.Civilian,
-            word = "",
-        )
+            )
     }
 }

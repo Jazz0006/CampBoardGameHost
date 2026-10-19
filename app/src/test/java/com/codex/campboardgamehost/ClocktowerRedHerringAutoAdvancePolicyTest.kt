@@ -160,7 +160,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
 
     @Test
     fun `automatic information reveal requires current independent clue and no prior publication`() {
-        val chef = PlayerCard("P1", Role.Civilian, "")
+        val chef = PlayerCard("P1")
         val step = ClocktowerNightStepUi(
             title = "Chef", actor = chef, isRealAction = true,
             reason = "", storytellerAction = "", tellPlayer = null,
@@ -205,7 +205,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
     @Test
     fun `player query auto result requires actual targets and a current legal decision`() {
         val step = ClocktowerNightStepUi(
-            title = "Fortune Teller", actor = PlayerCard("P2", Role.Civilian, ""),
+            title = "Fortune Teller", actor = PlayerCard("P2"),
             isRealAction = true, reason = "", storytellerAction = "",
             tellPlayer = null, explanation = "", roleEnName = "Fortune Teller",
             action = ClocktowerNightAction.FortuneTeller,
@@ -334,7 +334,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
 
     @Test
     fun `automatic night advance requires a newly committed current player reveal`() {
-        val actor = PlayerCard("P2", Role.Civilian, "")
+        val actor = PlayerCard("P2")
         val step = ClocktowerNightStepUi(
             title = "Ravenkeeper", actor = actor, isRealAction = true,
             reason = "", storytellerAction = "", tellPlayer = null,
@@ -357,7 +357,7 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
         assertFalse(allowed(alreadyPublished = true))
         assertFalse(allowed(handoff = ClocktowerPlayerRevealHandoff(true, false)))
         assertFalse(allowed(handoff = ClocktowerPlayerRevealHandoff(false, false)))
-        assertFalse(allowed(current = step.copy(actor = PlayerCard("P3", Role.Civilian, ""))))
+        assertFalse(allowed(current = step.copy(actor = PlayerCard("P3"))))
         assertFalse(allowed(current = step.copy(roleEnName = "Undertaker")))
         assertFalse(allowed(current = step.copy(isRealAction = false)))
     }

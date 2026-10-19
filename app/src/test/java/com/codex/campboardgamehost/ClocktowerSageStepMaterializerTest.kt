@@ -98,8 +98,6 @@ class ClocktowerSageStepMaterializerTest {
 
     private fun sageMaterializerCard(name: String, demon: Boolean = false) = PlayerCard(
         name = name,
-        role = Role.Civilian,
-        word = "",
         clocktowerTeam = if (demon) ClocktowerTeam.Demon else ClocktowerTeam.Townsfolk,
         clocktowerRole = ClocktowerRole(
             team = if (demon) ClocktowerTeam.Demon else ClocktowerTeam.Townsfolk,

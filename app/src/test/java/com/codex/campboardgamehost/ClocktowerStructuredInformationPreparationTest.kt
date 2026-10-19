@@ -179,8 +179,6 @@ class ClocktowerStructuredInformationPreparationTest {
         )
         val actor = PlayerCard(
             name = "Player 1",
-            role = Role.Civilian,
-            word = "",
             clocktowerTeam = ClocktowerTeam.Townsfolk,
             clocktowerRole = investigator,
             clocktowerShownRole = investigator,

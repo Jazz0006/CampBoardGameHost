@@ -23,8 +23,7 @@ authorized execution flow; this correction does not authorize arbitrary AI write
 Delete first; event coverage, crash continuation and recap may remain explicit gaps. Do not
 restore an independent save system, exact UI reconstruction, duplicate textual history,
 compatibility scaffolding, or a new generic AI execution framework. Basic manual entry and
-state editing remain necessary even though rule assistance is removed. Preserve Undercover
-outside the Clocktower refactor unless explicitly scoped otherwise.
+state editing remain necessary even though rule assistance is removed. **Undercover retirement (owner instruction, 2026-10-18):** Undercover is explicitly in scope for complete deletion. Remove its game mode, words/roles, game screens, startup, outcome logic, settings, resources and exclusive tests, retaining only Clocktower. This overrides earlier directions to preserve Undercover.
 
 This section overrides conflicting older instructions anywhere in this repository to preserve
 Host legality, rules semantics, legal domains, inferred witnesses or rule-specific regression

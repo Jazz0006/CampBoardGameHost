@@ -4,7 +4,6 @@ import com.codex.campboardgamehost.ClocktowerRole
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.ClocktowerTeam
 import com.codex.campboardgamehost.PlayerCard
-import com.codex.campboardgamehost.Role
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -46,8 +45,6 @@ class ClocktowerGameStateAdapterTest {
         eliminatedRound: Int? = null,
     ): PlayerCard = PlayerCard(
         name = name,
-        role = Role.Civilian,
-        word = "",
         clocktowerTeam = actualRole.team,
         clocktowerRole = actualRole,
         clocktowerShownRole = shownRole,

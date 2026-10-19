@@ -7,8 +7,7 @@ import org.junit.Test
 
 class ClocktowerRegistrationOptionPreparationTest {
     private fun card(name: String, role: String) = PlayerCard(
-        name = name, role = Role.Civilian, word = "",
-        clocktowerRole = completeTroubleBrewingRoles.single { it.enName == role },
+        name = name, clocktowerRole = completeTroubleBrewingRoles.single { it.enName == role },
     )
     private val spy = card("S", "Spy")
     private val recluse = card("R", "Recluse")
