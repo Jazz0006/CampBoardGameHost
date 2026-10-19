@@ -11,59 +11,7 @@ internal data class ClocktowerSageStepContent(
     val displayPrimary: String,
     val displayFooter: String,
     val hostInstruction: String,
-    val highPressureSuffix: String,
 )
-
-internal fun clocktowerSageDisplayOptions(
-    cards: List<PlayerCard>,
-    actor: PlayerCard,
-    demon: PlayerCard,
-    truthfulOnly: Boolean,
-    content: ClocktowerSageStepContent,
-): List<ClocktowerDisplayOption> {
-    val pool = cards.filter { it.name != actor.name }
-    val pairs = buildList {
-        for (firstIndex in 0 until pool.lastIndex) {
-            for (secondIndex in firstIndex + 1 until pool.size) {
-                add(pool[firstIndex] to pool[secondIndex])
-            }
-        }
-    }
-    if (pairs.isEmpty()) return emptyList()
-    val demonRole = demon.clocktowerRole?.enName?.let(::RoleId) ?: return emptyList()
-
-    fun pairId(pair: Pair<PlayerCard, PlayerCard>): String =
-        listOf(cards.indexOf(pair.first), cards.indexOf(pair.second))
-            .sorted()
-            .joinToString(":")
-
-    return pairs
-        .map { pair ->
-            pair to (pair.first.name == demon.name || pair.second.name == demon.name)
-        }
-        .filter { (_, isTruthful) -> !truthfulOnly || isTruthful }
-        .sortedBy { (pair, _) -> pairId(pair) }
-        .mapNotNull { (pair, isTruthful) ->
-            val subjectSeats = clocktowerSageSubjectSeats(cards, pair.first, pair.second)
-            if (subjectSeats.size != 2) return@mapNotNull null
-            val seats = subjectSeats.joinToString("   ")
-            ClocktowerDisplayOption(
-                label = seats,
-                displayKind = ClocktowerDisplayKind.EitherOne,
-                displayTitle = content.displayTitle,
-                displayPrimary = content.displayPrimary,
-                displaySecondary = seats,
-                displayFooter = content.displayFooter,
-                proposition = InformationProposition.AnyOf(subjectSeats.map { seat ->
-                    InformationProposition.RoleAt(seat, demonRole)
-                }),
-                presentationSubjectSeats = subjectSeats,
-                isTruthful = isTruthful,
-                misinformationPressure = 0,
-                isDefaultRecommendation = false,
-            )
-        }
-}
 
 internal fun clocktowerSageStepMaterializer(
     builder: ClocktowerInformationStepBuilder,
@@ -105,19 +53,40 @@ internal fun clocktowerSageStepMaterializer(
                 },
             presentationSubjectSeats = directSubjectSeats,
             hostInstruction = content.hostInstruction,
-            displayOptions = { actor ->
-                clocktowerSageDisplayOptions(
-                    cards = cards,
-                    actor = actor,
-                    demon = resolvedDemon,
-                    truthfulOnly = false,
-                    content = content,
-                )
-            },
+
 
         )
     },
 )
+
+
+/** Records the two seats the Storyteller actually chose, without deriving a legal Sage candidate menu. */
+internal fun clocktowerSageManualPlayerDisplay(
+    step: ClocktowerNightStepUi,
+    selectedSeats: List<Int>,
+    seatCount: Int,
+): ClocktowerNightStepUi? {
+    if (step.roleEnName != "Sage" || step.actor == null || !step.isRealAction ||
+        !clocktowerSageValidPair(selectedSeats, seatCount)
+    ) return null
+    val seats = selectedSeats.sorted()
+    val demonRole = (step.displayProposition as? InformationProposition.AnyOf)
+        ?.alternatives?.filterIsInstance<InformationProposition.RoleAt>()?.firstOrNull()?.role
+        ?: RoleId("Imp")
+    return step.copy(
+        displayKind = ClocktowerDisplayKind.EitherOne,
+        tellPlayer = step.displayPrimary ?: "Demon",
+        displayPrimary = step.displayPrimary ?: "Demon",
+        displaySecondary = seats.joinToString("   "),
+        presentationSubjectSeats = seats,
+        displayProposition = InformationProposition.AnyOf(seats.map { seat ->
+            InformationProposition.RoleAt(seat, demonRole)
+        }),
+        displayOptions = emptyList(),
+        recommendedDisplayOptions = emptyList(),
+        selectedInformationTruthful = null,
+    )
+}
 
 private fun clocktowerSageSubjectSeats(
     cards: List<PlayerCard>,

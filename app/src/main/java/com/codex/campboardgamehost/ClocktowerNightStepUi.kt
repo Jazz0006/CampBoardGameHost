@@ -166,15 +166,13 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val usesUndertakerSquareTable =
         plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Undertaker && undertakerResultChoices.isNotEmpty()
-    val sageResultChoices = clocktowerSageResultChoices(
-        step = manualFallbackStep,
-        seatCount = cards.size,
-        allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
-        automaticDisplayOption = automaticDisplayOption,
-        recommendedOptionIds = effectiveRecommendedOptionIds,
-    )
+    val sageSuggestedOption = currentAiSuggestedOption?.takeIf { option ->
+        option.displayKind == ClocktowerDisplayKind.EitherOne &&
+            clocktowerSageValidPair(option.presentationSubjectSeats, cards.size)
+    }
     val usesSageSquareTable =
-        plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Sage && sageResultChoices.isNotEmpty()
+        plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Sage &&
+            step.actor != null && step.isRealAction && cards.size >= 2
     val usesRavenkeeperSquareTable = plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Ravenkeeper
     val ravenkeeperSelectedSeat = if (usesRavenkeeperSquareTable) {
         selectedName
@@ -274,20 +272,8 @@ internal fun ClocktowerNightStepCardLocalized(
     }
 
 
-    fun showSageChoice(choice: ClocktowerSageResultChoice) {
-        when (choice.sourceKind) {
-            ClocktowerSageResultSourceKind.DisplayOption -> {
-                choice.displayOption?.let(::showRecommendedDisplayOption)
-            }
-
-            ClocktowerSageResultSourceKind.LegacyUnreliable -> {
-                choice.displayOption?.let { option ->
-                    onShowPlayerDisplay(resolveClocktowerLegacyUnreliablePlayerDisplay(step, option))
-                }
-            }
-
-            ClocktowerSageResultSourceKind.Direct -> onShowPlayerDisplay(step)
-        }
+    fun showSageManualPair(seats: List<Int>) {
+        clocktowerSageManualPlayerDisplay(step, seats, cards.size)?.let(onShowPlayerDisplay)
     }
 
     fun showStructuredFortuneTellerResult(value: Boolean) {
@@ -772,13 +758,14 @@ internal fun ClocktowerNightStepCardLocalized(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
-                    choices = sageResultChoices,
+                    recommendedSeats = sageSuggestedOption?.presentationSubjectSeats,
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,
                     onHostTools = onHostTools,
                     onNext = onNext,
-                    onConfirm = ::showSageChoice,
+                    onConfirmRecommended = { sageSuggestedOption?.let(::showRecommendedDisplayOption) },
+                    onConfirmManual = ::showSageManualPair,
                 )
             }
 

@@ -1050,7 +1050,6 @@ internal fun ClocktowerJudgeScreen(
                 displayPrimary = text("恶魔", "Demon"),
                 displayFooter = text("在下面两位玩家之中", "One of these two players"),
                 hostInstruction = text("如果恶魔今晚杀死贤者，轻拍贤者，示意睁眼。把两名玩家只给他看；这两人之中有一名是恶魔。", "If the Demon killed the Sage tonight, wake the Sage and show only them two players, one of whom is the Demon."),
-                highPressureSuffix = text(" ⚠ 高压", " ⚠ high pressure"),
             ),
         ),
         ClocktowerNightStepMaterializerRegistry.Entry(

@@ -8,44 +8,24 @@ import org.junit.Test
 
 class ClocktowerSageStepMaterializerTest {
     @Test
-    fun `Sage option retains actually selected demon candidate seats as a typed proposition`() {
+    fun `Sage manually confirmed pair is recorded as typed information without rules filtering`() {
         val cards = (1..5).map { seat -> sageMaterializerCard("P$seat", seat == 2) }
-        val options = clocktowerSageDisplayOptions(
-            cards = cards,
-            actor = cards[3],
-            demon = cards[1],
-            truthfulOnly = false,
-            content = sageContent(),
+        val builder = ClocktowerInformationStepBuilder(
+            cards = cards, language = "en", text = { _, en -> en },
+            roleActor = { null }, roleMissingReason = { "missing" },
+            abilityStateFor = { _, _ -> null },
         )
-
-        assertEquals(6, options.size)
-        val option = options.single { it.presentationSubjectSeats == listOf(1, 2) }
-        assertEquals("1   2", option.displaySecondary)
-        assertEquals(demonClaim(1, 2), option.proposition)
-        assertTrue(option.isTruthful)
-        assertTrue(options.any { !it.isTruthful })
-    }
-
-    @Test
-    fun `truthful-only Sage projection exposes every legal truthful pair without ranking`() {
-        val cards = (1..5).map { seat -> sageMaterializerCard("P$seat", seat == 2) }
-
-        val options = clocktowerSageDisplayOptions(
-            cards = cards,
-            actor = cards[3],
-            demon = cards[1],
-            truthfulOnly = true,
-            content = sageContent(),
-        )
-
-        assertEquals(3, options.size)
-        assertTrue(options.all { option -> 2 in option.presentationSubjectSeats })
-        assertTrue(options.all { it.isTruthful })
-        assertTrue(options.all { option ->
-            option.proposition == demonClaim(
-                option.presentationSubjectSeats[0], option.presentationSubjectSeats[1],
-            )
-        })
+        val step = clocktowerSageStepMaterializer(
+            builder, cards, cards[3], cards[1], cards[1] to cards[4], null, sageContent(),
+        ).build()
+        val shown = requireNotNull(clocktowerSageManualPlayerDisplay(step, listOf(5, 1), cards.size))
+        assertEquals(listOf(1, 5), shown.presentationSubjectSeats)
+        assertEquals("1   5", shown.displaySecondary)
+        assertEquals(demonClaim(1, 5), shown.displayProposition)
+        assertEquals(null, shown.selectedInformationTruthful)
+        assertTrue(shown.displayOptions.isEmpty())
+        assertEquals(null, clocktowerSageManualPlayerDisplay(step, listOf(1, 1), cards.size))
+        assertEquals(null, clocktowerSageManualPlayerDisplay(step, listOf(0, 5), cards.size))
     }
 
     @Test
@@ -92,7 +72,6 @@ class ClocktowerSageStepMaterializerTest {
         displayPrimary = "Demon",
         displayFooter = "One of these two players",
         hostInstruction = "Wake the Sage and show two players.",
-        highPressureSuffix = " high pressure",
     )
 
     private fun sageMaterializerCard(name: String, demon: Boolean = false) = PlayerCard(
