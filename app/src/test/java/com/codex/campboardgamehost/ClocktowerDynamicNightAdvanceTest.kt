@@ -27,14 +27,23 @@ class ClocktowerDynamicNightAdvanceTest {
     }
 
     @Test
-    fun `existing next step advances normally`() {
+    fun `demon confirmation waits for reordered steps even when an old next step exists`() {
         val directive = clocktowerNightAdvanceDirective(
             currentStepIndex = 2,
             currentStepCount = 5,
             flowMayExpandAfterConfirmation = true,
         )
 
-        assertEquals(ClocktowerNightAdvanceDirective.MoveTo(3), directive)
+        assertEquals(ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(2), directive)
+    }
+
+    @Test
+    fun `refreshed night can complete immediately if a slain final wakeup was removed`() {
+        val directive = clocktowerRefreshedNightAdvanceDirective(
+            pending = ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(2),
+            refreshedStepCount = 3,
+        )
+        assertEquals(ClocktowerNightAdvanceDirective.CompleteNight, directive)
     }
 
     @Test

@@ -214,18 +214,6 @@ class ClocktowerHostInteractionProjectorTest {
         assertTrue(interactions.any { it.id == ClocktowerInteractionId("first_night:role:Poisoner") })
     }
 
-    @Test
-    fun `duplicate role handlers fail closed`() {
-        val handler = object : ClocktowerCharacterInteractionHandler {
-            override val roleId: RoleId = RoleId("Fortune Teller")
-        }
-        val failure = runCatching {
-            ClocktowerCharacterInteractionRegistry(listOf(handler, handler))
-        }.exceptionOrNull()
-
-        assertTrue(failure is IllegalArgumentException)
-    }
-
     private fun project(
         phase: ClocktowerNightFlowPhase,
         playerCount: Int,

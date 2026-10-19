@@ -1038,7 +1038,10 @@ internal fun ClocktowerJudgeScreen(
         ),
         ),
     )
-        otherNightMaterializers.materialize(otherNightInteractions)
+        otherNightMaterializers.materialize(
+            otherNightInteractions,
+            confirmedAttackDeathName = nightHostProjection.resolvedDeathForRemainingWakeups,
+        )
     }
 
     if (phase == ClocktowerPhase.FirstNight && !nightStarted) {

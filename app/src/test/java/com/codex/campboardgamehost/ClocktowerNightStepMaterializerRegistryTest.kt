@@ -97,6 +97,50 @@ class ClocktowerNightStepMaterializerRegistryTest {
     }
 
     @Test
+    fun `Host skips slain Fortune Teller after Imp but never erases steps already completed`() {
+        val night = ClocktowerNightFlowPhase.OTHER_NIGHT
+        val monk = ClocktowerProductionNightStepIdentity.role(RoleId("Monk"))
+        val imp = ClocktowerProductionNightStepIdentity.role(RoleId("Imp"))
+        val ravenkeeper = ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper"))
+        val fortuneTeller = ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller"))
+        val registry = ClocktowerNightStepMaterializerRegistry(
+            phase = night,
+            entries = listOf(
+                ClocktowerNightStepMaterializerRegistry.Entry(monk) { step("Monk", PlayerCard(name = "Monk")) },
+                ClocktowerNightStepMaterializerRegistry.Entry(imp) { step("Imp", PlayerCard(name = "Imp")) },
+                ClocktowerNightStepMaterializerRegistry.Entry(ravenkeeper) { step("Ravenkeeper", PlayerCard(name = "Ravenkeeper")) },
+                ClocktowerNightStepMaterializerRegistry.Entry(fortuneTeller) { step("Fortune Teller", PlayerCard(name = "Fortune Teller")) },
+            ),
+        )
+        val actions = listOf(
+            roleInteraction(monk, "Monk", night),
+            roleInteraction(imp, "Imp", night),
+            roleInteraction(ravenkeeper, "Ravenkeeper", night),
+            roleInteraction(fortuneTeller, "Fortune Teller", night),
+        )
+
+        assertEquals(
+            listOf("Monk", "Imp", "Ravenkeeper"),
+            registry.materialize(actions, confirmedAttackDeathName = "Fortune Teller").map { it.title },
+        )
+        // A protected target has no confirmed attack death, so Fortune Teller still wakes.
+        assertEquals(
+            listOf("Monk", "Imp", "Ravenkeeper", "Fortune Teller"),
+            registry.materialize(actions).map { it.title },
+        )
+        // Death-trigger Ravenkeeper still wakes when the night attack kills them.
+        assertEquals(
+            listOf("Monk", "Imp", "Ravenkeeper", "Fortune Teller"),
+            registry.materialize(actions, confirmedAttackDeathName = "Ravenkeeper").map { it.title },
+        )
+        // An earlier Monk turn remains in the existing cursor even if Monk dies later.
+        assertEquals(
+            listOf("Monk", "Imp", "Ravenkeeper", "Fortune Teller"),
+            registry.materialize(actions, confirmedAttackDeathName = "Monk").map { it.title },
+        )
+    }
+
+    @Test
     fun `missing projected actionable interaction fails closed`() {
         val empathIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Empath"))
         val chefIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Chef"))

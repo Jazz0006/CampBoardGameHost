@@ -5,6 +5,7 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerHostInteractionKind
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 
 /**
  * Stateless production adapter from canonical planner interactions to lazily-built night UI steps.
@@ -36,6 +37,7 @@ internal class ClocktowerNightStepMaterializerRegistry(
 
     fun materialize(
         projectedInteractions: List<ClocktowerHostInteraction>,
+        confirmedAttackDeathName: String? = null,
     ): List<ClocktowerNightStepUi> {
         require(projectedInteractions.all { it.phase == phase }) {
             "Clocktower night-step materialization cannot mix planner phases."
@@ -49,7 +51,13 @@ internal class ClocktowerNightStepMaterializerRegistry(
             "Clocktower projected materialization interaction IDs must be unique."
         }
 
-        return actionableInteractions.mapNotNull { interaction ->
+        // Previously completed actions retain their indices when a later Imp attack kills
+        // a player. The Host suppresses only that player's remaining normal wakeups;
+        // dying Ravenkeeper/Sage still wake for their death-trigger information.
+        val impIndex = actionableInteractions.indexOfFirst {
+            it.kind == ClocktowerHostInteractionKind.ROLE_PHASE_ACTION && it.roleId == RoleId("Imp")
+        }
+        return actionableInteractions.mapIndexedNotNull { index, interaction ->
             val step = requireNotNull(byInteractionId[interaction.id]) {
                 "Missing Clocktower night-step materializer for '${interaction.id.value}'."
             }.invoke().copy(interactionId = interaction.id)
@@ -58,10 +66,18 @@ internal class ClocktowerNightStepMaterializerRegistry(
             // By materialization time, normal later-night role lookup is cursor-relative and returns
             // no actor when that role has already become mechanically dead. Death-trigger roles such
             // as Ravenkeeper/Sage explicitly supply their trigger actor, so they remain materialized.
-            step.takeUnless {
+            val actorDiedAfterDemonAction =
                 phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+                    impIndex >= 0 && index > impIndex &&
+                    confirmedAttackDeathName != null &&
+                    step.actor?.name == confirmedAttackDeathName &&
                     interaction.kind == ClocktowerHostInteractionKind.ROLE_PHASE_ACTION &&
-                    step.actor == null
+                    interaction.roleId !in setOf(RoleId("Ravenkeeper"), RoleId("Sage"))
+            step.takeUnless {
+                actorDiedAfterDemonAction ||
+                    (phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+                        interaction.kind == ClocktowerHostInteractionKind.ROLE_PHASE_ACTION &&
+                        step.actor == null)
             }
         }
     }

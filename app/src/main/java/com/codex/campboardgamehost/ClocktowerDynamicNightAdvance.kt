@@ -19,10 +19,12 @@ internal fun clocktowerNightAdvanceDirective(
     require(currentStepCount > 0) { "Night advance requires at least one step." }
     require(currentStepIndex in 0 until currentStepCount) { "Current night step must be in range." }
     return when {
-        currentStepIndex < currentStepCount - 1 ->
-            ClocktowerNightAdvanceDirective.MoveTo(currentStepIndex + 1)
+        // Attack/redirect can REMOVE upcoming normal wakeups as well as insert death triggers.
+        // Always reconcile against the updated list before advancing, not just at the end.
         flowMayExpandAfterConfirmation ->
             ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(currentStepIndex)
+        currentStepIndex < currentStepCount - 1 ->
+            ClocktowerNightAdvanceDirective.MoveTo(currentStepIndex + 1)
         else -> ClocktowerNightAdvanceDirective.CompleteNight
     }
 }

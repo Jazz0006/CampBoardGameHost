@@ -39,6 +39,16 @@ internal class ClocktowerNightHostProjection internal constructor(
     val mayorCanRedirect: Boolean
         get() = canonicalNightDeathResolution.mayorRedirectEligible
 
+    /** Derived from already confirmed attack/protection choices, not a second writable roster.
+     * A Mayor choice must resolve first; do not assume the Mayor is dead while it is pending.
+     */
+    val resolvedDeathForRemainingWakeups: String?
+        get() = canonicalNightDeathResolution.resolvedDeathName.takeUnless {
+            canonicalNightDeathResolution.mayorRedirectEligible &&
+                canonicalNightDeathResolution.facts.mayorSeat != null &&
+                canonicalNightDeathResolution.resolvedDeathSeat == canonicalNightDeathResolution.facts.mayorSeat
+        }
+
     val demonCard: PlayerCard?
         get() = currentDemonHostContext?.actor
 

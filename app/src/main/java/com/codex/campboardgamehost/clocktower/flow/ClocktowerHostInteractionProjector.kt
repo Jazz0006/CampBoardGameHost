@@ -4,77 +4,87 @@ import com.codex.campboardgamehost.clocktower.catalog.NightOrderToken
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 
 /**
- * Converts the pure base night-token plan into stable flow interactions without touching Compose.
- * Role-specific setup and conditional hooks live in ClocktowerCharacterInteractionRegistry instead
- * of script-name or UI-level ordering branches.
+ * Host-owned script night sequencing. Only roles and already-resolved event flags
+ * determine wakeups; neither AI nor the player chooses the schedule.
  */
-internal class ClocktowerHostInteractionProjector(
-    private val registry: ClocktowerCharacterInteractionRegistry = ClocktowerCharacterInteractionRegistry.builtIn(),
-) {
+internal class ClocktowerHostInteractionProjector {
     fun projectNight(
         phase: ClocktowerNightFlowPhase,
         basePlan: List<NightOrderToken>,
         resolvedFacts: ClocktowerResolvedFlowFacts = ClocktowerResolvedFlowFacts.EMPTY,
         actualRoleIds: Set<RoleId>? = null,
     ): List<ClocktowerHostInteraction> {
-        val effectiveActualRoleIds = actualRoleIds ?: basePlan
+        val actualRoles = actualRoleIds ?: basePlan
             .filterIsInstance<NightOrderToken.Character>()
             .mapTo(linkedSetOf()) { it.roleId }
-
-        fun retainSetupForActualRole(
-            roleId: RoleId,
-            interaction: ClocktowerHostInteraction,
-        ): Boolean = interaction.kind != ClocktowerHostInteractionKind.STORYTELLER_SETUP ||
-            roleId in effectiveActualRoleIds
-
         val interactions = buildList {
             basePlan.forEach { token ->
                 when (token) {
                     is NightOrderToken.Character -> {
-                        addAll(
-                            registry.beforeRoleInteractions(token.roleId, phase, resolvedFacts)
-                                .filter { retainSetupForActualRole(token.roleId, it) },
-                        )
-                        if (registry.isRoleInteractionEligible(token.roleId, phase, resolvedFacts)) {
-                            add(roleInteraction(phase, token))
+                        val roleId = token.roleId
+                        val role = roleId.value
+                        if (phase == ClocktowerNightFlowPhase.FIRST_NIGHT &&
+                            role == "Fortune Teller" && roleId in actualRoles
+                        ) {
+                            add(ClocktowerHostInteraction(
+                                id = ClocktowerInteractionId("first_night:fortune_teller:red_herring"),
+                                phase = phase,
+                                roleId = roleId,
+                                kind = ClocktowerHostInteractionKind.STORYTELLER_SETUP,
+                                completionPolicy = ClocktowerInteractionCompletionPolicy.STORYTELLER_SELECTION,
+                            ))
                         }
-                        addAll(
-                            registry.afterRoleInteractions(token.roleId, phase, resolvedFacts)
-                                .filter { retainSetupForActualRole(token.roleId, it) },
-                        )
+                        if (phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+                            role == "Imp" &&
+                            ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON in resolvedFacts
+                        ) {
+                            add(event(phase, roleId, "other_night:event:imp:new_demon_identity",
+                                ClocktowerInteractionCompletionPolicy.INFORMATION_DISPLAY))
+                        }
+                        if (phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+                            role == "Mayor" &&
+                            ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE in resolvedFacts
+                        ) {
+                            add(event(phase, roleId, "other_night:event:mayor:death_resolution",
+                                ClocktowerInteractionCompletionPolicy.STORYTELLER_SELECTION))
+                        }
+                        val eligible = when (role) {
+                            "Scarlet Woman", "Mayor" -> false
+                            "Ravenkeeper" -> phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+                                ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT in resolvedFacts
+                            "Sage" -> phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+                                ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON in resolvedFacts
+                            "Undertaker" -> phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+                                ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY in resolvedFacts
+                            else -> true
+                        }
+                        if (eligible) add(ClocktowerHostInteraction(
+                            id = ClocktowerInteractionId("${phase.idPrefix()}:role:$role"),
+                            phase = phase,
+                            roleId = roleId,
+                            kind = ClocktowerHostInteractionKind.ROLE_PHASE_ACTION,
+                            completionPolicy = ClocktowerInteractionCompletionPolicy.ROLE_RESOLUTION,
+                        ))
+                        if (phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+                            role == "Imp" &&
+                            ClocktowerResolvedFlowFact.DEMON_SUCCESSION_REQUIRED in resolvedFacts
+                        ) {
+                            add(event(phase, roleId, "other_night:event:imp:demon_successor",
+                                ClocktowerInteractionCompletionPolicy.STORYTELLER_SELECTION))
+                        }
                     }
-                    NightOrderToken.System.DUSK -> add(
-                        systemInteraction(
-                            phase = phase,
-                            suffix = "dusk",
-                            kind = ClocktowerHostInteractionKind.SYSTEM_BOUNDARY,
-                            completion = ClocktowerInteractionCompletionPolicy.SYSTEM_TRANSITION,
-                        ),
-                    )
-                    NightOrderToken.System.MINION_INFO -> add(
-                        systemInteraction(
-                            phase = phase,
-                            suffix = "minion_info",
-                            kind = ClocktowerHostInteractionKind.EVIL_INFORMATION,
-                            completion = ClocktowerInteractionCompletionPolicy.INFORMATION_DISPLAY,
-                        ),
-                    )
-                    NightOrderToken.System.DEMON_INFO -> add(
-                        systemInteraction(
-                            phase = phase,
-                            suffix = "demon_info",
-                            kind = ClocktowerHostInteractionKind.EVIL_INFORMATION,
-                            completion = ClocktowerInteractionCompletionPolicy.INFORMATION_DISPLAY,
-                        ),
-                    )
-                    NightOrderToken.System.DAWN -> add(
-                        systemInteraction(
-                            phase = phase,
-                            suffix = "dawn",
-                            kind = ClocktowerHostInteractionKind.SYSTEM_BOUNDARY,
-                            completion = ClocktowerInteractionCompletionPolicy.SYSTEM_TRANSITION,
-                        ),
-                    )
+                    NightOrderToken.System.DUSK -> add(system(phase, "dusk",
+                        ClocktowerHostInteractionKind.SYSTEM_BOUNDARY,
+                        ClocktowerInteractionCompletionPolicy.SYSTEM_TRANSITION))
+                    NightOrderToken.System.MINION_INFO -> add(system(phase, "minion_info",
+                        ClocktowerHostInteractionKind.EVIL_INFORMATION,
+                        ClocktowerInteractionCompletionPolicy.INFORMATION_DISPLAY))
+                    NightOrderToken.System.DEMON_INFO -> add(system(phase, "demon_info",
+                        ClocktowerHostInteractionKind.EVIL_INFORMATION,
+                        ClocktowerInteractionCompletionPolicy.INFORMATION_DISPLAY))
+                    NightOrderToken.System.DAWN -> add(system(phase, "dawn",
+                        ClocktowerHostInteractionKind.SYSTEM_BOUNDARY,
+                        ClocktowerInteractionCompletionPolicy.SYSTEM_TRANSITION))
                 }
             }
         }
@@ -84,23 +94,25 @@ internal class ClocktowerHostInteractionProjector(
         return interactions
     }
 
-    private fun roleInteraction(
+    private fun event(
         phase: ClocktowerNightFlowPhase,
-        token: NightOrderToken.Character,
-    ): ClocktowerHostInteraction = ClocktowerHostInteraction(
-        id = ClocktowerInteractionId("${phase.idPrefix()}:role:${token.roleId.value}"),
+        roleId: RoleId,
+        id: String,
+        completion: ClocktowerInteractionCompletionPolicy,
+    ) = ClocktowerHostInteraction(
+        id = ClocktowerInteractionId(id),
         phase = phase,
-        roleId = token.roleId,
-        kind = ClocktowerHostInteractionKind.ROLE_PHASE_ACTION,
-        completionPolicy = ClocktowerInteractionCompletionPolicy.ROLE_RESOLUTION,
+        roleId = roleId,
+        kind = ClocktowerHostInteractionKind.EVENT_RESOLUTION,
+        completionPolicy = completion,
     )
 
-    private fun systemInteraction(
+    private fun system(
         phase: ClocktowerNightFlowPhase,
         suffix: String,
         kind: ClocktowerHostInteractionKind,
         completion: ClocktowerInteractionCompletionPolicy,
-    ): ClocktowerHostInteraction = ClocktowerHostInteraction(
+    ) = ClocktowerHostInteraction(
         id = ClocktowerInteractionId("${phase.idPrefix()}:system:$suffix"),
         phase = phase,
         roleId = null,
@@ -113,3 +125,4 @@ internal class ClocktowerHostInteractionProjector(
         ClocktowerNightFlowPhase.OTHER_NIGHT -> "other_night"
     }
 }
+
