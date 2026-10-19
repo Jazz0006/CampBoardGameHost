@@ -1,6 +1,11 @@
 package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionContext
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionSemantics
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
@@ -711,7 +716,7 @@ internal class ClocktowerGameSession private constructor(
         val effectiveProtection = state.nightTargets.monkSeat == targetSeat &&
             players.any { it.alive && !it.poisoned && it.actualRole == RoleId("Monk") }
         if (effectiveProtection) return null
-        if (target.seat == attacker.seat) return null // Imp succession is a real choice.
+        if (target.seat == attacker.seat) return null // Self-kill is settled with succession below.
         if (!target.poisoned && target.actualRole in setOf(RoleId("Soldier"), RoleId("Mayor"))) {
             return null // Soldier is safe; Mayor requires an actual redirect-or-stay decision.
         }
@@ -719,16 +724,56 @@ internal class ClocktowerGameSession private constructor(
     }
 
     /**
-     * Imp Attack + forced Death form one private Session transition. Neither effect is
-     * made PUBLIC before the Dawn phase transition. No guessed death for Mayor/self-kill.
+     * Imp Attack + actual Death + any chosen successor RoleChange form one Session transaction.
+     * These facts remain PRIVATE until Dawn announces only the Death, never its cause/role.
      */
     private fun acceptDeterministicNightAttack(
         targetSeat: Int,
         phase: StorytellerPhase,
         round: Int,
         actionId: String,
+        successorSeat: Int?,
     ): TimelineBoundActionFact {
-        val deathSeat = deterministicImpDeathSeat(targetSeat)
+        val roster = state.gameState.players
+        val imp = roster.singleOrNull { it.alive && it.actualRole == RoleId("Imp") }
+        val monkProtectsTarget = state.nightTargets.monkSeat == targetSeat &&
+            roster.any { it.alive && !it.poisoned && it.actualRole == RoleId("Monk") }
+        val selfKill = imp != null && imp.seat == targetSeat &&
+            !imp.poisoned && !monkProtectsTarget
+        val succession = if (selfKill) {
+            DemonSuccessionSemantics.resolve(DemonSuccessionContext(
+                demonActuallyDied = true,
+                demonDeathWasImpSelfKill = true,
+                aliveCountBeforeDemonDeath = roster.count { it.alive },
+                functioningScarletWomanSeat = roster.singleOrNull {
+                    it.alive && !it.poisoned && it.actualRole == RoleId("Scarlet Woman")
+                }?.seat,
+                livingMinionSeats = roster.filter {
+                    it.alive && it.actualType == CharacterType.MINION
+                }.mapTo(linkedSetOf()) { it.seat },
+            ))
+        } else DemonSuccessionResolution.None
+        val promotedSeat = when (succession) {
+            is DemonSuccessionResolution.Forced -> {
+                require(successorSeat == succession.targetSeat) {
+                    "A functioning Scarlet Woman must inherit this Imp death."
+                }
+                successorSeat
+            }
+            is DemonSuccessionResolution.Choice -> {
+                require(successorSeat in succession.targetSeats) {
+                    "Choose a living Minion as the new Imp before confirming self-kill."
+                }
+                successorSeat
+            }
+            DemonSuccessionResolution.None -> {
+                require(successorSeat == null) {
+                    "A successor cannot be selected when the Imp did not die or none can inherit."
+                }
+                null
+            }
+        }
+        val deathSeat = if (selfKill) targetSeat else deterministicImpDeathSeat(targetSeat)
         val attack = commitGlobalActionFact(
             state.semanticHistoryMode, state.actionTimeline, state.epistemicObservationLog,
             state.nextTimelineGlobalSequence,
@@ -748,15 +793,37 @@ internal class ClocktowerGameSession private constructor(
                 )),
             )
         }
-        val totalFacts = if (death != null) 2L else 1L
+        val identity = promotedSeat?.let { seat ->
+            val predecessor = requireNotNull(death)
+            check(predecessor.nextTimelineGlobalSequence < Int.MAX_VALUE)
+            commitGlobalActionFact(
+                state.semanticHistoryMode, predecessor.actionTimeline, state.epistemicObservationLog,
+                predecessor.nextTimelineGlobalSequence,
+                prepareGlobalActionDraft(ActionFactDraft.RoleChange(
+                    DawnCommitIdentity.roleChange(state.gameId, round, seat, RoleId("Imp")),
+                    StorytellerPhase.NIGHT, round,
+                    predecessor.nextTimelineGlobalSequence.toInt() + 1,
+                    seat, RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON,
+                )),
+            )
+        }
+        val totalFacts = 1L + (if (death != null) 1L else 0L) +
+            (if (identity != null) 1L else 0L)
         check(state.gameStateRevision <= Long.MAX_VALUE - totalFacts)
         updateState(state.copy(
             gameStateRevision = state.gameStateRevision + totalFacts,
-            actionTimeline = death?.actionTimeline ?: attack.actionTimeline,
-            nextTimelineGlobalSequence = death?.nextTimelineGlobalSequence ?: attack.nextTimelineGlobalSequence,
-            gameState = if (deathSeat == null) state.gameState else state.gameState.copy(
-                players = playersAfterConfirmedNightDeath(deathSeat),
-            ),
+            actionTimeline = identity?.actionTimeline ?: death?.actionTimeline ?: attack.actionTimeline,
+            nextTimelineGlobalSequence = identity?.nextTimelineGlobalSequence ?:
+                death?.nextTimelineGlobalSequence ?: attack.nextTimelineGlobalSequence,
+            gameState = state.gameState.copy(players = roster.map { player ->
+                val afterDeath = if (player.seat == deathSeat)
+                    player.copy(alive = false, poisoned = false) else player
+                if (player.seat == promotedSeat) afterDeath.copy(
+                    actualRole = RoleId("Imp"),
+                    actualAlignment = Alignment.EVIL,
+                    actualType = CharacterType.DEMON,
+                ) else afterDeath
+            }),
             nightTargets = state.nightTargets.withAttack(targetSeat),
         ))
         return attack.entry
@@ -776,6 +843,7 @@ internal class ClocktowerGameSession private constructor(
         phase: StorytellerPhase,
         round: Int,
         stepId: String,
+        successorSeat: Int? = null,
     ): TimelineBoundActionFact {
         require(phase == StorytellerPhase.NIGHT && phase == state.phase && round == state.round)
         require(stepId.isNotBlank())
@@ -787,12 +855,17 @@ internal class ClocktowerGameSession private constructor(
                 it.fact is ActionFact.Attack && it.fact.actionId.startsWith(prefix)
         }
         if (previous != null) {
-            check(previous.fact.actionId == actionId) {
-                "The Imp attack is already committed. Going back cannot change the target."
+            val previouslyPromoted = state.actionTimeline.entries.firstOrNull {
+                it.point.phase == StorytellerPhase.NIGHT && it.point.round == round &&
+                    it.fact is ActionFact.RoleChange &&
+                    (it.fact as ActionFact.RoleChange).role == RoleId("Imp")
+            }?.let { (it.fact as ActionFact.RoleChange).targetSeat }
+            check(previous.fact.actionId == actionId && previouslyPromoted == successorSeat) {
+                "The Imp attack and its successor are already committed and cannot change."
             }
             return previous
         }
-        return acceptDeterministicNightAttack(targetSeat, phase, round, actionId)
+        return acceptDeterministicNightAttack(targetSeat, phase, round, actionId, successorSeat)
     }
 
     private fun mayorAttackAwaitsRuling(): Boolean {

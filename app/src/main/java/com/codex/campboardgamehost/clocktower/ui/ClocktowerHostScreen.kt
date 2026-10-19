@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -96,7 +98,7 @@ internal fun ClocktowerJudgeScreen(
     onCommitConfirmedPrivateInformationPublication: (EpistemicObservationDraft, StorytellerDecisionRevision) -> Unit,
     onHostTools: () -> Unit,
     onSelectNightDeath: (String?) -> Unit,
-    onConfirmDemonAttack: (String) -> Unit,
+    onConfirmDemonAttack: (String, String?) -> Unit,
     onSelectExecution: (String?) -> Unit,
     onSelectPoisonTarget: (String?) -> Unit,
     onConfirmPoisonTarget: (String) -> Unit,
@@ -1247,16 +1249,46 @@ internal fun ClocktowerJudgeScreen(
             currentStep.action, currentStep.isRealAction,
             selectedNightName, legalPlayerTargetNames,
         )
+        val impPlayer = sessionGameState.players.singleOrNull {
+            it.alive && it.actualRole == RoleId("Imp")
+        }
+        val isSelfKillChoice = currentStep.isRealAction &&
+            currentStep.action == ClocktowerNightAction.DemonKill &&
+            impPlayer != null && impPlayer.name == selectedNightName
+        val monkProtectsImp = impPlayer != null &&
+            nightCheckpoint.confirmedMonkTarget == impPlayer.name &&
+            sessionGameState.players.any {
+                it.alive && !it.poisoned && it.actualRole == RoleId("Monk")
+            }
+        val eligibleMinions = if (isSelfKillChoice && impPlayer?.poisoned == false &&
+            !monkProtectsImp) sessionGameState.players.filter {
+            it.alive && it.actualType == com.codex.campboardgamehost.clocktower.domain.CharacterType.MINION
+        } else emptyList()
+        val forcedScarlet = eligibleMinions.singleOrNull {
+            it.actualRole == RoleId("Scarlet Woman") && !it.poisoned
+        }?.takeIf { sessionGameState.players.count { player -> player.alive } >= 5 }
+        val eligibleSuccessors = if (forcedScarlet != null) listOf(forcedScarlet)
+            else eligibleMinions
+        var selectedSelfKillSuccessor by remember(
+            gameId, phase, round, currentStep.interactionId,
+        ) { mutableStateOf<String?>(null) }
+        val successorName = when (eligibleSuccessors.size) {
+            0 -> null
+            1 -> eligibleSuccessors.single().name
+            else -> selectedSelfKillSuccessor
+        }
+        val successorReady = !isSelfKillChoice || eligibleSuccessors.size <= 1 ||
+            successorName in eligibleSuccessors.map { it.name }
         // UI-only token: only a FRESH seat tap during this exact step may auto-confirm.
         // Re-entering a step with a retained draft must not commit it silently.
         var freshAutomaticPlayerTarget by remember(
             gameId, phase, round, currentStepIndex, currentStep.interactionId,
         ) { mutableStateOf<String?>(null) }
         val advanceNightStep = advance@{
-            if (!playerTargetReady) {
+            if (!playerTargetReady || !successorReady) {
                 Toast.makeText(context, text(
-                    "请先选择当前行动的合法目标，不能跳过真实玩家行动。",
-                    "Select a legal target before continuing this player action.",
+                    "请先完成当前行动目标及必要的恶魔继任选择。",
+                    "Select the current target and any required Imp successor before continuing.",
                 ), Toast.LENGTH_LONG).show()
                 return@advance
             }
@@ -1276,7 +1308,10 @@ internal fun ClocktowerJudgeScreen(
                 onConfirmMonkProtectedTarget(currentStep.interactionId.toString())
             }
             if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.DemonKill) {
-                onConfirmDemonAttack(currentStep.interactionId.toString())
+                onConfirmDemonAttack(
+                    currentStep.interactionId.toString(),
+                    if (isSelfKillChoice) successorName else null,
+                )
             }
             if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.MayorRedirect) {
                 onConfirmMayorRedirectTarget()
@@ -1434,7 +1469,7 @@ internal fun ClocktowerJudgeScreen(
             subtitle = text("当前阶段：${currentStep.title}", "Current: ${currentStep.title}"),
             progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
             canGoPrevious = false,
-            nextEnabled = playerTargetReady && (currentStep.action !in setOf(
+            nextEnabled = playerTargetReady && successorReady && (currentStep.action !in setOf(
                 ClocktowerNightAction.MayorRedirect,
             ) || selectedNightName != null) &&
                 (currentStep.action != ClocktowerNightAction.RedHerring ||
@@ -1696,6 +1731,25 @@ internal fun ClocktowerJudgeScreen(
                 onHostTools = onHostTools,
                 onNext = advanceNightStep,
                 )
+                if (isSelfKillChoice && eligibleSuccessors.size > 1 &&
+                    !successorReady) {
+                    AlertDialog(
+                        onDismissRequest = {},
+                        title = { Text(text("小恶魔自杀 · 选择继任者", "Imp self-kill · successor")) },
+                        text = {
+                            Column {
+                                eligibleSuccessors.forEach { candidate ->
+                                    TextButton(onClick = {
+                                        selectedSelfKillSuccessor = candidate.name
+                                    }) {
+                                        Text(playerSeatLabel(cards, candidate.name))
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = {},
+                    )
+                }
             }
         }
         return

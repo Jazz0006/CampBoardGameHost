@@ -102,14 +102,68 @@ class ConfirmedNightAttackTest {
         assertFalse(poisoned.state.gameState.playerAt(4)!!.alive)
     }
 
-    @Test fun `Mayor and Imp self kill do not invent mechanical Death before ruling`() {
+    @Test fun `Mayor attack remains a real choice until its ruling`() {
         val mayor = session(withRole(4, "Mayor"))
         mayor.confirmNightAttack(4, StorytellerPhase.NIGHT, 2, "imp-step")
         assertTrue(mayor.state.gameState.playerAt(4)!!.alive)
         assertEquals(0, facts(mayor).count { it.fact is ActionFact.Death })
-        val self = session()
-        self.confirmNightAttack(8, StorytellerPhase.NIGHT, 2, "imp-step")
-        assertTrue(self.state.gameState.playerAt(8)!!.alive)
-        assertEquals(0, facts(self).count { it.fact is ActionFact.Death })
+    }
+
+    @Test fun `Imp self kill chooses living Minion and writes Attack Death RoleChange atomically`() {
+        val s = session()
+        val before = s.state
+        assertThrows(IllegalArgumentException::class.java) {
+            s.confirmNightAttack(8, StorytellerPhase.NIGHT, 2, "imp-step")
+        }
+        assertSame(before, s.state)
+        s.confirmNightAttack(8, StorytellerPhase.NIGHT, 2, "imp-step", successorSeat = 7)
+        assertFalse(s.state.gameState.playerAt(8)!!.alive)
+        assertEquals(RoleId("Imp"), s.state.gameState.playerAt(7)!!.actualRole)
+        assertEquals(com.codex.campboardgamehost.clocktower.domain.CharacterType.DEMON,
+            s.state.gameState.playerAt(7)!!.actualType)
+        assertEquals(before.gameStateRevision + 3, s.state.gameStateRevision)
+        assertEquals(before.nextTimelineGlobalSequence + 3, s.state.nextTimelineGlobalSequence)
+        assertEquals(listOf(8), facts(s).mapNotNull { (it.fact as? ActionFact.Death)?.targetSeat })
+        assertEquals(listOf(7), facts(s).mapNotNull { (it.fact as? ActionFact.RoleChange)?.targetSeat })
+        assertEquals(1, facts(s).count { it.fact is ActionFact.Attack })
+        val accepted = s.state
+        s.confirmNightAttack(8, StorytellerPhase.NIGHT, 2, "imp-step", successorSeat = 7)
+        assertSame(accepted, s.state)
+        assertThrows(IllegalStateException::class.java) {
+            s.confirmNightAttack(8, StorytellerPhase.NIGHT, 2, "imp-step", successorSeat = 6)
+        }
+        assertSame(accepted, s.state)
+    }
+
+    @Test fun `five alive Scarlet Woman must succeed instead of alternative Minion`() {
+        val s = session(withRole(7, "Scarlet Woman"))
+        val before = s.state
+        assertThrows(IllegalArgumentException::class.java) {
+            s.confirmNightAttack(8, StorytellerPhase.NIGHT, 2, "imp-step")
+        }
+        assertSame(before, s.state)
+        s.confirmNightAttack(8, StorytellerPhase.NIGHT, 2, "imp-step", successorSeat = 7)
+        assertFalse(s.state.gameState.playerAt(8)!!.alive)
+        assertEquals(RoleId("Imp"), s.state.gameState.playerAt(7)!!.actualRole)
+    }
+
+    @Test fun `Imp alone may die without successor but a poisoned Imp cannot self kill`() {
+        val noMinion = TroubleBrewingFixtures.eightPlayerExample().let { roster ->
+            roster.copy(players = roster.players.map {
+                if (it.seat == 7) it.copy(actualRole = RoleId("Chef"),
+                    actualType = com.codex.campboardgamehost.clocktower.domain.CharacterType.TOWNSFOLK)
+                else it
+            })
+        }
+        val alone = session(noMinion)
+        alone.confirmNightAttack(8, StorytellerPhase.NIGHT, 2, "imp-step")
+        assertFalse(alone.state.gameState.playerAt(8)!!.alive)
+        assertTrue(facts(alone).none { it.fact is ActionFact.RoleChange })
+
+        val poisoned = session()
+        poisoned.confirmNightPoison(8, StorytellerPhase.NIGHT, 2, "poison-step")
+        poisoned.confirmNightAttack(8, StorytellerPhase.NIGHT, 2, "imp-step")
+        assertTrue(poisoned.state.gameState.playerAt(8)!!.alive)
+        assertTrue(facts(poisoned).none { it.fact is ActionFact.Death || it.fact is ActionFact.RoleChange })
     }
 }

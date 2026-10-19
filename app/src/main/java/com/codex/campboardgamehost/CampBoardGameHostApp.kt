@@ -2126,16 +2126,33 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerDemonAttackDraftTarget = selected
                         },
-                        onConfirmDemonAttack = { stepId ->
-                            val targetName = clocktowerDemonAttackDraftTarget
+                        onConfirmDemonAttack = { stepId, successorName ->
                             val session = requireClocktowerGameSession()
+                            val targetSeat = clocktowerSeatFor(requireNotNull(clocktowerDemonAttackDraftTarget) {
+                                "Imp must choose a target before confirming the irreversible attack."
+                            })
+                            val originalImpSeat = session.state.gameState.players.singleOrNull {
+                                it.alive && it.actualRole == RoleId("Imp")
+                            }?.seat
                             session.confirmNightAttack(
-                                targetSeat = requireNotNull(targetName) {
-                                    "Imp must choose a target before confirming the irreversible attack."
-                                }.let(::clocktowerSeatFor),
+                                targetSeat = targetSeat,
                                 phase = storytellerPhaseFor(), round = round, stepId = stepId,
+                                successorSeat = successorName?.let(::clocktowerSeatFor),
                             )
                             publishClocktowerSessionView()
+                            if (targetSeat == originalImpSeat &&
+                                session.state.gameState.playerAt(targetSeat)?.alive == false
+                            ) {
+                                val newImp = session.state.gameState.players.singleOrNull {
+                                    it.alive && it.actualRole == RoleId("Imp")
+                                }
+                                if (newImp != null) {
+                                    clocktowerPendingNewDemonName = newImp.name
+                                } else {
+                                    gameOutcome = evaluateGameOutcome(context, cards)
+                                    showResults = gameOutcome != null
+                                }
+                            }
                         },
                         onSelectExecution = {
                             advanceClocktowerPlayerInputRevision()
@@ -2272,25 +2289,38 @@ internal fun CampBoardGameHostApp() {
                         },
                         onConfirmNewDemon = {
                             val pendingName = requireNotNull(clocktowerPendingNewDemonName)
-                            val imp = clocktowerRolesForScript(currentClocktowerScript).first { it.enName == "Imp" }
-                            commitClocktowerActualRole(
-                                pendingName, imp,
-                                DawnCommitIdentity.roleChange(clocktowerGameId, round, clocktowerSeatFor(pendingName), RoleId("Imp")),
-                            )
+                            val alreadyPromotedAtImpStep = clocktowerPhase == ClocktowerPhase.Night &&
+                                requireClocktowerGameSession().state.gameState.players.any {
+                                    it.name == pendingName && it.alive && it.actualRole == RoleId("Imp")
+                                }
+                            if (!alreadyPromotedAtImpStep) {
+                                val imp = clocktowerRolesForScript(currentClocktowerScript)
+                                    .first { it.enName == "Imp" }
+                                commitClocktowerActualRole(
+                                    pendingName, imp,
+                                    DawnCommitIdentity.roleChange(
+                                        clocktowerGameId, round,
+                                        clocktowerSeatFor(pendingName), RoleId("Imp"),
+                                    ),
+                                )
+                            }
                             clocktowerPendingNewDemonName = null
                             clocktowerPendingNightNewDemonIdentityName = null
-                            clocktowerPendingKlutzName = clocktowerPendingKlutzName?.takeIf { name ->
-                                requireClocktowerGameSession().state.gameState.players.any {
-                                    it.name == name && it.actualRole == RoleId("Klutz")
+                            if (!alreadyPromotedAtImpStep) {
+                                clocktowerPendingKlutzName = clocktowerPendingKlutzName?.takeIf { name ->
+                                    requireClocktowerGameSession().state.gameState.players.any {
+                                        it.name == name && it.actualRole == RoleId("Klutz")
+                                    }
                                 }
-                            }
-                            if (clocktowerPendingKlutzName != null) {
-                                commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                                clocktowerDayModeState.value = ClocktowerDayMode.Klutz
-                                captureKlutzLearnedDeathOnPublicAnnouncement(requireNotNull(clocktowerPendingKlutzName))
-                            } else {
-                                commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
-                                resetClocktowerNightFlow()
+                                if (clocktowerPendingKlutzName != null) {
+                                    commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
+                                    clocktowerDayModeState.value = ClocktowerDayMode.Klutz
+                                    captureKlutzLearnedDeathOnPublicAnnouncement(
+                                        requireNotNull(clocktowerPendingKlutzName))
+                                } else {
+                                    commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
+                                    resetClocktowerNightFlow()
+                                }
                             }
                         },
                         onSelectKlutzChoice = {
