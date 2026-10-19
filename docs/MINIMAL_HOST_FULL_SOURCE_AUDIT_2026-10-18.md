@@ -60,6 +60,12 @@
 
 当前范围已按F15变动重核：883跟踪文件、475源码/测试/工具配置；每个现行路径仍恰好一次。
 
+### 2026-10-19 Owner scope clarification：旧Rules先完全清除，未来Rules再考虑；自定义剧本可删
+
+- **本轮是已授权范围/归属纠正，不是代码清理完成证据。** 当前应保留最小Host的**唯一可写GameState/Session和结构化真实事件/原子提交**及**现有AI完整推荐**；所有旧Rules规则/候选/裁定、重复控制及不必要消费者必须先全部清除，不能因为生产还在调用就持续保留，也不能因未来可能重建独立Rules就在本期过渡保留旧算法。旧Rules完全清零、Host事实所有权收敛后才可能另行从零开始实现新的只读Rules；不包含当前P1–P5。
+- **动态/自定义剧本**是未来可选、当前复杂则可删的分支；核实两现有`ClocktowerScriptJsonParser`/`ClocktowerScriptNormalizer`仍被内置TB/NGJ通过RulesetJsonLoader→BuiltInClocktowerRulesetCatalog真实调用，**授权拆除自定义角色/Homebrew扩展及其测试**，但保留/更小替换内置两剧本JSON/身份解析。将上述两行已审计状态`需要人工审核`→`需要解耦`，不再被U1产品范围决策阻塞；仅剩`TroubleBrewingGameSnapshotJsonCodec`跨项目消费是否必需的人工审核。全部现行台账仍为**223/444已审（50.23%），221待审**；已审128必须保留、**93需要解耦**、1必须删除（SetupDistribution）、1人工审核。不因改分类冒充新全文审计或代码已删。
+- **下一批任务排序**：先横向逐文件确定实际Host事实/事件/安全、AI、平台必要UI或删除，优先完整归并同一个GameState/Session，集中清除大旧Rules模块和绑定的调用、独占测试，不再只为日间单个角色小规则沿链追逐；既有setup阵容及同人跨局角色防重复两个功能不得误删。所有删改仍必须精确代码HEAD完整CI/R2，文档检查Android skipped不是生产验证。
+
 ### F12-R：Slayer方桌彻底退出规则候选门禁、补审Virgin/Artist真实链（2026-10-19）
 
 - **精确起点与PR**：开发机MiniMCP`clocktower`原分支`codex/minimal-host-full-scan-20261018`，clean且远端一致`fcaecb54b75d59a7d5b2f247207e27fef2b9c6ed`；PR #334始终Draft、base`codex/minimal-host-m1c-direct-number-20261018`/SHA`64be3090`不变，无merge/retarget/force push。
@@ -317,8 +323,8 @@
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/TroubleBrewingGameSnapshotJsonCodec.kt` | 7985 | 已审计 | 需要人工审核 | F12-F全文+真实生产/测试引用，代码基线569759560837591695168244b1a4eeeca21fb574；编码TBGS UNKNOWN/UNCOMMITTED/KNOWN状态且文档称EvidenceLab共享；app/src/main没有调用codec，需确认跨项目真实消费再定退役/跨项目独立合同，禁止误删由AI使用的快照投影。（静态审计） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalog.kt` | 3528 | 已审计 | 必须保留 | App、HostScreen；生产调用 fromContext.ruleset；现用两内置剧本资产/元数据入口，延迟缓存是静态内容；parse/adapter 均真实消费，不能按 legacy 历史注释退休。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/ClocktowerCatalogModels.kt` | 6756 | 已审计 | 需要解耦 | Flow、Setup、InitialOpening、GrimoireReminderToken、Catalog；保留角色文本/token/ValidatedRuleset；ClocktowerScriptCatalog 仅 catalog 专属测试调用，homebrew/extra team 扩展须与生产内置数据模型分清再减，不能整文件删除。（静态） |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/ClocktowerScriptJsonParser.kt` | 21423 | 已审计 | 需要人工审核 | RulesetJsonLoader.parseScript→BuiltInCatalog，仅两内置 assets；直接解析消费者仅测试；保留 official ID/_meta/顺序解析；custom角色、homebrew、jinx/special/URI 导入当前没有用户入口，两资产均无 custom definition。建议退出未上线自定义导入分支；风险是删去未来导入能力及专属测试，须所有者决定是否仍属产品范围；不能整删现用 parser。（静态，运行结论仅明确列出者） |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/ClocktowerScriptNormalizer.kt` | 13636 | 已审计 | 需要人工审核 | RulesetJsonLoader→BuiltInCatalog；没有外部脚本导入入口；保留两内置脚本规范化、内容身份及顺序；customDefinition/homebrew/extra teams 是上一行同一产品决策，推荐连同 parser 未上线分支整体缩减。确认范围前保留，不能靠现有测试默认永久保留或直接整删。（静态，运行结论仅明确列出者） |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/ClocktowerScriptJsonParser.kt` | 21423 | 已审计 | 需要解耦 | 2026-10-19所有者已批准动态/自定义剧本作为未来可选项：Homebrew/custom角色定义、jinx/special/URI扩展导入与专属测试若增加复杂度，优先整组删除，**无需再就功能是否必须保留进行人工审批**。但实际生产调用RulesetJsonLoader.parseScript→BuiltInCatalog读内置TB/NGJ，必须保留或替换official ID/_meta/顺序解析和结构/角色存在性；不能直接整删当前parser破坏内置剧本。尚未实际删除，下一批按完整消费者链动手。 |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/ClocktowerScriptNormalizer.kt` | 13636 | 已审计 | 需要解耦 | 2026-10-19所有者确定Homebrew/custom/extra teams动态导入仅未来可选，当前增加复杂度可连同Parser相应部分及专属测试删除，无需为未上线功能保留完整Normalizer。现有RulesetJsonLoader→BuiltInCatalog必须维持内置TB/NGJ角色文本、身份和顺序的最小规范化；按真实消费者缩窄实现后清理旧customDefinition等分支。未实际删代码。 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/ClocktowerScriptValidation.kt` | 1161 | 已审计 | 必须保留 | ScriptJsonParser、ScriptNormalizer→BuiltInCatalog；JSON/字段/ID/重复等格式错误类型，非已确认信息规则门禁；随 parser 未来瘦身缩减枚举即可。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/LegacyRulesetCatalogAdapter.kt` | 2594 | 已审计 | 必须保留 | BuiltInClocktowerRulesetCatalog.load；将真实 rules asset 文本和顺序组装 registry；无候选/事实否决，独占生产消费者尚在，需等目录来源替换才可退役。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/NoGreaterJoyOfficialCharacterMetadata.kt` | 3502 | 已审计 | 必须保留 | BuiltInClocktowerRulesetCatalog.load；现用 NGJ 角色文本/顺序/提醒元数据来源，无 truth 计算；不能借 Host Rules 清理删除支持剧本。（静态） |

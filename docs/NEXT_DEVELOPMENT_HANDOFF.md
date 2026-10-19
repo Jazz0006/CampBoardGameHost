@@ -1,12 +1,17 @@
-# 新对话交接：F12-R 已审223/444，继续Virgin/Artist及夜间旧规则整链清理（2026-10-19）
+# 新对话交接：旧Rules彻底退出后才考虑重建；动态剧本可选，优先全模块审计（2026-10-19）
 
 ## 先读与现行授权
+
+**最新所有者纠正，优先级高于下面F12-R历史路线**：当前只保留最小唯一Host状态/事件/必要UI安全与现有AI推荐，**现在必须全部清除旧Rules实现和其不必需生产消费者/独占测试，不能只删入口留下旧Rules影子控制**。**旧Rules完全退出之后**才可能另行批准从零重建独立只读Rules，本轮不开发、不复用旧实现；这与已经工作的AI必须保留形成明确区别。动态/custom/homebrew剧本导入为未来可选，不必为其维持当前复杂架构，允许对custom角色、Homebrew检测、扩展解析/normalizer/测试整链删减；当前`ClocktowerScriptJsonParser`和`ClocktowerScriptNormalizer`被`RulesetJsonLoader`→`BuiltInClocktowerRulesetCatalog`用于两内置剧本，需先确保官方TB/NGJ继续正确加载，不能误删内置支持。已有生产调用**不能**单独成为保留理由，反而应核对完整调用链是否属于最小Host/AI。
 
 先读AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，然后读原MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md的F12-K/F12-J/F12-I/F12-H/F12-G/F12-F/F12-E/F15/F12-D/F12。唯一逐路径状态维护在原台账，不另建库存或NEXT。
 
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **本轮文档边界更新基线**：起点`65a15960c5fe2c9bdaa2d2438972d2dbdc8996ba`，分支`codex/minimal-host-full-scan-20261018`、PR #334 Draft/base SHA`64be3090`；本次只更新权威约束与两条已审计的可选动态导入归属，**没有实际删生产代码或测试**。后续先完成剩221项全文件审计并对91项需要解耦、1项明确必删、仍需人工确认的TBGS快照codec按产品必要性重新排序；保持AI完整调用、单一Session、跨局两种防重复，不新增并行状态/规则adapter。任何docs-only CI Android skipped都不能冒充F12-R代码CI #4414。
+
 
 - **最新F12-R完整代码检查点**：开发机MiniMCP`clocktower`原Draft #334分支`codex/minimal-host-full-scan-20261018`，干净远端一致起点`fcaecb54b75d59a7d5b2f247207e27fef2b9c6ed`；代码`e0cd90be62e00d52895e730ff05163de49da3e7a`（`[full-ci]`）整条SlayerTableState/UI/HostScreen/App层不再使用按被声称/存活/真实Slayer已使用规则的claimant/target候选集合：真人直接选实际存在且唯一的两个座位，保持Session真实Shot记录、明确实际死亡/继任，保留App来自Session的历史`clocktowerSlayerUsed`仅用于事件事实，旧UI生成声明人列表已删。真实GitHub diff**5文件+41/-114、净删73行**，完整[Android CI #4414 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39204226346)/[R2 #3994 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39204226503)，Android tests+Debug APK/ASP/真实Clingo/CI gate均全绿；docs-only提交之后Android skipped不能替代此真实编译。
 - **全仓唯一审计台账**：原`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md` F12-R 横向6个原待审全文审阅：NominationInteraction/DayOverviewTableUi/SlayerTableUi/ArtistInteraction/ArtistTableState/NominationDraftTest。原SlayerTableState及其Test此前已审本次改后复核不重复计。现行**223/444（50.23%）已审、221待审、0审计中**，AI首夜/后夜/pair/numeric/strategy/prompt/transport/schema/解析、双模式、阵容跨局与玩家身份跨局双防重复、唯一Session/私密原子提交都保留。
