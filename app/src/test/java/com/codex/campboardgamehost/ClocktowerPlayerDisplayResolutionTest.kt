@@ -69,7 +69,7 @@ class ClocktowerPlayerDisplayResolutionTest {
             proposition = null,
         )
         val truthful = InformationProposition.RoleAt(5, RoleId("Chef"))
-        val resolved = resolveClocktowerLegacyUnreliablePlayerDisplay(
+        val resolved = resolveClocktowerPlayerDisplay(
             unresolvedStep(selected).copy(
                 roleEnName = "Ravenkeeper",
                 displayProposition = truthful,
@@ -79,7 +79,7 @@ class ClocktowerPlayerDisplayResolutionTest {
         assertEquals("小恶魔", resolved.displayPrimary)
         assertEquals(InformationProposition.RoleAt(5, RoleId("Imp")), resolved.displayProposition)
         // A conflicting explicitly selected target never silently inherits the truthful anchor.
-        assertNull(resolveClocktowerLegacyUnreliablePlayerDisplay(
+        assertNull(resolveClocktowerPlayerDisplay(
             unresolvedStep(selected).copy(displayProposition = truthful),
             selected.copy(presentationSubjectSeats = listOf(4)),
         ).displayProposition)

@@ -33,19 +33,12 @@ internal data class ClocktowerRavenkeeperTypedResult(
     val roleId: RoleId,
 )
 
-internal enum class ClocktowerRavenkeeperResultSourceKind {
-    DisplayOption,
-    LegacyUnreliable,
-    Direct,
-}
-
 internal data class ClocktowerRavenkeeperResultChoice(
     val key: String,
     val targetSeat: Int,
     val roleId: RoleId?,
     val displayLabel: String,
-    val sourceKind: ClocktowerRavenkeeperResultSourceKind,
-    val displayOption: ClocktowerDisplayOption? = null,
+    val displayOption: ClocktowerDisplayOption,
     val recommended: Boolean = false,
 )
 
@@ -89,7 +82,7 @@ internal fun clocktowerRavenkeeperResultChoices(
         ClocktowerRavenkeeperResultChoice(
             key = clocktowerInformationCandidateId(option), targetSeat = targetSeat,
             roleId = result.role, displayLabel = option.displayPrimary.orEmpty(),
-            sourceKind = ClocktowerRavenkeeperResultSourceKind.DisplayOption, displayOption = option,
+            displayOption = option,
             recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds,
         )
     }

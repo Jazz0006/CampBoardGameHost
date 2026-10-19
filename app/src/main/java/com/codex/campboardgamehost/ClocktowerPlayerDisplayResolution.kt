@@ -13,12 +13,6 @@ internal fun resolveClocktowerPlayerDisplay(
     option: ClocktowerDisplayOption,
 ): ClocktowerNightStepUi = step.withDisplayOption(option).copy(recommendedDisplayOptions = emptyList())
 
-/** Compatibility path: the legacy unreliable picker clears only its manual display options. */
-internal fun resolveClocktowerLegacyUnreliablePlayerDisplay(
-    step: ClocktowerNightStepUi,
-    option: ClocktowerDisplayOption,
-): ClocktowerNightStepUi = step.withDisplayOption(option)
-
 /**
  * Presentation-only normalization for player display. New-Demon identity is a private role reveal
  * even though the host-flow step intentionally carries displayKind=None.

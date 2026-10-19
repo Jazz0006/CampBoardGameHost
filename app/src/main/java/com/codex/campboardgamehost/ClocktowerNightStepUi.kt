@@ -238,37 +238,11 @@ internal fun ClocktowerNightStepCardLocalized(
         fun undertakerDisplay(displayStep: ClocktowerNightStepUi): ClocktowerNightStepUi =
             clocktowerUndertakerPlayerDisplayStep(displayStep, choice, cards, language)
 
-        when (choice.sourceKind) {
-            ClocktowerUndertakerResultSourceKind.DisplayOption -> {
-                choice.displayOption?.let { option ->
-                    showRecommendedDisplayOption(option, ::undertakerDisplay)
-                }
-            }
-
-            ClocktowerUndertakerResultSourceKind.LegacyUnreliable -> {
-                choice.displayOption?.let { option ->
-                    onShowPlayerDisplay(undertakerDisplay(resolveClocktowerLegacyUnreliablePlayerDisplay(step, option)))
-                }
-            }
-
-            ClocktowerUndertakerResultSourceKind.Direct -> onShowPlayerDisplay(undertakerDisplay(step))
-        }
+        showRecommendedDisplayOption(choice.displayOption, ::undertakerDisplay)
     }
 
     fun showRavenkeeperChoice(choice: ClocktowerRavenkeeperResultChoice) {
-        when (choice.sourceKind) {
-            ClocktowerRavenkeeperResultSourceKind.DisplayOption -> {
-                choice.displayOption?.let(::showRecommendedDisplayOption)
-            }
-
-            ClocktowerRavenkeeperResultSourceKind.LegacyUnreliable -> {
-                choice.displayOption?.let { option ->
-                    onShowPlayerDisplay(resolveClocktowerLegacyUnreliablePlayerDisplay(step, option))
-                }
-            }
-
-            ClocktowerRavenkeeperResultSourceKind.Direct -> onShowPlayerDisplay(step)
-        }
+        showRecommendedDisplayOption(choice.displayOption)
     }
 
 

@@ -32,19 +32,12 @@ internal data class ClocktowerUndertakerTypedResult(
     val roleId: RoleId,
 )
 
-internal enum class ClocktowerUndertakerResultSourceKind {
-    DisplayOption,
-    LegacyUnreliable,
-    Direct,
-}
-
 internal data class ClocktowerUndertakerResultChoice(
     val key: String,
     val executedSeat: Int,
     val roleId: RoleId?,
     val displayLabel: String,
-    val sourceKind: ClocktowerUndertakerResultSourceKind,
-    val displayOption: ClocktowerDisplayOption? = null,
+    val displayOption: ClocktowerDisplayOption,
     val recommended: Boolean = false,
 )
 
@@ -84,7 +77,7 @@ internal fun clocktowerUndertakerResultChoices(
         ClocktowerUndertakerResultChoice(
             key = clocktowerInformationCandidateId(option), executedSeat = targetSeat,
             roleId = result.role, displayLabel = option.displayPrimary.orEmpty(),
-            sourceKind = ClocktowerUndertakerResultSourceKind.DisplayOption, displayOption = option,
+            displayOption = option,
             recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds,
         )
     }
