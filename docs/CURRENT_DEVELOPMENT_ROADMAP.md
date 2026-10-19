@@ -1,6 +1,8 @@
-# 当前开发路线（2026-10-19，F12-M Klutz规则裁定退休及横向源码审计）
+# 当前开发路线（2026-10-19，F12-N 夜间预览多余链和旧红鲱鱼分支减法）
 
 ## 当前状态
+
+**最新F12-N（代码已推送、完整CI验收）**：从干净且远端一致HEAD`9f11548825903330d76700c08d7ccb041e933707`在原Draft #334分支改动。提交`e49972e1268b483dc273301f4287f760772d0ffd`清除生产零消费者`automaticRedHerringSelectionAtBarrier`及旧单候选门禁测试、清除HostScreen没有实际使用的夜间预测死亡名称镜像和重复触发判断、清掉配对全枚举临时对象无用字符串ID；GitHub精确对比**6文件+2/-103，净删101行**。真正完整**[CI #4403 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39188307015)**和**[R2 #3983 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39188307113)**，Android tests、ASP、Clingo、CI gate全绿。11个待审源码/测试全文核查消费者，唯一台账升至**209/450（46.44%）已审、241待审**。**DemonAttackProductionAdapter仍被活跃夜间Ravenkeeper/Sage流程依赖，不能凭普通攻击选择推断最终死亡**：夜末已有人类明确确认死亡，但早于角色唤醒的真实结果界面/合同尚不存在；本批不假装整删该链。下一批先确保触发角色在实际确认结果后才被唤醒，再删对应Host规则preview与独占测试。两个>50KB文件及其他自动终局仍未完成。现行AI首夜/后夜、双自动模式与跨局双重轮换、唯一Session事件/安全私密不变；无付费API或真机，PR #334仍Draft/base`64be3090`且未改变。后续docs-only HEAD区别于代码编译基线。
 
 **最新F12-M（真实代码已提交推送+完整验收）**：开发机clean/equal起点`c3ea51af96a2c44429bd8f4782e0c6eb61d6c2c1`，分支Draft #334不变。代码提交`ba8ea494acc9aada4e4ead4168734de4f60d8894`整删`NoGreaterJoyKlutzChoiceRuleV1.kt`，Klutz已选真实座位仅通过Host Session事件记录，不再以选中角色真实阵营自动判邪恶获胜/弹结果，之后依原Dawn/夜间流程推进；保留实际Death、公开learned/choice、历史因果关联及安全结构检查。旧Rule独占测试删去，原混合LiveKlutzScriptReachabilityTest保留并测试真实事件。远端GitHub比较**4文件+30/-162，净删132行，整删1生产文件**。完整真正Android **[CI #4401 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39185744458)**及**[R2 #3981 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39185744492)**，Android tests、ASP、真实Clingo、CI gate全绿。又横向全文审阅13个原待审生产/测试，现唯一台账**198/450（44.00%）已审、252待审、0审计中**；旧App/HostScreen仍大于50KB，DemonAttack死亡预览和其它日间Host自动规则尚在。全部现行AI开局/后夜、配对/数字、策略记忆/预选、API及双模式、跨局阵容和同人身份防重复、唯一Session/隐私均未修改。未付费API或真机。PR仍Draft/base`64be3090`，不合并/retarget/force push；本次后续docs-only检查不能冒充上述真实代码CI。
 

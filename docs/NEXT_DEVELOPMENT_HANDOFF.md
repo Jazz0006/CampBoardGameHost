@@ -1,4 +1,4 @@
-# 新对话交接：F12-M 已审198/450，继续旧规则及超大 Host UI 减法（2026-10-19）
+# 新对话交接：F12-N 已审209/450，继续旧规则及超大 Host UI 减法（2026-10-19）
 
 ## 先读与现行授权
 
@@ -7,6 +7,10 @@
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **最新F12-N代码检查点**：MiniMCP别名`clocktower`，代码起点前一docs HEAD`9f11548825903330d76700c08d7ccb041e933707` clean/equal；推送`e49972e1268b483dc273301f4287f760772d0ffd`（`[full-ci]`），删除无人用于生产的Host红鲱鱼singleton伪裁定函数和测试、删除旧夜死亡预览的死getter/引用/重复判断及未使用的全配对临时ID；精确GitHub比较**6文件+2/-103，净删101行**，0整文件删除。正式代码Android [CI #4403 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39188307015)与[R2 #3983 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39188307113)，Android tests/ASP/Clingo/gate全通过，无付费API/真机。
+- **审计量与严格限制**：唯一原台账`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`的F12-N新增11个原待审生产/测试全文+consumer结论；**209/450（46.44%）已审、241待审、0审计中**，不把历史子阶段累加成当前库存。PR #334依然Draft、原base`codex/minimal-host-m1c-direct-number-20261018` / SHA`64be3090`，不得merge/retarget/force push。旧`DemonAttackProductionAdapter`仍是真实Sage/Ravenkeeper触发的唯一预览生产链，真正`ClocktowerNightResultConfirmation`在最后才确认实际死亡；**先建早于唤醒的真实Host选择/事件/安全步骤，再移除旧推演及其专属测试**，不能把攻击目标当死者或破坏AI实时依赖。
+- **下一批**：横向余241文件重点night result的真正触发重连、first-night 3角色全枚举pair手工菜单及对应旧domain，继续审计/缩减App/HostScreen>50KB与其它Slayer/Virgin/Mayor旧Host自动规则。AI首夜/后夜、gpt请求API/prompt/schema/解析/策略memory与预选/辅助/自动模式、两种跨局防重复、唯一GameState/事件、隐私/幂等/原子安全继续保留。允许实删代码、全CI/R2；不能为旧测试恢复规则候选。以下后续docs-only HEAD不能冒充代码CI检查点。
 
 - **最新F12-M完整代码检查点**：先核实`clocktower`与远端在`codex/minimal-host-full-scan-20261018` clean/equal，起点`c3ea51af96a2c44429bd8f4782e0c6eb61d6c2c1`。真实代码提交推送`ba8ea494acc9aada4e4ead4168734de4f60d8894`，在App中Klutz只提交实际选择并统一继续游戏；NoGreaterJoyKlutzHistoryProducer去掉旧Host阵营/候选计算，整删`NoGreaterJoyKlutzChoiceRuleV1.kt`及混合LiveKlutzScriptReachabilityTest的旧专属裁定断言。GitHub独立对比**4文件+30/-162，净删132行、整删1生产文件**。精确代码[full-ci] **[CI #4401 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39185744458)**（Android tests+Debug APK、ASP/Clingo/CI gate全绿）与**[R2 #3981 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39185744492)**。未真机、未付费API，所有活跃AI/唯一GameState事件和两类跨局防重复不改。
 - **唯一台账**：`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md` F12-M新增13个原待审生产/测试首次全文语义结论，退休原已审KlutzRule 1项并移除当前索引，故**198/450（44.00%）已审、252待审**，0审计中。保留现有DemonBluff三身份、开局AI匹配及review、FT直接YES/NO、Drunk可见角色、Host魔典与事实投影；DayNominationGesture的alive-only和InformationStepBuilder的manual/auto候选仍标待解耦。Klutz选中邪恶玩家后如今不会自动宣告胜负；说书人裁量，不得误称已实现单独显式终局入口。
