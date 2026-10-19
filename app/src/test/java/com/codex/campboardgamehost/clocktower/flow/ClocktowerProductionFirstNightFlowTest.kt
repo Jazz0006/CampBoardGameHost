@@ -33,7 +33,6 @@ class ClocktowerProductionFirstNightFlowTest {
             ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
             playerCount = 7,
             inPlayRoleIds = inPlay,
-            functioningActualRoleIds = inPlay,
             productionSteps = expected.reversed(),
             identityOf = Step::identity,
         )
@@ -65,6 +64,26 @@ class ClocktowerProductionFirstNightFlowTest {
             listOf("Investigator", "Empath", "Clockmaker", "Chambermaid"),
             ordered.map(Step::label),
         )
+    }
+
+    @Test
+    fun `shown Fortune Teller who is actually Drunk wakes without actual red herring setup`() {
+        val waking = setOf("Fortune Teller", "Drunk", "Imp").map(::RoleId).toSet()
+        val actual = setOf("Drunk", "Imp").map(::RoleId).toSet()
+
+        val steps = ClocktowerProductionFirstNightFlow.interactions(
+            ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
+            playerCount = 6,
+            inPlayRoleIds = waking,
+            actualRoleIds = actual,
+        )
+
+        assertEquals(
+            listOf("first_night:role:Fortune Teller"),
+            steps.filter { it.kind == ClocktowerHostInteractionKind.ROLE_PHASE_ACTION }
+                .map { it.id.value },
+        )
+        org.junit.Assert.assertTrue(steps.none { it.id.value == "first_night:fortune_teller:red_herring" })
     }
 
     private fun role(name: String): ClocktowerProductionNightStepIdentity =

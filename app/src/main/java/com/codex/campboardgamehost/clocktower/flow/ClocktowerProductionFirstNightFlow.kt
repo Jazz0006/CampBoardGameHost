@@ -19,8 +19,6 @@ internal object ClocktowerProductionFirstNightFlow {
         playerCount: Int,
         inPlayRoleIds: Set<RoleId>,
         actualRoleIds: Set<RoleId> = inPlayRoleIds,
-        functioningActualRoleIds: Set<RoleId> = actualRoleIds,
-        committedSetupFacts: Set<DeferredFirstNightSetupFact> = emptySet(),
     ): List<ClocktowerHostInteraction> {
         val phase = ClocktowerNightFlowPhase.FIRST_NIGHT
         val basePlan = planner.planNight(
@@ -31,15 +29,12 @@ internal object ClocktowerProductionFirstNightFlow {
                 inPlayRoleIds = inPlayRoleIds,
             ),
         )
-        val projected = projector.projectNight(
+        // The script defines ordering; Fortune Teller's actual setup is already
+        // placed directly before its first-night interaction by the projector.
+        return projector.projectNight(
             phase = phase,
             basePlan = basePlan,
             actualRoleIds = actualRoleIds,
-        )
-        return FirstNightSetupCommitInteractionOrderer.order(
-            interactions = projected,
-            functioningRoleIds = functioningActualRoleIds,
-            committedFacts = committedSetupFacts,
         )
     }
 
@@ -48,8 +43,6 @@ internal object ClocktowerProductionFirstNightFlow {
         playerCount: Int,
         inPlayRoleIds: Set<RoleId>,
         actualRoleIds: Set<RoleId> = inPlayRoleIds,
-        functioningActualRoleIds: Set<RoleId> = actualRoleIds,
-        committedSetupFacts: Set<DeferredFirstNightSetupFact> = emptySet(),
         productionSteps: List<T>,
         identityOf: (T) -> ClocktowerProductionNightStepIdentity,
     ): List<T> {
@@ -59,8 +52,6 @@ internal object ClocktowerProductionFirstNightFlow {
             playerCount = playerCount,
             inPlayRoleIds = inPlayRoleIds,
             actualRoleIds = actualRoleIds,
-            functioningActualRoleIds = functioningActualRoleIds,
-            committedSetupFacts = committedSetupFacts,
         )
         return ClocktowerProductionInteractionOrderer.order(
             phase = phase,
