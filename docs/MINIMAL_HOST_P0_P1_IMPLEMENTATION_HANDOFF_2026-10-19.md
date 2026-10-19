@@ -1,6 +1,6 @@
 # Minimal Host Rebuild — P0 current-tree audit and first P1 handoff (2026-10-19)
 
-> **Execution record / still incomplete.** This document supplements, never overrides, `MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md`. Baseline: `refactor/minimal-night-flow-20261019` at `c91a83ff55dbb44cce6c261c18e62a12f0acb577`, clean and equal to origin when read. PR #335 Draft stacked on #334. Latest docs-only CI #4424/R2 #4004 GREEN, Android tests SKIPPED. Last verified code checkpoint `47ce60da` Android CI #4422/R2 #4002 GREEN. These are **not** P1 code-validation evidence.
+> **Execution record / P1 remains incomplete.** This document supplements, never overrides, `MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md`. Original inventory baseline `c91a83ff` is historical. Current #335 code checkpoint `f91184fd24ed394b4880330bccc56bc18796eacf` implements Session-staged Imp attack committed at the next step's explicit start, plus private NIGHT deaths and atomic DAWN/DAY public announcements. [Full Android CI](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39254476810) / [R2](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39254476803) PASSED. #330–#333 merged into `main`, #334 and #335 still Draft. This is only a vertical slice: generic pendingOperation, immediate deterministic night death effects/conditional wake, old control retirement and crash recovery are **not implemented**. See NEXT_DEVELOPMENT_HANDOFF for current execution order.
 
 ## Inventory and evidence limits
 
@@ -38,7 +38,7 @@ Legend: **H** = Host forced rule once facts are known; **P** = player supplies t
 | TB Empath | each living night | H living-neighbor evil count at action time; S permitted registration/impairment | nightly, private |
 | TB Fortune Teller | each living night; P two targets | H Boolean demon/red herring if forced; S registration/impairment | nightly, private; red herring persistent |
 | TB Undertaker | later night following execution | H wake and executed character when execution occurred; S permitted misinformation | nightly condition, private |
-| TB Monk | later night; P chooses another player | H protection from Demon until next dusk as ruled; if poisoned ability does not function | nightly protection private |
+| TB Monk | later night; P chooses another player | H protects the chosen player from Demon **that night** when functioning; does not persist into the following day or night | nightly protection private |
 | TB Ravenkeeper | night death trigger; P picks target | H exact trigger and character when forced; S permitted misinformation/registration | once at qualifying death, private |
 | TB Virgin | first nomination by a Townsfolk | H consumes ability, initiates execution if functioning; registration may need S | one use, public |
 | TB Slayer | daytime, publicly P target | H kill Demon if functioning; S registration exceptions | one use, public |

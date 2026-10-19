@@ -2,6 +2,8 @@
 
 > **现行最高优先级**：[Minimal Host Architecture Rebuild 最终合同](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。以下早前 F12、Rules 清理、仅 #335 夜间补丁和“以后再实现固定信息”的执行顺序，已被新的整局架构路线替代；其已发生提交/CI/审计数字只作历史证据。**先 P0 全仓实际模块归属审计，再逐完整业务链重建、同步删净旧调用，最后 P5 全仓复查。** 不再先独立全删旧 Rules、也不允许长期新旧双轨。
 >
+> **2026-10-19 P1 真实代码进度（覆盖下方旧起点）**：PR #330–#333 已合并 main，#334 Draft/base main，#335 Draft/base #334。#335 HEAD `f91184fd24ed394b4880330bccc56bc18796eacf`：Session `pendingNightAttack` 与真正下一步骤开始提交、预览/回退安全、夜间私有 Death 与黎明原子 PUBLIC 公告，已推送；精确源码完整 [CI](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39254476810)/[R2](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39254476803) 通过。**P1 未完成**：待把仅 Imp pending 归一为所有动作的单一 pendingOperation；夜间真死仍在夜末人工确认，须改为恶魔动作被接受后立即在唯一 Session 确定并生效（Mayor 等仅有歧义时才人工/AI）；删除由此淘汰的旧 Adapter/Checkpoint/UI 路径，补完整角色/恢复/隐私验收。不得把纯预测死亡当作既成事实或把文档测试当代码 CI。
+>
 > **当前目标架构**：一个 Session/GameState + 顺序已提交事实及实际公布信息 + 最多一个可持久化 pendingOperation + 稳定步骤身份；Host 从两内置剧本和事件决定整局（开局/首夜/后夜/黎明/白天/终局）的确定步骤、机械效果与唯一信息，AI/人工仅决定真正非唯一项。Next 暂存上一项，下一步骤实际执行前提交；Previous 只能纠正最近尚未提交项；安全恢复、玩家保密、AI stale 校验必须同步设计。
 >
 > **阶段**：P0 全仓职责/角色合同/删除与替换清单及 PR 策略；P1 与代表性 P2 场景联动完成 pending/提交/恢复；P2 全夜间步骤与即时结果；P3 白天/胜负/固定线索；P4 UI 与保留现有 AI 同一入口；P5 全树源码、测试、CI 和 5–15 人完整对局验收。每条链被新路径接管以后立刻物理删除旧实现、冗余 UI 状态和独占旧测试。保留跨局阵容及同玩家身份双多样性、现行 AI 全链、TB/NGJ。未来动态剧本可延期。

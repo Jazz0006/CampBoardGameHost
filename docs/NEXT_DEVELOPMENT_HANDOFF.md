@@ -2,6 +2,13 @@
 
 > **唯一现行实施合同**：[MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。以下早期“最新” F12、局部夜间和重新追查已删规则的历史记录不可作为新一轮执行命令。
 
+## 最新 P1 实际实施检查点（2026-10-19，取代下面历史基线）
+
+- 已完成 PR 整理：#330–#333 全部按顺序合并 `main`，四次合并及最终 `main` 的完整 Android CI 均通过；#334 已改 base=`main`，仍 Draft（大规模清理审计未完成）；#335 保持 Draft、base=#334 的分支，不做 merge/rebase/force。
+- `clocktower` 工作分支 `refactor/minimal-night-flow-20261019`。P1 本轮代码已实际推送：`baa777d`（Session 内暂存 Imp 攻击，下一实际步骤开始才提交）、`0a5dcbf`（阶段安全与预览测试）、`6a91f59`（已提交目标无法回退更改）、`f91184f`（夜间机械死亡私密记录，跨 NIGHT→DAWN/DAY 阶段时才原子公开死亡公告）。最后源码 HEAD `f91184fd24ed394b4880330bccc56bc18796eacf`，GitHub [完整 CI](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39254476810) 与 [R2](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39254476803) 均 SUCCESS，含 Android tests/APK。没有真机或收费 API。
+- **必须如实保留缺口**：`pendingNightAttack` 目前只是首个垂直切片，尚未统一为整个夜间所有角色共享的**最多一个 pendingOperation**；Poison/Monk/Butler 仍存在旧立即确认/多重 UI 控制。`commitConfirmedNightDeaths` 虽已把事实与黎明公告分离，但**真实死亡仍在夜末通过人工 NightResultConfirmation 才提交**，不是恶魔行动后的及时确定性结算；当前 Ravenkeeper/Sage 触发仍使用旧死亡纯预览，而非最终已确认机械状态。旧 Adapter/Projection/Materializer 尚有生产消费者，不可声称已删除。无稳定持久化恢复的完整验收，也未遍历 TB 5–15/NGJ 5–6 所有角色组合。
+- **下一实施顺序**：先以稳定步骤身份把 Poison→Monk→Imp 和其后续条件动作统一为一个 Session-owned pending 操作/按需纯预览，真正在后续步骤开始时原子接受；把无需裁量的死亡结算移到恶魔行动被接受时，确有裁量的 Mayor/继任等显式处理，改变 Session 存活状态再计算 Ravenkeeper/Sage/后续跳过；最后移除被替换的旧 Checkpoint/Adapter/夜末自由判死/多份可写 UI，补齐事件恢复、隐私、整局验收，任何未达成的子链继续 Draft。
+
 ## 下一轮必须实际执行的首批工作
 
 1. **先通过 GitHub Connector + Mini MCP `clocktower` 核对**：main / PR #334 / Draft #335 的真实 HEAD、base、clean、远端同步、准确最新代码 CI/R2 和任何并发改动。此前基线 `refactor/minimal-night-flow-20261019`, HEAD `011baa1f49683c42b1eef65acc5a50f669c373ab`，#335 基于 `codex/minimal-host-full-scan-20261018`，不是直接 main。原代码 `47ce60da` Android CI #4422 / R2 #4002 SUCCESS，docs-only `011baa1f` CI #4423 / R2 #4003 SUCCESS 但 Android skipped。新对话核对本次文档提交后更新的 HEAD。
