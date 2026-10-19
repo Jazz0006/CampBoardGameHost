@@ -40,7 +40,8 @@ class DawnCommitBoundaryTest {
         assertFalse(s.state.gameState.playerAt(2)!!.alive)
         val deaths = s.state.actionTimeline.entries.filter { it.fact is ActionFact.Death }
         assertEquals(listOf(1, 2), deaths.map { (it.fact as ActionFact.Death).targetSeat })
-        assertEquals(2, s.state.epistemicObservationLog.records.size)
+        // Death is mechanical and private until the transition to Dawn or Day.
+        assertEquals(0, s.state.epistemicObservationLog.records.size)
         assertEquals(before.gameStateRevision + 2, s.state.gameStateRevision)
         val accepted = s.state
         s.commitConfirmedNightDeaths(listOf(1, 2), accepted.gameStateRevision, accepted.playerInputRevision)
@@ -70,7 +71,7 @@ class DawnCommitBoundaryTest {
         assertEquals(before, s.state)
     }
 
-    @Test fun `a later publication conflict leaves every earlier staged death uncommitted`() {
+    @Test fun `later public announcement conflict leaves dawn transition atomic`() {
         val s = session()
         s.commitGlobalEpistemicObservation(com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft(
             DawnCommitIdentity.deathObservation(s.state.gameId, 2, 2), StorytellerPhase.NIGHT, 2,
@@ -79,13 +80,18 @@ class DawnCommitBoundaryTest {
             com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability.NOT_ABILITY_INFORMATION,
             com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AliveAt(2, true),
         ))
-        val before = s.state
+        s.commitConfirmedNightDeaths(listOf(1, 2), s.state.gameStateRevision, s.state.playerInputRevision)
+        val beforeDawn = s.state
+        assertFalse(s.state.gameState.playerAt(1)!!.alive)
+        assertFalse(s.state.gameState.playerAt(2)!!.alive)
         assertThrows(IllegalArgumentException::class.java) {
-            s.commitConfirmedNightDeaths(listOf(1, 2), before.gameStateRevision, before.playerInputRevision)
+            s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
+                "night-to-dawn-conflict", StorytellerPhase.NIGHT, 2,
+                s.nextInputSequence, StorytellerPhase.DAWN, 2,
+            ), beforeDawn.gameStateRevision)
         }
-        assertEquals(before, s.state)
-        assertTrue(s.state.gameState.playerAt(1)!!.alive)
-        assertTrue(s.state.gameState.playerAt(2)!!.alive)
+        assertSame(beforeDawn, s.state)
+        assertEquals(StorytellerPhase.NIGHT, s.state.phase)
     }
 
     @Test fun `no deaths is an explicit public fact and AI event rather than missing history`() {
@@ -103,15 +109,15 @@ class DawnCommitBoundaryTest {
 
     @Test fun `death publication succession and dawn are ordered and retries add nothing`() {
         val s = session()
-        val observationId = DawnCommitIdentity.deathObservation(s.state.gameId, 2, 8)
-        val committedDeath = s.commitConfirmedPlayerDeath(death(s), s.state.gameStateRevision, observationId)
+        val committedDeath = s.commitConfirmedPlayerDeath(death(s), s.state.gameStateRevision)
+        assertTrue(s.state.epistemicObservationLog.records.isEmpty())
         val roleId = DawnCommitIdentity.roleChange(s.state.gameId, 2, 7, RoleId("Imp"))
         val role = ActionFactDraft.RoleChange(roleId, StorytellerPhase.NIGHT, 2, s.nextInputSequence,
             7, RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON)
         val committedRole = s.commitConfirmedActualRoleChange(role, s.state.gameStateRevision)
         val beforeRetry = s.state
         // The callback is reconstructed after other accepted actions moved the input cursor.
-        assertEquals(committedDeath, s.commitConfirmedPlayerDeath(death(s), s.state.gameStateRevision, observationId))
+        assertEquals(committedDeath, s.commitConfirmedPlayerDeath(death(s), s.state.gameStateRevision))
         assertEquals(committedRole, s.commitConfirmedActualRoleChange(role, s.state.gameStateRevision))
         assertEquals(beforeRetry, s.state)
         val phase = ActionFactDraft.PhaseAdvance("dawn", StorytellerPhase.NIGHT, 2,
@@ -122,12 +128,33 @@ class DawnCommitBoundaryTest {
         assertEquals(afterDawn, s.state)
         val publication = s.state.epistemicObservationLog.records.single()
         val point = (publication.timelineBinding as ObservationTimelineBinding.Global).point
-        assertEquals(committedDeath.point.globalSequence + 1, point.globalSequence)
-        assertTrue(point.globalSequence < committedRole.point.globalSequence)
+        assertTrue(committedDeath.point.globalSequence < committedRole.point.globalSequence)
         assertTrue(committedRole.point.globalSequence < dawn.point.globalSequence)
+        assertEquals(dawn.point.globalSequence + 1, point.globalSequence)
+        assertEquals(StorytellerPhase.DAWN, publication.phase)
         assertFalse(s.state.gameState.playerAt(8)!!.alive)
         assertEquals(RoleId("Imp"), s.state.gameState.playerAt(7)!!.actualRole)
         assertEquals(StorytellerPhase.DAWN, s.state.phase)
+    }
+
+    @Test fun `two private night deaths are announced together only at dawn`() {
+        val s = session()
+        s.commitConfirmedNightDeaths(listOf(3, 4), s.state.gameStateRevision, s.state.playerInputRevision)
+        val privateNight = s.state
+        assertEquals(0, privateNight.epistemicObservationLog.records.size)
+        assertEquals(StorytellerPhase.NIGHT, privateNight.phase)
+        val phase = ActionFactDraft.PhaseAdvance("night-to-dawn-two", StorytellerPhase.NIGHT, 2,
+            s.nextInputSequence, StorytellerPhase.DAWN, 2)
+        s.commitConfirmedPhaseAdvance(phase, s.state.gameStateRevision)
+        val announcements = s.state.epistemicObservationLog.records
+        assertEquals(2, announcements.size)
+        assertTrue(announcements.all { it.phase == StorytellerPhase.DAWN })
+        assertTrue(announcements.all { it.visibility ==
+            com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PUBLIC })
+        assertEquals(2, s.state.actionTimeline.entries.count { it.fact is ActionFact.Death })
+        val afterDawn = s.state
+        s.commitConfirmedPhaseAdvance(phase, s.state.gameStateRevision)
+        assertSame(afterDawn, s.state)
     }
 
     @Test fun `existing death without publication cannot be repaired by a retry`() {

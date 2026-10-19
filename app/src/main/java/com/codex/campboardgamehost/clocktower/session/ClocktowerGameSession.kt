@@ -405,6 +405,7 @@ internal class ClocktowerGameSession private constructor(
         expectedGameStateRevision: Long,
         publishedObservation: EpistemicObservationDraft? = null,
         preserveNightChoices: Boolean = false,
+        publishedObservations: List<EpistemicObservationDraft> = emptyList(),
     ): TimelineBoundActionFact {
         require(nextGameState.seed == state.gameSeed && nextGameState.script == state.gameState.script) {
             "A confirmed step cannot change the session seed or script."
@@ -417,20 +418,25 @@ internal class ClocktowerGameSession private constructor(
             nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
             draft = prepared,
         )
-        val observationCommit = publishedObservation?.let { observation ->
-            commitGlobalEpistemicObservation(
+        // Preflight all announcements before updating Session: multiple dawn deaths are atomic.
+        var nextObservations = state.epistemicObservationLog
+        var nextCursor = committed.nextTimelineGlobalSequence
+        var nextInputRevision = state.playerInputRevision
+        (listOfNotNull(publishedObservation) + publishedObservations).forEach { observation ->
+            val result = commitGlobalEpistemicObservation(
                 semanticHistoryMode = state.semanticHistoryMode,
-                observationLog = state.epistemicObservationLog,
-                nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
-                playerInputRevision = state.playerInputRevision,
+                observationLog = nextObservations,
+                nextTimelineGlobalSequence = nextCursor,
+                playerInputRevision = nextInputRevision,
                 draft = observation,
                 actionTimeline = committed.actionTimeline,
             )
+            nextObservations = result.observationLog
+            nextCursor = result.nextTimelineGlobalSequence
+            nextInputRevision = result.playerInputRevision
         }
         if (committed.actionTimeline === state.actionTimeline) {
-            // Replaying an accepted action must not silently append a missing publication.
-            check(observationCommit == null ||
-                observationCommit.observationLog === state.epistemicObservationLog) {
+            check(nextObservations === state.epistemicObservationLog) {
                 "Previously committed action has no matching published observation."
             }
             return committed.entry
@@ -460,10 +466,9 @@ internal class ClocktowerGameSession private constructor(
                 else -> state.voteStanding
             },
             actionTimeline = committed.actionTimeline,
-            epistemicObservationLog = observationCommit?.observationLog ?: state.epistemicObservationLog,
-            playerInputRevision = observationCommit?.playerInputRevision ?: state.playerInputRevision,
-            nextTimelineGlobalSequence = observationCommit?.nextTimelineGlobalSequence
-                ?: committed.nextTimelineGlobalSequence,
+            epistemicObservationLog = nextObservations,
+            playerInputRevision = nextInputRevision,
+            nextTimelineGlobalSequence = nextCursor,
         ))
         return committed.entry
     }
@@ -503,10 +508,32 @@ internal class ClocktowerGameSession private constructor(
             (previouslyAcceptedPhase.phase == draft.phase && previouslyAcceptedPhase.round == draft.round)) {
             "Phase transition must start from the last accepted PhaseAdvance in Session history."
         }
+        // Death changes the private mechanical roster during the night. Publication happens only
+        // when crossing the night-to-public boundary, in the SAME atomic Session transition as
+        // PhaseAdvance. No role identity, attack or protection information is published here.
+        val dawnAnnouncements = if (draft.phase == StorytellerPhase.NIGHT &&
+            draft.nextPhase in setOf(StorytellerPhase.DAWN, StorytellerPhase.DAY)
+        ) state.actionTimeline.entries.filter { entry ->
+            entry.point.phase == StorytellerPhase.NIGHT && entry.point.round == draft.round &&
+                entry.fact is ActionFact.Death
+        }.sortedBy { it.point.globalSequence }.mapIndexed { index, entry ->
+            val seat = (entry.fact as ActionFact.Death).targetSeat
+            EpistemicObservationDraft(
+                recordId = DawnCommitIdentity.deathObservation(state.gameId, draft.round, seat),
+                phase = draft.nextPhase, round = draft.nextRound,
+                sequence = draft.sequence + index + 1,
+                sourceSeat = null, sourceAbility = null,
+                visibility = com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PUBLIC,
+                recipientSeats = emptySet(),
+                reliability = com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability.NOT_ABILITY_INFORMATION,
+                proposition = com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AliveAt(seat, false),
+            )
+        } else emptyList()
         return commitConfirmedGameAction(
             draft = draft,
             nextGameState = state.gameState,
             expectedGameStateRevision = expectedGameStateRevision,
+            publishedObservations = dawnAnnouncements,
         )
     }
 
@@ -653,8 +680,7 @@ internal class ClocktowerGameSession private constructor(
         updateState(state.copy(nightTargets = next, gameStateRevision = state.gameStateRevision + 1))
     }
 
-    /** Pending selection only; the existing New Demon boundary owns the actual role change. */
-    /** Publish the explicitly confirmed night deaths together; Attack remains a separate fact. */
+    /** Confirm private night mechanics; public death announcements are generated at Dawn/Day entry. */
     fun commitConfirmedNightDeaths(
         deathSeats: List<Int>,
         expectedGameStateRevision: Long,
@@ -666,9 +692,7 @@ internal class ClocktowerGameSession private constructor(
         require(deathSeats.distinct().size == deathSeats.size) { "Duplicate night death seat." }
         deathSeats.forEach { require(state.gameState.playerAt(it) != null) { "Unknown night death seat $it." } }
         var actions = state.actionTimeline
-        var observations = state.epistemicObservationLog
         var cursor = state.nextTimelineGlobalSequence
-        var inputRevision = state.playerInputRevision
         var newlyDead = emptySet<Int>()
         deathSeats.sorted().forEach { seat ->
             val actionId = DawnCommitIdentity.death(state.gameId, state.round, seat)
@@ -678,31 +702,14 @@ internal class ClocktowerGameSession private constructor(
                 check(cursor < Int.MAX_VALUE) { "Night result input sequence exhausted." }
                 val sequence = prior?.point?.sequence ?: (cursor.toInt() + 1)
                 val action = commitGlobalActionFact(
-                    state.semanticHistoryMode, actions, observations, cursor,
+                    state.semanticHistoryMode, actions, state.epistemicObservationLog, cursor,
                     prepareGlobalActionDraft(ActionFactDraft.Death(
                         actionId, StorytellerPhase.NIGHT, state.round, sequence, seat,
                     )),
                 )
-                val observation = commitGlobalEpistemicObservation(
-                    state.semanticHistoryMode, observations, action.nextTimelineGlobalSequence, inputRevision,
-                    com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft(
-                        recordId = DawnCommitIdentity.deathObservation(state.gameId, state.round, seat),
-                        phase = StorytellerPhase.NIGHT, round = state.round, sequence = sequence,
-                        sourceSeat = null, sourceAbility = null,
-                        visibility = com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PUBLIC,
-                        recipientSeats = emptySet(),
-                        reliability = com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability.NOT_ABILITY_INFORMATION,
-                        proposition = com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AliveAt(seat, false),
-                    ), action.actionTimeline,
-                )
-                check(prior == null || observation.observationLog === observations) {
-                    "Previously committed death has no matching publication."
-                }
                 if (prior == null) newlyDead = newlyDead + seat
                 actions = action.actionTimeline
-                observations = observation.observationLog
-                cursor = observation.nextTimelineGlobalSequence
-                inputRevision = observation.playerInputRevision
+                cursor = action.nextTimelineGlobalSequence
             }
         }
         var resultFacts = newlyDead.size
@@ -710,7 +717,7 @@ internal class ClocktowerGameSession private constructor(
             val id = "night-no-deaths-${state.gameId}-${state.round}"
             val prior = actions.entries.firstOrNull { it.fact.actionId == id }
             check(cursor < Int.MAX_VALUE) { "Night result input sequence exhausted." }
-            val action = commitGlobalActionFact(state.semanticHistoryMode, actions, observations, cursor,
+            val action = commitGlobalActionFact(state.semanticHistoryMode, actions, state.epistemicObservationLog, cursor,
                 ActionFactDraft.NoNightDeaths(id, StorytellerPhase.NIGHT, state.round,
                     prior?.point?.sequence ?: (cursor.toInt() + 1)))
             if (prior == null) resultFacts++
@@ -723,8 +730,8 @@ internal class ClocktowerGameSession private constructor(
                 if (player.seat in newlyDead) player.copy(alive = false, poisoned = false) else player
             }),
             gameStateRevision = state.gameStateRevision + resultFacts,
-            actionTimeline = actions, epistemicObservationLog = observations,
-            nextTimelineGlobalSequence = cursor, playerInputRevision = inputRevision,
+            actionTimeline = actions,
+            nextTimelineGlobalSequence = cursor,
         ))
     }
 
