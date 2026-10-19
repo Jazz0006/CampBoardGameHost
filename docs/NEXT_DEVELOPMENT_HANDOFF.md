@@ -1,4 +1,4 @@
-# 新对话交接：F12-Q 已审217/444，继续夜间预测与白天旧规则清理（2026-10-19）
+# 新对话交接：F12-R 已审223/444，继续Virgin/Artist及夜间旧规则整链清理（2026-10-19）
 
 ## 先读与现行授权
 
@@ -7,6 +7,10 @@
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **最新F12-R完整代码检查点**：开发机MiniMCP`clocktower`原Draft #334分支`codex/minimal-host-full-scan-20261018`，干净远端一致起点`fcaecb54b75d59a7d5b2f247207e27fef2b9c6ed`；代码`e0cd90be62e00d52895e730ff05163de49da3e7a`（`[full-ci]`）整条SlayerTableState/UI/HostScreen/App层不再使用按被声称/存活/真实Slayer已使用规则的claimant/target候选集合：真人直接选实际存在且唯一的两个座位，保持Session真实Shot记录、明确实际死亡/继任，保留App来自Session的历史`clocktowerSlayerUsed`仅用于事件事实，旧UI生成声明人列表已删。真实GitHub diff**5文件+41/-114、净删73行**，完整[Android CI #4414 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39204226346)/[R2 #3994 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39204226503)，Android tests+Debug APK/ASP/真实Clingo/CI gate均全绿；docs-only提交之后Android skipped不能替代此真实编译。
+- **全仓唯一审计台账**：原`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md` F12-R 横向6个原待审全文审阅：NominationInteraction/DayOverviewTableUi/SlayerTableUi/ArtistInteraction/ArtistTableState/NominationDraftTest。原SlayerTableState及其Test此前已审本次改后复核不重复计。现行**223/444（50.23%）已审、221待审、0审计中**，AI首夜/后夜/pair/numeric/strategy/prompt/transport/schema/解析、双模式、阵容跨局与玩家身份跨局双防重复、唯一Session/私密原子提交都保留。
+- **下一步任务**：继续全树剩221项，特别`ClocktowerNominationInteraction.kt`现在仍据Virgin真角色、poison和Spy登记自己计算立即处决结果，App又重复计算`firstVirginNomination`；应改成说书人先确认真实Virgin能力消耗及是否处决再唯一Session提交Nomination/Execution，并移除旧Spy专属选择和规则推演（注意保留可用的投票/处决流程与事实顺序）；`ClocktowerArtistInteraction/ArtistTableState`仍有真值自动菜单与claimant名单门禁，待真人直选和只记录真实公开答案。旧`DemonAttackProductionAdapter`→NightHostProjection中的死亡预览仍决定Sage/Ravenkeeper实际唤醒，夜末Session才确认真实死亡，不能把攻击目标当死者硬删，先建立先于唤醒且可恢复的真实确认入口后连同独占测试整体退休。继续App/HostScreen/NightStepUi三个>50KB源码，未授权不得merge/retarget/force push/付费API/真机。PR #334仍Draft/base SHA`64be3090`。
 
 - **最新F12-Q实际代码验收**：开发机`clocktower`、原Draft #334分支`codex/minimal-host-full-scan-20261018`，起点`0a500c2f6d3438e9fa91611e2c31caef8c28ae4d` clean/equal。生产提交`3de38e6e53a841bd4c866ce1f2daa1fa5a739228`（`[full-ci]`）Slayer射击从根据中毒/Drunk/Recluse/恶魔自动命中和自动死亡，换为说书人勾选**真实目标死亡**（默认无死亡、换座位重置），继续用原Session提交真实Shot、已确认Death和后续继任；移除旧oneShotDecision/OneShotAbilityDecision/selectedMechanicalEffectApplies和专属规则测试，7文件+45/-165**净删120行**。现有`SlayerShot.abilityConsumed`标识真实Slayer使用历史，`targetRegistersAsDemon`旧事件字段保留向后兼容但新界面不臆造。旧R2 #3991因硬依赖退休登记控件FAILED，后续`8b1d07b983de190ed0a61ec994fb01704a6e3cca`更新门禁断言新实际结果而不恢复旧控件，真正最新完整[Android CI #4412 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39202867302)/[R2 #3992 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39202867257)，Android tests+APK/ASP/Clingo/CI gate全成功。无真机/付费API。
 - **唯一台账**：`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md` F12-Q真实横向5原待审源码/测试：SlayerInteraction、SlayerDraftTest、AbilityFunctioningSemanticsTest、SlayerTableState+Test首次全文并追真实引用；现库存**444项、217（48.87%）已审、227待审、0审计中**。其余原已审App/Screen/ActionFactDraft/AbilityFunctioningSemantics和docs只复核，不双计。
