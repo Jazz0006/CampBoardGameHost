@@ -2,6 +2,12 @@
 
 > **唯一现行实施合同**：[MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。以下早期“最新” F12、局部夜间和重新追查已删规则的历史记录不可作为新一轮执行命令。
 
+## P1 2026-10-20 第二次裁定与实际变更（最高优先级）
+
+- **明确例外**：除恶魔以外的 Poison/Monk/Butler 仍遵循唯一 Session `pendingOperation`，允许下一步骤未执行前退一步更改；**Imp 袭击在自己的“确认并继续”动作当刻不可逆地接受**，与确定性的死亡及 GameState 一次原子提交。此前 10-20 记录“Imp 延迟到下一步骤提交”已由该新产品决定取代。
+- 新代码 `683ad97aead2b4cd6fb2d1f7047d609cb8ca11a2` 已推送 #335、[全 Android CI](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39332646726)/[R2](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39332646724) 均通过：删除生产 `stageNightAttack`，改 `confirmNightAttack`；单次 Session 写入 Attack + 唯一 Death；UI Previous 无法跨已接受的 Imp，Ravenkeeper/Sage/后续角色从单一 History/GameState 已确认 Death 派生；以新立即确认语义测试代替旧暂存攻击测试，覆盖 Monk、Soldier、投毒、Mayor、自杀边界。
+- 后续安全收尾 `5ffbdbec6455569e268d833a48775d2ff2217947` 预选并锁定旧夜末界面已接受 Death、Session 防止夜末增加/移除这批确定死者；[完整 Android CI #39333202349](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39333202349)/[R2 #39333202449](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39333202449) 均 SUCCESS。**下一项必须仍实际做**：Mayor 真实转移及 Imp 自杀继任不能用 `null` 死亡代替“待裁量”，在继续后续角色前完成选择并原子写 Death/继任；彻底移除旧夜末自由决定死亡、重复攻击/预测适配器，保证已确认死亡与黎明公告不重复；补持久化恢复和 TB/NGJ 人数/角色测试。保持 #334/#335 Draft，绝不声称 P1 完成。
+
 ## P1 2026-10-20 更新（优先于下方 10-19 检查点）
 
 - 已完成单一 `ClocktowerSessionState.pendingOperation` 的夜间玩家行动首批整链替换：Poisoner、Monk、Butler、Imp **四种行动**统一暂存、修改、按下一实际步骤开场原子提交；正确同步投毒机械状态，提交前不修改效果/历史。真实角色间的占位 UI 不可提前触发提交；Session 拒绝两个并行 pending、跨轮/未前进提交、不相关事实消费 pending。
