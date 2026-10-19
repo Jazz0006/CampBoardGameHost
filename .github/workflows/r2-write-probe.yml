@@ -209,16 +209,20 @@ jobs:
             fi
           done
 
-          for symbol in \
-            "internal enum class ClocktowerPairInformationAbility" \
-            "internal data class ClocktowerNightStepUi"
-          do
-            if grep -q "$symbol" "$host"; then
-              echo "$symbol still lives in ClocktowerHostScreen.kt" >&2
-              exit 1
-            fi
-            grep -q "$symbol" "$presentation"
-          done
+          if grep -q "internal data class ClocktowerNightStepUi" "$host"; then
+            echo "ClocktowerNightStepUi returned to ClocktowerHostScreen.kt" >&2
+            exit 1
+          fi
+          grep -q "internal data class ClocktowerNightStepUi" "$presentation"
+
+          # Pair roles and seats are now entered directly; the obsolete
+          # all-role x all-seat candidate grid and its UI authority must stay gone.
+          direct_pair=app/src/main/java/com/codex/campboardgamehost/ClocktowerDirectPairInformation.kt
+          grep -q "internal data class ClocktowerDirectPairSelection" "$direct_pair"
+          if grep -R -q -E "ClocktowerPairManualAuthority|ClocktowerPairManualSelectionModel|ClocktowerPairInformationAbility" app/src/main/java; then
+            echo "Retired pair candidate-domain code returned" >&2
+            exit 1
+          fi
 
           if grep -R -q "fun RecommendationReasonSummary(" app/src/main/java/com/codex/campboardgamehost; then
             echo "Dead RecommendationReasonSummary returned to production" >&2
