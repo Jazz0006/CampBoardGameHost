@@ -1137,8 +1137,9 @@ internal fun ClocktowerJudgeScreen(
         require(nightSteps.isNotEmpty()) { "A started night must contain an actionable step." }
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
-        if (readyToBeginNightStep == currentStepIndex &&
-            nightCheckpoint.pendingOperationStepId != null
+        // Placeholder steps must not commit the pending action before a real next action begins.
+        if (readyToBeginNightStep != null && currentStepIndex >= readyToBeginNightStep!! &&
+            currentStep.isRealAction && nightCheckpoint.pendingOperationStepId != null
         ) {
             ClocktowerStorytellerRecommendationScreen(
                 title = text("下一位玩家", "NEXT PLAYER"),
@@ -1357,8 +1358,9 @@ internal fun ClocktowerJudgeScreen(
                 }
                 is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow -> pendingNightAdvance = directive
                 ClocktowerNightAdvanceDirective.CompleteNight -> {
-                    if (hasStagedOperation) readyToResolveNight = true
-                    else confirmActualNightResult()
+                    if (hasStagedOperation || nightCheckpoint.pendingOperationStepId != null) {
+                        readyToResolveNight = true
+                    } else confirmActualNightResult()
                 }
             }
         }

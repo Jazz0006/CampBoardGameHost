@@ -100,5 +100,20 @@ class PendingNightOperationTest {
             s.stageNightButlerMaster(4, 2, StorytellerPhase.FIRST_NIGHT, 1, "butler-step")
         }
         assertSame(accepted, s.state)
+
+        s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
+            "butler-first-day", StorytellerPhase.FIRST_NIGHT, 1,
+            s.nextInputSequence, StorytellerPhase.DAY, 1,
+        ), s.state.gameStateRevision)
+        s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
+            "butler-day-night", StorytellerPhase.DAY, 1,
+            s.nextInputSequence, StorytellerPhase.NIGHT, 2,
+        ), s.state.gameStateRevision)
+        s.stageNightButlerMaster(4, 2, StorytellerPhase.NIGHT, 2, "butler-other-night")
+        assertNotNull(s.startNextNightStep("other-next-step"))
+        val masters = s.state.actionTimeline.entries.mapNotNull {
+            (it.fact as? ActionFact.ButlerMasterChoice)?.masterSeat
+        }
+        assertEquals(listOf(3, 2), masters)
     }
 }
