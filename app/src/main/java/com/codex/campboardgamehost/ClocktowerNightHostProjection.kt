@@ -167,10 +167,24 @@ internal object ClocktowerNightHostProjectionFactory {
         val sageNightDeath = resolvedNightDeathCard?.takeIf {
             AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage")
         }
-        val otherNightWakingRoleIds = clocktowerNightWakingRoleIds(
+        val confirmedWakingRoleIds = clocktowerNightWakingRoleIds(
             gameState = gameState,
             includeDead = false,
         )
+        val otherNightWakingRoleIds = canonicalNightDeathResolution.resolvedDeathSeat
+            ?.let(gameState::playerAt)
+            ?.let { projectedDeadPlayer ->
+                buildSet {
+                    addAll(confirmedWakingRoleIds)
+                    remove(projectedDeadPlayer.actualRole)
+                    if (projectedDeadPlayer.actualRole == RoleId("Drunk")) {
+                        projectedDeadPlayer.shownRole?.let(::remove)
+                    }
+                    if (ravenkeeperTrigger != null) add(RoleId("Ravenkeeper"))
+                    if (sageNightDeath != null) add(RoleId("Sage"))
+                }
+            }
+            ?: confirmedWakingRoleIds
         val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(
             buildSet {
                 if (pendingNightNewDemonIdentityName != null) {

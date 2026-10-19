@@ -89,6 +89,8 @@ internal data class ClocktowerSessionState(
     val voteStanding: ClocktowerVoteStanding = ClocktowerVoteStanding(),
     val redHerringSeat: Int? = null,
     val demonBluffRoleIds: List<RoleId> = emptyList(),
+    /** The sole staged night operation; it is not an accepted fact until its next step starts. */
+    val pendingNightAttack: PendingNightAttack? = null,
 ) {
     private val lastPhaseAdvance: ActionFact.PhaseAdvance?
         get() = actionTimeline.entries.asReversed().firstNotNullOfOrNull { it.fact as? ActionFact.PhaseAdvance }
@@ -122,6 +124,15 @@ internal data class ClocktowerSessionState(
         )
     }
 }
+
+internal data class PendingNightAttack(
+    val targetSeat: Int,
+    val phase: StorytellerPhase,
+    val round: Int,
+    val stepId: String,
+    val actionId: String,
+    val sequence: Int,
+)
 
 internal class ClocktowerGameSession private constructor(
     initialState: ClocktowerSessionState,
@@ -577,6 +588,51 @@ internal class ClocktowerGameSession private constructor(
 
     fun clearConfirmedNightProtection(expectedRevision: Long) =
         confirmNightTargets(state.nightTargets.withProtection(null), expectedRevision)
+
+    /** Stage/amend an Imp action for the next step. No Attack fact is written here. */
+    fun stageNightAttack(targetSeat: Int, phase: StorytellerPhase, round: Int, stepId: String) {
+        require(phase == StorytellerPhase.NIGHT && state.phase == phase && state.round == round)
+        require(stepId.isNotBlank())
+        check(state.actionTimeline.entries.none { it.fact.actionId.contains("-$stepId-") }) {
+            "A started night step cannot be corrected as pending input."
+        }
+        requireNotNull(state.gameState.playerAt(targetSeat)) { "Unknown attack seat $targetSeat." }
+        val old = state.pendingNightAttack
+        check(old == null || old.stepId == stepId) { "Another night operation is already pending." }
+        if (old?.targetSeat == targetSeat) return
+        check(state.playerInputRevision != Long.MAX_VALUE)
+        val sequence = old?.sequence ?: nextInputSequence
+        val targetPart = targetSeat.toString()
+        updateState(state.copy(
+            playerInputRevision = state.playerInputRevision + 1,
+            pendingNightAttack = PendingNightAttack(
+                targetSeat, phase, round, stepId,
+                "imp-attack-${state.gameId}-$round-$stepId-$targetPart", sequence,
+            ),
+        ))
+    }
+
+    /** Accepts the pending action atomically at the next step's actual start. */
+    fun startNextNightStep(stepId: String): TimelineBoundActionFact? {
+        val pending = state.pendingNightAttack ?: return null
+        check(pending.stepId != stepId) { "The staged attack step has not advanced." }
+        val draft = prepareGlobalActionDraft(ActionFactDraft.Attack(
+            pending.actionId, pending.phase, pending.round, pending.sequence, pending.targetSeat,
+        ))
+        val committed = commitGlobalActionFact(
+            state.semanticHistoryMode, state.actionTimeline, state.epistemicObservationLog,
+            state.nextTimelineGlobalSequence, draft,
+        )
+        check(state.gameStateRevision != Long.MAX_VALUE)
+        updateState(state.copy(
+            gameStateRevision = state.gameStateRevision + 1,
+            actionTimeline = committed.actionTimeline,
+            nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+            nightTargets = state.nightTargets.withAttack(pending.targetSeat),
+            pendingNightAttack = null,
+        ))
+        return committed.entry
+    }
 
     private fun confirmNightTargets(next: ClocktowerNightTargets, expectedRevision: Long) {
         check(state.gameStateRevision == expectedRevision) { "Stale night confirmation." }

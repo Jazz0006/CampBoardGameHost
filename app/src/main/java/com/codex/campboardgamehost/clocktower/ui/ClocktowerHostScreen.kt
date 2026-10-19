@@ -97,7 +97,9 @@ internal fun ClocktowerJudgeScreen(
     onPreviousFromFirstNightReady: () -> Unit,
     onMovePreviousNightStep: () -> Unit,
     onSelectNightDeath: (String?) -> Unit,
-    onConfirmDemonAttack: () -> Unit,
+    onConfirmDemonAttack: (String) -> Unit,
+    onStartNightStep: (String) -> Unit,
+    onStartNightResolution: (String) -> StorytellerDecisionRevision,
     onSelectExecution: (String?) -> Unit,
     onSelectPoisonTarget: (String?) -> Unit,
     onConfirmPoisonTarget: () -> Unit,
@@ -168,6 +170,9 @@ internal fun ClocktowerJudgeScreen(
         mutableStateOf<ClocktowerNightAdvanceDirective.AwaitRefreshedFlow?>(null)
     }
     var nightResultRevision by remember(gameId, round, phase) { mutableStateOf<StorytellerDecisionRevision?>(null) }
+    // UI readiness gates never own game facts. The staged action lives only in Session.
+    var readyToBeginNightStep by remember(gameId, round, phase) { mutableStateOf<Int?>(null) }
+    var readyToResolveNight by remember(gameId, round, phase) { mutableStateOf(false) }
     fun confirmActualNightResult() { nightResultRevision = StorytellerDecisionRevision(gameStateRevision, playerInputRevision) }
     nightResultRevision?.let { anchor ->
         ClocktowerNightResultConfirmationScreen(
@@ -177,6 +182,24 @@ internal fun ClocktowerJudgeScreen(
             onCancel = { nightResultRevision = null },
             onConfirm = { result -> onConfirmNight(result); nightResultRevision = null },
         )
+        return
+    }
+    if (readyToResolveNight && nightCheckpoint.pendingNightAttackStepId != null) {
+        ClocktowerStorytellerRecommendationScreen(
+            title = text("夜间流程结束", "NIGHT ACTIONS COMPLETE"),
+            subtitle = text("准备确认今夜结果", "Ready to resolve the night"),
+            description = text(
+                "恶魔目标仍可修改。只有实际进入夜间结算，上一行动才正式写入事件记录。",
+                "The attack is still editable. It is recorded only when night resolution actually begins.",
+            ),
+            buttonLabel = text("开始夜间结算", "Begin night resolution"),
+            onHostTools = onHostTools,
+            onPrevious = { readyToResolveNight = false },
+            onStartNight = {
+                nightResultRevision = onStartNightResolution("night-resolution")
+                readyToResolveNight = false
+            },
+        ) { ClocktowerNightReadyCard() }
         return
     }
     val nominationDraft = remember(gameId, round) { ClocktowerNominationDraft() }
@@ -1114,6 +1137,29 @@ internal fun ClocktowerJudgeScreen(
         require(nightSteps.isNotEmpty()) { "A started night must contain an actionable step." }
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
+        if (readyToBeginNightStep == currentStepIndex &&
+            nightCheckpoint.pendingNightAttackStepId != null
+        ) {
+            ClocktowerStorytellerRecommendationScreen(
+                title = text("下一位玩家", "NEXT PLAYER"),
+                subtitle = currentStep.title,
+                description = text(
+                    "当前恶魔目标尚未记为事实。可以返回修改，或在真正唤醒下一位玩家时开始这一步并提交上一行动。",
+                    "The attack has not been recorded. Go back to amend it, or start this step to accept the previous action.",
+                ),
+                buttonLabel = text("开始当前步骤", "Begin this step"),
+                onHostTools = onHostTools,
+                onPrevious = {
+                    readyToBeginNightStep = null
+                    onMovePreviousNightStep()
+                },
+                onStartNight = {
+                    onStartNightStep(currentStep.interactionId.toString())
+                    readyToBeginNightStep = null
+                },
+            ) { ClocktowerNightReadyCard() }
+            return
+        }
         val globalAiPending = if (globalAiAssisted && phase == ClocktowerPhase.FirstNight) {
             pendingGlobalFirstNightPairDecision(
                 currentStep, phase, round, cards, sessionGameState, gameId,
@@ -1276,7 +1322,7 @@ internal fun ClocktowerJudgeScreen(
                 onConfirmMonkProtectedTarget()
             }
             if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.DemonKill) {
-                onConfirmDemonAttack()
+                onConfirmDemonAttack(currentStep.interactionId.toString())
             }
             if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.MayorRedirect) {
                 onConfirmMayorRedirectTarget()
@@ -1298,9 +1344,18 @@ internal fun ClocktowerJudgeScreen(
                     flowMayExpandAfterConfirmation = flowMayExpandAfterConfirmation,
                 )
             ) {
-                is ClocktowerNightAdvanceDirective.MoveTo -> nightStepIndex = directive.stepIndex
+                is ClocktowerNightAdvanceDirective.MoveTo -> {
+                    if (currentStep.action == ClocktowerNightAction.DemonKill && currentStep.isRealAction) {
+                        readyToBeginNightStep = directive.stepIndex
+                    }
+                    nightStepIndex = directive.stepIndex
+                }
                 is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow -> pendingNightAdvance = directive
-                ClocktowerNightAdvanceDirective.CompleteNight -> confirmActualNightResult()
+                ClocktowerNightAdvanceDirective.CompleteNight -> {
+                    if (currentStep.action == ClocktowerNightAction.DemonKill && currentStep.isRealAction) {
+                        readyToResolveNight = true
+                    } else confirmActualNightResult()
+                }
             }
         }
 
@@ -1374,13 +1429,18 @@ internal fun ClocktowerJudgeScreen(
             ) {
                 is ClocktowerNightAdvanceDirective.MoveTo -> {
                     pendingNightAdvance = null
+                    if (nightCheckpoint.pendingNightAttackStepId != null) {
+                        readyToBeginNightStep = directive.stepIndex
+                    }
                     nightStepIndex = directive.stepIndex
                 }
                 is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow ->
                     error("Refreshed night advance cannot remain pending.")
                 ClocktowerNightAdvanceDirective.CompleteNight -> {
                     pendingNightAdvance = null
-                    confirmActualNightResult()
+                    if (nightCheckpoint.pendingNightAttackStepId != null) {
+                        readyToResolveNight = true
+                    } else confirmActualNightResult()
                 }
             }
         }

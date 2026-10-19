@@ -24,6 +24,11 @@ internal data class ClocktowerNightCheckpoint(
     val pendingNewDemonName: String?,
     val pendingNightNewDemonIdentityName: String? = null,
     val nextTimelineGlobalSequence: Long = 0L,
+    /** Read-only projection of the Session-owned staged attack's stable step identity. */
+    val pendingNightAttackStepId: String? = null,
+    /** Read-only target projection for hypothetical later-night wake/death-trigger planning. */
+    val pendingNightAttackTargetName: String? = null,
+    val pendingNightAttackTargetSeat: Int? = null,
 ) {
     init {
         require(round > 0)

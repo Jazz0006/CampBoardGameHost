@@ -106,16 +106,22 @@ internal data class TroubleBrewingDawnDeathResolution(
 
 /**
  * Checkpoint-backed production composition used by non-durable consumers such as Host. Confirmed
- * choices only preview later information steps. This prediction is never a fact-commit authority.
+ * choices and the Session's pending target only preview later steps. This prediction is never a
+ * fact-commit authority.
  */
 internal fun resolveTroubleBrewingDawnDeathResolution(
     cards: List<PlayerCard>,
     gameState: GameState,
     checkpoint: ClocktowerNightCheckpoint,
 ): TroubleBrewingDawnDeathResolution {
+    val pendingTargetName = checkpoint.pendingNightAttackTargetSeat?.let { seat ->
+        requireNotNull(gameState.playerAt(seat)) { "Unknown pending attack seat $seat." }.name
+    } ?: checkpoint.pendingNightAttackTargetName
     val facts = resolveTroubleBrewingDawnDeathFacts(
         cards = cards,
-        targetName = checkpoint.confirmedAttackTarget,
+        // A Session-owned pending target feeds only this pure future-step preview.
+        // It does not change alive state or create an Attack/Death/history fact.
+        targetName = pendingTargetName ?: checkpoint.confirmedAttackTarget,
         poisonedPlayerName = checkpoint.confirmedPoisonTarget,
         monkProtectedTargetName = checkpoint.confirmedMonkTarget,
     )
