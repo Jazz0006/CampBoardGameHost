@@ -2122,10 +2122,6 @@ internal fun CampBoardGameHostApp() {
                             hostToolTab = HostToolTab.Roles
                             showHostTools = true
                         },
-                        onPreviousFromFirstNightReady = {
-                            currentDealIndex = cards.lastIndex
-                            screen = Screen.PassPhone
-                        },
                         onSelectNightDeath = { selected ->
                             advanceClocktowerPlayerInputRevision()
                             clocktowerDemonAttackDraftTarget = selected

@@ -95,7 +95,6 @@ internal fun ClocktowerJudgeScreen(
     gameOutcome: GameOutcome?,
     onCommitConfirmedPrivateInformationPublication: (EpistemicObservationDraft, StorytellerDecisionRevision) -> Unit,
     onHostTools: () -> Unit,
-    onPreviousFromFirstNightReady: () -> Unit,
     onSelectNightDeath: (String?) -> Unit,
     onConfirmDemonAttack: (String) -> Unit,
     onSelectExecution: (String?) -> Unit,
@@ -1063,12 +1062,11 @@ internal fun ClocktowerJudgeScreen(
             title = text("身份展示完成", "IDENTITY DISPLAY COMPLETE"),
             subtitle = text("准备进入首夜", "Prepare for the first night"),
             description = text(
-                "这是说书人私密页面。可返回最后一位玩家重新展示身份，或确认首夜裁定后开始夜晚。",
-                "This is a private Storyteller screen. You may return to the final player to show the role again, or confirm the first-night rulings and begin the night.",
+                "这是说书人私密页面。确认首夜裁定后开始夜晚；开始后只向前推进。",
+                "This is a private Storyteller screen. Confirm the first-night rulings and begin; night steps only move forward.",
             ),
             buttonLabel = text("确认首夜设置，开始夜晚", "Confirm first-night setup and begin"),
             onHostTools = onHostTools,
-            onPrevious = onPreviousFromFirstNightReady,
             startEnabled = manualDemonBluffsReady,
             onStartNight = {
                 if (manualDemonBluffsRequired && manualDemonBluffsReady) {

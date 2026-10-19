@@ -30,7 +30,7 @@ internal fun ClocktowerHostFullScreenScaffold(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     previousEnabled: Boolean = true,
-    previousVisible: Boolean = true,
+    previousVisible: Boolean = previousEnabled,
     nextEnabled: Boolean = true,
     nextVisible: Boolean = true,
     onBack: (() -> Unit)? = null,
