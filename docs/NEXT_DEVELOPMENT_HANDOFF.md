@@ -2,6 +2,12 @@
 
 > **唯一现行实施合同**：[MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。以下早期“最新” F12、局部夜间和重新追查已删规则的历史记录不可作为新一轮执行命令。
 
+## P1 2026-10-20 更新（优先于下方 10-19 检查点）
+
+- 已完成单一 `ClocktowerSessionState.pendingOperation` 的夜间玩家行动首批整链替换：Poisoner、Monk、Butler、Imp **四种行动**统一暂存、修改、按下一实际步骤开场原子提交；正确同步投毒机械状态，提交前不修改效果/历史。真实角色间的占位 UI 不可提前触发提交；Session 拒绝两个并行 pending、跨轮/未前进提交、不相关事实消费 pending。
+- 实际代码提交：`c0a1394` 首次统一（659 tests 中夹具 Butler 不符，已修）；`be91f77` 修测试，Android CI/R2 SUCCESS；`8f7058e` 删除旧 `confirmButlerMaster` 并把首夜/后夜重复验证迁入真实 Pending，Android CI/R2 SUCCESS；`c29a319b7e4d29423fb4c5534060924ab2cc6f8b` 对已提交四类行动统一阻止回退编辑、删除旧 `clearConfirmedNightAttack`/`clearConfirmedNightProtection` 和独占错误测试、确认 Session 原子接受身份（[完整 Android CI #39327637102](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39327637102) / [R2 #39327637052](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39327637052) 均 SUCCESS）。
+- **不要误报 P1 完成**：目前未统一所有角色/推荐/显示事件与持久化安全恢复；`ClocktowerNightResultConfirmation` 仍在夜末自由确认最终死者，Ravenkeeper/Sage/Mayor 仍依赖旧纯死亡预览，**未完成 Imp 确认后确定性死亡即时生效/条件唤醒/旧路径彻底退出**。下一批先推进这条真实闭环，再删旧 Adapter、重复 UI 和测试，不恢复旧候选/评分/控制器。#334/#335 均保持 Draft；保留双内置剧本与现有 AI 全链。
+
 ## 最新 P1 实际实施检查点（2026-10-19，取代下面历史基线）
 
 - 已完成 PR 整理：#330–#333 全部按顺序合并 `main`，四次合并及最终 `main` 的完整 Android CI 均通过；#334 已改 base=`main`，仍 Draft（大规模清理审计未完成）；#335 保持 Draft、base=#334 的分支，不做 merge/rebase/force。
