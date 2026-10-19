@@ -703,7 +703,6 @@ internal fun ClocktowerJudgeScreen(
     val ravenkeeperTargetCard = ravenkeeperTarget?.let { name -> cards.firstOrNull { it.name == name } }
     // Evil-team introductions always use true identities. Registration choices
     // for the Spy/Recluse only affect abilities that explicitly allow them.
-    val sagePair = demonCard?.let { storytellerPairHint(it, cards) }
     val minionCards = cards.filter { it.clocktowerRole?.team == ClocktowerTeam.Minion }
     fun seatNumberText(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
     val shouldGiveFirstNightEvilInfo = cards.size >= 7
@@ -1039,10 +1038,7 @@ internal fun ClocktowerJudgeScreen(
         ),
         clocktowerSageStepMaterializer(
             builder = informationStepBuilder,
-            cards = cards,
             triggerActor = sageNightDeath,
-            demon = demonCard,
-            directPair = sagePair,
             abilityState = sageDeathTriggerAbilityState,
             content = ClocktowerSageStepContent(
                 explanation = text("贤者被恶魔杀死时，得知恶魔是两名玩家之一。", "When killed by the Demon, the Sage learns that the Demon is one of two players."),

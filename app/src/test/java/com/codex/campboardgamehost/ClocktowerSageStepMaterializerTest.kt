@@ -16,7 +16,7 @@ class ClocktowerSageStepMaterializerTest {
             abilityStateFor = { _, _ -> null },
         )
         val step = clocktowerSageStepMaterializer(
-            builder, cards, cards[3], cards[1], cards[1] to cards[4], null, sageContent(),
+            builder, cards[3], null, sageContent(),
         ).build()
         val shown = requireNotNull(clocktowerSageManualPlayerDisplay(step, listOf(5, 1), cards.size))
         assertEquals(listOf(1, 5), shown.presentationSubjectSeats)
@@ -32,7 +32,6 @@ class ClocktowerSageStepMaterializerTest {
     fun `Sage materializer builds direct reliable step from prepared Host facts`() {
         val cards = (1..5).map { seat -> sageMaterializerCard("P$seat", seat == 2) }
         val actor = cards[3]
-        val demon = cards[1]
         val builder = ClocktowerInformationStepBuilder(
             cards = cards,
             language = "en",
@@ -44,10 +43,7 @@ class ClocktowerSageStepMaterializerTest {
 
         val entry = clocktowerSageStepMaterializer(
             builder = builder,
-            cards = cards,
             triggerActor = actor,
-            demon = demon,
-            directPair = demon to cards[4],
             abilityState = null,
             content = sageContent(),
         )
@@ -56,9 +52,9 @@ class ClocktowerSageStepMaterializerTest {
 
         assertEquals("Sage", step.roleEnName)
         assertEquals(actor, step.actor)
-        assertEquals(listOf(2, 5), step.presentationSubjectSeats)
-        assertEquals("2   5", step.displaySecondary)
-        assertEquals(demonClaim(2, 5), step.displayProposition)
+        assertTrue(step.presentationSubjectSeats.isEmpty())
+        assertEquals(null, step.displaySecondary)
+        assertEquals(null, step.displayProposition)
     }
 
     private fun demonClaim(first: Int, second: Int) = InformationProposition.AnyOf(listOf(

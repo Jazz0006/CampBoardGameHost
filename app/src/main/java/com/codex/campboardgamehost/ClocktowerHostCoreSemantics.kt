@@ -139,14 +139,4 @@ internal fun clocktowerOtherNightWakingRoleIds(
     }
 }
 
-internal fun storytellerPairHint(
-    target: PlayerCard,
-    cards: List<PlayerCard>,
-    fallbackPool: List<PlayerCard> = cards,
-    excludeNames: Set<String> = emptySet(),
-): Pair<PlayerCard, PlayerCard>? {
-    val decoy = fallbackPool.firstOrNull { it.name != target.name && it.name !in excludeNames }
-        ?: fallbackPool.firstOrNull { it.name != target.name }
-        ?: return null
-    return target to decoy
-}
+
