@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import java.security.MessageDigest
 
@@ -128,13 +129,15 @@ internal fun <T> clocktowerFortuneTellerRoleAuthority(
     otherNightRole: () -> T?,
 ): T? = if (phase == ClocktowerPhase.Night) otherNightRole() else baseRole
 
-internal fun clocktowerOtherNightWakingRoleIds(
-    cards: List<PlayerCard>,
+/** Night role eligibility reads the one authoritative Session game state, not a second UI card list. */
+internal fun clocktowerNightWakingRoleIds(
+    gameState: GameState,
+    includeDead: Boolean,
 ): Set<RoleId> = buildSet {
-    cards.filter { it.eliminatedRound == null }.forEach { card ->
-        card.clocktowerRole?.enName?.let { add(RoleId(it)) }
-        if (card.clocktowerRole?.enName == "Drunk") {
-            card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
+    gameState.players.filter { includeDead || it.alive }.forEach { player ->
+        add(player.actualRole)
+        if (player.actualRole == RoleId("Drunk")) {
+            player.shownRole?.let { add(it) }
         }
     }
 }

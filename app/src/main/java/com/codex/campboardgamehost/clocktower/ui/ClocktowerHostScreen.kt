@@ -704,19 +704,12 @@ internal fun ClocktowerJudgeScreen(
         demonBluffPresentation = demonBluffPresentation,
         language = language,
     )
-    val firstNightActualRoleIds = buildSet {
-        cards.forEach { card ->
-            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
-        }
-    }
-    val firstNightWakingRoleIds = buildSet {
-        cards.forEach { card ->
-            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
-            if (card.clocktowerRole?.enName == "Drunk") {
-                card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
-            }
-        }
-    }
+    // Session owns true and shown roles; player cards are only a presentation surface.
+    val firstNightActualRoleIds = sessionGameState.players.mapTo(linkedSetOf()) { it.actualRole }
+    val firstNightWakingRoleIds = clocktowerNightWakingRoleIds(
+        gameState = sessionGameState,
+        includeDead = true,
+    )
     val chambermaidMaterializer = clocktowerChambermaidStepMaterializer(
         builder = informationStepBuilder,
         content = ClocktowerChambermaidStepContent(

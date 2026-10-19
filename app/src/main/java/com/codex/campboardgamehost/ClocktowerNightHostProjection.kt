@@ -157,8 +157,9 @@ internal object ClocktowerNightHostProjectionFactory {
         val sageNightDeath = resolvedNightDeathCard?.takeIf {
             AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage")
         }
-        val otherNightWakingRoleIds = clocktowerOtherNightWakingRoleIds(
-            cards = cards,
+        val otherNightWakingRoleIds = clocktowerNightWakingRoleIds(
+            gameState = gameState,
+            includeDead = false,
         )
         val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(
             buildSet {
