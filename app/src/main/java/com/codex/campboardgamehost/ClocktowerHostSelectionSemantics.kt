@@ -200,20 +200,6 @@ internal fun shouldAutoAdvanceRedHerring(
     // the single joint opening; an arbitrary manual/legacy selection is not enough.
     (!isRealAction || (acceptedJointOpening && hasSelectedRedHerring))
 
-internal fun automaticRedHerringSelectionAtBarrier(
-    allowRuleDeterminedAutoUi: Boolean,
-    isRedHerringStep: Boolean,
-    isRealAction: Boolean,
-    currentSelection: String?,
-    recommendedSelection: String?,
-    legalSelections: Set<String>,
-): String? {
-    if (!allowRuleDeterminedAutoUi || !isRedHerringStep || !isRealAction) return null
-    if (currentSelection != null) return null
-    // A legacy UI recommendation has no current Host validation. Only a singleton is deterministic.
-    return legalSelections.singleOrNull()
-}
-
 internal data class ClocktowerDisplayOption(
     val label: String,
     val displayKind: ClocktowerDisplayKind,

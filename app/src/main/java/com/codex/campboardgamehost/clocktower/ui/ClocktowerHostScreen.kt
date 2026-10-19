@@ -508,7 +508,6 @@ internal fun ClocktowerJudgeScreen(
     val mayorCanRedirect = nightHostProjection.mayorCanRedirect
     val mayorTarget = nightHostProjection.mayorTarget
     val mayorRedirectTargetCards = nightHostProjection.mayorRedirectTargetCards
-    val resolvedNightDeathName = nightHostProjection.resolvedNightDeathName
     val ravenkeeperTrigger = nightHostProjection.ravenkeeperTrigger
     val demonCard = nightHostProjection.demonCard
     val demonPoisonedForActionExplanation = nightHostProjection.demonPoisonedForActionExplanation

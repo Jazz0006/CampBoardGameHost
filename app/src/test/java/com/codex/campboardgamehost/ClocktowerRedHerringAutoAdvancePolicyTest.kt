@@ -9,7 +9,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -79,81 +78,6 @@ class ClocktowerRedHerringAutoAdvancePolicyTest {
                 isRedHerringStep = true,
                 isRealAction = false,
                 hasSelectedRedHerring = false,
-            ),
-        )
-    }
-
-    @Test
-    fun `legacy red herring recommendation cannot bypass Host singleton gate`() {
-        assertNull(
-            automaticRedHerringSelectionAtBarrier(
-                allowRuleDeterminedAutoUi = true,
-                isRedHerringStep = true,
-                isRealAction = true,
-                currentSelection = null,
-                recommendedSelection = "Alice",
-                legalSelections = setOf("Alice", "Bob"),
-            ),
-        )
-        assertNull(
-            automaticRedHerringSelectionAtBarrier(
-                allowRuleDeterminedAutoUi = false,
-                isRedHerringStep = true,
-                isRealAction = true,
-                currentSelection = null,
-                recommendedSelection = "Alice",
-                legalSelections = setOf("Alice"),
-            ),
-        )
-        assertNull(
-            automaticRedHerringSelectionAtBarrier(
-                allowRuleDeterminedAutoUi = true,
-                isRedHerringStep = false,
-                isRealAction = true,
-                currentSelection = null,
-                recommendedSelection = "Alice",
-                legalSelections = setOf("Alice"),
-            ),
-        )
-        assertNull(
-            automaticRedHerringSelectionAtBarrier(
-                allowRuleDeterminedAutoUi = true,
-                isRedHerringStep = true,
-                isRealAction = false,
-                currentSelection = null,
-                recommendedSelection = "Alice",
-                legalSelections = setOf("Alice"),
-            ),
-        )
-        assertNull(
-            automaticRedHerringSelectionAtBarrier(
-                allowRuleDeterminedAutoUi = true,
-                isRedHerringStep = true,
-                isRealAction = true,
-                currentSelection = "Bob",
-                recommendedSelection = "Alice",
-                legalSelections = setOf("Alice", "Bob"),
-            ),
-        )
-        assertEquals(
-            "Alice",
-            automaticRedHerringSelectionAtBarrier(
-                allowRuleDeterminedAutoUi = true,
-                isRedHerringStep = true,
-                isRealAction = true,
-                currentSelection = null,
-                recommendedSelection = null,
-                legalSelections = setOf("Alice"),
-            ),
-        )
-        assertNull(
-            automaticRedHerringSelectionAtBarrier(
-                allowRuleDeterminedAutoUi = true,
-                isRedHerringStep = true,
-                isRealAction = true,
-                currentSelection = null,
-                recommendedSelection = "Stale",
-                legalSelections = setOf("Alice", "Bob"),
             ),
         )
     }

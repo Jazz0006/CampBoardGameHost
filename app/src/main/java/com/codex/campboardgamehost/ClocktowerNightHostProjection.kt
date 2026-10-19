@@ -39,9 +39,6 @@ internal class ClocktowerNightHostProjection internal constructor(
     val mayorCanRedirect: Boolean
         get() = canonicalNightDeathResolution.mayorRedirectEligible
 
-    val resolvedNightDeathName: String?
-        get() = canonicalNightDeathResolution.resolvedDeathName
-
     val demonCard: PlayerCard?
         get() = currentDemonHostContext?.actor
 
@@ -149,10 +146,8 @@ internal object ClocktowerNightHostProjectionFactory {
         }
         val resolvedNightDeathCard = canonicalNightDeathResolution.resolvedDeathName
             ?.let { name -> cards.firstOrNull { it.name == name } }
-        val nightDeathWillOccur = canonicalNightDeathResolution.resolvedDeathSeat != null
         val ravenkeeperTrigger = resolvedNightDeathCard?.takeIf {
-            nightDeathWillOccur &&
-                AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Ravenkeeper")
+            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Ravenkeeper")
         }
 
         val currentDemonHostContext = resolveCurrentDemonHostContext(
@@ -160,8 +155,7 @@ internal object ClocktowerNightHostProjectionFactory {
             poisonedPlayerName = checkpoint.confirmedPoisonTarget,
         )
         val sageNightDeath = resolvedNightDeathCard?.takeIf {
-            nightDeathWillOccur &&
-                AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage")
+            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage")
         }
         val otherNightWakingRoleIds = clocktowerOtherNightWakingRoleIds(
             cards = cards,

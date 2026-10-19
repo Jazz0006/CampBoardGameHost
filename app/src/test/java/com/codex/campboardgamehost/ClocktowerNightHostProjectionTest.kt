@@ -44,7 +44,6 @@ class ClocktowerNightHostProjectionTest {
             .role(RoleId("Imp"))
             .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
 
-        assertEquals("Ravenkeeper", projection.resolvedNightDeathName)
         assertEquals("Ravenkeeper", projection.ravenkeeperTrigger?.name)
         assertEquals(null, projection.sageNightDeath)
         assertTrue(projection.otherNightInteractions.any { it.id == impInteractionId })

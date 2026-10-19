@@ -60,7 +60,6 @@ internal object ClocktowerNeutralInformationPreparation {
                     for (secondIndex in firstIndex + 1 until pool.size) {
                         add(
                             PairInformationEffect(
-                                id = "unreliable:${ability.name}:${role.enName}:${cards.indexOf(pool[firstIndex]) + 1}:${cards.indexOf(pool[secondIndex]) + 1}",
                                 shownRole = role,
                                 target = pool[firstIndex],
                                 decoy = pool[secondIndex],
@@ -73,7 +72,6 @@ internal object ClocktowerNeutralInformationPreparation {
             run {
                 add(
                     PairInformationEffect(
-                        id = "unreliable:${ability.name}:none",
                         shownRole = null,
                         target = null,
                         decoy = null,
@@ -155,7 +153,6 @@ internal object ClocktowerNeutralInformationPreparation {
         ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
 
     private data class PairInformationEffect(
-        val id: String,
         val shownRole: ClocktowerRole?,
         val target: PlayerCard?,
         val decoy: PlayerCard?,
