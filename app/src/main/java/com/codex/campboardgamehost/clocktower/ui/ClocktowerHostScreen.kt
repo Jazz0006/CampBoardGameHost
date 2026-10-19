@@ -597,19 +597,6 @@ internal fun ClocktowerJudgeScreen(
         } in
             setOf(AbilityFunctioningState.DRUNK, AbilityFunctioningState.POISONED)
         )
-    fun pairInformationOptions(
-        ability: ClocktowerPairInformationAbility,
-        actor: PlayerCard,
-    ): List<ClocktowerDisplayOption> {
-        return ClocktowerNeutralInformationPreparation.pairInformationOptions(
-            ability = ability,
-            actor = actor,
-            cards = cards,
-            scriptRoles = clocktowerRolesForScript(script),
-            roleLabel = { role -> role.nameFor(language) },
-            text = ::text,
-        )
-    }
     val informationStepBuilder = ClocktowerInformationStepBuilder(
         cards = cards,
         language = language,
@@ -819,7 +806,6 @@ internal fun ClocktowerJudgeScreen(
                 informationStepBuilder.build(
                     roleName = "洗衣妇", enName = "Washerwoman", tellPlayer = null,
                     explanation = text("选择实际展示的角色和两名玩家，或缺席结果。", "Choose the actually shown role and two players, or the absence result."),
-                    displayOptions = { actor -> pairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor) },
                 )
             },
         ),
@@ -829,7 +815,6 @@ internal fun ClocktowerJudgeScreen(
                 informationStepBuilder.build(
                     roleName = "图书管理员", enName = "Librarian", tellPlayer = null,
                     explanation = text("选择实际展示的角色和两名玩家，或缺席结果。", "Choose the actually shown role and two players, or the absence result."),
-                    displayOptions = { actor -> pairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor) },
                 )
             },
         ),
@@ -839,7 +824,6 @@ internal fun ClocktowerJudgeScreen(
                 informationStepBuilder.build(
                     roleName = "调查员", enName = "Investigator", tellPlayer = null,
                     explanation = text("选择实际展示的角色和两名玩家，或缺席结果。", "Choose the actually shown role and two players, or the absence result."),
-                    displayOptions = { actor -> pairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor) },
                 )
             },
         ),
@@ -1507,6 +1491,7 @@ internal fun ClocktowerJudgeScreen(
                     }
                 }
                 ClocktowerNightStepCardLocalized(
+                scriptRoles = clocktowerRolesForScript(script),
                 allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                 phase = phase,
                 gameId = gameId,

@@ -61,7 +61,7 @@ class ClocktowerNightFullScreenOwnershipTest {
     }
 
     @Test
-    fun `pair information requires a real first night manual domain and otherwise has plain fallback`() {
+    fun `pair information owns first night without enumerating a Host candidate domain`() {
         val candidate = ClocktowerDisplayOption(
             label = "pair",
             displayKind = ClocktowerDisplayKind.EitherOne,
@@ -79,7 +79,7 @@ class ClocktowerNightFullScreenOwnershipTest {
             ),
         )
         assertEquals(
-            ClocktowerNightSurfacePlan.FullScreen(ClocktowerNightFullScreenSurface.PlainInformation),
+            ClocktowerNightSurfacePlan.FullScreen(ClocktowerNightFullScreenSurface.PairInformation),
             clocktowerNightSurfacePlan(step(roleEnName = "Investigator"), ClocktowerPhase.FirstNight),
         )
         assertEquals(

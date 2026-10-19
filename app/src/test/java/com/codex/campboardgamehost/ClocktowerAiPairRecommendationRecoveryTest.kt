@@ -44,14 +44,6 @@ class ClocktowerAiPairRecommendationRecoveryTest {
             abilityRole = RoleId("Investigator"),
             reliability = ReliabilityState.RELIABLE,
         )
-        val options = ClocktowerNeutralInformationPreparation.pairInformationOptions(
-            ability = ClocktowerPairInformationAbility.Investigator,
-            actor = cards.first(),
-            cards = cards,
-            scriptRoles = scriptRoles,
-            roleLabel = { it.enName },
-            text = { _, en -> en },
-        )
         val candidate = SemanticResult("PAIR_RESULT", pairRoleId = "Baron", pairSeats = listOf(1, 2))
         val selected = ClocktowerResidualDisplayMatcherV2.matchPair(
             decision, candidate, emptyList(), cards, "en")
@@ -64,12 +56,19 @@ class ClocktowerAiPairRecommendationRecoveryTest {
                     }.sorted()
             })
 
-        val manuallySelected = options.first { it.displayPrimary == "Baron" }
+        val preselected = requireNotNull(ClocktowerDirectPairSelection.fromRecommendation(
+            selected, "Investigator", cards.size, scriptRoles,
+        ))
+        assertEquals("Baron", preselected.roleId)
+        assertEquals(listOf(1, 2), listOf(preselected.firstSeat, preselected.secondSeat))
+        val manuallySelected = requireNotNull(ClocktowerDirectPairSelection()
+            .chooseRole("Baron").chooseSeat(2, cards.size).chooseSeat(3, cards.size)
+            .toDisplayOption("Investigator", cards.size, scriptRoles, { it },
+                "Investigator information", "en"))
         val step = ClocktowerNightStepUi(
             title = "Investigator", actor = cards.first(), isRealAction = true,
             reason = "", storytellerAction = "", tellPlayer = null, explanation = "",
             roleEnName = "Investigator", displayKind = ClocktowerDisplayKind.EitherOne,
-            manualInformationCandidates = options,
         )
         val displayed = resolveClocktowerPlayerDisplay(step, manuallySelected)
         val observed = requireNotNull(

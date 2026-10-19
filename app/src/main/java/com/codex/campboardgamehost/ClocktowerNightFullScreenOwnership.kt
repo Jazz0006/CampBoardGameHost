@@ -77,8 +77,7 @@ internal fun clocktowerNightSurfacePlan(
             ClocktowerNightFullScreenSurface.EvilInformation
 
         phase == ClocktowerPhase.FirstNight &&
-            presentationRoleEnName in pairInformationRoles &&
-            step.manualInformationCandidates.isNotEmpty() ->
+            presentationRoleEnName in pairInformationRoles ->
             ClocktowerNightFullScreenSurface.PairInformation
 
         presentationRoleEnName == "Chef" -> ClocktowerNightFullScreenSurface.Chef

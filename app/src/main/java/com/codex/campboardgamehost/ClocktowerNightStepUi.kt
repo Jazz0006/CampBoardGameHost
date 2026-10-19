@@ -24,6 +24,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 
 @Composable
 internal fun ClocktowerNightStepCardLocalized(
+    scriptRoles: List<ClocktowerRole>,
     allowRuleDeterminedAutoUi: Boolean,
     phase: ClocktowerPhase,
     gameId: String,
@@ -111,14 +112,6 @@ internal fun ClocktowerNightStepCardLocalized(
     }.distinctBy(::clocktowerInformationCandidateId)
     val displayedInformationOptions = listOfNotNull(currentAiSuggestedOption)
 
-    val pairInformationCandidates = if (
-        phase == ClocktowerPhase.FirstNight &&
-        presentationRoleEnName in setOf("Washerwoman", "Librarian", "Investigator")
-    ) {
-        step.manualInformationCandidates
-    } else {
-        emptyList()
-    }
     val automaticDisplayOption = currentAiSuggestedOption.takeIf { allowRuleDeterminedAutoUi }
     val manualInformationFallback = allowRuleDeterminedAutoUi &&
         step.isRealAction &&
@@ -419,13 +412,6 @@ internal fun ClocktowerNightStepCardLocalized(
         } else {
             emptyList()
         }
-        val pairSquareTablePresentation = if (
-            plannedFullScreenSurface == ClocktowerNightFullScreenSurface.PairInformation
-        ) {
-            ClocktowerPairManualAuthority.selectionPresentation(pairInformationCandidates)
-        } else {
-            null
-        }
         val evilInfoSquareTablePresentation = if (
             plannedFullScreenSurface == ClocktowerNightFullScreenSurface.EvilInformation
         ) {
@@ -442,7 +428,7 @@ internal fun ClocktowerNightStepCardLocalized(
         }
         val plannedSpecialistUnavailable = when (plannedFullScreenSurface) {
             ClocktowerNightFullScreenSurface.EvilInformation -> evilInfoSquareTablePresentation == null
-            ClocktowerNightFullScreenSurface.PairInformation -> pairSquareTablePresentation == null
+            ClocktowerNightFullScreenSurface.PairInformation -> false
             ClocktowerNightFullScreenSurface.Chef -> true
             ClocktowerNightFullScreenSurface.Empath -> true
             ClocktowerNightFullScreenSurface.Undertaker -> !usesUndertakerSquareTable
@@ -670,35 +656,31 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightFullScreenSurface.PairInformation -> {
-                val presentation = pairSquareTablePresentation
-                if (presentation == null) {
-                    renderPlainInformationFallback()
-                } else {
-                    ClocktowerPairInformationSquareTableDialog(
-                        interactionKey = informationDecisionKey,
-                        presentation = presentation,
-                        recommendedOptions = when {
-                            manualInformationFallback -> emptyList()
-                            effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-                            else -> listOfNotNull(currentAiSuggestedOption)
-                        },
-                        seats = nightActionSeats,
-                        actorSeat = actionActorSeat,
-                        wakeInstruction = command,
-                        abilityLabel = presentationRoleEnName
-                            ?.let { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) }
-                            ?: step.title,
-                        roleLabel = { roleId ->
-                            clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
-                        },
-                        language = language,
-                        canGoPrevious = canGoPrevious,
-                        onPrevious = onPrevious,
-                        onHostTools = onHostTools,
-                        onNext = onNext,
-                        onConfirm = ::showRecommendedDisplayOption,
-                    )
-                }
+                ClocktowerPairInformationSquareTableDialog(
+                    interactionKey = informationDecisionKey,
+                    recommendedOption = when {
+                        manualInformationFallback -> null
+                        effectiveAutomaticInformation -> automaticDisplayOption
+                        else -> currentAiSuggestedOption
+                    },
+                    scriptRoles = scriptRoles,
+                    abilityRoleEnName = requireNotNull(presentationRoleEnName),
+                    seats = nightActionSeats,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
+                    abilityLabel = presentationRoleEnName
+                        ?.let { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) }
+                        ?: step.title,
+                    roleLabel = { roleId ->
+                        clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
+                    },
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                    onConfirm = ::showRecommendedDisplayOption,
+                )
             }
 
             ClocktowerNightFullScreenSurface.Chef,

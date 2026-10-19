@@ -4,12 +4,6 @@ import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 
-internal enum class ClocktowerPairInformationAbility {
-    Washerwoman,
-    Librarian,
-    Investigator,
-}
-
 /** The actual question and its targets, with no calculated answer or registration witness. */
 internal sealed interface ClocktowerInformationQuestion {
     val subjectSeats: List<Int>
@@ -47,17 +41,9 @@ internal data class ClocktowerNightStepUi(
      * surface only; it must not define what a Storyteller is legally allowed to choose manually.
      */
     val legacyInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
-    /**
-     * Complete legal candidate domain available to the Storyteller in manual presentation.
-     * Recommendation ranking may choose a subset for the default surface, but may not narrow this
-     * list. Pair-information abilities source this through [ClocktowerPairManualAuthority].
-     */
+    /** Temporary information presentation options for remaining legacy role surfaces. */
     val manualInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
-    /**
-     * Candidate domain used by automatic first-night information selection. Pair-information
-     * abilities share the same legal domain as manual presentation so execution policy changes
-     * ranking/selection only, never legality.
-     */
+    /** Temporary fallback candidates for roles not yet migrated to direct input. */
     val automaticInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
     val wakeText: String? = null,
     val roleEnName: String? = null,
