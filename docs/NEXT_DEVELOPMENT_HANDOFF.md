@@ -20,6 +20,14 @@
 - **M1a 已实施，待最新 Android CI 最终验收**：堆叠 Draft PR #331，基于 #330，分支 `codex/minimal-host-m1-publication-20261018`。删除信息展示前 Spy/Recluse 合法登记见证解释与阻断、App 层登记规则写入回调、无消费者的 `ClocktowerAutomaticRegistrationEffect.kt` 及其旧 R2 守卫和对应无效测试。真实私密展示仍通过 Session 的 confirmed observation 入口，保留去重、旧查询不冲突、过期响应隔离、私密性。
 - 本次使用 GitHub Connector 直接小步提交；本地开发机 `clocktower` 可保持在 M0 工作树，**不能仅凭旧 HEAD 断言 M1 的本地 Git 状态**。
 
+## M1b Session 第一批实施与风险（2026-10-18）
+
+Draft PR #332 基于 #331、代码分支 `codex/minimal-host-m1b-session-20261018`。已删除 `ClocktowerConfirmedRegistrationPublicationV1.kt`、`ClocktowerConfirmedRegistrationHostWriterV1.kt`、`StorytellerRegistrationRulingProducerV1.kt` 和相关专属旧测试；`ClocktowerGameSession.commitConfirmedPrivateInformationPublication` 已移除，App 直接通过现有唯一 `commitGlobalEpistemicObservation` 提交。并清理不再使用的手动登记见证匹配函数及其测试。保留 Session 事实记录、去重和时间线结构防护，不将“显示的值”反推为登记见证。
+
+首个代码 HEAD `8f9ac02` 完整 CI #4318/R2 #3898 均成功；补充 HEAD `c124e70` 的 CI #4319 与 R2 #3899 以实际最新结果为准。新分支尚未合并 #331、#330；这三个 Draft PR 均为堆叠结构。
+
+下一任务 M1b 第二轮必须处理所有人工信息结果形态（数字、Yes/No、角色、两座位信息），让说书人的最终输入独立于 Host 真实答案和旧合法候选池。当前 `ClocktowerNightStepUi`、`ClocktowerInformationStepBuilder`、`ClocktowerFirstNightInformationRequest`、各类方桌 UI 仍保留旧合法候选/真值语义。审查时特别防止将人工选择的数值误记为“Host 证明的真实/虚假”结果；语义需只记录被确认的展示事实。迁移完所有生产消费者后整条删旧计算与测试。禁止重新建立并行 Session/存档/规则助手。
+
 ## 立即下一项任务
 
 1. 核查 #331 最新 HEAD 的 CI/R2；Android 若失败直接读取失败 job log 并修复直至通过，不把旧测试重新引入。

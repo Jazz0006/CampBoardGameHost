@@ -93,28 +93,5 @@ internal class ClocktowerRegistrationInteractionState {
         recluseRoles[key] = role
     }
 
-    /**
-     * Validate a manually specified interpretation against ALL explanations for this exact result.
-     * A displayed result alone never modifies registration. Empty witness coverage is not evidence
-     * of a specific ruling; it is left to the ability's ordinary manual interaction.
-     */
-    fun manualChoicesMatchResult(
-        spyKey: String?,
-        recluseKey: String?,
-        option: ClocktowerDisplayOption,
-    ): Boolean {
-        val witnesses = option.legalRegistrationWitnesses
-        if (witnesses.isEmpty()) return true
-        val spy = explicitChoice(ClocktowerRegistrationSubject.SPY, spyKey)
-        val recluse = explicitChoice(ClocktowerRegistrationSubject.RECLUSE, recluseKey)
-        if (spy == null && recluse == null) return true
-        return witnesses.any { witness ->
-            (spy == null || witness.spyRegistersGood == spy.usesSpecialRegistration) &&
-                (recluse == null || witness.recluseRegistersEvil == recluse.usesSpecialRegistration) &&
-                (spy?.selectedRegisteredRoleEnName == null || witness.spyRegisteredRoleEnName == null ||
-                    witness.spyRegisteredRoleEnName == spy.selectedRegisteredRoleEnName) &&
-                (recluse?.selectedRegisteredRoleEnName == null || witness.recluseRegisteredRoleEnName == null ||
-                    witness.recluseRegisteredRoleEnName == recluse.selectedRegisteredRoleEnName)
-        }
-    }
+
 }

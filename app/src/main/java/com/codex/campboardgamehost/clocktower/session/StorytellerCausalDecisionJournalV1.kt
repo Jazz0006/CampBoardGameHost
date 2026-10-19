@@ -265,14 +265,10 @@ internal class StorytellerCausalDecisionJournalV1(private val gameId: String) {
         return frozen
     }
 
-    /** The Host may commit only a confirmed legal outcome, not an unselected registration witness. */
+    /** Preserve decision identity and event integrity without inferring registration witnesses. */
     fun commit(decisionId: String, event: StorytellerProviderPriorDecisionV1) {
         val frozen = captureFor(decisionId)
         if (frozen.identity.decisionTypeId ==
-            com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.REGISTRATION_RESOLUTION
-        ) {
-            StorytellerRegistrationRulingProducerV1.validateCommitted(frozen, event)
-        } else if (frozen.identity.decisionTypeId ==
             com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.DAY_ABILITY_REGISTRATION
         ) {
             DayAbilityRegistrationRulingProducerV1.validateCommitted(frozen, event)

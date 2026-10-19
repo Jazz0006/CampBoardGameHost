@@ -24,6 +24,12 @@
 
 在堆叠 Draft PR #331 / `codex/minimal-host-m1-publication-20261018` 中，已删除玩家私密信息发布路径对 Spy/Recluse 登记见证推导、手动登记匹配、展示拦截和过时 UI 自动登记控件的依赖。**仍保留事实确认、Session 私密观察原子提交、去重、旧信息重开和过期检查。** R2 及其他分项已成功；Android CI 以最新 HEAD 验收为准。此批不等于 M1 整体完成。
 
+## M1b 第一轮：Session 登记见证链清除（2026-10-18）
+
+堆叠 Draft PR #332（`codex/minimal-host-m1b-session-20261018`）实施了真正的删除：App 的实际已确认私密信息改走现有唯一 `ClocktowerGameSession.commitGlobalEpistemicObservation`；删除原 Session 的 `commitConfirmedPrivateInformationPublication` 并行入口、独立规则见证写入器、登记见证发布 DTO、登记裁定生成器及其专属旧测试。因已不再生产，旧 journal 仅存的数据验证分支一并清除。补充删除无消费者的 `ClocktowerRegistrationInteractionState.manualChoicesMatchResult` 和依赖它的 4 项旧语义测试。
+
+代码曾在提交 `8f9ac02` 经 CI #4318 / R2 #3898 通过；当前补充删除提交 `c124e70` 的独立 CI #4319 / R2 #3899 仍以最终 GitHub 结论为准。**本次没有完成所有人工信息表单**；原合法数字、角色、二人组合候选 UI 仍存在，禁止把 M1 记为已结束。后续要实现最终人工输入，不将计算出的“真值”/“合法性”回填当权威。
+
 ## 下一批重点
 
 1. M1a Android CI 通过并审查后结束该批；两支 PR 保持 Draft，不自动合并。

@@ -939,7 +939,7 @@ internal fun CampBoardGameHostApp() {
     fun commitClocktowerPrivateInformationPublication(draft: EpistemicObservationDraft) {
         val session = requireClocktowerGameSession()
         val before = session.state
-        val committed = session.commitConfirmedPrivateInformationPublication(draft = draft)
+        val committed = session.commitGlobalEpistemicObservation(draft)
         if (session.state.playerInputRevision == before.playerInputRevision) return
         reviewConfirmedCurrentStepAdvice(before, draft)
         publishClocktowerSessionView()
