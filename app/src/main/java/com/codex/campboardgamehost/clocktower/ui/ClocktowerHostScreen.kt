@@ -32,6 +32,7 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNigh
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
+import com.codex.campboardgamehost.clocktower.session.NightOperationKind
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
@@ -1585,39 +1586,46 @@ internal fun ClocktowerJudgeScreen(
                 chambermaidFirst = chambermaidSelection.first,
                 chambermaidSecond = chambermaidSelection.second,
                 onSelectName = { name ->
-                    val nextSelection = clocktowerToggledSingleTargetSelection(
-                        currentSelection = selectedNightName,
-                        tappedSelection = name,
-                    )
-                    when (currentStep.action) {
-                        ClocktowerNightAction.RedHerring -> onSelectRedHerring(nextSelection)
-                        ClocktowerNightAction.Poison -> onSelectPoisonTarget(nextSelection)
-                        ClocktowerNightAction.ButlerMaster -> onSelectButlerMaster(nextSelection)
-                        ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(nextSelection)
-                        ClocktowerNightAction.DemonKill -> {
-                            if (nightCheckpoint.confirmedAttackTarget == null ||
-                                nightCheckpoint.pendingOperationStepId != null
-                            ) onSelectNightDeath(nextSelection)
-                            else Toast.makeText(context, text(
-                                "上一行动已正式记录，不能修改目标。",
-                                "This attack was already recorded and cannot be amended.",
-                            ), Toast.LENGTH_LONG).show()
-                        }
-                        ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(nextSelection)
-                        ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(nextSelection)
-                        else -> Unit
+                    val committedKind = when (currentStep.action) {
+                        ClocktowerNightAction.Poison -> NightOperationKind.POISON
+                        ClocktowerNightAction.MonkProtect -> NightOperationKind.PROTECT
+                        ClocktowerNightAction.ButlerMaster -> NightOperationKind.BUTLER
+                        ClocktowerNightAction.DemonKill -> NightOperationKind.ATTACK
+                        else -> null
                     }
-                    // Selection updates the actual Host-owned draft first;
-                    // confirmation waits for the freshly selected target to render.
-                    freshAutomaticPlayerTarget = nextSelection?.takeIf { target ->
-                        globalAiAutomatic && allowRuleDeterminedAutoUi &&
-                            currentStep.isRealAction &&
-                            currentStep.action in setOf(
-                                ClocktowerNightAction.Poison,
-                                ClocktowerNightAction.ButlerMaster,
-                                ClocktowerNightAction.MonkProtect,
-                                ClocktowerNightAction.DemonKill,
-                            ) && target in legalPlayerTargetNames
+                    if (committedKind != null &&
+                        committedKind in nightCheckpoint.acceptedOperationKinds
+                    ) {
+                        freshAutomaticPlayerTarget = null
+                        Toast.makeText(context, text(
+                            "本步骤行动已经正式记录，不能通过返回修改。",
+                            "This action has already started and cannot be amended.",
+                        ), Toast.LENGTH_LONG).show()
+                    } else {
+                        val nextSelection = clocktowerToggledSingleTargetSelection(
+                            currentSelection = selectedNightName,
+                            tappedSelection = name,
+                        )
+                        when (currentStep.action) {
+                            ClocktowerNightAction.RedHerring -> onSelectRedHerring(nextSelection)
+                            ClocktowerNightAction.Poison -> onSelectPoisonTarget(nextSelection)
+                            ClocktowerNightAction.ButlerMaster -> onSelectButlerMaster(nextSelection)
+                            ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(nextSelection)
+                            ClocktowerNightAction.DemonKill -> onSelectNightDeath(nextSelection)
+                            ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(nextSelection)
+                            ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(nextSelection)
+                            else -> Unit
+                        }
+                        freshAutomaticPlayerTarget = nextSelection?.takeIf { target ->
+                            globalAiAutomatic && allowRuleDeterminedAutoUi &&
+                                currentStep.isRealAction &&
+                                currentStep.action in setOf(
+                                    ClocktowerNightAction.Poison,
+                                    ClocktowerNightAction.ButlerMaster,
+                                    ClocktowerNightAction.MonkProtect,
+                                    ClocktowerNightAction.DemonKill,
+                                ) && target in legalPlayerTargetNames
+                        }
                     }
                 },
                 onSelectFortuneTellerFirst = {

@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.session.OpeningPlayerExperienceV1
@@ -544,6 +545,17 @@ internal fun CampBoardGameHostApp() {
 
     fun currentClocktowerNightCheckpoint(): ClocktowerNightCheckpoint {
         val pending = clocktowerGameSession?.state?.pendingOperation
+        val acceptedKinds = clocktowerGameSession?.state?.actionTimeline?.entries
+            ?.filter { it.point.phase == storytellerPhaseFor() && it.point.round == round }
+            ?.mapNotNull { entry ->
+                when (entry.fact) {
+                    is ActionFact.Attack -> NightOperationKind.ATTACK
+                    is ActionFact.Poison -> NightOperationKind.POISON
+                    is ActionFact.Protect -> NightOperationKind.PROTECT
+                    is ActionFact.ButlerMasterChoice -> NightOperationKind.BUTLER
+                    else -> null
+                }
+            }?.toSet().orEmpty()
         return ClocktowerNightCheckpoint(
             phaseName = clocktowerPhase.name,
             round = round,
@@ -565,6 +577,7 @@ internal fun CampBoardGameHostApp() {
             pendingOperationStepId = pending?.stepId,
             pendingNightAttackTargetSeat = pending?.targetSeat
                 ?.takeIf { pending.kind == NightOperationKind.ATTACK },
+            acceptedOperationKinds = acceptedKinds,
         )
     }
 

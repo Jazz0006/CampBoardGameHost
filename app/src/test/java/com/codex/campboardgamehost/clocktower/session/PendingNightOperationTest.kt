@@ -70,6 +70,25 @@ class PendingNightOperationTest {
         assertTrue(s.state.epistemicObservationLog.records.isEmpty())
     }
 
+    @Test fun `an unrelated fact cannot accidentally consume a staged operation`() {
+        val s = nightSession()
+        s.stageNightAttack(6, StorytellerPhase.NIGHT, 2, "imp-step")
+        val before = s.state
+        assertThrows(IllegalStateException::class.java) {
+            s.commitConfirmedGameAction(
+                draft = ActionFactDraft.Protect(
+                    "unrelated-protect", StorytellerPhase.NIGHT, 2,
+                    s.nextInputSequence, 6,
+                ),
+                nextGameState = s.state.gameState,
+                expectedGameStateRevision = s.state.gameStateRevision,
+                acceptPendingOperation = true,
+            )
+        }
+        assertSame(before, s.state)
+        assertEquals(NightOperationKind.ATTACK, s.state.pendingOperation?.kind)
+    }
+
     @Test fun `first night Butler also follows next step boundary and remains immutable afterwards`() {
         val game = TroubleBrewingFixtures.eightPlayerExample().let { base ->
             base.copy(players = base.players.map { player ->

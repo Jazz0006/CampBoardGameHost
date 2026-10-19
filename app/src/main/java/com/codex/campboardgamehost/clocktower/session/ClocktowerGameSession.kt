@@ -386,6 +386,11 @@ internal class ClocktowerGameSession private constructor(
         require(nextGameState.seed == state.gameSeed && nextGameState.script == state.gameState.script) {
             "A confirmed step cannot change the session seed or script."
         }
+        if (acceptPendingOperation) {
+            check(state.pendingOperation?.actionId == draft.actionId) {
+                "Only the Session's currently staged action may be accepted as pending."
+            }
+        }
         val prepared = prepareGlobalActionDraft(draft)
         val committed = commitGlobalActionFact(
             semanticHistoryMode = state.semanticHistoryMode,
@@ -589,13 +594,6 @@ internal class ClocktowerGameSession private constructor(
         )
     }
 
-    /** Explicit empty confirmations have no positive Attack/Protect fact in the current schema. */
-    fun clearConfirmedNightAttack(expectedRevision: Long) =
-        confirmNightTargets(state.nightTargets.withAttack(null), expectedRevision)
-
-    fun clearConfirmedNightProtection(expectedRevision: Long) =
-        confirmNightTargets(state.nightTargets.withProtection(null), expectedRevision)
-
     /**
      * Player selection is staged without changing mechanics or adding timeline facts.
      * A new operation cannot be staged until the previous step actually starts.
@@ -700,13 +698,6 @@ internal class ClocktowerGameSession private constructor(
                 acceptPendingOperation = true,
             )
         }
-    }
-
-    private fun confirmNightTargets(next: ClocktowerNightTargets, expectedRevision: Long) {
-        check(state.gameStateRevision == expectedRevision) { "Stale night confirmation." }
-        if (next == state.nightTargets) return
-        check(state.gameStateRevision != Long.MAX_VALUE)
-        updateState(state.copy(nightTargets = next, gameStateRevision = state.gameStateRevision + 1))
     }
 
     /** Confirm private night mechanics; public death announcements are generated at Dawn/Day entry. */

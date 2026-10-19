@@ -53,28 +53,6 @@ class ClocktowerNightVoteOwnershipTest {
         assertEquals(accepted, s.state)
     }
 
-    @Test fun `empty attack confirmation invalidates its dependent Mayor choice`() {
-        val s = session()
-        commit(s, attack(s, 4))
-        val beforeChoice = s.state
-        dependents(s)
-        assertEquals(beforeChoice.playerInputRevision, s.state.playerInputRevision)
-        // The one game revision belongs to the Mayor fact, not pending succession.
-        assertEquals(beforeChoice.gameStateRevision + 1, s.state.gameStateRevision)
-        assertEquals(base, s.state.gameState)
-        val accepted = s.state
-        assertEquals(accepted, s.state)
-        s.clearConfirmedNightAttack(s.state.gameStateRevision)
-        assertEquals(ClocktowerNightTargets(), s.state.nightTargets)
-        assertEquals(accepted.gameStateRevision + 1, s.state.gameStateRevision)
-        assertEquals(accepted.actionTimeline, s.state.actionTimeline)
-        commit(s, ActionFactDraft.Protect("protect", StorytellerPhase.NIGHT, 2, s.nextInputSequence, 3))
-        dependents(s)
-        s.clearConfirmedNightProtection(s.state.gameStateRevision)
-        assertEquals(ClocktowerNightTargets(), s.state.nightTargets)
-        assertEquals(base, s.state.gameState)
-    }
-
     @Test fun `night cleanup and new night retain only their intended pending facts`() {
         val s = session()
         commit(s, attack(s, 4))

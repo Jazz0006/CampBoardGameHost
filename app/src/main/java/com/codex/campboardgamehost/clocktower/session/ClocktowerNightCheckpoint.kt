@@ -28,6 +28,8 @@ internal data class ClocktowerNightCheckpoint(
     val pendingOperationStepId: String? = null,
     /** Only a staged Attack contributes a hypothetical later-night wake/death preview. */
     val pendingNightAttackTargetSeat: Int? = null,
+    /** Derived from accepted facts only; prevents back-navigation from editing a committed choice. */
+    val acceptedOperationKinds: Set<NightOperationKind> = emptySet(),
 ) {
     init {
         require(round > 0)
