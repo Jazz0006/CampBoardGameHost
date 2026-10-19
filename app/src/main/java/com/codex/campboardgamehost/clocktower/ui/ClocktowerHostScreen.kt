@@ -179,6 +179,7 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerNightResultConfirmationScreen(
             gameId = gameId, cards = cards, sourceRevision = anchor,
             currentRevision = StorytellerDecisionRevision(gameStateRevision, playerInputRevision),
+            confirmedNightDeathSeats = confirmedNightDeathSeats,
             poisonedPlayerName = poisonTarget, language = language,
             onCancel = { nightResultRevision = null },
             onConfirm = { result -> onConfirmNight(result); nightResultRevision = null },

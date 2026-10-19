@@ -30,13 +30,18 @@ internal fun ClocktowerNightResultConfirmationScreen(
     cards: List<PlayerCard>,
     sourceRevision: StorytellerDecisionRevision,
     currentRevision: StorytellerDecisionRevision,
+    confirmedNightDeathSeats: List<Int>,
     poisonedPlayerName: String?,
     language: String,
     onCancel: () -> Unit,
     onConfirm: (ClocktowerConfirmedNightResult) -> Unit,
 ) {
     fun text(zh: String, en: String) = if (language == "en") en else zh
-    var deaths by remember(sourceRevision) { mutableStateOf(emptySet<Int>()) }
+    // A mechanical Death accepted at the Imp boundary is not a night-end draft.
+    val deathsLocked = confirmedNightDeathSeats.isNotEmpty()
+    var deaths by remember(sourceRevision, confirmedNightDeathSeats) {
+        mutableStateOf(confirmedNightDeathSeats.toSet())
+    }
     var successor by remember(sourceRevision) { mutableStateOf<Int?>(null) }
     var keepPoison by remember(sourceRevision) { mutableStateOf(poisonedPlayerName != null) }
     var submitting by remember(sourceRevision) { mutableStateOf(false) }
@@ -47,11 +52,17 @@ internal fun ClocktowerNightResultConfirmationScreen(
                 Text(text("确认本夜实际结果", "Confirm actual night results"), style = MaterialTheme.typography.headlineSmall)
                 Text(text("确认后记录并公开播报死亡；新身份单独私密展示。", "Confirm and announce the deaths. Reveal the new identity privately."))
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                    Text(text("实际死者（可多选；不选表示无人死亡）", "Actual deaths (select any; none means no deaths)"))
+                    Text(if (deathsLocked) text(
+                        "恶魔行动已确认死亡；不可在夜末撤销或更改。",
+                        "The confirmed Imp death cannot be changed at night end.",
+                    ) else text(
+                        "尚未确认的死亡结果（可多选；不选表示无人死亡）",
+                        "Unresolved night deaths (select any; none means no deaths)",
+                    ))
                     cards.forEachIndexed { index, card ->
                         val seat = index + 1
                         Row {
-                            Checkbox(seat in deaths, { checked -> deaths = if (checked) deaths + seat else deaths - seat }, enabled = current)
+                            Checkbox(seat in deaths, { checked -> deaths = if (checked) deaths + seat else deaths - seat }, enabled = current && !deathsLocked)
                             Text(card.seatLabel(cards), modifier = Modifier.padding(top = 12.dp))
                         }
                     }

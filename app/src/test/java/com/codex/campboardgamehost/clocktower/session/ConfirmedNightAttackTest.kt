@@ -70,6 +70,26 @@ class ConfirmedNightAttackTest {
         assertSame(accepted, s.state)
     }
 
+    @Test fun `night end cannot remove or replace a mechanically settled Imp death`() {
+        val s = session()
+        s.confirmNightAttack(6, StorytellerPhase.NIGHT, 2, "imp-step")
+        val accepted = s.state
+        assertThrows(IllegalStateException::class.java) {
+            s.commitConfirmedNightDeaths(emptyList(),
+                accepted.gameStateRevision, accepted.playerInputRevision)
+        }
+        assertThrows(IllegalStateException::class.java) {
+            s.commitConfirmedNightDeaths(listOf(6, 5),
+                accepted.gameStateRevision, accepted.playerInputRevision)
+        }
+        assertSame(accepted, s.state)
+        s.commitConfirmedNightDeaths(listOf(6),
+            accepted.gameStateRevision, accepted.playerInputRevision)
+        assertSame(accepted, s.state)
+        assertEquals(1, facts(s).count { it.fact is ActionFact.Death })
+        assertEquals(0, facts(s).count { it.fact is ActionFact.NoNightDeaths })
+    }
+
     @Test fun `Monk protection prevents Death and cannot require reverting Imp`() {
         val s = session(withRole(2, "Monk"))
         s.stageNightProtection(3, StorytellerPhase.NIGHT, 2, "monk-step")

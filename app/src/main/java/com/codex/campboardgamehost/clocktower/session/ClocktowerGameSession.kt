@@ -813,6 +813,16 @@ internal class ClocktowerGameSession private constructor(
         check(state.gameStateRevision == expectedGameStateRevision &&
             state.playerInputRevision == expectedPlayerInputRevision) { "Stale night result confirmation." }
         require(deathSeats.distinct().size == deathSeats.size) { "Duplicate night death seat." }
+        val alreadySettledDeaths = state.actionTimeline.entries.mapNotNull { entry ->
+            (entry.fact as? ActionFact.Death)?.targetSeat?.takeIf {
+                entry.point.phase == StorytellerPhase.NIGHT && entry.point.round == state.round
+            }
+        }.toSet()
+        if (alreadySettledDeaths.isNotEmpty()) {
+            check(deathSeats.toSet() == alreadySettledDeaths) {
+                "The Imp attack already resolved these deaths. Night-end confirmation cannot undo or add deaths."
+            }
+        }
         deathSeats.forEach { require(state.gameState.playerAt(it) != null) { "Unknown night death seat $it." } }
         var actions = state.actionTimeline
         var cursor = state.nextTimelineGlobalSequence
