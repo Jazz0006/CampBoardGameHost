@@ -1,162 +1,141 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.PlayerState
-import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
-import com.codex.campboardgamehost.clocktower.domain.SnapshotField
-import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionIdentityV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderGameStateV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
-import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
-import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotPosition
-import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSeat
-import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotSetupState
-import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
-import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/** Mayor ruling happens at the attack-result boundary, not at dawn. */
 class MayorRedirectBoundaryTest {
-    private val playerStates = listOf(
+    private val players = listOf(
         PlayerState(1, "Mayor", RoleId("Mayor"), Alignment.GOOD, CharacterType.TOWNSFOLK, RoleId("Mayor")),
         PlayerState(2, "Spy", RoleId("Spy"), Alignment.EVIL, CharacterType.MINION, RoleId("Spy")),
         PlayerState(3, "Imp", RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON, RoleId("Imp")),
         PlayerState(4, "Recluse", RoleId("Recluse"), Alignment.GOOD, CharacterType.OUTSIDER, RoleId("Recluse")),
         PlayerState(5, "Empath", RoleId("Empath"), Alignment.GOOD, CharacterType.TOWNSFOLK, RoleId("Empath")),
     )
-
     private fun session(
-        mode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
-    ) = ClocktowerGameSession.createProduction(
-        gameId = "causal-game",
-        gameSeed = 42L,
-        initialState = GameState(ScriptId("trouble_brewing"), playerStates, 42L),
-        semanticHistoryMode = mode,
-    )
-
-    private fun snapshot(session: ClocktowerGameSession) = TroubleBrewingGameSnapshotV1(
-        gameId = session.state.gameId,
-        gameSeed = session.state.gameSeed,
-        position = TroubleBrewingSnapshotPosition(
-            stage = TroubleBrewingSnapshotStage.RUNTIME,
-            phase = SnapshotField.Known(StorytellerPhase.NIGHT),
-            round = SnapshotField.Known(2),
-            gameStateRevision = SnapshotField.Known(session.state.gameStateRevision),
-            playerInputRevision = SnapshotField.Known(session.state.playerInputRevision),
-        ),
-        grimoireSeats = session.state.gameState.players.map {
-            TroubleBrewingSnapshotSeat(
-                seat = it.seat,
-                actualRoleId = SnapshotField.Known(it.actualRole.value),
-                shownRoleId = SnapshotField.Known((it.shownRole ?: it.actualRole).value),
-                alive = SnapshotField.Known(it.alive),
-                poisoned = SnapshotField.Known(it.poisoned),
-            )
-        },
-        setupState = TroubleBrewingSnapshotSetupState(SnapshotField.Unknown, SnapshotField.Unknown),
-    )
-
-    private fun request(id: String, session: ClocktowerGameSession):
-        StorytellerProviderRequestV1 {
-        val snapshot = snapshot(session)
+        setup: List<PlayerState> = players,
+    ): ClocktowerGameSession {
+        val s = ClocktowerGameSession.createProduction(
+            "mayor-attack", 42L, GameState(ScriptId("trouble_brewing"), setup, 42L),
+            ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
+            "night-one-to-day", StorytellerPhase.FIRST_NIGHT, 1,
+            s.nextInputSequence, StorytellerPhase.DAY, 1,
+        ), s.state.gameStateRevision)
+        s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
+            "day-to-night", StorytellerPhase.DAY, 1,
+            s.nextInputSequence, StorytellerPhase.NIGHT, 2,
+        ), s.state.gameStateRevision)
+        s.confirmNightAttack(1, StorytellerPhase.NIGHT, 2, "imp-step")
+        assertTrue(s.state.gameState.playerAt(1)!!.alive)
+        return s
+    }
+    private fun request(s: ClocktowerGameSession): StorytellerProviderRequestV1 {
+        val snapshot = TroubleBrewingGameSnapshotV1(
+            gameId = s.state.gameId,
+            gameSeed = s.state.gameSeed,
+            position = TroubleBrewingSnapshotPosition(
+                stage = TroubleBrewingSnapshotStage.RUNTIME,
+                phase = SnapshotField.Known(StorytellerPhase.NIGHT),
+                round = SnapshotField.Known(2),
+                gameStateRevision = SnapshotField.Known(s.state.gameStateRevision),
+                playerInputRevision = SnapshotField.Known(s.state.playerInputRevision),
+            ),
+            grimoireSeats = s.state.gameState.players.map {
+                TroubleBrewingSnapshotSeat(
+                    seat = it.seat,
+                    actualRoleId = SnapshotField.Known(it.actualRole.value),
+                    shownRoleId = SnapshotField.Known((it.shownRole ?: it.actualRole).value),
+                    alive = SnapshotField.Known(it.alive),
+                    poisoned = SnapshotField.Known(it.poisoned),
+                )
+            },
+            setupState = TroubleBrewingSnapshotSetupState(SnapshotField.Unknown, SnapshotField.Unknown),
+        )
         return StorytellerProviderRequestV1(
             identity = StorytellerProviderDecisionIdentityV1(
                 snapshot.gameId, snapshot.script.value,
-                StorytellerProviderDecisionContextV1.MAYOR_REDIRECT, id,
+                StorytellerProviderDecisionContextV1.MAYOR_REDIRECT,
+                "night:2:mayor-redirect",
             ),
             sourceRevision = StorytellerProviderRevisionV1(
-                session.state.gameStateRevision, session.state.playerInputRevision,
+                s.state.gameStateRevision, s.state.playerInputRevision,
             ),
             state = StorytellerProviderGameStateV1.TroubleBrewing(snapshot),
             decisionContext = StorytellerProviderDecisionContextV1.MayorRedirect(1),
-            legalCandidates = listOf(
-                StorytellerProviderCandidateV1("seat-2", StorytellerProviderCandidatePayloadV1.SeatTarget(2)),
-                StorytellerProviderCandidateV1("seat-4", StorytellerProviderCandidatePayloadV1.SeatTarget(4)),
-            ),
+            legalCandidates = emptyList(),
             gameContext = StorytellerProviderGameContextBuilderV1.build(
                 snapshot, StorytellerProviderRevisionV1(
-                    session.state.gameStateRevision, session.state.playerInputRevision,
-                ), session.state,
+                    s.state.gameStateRevision, s.state.playerInputRevision,
+                ), s.state,
             ),
         )
     }
-
-    @Test
-    fun `confirmed Mayor commits one actual fact without candidate gating`() {
-        val game = session()
-        fun mayorRequest(id: String): StorytellerProviderRequestV1 =
-            request(id, game).copy(legalCandidates = emptyList())
-        val firstRequest = mayorRequest("night:2:mayor-redirect:first")
-        val choice = ActionFactDraft.MayorRedirectChoice(
-            actionId = "mayor-night-two-first",
-            phase = StorytellerPhase.NIGHT,
-            round = 2,
-            sequence = 1,
-            mayorSeat = 1,
-            targetSeat = 2,
+    private fun choice(s: ClocktowerGameSession, seat: Int) =
+        ActionFactDraft.MayorRedirectChoice(
+            "mayor-choice-$seat", StorytellerPhase.NIGHT, 2,
+            s.nextInputSequence, 1, seat,
         )
-        val accepted = game.commitConfirmedMayorRedirect(choice, firstRequest, 0L)
-        assertEquals(0L, accepted.point.globalSequence)
-        assertEquals(1L, game.state.gameStateRevision)
-        assertEquals(1L, game.state.nextTimelineGlobalSequence)
-        assertEquals(choice.targetSeat, (game.state.actionTimeline.entries.single().fact as
-            com.codex.campboardgamehost.clocktower.domain.ActionFact.MayorRedirectChoice).targetSeat)
 
-        // Re-tapping the same stable confirmation is a no-op.
-        val afterFirst = game.state
-        assertEquals(accepted, game.commitConfirmedMayorRedirect(choice, firstRequest, 0L))
-        assertEquals(afterFirst, game.state)
-
-        val bad = choice.copy(actionId = "mayor-invalid", targetSeat = 99, sequence = 2)
-        assertThrows(IllegalArgumentException::class.java) {
-            game.commitConfirmedMayorRedirect(
-                bad, mayorRequest("night:2:mayor-redirect:invalid"),
-                1L,
-            )
-        }
-        assertEquals(afterFirst, game.state)
-
+    @Test fun `Mayor redirect immediately kills the chosen living player in same transaction`() {
+        val s = session()
+        val before = s.state
+        val selected = choice(s, 5)
+        val request = request(s)
+        val accepted = s.commitConfirmedMayorRedirect(selected, request, before.gameStateRevision)
+        assertTrue(s.state.gameState.playerAt(1)!!.alive)
+        assertFalse(s.state.gameState.playerAt(5)!!.alive)
+        assertEquals(before.gameStateRevision + 2, s.state.gameStateRevision)
+        assertEquals(before.nextTimelineGlobalSequence + 2, s.state.nextTimelineGlobalSequence)
+        assertEquals(5, s.state.nightTargets.mayorRedirectSeat)
+        assertEquals(1, s.state.actionTimeline.entries.count { it.fact is ActionFact.MayorRedirectChoice })
+        assertEquals(listOf(5), s.state.actionTimeline.entries.mapNotNull {
+            (it.fact as? ActionFact.Death)?.targetSeat
+        })
+        val committed = s.state
+        assertSame(accepted, s.commitConfirmedMayorRedirect(selected, request, before.gameStateRevision))
+        assertSame(committed, s.state)
         assertThrows(IllegalStateException::class.java) {
-            game.commitConfirmedMayorRedirect(choice.copy(actionId = "stale", sequence = 2), firstRequest, 0L)
+            s.commitConfirmedMayorRedirect(choice(s, 4), request(s), committed.gameStateRevision)
         }
-        val wrongSource = mayorRequest("wrong-source").copy(
-            decisionContext = StorytellerProviderDecisionContextV1.MayorRedirect(2))
-        assertThrows(IllegalArgumentException::class.java) {
-            game.commitConfirmedMayorRedirect(choice.copy(actionId = "wrong-source", sequence = 2), wrongSource, 1L)
-        }
-        assertEquals(afterFirst, game.state)
-
-        val secondRequest = mayorRequest("night:2:mayor-redirect:revised")
-        game.commitConfirmedMayorRedirect(
-            choice.copy(actionId = "mayor-night-two-revised", targetSeat = 3, sequence = 2),
-            secondRequest, 1L,
-        )
-        assertEquals(2L, game.state.gameStateRevision)
-        assertEquals(2L, game.state.nextTimelineGlobalSequence)
-        assertEquals(listOf(0L, 1L), game.state.actionTimeline.entries.map { it.point.globalSequence })
-        assertEquals(3, game.state.nightTargets.mayorRedirectSeat)
-
-        // The legal domain also permits letting the Mayor die: target == Mayor seat.
-        game.commitConfirmedMayorRedirect(
-            choice.copy(actionId = "mayor-night-two-no-redirect", targetSeat = 1, sequence = 3),
-            mayorRequest("night:2:mayor-redirect:no-redirect"),
-            2L,
-        )
-        assertEquals(3L, game.state.gameStateRevision)
-        assertEquals(3L, game.state.nextTimelineGlobalSequence)
-        assertEquals(1, game.state.nightTargets.mayorRedirectSeat)
-
+        assertSame(committed, s.state)
     }
 
+    @Test fun `Mayor may choose own death and its result is immediately recorded`() {
+        val s = session()
+        val request = request(s)
+        s.commitConfirmedMayorRedirect(choice(s, 1), request, s.state.gameStateRevision)
+        assertFalse(s.state.gameState.playerAt(1)!!.alive)
+        assertEquals(listOf(1), s.state.actionTimeline.entries.mapNotNull {
+            (it.fact as? ActionFact.Death)?.targetSeat
+        })
+    }
+
+    @Test fun `choosing a dead target does not invent a second death`() {
+        val s = session(players.map { if (it.seat == 4) it.copy(alive = false) else it })
+        val request = request(s)
+        s.commitConfirmedMayorRedirect(choice(s, 4), request, s.state.gameStateRevision)
+        assertTrue(s.state.gameState.playerAt(1)!!.alive)
+        assertEquals(0, s.state.actionTimeline.entries.count { it.fact is ActionFact.Death })
+        assertEquals(1, s.state.actionTimeline.entries.count { it.fact is ActionFact.MayorRedirectChoice })
+    }
+
+    @Test fun `ruling refuses stale revision or unrelated source`() {
+        val s = session()
+        val request = request(s)
+        val action = choice(s, 4)
+        assertThrows(IllegalStateException::class.java) {
+            s.commitConfirmedMayorRedirect(action, request, s.state.gameStateRevision - 1)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            s.commitConfirmedMayorRedirect(action.copy(mayorSeat = 2), request, s.state.gameStateRevision)
+        }
+    }
 }

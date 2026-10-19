@@ -496,25 +496,79 @@ internal class ClocktowerGameSession private constructor(
         )
     }
 
-    /** Confirm the actual redirect once; its canonical action is also the AI history. */
+    /**
+     * A functioning Mayor's redirect is an immediate, irreversible attack-result decision.
+     * The private choice and any actual Death are committed together in ONE Session update.
+     * This is not a later-night draft and cannot be amended by a second action ID.
+     */
     fun commitConfirmedMayorRedirect(
         draft: ActionFactDraft.MayorRedirectChoice,
         request: StorytellerProviderRequestV1,
         expectedGameStateRevision: Long,
     ): TimelineBoundActionFact {
-        require(draft.phase == StorytellerPhase.NIGHT)
-        state.actionTimeline.entries.firstOrNull { it.fact.actionId == draft.actionId }?.let { accepted ->
-            require(draft.matches(accepted)) { "Mayor action ID already committed with different content." }
+        require(draft.phase == StorytellerPhase.NIGHT && state.phase == draft.phase &&
+            draft.round == state.round)
+        state.actionTimeline.entries.firstOrNull {
+            it.point.phase == StorytellerPhase.NIGHT && it.point.round == draft.round &&
+                it.fact is ActionFact.MayorRedirectChoice
+        }?.let { accepted ->
+            check(accepted.fact.actionId == draft.actionId && draft.matches(accepted)) {
+                "The Mayor ruling is already committed; it cannot be amended."
+            }
             return accepted
         }
         check(state.gameStateRevision == expectedGameStateRevision) { "Stale Mayor confirmation." }
         require(request.identity.gameId == state.gameId)
-        require(request.sourceRevision == StorytellerProviderRevisionV1(state.gameStateRevision, state.playerInputRevision))
-        val question = request.decisionContext as? com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.MayorRedirect
+        require(request.sourceRevision == StorytellerProviderRevisionV1(
+            state.gameStateRevision, state.playerInputRevision))
+        val question = request.decisionContext as?
+            com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1.MayorRedirect
         require(question?.mayorSeat == draft.mayorSeat) { "Mayor request source differs from the actual action." }
-        require(state.gameState.playerAt(draft.mayorSeat) != null)
-        require(state.gameState.playerAt(draft.targetSeat) != null) { "Unknown Mayor redirect target seat." }
-        return commitConfirmedGameAction(draft, state.gameState, expectedGameStateRevision)
+        val mayor = requireNotNull(state.gameState.playerAt(draft.mayorSeat))
+        val target = requireNotNull(state.gameState.playerAt(draft.targetSeat)) {
+            "Unknown Mayor redirect target seat."
+        }
+        check(state.nightTargets.attackSeat == draft.mayorSeat &&
+            mayor.alive && mayor.actualRole == RoleId("Mayor") && !mayor.poisoned) {
+            "Mayor ruling requires a confirmed attack against a functioning living Mayor."
+        }
+        // The attack's deterministic boundary already checked a functioning Monk on the Mayor.
+        val effectiveMonkProtection = state.nightTargets.monkSeat == draft.targetSeat &&
+            state.gameState.players.any {
+                it.alive && !it.poisoned && it.actualRole == RoleId("Monk")
+            }
+        val noDeath = !target.alive || effectiveMonkProtection ||
+            (target.actualRole == RoleId("Soldier") && !target.poisoned)
+        val deathSeat = draft.targetSeat.takeUnless { noDeath }
+        val ruling = commitGlobalActionFact(
+            state.semanticHistoryMode, state.actionTimeline, state.epistemicObservationLog,
+            state.nextTimelineGlobalSequence, prepareGlobalActionDraft(draft),
+        )
+        val death = deathSeat?.let { seat ->
+            check(ruling.nextTimelineGlobalSequence < Int.MAX_VALUE)
+            commitGlobalActionFact(
+                state.semanticHistoryMode, ruling.actionTimeline, state.epistemicObservationLog,
+                ruling.nextTimelineGlobalSequence,
+                prepareGlobalActionDraft(ActionFactDraft.Death(
+                    DawnCommitIdentity.death(state.gameId, draft.round, seat),
+                    StorytellerPhase.NIGHT, draft.round,
+                    ruling.nextTimelineGlobalSequence.toInt() + 1, seat,
+                )),
+            )
+        }
+        val facts = if (death == null) 1L else 2L
+        check(state.gameStateRevision <= Long.MAX_VALUE - facts)
+        updateState(state.copy(
+            gameStateRevision = state.gameStateRevision + facts,
+            gameState = if (deathSeat == null) state.gameState else state.gameState.copy(
+                players = playersAfterConfirmedNightDeath(deathSeat),
+            ),
+            actionTimeline = death?.actionTimeline ?: ruling.actionTimeline,
+            nextTimelineGlobalSequence = death?.nextTimelineGlobalSequence ?:
+                ruling.nextTimelineGlobalSequence,
+            nightTargets = state.nightTargets.copy(mayorRedirectSeat = draft.targetSeat),
+        ))
+        return ruling.entry
     }
 
     /** Non-mutating validation/projection for production flows that must persist before commit. */
