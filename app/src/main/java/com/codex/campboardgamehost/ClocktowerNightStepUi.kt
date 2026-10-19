@@ -274,7 +274,7 @@ internal fun ClocktowerNightStepCardLocalized(
     LaunchedEffect(
         informationDecisionKey, autoPresentAiInformation,
         automaticQueriedDisplayOption?.let(::clocktowerInformationCandidateId),
-        automaticRavenkeeperChoice?.key,
+        automaticRavenkeeperChoice?.displayOption?.let(::clocktowerInformationCandidateId),
     ) {
         automaticQueriedDisplayOption?.let(::showRecommendedDisplayOption)
         automaticRavenkeeperChoice?.let(::showRavenkeeperChoice)
