@@ -79,27 +79,14 @@ class ClocktowerSingleTargetInteractionPresentationTest {
     }
 
     @Test
-    fun `automatic rulings keep a concrete read only surface while effects settle`() {
-        for (action in listOf(ClocktowerNightAction.MayorRedirect)) {
-            val presentation = requireNotNull(
-                clocktowerNightRulingPresentation(action, selection, true, 2, "explanation"),
-            )
-            assertTrue(presentation.automatic)
-            assertFalse(presentation.selection.enabled)
-            assertTrue(presentation.selection.selectableSeats.isEmpty())
-            assertFalse(presentation.confirmationEnabled)
-        }
-    }
-
-    @Test
     fun `Mayor absence disables targets while retaining current selection`() {
-        val missing = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.MayorRedirect, selection, false, null, ""))
+        val missing = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.MayorRedirect, selection, null))
         assertFalse(missing.selection.enabled)
         assertTrue(missing.selection.selectableSeats.isEmpty())
         assertEquals(selection.selectedSeat, missing.selection.selectedSeat)
         assertNull(missing.mayorSeat)
         assertFalse(missing.confirmationEnabled)
-        val present = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.MayorRedirect, selection, false, 2, ""))
+        val present = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.MayorRedirect, selection, 2))
         assertEquals(selection, present.selection)
         assertEquals(2, present.mayorSeat)
         assertTrue(present.confirmationEnabled)

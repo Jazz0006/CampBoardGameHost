@@ -683,9 +683,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         selection = ClocktowerSingleTargetSelection(
                             seatNumberForName(selectedName), selectableSeatNumbers(candidates), step.isRealAction,
                         ),
-                        automatic = false,
                         mayorSeat = seatNumberForName(mayor?.name),
-                        explanation = step.explanation,
                     ),
                 ) { "Ruling surface plan requires Mayor redirect or Demon succession." }
                 key(step.action) {
