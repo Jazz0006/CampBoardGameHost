@@ -444,6 +444,12 @@ internal class ClocktowerGameSession private constructor(
         draft: ActionFactDraft.PhaseAdvance,
         expectedGameStateRevision: Long,
     ): TimelineBoundActionFact {
+        if (draft.phase == StorytellerPhase.NIGHT &&
+            draft.nextPhase in setOf(StorytellerPhase.DAWN, StorytellerPhase.DAY)) {
+            check(!mayorAttackAwaitsRuling()) {
+                "The confirmed Imp attack on the Mayor must be resolved before dawn."
+            }
+        }
         val legal = when (draft.phase) {
             StorytellerPhase.FIRST_NIGHT ->
                 draft.nextPhase == StorytellerPhase.DAY && draft.nextRound == draft.round
@@ -789,6 +795,24 @@ internal class ClocktowerGameSession private constructor(
         return acceptDeterministicNightAttack(targetSeat, phase, round, actionId)
     }
 
+    private fun mayorAttackAwaitsRuling(): Boolean {
+        val seat = state.nightTargets.attackSeat ?: return false
+        val target = state.gameState.playerAt(seat) ?: return false
+        if (!target.alive || target.actualRole != RoleId("Mayor") || target.poisoned) return false
+        val effectiveMonkProtection = state.nightTargets.monkSeat == seat &&
+            state.gameState.players.any {
+                it.alive && !it.poisoned && it.actualRole == RoleId("Monk")
+            }
+        if (effectiveMonkProtection) return false
+        if (state.gameState.players.none { it.alive && !it.poisoned && it.actualRole == RoleId("Imp") }) {
+            return false
+        }
+        return state.actionTimeline.entries.none {
+            it.point.phase == StorytellerPhase.NIGHT && it.point.round == state.round &&
+                it.fact is ActionFact.MayorRedirectChoice
+        }
+    }
+
     /** Confirm private night mechanics; public death announcements are generated at Dawn/Day entry. */
     fun commitConfirmedNightDeaths(
         deathSeats: List<Int>,
@@ -796,6 +820,9 @@ internal class ClocktowerGameSession private constructor(
         expectedPlayerInputRevision: Long,
     ) {
         check(state.phase == StorytellerPhase.NIGHT) { "Night results require the current Night." }
+        check(!mayorAttackAwaitsRuling()) {
+            "Cannot declare a no-death night or settle deaths while the Mayor ruling is unresolved."
+        }
         check(state.gameStateRevision == expectedGameStateRevision &&
             state.playerInputRevision == expectedPlayerInputRevision) { "Stale night result confirmation." }
         require(deathSeats.distinct().size == deathSeats.size) { "Duplicate night death seat." }

@@ -127,6 +127,25 @@ class MayorRedirectBoundaryTest {
         assertEquals(1, s.state.actionTimeline.entries.count { it.fact is ActionFact.MayorRedirectChoice })
     }
 
+    @Test fun `Mayor attack cannot be declared no deaths or advance to dawn before ruling`() {
+        val s = session()
+        val before = s.state
+        assertThrows(IllegalStateException::class.java) {
+            s.commitConfirmedNightDeaths(emptyList(), before.gameStateRevision, before.playerInputRevision)
+        }
+        assertThrows(IllegalStateException::class.java) {
+            s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
+                "night-to-dawn", StorytellerPhase.NIGHT, 2,
+                s.nextInputSequence, StorytellerPhase.DAWN, 2,
+            ), before.gameStateRevision)
+        }
+        assertSame(before, s.state)
+        s.commitConfirmedMayorRedirect(choice(s, 4), request(s), s.state.gameStateRevision)
+        s.commitConfirmedNightDeaths(listOf(4),
+            s.state.gameStateRevision, s.state.playerInputRevision)
+        assertFalse(s.state.gameState.playerAt(4)!!.alive)
+    }
+
     @Test fun `ruling refuses stale revision or unrelated source`() {
         val s = session()
         val request = request(s)
