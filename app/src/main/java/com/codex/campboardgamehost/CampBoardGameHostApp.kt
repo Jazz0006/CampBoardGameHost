@@ -2356,27 +2356,19 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerGameStateRevision()
                             clocktowerDayModeState.value = ClocktowerDayMode.Overview
                         },
-                        onSlayerShot = { claimantName, targetName, recluseRegistersAsDemon ->
+                        onSlayerShot = { claimantName, targetName, targetDied ->
                             val claimantCard = cards.firstOrNull { it.name == claimantName }
                             val targetIndex = cards.indexOfFirst { it.name == targetName }
                             val targetCard = cards.getOrNull(targetIndex)
-                            val slayerDecision = AbilityFunctioningSemantics.oneShotDecision(
-                                subject = claimantCard?.abilitySubject(confirmedClocktowerPoisonTarget()),
-                                role = "Slayer",
-                                alreadyUsed = clocktowerSlayerUsed,
-                            )
-                            val targetRegistersAsDemon = targetCard?.clocktowerTeam == ClocktowerTeam.Demon ||
-                                (targetCard?.clocktowerRole?.enName == "Recluse" &&
-                                    targetCard.name != confirmedClocktowerPoisonTarget() &&
-                                    recluseRegistersAsDemon == true)
-                            val shotWillHit = slayerDecision.effectApplies &&
-                                targetIndex >= 0 && targetCard != null &&
-                                targetCard.eliminatedRound == null && targetRegistersAsDemon
+                            // The actual public outcome is confirmed by the Storyteller.
+                            // Do not calculate an answer from poisoning, true role or Recluse.
+                            val shotWillHit = targetDied
+                            val actualSlayerAbilityConsumed =
+                                claimantCard?.clocktowerRole?.enName == "Slayer" && !clocktowerSlayerUsed
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing &&
                                 claimantCard != null && targetCard != null
                             ) {
-                                // One action records the public attempt and any explicitly selected private
-                                // registration; neither a miss nor impairment fabricates a registration.
+                                // One confirmed action records the actual attempt and result.
                                 commitClocktowerConfirmedAction(ActionFactDraft.SlayerShot(
                                     actionId = clocktowerActionId("slayer-shot", targetSeat = targetIndex + 1),
                                     phase = storytellerPhaseFor(),
@@ -2384,9 +2376,8 @@ internal fun CampBoardGameHostApp() {
                                     sequence = requireClocktowerGameSession().nextInputSequence,
                                     claimantSeat = clocktowerSeatFor(claimantName),
                                     targetSeat = targetIndex + 1,
-                                    abilityConsumed = slayerDecision.consumesUse,
+                                    abilityConsumed = actualSlayerAbilityConsumed,
                                     hit = shotWillHit,
-                                    targetRegistersAsDemon = recluseRegistersAsDemon,
                                 ))
                             }
                             var shotOutcome: GameOutcome? = null

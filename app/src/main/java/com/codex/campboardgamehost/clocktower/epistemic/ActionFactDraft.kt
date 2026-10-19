@@ -118,7 +118,6 @@ sealed interface ActionFactDraft {
             requireIdentity(actionId, round, sequence)
             requireSeat(claimantSeat)
             requireSeat(targetSeat)
-            require(!hit || abilityConsumed)
         }
     }
 

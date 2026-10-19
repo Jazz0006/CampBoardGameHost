@@ -4,6 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 
 /** Pending shot only. App/Session still validate and commit the shot and its consequences. */
@@ -11,8 +19,6 @@ internal class ClocktowerSlayerDraft {
     var claimantName by mutableStateOf<String?>(null)
         private set
     var targetName by mutableStateOf<String?>(null)
-        private set
-    var recluseRegistersDemon by mutableStateOf<Boolean?>(null)
         private set
 
     fun selectSeat(name: String?) {
@@ -22,18 +28,15 @@ internal class ClocktowerSlayerDraft {
         } else {
             targetName = name.takeUnless { targetName == it }
         }
-        recluseRegistersDemon = null
     }
-    fun chooseRecluseRegistration(value: Boolean) { recluseRegistersDemon = value }
     fun clear() {
         claimantName = null
         targetName = null
-        recluseRegistersDemon = null
     }
-    fun confirm(targetIsHealthyRecluse: Boolean, onShot: (String, String, Boolean?) -> Unit): Boolean {
+    fun confirm(targetDied: Boolean, onShot: (String, String, Boolean) -> Unit): Boolean {
         val claimant = claimantName ?: return false
         val target = targetName ?: return false
-        onShot(claimant, target, recluseRegistersDemon.takeIf { targetIsHealthyRecluse })
+        onShot(claimant, target, targetDied)
         clear()
         return true
     }
@@ -46,15 +49,14 @@ internal fun ClocktowerSlayerInteraction(
     seats: List<HostSeatPresentation>,
     claimantCandidateNames: Set<String>,
     round: Int,
-    poisonTarget: String?,
     actionsEnabled: Boolean,
     onHostTools: () -> Unit,
-    onSlayerShot: (String, String, Boolean?) -> Unit,
+    onSlayerShot: (String, String, Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
-    fun registrationKey(ability: String, subject: String) = "${ClocktowerPhase.Day.name}:$round:$ability:$subject"
-    val slayerTargetCard = cards.firstOrNull { it.name == draft.targetName }
+    // The Storyteller confirms the visible result; target changes clear a stale selection.
+    var targetDied by remember(draft.claimantName, draft.targetName) { mutableStateOf(false) }
     val slayerTableState = clocktowerSlayerTableState(
         seats = seats,
         claimantCandidateNames = claimantCandidateNames,
@@ -71,25 +73,26 @@ internal fun ClocktowerSlayerInteraction(
         onSeatClick = { seatId -> draft.selectSeat(slayerTableState.playerNameForSeat(seatId)) },
         onResetClaimant = draft::clear,
         onResolve = {
-            val targetIsHealthyRecluse = slayerTargetCard?.clocktowerRole?.enName == "Recluse"
-            if (draft.confirm(targetIsHealthyRecluse, onSlayerShot)) onBack()
+            if (draft.confirm(targetDied, onSlayerShot)) onBack()
         },
         onBack = {
             draft.clear()
             onBack()
         },
         specialContent = {
-            if (slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
-                ClocktowerRecluseRegistrationDecisionControls(
-                    legalRoles = emptyList(),
-                    registersEvil = draft.recluseRegistersDemon == true,
-                    registeredRoleEnName = null,
-                    enabled = actionsEnabled,
-                    hasExplicitChoice = draft.recluseRegistersDemon != null,
-                    language = language,
-                    onRegistersEvilChange = draft::chooseRecluseRegistration,
-                    onRoleChange = {},
-                )
+            if (draft.targetName != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = targetDied,
+                        onCheckedChange = { targetDied = it },
+                        enabled = actionsEnabled,
+                    )
+                    Text(
+                        if (language == "en") "Confirmed: target died from the shot"
+                        else "说书人确认：目标因射击死亡",
+                        modifier = Modifier.padding(start = 4.dp),
+                    )
+                }
             }
         },
     )
