@@ -2140,9 +2140,9 @@ internal fun CampBoardGameHostApp() {
                         onConfirmDemonAttack = { stepId ->
                             val targetName = clocktowerDemonAttackDraftTarget
                             val session = requireClocktowerGameSession()
-                            session.stageNightAttack(
+                            session.confirmNightAttack(
                                 targetSeat = requireNotNull(targetName) {
-                                    "Imp must choose a target before staging the night action."
+                                    "Imp must choose a target before confirming the irreversible attack."
                                 }.let(::clocktowerSeatFor),
                                 phase = storytellerPhaseFor(), round = round, stepId = stepId,
                             )

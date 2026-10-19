@@ -18,6 +18,7 @@ import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundar
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerOptionalNightSourceChronology
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
+import com.codex.campboardgamehost.clocktower.session.NightOperationKind
 
 /**
  * Immutable, non-Compose projection of the mechanical state consumed by the Clocktower host UI.
@@ -29,6 +30,8 @@ internal class ClocktowerNightHostProjection internal constructor(
     private val phase: ClocktowerPhase,
     private val poisonTarget: String?,
     val canonicalNightDeathResolution: TroubleBrewingDawnDeathResolution,
+    private val committedAttackDeathName: String?,
+    private val attackAlreadyAccepted: Boolean,
     val mayorTarget: PlayerCard?,
     val mayorRedirectTargetCards: List<PlayerCard>,
     val ravenkeeperTrigger: PlayerCard?,
@@ -43,11 +46,12 @@ internal class ClocktowerNightHostProjection internal constructor(
      * A Mayor choice must resolve first; do not assume the Mayor is dead while it is pending.
      */
     val resolvedDeathForRemainingWakeups: String?
-        get() = canonicalNightDeathResolution.resolvedDeathName.takeUnless {
-            canonicalNightDeathResolution.mayorRedirectEligible &&
-                canonicalNightDeathResolution.facts.mayorSeat != null &&
-                canonicalNightDeathResolution.resolvedDeathSeat == canonicalNightDeathResolution.facts.mayorSeat
-        }
+        get() = if (attackAlreadyAccepted) committedAttackDeathName
+            else canonicalNightDeathResolution.resolvedDeathName.takeUnless {
+                canonicalNightDeathResolution.mayorRedirectEligible &&
+                    canonicalNightDeathResolution.facts.mayorSeat != null &&
+                    canonicalNightDeathResolution.resolvedDeathSeat == canonicalNightDeathResolution.facts.mayorSeat
+            }
 
     val demonCard: PlayerCard?
         get() = currentDemonHostContext?.actor
@@ -128,7 +132,11 @@ internal class ClocktowerNightHostProjection internal constructor(
         roleEnName: String,
         triggerActor: PlayerCard?,
     ): AbilityFunctioningState? = effectiveAbilitySubjectForRole(roleEnName, triggerActor)
-        ?.let { subject -> AbilityFunctioningSemantics.stateFor(subject, roleEnName) }
+        ?.let { subject ->
+            if (attackAlreadyAccepted && committedAttackDeathName == triggerActor?.name)
+                AbilityFunctioningSemantics.stateForEstablishedInteraction(subject, roleEnName)
+            else AbilityFunctioningSemantics.stateFor(subject, roleEnName)
+        }
 
 }
 
@@ -142,6 +150,7 @@ internal object ClocktowerNightHostProjectionFactory {
         checkpoint: ClocktowerNightCheckpoint,
         pendingNightNewDemonIdentityName: String?,
         lastExecutedName: String?,
+        confirmedNightDeathSeats: List<Int> = emptyList(),
     ): ClocktowerNightHostProjection {
         val canonicalNightDeathResolution = resolveTroubleBrewingDawnDeathResolution(
             cards = cards,
@@ -154,10 +163,19 @@ internal object ClocktowerNightHostProjectionFactory {
         val mayorRedirectTargetCards = cards.filter { card ->
             card.name != mayorTarget?.name
         }
-        val resolvedNightDeathCard = canonicalNightDeathResolution.resolvedDeathName
-            ?.let { name -> cards.firstOrNull { it.name == name } }
+        val attackAlreadyAccepted = NightOperationKind.ATTACK in checkpoint.acceptedOperationKinds
+        val committedDeathSeat = confirmedNightDeathSeats.firstOrNull()
+        val resolvedNightDeathSeat = if (attackAlreadyAccepted) committedDeathSeat
+            else canonicalNightDeathResolution.resolvedDeathSeat
+        val resolvedNightDeathCard = resolvedNightDeathSeat?.let { cards.getOrNull(it - 1) }
+        fun wokeWhenKilled(role: String): Boolean {
+            val seat = resolvedNightDeathSeat ?: return false
+            val player = gameState.playerAt(seat) ?: return false
+            return player.actualRole == RoleId(role) ||
+                (player.actualRole == RoleId("Drunk") && player.shownRole == RoleId(role))
+        }
         val ravenkeeperTrigger = resolvedNightDeathCard?.takeIf {
-            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Ravenkeeper")
+            wokeWhenKilled("Ravenkeeper")
         }
 
         val currentDemonHostContext = resolveCurrentDemonHostContext(
@@ -165,13 +183,13 @@ internal object ClocktowerNightHostProjectionFactory {
             poisonedPlayerName = checkpoint.confirmedPoisonTarget,
         )
         val sageNightDeath = resolvedNightDeathCard?.takeIf {
-            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage")
+            wokeWhenKilled("Sage")
         }
         val confirmedWakingRoleIds = clocktowerNightWakingRoleIds(
             gameState = gameState,
             includeDead = false,
         )
-        val otherNightWakingRoleIds = canonicalNightDeathResolution.resolvedDeathSeat
+        val otherNightWakingRoleIds = resolvedNightDeathSeat
             ?.let(gameState::playerAt)
             ?.let { projectedDeadPlayer ->
                 buildSet {
@@ -212,6 +230,8 @@ internal object ClocktowerNightHostProjectionFactory {
             phase = phase,
             poisonTarget = poisonTarget,
             canonicalNightDeathResolution = canonicalNightDeathResolution,
+            committedAttackDeathName = committedDeathSeat?.let { gameState.playerAt(it)?.name },
+            attackAlreadyAccepted = attackAlreadyAccepted,
             mayorTarget = mayorTarget,
             mayorRedirectTargetCards = mayorRedirectTargetCards,
             ravenkeeperTrigger = ravenkeeperTrigger,

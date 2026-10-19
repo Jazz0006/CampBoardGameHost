@@ -520,6 +520,7 @@ internal fun ClocktowerJudgeScreen(
         checkpoint = nightCheckpoint,
         pendingNightNewDemonIdentityName = pendingNightNewDemonIdentityName,
         lastExecutedName = lastExecutedName,
+        confirmedNightDeathSeats = confirmedNightDeathSeats,
     )
     val mayorCanRedirect = nightHostProjection.mayorCanRedirect
     val mayorTarget = nightHostProjection.mayorTarget
@@ -1138,6 +1139,19 @@ internal fun ClocktowerJudgeScreen(
         require(nightSteps.isNotEmpty()) { "A started night must contain an actionable step." }
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
+        val committedImpStepIndex = if (NightOperationKind.ATTACK in nightCheckpoint.acceptedOperationKinds) {
+            nightSteps.indexOfFirst { it.isRealAction && it.action == ClocktowerNightAction.DemonKill }
+        } else -1
+        // Once Attack/Death has committed, previous cannot cross the Imp transaction boundary.
+        val canGoPreviousNightStep = currentStepIndex > 0 &&
+            (committedImpStepIndex < 0 || currentStepIndex - 1 > committedImpStepIndex)
+        val previousNightStepIfAllowed = {
+            if (canGoPreviousNightStep) onMovePreviousNightStep()
+            else Toast.makeText(context, text(
+                "恶魔袭击已经结算，不能返回修改。",
+                "The Imp attack has been resolved and cannot be rolled back.",
+            ), Toast.LENGTH_LONG).show()
+        }
         // Placeholder steps must not commit the pending action before a real next action begins.
         if (readyToBeginNightStep != null && currentStepIndex >= readyToBeginNightStep!! &&
             currentStep.isRealAction && nightCheckpoint.pendingOperationStepId != null
@@ -1152,8 +1166,10 @@ internal fun ClocktowerJudgeScreen(
                 buttonLabel = text("开始当前步骤", "Begin this step"),
                 onHostTools = onHostTools,
                 onPrevious = {
-                    readyToBeginNightStep = null
-                    onMovePreviousNightStep()
+                    if (canGoPreviousNightStep) {
+                        readyToBeginNightStep = null
+                        onMovePreviousNightStep()
+                    }
                 },
                 onStartNight = {
                     onStartNightStep(currentStep.interactionId.toString())
@@ -1340,7 +1356,6 @@ internal fun ClocktowerJudgeScreen(
                 ClocktowerNightAction.Poison,
                 ClocktowerNightAction.MonkProtect,
                 ClocktowerNightAction.ButlerMaster,
-                ClocktowerNightAction.DemonKill,
             )
             val flowMayExpandAfterConfirmation = currentStep.action in setOf(
                 ClocktowerNightAction.DemonKill,
@@ -1497,13 +1512,13 @@ internal fun ClocktowerJudgeScreen(
             },
             subtitle = text("当前阶段：${currentStep.title}", "Current: ${currentStep.title}"),
             progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
-            canGoPrevious = currentStepIndex > 0,
+            canGoPrevious = canGoPreviousNightStep,
             nextEnabled = playerTargetReady && (currentStep.action !in setOf(
                 ClocktowerNightAction.MayorRedirect,
             ) || selectedNightName != null) &&
                 (currentStep.action != ClocktowerNightAction.RedHerring ||
                     !currentStep.isRealAction || redHerring != null),
-            onPrevious = onMovePreviousNightStep,
+            onPrevious = previousNightStepIfAllowed,
             onHostTools = onHostTools,
             onNext = advanceNightStep,
             contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
@@ -1755,8 +1770,8 @@ internal fun ClocktowerJudgeScreen(
                         ), Toast.LENGTH_LONG).show()
                     }
                 },
-                canGoPrevious = currentStepIndex > 0,
-                onPrevious = onMovePreviousNightStep,
+                canGoPrevious = canGoPreviousNightStep,
+                onPrevious = previousNightStepIfAllowed,
                 onHostTools = onHostTools,
                 onNext = advanceNightStep,
                 )

@@ -33,7 +33,7 @@ class PendingNightOperationTest {
         return session
     }
 
-    @Test fun `poison protect and attack are one serial pending operation with accepted mechanical effects`() {
+    @Test fun `poison and protection remain staged but the attack settles on confirmation`() {
         val s = nightSession()
         val startRevision = s.state.gameStateRevision
         val startCursor = s.state.nextTimelineGlobalSequence
@@ -60,19 +60,19 @@ class PendingNightOperationTest {
         assertEquals(2, s.state.nightTargets.monkSeat)
         assertEquals(1, s.state.actionTimeline.entries.count { it.fact is ActionFact.Protect })
 
-        s.stageNightAttack(6, StorytellerPhase.NIGHT, 2, "imp-step")
         assertNull(s.state.nightTargets.attackSeat)
-        assertNotNull(s.startNextNightStep("night-resolution"))
+        assertNotNull(s.confirmNightAttack(6, StorytellerPhase.NIGHT, 2, "imp-step"))
         assertEquals(6, s.state.nightTargets.attackSeat)
         assertNull(s.state.pendingOperation)
         assertEquals(1, s.state.actionTimeline.entries.count { it.fact is ActionFact.Attack })
-        assertTrue(s.state.gameState.playerAt(6)!!.alive)
+        assertEquals(1, s.state.actionTimeline.entries.count { it.fact is ActionFact.Death })
+        assertFalse(s.state.gameState.playerAt(6)!!.alive)
         assertTrue(s.state.epistemicObservationLog.records.isEmpty())
     }
 
     @Test fun `an unrelated fact cannot accidentally consume a staged operation`() {
         val s = nightSession()
-        s.stageNightAttack(6, StorytellerPhase.NIGHT, 2, "imp-step")
+        s.stageNightPoison(6, StorytellerPhase.NIGHT, 2, "poison-step")
         val before = s.state
         assertThrows(IllegalStateException::class.java) {
             s.commitConfirmedGameAction(
@@ -86,7 +86,7 @@ class PendingNightOperationTest {
             )
         }
         assertSame(before, s.state)
-        assertEquals(NightOperationKind.ATTACK, s.state.pendingOperation?.kind)
+        assertEquals(NightOperationKind.POISON, s.state.pendingOperation?.kind)
     }
 
     @Test fun `first night Butler also follows next step boundary and remains immutable afterwards`() {
