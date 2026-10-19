@@ -1,6 +1,8 @@
-# 当前开发路线（2026-10-19，F12-J 清理夜间规则候选包装和不可达自动分支）
+# 当前开发路线（2026-10-19，F12-K Sage直选配对完成及切换新对话）
 
 ## 当前状态
+
+**最新F12-K（Sage子阶段完成，准备转入新对话）**：正式将Sage旧“枚举全部pair、真假筛选、手动候选下拉”改为现有方桌上人工直接点两个实际座位，并仍可直接采纳AI明确返回的两个座位；统一沿原onShowPlayerDisplay→唯一Session私密公布/事件记录。连带删除Host`storytellerPairHint`根据真恶魔自动拼出来的默认decoy，Sage夜步骤不再带伪默认信息。两个代码提交`9d962565b18e53b41713d639129e1ec8f6af253e`、最终`9c7c57a7369d9ee76324b009d26d088a66660923`，GitHub实际比对**7文件+163/-558，净删395行**。精确最终Android完整 **[CI #4396 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39181025505)**（full JVM tests+Debug APK、ASP/Clingo/gate成功）、**[R2 #3976 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39181025502)**。唯一台账**177/453（39.07%）已审、276待审、0审计中**；Sage已审生产/测试只复查、新全文审阅HostCoreSemantics+1，NightStepUi仍待全文件审计。阵容跨局防重复和同一玩家身份防重复、现有AI/唯一Session/安全保密全保留。**注意本轮只完成Sage子阶段，P1/P4及未审276文件并未完成**。无真机/付费API验证。
 
 **最新F12-J**：用户批准的两类开局防重复（跨局阵容多样性、同一玩家身份轮换）及现有AI/唯一Session均保留。已整删Host夜间Monk/Ravenkeeper目标合法性包装器、singleton紧凑授权模块及两份专属测试（4文件）；Undertaker/Sage/Ravenkeeper取消仅有一个候选时的特别展示分支，改用原统一确认UI；切除已孤立的BeginnerSingleTargetRevealDialog。随后清掉Mayor方桌永不可达的automatic/Imp继任分支和无消费者DTO字段，保留真实Mayor选择目标、Mayor dies按钮与Session实际事件。代码从`2210130d`经`8582fe7a`到最终**`f822ef5b9174c2e5d38b4704dca68af1042c9c72`**，GitHub比较13文件+13/-243，**净删230行**。最终完整 **[CI #4393 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39178966455)**（Android全JVM单测+Debug APK、ASP/Clingo/gate成功）、**[R2 #3973 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39178966521)**。唯一审计账**176/453（38.85%）已审、277待审**。Monk界面现允许选择任意已存在座位，不再由Host按玩法过滤自己，规则裁量由说书人自行把握。Sage全配对仍供真实手工下拉使用，待直接座位Pair UI可用才整删。App/HostScreen仍>50KB，P1/P4未完成；未运行真机/付费API。
 

@@ -60,6 +60,16 @@
 
 当前范围已按F15变动重核：883跟踪文件、475源码/测试/工具配置；每个现行路径仍恰好一次。
 
+### F12-K：Sage人工直选两座位替代全配对枚举，完成本阶段并切新对话（2026-10-19）
+
+- **产品决策严格保留**：跨局角色/展示阵容尽量不重复，以及同一玩家跨局尽量不拿重复角色，两项均保留完整正式算法与持久化历史；现有AI的首夜/后夜、prompt/API/JSON/parser/strategy memory/预选及AI_ASSISTED/AI_AUTOMATIC、唯一Session与结构化实际公布事件均不删除。
+- **真实Sage生产改造**：原Host为每个Sage枚举全部候选pair（排actor、计算真假、分真/假来源）→Sage UI旧候选下拉→全配对菜单中确认已退休。现在NightStepUI接收实际AI建议的已选结构化two-seat pair（如果有），SageSquareTable用同一方桌高亮两个座位、一键采纳；没有有效AI建议或说书人切换人工时，直接点击两名实际座位、必要时重新轻点更改，只有两不同且范围内的座位可确认；走现有`onShowPlayerDisplay`和Session实际私密观察流程。Sage的真人`actor`醒夜信息、受毒/Drunk标志与隐私仍保留。
+- **连锁移除旧Host伪推荐**：从SageStepMaterializer删除`clocktowerSageDisplayOptions`全pairs生成、isTruthful TruthfulOnly分支及无用HighPressureSuffix；从HostCoreSemantics整删唯一服务Sage的`storytellerPairHint`，HostScreen不再依据真实恶魔自动拼“恶魔＋第一个其他人”作为预设线索。初始Sage step不再有虚构已选pair命题；只有明确采纳的AI配对或确认的真人pair作为实际展示，人工结果使用typed two-seat AnyOf，selectedInformationTruthful保持未知，不从真相推说书人选择；首夜显示/历史基础设施不受影响。
+- **测试收敛**：SageMaterializerTest删Host合法/真实配对枚举专项用例，新增真人实际两座位的命题、原始步骤无预设配对、重复/范围错误拒绝；SageSquareTablePresentationTest删LegacyUnreliable候选菜单断言，保留展示typed seat、防文案解析、actor独立高亮/座位点选及纠错测试。没有新增专属“合法结果”系统或新的Shadow GameState。
+- **真实代码提交/验证**：起点`4b29f45117119299f6ed3c395b3f8a4e9556fa35`。先代码`9d962565b18e53b41713d639129e1ec8f6af253e`，**CI #4395 / R2 #3975 SUCCESS**；后代码`9c7c57a7369d9ee76324b009d26d088a66660923`，**[CI #4396 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39181025505)**（Android JVM所有单元测试、Debug APK、ASP、真实Clingo、CI gate均成功）、**[R2 #3976 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39181025502)**。GitHub比对共7文件**+163/-558，净删395行**，0文件整删；没有真机/真实付费AI验证。
+- **唯一台账进度**：代码文件数453未变；新增全面首次审阅`ClocktowerHostCoreSemantics.kt`1项，原4项Sage已审生产/测试和已审HostScreen只复审不计新增；NightStepUi约40KB虽改Sage调用但仍保持整文件待审。当前**177/453（39.07%）已审，276待审、0审计中**。后续仍须真正逐文件遍历，不把F12-K称整个P1/P4/P5完成。
+- **下一轮清理顺序**：先从276项横向继续，优先审NightStepUi其它manual/automatic domain与legacy unreliable角色候选、DemonAttackProductionAdapter只读预览、Sage/Ravenkeeper夜间触发推导与日间Klutz结算；保留主流程，按照“删除不会妨碍实际游戏继续”移除旧规则；两个>50KB App/HostScreen需继续实际净删。Audit ledger是唯一库存；PR #334保持Draft原base64be3090，不merge/retarget/force push。后续文档独立提交后精确完整Android代码证明仍为9c7c57a，docs-only CI不能替代。
+
 ### F12-J：去除Host目标规则候选包装器、singleton专用UI与Mayor死分支（2026-10-19）
 
 - **最新保留硬边界**：阵容跨局多样性（SetupDiversitySelector/History/TemplateRepository）及同一玩家角色轮换（DealPlanner/RotationHistory Store）全部保留，无改动；同样保留唯一Session确认/事实、现有AI开局/后夜、API/parser/strategy memory/预选、真实手工公布和身份保密。
@@ -174,7 +184,7 @@
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerGlobalFirstNightDecision.kt` | 2158 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerGlobalFirstNightScalarDecision.kt` | 3678 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostBottomInsetPolicy.kt` | 1233 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt` | 6855 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt` | 6435 | 已审计 | 需要解耦 | F12-K全文/生产消费者复核：全文件审阅实际引用：现用私密命题ID稳定hash、Drunk/Poison显示命题、活着的邻居/真实角色判别和夜间角色wake仍消费；仅老storytellerPairHint单一Sage consumer已整删，余helpers混合真实场景与规则语义，未来逐项解耦，不整删。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostFullScreenScaffold.kt` | 2726 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostPresentationModels.kt` | 3747 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSeatContentPresentation.kt` | 2600 | 待审 | — | 尚未形成有证据结论 |
@@ -197,7 +207,7 @@
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerNightPresentationRole.kt` | 710 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepMaterializerRegistry.kt` | 3241 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerNightResultConfirmation.kt` | 4673 | 已审计 | 必须保留 | F15新增实际结果复核UI与窄输入，任意座位/多死亡/无死亡/新Imp/原中毒keep-clear，不枚举合法候选；gameId绑定及双revision过期与防双击、取消后可复核；实际事实只由Session原子提交，私密身份另确认。完整741测试/APK；真机未执行。 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt` | 39960 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt` | 39613 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerNumericInformationOptionPreparation.kt` | 1317 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt` | 14493 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerPairManualAuthority.kt` | 3870 | 待审 | — | 尚未形成有证据结论 |
@@ -219,8 +229,8 @@
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerResidualRequestIdentityV2.kt` | 947 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerRoleLocalization.kt` | 583 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerRoleRevealChoiceProjection.kt` | 2263 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt` | 11344 | 已审计 | 需要解耦 | NightStepUi.clocktowerSageResultChoices→ClocktowerSageSquareTableDialog；保留稳定 seat 高亮和明确确认回调；当前 manual 是 choices 下拉且 table enabled=false，不能录菜单外 pair；去 LegacyUnreliable/规则候选与默认 first fallback，改任意结构合法 pair。（静态，运行结论仅明确列出者） |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerSageStepMaterializer.kt` | 5333 | 已审计 | 需要解耦 | HostScreen.sagePair/storytellerPairHint→clocktowerSageStepMaterializer；NightStepUi 消费 step；枚举排除 actor 的全 pair、计算 isTruthful 并以真实 Demon 构建默认展示；改为结构化实际选定两 seat，不从真值默认值或菜单生成；保留 AnyOf 公布命题与 actor/recipient/revision。（静态，运行结论仅明确列出者） |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt` | 6088 | 已审计 | 必须保留 | F12-K全文/生产消费者复核：Sage UI已改为AI仅一条预选和现有方桌轻点任意两个真实座位；仅结构检查不同/存在座位，不从全部可能的pair/真假列表筛选。原真人确认与Sage actor高亮保留。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerSageStepMaterializer.kt` | 2798 | 已审计 | 必须保留 | F12-K全文/生产消费者复核：Sage实际被杀唤醒的NightStep构建仍真实消费；删除全Sage合法/真假配对枚举及直接恶魔默认Pair、highPressure旧字段；保留从说书人手工两seat构造typed AnyOf和原PlayerDisplay确认/事件。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSeatNumberBadge.kt` | 2796 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSeatNumberLabel.kt` | 390 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSessionPlayerCards.kt` | 2544 | 已审计 | 必须保留 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；App.cards→JudgeScreen及所有展示读者；AbstractList每次get读取当前Session而非镜像可写cards，保留seat/name绑定、已确认role/death round投影；setupCards仅开局展示。复活/多次死亡的first death round与未知role渲染扩展是后续状态合同核查项，不据此发明恢复状态。对应现有3测试本轮通过。（静态；运行仅上述明确测试） |
@@ -356,7 +366,7 @@
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt` | 13585 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayTableScaffoldUi.kt` | 1002 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDrunkSelectionScreen.kt` | 8884 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt` | 96729 | 已审计 | 需要解耦 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；App.Screen.ClocktowerJudge→ClocktowerJudgeScreen→Day/Night/PlayerDisplay；R2位置守卫；已按1795行覆盖。保留私密显隐、确认后展示、current revision、AI预选及fresh-step自动handoff。L257起投票阈值/claimant筛选、558角色资格、721 Sage默认、896/1125 Spy醉毒、1335行动合法目标、1387继承候选需退出。L1680-1761按同phase/round/source阻止不同公布并非只去重同事件；后续区分新确认事实与重复ID/重开既有显示，不能删除防重放/隐私保护。FirstNightMigration、display DTO是需缩减的混合边界，非整UI可删。（静态；运行仅上述明确测试） |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt` | 96487 | 已审计 | 需要解耦 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；App.Screen.ClocktowerJudge→ClocktowerJudgeScreen→Day/Night/PlayerDisplay；R2位置守卫；已按1795行覆盖。保留私密显隐、确认后展示、current revision、AI预选及fresh-step自动handoff。L257起投票阈值/claimant筛选、558角色资格、721 Sage默认、896/1125 Spy醉毒、1335行动合法目标、1387继承候选需退出。L1680-1761按同phase/round/source阻止不同公布并非只去重同事件；后续区分新确认事实与重复ID/重开既有显示，不能删除防重放/隐私保护。FirstNightMigration、display DTO是需缩减的混合边界，非整UI可删。（静态；运行仅上述明确测试） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerKlutzTableUi.kt` | 5712 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt` | 15696 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNominationInteraction.kt` | 5956 | 待审 | — | 尚未形成有证据结论 |
@@ -440,8 +450,8 @@
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerResidualRequestIdentityV2Test.kt` | 1594 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerRoleLocalizationTest.kt` | 620 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerRoundedRectanglePerimeterLayoutTest.kt` | 6857 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/test/java/com/codex/campboardgamehost/ClocktowerSageSquareTablePresentationTest.kt` | 7879 | 已审计 | 需要解耦 | Gradle testFast/testFull；SageSquareTableUi/PlayerDisplayResolution；保留 typed seat、不从显示文本解析、actor 与 pair 独立高亮及未知 seat 拒绝；候选来源/LegacyUnreliable/菜单预选断言随新直接 pair 合同缩减，不整删空间展示验证。（静态，运行结论仅明确列出者） |
-| `app/src/test/java/com/codex/campboardgamehost/ClocktowerSageStepMaterializerTest.kt` | 4129 | 已审计 | 需要解耦 | Gradle testFast/testFull；SageStepMaterializer；typed 实际 pair/命题需保留；truthful-only 全合法pair、默认真实恶魔+decoy 是旧 Host 真值断言，可随职责退休；不是保护正常 AI 配对推荐的理由。（静态，运行结论仅明确列出者） |
+| `app/src/test/java/com/codex/campboardgamehost/ClocktowerSageSquareTablePresentationTest.kt` | 2888 | 已审计 | 必须保留 | F12-K全文/生产消费者复核：保留现用Sage typed two-seat信息展示、防文本反推座位、实际手工两seat toggle及actor独立高亮、结构拒绝越界/重复座位；删除旧候选dropdown/LegacyUnreliable路径专项测试。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
+| `app/src/test/java/com/codex/campboardgamehost/ClocktowerSageStepMaterializerTest.kt` | 3562 | 已审计 | 必须保留 | F12-K全文/生产消费者复核：原Sage全合法pair真值/默认恶魔decoy断言退役；现验证Host步骤初始无伪默认信息，Storyteller实际两seat记录为AnyOf、非法/重复座位不提交。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSeatNumberLabelTest.kt` | 601 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSessionPlayerCardsTest.kt` | 3910 | 已审计 | 必须保留 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；testFast/testFull→ClocktowerSessionPlayerCards；3项验证同frame读取Session死亡/role变化无需镜像写cards、纯setup仍可编辑；本轮通过，保护唯一事实来源而非UI表象字符串。（静态；运行仅上述明确测试） |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerShownUnreliablePropositionTest.kt` | 4641 | 待审 | — | 尚未形成有证据结论 |

@@ -1,12 +1,18 @@
-# 新对话交接：F12-J 退役目标规则候选与Mayor不可达分支（2026-10-19）
+# 新对话交接：F12-K Sage直接配对收尾，下一轮恢复横向全文件清理（2026-10-19）
 
 ## 先读与现行授权
 
-先读AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，然后读原MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md的F12-J/F12-I/F12-H/F12-G/F12-F/F12-E/F15/F12-D/F12。唯一逐路径状态维护在原台账，不另建库存或NEXT。
+先读AGENTS.md、HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md、CURRENT_DEVELOPMENT_ROADMAP.md、TESTING_STRATEGY.md，然后读原MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md的F12-K/F12-J/F12-I/F12-H/F12-G/F12-F/F12-E/F15/F12-D/F12。唯一逐路径状态维护在原台账，不另建库存或NEXT。
 
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **F12-K Sage子阶段实际完成**：从clean+sync `4b29f45117119299f6ed3c395b3f8a4e9556fa35`出发，提交`9d962565b18e53b41713d639129e1ec8f6af253e`将旧全pair真/假枚举、LegacyUnreliable候选菜单替换成Sage方桌直接轻点两名实际玩家，保留有效AI两座位建议的一键确认、现有onShowPlayerDisplay/私密观察原子记录；Sage手工结果使用typed two-seat AnyOf并不强行标truthful。进一步提交最终真实代码`9c7c57a7369d9ee76324b009d26d088a66660923`，彻底删掉`storytellerPairHint`旧默认恶魔+第一人配对、删Sage初始化虚构已选命题和无用传参。真实GitHub对比7文件**+163/-558、净删395行**（本轮无整文件删除）。代码两次完整验收：首CI #4395/R2 #3975 SUCCESS，最终 **[CI #4396 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39181025505)**（Android full JVM unit tests、debug APK、ASP、real Clingo、CI gate）、**[R2 #3976 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39181025502)**。无真实付费OpenAI API/真机测试。
+- **保护项重申**：User明确要求保留两种跨局体验：①阵容/展示角色尽量避免连局重复（SetupDiversitySelector/History/TemplateRepository）；②同一玩家不同对局尽量避免分到相同身份角色（TB DealPlanner、PlayerStartingIdentityHistory、rotation record/store）。禁止重新以“游戏仍能启动”为理由删除它们。仍须保留现有首夜/pair/numeric/后夜AI推荐、真正的调用/提示词/返回parser/战略记忆、所有MANUAL/AI_ASSISTED/AI_AUTOMATIC模式、唯一Session/GameState、结构化实际行动/公布/角色/存活历史、stale/privacy/idempotent/atomic safety。
+- **最新唯一横向审计台账**：`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md` F12-K，**177/453（39.07%）已审、276待审、0审计中**。F12-K新全文首次审`ClocktowerHostCoreSemantics.kt`1项；已经审过的4项Sage生产/测试与HostScreen不重计；`ClocktowerNightStepUi.kt`虽然被窄修改但整文件仍待审。代码没有删文件，分母不变。未来要继续覆盖真正尚未审过的276项，而不是拿净删行数代替全仓审计。两个>50KB文件App/HostScreen未完成减法，P1/P4/P5仍有剩余，不能宣称整个P1完结。
+- **下一轮必须实际实施（F12-L起）**：先用GitHub Connector+MiniMCP `clocktower`检查最新PR #334/head/base、branch/index/clean、remote sync及最精确CI/R2，不重用本段SHA当docs最新HEAD。横向对全仓剩余未审文件审计（优先`ClocktowerNightStepUi.kt` ~39KB及配套legacyInformationCandidates/旧automatic/manual-domain语义、`DemonAttackProductionAdapter`预览链、Sage/Ravenkeeper触发推导、日间Klutz自动判胜负、测试/工具）。对“删除后已有方桌、说书人手工、唯一Session及AI仍能继续游戏”的旧模块，先移除调用再整删与独占测试；不可仅因生产调用而保留。持续检查50KB源文件上限，针对真实废弃职责减法，不靠机械拆文件达标。**确实改代码、提交推送、精确完整Android CI+R2失败即修**，之后更新本唯一台账/roadmap/handoff。不合并、不retarget、不force push PR #334或其它堆叠PR；不调用付费API/不做真机除非后续明确批准。
+- **切换注意**：本交接/审计文档另有docs-only提交，GitHub新的文档CI/R2即使成功，Android/ASP/Clingo通常跳过，不可冒充精确代码`9c7c57a`的完整验收。要核对当前真实HEAD与同步关系。
 
 - **F12-J正式代码验收**：原分支/远端Clean、HEAD `2210130d9f89fc03de0f0345d809135748ef7718`。代码提交 `8582fe7a435c2f4c01c84b3a9468f25bc63c4541` 完整Android CI #4392/R2 #3972 SUCCESS；接续提交 **`f822ef5b9174c2e5d38b4704dca68af1042c9c72`** 完整 **[CI #4393 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39178966455)**（Android全套单元测试、Debug APK、ASP、真实Clingo和gate）及 **[R2 #3973 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39178966521)**。GitHub比对13文件**+13/-243，净删230行**。2生产文件（ClocktowerNightTargetLegality、ClocktowerRuleOnlyCompactChoice）与2项只保护旧实现的专属测试整删，3个信息角色single-choice专用compact UI与已孤立BeginnerSingleTargetRevealDialog切除；Mayor仅false的automatic/旧ImpSuccession展示退役。所有现行AI建议/真实Session提交、Mayor事件、两种跨局防重复、夜间按Next继续及手工/AI信息确认保留。无付费API或真机验证。
 - **最新全源台账**：在F12-I `171/457`上删4路径，其中1已审、3待审；另6个此前未审UI/Presentation/测试已实际全文+consumer复核，故**176/453（38.85%）已审，277待审、0审计中**，单一路径库存详见F12-J段。HostScreen/SageSquareTable以前已审本轮不重复计，NightStepUi的大规模源码继续待全量横向复核。
@@ -58,7 +64,7 @@
 - 生产净删642行/30217B、测试净删1300行/47578B，共1942行/77795B。当前883跟踪文件，241生产+178测试Kotlin；F15完工时475项、116已审计；之后F12-D已新增横向6项，当前122已审计（25.68%）、0审计中、353待审。每路径状态及删除历史只维护在原台账F12/F15。
 - App159449B、HostScreen99682B仍超50,000B；Session42993B、新界面4673B未新增超限。P1/P4未完成。U1无生产入口的自定义导入仍待所有者决定，本批无新增决策阻塞。
 
-## 下一任务：从F12-J继续未审277项，同时保护两类跨局防重复
+## 下一任务：从F12-K继续未审276项，进入F12-L横向清理及超大模块减法
 
 **当前两条并行准则**：旧功能生产有调用不构成保留理由、可以用真实Session/人工或现用AI等价继续游戏则删除；但开局角色阵容防重复与同一玩家跨局身份防重复已被所有者明确认定必须保留，绝不再次擅删。F12-I退役public影子历史与Mayor/FT旧单例真值门禁，现行171/457已审、286待审；下一轮从286项继续横向审计并处理有等价可用入口的旧模块，不能用净删行数冒充完成全仓审计。** 保持唯一现行台账，横向覆盖epistemic/codec、catalog/setup、平台/transport、tools/CI和测试，全文读取并验证真实消费者后再给最终分类；不重读已审文件冒充新进度。再依据横向结果选规模大、证据闭合的一组退休。
 
