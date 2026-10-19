@@ -146,19 +146,11 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val structuredActorSeat = step.actor
         ?.let { actor -> cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1) }
-    val undertakerResultChoices = if (presentationRoleEnName == "Undertaker" && step.actor != null) {
-        clocktowerUndertakerResultChoices(
-            step = manualFallbackStep,
-            seatCount = cards.size,
-            allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
-            automaticDisplayOption = automaticDisplayOption,
-            recommendedOptionIds = effectiveRecommendedOptionIds,
-        )
-    } else {
-        emptyList()
-    }
+    val undertakerTargetSeat = (step.informationQuestion as? ClocktowerInformationQuestion.Role)
+        ?.subjectSeat?.takeIf { it in 1..cards.size }
     val usesUndertakerSquareTable =
-        plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Undertaker && undertakerResultChoices.isNotEmpty()
+        plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Undertaker &&
+            step.actor != null && undertakerTargetSeat != null
     val sageSuggestedOption = currentAiSuggestedOption?.takeIf { option ->
         option.displayKind == ClocktowerDisplayKind.EitherOne &&
             clocktowerSageValidPair(option.presentationSubjectSeats, cards.size)
@@ -175,18 +167,13 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         null
     }
-    val ravenkeeperResultChoices = if (usesRavenkeeperSquareTable) {
-        clocktowerRavenkeeperResultChoices(
-            step = manualFallbackStep,
-            selectedSeat = ravenkeeperSelectedSeat,
-            seatCount = cards.size,
-            allowRuleDeterminedAutoUi = effectiveAutomaticInformation,
-            automaticDisplayOption = automaticDisplayOption,
-            recommendedOptionIds = effectiveRecommendedOptionIds,
+    val recommendedRoleRevealOption =
+        if (manualInformationFallback) null else currentAiSuggestedOption
+    val ravenkeeperRecommendedChoice = if (usesRavenkeeperSquareTable) {
+        clocktowerDirectRecommendedRoleReveal(
+            step, ravenkeeperSelectedSeat, cards.size, scriptRoles, recommendedRoleRevealOption,
         )
-    } else {
-        emptyList()
-    }
+    } else null
     val fortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
         .mapNotNull { selectedName ->
             cards.indexOfFirst { it.name == selectedName }
@@ -227,14 +214,14 @@ internal fun ClocktowerNightStepCardLocalized(
     }
 
 
-    fun showUndertakerChoice(choice: ClocktowerUndertakerResultChoice) {
+    fun showUndertakerChoice(choice: ClocktowerDirectRoleRevealChoice) {
         fun undertakerDisplay(displayStep: ClocktowerNightStepUi): ClocktowerNightStepUi =
             clocktowerUndertakerPlayerDisplayStep(displayStep, choice, cards, language)
 
         showRecommendedDisplayOption(choice.displayOption, ::undertakerDisplay)
     }
 
-    fun showRavenkeeperChoice(choice: ClocktowerRavenkeeperResultChoice) {
+    fun showRavenkeeperChoice(choice: ClocktowerDirectRoleRevealChoice) {
         showRecommendedDisplayOption(choice.displayOption)
     }
 
@@ -283,7 +270,7 @@ internal fun ClocktowerNightStepCardLocalized(
         autoPresentAiInformation &&
         step.action == ClocktowerNightAction.Ravenkeeper &&
         ravenkeeperSelectedSeat != null
-    ) ravenkeeperResultChoices.singleOrNull() else null
+    ) ravenkeeperRecommendedChoice else null
     LaunchedEffect(
         informationDecisionKey, autoPresentAiInformation,
         automaticQueriedDisplayOption?.let(::clocktowerInformationCandidateId),
@@ -517,7 +504,12 @@ internal fun ClocktowerNightStepCardLocalized(
                     selectableSeats = selectableSeatNumbers(candidates),
                     enabled = step.isRealAction,
                     wakeInstruction = command,
-                    choices = ravenkeeperResultChoices,
+                    step = step,
+                    scriptRoles = scriptRoles,
+                    recommendedOption = recommendedRoleRevealOption,
+                    roleLabel = { roleId ->
+                        clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
+                    },
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onSeatSelected = { seatNumber ->
@@ -693,7 +685,12 @@ internal fun ClocktowerNightStepCardLocalized(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
-                    choices = undertakerResultChoices,
+                    step = step,
+                    scriptRoles = scriptRoles,
+                    recommendedOption = recommendedRoleRevealOption,
+                    roleLabel = { roleId ->
+                        clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
+                    },
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,

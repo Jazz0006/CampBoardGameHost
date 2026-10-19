@@ -27,7 +27,6 @@ internal class ClocktowerInformationStepBuilder(
         displayProposition: InformationProposition? = null,
         presentationSubjectSeats: List<Int> = emptyList(),
         hostInstruction: String? = null,
-        displayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         previousShownNumber: Int? = null,
         numericMinimumValue: Int? = null,
         numericMaximumValue: Int? = null,
@@ -57,7 +56,6 @@ internal class ClocktowerInformationStepBuilder(
         } else {
             null
         }
-        val options = actor?.let(displayOptions).orEmpty().distinctBy(::clocktowerInformationCandidateId)
         val resolvedDisplayKind = when (enName) {
             "Chef", "Empath", "Clockmaker", "Chambermaid" -> ClocktowerDisplayKind.Number
             "Fortune Teller" -> ClocktowerDisplayKind.YesNo
@@ -95,9 +93,6 @@ internal class ClocktowerInformationStepBuilder(
             displayPrimary = if (actor != null) displayPrimary ?: tellPlayer else null,
             displaySecondary = if (actor != null) displaySecondary else null,
             displayFooter = if (actor != null) displayFooter ?: explanation else null,
-            displayOptions = options,
-            manualInformationCandidates = options,
-            automaticInformationCandidates = options,
             roleEnName = enName,
             informationReliability = informationReliability,
             previousShownNumber = previousShownNumber,

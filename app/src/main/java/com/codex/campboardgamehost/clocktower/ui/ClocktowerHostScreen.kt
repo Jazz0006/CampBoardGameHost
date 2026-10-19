@@ -913,12 +913,6 @@ internal fun ClocktowerJudgeScreen(
                     explanation = text("记录实际展示的角色。", "Record the actual shown character."),
                     displayKind = ClocktowerDisplayKind.RoleReveal,
                     informationQuestion = undertakerTarget?.let { ClocktowerInformationQuestion.Role(cards.indexOf(it) + 1) },
-                    displayOptions = { ClocktowerNeutralInformationPreparation.roleRevealOptions(
-                        title = text("送葬者信息", "Undertaker information"),
-                        targetSeat = undertakerTarget?.let { cards.indexOf(it) + 1 },
-                        scriptRoles = clocktowerRolesForScript(script), roleLabel = { it.nameFor(language) },
-                        footer = "",
-                    ) },
                 )
             },
         ),
@@ -1041,12 +1035,6 @@ internal fun ClocktowerJudgeScreen(
                     explanation = text("记录实际展示的角色。", "Record the actual shown character."),
                     displayKind = ClocktowerDisplayKind.RoleReveal,
                     informationQuestion = ravenkeeperTargetCard?.let { ClocktowerInformationQuestion.Role(cards.indexOf(it) + 1) },
-                    displayOptions = { ClocktowerNeutralInformationPreparation.roleRevealOptions(
-                        title = text("守鸦人信息", "Ravenkeeper information"),
-                        targetSeat = ravenkeeperTargetCard?.let { cards.indexOf(it) + 1 },
-                        scriptRoles = clocktowerRolesForScript(script), roleLabel = { it.nameFor(language) },
-                        footer = "",
-                    ) },
                 )
             },
         ),
