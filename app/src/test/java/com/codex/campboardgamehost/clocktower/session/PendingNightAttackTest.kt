@@ -68,6 +68,13 @@ class PendingNightAttackTest {
         assertNull(session.state.pendingNightAttack)
         assertNull(session.startNextNightStep("ravenkeeper-step"))
         assertEquals(1, attacks(session).size)
+        val accepted = session.state
+        session.stageNightAttack(6, StorytellerPhase.NIGHT, 2, "imp-step")
+        assertSame(accepted, session.state)
+        assertThrows(IllegalStateException::class.java) {
+            session.stageNightAttack(3, StorytellerPhase.NIGHT, 2, "imp-step")
+        }
+        assertSame(accepted, session.state)
     }
 
     @Test fun `identical staged choice is idempotent and rejected target is atomic`() {

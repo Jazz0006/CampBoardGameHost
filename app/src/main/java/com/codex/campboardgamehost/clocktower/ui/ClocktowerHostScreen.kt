@@ -1588,7 +1588,15 @@ internal fun ClocktowerJudgeScreen(
                         ClocktowerNightAction.Poison -> onSelectPoisonTarget(nextSelection)
                         ClocktowerNightAction.ButlerMaster -> onSelectButlerMaster(nextSelection)
                         ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(nextSelection)
-                        ClocktowerNightAction.DemonKill -> onSelectNightDeath(nextSelection)
+                        ClocktowerNightAction.DemonKill -> {
+                            if (nightCheckpoint.confirmedAttackTarget == null ||
+                                nightCheckpoint.pendingNightAttackStepId != null
+                            ) onSelectNightDeath(nextSelection)
+                            else Toast.makeText(context, text(
+                                "上一行动已正式记录，不能修改目标。",
+                                "This attack was already recorded and cannot be amended.",
+                            ), Toast.LENGTH_LONG).show()
+                        }
                         ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(nextSelection)
                         ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(nextSelection)
                         else -> Unit

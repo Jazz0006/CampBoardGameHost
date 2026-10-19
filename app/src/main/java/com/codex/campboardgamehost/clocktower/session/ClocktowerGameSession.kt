@@ -596,8 +596,14 @@ internal class ClocktowerGameSession private constructor(
     fun stageNightAttack(targetSeat: Int, phase: StorytellerPhase, round: Int, stepId: String) {
         require(phase == StorytellerPhase.NIGHT && state.phase == phase && state.round == round)
         require(stepId.isNotBlank())
-        check(state.actionTimeline.entries.none { it.fact.actionId.contains("-$stepId-") }) {
-            "A started night step cannot be corrected as pending input."
+        // Back-navigation cannot rewrite a fact that was accepted when the next step began.
+        val accepted = state.actionTimeline.entries.firstOrNull { entry ->
+            entry.point.phase == phase && entry.point.round == round &&
+                entry.fact is ActionFact.Attack && entry.fact.actionId.contains("-$stepId-")
+        }?.fact as? ActionFact.Attack
+        if (accepted != null) {
+            check(accepted.targetSeat == targetSeat) { "The previous night attack has already started and cannot be amended." }
+            return
         }
         requireNotNull(state.gameState.playerAt(targetSeat)) { "Unknown attack seat $targetSeat." }
         val old = state.pendingNightAttack
