@@ -1,4 +1,4 @@
-# 新对话交接：F12-O 已审211/445，继续其余旧规则和超大 Host UI 清理（2026-10-19）
+# 新对话交接：F12-P 已审212/444，继续实际夜间触发及超大 Host UI 清理（2026-10-19）
 
 ## 先读与现行授权
 
@@ -7,6 +7,10 @@
 所有者授权按完整职责链加速实际删除，同时继续全树横向审计。保留Host唯一事实/事件/安全提交及现有开局、pair、数字、后夜AI、prompt/transport/parser/memory/preselection和AI模式。不能让Host规则候选阻断确认事实，不能以退休适配器为由关闭AI。
 
 ## 精确代码与环境基线（每次进入必须重查）
+
+- **最新F12-P真实验收检查点**：MiniMCP`clocktower`原Draft PR #334工作分支`codex/minimal-host-full-scan-20261018`，起点`d7c9484f804f882485ba7257c12952f82b2147bd` clean/equal，实际代码`ea6d9a03c968077299c0aea3aac043ab7514d6bf`（`[full-ci]`）完整退役`ClocktowerNeutralInformationPreparation.kt`与2份独占Undertaker/Ravenkeeper旧角色菜单测试；同时移除HostScreen调用、InformationStepBuilder三个重复候选域赋值、旧ResultChoices转换，UI走直接RoleAt和AI typed预选，保留已确认目标seat/Session事实/原玩家展示。GitHub精确比较**10文件+269/-431，净删162行**，3整删/2新增。首次CI #4408 Android编译失败旧`choice.key`字段，随后修复`37f7c63bcc0df93dd47918153fcfce4f04db5c7a`（`[full-ci]`），用原`clocktowerInformationCandidateId`去重，最终真完整[Android CI #4409 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39192215275)/[R2 #3989 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39192215497)，Android tests+APK/ASP/Clingo/CI gate全部SUCCESS，无付费API或真机。
+- **现行唯一源审计库存**：`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md` F12-P：445退役3项、增加2项→**444项**；211已审删1、加新2→**212/444（47.75%）已审、232待审、0进行中**。原两份旧测试原待审但已退役，不假装新审。原已审UI/builder复审不双计。守鸦人玩家先选座位；送葬者仅用实际昨日处决座位；不会因AI预测或旧候选规则改变座位/事实。
+- **下一任务**：不要回头补旧菜单与测试，继续横向剩余232文件；优先拆断`NightHostProjection→DemonAttackProductionAdapter`旧恶魔攻击预测与Sage/Ravenkeeper唤醒及Mayor redirect的依赖；真正`ClocktowerNightResultConfirmation`在夜末，**不能把攻击目标代替实际死亡或没有触发步骤就简单删适配器**，必须先保留可玩的实际确认/信息公布入口，然后连同独占攻击规则及专属测试整退。其次逐步真实减小CampBoardGameHostApp/ClocktowerHostScreen/ClocktowerNightStepUi的>50KB职责、Slayer/Virgin旧自动规则/事实事件混合。唯一Session事实/保密/幂等与现有全链AI首夜/后夜/pair/numeric/prompt/transport/parser/memory/preselection/辅助及自动模式、阵容跨局与玩家身份跨局防重复必须保留。PR #334继续Draft/base`codex/minimal-host-m1c-direct-number-20261018` SHA`64be3090`，不merge/retarget/force push，不授权付费API/真机。docs-only HEAD CI Android skipped绝不等同代码#4409全验收。
 
 - **最新F12-O已验收代码**：开发机MiniMCP别名`clocktower`；起点`0513123ef51d82766327908cbd412ad9aaf66b3d` clean/equal，代码提交`de091e2480373b271325d679c87c10bbb3093e10`（`[full-ci]`）17文件+372/-1166（净删794行）、整删3个生产旧PairManualAuthority/SelectionModel/SelectionUi和4个旧依赖测试；新`ClocktowerDirectPairInformation.kt`+测试保留人工角色/双座位/缺席输入、真实Session信息、AI typed preselection；Role×座位全组合从HostScreen/NeutralPrep/夜间入口全部移除。CI修复提交`526190030926eb5e52e8a2e9f85ec73e4aef148d`同步R2老enum必须存在的错误架构门禁，真正完整[Android CI #4406 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39189973397)与[R2 #3986 SUCCESS](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39189973230)，Android tests+APK/ASP/Clingo/CI gate/R2全成功（老R2 #3985失败已修，旧CI #4405取消）。**如果后续HEAD由docs-only提交向前，不得把其Android skipped等同#4406真实编译。**
 - **唯一审计台账**：原`docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md`新增F12-O。现行范围从450整退7、增加2=>**445项**；从209已审退出2旧已审、增加2新增已审及2原待审首审=>**211/445（47.42%）已审、234待审、0审计中**。原已审UI/AI代码只复核不重计。AI首夜/后夜/pair/numeric/strategy/context/解析/transport/preselection/辅助/自动模式、两种跨局防重复、唯一GameState/Session、实际死亡确认/秘密展示和安全原子提交不改，未付费API、未真机。
