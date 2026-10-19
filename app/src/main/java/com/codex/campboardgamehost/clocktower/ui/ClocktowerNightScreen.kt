@@ -315,6 +315,7 @@ internal fun ClocktowerNightActiveScreen(
                     hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
                     nextLabel = if (language == "en") "Next →" else "下一步 →",
                     previousEnabled = canGoPrevious,
+                    previousVisible = false,
                     nextEnabled = nextEnabled,
                     onPrevious = onPrevious,
                     onHostTools = onHostTools,

@@ -57,28 +57,6 @@ class ClocktowerNightHostProjectionTest {
     }
 
     @Test
-    fun `pending Imp attack previews the Ravenkeeper step without creating a death fact`() {
-        val cards = listOf(
-            card("Imp", "Imp", ClocktowerTeam.Demon),
-            card("Poisoner", "Poisoner", ClocktowerTeam.Minion),
-            card("Ravenkeeper", "Ravenkeeper", ClocktowerTeam.Townsfolk),
-            card("Empath", "Empath", ClocktowerTeam.Townsfolk),
-            card("Chef", "Chef", ClocktowerTeam.Townsfolk),
-        )
-        val game = cards.toClocktowerGameState(ClocktowerScript.TroubleBrewing, 17L)
-        val checkpoint = checkpoint(null).copy(
-            pendingOperationStepId = "imp-step",
-            pendingNightAttackTargetSeat = 3,
-        )
-        val projection = ClocktowerNightHostProjectionFactory.project(
-            cards, game, builtInRuleset(), ClocktowerPhase.Night, null, checkpoint, null, null,
-        )
-        assertEquals("Ravenkeeper", projection.ravenkeeperTrigger?.name)
-        assertTrue(game.playerAt(3)?.alive == true)
-        assertTrue(projection.chambermaidTargetCards.any { it.name == "Ravenkeeper" })
-    }
-
-    @Test
     fun `night base alive and role maps are read from canonical GameState, not stale cards`() {
         val cards = listOf(
             card("Imp", "Imp", ClocktowerTeam.Demon),

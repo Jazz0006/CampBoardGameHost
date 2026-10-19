@@ -89,8 +89,6 @@ internal data class ClocktowerSessionState(
     val voteStanding: ClocktowerVoteStanding = ClocktowerVoteStanding(),
     val redHerringSeat: Int? = null,
     val demonBluffRoleIds: List<RoleId> = emptyList(),
-    /** The sole staged night operation; it is not an accepted fact until its next step starts. */
-    val pendingOperation: PendingNightOperation? = null,
 ) {
     private val lastPhaseAdvance: ActionFact.PhaseAdvance?
         get() = actionTimeline.entries.asReversed().firstNotNullOfOrNull { it.fact as? ActionFact.PhaseAdvance }
@@ -125,19 +123,8 @@ internal data class ClocktowerSessionState(
     }
 }
 
-/** One editable operation in the sole Session; no committed action or second GameState. */
+/** Action categories for reading accepted night facts; no pending state is retained. */
 internal enum class NightOperationKind { ATTACK, POISON, PROTECT, BUTLER }
-
-internal data class PendingNightOperation(
-    val kind: NightOperationKind,
-    val targetSeat: Int?,
-    val phase: StorytellerPhase,
-    val round: Int,
-    val stepId: String,
-    val actionId: String,
-    val sequence: Int,
-    val actorSeat: Int? = null,
-)
 
 internal class ClocktowerGameSession private constructor(
     initialState: ClocktowerSessionState,
@@ -381,15 +368,9 @@ internal class ClocktowerGameSession private constructor(
         publishedObservation: EpistemicObservationDraft? = null,
         preserveNightChoices: Boolean = false,
         publishedObservations: List<EpistemicObservationDraft> = emptyList(),
-        acceptPendingOperation: Boolean = false,
     ): TimelineBoundActionFact {
         require(nextGameState.seed == state.gameSeed && nextGameState.script == state.gameState.script) {
             "A confirmed step cannot change the session seed or script."
-        }
-        if (acceptPendingOperation) {
-            check(state.pendingOperation?.actionId == draft.actionId) {
-                "Only the Session's currently staged action may be accepted as pending."
-            }
         }
         val prepared = prepareGlobalActionDraft(draft)
         val committed = commitGlobalActionFact(
@@ -450,7 +431,6 @@ internal class ClocktowerGameSession private constructor(
             epistemicObservationLog = nextObservations,
             playerInputRevision = nextInputRevision,
             nextTimelineGlobalSequence = nextCursor,
-            pendingOperation = if (acceptPendingOperation) null else state.pendingOperation,
         ))
         return committed.entry
     }
@@ -464,9 +444,6 @@ internal class ClocktowerGameSession private constructor(
         draft: ActionFactDraft.PhaseAdvance,
         expectedGameStateRevision: Long,
     ): TimelineBoundActionFact {
-        check(state.pendingOperation == null) {
-            "Begin night resolution to accept the staged attack before changing phases."
-        }
         val legal = when (draft.phase) {
             StorytellerPhase.FIRST_NIGHT ->
                 draft.nextPhase == StorytellerPhase.DAY && draft.nextRound == draft.round
@@ -595,22 +572,21 @@ internal class ClocktowerGameSession private constructor(
     }
 
     /**
-     * Player selection is staged without changing mechanics or adding timeline facts.
-     * A new operation cannot be staged until the previous step actually starts.
+     * A night action is accepted on its OWN Next button, with no intermediate pending cache.
+     * Re-entering a previously accepted step is idempotent for the same choice; attempting
+     * to change it is rejected, including after UI recomposition or a duplicate click.
      */
-    private fun stageNightOperation(
+    private fun confirmNightOperation(
         kind: NightOperationKind,
         targetSeat: Int?,
         phase: StorytellerPhase,
         round: Int,
         stepId: String,
         actorSeat: Int? = null,
-    ) {
+    ): TimelineBoundActionFact {
+        require(kind != NightOperationKind.ATTACK)
         require(phase == state.phase && round == state.round)
         require(phase in setOf(StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT))
-        require(kind != NightOperationKind.ATTACK) {
-            "Imp attacks commit at their own confirmation boundary, not at a later wake."
-        }
         require(kind != NightOperationKind.PROTECT || phase == StorytellerPhase.NIGHT)
         require(stepId.isNotBlank())
         targetSeat?.let { requireNotNull(state.gameState.playerAt(it)) { "Unknown night target seat $it." } }
@@ -625,39 +601,40 @@ internal class ClocktowerGameSession private constructor(
         }
         val key = "night-${kind.name.lowercase()}-${state.gameId}-${phase.name}-$round-$stepId-"
         val actionId = "$key${actorSeat ?: "none"}-${targetSeat ?: "none"}"
-        val accepted = state.actionTimeline.entries.firstOrNull {
+        state.actionTimeline.entries.firstOrNull {
             it.point.phase == phase && it.point.round == round && it.fact.actionId.startsWith(key)
-        }
-        if (accepted != null) {
+        }?.let { accepted ->
             check(accepted.fact.actionId == actionId) {
-                "This night action already started and cannot be amended."
+                "This night action is committed and cannot be amended."
             }
-            return
+            return accepted
         }
-        val previous = state.pendingOperation
-        check(previous == null || previous.kind == kind && previous.stepId == stepId) {
-            "Finish the previous night operation before staging another."
+        val fact = when (kind) {
+            NightOperationKind.POISON ->
+                ActionFactDraft.Poison(actionId, phase, round, nextInputSequence, targetSeat)
+            NightOperationKind.PROTECT ->
+                ActionFactDraft.Protect(actionId, phase, round, nextInputSequence, requireNotNull(targetSeat))
+            NightOperationKind.BUTLER ->
+                ActionFactDraft.ButlerMasterChoice(actionId, phase, round, nextInputSequence,
+                    requireNotNull(actorSeat), requireNotNull(targetSeat))
+            NightOperationKind.ATTACK -> error("Imp uses its own immediate attack settlement.")
         }
-        if (previous != null && previous.actionId == actionId) return
-        check(state.playerInputRevision != Long.MAX_VALUE)
-        updateState(state.copy(
-            playerInputRevision = state.playerInputRevision + 1,
-            pendingOperation = PendingNightOperation(
-                kind = kind, targetSeat = targetSeat, phase = phase, round = round,
-                stepId = stepId, actionId = actionId, sequence = previous?.sequence ?: nextInputSequence,
-                actorSeat = actorSeat,
-            ),
-        ))
+        return when (fact) {
+            is ActionFactDraft.Poison ->
+                commitConfirmedPoisonTransition(fact, state.gameStateRevision)
+            else ->
+                commitConfirmedGameAction(fact, state.gameState, state.gameStateRevision)
+        }
     }
 
-    fun stageNightPoison(targetSeat: Int?, phase: StorytellerPhase, round: Int, stepId: String) =
-        stageNightOperation(NightOperationKind.POISON, targetSeat, phase, round, stepId)
+    fun confirmNightPoison(targetSeat: Int?, phase: StorytellerPhase, round: Int, stepId: String) =
+        confirmNightOperation(NightOperationKind.POISON, targetSeat, phase, round, stepId)
 
-    fun stageNightProtection(targetSeat: Int, phase: StorytellerPhase, round: Int, stepId: String) =
-        stageNightOperation(NightOperationKind.PROTECT, targetSeat, phase, round, stepId)
+    fun confirmNightProtection(targetSeat: Int, phase: StorytellerPhase, round: Int, stepId: String) =
+        confirmNightOperation(NightOperationKind.PROTECT, targetSeat, phase, round, stepId)
 
-    fun stageNightButlerMaster(actorSeat: Int, masterSeat: Int, phase: StorytellerPhase, round: Int, stepId: String) =
-        stageNightOperation(NightOperationKind.BUTLER, masterSeat, phase, round, stepId, actorSeat)
+    fun confirmNightButlerMaster(actorSeat: Int, masterSeat: Int, phase: StorytellerPhase, round: Int, stepId: String) =
+        confirmNightOperation(NightOperationKind.BUTLER, masterSeat, phase, round, stepId, actorSeat)
 
     /**
      * The forced mechanical result of a functioning Imp's attack. This reads only the
@@ -685,14 +662,18 @@ internal class ClocktowerGameSession private constructor(
      * Imp Attack + forced Death form one private Session transition. Neither effect is
      * made PUBLIC before the Dawn phase transition. No guessed death for Mayor/self-kill.
      */
-    private fun acceptDeterministicNightAttack(pending: PendingNightOperation): TimelineBoundActionFact {
-        val targetSeat = requireNotNull(pending.targetSeat)
+    private fun acceptDeterministicNightAttack(
+        targetSeat: Int,
+        phase: StorytellerPhase,
+        round: Int,
+        actionId: String,
+    ): TimelineBoundActionFact {
         val deathSeat = deterministicImpDeathSeat(targetSeat)
         val attack = commitGlobalActionFact(
             state.semanticHistoryMode, state.actionTimeline, state.epistemicObservationLog,
             state.nextTimelineGlobalSequence,
             prepareGlobalActionDraft(ActionFactDraft.Attack(
-                pending.actionId, pending.phase, pending.round, pending.sequence, targetSeat,
+                actionId, phase, round, nextInputSequence, targetSeat,
             )),
         )
         val death = deathSeat?.let { seat ->
@@ -701,8 +682,8 @@ internal class ClocktowerGameSession private constructor(
                 state.semanticHistoryMode, attack.actionTimeline, state.epistemicObservationLog,
                 attack.nextTimelineGlobalSequence,
                 prepareGlobalActionDraft(ActionFactDraft.Death(
-                    DawnCommitIdentity.death(state.gameId, pending.round, seat),
-                    StorytellerPhase.NIGHT, pending.round,
+                    DawnCommitIdentity.death(state.gameId, round, seat),
+                    StorytellerPhase.NIGHT, round,
                     attack.nextTimelineGlobalSequence.toInt() + 1, seat,
                 )),
             )
@@ -717,7 +698,6 @@ internal class ClocktowerGameSession private constructor(
                 players = playersAfterConfirmedNightDeath(deathSeat),
             ),
             nightTargets = state.nightTargets.withAttack(targetSeat),
-            pendingOperation = null,
         ))
         return attack.entry
     }
@@ -752,55 +732,7 @@ internal class ClocktowerGameSession private constructor(
             }
             return previous
         }
-        check(state.pendingOperation == null) {
-            "The preceding night choice must be accepted before confirming the Imp attack."
-        }
-        return acceptDeterministicNightAttack(PendingNightOperation(
-            kind = NightOperationKind.ATTACK,
-            targetSeat = targetSeat,
-            phase = phase,
-            round = round,
-            stepId = stepId,
-            actionId = actionId,
-            sequence = nextInputSequence,
-        ))
-    }
-
-    /**
-     * All other pending player operations are accepted when the following step begins.
-     * Unlike Imp attacks, these do not settle an irreversible death.
-     */
-    fun startNextNightStep(stepId: String): TimelineBoundActionFact? {
-        val pending = state.pendingOperation ?: return null
-        check(pending.phase == state.phase && pending.round == state.round) {
-            "Staged night operation belongs to a different phase or round."
-        }
-        check(pending.stepId != stepId) { "The staged night step has not advanced." }
-        val fact = when (pending.kind) {
-            NightOperationKind.ATTACK -> error("An Imp attack cannot be deferred past its confirmation.")
-            NightOperationKind.PROTECT -> ActionFactDraft.Protect(
-                pending.actionId, pending.phase, pending.round, pending.sequence,
-                requireNotNull(pending.targetSeat),
-            )
-            NightOperationKind.POISON -> ActionFactDraft.Poison(
-                pending.actionId, pending.phase, pending.round, pending.sequence, pending.targetSeat,
-            )
-            NightOperationKind.BUTLER -> ActionFactDraft.ButlerMasterChoice(
-                pending.actionId, pending.phase, pending.round, pending.sequence,
-                requireNotNull(pending.actorSeat), requireNotNull(pending.targetSeat),
-            )
-        }
-        return when (fact) {
-            is ActionFactDraft.Poison -> commitConfirmedPoisonTransition(
-                draft = fact, expectedGameStateRevision = state.gameStateRevision,
-                acceptPendingOperation = true,
-            )
-            else -> commitConfirmedGameAction(
-                draft = fact, nextGameState = state.gameState,
-                expectedGameStateRevision = state.gameStateRevision,
-                acceptPendingOperation = true,
-            )
-        }
+        return acceptDeterministicNightAttack(targetSeat, phase, round, actionId)
     }
 
     /** Confirm private night mechanics; public death announcements are generated at Dawn/Day entry. */

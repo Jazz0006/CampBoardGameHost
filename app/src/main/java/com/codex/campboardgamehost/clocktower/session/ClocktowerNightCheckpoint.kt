@@ -24,10 +24,6 @@ internal data class ClocktowerNightCheckpoint(
     val pendingNewDemonName: String?,
     val pendingNightNewDemonIdentityName: String? = null,
     val nextTimelineGlobalSequence: Long = 0L,
-    /** The Session's sole staged operation. This is a read-only UI gate. */
-    val pendingOperationStepId: String? = null,
-    /** Only a staged Attack contributes a hypothetical later-night wake/death preview. */
-    val pendingNightAttackTargetSeat: Int? = null,
     /** Derived from accepted facts only; prevents back-navigation from editing a committed choice. */
     val acceptedOperationKinds: Set<NightOperationKind> = emptySet(),
 ) {
