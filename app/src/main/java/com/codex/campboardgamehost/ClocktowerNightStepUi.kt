@@ -31,7 +31,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
-import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 
 @Composable
 internal fun ClocktowerNightStepCardLocalized(
@@ -57,14 +56,6 @@ internal fun ClocktowerNightStepCardLocalized(
     /** True only for a not-yet-published, player-independent, live Host step. */
     autoPresentAiInformation: Boolean = false,
     surfacePlan: ClocktowerNightSurfacePlan,
-    spyCard: PlayerCard?,
-    spyRegistrationResolution: TroubleBrewingRegistrationResolution?,
-    onSpyRegistrationGoodChange: (Boolean) -> Unit,
-    onSpyRegistrationRoleChange: (String) -> Unit,
-    recluseCard: PlayerCard?,
-    recluseRegistrationResolution: TroubleBrewingRegistrationResolution?,
-    onRecluseRegistrationEvilChange: (Boolean) -> Unit,
-    onRecluseRegistrationRoleChange: (String) -> Unit,
     selectedName: String?,
     fortuneTellerFirst: String?,
     fortuneTellerSecond: String?,
@@ -76,7 +67,6 @@ internal fun ClocktowerNightStepCardLocalized(
     onSelectFortuneTellerSecond: (String) -> Unit,
     onSelectChambermaidFirst: (String) -> Unit,
     onSelectChambermaidSecond: (String) -> Unit,
-    onApplyRecommendedDisplayOption: (ClocktowerDisplayOption) -> Boolean,
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
@@ -217,24 +207,6 @@ internal fun ClocktowerNightStepCardLocalized(
             storytellerDecisionPresentationIsAutomatic(allowRuleDeterminedAutoUi, authority)
         } ?: false
         else -> false
-    }
-    if (!usesResultFirstRegistration && step.spyRegistrationKey != null && spyCard != null && spyRegistrationResolution?.canUseSpecialAbility == true) {
-        ClocktowerAutomaticRegistrationEffect(
-            allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
-            registration = spyRegistrationResolution,
-            applyRegisteredRole = step.spyRegistrationDetail == ClocktowerRegistrationDetail.Role,
-            onUsesSpecialRegistrationChange = onSpyRegistrationGoodChange,
-            onRoleChange = onSpyRegistrationRoleChange,
-        )
-    }
-    if (!usesResultFirstRegistration && step.recluseRegistrationKey != null && recluseCard != null && recluseRegistrationResolution?.canUseSpecialAbility == true) {
-        ClocktowerAutomaticRegistrationEffect(
-            allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
-            registration = recluseRegistrationResolution,
-            applyRegisteredRole = true,
-            onUsesSpecialRegistrationChange = onRecluseRegistrationEvilChange,
-            onRoleChange = onRecluseRegistrationRoleChange,
-        )
     }
     val automaticDisplayOption = clocktowerAutomaticInformationOption(
         currentOptions = automaticAuthorityDomain,
@@ -424,15 +396,6 @@ internal fun ClocktowerNightStepCardLocalized(
         option: ClocktowerDisplayOption,
         transformDisplayStep: (ClocktowerNightStepUi) -> ClocktowerNightStepUi = { it },
     ) {
-        if (!onApplyRecommendedDisplayOption(option)) {
-            Toast.makeText(
-                hostContext,
-                if (language == "en") "The selected result conflicts with an explicitly chosen registration."
-                else "当前结果与手动指定的登记解释冲突，请先修改登记选择。",
-                Toast.LENGTH_LONG,
-            ).show()
-            return
-        }
         onShowPlayerDisplay(transformDisplayStep(resolveClocktowerPlayerDisplay(step, option)))
     }
 

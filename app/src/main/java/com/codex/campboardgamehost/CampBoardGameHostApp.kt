@@ -87,7 +87,6 @@ import com.codex.campboardgamehost.clocktower.session.DayAbilityRegistrationRuli
 import com.codex.campboardgamehost.clocktower.rules.NoGreaterJoyKlutzChoiceRuleV1
 import com.codex.campboardgamehost.clocktower.session.ConfirmedDaySlayerRegistrationV1
 import com.codex.campboardgamehost.clocktower.session.ConfirmedDayVirginSpyRegistrationV1
-import com.codex.campboardgamehost.clocktower.session.ClocktowerConfirmedRegistrationHostWriterV1
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleChange
@@ -937,30 +936,10 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun commitClocktowerPrivateInformationPublication(
-        draft: EpistemicObservationDraft,
-        registration: ClocktowerConfirmedRegistrationPublicationV1?,
-    ) {
+    fun commitClocktowerPrivateInformationPublication(draft: EpistemicObservationDraft) {
         val session = requireClocktowerGameSession()
-        val rulesetRef = clocktowerRulesetRef
-        val registrationSnapshot = registration?.let {
-            check(currentClocktowerScript == ClocktowerScript.TroubleBrewing)
-            TroubleBrewingGameSnapshotProjector.fromRuntime(
-                gameSnapshot = session.toGameSnapshot(requireNotNull(rulesetRef)),
-                phase = storytellerPhaseFor(clocktowerPhase),
-                round = round,
-                characterRegistry = activeGameClocktowerRulesetCatalog
-                    .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry,
-            )
-        }
         val before = session.state
-        val committed = session.commitConfirmedPrivateInformationPublication(
-            draft = draft,
-            registration = registration,
-            registrationSnapshot = registrationSnapshot,
-            legalRoles = if (registration == null) emptyList()
-                else clocktowerRoleDefinitionsForScript(currentClocktowerScript),
-        )
+        val committed = session.commitConfirmedPrivateInformationPublication(draft = draft)
         if (session.state.playerInputRevision == before.playerInputRevision) return
         reviewConfirmedCurrentStepAdvice(before, draft)
         publishClocktowerSessionView()
@@ -971,41 +950,6 @@ internal fun CampBoardGameHostApp() {
                 strategicPolicyCursor?.version ?: 0,
                 draft.phase.name, draft.round)
         }
-    }
-
-    /**
-     * Real Host confirmation after player information was published, never an option preview.
-     * The shared writer validates the persisted typed observation, complete legal witness,
-     * per-subject rules and causal revision before mutating the Host-owned journal.
-     */
-    fun canCommitConfirmedRegistrationResult(publication: ClocktowerConfirmedRegistrationPublicationV1): Boolean {
-        if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) return true
-        val session = clocktowerGameSession ?: return false
-        return publication.isRulesConsistent(
-            session.state.gameState,
-            clocktowerRoleDefinitionsForScript(currentClocktowerScript),
-        )
-    }
-
-    fun commitConfirmedRegistrationResult(publication: ClocktowerConfirmedRegistrationPublicationV1) {
-        if (currentClocktowerScript != ClocktowerScript.TroubleBrewing
-        ) return
-        val session = requireClocktowerGameSession()
-        val rulesetRef = requireNotNull(clocktowerRulesetRef)
-        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
-            gameSnapshot = session.toGameSnapshot(rulesetRef),
-            phase = storytellerPhaseFor(clocktowerPhase),
-            round = round,
-            characterRegistry = activeGameClocktowerRulesetCatalog
-                .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry,
-        )
-        ClocktowerConfirmedRegistrationHostWriterV1.commit(
-            publication = publication,
-            session = session,
-            journal = currentClocktowerCausalJournal(),
-            snapshot = snapshot,
-            legalRoles = clocktowerRoleDefinitionsForScript(currentClocktowerScript),
-        )
     }
 
     fun preflightClocktowerPublicAliveObservation(
@@ -2504,8 +2448,6 @@ internal fun CampBoardGameHostApp() {
                         highestVoteCount = clocktowerSessionView?.voteStanding?.count ?: 0,
                         gameOutcome = gameOutcome,
                         onCommitConfirmedPrivateInformationPublication = ::commitClocktowerPrivateInformationPublication,
-                        onCommitConfirmedRegistrationResult = ::commitConfirmedRegistrationResult,
-                        onPreflightConfirmedRegistrationResult = ::canCommitConfirmedRegistrationResult,
                         onHostTools = {
                             hostToolTab = HostToolTab.Roles
                             showHostTools = true
