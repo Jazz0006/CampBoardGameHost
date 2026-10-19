@@ -101,15 +101,17 @@ class ClocktowerDrunkFortuneTellerFlowTest {
     fun `production first-night seam carries actual roles separately from waking roles`() {
         val fortuneTeller = RoleId("Fortune Teller")
         val drunk = RoleId("Drunk")
-        val ordered = ClocktowerProductionFirstNightFlow.order(
+        val interactions = ClocktowerProductionFirstNightFlow.interactions(
             ruleset = ruleset,
             playerCount = 5,
             inPlayRoleIds = setOf(drunk, fortuneTeller),
             actualRoleIds = setOf(drunk),
-            productionSteps = listOf("drunk-as-fortune-teller"),
-            identityOf = { ClocktowerProductionNightStepIdentity.role(fortuneTeller) },
         )
 
-        assertEquals(listOf("drunk-as-fortune-teller"), ordered)
+        assertEquals(
+            listOf("first_night:role:Fortune Teller"),
+            interactions.filterNot { it.kind == ClocktowerHostInteractionKind.SYSTEM_BOUNDARY }
+                .map { it.id.value },
+        )
     }
 }

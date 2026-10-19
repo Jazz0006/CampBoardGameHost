@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.io.File
 
@@ -13,89 +14,67 @@ class ClocktowerProductionFirstNightFlowTest {
     }
 
     @Test
-    fun `Trouble Brewing production first night is ordered exclusively by canonical planner interactions`() {
+    fun `Trouble Brewing first-night steps follow script order and include real Fortune Teller setup`() {
         val inPlay = setOf(
             "Poisoner", "Spy", "Chef", "Empath", "Fortune Teller", "Butler", "Imp",
         ).map(::RoleId).toSet()
-        val expected = listOf(
-            step("minion-info", ClocktowerProductionNightStepIdentity.minionInfo()),
-            step("demon-info", ClocktowerProductionNightStepIdentity.demonInfo()),
-            step("Poisoner", role("Poisoner")),
-            step("Spy", role("Spy")),
-            step("Chef", role("Chef")),
-            step("Empath", role("Empath")),
-            step("red-herring", ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()),
-            step("Fortune Teller", role("Fortune Teller")),
-            step("Butler", role("Butler")),
+        assertEquals(
+            listOf(
+                "first_night:system:minion_info",
+                "first_night:system:demon_info",
+                "first_night:role:Poisoner",
+                "first_night:role:Spy",
+                "first_night:role:Chef",
+                "first_night:role:Empath",
+                "first_night:fortune_teller:red_herring",
+                "first_night:role:Fortune Teller",
+                "first_night:role:Butler",
+            ),
+            ClocktowerProductionFirstNightFlow.interactions(
+                ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
+                playerCount = 7,
+                inPlayRoleIds = inPlay,
+                actualRoleIds = inPlay,
+            ).actionIds(),
         )
-
-        val ordered = ClocktowerProductionFirstNightFlow.order(
-            ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
-            playerCount = 7,
-            inPlayRoleIds = inPlay,
-            productionSteps = expected.reversed(),
-            identityOf = Step::identity,
-        )
-
-        assertEquals(expected.map(Step::label), ordered.map(Step::label))
     }
 
     @Test
-    fun `No Greater Joy production first night follows canonical script override not legacy host ordering`() {
+    fun `No Greater Joy first-night steps follow its script order`() {
         val inPlay = setOf(
             "Investigator", "Empath", "Clockmaker", "Chambermaid", "Scarlet Woman", "Imp",
         ).map(::RoleId).toSet()
-        val productionSteps = listOf(
-            step("Clockmaker", role("Clockmaker")),
-            step("Chambermaid", role("Chambermaid")),
-            step("Empath", role("Empath")),
-            step("Investigator", role("Investigator")),
-        )
-
-        val ordered = ClocktowerProductionFirstNightFlow.order(
-            ruleset = catalog.ruleset(ClocktowerScript.NoGreaterJoy),
-            playerCount = 6,
-            inPlayRoleIds = inPlay,
-            productionSteps = productionSteps,
-            identityOf = Step::identity,
-        )
-
         assertEquals(
-            listOf("Investigator", "Empath", "Clockmaker", "Chambermaid"),
-            ordered.map(Step::label),
+            listOf(
+                "first_night:role:Investigator",
+                "first_night:role:Empath",
+                "first_night:role:Clockmaker",
+                "first_night:role:Chambermaid",
+            ),
+            ClocktowerProductionFirstNightFlow.interactions(
+                ruleset = catalog.ruleset(ClocktowerScript.NoGreaterJoy),
+                playerCount = 6,
+                inPlayRoleIds = inPlay,
+            ).actionIds(),
         )
     }
 
     @Test
-    fun `shown Fortune Teller who is actually Drunk wakes without actual red herring setup`() {
+    fun `Drunk shown Fortune Teller wakes without real red-herring setup`() {
         val waking = setOf("Fortune Teller", "Drunk", "Imp").map(::RoleId).toSet()
         val actual = setOf("Drunk", "Imp").map(::RoleId).toSet()
-
         val steps = ClocktowerProductionFirstNightFlow.interactions(
             ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
             playerCount = 6,
             inPlayRoleIds = waking,
             actualRoleIds = actual,
         )
-
-        assertEquals(
-            listOf("first_night:role:Fortune Teller"),
-            steps.filter { it.kind == ClocktowerHostInteractionKind.ROLE_PHASE_ACTION }
-                .map { it.id.value },
-        )
-        org.junit.Assert.assertTrue(steps.none { it.id.value == "first_night:fortune_teller:red_herring" })
+        assertEquals(listOf("first_night:role:Fortune Teller"), steps.actionIds())
+        assertFalse(steps.any { it.id.value == "first_night:fortune_teller:red_herring" })
     }
 
-    private fun role(name: String): ClocktowerProductionNightStepIdentity =
-        ClocktowerProductionNightStepIdentity.role(RoleId(name))
-
-    private fun step(
-        label: String,
-        identity: ClocktowerProductionNightStepIdentity,
-    ): Step = Step(label, identity)
-
-    private data class Step(
-        val label: String,
-        val identity: ClocktowerProductionNightStepIdentity,
-    )
+    private fun List<ClocktowerHostInteraction>.actionIds(): List<String> =
+        filterNot { it.kind == ClocktowerHostInteractionKind.SYSTEM_BOUNDARY }
+            .map { it.id.value }
 }
+

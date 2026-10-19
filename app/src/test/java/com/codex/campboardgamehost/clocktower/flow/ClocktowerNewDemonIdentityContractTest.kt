@@ -23,28 +23,24 @@ class ClocktowerNewDemonIdentityContractTest {
 
     @Test
     fun `resolved Scarlet Woman promotion is ordered before current Imp action`() {
-        val expected = listOf(
-            Step("NewDemonIdentity", ClocktowerProductionNightStepIdentity.newDemonIdentity()),
-            Step("DemonKill", ClocktowerProductionNightStepIdentity.role(RoleId("Imp"))),
-            Step("Empath", ClocktowerProductionNightStepIdentity.role(RoleId("Empath"))),
-        )
-
-        val ordered = ClocktowerProductionOtherNightFlow.order(
+        val ordered = ClocktowerProductionOtherNightFlow.interactions(
             ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
             playerCount = 7,
             wakingRoleIds = setOf(RoleId("Imp"), RoleId("Empath")),
             resolvedFacts = ClocktowerResolvedFlowFacts(
                 setOf(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON),
             ),
-            productionSteps = expected.reversed(),
-            identityOf = Step::identity,
-        )
+        ).filterNot { it.kind == ClocktowerHostInteractionKind.SYSTEM_BOUNDARY }
+            .map { it.id.value }
 
-        assertEquals(expected.map(Step::label), ordered.map(Step::label))
+        assertEquals(
+            listOf(
+                "other_night:event:imp:new_demon_identity",
+                "other_night:role:Imp",
+                "other_night:role:Empath",
+            ),
+            ordered,
+        )
     }
 
-    private data class Step(
-        val label: String,
-        val identity: ClocktowerProductionNightStepIdentity,
-    )
 }

@@ -36,25 +36,4 @@ internal object ClocktowerProductionOtherNightFlow {
         )
     }
 
-    fun <T> order(
-        ruleset: ValidatedClocktowerRuleset,
-        playerCount: Int,
-        wakingRoleIds: Set<RoleId>,
-        resolvedFacts: ClocktowerResolvedFlowFacts,
-        productionSteps: List<T>,
-        identityOf: (T) -> ClocktowerProductionNightStepIdentity,
-    ): List<T> {
-        val phase = ClocktowerNightFlowPhase.OTHER_NIGHT
-        return ClocktowerProductionInteractionOrderer.order(
-            phase = phase,
-            projectedInteractions = interactions(
-                ruleset = ruleset,
-                playerCount = playerCount,
-                wakingRoleIds = wakingRoleIds,
-                resolvedFacts = resolvedFacts,
-            ),
-            productionSteps = productionSteps,
-            identityOf = identityOf,
-        )
-    }
 }

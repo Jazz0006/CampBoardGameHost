@@ -6,8 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
  * Stable identity for one existing production night UI step.
  *
  * This deliberately does not contain localized copy or Compose state. It only bridges the current
- * production UI step model onto the stable interaction IDs already emitted by the R5.5 planner.
- * Ordering comes exclusively from the projected interaction list.
+ * UI step type to a stable interaction ID without owning any game state or ordering.
  */
 internal data class ClocktowerProductionNightStepIdentity private constructor(
     private val kind: Kind,
@@ -89,54 +88,6 @@ internal data class ClocktowerProductionNightStepIdentity private constructor(
     }
 }
 
-/**
- * Orders the existing production UI steps by the planner projection and verifies exact parity.
- *
- * Dusk/dawn system boundaries are flow-only transitions and therefore are intentionally excluded
- * from the production UI-step equality check. Every other projected interaction must have exactly
- * one production step, and production may not invent an extra step that the planner did not emit.
- */
-internal object ClocktowerProductionInteractionOrderer {
-    fun <T> order(
-        phase: ClocktowerNightFlowPhase,
-        projectedInteractions: List<ClocktowerHostInteraction>,
-        productionSteps: List<T>,
-        identityOf: (T) -> ClocktowerProductionNightStepIdentity,
-    ): List<T> {
-        require(projectedInteractions.all { it.phase == phase }) {
-            "Clocktower production ordering cannot mix planner phases."
-        }
-
-        val actionableInteractions = projectedInteractions.filterNot { interaction ->
-            interaction.kind == ClocktowerHostInteractionKind.SYSTEM_BOUNDARY
-        }
-        val projectedIds = actionableInteractions.map(ClocktowerHostInteraction::id)
-        require(projectedIds.distinct().size == projectedIds.size) {
-            "Clocktower projected production interaction IDs must be unique."
-        }
-
-        val identifiedSteps = productionSteps.map { step ->
-            identityOf(step).interactionId(phase) to step
-        }
-        val productionIds = identifiedSteps.map { it.first }
-        require(productionIds.distinct().size == productionIds.size) {
-            "Clocktower production night steps must map to unique interaction IDs."
-        }
-
-        val projectedSet = projectedIds.toSet()
-        val productionSet = productionIds.toSet()
-        require(projectedSet == productionSet) {
-            val missing = (projectedSet - productionSet).map { it.value }.sorted()
-            val extra = (productionSet - projectedSet).map { it.value }.sorted()
-            "Clocktower production/planner interaction mismatch; missing=$missing extra=$extra"
-        }
-
-        val rank = projectedIds.withIndex().associate { (index, id) -> id to index }
-        return identifiedSteps
-            .sortedBy { (id, _) -> requireNotNull(rank[id]) }
-            .map { (_, step) -> step }
-    }
-}
 
 private fun ClocktowerNightFlowPhase.idPrefix(): String = when (this) {
     ClocktowerNightFlowPhase.FIRST_NIGHT -> "first_night"

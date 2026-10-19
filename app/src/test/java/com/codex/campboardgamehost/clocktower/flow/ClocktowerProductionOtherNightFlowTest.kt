@@ -13,18 +13,10 @@ class ClocktowerProductionOtherNightFlowTest {
     }
 
     @Test
-    fun `Trouble Brewing production other night orders base roles and resolved events canonically`() {
-        val wakingRoles = setOf(
-            "Poisoner",
-            "Monk",
-            "Spy",
-            "Imp",
-            "Mayor",
-            "Ravenkeeper",
-            "Undertaker",
-            "Empath",
-            "Fortune Teller",
-            "Butler",
+    fun `Trouble Brewing later-night steps follow script order and confirmed event flags`() {
+        val roles = setOf(
+            "Poisoner", "Monk", "Spy", "Imp", "Mayor", "Ravenkeeper",
+            "Undertaker", "Empath", "Fortune Teller", "Butler",
         ).map(::RoleId).toSet()
         val facts = ClocktowerResolvedFlowFacts(
             setOf(
@@ -34,93 +26,71 @@ class ClocktowerProductionOtherNightFlowTest {
                 ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY,
             ),
         )
-        val expected = listOf(
-            step("Poisoner", role("Poisoner")),
-            step("Monk", role("Monk")),
-            step("Spy", role("Spy")),
-            step("DemonKill", role("Imp")),
-            step("DemonSuccessor", ClocktowerProductionNightStepIdentity.demonSuccessor()),
-            step("MayorRedirect", ClocktowerProductionNightStepIdentity.mayorRedirect()),
-            step("Ravenkeeper", role("Ravenkeeper")),
-            step("Undertaker", role("Undertaker")),
-            step("Empath", role("Empath")),
-            step("Fortune Teller", role("Fortune Teller")),
-            step("Butler", role("Butler")),
+        assertEquals(
+            listOf(
+                "other_night:role:Poisoner",
+                "other_night:role:Monk",
+                "other_night:role:Spy",
+                "other_night:role:Imp",
+                "other_night:event:imp:demon_successor",
+                "other_night:event:mayor:death_resolution",
+                "other_night:role:Ravenkeeper",
+                "other_night:role:Undertaker",
+                "other_night:role:Empath",
+                "other_night:role:Fortune Teller",
+                "other_night:role:Butler",
+            ),
+            ClocktowerProductionOtherNightFlow.interactions(
+                ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
+                playerCount = 10,
+                wakingRoleIds = roles,
+                resolvedFacts = facts,
+            ).actionIds(),
         )
-
-        val ordered = ClocktowerProductionOtherNightFlow.order(
-            ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
-            playerCount = 10,
-            wakingRoleIds = wakingRoles,
-            resolvedFacts = facts,
-            productionSteps = expected.reversed(),
-            identityOf = Step::identity,
-        )
-
-        assertEquals(expected.map(Step::label), ordered.map(Step::label))
     }
 
     @Test
-    fun `No Greater Joy other night uses script override and Sage resolved fact`() {
-        val wakingRoles = setOf(
-            "Imp",
-            "Sage",
-            "Empath",
-            "Chambermaid",
-        ).map(::RoleId).toSet()
-        val expected = listOf(
-            step("DemonKill", role("Imp")),
-            step("Sage", role("Sage")),
-            step("Empath", role("Empath")),
-            step("Chambermaid", role("Chambermaid")),
-        )
-
-        val ordered = ClocktowerProductionOtherNightFlow.order(
-            ruleset = catalog.ruleset(ClocktowerScript.NoGreaterJoy),
-            playerCount = 6,
-            wakingRoleIds = wakingRoles,
-            resolvedFacts = ClocktowerResolvedFlowFacts(
-                setOf(ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON),
+    fun `No Greater Joy later-night steps follow script order and Sage death event`() {
+        val roles = setOf("Imp", "Sage", "Empath", "Chambermaid").map(::RoleId).toSet()
+        assertEquals(
+            listOf(
+                "other_night:role:Imp",
+                "other_night:role:Sage",
+                "other_night:role:Empath",
+                "other_night:role:Chambermaid",
             ),
-            productionSteps = expected.reversed(),
-            identityOf = Step::identity,
+            ClocktowerProductionOtherNightFlow.interactions(
+                ruleset = catalog.ruleset(ClocktowerScript.NoGreaterJoy),
+                playerCount = 6,
+                wakingRoleIds = roles,
+                resolvedFacts = ClocktowerResolvedFlowFacts(
+                    setOf(ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON),
+                ),
+            ).actionIds(),
         )
-
-        assertEquals(expected.map(Step::label), ordered.map(Step::label))
     }
 
     @Test
-    fun `new Demon identity is exact matched before current Imp action`() {
-        val expected = listOf(
-            step("NewDemonIdentity", ClocktowerProductionNightStepIdentity.newDemonIdentity()),
-            step("DemonKill", role("Imp")),
-            step("Empath", role("Empath")),
-        )
-
-        val ordered = ClocktowerProductionOtherNightFlow.order(
-            ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
-            playerCount = 7,
-            wakingRoleIds = setOf(RoleId("Imp"), RoleId("Empath")),
-            resolvedFacts = ClocktowerResolvedFlowFacts(
-                setOf(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON),
+    fun `confirmed new Demon identity appears before current Imp action`() {
+        assertEquals(
+            listOf(
+                "other_night:event:imp:new_demon_identity",
+                "other_night:role:Imp",
+                "other_night:role:Empath",
             ),
-            productionSteps = expected.reversed(),
-            identityOf = Step::identity,
+            ClocktowerProductionOtherNightFlow.interactions(
+                ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
+                playerCount = 7,
+                wakingRoleIds = setOf(RoleId("Imp"), RoleId("Empath")),
+                resolvedFacts = ClocktowerResolvedFlowFacts(
+                    setOf(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON),
+                ),
+            ).actionIds(),
         )
-
-        assertEquals(expected.map(Step::label), ordered.map(Step::label))
     }
 
-    private fun role(name: String): ClocktowerProductionNightStepIdentity =
-        ClocktowerProductionNightStepIdentity.role(RoleId(name))
-
-    private fun step(
-        label: String,
-        identity: ClocktowerProductionNightStepIdentity,
-    ): Step = Step(label, identity)
-
-    private data class Step(
-        val label: String,
-        val identity: ClocktowerProductionNightStepIdentity,
-    )
+    private fun List<ClocktowerHostInteraction>.actionIds(): List<String> =
+        filterNot { it.kind == ClocktowerHostInteractionKind.SYSTEM_BOUNDARY }
+            .map { it.id.value }
 }
+
