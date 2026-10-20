@@ -1,3 +1,21 @@
+## 2026-10-21 在途实施：P3 白天与原子保存（未验收、未推送代码）
+
+最新所有者要求：收尾 P2、推进 P3 并完成最终收敛；随后要求同步当前进度文档。本次仅提交文档，工作树 Kotlin 改动仍未提交。完整状态/下一步见 [路线](CURRENT_DEVELOPMENT_ROADMAP.md) 与 [交接](NEXT_DEVELOPMENT_HANDOFF.md)。已验收代码仍是下面的 `311191a3`，本轮不能借用其 CI #4486/R2 #4062 作为新代码验收。
+
+| 在途职责 | 原链退出 | 本地替代及尚缺证据 |
+|---|---|---|
+| B 日结 | EndConfirm → ClocktowerExecutionConfirmScreen；ClocktowerDayScreen.kt 实删 | 方桌直接调用 Session.confirmEndDay，尚待日结/重复点击/UI 验证 |
+| C Klutz | App pending/ResumeSameDay/Learned 捕获 → NoGreaterJoyKlutzHistoryProducerV1；producer 实删 | pendingKlutzDeath 从真实 Death/Execution 派生，实际 KlutzChoice 引用 deathActionId；需夜死/日死/善恶目标/重复与恢复证明 |
+| 白天确定性效果/胜负 | App evaluateGameOutcome、旧处决/继任控制；Slayer 任意手工判死 UI | Session DayFlow + GameEnded；仅保留真实 Spy/Recluse 裁量。规则优先级、全部消费者、UI 路由及幂等未验收 |
+| Artist | App 可写 used/claimed 标记 | 正式 ArtistAnswer + 实际私密 Observation；旧草稿测试回调未迁完，当前测试编译失败 |
+| 唯一存档 | 仅 remember 的活动局缺口开始补齐 | SessionJson + noBackup AtomicFile + 元数据/恢复入口；无新旧双存档引擎，但落盘、故障回滚、真实进程恢复和错误 UI 未验证 |
+
+当前工作树删除生产文件 2 个：`clocktower/ui/ClocktowerDayScreen.kt`、`clocktower/session/NoGreaterJoyKlutzHistoryProducerV1.kt`；删除旧人工判死 UI 专属测试 `ClocktowerSlayerDraftTest.kt` 1 个。混合 `LiveKlutzScriptReachabilityTest` 与 D2 UI fixture 正在迁移。新增生产 6 文件：`ClocktowerActiveGameMetadata.kt`、`ClocktowerOutcomePresentation.kt`、`clocktower/domain/GameEndReason.kt`、`clocktower/session/ClocktowerDayFlow.kt`、`clocktower/session/ClocktowerSessionJson.kt`、`persistence/ClocktowerActiveGameStore.kt`。
+
+计入尚未跟踪新源码、按当前磁盘 UTF-8 字节对比 docs-only `8024613e`：生产 Kotlin 212→216，净 **-3B**；测试 150→149，净 **-2846B**。这是在途快照，不是最终净删成绩。超限仍为 App **125487B**、HostScreen **79274B**、Session **54513B**，未达到 <=50000B。
+
+最近 `:app:testFast` 在 `compileDebugUnitTestKotlin` 失败，Artist 草稿测试仍调用旧接口；未执行测试。本轮无新的远端 Android CI/R2、无新 APK 真机/付费 API 验收。R2 旧 Slayer 字符串守卫尚需随真实行为迁移。P2 全轨迹、P0/P5 全树语义审计、余留 UI/AI 职责及大小收敛均仍未完成。
+
 ## 2026-10-20 已实施：无用途净删与全夜 Session 步骤切换
 
 代码 **`311191a30d6b0d83b5cf2d6de2a67905b526e596`** 已推送原 Draft #335。本节是实际实施状态；下方同日候选表保留为迁移前审计证据，不再把已经完成的项目作为 NEXT。

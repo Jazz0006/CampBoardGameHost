@@ -1,4 +1,29 @@
-# 当前交接 — Codex 本地净删与全夜切换（2026-10-20）
+# 当前交接 — P2/P3 与最终收敛实施中（2026-10-21）
+
+## 本地未提交代码：先修复验证，再继续迁移
+
+本次远端同步为**文档专用检查点**，不包含本轮未验收 Kotlin。工作分支 `refactor/minimal-night-flow-20261019`；起点 `8024613ead6935d0baf4dea0d07638f82c921153`。接续必须保留当前脏工作树，不能直接 checkout/reset 丢弃改动，也不能把远端文档当成已推送的 P3 实现。`node_modules/`、`package.json`、`package-lock.json` 是原未跟踪文件，不得纳入本批。
+
+已在本地修改：
+
+- 删除独立日结页及 EndConfirm 路由；删除 KlutzLearnedDeath/producer，KlutzChoice 改为引用真实 deathActionId；待选择从 Session Death/Execution 派生。
+- 新增 `clocktower/session/ClocktowerDayFlow.kt`：日结、真实 Klutz 选择、提名/投票/鬼票、Virgin/Spy、Slayer/Recluse、Artist 私密答案/消耗、确定继任与 GameEnded 事实。App 的旧胜负/日结控制已开始物理退出。
+- 新增 SessionJson、私有 AtomicFile ActiveGameStore、ActiveGameMetadata 和 App 恢复入口。Session 确认批尝试先持久化再发布、失败回滚；AI 建议记忆和开局轮换身份元数据保留。尚未完成故障/恢复验收。
+- 当前物理删除生产 2 文件、测试 1 文件；新增生产 6 文件。包含新文件的生产 Kotlin 字节仅净 -3B，测试净 -2846B，不能把只看已跟踪 diff 的大幅删除当作最终清理量。
+
+**最近失败必须先处理：** 本地 `:app:testFast` 停在 `:app:compileDebugUnitTestKotlin`；`ClocktowerArtistDraftTest` 旧回调需迁为三个实际确认参数。生产 Kotlin 编译成功不等于测试/APK通过。最后日志 `.codex-fast.log` 与 `.codex-compile.log` 为本地临时诊断文件，不提交。`ClocktowerSlayerDraftTest` 的旧人工任意判死合同已退休，真实杀手/陌客机械与裁量行为需要新的 Session 回归。
+
+接续事项按依赖顺序：
+
+1. 修复当前测试编译，保留 Artist 草稿修改/失败不清空等真实不变量；补 P3 的 Session 行为证明，不恢复旧 Learned/EndConfirm/任意判死 UI。
+2. 核验提名确认后未完成投票的恢复及去重、鬼票/管家、日结幂等、Saint/Mayor/Klutz/普通胜负优先级、Scarlet Woman 继任。检查新边界及 UI 全部生产消费者，不凭编译通过判定完成。
+3. 验证 SessionJson 真实保存/重新读取、事件/观察顺序与收件人、毒/保护/继任恢复、原子写失败回滚、未确认预览重做、AI 旧响应隔离与建议记忆、双跨局防重复元数据。核验保存失败的 UI 处理和恢复入口；同一内存对象 copy 不算进程恢复。
+4. P2 仍需跨夜/全角色/人数轨迹；P0/P5 全树语义审计未完。当前超限 App 125487B、HostScreen 79274B、Session 54513B，最终均须 <=50000B；不要机械拆分或引入通用外观/第二可写 GameState。
+5. 更新 `.github/workflows/r2-write-probe.yml` 内已退休 Slayer `targetDied` 守卫，使其保护实际确定性结算和窄裁量；再完整 `:app:testFast :app:testFull :app:assembleDebug`、R2。通过后按同批迁移/删旧原则提交代码并推送，独立验证精确 SHA 的 Android CI/R2，更新 PR 描述与台账。
+
+当前本轮没有通过的新 CI/R2、没有新 APK 真机或付费 API 验收。#334/#335 继续 Draft，不 merge/retarget/rebase/force-push/删分支。用户当前要求是同步进度文档，未授权将失败代码当作已验收成果发布。
+
+## 上一批已验收基线与历史交接
 
 **代码基线 `311191a30d6b0d83b5cf2d6de2a67905b526e596`，已推送原 Draft #335。** [完整 CI #4486](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39419032184) SUCCESS；[R2 #4062](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39419032113) SUCCESS。本地 fast 593/full 616 tests（145/146 suites，0 failure/error/skipped，含 23 个真实 UI 用例）及 APK 通过。docs-only 后续提交不改变此代码验收归属。
 
