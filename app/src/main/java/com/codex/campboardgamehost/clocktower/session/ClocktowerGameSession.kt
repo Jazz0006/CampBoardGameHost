@@ -549,7 +549,7 @@ internal class ClocktowerGameSession private constructor(
                 state.semanticHistoryMode, ruling.actionTimeline, state.epistemicObservationLog,
                 ruling.nextTimelineGlobalSequence,
                 prepareGlobalActionDraft(ActionFactDraft.Death(
-                    DawnCommitIdentity.death(state.gameId, draft.round, seat),
+                    ConfirmedNightEffectIdentity.death(state.gameId, draft.round, seat),
                     StorytellerPhase.NIGHT, draft.round,
                     ruling.nextTimelineGlobalSequence.toInt() + 1, seat,
                 )),
@@ -562,7 +562,7 @@ internal class ClocktowerGameSession private constructor(
                 state.semanticHistoryMode, predecessor.actionTimeline, state.epistemicObservationLog,
                 predecessor.nextTimelineGlobalSequence,
                 prepareGlobalActionDraft(ActionFactDraft.RoleChange(
-                    DawnCommitIdentity.roleChange(state.gameId, draft.round, seat, RoleId("Imp")),
+                    ConfirmedNightEffectIdentity.roleChange(state.gameId, draft.round, seat, RoleId("Imp")),
                     StorytellerPhase.NIGHT, draft.round,
                     predecessor.nextTimelineGlobalSequence.toInt() + 1,
                     seat, RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON,
@@ -796,7 +796,7 @@ internal class ClocktowerGameSession private constructor(
                 state.semanticHistoryMode, attack.actionTimeline, state.epistemicObservationLog,
                 attack.nextTimelineGlobalSequence,
                 prepareGlobalActionDraft(ActionFactDraft.Death(
-                    DawnCommitIdentity.death(state.gameId, round, seat),
+                    ConfirmedNightEffectIdentity.death(state.gameId, round, seat),
                     StorytellerPhase.NIGHT, round,
                     attack.nextTimelineGlobalSequence.toInt() + 1, seat,
                 )),
@@ -809,7 +809,7 @@ internal class ClocktowerGameSession private constructor(
                 state.semanticHistoryMode, predecessor.actionTimeline, state.epistemicObservationLog,
                 predecessor.nextTimelineGlobalSequence,
                 prepareGlobalActionDraft(ActionFactDraft.RoleChange(
-                    DawnCommitIdentity.roleChange(state.gameId, round, seat, RoleId("Imp")),
+                    ConfirmedNightEffectIdentity.roleChange(state.gameId, round, seat, RoleId("Imp")),
                     StorytellerPhase.NIGHT, round,
                     predecessor.nextTimelineGlobalSequence.toInt() + 1,
                     seat, RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON,

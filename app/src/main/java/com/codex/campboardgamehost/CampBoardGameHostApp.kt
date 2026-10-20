@@ -73,7 +73,6 @@ import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequest
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleChange
 import com.codex.campboardgamehost.clocktower.session.expirePoisonAtDusk
-import com.codex.campboardgamehost.clocktower.session.DawnCommitIdentity
 import com.codex.campboardgamehost.clocktower.session.confirmedPoisonTargetSeat
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPoisonTransition
 import com.codex.campboardgamehost.clocktower.session.confirmedPoisonTargetName
@@ -341,7 +340,7 @@ internal fun CampBoardGameHostApp() {
     var clocktowerLastExecutedName by remember { mutableStateOf<String?>(null) }
     var clocktowerPendingKlutzName by remember { mutableStateOf<String?>(null) }
     var clocktowerKlutzChoiceName by remember { mutableStateOf<String?>(null) }
-    var clocktowerKlutzReturnToDawn by remember { mutableStateOf(false) }
+    var clocktowerKlutzResumeSameDay by remember { mutableStateOf(false) }
     var selectedClocktowerScript by remember { mutableStateOf<ClocktowerScript?>(null) }
     var clocktowerGameSession by remember { mutableStateOf<ClocktowerGameSession?>(null) }
     var clocktowerSessionView by remember { mutableStateOf<ClocktowerSessionView?>(null) }
@@ -886,7 +885,7 @@ internal fun CampBoardGameHostApp() {
         clocktowerLastExecutedName = null
         clocktowerPendingKlutzName = null
         clocktowerKlutzChoiceName = null
-        clocktowerKlutzReturnToDawn = false
+        clocktowerKlutzResumeSameDay = false
         resetClocktowerFlow()
         screen = Screen.PassPhone
     }
@@ -2293,39 +2292,14 @@ internal fun CampBoardGameHostApp() {
                         },
                         onConfirmNewDemon = {
                             val pendingName = requireNotNull(clocktowerPendingNewDemonName)
-                            val alreadyPromotedAtImpStep = clocktowerPhase == ClocktowerPhase.Night &&
+                            // The Imp's actual role change was already atomically committed at
+                            // the attack/ruling step. This callback ONLY acknowledges showing it.
+                            check(clocktowerPhase == ClocktowerPhase.Night &&
                                 requireClocktowerGameSession().state.gameState.players.any {
                                     it.name == pendingName && it.alive && it.actualRole == RoleId("Imp")
-                                }
-                            if (!alreadyPromotedAtImpStep) {
-                                val imp = clocktowerRolesForScript(currentClocktowerScript)
-                                    .first { it.enName == "Imp" }
-                                commitClocktowerActualRole(
-                                    pendingName, imp,
-                                    DawnCommitIdentity.roleChange(
-                                        clocktowerGameId, round,
-                                        clocktowerSeatFor(pendingName), RoleId("Imp"),
-                                    ),
-                                )
-                            }
+                                }) { "New Imp must already exist in the sole Session." }
                             clocktowerPendingNewDemonName = null
                             clocktowerPendingNightNewDemonIdentityName = null
-                            if (!alreadyPromotedAtImpStep) {
-                                clocktowerPendingKlutzName = clocktowerPendingKlutzName?.takeIf { name ->
-                                    requireClocktowerGameSession().state.gameState.players.any {
-                                        it.name == name && it.actualRole == RoleId("Klutz")
-                                    }
-                                }
-                                if (clocktowerPendingKlutzName != null) {
-                                    commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                                    clocktowerDayModeState.value = ClocktowerDayMode.Klutz
-                                    captureKlutzLearnedDeathOnPublicAnnouncement(
-                                        requireNotNull(clocktowerPendingKlutzName))
-                                } else {
-                                    // The player's current DAY session already contains the real facts.
-                                    resetClocktowerNightFlow()
-                                }
-                            }
                         },
                         onSelectKlutzChoice = {
                             advanceClocktowerPlayerInputRevision()
@@ -2346,10 +2320,9 @@ internal fun CampBoardGameHostApp() {
                                 )?.let(::commitClocktowerConfirmedAction)
                                 clocktowerPendingKlutzName = null
                                 clocktowerKlutzChoiceName = null
-                                if (clocktowerKlutzReturnToDawn) {
-                                    // A Klutz who learns of a night death chooses during the new Day.
-                                    // Completing that real choice does not trigger another phase.
-                                    clocktowerKlutzReturnToDawn = false
+                                if (clocktowerKlutzResumeSameDay) {
+                                    // Learning about the night death and choosing happen in Day.
+                                    clocktowerKlutzResumeSameDay = false
                                 } else {
                                     val nextRound = round + 1
                                     materializeClocktowerPoisonExpiryAtDusk()
@@ -2636,7 +2609,7 @@ internal fun CampBoardGameHostApp() {
                                     } else if (executedCard.clocktowerRole?.enName == "Klutz") {
                                         clocktowerPendingKlutzName = executionName
                                         clocktowerKlutzChoiceName = null
-                                        clocktowerKlutzReturnToDawn = false
+                                        clocktowerKlutzResumeSameDay = false
 
                                         clocktowerDayModeState.value = ClocktowerDayMode.Klutz
                                         captureKlutzLearnedDeathOnPublicAnnouncement(executionName)
@@ -2719,7 +2692,7 @@ internal fun CampBoardGameHostApp() {
                             if (nightKlutzName != null) {
                                 clocktowerPendingKlutzName = nightKlutzName
                                 clocktowerKlutzChoiceName = null
-                                clocktowerKlutzReturnToDawn = true
+                                clocktowerKlutzResumeSameDay = true
                                 commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
                                 clocktowerDayModeState.value = ClocktowerDayMode.Klutz
                                 captureKlutzLearnedDeathOnPublicAnnouncement(nightKlutzName)

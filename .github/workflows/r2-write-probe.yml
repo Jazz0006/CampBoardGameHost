@@ -82,14 +82,18 @@ jobs:
           grep -q "HostTableShell(" "$day_overview"
           grep -q "private fun ClocktowerDayOverviewCenterContent" "$day_overview"
 
-          for name in ClocktowerDawnSummaryScreen ClocktowerExecutionConfirmScreen
-          do
-            if grep -q "fun ${name}(" "$root"; then
-              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
-              exit 1
-            fi
-            grep -q "internal fun ${name}" "$day"
-          done
+          # No separate Dawn screen or phase may return. Night-end goes to Day's
+          # read-only summary of accepted Death facts; do not preserve an obsolete UI.
+          if grep -R -q -E 'ClocktowerDawnSummaryScreen|ClocktowerPhase\.Dawn|StorytellerPhase\.DAWN' app/src/main/java; then
+            echo "Retired Dawn stage or screen resurfaced in production" >&2
+            exit 1
+          fi
+          if grep -q "fun ClocktowerExecutionConfirmScreen(" "$root"; then
+            echo "ClocktowerExecutionConfirmScreen still lives in CampBoardGameHostApp.kt" >&2
+            exit 1
+          fi
+          grep -q "internal fun ClocktowerExecutionConfirmScreen" "$day"
+          grep -q "lastNightDeathLabels" "$day_overview"
 
           if grep -q "fun ClocktowerDayPlayerTile(" "$day"; then
             echo "Legacy ClocktowerDayPlayerTile returned to ClocktowerDayScreen.kt" >&2
