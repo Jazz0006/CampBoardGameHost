@@ -59,20 +59,17 @@ class ConfirmedNightAttackTest {
         assertSame(accepted, s.state)
     }
 
-    @Test fun `night end cannot override mechanically confirmed Imp death`() {
+    @Test fun `confirmed Imp Death is final and Dawn does not choose another victim`() {
         val s = session()
         s.confirmNightAttack(6, StorytellerPhase.NIGHT, 2, "imp-step")
-        val accepted = s.state
-        assertThrows(IllegalStateException::class.java) {
-            s.commitConfirmedNightDeaths(emptyList(), accepted.gameStateRevision, accepted.playerInputRevision)
-        }
-        assertThrows(IllegalStateException::class.java) {
-            s.commitConfirmedNightDeaths(listOf(6, 5), accepted.gameStateRevision, accepted.playerInputRevision)
-        }
-        assertSame(accepted, s.state)
-        s.commitConfirmedNightDeaths(listOf(6), accepted.gameStateRevision, accepted.playerInputRevision)
-        assertSame(accepted, s.state)
-        assertEquals(1, facts(s).count { it.fact is ActionFact.Death })
+        s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
+            "dawn", StorytellerPhase.NIGHT, 2, s.nextInputSequence,
+            StorytellerPhase.DAWN, 2,
+        ), s.state.gameStateRevision)
+        assertEquals(listOf(6), facts(s).mapNotNull { (it.fact as? ActionFact.Death)?.targetSeat })
+        assertEquals(1, s.state.epistemicObservationLog.records.size)
+        assertFalse(s.state.gameState.playerAt(6)!!.alive)
+        assertTrue(s.state.gameState.playerAt(5)!!.alive)
     }
 
     @Test fun `Monk confirmed protection prevents Imp death`() {

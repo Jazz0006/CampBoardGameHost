@@ -6,11 +6,6 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 
-/** Explicit keep/clear result for the previously confirmed poison choice. */
-internal data class DawnPoisonCarryIntent(val targetSeat: Int?, val previousTargetSeat: Int? = null) {
-    init { require(targetSeat == null || targetSeat > 0); require(previousTargetSeat == null || previousTargetSeat > 0) }
-}
-
 /**
  * Read the accepted poison choice from the one Session, including a dead target whose
  * mechanical poisoned flag has already cleared. The last same-round expiry (null) wins.
@@ -29,16 +24,6 @@ internal fun ClocktowerSessionState.confirmedPoisonTargetName(round: Int): Strin
             "Confirmed Session poison references unknown seat $seat."
         }.name
     }
-
-/** Commit the explicitly confirmed keep/clear result for the existing poison choice. */
-internal fun ClocktowerGameSession.commitDawnPoisonCarry(
-    intent: DawnPoisonCarryIntent,
-    expectedGameStateRevision: Long,
-): Boolean {
-    check(state.phase == StorytellerPhase.NIGHT) { "Dawn poison settles from Night." }
-    require(intent.targetSeat == null || intent.targetSeat == intent.previousTargetSeat)
-    return settlePoison(intent.targetSeat, intent.previousTargetSeat, expectedGameStateRevision)
-}
 
 /** The outgoing Day owns expiry, before the next Night phase is committed. */
 internal fun ClocktowerGameSession.expirePoisonAtDusk(expectedGameStateRevision: Long): Boolean {
@@ -87,8 +72,9 @@ private fun ClocktowerGameSession.gameStateWithPoisonTarget(targetSeat: Int?): G
 }
 
 /**
- * One confirmed Host poison transition: explicit night choice, Dawn carry/expiry or outgoing
- * Day expiry. Mechanical flags, revision and globally sequenced fact commit together.
+ * One confirmed Host poison transition: a real night choice or outgoing Day expiry.
+ * Night poison persists naturally through Dawn; no separate carry/clear decision exists.
+ * Mechanical flags, revision and globally sequenced fact commit together.
  * A semantic expiry can be a fact even if the poisoned seat was already killed.
  */
 internal fun ClocktowerGameSession.commitConfirmedPoisonTransition(

@@ -72,11 +72,9 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevision
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleChange
-import com.codex.campboardgamehost.clocktower.session.commitDawnPoisonCarry
 import com.codex.campboardgamehost.clocktower.session.expirePoisonAtDusk
 import com.codex.campboardgamehost.clocktower.session.DawnCommitIdentity
 import com.codex.campboardgamehost.clocktower.session.confirmedPoisonTargetSeat
-import com.codex.campboardgamehost.clocktower.session.DawnPoisonCarryIntent
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPoisonTransition
 import com.codex.campboardgamehost.clocktower.session.confirmedPoisonTargetName
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPlayerDeath
@@ -622,14 +620,6 @@ internal fun CampBoardGameHostApp() {
             publishClocktowerSessionView()
         }
         clocktowerPoisonTarget = null
-    }
-
-    fun commitClocktowerDawnPoison(intent: DawnPoisonCarryIntent) {
-        val session = requireClocktowerGameSession()
-        if (session.commitDawnPoisonCarry(intent, session.state.gameStateRevision)) {
-            publishClocktowerSessionView()
-        }
-        clocktowerPoisonTarget = session.state.confirmedPoisonTargetName(round)
     }
 
     fun commitClocktowerPhaseAdvance(
@@ -2706,38 +2696,37 @@ internal fun CampBoardGameHostApp() {
                             }
                             clocktowerSelectedExecution = null
                         },
-                        onConfirmNight = { result ->
+                        onCompleteNight = {
                             val session = requireClocktowerGameSession()
-                            require(result.gameId == session.state.gameId) { "Night result belongs to another game." }
-                            result.newImpSeat?.let { require(session.state.gameState.playerAt(it) != null) }
-                            val nightKlutzName = result.deathSeats.firstNotNullOfOrNull { seat ->
-                                session.state.gameState.playerAt(seat)?.takeIf { it.actualRole == RoleId("Klutz") && it.alive }?.name
+                            check(session.state.phase == StorytellerPhase.NIGHT) {
+                                "Night completion is only allowed after the actual night steps."
                             }
-                            session.commitConfirmedNightDeaths(
-                                result.deathSeats, result.sourceRevision.gameStateRevision, result.sourceRevision.playerInputRevision,
-                            )
-                            publishClocktowerSessionView()
-                            val previousPoisonSeat = session.state.confirmedPoisonTargetSeat(round)
-                            commitClocktowerDawnPoison(DawnPoisonCarryIntent(
-                                if (result.keepPoison) previousPoisonSeat else null, previousPoisonSeat,
-                            ))
-                            clocktowerPendingNewDemonName = result.newImpSeat?.let { session.state.gameState.playerAt(it)?.name }
-                            clocktowerPendingNightNewDemonIdentityName = null
-                            gameOutcome = null
+                            val deaths = session.state.actionTimeline.entries.filter { entry ->
+                                entry.point.phase == StorytellerPhase.NIGHT &&
+                                    entry.point.round == round &&
+                                    entry.fact is com.codex.campboardgamehost.clocktower.domain.ActionFact.Death
+                            }.map { entry ->
+                                (entry.fact as com.codex.campboardgamehost.clocktower.domain.ActionFact.Death).targetSeat
+                            }
+                            val nightKlutzName = if (currentClocktowerScript == ClocktowerScript.NoGreaterJoy) {
+                                deaths.firstNotNullOfOrNull { seat ->
+                                    session.state.gameState.playerAt(seat)
+                                        ?.takeIf { it.actualRole == RoleId("Klutz") }?.name
+                                }
+                            } else null
+                            // Poison is already the Session's effective status. It continues
+                            // through Dawn/Day and expires at the outgoing Day boundary.
+                            // No late manual override or second death/succession decision.
                             if (nightKlutzName != null) {
                                 clocktowerPendingKlutzName = nightKlutzName
                                 clocktowerKlutzChoiceName = null
                                 clocktowerKlutzReturnToDawn = true
-                            }
-                            if (clocktowerPendingNewDemonName == null) {
-                                if (nightKlutzName != null) {
-                                    commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                                    clocktowerDayModeState.value = ClocktowerDayMode.Klutz
-                                    captureKlutzLearnedDeathOnPublicAnnouncement(nightKlutzName)
-                                } else {
-                                    commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
-                                    resetClocktowerNightFlow()
-                                }
+                                commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
+                                clocktowerDayModeState.value = ClocktowerDayMode.Klutz
+                                captureKlutzLearnedDeathOnPublicAnnouncement(nightKlutzName)
+                            } else {
+                                commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
+                                resetClocktowerNightFlow()
                             }
                             clocktowerFortuneTellerFirst = null
                             clocktowerFortuneTellerSecond = null
@@ -2745,7 +2734,7 @@ internal fun CampBoardGameHostApp() {
                             clocktowerChambermaidSecond = null
                             clocktowerRavenkeeperTarget = null
                             clocktowerMonkProtectedTarget = null
-                            session.finishNightResolution()
+                            // PhaseAdvance has already cleared transient night targets.
                             publishClocktowerSessionView()
                             clocktowerMayorRedirectTarget = null
                         },

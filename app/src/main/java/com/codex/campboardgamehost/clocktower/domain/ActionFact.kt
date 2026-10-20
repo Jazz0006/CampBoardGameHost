@@ -67,9 +67,6 @@ sealed interface ActionFact {
         override val sequence: Long,
     ) : ActionFact
 
-    /** Explicitly confirmed public result, not an inference from missing death events. */
-    data class NoNightDeaths(override val actionId: String, override val sequence: Long) : ActionFact
-
     /** Confirmed public player attempt, not a Storyteller decision or a claim that a hit occurred. */
     data class SlayerShot(
         override val actionId: String,
@@ -231,7 +228,7 @@ object DynamicActionReducer {
                     requireSeat(fact.mayorSeat)
                     requireSeat(fact.targetSeat)
                 }
-                is ActionFact.NoExecution, is ActionFact.NoNightDeaths -> Unit
+                is ActionFact.NoExecution -> Unit
                 is ActionFact.SlayerShot -> {
                     requireSeat(fact.claimantSeat)
                     requireSeat(fact.targetSeat)

@@ -127,7 +127,7 @@ internal fun ClocktowerJudgeScreen(
     onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
-    onConfirmNight: (ClocktowerConfirmedNightResult) -> Unit,
+    onCompleteNight: () -> Unit,
 ) {
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
@@ -167,19 +167,6 @@ internal fun ClocktowerJudgeScreen(
     var dayMode by dayModeState
     var pendingNightAdvance by remember(gameId, round, phase) {
         mutableStateOf<ClocktowerNightAdvanceDirective.AwaitRefreshedFlow?>(null)
-    }
-    var nightResultRevision by remember(gameId, round, phase) { mutableStateOf<StorytellerDecisionRevision?>(null) }
-    fun confirmActualNightResult() { nightResultRevision = StorytellerDecisionRevision(gameStateRevision, playerInputRevision) }
-    nightResultRevision?.let { anchor ->
-        ClocktowerNightResultConfirmationScreen(
-            gameId = gameId, cards = cards, sourceRevision = anchor,
-            currentRevision = StorytellerDecisionRevision(gameStateRevision, playerInputRevision),
-            confirmedNightDeathSeats = confirmedNightDeathSeats,
-            poisonedPlayerName = poisonTarget, language = language,
-            onCancel = { nightResultRevision = null },
-            onConfirm = { result -> onConfirmNight(result); nightResultRevision = null },
-        )
-        return
     }
     val nominationDraft = remember(gameId, round) { ClocktowerNominationDraft() }
     val slayerDraft = remember(gameId) { ClocktowerSlayerDraft() }
@@ -1338,7 +1325,7 @@ internal fun ClocktowerJudgeScreen(
                     nightStepIndex = directive.stepIndex
                 }
                 is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow -> pendingNightAdvance = directive
-                ClocktowerNightAdvanceDirective.CompleteNight -> confirmActualNightResult()
+                ClocktowerNightAdvanceDirective.CompleteNight -> onCompleteNight()
             }
         }
 

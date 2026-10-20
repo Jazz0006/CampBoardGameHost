@@ -131,9 +131,6 @@ class MayorRedirectBoundaryTest {
         val s = session()
         val before = s.state
         assertThrows(IllegalStateException::class.java) {
-            s.commitConfirmedNightDeaths(emptyList(), before.gameStateRevision, before.playerInputRevision)
-        }
-        assertThrows(IllegalStateException::class.java) {
             s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
                 "night-to-dawn", StorytellerPhase.NIGHT, 2,
                 s.nextInputSequence, StorytellerPhase.DAWN, 2,
@@ -141,9 +138,13 @@ class MayorRedirectBoundaryTest {
         }
         assertSame(before, s.state)
         s.commitConfirmedMayorRedirect(choice(s, 4), request(s), s.state.gameStateRevision)
-        s.commitConfirmedNightDeaths(listOf(4),
-            s.state.gameStateRevision, s.state.playerInputRevision)
         assertFalse(s.state.gameState.playerAt(4)!!.alive)
+        s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
+            "night-to-dawn", StorytellerPhase.NIGHT, 2,
+            s.nextInputSequence, StorytellerPhase.DAWN, 2,
+        ), s.state.gameStateRevision)
+        assertEquals(StorytellerPhase.DAWN, s.state.phase)
+        assertEquals(1, s.state.epistemicObservationLog.records.size)
     }
 
     @Test fun `Mayor redirect can kill Imp and immediately force Scarlet Woman succession`() {
