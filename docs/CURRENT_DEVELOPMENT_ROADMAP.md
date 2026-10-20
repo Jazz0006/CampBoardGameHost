@@ -1,8 +1,7 @@
 # 当前开发路线 — Minimal Host（2026-10-20）
 
-> **D2 本轮进度（新 SHA 的 CI 待核）**：本地 fast 671 / full 692 tests + APK 通过，包括 21 项真实 Compose 操作回归；已修复系统返回、Next 可用性、显式 AI 重试、真实查询输入的战略审查和信息指标绑定。细节见 [验收矩阵](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。代码/自动交互检查点已建立，D2 最终设备及真实网络验收仍待完成，暂不推进全夜调度改造。
 
-> **最新代码验收（2026-10-20）**：`b5a955e92e45a9ea4c03fff122c165de3bf8a929` 的 [完整 Android CI #4482](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336436) 与 [R2 #4058](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336439) 均 SUCCESS；Android 全回归/APK、ASP、Clingo 和总门禁通过。本地完整回归 162 suites / 670 tests、0 failure/error/skipped，调试 APK 构建成功。双人/送葬者/守鸦人/贤者的草稿改选失效、步骤隔离和手动输入不被 AI 重置，数字预览输入恢复与占卜师最后预览标记已落地；未作真机或付费 API 验收。
+> **最新代码验收（2026-10-20）**：`af35cee951539df689552fb3c3ff97b7b2b5861e` 的 [完整 Android CI #4484](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558605) 与 [R2 #4060](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558519) 均 SUCCESS，Android full/APK、ASP、Clingo 与总门禁通过。本地 fast 671 / full 692 tests（含 21 个真实 Compose 交互用例）及 APK 通过。D2 系统 Back、全屏 Next、显式重试及真实查询的战略检查缺口已修复；详见 [D2 验收矩阵](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。这是代码/自动交互检查点，不是设备/像素视觉/现场或付费 API 验收。
 
 以 [最终架构](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)、[A–D2 决策](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md) 和最新用户指令为准。当前在 Codex 本地 Windows 环境直接读写仓库；不使用 MiniMCP。
 
@@ -16,8 +15,8 @@
 
 ## 当前执行顺序
 
-1. 更新落后文档和 #334/#335 描述；当前状态与历史记录分开，旧记录归档保留。
-2. 收尾 D2（本批代码已修复双人/角色/Sage 草稿失效、移除异步推荐重置人工草稿、数字预览恢复及 FT 最近结果高亮；本地全回归 670 tests/APK 通过，精确代码 b5a955e9 的 CI #4482/R2 #4058 通过）：改任何信息草稿（包括双人身份/座位）必须使旧预览失效；全屏返回重现最后预览；异步 AI 不覆盖人工编辑；缺失/失败/过期可重试，实际查询目标与结果一致。只在本角色 Next 写唯一 Observation。
+1. 已更新落后文档和 #334/#335 描述；当前状态与历史记录分开，旧记录归档保留。
+2. D2 代码及自动化交互已到验收检查点（af35cee9；CI #4484/R2 #4060）。当前剩独立设备/现场操作验收，不能以 JVM 操作回归冒称真机视觉通过；完整覆盖矩阵见上方报告。一般确定性线索计算、特殊身份通知及持久恢复仍按原职责阶段处理。
 3. 统一全夜 `nextStep(Session)`：替换并同批删除 UI `nightStepIndexState`、`nightStartedState`、`pendingNightAdvance`、旧 Dynamic/Fixed resolver 控制链。清理点目标自动提交的旧路径，恢复所有行动的显式 Next 确认；保留 AI 裁量/预选，不让 AI 代替玩家选择。
 4. P3：B 同一白天方桌一次日结，C 从 Death/Execution 派生 Klutz 真实选择；确定性结算和胜负归 Host。
 5. P4/P5：AI 三模式同一入口、唯一 Session 原子存储和安全续局、TB 5–15/NGJ 5–6 全角色与代表性交互、全树删除证明、全部源码 <=50,000 bytes、完整 CI/R2 和必要真机验收。

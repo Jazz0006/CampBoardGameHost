@@ -1,6 +1,6 @@
 # D2 交互验收检查点（2026-10-20，本地 Codex）
 
-本报告区分已运行的真实 Compose 自动化与尚未进行的设备/真实网络验收。当前批次代码 SHA 和远端 CI 在推送后补录；起点是 `d52cd2b6`，上一代码基线 `b5a955e9`。
+本报告区分已运行的真实 Compose 自动化与尚未进行的设备/真实网络验收。本批代码 `af35cee951539df689552fb3c3ff97b7b2b5861e` 的 [完整 CI #4484](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558605) / [R2 #4060](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558519) 均 SUCCESS；Android full/APK、ASP、Clingo 和总门禁通过，remote compare 与本地 16 文件变更一致。起点 `d52cd2b6`，上一代码基线 `b5a955e9`。后续仅文档提交不冒充新 Android 编译证据。
 
 ## 本批修复
 

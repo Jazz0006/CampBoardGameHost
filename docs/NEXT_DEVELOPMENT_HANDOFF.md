@@ -1,8 +1,7 @@
 # 当前交接 — Codex 本地 D2（2026-10-20）
 
-> **本轮 D2 交互检查点（代码待对应远端 SHA 验证）**：已修复系统 Back、全屏/数字 Next 预览门禁、显式重试被旧说明文本拦截，以及已形成的真实玩家查询被战略检查当成“无变化”的路径。本地 fast 671 / full 692 tests（含 21 个真实 Compose 用例）及 APK 通过。详细矩阵、范围和体积见 [D2 验收记录](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。NGJ 保持既有 MANUAL 产品边界；设备/真实网络/像素视觉与现场验收仍未通过，不能宣称 D2 全部完成。
 
-> **最新代码验收（2026-10-20）**：`b5a955e92e45a9ea4c03fff122c165de3bf8a929` 的 [完整 Android CI #4482](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336436) 与 [R2 #4058](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336439) 均 SUCCESS；Android 全回归/APK、ASP、Clingo 和总门禁通过。本地完整回归 162 suites / 670 tests、0 failure/error/skipped，调试 APK 构建成功。双人/送葬者/守鸦人/贤者的草稿改选失效、步骤隔离和手动输入不被 AI 重置，数字预览输入恢复与占卜师最后预览标记已落地；未作真机或付费 API 验收。
+> **最新代码验收（2026-10-20）**：`af35cee951539df689552fb3c3ff97b7b2b5861e` 的 [完整 Android CI #4484](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558605) 与 [R2 #4060](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558519) 均 SUCCESS，Android full/APK、ASP、Clingo 与总门禁通过。本地 fast 671 / full 692 tests（含 21 个真实 Compose 交互用例）及 APK 通过。D2 系统 Back、全屏 Next、显式重试及真实查询的战略检查缺口已修复；详见 [D2 验收矩阵](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。这是代码/自动交互检查点，不是设备/像素视觉/现场或付费 API 验收。
 
 ## 环境、分支与已验证基线
 

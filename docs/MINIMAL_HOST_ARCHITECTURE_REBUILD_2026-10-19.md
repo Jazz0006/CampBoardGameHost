@@ -1,6 +1,6 @@
 # Minimal Host Architecture Rebuild — 最终架构、替换清理与验收合同（2026-10-19）
 
-> **最新代码验收（2026-10-20）**：`b5a955e92e45a9ea4c03fff122c165de3bf8a929` 的 [完整 Android CI #4482](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336436) 与 [R2 #4058](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336439) 均 SUCCESS；Android 全回归/APK、ASP、Clingo 和总门禁通过。本地完整回归 162 suites / 670 tests、0 failure/error/skipped，调试 APK 构建成功。双人/送葬者/守鸦人/贤者的草稿改选失效、步骤隔离和手动输入不被 AI 重置，数字预览输入恢复与占卜师最后预览标记已落地；未作真机或付费 API 验收。
+> **最新代码验收（2026-10-20）**：`af35cee951539df689552fb3c3ff97b7b2b5861e` 的 [完整 Android CI #4484](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558605) 与 [R2 #4060](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558519) 均 SUCCESS，Android full/APK、ASP、Clingo 与总门禁通过。本地 fast 671 / full 692 tests（含 21 个真实 Compose 交互用例）及 APK 通过。D2 系统 Back、全屏 Next、显式重试及真实查询的战略检查缺口已修复；详见 [D2 验收矩阵](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。这是代码/自动交互检查点，不是设备/像素视觉/现场或付费 API 验收。
 
 > **最新用户 D2 裁决（2026-10-20，覆盖本文件所有与私密信息展示有关的旧 D/确认时点文字；已分批实施并经代码 CI 验证，尚待全部角色真机验收）**：信息角色 UI 允许反复选信息、打开全屏预览、返回原角色重选并高亮最后一次预览；全屏返回**不自动推进**。仅按“下一步”时，Host 原子记录本步骤最终确认的**唯一一条**信息 Observation 并推进；预览中间版本不记录。Next 前 APP 中断，安全回到本角色重新展示即可，无须恢复预览/选择/高亮；Next 后稳定步骤 ID 幂等且不可退回。AI_AUTOMATIC 仅自动选定说书人裁量信息，仍要现场点击按钮向真人玩家展示。全手动仅手选，辅助当前 1 条/未来可能 3 条推荐+手选，全自动仅一条选定信息展示；唯一结果只有一个展示按钮。**此裁决不改变行动角色点击 Next 立即提交的规则**。代表性 Poisoner→Monk→Imp→Butler 机械链已验收，D2 正在逐角色收尾；完整全夜 Host `nextStep(Session)` 及旧 UI 业务游标清除仍未完成。
 

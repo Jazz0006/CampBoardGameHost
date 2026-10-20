@@ -1,6 +1,6 @@
 # CampBoardGameHost Testing Strategy（2026-10-19，Minimal Host Rebuild）
 
-> **最新代码验收（2026-10-20）**：`b5a955e92e45a9ea4c03fff122c165de3bf8a929` 的 [完整 Android CI #4482](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336436) 与 [R2 #4058](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336439) 均 SUCCESS；Android 全回归/APK、ASP、Clingo 和总门禁通过。本地完整回归 162 suites / 670 tests、0 failure/error/skipped，调试 APK 构建成功。双人/送葬者/守鸦人/贤者的草稿改选失效、步骤隔离和手动输入不被 AI 重置，数字预览输入恢复与占卜师最后预览标记已落地；未作真机或付费 API 验收。
+> **最新代码验收（2026-10-20）**：`af35cee951539df689552fb3c3ff97b7b2b5861e` 的 [完整 Android CI #4484](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558605) 与 [R2 #4060](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558519) 均 SUCCESS，Android full/APK、ASP、Clingo 与总门禁通过。本地 fast 671 / full 692 tests（含 21 个真实 Compose 交互用例）及 APK 通过。D2 系统 Back、全屏 Next、显式重试及真实查询的战略检查缺口已修复；详见 [D2 验收矩阵](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。这是代码/自动交互检查点，不是设备/像素视觉/现场或付费 API 验收。
 
 > **现行验收合同**：[Minimal Host Architecture Rebuild](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md) 覆盖下文旧三模块/F12/P1-P5 流程描述；下方通用证据优先、不强制机械 TDD、CI/Android、安全/隐私和 AI 回归原则仍有效。不要为了让旧实现测试继续通过而保留过时组件。
 >
@@ -60,6 +60,6 @@
 
 GitHub Connector 默认为远端审计与变更工具，Mini MCP 仅在大文件完整上下文/本地操作时补充。所有相关 PR 保持 Draft；未授权不得擅自合并堆叠分支、强推、删除远端分支或进行收费 API 测试。
 
-## D2 Compose 交互回归（2026-10-20）
+## D2 Compose 交互回归（2026-10-20，已由 af35cee9 的 CI #4484/R2 #4060 验证）
 
 `:app:testFull` 包含 `ClocktowerD2UiTest` 的真实 Compose + Robolectric 回归，当前 21 个 UI 用例；`:app:testFast` 排除这一个较重的 UI 类，保留所有原快速合同与新增查询审查回归。必须以 full 的结果接受 UI 改动，不能以 fast 代替。全部 UI 用例使用离线输入/响应 fixture，部分直接走真实 JudgeScreen 与 GLOBAL_V1 Session，组件级和整链证明范围见 [D2 验收记录](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。此记录不等于设备/真实网络/像素视觉验收。

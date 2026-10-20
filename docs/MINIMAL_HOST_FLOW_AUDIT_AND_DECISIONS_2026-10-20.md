@@ -1,6 +1,6 @@
 # Minimal Host — 主持流程零基线审计与人工裁定（2026-10-20）
 
-> **最新代码验收（2026-10-20）**：`b5a955e92e45a9ea4c03fff122c165de3bf8a929` 的 [完整 Android CI #4482](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336436) 与 [R2 #4058](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336439) 均 SUCCESS；Android 全回归/APK、ASP、Clingo 和总门禁通过。本地完整回归 162 suites / 670 tests、0 failure/error/skipped，调试 APK 构建成功。双人/送葬者/守鸦人/贤者的草稿改选失效、步骤隔离和手动输入不被 AI 重置，数字预览输入恢复与占卜师最后预览标记已落地；未作真机或付费 API 验收。
+> **最新代码验收（2026-10-20）**：`af35cee951539df689552fb3c3ff97b7b2b5861e` 的 [完整 Android CI #4484](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558605) 与 [R2 #4060](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558519) 均 SUCCESS，Android full/APK、ASP、Clingo 与总门禁通过。本地 fast 671 / full 692 tests（含 21 个真实 Compose 交互用例）及 APK 通过。D2 系统 Back、全屏 Next、显式重试及真实查询的战略检查缺口已修复；详见 [D2 验收矩阵](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。这是代码/自动交互检查点，不是设备/像素视觉/现场或付费 API 验收。
 
 > **2026-10-20 最新信息展示裁决 D2（优先于本文所有历史 D 文案；已批准，D2 已分批实施但未完成全部验收）**：信息角色的单步流程为 **信息候选/手动选择 → 点击“向玩家展示”打开全屏 → 点击全屏返回当前角色方桌（不推进）→ 可改选再预览 → 点击当前角色“下一步”才正式把最后一次确认展示的信息写入唯一 Session Observation，并让 Host 进入下一步骤**。单次步骤只记录最终确认的一条结果；先前预览的选项不是正式信息事件，无需逐条记日志。Next 前不允许进入下一角色；Next 后不可回上一夜间角色。可以只在 UI 临时状态保留上次预览及高亮，不得创建持久 Pending、已展示事实或第二权威对象。异常退出在 Next 之前：恢复同一未完成角色，重新选择/展示即可，不追求此前全屏、草稿和预览历史精确恢复。Next 提交必须按稳定 stepId 幂等、记录实际最终内容并保证已确认进度可靠恢复。唯一候选只给一个展示按钮；手动模式仅手选，辅助模式当前一条、未来可三条推荐加手选，自动模式仅 AI 已选信息展示按钮。**注意这是预览而不是确认玩家已经获得信息，旧“打开即写 Observation、关闭即下一位”一律作废。**
 
