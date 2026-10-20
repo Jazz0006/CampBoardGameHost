@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 internal fun ClocktowerPairInformationSquareTableDialog(
     interactionKey: String,
     recommendedOption: ClocktowerDisplayOption?,
+    lastPreviewProposition: com.codex.campboardgamehost.clocktower.epistemic.InformationProposition? = null,
     automaticOnly: Boolean = false,
     scriptRoles: List<ClocktowerRole>,
     abilityRoleEnName: String,
@@ -52,12 +53,23 @@ internal fun ClocktowerPairInformationSquareTableDialog(
             recommendedOption, abilityRoleEnName, seatCount, scriptRoles,
         )
     }
-    var selection by remember(interactionKey, recommendedOption, scriptRoles, automaticOnly) {
-        mutableStateOf(validRecommendation ?: ClocktowerDirectPairSelection())
+    // Opening the player fullscreen temporarily unmounts this square table.
+    // Restore the last *previewed* pair (manual or recommended) on return.
+    val lastPreviewSelection = ClocktowerDirectPairSelection.fromProposition(
+        lastPreviewProposition, abilityRoleEnName, seatCount, scriptRoles,
+    )
+    // An asynchronous AI recommendation must not erase a Storyteller's in-progress edit.
+    var selection by remember(interactionKey, lastPreviewProposition, scriptRoles, automaticOnly) {
+        mutableStateOf(lastPreviewSelection ?: validRecommendation ?: ClocktowerDirectPairSelection())
     }
-    var editing by remember(interactionKey, recommendedOption, scriptRoles, automaticOnly) {
-        mutableStateOf(validRecommendation == null && !automaticOnly)
+    var editing by remember(interactionKey, lastPreviewProposition, scriptRoles, automaticOnly) {
+        mutableStateOf(!automaticOnly &&
+            (validRecommendation == null || (lastPreviewSelection != null &&
+                lastPreviewSelection != validRecommendation)))
     }
+    // While not editing, the newest valid recommendation remains highlighted.
+    val highlightedSelection = if (!editing && validRecommendation != null)
+        validRecommendation else selection
     fun restoreRecommendation() {
         selection = validRecommendation ?: ClocktowerDirectPairSelection()
         editing = validRecommendation == null && !automaticOnly
@@ -81,7 +93,8 @@ internal fun ClocktowerPairInformationSquareTableDialog(
         },
         seatUiModel = { seat ->
             val seatNumber = seat.seatId.number
-            val selected = seatNumber == selection.firstSeat || seatNumber == selection.secondSeat
+            val selected = seatNumber == highlightedSelection.firstSeat ||
+                seatNumber == highlightedSelection.secondSeat
             val state = when {
                 selected -> ClocktowerSquareTableSeatState.SelectedHighlighted
                 editing && selection.roleId != null && !selection.noneSelected ->
@@ -101,7 +114,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                 isCurrentActor = seatNumber == actorSeat,
                 suppressDefaultStateMarker = selected,
                 stateMarkerOverride = clocktowerPairInformationTruthMarker(
-                    selected, selection.roleId, seat.actualRole?.roleId,
+                    selected, highlightedSelection.roleId, seat.actualRole?.roleId,
                 ),
             )
         },

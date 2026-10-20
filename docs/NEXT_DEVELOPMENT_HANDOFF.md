@@ -14,6 +14,12 @@
 >
 > **2026-10-20 最小纵向流程实施第 1 批（本提交后按实际 SHA/CI 更新）**：不扩展全角色；生产 UI 取消后夜通用 StartNight/ReadyCard 以及无真实首夜配置时的通用准备页，唯独实际恶魔伪装确认保留为真实决策操作；删除无生产消费者的 `ClocktowerNightReadyCard`，添加 Poisoner→Monk（中毒后仍可选目标但保护无效）→Imp（即时 Death）→Butler（幂等）的 Session 事实时序回归。**未实现/绝不宣称完成**：唯一 `nextStep(Session)` 和替换 UI `nightStepIndex`/`AwaitRefreshedFlow`，退出旧 NightHostProjection 攻击死亡预测，首夜真实伪装决策持久恢复，D 展示关闭自动下一角色，B/C 白天调整，完整 TB/NGJ 全角色覆盖。测试需以新代码 SHA 对应 Android CI/R2 为准；独立隔离工作区的 Gradle 曾因文件锁/端口 bind 失败，非代码通过证据。
 
+## 2026-10-20 D2 双人线索返回高亮恢复（第六批，以新 SHA/CI 为准）
+
+- 洗衣妇/图书管理员/调查员双人信息界面从**本步骤最近预览的结构化命题**恢复选中的身份/两个座位；即使打开全屏导致子树销毁，返回后的方桌也应高亮最后预览的选项，而非重置回默认 AI 推荐。
+- 该 UI 仅使用 Session 之外已有的临时预览草稿；由既有 `ClocktowerDirectPairSelection` 解析结构化 pair 命题，不新增持久状态、评分、合法候选领域或流程游标。手动编辑过程不因新的异步 AI 推荐被覆写；自动未在编辑时仍能展示当前有效推荐。
+- 完成逻辑回归不等于设备上的最终可视验收；占卜师/侍女/守鸦人等其他界面高亮与 AI 过期时序仍需持续审查，之后才能推进统一 `nextStep(Session)`。
+
 ## 2026-10-20 D2 跨夜数字草稿隔离与免 AI 边界收紧（第五批，以新 SHA/CI 为准）
 
 - 数字输入草稿的 Compose `remember` 现在包含当前步骤身份 `informationDecisionKey`，避免同一角色与相同对象在后续夜晚错误复用前夜数字。

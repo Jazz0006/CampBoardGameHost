@@ -89,10 +89,20 @@ internal data class ClocktowerDirectPairSelection(
             abilityRole: String,
             seatCount: Int,
             scriptRoles: List<ClocktowerRole>,
+        ): ClocktowerDirectPairSelection? = fromProposition(
+            option?.proposition, abilityRole, seatCount, scriptRoles,
+        )
+
+        /** Restore UI highlighting from the latest fullscreen preview, not an AI default. */
+        fun fromProposition(
+            proposition: InformationProposition?,
+            abilityRole: String,
+            seatCount: Int,
+            scriptRoles: List<ClocktowerRole>,
         ): ClocktowerDirectPairSelection? {
-            val proposition = option?.proposition ?: return null
+            val confirmedPreview = proposition ?: return null
             val roles = scriptRoles.map { it.enName }.toSet()
-            return when (proposition) {
+            return when (confirmedPreview) {
                 is InformationProposition.AnyOf -> {
                     val alternatives = proposition.alternatives
                         .map { it as? InformationProposition.RoleAt ?: return null }

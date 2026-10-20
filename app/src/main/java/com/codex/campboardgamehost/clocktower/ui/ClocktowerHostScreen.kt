@@ -1653,6 +1653,7 @@ internal fun ClocktowerJudgeScreen(
                     }
                 },
                 onInformationDraftChanged = { lastInformationPreview = null },
+                lastPreviewProposition = currentInformationPreview?.displayProposition,
                 canGoPrevious = false,
                 onPrevious = {},
                 onHostTools = onHostTools,

@@ -69,6 +69,7 @@ internal fun ClocktowerNightStepCardLocalized(
     onSelectChambermaidSecond: (String) -> Unit,
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
     onInformationDraftChanged: () -> Unit = {},
+    lastPreviewProposition: InformationProposition? = null,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
     onHostTools: () -> Unit,
@@ -586,6 +587,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 ClocktowerPairInformationSquareTableDialog(
                     interactionKey = informationDecisionKey,
                     recommendedOption = currentAiSuggestedOption,
+                    lastPreviewProposition = lastPreviewProposition,
                     automaticOnly = allowRuleDeterminedAutoUi,
                     scriptRoles = scriptRoles,
                     abilityRoleEnName = requireNotNull(presentationRoleEnName),

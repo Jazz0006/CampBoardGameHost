@@ -63,6 +63,25 @@ class ClocktowerDirectPairInformationTest {
                 none, "Librarian", 8, roles))
     }
 
+    @Test fun `returning from fullscreen reconstructs the last previewed pair rather than AI default`() {
+        val ai = requireNotNull(ClocktowerDirectPairSelection("Baron", 2, 5).toDisplayOption(
+            "Investigator", 8, roles, { it }, "Info", "en",
+        ))
+        val manualPreview = requireNotNull(ClocktowerDirectPairSelection("Scarlet Woman", 3, 7).toDisplayOption(
+            "Investigator", 8, roles, { it }, "Info", "en",
+        ))
+        val restored = ClocktowerDirectPairSelection.fromProposition(
+            manualPreview.proposition, "Investigator", 8, roles,
+        )
+        assertEquals(ClocktowerDirectPairSelection("Scarlet Woman", 3, 7), restored)
+        assertTrue(restored != ClocktowerDirectPairSelection.fromRecommendation(
+            ai, "Investigator", 8, roles,
+        ))
+        assertNull(ClocktowerDirectPairSelection.fromProposition(
+            manualPreview.proposition, "Investigator", 6, roles,
+        ))
+    }
+
     @Test fun `true-role UI marker never invents Spy Recluse registration`() {
         assertEquals("✓", clocktowerPairInformationTruthMarker(true, "Chef", "Chef"))
         assertNull(clocktowerPairInformationTruthMarker(true, "Chef", "Empath"))
