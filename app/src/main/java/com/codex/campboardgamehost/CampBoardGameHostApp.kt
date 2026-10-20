@@ -93,9 +93,6 @@ import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationR
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
-import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionContext
@@ -717,37 +714,6 @@ internal fun CampBoardGameHostApp() {
             BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
                 strategicPolicyCursor?.version ?: 0,
                 draft.phase.name, draft.round)
-        }
-    }
-
-    fun preflightClocktowerPublicAliveObservation(
-        playerName: String,
-        eventSequence: Int,
-        eventPhase: ClocktowerPhase = clocktowerPhase,
-        eventRound: Int = round,
-        recordId: String? = null,
-    ) {
-        val seat = cards.indexOfFirst { it.name == playerName }
-            .takeIf { index -> index >= 0 }
-            ?.plus(1)
-            ?: return
-        val epistemicPhase = eventPhase.toStorytellerPhase()
-        val committed = requireClocktowerGameSession().preflightGlobalEpistemicObservation(
-            EpistemicObservationDraft(
-                recordId = recordId ?: "public-alive-${clocktowerGameId}-${eventSequence}-$seat",
-                phase = epistemicPhase,
-                round = eventRound,
-                sequence = eventSequence,
-                sourceSeat = null,
-                sourceAbility = null,
-                visibility = ObservationVisibility.PUBLIC,
-                recipientSeats = emptySet(),
-                reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
-                proposition = InformationProposition.AliveAt(seat, false),
-            ),
-        )
-        check(committed.playerInputRevision != clocktowerPlayerInputRevision) {
-            "A new public elimination cannot reuse an existing observation ID."
         }
     }
 
@@ -2372,10 +2338,6 @@ internal fun CampBoardGameHostApp() {
                             if (shotWillHit && targetIndex >= 0 && targetCard != null) {
                                 val targetSeat = targetIndex + 1
                                 val localSequence = requireClocktowerGameSession().nextInputSequence
-                                preflightClocktowerPublicAliveObservation(
-                                    playerName = targetName,
-                                    eventSequence = localSequence,
-                                )
                                 requireClocktowerGameSession().commitConfirmedPlayerDeath(
                                     draft = ActionFactDraft.Death(
                                         actionId = clocktowerActionId(
@@ -2389,7 +2351,6 @@ internal fun CampBoardGameHostApp() {
                                         targetSeat = targetSeat,
                                     ),
                                     expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
-                                    publishedObservationId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat",
                                 )
                                 publishClocktowerSessionView()
                                 val promotedName = if (targetCard.clocktowerTeam == ClocktowerTeam.Demon) {
@@ -2406,17 +2367,6 @@ internal fun CampBoardGameHostApp() {
                             gameOutcome = shotOutcome
                             if (shotOutcome != null) {
                                 showResults = true
-                            }
-                        },
-                        onPreflightVirginExecution = { nominatorName ->
-                            val preflightIndex = cards.indexOfFirst { it.name == nominatorName }
-                            val preflightCard = cards.getOrNull(preflightIndex)
-                            if (preflightIndex >= 0 && preflightCard != null && preflightCard.eliminatedRound == null) {
-                                preflightClocktowerPublicAliveObservation(
-                                    playerName = nominatorName,
-                                    // The nomination is committed before the Virgin execution.
-                                    eventSequence = Math.addExact(requireClocktowerGameSession().nextInputSequence, 1),
-                                )
                             }
                         },
                         onConfirmedNomination = { nominatorName, nomineeName, explicitSpyRegistration ->
@@ -2483,7 +2433,6 @@ internal fun CampBoardGameHostApp() {
                                             targetSeat = index + 1,
                                         ),
                                         expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
-                                        publishedObservationId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}",
                                     )
                                     publishClocktowerSessionView()
                                 }
@@ -2529,16 +2478,6 @@ internal fun CampBoardGameHostApp() {
                                 advanceClocktowerPlayerInputRevision()
                                 return@onConfirmDay
                             }
-                            val proposedSequence = requireClocktowerGameSession().nextInputSequence
-                            val proposedObservationId = if (preflightIndex >= 0) {
-                                "public-alive-${clocktowerGameId}-${proposedSequence}-${preflightIndex + 1}"
-                            } else {
-                                ""
-                            }
-                            val observationAlreadyExists = proposedObservationId.isNotEmpty() &&
-                                clocktowerEpistemicObservations.any { observation ->
-                                    observation.recordId == proposedObservationId
-                                }
                             val executionDebugFields = mapOf(
                                 "lastCriticalAction" to "CONFIRM_EXECUTION_CLICKED",
                                 "phaseAtAction" to clocktowerPhase.name,
@@ -2548,30 +2487,12 @@ internal fun CampBoardGameHostApp() {
                                 "gameStateRevision" to clocktowerGameStateRevision.toString(),
                                 "playerInputRevision" to clocktowerPlayerInputRevision.toString(),
                                 "observationCount" to clocktowerEpistemicObservations.size.toString(),
-                                "proposedObservationId" to proposedObservationId,
-                                "observationAlreadyExists" to observationAlreadyExists.toString(),
                             )
                             DebugFlightRecorder.updateState(executionDebugFields)
                             DebugFlightRecorder.record(
                                 event = "CONFIRM_EXECUTION_CLICKED",
                                 fields = executionDebugFields,
                             )
-                            if (preflightExecutionName != null &&
-                                preflightIndex >= 0 &&
-                                preflightCard != null &&
-                                preflightCard.eliminatedRound == null
-                            ) {
-                                DebugFlightRecorder.record(
-                                    event = "EXECUTION_PREFLIGHT",
-                                    fields = executionDebugFields + mapOf(
-                                        "proposedSequence" to proposedSequence.toString(),
-                                    ),
-                                )
-                                preflightClocktowerPublicAliveObservation(
-                                    playerName = preflightExecutionName,
-                                    eventSequence = proposedSequence,
-                                )
-                            }
                             // Execution and NoExecution own their revision with the accepted fact.
                             val aliveBeforeExecution = cards.filter { it.eliminatedRound == null }
                             val executionName = clocktowerSelectedExecution
@@ -2596,7 +2517,6 @@ internal fun CampBoardGameHostApp() {
                                             targetSeat = index + 1,
                                         ),
                                         expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
-                                        publishedObservationId = "public-alive-${clocktowerGameId}-$actionSequence-${index + 1}",
                                     )
                                     publishClocktowerSessionView()
                                     clocktowerLastExecutedName = executionName

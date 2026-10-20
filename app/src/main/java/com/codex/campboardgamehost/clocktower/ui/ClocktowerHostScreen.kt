@@ -121,7 +121,6 @@ internal fun ClocktowerJudgeScreen(
     onConfirmKlutzChoice: () -> Unit,
     onConfirmArtistQuestion: (String) -> Unit,
     onSlayerShot: (String, String, Boolean) -> Unit,
-    onPreflightVirginExecution: (String) -> Unit,
     onVirginNomination: (String, String, Boolean) -> Unit,
     onConfirmedNomination: (String, String, Boolean?) -> Unit,
     onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord) -> Unit,
@@ -315,9 +314,6 @@ internal fun ClocktowerJudgeScreen(
                     actionsEnabled = gameOutcome == null,
                     onHostTools = onHostTools,
                     onConfirm = { confirmation ->
-                        if (confirmation.firstVirginNomination && confirmation.virginExecutes) {
-                            onPreflightVirginExecution(confirmation.nominator)
-                        }
                         onConfirmedNomination(
                             confirmation.nominator, confirmation.nominee, confirmation.explicitSpyRegistration,
                         )

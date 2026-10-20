@@ -8,6 +8,12 @@
 >
 > **2026-10-20 最小纵向流程实施第 1 批（本提交后按实际 SHA/CI 更新）**：不扩展全角色；生产 UI 取消后夜通用 StartNight/ReadyCard 以及无真实首夜配置时的通用准备页，唯独实际恶魔伪装确认保留为真实决策操作；删除无生产消费者的 `ClocktowerNightReadyCard`，添加 Poisoner→Monk（中毒后仍可选目标但保护无效）→Imp（即时 Death）→Butler（幂等）的 Session 事实时序回归。**未实现/绝不宣称完成**：唯一 `nextStep(Session)` 和替换 UI `nightStepIndex`/`AwaitRefreshedFlow`，退出旧 NightHostProjection 攻击死亡预测，首夜真实伪装决策持久恢复，D 展示关闭自动下一角色，B/C 白天调整，完整 TB/NGJ 全角色覆盖。测试需以新代码 SHA 对应 Android CI/R2 为准；独立隔离工作区的 Gradle 曾因文件锁/端口 bind 失败，非代码通过证据。
 
+## 2026-10-20 未提交文件专项审计：死亡只保留一条确认事实（提交后确认 CI）
+
+- 审计 `ClocktowerGameSessionAliveBoundaries.kt` 的遗留未提交更改：**保留意图，并补齐消费者，而非抛弃**。现行产品约定已经确认 Session 的 `Death/Execution` 即死亡唯一事实，不在同一次提交中再建 `PUBLIC AliveAt(false)`。原未提交改动只删了 `publishedObservationId` 参数，尚有三条生产调用和对应单元测试使用，若原样提交将无法编译。
+- 一并迁移杀手射击致死、处女提名直接处决、白天正式处决的生产调用与测试；删除 `preflightClocktowerPublicAliveObservation`、用于该冗余观察的调试字段和仅为其存在的 Virgin preflight UI 回调，取消旧 `publishedObservationId`、`public-alive-` producer。仍保留一般观察数据结构 `AliveAt` 解析以理解历史记录，保留 Klutz 死亡时真实身份/醉毒证据及真正选择行动。
+- 这不意味着日间所有 Host 业务已重构完成：`EndConfirm` UI、`KlutzLearnedDeath` 独立事件及规则/胜负 UI 控制仍依 A–D 后续批次清理。需要本次 Android CI/R2 真实验证通过才可报告代码验收；目的是清理此遗留未提交工作，维护干净的开发分支。
+
 ## 2026-10-20 第二批：夜间稳定步骤身份与真实死亡触发（代码批次，验收按最新 SHA）
 
 - 后夜确认步骤以后不再用旧 `ClocktowerNightAdvanceDirective.AwaitRefreshedFlow`、旧列表长度或原索引猜下一角色。改为短暂 UI handoff 储存刚**已确认**步骤的稳定 interactionId / 已完成前缀，由刷新后的 Host 可执行步骤重新定位下一项；对 Imp 攻击、市长转移必须等 Session gameStateRevision 增长才允许导航，重复 Next 在待刷新期间禁用。该 handoff 不是待提交业务操作或第二份 GameState，**但 Compose 的 `nightStepIndex` 仍存在，仅作为显示位置；还没实现 `nextStep(Session)` 的完整可恢复业务游标**。
