@@ -1,0 +1,88 @@
+# Minimal Host — 主持流程零基线审计与人工裁定（2026-10-20）
+
+> **权威产品裁定，实施边界；不是代码已完成声明。** 依照用户 A–D 四项明确批准，优先级高于此前任何与准备页、日末确认页、Klutz Learned 事件、信息展示关闭后动作有关的历史文件、测试和代码注释。总合同见 [MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。审计的生产源码检查基线包括 `ccaef940`、`0e63d9c`；制定文档时最新开发机 HEAD 为 `4fc60df`。每批实施前必须重新扫描当前真实 HEAD/工作树及消费者。
+>
+> 本审计枚举约 226 个 Kotlin 生产文件，并阅读/追踪关键 Activity→Compose App→Host UI→Session、夜间、白天、AI/事件及持久化入口；**并非 226 文件逐一完整语义验收**，不能宣称全仓旧代码已清零。已定位项目详见下面矩阵；未确认代码按 REVIEW_REQUIRED，不可假设已删除。
+
+## 1. 先从游戏规则独立定义最小流程
+
+```text
+创建游戏（TB 5–15 / NGJ 5–6、座位、配置、保留双跨局防重复）
+  -> 分发身份、已确定的实际配置与红鲱鱼/恶魔伪装等真实裁量
+  -> 首夜第一个实际可执行步骤
+     -> 当前角色 UI 草稿/必要玩家操作、Host 唯一决定固定规则和是否唤醒
+     -> 本步确认时原子记录 Action + 确定机械影响；实际展示信息即时记录 Observation
+     -> 私密信息展示关闭即完成该步骤并自动进入下一个可执行步骤
+     -> 已完成不允许回到上一个夜间角色；无需独立 Begin/Start/Previous/交接页
+  -> 最后一夜间步骤完成直接进入 Day（绝无 Dawn/死亡播报/公开确认步骤）
+  -> 白天同一方桌直接只读展示当夜已确认 Death
+     -> 讨论/提名/投票/鬼票/技能/正式处决，按发生时记录必要事件
+     -> 单个“结束白天”确认在**同一方桌**完成结算/胜负；不出现 EndConfirm 页面
+  -> 已结束：展示 Session 结算结果；未结束：直接下一夜的第一个实际可执行步骤
+  -> 每一次非唯一裁量由 AI/人工，说书人以外不由 UI/AI 决定流程本身
+```
+
+**状态权威**：唯一可写 Session/GameState + 按发生顺序确认事件；Script 提供固定角色次序/有限剧本例外；Host 是机械效果、下一步、触发/跳过、胜负和原子事务的唯一业务决策者。UI 保存**当前未确认输入草稿/可见性**，不能拥有另一份实际进度。AI 保留原有开局/后夜建议、战略记忆、人工/辅助/自动模式，通过 Host 一条提交路径；不得恢复通用候选枚举、评分、世界搜索、平行 Rules 权威。
+
+## 2. 人工裁决 A–D：已批准、无需反复征询
+
+| ID | 已批准行为 | 必须删除/收敛 | 不得误删的能力 |
+|---|---|---|---|
+| **A 夜晚开始** | 夜与首夜直接进入 Host 计算的第一个可执行步骤；无“开始第N夜”“首夜准备完毕”页面 | `nightStarted` 布尔流程分支、`ClocktowerNightReadyCard`、专用 StartNight 屏和仅支撑它们的按钮/测试；不允许改为隐藏的自动点击/空步骤 | 确实需要的开局裁量（恶魔伪装、红鲱鱼、酒鬼选定）作为独立真实配置输入；必须记录 |
+| **B 白天结束** | 同一白天方桌上一键确认结束，进行本日处决/无人处决、特殊结果与胜负结算；无需离开方桌再点击 | `ClocktowerDayMode.EndConfirm`、`ClocktowerExecutionConfirmScreen` 和跳转到独立确认页的接口/状态/旧测试 | 日间提名/投票/处决动作及票数、胜负规则仍在 Host 确认，不可绕过投票权限/鬼票校验 |
+| **C NGJ Klutz** | 已发生 `Death` + 身份/已完成角色行动推导出应执行 Klutz 玩家选择；不再单独记录“获知死亡”事件 | `KlutzLearnedDeath` 类型/producer/记录入口/单独发布标志、`clocktowerKlutzReturnToDawn` 等过渡状态以及其独占测试/AI历史映射（在安全迁移后） | 必须保留 Klutz 真正选座位及其实际结算；夜死在新 Day 才显示给玩家；白天死亡当时触发流程；不新增独立 Dawn |
+| **D 展示完成** | 当前私密信息一经**实际展示**即写入唯一 Session Observation；用户关闭展示页即完成该夜间步骤并自动进入下一角色，**不再额外 Next** | `pendingAutoAdvanceAfterDisplay` 的平行游标/回调协定以及关闭后需人工 Next 的双确认；整链迁移后删旧 reveal lifecycle | 关闭前不得预先唤醒/告知下一玩家；显示中被系统中断时可安全续步，已显示信息重开只读原事实，幂等且不产生第二记录；AI 自动与人工一致 |
+
+**边界澄清**：D 的“关闭后完成步骤”是导航完成点，而不是延迟记录事实。私密信息真正展示时就记录；关闭只解除遮挡并由 Host 选择下一项，避免信息已显示却未入历史。C 的“由 Death 事实触发”不免除真实 Klutz 人工选座位的事件记录。
+
+## 3. 已查明的旧流程/隐藏控制：改造与删除台账
+
+| 优先 | 现存/历史路径（实施时核对最新代码） | 结论 | 所需验证 |
+|---|---|---|---|
+| P0 | `ClocktowerHostScreen.kt` 夜前 `nightStarted`、`ClocktowerStorytellerRecommendationScreen`、`ClocktowerNightReadyCard` | **DELETE A**：取消实际 StartNight 分支；开局真实裁量改为角色配置步骤 | 首夜及后夜无准备页，立刻呈现合法第一步 |
+| P0 | `ClocktowerHostScreen.kt` `ClocktowerDayMode.EndConfirm`、`ClocktowerDayScreen.kt` `ClocktowerExecutionConfirmScreen` | **DELETE B**：把 onConfirmDay 结算入白天方桌按钮 | 不重复处决/NoExecution、选票与胜负一致 |
+| P0 | `CampBoardGameHostApp.kt` `captureKlutzLearnedDeathOnPublicAnnouncement`、`NoGreaterJoyKlutzHistoryProducerV1.kt` 的 learned、`clocktowerPendingKlutzName`、`clocktowerKlutzReturnToDawn` | **REPLACE/DELETE C**：改为 Session Death/Execution + Klutz 实际选择推导待处理 | 夜死及日间死亡两入口、真实玩家选择、无伪造 Learned |
+| P0 | `ClocktowerHostScreen.kt` `playerDisplayStep`、`pendingAutoAdvanceAfterDisplay`、`FirstNightInformationMigration`、`ClocktowerPlayerRevealHandoff` | **REPLACE/DELETE D**：以 Session 中实际已展示事件与稳定步骤身份决定关闭后的后继；移除平行展示去重 | 关闭自动前进，崩溃/双关闭不重发、不重写原值 |
+| P0 | `ClocktowerNightHostProjection.kt` + `ClocktowerDemonAttackProductionAdapter.kt` 死亡预览驱动唤醒 | **REPLACE**：仅从已确认 Session Attack/Death/Poison/Protection/Mayor 分支决定实际夜序，然后删除整条失效预测路径 | 杀死尚未行动角色跳过；Ravenkeeper/Sage 真触发；受保护不死 |
+| P0 | `ClocktowerNightCheckpoint.kt` + `ClocktowerDynamicNightAdvance.kt` + UI `nightStepIndex`、`AwaitRefreshedFlow` | **REPLACE**：由 Host 根据稳定步骤 identity、Session 已完成事实选择下一步骤；不保留 UI 第二流程游标 | 角色因死亡消失、死后触发插入、没有重复确认/跳过 |
+| P0 | `CampBoardGameHostApp.kt` `evaluateGameOutcome(context, cards)` 和 `gameOutcome` 写入 | **MOVE**：确定性胜负、Saint/Mayor/Demon succession 统一进入 Host；UI 可保留只读展示开关 | Host 真实状态和显示状态一致，多结果优先级准确 |
+| P1 | `ClocktowerNominationInteraction.kt` 中 Virgin/Spy 判定、`ClocktowerArtistInteraction.kt` 中回答真值 | **MOVE**：确定结果到 Host，真正角色裁量/玩家问题可从 UI 输入 | Virgin/Spy/醉毒、艺术家独立真值与实际播报 |
+| P1 | `ClocktowerFirstNightInformationRequest.kt`、`FirstNightInformationMigration.kt` 单候选发布域和临时已显示 lifecycle | **REPLACE**：Session Observation + 单条推荐直接绑定，不为单候选重建旧域引擎 | 已展示信息严格一次；手动及自动、AI预选不中断 |
+| P1 | `ClocktowerFlowPlanner.kt`、`ClocktowerHostInteractionProjector.kt`、`ClocktowerScriptNormalizer.kt` 的 `DUSK/DAWN` token | **REVIEW THEN DELETE** 非必要 system token/UI；既有 Dawn UI 在 `0e63d9c` 已删除，后续 token 不能再成为步骤 | 内置剧本夜序、6 人开场信息、正确日夜轮换 |
+| P1 | 旧 `DawnCommitIdentity`、后夜死者显示 `PUBLIC AliveAt` 构造 | **CLEAN** 非必要重复公开事件/旧命名；已有稳定 ID 若是事件历史 key，重命名不得破坏去重 | Night→Day 无第二次 Death、无隐私泄露；其他日间公众事实仍可记录 |
+| P1 | 多处 `PlayerCard.eliminatedRound` 与 Session `alive` 双状态读写 | **REPLACE** 所有规则判断；展示数据只能由 Session 单向派生 | 已死角色/鬼票/票数/胜负不因视图过时错判 |
+| P1 | 夜间 `onPrevious` 禁用参数与专门 UI scaffold | **DELETE** 无用途参数、空 callback/旧测试 | 任何夜间角色不可回上一角色；配置/白天取消草稿仍允许 |
+| P1 | App 中 `LaunchedEffect` 自动确认选中信息与自动下一步 | **MOVE** AI 自动选择到统一 Host 事务入口；UI 可执行显示关闭等真正展示动作 | 无重复提交；没有在玩家看到信息前自动跳过 |
+| P1 | 活动对局只在 Compose `remember` 持有，缺乏证实的持久化 Session 恢复入口 | **BUILD MINIMAL** 单 Session 原子保存、安全恢复，而非旧平行存档引擎 | 进程被杀后能安全继续，宁可重复未完成操作也不篡改已公布事实 |
+
+**审计注意**：以上为已查明的活跃旧路径和有待迁移职责，并非所有行都证明功能完全错误。特殊角色必须以真实合同判定“必需／非唯一裁量／冗余”，不能仅因发生在 UI 或叫 `candidate` 就暴力删掉当前有用的 AI 路径。不要为了未来 Homebrew、独立 Web、实验性评分保留复杂度。
+
+## 4. 实施顺序、权限与每批清理退出标准
+
+1. **P0 继续补全当前全树职责地图**：枚举所有源码/资源/入口/生产消费者（前轮只深入核查关键调用链），每项分 KEEP_MINIMAL、REPLACE_AND_DELETE、DELETE、OWNER_REVIEW；包含角色逐项输入/触发/输出；不以“有调用/CI 仍要求”作为保留理由。
+2. **P1/P2 Host nextStep(Session) 唯一路由**：先以投毒者→僧侣→Imp→死亡/条件唤醒覆盖确定性结算，同时直接切换 A；以证据删除 `nightStarted`、UI 业务 index、预测 adapter 及交接/旧等待链，确保身份展示时序。每迁移一条业务责任同批实际删除整条被替代控制链、辅助类、页面、独占测试/CI 守卫。
+3. **P3 白天 Host 结算与 B/C**：白天方桌一次确认；Klutz 死亡事实触发真实选座位，不新增“得知死亡”事件；UI 不再自行判断胜负。处理夜死/日间死、胜负优先级和幽灵票。
+4. **P4 D 与全部 AI/UI 汇合**：实际私密信息展示时 Session 只记录一次；关闭后自动走下一真实步骤，不建立隐藏的第二次确认/Next；保留开局/后夜推荐、战略记忆、三模式和预选，所有模式走同一个接受接口。
+5. **P1/P5 恢复及全树验收**：唯一 Session 原子存储、崩溃时安全续局；重复点击、重组、恢复、旧 ID 兼容、玩家私密资料；TB 5–15/NGJ 5–6 每角色合同与代表性全局组合；Android testFull/assembleDebug、R2、必要真机及大于 50KB 文件净化。
+
+**物理删除原则**：功能不必需即删除；有必要但与旧实现耦合，先让最小新路径承接并验证同等实际游戏行为，再在**同一批**切断和删除旧 producer/consumer、数据字段、测试及门禁。禁止永久新旧双轨、影子 GameState、泛用 Rules 引擎、保留只读但无人调用的兼容封装、伪造旧事件保持测试通过。每批报告准确代码 SHA、物理删除量、实测 CI/R2、剩余调用和风险。**只读审计不等于完成迁移**。
+
+## 5. 需要保护且不得误删的合同
+
+- 两个内置剧本 TB 5–15 / NGJ 5–6 的阵容、首夜/后夜/白天流程与每个真实角色动作；脚本元数据和 5/6 人的特殊信息行为。
+- 连续局阵容防重复、同一玩家连续角色避免重复，两者独立保留。
+- 实际展示给玩家的消息、公开或私密范围、已发生事件的有序记录；红鲱鱼等实际开局决策；事件日期轮次/位置/座位。
+- AI 首夜联合策略、后夜增量、提示词/API/解析、策略记忆、MANUAL/AI_ASSISTED/AI_AUTOMATIC、过时版本判定；付费 API 必须另行批准。
+- 确定机械效果：保护/中毒时点、死亡、跳过/触发、继任、票数/鬼票、处决及胜负；必要结构和身份/隐私/原子/去重安全。
+- 真正人工误播只能添加显式纠正事实，不允许普通返回覆盖历史；意外退出后可从安全位置继续（持久化尚待实现证明）。
+
+## 6. 测试策略纠正
+
+删除旧测试中的 “Next 先 stage、下一步开始才 commit、允许 Previous 改前一步、黎明再公布死亡、独立 Klutz learned 事件、仅 StartNight/EndConfirm 页面渲染” 期望，替换为：
+- A：首夜开局设置完成/后夜上日结束，第一可执行动作直接出现；有真正开局选择时先处理选择并记录，没有空转页。
+- B：白天方桌一次结束，已投最高票及处决/无人处决严格提交一次；无第二确认页。
+- C：夜死进入 Day 或当日现场死亡可准确触发 Klutz 选座位，一次性记录真实玩家选择，但无 Learned 单独事件。
+- D：展示页面关闭自动到下一真实角色；展示时先写唯一 Observation，旧值重新打开只读，双击/重组/进程杀死恢复不重发、不改值、不泄露下家信息。
+- 基础：夜间无上一角色、Next 即刻原子提交；确定死亡即时影响之后的唤醒；Dawn 不成为阶段/单独死亡公告；Session 一直唯一；AI stale/安全边界不退化。
+
+> **实施声明**：本文件记录 2026-10-20 新的权威设计决策和审计整改清单；它本身不证明 A–D 已经写入正式 Android 产品、不证明 226 个 Kotlin 文件已全部彻底审完，也不替代源代码、CI/R2 和真机验收。

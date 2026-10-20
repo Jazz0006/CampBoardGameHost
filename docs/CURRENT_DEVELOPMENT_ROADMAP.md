@@ -1,4 +1,8 @@
-# 当前开发路线（2026-10-19：Minimal Host Architecture Rebuild）
+# 当前开发路线（2026-10-20：Minimal Host Architecture Rebuild + A–D 已裁定）
+
+> **最新四项用户决策（A–D，全局强制）**：参见 [最小 Host 主持流程审计与 A–D 人工裁定](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md)。A 取消首夜/后夜 StartNight/准备页面，直接进入下一真实可执行步骤；B 在白天方桌一次确认本日结果，删除独立 EndConfirm；C Klutz 从已确认 Death/Execution 派生真实待处理行动，**不新增 Learned/得知死亡事件**；D 信息实际展示时写入 Observation，关闭展示即完成当前夜间步骤并自动前进，**不再额外 Next**。所有实现要同时删除旧路由、模型、状态、专属测试及生产调用，不允许“只隐藏 UI、内部照旧”。
+>
+> **实施优先次序**：当前 P0 完成未覆盖源码的职责和生产消费者审计；P1/P2 合并夜间 Host nextStep/实际触发与 A/D，迁移后同批删除 nightStarted/旧 preview/独立 UI flow；P3 白天 Host 唯一结算与 B/C；P4 保留 AI 三模式按同一 Host 确认入口对接；P5 全树零遗留/安全恢复/两内置剧本及 CI、真机验收。2026-10-20 审计只覆盖关键生产流程及全树文件枚举，不等于 226 文件均完成完整语义审计。以下更早带“最新”字样的记录仅为历史证据。
 
 > **现行最高优先级**：[Minimal Host Architecture Rebuild 最终合同](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。以下早前 F12、Rules 清理、仅 #335 夜间补丁和“以后再实现固定信息”的执行顺序，已被新的整局架构路线替代；其已发生提交/CI/审计数字只作历史证据。**先 P0 全仓实际模块归属审计，再逐完整业务链重建、同步删净旧调用，最后 P5 全仓复查。** 不再先独立全删旧 Rules、也不允许长期新旧双轨。
 >

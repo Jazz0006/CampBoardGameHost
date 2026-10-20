@@ -1,4 +1,8 @@
-# 新对话交接：Minimal Host Architecture Rebuild（2026-10-19 已批准）
+# 新对话交接：Minimal Host Architecture Rebuild（2026-10-20 A–D 最新裁定）
+
+> **本条优先于下方全部历史步骤和阶段文本：** 用户在 2026-10-20 审核最小 Host 全流程后明确批准 A–D，参见 [专项审计与实施边界](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md)。**A** 删除首夜/后夜通用“开始夜晚/准备”页，直接呈现第一个实际可执行步骤；**B** 白天同一方桌一次确认当日结束/处决/胜负，删除 EndConfirm 路由；**C** NGJ Klutz 只由已确认 Death/Execution 与实际角色触发待处理真实玩家选择，删除独立 Learned/得知死亡事件、ReturnToDawn 状态/无用日志；**D** 玩家信息实际展示时立即记录 Observation，关闭展示直接完成当前步骤、经 Host 自动进入下一步，无关闭后的额外 Next。夜间无 Previous/pending，Night→Day 无 Dawn 或二次公开死亡事务。
+>
+> **立即实施边界**：优先比对现行代码而非从旧设计增删；完成剩余全树职责/消费者审计，按照完整业务链把流程/确定性结算统一到 `nextStep(Session)` / 唯一 Session；完成替代和行为验证的**同一批**物理删除旧页面、UI 游标/流程状态、预测和候选的多余包装、producer/consumer、独占测试与失效 CI 门禁。生产仍有调用不是保留理由；AI 首夜/后夜全链、TB 5–15/NGJ 5–6、两类跨局防重复、真实信息/私密与 Session 安全必须保留。**未完成**：彻底撤出旧投影/多层流转、白天由 UI 规则判断、活跃 Session 安全持久化恢复、全源码/角色验证。此条仅文档定稿，**不得报告为已删除 A–D 代码**。
 
 > **唯一现行实施合同**：[MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。以下早期“最新” F12、局部夜间和重新追查已删规则的历史记录不可作为新一轮执行命令。
 
