@@ -1,5 +1,7 @@
 # CampBoardGameHost Testing Strategy（2026-10-19，Minimal Host Rebuild）
 
+> **最新代码验收（2026-10-20）**：`b5a955e92e45a9ea4c03fff122c165de3bf8a929` 的 [完整 Android CI #4482](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336436) 与 [R2 #4058](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336439) 均 SUCCESS；Android 全回归/APK、ASP、Clingo 和总门禁通过。本地完整回归 162 suites / 670 tests、0 failure/error/skipped，调试 APK 构建成功。双人/送葬者/守鸦人/贤者的草稿改选失效、步骤隔离和手动输入不被 AI 重置，数字预览输入恢复与占卜师最后预览标记已落地；未作真机或付费 API 验收。
+
 > **现行验收合同**：[Minimal Host Architecture Rebuild](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md) 覆盖下文旧三模块/F12/P1-P5 流程描述；下方通用证据优先、不强制机械 TDD、CI/Android、安全/隐私和 AI 回归原则仍有效。不要为了让旧实现测试继续通过而保留过时组件。
 >
 > **现在的阶段 P0→P5（用户 A–D 裁定后的唯一当前执行标准）**：P0 全树职责归属、角色输入/触发/结算及退役矩阵；P1 唯一 Session + 本步 Next 即时提交 + 稳定步骤身份 + 原子落盘 + 安全续局，**无 pendingOperation、无夜间 Previous**；P2 全夜间唤醒/跳过/即时死亡/中毒保护时序/继任以及 **A 无 StartNight/ReadyCard，D2 信息可多次全屏预览/返回且仅 Next 记录最终一条 Observation**；P3 白天提名、投票、鬼票、处决及胜负，**B 方桌同页一次结束，C Klutz 从 Death/Execution 推导，不记录独立 Learned**；P4 UI 无规则写入、原 AI 人工/辅助/自动同提交入口、AI stale 版本指纹；P5 全树删除证明、5–15 人两内置剧本完整游戏与真机验收。详见 [2026-10-20 决策与审计](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md)。
@@ -8,7 +10,7 @@
 >
 > **D2 追加关键验证**：在数字或双人信息已经全屏预览之后修改数字、身份、座位、无角色选项或恢复推荐草稿，Next 不得直接提交旧预览；后续 AI 推荐到达不得覆盖当前人工输入；普通方桌无 typed `displayProposition` 时不得提供误导性展示按钮，全自动必须等待或允许重试，已确定 typed 结果可直接展示。侍女无选定数字不应出现“查询并展示”的空操作。以上纯逻辑及真实 UI 路径都要验收，安卓完整 CI 通过不等于视觉/现场操作已验收。
 >
-> **最新已验收代码证据（2026-10-20）**：PR #335 `35a2c880646b3b2d1af8d3bd69a2636e57db9001` 完整 Android CI #4479 / R2 #4055 SUCCESS；前一 SHA `e0426d5` Android CI #4478 因 Kotlin 编译失败，后以 `35a2c88` 修复，只有成功 SHA 是当前基线。该证据涵盖源码已有相关单测与 Debug APK 构建，**不等于真机手工 D2 全角色行为验收**。当前执行环境为 Codex Windows 本地，已同步到其纯文档子提交 cf3dd516，不使用 MiniMCP。Docs-only 后续 CI 可能跳过 Android，不能替代真实代码验收。
+> **前一代码基线证据（2026-10-20，最新见本文首段）**：PR #335 `35a2c880646b3b2d1af8d3bd69a2636e57db9001` 完整 Android CI #4479 / R2 #4055 SUCCESS；前一 SHA `e0426d5` Android CI #4478 因 Kotlin 编译失败，后以 `35a2c88` 修复，只有成功 SHA 是当前基线。该证据涵盖源码已有相关单测与 Debug APK 构建，**不等于真机手工 D2 全角色行为验收**。当前执行环境为 Codex Windows 本地，已同步到其纯文档子提交 cf3dd516，不使用 MiniMCP。Docs-only 后续 CI 可能跳过 Android，不能替代真实代码验收。
 >
 > **D2 下一批定向验收**：分别在 MANUAL/AI_ASSISTED/AI_AUTOMATIC 模式走一次洗衣妇/图书管理员/调查员、厨师/共情者、占卜师、侍女、送葬者、守鸦人、贤者等的“选择→全屏预览→返回原角色高亮→修改再预览→Next 唯一结构化 Observation”完整链；AI 缺失/调用失败/版本过期必须可见并重试，查询目标变更后旧结果绝不可提交；唯一确定线索无需多余 AI 请求；中断后能回未完成安全步骤。然后全夜 `nextStep(Session)` 验证剧本夜序、已确认 ActionFact/Observation、死亡/保护/毒及条件唤醒、无跳步/重复行动/持久游标，迁移一条业务链同批删除旧 UI 步进路径。避免只按源字符串或机械 TDD 编造不必要断言。
 >

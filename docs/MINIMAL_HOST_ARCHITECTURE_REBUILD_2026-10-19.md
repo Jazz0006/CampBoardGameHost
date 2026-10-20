@@ -1,5 +1,7 @@
 # Minimal Host Architecture Rebuild — 最终架构、替换清理与验收合同（2026-10-19）
 
+> **最新代码验收（2026-10-20）**：`b5a955e92e45a9ea4c03fff122c165de3bf8a929` 的 [完整 Android CI #4482](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336436) 与 [R2 #4058](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336439) 均 SUCCESS；Android 全回归/APK、ASP、Clingo 和总门禁通过。本地完整回归 162 suites / 670 tests、0 failure/error/skipped，调试 APK 构建成功。双人/送葬者/守鸦人/贤者的草稿改选失效、步骤隔离和手动输入不被 AI 重置，数字预览输入恢复与占卜师最后预览标记已落地；未作真机或付费 API 验收。
+
 > **最新用户 D2 裁决（2026-10-20，覆盖本文件所有与私密信息展示有关的旧 D/确认时点文字；已分批实施并经代码 CI 验证，尚待全部角色真机验收）**：信息角色 UI 允许反复选信息、打开全屏预览、返回原角色重选并高亮最后一次预览；全屏返回**不自动推进**。仅按“下一步”时，Host 原子记录本步骤最终确认的**唯一一条**信息 Observation 并推进；预览中间版本不记录。Next 前 APP 中断，安全回到本角色重新展示即可，无须恢复预览/选择/高亮；Next 后稳定步骤 ID 幂等且不可退回。AI_AUTOMATIC 仅自动选定说书人裁量信息，仍要现场点击按钮向真人玩家展示。全手动仅手选，辅助当前 1 条/未来可能 3 条推荐+手选，全自动仅一条选定信息展示；唯一结果只有一个展示按钮。**此裁决不改变行动角色点击 Next 立即提交的规则**。代表性 Poisoner→Monk→Imp→Butler 机械链已验收，D2 正在逐角色收尾；完整全夜 Host `nextStep(Session)` 及旧 UI 业务游标清除仍未完成。
 
 
@@ -12,7 +14,7 @@
 >
 > **2026-10-20 用户 A–D 四项最终裁定（当前最高优先级）**：以独立最小游戏流程为基线，而不是从既有页面做加减。**A** 取消首夜/后夜准备/开始页面，直接展示 Host 判定的第一个可执行步骤；**B** 白天直接在方桌一次确认结束/处决/胜负，删除独立 EndConfirm 页；**C** NGJ 呆瓜的待处理真实选择从已确认 Death/Execution 和身份推导，不另记“得知死亡”事件；**D2（取代旧 D）** 全屏展示仅为可返回、可重选的预览，不产生正式事件；**仅本角色“下一步”** 写最后确认的唯一 Observation 并请求 Host 推进，绝不以关闭全屏作为前进触发。详见 [2026-10-20 Host 流程审计与 A–D 裁决](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md)。该裁定覆盖下方任何冲突的历史段落，尚未视作代码全部实施完成。
 
-> **代码验收基线与后续顺序（2026-10-20，非全部目标完成）**：PR #335 `refactor/minimal-night-flow-20261019` 的实测代码 HEAD `35a2c880646b3b2d1af8d3bd69a2636e57db9001`，完整 Android CI #4479 和 R2 #4055 均 SUCCESS。D2 已有全屏返回/最终 Next 事件绑定、三模式信息按钮/错误等待与重试、真人查询对象防过期、可靠数字直接展示、双人信息上次预览高亮恢复等代码。**仍待**专用角色界面/真机行为验收与更广泛唯一确定线索生成。然后重建唯一 `nextStep(Session)`，将 `nightStepIndexState`、`nightStartedState`、`pendingNightAdvance`、`ClocktowerDynamicNightAdvance` 和过渡 `ClocktowerFixedNightStepResolver` 的消费者迁至 Host，替换同批删除旧实现；不得新增持久游标、第二份 Session 或长期双轨。白天 B/C、TB/NGJ 完整角色/人数与实用恢复仍是后续阶段。
+> **前一代码基线与后续顺序（最新验收见本文首段，非全部目标完成）**：PR #335 `refactor/minimal-night-flow-20261019` 的实测代码 HEAD `35a2c880646b3b2d1af8d3bd69a2636e57db9001`，完整 Android CI #4479 和 R2 #4055 均 SUCCESS。D2 已有全屏返回/最终 Next 事件绑定、三模式信息按钮/错误等待与重试、真人查询对象防过期、可靠数字直接展示、双人信息上次预览高亮恢复等代码。**仍待**专用角色界面/真机行为验收与更广泛唯一确定线索生成。然后重建唯一 `nextStep(Session)`，将 `nightStepIndexState`、`nightStartedState`、`pendingNightAdvance`、`ClocktowerDynamicNightAdvance` 和过渡 `ClocktowerFixedNightStepResolver` 的消费者迁至 Host，替换同批删除旧实现；不得新增持久游标、第二份 Session 或长期双轨。白天 B/C、TB/NGJ 完整角色/人数与实用恢复仍是后续阶段。
 >
 ## 1. 产品目标与不可改变的边界
 

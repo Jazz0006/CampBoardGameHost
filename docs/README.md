@@ -1,10 +1,11 @@
-# 文档入口（2026-10-19）
+# 文档入口（2026-10-20，Codex 本地）
 
 ## 现行权威与推荐阅读顺序
 
-1. [**Minimal Host Architecture Rebuild（已批准的唯一总设计与执行合同）**](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)：唯一 Session + 一个 pending、Host 全局确定性流程、整链替换与立即删旧、P0–P5 与风险/验收。
-2. [AGENTS](../AGENTS.md)：提交、安全与工程约束；[当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[新对话交接](NEXT_DEVELOPMENT_HANDOFF.md)：当前分支、PR、第一批实际任务。
-3. [测试策略](TESTING_STRATEGY.md)：业务行为与退出门槛；[Host 事实合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)：核心事件语义。
+1. [**Minimal Host Architecture Rebuild（已批准的唯一总设计与执行合同）**](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)：唯一 Session + 已确认有序事件 + 稳定步骤 ID；无 persistent Pending/夜间 Previous/Dawn；行动本步 Next 提交，D2 预览返回可改选且仅 Next 记录最后唯一 Observation；整链替换与同批删旧、P0–P5 验收。
+2. [A–D2 最新裁决](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md)：预览与最终确认边界、A/B/C 与迁移清单。
+3. [AGENTS](../AGENTS.md)：提交、安全与工程约束；[当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[新对话交接](NEXT_DEVELOPMENT_HANDOFF.md)：当前分支、PR、第一批实际任务。
+4. [测试策略](TESTING_STRATEGY.md)：业务行为与退出门槛；[Host 事实合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)：核心事件语义。
 
 **冲突优先级**：新总纲 > AGENTS 最新段 > Roadmap/NEXT 最新段 > 事实合同/测试 > 历史文件。旧三模块新 Rules、旧 P1–P5、局部 F12 和 ARCH-CLEANUP-2 分批指令均只作为当时审计/提交证据，不能再次作为下一步执行命令。
 
@@ -16,3 +17,5 @@
 - [历史归档](archive/README.md) 和 Git 提交保留设计追溯。旧 Rules 完整合法性、恢复/历史影子、多路径开发 NEXT 不再是生产必须保持的合同。
 
 新任务只维护顶部现行状态和 GitHub 可验证结果；历史旧路线尽量归档而不是不断叠加“最新指令”，不得与现行总纲竞争权威。
+
+当前在 Windows Codex 本地直接读写与验证，不使用 MiniMCP。开放 PR 只有 Draft #334（base main）和 #335（base #334）；每次从当前交接取得精确 HEAD/CI，而非沿旧快照执行。旧路线和交接已分别归档为 [路线历史](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_LOCAL_D2_2026-10-20.md) / [交接历史](archive/handoffs/NEXT_DEVELOPMENT_HANDOFF_PRE_LOCAL_D2_2026-10-20.md)。

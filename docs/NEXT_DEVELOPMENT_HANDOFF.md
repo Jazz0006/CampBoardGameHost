@@ -1,5 +1,7 @@
 # 当前交接 — Codex 本地 D2（2026-10-20）
 
+> **最新代码验收（2026-10-20）**：`b5a955e92e45a9ea4c03fff122c165de3bf8a929` 的 [完整 Android CI #4482](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336436) 与 [R2 #4058](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336439) 均 SUCCESS；Android 全回归/APK、ASP、Clingo 和总门禁通过。本地完整回归 162 suites / 670 tests、0 failure/error/skipped，调试 APK 构建成功。双人/送葬者/守鸦人/贤者的草稿改选失效、步骤隔离和手动输入不被 AI 重置，数字预览输入恢复与占卜师最后预览标记已落地；未作真机或付费 API 验收。
+
 ## 环境、分支与已验证基线
 
 直接使用 Windows 本地 `C:/Users/Jazz_/source/repos/CampBoardGameHost` 和 PowerShell；不使用 MiniMCP。JDK 可用路径为 `C:/Program Files/Android/Android Studio/jbr`；实际 Gradle/SDK 能力每次核验。
@@ -14,7 +16,7 @@
 
 Host 执行确定性规则与流程，AI/人工只做真实非唯一裁量；真人玩家查询仍由真人选择。保持实际生产 AI、TB/NGJ、双防重复、事件隐私和原子/stale 安全。
 
-## 已完成范围与最新 D2 批次（本地通过，远端验证待本批 SHA）
+## 已完成范围与最新 D2 批次（本地及精确代码 CI/R2 已通过）
 
 四角色机械链、即时确定性死亡/继任及夜末/Dawn 删除已有分批证据。D2 已有最终 Next/稳定 Observation、三模式/部分重试和查询绑定、数字草稿隔离、双人最后预览恢复。D2 仍不是全角色或真机验收。
 
@@ -24,7 +26,7 @@ Host 执行确定性规则与流程，AI/人工只做真实非唯一裁量；真
 
 本批验证与净体量：本地 `:app:testFast` 通过；最终 `:app:testFull :app:assembleDebug` 通过，162 suites / 670 tests，0 failure/error/skipped。新增两个查询/结构绑定行为用例；首次运行新增用例尝试构造负数，被既有 NumericResult 构造器直接拒绝，去掉这条无效测试数据后完整重跑成功。没有设备或付费 API 验收。
 
-本批 8 个生产文件 +101 行/+4,620B、2 个测试文件 +41 行/+2,476B，未整删生产/测试文件；这是 D2 合同修复，不能冒称净删。替换的是各角色的推荐驱动 remember 重置/不通知父级的局部改选路径，统一复用原 onInformationDraftChanged→清空最后预览。无新 Pending/Session/流程游标/候选引擎。现有 UI index/dynamic handoff 尚存，下一阶段必须整体迁移删除。超限源码仍是 App 150,261B、HostScreen 94,508B、Session 54,310B，三者本批未增长。远端精确代码 SHA 的完整 CI/R2 待推送后补记录。
+本批 8 个生产文件 +101 行/+4,620B、2 个测试文件 +41 行/+2,476B，未整删生产/测试文件；这是 D2 合同修复，不能冒称净删。替换的是各角色的推荐驱动 remember 重置/不通知父级的局部改选路径，统一复用原 onInformationDraftChanged→清空最后预览。无新 Pending/Session/流程游标/候选引擎。现有 UI index/dynamic handoff 尚存，下一阶段必须整体迁移删除。超限源码仍是 App 150,261B、HostScreen 94,508B、Session 54,310B，三者本批未增长。远端代码 b5a955e9 的完整 CI #4482/R2 #4058 通过，remote compare 与本地 12 文件变更一致。
 
 每批报告生产/测试删除与净体量、替换消费者、尚存旧链、超限文件、状态/事件风险、精确代码 SHA 的测试及 CI/R2。不得以构建通过声称设备交互已通过。
 
