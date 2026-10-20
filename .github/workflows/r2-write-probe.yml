@@ -101,13 +101,16 @@ jobs:
           fi
           grep -q "private fun ClocktowerDayActionHeader" "$day"
 
-          for name in ClocktowerNightActiveScreen ClocktowerNightReadyCard; do
-            if grep -q "fun ${name}(" "$root"; then
-              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
-              exit 1
-            fi
-            grep -q "internal fun ${name}" "$night"
-          done
+          if grep -q "fun ClocktowerNightActiveScreen(" "$root"; then
+            echo "ClocktowerNightActiveScreen still lives in CampBoardGameHostApp.kt" >&2
+            exit 1
+          fi
+          grep -q "internal fun ClocktowerNightActiveScreen" "$night"
+          # Owner decision A retires the generic ready/preparation page altogether.
+          if grep -R -q "ClocktowerNightReadyCard" app/src/main/java; then
+            echo "Retired generic Night Ready card returned to production" >&2
+            exit 1
+          fi
 
           if grep -q "fun ClocktowerJudgeScreen(" "$root"; then
             echo "ClocktowerJudgeScreen still lives in CampBoardGameHostApp.kt" >&2
