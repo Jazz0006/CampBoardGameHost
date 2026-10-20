@@ -553,8 +553,6 @@ internal fun CampBoardGameHostApp() {
             round = round,
             gameStateRevision = clocktowerGameStateRevision,
             playerInputRevision = clocktowerPlayerInputRevision,
-            nightStarted = clocktowerNightStartedState.value,
-            nightStepIndex = clocktowerNightStepIndexState.value,
             confirmedAttackTarget = confirmedNightAttackName(),
             attackDraftTarget = clocktowerDemonAttackDraftTarget,
             confirmedPoisonTarget = confirmedClocktowerPoisonTarget(),

@@ -8,6 +8,13 @@
 >
 > **2026-10-20 最小纵向流程实施第 1 批（本提交后按实际 SHA/CI 更新）**：不扩展全角色；生产 UI 取消后夜通用 StartNight/ReadyCard 以及无真实首夜配置时的通用准备页，唯独实际恶魔伪装确认保留为真实决策操作；删除无生产消费者的 `ClocktowerNightReadyCard`，添加 Poisoner→Monk（中毒后仍可选目标但保护无效）→Imp（即时 Death）→Butler（幂等）的 Session 事实时序回归。**未实现/绝不宣称完成**：唯一 `nextStep(Session)` 和替换 UI `nightStepIndex`/`AwaitRefreshedFlow`，退出旧 NightHostProjection 攻击死亡预测，首夜真实伪装决策持久恢复，D 展示关闭自动下一角色，B/C 白天调整，完整 TB/NGJ 全角色覆盖。测试需以新代码 SHA 对应 Android CI/R2 为准；独立隔离工作区的 Gradle 曾因文件锁/端口 bind 失败，非代码通过证据。
 
+## 2026-10-20 最小流程第 3 批：机械行动由 Session 事实恢复当前步骤（验收以当前 SHA/CI 为准）
+
+- 范围仅含 TB/NGJ 夜晚现有脚本流中的 **Poisoner、Monk、Imp、Butler**。使用已按 phase+round 从唯一 Session 事件时间线派生的 `acceptedOperationKinds` 和唯一 GameState 的实际存活信息，识别这四类已执行/不应唤醒的机械步骤；UI 不能因为 `nightStepIndex` 重新初始化而重复执行这些步骤。步骤完成仍即时提交，不添加独立持久化标志。
+- 新 `ClocktowerFixedNightStepResolver` 是纯读取的最小步骤状态判断，当前仅跳过这四类机械动作；遇到其他真实信息角色与 Ravenkeeper/Sage 夜间触发时必须保留原展示步骤，不能推断其已完成。为避免未经确认的刷新泄露下一角色，旧短暂 `pendingNightAdvance` handoff 尚在；`nightStepIndex` 暂保留为显示提示而非提交事实。
+- 物理删除 `ClocktowerNightCheckpoint` 中无生产消费者的 `nightStarted`、`nightStepIndex` 字段和独占测试输入，代之用 GameState + Session 已确认事件。新增跨角色、游标复位、死亡跳过、不跳过信息角色、夜末无待操作的纯函数回归测试。
+- **未完成**：通用持久化 `nextStep(Session)`、实际信息公开/展示的逐步完成记录与关闭后自动推进（D）、旧 Compose 显示游标退出、按所有角色/夜序的完整动态触发与 Day B/C；不得误称所有夜晚已实现 Session-only 游标。提交后须以该 SHA 的 GitHub Android CI/R2 真验收更新结果。
+
 ## 2026-10-20 未提交文件专项审计：死亡只保留一条确认事实（提交后确认 CI）
 
 - 审计 `ClocktowerGameSessionAliveBoundaries.kt` 的遗留未提交更改：**保留意图，并补齐消费者，而非抛弃**。现行产品约定已经确认 Session 的 `Death/Execution` 即死亡唯一事实，不在同一次提交中再建 `PUBLIC AliveAt(false)`。原未提交改动只删了 `publishedObservationId` 参数，尚有三条生产调用和对应单元测试使用，若原样提交将无法编译。

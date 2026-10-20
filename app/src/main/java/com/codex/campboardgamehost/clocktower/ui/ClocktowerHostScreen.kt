@@ -35,6 +35,8 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStep
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.NightOperationKind
+import com.codex.campboardgamehost.clocktower.session.ClocktowerFixedNightStepStatus
+import com.codex.campboardgamehost.clocktower.session.clocktowerNextUnperformedFixedNightStepIndex
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
@@ -1069,7 +1071,48 @@ internal fun ClocktowerJudgeScreen(
     // enter their first actionable step directly, regardless of the old UI start flag.
     if (phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) {
         require(nightSteps.isNotEmpty()) { "Night flow must contain an actionable step." }
-        val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
+        // This four-role slice is selected from SAME-NIGHT accepted Session facts,
+        // not a cached UI action completion flag. Other information roles retain
+        // their actual display/publication lifecycle until their migration.
+        val fixedNightStepStatuses = nightSteps.map { step ->
+            val kind = when (step.action) {
+                ClocktowerNightAction.Poison -> NightOperationKind.POISON
+                ClocktowerNightAction.MonkProtect -> NightOperationKind.PROTECT
+                ClocktowerNightAction.DemonKill -> NightOperationKind.ATTACK
+                ClocktowerNightAction.ButlerMaster -> NightOperationKind.BUTLER
+                else -> null
+            }
+            ClocktowerFixedNightStepStatus(
+                kind = kind,
+                actorAlive = step.actor?.let { actor ->
+                    sessionGameState.players.any { it.name == actor.name && it.alive }
+                } ?: false,
+                realAction = step.isRealAction,
+            )
+        }
+        // Never expose the next actor while a just-confirmed step is still
+        // waiting for the current Session revision / dynamic flow reconciliation.
+        val resolvedIndex = if (pendingNightAdvance != null) {
+            nightStepIndex.coerceIn(0, nightSteps.lastIndex)
+        } else {
+            clocktowerNextUnperformedFixedNightStepIndex(
+                cursor = nightStepIndex.coerceIn(0, nightSteps.lastIndex),
+                steps = fixedNightStepStatuses,
+                acceptedFactsInCurrentNight = nightCheckpoint.acceptedOperationKinds,
+            )
+        }
+        // If the last confirmed action also removes the final wakeup, a pending
+        // handoff must reconcile first. On a resumed settled night, enter Day.
+        LaunchedEffect(gameId, round, phase, resolvedIndex, pendingNightAdvance) {
+            if (pendingNightAdvance != null) return@LaunchedEffect
+            if (resolvedIndex == null) {
+                if (phase == ClocktowerPhase.FirstNight) onAdvanceFromFirstNight()
+                else onCompleteNight()
+            } else if (resolvedIndex != nightStepIndex) {
+                nightStepIndex = resolvedIndex
+            }
+        }
+        val currentStepIndex = resolvedIndex ?: nightSteps.lastIndex
         val currentStep = nightSteps[currentStepIndex]
         val globalAiPending = if (globalAiAssisted && phase == ClocktowerPhase.FirstNight) {
             pendingGlobalFirstNightPairDecision(
@@ -1424,7 +1467,7 @@ internal fun ClocktowerJudgeScreen(
             subtitle = text("当前阶段：${currentStep.title}", "Current: ${currentStep.title}"),
             progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
             canGoPrevious = false,
-            nextEnabled = pendingNightAdvance == null && playerTargetReady && successorReady && (currentStep.action !in setOf(
+            nextEnabled = resolvedIndex != null && pendingNightAdvance == null && playerTargetReady && successorReady && (currentStep.action !in setOf(
                 ClocktowerNightAction.MayorRedirect,
             ) || selectedNightName != null) &&
                 (currentStep.action != ClocktowerNightAction.RedHerring ||

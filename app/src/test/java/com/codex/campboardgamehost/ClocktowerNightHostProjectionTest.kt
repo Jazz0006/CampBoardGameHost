@@ -142,16 +142,13 @@ class ClocktowerNightHostProjectionTest {
         )
         val acceptedSelection = session.state
         val selectedCheckpoint = checkpoint("Imp")
-        listOf(2, 1, 0, 99).forEach { step ->
-            val projection = ClocktowerNightHostProjectionFactory.project(
-                cards, session.state.gameState, builtInRuleset(), ClocktowerPhase.Night, null,
-                selectedCheckpoint.copy(nightStepIndex = step),
-                null, null,
-            )
-            assertTrue(projection.chambermaidTargetCards.any { it.name == "Imp" })
-            assertEquals("Poisoner", projection.effectiveAbilitySubjectForRole("Poisoner", cards[1])?.actualRole)
-            assertEquals(acceptedSelection, session.state)
-        }
+        val initialProjection = ClocktowerNightHostProjectionFactory.project(
+            cards, session.state.gameState, builtInRuleset(), ClocktowerPhase.Night, null,
+            selectedCheckpoint, null, null,
+        )
+        assertTrue(initialProjection.chambermaidTargetCards.any { it.name == "Imp" })
+        assertEquals("Poisoner", initialProjection.effectiveAbilitySubjectForRole("Poisoner", cards[1])?.actualRole)
+        assertEquals(acceptedSelection, session.state)
         assertEquals(listOf("self-attack"), session.state.actionTimeline.entries.map { it.fact.actionId })
         assertTrue(session.state.gameState.playerAt(1)?.alive == true)
         assertEquals(RoleId("Poisoner"), session.state.gameState.playerAt(2)?.actualRole)
@@ -166,7 +163,7 @@ class ClocktowerNightHostProjectionTest {
         // Stale cards and old navigation/selection cannot resurrect or reassign committed facts.
         val projection = ClocktowerNightHostProjectionFactory.project(
             cards, session.state.gameState, builtInRuleset(), ClocktowerPhase.Night, null,
-            selectedCheckpoint.copy(nightStepIndex = 0), null, null,
+            selectedCheckpoint, null, null,
         )
         assertFalse(projection.chambermaidTargetCards.any { it.name == "Imp" })
         assertEquals("Imp", projection.effectiveAbilitySubjectForRole("Poisoner", cards[1])?.actualRole)
@@ -187,8 +184,6 @@ class ClocktowerNightHostProjectionTest {
         round = 2,
         gameStateRevision = 1L,
         playerInputRevision = 1L,
-        nightStarted = true,
-        nightStepIndex = 0,
         confirmedAttackTarget = confirmedAttackTarget,
         attackDraftTarget = confirmedAttackTarget,
         confirmedPoisonTarget = null,

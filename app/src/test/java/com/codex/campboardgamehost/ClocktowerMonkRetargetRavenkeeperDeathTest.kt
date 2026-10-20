@@ -40,8 +40,6 @@ class ClocktowerMonkRetargetRavenkeeperDeathTest {
         round = 2,
         gameStateRevision = 0,
         playerInputRevision = 0,
-        nightStarted = true,
-        nightStepIndex = 4,
         confirmedAttackTarget = null,
         attackDraftTarget = null,
         confirmedPoisonTarget = null,

@@ -11,8 +11,6 @@ internal data class ClocktowerNightCheckpoint(
     val round: Int,
     val gameStateRevision: Long,
     val playerInputRevision: Long,
-    val nightStarted: Boolean,
-    val nightStepIndex: Int,
     val confirmedAttackTarget: String?,
     val attackDraftTarget: String?,
     val confirmedPoisonTarget: String?,
@@ -30,7 +28,6 @@ internal data class ClocktowerNightCheckpoint(
     init {
         require(round > 0)
         require(gameStateRevision >= 0 && playerInputRevision >= 0)
-        require(nightStepIndex >= 0)
         require(nextTimelineGlobalSequence >= 0) { "nextTimelineGlobalSequence cannot be negative." }
     }
 
