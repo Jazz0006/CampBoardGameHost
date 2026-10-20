@@ -22,7 +22,7 @@ import java.io.File
 
 class ClocktowerNightHostProjectionTest {
     @Test
-    fun `pending death preview preserves Ravenkeeper information without changing confirmed alive`() {
+    fun `unconfirmed attack must not wake Ravenkeeper or suppress surviving actor`() {
         val cards = listOf(
             card("Imp", "Imp", ClocktowerTeam.Demon),
             card("Poisoner", "Poisoner", ClocktowerTeam.Minion),
@@ -44,16 +44,50 @@ class ClocktowerNightHostProjectionTest {
             .role(RoleId("Imp"))
             .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
 
-        assertEquals("Ravenkeeper", projection.ravenkeeperTrigger?.name)
+        assertEquals(null, projection.ravenkeeperTrigger)
         assertEquals(null, projection.sageNightDeath)
+        assertEquals(null, projection.resolvedDeathForRemainingWakeups)
         assertTrue(projection.otherNightInteractions.any { it.id == impInteractionId })
         assertTrue(projection.chambermaidTargetCards.any { it.name == "Ravenkeeper" })
         assertTrue(projection.effectiveAbilitySubjectForRole("Ravenkeeper", cards[2])?.isAlive == true)
         assertEquals(RoleId("Ravenkeeper").value,
             projection.effectiveAbilitySubjectForRole("Ravenkeeper", cards[2])?.actualRole)
-        assertEquals(com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState.FUNCTIONING,
-            projection.ravenkeeperDeathTriggerAbilityState)
+        assertEquals(null, projection.ravenkeeperDeathTriggerAbilityState)
 
+    }
+
+    @Test
+    fun `confirmed Session death wakes Ravenkeeper even though no longer alive`() {
+        val cards = listOf(
+            card("Imp", "Imp", ClocktowerTeam.Demon),
+            card("Poisoner", "Poisoner", ClocktowerTeam.Minion),
+            card("Ravenkeeper", "Ravenkeeper", ClocktowerTeam.Townsfolk),
+            card("Empath", "Empath", ClocktowerTeam.Townsfolk),
+            card("Chef", "Chef", ClocktowerTeam.Townsfolk),
+        )
+        val game = cards.toClocktowerGameState(ClocktowerScript.TroubleBrewing, 17L)
+        val deathConfirmed = game.copy(players = game.players.map {
+            if (it.seat == 3) it.copy(alive = false) else it
+        })
+        val projection = ClocktowerNightHostProjectionFactory.project(
+            cards = cards,
+            gameState = deathConfirmed,
+            ruleset = builtInRuleset(),
+            phase = ClocktowerPhase.Night,
+            poisonTarget = null,
+            checkpoint = checkpoint("Ravenkeeper").copy(
+                acceptedOperationKinds = setOf(com.codex.campboardgamehost.clocktower.session.NightOperationKind.ATTACK),
+            ),
+            pendingNightNewDemonIdentityName = null,
+            lastExecutedName = null,
+            confirmedNightDeathSeats = listOf(3),
+        )
+        assertEquals("Ravenkeeper", projection.ravenkeeperTrigger?.name)
+        assertEquals("Ravenkeeper", projection.resolvedDeathForRemainingWakeups)
+        assertFalse(projection.chambermaidTargetCards.any { it.name == "Ravenkeeper" })
+        assertTrue(projection.otherNightInteractions.any {
+            it.roleId == RoleId("Ravenkeeper")
+        })
     }
 
     @Test

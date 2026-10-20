@@ -1,46 +1,51 @@
 package com.codex.campboardgamehost
 
+/**
+ * A transient UI handoff after the Session has accepted a night step. This is
+ * NOT another game event, tentative operation, or persistent game cursor.
+ * Stable interaction identities let a newly recomputed Host flow remove dead
+ * actors and insert death-triggered actions without shifting completed steps.
+ */
+internal data class ClocktowerConfirmedNightAdvance(
+    val completedInteractionId: String,
+    val completedAndEarlierInteractionIds: List<String>,
+    val revisionBeforeCommit: Long,
+    val awaitCommittedRevision: Boolean,
+) {
+    init {
+        require(completedInteractionId.isNotBlank())
+        require(completedAndEarlierInteractionIds.lastOrNull() == completedInteractionId)
+        require(completedAndEarlierInteractionIds.distinct().size == completedAndEarlierInteractionIds.size)
+    }
+}
+
 internal sealed interface ClocktowerNightAdvanceDirective {
     data class MoveTo(val stepIndex: Int) : ClocktowerNightAdvanceDirective
-    data class AwaitRefreshedFlow(val currentStepIndex: Int) : ClocktowerNightAdvanceDirective
     data object CompleteNight : ClocktowerNightAdvanceDirective
 }
 
 /**
- * Decides navigation from the list visible before the current step's confirmation mutates
- * checkpoint-derived flow. Dynamic flow mutations keep the durable cursor on the current renderable
- * step until the refreshed flow can prove either a real next step or explicit night completion.
+ * Resolve the position only after the Host has recomputed its actionable steps.
+ * Never reuse the former index: an Imp death may remove *earlier* actors, and a
+ * Ravenkeeper/Sage death may insert an interaction after this one.
  */
-internal fun clocktowerNightAdvanceDirective(
-    currentStepIndex: Int,
-    currentStepCount: Int,
-    flowMayExpandAfterConfirmation: Boolean,
+internal fun clocktowerResolvedNightAdvanceDirective(
+    confirmed: ClocktowerConfirmedNightAdvance,
+    refreshedInteractionIds: List<String>,
 ): ClocktowerNightAdvanceDirective {
-    require(currentStepCount > 0) { "Night advance requires at least one step." }
-    require(currentStepIndex in 0 until currentStepCount) { "Current night step must be in range." }
-    return when {
-        // Attack/redirect can REMOVE upcoming normal wakeups as well as insert death triggers.
-        // Always reconcile against the updated list before advancing, not just at the end.
-        flowMayExpandAfterConfirmation ->
-            ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(currentStepIndex)
-        currentStepIndex < currentStepCount - 1 ->
-            ClocktowerNightAdvanceDirective.MoveTo(currentStepIndex + 1)
-        else -> ClocktowerNightAdvanceDirective.CompleteNight
+    require(refreshedInteractionIds.distinct().size == refreshedInteractionIds.size) {
+        "Refreshed night steps must have unique identities."
     }
-}
-
-/** Resolves a pending dynamic advance only against a refreshed, renderable night-step list. */
-internal fun clocktowerRefreshedNightAdvanceDirective(
-    pending: ClocktowerNightAdvanceDirective.AwaitRefreshedFlow,
-    refreshedStepCount: Int,
-): ClocktowerNightAdvanceDirective {
-    require(refreshedStepCount > 0) { "Night advance reconciliation requires at least one step." }
-    require(pending.currentStepIndex in 0 until refreshedStepCount) {
-        "Pending night cursor must remain renderable while flow refresh is pending."
+    val current = refreshedInteractionIds.indexOf(confirmed.completedInteractionId)
+    val predecessor = if (current >= 0) current else {
+        confirmed.completedAndEarlierInteractionIds.asReversed()
+            .firstNotNullOfOrNull { oldId ->
+                refreshedInteractionIds.indexOf(oldId).takeIf { it >= 0 }
+            } ?: -1
     }
-    val nextStepIndex = pending.currentStepIndex + 1
-    return if (nextStepIndex < refreshedStepCount) {
-        ClocktowerNightAdvanceDirective.MoveTo(nextStepIndex)
+    val nextIndex = predecessor + 1
+    return if (nextIndex in refreshedInteractionIds.indices) {
+        ClocktowerNightAdvanceDirective.MoveTo(nextIndex)
     } else {
         ClocktowerNightAdvanceDirective.CompleteNight
     }

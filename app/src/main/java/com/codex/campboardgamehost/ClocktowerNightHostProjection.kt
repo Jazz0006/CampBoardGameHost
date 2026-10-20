@@ -42,16 +42,11 @@ internal class ClocktowerNightHostProjection internal constructor(
     val mayorCanRedirect: Boolean
         get() = canonicalNightDeathResolution.mayorRedirectEligible
 
-    /** Derived from already confirmed attack/protection choices, not a second writable roster.
-     * A Mayor choice must resolve first; do not assume the Mayor is dead while it is pending.
+    /** Only an actual Session-confirmed Death may suppress later wakeups.
+     * A draft attack or Mayor preview is never a death fact.
      */
     val resolvedDeathForRemainingWakeups: String?
-        get() = if (attackAlreadyAccepted) committedAttackDeathName
-            else canonicalNightDeathResolution.resolvedDeathName.takeUnless {
-                canonicalNightDeathResolution.mayorRedirectEligible &&
-                    canonicalNightDeathResolution.facts.mayorSeat != null &&
-                    canonicalNightDeathResolution.resolvedDeathSeat == canonicalNightDeathResolution.facts.mayorSeat
-            }
+        get() = committedAttackDeathName
 
     val demonCard: PlayerCard?
         get() = currentDemonHostContext?.actor
@@ -126,8 +121,8 @@ internal class ClocktowerNightHostProjection internal constructor(
             )
         }
 
-    // The trigger is still a pending UI preview. It must not synthesize a death/role event
-    // or treat a selected successor as a committed role change.
+    // Only a confirmed Session death enables this trigger. Do not synthesize a
+    // death or role change from a selected attack/successor draft.
     private fun deathTriggerAbilityState(
         roleEnName: String,
         triggerActor: PlayerCard?,
@@ -165,8 +160,9 @@ internal object ClocktowerNightHostProjectionFactory {
         }
         val attackAlreadyAccepted = NightOperationKind.ATTACK in checkpoint.acceptedOperationKinds
         val committedDeathSeat = confirmedNightDeathSeats.firstOrNull()
-        val resolvedNightDeathSeat = if (attackAlreadyAccepted) committedDeathSeat
-            else canonicalNightDeathResolution.resolvedDeathSeat
+        // No forecast may wake a death-trigger role or suppress a player before the
+        // accepted attack/death is present in the one authoritative Session.
+        val resolvedNightDeathSeat = committedDeathSeat
         val resolvedNightDeathCard = resolvedNightDeathSeat?.let { cards.getOrNull(it - 1) }
         fun wokeWhenKilled(role: String): Boolean {
             val seat = resolvedNightDeathSeat ?: return false

@@ -8,7 +8,14 @@
 >
 > **2026-10-20 最小纵向流程实施第 1 批（本提交后按实际 SHA/CI 更新）**：不扩展全角色；生产 UI 取消后夜通用 StartNight/ReadyCard 以及无真实首夜配置时的通用准备页，唯独实际恶魔伪装确认保留为真实决策操作；删除无生产消费者的 `ClocktowerNightReadyCard`，添加 Poisoner→Monk（中毒后仍可选目标但保护无效）→Imp（即时 Death）→Butler（幂等）的 Session 事实时序回归。**未实现/绝不宣称完成**：唯一 `nextStep(Session)` 和替换 UI `nightStepIndex`/`AwaitRefreshedFlow`，退出旧 NightHostProjection 攻击死亡预测，首夜真实伪装决策持久恢复，D 展示关闭自动下一角色，B/C 白天调整，完整 TB/NGJ 全角色覆盖。测试需以新代码 SHA 对应 Android CI/R2 为准；独立隔离工作区的 Gradle 曾因文件锁/端口 bind 失败，非代码通过证据。
 
-## P1 2026-10-20 用户最终裁定：取消黎明阶段和机械死亡公开复制（最新）
+## 2026-10-20 第二批：夜间稳定步骤身份与真实死亡触发（代码批次，验收按最新 SHA）
+
+- 后夜确认步骤以后不再用旧 `ClocktowerNightAdvanceDirective.AwaitRefreshedFlow`、旧列表长度或原索引猜下一角色。改为短暂 UI handoff 储存刚**已确认**步骤的稳定 interactionId / 已完成前缀，由刷新后的 Host 可执行步骤重新定位下一项；对 Imp 攻击、市长转移必须等 Session gameStateRevision 增长才允许导航，重复 Next 在待刷新期间禁用。该 handoff 不是待提交业务操作或第二份 GameState，**但 Compose 的 `nightStepIndex` 仍存在，仅作为显示位置；还没实现 `nextStep(Session)` 的完整可恢复业务游标**。
+- `ClocktowerNightHostProjection` 不再使用尚未确认的袭击草稿/死亡预测驱动 Ravenkeeper/Sage 唤醒和后续角色跳过。只有当前夜在唯一 Session 已接受的 Death 才提供死亡触发和正常角色跳过。Mayor 判定是否可选择转移的旧预测仍保留等待拆除；有意不扩大到全部角色。
+- 删除旧索引式动态推进函数和专属测试；新增死亡使先前角色消失、插入守鸦人步骤、当前 actor 消失、夜末直接完成、重复步骤 ID 拒绝等回归，以及“未确认袭击不得触发守鸦人”与“已确认死亡触发守鸦人”测试。现行 AI、私密已展示事实、双剧本/跨局轮换未删。
+- **未完成**：彻底 Host-owned `nextStep(Session)`、去除 `nightStepIndex` 和其 UI/Checkpoint 双轨、删除整个死亡预测 Adapter/Planner 重叠、真机中断安全恢复、A 中尚存恶魔真实配置步骤的持久判定、D 展示关闭与 Session 步骤身份统一、B/C 日间与 Klutz，以及全角色覆盖。此处不允许把批次性修复表述为完整最小 Host 完成。要以本次实际代码 SHA 的 Android full CI/R2 验收结论为准。
+
+## P1 2026-10-20 用户最终裁定：取消黎明阶段和机械死亡公开复制（历史已实施）
 
 - **唯一现行合同**：夜间确认的 `Death` 是即时生效的机械事实；后续夜间能力从同一 Session 的已确认存活状态计算，不维护为了玩家认知一致性而生成的第二次公开死亡事实。不额外生成 `PUBLIC AliveAt`、不设置 `DAWN` 阶段或播报确认页。首夜/后夜最后一项操作直接进入 Day，白天方桌读取本轮 Night 已确认死者并显示；讨论、提名、投票正常继续。NGJ 呆瓜在得知死亡后的实际白天选择保留，已给角色展示的私密观察及现有 AI 推荐整链保留。
 - `0e63d9c6c7f126b5a383bf5cfecb914b1489e192`：生产移除 `StorytellerPhase.DAWN`、`ClocktowerPhase.Dawn`、`ClocktowerDawnSummaryScreen`、夜→日合成 `PUBLIC AliveAt` 的代码及专用 Dawn 测试，Day Overview 显示“昨夜死亡/无人死亡”。官方剧本 JSON 内的 dawn **仅是夜序终止标记**，Host Projector 不再将其生成为游戏操作或 UI 步骤。[Android CI #39355476807](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39355476807) SUCCESS。旧 [R2 #39355476845](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39355476845) 失败仅因自动化守卫仍要求存在已删除 Dawn UI。

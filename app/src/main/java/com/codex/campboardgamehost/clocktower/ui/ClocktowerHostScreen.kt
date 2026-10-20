@@ -166,7 +166,7 @@ internal fun ClocktowerJudgeScreen(
     var nightStepIndex by nightStepIndexState
     var dayMode by dayModeState
     var pendingNightAdvance by remember(gameId, round, phase) {
-        mutableStateOf<ClocktowerNightAdvanceDirective.AwaitRefreshedFlow?>(null)
+        mutableStateOf<ClocktowerConfirmedNightAdvance?>(null)
     }
     val nominationDraft = remember(gameId, round) { ClocktowerNominationDraft() }
     val slayerDraft = remember(gameId) { ClocktowerSlayerDraft() }
@@ -1244,6 +1244,9 @@ internal fun ClocktowerJudgeScreen(
             gameId, phase, round, currentStepIndex, currentStep.interactionId,
         ) { mutableStateOf<String?>(null) }
         val advanceNightStep = advance@{
+            // A confirmed operation may still be waiting for Session's fresh flow.
+            // Do not let double taps or recomposition advance the UI again.
+            if (pendingNightAdvance != null) return@advance
             if (!playerTargetReady || !successorReady) {
                 Toast.makeText(context, text(
                     "请先完成当前行动目标及必要的恶魔继任选择。",
@@ -1282,26 +1285,17 @@ internal fun ClocktowerJudgeScreen(
                     currentStep.interactionId.toString(),
                 )
             }
-            val flowMayExpandAfterConfirmation = currentStep.action in setOf(
+            val awaitCommittedRevision = currentStep.action in setOf(
                 ClocktowerNightAction.DemonKill,
                 ClocktowerNightAction.MayorRedirect,
+            ) && currentStep.isRealAction
+            pendingNightAdvance = ClocktowerConfirmedNightAdvance(
+                completedInteractionId = currentStep.interactionId.toString(),
+                completedAndEarlierInteractionIds = nightSteps.take(currentStepIndex + 1)
+                    .map { it.interactionId.toString() },
+                revisionBeforeCommit = gameStateRevision,
+                awaitCommittedRevision = awaitCommittedRevision,
             )
-            when (
-                val directive = clocktowerNightAdvanceDirective(
-                    currentStepIndex = currentStepIndex,
-                    currentStepCount = nightSteps.size,
-                    flowMayExpandAfterConfirmation = flowMayExpandAfterConfirmation,
-                )
-            ) {
-                is ClocktowerNightAdvanceDirective.MoveTo -> {
-                    nightStepIndex = directive.stepIndex
-                }
-                is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow -> pendingNightAdvance = directive
-                ClocktowerNightAdvanceDirective.CompleteNight -> {
-                    if (phase == ClocktowerPhase.FirstNight) onAdvanceFromFirstNight()
-                    else onCompleteNight()
-                }
-            }
         }
 
         LaunchedEffect(
@@ -1364,20 +1358,22 @@ internal fun ClocktowerJudgeScreen(
             advanceNightStep()
         }
 
-        LaunchedEffect(nightSteps.size, pendingNightAdvance) {
-            val pending = pendingNightAdvance ?: return@LaunchedEffect
-            when (
-                val directive = clocktowerRefreshedNightAdvanceDirective(
-                    pending = pending,
-                    refreshedStepCount = nightSteps.size,
-                )
-            ) {
+        // The actual Session transaction is accepted before this handoff.
+        // Reconcile by interaction identity, not a saved list index that may have
+        // shifted when an actor died or a death-trigger interaction appeared.
+        val refreshedNightIds = nightSteps.map { it.interactionId.toString() }
+        LaunchedEffect(refreshedNightIds, pendingNightAdvance, gameStateRevision) {
+            val confirmed = pendingNightAdvance ?: return@LaunchedEffect
+            if (confirmed.awaitCommittedRevision &&
+                gameStateRevision <= confirmed.revisionBeforeCommit
+            ) return@LaunchedEffect
+            when (val directive = clocktowerResolvedNightAdvanceDirective(
+                confirmed = confirmed, refreshedInteractionIds = refreshedNightIds,
+            )) {
                 is ClocktowerNightAdvanceDirective.MoveTo -> {
                     pendingNightAdvance = null
                     nightStepIndex = directive.stepIndex
                 }
-                is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow ->
-                    error("Refreshed night advance cannot remain pending.")
                 ClocktowerNightAdvanceDirective.CompleteNight -> {
                     pendingNightAdvance = null
                     if (phase == ClocktowerPhase.FirstNight) onAdvanceFromFirstNight()
@@ -1432,7 +1428,7 @@ internal fun ClocktowerJudgeScreen(
             subtitle = text("当前阶段：${currentStep.title}", "Current: ${currentStep.title}"),
             progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
             canGoPrevious = false,
-            nextEnabled = playerTargetReady && successorReady && (currentStep.action !in setOf(
+            nextEnabled = pendingNightAdvance == null && playerTargetReady && successorReady && (currentStep.action !in setOf(
                 ClocktowerNightAction.MayorRedirect,
             ) || selectedNightName != null) &&
                 (currentStep.action != ClocktowerNightAction.RedHerring ||

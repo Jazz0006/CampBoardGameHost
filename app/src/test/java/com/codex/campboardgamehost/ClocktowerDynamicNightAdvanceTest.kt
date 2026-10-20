@@ -1,68 +1,67 @@
 package com.codex.campboardgamehost
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
+/** Navigation must follow the Host's refreshed interaction identities, not old list indices. */
 class ClocktowerDynamicNightAdvanceTest {
-    @Test
-    fun `dynamic last step keeps the current renderable cursor while awaiting refreshed flow`() {
-        val directive = clocktowerNightAdvanceDirective(
-            currentStepIndex = 4,
-            currentStepCount = 5,
-            flowMayExpandAfterConfirmation = true,
-        )
+    private fun after(
+        completed: String,
+        acceptedPrefix: List<String>,
+        refreshed: List<String>,
+    ) = clocktowerResolvedNightAdvanceDirective(
+        confirmed = ClocktowerConfirmedNightAdvance(
+            completedInteractionId = completed,
+            completedAndEarlierInteractionIds = acceptedPrefix,
+            revisionBeforeCommit = 0L,
+            awaitCommittedRevision = true,
+        ),
+        refreshedInteractionIds = refreshed,
+    )
 
-        assertEquals(ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(4), directive)
+    @Test fun `normal Poisoner Monk Imp Butler order advances to the actual next role`() {
+        assertEquals(
+            ClocktowerNightAdvanceDirective.MoveTo(3),
+            after("imp", listOf("poison", "monk", "imp"),
+                listOf("poison", "monk", "imp", "butler")),
+        )
     }
 
-    @Test
-    fun `ordinary last step still completes immediately`() {
-        val directive = clocktowerNightAdvanceDirective(
-            currentStepIndex = 4,
-            currentStepCount = 5,
-            flowMayExpandAfterConfirmation = false,
+    @Test fun `death of an earlier actor cannot shift the Imp cursor into the wrong role`() {
+        assertEquals(
+            ClocktowerNightAdvanceDirective.MoveTo(2),
+            after("imp", listOf("poison", "monk", "imp"),
+                listOf("poison", "imp", "butler")),
         )
-
-        assertEquals(ClocktowerNightAdvanceDirective.CompleteNight, directive)
     }
 
-    @Test
-    fun `demon confirmation waits for reordered steps even when an old next step exists`() {
-        val directive = clocktowerNightAdvanceDirective(
-            currentStepIndex = 2,
-            currentStepCount = 5,
-            flowMayExpandAfterConfirmation = true,
+    @Test fun `committed attack adds death-trigger Ravenkeeper before Butler`() {
+        assertEquals(
+            ClocktowerNightAdvanceDirective.MoveTo(3),
+            after("imp", listOf("poison", "monk", "imp"),
+                listOf("poison", "monk", "imp", "ravenkeeper", "butler")),
         )
-
-        assertEquals(ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(2), directive)
     }
 
-    @Test
-    fun `refreshed night can complete immediately if a slain final wakeup was removed`() {
-        val directive = clocktowerRefreshedNightAdvanceDirective(
-            pending = ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(2),
-            refreshedStepCount = 3,
+    @Test fun `a disappearing current actor anchors to the last surviving preceding step`() {
+        assertEquals(
+            ClocktowerNightAdvanceDirective.MoveTo(2),
+            after("imp", listOf("poison", "monk", "imp"),
+                listOf("poison", "monk", "butler")),
         )
-        assertEquals(ClocktowerNightAdvanceDirective.CompleteNight, directive)
     }
 
-    @Test
-    fun `refreshed dynamic flow moves only to a newly renderable next step`() {
-        val directive = clocktowerRefreshedNightAdvanceDirective(
-            pending = ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(4),
-            refreshedStepCount = 6,
+    @Test fun `night completes after Host removes slain final actor`() {
+        assertEquals(
+            ClocktowerNightAdvanceDirective.CompleteNight,
+            after("imp", listOf("poison", "monk", "imp"), listOf("poison", "monk", "imp")),
         )
-
-        assertEquals(ClocktowerNightAdvanceDirective.MoveTo(5), directive)
     }
 
-    @Test
-    fun `refreshed dynamic flow completes when no next step was inserted`() {
-        val directive = clocktowerRefreshedNightAdvanceDirective(
-            pending = ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(4),
-            refreshedStepCount = 5,
-        )
-
-        assertEquals(ClocktowerNightAdvanceDirective.CompleteNight, directive)
+    @Test fun `Host refuses duplicated interaction identities`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            after("imp", listOf("poison", "imp"), listOf("poison", "imp", "imp"))
+        }
     }
 }
