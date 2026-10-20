@@ -71,8 +71,12 @@ internal fun ClocktowerDirectNumericResultUi(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (Int) -> Unit,
+    onDraftChanged: () -> Unit = {},
 ) {
-    var entered by remember(title, actorLabel, initialValue, subjectSeats) { mutableStateOf(initialValue?.toString().orEmpty()) }
+    // An async recommendation must not overwrite a Storyteller's live manual draft.
+    var entered by remember(title, actorLabel, subjectSeats) {
+        mutableStateOf(initialValue?.toString().orEmpty())
+    }
     val selected = entered.trim().toIntOrNull()?.takeIf { it >= 0 }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -102,7 +106,13 @@ internal fun ClocktowerDirectNumericResultUi(
             if (!automaticOnly) {
                 OutlinedTextField(
                     value = entered,
-                    onValueChange = { value -> if (value.length <= 11) entered = value },
+                    onValueChange = { value ->
+                        if (value.length <= 11 && value != entered) {
+                            entered = value
+                            // Changing an unshown draft cannot confirm a previous preview.
+                            onDraftChanged()
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(if (language == "en") "Manual information (number)" else "手动选择信息数字") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

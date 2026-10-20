@@ -32,7 +32,6 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     language: String,
     canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
-    onShowDeterminedResult: () -> Unit,
     onResultSelected: (ClocktowerDisplayOption) -> Unit,
     numericInput: (@Composable () -> Unit)? = null,
     onPrevious: () -> Unit,
@@ -47,7 +46,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
         val orderedOptions = resultOptions.sortedBy { option -> if (option.isDefaultRecommendation) 0 else 1 }
         val reveal: (() -> Unit)? = when {
             !completePair -> null
-            orderedOptions.isEmpty() -> onShowDeterminedResult
+            orderedOptions.isEmpty() -> null
             else -> ({ onResultSelected(orderedOptions.single()) })
         }
         ClocktowerBeginnerTwoTargetRevealDialog(
@@ -92,7 +91,6 @@ internal fun ClocktowerChambermaidSquareTableDialog(
             resultOptions = resultOptions,
             automaticOnly = automaticOnly,
             language = language,
-            onShowDeterminedResult = onShowDeterminedResult,
             onResultSelected = onResultSelected,
         )
     }
@@ -106,7 +104,6 @@ private fun ClocktowerChambermaidCenterControls(
     resultOptions: List<ClocktowerDisplayOption>,
     automaticOnly: Boolean,
     language: String,
-    onShowDeterminedResult: () -> Unit,
     onResultSelected: (ClocktowerDisplayOption) -> Unit,
 ) {
     val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
@@ -165,12 +162,11 @@ private fun ClocktowerChambermaidCenterControls(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 } else {
-                    Button(
-                        onClick = onShowDeterminedResult,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(if (language == "en") "Check and show" else "查询并展示")
-                    }
+                    Text(
+                        if (language == "en") "Enter the actual number before showing information."
+                        else "请先输入实际要展示的数字。",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
             } else {
                 if (recommendations.isNotEmpty()) {

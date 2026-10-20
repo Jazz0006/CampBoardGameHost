@@ -68,6 +68,7 @@ internal fun ClocktowerNightStepCardLocalized(
     onSelectChambermaidFirst: (String) -> Unit,
     onSelectChambermaidSecond: (String) -> Unit,
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
+    onInformationDraftChanged: () -> Unit = {},
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
     onHostTools: () -> Unit,
@@ -107,6 +108,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 clocktowerDirectNumericResult(step, directNumericActorSeat, value, cards)
                     ?.let(onShowPlayerDisplay)
             },
+            onDraftChanged = onInformationDraftChanged,
         )
         return
     }
@@ -356,6 +358,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 step = plainInformationDisplayStep,
                 actorSeat = actionActorSeat,
                 wakeInstruction = command,
+                automaticOnly = allowRuleDeterminedAutoUi,
             ) ?: ClocktowerPlainInformationSquareTablePresentation(
                 actorSeat = actionActorSeat,
                 wakeInstruction = command,
@@ -517,7 +520,6 @@ internal fun ClocktowerNightStepCardLocalized(
                             }
                         }
                     },
-                    onShowDeterminedResult = { onShowPlayerDisplay(step) },
                     onResultSelected = ::showRecommendedDisplayOption,
                     numericInput = if (!allowRuleDeterminedAutoUi &&
                         selectedSeats.size == 2 && structuredActorSeat != null) ({
@@ -532,6 +534,7 @@ internal fun ClocktowerNightStepCardLocalized(
                                     step, structuredActorSeat, value, cards, subjectSeats = selectedSeats,
                                 )?.let(onShowPlayerDisplay)
                             },
+                            onDraftChanged = onInformationDraftChanged,
                         )
                     }) else null,
                     onPrevious = onPrevious,

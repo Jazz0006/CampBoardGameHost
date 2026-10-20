@@ -1640,6 +1640,7 @@ internal fun ClocktowerJudgeScreen(
                         playerDisplayStep = preview
                     }
                 },
+                onInformationDraftChanged = { lastInformationPreview = null },
                 canGoPrevious = false,
                 onPrevious = {},
                 onHostTools = onHostTools,
