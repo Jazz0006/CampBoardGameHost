@@ -42,7 +42,8 @@ class ClocktowerGameSessionAliveBoundaryTest {
         assertEquals(before.players.filterNot { it.seat == targetSeat },
             session.state.gameState.players.filterNot { it.seat == targetSeat })
         assertEquals(1L, session.state.gameStateRevision)
-        assertEquals(1L, session.state.playerInputRevision)
+        // Death itself is a GameState fact; no additional player information was published.
+        assertEquals(0L, session.state.playerInputRevision)
         assertEquals(2L, session.state.nextTimelineGlobalSequence)
         assertEquals(death, session.state.actionTimeline.entries.single())
         // Death is the only historical fact; there is no synthetic public AliveAt(false).
